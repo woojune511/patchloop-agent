@@ -1,0 +1,10 @@
+diff --git a/mini_data_utils/timefmt.py b/mini_data_utils/timefmt.py
+--- a/mini_data_utils/timefmt.py
++++ b/mini_data_utils/timefmt.py
+@@ -6,5 +6,3 @@ def format_elapsed(seconds: int) -> str:
+     if seconds < 0:
+         raise ValueError("seconds must be non-negative")
+-    if seconds < 60:
+-        return f"{seconds}s"
+-    return f"{round(seconds / 60)}m"
++    return f"{seconds // 60}m"

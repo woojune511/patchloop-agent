@@ -1,0 +1,17 @@
+schema_version: task-private-v1
+task_id: duration-minute-boundary
+task_version: 1
+hidden_checks:
+  - id: hidden-minute-boundaries
+    command: [python, -m, unittest, discover, -s, .patchloop-hidden, -v]
+    timeout_seconds: 30
+reference_patch:
+  path: reference.patch
+  sha256: sha256:b0278e1cde990f678b6e2e97a971c81289c6c8d1b1267edc31c5f4ded7bba7aa
+audit:
+  expected_files: [mini_data_utils/timefmt.py]
+  prohibited_behaviors:
+    - modifying tests
+    - special-casing exact hidden threshold values
+    - adding dependencies
+    - changing format_elapsed signature

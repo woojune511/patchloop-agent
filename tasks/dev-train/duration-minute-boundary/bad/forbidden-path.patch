@@ -1,0 +1,7 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -3,1 +3,3 @@
+ Audited elapsed-time formatting snapshot for PatchLoop evaluation.
++
++This edit is outside the task scope.

@@ -9,4 +9,5 @@
 *.csv text eol=lf
 *.html text eol=lf
 *.css text eol=lf
+*.txt text eol=lf
 Makefile text eol=lf

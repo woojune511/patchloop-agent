@@ -1,0 +1,31 @@
+schema_version: task-public-v1
+task_id: duration-minute-boundary
+task_version: 1
+split: dev-train
+repository:
+  url: snapshot://mini-data-utils-duration-minute-boundary
+  base_commit: sha256:a3508607ed05735c39f766580002fa29801440ee66301fbc85b1525114f079fe
+  language: python
+issue:
+  title: Elapsed-time formatter rounds incomplete minutes upward
+  description: |
+    Durations of at least 60 seconds must report only fully completed minutes.
+    Values below 60 seconds must remain in seconds, negative durations must
+    remain invalid, and the public format_elapsed(seconds) interface must not
+    change.
+constraints:
+  allowed_paths:
+    - mini_data_utils/timefmt.py
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 10
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: existing-unit-tests
+    command: [python, -m, unittest, discover, -s, tests, -v]
+    timeout_seconds: 30
+tags: [time-formatting, boundary-handling, rounding, dev-train]
