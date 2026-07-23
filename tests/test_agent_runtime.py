@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import uuid
 from pathlib import Path
 
@@ -56,6 +57,16 @@ def test_offline_mock_agent_creates_complete_trace(
     assert any(event.type == EventType.RUN_COMPLETED for event in events)
     workspace = tmp_path / "runtime" / "workspaces" / result["run_id"] / "repo"
     assert not (workspace / ".patchloop-hidden").exists()
+    result_path = (
+        tmp_path
+        / "runtime"
+        / "artifacts"
+        / "runs"
+        / result["run_id"]
+        / "result.json"
+    )
+    persisted = json.loads(result_path.read_text(encoding="utf-8"))
+    assert persisted["usage"] == result["usage"]
     _assert_public_trace_boundary(runner, result["run_id"], task_path)
 
 

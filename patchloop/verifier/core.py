@@ -101,7 +101,11 @@ class EvaluationEngine:
         return VerdictState.PASS
 
     def evaluate(
-        self, task_dir: str | Path, patch_path: str | Path, manifest: RunManifest
+        self,
+        task_dir: str | Path,
+        patch_path: str | Path,
+        manifest: RunManifest,
+        usage: Usage | None = None,
     ) -> RunResult:
         package = load_task_package(task_dir)
         workspace = self.workspace_manager.create(
@@ -165,6 +169,8 @@ class EvaluationEngine:
         )
         patch_artifact = self.artifact_store.put_text(summary.patch, "text/x-diff")
         elapsed = int((time.monotonic() - started) * 1000)
+        final_usage = usage.model_copy(deep=True) if usage is not None else Usage()
+        final_usage.wall_clock_ms += elapsed
         result = RunResult(
             run_id=manifest.run_id,
             agent_submission_status="completed",
@@ -172,7 +178,7 @@ class EvaluationEngine:
             scope_compliant_success=success,
             official=self.sandbox.official,
             verdicts=verdicts,
-            usage=Usage(wall_clock_ms=elapsed),
+            usage=final_usage,
             submitted_patch_artifact_id=patch_artifact.artifact_id,
             verifier_results=results,
         )

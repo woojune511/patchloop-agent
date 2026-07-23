@@ -344,10 +344,8 @@ class AgentRunner:
         patch_path.write_text(summary.patch, encoding="utf-8", newline="\n")
         evaluator = EvaluationEngine(self.workspaces, sandbox, self.artifacts)
         evaluator_started = time.monotonic()
-        result = evaluator.evaluate(task_dir, patch_path, manifest)
+        result = evaluator.evaluate(task_dir, patch_path, manifest, usage=usage)
         evaluator_duration_ms = int((time.monotonic() - evaluator_started) * 1000)
-        usage.wall_clock_ms += evaluator_duration_ms
-        result.usage = usage
         failure = classify_failure(result, load_task_package(task_dir).public.split)
         if failure is not None:
             self.state.append_event(
