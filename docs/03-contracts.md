@@ -120,6 +120,7 @@ harness:
 model:
   provider: configured-provider
   model_id: fixed-model-id
+  replay_hash: null
   temperature: 0
   max_output_tokens: 4096
 
@@ -150,6 +151,9 @@ created_at: "2026-07-23T10:00:00Z"
 ```
 
 Manifest는 run 시작 전에 finalize하며 이후 수정하지 않는다. 계산된 실제 usage/outcome은 result에 기록한다.
+`provider: replay`인 경우 `model_id`는 `replay:<repository-relative-jsonl-path>` 형식이고
+`replay_hash`는 해당 JSONL bytes의 SHA-256이다. Resume은 둘을 다시 검증해 source가 이동하거나
+변조된 경우 실행을 거부한다. 다른 provider에서는 `replay_hash`를 허용하지 않는다.
 
 ## 4. Event envelope
 

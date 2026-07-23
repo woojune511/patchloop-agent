@@ -16,6 +16,8 @@ uv run ruff check patchloop tests
 uv run pytest -q
 uv run patchloop task validate tasks/smoke/csv-quoted-newline
 uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml --model mock
+uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml `
+  --model replay:replays/smoke/csv-quoted-newline.jsonl
 uv run patchloop evaluate --suite experiments/smoke.yaml
 uv run patchloop report --experiment offline-smoke --output reports/offline-smoke
 ```
@@ -23,6 +25,10 @@ uv run patchloop report --experiment offline-smoke --output reports/offline-smok
 The mock run does not need an API key. It creates `.patchloop/state.sqlite3`, immutable run manifests,
 ordered events, checkpoints, submitted patches and content-addressed evidence. Local backend results have
 `official=false` by design.
+
+The replay file must be inside the repository and is identified by both its repository-relative path and
+SHA-256 in the immutable run manifest. Resume rejects a missing, moved or changed replay. The checked-in
+smoke replays are deterministic test fixtures, not captured live-model responses.
 
 ## Official Docker boundary
 

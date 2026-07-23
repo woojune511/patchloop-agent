@@ -22,6 +22,7 @@
 | D-012 | Negative result를 유효한 산출물로 취급한다. | 과장된 개선 주장보다 재현 가능한 failure analysis가 중요하다. |
 | D-013 | `DONE`은 agent submission 완료이며 evaluator 성공이 아니다. | Agent 자기평가와 최종 판정을 분리한다. |
 | D-014 | v1 공식 evaluator 경로는 Windows 11 + WSL2의 Linux Docker container다. | Agent/evaluator 격리와 실행 환경을 고정하며 local backend는 smoke 전용 `official=false`로 유지한다. |
+| D-015 | Replay source는 repository-relative JSONL 경로와 SHA-256을 run manifest에 함께 고정한다. | Offline run과 resume이 같은 recorded response bytes를 사용했음을 검증하고 외부 경로 의존을 막는다. |
 
 ## Provisional defaults
 

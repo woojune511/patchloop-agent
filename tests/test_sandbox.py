@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+from pathlib import Path
 
 import pytest
 
@@ -28,6 +29,20 @@ def test_docker_cli_override_requires_an_existing_file(tmp_path, monkeypatch) ->
 
     docker_cli.touch()
     assert DockerSandbox.cli_path() == str(docker_cli)
+
+
+def test_docker_cli_ignores_inaccessible_install_candidates(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.delenv("PATCHLOOP_DOCKER_CLI", raising=False)
+    monkeypatch.setattr(shutil, "which", lambda _name: None)
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+
+    def deny_stat(_path: Path) -> bool:
+        raise PermissionError("inaccessible Docker install")
+
+    monkeypatch.setattr(Path, "is_file", deny_stat)
+    assert DockerSandbox.cli_path() is None
 
 
 def test_local_sandbox_truncates_output(tmp_path) -> None:

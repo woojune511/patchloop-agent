@@ -189,11 +189,21 @@ class ModelConfig(StrictModel):
     provider: str
     model_id: str
     provider_sdk_version: str | None = None
+    replay_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     reasoning_effort: str = "medium"
     temperature: float = 0
     max_output_tokens: int = 4096
     input_price_per_million_usd: float | None = Field(default=None, ge=0)
     output_price_per_million_usd: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def validate_replay_identity(self) -> ModelConfig:
+        if self.provider == "replay":
+            if not self.model_id.startswith("replay:") or self.replay_hash is None:
+                raise ValueError("replay provider requires a replay model ID and content hash")
+        elif self.replay_hash is not None:
+            raise ValueError("replay_hash is only valid for the replay provider")
+        return self
 
 
 class FaultSpec(StrictModel):

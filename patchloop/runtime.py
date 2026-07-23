@@ -59,6 +59,7 @@ def build_manifest(
     evaluator_image_digest: str | None = None,
     input_price_per_million_usd: float | None = None,
     output_price_per_million_usd: float | None = None,
+    replay_hash: str | None = None,
 ) -> RunManifest:
     sdk_version = None
     if provider == "openai":
@@ -85,6 +86,7 @@ def build_manifest(
             provider=provider,
             model_id=model_id,
             provider_sdk_version=sdk_version,
+            replay_hash=replay_hash,
             input_price_per_million_usd=input_price_per_million_usd,
             output_price_per_million_usd=output_price_per_million_usd,
         ),

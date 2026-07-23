@@ -52,8 +52,14 @@ uv run patchloop eval-task tasks/smoke/csv-quoted-newline `
   --patch tasks/smoke/csv-quoted-newline/reference.patch --backend local
 uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml `
   --model mock --memory no_memory
+uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml `
+  --model replay:replays/smoke/csv-quoted-newline.jsonl --memory no_memory
 uv run pytest -q
 ```
+
+`replays/smoke/*.jsonl`은 public task 정보만으로 만든 deterministic offline fixture다. Replay run은
+repository-relative source 경로와 content hash를 immutable manifest에 기록하며, live model 결과나
+memory experiment evidence로 간주하지 않는다.
 
 Offline experiment와 report도 API key 없이 재현된다.
 

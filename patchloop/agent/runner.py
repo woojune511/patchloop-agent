@@ -37,7 +37,7 @@ from patchloop.runtime import build_manifest, repository_root, runtime_root
 from patchloop.sandbox import DockerSandbox, LocalSandbox, TimeoutOnceSandbox
 from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
-from patchloop.util import utc_now
+from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, utc_now
 from patchloop.verifier import EvaluationEngine
 
 
@@ -63,6 +63,10 @@ class AgentRunner:
     ) -> dict[str, Any]:
         task_dir = self._task_dir(task_path)
         package = load_task_package(task_dir)
+        normalized_model = model
+        replay_hash = None
+        if model.startswith("replay:"):
+            normalized_model, _, replay_hash = self._replay_identity(model)
         docker_sandbox = DockerSandbox()
         backend = (
             "docker"
@@ -70,8 +74,15 @@ class AgentRunner:
             else "local"
         )
         if manifest is None:
-            provider = "mock" if model == "mock" or model.startswith("replay:") else "openai"
-            selected_model_id = "mock-v1" if provider == "mock" else model_id or "gpt-5.6-terra"
+            if normalized_model == "mock":
+                provider = "mock"
+                selected_model_id = "mock-v1"
+            elif normalized_model.startswith("replay:"):
+                provider = "replay"
+                selected_model_id = normalized_model
+            else:
+                provider = "openai"
+                selected_model_id = model_id or "gpt-5.6-terra"
             image_identity = docker_sandbox.image_identity() if backend == "docker" else None
             manifest = build_manifest(
                 package,
@@ -83,6 +94,7 @@ class AgentRunner:
                 evaluator_image_digest=image_identity,
                 input_price_per_million_usd=input_price_per_million_usd,
                 output_price_per_million_usd=output_price_per_million_usd,
+                replay_hash=replay_hash,
             )
         if not self.state.has_run(manifest.run_id):
             self.state.create_run(manifest)
@@ -95,13 +107,20 @@ class AgentRunner:
             )
         elif self.state.list_events(manifest.run_id):
             self._reconcile_workspace(manifest, workspace)
-        adapter = self._model_adapter(model, manifest, self._completed_tools(manifest.run_id))
+        adapter = self._model_adapter(
+            normalized_model, manifest, self._completed_tools(manifest.run_id)
+        )
         return self._execute(package.root, workspace, manifest, adapter)
 
     def resume(self, run_id: str) -> dict[str, Any]:
         manifest = self.state.get_manifest(run_id)
         task_dir = self._find_task(manifest)
-        model = "mock" if manifest.model.provider == "mock" else "openai"
+        if manifest.model.provider == "mock":
+            model = "mock"
+        elif manifest.model.provider == "replay":
+            model = manifest.model.model_id
+        else:
+            model = "openai"
         return self.start(
             task_dir,
             model=model,
@@ -474,10 +493,34 @@ class AgentRunner:
         if model == "mock":
             return MockModelAdapter(manifest.task_id, completed_tools)
         if model.startswith("replay:"):
-            return ReplayModelAdapter(model.split(":", 1)[1], len(completed_tools))
+            normalized_model, replay_path, replay_hash = self._replay_identity(model)
+            if (
+                manifest.model.provider != "replay"
+                or manifest.model.model_id != normalized_model
+                or manifest.model.replay_hash != replay_hash
+            ):
+                raise ContractError("replay source does not match the immutable run manifest")
+            return ReplayModelAdapter(
+                replay_path,
+                len(completed_tools),
+                expected_hash=manifest.model.replay_hash,
+            )
         if model == "openai":
             return OpenAIResponsesAdapter(manifest.model)
         raise ContractError(f"unknown model adapter: {model}")
+
+    @staticmethod
+    def _replay_identity(model: str) -> tuple[str, Path, str]:
+        raw_path = model.split(":", 1)[1]
+        relative = safe_relative_path(raw_path, field_name="replay path")
+        replay_path = ensure_within(repository_root(), relative)
+        if not replay_path.is_file():
+            raise ContractError(f"replay file does not exist: {relative}")
+        return (
+            f"replay:{Path(relative).as_posix()}",
+            replay_path,
+            sha256_bytes(replay_path.read_bytes()),
+        )
 
     def _reconcile_workspace(self, manifest: RunManifest, workspace: Path) -> None:
         checkpoint = self.state.latest_checkpoint(manifest.run_id)

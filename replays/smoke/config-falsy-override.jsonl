@@ -1,0 +1,5 @@
+{"text":"Inspect the config merge implementation.","tool_calls":[{"name":"read_file","action_id":"replay-config-read","arguments":{"path":"mini_data_utils/config.py","start_line":1,"end_line":200}}]}
+{"text":"Apply every explicit override without truthiness fallback.","tool_calls":[{"name":"apply_patch","action_id":"replay-config-patch","arguments":{"patch":"diff --git a/mini_data_utils/config.py b/mini_data_utils/config.py\n--- a/mini_data_utils/config.py\n+++ b/mini_data_utils/config.py\n@@ -8,5 +8,5 @@ def merge_config(\n \n     result = dict(base)\n     for key, value in override.items():\n-        result[key] = value or result.get(key)\n+        result[key] = value\n     return result\n"}}]}
+{"text":"Run the registered regression suite.","tool_calls":[{"name":"run_check","action_id":"replay-config-check","arguments":{"check_id":"existing-unit-tests"}}]}
+{"text":"Review the final scoped diff.","tool_calls":[{"name":"get_diff","action_id":"replay-config-review","arguments":{}}]}
+{"text":"DONE","done":true}

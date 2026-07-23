@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from patchloop.agent.model import OpenAIResponsesAdapter
+import pytest
+
+from patchloop.agent.model import OpenAIResponsesAdapter, ReplayModelAdapter
 from patchloop.contracts import ModelConfig
+from patchloop.errors import ContractError
 
 
 class FakeResponses:
@@ -38,3 +41,11 @@ def test_openai_adapter_disables_provider_state() -> None:
     assert responses.kwargs["reasoning"]["context"] == "current_turn"
     assert "previous_response_id" not in responses.kwargs
     assert turn.tool_calls[0].name == "get_diff"
+
+
+def test_replay_adapter_rejects_content_hash_mismatch() -> None:
+    with pytest.raises(ContractError, match="replay hash mismatch"):
+        ReplayModelAdapter(
+            "replays/smoke/csv-quoted-newline.jsonl",
+            expected_hash="sha256:" + "0" * 64,
+        )

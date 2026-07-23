@@ -120,7 +120,10 @@ class DockerSandbox:
         override = os.environ.get("PATCHLOOP_DOCKER_CLI")
         if override:
             candidate = Path(override).expanduser()
-            return str(candidate) if candidate.is_file() else None
+            try:
+                return str(candidate) if candidate.is_file() else None
+            except OSError:
+                return None
 
         discovered = shutil.which("docker")
         if discovered:
@@ -155,8 +158,11 @@ class DockerSandbox:
                 / "docker.exe"
             )
         for candidate in candidates:
-            if candidate.is_file():
-                return str(candidate)
+            try:
+                if candidate.is_file():
+                    return str(candidate)
+            except OSError:
+                continue
         return None
 
     @staticmethod
