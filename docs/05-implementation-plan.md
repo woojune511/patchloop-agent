@@ -16,7 +16,8 @@
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
 
 Smoke task authoring gate는 3/3으로 완료됐다: quoted multiline CSV, falsey config override, normalized
-path boundary. Dev-train, dev-validation, held-out task 제작은 아직 시작하지 않았다.
+path boundary. Dev-train은 1/6으로 시작됐고 `duration-minute-boundary`의 Docker admission gate가
+통과했다. Dev-validation과 held-out task 제작은 아직 시작하지 않았다.
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
 smoke는 2026-07-24까지 통과했다. Live OpenAI, 23개 dataset, 96-run campaign은 아직 완료가 아니며

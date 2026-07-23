@@ -8,21 +8,29 @@ prediction.
 
 ## Current contents
 
-Three independently content-addressed `mini-data-utils` smoke tasks are audited and executable:
+Four independently content-addressed `mini-data-utils` tasks are audited and executable.
+
+Smoke:
 
 - `csv-quoted-newline`: parser state across quoted LF/CRLF fields
 - `config-falsy-override`: explicit falsey values in merge semantics
 - `path-prefix-boundary`: segment boundaries and parent-segment normalization
 
+Dev-train:
+
+- `duration-minute-boundary`: completed-unit semantics around elapsed-minute boundaries
+
 Each package contains public issue/check metadata, evaluator-only hidden acceptance, a reviewed reference
-patch and known-bad patches. These are task-authoring and evaluator smoke fixtures, not benchmark results.
+patch and known-bad patches. The smoke packages are pipeline fixtures. The dev-train package is eligible
+for development failure collection only; its reference and private assets remain excluded from agent
+context and memory source text.
 
 ## Planned splits
 
 | Split | Planned | Memory source | Current |
 | --- | ---: | --- | ---: |
 | Smoke | 3 | no | 3 |
-| Dev-train | 6 | reviewed failures only | 0 |
+| Dev-train | 6 | reviewed failures only | 1 |
 | Dev-validation | 2 | no | 0 |
 | Same-repo held-out | 6 | prohibited | 0 |
 | Cross-repo held-out | 6 | prohibited | 0 |

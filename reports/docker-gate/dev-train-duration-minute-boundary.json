@@ -1,0 +1,97 @@
+{
+  "schema_version": "dev-train-task-gate-v1",
+  "executed_on": "2026-07-24",
+  "task_id": "duration-minute-boundary",
+  "task_version": 1,
+  "split": "dev-train",
+  "repository_url": "snapshot://mini-data-utils-duration-minute-boundary",
+  "base_commit": "sha256:a3508607ed05735c39f766580002fa29801440ee66301fbc85b1525114f079fe",
+  "public_spec_hash": "sha256:bcd131c3449e9d9b8c193847a3bced62e75934bd53ed49747f3847abec1f5a6b",
+  "private_spec_hash": "sha256:27b0045d5b3c8e0a303f24115e75a8b49cf840750091905994a6f08dd4b148bc",
+  "harness_git_commit": "6152e9b207ee615f5c1dd0ec8dbefc09f075f951",
+  "evaluator_image": "sha256:5d430c8dbf2e1222148909ed4c79c3cbf212aa25a94c8c2d0cbd0a97adfccf1f",
+  "official": true,
+  "reference_pass_count": 1,
+  "bad_patch_rejection_count": 4,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr": "pass",
+    "known_bad_boundaries": "pass",
+    "public_private_separation": "pass",
+    "clean_clone_base_hash": "pass"
+  },
+  "cases": [
+    {
+      "patch": "reference.patch",
+      "run_id": "run_4c333240f3ae4a26",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:b0278e1cde990f678b6e2e97a971c81289c6c8d1b1267edc31c5f4ded7bba7aa",
+      "manifest_sha256": "sha256:f033971d28077efaaaba1b7eb0f464d93561e8770f426a99cba2e65c7e28858e",
+      "result_sha256": "sha256:5c6ad54167426e2fbdcd242bdb6250b634391f2c08da562c2dec202f9dcc5d5b",
+      "provenance_sha256": "sha256:36f03717eb3502d34d5c108da7f4380a49aa1c51d3c6d1a839e0aa6ac77f1ca2"
+    },
+    {
+      "patch": "bad/noop.patch",
+      "run_id": "run_02cdf575981042d5",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:hidden-minute-boundaries"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:6b68ba71a86f2e179968e951a73749de84d7e897567d306439bab9d5f4597d40",
+      "result_sha256": "sha256:b96d536bfdbb9b527af1ef6aa0720f060a67a4f626d23439254a03e2949e48bf",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "patch": "bad/near-miss.patch",
+      "run_id": "run_18b131fb74a84d1a",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:hidden-minute-boundaries"
+      ],
+      "patch_sha256": "sha256:2df3cad4d9a0ddab3821a29e0bbc6fca79d40a0e04fb41fc020f69b7dc49def2",
+      "manifest_sha256": "sha256:367ca09f17622f60c39958fa3c24b21b04c9bbf216da1dbcc53f73c53d5d88c4",
+      "result_sha256": "sha256:01faa230931c1fc604fbbb266774f1cb41788bed079896c1a0c96f12f3621b1d",
+      "provenance_sha256": "sha256:136853a36732b004be0a32f87be24cac5b36877adc887c515b8624190f64f889"
+    },
+    {
+      "patch": "bad/regression.patch",
+      "run_id": "run_51bc997fa1394e20",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:existing-unit-tests"
+      ],
+      "patch_sha256": "sha256:ede791f344e8f08fe3066a72380c749eed1be2642315cfb008c856fbc0b561fa",
+      "manifest_sha256": "sha256:7a9180e1cc81ec7f927824fe54ee2ba71b4f33f1c6e3d1737529c84a53911411",
+      "result_sha256": "sha256:5850bac05a07151ef5599aa854e63d6c5c67ed20e92eb6d6d34c17486c3cd9ff",
+      "provenance_sha256": "sha256:60f9eba99906a19d980d3d3b9150814da1de2891be8d6b75f12c69579582c487"
+    },
+    {
+      "patch": "bad/forbidden-path.patch",
+      "run_id": "run_a5b492be61d2433d",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:hidden-minute-boundaries",
+        "policy:scope"
+      ],
+      "patch_sha256": "sha256:e8d8513cad1de0bfd8f14773a28c46652d1fd0d2bad43fc67393ccdcac778fab",
+      "manifest_sha256": "sha256:aee06e932ea6c16099e341c3ea7268df141762786ead90c4dd043d21a1cd04ec",
+      "result_sha256": "sha256:d10c3f042b08fc1e277261cebb28b1a9a6e74b9fe0be658ac569ae193db45927",
+      "provenance_sha256": "sha256:9fdfe3f87464b034c61356365527b519456aba59db797c3595b319c1a2a3288a"
+    }
+  ]
+}

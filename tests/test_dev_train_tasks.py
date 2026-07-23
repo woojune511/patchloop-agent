@@ -15,6 +15,23 @@ from patchloop.verifier import EvaluationEngine
 TASK = Path("tasks/dev-train/duration-minute-boundary")
 
 
+def test_duration_public_package_excludes_private_evidence(tmp_path) -> None:
+    package = load_task_package(TASK)
+    public_text = (TASK / "public.yaml").read_text(encoding="utf-8")
+    assert "hidden-minute-boundaries" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+
+    workspace = WorkspaceManager(
+        "fixtures/repositories", tmp_path / "workspaces"
+    ).create(
+        "agent-boundary",
+        package.public.repository.url,
+        package.public.repository.base_commit,
+    )
+    assert not (workspace / ".patchloop-hidden").exists()
+
+
 def _evaluate(tmp_path: Path, patch_name: str):
     package = load_task_package(TASK)
     engine = EvaluationEngine(

@@ -8,9 +8,10 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv lock --check` | pass, 78 packages resolved |
 | Static analysis | `uv run ruff check .` | pass |
-| Tests | `uv run pytest -q -ra` | 58 pass, including Docker isolation and three-task mock/replay agent tests |
+| Tests | `uv run pytest -q -ra` | 64 pass, including Docker isolation and dev-train task boundary tests |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/smoke/<task>` | all three smoke packages pass |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | all four audited packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: 4/23, smoke 3/3, dev-train 1/6 |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
 | Evaluator | three references plus 14 bad patches on Docker | all references pass; every bad patch rejected; all `official=true` |
@@ -99,6 +100,27 @@ All ten expansion runs record the task commit and the same pinned evaluator imag
 and manifest/result/provenance hashes. Together, the three smoke tasks cover parser state, merge semantics
 and path normalization without sharing a solution.
 
+## First dev-train task admission
+
+`duration-minute-boundary` is the first `dev-train` package. Its immutable snapshot keeps exact-minute
+and sub-minute visible behavior working while deliberately rounding incomplete minute buckets upward.
+The private acceptance checks values inside and near the end of those buckets.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| reference | `run_4c333240f3ae4a26` | full success | success, `official=true` |
+| no-op | `run_02cdf575981042d5` | hidden fail | rejected |
+| near-miss | `run_18b131fb74a84d1a` | hidden fail | rejected |
+| regression | `run_51bc997fa1394e20` | visible regression fail | rejected |
+| forbidden path | `run_a5b492be61d2433d` | hidden and scope fail | rejected |
+
+All five manifests record clean harness commit `6152e9b207ee615f5c1dd0ec8dbefc09f075f951`
+and the pinned evaluator image. The machine-readable
+[dev-train task gate](../reports/docker-gate/dev-train-duration-minute-boundary.json) records task/spec,
+patch, manifest, result and provenance hashes. This admission is dataset evidence, not a model run; it
+made zero API calls and does not create a memory entry. A clean clone reproduced the declared snapshot
+hash `sha256:a3508607ed05735c39f766580002fa29801440ee66301fbc85b1525114f079fe`.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -108,6 +130,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero: 3 of 23
-packages exist and 0 of 6 OSS tasks is selected. The smoke split itself is complete at 3/3. No live OpenAI
-request or paid campaign was made.
+`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero: 4 of 23
+packages exist and 0 of 6 OSS tasks is selected. The smoke split is complete at 3/3 and dev-train is 1/6.
+No live OpenAI request or paid campaign was made.
