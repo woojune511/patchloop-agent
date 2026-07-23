@@ -1,4 +1,4 @@
-# Implementation evidence — 2026-07-23
+# Implementation evidence — 2026-07-24
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
@@ -8,12 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv lock --check` | pass, 78 packages resolved |
 | Static analysis | `uv run ruff check .` | pass |
-| Tests | `uv run pytest -q` | 47 pass, including Docker isolation and three-task evaluator tests |
+| Tests | `uv run pytest -q -ra` | 58 pass, including Docker isolation and three-task mock/replay agent tests |
 | Package build | `uv build` | sdist and wheel built |
 | Task contract | `patchloop task validate tasks/smoke/<task>` | all three smoke packages pass |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
 | Evaluator | three references plus 14 bad patches on Docker | all references pass; every bad patch rejected; all `official=true` |
+| Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
 | Viewer routes | six ASGI route requests | all HTTP 200 |
@@ -32,6 +33,31 @@ Latest bundled offline run: `run_671aa408ac4241ca`.
 
 The one-task bootstrap interval `[1.0, 1.0]` is mechanically correct but not inferentially useful. It must
 not be presented as benchmark evidence.
+
+## Official offline agent smoke evidence
+
+Commit `1ea257cbbcc2ce131b5c09508f6df8c62ed23ed8` was run against the pinned Docker evaluator.
+Each of the three smoke tasks completed once with the task-aware mock and once with its checked-in,
+content-hashed replay.
+
+| Task | Mock run | Replay run | Observed |
+| --- | --- | --- | --- |
+| `csv-quoted-newline` | `run_5cd7103a1c6f4d7a` | `run_c468655d03ed4d08` | 2/2 SCRR pass, `official=true` |
+| `config-falsy-override` | `run_1492e28b07dd4feb` | `run_403b92ac32264725` | 2/2 SCRR pass, `official=true` |
+| `path-prefix-boundary` | `run_27339c856bee4242` | `run_bd06edd18bc9434f` | 2/2 SCRR pass, `official=true` |
+
+Every accepted run records five model calls, four tool calls, five rebuilt contexts, one `PatchApplied`,
+one `RunCompleted` and a final `DONE` checkpoint. Persisted `result.json` usage equals SQLite state.
+The context scan found no hidden check ID or reference-patch locator; the first context also excludes the
+private reference hash. Replay manifests bind the repository-relative JSONL path to its SHA-256.
+
+The machine-readable [offline agent smoke summary](../reports/offline-agent-smoke/summary.json) records
+run IDs plus manifest, result, provenance, submitted-patch, event-stream and checkpoint hashes. It also
+keeps an exclusion ledger for one non-official Docker-daemon diagnostic run and six pre-fix runs whose
+persisted result artifact omitted agent usage. Those runs were not counted in the 6/6 gate.
+
+These are deterministic scripted runs with zero API calls and zero model cost. They establish harness,
+trace and evaluator behavior; they are not evidence of live-model quality or memory effectiveness.
 
 ## Official Docker evaluator evidence
 

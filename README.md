@@ -6,10 +6,10 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.
 
-현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-23에는
-고정된 Linux Docker image로 reference patch와 6종 bad patch의 공식 smoke 판정도 실행했다. 실제
-OpenAI 96-run campaign과 23개 전체 dataset audit 결과는 아직 주장하지 않는다. 미실행 gate는
-[Current limitations](docs/08-limitations.md)에 분리했다.
+현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-24에는
+세 smoke task를 mock과 content-hashed replay로 각각 실행한 6개 agent run이 고정된 Linux Docker
+evaluator에서 모두 공식 통과했다. 실제 OpenAI 96-run campaign과 23개 전체 dataset audit 결과는
+아직 주장하지 않는다. 미실행 gate는 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 ## 구현된 핵심 경로
 

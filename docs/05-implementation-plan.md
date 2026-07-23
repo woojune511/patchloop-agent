@@ -3,12 +3,12 @@
 상태: **Implementation baseline active**  
 현재 milestone: **Dataset expansion and external acceptance gates**
 
-2026-07-23 구현 스냅샷:
+2026-07-24 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
-| Phase 2 agent | done (offline) | Mock agent 전체 trace와 valid patch 생성 |
+| Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
 | Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
 | Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
 | Phase 5 memory | implemented, data gate pending | Reviewed dev failure와 embedding revision 필요 |
@@ -18,8 +18,8 @@
 Smoke task authoring gate는 3/3으로 완료됐다: quoted multiline CSV, falsey config override, normalized
 path boundary. Dev-train, dev-validation, held-out task 제작은 아직 시작하지 않았다.
 
-`done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker 공식 smoke는 2026-07-23에
-통과했다. Live OpenAI, 23개 dataset, 96-run campaign은 아직 완료가 아니며
+`done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
+smoke는 2026-07-24까지 통과했다. Live OpenAI, 23개 dataset, 96-run campaign은 아직 완료가 아니며
 `docs/08-limitations.md`에서 별도로 추적한다.
 
 ## 1. Sequencing rule
