@@ -31,7 +31,7 @@ public.yaml → stateless context builder → model adapter
 - Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
 - 독립 content hash를 가진 CSV, config merge, path boundary smoke task 3개
-- 완료된 분 단위만 세는 time-formatting boundary dev-train task 1개
+- time-formatting boundary와 CSV EOF finalization을 다루는 dev-train task 2개
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 

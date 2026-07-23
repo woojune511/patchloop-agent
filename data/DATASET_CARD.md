@@ -8,7 +8,7 @@ prediction.
 
 ## Current contents
 
-Four independently content-addressed `mini-data-utils` tasks are audited and executable.
+Five independently content-addressed `mini-data-utils` tasks are audited and executable.
 
 Smoke:
 
@@ -19,6 +19,7 @@ Smoke:
 Dev-train:
 
 - `duration-minute-boundary`: completed-unit semantics around elapsed-minute boundaries
+- `csv-final-record-flush`: parser-state finalization when chunked input reaches EOF
 
 Each package contains public issue/check metadata, evaluator-only hidden acceptance, a reviewed reference
 patch and known-bad patches. The smoke packages are pipeline fixtures. The dev-train package is eligible
@@ -30,7 +31,7 @@ context and memory source text.
 | Split | Planned | Memory source | Current |
 | --- | ---: | --- | ---: |
 | Smoke | 3 | no | 3 |
-| Dev-train | 6 | reviewed failures only | 1 |
+| Dev-train | 6 | reviewed failures only | 2 |
 | Dev-validation | 2 | no | 0 |
 | Same-repo held-out | 6 | prohibited | 0 |
 | Cross-repo held-out | 6 | prohibited | 0 |

@@ -10,8 +10,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - Docker network denial, non-root UID, read-only workspace and host-secret non-forwarding checks
 - Official Docker-evaluated offline agent smoke: three tasks under both mock and content-hashed replay,
   six of six runs accepted with complete persisted usage and trace evidence
-- First dev-train task admitted: duration-minute boundary reference accepted and four known-bad patches
-  rejected by the pinned Docker evaluator
+- First two dev-train tasks admitted: duration-minute boundary and CSV EOF-finalization references
+  accepted, with four known-bad patches rejected per task by the pinned Docker evaluator
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -26,7 +26,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 ## Dataset and campaign not yet produced
 
-- The smoke split is complete at 3/3 and dev-train is 1/6; five dev-train, both dev-validation and all
+- The smoke split is complete at 3/3 and dev-train is 2/6; four dev-train, both dev-validation and all
   same-repo held-out packages remain.
 - The six `python-tabulate` tasks remain `pending-audit` in `data/oss-candidate-ledger.csv`.
 - No 96-run OpenAI campaign, cost measurement, negative-transfer review or cross-repo result exists.

@@ -8,10 +8,10 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv lock --check` | pass, 78 packages resolved |
 | Static analysis | `uv run ruff check .` | pass |
-| Tests | `uv run pytest -q -ra` | 64 pass, including Docker isolation and dev-train task boundary tests |
+| Tests | `uv run pytest -q -ra` | 70 pass, including Docker isolation and two dev-train admission suites |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | all four audited packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: 4/23, smoke 3/3, dev-train 1/6 |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | all five audited packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: 5/23, smoke 3/3, dev-train 2/6 |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
 | Evaluator | three references plus 14 bad patches on Docker | all references pass; every bad patch rejected; all `official=true` |
@@ -121,6 +121,27 @@ patch, manifest, result and provenance hashes. This admission is dataset evidenc
 made zero API calls and does not create a memory entry. A clean clone reproduced the declared snapshot
 hash `sha256:a3508607ed05735c39f766580002fa29801440ee66301fbc85b1525114f079fe`.
 
+## Second dev-train task admission
+
+`csv-final-record-flush` uses a separate chunked-parser API and source file from the multiline-CSV smoke
+task. Its base snapshot handles newline-terminated records, chunk boundaries and quoted commas, but does
+not finalize the remaining valid record when input reaches EOF.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| reference | `run_b01dedac6de84caa` | full success | success, `official=true` |
+| no-op | `run_aad5c6d582d24e40` | hidden fail | rejected |
+| near-miss | `run_6992b1281550416c` | hidden fail | rejected |
+| regression | `run_4db275cfe376444f` | visible regression fail | rejected |
+| forbidden path | `run_32865f2f94754584` | hidden and scope fail | rejected |
+
+All five manifests record clean harness commit `76471df95e26857f42662b7514fa31896a5496a2`
+and the pinned evaluator image. The machine-readable
+[CSV final-record gate](../reports/docker-gate/dev-train-csv-final-record-flush.json) records task/spec,
+patch, manifest, result and provenance hashes. This admission made zero API calls and creates no memory
+entry. A clean clone reproduced snapshot hash
+`sha256:afa42fe0bcb75bc7f0f7969e394433d5c8e9c8ce34232ebbf5bb5416c2bcd680`.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -130,6 +151,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero: 4 of 23
-packages exist and 0 of 6 OSS tasks is selected. The smoke split is complete at 3/3 and dev-train is 1/6.
+`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero: 5 of 23
+packages exist and 0 of 6 OSS tasks is selected. The smoke split is complete at 3/3 and dev-train is 2/6.
 No live OpenAI request or paid campaign was made.

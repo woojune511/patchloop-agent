@@ -1,0 +1,98 @@
+{
+  "schema_version": "dev-train-task-gate-v1",
+  "executed_on": "2026-07-24",
+  "task_id": "csv-final-record-flush",
+  "task_version": 1,
+  "split": "dev-train",
+  "repository_url": "snapshot://mini-data-utils-csv-final-record-flush",
+  "base_commit": "sha256:afa42fe0bcb75bc7f0f7969e394433d5c8e9c8ce34232ebbf5bb5416c2bcd680",
+  "public_spec_hash": "sha256:d6c650000c05b3c8def5d9bab0acda7d4d9cac3c76c646de4d7b6557e3c690ce",
+  "private_spec_hash": "sha256:54acbaa13d31b61c9ff0402956f1c04297912e0b973d8abe57c639ffe3bed5bf",
+  "harness_git_commit": "76471df95e26857f42662b7514fa31896a5496a2",
+  "evaluator_image": "sha256:5d430c8dbf2e1222148909ed4c79c3cbf212aa25a94c8c2d0cbd0a97adfccf1f",
+  "official": true,
+  "reference_pass_count": 1,
+  "bad_patch_rejection_count": 4,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr": "pass",
+    "known_bad_boundaries": "pass",
+    "public_private_separation": "pass",
+    "clean_clone_base_hash": "pass",
+    "solution_independence_from_smoke_csv": "pass"
+  },
+  "cases": [
+    {
+      "patch": "reference.patch",
+      "run_id": "run_b01dedac6de84caa",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:b17ad1e31c237da1457e65682f889e480b81721d28904990a45b47d6ce77c94f",
+      "manifest_sha256": "sha256:78a7856c937446f13f6c62a405002230e3483e3efaa4f441a383a23f1301270d",
+      "result_sha256": "sha256:5c36fe97bf45f60f5332a25ddbedb4c212967157a6593fabe45662e96d9c748a",
+      "provenance_sha256": "sha256:829b46cb8a6077dd6d315347d94e88f360f3d3a0ce6605390631d246bd1f8f88"
+    },
+    {
+      "patch": "bad/noop.patch",
+      "run_id": "run_aad5c6d582d24e40",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:hidden-final-record-flush"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:50941d1e18d680943b036d7d8de6ab5c555e6cb5b63f38298ca8ccb6659e9dc9",
+      "result_sha256": "sha256:4f6774fea98f6043062665f8478f12eed66a65e83cd9a44698f96c8777e3e94a",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "patch": "bad/near-miss.patch",
+      "run_id": "run_6992b1281550416c",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:hidden-final-record-flush"
+      ],
+      "patch_sha256": "sha256:dc9fbc94b699bd9c94f26e98057ca8b3c96e41366cd2a21ca95597a155cdbf4c",
+      "manifest_sha256": "sha256:69076fb20a9459ad8467d09c9c66d5252ea73b9991e2af349ceebf9d6b97d7a1",
+      "result_sha256": "sha256:fa1e57a4a212251f4aa29f662f941b7d77567053d13aa77bb3a70b886c40b95d",
+      "provenance_sha256": "sha256:722ed8adb2b9266c70c3d7bcac2f27473f4671d1c93ae0a18d318c086fcece8d"
+    },
+    {
+      "patch": "bad/regression.patch",
+      "run_id": "run_4db275cfe376444f",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:existing-unit-tests"
+      ],
+      "patch_sha256": "sha256:b12dd4aa805aed518251b2c6b12aa4950f2a99e240b261286e7138fdba9da4fe",
+      "manifest_sha256": "sha256:1f5a5ffad93913108c5d1c8dd4bec5c0fa6c8556326a83fdf25b2bd9547b90fc",
+      "result_sha256": "sha256:ec807e7895c872675b8e850cfa0cde75a23243938ab17e11d7424897390e0895",
+      "provenance_sha256": "sha256:23054416bd0c55e879f810b97a0a3dca637246ec15fc6559bc5f13c9ce86df17"
+    },
+    {
+      "patch": "bad/forbidden-path.patch",
+      "run_id": "run_32865f2f94754584",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:hidden-final-record-flush",
+        "policy:scope"
+      ],
+      "patch_sha256": "sha256:40ccce286b858047df1844d6e7502eb1a05ff8e8af35f0a8a169700a24654a50",
+      "manifest_sha256": "sha256:9ec8aa36a9dd2fae0136b42856d174c9fc21187aab8145968b614eebdffcc869",
+      "result_sha256": "sha256:24909ccad7d7f193ebefa87121cbd98e7471bde15120f1fe2bc964427b746048",
+      "provenance_sha256": "sha256:47ad1af1e2d6c2d19d754960f7f34aaf7e65627f15965fa197d01aa1a3137d10"
+    }
+  ]
+}
