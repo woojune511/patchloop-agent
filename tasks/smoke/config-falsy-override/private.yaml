@@ -1,0 +1,17 @@
+schema_version: task-private-v1
+task_id: config-falsy-override
+task_version: 1
+hidden_checks:
+  - id: hidden-falsy-overrides
+    command: [python, -m, unittest, discover, -s, .patchloop-hidden, -v]
+    timeout_seconds: 30
+reference_patch:
+  path: reference.patch
+  sha256: sha256:3cd0ba877626fcf9a074e1977f10f224a04e9f35d77ac6d676026ed9e6dc10e5
+audit:
+  expected_files: [mini_data_utils/config.py]
+  prohibited_behaviors:
+    - modifying tests
+    - special-casing only boolean or numeric values
+    - adding dependencies
+    - changing merge_config signature

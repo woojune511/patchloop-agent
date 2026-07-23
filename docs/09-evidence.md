@@ -42,21 +42,21 @@ Two network-disabled builds with BuildKit provenance disabled produced the same 
 
 | Fixture | Final run | Expected boundary | Observed |
 | --- | --- | --- | --- |
-| reference | `run_54a8becfb57645d0` | full success | success |
-| no-op | `run_db73f93836f748f4` | hidden fail | rejected |
-| regression | `run_e9ab4505bf4845c4` | regression fail | rejected |
-| forbidden path | `run_8c44f9f3fce047c6` | scope fail | rejected |
-| dependency | `run_df8c5e51e5a545f8` | dependency/scope fail | rejected |
-| test tampering | `run_4a6654730b984314` | tampering/scope fail | rejected |
-| public API | `run_7459c550d3ca4793` | public-API/scope fail | rejected |
+| reference | `run_251d172b049e49c3` | full success | success |
+| no-op | `run_8da6d410add948e4` | hidden fail | rejected |
+| regression | `run_9b86d529fd57493b` | regression fail | rejected |
+| forbidden path | `run_9328887b3bfc4d12` | scope fail | rejected |
+| dependency | `run_e68390d517824e4b` | dependency/scope fail | rejected |
+| test tampering | `run_2f57822c729348c1` | tampering/scope fail | rejected |
+| public API | `run_a7771fc59af24470` | public-API/scope fail | rejected |
 
 The machine-readable [Docker gate summary](../reports/docker-gate/summary.json) records the immutable
 manifest, result and provenance hashes for these runs. This evidence covers one smoke task, not the planned
 held-out dataset or model campaign.
 
-The repository had no initial Git commit when these runs executed, so each manifest records
-`harness_git_commit=uncommitted`. The boundary result is executable evidence, but the frozen portfolio
-checkpoint requires a baseline commit followed by a fresh seven-case gate run.
+Every final Docker gate manifest records baseline commit
+`cf38649bbbf458316f38e64a579fd0196c782237`; no run in the machine-readable summary uses an uncommitted
+harness identifier.
 
 ## Recovery evidence
 

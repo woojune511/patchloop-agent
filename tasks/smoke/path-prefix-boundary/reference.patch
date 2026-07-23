@@ -1,0 +1,20 @@
+diff --git a/mini_data_utils/pathmatch.py b/mini_data_utils/pathmatch.py
+--- a/mini_data_utils/pathmatch.py
++++ b/mini_data_utils/pathmatch.py
+@@ -1,9 +1,13 @@
+ """Path matching helpers with one audited boundary defect."""
+ 
++import posixpath
++
+ 
+ def is_path_within(path: str, root: str) -> bool:
+     """Return whether path is root itself or one of its descendants."""
+ 
+-    normalized_path = path.replace("\\", "/").rstrip("/")
+-    normalized_root = root.replace("\\", "/").rstrip("/")
+-    return normalized_path.startswith(normalized_root)
++    normalized_path = posixpath.normpath(path.replace("\\", "/"))
++    normalized_root = posixpath.normpath(root.replace("\\", "/"))
++    return normalized_path == normalized_root or normalized_path.startswith(
++        f"{normalized_root}/"
++    )

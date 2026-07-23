@@ -1,0 +1,9 @@
+diff --git a/mini_data_utils/pathmatch.py b/mini_data_utils/pathmatch.py
+--- a/mini_data_utils/pathmatch.py
++++ b/mini_data_utils/pathmatch.py
+@@ -6,4 +6,4 @@ def is_path_within(path: str, root: str) -> bool:
+ 
+     normalized_path = path.replace("\\", "/").rstrip("/")
+     normalized_root = root.replace("\\", "/").rstrip("/")
+-    return normalized_path.startswith(normalized_root)
++    return normalized_path == normalized_root

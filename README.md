@@ -30,6 +30,7 @@ public.yaml → stateless context builder → model adapter
 - Reviewed dev-train failure 전용 structured/raw memory index, threshold/no-match audit
 - Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
+- 독립 content hash를 가진 CSV, config merge, path boundary smoke task 3개
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 

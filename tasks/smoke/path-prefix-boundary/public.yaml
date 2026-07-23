@@ -1,0 +1,30 @@
+schema_version: task-public-v1
+task_id: path-prefix-boundary
+task_version: 1
+split: smoke
+repository:
+  url: snapshot://mini-data-utils-path-prefix-boundary
+  base_commit: sha256:9d542db8a132bc1f52afbd3694ecd07c17372ae404f0048fe84c83613fdaf049
+  language: python
+issue:
+  title: Path containment accepts sibling prefixes and traversal
+  description: |
+    is_path_within(path, root) treats sibling names sharing a text prefix as
+    descendants and does not normalize dot segments. Preserve the public API,
+    support slash and backslash input, and compare complete path segments.
+constraints:
+  allowed_paths:
+    - mini_data_utils/pathmatch.py
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 20
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: existing-unit-tests
+    command: [python, -m, unittest, discover, -s, tests, -v]
+    timeout_seconds: 30
+tags: [path, normalization, boundary, smoke]

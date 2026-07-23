@@ -1,0 +1,30 @@
+schema_version: task-public-v1
+task_id: config-falsy-override
+task_version: 1
+split: smoke
+repository:
+  url: snapshot://mini-data-utils-config-falsy-override
+  base_commit: sha256:216c4fe1589d3ffc22a0e1bb9f7f86ae4c2c51a5bd7dfe9d597e8afe54f36f73
+  language: python
+issue:
+  title: Config merge ignores explicit falsey overrides
+  description: |
+    Explicit override values such as false, zero, an empty string, or an empty
+    list are treated as if the key were absent. Preserve merge_config(base,
+    override), retain unmentioned base values, and apply every provided value.
+constraints:
+  allowed_paths:
+    - mini_data_utils/config.py
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 20
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: existing-unit-tests
+    command: [python, -m, unittest, discover, -s, tests, -v]
+    timeout_seconds: 30
+tags: [config, merge-semantics, falsey-values, smoke]

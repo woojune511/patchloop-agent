@@ -1,0 +1,12 @@
+diff --git a/mini_data_utils/config.py b/mini_data_utils/config.py
+--- a/mini_data_utils/config.py
++++ b/mini_data_utils/config.py
+@@ -6,7 +6,4 @@ def merge_config(
+ ) -> dict[str, object]:
+     """Return base values updated by every explicitly provided override."""
+ 
+-    result = dict(base)
+-    for key, value in override.items():
+-        result[key] = value or result.get(key)
+-    return result
++    return dict(override)

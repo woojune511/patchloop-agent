@@ -4,8 +4,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 ## Implemented and measured locally
 
-- One audited `mini-data-utils` smoke task
-- Reference and six bad-patch evaluator paths
+- Three audited `mini-data-utils` smoke tasks with independent snapshot hashes
+- Reviewed reference and known-bad evaluator paths for every smoke task
 - Official Linux Docker evaluator smoke: reference accepted, six bad patches rejected
 - Docker network denial, non-root UID, read-only workspace and host-secret non-forwarding checks
 - Offline mock-agent end-to-end run

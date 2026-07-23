@@ -8,15 +8,20 @@ prediction.
 
 ## Current contents
 
-Only `csv-quoted-newline` is audited and executable today. It uses the local `mini-data-utils` snapshot and
-contains public issue/check metadata, evaluator-only hidden acceptance, one reference patch and six known
-bad patches. It is a smoke task, not a benchmark result.
+Three independently content-addressed `mini-data-utils` smoke tasks are audited and executable:
+
+- `csv-quoted-newline`: parser state across quoted LF/CRLF fields
+- `config-falsy-override`: explicit falsey values in merge semantics
+- `path-prefix-boundary`: segment boundaries and parent-segment normalization
+
+Each package contains public issue/check metadata, evaluator-only hidden acceptance, a reviewed reference
+patch and known-bad patches. These are task-authoring and evaluator smoke fixtures, not benchmark results.
 
 ## Planned splits
 
 | Split | Planned | Memory source | Current |
 | --- | ---: | --- | ---: |
-| Smoke | 3 | no | 1 |
+| Smoke | 3 | no | 3 |
 | Dev-train | 6 | reviewed failures only | 0 |
 | Dev-validation | 2 | no | 0 |
 | Same-repo held-out | 6 | prohibited | 0 |

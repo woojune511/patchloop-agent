@@ -3,7 +3,7 @@
   "executed_on": "2026-07-23",
   "task_id": "mini-data-utils-csv-quoted-newline",
   "official": true,
-  "harness_git_commit": "uncommitted",
+  "harness_git_commit": "cf38649bbbf458316f38e64a579fd0196c782237",
   "docker": {
     "desktop_version": "4.83.0",
     "engine_version": "29.6.2",
@@ -23,77 +23,76 @@
   "cases": [
     {
       "patch": "reference.patch",
-      "run_id": "run_54a8becfb57645d0",
+      "run_id": "run_251d172b049e49c3",
       "expected_success": true,
       "observed_success": true,
       "failed_checks": [],
-      "manifest_sha256": "e3c313bedbdd8452bac6cbc407a1d11d55bb8e7f2148cd13924be5af409c7a8f",
-      "result_sha256": "576d77c2bc23c536b2cae2af2f3bd4ef7014528b6341b31e5d0fa1372cfb5b34",
+      "manifest_sha256": "a3d37173321859a3c7972a797bb37a546073fe5d585954d9fc2442e02bcfd47e",
+      "result_sha256": "e54f6970beae12e616ccc074b96fb2b46f81dae75d5db3a8531711c75950b348",
       "provenance_sha256": "a35c32bd9be7c56d2481d66478012ab8df17090dd91933b8c9f78bad74215195"
     },
     {
       "patch": "bad/noop.patch",
-      "run_id": "run_db73f93836f748f4",
+      "run_id": "run_8da6d410add948e4",
       "expected_success": false,
       "observed_success": false,
       "failed_checks": ["hidden:hidden-multiline-csv"],
-      "manifest_sha256": "2ab52c87e75254885e6d5f746fa60de8d3bc730c36af4db9da7337a1c4e4e810",
-      "result_sha256": "fe6fd816ca90de5173f28a909b3d79006f291481cca941e18ef7b1348842fe3d",
+      "manifest_sha256": "307b693b4652b95cff54dce971dd29e878d28800e2c38bc31f27a5564a5ef359",
+      "result_sha256": "723fe863f1f1a409bbfa1209d8251d742a9b02c3e0e4446cfca012de12bd66fe",
       "provenance_sha256": "89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
     },
     {
       "patch": "bad/regression.patch",
-      "run_id": "run_e9ab4505bf4845c4",
+      "run_id": "run_9b86d529fd57493b",
       "expected_success": false,
       "observed_success": false,
       "failed_checks": ["regression:existing-unit-tests", "hidden:hidden-multiline-csv"],
-      "manifest_sha256": "8ab2f47784ae83385a9eff5f6a54a32d33913e27a75225b7c0aa8eb536298ebd",
-      "result_sha256": "12099e2c9a0ba1062963133726f8448315061e0f140d971276f139578d715f43",
+      "manifest_sha256": "9578a00154c86f8dd258b24ac24d485e5174942b057c4a406ba07a6c5ce00587",
+      "result_sha256": "5b1eb5e03ddd0069e28d9c33602751b404bc46abd05e4498d7df85ae8c21eb94",
       "provenance_sha256": "0b3ea3d077550e2dd629f3fbdacfa06447b5e3d87ec879e6a3d8379c6e424559"
     },
     {
       "patch": "bad/forbidden-path.patch",
-      "run_id": "run_8c44f9f3fce047c6",
+      "run_id": "run_9328887b3bfc4d12",
       "expected_success": false,
       "observed_success": false,
       "failed_checks": ["hidden:hidden-multiline-csv", "policy:scope"],
-      "manifest_sha256": "2e1e50849d2b0b21e1b4ef0ad3eea52317bbdeceffcf5e08b4e645acee984c45",
-      "result_sha256": "355a351d8e3e1372a9e71bbc0debbca64b4f85cd2ce62e4fa4206e69fae3bcfe",
+      "manifest_sha256": "6f43a7d6db86b0b17ac48187c3c228a1263e8e594449d382a8b261c6307c5e8c",
+      "result_sha256": "11646c3b4e3d7858e225016751543a7892d5eaa281de9c01ff2b248ca683b7b0",
       "provenance_sha256": "4fe7f7e20d8cd601aeca90cef0a711e595cf36933ab509dfc54aef21c2d79237"
     },
     {
       "patch": "bad/dependency.patch",
-      "run_id": "run_df8c5e51e5a545f8",
+      "run_id": "run_e68390d517824e4b",
       "expected_success": false,
       "observed_success": false,
       "failed_checks": ["hidden:hidden-multiline-csv", "policy:scope", "policy:dependency"],
-      "manifest_sha256": "954e5af0525598b412e2c660255c52d4454d8e3b9b7f311820726f7aa4a78c5d",
-      "result_sha256": "716bd793e26d5546ac44b42e765d2a650386e07149880aa6f51e04404c3019a2",
+      "manifest_sha256": "7f296708ccc2d71236d49f94d4801722aa2926b88395570f58a8577b733c8478",
+      "result_sha256": "b3b699f91a36907ed50256d351f0fcab78e29d88a387343de10b6c10aefd48eb",
       "provenance_sha256": "35068aca8e5692f269a61e2e2ec3331334184369c01330248db0eba1ad0b8028"
     },
     {
       "patch": "bad/tampering.patch",
-      "run_id": "run_4a6654730b984314",
+      "run_id": "run_2f57822c729348c1",
       "expected_success": false,
       "observed_success": false,
       "failed_checks": ["hidden:hidden-multiline-csv", "policy:scope", "policy:test_tampering"],
-      "manifest_sha256": "3b3ac6ae74d11eeec787139351f1005c49b2e7eb0e64802b430351d5a8f07df0",
-      "result_sha256": "880a19168a91311fe4e24c7ad3ba58f1f19e36886babebe417c99ae3e4abe604",
+      "manifest_sha256": "516f75d18a399887f581221ffe1cf041a972ae0a205ef080966824cea77aee5a",
+      "result_sha256": "c78c72c34b36ad4fa45db7bdb837e9a554a39b6c2e07a475921b666ab784f229",
       "provenance_sha256": "ed5c2d2f64026f1ea915a1e9f3a0bc690a41295d8b0ecd946b54b07a300938e0"
     },
     {
       "patch": "bad/public-api.patch",
-      "run_id": "run_7459c550d3ca4793",
+      "run_id": "run_a7771fc59af24470",
       "expected_success": false,
       "observed_success": false,
       "failed_checks": ["hidden:hidden-multiline-csv", "policy:public_api"],
-      "manifest_sha256": "b950dff24ade39e0c1dc0036c9751262ab3ed814ab373e95d185b5a82e1b29f6",
-      "result_sha256": "6b13837665ad12a4e932c417a280d3698243f82150cb504dba823ff78c4553c9",
+      "manifest_sha256": "9945b78830200ff8cac856309cdb7207fa8caec9c81a617c46fedcbc3756c4c4",
+      "result_sha256": "22dea43978b0e541ee39b5d3bad8e1aac09c3aaac84aff59878ffeaa8dd65448",
       "provenance_sha256": "b0adb5673a4ca9225fdb33b8dd559adefd7f93eb164e1a9fb2fe3552446773df"
     }
   ],
   "remaining_external_gates": [
-    "baseline Git commit and post-commit Docker gate rerun",
     "live OpenAI dev-validation pilot",
     "23-task dataset audit",
     "96-run core campaign"

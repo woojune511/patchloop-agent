@@ -1,0 +1,13 @@
+diff --git a/mini_data_utils/config.py b/mini_data_utils/config.py
+--- a/mini_data_utils/config.py
++++ b/mini_data_utils/config.py
+@@ -8,5 +8,8 @@ def merge_config(
+ 
+     result = dict(base)
+     for key, value in override.items():
+-        result[key] = value or result.get(key)
++        if isinstance(value, (bool, int)):
++            result[key] = value
++        else:
++            result[key] = value or result.get(key)
+     return result
