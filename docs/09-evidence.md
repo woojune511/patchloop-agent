@@ -8,12 +8,12 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv lock --check` | pass, 78 packages resolved |
 | Static analysis | `uv run ruff check .` | pass |
-| Tests | `uv run pytest -q` | 37 pass, including Docker isolation tests |
+| Tests | `uv run pytest -q` | 47 pass, including Docker isolation and three-task evaluator tests |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/smoke/csv-quoted-newline` | pass |
+| Task contract | `patchloop task validate tasks/smoke/<task>` | all three smoke packages pass |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Evaluator | reference plus six bad patches on Docker | reference pass; every bad patch rejected; all `official=true` |
+| Evaluator | three references plus 14 bad patches on Docker | all references pass; every bad patch rejected; all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
 | Viewer routes | six ASGI route requests | all HTTP 200 |
@@ -58,6 +58,21 @@ Every final Docker gate manifest records baseline commit
 `cf38649bbbf458316f38e64a579fd0196c782237`; no run in the machine-readable summary uses an uncommitted
 harness identifier.
 
+## Smoke task expansion evidence
+
+Two additional independently content-addressed snapshots were frozen in commit
+`024a3a375dc9514be6d127199d10f7115659eecf`.
+
+| Task | Reference run | Known-bad corpus | Observed |
+| --- | --- | --- | --- |
+| `config-falsy-override` | `run_57c437c24e154317` | no-op, partial falsey fix, regression, forbidden path | reference passed; 4/4 rejected |
+| `path-prefix-boundary` | `run_395efa14bc7c4e59` | no-op, boundary-only fix, regression, forbidden path | reference passed; 4/4 rejected |
+
+All ten expansion runs record the task commit and the same pinned evaluator image as the CSV gate. The
+[smoke expansion summary](../reports/docker-gate/smoke-expansion.json) records task/spec hashes, run IDs
+and manifest/result/provenance hashes. Together, the three smoke tasks cover parser state, merge semantics
+and path normalization without sharing a solution.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -67,5 +82,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero: 1 of 23
-packages exists and 0 of 6 OSS tasks is selected. No live OpenAI request or paid campaign was made.
+`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero: 3 of 23
+packages exist and 0 of 6 OSS tasks is selected. The smoke split itself is complete at 3/3. No live OpenAI
+request or paid campaign was made.

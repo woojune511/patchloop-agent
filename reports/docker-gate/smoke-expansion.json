@@ -1,0 +1,134 @@
+{
+  "schema_version": "docker-smoke-expansion-v1",
+  "executed_on": "2026-07-23",
+  "harness_git_commit": "024a3a375dc9514be6d127199d10f7115659eecf",
+  "evaluator_image": "sha256:5d430c8dbf2e1222148909ed4c79c3cbf212aa25a94c8c2d0cbd0a97adfccf1f",
+  "official": true,
+  "tasks": [
+    {
+      "task_id": "config-falsy-override",
+      "base_commit": "sha256:216c4fe1589d3ffc22a0e1bb9f7f86ae4c2c51a5bd7dfe9d597e8afe54f36f73",
+      "public_spec_hash": "sha256:581e592642862cf6a5e286e032a923480d6b2006784d2bda1cac96b2ff5bd578",
+      "private_spec_hash": "sha256:a15cc52fbad7ff8483786d4b8884d026d755dd8695275d06a9b2ec8906cfe162",
+      "cases": [
+        {
+          "patch": "reference.patch",
+          "run_id": "run_57c437c24e154317",
+          "expected_success": true,
+          "observed_success": true,
+          "failed_checks": [],
+          "manifest_sha256": "3b8d7abdb6279ad7dae665e07abbf1caab698d4b8399eac176a3da239bcfa818",
+          "result_sha256": "8de0fee4c9484ffc75486518ff2cbf8087fdbbe906b9f07795f911d969b58f53",
+          "provenance_sha256": "f4df0a456f8770fac9393560666adc34532611cd84ca25b33cc87d5c6f1e3212"
+        },
+        {
+          "patch": "bad/noop.patch",
+          "run_id": "run_640ed0c19f514f9f",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": ["hidden:hidden-falsy-overrides"],
+          "manifest_sha256": "eaf40ebb7811dd771c40110580098c5cbee03578bf65ba73b5a75563a6fa3627",
+          "result_sha256": "f92ea8e4a812c143d6144e65fe1aadfcbccc02d6f6372cd3988adee0803c753b",
+          "provenance_sha256": "89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+        },
+        {
+          "patch": "bad/near-miss.patch",
+          "run_id": "run_87f51bd4fb93472e",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": ["hidden:hidden-falsy-overrides"],
+          "manifest_sha256": "c1f42d9eb443e614cbf72cde359616a990c091895a48634431d2500e9c844066",
+          "result_sha256": "59a323c554e1bbb6db93642eedfa1e11ed39f572aeeaa46f38495a17a8df8919",
+          "provenance_sha256": "b3993b236f1b86b7b071c10df9da70a81e64047e00d24d17d2dd92a8a90f76ea"
+        },
+        {
+          "patch": "bad/regression.patch",
+          "run_id": "run_26cdd090d8884035",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": [
+            "regression:existing-unit-tests",
+            "hidden:hidden-falsy-overrides"
+          ],
+          "manifest_sha256": "3e9c316a65abfc7e4b26f3756343574a37d6cd177b46bf71bcf0d050d9352a8b",
+          "result_sha256": "a48b3ebc74f8a9627adc8ff596a93724e2f25bc7598af789a203b249f6ea8989",
+          "provenance_sha256": "07129d79f2685c3ea6c6e665f0640505499ffc6be731abf456edfcf0e9c430fc"
+        },
+        {
+          "patch": "bad/forbidden-path.patch",
+          "run_id": "run_e32654d14b6a4417",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": [
+            "hidden:hidden-falsy-overrides",
+            "policy:scope"
+          ],
+          "manifest_sha256": "2c0026bfd15cf7967c0bcc6772e6c44b3478e90d4adb030cd555c24b8a0fad73",
+          "result_sha256": "7009248a0fd8eaea19822bfecfccce598b1e66cff5f2300fba79dac58c2d9f2e",
+          "provenance_sha256": "e60d4c4d3341263dd57a13282f84c8e4de33ca4d7cb595337cb918b1a3062383"
+        }
+      ]
+    },
+    {
+      "task_id": "path-prefix-boundary",
+      "base_commit": "sha256:9d542db8a132bc1f52afbd3694ecd07c17372ae404f0048fe84c83613fdaf049",
+      "public_spec_hash": "sha256:57ecb70019f4b68c2605e6b8e4813ac80b9b579085f0d5531f09964bd584421b",
+      "private_spec_hash": "sha256:261f245167b171545e186cd56791bc0055d1fdc143b5c0021818a16031cbba40",
+      "cases": [
+        {
+          "patch": "reference.patch",
+          "run_id": "run_395efa14bc7c4e59",
+          "expected_success": true,
+          "observed_success": true,
+          "failed_checks": [],
+          "manifest_sha256": "86795cc26865f7fc497267f1f0c59f8f8ea0df4342b91f58a73d06e07b483293",
+          "result_sha256": "1176f9143bad95f383cd21994c9aa785d1cfb986a1dc757bbeb2accdb0accb55",
+          "provenance_sha256": "7ab224db32f6f4cc125779f5b1aa3021244ae8404c7e5920eed25997dcd237c3"
+        },
+        {
+          "patch": "bad/noop.patch",
+          "run_id": "run_6c60aaea9d2a42b8",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": ["hidden:hidden-path-boundaries"],
+          "manifest_sha256": "07e4f111f7bf0e52a392f1e0fb49fa67682d60c481019a6b98de37c0def4ed35",
+          "result_sha256": "1401cb5011fdf0506d1e5967b9fff0c61dad08b7f65acc8124fae80a1b8b520c",
+          "provenance_sha256": "89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+        },
+        {
+          "patch": "bad/near-miss.patch",
+          "run_id": "run_15310cd7dbcb446c",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": ["hidden:hidden-path-boundaries"],
+          "manifest_sha256": "8394c7e23c13a638a9aff4e1b72949ed170c15e4aa5ddb9497e0b55c0c132e39",
+          "result_sha256": "0562b4478a21038bac7a2bb5c3bb7fd579ec1554c2a298f3f74bb632417e83cd",
+          "provenance_sha256": "458368fce5882dfb307e5aa9957c661f04417ebf26df77459559a135cfd86f32"
+        },
+        {
+          "patch": "bad/regression.patch",
+          "run_id": "run_ad915bebab064ed4",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": ["regression:existing-unit-tests"],
+          "manifest_sha256": "e639b54e0f80806def32147118c298f6be78622b2e7a8d3c0ae942ca712fc1b4",
+          "result_sha256": "e73cc8bb496033416364c4add115cb788645415d29c69970e9e7ceffd2d64830",
+          "provenance_sha256": "dd7d03692a9b4ca5d7760488c99ea1b30377e0f1e7837bd1a60d67411b1acbc1"
+        },
+        {
+          "patch": "bad/forbidden-path.patch",
+          "run_id": "run_50b388771d8f406f",
+          "expected_success": false,
+          "observed_success": false,
+          "failed_checks": [
+            "hidden:hidden-path-boundaries",
+            "policy:scope"
+          ],
+          "manifest_sha256": "a147f23dabcc7067647cecbb3a8cddb5877a0bf183c78a6b2d5355499deca921",
+          "result_sha256": "cd63c9727bfc26fbb187530d385da2df5bc09804812b15a7a4a80e43ff2e67b7",
+          "provenance_sha256": "44fc9d1cbf38fd8ff74795303b92adbb7d6283824000c7535a1f3b6b30d7591d"
+        }
+      ]
+    }
+  ]
+}
