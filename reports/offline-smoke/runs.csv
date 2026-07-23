@@ -1,0 +1,2 @@
+task_id,split,condition,repetition,scope_compliant_success,hidden_pass,regression_free,scope_violation,input_tokens,output_tokens,model_cost_usd,run_id,infrastructure_error
+csv-quoted-newline,smoke,no_memory,1,1,1,1,0,0,0,0.0,run_671aa408ac4241ca,{}

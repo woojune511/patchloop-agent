@@ -1,0 +1,12 @@
+{
+  "done": false,
+  "response_id": null,
+  "text": "Review the final scoped diff.",
+  "tool_calls": [
+    {
+      "action_id": "mock-review-diff",
+      "arguments": {},
+      "name": "get_diff"
+    }
+  ]
+}

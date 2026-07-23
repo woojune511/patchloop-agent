@@ -1,0 +1,205 @@
+{
+  "public_task": {
+    "schema_version": "task-public-v1",
+    "task_id": "csv-quoted-newline",
+    "task_version": 1,
+    "split": "smoke",
+    "repository": {
+      "url": "snapshot://mini-data-utils",
+      "base_commit": "sha256:ea86e87d65632d2cadc0a65066bdd1fcdfb66ef3799ff4fed85ea1c2626a3d67",
+      "language": "python"
+    },
+    "issue": {
+      "title": "CSV parser splits quoted multiline fields",
+      "description": "A quoted CSV field containing a newline is emitted as two records.\nPreserve the public parse_rows(text) interface and existing behavior.\n"
+    },
+    "constraints": {
+      "allowed_paths": [
+        "mini_data_utils/**"
+      ],
+      "forbidden_paths": [
+        "tests/**",
+        ".patchloop-hidden/**",
+        "requirements.txt"
+      ],
+      "max_changed_files": 1,
+      "max_diff_lines": 20,
+      "dependency_changes_allowed": false,
+      "public_api_changes_allowed": false
+    },
+    "visible_checks": [
+      {
+        "id": "existing-unit-tests",
+        "command": [
+          "python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "timeout_seconds": 30,
+        "working_directory": ".",
+        "environment": {},
+        "expected_exit_codes": [
+          0
+        ],
+        "output_limit_bytes": 200000
+      }
+    ],
+    "tags": [
+      "csv",
+      "parser-state",
+      "smoke"
+    ]
+  },
+  "phase": "REVIEW",
+  "checkpoint": {
+    "schema_version": "checkpoint-v1",
+    "checkpoint_id": "ckpt_ac1acd50a4584fcd8ace96380db6cf87",
+    "run_id": "run_671aa408ac4241ca",
+    "through_sequence": 27,
+    "phase": "REVIEW",
+    "task_summary": "csv-quoted-newline",
+    "reproduction_status": "unknown",
+    "current_plan": [],
+    "modified_files": [
+      "mini_data_utils/csvlite.py"
+    ],
+    "completed_action_ids": [
+      "mock-read-parser",
+      "mock-fix-parser",
+      "mock-visible-check",
+      "mock-review-diff"
+    ],
+    "completed_checks": [
+      "existing-unit-tests"
+    ],
+    "pending_checks": [],
+    "important_decisions": [],
+    "repository_head": "10ac11d6fe9fe6ae97016bd9dd306ba1c9844404",
+    "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c",
+    "last_patch_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c",
+    "remaining_budget": {
+      "model_calls": 16,
+      "tool_calls": 46,
+      "tokens": 80000
+    },
+    "created_at": "2026-07-23T02:01:05.071865Z"
+  },
+  "recent_events": [
+    {
+      "sequence": 19,
+      "type": "PhaseChanged",
+      "actor": "phase-machine",
+      "payload": {
+        "from": "IMPLEMENT",
+        "to": "VERIFY"
+      }
+    },
+    {
+      "sequence": 20,
+      "type": "ToolCalled",
+      "actor": "agent",
+      "payload": {
+        "input_hash": "sha256:4c107e7ca5cb9ce4524c043503634f552345529ed8cd68548b1d8c0c74285f5e",
+        "tool": "run_check"
+      }
+    },
+    {
+      "sequence": 21,
+      "type": "ToolSucceeded",
+      "actor": "tool-gateway",
+      "payload": {
+        "artifact_id": "art_b972607d72e64600b2368a5479752920",
+        "artifact_path": "[normalized runtime artifact path]",
+        "check_id": "existing-unit-tests",
+        "duration_ms": 103,
+        "error_code": null,
+        "passed": true,
+        "status": "succeeded",
+        "timed_out": false,
+        "tool": "run_check",
+        "tool_result": {
+          "check_id": "existing-unit-tests",
+          "exit_code": 0,
+          "passed": true,
+          "stderr": "test_parses_rows (test_csvlite.ParseRowsTests.test_parses_rows) ... ok\r\ntest_preserves_quoted_comma (test_csvlite.ParseRowsTests.test_preserves_quoted_comma) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.000s\r\n\r\nOK\r\n",
+          "stdout": "",
+          "timed_out": false,
+          "truncated": false
+        }
+      }
+    },
+    {
+      "sequence": 22,
+      "type": "CheckpointSaved",
+      "actor": "state-store",
+      "payload": {
+        "checkpoint_id": "ckpt_7706412657244045938e0cebec6be29d",
+        "through_sequence": 21,
+        "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c"
+      }
+    },
+    {
+      "sequence": 25,
+      "type": "PhaseChanged",
+      "actor": "phase-machine",
+      "payload": {
+        "from": "VERIFY",
+        "to": "REVIEW"
+      }
+    },
+    {
+      "sequence": 26,
+      "type": "ToolCalled",
+      "actor": "agent",
+      "payload": {
+        "input_hash": "sha256:cd78bbc34e583c0978aab83e99b949c6146375477eabc3f813ff1be61380d369",
+        "tool": "get_diff"
+      }
+    },
+    {
+      "sequence": 27,
+      "type": "ToolSucceeded",
+      "actor": "tool-gateway",
+      "payload": {
+        "artifact_id": "art_165bda2bcde34d2390aa6338338d92e3",
+        "artifact_path": "[normalized runtime artifact path]",
+        "check_id": null,
+        "duration_ms": 122,
+        "error_code": null,
+        "passed": null,
+        "status": "succeeded",
+        "timed_out": null,
+        "tool": "get_diff",
+        "tool_result": {
+          "added_lines": 2,
+          "changed_files": [
+            "mini_data_utils/csvlite.py"
+          ],
+          "deleted_lines": 4,
+          "patch": "diff --git a/mini_data_utils/csvlite.py b/mini_data_utils/csvlite.py\nindex 7e30f32..ec46e20 100644\n--- a/mini_data_utils/csvlite.py\n+++ b/mini_data_utils/csvlite.py\n@@ -1,13 +1,11 @@\n \"\"\"A deliberately small CSV reader with one audited defect.\"\"\"\n \n import csv\n+import io\n \n \n def parse_rows(text: str) -> list[list[str]]:\n     \"\"\"Parse CSV text into rows while preserving quoted values.\"\"\"\n \n-    rows: list[list[str]] = []\n-    for physical_line in text.splitlines():\n-        rows.extend(csv.reader([physical_line]))\n-    return rows\n+    return list(csv.reader(io.StringIO(text, newline=\"\")))\n \n",
+          "patch_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c"
+        }
+      }
+    },
+    {
+      "sequence": 28,
+      "type": "CheckpointSaved",
+      "actor": "state-store",
+      "payload": {
+        "checkpoint_id": "ckpt_ac1acd50a4584fcd8ace96380db6cf87",
+        "through_sequence": 27,
+        "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c"
+      }
+    }
+  ],
+  "selected_memory": null,
+  "rules": {
+    "private_evaluator_data_unavailable": true,
+    "done_is_submission_not_success": true,
+    "registered_checks_only": true
+  }
+}

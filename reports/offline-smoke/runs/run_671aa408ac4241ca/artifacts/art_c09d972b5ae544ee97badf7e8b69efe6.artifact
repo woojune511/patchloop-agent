@@ -1,0 +1,103 @@
+{
+  "system_prompt": "You are a constrained coding agent. Use only supplied tools. Inspect evidence, apply a minimal patch, run registered checks, review the diff, then answer exactly DONE.",
+  "tools": [
+    {
+      "description": "Search repository text files for a literal query.",
+      "name": "search_files",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "path_glob": {
+            "default": "**/*",
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "path_glob"
+        ],
+        "type": "object"
+      },
+      "strict": true,
+      "type": "function"
+    },
+    {
+      "description": "Read a bounded range from a repository file.",
+      "name": "read_file",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "end_line": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "type": "string"
+          },
+          "start_line": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "start_line",
+          "end_line"
+        ],
+        "type": "object"
+      },
+      "strict": true,
+      "type": "function"
+    },
+    {
+      "description": "Apply a unified diff within the task's allowed paths.",
+      "name": "apply_patch",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "patch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch"
+        ],
+        "type": "object"
+      },
+      "strict": true,
+      "type": "function"
+    },
+    {
+      "description": "Run one task-registered public check by ID.",
+      "name": "run_check",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "check_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "check_id"
+        ],
+        "type": "object"
+      },
+      "strict": true,
+      "type": "function"
+    },
+    {
+      "description": "Return the current Git diff and size summary.",
+      "name": "get_diff",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "strict": true,
+      "type": "function"
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "public_task": {
+    "schema_version": "task-public-v1",
+    "task_id": "csv-quoted-newline",
+    "task_version": 1,
+    "split": "smoke",
+    "repository": {
+      "url": "snapshot://mini-data-utils",
+      "base_commit": "sha256:ea86e87d65632d2cadc0a65066bdd1fcdfb66ef3799ff4fed85ea1c2626a3d67",
+      "language": "python"
+    },
+    "issue": {
+      "title": "CSV parser splits quoted multiline fields",
+      "description": "A quoted CSV field containing a newline is emitted as two records.\nPreserve the public parse_rows(text) interface and existing behavior.\n"
+    },
+    "constraints": {
+      "allowed_paths": [
+        "mini_data_utils/**"
+      ],
+      "forbidden_paths": [
+        "tests/**",
+        ".patchloop-hidden/**",
+        "requirements.txt"
+      ],
+      "max_changed_files": 1,
+      "max_diff_lines": 20,
+      "dependency_changes_allowed": false,
+      "public_api_changes_allowed": false
+    },
+    "visible_checks": [
+      {
+        "id": "existing-unit-tests",
+        "command": [
+          "python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "timeout_seconds": 30,
+        "working_directory": ".",
+        "environment": {},
+        "expected_exit_codes": [
+          0
+        ],
+        "output_limit_bytes": 200000
+      }
+    ],
+    "tags": [
+      "csv",
+      "parser-state",
+      "smoke"
+    ]
+  },
+  "phase": "IMPLEMENT",
+  "checkpoint": {
+    "schema_version": "checkpoint-v1",
+    "checkpoint_id": "ckpt_67f30e64b68746e78073e2ecaa076773",
+    "run_id": "run_671aa408ac4241ca",
+    "through_sequence": 15,
+    "phase": "IMPLEMENT",
+    "task_summary": "csv-quoted-newline",
+    "reproduction_status": "unknown",
+    "current_plan": [],
+    "modified_files": [
+      "mini_data_utils/csvlite.py"
+    ],
+    "completed_action_ids": [
+      "mock-read-parser",
+      "mock-fix-parser"
+    ],
+    "completed_checks": [],
+    "pending_checks": [],
+    "important_decisions": [],
+    "repository_head": "10ac11d6fe9fe6ae97016bd9dd306ba1c9844404",
+    "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c",
+    "last_patch_hash": "sha256:476656eed340a07b5a08e936fcdb673c227aa38e885e1bdb64a9356f8a8eef49",
+    "remaining_budget": {
+      "model_calls": 18,
+      "tool_calls": 48,
+      "tokens": 80000
+    },
+    "created_at": "2026-07-23T02:01:04.426578Z"
+  },
+  "recent_events": [
+    {
+      "sequence": 6,
+      "type": "ToolCalled",
+      "actor": "agent",
+      "payload": {
+        "input_hash": "sha256:4b7944afbc74edab465c49ba0c3a1b68da819e6f9b3128854ce4fe5569d0356e",
+        "tool": "read_file"
+      }
+    },
+    {
+      "sequence": 7,
+      "type": "ToolSucceeded",
+      "actor": "tool-gateway",
+      "payload": {
+        "artifact_id": "art_8bea9a125c97404fa8e650640a5d1f34",
+        "artifact_path": "[normalized runtime artifact path]",
+        "check_id": null,
+        "duration_ms": 2,
+        "error_code": null,
+        "passed": null,
+        "status": "succeeded",
+        "timed_out": null,
+        "tool": "read_file",
+        "tool_result": {
+          "content": "\"\"\"A deliberately small CSV reader with one audited defect.\"\"\"\n\nimport csv\n\n\ndef parse_rows(text: str) -> list[list[str]]:\n    \"\"\"Parse CSV text into rows while preserving quoted values.\"\"\"\n\n    rows: list[list[str]] = []\n    for physical_line in text.splitlines():\n        rows.extend(csv.reader([physical_line]))\n    return rows\n",
+          "end_line": 200,
+          "path": "mini_data_utils/csvlite.py",
+          "start_line": 1
+        }
+      }
+    },
+    {
+      "sequence": 8,
+      "type": "CheckpointSaved",
+      "actor": "state-store",
+      "payload": {
+        "checkpoint_id": "ckpt_ef4e5dd767934ecc91692e5e2e9e2e76",
+        "through_sequence": 7,
+        "worktree_diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    {
+      "sequence": 11,
+      "type": "PhaseChanged",
+      "actor": "phase-machine",
+      "payload": {
+        "from": "REPRODUCE",
+        "to": "PLAN"
+      }
+    },
+    {
+      "sequence": 12,
+      "type": "PhaseChanged",
+      "actor": "phase-machine",
+      "payload": {
+        "from": "PLAN",
+        "to": "IMPLEMENT"
+      }
+    },
+    {
+      "sequence": 13,
+      "type": "ToolCalled",
+      "actor": "agent",
+      "payload": {
+        "input_hash": "sha256:8eeb6b60e20bb6b762b3e729d93f6711c8ee8235f30215cf1a3f6d439063bb4d",
+        "tool": "apply_patch"
+      }
+    },
+    {
+      "sequence": 14,
+      "type": "ToolSucceeded",
+      "actor": "tool-gateway",
+      "payload": {
+        "artifact_id": "art_7ce7904bed1f488db63c23654f35f383",
+        "artifact_path": "[normalized runtime artifact path]",
+        "check_id": null,
+        "duration_ms": 198,
+        "error_code": null,
+        "passed": null,
+        "status": "succeeded",
+        "timed_out": null,
+        "tool": "apply_patch",
+        "tool_result": {
+          "changed_files": [
+            "mini_data_utils/csvlite.py"
+          ],
+          "diff_lines": 6,
+          "patch_hash": "sha256:476656eed340a07b5a08e936fcdb673c227aa38e885e1bdb64a9356f8a8eef49",
+          "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c"
+        }
+      }
+    },
+    {
+      "sequence": 15,
+      "type": "PatchApplied",
+      "actor": "tool-gateway",
+      "payload": {
+        "patch_hash": "sha256:476656eed340a07b5a08e936fcdb673c227aa38e885e1bdb64a9356f8a8eef49"
+      }
+    },
+    {
+      "sequence": 16,
+      "type": "CheckpointSaved",
+      "actor": "state-store",
+      "payload": {
+        "checkpoint_id": "ckpt_67f30e64b68746e78073e2ecaa076773",
+        "through_sequence": 15,
+        "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c"
+      }
+    }
+  ],
+  "selected_memory": null,
+  "rules": {
+    "private_evaluator_data_unavailable": true,
+    "done_is_submission_not_success": true,
+    "registered_checks_only": true
+  }
+}

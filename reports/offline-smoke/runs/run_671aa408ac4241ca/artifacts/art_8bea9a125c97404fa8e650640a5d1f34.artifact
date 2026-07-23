@@ -1,0 +1,6 @@
+{
+  "content": "\"\"\"A deliberately small CSV reader with one audited defect.\"\"\"\n\nimport csv\n\n\ndef parse_rows(text: str) -> list[list[str]]:\n    \"\"\"Parse CSV text into rows while preserving quoted values.\"\"\"\n\n    rows: list[list[str]] = []\n    for physical_line in text.splitlines():\n        rows.extend(csv.reader([physical_line]))\n    return rows\n",
+  "end_line": 200,
+  "path": "mini_data_utils/csvlite.py",
+  "start_line": 1
+}

@@ -1,0 +1,16 @@
+:root { color-scheme: dark; --bg:#0b0f14; --panel:#141b23; --line:#263242; --text:#e7edf5; --muted:#8fa0b5; --accent:#6ee7b7; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:15px/1.55 ui-sans-serif,system-ui,sans-serif; }
+header { height:58px; display:flex; align-items:center; gap:18px; padding:0 max(24px,calc((100vw - 1180px)/2)); border-bottom:1px solid var(--line); }
+header a { color:var(--accent); font-weight:800; text-decoration:none; font-size:20px; } header a.nav { color:var(--muted); font-size:14px; font-weight:600; } header span,.lede,small { color:var(--muted); }
+main { max-width:1180px; margin:0 auto; padding:36px 24px 80px; }
+h1 { font-size:30px; margin:0 0 8px; } h2 { font-size:14px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+table { width:100%; border-collapse:collapse; margin-top:24px; background:var(--panel); border:1px solid var(--line); }
+th,td { text-align:left; padding:12px 14px; border-bottom:1px solid var(--line); } th { color:var(--muted); font-size:12px; text-transform:uppercase; }
+a { color:#93c5fd; } .pill { padding:3px 8px; border-radius:999px; background:#263242; } .pill.completed { color:var(--accent); }
+.run-title { display:flex; align-items:center; justify-content:space-between; }.button { border:1px solid var(--line); padding:9px 14px; border-radius:7px; text-decoration:none; }
+.cards { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:28px 0; }.cards article { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; }.cards strong { font-size:20px; }
+section { margin-top:30px; } pre { max-height:420px; overflow:auto; padding:12px; background:#080b0f; border:1px solid var(--line); border-radius:6px; white-space:pre-wrap; word-break:break-word; }
+.diff { color:#c4f1d8; }
+.timeline { list-style:none; padding:0; }.timeline li { display:grid; grid-template-columns:48px 1fr; gap:12px; border-left:1px solid var(--line); margin-left:18px; padding:0 0 18px 18px; }.timeline .seq { width:34px; height:25px; margin-left:-36px; text-align:center; background:var(--panel); border:1px solid var(--line); border-radius:99px; }.timeline small { display:block; }
+@media (max-width:760px) { .cards { grid-template-columns:1fr; } table { display:block; overflow:auto; } header span { display:none; } }

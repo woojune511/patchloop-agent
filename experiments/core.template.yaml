@@ -1,0 +1,34 @@
+schema_version: experiment-v1
+experiment_id: core-YYYYMMDD
+core: true
+tasks:
+  # Exactly six same-repo held-out and six cross-repo held-out public.yaml paths.
+  - tasks/same-repo-heldout/TODO-1/public.yaml
+  - tasks/same-repo-heldout/TODO-2/public.yaml
+  - tasks/same-repo-heldout/TODO-3/public.yaml
+  - tasks/same-repo-heldout/TODO-4/public.yaml
+  - tasks/same-repo-heldout/TODO-5/public.yaml
+  - tasks/same-repo-heldout/TODO-6/public.yaml
+  - tasks/cross-repo-heldout/TODO-1/public.yaml
+  - tasks/cross-repo-heldout/TODO-2/public.yaml
+  - tasks/cross-repo-heldout/TODO-3/public.yaml
+  - tasks/cross-repo-heldout/TODO-4/public.yaml
+  - tasks/cross-repo-heldout/TODO-5/public.yaml
+  - tasks/cross-repo-heldout/TODO-6/public.yaml
+conditions: [no_memory, raw_trace, structured, selective_structured]
+repetitions: 2
+model: openai
+model_id: gpt-5.6-terra
+seed: 20260723
+# Set true only after dated price verification and explicit user approval.
+live_cost_approved: false
+estimated_cost_usd: 0
+cost_limit_usd: 150
+pricing_verified_at: null
+pricing_source_url: https://developers.openai.com/api/docs/models/gpt-5.6-terra
+input_price_per_million_usd: null
+output_price_per_million_usd: null
+retrieval_threshold: 0.72
+memory_token_budget: 2000
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+embedding_revision: PIN_AT_FREEZE

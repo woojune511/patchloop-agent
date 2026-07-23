@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Runs · PatchLoop{% endblock %}
+{% block content %}
+<h1>Runs</h1>
+<p class="lede">Every row links the immutable manifest, event trace, checkpoint and evaluator result.</p>
+<table>
+  <thead><tr><th>Run</th><th>Task</th><th>Memory</th><th>Status</th><th>SCRR</th><th>Official</th></tr></thead>
+  <tbody>
+  {% for run in runs %}
+    <tr>
+      <td><a href="/runs/{{ run.run_id }}">{{ run.run_id }}</a></td>
+      <td>{{ run.manifest.task_id }}</td>
+      <td>{{ run.manifest.memory.condition }}</td>
+      <td><span class="pill {{ run.status }}">{{ run.status }}</span></td>
+      <td>{{ run.result.scope_compliant_success if run.result else "—" }}</td>
+      <td>{{ run.result.official if run.result else "—" }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6">No runs yet. Start with the offline mock smoke command.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

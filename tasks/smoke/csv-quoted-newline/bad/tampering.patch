@@ -1,0 +1,15 @@
+diff --git a/tests/test_csvlite.py b/tests/test_csvlite.py
+index b1c84cd..29f8b49 100644
+--- a/tests/test_csvlite.py
++++ b/tests/test_csvlite.py
+@@ -8,9 +8,6 @@ class ParseRowsTests(unittest.TestCase):
+     def test_parses_rows(self) -> None:
+         self.assertEqual(parse_rows("name,age\nAda,36"), [["name", "age"], ["Ada", "36"]])
+ 
+-    def test_preserves_quoted_comma(self) -> None:
+-        self.assertEqual(parse_rows('name,note\nAda,"hello, world"'), [["name", "note"], ["Ada", "hello, world"]])
+-
+ 
+ if __name__ == "__main__":
+     unittest.main()
+

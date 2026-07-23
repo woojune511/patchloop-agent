@@ -1,0 +1,5 @@
+<ol class="timeline">
+{% for event in events %}
+  <li><span class="seq">{{ event.sequence }}</span><div><strong>{{ event.type.value }}</strong><small>{{ event.actor }} · {{ event.timestamp }}</small><pre>{{ event.payload | tojson(indent=2) }}</pre></div></li>
+{% endfor %}
+</ol>

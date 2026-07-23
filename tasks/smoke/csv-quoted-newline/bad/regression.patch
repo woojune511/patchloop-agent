@@ -1,0 +1,13 @@
+diff --git a/mini_data_utils/csvlite.py b/mini_data_utils/csvlite.py
+index b7049fd..e825e88 100644
+--- a/mini_data_utils/csvlite.py
++++ b/mini_data_utils/csvlite.py
+@@ -7,6 +7,6 @@ def parse_rows(text: str) -> list[list[str]]:
+     """Parse CSV text into rows while preserving quoted values."""
+ 
+     rows: list[list[str]] = []
+     for physical_line in text.splitlines():
+-        rows.extend(csv.reader([physical_line]))
++        rows.append([field.strip() for field in physical_line.split(",")])
+     return rows
+

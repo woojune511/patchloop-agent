@@ -1,0 +1,14 @@
+{
+  "done": false,
+  "response_id": null,
+  "text": "Run the registered regression suite.",
+  "tool_calls": [
+    {
+      "action_id": "mock-visible-check",
+      "arguments": {
+        "check_id": "existing-unit-tests"
+      },
+      "name": "run_check"
+    }
+  ]
+}

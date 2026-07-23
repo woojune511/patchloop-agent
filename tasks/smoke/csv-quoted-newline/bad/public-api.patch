@@ -1,0 +1,12 @@
+diff --git a/mini_data_utils/csvlite.py b/mini_data_utils/csvlite.py
+--- a/mini_data_utils/csvlite.py
++++ b/mini_data_utils/csvlite.py
+@@ -3,7 +3,7 @@
+ import csv
+ 
+ 
+-def parse_rows(text: str) -> list[list[str]]:
++def parse_rows(text: str, delimiter: str = ",") -> list[list[str]]:
+     """Parse CSV text into rows while preserving quoted values."""
+ 
+     rows: list[list[str]] = []

@@ -1,0 +1,16 @@
+{
+  "done": false,
+  "response_id": null,
+  "text": "Inspect the implicated parser before editing.",
+  "tool_calls": [
+    {
+      "action_id": "mock-read-parser",
+      "arguments": {
+        "end_line": 200,
+        "path": "mini_data_utils/csvlite.py",
+        "start_line": 1
+      },
+      "name": "read_file"
+    }
+  ]
+}

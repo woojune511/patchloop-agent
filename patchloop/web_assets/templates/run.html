@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ manifest.run_id }} · PatchLoop{% endblock %}
+{% block content %}
+<div class="run-title"><div><h1>{{ manifest.run_id }}</h1><p>{{ manifest.task_id }} · {{ manifest.memory.condition.value }}</p></div>
+<a class="button" href="/runs/{{ manifest.run_id }}/patch">Download patch</a></div>
+<section class="cards">
+  <article><h2>Boundary outcome</h2><strong>{{ row.result.scope_compliant_success if row.result else "pending" }}</strong><p>official={{ row.result.official if row.result else "—" }}</p></article>
+  <article><h2>Model</h2><strong>{{ manifest.model.model_id }}</strong><p>{{ manifest.model.reasoning_effort }} · store=false</p></article>
+  <article><h2>Checkpoint</h2><strong>{{ checkpoint.phase.value if checkpoint else "none" }}</strong><p>seq {{ checkpoint.through_sequence if checkpoint else "—" }}</p></article>
+</section>
+<section><h2>Event trace</h2><div id="events" hx-get="/runs/{{ manifest.run_id }}/events" hx-trigger="load">Loading trace…</div></section>
+<section><h2>Submitted diff</h2><pre class="diff">{{ patch_text or "No patch submitted" }}</pre></section>
+<section><h2>Checkpoint history</h2>
+  <table><thead><tr><th>Sequence</th><th>Phase</th><th>Files</th><th>Diff hash</th></tr></thead><tbody>
+  {% for item in checkpoints %}<tr><td>{{ item.through_sequence }}</td><td>{{ item.phase.value }}</td><td>{{ item.modified_files | join(", ") or "—" }}</td><td><code>{{ item.worktree_diff_hash }}</code></td></tr>{% endfor %}
+  </tbody></table>
+</section>
+<section><h2>Memory decisions</h2>
+  {% set memory_events = events | selectattr("type.value", "equalto", "MemoryRetrieved") | list %}
+  {% if memory_events %}{% for event in memory_events %}<pre>{{ event.payload | tojson(indent=2) }}</pre>{% endfor %}{% else %}<p class="lede">No memory was requested for this run.</p>{% endif %}
+</section>
+<section><h2>Verifier result</h2><pre>{{ result_json }}</pre></section>
+{% endblock %}

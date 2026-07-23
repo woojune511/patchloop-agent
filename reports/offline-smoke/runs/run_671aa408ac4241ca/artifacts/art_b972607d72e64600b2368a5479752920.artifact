@@ -1,0 +1,9 @@
+{
+  "check_id": "existing-unit-tests",
+  "exit_code": 0,
+  "passed": true,
+  "stderr": "test_parses_rows (test_csvlite.ParseRowsTests.test_parses_rows) ... ok\r\ntest_preserves_quoted_comma (test_csvlite.ParseRowsTests.test_preserves_quoted_comma) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.000s\r\n\r\nOK\r\n",
+  "stdout": "",
+  "timed_out": false,
+  "truncated": false
+}

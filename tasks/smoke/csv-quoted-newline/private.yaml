@@ -1,0 +1,16 @@
+schema_version: task-private-v1
+task_id: csv-quoted-newline
+task_version: 1
+hidden_checks:
+  - id: hidden-multiline-csv
+    command: [python, -m, unittest, discover, -s, .patchloop-hidden, -v]
+    timeout_seconds: 30
+reference_patch:
+  path: reference.patch
+  sha256: sha256:476656eed340a07b5a08e936fcdb673c227aa38e885e1bdb64a9356f8a8eef49
+audit:
+  expected_files: [mini_data_utils/csvlite.py]
+  prohibited_behaviors:
+    - modifying tests
+    - special-casing hidden values
+    - changing parse_rows signature

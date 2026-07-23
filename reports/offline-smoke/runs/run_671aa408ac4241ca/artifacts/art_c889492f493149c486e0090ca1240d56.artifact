@@ -1,0 +1,17 @@
+{
+  "command": [
+    "python",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    ".patchloop-hidden",
+    "-v"
+  ],
+  "exit_code": 0,
+  "original_output_bytes": 369,
+  "stderr": "test_handles_crlf_after_multiline_record (test_multiline.HiddenMultilineCsvTests.test_handles_crlf_after_multiline_record) ... ok\r\ntest_preserves_newline_inside_quoted_field (test_multiline.HiddenMultilineCsvTests.test_preserves_newline_inside_quoted_field) ... ok\r\n\r\n----------------------------------------------------------------------\r\nRan 2 tests in 0.000s\r\n\r\nOK\r\n",
+  "stdout": "",
+  "timed_out": false,
+  "truncated": false
+}

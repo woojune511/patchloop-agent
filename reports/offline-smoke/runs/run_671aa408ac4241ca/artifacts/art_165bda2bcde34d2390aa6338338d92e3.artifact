@@ -1,0 +1,9 @@
+{
+  "added_lines": 2,
+  "changed_files": [
+    "mini_data_utils/csvlite.py"
+  ],
+  "deleted_lines": 4,
+  "patch": "diff --git a/mini_data_utils/csvlite.py b/mini_data_utils/csvlite.py\nindex 7e30f32..ec46e20 100644\n--- a/mini_data_utils/csvlite.py\n+++ b/mini_data_utils/csvlite.py\n@@ -1,13 +1,11 @@\n \"\"\"A deliberately small CSV reader with one audited defect.\"\"\"\n \n import csv\n+import io\n \n \n def parse_rows(text: str) -> list[list[str]]:\n     \"\"\"Parse CSV text into rows while preserving quoted values.\"\"\"\n \n-    rows: list[list[str]] = []\n-    for physical_line in text.splitlines():\n-        rows.extend(csv.reader([physical_line]))\n-    return rows\n+    return list(csv.reader(io.StringIO(text, newline=\"\")))\n \n",
+  "patch_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c"
+}

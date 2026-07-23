@@ -1,0 +1,2 @@
+# The fixture intentionally has no runtime dependencies.
+

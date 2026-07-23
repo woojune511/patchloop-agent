@@ -1,0 +1,155 @@
+[
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:RunStarted",
+    "artifact_id": "art_c09d972b5ae544ee97badf7e8b69efe6",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_c09d972b5ae544ee97badf7e8b69efe6.artifact",
+    "source_content_hash": "sha256:5c78bee003d8af407f39e562964f6e00190bee01e7f71c9f32ee37f5a60bc389",
+    "content_hash": "sha256:5c78bee003d8af407f39e562964f6e00190bee01e7f71c9f32ee37f5a60bc389",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ContextBuilt",
+    "artifact_id": "art_b4ebb4c60b784093abe27af331c97aac",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_b4ebb4c60b784093abe27af331c97aac.artifact",
+    "source_content_hash": "sha256:7cb041e24cafce53322dbc0c87a5849c353ce36b9de937d6ae010eefda228329",
+    "content_hash": "sha256:07937e90593554fdfead3bfa7abed8ecbfcfd7a3e1fa4fade30dbc3531f6563e",
+    "normalized": true
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ModelCalled",
+    "artifact_id": "art_c54071f642554624a26d612f3d51bb3b",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_c54071f642554624a26d612f3d51bb3b.artifact",
+    "source_content_hash": "sha256:2c17dd7d8a8c24455834c0dabbc240828c9835307bd7957874c98770185026a9",
+    "content_hash": "sha256:2c17dd7d8a8c24455834c0dabbc240828c9835307bd7957874c98770185026a9",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ToolSucceeded",
+    "artifact_id": "art_8bea9a125c97404fa8e650640a5d1f34",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_8bea9a125c97404fa8e650640a5d1f34.artifact",
+    "source_content_hash": "sha256:570df1f5022b244252e71783bad4d3a521ed6817776a9e9aea8091180b6e30f6",
+    "content_hash": "sha256:570df1f5022b244252e71783bad4d3a521ed6817776a9e9aea8091180b6e30f6",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ContextBuilt",
+    "artifact_id": "art_974de600141c4c5080028176a2af22a9",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_974de600141c4c5080028176a2af22a9.artifact",
+    "source_content_hash": "sha256:b74df201a244264ddbd7ffd3564f356c81a6e382373434597a5a4394c5c874c3",
+    "content_hash": "sha256:99933734b6275995780cc62df2358ef2b13605d10037c662d7752f6119e4d745",
+    "normalized": true
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ModelCalled",
+    "artifact_id": "art_123762394fce47a19e8c039c6453be06",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_123762394fce47a19e8c039c6453be06.artifact",
+    "source_content_hash": "sha256:10f279acb7ee907c8f0b4de65332712e2c8d360bf9885e352d221cf5225da848",
+    "content_hash": "sha256:10f279acb7ee907c8f0b4de65332712e2c8d360bf9885e352d221cf5225da848",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ToolSucceeded",
+    "artifact_id": "art_7ce7904bed1f488db63c23654f35f383",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_7ce7904bed1f488db63c23654f35f383.artifact",
+    "source_content_hash": "sha256:152519b0927b3fa2de6dbcb6c97dbcff5650cefaf9fcf4b4dabdc4d6185dcc87",
+    "content_hash": "sha256:152519b0927b3fa2de6dbcb6c97dbcff5650cefaf9fcf4b4dabdc4d6185dcc87",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ContextBuilt",
+    "artifact_id": "art_185ee38d93634c728f92b71d56a410b6",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_185ee38d93634c728f92b71d56a410b6.artifact",
+    "source_content_hash": "sha256:62fa0f2faceae9abb2f643727ae42d29803c9f4ae6de4321714cf4b28b69422b",
+    "content_hash": "sha256:7499173d2d6f1b1659b93205f519efc798e6de93a6aa33aa49951deb9bbffab4",
+    "normalized": true
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ModelCalled",
+    "artifact_id": "art_5f12510eaeb94e2a810c95d088a6eac8",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_5f12510eaeb94e2a810c95d088a6eac8.artifact",
+    "source_content_hash": "sha256:3ddd73c022e383251541377d1d664d4e20852f093d1d87fb3ba98f859b387819",
+    "content_hash": "sha256:3ddd73c022e383251541377d1d664d4e20852f093d1d87fb3ba98f859b387819",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ToolSucceeded",
+    "artifact_id": "art_b972607d72e64600b2368a5479752920",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_b972607d72e64600b2368a5479752920.artifact",
+    "source_content_hash": "sha256:a5356ae4ca2d2d751c2d9619424c11fc3fbc59bb0320bdf616e463684e0a3107",
+    "content_hash": "sha256:a5356ae4ca2d2d751c2d9619424c11fc3fbc59bb0320bdf616e463684e0a3107",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ContextBuilt",
+    "artifact_id": "art_2f817f7dfa9e44d992b4c97a3edb49b2",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_2f817f7dfa9e44d992b4c97a3edb49b2.artifact",
+    "source_content_hash": "sha256:f9ff85f6889324d49e8d14747693cbdb15a463292773e3761d5f78d4858ca4e8",
+    "content_hash": "sha256:0bbe83b32f02dd85ba7b3f6d03ce5b008bbd152caceae9205681105789c3c7ad",
+    "normalized": true
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ModelCalled",
+    "artifact_id": "art_55021f24e1f3418a9209e80aa6e60f37",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_55021f24e1f3418a9209e80aa6e60f37.artifact",
+    "source_content_hash": "sha256:a961a44fc33752797825184e182eb3ba6bbde3c6ac374f0003f65ce488a0905c",
+    "content_hash": "sha256:a961a44fc33752797825184e182eb3ba6bbde3c6ac374f0003f65ce488a0905c",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ToolSucceeded",
+    "artifact_id": "art_165bda2bcde34d2390aa6338338d92e3",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_165bda2bcde34d2390aa6338338d92e3.artifact",
+    "source_content_hash": "sha256:e96eb1dfe9a27953ced029c5e434ba1c143bac95ce89d2359f6a9af2cc4ded4d",
+    "content_hash": "sha256:e96eb1dfe9a27953ced029c5e434ba1c143bac95ce89d2359f6a9af2cc4ded4d",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ContextBuilt",
+    "artifact_id": "art_15968703e8a741a28ea7d47e51bc43e2",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_15968703e8a741a28ea7d47e51bc43e2.artifact",
+    "source_content_hash": "sha256:e63540860fb26dd427910d33bbc6d0b86dc73a7c1608a8d07fa1e6d7045138d6",
+    "content_hash": "sha256:ec2dc8d088a7f8cae1ccd4e37941951c4ab9958b9b6c47b56616037d37bd80f9",
+    "normalized": true
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "event:ModelCalled",
+    "artifact_id": "art_5e5816f8578a4891ab25751dee7b9da2",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_5e5816f8578a4891ab25751dee7b9da2.artifact",
+    "source_content_hash": "sha256:074b99fe3756beb289584528394d8a23bf3ebf3482d80d6ec5b2f78a8af49f50",
+    "content_hash": "sha256:074b99fe3756beb289584528394d8a23bf3ebf3482d80d6ec5b2f78a8af49f50",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "verifier:existing-unit-tests",
+    "artifact_id": "art_7851a1f52e8e4980ab68dbe11b04262b",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_7851a1f52e8e4980ab68dbe11b04262b.artifact",
+    "source_content_hash": "sha256:7d99bb05b0ee5ce5eb3c1c1bf814899dd83129026b0913542c4ca786057f7e6c",
+    "content_hash": "sha256:7d99bb05b0ee5ce5eb3c1c1bf814899dd83129026b0913542c4ca786057f7e6c",
+    "normalized": false
+  },
+  {
+    "run_id": "run_671aa408ac4241ca",
+    "evidence_type": "verifier:hidden-multiline-csv",
+    "artifact_id": "art_c889492f493149c486e0090ca1240d56",
+    "path": "runs/run_671aa408ac4241ca/artifacts/art_c889492f493149c486e0090ca1240d56.artifact",
+    "source_content_hash": "sha256:0fda1f73136e43cb876a8091ec111cfb3e221af7803e9ee7ab88faec8e850b45",
+    "content_hash": "sha256:0fda1f73136e43cb876a8091ec111cfb3e221af7803e9ee7ab88faec8e850b45",
+    "normalized": false
+  }
+]

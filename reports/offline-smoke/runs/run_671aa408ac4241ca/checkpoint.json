@@ -1,0 +1,33 @@
+{
+  "schema_version": "checkpoint-v1",
+  "checkpoint_id": "ckpt_da1cf3cbb4944c2fa1d99923d461a783",
+  "run_id": "run_671aa408ac4241ca",
+  "through_sequence": 31,
+  "phase": "DONE",
+  "task_summary": "csv-quoted-newline",
+  "reproduction_status": "unknown",
+  "current_plan": [],
+  "modified_files": [
+    "mini_data_utils/csvlite.py"
+  ],
+  "completed_action_ids": [
+    "mock-read-parser",
+    "mock-fix-parser",
+    "mock-visible-check",
+    "mock-review-diff"
+  ],
+  "completed_checks": [
+    "existing-unit-tests"
+  ],
+  "pending_checks": [],
+  "important_decisions": [],
+  "repository_head": "10ac11d6fe9fe6ae97016bd9dd306ba1c9844404",
+  "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c",
+  "last_patch_hash": null,
+  "remaining_budget": {
+    "model_calls": 15,
+    "tokens": 80000,
+    "tool_calls": 46
+  },
+  "created_at": "2026-07-23T02:01:05.286966Z"
+}

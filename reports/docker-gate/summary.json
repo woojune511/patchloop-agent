@@ -1,0 +1,101 @@
+{
+  "schema_version": "docker-evaluator-gate-v1",
+  "executed_on": "2026-07-23",
+  "task_id": "mini-data-utils-csv-quoted-newline",
+  "official": true,
+  "harness_git_commit": "uncommitted",
+  "docker": {
+    "desktop_version": "4.83.0",
+    "engine_version": "29.6.2",
+    "base_image": "python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de",
+    "evaluator_image": "sha256:5d430c8dbf2e1222148909ed4c79c3cbf212aa25a94c8c2d0cbd0a97adfccf1f",
+    "dockerfile_sha256": "077bd5a3bfb7771d7ff63734916b69db5c498bb8908d3ad063da545ee98a2895",
+    "build_network": "none",
+    "build_provenance": false,
+    "repeat_build_identity_stable": true
+  },
+  "isolation_checks": {
+    "network_disabled": "pass",
+    "container_uid_10001": "pass",
+    "workspace_read_only": "pass",
+    "host_secret_not_forwarded": "pass"
+  },
+  "cases": [
+    {
+      "patch": "reference.patch",
+      "run_id": "run_54a8becfb57645d0",
+      "expected_success": true,
+      "observed_success": true,
+      "failed_checks": [],
+      "manifest_sha256": "e3c313bedbdd8452bac6cbc407a1d11d55bb8e7f2148cd13924be5af409c7a8f",
+      "result_sha256": "576d77c2bc23c536b2cae2af2f3bd4ef7014528b6341b31e5d0fa1372cfb5b34",
+      "provenance_sha256": "a35c32bd9be7c56d2481d66478012ab8df17090dd91933b8c9f78bad74215195"
+    },
+    {
+      "patch": "bad/noop.patch",
+      "run_id": "run_db73f93836f748f4",
+      "expected_success": false,
+      "observed_success": false,
+      "failed_checks": ["hidden:hidden-multiline-csv"],
+      "manifest_sha256": "2ab52c87e75254885e6d5f746fa60de8d3bc730c36af4db9da7337a1c4e4e810",
+      "result_sha256": "fe6fd816ca90de5173f28a909b3d79006f291481cca941e18ef7b1348842fe3d",
+      "provenance_sha256": "89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "patch": "bad/regression.patch",
+      "run_id": "run_e9ab4505bf4845c4",
+      "expected_success": false,
+      "observed_success": false,
+      "failed_checks": ["regression:existing-unit-tests", "hidden:hidden-multiline-csv"],
+      "manifest_sha256": "8ab2f47784ae83385a9eff5f6a54a32d33913e27a75225b7c0aa8eb536298ebd",
+      "result_sha256": "12099e2c9a0ba1062963133726f8448315061e0f140d971276f139578d715f43",
+      "provenance_sha256": "0b3ea3d077550e2dd629f3fbdacfa06447b5e3d87ec879e6a3d8379c6e424559"
+    },
+    {
+      "patch": "bad/forbidden-path.patch",
+      "run_id": "run_8c44f9f3fce047c6",
+      "expected_success": false,
+      "observed_success": false,
+      "failed_checks": ["hidden:hidden-multiline-csv", "policy:scope"],
+      "manifest_sha256": "2e1e50849d2b0b21e1b4ef0ad3eea52317bbdeceffcf5e08b4e645acee984c45",
+      "result_sha256": "355a351d8e3e1372a9e71bbc0debbca64b4f85cd2ce62e4fa4206e69fae3bcfe",
+      "provenance_sha256": "4fe7f7e20d8cd601aeca90cef0a711e595cf36933ab509dfc54aef21c2d79237"
+    },
+    {
+      "patch": "bad/dependency.patch",
+      "run_id": "run_df8c5e51e5a545f8",
+      "expected_success": false,
+      "observed_success": false,
+      "failed_checks": ["hidden:hidden-multiline-csv", "policy:scope", "policy:dependency"],
+      "manifest_sha256": "954e5af0525598b412e2c660255c52d4454d8e3b9b7f311820726f7aa4a78c5d",
+      "result_sha256": "716bd793e26d5546ac44b42e765d2a650386e07149880aa6f51e04404c3019a2",
+      "provenance_sha256": "35068aca8e5692f269a61e2e2ec3331334184369c01330248db0eba1ad0b8028"
+    },
+    {
+      "patch": "bad/tampering.patch",
+      "run_id": "run_4a6654730b984314",
+      "expected_success": false,
+      "observed_success": false,
+      "failed_checks": ["hidden:hidden-multiline-csv", "policy:scope", "policy:test_tampering"],
+      "manifest_sha256": "3b3ac6ae74d11eeec787139351f1005c49b2e7eb0e64802b430351d5a8f07df0",
+      "result_sha256": "880a19168a91311fe4e24c7ad3ba58f1f19e36886babebe417c99ae3e4abe604",
+      "provenance_sha256": "ed5c2d2f64026f1ea915a1e9f3a0bc690a41295d8b0ecd946b54b07a300938e0"
+    },
+    {
+      "patch": "bad/public-api.patch",
+      "run_id": "run_7459c550d3ca4793",
+      "expected_success": false,
+      "observed_success": false,
+      "failed_checks": ["hidden:hidden-multiline-csv", "policy:public_api"],
+      "manifest_sha256": "b950dff24ade39e0c1dc0036c9751262ab3ed814ab373e95d185b5a82e1b29f6",
+      "result_sha256": "6b13837665ad12a4e932c417a280d3698243f82150cb504dba823ff78c4553c9",
+      "provenance_sha256": "b0adb5673a4ca9225fdb33b8dd559adefd7f93eb164e1a9fb2fe3552446773df"
+    }
+  ],
+  "remaining_external_gates": [
+    "baseline Git commit and post-commit Docker gate rerun",
+    "live OpenAI dev-validation pilot",
+    "23-task dataset audit",
+    "96-run core campaign"
+  ]
+}

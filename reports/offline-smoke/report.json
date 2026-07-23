@@ -1,0 +1,67 @@
+{
+  "schema_version": "analysis-report-v1",
+  "experiment_id": "offline-smoke",
+  "source": "raw-experiment.json",
+  "source_runtime_hash": "sha256:325c0dfe2a3c8d81849e06e7f42a4691c8da4957325b7264a0067fca3d909e95",
+  "source_note": "runtime raw paths are normalized to the portable evidence bundle",
+  "method": {
+    "unit": "task",
+    "repetition_aggregation": "mean within task",
+    "bootstrap_samples": 10000,
+    "seed": 20260723,
+    "interval": "95% percentile"
+  },
+  "metrics": {
+    "no_memory": {
+      "scrr": {
+        "estimate": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "tasks": 1
+      },
+      "hidden_pass": {
+        "estimate": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "tasks": 1
+      },
+      "regression_free": {
+        "estimate": 1.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "tasks": 1
+      },
+      "scope_violation": {
+        "estimate": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "tasks": 1
+      },
+      "by_split": {
+        "smoke": {
+          "estimate": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "tasks": 1
+        }
+      },
+      "runs": 1,
+      "total_cost_usd": 0.0,
+      "cost_per_success_usd": 0.0,
+      "mean_total_tokens": 0
+    }
+  },
+  "paired_scrr_difference_vs_no_memory": {},
+  "success_failure_flips_vs_no_memory": {},
+  "infrastructure_errors": 0
+}

@@ -1,0 +1,14 @@
+{
+  "done": false,
+  "response_id": null,
+  "text": "Use csv.reader over a text stream so quoted records span physical lines.",
+  "tool_calls": [
+    {
+      "action_id": "mock-fix-parser",
+      "arguments": {
+        "patch": "diff --git a/mini_data_utils/csvlite.py b/mini_data_utils/csvlite.py\n--- a/mini_data_utils/csvlite.py\n+++ b/mini_data_utils/csvlite.py\n@@ -1,13 +1,11 @@\n \"\"\"A deliberately small CSV reader with one audited defect.\"\"\"\n \n import csv\n+import io\n \n \n def parse_rows(text: str) -> list[list[str]]:\n     \"\"\"Parse CSV text into rows while preserving quoted values.\"\"\"\n \n-    rows: list[list[str]] = []\n-    for physical_line in text.splitlines():\n-        rows.extend(csv.reader([physical_line]))\n-    return rows\n+    return list(csv.reader(io.StringIO(text, newline=\"\")))\n \n"
+      },
+      "name": "apply_patch"
+    }
+  ]
+}

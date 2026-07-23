@@ -1,0 +1,22 @@
+schema_version: experiment-v1
+experiment_id: offline-smoke
+core: false
+tasks:
+  - tasks/smoke/csv-quoted-newline/public.yaml
+conditions:
+  - no_memory
+repetitions: 1
+model: mock
+model_id: mock-v1
+seed: 20260723
+live_cost_approved: false
+estimated_cost_usd: 0
+cost_limit_usd: 150
+pricing_verified_at: null
+pricing_source_url: null
+input_price_per_million_usd: null
+output_price_per_million_usd: null
+retrieval_threshold: 0.72
+memory_token_budget: 2000
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+embedding_revision: PIN_AT_FREEZE

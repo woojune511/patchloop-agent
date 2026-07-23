@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ experiment.experiment_id }} · PatchLoop{% endblock %}
+{% block content %}
+<h1>{{ experiment.experiment_id }}</h1>
+<p class="lede">Seed {{ experiment.schedule_seed }} · suite {{ experiment.suite_hash }}</p>
+<table><thead><tr><th>Order</th><th>Task</th><th>Split</th><th>Condition</th><th>Rep</th><th>SCRR</th><th>Run</th></tr></thead><tbody>
+{% for row in experiment.runs %}<tr><td>{{ row.order }}</td><td>{{ row.task_id }}</td><td>{{ row.split }}</td><td>{{ row.condition }}</td><td>{{ row.repetition }}</td><td>{{ row.result.scope_compliant_success if row.result else "infra error" }}</td><td>{% if row.result %}<a href="/runs/{{ row.result.run_id }}">{{ row.result.run_id }}</a>{% else %}—{% endif %}</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}

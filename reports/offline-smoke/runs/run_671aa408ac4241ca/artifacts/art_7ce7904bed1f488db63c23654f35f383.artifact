@@ -1,0 +1,8 @@
+{
+  "changed_files": [
+    "mini_data_utils/csvlite.py"
+  ],
+  "diff_lines": 6,
+  "patch_hash": "sha256:476656eed340a07b5a08e936fcdb673c227aa38e885e1bdb64a9356f8a8eef49",
+  "worktree_diff_hash": "sha256:0528cda528c84257c62049bd27eb57e842c37d9d43761f02d787f40b8bb8755c"
+}
