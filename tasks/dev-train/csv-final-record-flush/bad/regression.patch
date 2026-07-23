@@ -1,0 +1,12 @@
+diff --git a/mini_data_utils/chunkcsv.py b/mini_data_utils/chunkcsv.py
+--- a/mini_data_utils/chunkcsv.py
++++ b/mini_data_utils/chunkcsv.py
+@@ -13,5 +13,7 @@ def parse_chunks(chunks: list[str]) -> list[list[str]]:
+         while "\n" in buffer:
+             physical_line, buffer = buffer.split("\n", 1)
+             if physical_line:
+-                rows.extend(csv.reader([physical_line]))
++                rows.append(physical_line.split(","))
++    if buffer:
++        rows.extend(csv.reader([buffer]))
+     return rows

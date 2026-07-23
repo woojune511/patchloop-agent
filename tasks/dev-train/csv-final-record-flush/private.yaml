@@ -1,0 +1,17 @@
+schema_version: task-private-v1
+task_id: csv-final-record-flush
+task_version: 1
+hidden_checks:
+  - id: hidden-final-record-flush
+    command: [python, -m, unittest, discover, -s, .patchloop-hidden, -v]
+    timeout_seconds: 30
+reference_patch:
+  path: reference.patch
+  sha256: sha256:b17ad1e31c237da1457e65682f889e480b81721d28904990a45b47d6ce77c94f
+audit:
+  expected_files: [mini_data_utils/chunkcsv.py]
+  prohibited_behaviors:
+    - modifying tests
+    - special-casing a particular chunk count or final record
+    - adding dependencies
+    - changing parse_chunks signature

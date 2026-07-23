@@ -1,0 +1,31 @@
+schema_version: task-public-v1
+task_id: csv-final-record-flush
+task_version: 1
+split: dev-train
+repository:
+  url: snapshot://mini-data-utils-csv-final-record-flush
+  base_commit: sha256:afa42fe0bcb75bc7f0f7969e394433d5c8e9c8ce34232ebbf5bb5416c2bcd680
+  language: python
+issue:
+  title: Chunked CSV parser drops the final unterminated record
+  description: |
+    A valid final CSV record is lost when the input ends without a trailing
+    newline. Records may span input chunks and quoted commas must remain
+    supported. Preserve the public parse_chunks(chunks) interface and existing
+    behavior for newline-terminated records.
+constraints:
+  allowed_paths:
+    - mini_data_utils/chunkcsv.py
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 10
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: existing-unit-tests
+    command: [python, -m, unittest, discover, -s, tests, -v]
+    timeout_seconds: 30
+tags: [csv, parser-state, eof-finalization, chunk-boundary, dev-train]
