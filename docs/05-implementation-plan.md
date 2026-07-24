@@ -11,17 +11,19 @@
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
 | Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
 | Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
-| Phase 5 memory | implemented, data gate pending | Reviewed dev failure와 embedding revision 필요 |
+| Phase 5 memory | implemented, data gate pending | Admitted memory-development task 0/6 |
 | Phase 6 evaluation | implemented, core campaign pending | Seeded smoke와 task bootstrap report 실행 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
 
-Smoke task authoring gate는 3/3으로 완료됐다: quoted multiline CSV, falsey config override, normalized
-path boundary. Dev-train은 2/6이며 `duration-minute-boundary`와 `csv-final-record-flush`의 Docker
-admission gate가 통과했다. Dev-validation과 held-out task 제작은 아직 시작하지 않았다.
+Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
+`duration-minute-boundary`, `csv-final-record-flush`는 evaluator, sandbox와 authoring workflow를
+검증하는 fixture다. 뒤의 두 package가 물리적으로 `dev-train` 아래에 있어도 memory source나
+research task로 보지 않는다. 현재 admitted research task는 0/20이다.
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
-smoke는 2026-07-24까지 통과했다. Live OpenAI, 23개 dataset, 96-run campaign은 아직 완료가 아니며
-`docs/08-limitations.md`에서 별도로 추적한다.
+smoke는 2026-07-24까지 통과했다. Live OpenAI, 20개 research dataset, 세 sentinel stress
+overlay와 96-run core campaign은 아직 완료가 아니며 `docs/08-limitations.md`에서 별도로
+추적한다.
 
 ## 1. Sequencing rule
 
@@ -36,6 +38,34 @@ Evaluation foundation
   → Core evaluation
   → Viewer and GitHub demo
 ```
+
+## Current dataset gate
+
+목표: Calibration과 research evidence를 분리하고, benchmark/upstream provenance가 있는 20개
+research task를 admission한다.
+
+### Ordered work items
+
+1. Dataset manifest에 5개 calibration fixture를 등록하고 headline exclusion을 검증한다.
+2. SWE 계열 benchmark instance와 실제 upstream issue/PR에서 Python coding 후보를 수집한다.
+3. 각 후보를 constrained tool, registered check, submitted patch와 separate hidden evaluator
+   계약으로 변환한다.
+4. Base/no-op로 visible pass와 hidden fail을 확인하고, reference를 pinned Docker image에서 3회
+   실행하며 세 개 이상의 representative bad patch를 거부한 evidence hash를 등록한다.
+5. Memory-development 6, development-validation 2, same-repo core 6, cross-repo core 6을 채운다.
+6. Admitted research task 중 Terminal-Bench 2.1 pattern을 적용할 sentinel 세 개를 동결한다.
+7. 원본 benchmark 호환성 run은 external acceptance lane에 남기고 core aggregate와 분리한다.
+
+### Exit gate
+
+- Calibration은 정확히 5개이며 memory/core/headline에서 거부된다.
+- Research role은 정확히 20개이고 easy task가 없으며 현재보다 낮은 품질 기준으로 수를 채우지
+  않는다.
+- 모든 research task가 immutable source provenance, base visible pass/private hidden fail,
+  official reference 3회 pass와 세 개 이상 bad-patch rejection evidence를 가진다.
+- Same-repo repository coverage와 cross-repo disjointness, solution-lineage uniqueness가
+  machine audit를 통과한다.
+- 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
 ## Phase 1. Evaluation Foundation
 
@@ -141,7 +171,8 @@ patchloop eval-task tasks/dev/task_001
 
 ### Exit gate
 
-- Development failure에서 reviewed memory entry를 생성한다.
+- Admitted `memory-development` task의 failure에서 reviewed memory entry를 생성한다.
+- Calibration과 external acceptance trace는 memory source에서 거부한다.
 - Reference patch·hidden test·정답 code가 memory에 포함되지 않는다.
 - 관련 memory가 없을 때 empty retrieval을 반환한다.
 - Frozen index의 content hash가 held-out run manifest에 기록된다.
@@ -155,6 +186,7 @@ patchloop eval-task tasks/dev/task_001
 - Experiment config와 condition matrix runner
 - Seeded execution order와 repetition
 - Same-repo/cross-repo split audit
+- Calibration/external/stress headline exclusion audit
 - SCRR, 비용, recovery, memory metric
 - Paired comparison과 bootstrap confidence interval
 - Task-level JSON/CSV와 analysis report
@@ -163,6 +195,8 @@ patchloop eval-task tasks/dev/task_001
 ### Exit gate
 
 - No Memory, Raw Trace, Structured, Selective Structured를 같은 task/budget으로 실행한다.
+- 12개 core held-out task를 condition당 두 번 실행해 96개 core run을 만든다.
+- 세 sentinel stress 결과를 core aggregate와 분리한다.
 - Raw result에서 report를 다시 생성할 수 있다.
 - Task-level matrix와 confidence interval이 생성된다.
 - 모든 headline 수치가 raw row와 run artifact로 추적된다.

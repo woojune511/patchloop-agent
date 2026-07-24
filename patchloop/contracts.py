@@ -178,6 +178,299 @@ class TaskPackage(StrictModel):
         return self
 
 
+class DatasetRole(StrEnum):
+    CALIBRATION = "calibration"
+    MEMORY_DEVELOPMENT = "memory-development"
+    DEVELOPMENT_VALIDATION = "development-validation"
+    CORE_SAME_REPO = "core-same-repo"
+    CORE_CROSS_REPO = "core-cross-repo"
+    EXTERNAL_ACCEPTANCE = "external-acceptance"
+
+
+class DatasetAdmissionState(StrEnum):
+    FIXTURE = "fixture"
+    ADMITTED = "admitted"
+
+
+class DatasetSourceKind(StrEnum):
+    SYNTHETIC_CONTROL = "synthetic-control"
+    BENCHMARK_INSTANCE = "benchmark-instance"
+    UPSTREAM_INCIDENT = "upstream-incident"
+    BENCHMARK_INSPIRED = "benchmark-inspired"
+
+
+class WorkflowType(StrEnum):
+    ISSUE_FIX = "issue-fix"
+    FEATURE_IMPLEMENTATION = "feature-implementation"
+    CI_REPAIR = "ci-repair"
+    REVIEW_REMEDIATION = "review-remediation"
+    MIGRATION = "migration"
+    SECURITY_FIX = "security-fix"
+
+
+class DifficultyTier(StrEnum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+
+
+class DifficultyAudit(StrictModel):
+    localization: int = Field(ge=0, le=2)
+    reasoning_depth: int = Field(ge=0, le=2)
+    implementation_breadth: int = Field(ge=0, le=2)
+    verification_breadth: int = Field(ge=0, le=2)
+    total: int = Field(ge=0, le=8)
+    tier: DifficultyTier
+    rationale: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_total_and_tier(self) -> DifficultyAudit:
+        expected_total = (
+            self.localization
+            + self.reasoning_depth
+            + self.implementation_breadth
+            + self.verification_breadth
+        )
+        if self.total != expected_total:
+            raise ValueError(
+                f"difficulty total must equal dimension sum: {expected_total}, got {self.total}"
+            )
+        expected_tier = (
+            DifficultyTier.EASY
+            if self.total <= 2
+            else DifficultyTier.MEDIUM
+            if self.total <= 5
+            else DifficultyTier.HARD
+        )
+        if self.tier != expected_tier:
+            raise ValueError(
+                f"difficulty tier for total {self.total} must be {expected_tier.value}"
+            )
+        return self
+
+
+class SourceProvenance(StrictModel):
+    kind: DatasetSourceKind
+    benchmark_family: str | None = None
+    benchmark_revision: str | None = None
+    benchmark_instance_id: str | None = None
+    upstream_repository: str | None = None
+    issue_url: str | None = None
+    pull_request_url: str | None = None
+    upstream_base_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{40}$")
+    resolution_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{40}$")
+    license_spdx: str | None = None
+    retrieved_at: datetime | None = None
+    contamination_risk: Literal["none", "low", "medium", "high", "unknown"] = "unknown"
+    workflow_type: WorkflowType
+    environment_image: str | None = None
+
+    @model_validator(mode="after")
+    def validate_source_identity(self) -> SourceProvenance:
+        if self.kind == DatasetSourceKind.SYNTHETIC_CONTROL:
+            if self.contamination_risk != "none":
+                raise ValueError("synthetic controls must use contamination_risk=none")
+            return self
+
+        required = {
+            "upstream_repository": self.upstream_repository,
+            "upstream_base_commit": self.upstream_base_commit,
+            "license_spdx": self.license_spdx,
+            "retrieved_at": self.retrieved_at,
+        }
+        missing = [name for name, value in required.items() if value is None]
+        if missing:
+            raise ValueError(
+                "non-synthetic dataset source is missing provenance: " + ", ".join(missing)
+            )
+        if self.kind in {
+            DatasetSourceKind.BENCHMARK_INSTANCE,
+            DatasetSourceKind.BENCHMARK_INSPIRED,
+        }:
+            benchmark_required = {
+                "benchmark_family": self.benchmark_family,
+                "benchmark_revision": self.benchmark_revision,
+                "benchmark_instance_id": self.benchmark_instance_id,
+            }
+            benchmark_missing = [
+                name for name, value in benchmark_required.items() if value is None
+            ]
+            if benchmark_missing:
+                raise ValueError(
+                    "benchmark source is missing identity: " + ", ".join(benchmark_missing)
+                )
+        return self
+
+
+class AdmissionEvidence(StrictModel):
+    path: str
+    sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    official: bool
+    base_visible_pass: bool
+    base_hidden_fail: bool
+    reference_pass: bool
+    reference_pass_runs: int = Field(ge=3)
+    rejected_bad_patches: int = Field(ge=3)
+
+    @field_validator("path")
+    @classmethod
+    def validate_evidence_path(cls, value: str) -> str:
+        return safe_relative_path(value)
+
+
+class DatasetTaskEntry(StrictModel):
+    task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    task_version: int = Field(ge=1)
+    path: str
+    role: DatasetRole
+    admission_state: DatasetAdmissionState
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    source: SourceProvenance
+    difficulty: DifficultyAudit
+    failure_pattern_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    solution_lineage_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    admission_evidence: AdmissionEvidence | None = None
+
+    @field_validator("path")
+    @classmethod
+    def validate_task_path(cls, value: str) -> str:
+        return safe_relative_path(value)
+
+    @model_validator(mode="after")
+    def validate_role_eligibility(self) -> DatasetTaskEntry:
+        if self.role == DatasetRole.CALIBRATION:
+            if self.admission_state != DatasetAdmissionState.FIXTURE:
+                raise ValueError("calibration entries must use admission_state=fixture")
+            if self.source.kind != DatasetSourceKind.SYNTHETIC_CONTROL:
+                raise ValueError("calibration entries must be synthetic-control sources")
+            return self
+
+        if self.admission_state != DatasetAdmissionState.ADMITTED:
+            raise ValueError("research dataset entries must be admitted")
+        if self.source.kind not in {
+            DatasetSourceKind.BENCHMARK_INSTANCE,
+            DatasetSourceKind.UPSTREAM_INCIDENT,
+        }:
+            raise ValueError(
+                "research dataset entries require benchmark-instance or upstream-incident sources"
+            )
+        if self.difficulty.tier == DifficultyTier.EASY:
+            raise ValueError("easy tasks are not eligible for the research dataset")
+        if self.source.contamination_risk == "unknown":
+            raise ValueError("research dataset entries require a contamination-risk audit")
+        if self.source.issue_url is None and self.source.pull_request_url is None:
+            raise ValueError(
+                "research dataset entries require an upstream issue or pull request URL"
+            )
+        if self.admission_evidence is None:
+            raise ValueError("research dataset entries require admission evidence")
+        evidence = self.admission_evidence
+        if (
+            not evidence.official
+            or not evidence.base_visible_pass
+            or not evidence.base_hidden_fail
+            or not evidence.reference_pass
+        ):
+            raise ValueError(
+                "research admission evidence must prove the base failure "
+                "and official reference pass"
+            )
+        return self
+
+
+class DatasetPolicy(StrictModel):
+    minimum_repositories: int = Field(default=2, ge=2)
+    same_repo_must_overlap_development: bool = True
+    cross_repo_must_be_disjoint: bool = True
+    research_minimum_tier: Literal["medium"] = "medium"
+
+
+class StressLane(StrictModel):
+    lane_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    benchmark_inspiration: Literal["terminal-bench-2.1"]
+    sentinel_count: int = Field(default=3, ge=1)
+    task_ids: list[str] = Field(default_factory=list)
+    scenarios: list[Literal["context-reset", "worker-kill-after-patch", "test-timeout"]] = Field(
+        min_length=1
+    )
+    include_in_core_metrics: Literal[False] = False
+
+    @model_validator(mode="after")
+    def unique_sentinels(self) -> StressLane:
+        if len(self.task_ids) != len(set(self.task_ids)):
+            raise ValueError("stress lane task_ids must be unique")
+        return self
+
+
+RESEARCH_DATASET_ROLES = {
+    DatasetRole.MEMORY_DEVELOPMENT,
+    DatasetRole.DEVELOPMENT_VALIDATION,
+    DatasetRole.CORE_SAME_REPO,
+    DatasetRole.CORE_CROSS_REPO,
+}
+
+
+class DatasetManifest(StrictModel):
+    schema_version: Literal["dataset-manifest-v1"] = "dataset-manifest-v1"
+    dataset_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]+$")
+    status: Literal["draft", "frozen"] = "draft"
+    calibration_target: int = Field(default=5, ge=1)
+    targets: dict[DatasetRole, int]
+    policy: DatasetPolicy = Field(default_factory=DatasetPolicy)
+    tasks: list[DatasetTaskEntry] = Field(default_factory=list)
+    stress_lanes: list[StressLane] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_registry(self) -> DatasetManifest:
+        if set(self.targets) != RESEARCH_DATASET_ROLES:
+            expected = ", ".join(sorted(role.value for role in RESEARCH_DATASET_ROLES))
+            raise ValueError(f"dataset targets must contain exactly: {expected}")
+        if any(value < 1 for value in self.targets.values()):
+            raise ValueError("dataset target counts must be positive")
+
+        identities = [(entry.task_id, entry.task_version) for entry in self.tasks]
+        if len(identities) != len(set(identities)):
+            raise ValueError("dataset task identities must be unique")
+        paths = [entry.path for entry in self.tasks]
+        if len(paths) != len(set(paths)):
+            raise ValueError("dataset task paths must be unique")
+
+        research = [entry for entry in self.tasks if entry.role in RESEARCH_DATASET_ROLES]
+        source_ids = [
+            (entry.source.benchmark_family, entry.source.benchmark_instance_id)
+            for entry in research
+            if entry.source.benchmark_instance_id is not None
+        ]
+        if len(source_ids) != len(set(source_ids)):
+            raise ValueError("benchmark instances must not be reused across dataset roles")
+        lineages = [entry.solution_lineage_id for entry in research]
+        if len(lineages) != len(set(lineages)):
+            raise ValueError("research solution_lineage_id values must be unique")
+
+        counts = {
+            role: sum(entry.role == role for entry in research) for role in RESEARCH_DATASET_ROLES
+        }
+        exceeded = [role.value for role, count in counts.items() if count > self.targets[role]]
+        if exceeded:
+            raise ValueError("dataset role count exceeds target: " + ", ".join(sorted(exceeded)))
+        if self.status == "frozen":
+            incomplete = [
+                f"{role.value}={counts[role]}/{target}"
+                for role, target in self.targets.items()
+                if counts[role] != target
+            ]
+            if incomplete:
+                raise ValueError("frozen dataset has incomplete roles: " + ", ".join(incomplete))
+            for lane in self.stress_lanes:
+                if len(lane.task_ids) != lane.sentinel_count:
+                    raise ValueError(
+                        f"frozen stress lane {lane.lane_id} requires "
+                        f"{lane.sentinel_count} sentinels"
+                    )
+        return self
+
+
 class Budget(StrictModel):
     max_model_calls: int = Field(default=20, ge=1)
     max_tool_calls: int = Field(default=50, ge=1)

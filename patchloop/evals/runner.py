@@ -12,7 +12,8 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from patchloop.agent.runner import AgentRunner
-from patchloop.contracts import MemoryCondition
+from patchloop.contracts import DatasetRole, MemoryCondition
+from patchloop.dataset import load_dataset_manifest, require_dataset_role
 from patchloop.errors import ContractError
 from patchloop.memory.store import latest_frozen_index
 from patchloop.runtime import runtime_root
@@ -43,6 +44,10 @@ class ExperimentSuite(BaseModel):
     memory_token_budget: int = 2000
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     embedding_revision: str = "PIN_AT_FREEZE"
+    dataset_manifest_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
 
     @model_validator(mode="after")
     def validate_campaign(self) -> ExperimentSuite:
@@ -72,6 +77,8 @@ class ExperimentSuite(BaseModel):
                 raise ValueError("core experiment requires two repetitions")
             if self.embedding_revision == "PIN_AT_FREEZE":
                 raise ValueError("core experiment requires a pinned embedding revision")
+            if self.dataset_manifest_hash is None:
+                raise ValueError("core experiment requires a frozen dataset manifest hash")
         return self
 
 
@@ -83,8 +90,65 @@ def load_suite(path: str | Path) -> ExperimentSuite:
         raise ContractError(f"experiment contract validation failed: {exc}") from exc
 
 
+def _validate_memory_index(index_payload: dict, suite: ExperimentSuite) -> None:
+    if (
+        not index_payload.get("entries")
+        or index_payload["embedding"].get("implementation") != "sentence-transformers"
+    ):
+        raise ContractError("memory campaign requires a non-empty vectorized frozen index")
+    if index_payload["embedding"].get("revision") != suite.embedding_revision:
+        raise ContractError("experiment embedding revision does not match the frozen memory index")
+    if suite.core and index_payload.get("dataset_manifest_hash") != suite.dataset_manifest_hash:
+        raise ContractError(
+            "frozen memory index dataset manifest hash does not match the core experiment"
+        )
+
+
 def evaluate_suite(path: str | Path) -> dict:
     suite = load_suite(path)
+    dataset_identity = None
+    dataset_manifest_path = None
+    if suite.core:
+        dataset, actual_dataset_hash, dataset_manifest_path = load_dataset_manifest()
+        if dataset.status != "frozen":
+            raise ContractError("core experiment requires a frozen dataset manifest")
+        if suite.dataset_manifest_hash != actual_dataset_hash:
+            raise ContractError(
+                "experiment dataset manifest hash does not match the current registry"
+            )
+        dataset_identity = {
+            "dataset_id": dataset.dataset_id,
+            "manifest_hash": actual_dataset_hash,
+        }
+
+    task_rows = []
+    for task in suite.tasks:
+        task_path = Path(task)
+        package = load_task_package(task_path.parent if task_path.is_file() else task_path)
+        if suite.core:
+            entry = require_dataset_role(
+                task_id=package.public.task_id,
+                task_version=package.public.task_version,
+                public_spec_hash=package.public_spec_hash,
+                allowed_roles={
+                    DatasetRole.CORE_SAME_REPO,
+                    DatasetRole.CORE_CROSS_REPO,
+                },
+                manifest_path=dataset_manifest_path,
+            )
+            expected_role = {
+                "same-repo-heldout": DatasetRole.CORE_SAME_REPO,
+                "cross-repo-heldout": DatasetRole.CORE_CROSS_REPO,
+            }.get(package.public.split)
+            if expected_role is None:
+                raise ContractError(f"core task is not held-out: {package.public.task_id}")
+            if entry.role != expected_role:
+                raise ContractError(
+                    f"core task role/split mismatch for {package.public.task_id}: "
+                    f"{entry.role.value} != {expected_role.value}"
+                )
+        task_rows.append((task, package.public.task_id, package.public.split))
+
     if (
         any(condition != MemoryCondition.NO_MEMORY for condition in suite.conditions)
         and latest_frozen_index() is None
@@ -95,25 +159,7 @@ def evaluate_suite(path: str | Path) -> dict:
         condition != MemoryCondition.NO_MEMORY for condition in suite.conditions
     ):
         index_payload = json.loads(frozen_index.read_text(encoding="utf-8"))
-        if (
-            not index_payload.get("entries")
-            or index_payload["embedding"].get("implementation") != "sentence-transformers"
-        ):
-            raise ContractError("memory campaign requires a non-empty vectorized frozen index")
-        if index_payload["embedding"].get("revision") != suite.embedding_revision:
-            raise ContractError(
-                "experiment embedding revision does not match the frozen memory index"
-            )
-    task_rows = []
-    for task in suite.tasks:
-        task_path = Path(task)
-        package = load_task_package(task_path.parent if task_path.is_file() else task_path)
-        if suite.core and package.public.split not in {
-            "same-repo-heldout",
-            "cross-repo-heldout",
-        }:
-            raise ContractError(f"core task is not held-out: {package.public.task_id}")
-        task_rows.append((task, package.public.task_id, package.public.split))
+        _validate_memory_index(index_payload, suite)
     schedule = [
         {
             "task": task,
@@ -173,6 +219,7 @@ def evaluate_suite(path: str | Path) -> dict:
         "completed_runs": sum(row["result"] is not None for row in results),
         "infrastructure_errors": sum(row["infrastructure_error"] is not None for row in results),
         "actual_model_cost_usd": actual_model_cost_usd,
+        "dataset": dataset_identity,
         "suite": suite.model_dump(mode="json"),
         "runs": results,
     }

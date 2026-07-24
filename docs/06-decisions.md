@@ -23,6 +23,9 @@
 | D-013 | `DONE`은 agent submission 완료이며 evaluator 성공이 아니다. | Agent 자기평가와 최종 판정을 분리한다. |
 | D-014 | v1 공식 evaluator 경로는 Windows 11 + WSL2의 Linux Docker container다. | Agent/evaluator 격리와 실행 환경을 고정하며 local backend는 smoke 전용 `official=false`로 유지한다. |
 | D-015 | Replay source는 repository-relative JSONL 경로와 SHA-256을 run manifest에 함께 고정한다. | Offline run과 resume이 같은 recorded response bytes를 사용했음을 검증하고 외부 경로 의존을 막는다. |
+| D-016 | 기존 `mini-data-utils` 다섯 task는 calibration fixture이며 memory, core와 headline에서 제외한다. Research target은 별도의 20개다. | 쉬운 authoring/evaluator 확인 문제를 agent capability나 memory effectiveness evidence로 오해하지 않게 한다. |
+| D-017 | Research admission은 immutable provenance가 있는 benchmark instance 또는 upstream incident, medium 이상 difficulty와 official reference/bad-patch evidence를 요구한다. | 유명 benchmark 포함 여부나 directory 이름 대신 재현 가능한 독립 audit로 데이터 품질을 결정한다. |
+| D-018 | Terminal-Bench 2.1은 세 sentinel stress overlay와 external acceptance의 참고 원천으로 사용하고 core aggregate와 분리한다. 원본 terminal task보다 constrained coding adaptation을 우선한다. | Unrestricted shell, network와 shared verifier를 PatchLoop의 고정 tool/evaluator 계약에 섞지 않으면서 실제 deployment failure pattern을 보존한다. |
 
 ## Provisional defaults
 

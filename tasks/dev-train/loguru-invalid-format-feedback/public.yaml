@@ -1,0 +1,66 @@
+schema_version: task-public-v1
+task_id: loguru-invalid-format-feedback
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/Delgan/loguru.git
+  base_commit: 2abeb0fa6d7be4b0455c6e0b580b1e9dab19005e
+  language: python
+issue:
+  title: Invalid logger format keys do not provide actionable feedback
+  description: |
+    A static format passed to logger.add() can reference a record key that does
+    not exist. The resulting runtime KeyError is currently difficult to diagnose.
+    Improve that feedback so it identifies the missing key, reports the available
+    record keys, and explains how custom values should be supplied and referenced.
+
+    Preserve the existing catch contract: catch=True must report the logging error
+    without propagating it, while catch=False must raise a useful KeyError. Existing
+    valid formats, including fields injected by a configured patcher, must continue
+    to work.
+constraints:
+  allowed_paths:
+    - loguru/_handler.py
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: basic-format-regression
+    command:
+      - python
+      - -c
+      - |
+        from loguru import logger
+        logger.remove()
+        output = []
+        logger.add(output.append, format="{level.name}:{message}", catch=False)
+        logger.info("ready")
+        assert len(output) == 1
+        assert str(output[0]).strip() == "INFO:ready"
+    timeout_seconds: 30
+  - id: patcher-field-regression
+    command:
+      - python
+      - -c
+      - |
+        from loguru import logger
+        logger.remove()
+        output = []
+        logger.configure(patcher=lambda record: record.update(request_id="req-7"))
+        logger.add(output.append, format="{message}:{request_id}", catch=False)
+        logger.info("ready")
+        assert len(output) == 1
+        assert str(output[0]).strip() == "ready:req-7"
+    timeout_seconds: 30
+tags:
+  - swe-rebench
+  - real-repository
+  - error-diagnostics
+  - format-semantics
+  - memory-development

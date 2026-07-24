@@ -32,3 +32,5 @@ retrieval_threshold: 0.72
 memory_token_budget: 2000
 embedding_model: sentence-transformers/all-MiniLM-L6-v2
 embedding_revision: PIN_AT_FREEZE
+# Replace null with the content hash emitted by `patchloop dataset audit` after freeze.
+dataset_manifest_hash: null

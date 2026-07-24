@@ -15,28 +15,42 @@ Harness를 고정하고 memory representation/retrieval만 바꿨을 때 held-ou
 
 Core memory effect와 reliability component effect를 같은 비교표에서 하나의 원인처럼 해석하지 않는다.
 
-## 2. Data splits
+## 2. Dataset roles
 
-| Split | Purpose | May tune on it? |
-| --- | --- | --- |
-| Smoke | Pipeline과 schema의 빠른 검증 | 예, 성능 보고에 사용하지 않음 |
-| Development | Prompt, taxonomy, retrieval, threshold 개발 | 예 |
-| Same-repo held-out | Repository-specific memory의 장기 유지보수 효과 | 아니요 |
-| Cross-repo held-out | Remediation rule의 codebase 간 일반화 | 아니요 |
-| Stress | 동일 task에 deterministic fault 적용 | Fault config만 사전 정의 |
+물리적 task directory와 연구 eligibility를 분리한다. `data/dataset-manifest.yaml`의 role만
+memory와 experiment 사용 가능 여부를 결정한다.
+
+| Role | Purpose | Target | May tune on it? |
+| --- | --- | ---: | --- |
+| Calibration | Pipeline, schema, evaluator boundary 확인 | 5 | Harness 확인만; 성능·memory 보고 금지 |
+| Memory development | Prompt, taxonomy, retrieval, threshold 개발 | 6 | 예 |
+| Development validation | Rendering, no-match, leak validation | 2 | 제한적; memory entry 생성 금지 |
+| Core same-repo | Repository-specific memory 효과 | 6 | 아니요 |
+| Core cross-repo | Remediation rule의 repository 간 일반화 | 6 | 아니요 |
+| External acceptance | 원본 benchmark/외부 workflow 호환성 | 별도 | 아니요; core 집계 금지 |
+
+Research dataset target은 calibration을 제외한 20개다. Core campaign은 그중 held-out 12개만
+사용한다. 세 smoke task와 기존의 쉬운 dev-train task 두 개는 calibration fixture로 유지하고,
+memory generation, core SCRR와 portfolio headline에서 제외한다. 현재 admitted research task는
+0/20이다.
+
+Stress는 별도 task count가 아니다. Admitted research task에서 세 sentinel을 미리 선택해
+deterministic fault를 적용하는 overlay이며 core aggregate에 포함하지 않는다.
 
 ### Minimum MVP size
 
 | Data | Target |
 | --- | ---: |
-| Smoke task | 3~5 |
-| Development task | 8~10 |
-| Held-out task | 12~15 |
-| Repository | 2 |
-| Repetition | condition당 2회 이상 |
+| Calibration fixture | 5 |
+| Research task | 20 |
+| Core held-out task | 12 |
+| Research repository | 2 이상 |
+| Core repetition | condition당 2회 |
+| Stress sentinel | 3 |
 | Fault scenario | 3 |
 
-작은 수의 audited task가 많은 저품질 task보다 우선한다.
+작은 수의 audited research task가 많은 저품질 task보다 우선한다. Calibration evidence가 완전해도
+research readiness를 의미하지 않는다.
 
 ## 3. Task admission and audit
 
@@ -48,7 +62,21 @@ Core memory effect와 reliability component effect를 같은 비교표에서 하
 - Regression check
 - Allowed/forbidden path, dependency, API, diff-size policy
 - Human-reviewed reference patch
-- Audit/difficulty note와 split assignment
+- Source benchmark/issue/PR, revision, license, retrieval timestamp와 contamination risk
+- 4차원 difficulty audit와 role assignment
+- Failure pattern ID와 split 간 중복되지 않는 solution lineage ID
+- Base visible pass/private hidden fail, official reference 3회 통과, 세 개 이상 known-bad rejection을
+  포함한 content-hashed admission evidence
+
+Research task는 medium 이상이어야 하며 `benchmark-instance` 또는 `upstream-incident` provenance를
+가져야 한다. 공개 benchmark의 파일을 그대로 복사하거나 task author의 difficulty label을
+신뢰하는 것으로는 충분하지 않다.
+
+Terminal-Bench 2.1은 세 sentinel stress overlay의 failure pattern과 external acceptance에
+사용한다. Code-writing 후보는 unrestricted terminal task를 그대로 import하지 않고
+PatchLoop의 Python repository, constrained tool, registered check, submitted patch와 separate hidden
+evaluator 계약으로 변환한 뒤 재감사한다. 원본 Harbor run과 adaptation 결과는 core SCRR에
+합치지 않는다.
 
 다음 task는 결과를 보기 전에 제외한다.
 
@@ -154,7 +182,9 @@ Memory utilization과 negative-transfer 원인은 자동 metric만으로 단정�
 
 ## 10. Fault protocol
 
-MVP fault는 deterministic config로 주입한다.
+MVP fault는 admitted research task 중 사전에 고정한 세 sentinel에 deterministic config로
+주입한다. Sentinel 선택, trigger와 schedule은 normal/core 결과를 보기 전에 manifest hash로
+freeze한다.
 
 | Fault | Trigger | Expected behavior |
 | --- | --- | --- |
@@ -163,6 +193,13 @@ MVP fault는 deterministic config로 주입한다.
 | Test timeout | 첫 full-suite check를 강제 timeout | 무한 반복 없이 targeted strategy 또는 environment failure |
 
 후속 stress candidate는 output truncation, forbidden modification, repeated-action loop다. Random flaky behavior 대신 fixed seed와 schedule을 쓴다.
+
+Terminal-Bench 2.1에서 참고하는 것은 async cancellation, long-horizon scheduling, persisted-state
+recovery와 deployment failure의 task pattern이다. Binary forensics, unrestricted Git mutation,
+runtime package download 또는 background service 조작이 필요한 원본 task는 현재 constrained tool
+계약에 직접 넣지 않는다.
+
+Stress run은 core 96-run campaign의 일부가 아니며 normal/core SCRR와 별도 표로 보고한다.
 
 ### Recovery success
 
@@ -189,6 +226,7 @@ Human approval는 autonomous agent 비교를 바꾸므로 main ablation에 넣�
 - Absolute/relative difference와 bootstrap confidence interval
 - Same-repo와 cross-repo 분리
 - Normal과 stress 결과 분리
+- Calibration, external acceptance와 research/core 분모 분리
 - Token, cost, duration, tool call
 - Success flip과 failure flip task 목록
 - Memory가 도움/방해된 대표 trace
@@ -200,6 +238,7 @@ Task 수가 작으면 p-value를 headline으로 삼지 않는다. Effect size, i
 ## 13. Leakage controls
 
 - Held-out task를 development prompt/taxonomy tuning에 사용하지 않는다.
+- Calibration fixture와 external acceptance trace를 memory source로 사용하지 않는다.
 - Held-out evaluation 동안 memory index를 변경하지 않는다.
 - Memory builder가 private spec, hidden test, reference patch를 읽지 못하게 한다.
 - Raw trace condition도 held-out solution trace를 검색 대상으로 사용하지 않는다.

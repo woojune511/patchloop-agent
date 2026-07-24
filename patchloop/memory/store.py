@@ -6,9 +6,11 @@ import json
 import uuid
 from pathlib import Path
 
-from patchloop.contracts import FailurePattern, FailureRecord, MemoryEntry
-from patchloop.errors import ContractError
+from patchloop.contracts import DatasetRole, FailurePattern, FailureRecord, MemoryEntry
+from patchloop.dataset import load_dataset_manifest, require_dataset_role
+from patchloop.errors import ContractError, RecoveryError
 from patchloop.runtime import runtime_root
+from patchloop.state import StateStore
 from patchloop.util import canonical_json, sha256_text, utc_now
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
@@ -20,12 +22,34 @@ def index_root() -> Path:
     return root
 
 
+def _require_memory_source(
+    record: FailureRecord,
+    *,
+    dataset_manifest_path: str | Path | None = None,
+) -> tuple[str, str]:
+    state = StateStore(runtime_root() / "state.sqlite3")
+    try:
+        manifest = state.get_manifest(record.run_id)
+    except RecoveryError as exc:
+        raise ContractError(f"failure source run manifest is unavailable: {record.run_id}") from exc
+    entry = require_dataset_role(
+        task_id=manifest.task_id,
+        task_version=manifest.task_version,
+        public_spec_hash=manifest.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+        manifest_path=dataset_manifest_path,
+    )
+    _, dataset_hash, _ = load_dataset_manifest(dataset_manifest_path)
+    return entry.role.value, dataset_hash
+
+
 def review_failure(
     failure_id: str,
     *,
     split: str = "dev-train",
     approve: bool,
     reviewer: str = "human",
+    dataset_manifest_path: str | Path | None = None,
 ) -> dict:
     if split != "dev-train":
         raise ContractError("only dev-train failures may enter the memory review queue")
@@ -34,6 +58,10 @@ def review_failure(
         raise ContractError(f"unknown failure record: {failure_id}")
     original = path.read_bytes()
     record = FailureRecord.model_validate_json(original)
+    dataset_role, dataset_manifest_hash = _require_memory_source(
+        record,
+        dataset_manifest_path=dataset_manifest_path,
+    )
     record.review_status = "reviewed" if approve else "rejected"
     path.write_text(record.model_dump_json(indent=2), encoding="utf-8")
     audit = {
@@ -43,6 +71,8 @@ def review_failure(
         "reviewed_at": utc_now().isoformat(),
         "pre_review_hash": sha256_text(original.decode("utf-8")),
         "post_review_hash": sha256_text(path.read_text(encoding="utf-8")),
+        "dataset_role": dataset_role,
+        "dataset_manifest_hash": dataset_manifest_hash,
     }
     audit_path = path.with_suffix(".review-audit")
     audit_path.write_text(json.dumps(audit, indent=2), encoding="utf-8")
@@ -113,10 +143,13 @@ def _leak_scan(payload: str) -> list[str]:
 
 
 def build_index_from_failures(
-    split: str = "dev-train", embedding_revision: str | None = None
+    split: str = "dev-train",
+    embedding_revision: str | None = None,
+    dataset_manifest_path: str | Path | None = None,
 ) -> dict:
     if split != "dev-train":
         raise ContractError("memory entries may only be built from the dev-train split")
+    dataset, dataset_manifest_hash, _ = load_dataset_manifest(dataset_manifest_path)
     version = f"idx_{utc_now().strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}"
     source_dir = runtime_root() / "failures" / split
     entries: list[MemoryEntry] = []
@@ -126,12 +159,18 @@ def build_index_from_failures(
         if record.review_status != "reviewed":
             rejected.append({"path": str(path), "reason": "not reviewed"})
             continue
+        _require_memory_source(
+            record,
+            dataset_manifest_path=dataset_manifest_path,
+        )
         entries.append(_entry_from_failure(record, version))
     embeddings = _build_embeddings(entries, embedding_revision)
     payload = {
         "schema_version": "memory-index-v1",
         "index_version": version,
         "split": split,
+        "dataset_id": dataset.dataset_id,
+        "dataset_manifest_hash": dataset_manifest_hash,
         "frozen": False,
         "embedding": {
             "model": EMBEDDING_MODEL,

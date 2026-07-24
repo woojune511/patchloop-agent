@@ -1,13 +1,129 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
+import yaml
 
-from patchloop.contracts import MemoryCondition, Phase
+from patchloop.contracts import FailureRecord, MemoryCondition, Phase
 from patchloop.errors import ContractError
 from patchloop.memory import store as memory_store
 from patchloop.memory.retrieval import retrieve_memory
+from patchloop.runtime import build_manifest
+from patchloop.state import StateStore
+from patchloop.task_loader import load_task_package
+
+
+def _write_dataset_manifest(
+    path: Path,
+    *,
+    role: str,
+    public_spec_hash: str,
+    private_spec_hash: str,
+) -> Path:
+    calibration = role == "calibration"
+    source = (
+        {
+            "kind": "synthetic-control",
+            "contamination_risk": "none",
+            "workflow_type": "issue-fix",
+        }
+        if calibration
+        else {
+            "kind": "upstream-incident",
+            "upstream_repository": "https://github.com/example/project",
+            "upstream_base_commit": "a" * 40,
+            "issue_url": "https://github.com/example/project/issues/1",
+            "license_spdx": "MIT",
+            "retrieved_at": "2026-07-24T00:00:00Z",
+            "contamination_risk": "low",
+            "workflow_type": "issue-fix",
+        }
+    )
+    difficulty = (
+        {
+            "localization": 0,
+            "reasoning_depth": 1,
+            "implementation_breadth": 0,
+            "verification_breadth": 1,
+            "total": 2,
+            "tier": "easy",
+            "rationale": "Calibration boundary fixture.",
+        }
+        if calibration
+        else {
+            "localization": 1,
+            "reasoning_depth": 1,
+            "implementation_breadth": 1,
+            "verification_breadth": 0,
+            "total": 3,
+            "tier": "medium",
+            "rationale": "Requires non-local repository reasoning.",
+        }
+    )
+    entry = {
+        "task_id": "duration-minute-boundary",
+        "task_version": 1,
+        "path": "tasks/dev-train/duration-minute-boundary",
+        "role": role,
+        "admission_state": "fixture" if calibration else "admitted",
+        "public_spec_hash": public_spec_hash,
+        "private_spec_hash": private_spec_hash,
+        "source": source,
+        "difficulty": difficulty,
+        "failure_pattern_id": "boundary-semantics",
+        "solution_lineage_id": "duration-minute-v1",
+        "admission_evidence": (
+            None
+            if calibration
+            else {
+                "path": "reports/example.json",
+                "sha256": "sha256:" + ("b" * 64),
+                "official": True,
+                "base_visible_pass": True,
+                "base_hidden_fail": True,
+                "reference_pass": True,
+                "reference_pass_runs": 3,
+                "rejected_bad_patches": 3,
+            }
+        ),
+    }
+    payload = {
+        "schema_version": "dataset-manifest-v1",
+        "dataset_id": "memory-role-test",
+        "status": "draft",
+        "calibration_target": 1,
+        "targets": {
+            "memory-development": 1,
+            "development-validation": 1,
+            "core-same-repo": 1,
+            "core-cross-repo": 1,
+        },
+        "tasks": [entry],
+        "stress_lanes": [],
+    }
+    path.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
+    return path
+
+
+def _write_failure_source(tmp_path: Path) -> tuple[str, str, str]:
+    package = load_task_package("tasks/dev-train/duration-minute-boundary")
+    manifest = build_manifest(package, run_id="run_memory_role_test")
+    StateStore(tmp_path / "state.sqlite3").create_run(manifest)
+    record = FailureRecord(
+        failure_id="fail_memory_role_test",
+        run_id=manifest.run_id,
+        primary_cause="hidden-acceptance-failure",
+        phase=Phase.REVIEW,
+        confidence=1.0,
+        classification_method="test",
+    )
+    failure_dir = tmp_path / "failures" / "dev-train"
+    failure_dir.mkdir(parents=True)
+    failure_path = failure_dir / f"{record.failure_id}.json"
+    failure_path.write_text(record.model_dump_json(indent=2), encoding="utf-8")
+    return record.failure_id, package.public_spec_hash, package.private_spec_hash
 
 
 def test_selective_memory_has_auditable_no_match(tmp_path) -> None:
@@ -54,3 +170,56 @@ def test_empty_memory_index_cannot_be_frozen(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(memory_store, "index_root", lambda: root)
     with pytest.raises(ContractError, match="empty"):
         memory_store.freeze_index("idx_empty", "abc123")
+
+
+def test_calibration_failure_cannot_be_approved_as_memory_source(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(memory_store, "runtime_root", lambda: tmp_path)
+    failure_id, public_hash, private_hash = _write_failure_source(tmp_path)
+    dataset_path = _write_dataset_manifest(
+        tmp_path / "dataset.yaml",
+        role="calibration",
+        public_spec_hash=public_hash,
+        private_spec_hash=private_hash,
+    )
+    failure_path = tmp_path / "failures" / "dev-train" / f"{failure_id}.json"
+    original = failure_path.read_bytes()
+
+    with pytest.raises(ContractError, match="dataset role calibration is not eligible"):
+        memory_store.review_failure(
+            failure_id,
+            approve=True,
+            dataset_manifest_path=dataset_path,
+        )
+
+    assert failure_path.read_bytes() == original
+
+
+def test_memory_index_records_admitted_dataset_identity(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(memory_store, "runtime_root", lambda: tmp_path)
+    failure_id, public_hash, private_hash = _write_failure_source(tmp_path)
+    dataset_path = _write_dataset_manifest(
+        tmp_path / "dataset.yaml",
+        role="memory-development",
+        public_spec_hash=public_hash,
+        private_spec_hash=private_hash,
+    )
+    review = memory_store.review_failure(
+        failure_id,
+        approve=True,
+        dataset_manifest_path=dataset_path,
+    )
+    monkeypatch.setattr(
+        memory_store,
+        "_build_embeddings",
+        lambda entries, revision: {entry.memory_id: [1.0, 0.0] for entry in entries},
+    )
+
+    built = memory_store.build_index_from_failures(
+        embedding_revision="test-revision",
+        dataset_manifest_path=dataset_path,
+    )
+    payload = json.loads(Path(built["path"]).read_text(encoding="utf-8"))
+
+    assert review["dataset_role"] == "memory-development"
+    assert payload["dataset_id"] == "memory-role-test"
+    assert payload["dataset_manifest_hash"] == review["dataset_manifest_hash"]

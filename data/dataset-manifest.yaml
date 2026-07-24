@@ -1,0 +1,135 @@
+schema_version: dataset-manifest-v1
+dataset_id: patchloop-benchmark-v1
+status: draft
+calibration_target: 5
+targets:
+  memory-development: 6
+  development-validation: 2
+  core-same-repo: 6
+  core-cross-repo: 6
+policy:
+  minimum_repositories: 2
+  same_repo_must_overlap_development: true
+  cross_repo_must_be_disjoint: true
+  research_minimum_tier: medium
+tasks:
+  - task_id: config-falsy-override
+    task_version: 1
+    path: tasks/smoke/config-falsy-override
+    role: calibration
+    admission_state: fixture
+    public_spec_hash: sha256:581e592642862cf6a5e286e032a923480d6b2006784d2bda1cac96b2ff5bd578
+    private_spec_hash: sha256:a15cc52fbad7ff8483786d4b8884d026d755dd8695275d06a9b2ec8906cfe162
+    source:
+      kind: synthetic-control
+      contamination_risk: none
+      workflow_type: issue-fix
+    difficulty:
+      localization: 0
+      reasoning_depth: 1
+      implementation_breadth: 0
+      verification_breadth: 1
+      total: 2
+      tier: easy
+      rationale: One localized truthiness bug with a narrow regression surface.
+    failure_pattern_id: falsy-value-semantics
+    solution_lineage_id: fixture-config-falsy-override-v1
+
+  - task_id: csv-quoted-newline
+    task_version: 1
+    path: tasks/smoke/csv-quoted-newline
+    role: calibration
+    admission_state: fixture
+    public_spec_hash: sha256:e396266522131f4aabfaae3fd140e33c60eaab17dfdd7bca18be03be3a93e04d
+    private_spec_hash: sha256:c2174e536111cec56d29ad59bb0d547bd38febfff156bb7ca63cdc42c7ef65be
+    source:
+      kind: synthetic-control
+      contamination_risk: none
+      workflow_type: issue-fix
+    difficulty:
+      localization: 0
+      reasoning_depth: 1
+      implementation_breadth: 0
+      verification_breadth: 1
+      total: 2
+      tier: easy
+      rationale: A small parser boundary case intentionally designed for evaluator smoke.
+    failure_pattern_id: quoted-record-state
+    solution_lineage_id: fixture-csv-quoted-newline-v1
+
+  - task_id: path-prefix-boundary
+    task_version: 1
+    path: tasks/smoke/path-prefix-boundary
+    role: calibration
+    admission_state: fixture
+    public_spec_hash: sha256:57ecb70019f4b68c2605e6b8e4813ac80b9b579085f0d5531f09964bd584421b
+    private_spec_hash: sha256:261f245167b171545e186cd56791bc0055d1fdc143b5c0021818a16031cbba40
+    source:
+      kind: synthetic-control
+      contamination_risk: none
+      workflow_type: issue-fix
+    difficulty:
+      localization: 0
+      reasoning_depth: 1
+      implementation_breadth: 0
+      verification_breadth: 1
+      total: 2
+      tier: easy
+      rationale: A localized prefix-boundary defect used to exercise scope and hidden checks.
+    failure_pattern_id: path-component-boundary
+    solution_lineage_id: fixture-path-prefix-boundary-v1
+
+  - task_id: duration-minute-boundary
+    task_version: 1
+    path: tasks/dev-train/duration-minute-boundary
+    role: calibration
+    admission_state: fixture
+    public_spec_hash: sha256:bcd131c3449e9d9b8c193847a3bced62e75934bd53ed49747f3847abec1f5a6b
+    private_spec_hash: sha256:27b0045d5b3c8e0a303f24115e75a8b49cf840750091905994a6f08dd4b148bc
+    source:
+      kind: synthetic-control
+      contamination_risk: none
+      workflow_type: issue-fix
+    difficulty:
+      localization: 0
+      reasoning_depth: 1
+      implementation_breadth: 0
+      verification_breadth: 1
+      total: 2
+      tier: easy
+      rationale: A single boundary condition retained only as a deterministic harness fixture.
+    failure_pattern_id: duration-unit-boundary
+    solution_lineage_id: fixture-duration-minute-boundary-v1
+
+  - task_id: csv-final-record-flush
+    task_version: 1
+    path: tasks/dev-train/csv-final-record-flush
+    role: calibration
+    admission_state: fixture
+    public_spec_hash: sha256:d6c650000c05b3c8def5d9bab0acda7d4d9cac3c76c646de4d7b6557e3c690ce
+    private_spec_hash: sha256:54acbaa13d31b61c9ff0402956f1c04297912e0b973d8abe57c639ffe3bed5bf
+    source:
+      kind: synthetic-control
+      contamination_risk: none
+      workflow_type: issue-fix
+    difficulty:
+      localization: 0
+      reasoning_depth: 1
+      implementation_breadth: 0
+      verification_breadth: 1
+      total: 2
+      tier: easy
+      rationale: A compact end-of-input parser bug retained only for harness calibration.
+    failure_pattern_id: parser-eof-flush
+    solution_lineage_id: fixture-csv-final-record-flush-v1
+
+stress_lanes:
+  - lane_id: terminal-recovery-v1
+    benchmark_inspiration: terminal-bench-2.1
+    sentinel_count: 3
+    task_ids: []
+    scenarios:
+      - context-reset
+      - worker-kill-after-patch
+      - test-timeout
+    include_in_core_metrics: false

@@ -83,6 +83,64 @@ audit:
 
 `task_id + task_version + base_commit`은 평가 도중 immutable하다. Public/private의 ID와 version이 일치하지 않으면 실행을 거부한다.
 
+### Dataset registry and eligibility
+
+Task package가 evaluator를 통과했다는 사실만으로 memory 또는 core experiment에 사용할 수 있는 것은
+아니다. `data/dataset-manifest.yaml`이 task의 연구 역할, source provenance, difficulty, solution
+lineage와 admission evidence를 별도로 등록한다. Directory 이름이 아니라 manifest의 `role`이
+eligibility를 결정한다.
+
+초기 manifest의 역할과 목표는 다음과 같다.
+
+| Role | Target | Eligibility |
+| --- | ---: | --- |
+| `calibration` | 5 | Harness와 evaluator 확인 전용; memory/core/headline에서 제외 |
+| `memory-development` | 6 | Reviewed failure만 memory source로 사용 가능 |
+| `development-validation` | 2 | Rendering, no-match, leak 검증 전용; memory source에서 제외 |
+| `core-same-repo` | 6 | Frozen core experiment 전용 |
+| `core-cross-repo` | 6 | Frozen core experiment 전용 |
+| `external-acceptance` | 별도 | 호환성 evidence 전용; core aggregate에서 제외 |
+
+따라서 research target은 calibration을 제외한 20개다. 현재 존재하는 세 smoke task와 역사적으로
+`dev-train` 경로에 작성된 두 쉬운 task는 모두 `calibration` fixture다. 이 다섯 package의
+reference/bad-patch evidence는 유효하지만 admitted research task 수에는 포함하지 않는다.
+
+Research entry는 최소한 다음을 만족해야 한다.
+
+- `benchmark-instance` 또는 `upstream-incident` source와 immutable upstream commit
+- Benchmark revision/instance ID 또는 issue/PR URL, retrieval timestamp와 SPDX license
+- Contamination risk, workflow type, environment image provenance
+- Medium 이상으로 사전 판정된 difficulty와 고유 `solution_lineage_id`
+- Base visible pass/private hidden fail, 동일 reference의 official Docker 3회 통과와 세 개 이상의
+  representative bad-patch rejection을 가리키는 content-hashed admission evidence
+
+공개 benchmark의 instruction, solution과 verifier를 그대로 복사하는 것은 admission이 아니다.
+Terminal-Bench 계열은 PatchLoop의 registered-check-only, patch-producing Python workflow와
+분리 evaluator 경계로 변환해 독립적으로 재감사한다. 원본 benchmark 실행은
+`external-acceptance` evidence로만 취급한다. 단순히 pattern만 재구성한
+`benchmark-inspired` fixture는 출처를 기록할 수 있지만 그 사실만으로 research eligibility를
+얻지 못한다.
+
+Dataset manifest는 freeze 시 role별 목표를 정확히 채워야 하며 manifest content hash를 experiment
+manifest에 기록한다. Calibration entry, research entry와 external acceptance 결과를 같은 headline
+분모에 합치지 않는다.
+
+### Stress lane
+
+Stress는 새로운 core split이 아니라 admitted research task 중 사전 고정한 세 sentinel에 fault를
+덧씌우는 overlay다. 초기 lane은 Terminal-Bench 2.1의 long-horizon/container failure pattern을
+참고하되 다음 세 deterministic scenario만 사용한다.
+
+```text
+context-reset
+worker-kill-after-patch
+test-timeout
+```
+
+Stress lane은 `sentinel_count: 3`과 `include_in_core_metrics: false`를 고정한다. Fault-derived run은
+원본 task identity와 manifest를 보존하면서 새 run ID를 사용하고, core memory 결과와 별도로
+보고한다.
+
 ### Registered check
 
 ```yaml
