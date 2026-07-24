@@ -67,12 +67,23 @@ class AgentRunner:
         replay_hash = None
         if model.startswith("replay:"):
             normalized_model, _, replay_hash = self._replay_identity(model)
-        docker_sandbox = DockerSandbox()
+        docker_sandbox = self._docker_sandbox(package)
         backend = (
             "docker"
             if DockerSandbox.available() and docker_sandbox.image_identity() is not None
             else "local"
         )
+        if package.environment is not None:
+            image_identity = docker_sandbox.image_identity()
+            if backend != "docker":
+                raise ContractError(
+                    "task requires its digest-pinned Docker evaluator image, but it is unavailable"
+                )
+            if image_identity != package.environment.image_digest:
+                raise ContractError(
+                    "task evaluator image identity does not match environment.yaml: "
+                    f"{image_identity} != {package.environment.image_digest}"
+                )
         if manifest is None:
             if normalized_model == "mock":
                 provider = "mock"
@@ -136,7 +147,16 @@ class AgentRunner:
         adapter: ModelAdapter,
     ) -> dict[str, Any]:
         package = load_task_package(task_dir)
-        sandbox = DockerSandbox() if manifest.sandbox_backend == "docker" else LocalSandbox()
+        sandbox = (
+            self._docker_sandbox(package)
+            if manifest.sandbox_backend == "docker"
+            else LocalSandbox()
+        )
+        if (
+            package.environment is not None
+            and manifest.evaluator_image_digest != package.environment.image_digest
+        ):
+            raise ContractError("run manifest evaluator image does not match the task environment")
         gateway_sandbox = (
             TimeoutOnceSandbox(sandbox) if manifest.fault.type == "test-timeout" else sandbox
         )
@@ -543,6 +563,12 @@ class AgentRunner:
             for event in self.state.list_events(run_id)
             if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool")
         ]
+
+    @staticmethod
+    def _docker_sandbox(package) -> DockerSandbox:
+        if package.environment is not None:
+            return DockerSandbox(package.environment.evaluator_image)
+        return DockerSandbox()
 
     def _usage(self, run_id: str) -> Usage:
         usage = Usage()

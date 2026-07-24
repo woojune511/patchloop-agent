@@ -8,7 +8,7 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from patchloop.contracts import PrivateTask, PublicTask, TaskPackage
+from patchloop.contracts import PrivateTask, PublicTask, TaskEnvironment, TaskPackage
 from patchloop.errors import ContractError
 from patchloop.util import ensure_within, sha256_bytes, sha256_json
 
@@ -32,6 +32,12 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
         private_data = _load_yaml(root / "private.yaml")
         public = PublicTask.model_validate(public_data)
         private = PrivateTask.model_validate(private_data)
+        environment_path = root / "environment.yaml"
+        environment = (
+            TaskEnvironment.model_validate(_load_yaml(environment_path))
+            if environment_path.is_file()
+            else None
+        )
     except ValidationError as exc:
         raise ContractError(f"task contract validation failed: {exc}") from exc
 
@@ -57,6 +63,7 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
         return TaskPackage(
             public=public,
             private=private,
+            environment=environment,
             root=str(root),
             public_spec_hash=sha256_json(public.model_dump(mode="json")),
             private_spec_hash=sha256_json(private.model_dump(mode="json")),

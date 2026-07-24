@@ -22,6 +22,7 @@
 tasks/{split}/{task_id}/
 ├── public.yaml
 ├── private.yaml          # agent에 mount하지 않음
+├── environment.yaml      # optional digest-pinned evaluator image
 ├── hidden/               # agent에 mount하지 않음
 ├── reference.patch       # agent와 memory builder에 노출하지 않음
 └── audit.md              # evaluator/editor 전용
@@ -82,6 +83,12 @@ audit:
 ```
 
 `task_id + task_version + base_commit`은 평가 도중 immutable하다. Public/private의 ID와 version이 일치하지 않으면 실행을 거부한다.
+
+Benchmark dependency environment가 필요한 package는 별도 `task-environment-v1` 파일로
+`repository@sha256:<digest>` evaluator image와 observed image digest를 함께 고정한다. Mutable tag는
+source provenance로만 남기고 실행에는 사용하지 않는다. Environment file은 solution이나 hidden
+assertion을 포함하지 않으며, 실제 run manifest의 `evaluator_image_digest`가 선언 digest와 다르면
+실행을 거부한다. Environment file이 없는 calibration fixture만 기본 PatchLoop image를 사용한다.
 
 ### Dataset registry and eligibility
 

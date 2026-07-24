@@ -161,9 +161,23 @@ class PrivateTask(StrictModel):
     audit: AuditSpec = Field(default_factory=AuditSpec)
 
 
+class TaskEnvironment(StrictModel):
+    schema_version: Literal["task-environment-v1"] = "task-environment-v1"
+    evaluator_image: str = Field(min_length=1)
+    image_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    source_image_tag: str | None = None
+
+    @model_validator(mode="after")
+    def require_digest_pinned_image(self) -> TaskEnvironment:
+        if not self.evaluator_image.endswith(f"@{self.image_digest}"):
+            raise ValueError("evaluator_image must end with the declared immutable image digest")
+        return self
+
+
 class TaskPackage(StrictModel):
     public: PublicTask
     private: PrivateTask
+    environment: TaskEnvironment | None = None
     root: str
     public_spec_hash: str
     private_spec_hash: str

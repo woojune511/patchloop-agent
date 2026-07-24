@@ -31,6 +31,16 @@ constraints:
   dependency_changes_allowed: false
   public_api_changes_allowed: false
 visible_checks:
+  - id: upstream-format-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - -q
+      - -p
+      - no:cacheprovider
+      - tests/test_add_option_format.py
+    timeout_seconds: 60
   - id: basic-format-regression
     command:
       - python

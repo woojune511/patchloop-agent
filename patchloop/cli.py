@@ -13,7 +13,7 @@ import typer
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import MemoryCondition
-from patchloop.errors import PatchLoopError
+from patchloop.errors import ContractError, PatchLoopError
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import build_manifest, repository_root, runtime_root
 from patchloop.sandbox import DockerSandbox, LocalSandbox
@@ -138,7 +138,7 @@ def validate_task(task_dir: Annotated[Path, typer.Argument(exists=True, file_oka
 
 @dataset_app.command("audit")
 def dataset_audit() -> None:
-    """Fail closed until all 23 task packages and six OSS selections are audited."""
+    """Audit calibration, research-role admission, and stress-lane readiness."""
     from patchloop.dataset import audit_dataset
 
     result = audit_dataset()
@@ -158,7 +158,16 @@ def eval_task(
         package = load_task_package(task_dir)
         if backend not in {"local", "docker"}:
             raise typer.BadParameter("backend must be local or docker")
-        sandbox = LocalSandbox() if backend == "local" else DockerSandbox()
+        evaluator_image = (
+            package.environment.evaluator_image if package.environment is not None else None
+        )
+        sandbox = (
+            LocalSandbox()
+            if backend == "local"
+            else DockerSandbox(evaluator_image)
+            if evaluator_image
+            else DockerSandbox()
+        )
         if backend == "docker" and not DockerSandbox.available():
             _emit({"ok": False, "error": "DOCKER_UNAVAILABLE"})
             raise typer.Exit(code=2)
@@ -173,6 +182,15 @@ def eval_task(
             raise typer.Exit(code=2)
         root = runtime_root()
         image_identity = sandbox.image_identity() if isinstance(sandbox, DockerSandbox) else None
+        if (
+            package.environment is not None
+            and backend == "docker"
+            and image_identity != package.environment.image_digest
+        ):
+            raise ContractError(
+                "task evaluator image identity does not match environment.yaml: "
+                f"{image_identity} != {package.environment.image_digest}"
+            )
         manifest = build_manifest(
             package,
             sandbox_backend=backend,

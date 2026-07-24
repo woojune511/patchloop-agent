@@ -18,6 +18,11 @@ def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
     assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
     assert package.public.constraints.allowed_paths == ["loguru/_handler.py"]
     assert package.public.constraints.max_diff_lines == 60
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
 
 
 def test_loguru_public_contract_excludes_evaluator_only_material() -> None:

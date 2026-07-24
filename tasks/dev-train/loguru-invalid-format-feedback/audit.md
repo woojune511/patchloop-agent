@@ -7,10 +7,13 @@
 - Base commit: `2abeb0fa6d7be4b0455c6e0b580b1e9dab19005e`
 - Resolution commit: `b782e56fcf07fecf9545ff6ee2350baacb0968ce`
 - License: MIT
+- Evaluator image:
+  `swerebench/sweb.eval.x86_64.delgan_1776_loguru-1451@sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db`
 - Workflow: real-repository issue fix
 - Failure pattern: an internal catch boundary removes diagnostic context
 - Expected source change: `loguru/_handler.py`
-- Public regression: ordinary static formats and patcher-injected top-level fields
+- Public regression: upstream `tests/test_add_option_format.py`, ordinary static formats, and
+  patcher-injected top-level fields
 - Private acceptance: actionable feedback in both catch modes, complete record-key context,
   and dynamic patcher-key compatibility
 - Leakage control: the benchmark gold patch, upstream test patch, and hidden assertions remain
