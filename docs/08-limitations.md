@@ -12,6 +12,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   six of six runs accepted with complete persisted usage and trace evidence
 - Duration-minute boundary and CSV EOF-finalization fixture references accepted, with four known-bad
   patches rejected per task by the pinned Docker evaluator
+- First SWE-rebench-derived research task admitted: Loguru #1451, with an immutable official image,
+  three reference passes, 20 upstream regressions, one base hidden failure and five known-bad rejections
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -28,7 +30,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 0/20: memory-development 0/6, development-validation 0/2,
+- Admitted research tasks are 1/20: memory-development 1/6, development-validation 0/2,
   same-repo core 0/6 and cross-repo core 0/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is

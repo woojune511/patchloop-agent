@@ -8,8 +8,10 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 
 현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-24에는
 세 smoke task를 mock과 content-hashed replay로 각각 실행한 6개 agent run이 고정된 Linux Docker
-evaluator에서 모두 공식 통과했다. 실제 OpenAI 96-run campaign과 23개 전체 dataset audit 결과는
-아직 주장하지 않는다. 미실행 gate는 [Current limitations](docs/08-limitations.md)에 분리했다.
+evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
+SWE-rebench의 실제 Loguru issue 한 개를 첫 research task로 admission했다. 실제 OpenAI 96-run
+campaign과 나머지 19개 research task는 아직 완료하지 않았다. 미실행 gate는
+[Current limitations](docs/08-limitations.md)에 분리했다.
 
 ## 구현된 핵심 경로
 
@@ -27,11 +29,13 @@ public.yaml → stateless context builder → model adapter
 - Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff` 도구만 허용
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
 - `action_id + input_hash` idempotency, context reset과 worker-kill-derived run
-- Reviewed dev-train failure 전용 structured/raw memory index, threshold/no-match audit
+- Dataset role이 `memory-development`인 reviewed failure 전용 structured/raw memory index
 - Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
-- 독립 content hash를 가진 CSV, config merge, path boundary smoke task 3개
-- time-formatting boundary와 CSV EOF finalization을 다루는 dev-train task 2개
+- Memory/core/headline에서 제외되는 content-addressed calibration fixture 5개
+- SWE-rebench revision, upstream issue/PR/commit, MIT license와 Docker digest를 고정한
+  `loguru-invalid-format-feedback` research task
+- Base hidden failure, upstream regression 20개, reference 3회와 known-bad 5종을 기록한 admission evidence
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 
@@ -77,6 +81,7 @@ Viewer는 `http://127.0.0.1:8000`에서 run manifest, trace, patch, verifier 결
 ```text
 patchloop doctor
 patchloop task validate <task-dir>
+patchloop dataset audit
 patchloop eval-task <task-dir> --patch <patch> [--backend local|docker]
 patchloop run --task <public.yaml> --model <mock|openai|replay:path> --memory <condition>
 patchloop resume --run-id <run-id>
@@ -97,6 +102,7 @@ Responses API adapter는 host process에서만 API key를 읽고 container, chec
 실패한다.
 
 - 정확히 12개 held-out task, 네 memory 조건, task당 2회
+- frozen dataset manifest content hash와 role 검증
 - exact embedding revision
 - dated price estimate가 $150 상한 이하
 - `live_cost_approved: true`라는 명시적 승인

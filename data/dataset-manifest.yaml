@@ -123,6 +123,48 @@ tasks:
     failure_pattern_id: parser-eof-flush
     solution_lineage_id: fixture-csv-final-record-flush-v1
 
+  - task_id: loguru-invalid-format-feedback
+    task_version: 1
+    path: tasks/dev-train/loguru-invalid-format-feedback
+    role: memory-development
+    admission_state: admitted
+    public_spec_hash: sha256:4839d8e5e1e57efa2a33a458ab0fe839d5ef4200bbe53b0f56683d8b8b98e7ea
+    private_spec_hash: sha256:ec2ed909ae10910d86b84469a79a2bd737ab034c57cd1d0117b5a97ed630a6bf
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: delgan__loguru-1451
+      upstream_repository: Delgan/loguru
+      issue_url: https://github.com/Delgan/loguru/issues/1450
+      pull_request_url: https://github.com/Delgan/loguru/pull/1451
+      upstream_base_commit: 2abeb0fa6d7be4b0455c6e0b580b1e9dab19005e
+      resolution_commit: b782e56fcf07fecf9545ff6ee2350baacb0968ce
+      license_spdx: MIT
+      retrieved_at: 2026-07-24T08:15:14Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.delgan_1776_loguru-1451@sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db
+    difficulty:
+      localization: 1
+      reasoning_depth: 1
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 5
+      tier: medium
+      rationale: The fix spans the handler exception boundary, two catch modes, diagnostics, and patcher-injected record keys.
+    failure_pattern_id: diagnostic-context-loss
+    solution_lineage_id: delgan-loguru-pr-1451
+    admission_evidence:
+      path: reports/docker-gate/research-loguru-invalid-format-feedback.json
+      sha256: sha256:6e294742e037f5d972d015063ba93687f3a46e2e04fa79586d5ea499ed07b6aa
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 5
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

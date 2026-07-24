@@ -14,7 +14,8 @@ from patchloop.contracts import (
     SourceProvenance,
     WorkflowType,
 )
-from patchloop.dataset import audit_dataset
+from patchloop.dataset import audit_dataset, require_dataset_role
+from patchloop.task_loader import load_task_package
 
 
 def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
@@ -23,14 +24,16 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["calibration_ready"] is True
     assert result["research_ready"] is False
     assert result["stress_ready"] is False
-    assert result["task_count"] == 5
+    assert result["task_count"] == 6
     assert result["calibration_task_count"] == 5
-    assert result["research_task_count"] == 0
-    assert result["candidate_package_count"] == 1
-    assert result["unregistered_task_paths"] == ["tasks/dev-train/loguru-invalid-format-feedback"]
-    assert result["role_counts"] == {"calibration": 5}
-    assert result["missing"]["memory-development"] == 6
+    assert result["research_task_count"] == 1
+    assert result["candidate_package_count"] == 0
+    assert result["unregistered_task_paths"] == []
+    assert result["role_counts"] == {"calibration": 5, "memory-development": 1}
+    assert result["missing"]["memory-development"] == 5
     assert result["missing"]["core-cross-repo"] == 6
+    assert result["repositories"] == ["delgan/loguru"]
+    assert result["repository_policy_passed"] is False
     assert result["headline_excluded_task_ids"] == [
         "config-falsy-override",
         "csv-final-record-flush",
@@ -39,6 +42,30 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
         "path-prefix-boundary",
     ]
     assert result["errors"] == []
+
+
+def test_first_research_task_has_real_benchmark_admission_evidence() -> None:
+    result = audit_dataset("tasks")
+    assert result["research_task_count"] == 1
+    assert result["source_counts"] == {
+        "synthetic-control": 5,
+        "benchmark-instance": 1,
+    }
+    assert result["difficulty_counts"] == {"easy": 5, "medium": 1}
+
+
+def test_first_research_task_is_eligible_only_for_memory_development() -> None:
+    package = load_task_package("tasks/dev-train/loguru-invalid-format-feedback")
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.role == DatasetRole.MEMORY_DEVELOPMENT
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 5
 
 
 def test_easy_task_cannot_be_admitted_to_research_dataset() -> None:

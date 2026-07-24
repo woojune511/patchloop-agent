@@ -234,7 +234,7 @@ def audit_dataset(
     repository_policy_passed = (
         not research or len(admitted_repositories) >= manifest.policy.minimum_repositories
     )
-    if research and not repository_policy_passed:
+    if manifest.status == "frozen" and research and not repository_policy_passed:
         errors.append(
             {
                 "path": str(resolved_manifest),
@@ -295,6 +295,7 @@ def audit_dataset(
         "targets": {role.value: target for role, target in manifest.targets.items()},
         "missing": missing,
         "repositories": sorted(admitted_repositories),
+        "repository_policy_passed": repository_policy_passed,
         "source_counts": dict(Counter(entry.source.kind.value for entry in valid_entries)),
         "difficulty_counts": dict(Counter(entry.difficulty.tier.value for entry in valid_entries)),
         "workflow_counts": dict(

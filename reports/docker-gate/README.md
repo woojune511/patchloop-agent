@@ -7,7 +7,13 @@ patches were rejected. Every run used the same pinned Linux image. The summaries
 and hashes of their immutable manifest, result and provenance files.
 
 The source artifacts remain under `.patchloop/artifacts/runs/<run-id>` on the machine that executed the
-gate and are intentionally ignored as mutable runtime state. These summaries cover the complete three-task
-smoke split; they are not the planned 23-task dataset or 96-run model campaign. CSV manifests are pinned
+gate and are intentionally ignored as mutable runtime state. The calibration summaries cover the original
+three-task smoke split; they are not the planned 20-task research dataset or 96-run model campaign. CSV manifests are pinned
 to baseline commit `cf38649bbbf458316f38e64a579fd0196c782237`; config/path manifests are pinned to task
 commit `024a3a375dc9514be6d127199d10f7115659eecf`.
+
+`research-loguru-invalid-format-feedback.json` is the first research admission summary. It pins
+SWE-rebench instance `delgan__loguru-1451`, upstream base/resolution commits and evaluator image
+`sha256:181bd51...`. On harness commit `d7cdd6fa...`, the reference passed three times, the no-op failed
+hidden acceptance, five known-bad patches were rejected, and the upstream format regression file reported
+20 passes. This is deterministic evaluator evidence with zero model/API calls, not agent performance.

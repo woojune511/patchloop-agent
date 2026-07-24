@@ -28,17 +28,23 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
+The first admitted research task is `loguru-invalid-format-feedback`, derived from SWE-rebench
+`delgan__loguru-1451` and upstream Loguru issue #1450 / PR #1451. It uses the exact upstream base commit,
+an MIT license audit and a digest-pinned SWE-rebench image. Admission evidence contains three reference
+passes, one base hidden failure, 20 upstream regression tests and five independently authored known-bad
+patch rejections.
+
 ## Research dataset target
 
 The research target is 20 newly admitted tasks, separate from the five calibration fixtures.
 
 | Manifest role | Target | Memory source | Currently admitted |
 | --- | ---: | --- | ---: |
-| Memory development | 6 | reviewed failures only | 0 |
+| Memory development | 6 | reviewed failures only | 1 |
 | Development validation | 2 | no | 0 |
 | Core same-repo | 6 | prohibited | 0 |
 | Core cross-repo | 6 | prohibited | 0 |
-| **Research total** | **20** |  | **0** |
+| **Research total** | **20** |  | **1** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,
@@ -53,7 +59,7 @@ fixture or a row in a candidate ledger is not an admitted research task.
 
 `astanin/python-tabulate` rows in `oss-candidate-ledger.csv` are candidate inventory only. They must pass
 source, license, environment, issue/test alignment, dependency, base-test, hidden-acceptance, difficulty
-and solution-lineage audits before registration. No OSS task is currently admitted.
+and solution-lineage audits before registration. No `python-tabulate` task is currently admitted.
 
 `benchmark-candidate-ledger.csv` records the pinned SWE-style shortlist and
 `terminal-bench-pattern-ledger.csv` records direct-import/adaptation decisions. Candidate rows are not

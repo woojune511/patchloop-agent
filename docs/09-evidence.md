@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv lock --check` | pass, 78 packages resolved |
 | Static analysis | `uv run ruff check .` | pass |
-| Tests | `uv run pytest -q -ra` | 70 pass, including Docker isolation and two dev-train admission suites |
+| Tests | `uv run pytest -q` | 83 pass, 2 skipped; dataset-role and task-environment gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | all five audited packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: 5/23, smoke 3/3, dev-train 2/6 |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus one research package pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 1/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Evaluator | three references plus 14 bad patches on Docker | all references pass; every bad patch rejected; all `official=true` |
+| Research admission | Loguru reference ×3, no-op and five bad patches | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -100,7 +100,7 @@ All ten expansion runs record the task commit and the same pinned evaluator imag
 and manifest/result/provenance hashes. Together, the three smoke tasks cover parser state, merge semantics
 and path normalization without sharing a solution.
 
-## First dev-train task admission
+## First additional calibration fixture
 
 `duration-minute-boundary` is the first `dev-train` package. Its immutable snapshot keeps exact-minute
 and sub-minute visible behavior working while deliberately rounding incomplete minute buckets upward.
@@ -117,11 +117,11 @@ The private acceptance checks values inside and near the end of those buckets.
 All five manifests record clean harness commit `6152e9b207ee615f5c1dd0ec8dbefc09f075f951`
 and the pinned evaluator image. The machine-readable
 [dev-train task gate](../reports/docker-gate/dev-train-duration-minute-boundary.json) records task/spec,
-patch, manifest, result and provenance hashes. This admission is dataset evidence, not a model run; it
+patch, manifest, result and provenance hashes. This is calibration evidence, not a model run; it
 made zero API calls and does not create a memory entry. A clean clone reproduced the declared snapshot
 hash `sha256:a3508607ed05735c39f766580002fa29801440ee66301fbc85b1525114f079fe`.
 
-## Second dev-train task admission
+## Second additional calibration fixture
 
 `csv-final-record-flush` uses a separate chunked-parser API and source file from the multiline-CSV smoke
 task. Its base snapshot handles newline-terminated records, chunk boundaries and quoted commas, but does
@@ -138,9 +138,39 @@ not finalize the remaining valid record when input reaches EOF.
 All five manifests record clean harness commit `76471df95e26857f42662b7514fa31896a5496a2`
 and the pinned evaluator image. The machine-readable
 [CSV final-record gate](../reports/docker-gate/dev-train-csv-final-record-flush.json) records task/spec,
-patch, manifest, result and provenance hashes. This admission made zero API calls and creates no memory
+patch, manifest, result and provenance hashes. This fixture gate made zero API calls and creates no memory
 entry. A clean clone reproduced snapshot hash
 `sha256:afa42fe0bcb75bc7f0f7969e394433d5c8e9c8ce34232ebbf5bb5416c2bcd680`.
+
+## First research task admission
+
+`loguru-invalid-format-feedback` comes from SWE-rebench leaderboard instance
+`delgan__loguru-1451`, upstream issue #1450 and PR #1451. It is registered as
+`memory-development`, not held-out. The source is pinned to Loguru commit
+`2abeb0fa6d7be4b0455c6e0b580b1e9dab19005e`; the upstream resolution is
+`b782e56fcf07fecf9545ff6ee2350baacb0968ce`.
+
+The evaluator uses the official task environment at immutable digest
+`sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db`.
+Every run is network-disabled and uses harness commit
+`d7cdd6fa1055311275ff4c8751051f47bb118ed5`.
+
+| Patch | Runs | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| reference | `run_da8b68a7ed544b20`, `run_528b24d9038e47d5`, `run_63e461ef353b4756` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_0766fe431389477d` | base visible pass, hidden fail | rejected |
+| generic diagnostic | `run_70725e940deb4260` | hidden diagnostic-content fail | rejected |
+| catch-true only | `run_6ca5cfe1e4d84d88` | hidden catch-false fail | rejected |
+| hardcoded reproduction | `run_51a443c8c3484b7b` | hidden alternate-key fail | rejected |
+| swallowed catch-false | `run_67209fa6a07844cc` | hidden propagation fail | rejected |
+| forbidden README edit | `run_f2cb40457ecb494d` | hidden and scope fail | rejected |
+
+The upstream `tests/test_add_option_format.py` file reported 20 passes on each reference run. PatchLoop's
+independently authored hidden oracle additionally checks both catch modes, actionable diagnostic content
+and patcher-injected keys. The machine-readable
+[research admission report](../reports/docker-gate/research-loguru-invalid-format-feedback.json) records
+all manifest, result, patch and provenance hashes. It made zero API calls and is evaluator evidence, not
+live-model performance.
 
 ## Recovery evidence
 
@@ -151,6 +181,7 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero: 5 of 23
-packages exist and 0 of 6 OSS tasks is selected. The smoke split is complete at 3/3 and dev-train is 2/6.
-No live OpenAI request or paid campaign was made.
+`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
+calibration is 5/5, admitted research is 1/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 19 research tasks are not
+admitted. No live OpenAI request or paid campaign was made.

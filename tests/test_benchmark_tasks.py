@@ -46,4 +46,4 @@ def test_loguru_candidate_is_traceable_to_swe_rebench_row() -> None:
     assert candidate["benchmark_revision"] == "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
     assert candidate["base_commit"] == "2abeb0fa6d7be4b0455c6e0b580b1e9dab19005e"
     assert candidate["pr_url"] == "https://github.com/Delgan/loguru/pull/1451"
-    assert candidate["status"] == "admission-running"
+    assert candidate["status"] == "admitted"

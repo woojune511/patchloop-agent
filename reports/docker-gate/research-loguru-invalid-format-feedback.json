@@ -1,0 +1,177 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-24",
+  "task_id": "loguru-invalid-format-feedback",
+  "task_version": 1,
+  "dataset_role": "memory-development",
+  "split": "dev-train",
+  "source": {
+    "benchmark_family": "SWE-rebench-leaderboard",
+    "benchmark_revision": "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b",
+    "benchmark_split": "2026_03",
+    "benchmark_instance_id": "delgan__loguru-1451",
+    "upstream_repository": "Delgan/loguru",
+    "issue_url": "https://github.com/Delgan/loguru/issues/1450",
+    "pull_request_url": "https://github.com/Delgan/loguru/pull/1451",
+    "base_commit": "2abeb0fa6d7be4b0455c6e0b580b1e9dab19005e",
+    "resolution_commit": "b782e56fcf07fecf9545ff6ee2350baacb0968ce",
+    "license_spdx": "MIT",
+    "contamination_risk": "high"
+  },
+  "public_spec_hash": "sha256:4839d8e5e1e57efa2a33a458ab0fe839d5ef4200bbe53b0f56683d8b8b98e7ea",
+  "private_spec_hash": "sha256:ec2ed909ae10910d86b84469a79a2bd737ab034c57cd1d0117b5a97ed630a6bf",
+  "harness_git_commit": "d7cdd6fa1055311275ff4c8751051f47bb118ed5",
+  "evaluator_image": "swerebench/sweb.eval.x86_64.delgan_1776_loguru-1451@sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db",
+  "evaluator_image_digest": "sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db",
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 5,
+  "upstream_regression_test_count": 20,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "public_private_separation": "pass",
+    "network_disabled_evaluator": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_da8b68a7ed544b20",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:bed37a0dbf76a572a68853db61e6ae24dc74a0791457f2f96fece1b75ec8de3a",
+      "manifest_sha256": "sha256:82d2cb242cf610d1b85885034dd1c4b5978219de1ecd66fa3fa9fa6827d22b1f",
+      "result_sha256": "sha256:5a8cd2ef6143c17a52b6504af4f117951cde4d23afa84ddd209637bf159affb5",
+      "provenance_sha256": "sha256:b55bdc935eabb553bfdc8410ecdab8e2fd47cc95482933d8b1b978d05a2ff5a8"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_528b24d9038e47d5",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:bed37a0dbf76a572a68853db61e6ae24dc74a0791457f2f96fece1b75ec8de3a",
+      "manifest_sha256": "sha256:12d155156f4fd4a74668d1751602d590ff273a56f06abce788fee51b1e04ab6e",
+      "result_sha256": "sha256:3bc10ddf12e34024bdc07e3a96d993375d5c267522dec41774e69b7eabcac822",
+      "provenance_sha256": "sha256:b55bdc935eabb553bfdc8410ecdab8e2fd47cc95482933d8b1b978d05a2ff5a8"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_63e461ef353b4756",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:bed37a0dbf76a572a68853db61e6ae24dc74a0791457f2f96fece1b75ec8de3a",
+      "manifest_sha256": "sha256:745f8c5d31a2d6c3a3c489f01da79da4c1dfca99c64d421959ae8eb91a42c2d9",
+      "result_sha256": "sha256:f389a5aebb6edcdda55fd1aafe4cf5c80efa69933e51539815153fad37359103",
+      "provenance_sha256": "sha256:b55bdc935eabb553bfdc8410ecdab8e2fd47cc95482933d8b1b978d05a2ff5a8"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_0766fe431389477d",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:invalid-format-feedback"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:093a2082a1e83e889b275d0bdaff4ce39149c772f2bfeb4b56e5a3b25268b759",
+      "result_sha256": "sha256:179f3e64c5779970bcb1f439f2c5cd9a096de7fa969312b36871402d81d27d27",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "generic-message",
+      "patch": "bad/generic-message.patch",
+      "run_id": "run_70725e940deb4260",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:invalid-format-feedback"
+      ],
+      "patch_sha256": "sha256:22b8eca3527c8b805a283e5663c04defe90d26b9158e42d2281d487c316c1aad",
+      "manifest_sha256": "sha256:ccbb69f12107fbef9e35527bd304aae857fb1600e58acbc7ac3647d760a374bd",
+      "result_sha256": "sha256:8f9245d01f7886a9dbe1ce021234c292cc1499fdcac4b97dc2aa30f39ba7355c",
+      "provenance_sha256": "sha256:8fbc9051c986da8985efa09ffa81eaff4d22f79f3fcafdbb7e581eee30b1a2da"
+    },
+    {
+      "name": "catch-true-only",
+      "patch": "bad/catch-true-only.patch",
+      "run_id": "run_6ca5cfe1e4d84d88",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:invalid-format-feedback"
+      ],
+      "patch_sha256": "sha256:c325a3b8ded100f55dd179d186d70ee71751d7b1027753d6970f2b9cb8f7ac2a",
+      "manifest_sha256": "sha256:d1fe4d3310af0eb5ab021470859f53de1f559e3a5caa8158d18bc2e98311dec9",
+      "result_sha256": "sha256:73ba761818ffcf9075ca3007f9a717679d303da2535df13c8315774e214a7700",
+      "provenance_sha256": "sha256:b3899feea5c0f22af71f48686a1166b8d6cd5e07552dd12338aaf0bf6301bc81"
+    },
+    {
+      "name": "hardcoded-reproduction",
+      "patch": "bad/hardcoded-reproduction.patch",
+      "run_id": "run_51a443c8c3484b7b",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:invalid-format-feedback"
+      ],
+      "patch_sha256": "sha256:a0277ac2ffbd6206644e51b3c5fab86e0bacaf76d4a075c56b88c2507bfd9daa",
+      "manifest_sha256": "sha256:66956a28832510a5d0e8496606687f3bd34f374ba10f0bf9135d8b8d905b389d",
+      "result_sha256": "sha256:2040bfdc42480cff8b4b6f12a143b67cdfad5ceabd010b45c1faedf3b8603e6e",
+      "provenance_sha256": "sha256:6caee96611706b5d52b43c1d011858c7e023963e01f699fe6f34aa8e2c22771a"
+    },
+    {
+      "name": "swallow-catch-false",
+      "patch": "bad/swallow-catch-false.patch",
+      "run_id": "run_67209fa6a07844cc",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:invalid-format-feedback"
+      ],
+      "patch_sha256": "sha256:ffcc8ee879e3a677c1589a32757585d73f817280915b53a46948974c643f9f3d",
+      "manifest_sha256": "sha256:ef29cee8c143513485f91c6652ab6098ecf82a852150cbd02eded9c27caa8049",
+      "result_sha256": "sha256:21868277ad9f502e29891a548730e6237219086b8eae2910c7585b612b28ed34",
+      "provenance_sha256": "sha256:efb8deae5c3a1c59f8a8602d252a578c0ea75688185e87826c3232ba29d6e2b1"
+    },
+    {
+      "name": "forbidden-path",
+      "patch": "bad/forbidden-path.patch",
+      "run_id": "run_f2cb40457ecb494d",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:invalid-format-feedback",
+        "policy:scope"
+      ],
+      "patch_sha256": "sha256:ac4d4f4925971d02ded9dc20b0150311be7c02a06f4f95c042ba9b91f60cfc38",
+      "manifest_sha256": "sha256:692dcc5bd86cea094f281a17ea144357d3d7f155f38fce12fa54092541de77d8",
+      "result_sha256": "sha256:874f877f650c472805d6eb861417ae6295f28ba6ddc675847473426188b2b34f",
+      "provenance_sha256": "sha256:35f0190643509a33abfe223a083f807bc14f18db8a47a8bf740e9ce8ef4c2b02"
+    }
+  ]
+}
