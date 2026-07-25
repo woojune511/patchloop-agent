@@ -165,6 +165,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 5
 
+  - task_id: anyio-interrupt-runner-cleanup
+    task_version: 1
+    path: tasks/dev-train/anyio-interrupt-runner-cleanup
+    role: memory-development
+    admission_state: admitted
+    public_spec_hash: sha256:b6d5b8d42a003795ed38256fa9a0e07c94578a6e0996179588a15d42604b86bf
+    private_spec_hash: sha256:be9c79e456b87f253492416ddb2ed20f102832340c3e9f8e26a8186332846487
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: agronholm__anyio-1121
+      upstream_repository: agronholm/anyio
+      issue_url: https://github.com/agronholm/anyio/issues/1060
+      pull_request_url: https://github.com/agronholm/anyio/pull/1121
+      upstream_base_commit: cb245dba9883516f2ed4c23899de157183a1cb50
+      resolution_commit: f821c3712a7eb208b17d04f2df9f0168366ead3b
+      license_spdx: MIT
+      retrieved_at: 2026-07-25T00:34:13Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320
+    difficulty:
+      localization: 2
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 7
+      tier: hard
+      rationale: The fix requires locating a stale asyncio runner behind the pytest plugin, preserving interrupt propagation and fixture cleanup, and distinguishing normal pytest BaseException outcomes.
+    failure_pattern_id: interrupted-owner-lifecycle
+    solution_lineage_id: agronholm-anyio-pr-1121-hardened-1180
+    admission_evidence:
+      path: reports/docker-gate/research-anyio-interrupt-runner-cleanup.json
+      sha256: sha256:02477c8becc2d9f61bcb51827604346445bb234368ed3ef9df887f031ed45907
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 5
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

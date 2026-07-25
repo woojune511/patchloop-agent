@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv lock --check` | pass, 78 packages resolved |
 | Static analysis | `uv run ruff check .` | pass |
-| Tests | `uv run pytest -q` | 83 pass, 2 skipped; dataset-role and task-environment gates included |
+| Tests | `uv run pytest -q` | 87 pass, 2 skipped; both research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus one research package pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 1/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus two research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 2/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru reference ×3, no-op and five bad patches | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru and AnyIO references ×3, each with no-op and five bad patches | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -172,6 +172,36 @@ and patcher-injected keys. The machine-readable
 all manifest, result, patch and provenance hashes. It made zero API calls and is evaluator evidence, not
 live-model performance.
 
+## Second research task admission
+
+`anyio-interrupt-runner-cleanup` comes from SWE-rebench instance
+`agronholm__anyio-1121`, AnyIO issue #1060 and PR #1121. It is a hard
+`memory-development` task pinned to base commit
+`cb245dba9883516f2ed4c23899de157183a1cb50` and evaluator image
+`sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320`.
+
+The original upstream fix stopped an interrupted async test from resuming during fixture teardown.
+Follow-up issue #1179 and PR #1180 later showed that the same handler incorrectly reset the runner for
+normal pytest `OutcomeException` signals. PatchLoop therefore uses a hardened reference that preserves
+both behaviors, and treats a source-equivalent normalization of the original fix as a known-bad patch.
+
+| Patch | Runs | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| hardened reference | `run_4b93be1d3b664ee4`, `run_127a2daf82c14f3b`, `run_863bf64317894ade` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_bcf39b1790d94d8f` | P2P pass, hidden no-resume fail | rejected |
+| cancel without drain | `run_0e57530dd1f9485b` | hidden lifecycle fail | rejected |
+| drop runner reference only | `run_48d940b39f694567` | hidden stale-task fail | rejected |
+| swallow interrupt | `run_f572a38ce28446d6` | hidden propagation fail | rejected |
+| normalized upstream fix | `run_3fc2bd62bc9d4a9e` | hidden expected-outcome lifecycle fail | rejected |
+| forbidden test edit | `run_a888124ac80a47f7` | hidden, scope and tampering fail | rejected |
+
+The 32 benchmark P2P tests passed on base and reference. Three unrelated upstream tests that need the
+optional `hypothesis` package were explicitly deselected because that dependency is absent from the
+pinned official image. The private signal/lifecycle oracle passed 20/20 supplemental repetitions with
+the hardened reference. The
+[AnyIO research admission report](../reports/docker-gate/research-anyio-interrupt-runner-cleanup.json)
+records task, image, patch, manifest, result and provenance hashes. It made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -182,6 +212,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 1/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 19 research tasks are not
+calibration is 5/5, admitted research is 2/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 18 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

@@ -14,6 +14,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   patches rejected per task by the pinned Docker evaluator
 - First SWE-rebench-derived research task admitted: Loguru #1451, with an immutable official image,
   three reference passes, 20 upstream regressions, one base hidden failure and five known-bad rejections
+- Second research task admitted: AnyIO #1121, with three hardened-reference passes, 20/20 hidden
+  stability runs, 32 P2P regressions, one base hidden failure and five known-bad rejections. Its
+  independent oracle rejects a source-equivalent normalization of the original benchmark fix because a
+  later upstream incident exposed an expected-outcome lifecycle regression.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -30,7 +34,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 1/20: memory-development 1/6, development-validation 0/2,
+- Admitted research tasks are 2/20: memory-development 2/6, development-validation 0/2,
   same-repo core 0/6 and cross-repo core 0/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is

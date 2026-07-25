@@ -17,3 +17,10 @@ SWE-rebench instance `delgan__loguru-1451`, upstream base/resolution commits and
 `sha256:181bd51...`. On harness commit `d7cdd6fa...`, the reference passed three times, the no-op failed
 hidden acceptance, five known-bad patches were rejected, and the upstream format regression file reported
 20 passes. This is deterministic evaluator evidence with zero model/API calls, not agent performance.
+
+`research-anyio-interrupt-runner-cleanup.json` records the second research admission. It pins
+`agronholm__anyio-1121`, base commit `cb245dba...` and image `sha256:063bb968...`. On clean harness
+commit `45949f20...`, a hardened reference passed three official evaluations and 20/20 supplemental hidden
+stability repetitions. The base failed private no-resume acceptance, 32 P2P tests passed, and five
+known-bad patches were rejected. One negative is a source-equivalent normalization of the upstream fix:
+PatchLoop rejects it because the later AnyIO #1179/#1180 incident exposed a pytest outcome regression.

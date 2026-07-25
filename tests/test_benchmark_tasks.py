@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 
+from patchloop.contracts import DatasetRole
+from patchloop.dataset import require_dataset_role
 from patchloop.repository import ALLOWED_REMOTE_REPOSITORIES
 from patchloop.task_loader import load_task_package
 
@@ -88,4 +91,31 @@ def test_anyio_candidate_is_traceable_to_swe_rebench_row() -> None:
     assert candidate["benchmark_revision"] == "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
     assert candidate["base_commit"] == "cb245dba9883516f2ed4c23899de157183a1cb50"
     assert candidate["pr_url"] == "https://github.com/agronholm/anyio/pull/1121"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
+
+
+def test_anyio_admission_evidence_records_hardened_reference_and_bad_gold() -> None:
+    package = load_task_package(ANYIO_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 5
+
+    evidence = json.loads(
+        Path("reports/docker-gate/research-anyio-interrupt-runner-cleanup.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert evidence["harness_git_commit"] == "45949f2065905dcdd35c8c7820d2e549ff221eba"
+    assert evidence["reference_policy"]["kind"] == "hardened-upstream"
+    assert evidence["reference_hidden_stability_runs"] == 20
+    assert evidence["reference_hidden_stability_failures"] == 0
+    assert evidence["upstream_regression_test_count"] == 32
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert cases["upstream-gold-outcome-regression"]["observed_success"] is False

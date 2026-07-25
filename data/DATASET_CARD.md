@@ -28,11 +28,19 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The first admitted research task is `loguru-invalid-format-feedback`, derived from SWE-rebench
-`delgan__loguru-1451` and upstream Loguru issue #1450 / PR #1451. It uses the exact upstream base commit,
-an MIT license audit and a digest-pinned SWE-rebench image. Admission evidence contains three reference
-passes, one base hidden failure, 20 upstream regression tests and five independently authored known-bad
-patch rejections.
+The first two admitted research tasks are:
+
+- `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
+  Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
+  failure, 20 upstream regression tests and five independently authored known-bad patch rejections.
+- `anyio-interrupt-runner-cleanup`, derived from `agronholm__anyio-1121` and upstream AnyIO issue
+  #1060 / PR #1121. A later upstream incident showed that the original fix regressed normal pytest
+  outcome handling, so PatchLoop uses a hardened reference and rejects a source-equivalent normalization
+  of the original fix. It records three official passes, 20/20 hidden-oracle stability runs, 32 P2P
+  regressions, one base hidden failure and five known-bad rejections.
+
+Both tasks pin an exact upstream base commit, MIT license evidence and a digest-addressed SWE-rebench
+evaluator image.
 
 ## Research dataset target
 
@@ -40,11 +48,11 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 
 | Manifest role | Target | Memory source | Currently admitted |
 | --- | ---: | --- | ---: |
-| Memory development | 6 | reviewed failures only | 1 |
+| Memory development | 6 | reviewed failures only | 2 |
 | Development validation | 2 | no | 0 |
 | Core same-repo | 6 | prohibited | 0 |
 | Core cross-repo | 6 | prohibited | 0 |
-| **Research total** | **20** |  | **1** |
+| **Research total** | **20** |  | **2** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,
