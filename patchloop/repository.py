@@ -11,6 +11,8 @@ from patchloop.errors import ContractError
 from patchloop.util import directory_hash, sha256_bytes
 
 ALLOWED_REMOTE_REPOSITORIES = {
+    "https://github.com/agronholm/anyio.git",
+    "https://github.com/agronholm/anyio",
     "https://github.com/Delgan/loguru.git",
     "https://github.com/Delgan/loguru",
     "https://github.com/astanin/python-tabulate.git",

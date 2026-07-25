@@ -27,8 +27,8 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["task_count"] == 6
     assert result["calibration_task_count"] == 5
     assert result["research_task_count"] == 1
-    assert result["candidate_package_count"] == 0
-    assert result["unregistered_task_paths"] == []
+    assert result["candidate_package_count"] == 1
+    assert result["unregistered_task_paths"] == ["tasks/dev-train/anyio-interrupt-runner-cleanup"]
     assert result["role_counts"] == {"calibration": 5, "memory-development": 1}
     assert result["missing"]["memory-development"] == 5
     assert result["missing"]["core-cross-repo"] == 6

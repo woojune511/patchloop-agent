@@ -6,11 +6,12 @@ from pathlib import Path
 from patchloop.repository import ALLOWED_REMOTE_REPOSITORIES
 from patchloop.task_loader import load_task_package
 
-TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
+LOGURU_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
+ANYIO_TASK = Path("tasks/dev-train/anyio-interrupt-runner-cleanup")
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
-    package = load_task_package(TASK)
+    package = load_task_package(LOGURU_TASK)
 
     assert package.public.task_id == "loguru-invalid-format-feedback"
     assert package.public.repository.url == "https://github.com/Delgan/loguru.git"
@@ -26,8 +27,8 @@ def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
 
 
 def test_loguru_public_contract_excludes_evaluator_only_material() -> None:
-    package = load_task_package(TASK)
-    public_text = (TASK / "public.yaml").read_text(encoding="utf-8")
+    package = load_task_package(LOGURU_TASK)
+    public_text = (LOGURU_TASK / "public.yaml").read_text(encoding="utf-8")
 
     assert "test_invalid_format_feedback.py" not in public_text
     assert "_make_key_error" not in public_text
@@ -47,3 +48,44 @@ def test_loguru_candidate_is_traceable_to_swe_rebench_row() -> None:
     assert candidate["base_commit"] == "2abeb0fa6d7be4b0455c6e0b580b1e9dab19005e"
     assert candidate["pr_url"] == "https://github.com/Delgan/loguru/pull/1451"
     assert candidate["status"] == "admitted"
+
+
+def test_anyio_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(ANYIO_TASK)
+
+    assert package.public.task_id == "anyio-interrupt-runner-cleanup"
+    assert package.public.repository.url == "https://github.com/agronholm/anyio.git"
+    assert package.public.repository.base_commit == "cb245dba9883516f2ed4c23899de157183a1cb50"
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["src/anyio/**"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 50
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+
+
+def test_anyio_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(ANYIO_TASK)
+    public_text = (ANYIO_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_interrupt_runner_cleanup.py" not in public_text
+    assert "OutcomeException" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_anyio_candidate_is_traceable_to_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["agronholm__anyio-1121"]
+    assert candidate["benchmark_revision"] == "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    assert candidate["base_commit"] == "cb245dba9883516f2ed4c23899de157183a1cb50"
+    assert candidate["pr_url"] == "https://github.com/agronholm/anyio/pull/1121"
+    assert candidate["status"] == "screening"
