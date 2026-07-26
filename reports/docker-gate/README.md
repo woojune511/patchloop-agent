@@ -38,3 +38,12 @@ SWE-rebench V2 instance `huggingface__huggingface_hub-3180`, base commit `6f9b87
 official evaluations, while the base passed 15 P2P tests and failed the eight-check private oracle.
 Five semantic partial fixes and one scope/tampering patch were rejected. Submitted-source binding and
 the exact allowed public-signature delta are explicit oracle checks. This gate made zero model/API calls.
+
+`research-pdm-ignore-active-venv-resolution.json` records the fifth research admission. It pins
+SWE-rebench V2 instance `pdm-project__pdm-2781`, base commit `881cd4e3...` and image
+`sha256:a822ad38...`. On clean harness commit `035d7c7f...`, the normalized production reference passed
+three official evaluations, while the base passed 36 checkout regression tests and failed the ten-check
+private oracle. The benchmark declares 37 P2P nodes because one passing parameter exists only in its test
+patch. Six semantic partial fixes and one forbidden test edit were rejected. The forbidden edit retained
+aggregate safety=`pass` but failed hidden, scope and test-tampering checks. This gate made zero model/API
+calls.

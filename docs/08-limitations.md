@@ -25,6 +25,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   regressions, eight independent hidden checks, one base hidden failure and six known-bad rejections.
   Its oracle binds imports to submitted source and limits the allowed public API change to the exact
   endpoint-aware signature delta.
+- Fifth research task admitted: PDM #2781, with three normalized production-reference passes,
+  36 base-checkout regressions, ten independent hidden checks, one base hidden failure, six semantic
+  known-bad rejections and one scope/test-tampering rejection. The benchmark declares 37 P2P nodes
+  because one passing parameter exists only in its test patch.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -41,7 +45,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 4/20: memory-development 4/6, development-validation 0/2,
+- Admitted research tasks are 5/20: memory-development 5/6, development-validation 0/2,
   same-repo core 0/6 and cross-repo core 0/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is

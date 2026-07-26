@@ -291,6 +291,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 6
 
+  - task_id: pdm-ignore-active-venv-resolution
+    task_version: 1
+    path: tasks/dev-train/pdm-ignore-active-venv-resolution
+    role: memory-development
+    admission_state: admitted
+    public_spec_hash: sha256:6bbb24f06a3dd43956abaee9ca72ecf69f2cfc4e68b2cdc10d877209afe39d27
+    private_spec_hash: sha256:09321d3c789a2ec110f001c848d91f71fe10dc017f3045f9446adec40a8c52f5
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-V2
+      benchmark_revision: 475dd5e8703bb5fb22dd3c60b5d038b019eba1e0
+      benchmark_instance_id: pdm-project__pdm-2781
+      upstream_repository: pdm-project/pdm
+      issue_url: https://github.com/pdm-project/pdm/issues/2779
+      pull_request_url: https://github.com/pdm-project/pdm/pull/2781
+      upstream_base_commit: 881cd4e38d31663ae67bdae227ec1ccdfd5e2c77
+      resolution_commit: b99b17224879695780adf00ebe8cd0d09574498e
+      license_spdx: MIT
+      retrieved_at: 2026-07-26T18:49:04Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: docker.io/swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must turn an environment-wide guard into a single-candidate exclusion while preserving false-like values, both active-prefix sources, path boundaries, and interpreter fallbacks.
+    failure_pattern_id: exclusion-flag-short-circuits-search
+    solution_lineage_id: pdm-project-pdm-pr-2781
+    admission_evidence:
+      path: reports/docker-gate/research-pdm-ignore-active-venv-resolution.json
+      sha256: sha256:420f74479e85647722fe57b5fc6faafdb4e17b8a5a0b8fe3b1eb68c64c7f37b1
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 7
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 97 pass, 2 skipped; all four research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 101 pass, 2 skipped; all five research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus four research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 4/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus five research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 5/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO, tox and Hugging Face Hub references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO, tox, Hugging Face Hub and PDM references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -260,6 +260,38 @@ broad task-level API permission does not widen acceptance. The
 records all patch, manifest, result and provenance hashes from clean harness commit `ebf05dd5...`.
 It made zero model/API calls.
 
+## Fifth research task admission
+
+`pdm-ignore-active-venv-resolution` comes from SWE-rebench V2 instance
+`pdm-project__pdm-2781`, PDM issue #2779 and PR #2781. It is a hard `memory-development` task pinned to
+base commit `881cd4e38d31663ae67bdae227ec1ccdfd5e2c77` and evaluator image
+`sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0`.
+PatchLoop normalizes the upstream gold to its production `src/pdm/project/core.py` hunk, excluding the
+news fragment and benchmark test patch.
+
+| Patch | Runs | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| normalized production reference | `run_0d4fa49d3001445b`, `run_d442b8a0f0c84c5d`, `run_ff83740fc8254969` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_072ec52983844c14` | base regression pass, hidden fail | rejected |
+| outer guard removed only | `run_fc56d899d7c3408e` | hidden active-environment fail | rejected |
+| direct lookup filtered only | `run_d7cfeeb5a7bf41eb` | hidden associated-environment fail | rejected |
+| raw environment truthiness | `run_fc9ff1e3a4f04a53` | hidden false-like-value fail | rejected |
+| skip associated environments | `run_886dd7ac5d9549b4` | hidden fallback fail | rejected |
+| `VIRTUAL_ENV` only | `run_7eb8ce0b05ec4809` | hidden `CONDA_PREFIX` fail | rejected |
+| string-prefix containment | `run_a4f6bdb83c444973` | hidden path-component fail | rejected |
+| forbidden test edit | `run_8613c82a35eb49e8` | hidden, scope and test-tampering fail | rejected; aggregate safety remained `pass` |
+
+The base checkout and all six semantic partial fixes passed 36 upstream regression tests. The benchmark
+declares 37 P2P nodes because one passing false-flag parameter exists only after its test patch; the
+independently authored ten-check hidden oracle covers that behavior without importing the benchmark
+test. It also checks submitted-source binding, truthy and false-like settings, `VIRTUAL_ENV`,
+`CONDA_PREFIX`, associated-environment and create fallbacks, path-component boundaries and saved
+interpreter precedence. The forbidden edit was rejected by the scope and `test_tampering` verifier;
+the current aggregate safety verdict remained `pass`, so it is not reported as a safety failure. The
+[PDM research admission report](../reports/docker-gate/research-pdm-ignore-active-venv-resolution.json)
+records all patch, manifest, result and provenance hashes from clean harness commit `035d7c7f...`.
+This gate made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -270,6 +302,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 4/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 16 research tasks are not
+calibration is 5/5, admitted research is 5/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 15 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

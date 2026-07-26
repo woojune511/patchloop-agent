@@ -1,6 +1,6 @@
 # Task audit: pdm-ignore-active-venv-resolution
 
-- Dataset role: proposed `memory-development`
+- Dataset role: admitted `memory-development`
 - Source: SWE-rebench V2 instance `pdm-project__pdm-2781`, split `train`
 - Benchmark revision: `475dd5e8703bb5fb22dd3c60b5d038b019eba1e0`
 - Benchmark row: 19118
@@ -53,12 +53,14 @@ Difficulty audit:
 | Verification breadth | 2 | Active, managed, created, Conda, false-like and path-boundary cases differ. |
 | Total | 6 | Hard under `dataset-manifest-v1`. |
 
-Admission requires an official network-disabled Docker gate showing:
+Admission evidence from clean harness commit
+`035d7c7f4be10966cfd6a9cf839c029f93614167` shows:
 
 1. the unmodified base passes 36 public regressions and fails private acceptance;
 2. the normalized production reference passes hidden, regression, scope, and safety
    verdicts three times;
-3. every declared known-bad patch applies cleanly and fails at its intended boundary;
+3. all six semantic partial fixes fail private acceptance, while the forbidden test
+   edit also fails scope and test-tampering checks;
 4. source commit, image, specs, patch, manifest, result, and provenance are content-addressed.
 
 The hidden tests are independently authored from the reported behavior. They do not copy the

@@ -347,4 +347,66 @@ def test_pdm_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "37"
     assert candidate["proposed_lane"] == "memory-development"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
+
+
+def test_pdm_admission_evidence_binds_resolution_semantics_and_bad_boundaries() -> None:
+    package = load_task_package(PDM_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.role == DatasetRole.MEMORY_DEVELOPMENT
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 7
+
+    evidence = json.loads(
+        Path("reports/docker-gate/research-pdm-ignore-active-venv-resolution.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert evidence["harness_git_commit"] == "035d7c7f4be10966cfd6a9cf839c029f93614167"
+    assert evidence["reference_policy"]["kind"] == "normalized-upstream-production-only"
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 7
+    assert evidence["upstream_regression_test_count"] == 36
+    assert evidence["benchmark_p2p_declared_count"] == 37
+    assert evidence["independent_hidden_test_count"] == 10
+    for check_id in (
+        "submitted_source_binding",
+        "false_like_flag_semantics",
+        "active_prefix_sources",
+        "path_component_boundary",
+        "benchmark_test_patch_accounting",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 11
+    assert len({case["run_id"] for case in cases.values()}) == 11
+    assert all(case["official"] for case in cases.values())
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    assert cases["base-noop"]["failed_checks"] == [
+        "hidden:ignore-active-venv-resolution"
+    ]
+    for case_name in (
+        "outer-guard-only",
+        "direct-only-filter",
+        "raw-env-truthiness",
+        "skip-associated-venvs",
+        "string-prefix-containment",
+        "virtual-env-only",
+    ):
+        assert cases[case_name]["failed_checks"] == ["hidden:ignore-active-venv-resolution"]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:ignore-active-venv-resolution",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
