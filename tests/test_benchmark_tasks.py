@@ -15,6 +15,7 @@ TOX_TASK = Path("tasks/dev-train/tox-cross-section-empty-substitution")
 HF_HUB_TASK = Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
 PDM_TASK = Path("tasks/dev-train/pdm-ignore-active-venv-resolution")
 PYFAKEFS_TASK = Path("tasks/dev-train/pyfakefs-makedirs-parent-traversal")
+MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -522,4 +523,71 @@ def test_pyfakefs_admission_evidence_binds_traversal_and_bad_boundaries() -> Non
         "hidden:makedirs-parent-traversal",
         "policy:scope",
         "policy:test_tampering",
+    ]
+
+
+def test_moto_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(MOTO_TASK)
+
+    assert package.public.task_id == "moto-query-scanned-count"
+    assert package.public.split == "dev-validation"
+    assert package.public.repository.url == "https://github.com/getmoto/moto.git"
+    assert (
+        package.public.repository.base_commit
+        == "624de34d82a1b2c521727b14a2173380e196f1d8"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["moto/dynamodb/models/table.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 120
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace"
+
+
+def test_moto_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(MOTO_TASK)
+    public_text = (MOTO_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_query_scanned_count.py" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_moto_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["getmoto__moto-7208"]
+    assert candidate["benchmark_revision"] == "475dd5e8703bb5fb22dd3c60b5d038b019eba1e0"
+    assert candidate["benchmark_split"] == "train"
+    assert candidate["base_commit"] == "624de34d82a1b2c521727b14a2173380e196f1d8"
+    assert candidate["pr_url"] == "https://github.com/getmoto/moto/pull/7208"
+    assert candidate["changed_files"] == "3"
+    assert candidate["f2p"] == "3"
+    assert candidate["p2p"] == "173"
+    assert candidate["proposed_lane"] == "development-validation"
+    assert candidate["status"] == "screening"
+
+
+def test_moto_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_text = (MOTO_TASK / "hidden/test_query_scanned_count.py").read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (MOTO_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 9
+    assert bad_names == [
+        "cursor-subtraction-without-limit.patch",
+        "forbidden-test-edit.patch",
+        "index-uses-table-count.patch",
+        "key-results-before-page.patch",
+        "limit-without-cursor.patch",
+        "noop.patch",
+        "partition-total-only.patch",
+        "post-filter-result-count.patch",
     ]

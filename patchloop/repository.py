@@ -19,6 +19,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/astanin/python-tabulate",
     "https://github.com/huggingface/huggingface_hub.git",
     "https://github.com/huggingface/huggingface_hub",
+    "https://github.com/getmoto/moto.git",
+    "https://github.com/getmoto/moto",
     "https://github.com/pdm-project/pdm.git",
     "https://github.com/pdm-project/pdm",
     "https://github.com/pytest-dev/pyfakefs.git",

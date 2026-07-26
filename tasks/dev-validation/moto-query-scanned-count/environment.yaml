@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee
+image_digest: sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee
+source_image_tag: docker.io/swerebenchv2/getmoto-moto:7208-624de34

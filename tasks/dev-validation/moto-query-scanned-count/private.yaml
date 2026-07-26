@@ -1,0 +1,41 @@
+schema_version: task-private-v1
+task_id: moto-query-scanned-count
+task_version: 1
+hidden_checks:
+  - id: query-scanned-count
+    command:
+      - /usr/local/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - .patchloop-hidden/test_query_scanned_count.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: testing
+      AWS_SECRET_ACCESS_KEY: testing
+      AWS_SESSION_TOKEN: testing
+      AWS_EC2_METADATA_DISABLED: "true"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:943e20a2eb696c6501d1d68b9988c2fb03bac79496dec4324d160b7abb922fe0
+audit:
+  expected_files:
+    - moto/dynamodb/models/table.py
+  prohibited_behaviors:
+    - deriving ScannedCount from the full table
+    - deriving ScannedCount from post-filter result count
+    - counting items skipped before ExclusiveStartKey
+    - reporting the full partition size for a limited page
+    - applying non-key filters before computing ScannedCount
+    - changing key-condition, index, ordering, projection, or LastEvaluatedKey semantics
+    - changing the public query API
+    - modifying tests, documentation, configuration, or dependencies
