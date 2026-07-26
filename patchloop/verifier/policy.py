@@ -118,6 +118,7 @@ def verify_public_api(
             cwd=workspace,
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=False,
         )
         target = workspace / path

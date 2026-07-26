@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import TaskConstraints
 from patchloop.errors import ContractError
-from patchloop.repository import WorkspaceManager
+from patchloop.repository import DiffSummary, WorkspaceManager
 from patchloop.runtime import build_manifest
 from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.verifier import EvaluationEngine
+from patchloop.verifier.policy import verify_public_api
 
 TASK = "tasks/smoke/csv-quoted-newline"
 
@@ -59,6 +63,27 @@ def test_diff_summary_decodes_utf8_source_content(tmp_path) -> None:
 
     assert "Valid empty — not missing." in summary.patch
     assert summary.changed_files == ["README.md"]
+
+
+def test_public_api_base_source_is_explicitly_decoded_as_utf8(
+    tmp_path, monkeypatch
+) -> None:
+    source = '"""Locale separator → canonical form."""\n\ndef stable(value):\n    return value\n'
+    (tmp_path / "module.py").write_text(source, encoding="utf-8")
+
+    def fake_run(*args, **kwargs):
+        assert kwargs["encoding"] == "utf-8"
+        return SimpleNamespace(returncode=0, stdout=source, stderr="")
+
+    monkeypatch.setattr("patchloop.verifier.policy.subprocess.run", fake_run)
+    outcome = verify_public_api(
+        DiffSummary(["module.py"], 0, 0, ""),
+        TaskConstraints(allowed_paths=["module.py"]),
+        tmp_path,
+    )
+
+    assert outcome.passed is True
+    assert outcome.details["changed_symbols"] == []
 
 
 @pytest.mark.parametrize(
