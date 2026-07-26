@@ -35,13 +35,16 @@ constraints:
 visible_checks:
   - id: upstream-show-config-regression
     command:
-      - /opt/conda/envs/testbed/bin/python
-      - -m
-      - pytest
-      - -q
-      - -p
-      - no:cacheprovider
-      - tests/session/cmd/test_show_config.py
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        source_root="$(mktemp -d /tmp/patchloop-tox-source-XXXXXX)"
+        cp -R /workspace/src/. "$source_root/"
+        cp /testbed/src/tox/version.py "$source_root/tox/version.py"
+        PYTHONPATH="$source_root${PYTHONPATH:+:$PYTHONPATH}" \
+          /opt/conda/envs/testbed/bin/python -m pytest -q -p no:cacheprovider \
+          tests/session/cmd/test_show_config.py
     timeout_seconds: 90
 tags:
   - swe-rebench
