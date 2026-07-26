@@ -9,14 +9,17 @@ repository:
 issue:
   title: DuckDB rejects NULL modifiers after ordered window-function arguments
   description: |
-    SQLGlot's DuckDB dialect cannot parse valid window-function calls whose
-    aggregate argument contains ORDER BY followed by IGNORE NULLS or RESPECT
-    NULLS.
+    SQLGlot's DuckDB dialect cannot parse valid value-window function calls
+    whose argument-local ORDER BY is followed by IGNORE NULLS or RESPECT NULLS.
+    The affected family includes FIRST_VALUE, LAST_VALUE, NTH_VALUE, LAG, and
+    LEAD.
 
     Accept both NULL modifiers in that position and preserve DuckDB's modifier
-    order when parsing and generating SQL. Existing prefix-form NULL modifiers,
-    ordered arguments, window clauses, and other dialects must keep their
-    current behavior. Do not change public parser or generator APIs.
+    order when parsing and generating SQL. Existing prefix-form NULL modifiers
+    must remain accepted and normalize to DuckDB's valid suffix position when
+    an argument-local ORDER BY is emitted. Ordered arguments, window clauses,
+    and non-DuckDB modifier ordering must remain compatible. Do not change
+    existing public parser or generator method signatures.
 constraints:
   allowed_paths:
     - sqlglot/dialects/duckdb.py

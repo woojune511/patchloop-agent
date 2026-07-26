@@ -869,14 +869,14 @@ def test_sqlglot_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
     ).read_text(encoding="utf-8")
     bad_names = sorted(path.name for path in (SQLGLOT_TASK / "bad").glob("*.patch"))
 
-    assert hidden_text.count("\ndef test_") == 15
+    assert hidden_text.count("\ndef test_") == 21
     assert bad_names == [
-        "duckdb-flag-only.patch",
         "forbidden-test-edit.patch",
         "generator-only.patch",
         "global-order-change.patch",
         "ignore-only.patch",
         "missing-duckdb-policy.patch",
+        "missing-having-max-policy.patch",
         "missing-shared-generator-policy.patch",
         "noop.patch",
         "parser-only.patch",

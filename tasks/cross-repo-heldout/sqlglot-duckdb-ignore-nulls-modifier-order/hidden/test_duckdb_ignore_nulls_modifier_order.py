@@ -20,8 +20,8 @@ def _assert_duckdb_round_trip(sql: str) -> None:
 
 def test_submitted_parser_generator_and_dialect_are_imported() -> None:
     sources = (
-        inspect.getsourcefile(Parser._parse_lambda),
-        inspect.getsourcefile(Generator._embed_ignore_nulls),
+        inspect.getsourcefile(Parser),
+        inspect.getsourcefile(Generator),
         inspect.getsourcefile(DuckDB.Generator),
     )
     for source in sources:
@@ -41,6 +41,20 @@ def test_trailing_ignore_nulls_round_trips_for_ordered_first_value() -> None:
 def test_trailing_respect_nulls_round_trips_for_ordered_last_value() -> None:
     _assert_duckdb_round_trip(
         "SELECT LAST_VALUE(price ORDER BY captured_at RESPECT NULLS) "
+        "OVER (PARTITION BY symbol ORDER BY captured_at) FROM ticks"
+    )
+
+
+def test_trailing_respect_nulls_round_trips_for_ordered_first_value() -> None:
+    _assert_duckdb_round_trip(
+        "SELECT FIRST_VALUE(score ORDER BY sequence_id RESPECT NULLS) "
+        "OVER (PARTITION BY account_id ORDER BY sequence_id) FROM events"
+    )
+
+
+def test_trailing_ignore_nulls_round_trips_for_ordered_last_value() -> None:
+    _assert_duckdb_round_trip(
+        "SELECT LAST_VALUE(price ORDER BY captured_at IGNORE NULLS) "
         "OVER (PARTITION BY symbol ORDER BY captured_at) FROM ticks"
     )
 
@@ -102,6 +116,13 @@ def test_nth_value_keeps_offset_and_trailing_ignore_nulls() -> None:
     )
 
 
+def test_nth_value_keeps_offset_and_trailing_respect_nulls() -> None:
+    _assert_duckdb_round_trip(
+        "SELECT NTH_VALUE(score, 3 ORDER BY sequence_id RESPECT NULLS) "
+        "OVER (PARTITION BY account_id ORDER BY sequence_id) FROM events"
+    )
+
+
 def test_lag_keeps_offset_default_and_trailing_ignore_nulls() -> None:
     _assert_duckdb_round_trip(
         "SELECT LAG(score, 2, 0 ORDER BY sequence_id IGNORE NULLS) "
@@ -109,9 +130,24 @@ def test_lag_keeps_offset_default_and_trailing_ignore_nulls() -> None:
     )
 
 
+def test_lag_keeps_offset_default_and_trailing_respect_nulls() -> None:
+    _assert_duckdb_round_trip(
+        "SELECT LAG(score, 3, -1 ORDER BY sequence_id RESPECT NULLS) "
+        "OVER (PARTITION BY account_id ORDER BY sequence_id) FROM events"
+    )
+
+
 def test_lead_respect_nulls_round_trips_with_named_window() -> None:
     _assert_duckdb_round_trip(
         "SELECT LEAD(score ORDER BY sequence_id RESPECT NULLS) "
+        "OVER account_window FROM events "
+        "WINDOW account_window AS (PARTITION BY account_id ORDER BY sequence_id)"
+    )
+
+
+def test_lead_ignore_nulls_round_trips_with_named_window() -> None:
+    _assert_duckdb_round_trip(
+        "SELECT LEAD(score ORDER BY sequence_id IGNORE NULLS) "
         "OVER account_window FROM events "
         "WINDOW account_window AS (PARTITION BY account_id ORDER BY sequence_id)"
     )
@@ -148,5 +184,14 @@ def test_bigquery_keeps_ignore_nulls_before_order_and_limit() -> None:
 
 def test_bigquery_respect_nulls_order_is_not_changed_by_duckdb_policy() -> None:
     sql = "SELECT ARRAY_AGG(score RESPECT NULLS ORDER BY rank LIMIT 2) FROM results"
+    parsed = parse_one(sql, dialect="bigquery")
+    assert parsed.sql(dialect="bigquery") == sql
+
+
+def test_bigquery_having_order_limit_modifier_chain_is_unchanged() -> None:
+    sql = (
+        "SELECT ARRAY_AGG(score IGNORE NULLS HAVING MAX rank "
+        "ORDER BY rank DESC LIMIT 3) FROM results"
+    )
     parsed = parse_one(sql, dialect="bigquery")
     assert parsed.sql(dialect="bigquery") == sql
