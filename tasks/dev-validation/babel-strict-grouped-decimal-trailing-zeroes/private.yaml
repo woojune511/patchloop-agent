@@ -1,0 +1,38 @@
+schema_version: task-private-v1
+task_id: babel-strict-grouped-decimal-trailing-zeroes
+task_version: 1
+hidden_checks:
+  - id: strict-grouped-decimal-trailing-zeroes
+    command:
+      - /usr/local/bin/python
+      - -c
+      - >-
+        import babel.core, babel.localedata, pytest;
+        babel.core.__file__ = "/babel/babel/core.py";
+        babel.localedata._dirname = "/babel/babel/locale-data";
+        raise SystemExit(pytest.main([
+        "--no-header", "-q", "-p", "no:cacheprovider",
+        ".patchloop-hidden/test_strict_grouped_decimal.py"]))
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:ff2ca11b6df2bd0567a8ad6a4687b8373ede412f649ad892a351055a584e449a
+audit:
+  expected_files:
+    - babel/numbers.py
+  prohibited_behaviors:
+    - accepting malformed grouping merely because the input ends in zero
+    - trimming only one insignificant trailing zero
+    - handling only dot-decimal or Western three-digit grouping locales
+    - changing behavior for negative grouped decimals
+    - removing significant zeroes inside the fractional part
+    - normalizing away the Decimal scale returned to callers
+    - weakening strict validation by retrying malformed input non-strictly
+    - changing the public parse_decimal signature
+    - modifying tests, documentation, configuration, or dependencies

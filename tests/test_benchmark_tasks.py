@@ -16,6 +16,7 @@ HF_HUB_TASK = Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
 PDM_TASK = Path("tasks/dev-train/pdm-ignore-active-venv-resolution")
 PYFAKEFS_TASK = Path("tasks/dev-train/pyfakefs-makedirs-parent-traversal")
 MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
+BABEL_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -656,4 +657,75 @@ def test_moto_admission_evidence_binds_query_stage_boundaries() -> None:
         "hidden:query-scanned-count",
         "policy:scope",
         "policy:test_tampering",
+    ]
+
+
+def test_babel_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(BABEL_TASK)
+
+    assert package.public.task_id == "babel-strict-grouped-decimal-trailing-zeroes"
+    assert package.public.split == "dev-validation"
+    assert package.public.repository.url == "https://github.com/python-babel/babel.git"
+    assert (
+        package.public.repository.base_commit
+        == "aca7663728e08e9d60b192b11fa6626a60974929"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["babel/numbers.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 60
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace"
+
+
+def test_babel_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(BABEL_TASK)
+    public_text = (BABEL_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_strict_grouped_decimal.py" not in public_text
+    assert "_remove_trailing_zeros_after_decimal" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_babel_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["python-babel__babel-1042"]
+    assert candidate["benchmark_revision"] == "475dd5e8703bb5fb22dd3c60b5d038b019eba1e0"
+    assert candidate["benchmark_split"] == "train"
+    assert candidate["base_commit"] == "aca7663728e08e9d60b192b11fa6626a60974929"
+    assert candidate["pr_url"] == "https://github.com/python-babel/babel/pull/1042"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "1"
+    assert candidate["p2p"] == "131"
+    assert candidate["proposed_lane"] == "development-validation"
+    assert candidate["status"] == "screening"
+
+
+def test_babel_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_text = (BABEL_TASK / "hidden/test_strict_grouped_decimal.py").read_text(
+        encoding="utf-8"
+    )
+    bad_names = sorted(path.name for path in (BABEL_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 16
+    assert bad_names == [
+        "dot-decimal-only.patch",
+        "forbidden-test-edit.patch",
+        "noop.patch",
+        "normalize-returned-decimal.patch",
+        "positive-only.patch",
+        "remove-all-fraction-zeroes.patch",
+        "single-zero-trim.patch",
+        "suffix-zero-bypass.patch",
+        "western-group-only.patch",
     ]

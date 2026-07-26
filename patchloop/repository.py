@@ -17,6 +17,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/Delgan/loguru",
     "https://github.com/astanin/python-tabulate.git",
     "https://github.com/astanin/python-tabulate",
+    "https://github.com/python-babel/babel.git",
+    "https://github.com/python-babel/babel",
     "https://github.com/huggingface/huggingface_hub.git",
     "https://github.com/huggingface/huggingface_hub",
     "https://github.com/getmoto/moto.git",

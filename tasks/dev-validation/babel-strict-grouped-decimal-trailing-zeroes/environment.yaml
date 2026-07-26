@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a
+image_digest: sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a
+source_image_tag: docker.io/swerebenchv2/python-babel-babel:1042-aca7663

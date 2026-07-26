@@ -1,0 +1,62 @@
+schema_version: task-public-v1
+task_id: babel-strict-grouped-decimal-trailing-zeroes
+task_version: 1
+split: dev-validation
+repository:
+  url: https://github.com/python-babel/babel.git
+  base_commit: aca7663728e08e9d60b192b11fa6626a60974929
+  language: python
+issue:
+  title: Strict decimal parsing rejects valid grouped values with trailing zeroes
+  description: |
+    Babel's parse_decimal rejects canonically grouped localized decimals in
+    strict mode when a non-zero fractional value is followed by insignificant
+    trailing zeroes.
+
+    Accept grouped decimals when their localized representation differs from
+    the canonical form only by insignificant zeroes at the end of the
+    fractional part. Preserve the parsed Decimal's scale. Continue to reject
+    malformed grouping and wrong-locale separators, and do not change
+    non-strict parsing, locale handling, numbering-system behavior, or the
+    public parse_decimal API.
+constraints:
+  allowed_paths:
+    - babel/numbers.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-number-regression
+    command:
+      - /usr/local/bin/python
+      - -c
+      - >-
+        import babel.core, babel.localedata, pytest;
+        babel.core.__file__ = "/babel/babel/core.py";
+        babel.localedata._dirname = "/babel/babel/locale-data";
+        raise SystemExit(pytest.main([
+        "--no-header", "-rA", "--tb=line", "--color=no",
+        "-p", "no:cacheprovider", "-W", "ignore::DeprecationWarning",
+        "tests/test_numbers.py"]))
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+tags:
+  - swe-rebench-v2
+  - real-repository
+  - localization
+  - decimal-parsing
+  - development-validation
