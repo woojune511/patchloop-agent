@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The first five admitted research tasks are:
+The six admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -55,9 +55,16 @@ The first five admitted research tasks are:
   passes, 36 base-checkout regressions, ten independent hidden checks, one base hidden failure, six
   semantic known-bad rejections and one scope/test-tampering rejection. The benchmark declares 37 P2P
   nodes because one passing parameter exists only in its test patch.
+- `pyfakefs-makedirs-parent-traversal`, derived from SWE-rebench V2
+  `pytest-dev__pyfakefs-991` and upstream pyfakefs issue #987 / PR #991. Its oracle compares ordered
+  path-component effects across POSIX and Windows modes while preserving nested and bytes paths,
+  `exist_ok`, invalid-parent errors and leaf-only mode application. It records three official passes,
+  all 517 declared P2P regressions, 12 independent hidden checks, one base hidden failure, seven
+  semantic known-bad rejections and one scope/test-tampering rejection.
 
-All five tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
-SWE-rebench evaluator image. Four are MIT licensed, including PDM; Hugging Face Hub is Apache-2.0.
+All six tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+SWE-rebench evaluator image. Four are MIT licensed, including PDM; Hugging Face Hub and pyfakefs are
+Apache-2.0.
 
 ## Research dataset target
 
@@ -65,11 +72,11 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 
 | Manifest role | Target | Memory source | Currently admitted |
 | --- | ---: | --- | ---: |
-| Memory development | 6 | reviewed failures only | 5 |
+| Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 0 |
 | Core same-repo | 6 | prohibited | 0 |
 | Core cross-repo | 6 | prohibited | 0 |
-| **Research total** | **20** |  | **5** |
+| **Research total** | **20** |  | **6** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

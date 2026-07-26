@@ -333,6 +333,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 7
 
+  - task_id: pyfakefs-makedirs-parent-traversal
+    task_version: 1
+    path: tasks/dev-train/pyfakefs-makedirs-parent-traversal
+    role: memory-development
+    admission_state: admitted
+    public_spec_hash: sha256:4d5de049d133ee29adf726733b7ace99b9d55518cc0433c72d2aa7b1576664d8
+    private_spec_hash: sha256:908566e263a16ba32ed886c69b3fd23a7cf4f899eeb722a2d23d580fd3c67f40
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-V2
+      benchmark_revision: 475dd5e8703bb5fb22dd3c60b5d038b019eba1e0
+      benchmark_instance_id: pytest-dev__pyfakefs-991
+      upstream_repository: pytest-dev/pyfakefs
+      issue_url: https://github.com/pytest-dev/pyfakefs/issues/987
+      pull_request_url: https://github.com/pytest-dev/pyfakefs/pull/991
+      upstream_base_commit: 7285b671883b8a06fc26466582a8a45baf508bf7
+      resolution_commit: 080529189ac09d1fea2202cae4396aa964a3ad1f
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-26T19:50:26Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: docker.io/swerebenchv2/pytest-dev-pyfakefs@sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c
+    difficulty:
+      localization: 1
+      reasoning_depth: 1
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 5
+      tier: medium
+      rationale: The one-method fix must preserve ordered POSIX and Windows traversal side effects while retaining bytes, exist_ok, error and leaf-mode semantics across a 517-test regression surface.
+    failure_pattern_id: path-normalization-erases-traversal-side-effects
+    solution_lineage_id: pytest-dev-pyfakefs-pr-991
+    admission_evidence:
+      path: reports/docker-gate/research-pyfakefs-makedirs-parent-traversal.json
+      sha256: sha256:7ac182573b7b9432aa115cd44486a17efd8ec8009aa1d006537dd3fc305786a9
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 8
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

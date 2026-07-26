@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 101 pass, 2 skipped; all five research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 105 pass, 2 skipped; all six research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus five research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 5/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus six research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 6/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO, tox, Hugging Face Hub and PDM references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM and pyfakefs references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -292,6 +292,39 @@ the current aggregate safety verdict remained `pass`, so it is not reported as a
 records all patch, manifest, result and provenance hashes from clean harness commit `035d7c7f...`.
 This gate made zero model/API calls.
 
+## Sixth research task admission
+
+`pyfakefs-makedirs-parent-traversal` comes from SWE-rebench V2 instance
+`pytest-dev__pyfakefs-991`, pyfakefs issue #987 and PR #991. It is a medium
+`memory-development` task pinned to base commit
+`7285b671883b8a06fc26466582a8a45baf508bf7` and evaluator image
+`sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c`.
+PatchLoop normalizes the upstream gold to the exact production hunk in
+`pyfakefs/fake_os.py`, excluding `CHANGES.md` and the benchmark test patch.
+
+| Patch | Runs | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| normalized production reference | `run_009825262b514a68`, `run_7af592bb11bd4e1c`, `run_12873e02117e455b` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_0f7e30047ecf4639` | P2P pass, hidden fail | rejected |
+| normalize before creation | `run_f3cae9f4ed4c4442` | regression and hidden traversal fail | rejected |
+| one string parent only | `run_4faf97a4757940cf` | hidden bytes/mode fail | rejected |
+| propagate leaf mode to parents | `run_e3a8ccad251245fd` | hidden intermediate-mode fail | rejected |
+| ignore `exist_ok` | `run_dae4dc5afe1e43bd` | regression and hidden existing-leaf fail | rejected |
+| stop after parent creation | `run_28df8167bca54794` | regression and hidden destination fail | rejected |
+| swallow non-directory errors | `run_71fa030f5eb04a96` | regression and hidden error-policy fail | rejected |
+| leave parent `FileExistsError` uncaught | `run_4007c8257dc443dd` | regression and hidden traversal fail | rejected |
+| forbidden test edit | `run_17f66c01ff914266` | hidden, scope and test-tampering fail | rejected |
+
+The base checkout passed all 517 benchmark-declared P2P tests and failed the private
+acceptance suite; the same network-disabled command reported 570 platform skips. The
+independently authored 12-check oracle binds `FakeOsModule.makedirs` to `/workspace` and covers
+ordered POSIX and Windows traversal, nested and bytes paths, trailing separators, pre-existing
+destinations, `exist_ok`, non-directory parents and leaf-only mode application. The reference
+passed all 12 checks. The
+[pyfakefs research admission report](../reports/docker-gate/research-pyfakefs-makedirs-parent-traversal.json)
+records all patch, manifest, result and provenance hashes from clean harness commit `64b2f467...`.
+This gate made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -302,6 +335,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 5/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 15 research tasks are not
+calibration is 5/5, admitted research is 6/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 14 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

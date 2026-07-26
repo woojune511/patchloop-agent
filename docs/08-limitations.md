@@ -29,6 +29,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   36 base-checkout regressions, ten independent hidden checks, one base hidden failure, six semantic
   known-bad rejections and one scope/test-tampering rejection. The benchmark declares 37 P2P nodes
   because one passing parameter exists only in its test patch.
+- Sixth research task admitted: pyfakefs #991, with three normalized production-reference passes,
+  all 517 declared P2P regressions, 12 independent hidden checks and one base hidden failure. Seven
+  semantic partial fixes and one scope/test-tampering patch were rejected. The task is medium, not
+  hard; its strength is a clean network-disabled evaluator boundary and broad regression surface.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -45,7 +49,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 5/20: memory-development 5/6, development-validation 0/2,
+- Admitted research tasks are 6/20: memory-development 6/6, development-validation 0/2,
   same-repo core 0/6 and cross-repo core 0/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is

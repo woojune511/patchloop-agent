@@ -457,4 +457,69 @@ def test_pyfakefs_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "517"
     assert candidate["proposed_lane"] == "memory-development"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
+
+
+def test_pyfakefs_admission_evidence_binds_traversal_and_bad_boundaries() -> None:
+    package = load_task_package(PYFAKEFS_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.role == DatasetRole.MEMORY_DEVELOPMENT
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 8
+
+    evidence = json.loads(
+        Path("reports/docker-gate/research-pyfakefs-makedirs-parent-traversal.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert evidence["harness_git_commit"] == "64b2f46700d2f98793ae876a8c6cf6caccd8836d"
+    assert evidence["reference_policy"]["kind"] == "normalized-upstream-production-only"
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 8
+    assert evidence["upstream_regression_test_count"] == 517
+    assert evidence["benchmark_p2p_declared_count"] == 517
+    assert evidence["independent_hidden_test_count"] == 12
+    for check_id in (
+        "submitted_source_binding",
+        "posix_windows_component_order",
+        "nested_and_bytes_path_semantics",
+        "exist_ok_and_invalid_parent_semantics",
+        "leaf_intermediate_mode_separation",
+        "benchmark_test_patch_accounting",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 12
+    assert len({case["run_id"] for case in cases.values()}) == 12
+    assert all(case["official"] for case in cases.values())
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    assert cases["base-noop"]["failed_checks"] == ["hidden:makedirs-parent-traversal"]
+    for case_name in ("single-parent-string-only", "parent-mode-propagation"):
+        assert cases[case_name]["failed_checks"] == ["hidden:makedirs-parent-traversal"]
+    for case_name in (
+        "normalize-before-create",
+        "ignore-exist-ok",
+        "stop-after-parent-creation",
+        "swallow-nondirectory-when-exist-ok",
+        "uncaught-parent-exists",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "regression:upstream-fake-os-regression",
+            "hidden:makedirs-parent-traversal",
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:makedirs-parent-traversal",
+        "policy:scope",
+        "policy:test_tampering",
+    ]

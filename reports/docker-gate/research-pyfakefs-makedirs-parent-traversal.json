@@ -1,0 +1,264 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-27",
+  "task_id": "pyfakefs-makedirs-parent-traversal",
+  "task_version": 1,
+  "dataset_role": "memory-development",
+  "split": "dev-train",
+  "source": {
+    "benchmark_family": "SWE-rebench-V2",
+    "benchmark_revision": "475dd5e8703bb5fb22dd3c60b5d038b019eba1e0",
+    "benchmark_split": "train",
+    "benchmark_row": 308,
+    "benchmark_instance_id": "pytest-dev__pyfakefs-991",
+    "upstream_repository": "pytest-dev/pyfakefs",
+    "issue_url": "https://github.com/pytest-dev/pyfakefs/issues/987",
+    "pull_request_url": "https://github.com/pytest-dev/pyfakefs/pull/991",
+    "base_commit": "7285b671883b8a06fc26466582a8a45baf508bf7",
+    "base_tree": "7c0a994a94cc871d2d49a77b76356f2a1be3673b",
+    "pr_head_commit": "a3abfcc52e7a5b8b31b9e5005de61fe37250cf5a",
+    "resolution_commit": "080529189ac09d1fea2202cae4396aa964a3ad1f",
+    "resolution_tree": "b3d5b1ccd4451cb63e8456ed5497b1f07e280223",
+    "license_spdx": "Apache-2.0",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_gold_patch_sha256": "sha256:5a41a1a02dda3f1804c94456bb1610d7aabca6b277a7e705bdc996c5e51219fa",
+    "benchmark_test_patch_sha256": "sha256:030b095bd9b551a315e81ae423f3467aeda52b3e844cba94472f63ecda31565b"
+  },
+  "reference_policy": {
+    "kind": "normalized-upstream-production-only",
+    "excluded_upstream_files": [
+      "CHANGES.md",
+      "pyfakefs/tests/fake_os_test.py"
+    ],
+    "rationale": "The reference preserves the exact upstream production hunk in pyfakefs/fake_os.py while excluding the changelog and benchmark test patch. The independently authored hidden oracle validates ordered traversal without copying the F2P test."
+  },
+  "public_spec_hash": "sha256:4d5de049d133ee29adf726733b7ace99b9d55518cc0433c72d2aa7b1576664d8",
+  "private_spec_hash": "sha256:908566e263a16ba32ed886c69b3fd23a7cf4f899eeb722a2d23d580fd3c67f40",
+  "harness_git_commit": "64b2f46700d2f98793ae876a8c6cf6caccd8836d",
+  "evaluator_image": "docker.io/swerebenchv2/pytest-dev-pyfakefs@sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c",
+  "evaluator_image_digest": "sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/pyfakefs",
+    "python_version": "3.10.19",
+    "pytest_version": "9.0.2",
+    "network": "none"
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 8,
+  "independent_hidden_test_count": 12,
+  "benchmark_f2p_declared_count": 1,
+  "benchmark_p2p_declared_count": 517,
+  "upstream_regression_test_count": 517,
+  "upstream_regression_skipped_count": 570,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "posix_windows_component_order": "pass",
+    "nested_and_bytes_path_semantics": "pass",
+    "exist_ok_and_invalid_parent_semantics": "pass",
+    "leaf_intermediate_mode_separation": "pass",
+    "benchmark_test_patch_accounting": "pass",
+    "public_api_unchanged": "pass",
+    "normalized_reference_lineage": "pass",
+    "public_private_separation": "pass",
+    "network_disabled_evaluator": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "workspace_import_binding": "pass",
+    "utf8_patch_evidence": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_009825262b514a68",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ffc4b0fa6a3c83b76d3778172cbcccb922ba081cabde141484fe85eab75a27be",
+      "manifest_sha256": "sha256:e2ea7bec12a9f63f3e93f4de1c13979a64e845539180f83c1bdc218896eef6da",
+      "result_sha256": "sha256:398a8f5832cfee900a528e1ed104f39d94afee9fc20fb58db6f64a4ad05ff7cb",
+      "provenance_sha256": "sha256:43fcf6ede7936d4bf2a3a7522d72042b8ac22e37c5b1ccc08eb7f42382096cc1"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_7af592bb11bd4e1c",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ffc4b0fa6a3c83b76d3778172cbcccb922ba081cabde141484fe85eab75a27be",
+      "manifest_sha256": "sha256:54b69dff0f19377c9519ccd3d737834dbc4561bb6c966255435ac586bd8abe26",
+      "result_sha256": "sha256:8711c3ed1be1a1c97e079a7d9fb0732488a1d220816a703903dc7c2e7be4854f",
+      "provenance_sha256": "sha256:43fcf6ede7936d4bf2a3a7522d72042b8ac22e37c5b1ccc08eb7f42382096cc1"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_12873e02117e455b",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ffc4b0fa6a3c83b76d3778172cbcccb922ba081cabde141484fe85eab75a27be",
+      "manifest_sha256": "sha256:ee6b6380f897d1bc28794123250f3bd39d1acdc3fcd8bc3526729f2461b1596d",
+      "result_sha256": "sha256:9816c73978f9d61d535f530d4b3daba050f8706d9e0f983b2ebeed7641efd504",
+      "provenance_sha256": "sha256:43fcf6ede7936d4bf2a3a7522d72042b8ac22e37c5b1ccc08eb7f42382096cc1"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_0f7e30047ecf4639",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:a68b7cba5226e2bac9b0abd6c7de38fb9ef8c6d9d504de908547670cd8da432a",
+      "result_sha256": "sha256:fd6a08c821da2875389537a2547be203c9fa4dc5a44ed8fe94835d191d902e7e",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "normalize-before-create",
+      "patch": "bad/normalize-before-create.patch",
+      "run_id": "run_f3cae9f4ed4c4442",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-fake-os-regression",
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:9d23a16630e4d67e816bb89e82ca2fcc947e6827d7d89f7ad3cb3617f42acd0a",
+      "manifest_sha256": "sha256:44b34003bf2c1763788292e3116c503e0944866dd43629f969e4b3a06181dabc",
+      "result_sha256": "sha256:66fd08dba11644659e549a929981642ca5037ea5ac60730ac07028beb09a3179",
+      "provenance_sha256": "sha256:7834f5e3f44d8c97f1b22cef55608bdfee4e54170eeac04d6e426af6ed3f9058"
+    },
+    {
+      "name": "single-parent-string-only",
+      "patch": "bad/single-parent-string-only.patch",
+      "run_id": "run_4faf97a4757940cf",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:5aa1697267657951b4ea597c210633d4a15e09e6032021d59116cb9bf02749f7",
+      "manifest_sha256": "sha256:b54b21b6df0f5fb25cc8883c3f0b6918290cb8501616978e8a9402ef261edfa0",
+      "result_sha256": "sha256:a822d3501ec7ba100ff6f0c390622b89c8dcde65d51d3b395d880c4f5c87ea17",
+      "provenance_sha256": "sha256:0fb31152dbe5be293a1e3ea94008a4172d6218c4f50d7c90a654e445785982df"
+    },
+    {
+      "name": "parent-mode-propagation",
+      "patch": "bad/parent-mode-propagation.patch",
+      "run_id": "run_e3a8ccad251245fd",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:7b3bb6b7fb454326fac047a4ff64ff1cfa81126675f984e44395a58d6479ecd1",
+      "manifest_sha256": "sha256:d2e22a1248f1bad38436bd21dd180e580bbd2e64399dab79e11273992939c3d7",
+      "result_sha256": "sha256:78f23e49de82312817660ef449b4a13d65a2b0bd0640567aaae00904621758a8",
+      "provenance_sha256": "sha256:a9c9e9959402a675ed042647db683c08417bd7517ed8527aaa9a8cc9be91d0cd"
+    },
+    {
+      "name": "ignore-exist-ok",
+      "patch": "bad/ignore-exist-ok.patch",
+      "run_id": "run_dae4dc5afe1e43bd",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-fake-os-regression",
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:bc4b60f81c063bbdc73b6af31a0ba6742b3fa060ec1d6f571bafb473590483e9",
+      "manifest_sha256": "sha256:0eacd599879037a9bbcabe21249a833503f817beffef3832eba056013c6c54a2",
+      "result_sha256": "sha256:1eda71c60d1564303b0a693ed125072b292c91a1b54a4138d51240c93043c66b",
+      "provenance_sha256": "sha256:c8a5ed7b56c927dbda6a27d48930c66d517f1a0dea89a77e39adfde279cbea7f"
+    },
+    {
+      "name": "stop-after-parent-creation",
+      "patch": "bad/stop-after-parent-creation.patch",
+      "run_id": "run_28df8167bca54794",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-fake-os-regression",
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:ac3aa8259596b43c804f788e4eafaa5ed7db35d194202e3011030080aca9ddc0",
+      "manifest_sha256": "sha256:a853729131557c32d2fabe5d45243fef741694d77b4c3ac1174112b13e529f52",
+      "result_sha256": "sha256:f3f7658138643193eac8e609a1fc4283d46dd1d17fde54ab8e41651ab5f8840a",
+      "provenance_sha256": "sha256:b737a2f4ee65f7c0ce78f5c9a41fd1049a11662fb435158febe762f54ad81868"
+    },
+    {
+      "name": "swallow-nondirectory-when-exist-ok",
+      "patch": "bad/swallow-nondirectory-when-exist-ok.patch",
+      "run_id": "run_71fa030f5eb04a96",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-fake-os-regression",
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:4b605109357d4dd79274d5a15b644c0c41c11371a5ee77c5f0f8046333f00372",
+      "manifest_sha256": "sha256:52443a63c24382c7d7898e38aaea3f6029f32a4238c380992c33d96c0a174974",
+      "result_sha256": "sha256:694a511ffffaadb86907fc5ec55ae785668fff84130c877f1246232470a8125b",
+      "provenance_sha256": "sha256:43a91ca1b7f7f34048594b0640d8f1cc57cb8a6b6d80502d62253c3c96dd1f90"
+    },
+    {
+      "name": "uncaught-parent-exists",
+      "patch": "bad/uncaught-parent-exists.patch",
+      "run_id": "run_4007c8257dc443dd",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-fake-os-regression",
+        "hidden:makedirs-parent-traversal"
+      ],
+      "patch_sha256": "sha256:30cd61e0ba538efebfe2bb0a598ae80188b0bbdda1bc8e7600da50c3cb6c40e8",
+      "manifest_sha256": "sha256:0c1e5605b4f60695dcf764e29ee5b2a191d47071f2370208abd096a73546a7ce",
+      "result_sha256": "sha256:c2ad0fb0c3687e8ddd18f1f04a691e9d4d9afad3889c6feda6b468ede89a1fec",
+      "provenance_sha256": "sha256:1af4b53a8a89a386c5b0f93d6a74a7d30fe8efa6941a136dbb48ab5b6b479db7"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_17f66c01ff914266",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:makedirs-parent-traversal",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:8d4503b8c8d68b7e63280b90204a4a00c13f7acf967db01275d789fd26fbc560",
+      "manifest_sha256": "sha256:d8b6f603053f6d0171a48c598a27d4027725840f52eaf38f082e5ed4ce432194",
+      "result_sha256": "sha256:66e51f9c020f0ca87dc9687f6a2568fab93ae64d1896adc38606c1b9a434f821",
+      "provenance_sha256": "sha256:d57163bf281fde7c14101c5b75c289e791a7c65c28fe137d8ccb2d8d00706c6b"
+    }
+  ]
+}

@@ -48,5 +48,15 @@ Difficulty audit:
 | Verification breadth | 2 | Nested, bytes, existing, error, separator and mode cases diverge independently. |
 | Total | 5 | Medium under `dataset-manifest-v1`, matching the benchmark metadata. |
 
-Admission remains pending until the clean committed harness passes the official
-Docker base/no-op, three-reference, upstream-regression, and known-bad gates.
+Admission evidence from clean harness commit
+`64b2f46700d2f98793ae876a8c6cf6caccd8836d` shows:
+
+1. the unmodified base passes all 517 declared P2P regressions and fails private acceptance;
+2. the normalized production reference passes hidden, regression, scope and safety verdicts
+   three times;
+3. seven semantic partial fixes fail hidden acceptance or upstream regression, while the
+   forbidden test edit also fails scope and test-tampering checks;
+4. source commit, image, specs, patch, manifest, result and provenance are content-addressed.
+
+All official evaluator containers ran with network disabled. The submitted checkout was imported
+from `/workspace`, and the gate made zero model or API calls.

@@ -47,3 +47,11 @@ private oracle. The benchmark declares 37 P2P nodes because one passing paramete
 patch. Six semantic partial fixes and one forbidden test edit were rejected. The forbidden edit retained
 aggregate safety=`pass` but failed hidden, scope and test-tampering checks. This gate made zero model/API
 calls.
+
+`research-pyfakefs-makedirs-parent-traversal.json` records the sixth research admission. It pins
+SWE-rebench V2 instance `pytest-dev__pyfakefs-991`, base commit `7285b671...` and image
+`sha256:6de3b390...`. On clean harness commit `64b2f467...`, the production-only reference passed three
+official evaluations, while the base passed all 517 declared P2P regressions and failed the 12-check
+private oracle. Seven semantic partial fixes and one forbidden test edit were rejected; the latter
+failed hidden, scope and test-tampering checks. All containers ran without network, and the gate made
+zero model/API calls.
