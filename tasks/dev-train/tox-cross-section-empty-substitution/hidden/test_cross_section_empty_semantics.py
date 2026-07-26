@@ -22,6 +22,13 @@ class CrossSectionEmptySemanticsTests(unittest.TestCase):
             (root / "tox.ini").write_text(textwrap.dedent(ini), encoding="utf-8")
             env = os.environ.copy()
             env["PYTHONDONTWRITEBYTECODE"] = "1"
+            repository_src = str(Path.cwd() / "src")
+            inherited_pythonpath = env.get("PYTHONPATH")
+            env["PYTHONPATH"] = (
+                repository_src
+                if not inherited_pythonpath
+                else os.pathsep.join((repository_src, inherited_pythonpath))
+            )
             completed = subprocess.run(
                 [
                     sys.executable,
