@@ -1,6 +1,6 @@
 # Task audit: moto-query-scanned-count
 
-- Dataset role: candidate `development-validation`
+- Dataset role: admitted `development-validation`
 - Source: SWE-rebench V2 instance `getmoto__moto-7208`, split `train`
 - Benchmark revision: `475dd5e8703bb5fb22dd3c60b5d038b019eba1e0`
 - Benchmark row: 9878
@@ -50,16 +50,32 @@ Difficulty audit:
 | Dimension | Score | Reason |
 | --- | ---: | --- |
 | Localization | 1 | The defect is localized to `Table.query`, but accounting is spread across selection, filtering, sorting, and trimming stages. |
-| Reasoning depth | 3 | Correctness requires distinguishing key conditions, post-query filters, limits, prior pages, size boundaries, and index keys. |
+| Reasoning depth | 2 | Correctness requires distinguishing key conditions, post-query filters, limits, prior pages, size boundaries, and index keys. |
 | Implementation breadth | 1 | One production module changes without a public API change. |
-| Verification breadth | 3 | Partition, range, filter, pagination, projection, ordering, index, and empty-result semantics interact. |
-| Total | 8 | Hard under `dataset-manifest-v1`. |
+| Verification breadth | 2 | Partition, range, filter, pagination, projection, ordering, index, and empty-result semantics interact. |
+| Total | 6 | Hard under `dataset-manifest-v1`. |
 
 Authoring probes on the pinned image show the normalized reference passes all
 9 independent checks, while the clean base fails 7 checks. Six semantic partial
 fixes each fail at least one distinct private boundary. These probes are not
 admission evidence.
 
-Admission is pending the official three-reference, base, semantic bad-patch, and
-scope/tampering Docker gate. Until that evidence is content-addressed in the
-dataset manifest, this package is not an admitted research task.
+Admission evidence from clean harness commit
+`b4cc0ec8d2dffad907f31ed8ffac220ed0353c38` shows:
+
+1. the normalized production reference passes regression, hidden, scope, and
+   safety verdicts in runs `run_cee764017ee14f6f`,
+   `run_e3c92f006f094766`, and `run_ebb46abb00ea4da9`;
+2. the clean base passes all 182 selected regressions and fails the private
+   acceptance boundary in `run_7e5dad51ff294ca7`;
+3. all six semantic partial fixes pass the public regression and fail private
+   acceptance;
+4. the forbidden test edit fails hidden acceptance, scope, and test-tampering
+   policy;
+5. all runs are `official=true`, execute without container networking, and make
+   zero model or API calls.
+
+The content-addressed case ledger is
+`reports/docker-gate/research-moto-query-scanned-count.json`. The task may be
+used only for rendering, no-match, and leak validation. Its runs are prohibited
+from memory-entry generation and the held-out core denominator.

@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The six admitted research tasks are:
+The seven admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -61,10 +61,17 @@ The six admitted research tasks are:
   `exist_ok`, invalid-parent errors and leaf-only mode application. It records three official passes,
   all 517 declared P2P regressions, 12 independent hidden checks, one base hidden failure, seven
   semantic known-bad rejections and one scope/test-tampering rejection.
+- `moto-query-scanned-count`, derived from SWE-rebench V2 `getmoto__moto-7208` and upstream
+  Moto issue #7206 / PR #7208. Its oracle locates query cardinality at the boundary between key
+  selection and non-key filtering across partitions, ranges, pagination, global secondary indexes,
+  projections and empty results. It records three official passes, 182 selected upstream regressions,
+  nine independent hidden checks, one base hidden failure, six semantic known-bad rejections and one
+  scope/test-tampering rejection. The nine deselected endpoint tests are outside the benchmark P2P
+  declaration; every one of the 173 logical P2P nodes is represented by 179 passing concrete cases.
 
-All six tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
-SWE-rebench evaluator image. Four are MIT licensed, including PDM; Hugging Face Hub and pyfakefs are
-Apache-2.0.
+All seven tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+SWE-rebench evaluator image. Four are MIT licensed, including PDM; Hugging Face Hub, pyfakefs and
+Moto are Apache-2.0.
 
 ## Research dataset target
 
@@ -73,10 +80,10 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | Manifest role | Target | Memory source | Currently admitted |
 | --- | ---: | --- | ---: |
 | Memory development | 6 | reviewed failures only | 6 |
-| Development validation | 2 | no | 0 |
+| Development validation | 2 | no | 1 |
 | Core same-repo | 6 | prohibited | 0 |
 | Core cross-repo | 6 | prohibited | 0 |
-| **Research total** | **20** |  | **6** |
+| **Research total** | **20** |  | **7** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

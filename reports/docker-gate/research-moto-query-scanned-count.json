@@ -1,0 +1,248 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-27",
+  "task_id": "moto-query-scanned-count",
+  "task_version": 1,
+  "dataset_role": "development-validation",
+  "split": "dev-validation",
+  "source": {
+    "benchmark_family": "SWE-rebench-V2",
+    "benchmark_revision": "475dd5e8703bb5fb22dd3c60b5d038b019eba1e0",
+    "benchmark_split": "train",
+    "benchmark_row": 9878,
+    "benchmark_instance_id": "getmoto__moto-7208",
+    "upstream_repository": "getmoto/moto",
+    "issue_url": "https://github.com/getmoto/moto/issues/7206",
+    "pull_request_url": "https://github.com/getmoto/moto/pull/7208",
+    "base_commit": "624de34d82a1b2c521727b14a2173380e196f1d8",
+    "base_tree": "bf80fd425702651642b9ba655322b6daf8a4a424",
+    "pr_head_commit": "a64b7bcb4246760047d2cc1565d033fd0261693d",
+    "resolution_commit": "455fbd5eaa0270e03eac85a532e47ec75c7acd21",
+    "resolution_tree": "0e71074206f143c2c4fd175cc866c21e14a3f878",
+    "license_spdx": "Apache-2.0",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_gold_patch_sha256": "sha256:1c068070effeafae13d0d261c7d7d7cbde115c6ac3e8b9fef17a61742e4c95cd",
+    "benchmark_test_patch_sha256": "sha256:13508ec3ce19a9b59a440eb12820f007410b0fa0fd09ad5fd37041220fd3df96"
+  },
+  "reference_policy": {
+    "kind": "normalized-upstream-production-only",
+    "excluded_upstream_files": [
+      "tests/test_dynamodb/test_dynamodb.py",
+      "tests/test_dynamodb/test_dynamodb_table_with_range_key.py"
+    ],
+    "rationale": "The reference preserves the exact accepted production blob in moto/dynamodb/models/table.py while excluding the benchmark test patch. The independently authored hidden oracle validates query-stage accounting without copying the issue values or F2P assertions."
+  },
+  "public_spec_hash": "sha256:15b4c9f378d48ae8eadbfad1a375d367fc973c230abf0996c617282ca0df8ea7",
+  "private_spec_hash": "sha256:8d826a069668af41e245268cd8b84aa5f0c35d9085536cfde999ba0ad9703254",
+  "harness_git_commit": "b4cc0ec8d2dffad907f31ed8ffac220ed0353c38",
+  "evaluator_image": "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+  "evaluator_image_digest": "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/moto",
+    "python_version": "3.10.19",
+    "pytest_version": "9.0.2",
+    "network": "none"
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 7,
+  "semantic_bad_patch_rejection_count": 6,
+  "independent_hidden_test_count": 9,
+  "benchmark_f2p_declared_count": 3,
+  "benchmark_p2p_declared_count": 173,
+  "benchmark_p2p_concrete_count": 179,
+  "upstream_regression_test_count": 182,
+  "non_p2p_network_test_deselection_count": 9,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "partition_and_empty_query_accounting": "pass",
+    "filter_stage_accounting": "pass",
+    "range_and_index_accounting": "pass",
+    "limit_and_exclusive_start_key_accounting": "pass",
+    "projection_and_ordering_stability": "pass",
+    "benchmark_p2p_network_independence": "pass",
+    "non_p2p_network_exclusions_disclosed": "pass",
+    "public_api_unchanged": "pass",
+    "normalized_reference_lineage": "pass",
+    "public_private_separation": "pass",
+    "network_disabled_evaluator": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "workspace_import_binding": "pass",
+    "utf8_patch_evidence": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_cee764017ee14f6f",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:943e20a2eb696c6501d1d68b9988c2fb03bac79496dec4324d160b7abb922fe0",
+      "manifest_sha256": "sha256:0c0461c2081ea12c8ffc51fd94da7992b6a4e87ad2f10437f8e4956c9d7c3e1b",
+      "result_sha256": "sha256:753a2de8eaf0b07d6a21b22cb99adbf15d0af0374c6593052607050f57be92a2",
+      "provenance_sha256": "sha256:c44ffb7ecc5d6663b6aabec9c47f8b08cda472dadbd75765e7b70a677fb0b93e"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_e3c92f006f094766",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:943e20a2eb696c6501d1d68b9988c2fb03bac79496dec4324d160b7abb922fe0",
+      "manifest_sha256": "sha256:d4079417401bdd247040ebeb5c56788fbd09a8c26a168b9700b0adfbd305fe6e",
+      "result_sha256": "sha256:2160b74dc6cf76b795900954ff1bdf454fcdd6501434f74803d0c95929065659",
+      "provenance_sha256": "sha256:c44ffb7ecc5d6663b6aabec9c47f8b08cda472dadbd75765e7b70a677fb0b93e"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_ebb46abb00ea4da9",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:943e20a2eb696c6501d1d68b9988c2fb03bac79496dec4324d160b7abb922fe0",
+      "manifest_sha256": "sha256:faa3f17805e36a7738d533ef505161a8be5432fa252bcd9deae5885c72edbb7b",
+      "result_sha256": "sha256:43e8c18808b0c0751a79ff95f81b6535d3910f9d4747b31828af5099139b86b0",
+      "provenance_sha256": "sha256:c44ffb7ecc5d6663b6aabec9c47f8b08cda472dadbd75765e7b70a677fb0b93e"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_7e5dad51ff294ca7",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:7d32f868819b726ecd015dcd5a8778d545e34f4235c4c213394edc1f6d782ea9",
+      "result_sha256": "sha256:803a84051360c8eaeb27fa172f63502aa733ccb397dee5ad0424797f22485b5b",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "partition-total-only",
+      "patch": "bad/partition-total-only.patch",
+      "run_id": "run_f3838733470e4876",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count"
+      ],
+      "patch_sha256": "sha256:54e74bc7416d643b86adddc1a6a605bc64004ae60ccb50c9428cf97fb22a62e4",
+      "manifest_sha256": "sha256:44a07ecfeecb234ab1523adaf9b767ba32a7d59bddc3cd7af9a50d5812f1a4cf",
+      "result_sha256": "sha256:929e50f81b34000781b41733b52cdc58a593c91bee91add14983b79eb05c468c",
+      "provenance_sha256": "sha256:3021dd33376ff5d0be773d7da26a73e56563e5ff4b619df9c44a5426fea50fb3"
+    },
+    {
+      "name": "key-results-before-page",
+      "patch": "bad/key-results-before-page.patch",
+      "run_id": "run_a45ede4752554f08",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count"
+      ],
+      "patch_sha256": "sha256:9c3d86b270a1307d13aaf006212dac87a082111607a8cd42215de8797e109795",
+      "manifest_sha256": "sha256:c347aa70a6c2c3af374d012c288e78d5dc1ad221d6fc8f6ca91064a72a0b0c8a",
+      "result_sha256": "sha256:31cddb461212651b94745a136f8428bdd1fbfd6187a3b925501c2966cee28610",
+      "provenance_sha256": "sha256:ad411b028275c90e1a7cbe7ba0f672ccaf232f84d7742b1804a85efa96d38eb4"
+    },
+    {
+      "name": "limit-without-cursor",
+      "patch": "bad/limit-without-cursor.patch",
+      "run_id": "run_659b65fc2bde4447",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count"
+      ],
+      "patch_sha256": "sha256:58935d073cf11c5dd4e6e656b49eb1567626cfb83635d37c4d054780590a7628",
+      "manifest_sha256": "sha256:a025f9452197d0c135f768d2ffc259968ef254f5b9b694b9468bc0165f4bc399",
+      "result_sha256": "sha256:1614e645740c472e1dc0b1aaa32c85c18a0c2b6277d3753b49cc94060219c522",
+      "provenance_sha256": "sha256:44b0bb84909981ab313af21b624ed7e7977c3879e37f351b70db7054d6505742"
+    },
+    {
+      "name": "post-filter-result-count",
+      "patch": "bad/post-filter-result-count.patch",
+      "run_id": "run_e752404041714902",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count"
+      ],
+      "patch_sha256": "sha256:c2d909ab94afa64dd991280f5ac6c81fdad6969b7733f7cde5daa19e0d38628b",
+      "manifest_sha256": "sha256:acf06e49192efb7b2af53792efe4463bc0acc11ef67ff69a4651b8956227165b",
+      "result_sha256": "sha256:6936962bd32a3eea0c9b39c8ed021732d51e221dd027e5a4bec1f5f829983761",
+      "provenance_sha256": "sha256:8a80ea543743cee15edd3e80b3dcb7332328098eb5236c77fe1ac2ef7e3029fd"
+    },
+    {
+      "name": "index-uses-table-count",
+      "patch": "bad/index-uses-table-count.patch",
+      "run_id": "run_bc92fd9ff295438c",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count"
+      ],
+      "patch_sha256": "sha256:24ba432f03938af8852606fad4f35ee1a868177d1f1804e7935f5ef6bdd1aea9",
+      "manifest_sha256": "sha256:65d4d92f079c35cbdaa47d0f8bffbdd85dff4e5d046b55e738a7a39b738fdf8f",
+      "result_sha256": "sha256:e2feaffacecda387cbe44eb5822ae2f795fe1fb3b8ca2d1c18028a29ac731ba1",
+      "provenance_sha256": "sha256:833885a339d6d599cfea951b5a687b0855b4bdcb52ec2b1d32f910e646a027a5"
+    },
+    {
+      "name": "cursor-subtraction-without-limit",
+      "patch": "bad/cursor-subtraction-without-limit.patch",
+      "run_id": "run_06f7c30a08ed4b85",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count"
+      ],
+      "patch_sha256": "sha256:7022d305a2974a4435feaa154ce2391907f9a2e23630761ee2712bee70b9eaa4",
+      "manifest_sha256": "sha256:31b27e51fe228128787524b85e29db604b7d0b9bc048549980c0caf7ad9b7081",
+      "result_sha256": "sha256:327906bf82e13b5e26ee957317ab71832fbe223b0eb93034bdf7e1ee85b07beb",
+      "provenance_sha256": "sha256:771f318bafc67c5c5047375e850be0e7d845310a6bb68e5c880f15368f882aee"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_6fa7ed308ac6435a",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:query-scanned-count",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:0809955507d4c0be1793760847c52c05f41a1fe40d568ee5f759d2cbcef4cb19",
+      "manifest_sha256": "sha256:7b8974aaddfaf5b588a17b4b308f424e83ef2340b07dc34d2e5f41f22c7a7d0c",
+      "result_sha256": "sha256:d5c647956a41dfa1b0d4a7b4aa2107a6f085d6a2817edca363c292c46e4a829b",
+      "provenance_sha256": "sha256:71df104405b63f170f282c8e5649f4e8e8f3573a0a7d7c42a9537c563c8ce193"
+    }
+  ]
+}

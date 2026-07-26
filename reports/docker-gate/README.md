@@ -55,3 +55,12 @@ official evaluations, while the base passed all 517 declared P2P regressions and
 private oracle. Seven semantic partial fixes and one forbidden test edit were rejected; the latter
 failed hidden, scope and test-tampering checks. All containers ran without network, and the gate made
 zero model/API calls.
+
+`research-moto-query-scanned-count.json` records the seventh research admission and first
+development-validation task. It pins SWE-rebench V2 instance `getmoto__moto-7208`, base commit
+`624de34d...` and image `sha256:dfdf957a...`. On clean harness commit `b4cc0ec8...`, the
+production-only reference passed three official evaluations, while the base passed 182 selected
+regressions and failed the nine-check private oracle. Six semantic partial fixes and one forbidden
+test edit were rejected. The benchmark's 173 logical P2P nodes expand to 179 concrete passing cases;
+nine explicitly deselected endpoint tests are outside that P2P declaration. All containers ran
+without network, and the gate made zero model/API calls.

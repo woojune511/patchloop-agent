@@ -24,19 +24,23 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["calibration_ready"] is True
     assert result["research_ready"] is False
     assert result["stress_ready"] is False
-    assert result["task_count"] == 11
+    assert result["task_count"] == 12
     assert result["calibration_task_count"] == 5
-    assert result["research_task_count"] == 6
-    assert result["candidate_package_count"] == 1
-    assert result["unregistered_task_paths"] == [
-        "tasks/dev-validation/moto-query-scanned-count"
-    ]
-    assert result["role_counts"] == {"calibration": 5, "memory-development": 6}
+    assert result["research_task_count"] == 7
+    assert result["candidate_package_count"] == 0
+    assert result["unregistered_task_paths"] == []
+    assert result["role_counts"] == {
+        "calibration": 5,
+        "memory-development": 6,
+        "development-validation": 1,
+    }
     assert "memory-development" not in result["missing"]
+    assert result["missing"]["development-validation"] == 1
     assert result["missing"]["core-cross-repo"] == 6
     assert result["repositories"] == [
         "agronholm/anyio",
         "delgan/loguru",
+        "getmoto/moto",
         "huggingface/huggingface_hub",
         "pdm-project/pdm",
         "pytest-dev/pyfakefs",
@@ -55,12 +59,12 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
 
 def test_research_tasks_have_real_benchmark_admission_evidence() -> None:
     result = audit_dataset("tasks")
-    assert result["research_task_count"] == 6
+    assert result["research_task_count"] == 7
     assert result["source_counts"] == {
         "synthetic-control": 5,
-        "benchmark-instance": 6,
+        "benchmark-instance": 7,
     }
-    assert result["difficulty_counts"] == {"easy": 5, "medium": 2, "hard": 4}
+    assert result["difficulty_counts"] == {"easy": 5, "medium": 2, "hard": 5}
 
 
 def test_first_research_task_is_eligible_only_for_memory_development() -> None:

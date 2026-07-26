@@ -375,6 +375,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 8
 
+  - task_id: moto-query-scanned-count
+    task_version: 1
+    path: tasks/dev-validation/moto-query-scanned-count
+    role: development-validation
+    admission_state: admitted
+    public_spec_hash: sha256:15b4c9f378d48ae8eadbfad1a375d367fc973c230abf0996c617282ca0df8ea7
+    private_spec_hash: sha256:8d826a069668af41e245268cd8b84aa5f0c35d9085536cfde999ba0ad9703254
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-V2
+      benchmark_revision: 475dd5e8703bb5fb22dd3c60b5d038b019eba1e0
+      benchmark_instance_id: getmoto__moto-7208
+      upstream_repository: getmoto/moto
+      issue_url: https://github.com/getmoto/moto/issues/7206
+      pull_request_url: https://github.com/getmoto/moto/pull/7208
+      upstream_base_commit: 624de34d82a1b2c521727b14a2173380e196f1d8
+      resolution_commit: 455fbd5eaa0270e03eac85a532e47ec75c7acd21
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-26T20:31:52Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: Correct accounting must be placed between key selection and non-key filtering while preserving range and index semantics, per-page limits, exclusive start keys, ordering, projection and last-evaluated keys.
+    failure_pattern_id: cardinality-measured-at-wrong-pipeline-stage
+    solution_lineage_id: getmoto-moto-pr-7208
+    admission_evidence:
+      path: reports/docker-gate/research-moto-query-scanned-count.json
+      sha256: sha256:e8a983c41be61d44ac85fb5856cd63952992eb9cf6670ad7c8f050376167a3ff
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 7
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

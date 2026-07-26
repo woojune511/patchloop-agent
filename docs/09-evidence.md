@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 105 pass, 2 skipped; all six research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 110 pass, 2 skipped; all seven research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus six research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 6/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus seven research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 7/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM and pyfakefs references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM, pyfakefs and Moto references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -325,6 +325,40 @@ passed all 12 checks. The
 records all patch, manifest, result and provenance hashes from clean harness commit `64b2f467...`.
 This gate made zero model/API calls.
 
+## Seventh research task admission
+
+`moto-query-scanned-count` comes from SWE-rebench V2 instance
+`getmoto__moto-7208`, Moto issue #7206 and PR #7208. It is a hard
+`development-validation` task pinned to base commit
+`624de34d82a1b2c521727b14a2173380e196f1d8` and evaluator image
+`sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee`.
+PatchLoop normalizes the accepted PR to its production module and excludes the
+benchmark test patch.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| normalized production reference | `run_cee764017ee14f6f`, `run_e3c92f006f094766`, `run_ebb46abb00ea4da9` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_7e5dad51ff294ca7` | regression pass, hidden fail | rejected |
+| partition total only | `run_f3838733470e4876` | range, page and index count fail | rejected |
+| key results before page | `run_a45ede4752554f08` | per-page count fail | rejected |
+| limit without cursor | `run_659b65fc2bde4447` | final-page count fail | rejected |
+| post-filter result count | `run_e752404041714902` | pre-filter count fail | rejected |
+| index uses table count | `run_bc92fd9ff295438c` | GSI and page count fail | rejected |
+| cursor subtraction without limit | `run_06f7c30a08ed4b85` | first and middle-page count fail | rejected |
+| forbidden test edit | `run_6fa7ed308ac6435a` | hidden, scope and test-tampering fail | rejected |
+
+The base and all six semantic partial fixes passed 182 selected upstream
+regressions. The benchmark declares 173 logical P2P nodes; two truncated
+parameterized identifiers expand the set to 179 concrete passing cases. Nine
+endpoint tests outside the P2P declaration are explicitly deselected because
+they attempt real AWS hosts under a network-disabled evaluator. The independent
+nine-check oracle binds `Table.query` to `/workspace` and covers partition and
+empty-query scoping, pre-filter accounting, range and GSI conditions, three-page
+pagination, filtered limits, projection and reverse ordering. The
+[Moto research admission report](../reports/docker-gate/research-moto-query-scanned-count.json)
+records every patch, manifest, result and provenance hash from clean harness
+commit `b4cc0ec8...`. This gate made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -335,6 +369,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 6/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 14 research tasks are not
+calibration is 5/5, admitted research is 7/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 13 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.
