@@ -6,11 +6,11 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.
 
-현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-24에는
+현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-27 현재
 세 smoke task를 mock과 content-hashed replay로 각각 실행한 6개 agent run이 고정된 Linux Docker
 evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
-SWE-rebench의 실제 Loguru와 AnyIO issue 두 개를 memory-development research task로
-admission했다. 실제 OpenAI 96-run campaign과 나머지 18개 research task는 아직 완료하지 않았다. 미실행 gate는
+SWE-rebench의 실제 Loguru, AnyIO와 tox issue 세 개를 memory-development research task로
+admission했다. 실제 OpenAI 96-run campaign과 나머지 17개 research task는 아직 완료하지 않았다. 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 ## 구현된 핵심 경로
@@ -34,7 +34,7 @@ public.yaml → stateless context builder → model adapter
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
 - Memory/core/headline에서 제외되는 content-addressed calibration fixture 5개
 - SWE-rebench revision, upstream issue/PR/commit, MIT license와 Docker digest를 고정한
-  Loguru와 AnyIO research task
+  Loguru, AnyIO와 tox research task
 - Task별 base hidden failure, reference 3회와 known-bad 5종을 기록한 admission evidence
 - 후속 upstream 회귀까지 판별해 원래 AnyIO benchmark fix를 거부하는 hardened reference/oracle
 

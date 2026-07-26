@@ -1,4 +1,4 @@
-# Implementation evidence — 2026-07-24
+# Implementation evidence — through 2026-07-27
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
@@ -6,15 +6,15 @@ This is a local implementation checkpoint, not the planned core experiment resul
 
 | Gate | Command | Outcome |
 | --- | --- | --- |
-| Lock consistency | `uv lock --check` | pass, 78 packages resolved |
-| Static analysis | `uv run ruff check .` | pass |
-| Tests | `uv run pytest -q` | 87 pass, 2 skipped; both research admissions and dataset-role gates included |
+| Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
+| Static analysis | `.venv/Scripts/ruff check .` | pass |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 93 pass, 2 skipped; all three research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus two research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 2/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus three research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 3/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru and AnyIO references ×3, each with no-op and five bad patches | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO and tox references ×3, each with no-op and five bad patches | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -202,6 +202,36 @@ the hardened reference. The
 [AnyIO research admission report](../reports/docker-gate/research-anyio-interrupt-runner-cleanup.json)
 records task, image, patch, manifest, result and provenance hashes. It made zero model/API calls.
 
+## Third research task admission
+
+`tox-cross-section-empty-substitution` comes from SWE-rebench leaderboard instance
+`tox-dev__tox-3810`, tox issue #3809 and PR #3810. It is a hard `memory-development` task pinned to
+base commit `02e9ed73da6a0f97f9167e957e1168d6116942ce` and evaluator image
+`sha256:ffd1129e4be4692becf5011c874858918864d586267002a2917195726542de57`.
+
+The regression followed an earlier same-section fallback change: a same-section value filtered to empty
+must still signal the computed fallback, while an existing value reached through a `SectionProxy` must
+resolve to an empty string rather than be treated as absent. The independent hidden oracle checks both
+sides of that boundary and excludes the later, unrelated override-propagation behavior from tox PR #3951.
+
+| Patch | Runs | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| reference | `run_69c2902bef904d70`, `run_4fc68a56c574420e`, `run_a50049ba72f04850` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_26381b0f1ede4362` | P2P pass, hidden fail | rejected |
+| section `KeyError` on empty | `run_32cfdaf52afe4e2f` | hidden semantic fail | rejected |
+| global factor empty | `run_7497de1bbeef42fe` | hidden and regression fail | rejected |
+| hardcoded upstream section | `run_c03e7fdeedfc41e3` | hidden alternate-section fail | rejected |
+| drop all cross-section values | `run_cd00d175dee740b5` | hidden and regression fail | rejected |
+| forbidden test edit | `run_db7e448418114cea` | hidden, scope and tampering fail | rejected |
+
+The base and reference passed all 29 benchmark P2P tests. The reference passed six independently authored
+hidden checks on each of three official network-disabled Docker evaluations. The admission work also
+fixed two harness defects before the final evidence set was frozen: Git patch evidence is decoded as
+UTF-8 on Windows, and src-layout checks explicitly bind to the submitted source tree while preserving
+the image-generated `tox/version.py` module. The
+[tox research admission report](../reports/docker-gate/research-tox-cross-section-empty-substitution.json)
+records task, image, patch, manifest, result and provenance hashes. It made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -212,6 +242,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 2/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 18 research tasks are not
+calibration is 5/5, admitted research is 3/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 17 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

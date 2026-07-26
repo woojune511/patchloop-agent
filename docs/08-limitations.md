@@ -18,6 +18,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   stability runs, 32 P2P regressions, one base hidden failure and five known-bad rejections. Its
   independent oracle rejects a source-equivalent normalization of the original benchmark fix because a
   later upstream incident exposed an expected-outcome lifecycle regression.
+- Third research task admitted: tox #3810, with three reference passes, 29 P2P regressions, six
+  independent hidden checks, one base hidden failure and five known-bad rejections. Its oracle preserves
+  both cross-section empty-substitution and earlier same-section fallback semantics.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -34,7 +37,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 2/20: memory-development 2/6, development-validation 0/2,
+- Admitted research tasks are 3/20: memory-development 3/6, development-validation 0/2,
   same-repo core 0/6 and cross-repo core 0/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is

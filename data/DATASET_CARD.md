@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The first two admitted research tasks are:
+The first three admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -38,8 +38,13 @@ The first two admitted research tasks are:
   outcome handling, so PatchLoop uses a hardened reference and rejects a source-equivalent normalization
   of the original fix. It records three official passes, 20/20 hidden-oracle stability runs, 32 P2P
   regressions, one base hidden failure and five known-bad rejections.
+- `tox-cross-section-empty-substitution`, derived from `tox-dev__tox-3810` and upstream tox issue
+  #3809 / PR #3810. Its oracle distinguishes a factor-filtered empty value from a missing cross-section
+  key while preserving an earlier same-section fallback contract. It records three official passes,
+  29 P2P regressions, six independent hidden checks, one base hidden failure and five known-bad
+  rejections.
 
-Both tasks pin an exact upstream base commit, MIT license evidence and a digest-addressed SWE-rebench
+All three tasks pin an exact upstream base commit, MIT license evidence and a digest-addressed SWE-rebench
 evaluator image.
 
 ## Research dataset target
@@ -48,11 +53,11 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 
 | Manifest role | Target | Memory source | Currently admitted |
 | --- | ---: | --- | ---: |
-| Memory development | 6 | reviewed failures only | 2 |
+| Memory development | 6 | reviewed failures only | 3 |
 | Development validation | 2 | no | 0 |
 | Core same-repo | 6 | prohibited | 0 |
 | Core cross-repo | 6 | prohibited | 0 |
-| **Research total** | **20** |  | **2** |
+| **Research total** | **20** |  | **3** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

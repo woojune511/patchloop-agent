@@ -1,6 +1,6 @@
 # Task audit: tox-cross-section-empty-substitution
 
-- Dataset role: proposed `memory-development`
+- Dataset role: admitted `memory-development`
 - Source: SWE-rebench leaderboard instance `tox-dev__tox-3810`, split `2026_02`
 - Benchmark revision: `ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b`
 - Benchmark row: 2
@@ -46,7 +46,7 @@ Difficulty audit:
 | Reasoning depth | 2 | The fix must distinguish absence from valid emptiness without undoing an earlier fallback contract. |
 | Implementation breadth | 1 | The production fix is localized but needs a reusable resolution path. |
 | Verification breadth | 2 | Matched, unmatched, missing, default, caller-context, and same-section cases differ. |
-| Total | 6 | Medium under `dataset-manifest-v1`. |
+| Total | 6 | Hard under `dataset-manifest-v1`. |
 
 Admission requires an official network-disabled Docker gate showing:
 

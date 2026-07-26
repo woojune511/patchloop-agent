@@ -207,6 +207,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 5
 
+  - task_id: tox-cross-section-empty-substitution
+    task_version: 1
+    path: tasks/dev-train/tox-cross-section-empty-substitution
+    role: memory-development
+    admission_state: admitted
+    public_spec_hash: sha256:e371eddfbc9e8c73f7b47def95480496d7f88ddccb0348c00a12a9b78c496521
+    private_spec_hash: sha256:79bc8fa9ae0d24e7604f4a9b62ed64f5b2d3e510e659d245fd5f4ed347b0a7bb
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: tox-dev__tox-3810
+      upstream_repository: tox-dev/tox
+      issue_url: https://github.com/tox-dev/tox/issues/3809
+      pull_request_url: https://github.com/tox-dev/tox/pull/3810
+      upstream_base_commit: 02e9ed73da6a0f97f9167e957e1168d6116942ce
+      resolution_commit: 9adb72702cbad18351fbcb80183bd55bddc9b40b
+      license_spdx: MIT
+      retrieved_at: 2026-07-26T17:14:20Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.tox-dev_1776_tox-3810@sha256:ffd1129e4be4692becf5011c874858918864d586267002a2917195726542de57
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must distinguish an existing factor-filtered empty value from a missing cross-section key while preserving matching values, explicit defaults, caller context, and an earlier same-section computed fallback.
+    failure_pattern_id: empty-result-misclassified-as-missing
+    solution_lineage_id: tox-dev-tox-pr-3810
+    admission_evidence:
+      path: reports/docker-gate/research-tox-cross-section-empty-substitution.json
+      sha256: sha256:d627b6abc5ef48499d62809414a74e003be6337d21a10053dc9fb66b572c0fb3
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 5
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

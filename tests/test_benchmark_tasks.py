@@ -164,7 +164,7 @@ def test_tox_candidate_is_traceable_to_swe_rebench_row() -> None:
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "29"
     assert candidate["proposed_lane"] == "memory-development"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
 
 
 def test_same_repository_candidates_are_not_labeled_cross_repo() -> None:
@@ -173,3 +173,36 @@ def test_same_repository_candidates_are_not_labeled_cross_repo() -> None:
 
     assert rows["tox-dev__tox-3904"]["proposed_lane"] == "core-same-repo"
     assert rows["agronholm__anyio-1134"]["proposed_lane"] == "core-same-repo"
+
+
+def test_tox_admission_evidence_binds_submitted_source_and_bad_boundaries() -> None:
+    package = load_task_package(TOX_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 5
+
+    evidence = json.loads(
+        Path("reports/docker-gate/research-tox-cross-section-empty-substitution.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert evidence["harness_git_commit"] == "255ea88072f89adf9643c59105366f225e7ca379"
+    assert evidence["upstream_regression_test_count"] == 29
+    assert evidence["independent_hidden_test_count"] == 6
+    assert evidence["admission_checks"]["submitted_source_binding"] == "pass"
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert "regression:upstream-show-config-regression" in cases["global-factor-empty"][
+        "failed_checks"
+    ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:cross-section-empty-semantics",
+        "policy:scope",
+        "policy:test_tampering",
+    ]

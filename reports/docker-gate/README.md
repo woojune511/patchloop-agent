@@ -24,3 +24,10 @@ commit `45949f20...`, a hardened reference passed three official evaluations and
 stability repetitions. The base failed private no-resume acceptance, 32 P2P tests passed, and five
 known-bad patches were rejected. One negative is a source-equivalent normalization of the upstream fix:
 PatchLoop rejects it because the later AnyIO #1179/#1180 incident exposed a pytest outcome regression.
+
+`research-tox-cross-section-empty-substitution.json` records the third research admission. It pins
+`tox-dev__tox-3810`, base commit `02e9ed73...` and image `sha256:ffd1129e...`. On harness commit
+`255ea880...`, the reference passed three official evaluations, the base passed 29 P2P tests while
+failing six-check private acceptance, and five known-bad patches were rejected. The evaluator also
+records that both public and hidden checks execute against the submitted source tree rather than the
+image's pristine `/testbed` checkout.
