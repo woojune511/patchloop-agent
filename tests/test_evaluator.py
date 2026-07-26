@@ -46,6 +46,21 @@ def test_remote_repository_must_be_allowlisted(tmp_path) -> None:
         )
 
 
+def test_diff_summary_decodes_utf8_source_content(tmp_path) -> None:
+    manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
+    workspace = manager.create("utf8-diff", "snapshot://mini-data-utils")
+    readme = workspace / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\nValid empty — not missing.\n",
+        encoding="utf-8",
+    )
+
+    summary = manager.diff_summary(workspace)
+
+    assert "Valid empty — not missing." in summary.patch
+    assert summary.changed_files == ["README.md"]
+
+
 @pytest.mark.parametrize(
     "patch_name",
     [

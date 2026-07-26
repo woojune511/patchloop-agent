@@ -40,10 +40,17 @@ class DiffSummary:
 
 def _git(workspace: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     result = subprocess.run(
-        ["git", *args], cwd=workspace, capture_output=True, text=True, check=False
+        ["git", *args],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
     )
     if check and result.returncode != 0:
         raise ContractError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
+    if result.stdout is None or result.stderr is None:
+        raise ContractError(f"git {' '.join(args)} did not produce decodable UTF-8 output")
     return result
 
 
