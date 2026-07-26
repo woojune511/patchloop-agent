@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import configparser
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -9,8 +10,22 @@ import textwrap
 import unittest
 from pathlib import Path
 
+import tox.version as installed_tox_version
+
 
 class CrossSectionEmptySemanticsTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.source_temp = tempfile.TemporaryDirectory(prefix="patchloop-tox-source-")
+        cls.source_root = Path(cls.source_temp.name) / "src"
+        shutil.copytree(Path.cwd() / "src", cls.source_root)
+        generated_version = Path(installed_tox_version.__file__).resolve()
+        shutil.copy2(generated_version, cls.source_root / "tox" / "version.py")
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.source_temp.cleanup()
+
     def config_values(
         self,
         ini: str,
@@ -22,12 +37,11 @@ class CrossSectionEmptySemanticsTests(unittest.TestCase):
             (root / "tox.ini").write_text(textwrap.dedent(ini), encoding="utf-8")
             env = os.environ.copy()
             env["PYTHONDONTWRITEBYTECODE"] = "1"
-            repository_src = str(Path.cwd() / "src")
             inherited_pythonpath = env.get("PYTHONPATH")
             env["PYTHONPATH"] = (
-                repository_src
+                str(self.source_root)
                 if not inherited_pythonpath
-                else os.pathsep.join((repository_src, inherited_pythonpath))
+                else os.pathsep.join((str(self.source_root), inherited_pythonpath))
             )
             completed = subprocess.run(
                 [
