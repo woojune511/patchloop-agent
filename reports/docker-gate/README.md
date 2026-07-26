@@ -31,3 +31,10 @@ PatchLoop rejects it because the later AnyIO #1179/#1180 incident exposed a pyte
 failing six-check private acceptance, and five known-bad patches were rejected. The evaluator also
 records that both public and hidden checks execute against the submitted source tree rather than the
 image's pristine `/testbed` checkout.
+
+`research-hf-hub-xet-endpoint-propagation.json` records the fourth research admission. It pins
+SWE-rebench V2 instance `huggingface__huggingface_hub-3180`, base commit `6f9b87ec...` and image
+`sha256:c698facf...`. On harness commit `ebf05dd5...`, the production-only reference passed three
+official evaluations, while the base passed 15 P2P tests and failed the eight-check private oracle.
+Five semantic partial fixes and one scope/tampering patch were rejected. Submitted-source binding and
+the exact allowed public-signature delta are explicit oracle checks. This gate made zero model/API calls.

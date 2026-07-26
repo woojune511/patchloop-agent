@@ -1,6 +1,6 @@
 # Task audit: hf-hub-xet-endpoint-propagation
 
-- Dataset role: proposed `memory-development`
+- Dataset role: admitted `memory-development`
 - Source: SWE-rebench V2 instance `huggingface__huggingface_hub-3180`, split `train`
 - Benchmark revision: `475dd5e8703bb5fb22dd3c60b5d038b019eba1e0`
 - Benchmark row: 266
@@ -62,3 +62,9 @@ Admission requires an official network-disabled Docker gate showing:
 
 The hidden tests are independently authored from the reported behavior. They do not copy the
 benchmark F2P test or inspect implementation helper names.
+
+Admission evidence is recorded in
+`reports/docker-gate/research-hf-hub-xet-endpoint-propagation.json`: the production-only
+reference passed three official runs, the unmodified base failed hidden acceptance while
+passing all 15 P2P regressions, five semantic partial fixes failed the independent oracle,
+and a forbidden test edit additionally failed scope and test-tampering policy.

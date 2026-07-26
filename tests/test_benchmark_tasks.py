@@ -258,4 +258,43 @@ def test_hf_hub_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
     assert candidate["f2p"] == "2"
     assert candidate["p2p"] == "15"
     assert candidate["proposed_lane"] == "memory-development"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
+
+
+def test_hf_hub_admission_evidence_binds_source_api_and_bad_boundaries() -> None:
+    package = load_task_package(HF_HUB_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 6
+
+    evidence = json.loads(
+        Path("reports/docker-gate/research-hf-hub-xet-endpoint-propagation.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert evidence["harness_git_commit"] == "ebf05dd5327df011e7ec20ede3c3f01d14054007"
+    assert evidence["upstream_regression_test_count"] == 15
+    assert evidence["independent_hidden_test_count"] == 8
+    assert evidence["admission_checks"]["submitted_source_binding"] == "pass"
+    assert evidence["admission_checks"]["exact_public_signature_delta"] == "pass"
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    for case_name in (
+        "parser-only",
+        "missing-hf-api-forwarding",
+        "missing-download-forwarding",
+        "unguarded-substring-replace",
+        "hardcoded-default-endpoint",
+    ):
+        assert cases[case_name]["failed_checks"] == ["hidden:xet-endpoint-propagation"]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:xet-endpoint-propagation",
+        "policy:scope",
+        "policy:test_tampering",
+    ]

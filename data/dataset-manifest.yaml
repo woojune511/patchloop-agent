@@ -249,6 +249,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 5
 
+  - task_id: hf-hub-xet-endpoint-propagation
+    task_version: 1
+    path: tasks/dev-train/hf-hub-xet-endpoint-propagation
+    role: memory-development
+    admission_state: admitted
+    public_spec_hash: sha256:8f7b0ea5f92ec9d843b8053f0739b42570b7407d76fe6f7a7ea6fd08c481a075
+    private_spec_hash: sha256:6953e81aa29589b5eb02f2aa43edd4610b5def432a7d79fba0554c89187c942b
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-V2
+      benchmark_revision: 475dd5e8703bb5fb22dd3c60b5d038b019eba1e0
+      benchmark_instance_id: huggingface__huggingface_hub-3180
+      upstream_repository: huggingface/huggingface_hub
+      issue_url: https://github.com/huggingface/huggingface_hub/issues/3168
+      pull_request_url: https://github.com/huggingface/huggingface_hub/pull/3180
+      upstream_base_commit: 6f9b87ecda5025259c69a1eb0ae6f8ee80d05d33
+      resolution_commit: eebd13d365b925340dcf452c22d8cc7df56b149d
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-26T17:46:42Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: docker.io/swerebenchv2/huggingface-huggingface-hub@sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f
+    difficulty:
+      localization: 1
+      reasoning_depth: 1
+      implementation_breadth: 2
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The request-scoped endpoint must cross three modules while rebasing only default-origin routes and preserving relative, foreign-origin, and implicit-default behavior.
+    failure_pattern_id: endpoint-context-propagation-gap
+    solution_lineage_id: huggingface-hub-xet-endpoint-pr-3180
+    admission_evidence:
+      path: reports/docker-gate/research-hf-hub-xet-endpoint-propagation.json
+      sha256: sha256:ef8d6c7c638bde520c852c9d0965aeb4b4cb022f0d98fab86699c548960b08d5
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 6
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

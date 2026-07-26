@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 93 pass, 2 skipped; all three research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 97 pass, 2 skipped; all four research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus three research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 3/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus four research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 4/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO and tox references ×3, each with no-op and five bad patches | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO, tox and Hugging Face Hub references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -232,6 +232,34 @@ the image-generated `tox/version.py` module. The
 [tox research admission report](../reports/docker-gate/research-tox-cross-section-empty-substitution.json)
 records task, image, patch, manifest, result and provenance hashes. It made zero model/API calls.
 
+## Fourth research task admission
+
+`hf-hub-xet-endpoint-propagation` comes from SWE-rebench V2 instance
+`huggingface__huggingface_hub-3180`, Hugging Face Hub issue #3168 and PR #3180. It is a hard
+`memory-development` task pinned to base commit
+`6f9b87ecda5025259c69a1eb0ae6f8ee80d05d33` and evaluator image
+`sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f`.
+
+| Patch | Runs | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| reference | `run_d5419f78c5584ab3`, `run_a35997231ad7495a`, `run_4d4da461a8b74ea4` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_e6276ffd6a974845` | P2P pass, hidden fail | rejected |
+| parser only | `run_61cc4dc3fff94994` | hidden propagation fail | rejected |
+| missing `HfApi` forwarding | `run_6e39f1dbc4034225` | hidden wrapper-path fail | rejected |
+| missing download forwarding | `run_092c0061dce545f6` | hidden internal-path fail | rejected |
+| unguarded substring replace | `run_7088ef71a036459b` | hidden foreign-route fail | rejected |
+| hardcoded default endpoint | `run_e9281b5a7e6f46ab` | hidden endpoint-context fail | rejected |
+| forbidden test edit | `run_5c1be518ea764f8f` | hidden, scope and tampering fail | rejected |
+
+The base and every semantic partial fix passed all 15 benchmark P2P tests. The independently authored
+eight-check oracle covers header and link parsing, relative and foreign-origin route preservation,
+default and explicit endpoints, the low-level parser, internal download path and `HfApi` wrapper. It
+also binds imports to `/workspace/src` and fingerprints the exact allowed public-signature delta, so the
+broad task-level API permission does not widen acceptance. The
+[Hugging Face Hub research admission report](../reports/docker-gate/research-hf-hub-xet-endpoint-propagation.json)
+records all patch, manifest, result and provenance hashes from clean harness commit `ebf05dd5...`.
+It made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -242,6 +270,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 3/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 17 research tasks are not
+calibration is 5/5, admitted research is 4/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 16 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.
