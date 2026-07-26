@@ -21,6 +21,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/huggingface/huggingface_hub",
     "https://github.com/pdm-project/pdm.git",
     "https://github.com/pdm-project/pdm",
+    "https://github.com/pytest-dev/pyfakefs.git",
+    "https://github.com/pytest-dev/pyfakefs",
     "https://github.com/tox-dev/tox.git",
     "https://github.com/tox-dev/tox",
 }

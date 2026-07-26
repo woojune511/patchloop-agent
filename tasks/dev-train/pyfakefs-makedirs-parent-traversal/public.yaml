@@ -1,0 +1,64 @@
+schema_version: task-public-v1
+task_id: pyfakefs-makedirs-parent-traversal
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pytest-dev/pyfakefs.git
+  base_commit: 7285b671883b8a06fc26466582a8a45baf508bf7
+  language: python
+issue:
+  title: Fake makedirs loses parent-traversal side effects
+  description: |
+    The fake implementation of os.makedirs can produce the requested final
+    directory while still behaving differently from the real operating-system
+    implementation when a relative path contains parent-directory components.
+    Directories created while walking those components are missing from the
+    resulting fake filesystem.
+
+    Match real os.makedirs traversal semantics for these paths in supported
+    POSIX and Windows filesystem modes. Preserve normal behavior for existing
+    destinations, bytes paths, creation modes, invalid parents, and paths
+    without parent-directory components.
+constraints:
+  allowed_paths:
+    - pyfakefs/fake_os.py
+  forbidden_paths:
+    - pyfakefs/tests/**
+    - tests/**
+    - docs/**
+    - CHANGES.md
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 50
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-fake-os-regression
+    command:
+      - /usr/local/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - -W
+      - ignore::DeprecationWarning
+      - pyfakefs/tests/fake_os_test.py
+    timeout_seconds: 180
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+tags:
+  - swe-rebench-v2
+  - real-repository
+  - filesystem-semantics
+  - path-traversal
+  - memory-development
