@@ -13,6 +13,7 @@ LOGURU_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 ANYIO_TASK = Path("tasks/dev-train/anyio-interrupt-runner-cleanup")
 TOX_TASK = Path("tasks/dev-train/tox-cross-section-empty-substitution")
 HF_HUB_TASK = Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
+PDM_TASK = Path("tasks/dev-train/pdm-ignore-active-venv-resolution")
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -298,3 +299,52 @@ def test_hf_hub_admission_evidence_binds_source_api_and_bad_boundaries() -> None
         "policy:scope",
         "policy:test_tampering",
     ]
+
+
+def test_pdm_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(PDM_TASK)
+
+    assert package.public.task_id == "pdm-ignore-active-venv-resolution"
+    assert package.public.repository.url == "https://github.com/pdm-project/pdm.git"
+    assert package.public.repository.base_commit == "881cd4e38d31663ae67bdae227ec1ccdfd5e2c77"
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["src/pdm/project/core.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 60
+    assert package.public.constraints.public_api_changes_allowed is False
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace/src"
+
+
+def test_pdm_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(PDM_TASK)
+    public_text = (PDM_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_ignore_active_venv_resolution.py" not in public_text
+    assert "is_path_relative_to" not in public_text
+    assert "ensure_boolean" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_pdm_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["pdm-project__pdm-2781"]
+    assert candidate["benchmark_revision"] == "475dd5e8703bb5fb22dd3c60b5d038b019eba1e0"
+    assert candidate["benchmark_split"] == "train"
+    assert candidate["base_commit"] == "881cd4e38d31663ae67bdae227ec1ccdfd5e2c77"
+    assert candidate["pr_url"] == "https://github.com/pdm-project/pdm/pull/2781"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "1"
+    assert candidate["p2p"] == "37"
+    assert candidate["proposed_lane"] == "memory-development"
+    assert candidate["status"] == "screening"

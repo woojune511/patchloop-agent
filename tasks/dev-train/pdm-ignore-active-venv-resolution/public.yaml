@@ -1,0 +1,66 @@
+schema_version: task-public-v1
+task_id: pdm-ignore-active-venv-resolution
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/pdm-project/pdm.git
+  base_commit: 881cd4e38d31663ae67bdae227ec1ccdfd5e2c77
+  language: python
+issue:
+  title: Ignoring the active virtualenv disables interpreter resolution
+  description: |
+    A project configured to use virtual environments can report that no
+    compatible Python exists as soon as PDM_IGNORE_ACTIVE_VENV is enabled,
+    even when another associated environment is eligible or the normal
+    environment-creation fallback is available.
+
+    Treat the setting as an exclusion of the currently active environment,
+    not as a switch that disables virtualenv resolution. Preserve normal
+    active-environment reuse for unset and false-like values. The behavior
+    must work for both VIRTUAL_ENV and CONDA_PREFIX without confusing sibling
+    paths with descendants of the active environment.
+constraints:
+  allowed_paths:
+    - src/pdm/project/core.py
+  forbidden_paths:
+    - tests/**
+    - news/**
+    - docs/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - pdm.lock
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-project-regression
+    command:
+      - /usr/local/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - -W
+      - ignore::DeprecationWarning
+      - tests/test_project.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      XDG_CACHE_HOME: /tmp/xdg-cache
+      XDG_CONFIG_HOME: /tmp/xdg-config
+      XDG_DATA_HOME: /tmp/xdg-data
+      PDM_HOME: /tmp/pdm-home
+      HOME: /tmp/home
+      CI: "1"
+      PDM_CHECK_UPDATE: "0"
+tags:
+  - swe-rebench-v2
+  - real-repository
+  - interpreter-resolution
+  - virtualenv-selection
+  - memory-development

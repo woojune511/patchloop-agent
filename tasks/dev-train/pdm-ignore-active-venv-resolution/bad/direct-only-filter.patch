@@ -1,0 +1,19 @@
+diff --git a/src/pdm/project/core.py b/src/pdm/project/core.py
+index da539c11..07b9a74e 100644
+--- a/src/pdm/project/core.py
++++ b/src/pdm/project/core.py
+@@ -215,11 +215,12 @@ class Project:
+                 )
+             self._saved_python = None  # Clear the saved path if it doesn't match
+ 
+-        if config.get("python.use_venv") and not self.is_global and not os.getenv("PDM_IGNORE_ACTIVE_VENV"):
++        if config.get("python.use_venv") and not self.is_global:
+             # Resolve virtual environments from env-vars
++            ignore_active_venv = os.getenv("PDM_IGNORE_ACTIVE_VENV")
+             venv_in_env = os.getenv("VIRTUAL_ENV", os.getenv("CONDA_PREFIX"))
+             # We don't auto reuse conda's base env since it may cause breakage when removing packages.
+-            if venv_in_env and not is_conda_base():
++            if not ignore_active_venv and venv_in_env and not is_conda_base():
+                 python = PythonInfo.from_path(get_venv_python(Path(venv_in_env)))
+                 if match_version(python):
+                     note(

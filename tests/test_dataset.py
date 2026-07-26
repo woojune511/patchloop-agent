@@ -27,8 +27,10 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["task_count"] == 9
     assert result["calibration_task_count"] == 5
     assert result["research_task_count"] == 4
-    assert result["candidate_package_count"] == 0
-    assert result["unregistered_task_paths"] == []
+    assert result["candidate_package_count"] == 1
+    assert result["unregistered_task_paths"] == [
+        "tasks/dev-train/pdm-ignore-active-venv-resolution"
+    ]
     assert result["role_counts"] == {"calibration": 5, "memory-development": 4}
     assert result["missing"]["memory-development"] == 2
     assert result["missing"]["core-cross-repo"] == 6

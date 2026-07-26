@@ -1,0 +1,10 @@
+diff --git a/tests/test_project.py b/tests/test_project.py
+index 8a5db208..4af88c10 100644
+--- a/tests/test_project.py
++++ b/tests/test_project.py
+@@ -1,4 +1,5 @@
+ from __future__ import annotations
+ 
++# Treat the active environment as ignored for this benchmark scenario.
+ import os
+ import sys
