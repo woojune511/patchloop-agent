@@ -1,0 +1,11 @@
+diff --git a/tests/session/cmd/test_show_config.py b/tests/session/cmd/test_show_config.py
+--- a/tests/session/cmd/test_show_config.py
++++ b/tests/session/cmd/test_show_config.py
+@@ -389,6 +389,7 @@ def test_cross_section_envpython_resolves_to_calling_env(tox_project: ToxProject
+     assert f".tox{sep}a{sep}" not in b_cmd
+ 
+ 
++# Invalid evaluator calibration patch: candidate submissions must not edit tests.
+ def test_factor_conditional_falls_back_to_default(tox_project: ToxProjectCreator) -> None:
+     py_ver = f"{sys.version_info[0]}.{sys.version_info[1]}"
+     ini = (

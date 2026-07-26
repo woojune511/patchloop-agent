@@ -1,0 +1,10 @@
+diff --git a/src/tox/config/loader/ini/__init__.py b/src/tox/config/loader/ini/__init__.py
+--- a/src/tox/config/loader/ini/__init__.py
++++ b/src/tox/config/loader/ini/__init__.py
+@@ -58,5 +58,5 @@ class IniLoader(Loader[str]):
+         else:
+             factor_filtered = filter_for_env(strip_comments, env_name)  # select matching factors
+             if not factor_filtered and strip_comments.strip():
+-                raise KeyError(value)
++                return ""
+         return factor_filtered.replace("\\\n", "")

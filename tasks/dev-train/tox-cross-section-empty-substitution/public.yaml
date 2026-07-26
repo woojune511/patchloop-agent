@@ -1,0 +1,51 @@
+schema_version: task-public-v1
+task_id: tox-cross-section-empty-substitution
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/tox-dev/tox.git
+  base_commit: 02e9ed73da6a0f97f9167e957e1168d6116942ce
+  language: python
+issue:
+  title: Cross-section factor substitutions remain unresolved when no condition matches
+  description: |
+    An INI configuration can reference a value from another section with
+    `{[section]key}`. When that referenced key contains factor-conditional
+    lines and none of its factors match the requesting environment, tox leaves
+    the literal reference in the resolved configuration instead of treating the
+    existing value as empty.
+
+    Resolve an existing cross-section value that is empty after factor
+    filtering to an empty string. Preserve matching factor values, explicit
+    replacement defaults, caller-environment context, and the existing
+    same-section fallback behavior for computed configuration defaults.
+constraints:
+  allowed_paths:
+    - src/tox/config/loader/ini/**
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - tox.ini
+  max_changed_files: 2
+  max_diff_lines: 80
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-show-config-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - -q
+      - -p
+      - no:cacheprovider
+      - tests/session/cmd/test_show_config.py
+    timeout_seconds: 90
+tags:
+  - swe-rebench
+  - real-repository
+  - config-substitution
+  - factor-semantics
+  - memory-development

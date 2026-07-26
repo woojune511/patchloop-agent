@@ -1,0 +1,29 @@
+schema_version: task-private-v1
+task_id: tox-cross-section-empty-substitution
+task_version: 1
+hidden_checks:
+  - id: cross-section-empty-semantics
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -p
+      - test_*.py
+      - -v
+    timeout_seconds: 60
+reference_patch:
+  path: reference.patch
+  sha256: sha256:634ab6eafdf281ed5f2d82f774db2a77804a14496ee9c371aecd296baeb69e72
+audit:
+  expected_files:
+    - src/tox/config/loader/ini/replace.py
+  prohibited_behaviors:
+    - treating a genuinely missing cross-section key as an empty value
+    - applying a replacement default when an existing value validly filters to empty
+    - discarding cross-section values whose factors do match
+    - changing same-section computed-default fallback behavior
+    - hard-coding the upstream reproduction section, key, or environment names
+    - modifying tests, documentation, or dependency metadata

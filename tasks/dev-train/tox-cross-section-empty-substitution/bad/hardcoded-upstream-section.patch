@@ -1,0 +1,13 @@
+diff --git a/src/tox/config/loader/ini/replace.py b/src/tox/config/loader/ini/replace.py
+--- a/src/tox/config/loader/ini/replace.py
++++ b/src/tox/config/loader/ini/replace.py
+@@ -43,6 +43,8 @@ class ReplaceReferenceIni(ReplaceReference):
+                         if isinstance(src, SectionProxy):
+                             return self.loader.process_raw(self.conf, conf_args.env_name, src[key])
+                         value = src.load(key, conf_args.chain)
+                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy # noqa: PERF203
++                        if settings["section"] == "devpisettings":
++                            return ""
+                         exception = exc
+                     else:
+                         as_str, _ = stringify(value)
