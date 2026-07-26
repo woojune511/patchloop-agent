@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.tobymao_1776_sqlglot-7187@sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303
+image_digest: sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303
+source_image_tag: swerebench/sweb.eval.x86_64.tobymao_1776_sqlglot-7187:latest

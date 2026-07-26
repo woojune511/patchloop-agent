@@ -1,0 +1,38 @@
+schema_version: task-private-v1
+task_id: sqlglot-duckdb-ignore-nulls-modifier-order
+task_version: 1
+hidden_checks:
+  - id: duckdb-ignore-nulls-modifier-order
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - .patchloop-hidden/test_duckdb_ignore_nulls_modifier_order.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      SQLGLOTRS_TOKENIZER: "0"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:3f2d45f2116df6bb68432756ae243b27826d42b2a36d856caf55f22085018f7b
+audit:
+  expected_files:
+    - sqlglot/dialects/duckdb.py
+    - sqlglot/generator.py
+    - sqlglot/parser.py
+  prohibited_behaviors:
+    - hard-coding the upstream issue reproduction query
+    - accepting IGNORE NULLS while rejecting the symmetric RESPECT NULLS form
+    - parsing the trailing modifier without preserving DuckDB generation order
+    - changing modifier ordering globally for other dialects
+    - moving aggregate ORDER BY outside the window-function argument
+    - changing public parser or generator signatures
+    - modifying tests, documentation, configuration, or dependencies

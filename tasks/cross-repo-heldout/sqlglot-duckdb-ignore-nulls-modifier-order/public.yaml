@@ -1,0 +1,65 @@
+schema_version: task-public-v1
+task_id: sqlglot-duckdb-ignore-nulls-modifier-order
+task_version: 1
+split: cross-repo-heldout
+repository:
+  url: https://github.com/tobymao/sqlglot.git
+  base_commit: 0e8d0824c40ac46c5e7275180cf2eaae6810f805
+  language: python
+issue:
+  title: DuckDB rejects NULL modifiers after ordered window-function arguments
+  description: |
+    SQLGlot's DuckDB dialect cannot parse valid window-function calls whose
+    aggregate argument contains ORDER BY followed by IGNORE NULLS or RESPECT
+    NULLS.
+
+    Accept both NULL modifiers in that position and preserve DuckDB's modifier
+    order when parsing and generating SQL. Existing prefix-form NULL modifiers,
+    ordered arguments, window clauses, and other dialects must keep their
+    current behavior. Do not change public parser or generator APIs.
+constraints:
+  allowed_paths:
+    - sqlglot/dialects/duckdb.py
+    - sqlglot/generator.py
+    - sqlglot/parser.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 3
+  max_diff_lines: 80
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-duckdb-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -rA
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - tests/dialects/test_duckdb.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      SQLGLOTRS_TOKENIZER: "0"
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - sql-parser
+  - duckdb
+  - window-functions
+  - modifier-ordering
+  - core-cross-repo

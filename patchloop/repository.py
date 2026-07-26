@@ -29,6 +29,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/pytest-dev/pyfakefs",
     "https://github.com/tox-dev/tox.git",
     "https://github.com/tox-dev/tox",
+    "https://github.com/tobymao/sqlglot.git",
+    "https://github.com/tobymao/sqlglot",
 }
 
 

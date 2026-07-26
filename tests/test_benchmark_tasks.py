@@ -17,6 +17,9 @@ PDM_TASK = Path("tasks/dev-train/pdm-ignore-active-venv-resolution")
 PYFAKEFS_TASK = Path("tasks/dev-train/pyfakefs-makedirs-parent-traversal")
 MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
 BABEL_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
+SQLGLOT_TASK = Path(
+    "tasks/cross-repo-heldout/sqlglot-duckdb-ignore-nulls-modifier-order"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -801,4 +804,80 @@ def test_babel_admission_evidence_binds_locale_scale_and_strictness() -> None:
         "hidden:strict-grouped-decimal-trailing-zeroes",
         "policy:scope",
         "policy:test_tampering",
+    ]
+
+
+def test_sqlglot_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(SQLGLOT_TASK)
+
+    assert package.public.task_id == "sqlglot-duckdb-ignore-nulls-modifier-order"
+    assert package.public.split == "cross-repo-heldout"
+    assert package.public.repository.url == "https://github.com/tobymao/sqlglot.git"
+    assert (
+        package.public.repository.base_commit
+        == "0e8d0824c40ac46c5e7275180cf2eaae6810f805"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == [
+        "sqlglot/dialects/duckdb.py",
+        "sqlglot/generator.py",
+        "sqlglot/parser.py",
+    ]
+    assert package.public.constraints.max_changed_files == 3
+    assert package.public.constraints.max_diff_lines == 80
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace"
+
+
+def test_sqlglot_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(SQLGLOT_TASK)
+    public_text = (SQLGLOT_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_duckdb_ignore_nulls_modifier_order.py" not in public_text
+    assert "_parse_lambda" not in public_text
+    assert "_embed_ignore_nulls" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_sqlglot_candidate_is_traceable_to_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["tobymao__sqlglot-7187"]
+    assert candidate["benchmark_revision"] == "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == "0e8d0824c40ac46c5e7275180cf2eaae6810f805"
+    assert candidate["pr_url"] == "https://github.com/tobymao/sqlglot/pull/7187"
+    assert candidate["changed_files"] == "3"
+    assert candidate["f2p"] == "1"
+    assert candidate["p2p"] == "38"
+    assert candidate["proposed_lane"] == "core-cross-repo"
+    assert candidate["status"] == "screening"
+
+
+def test_sqlglot_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_text = (
+        SQLGLOT_TASK / "hidden/test_duckdb_ignore_nulls_modifier_order.py"
+    ).read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (SQLGLOT_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 15
+    assert bad_names == [
+        "duckdb-flag-only.patch",
+        "forbidden-test-edit.patch",
+        "generator-only.patch",
+        "global-order-change.patch",
+        "ignore-only.patch",
+        "missing-duckdb-policy.patch",
+        "missing-shared-generator-policy.patch",
+        "noop.patch",
+        "parser-only.patch",
     ]
