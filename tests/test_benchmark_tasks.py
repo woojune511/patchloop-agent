@@ -708,10 +708,10 @@ def test_babel_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "131"
     assert candidate["proposed_lane"] == "development-validation"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
 
 
-def test_babel_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
+def test_babel_oracle_and_bad_patch_inventory_are_explicit() -> None:
     hidden_text = (BABEL_TASK / "hidden/test_strict_grouped_decimal.py").read_text(
         encoding="utf-8"
     )
@@ -728,4 +728,77 @@ def test_babel_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
         "single-zero-trim.patch",
         "suffix-zero-bypass.patch",
         "western-group-only.patch",
+    ]
+
+
+def test_babel_admission_evidence_binds_locale_scale_and_strictness() -> None:
+    package = load_task_package(BABEL_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.DEVELOPMENT_VALIDATION},
+    )
+    assert entry.role == DatasetRole.DEVELOPMENT_VALIDATION
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 8
+
+    evidence = json.loads(
+        Path(
+            "reports/docker-gate/research-babel-strict-grouped-decimal-trailing-zeroes.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert evidence["harness_git_commit"] == "313af714025fb67852f696ae732e33a1ffd62815"
+    assert evidence["reference_policy"]["kind"] == "normalized-upstream-production-only"
+    assert evidence["runtime_data_policy"]["kind"] == "pinned-image-generated-cldr-overlay"
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 8
+    assert evidence["semantic_bad_patch_rejection_count"] == 7
+    assert evidence["upstream_regression_test_count"] == 132
+    assert evidence["benchmark_f2p_declared_count"] == 1
+    assert evidence["benchmark_p2p_declared_count"] == 131
+    assert evidence["independent_hidden_test_count"] == 16
+    for check_id in (
+        "submitted_source_binding",
+        "dot_comma_arabic_decimal_symbols",
+        "western_indian_narrow_space_grouping",
+        "negative_and_internal_zero_semantics",
+        "one_to_three_trailing_zero_runs",
+        "decimal_scale_preservation",
+        "malformed_and_wrong_locale_rejection",
+        "non_strict_compatibility",
+        "generated_cldr_data_provenance",
+        "utf8_public_api_verifier",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 12
+    assert len({case["run_id"] for case in cases.values()}) == 12
+    assert all(case["official"] for case in cases.values())
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    assert cases["base-noop"]["failed_checks"] == [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+    ]
+    for case_name in (
+        "dot-decimal-only",
+        "positive-only",
+        "single-zero-trim",
+        "normalize-returned-decimal",
+        "remove-all-fraction-zeroes",
+        "suffix-zero-bypass",
+        "western-group-only",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:strict-grouped-decimal-trailing-zeroes"
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:strict-grouped-decimal-trailing-zeroes",
+        "policy:scope",
+        "policy:test_tampering",
     ]

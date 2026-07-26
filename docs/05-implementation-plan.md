@@ -11,18 +11,18 @@
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
 | Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
 | Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
-| Phase 5 memory | implemented, trace/index gate pending | Memory-development 6/6, development-validation 1/2 |
+| Phase 5 memory | implemented, trace/index gate pending | Memory-development 6/6, development-validation 2/2 |
 | Phase 6 evaluation | implemented, core campaign pending | Seeded smoke와 task bootstrap report 실행 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
 `duration-minute-boundary`, `csv-final-record-flush`는 evaluator, sandbox와 authoring workflow를
 검증하는 fixture다. 뒤의 두 package가 물리적으로 `dev-train` 아래에 있어도 memory source나
-research task로 보지 않는다. 현재 admitted research task는 7/20이며 memory-development
-task admission은 6/6, development-validation은 1/2다.
+research task로 보지 않는다. 현재 admitted research task는 8/20이며 memory-development
+task admission은 6/6, development-validation은 2/2다.
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
-smoke와 일곱 research admission은 2026-07-27까지 통과했다. Live OpenAI, 완성된 20개 research dataset, 세 sentinel stress
+smoke와 여덟 research admission은 2026-07-27까지 통과했다. Live OpenAI, 완성된 20개 research dataset, 세 sentinel stress
 overlay와 96-run core campaign은 아직 완료가 아니며 `docs/08-limitations.md`에서 별도로
 추적한다.
 

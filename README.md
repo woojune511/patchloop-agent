@@ -10,8 +10,9 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 세 smoke task를 mock과 content-hashed replay로 각각 실행한 6개 agent run이 고정된 Linux Docker
 evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
 SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 pyfakefs #991
-사례 여섯 개를 memory-development task로, Moto #7208을 development-validation task로
-admission했다. 실제 OpenAI 96-run campaign과 나머지 13개 research task는 아직 완료하지
+사례 여섯 개를 memory-development task로, Moto #7208과 Babel #1042를
+development-validation task로 admission했다. 실제 OpenAI 96-run campaign과 나머지 12개
+research task는 아직 완료하지
 않았다. 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
@@ -36,7 +37,8 @@ public.yaml → stateless context builder → model adapter
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
 - Memory/core/headline에서 제외되는 content-addressed calibration fixture 5개
 - SWE-rebench revision, upstream issue/PR/commit, upstream license evidence와 Docker digest를
-  고정한 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs #991과 Moto #7208
+  고정한 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs #991, Moto #7208과
+  Babel #1042
   research task
 - Task별 base hidden failure, reference 3회와 최소 5종의 known-bad를 기록한 admission evidence
 - 후속 upstream 회귀까지 판별해 원래 AnyIO benchmark fix를 거부하는 hardened reference/oracle

@@ -38,6 +38,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   hidden failure. Six semantic partial fixes and one scope/test-tampering patch were rejected. Nine
   endpoint tests outside the benchmark P2P declaration are explicitly deselected; all 173 logical
   P2P nodes expand to 179 network-independent passing cases.
+- Eighth research task admitted: Babel #1042 as development-validation only, with three exact
+  production-reference passes, all 132 upstream number tests, 16 independent hidden checks and one
+  base hidden failure. Seven semantic partial fixes and one scope/test-tampering patch were rejected.
+  The task is medium, not hard. Its pinned-image CLDR overlay is explicit and submitted-source binding
+  prevents evaluation against the image's baked production module.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -54,7 +59,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 7/20: memory-development 6/6, development-validation 1/2,
+- Admitted research tasks are 8/20: memory-development 6/6, development-validation 2/2,
   same-repo core 0/6 and cross-repo core 0/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is

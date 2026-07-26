@@ -417,6 +417,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 7
 
+  - task_id: babel-strict-grouped-decimal-trailing-zeroes
+    task_version: 1
+    path: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes
+    role: development-validation
+    admission_state: admitted
+    public_spec_hash: sha256:dd7151171da2a60e2c772fafe7eb53840c335145206016bdc5a4f8f7486cc5cf
+    private_spec_hash: sha256:bfae8a6512048e1d4019034a10396d185355317af1ab8b9835ffd28d5fd76d34
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-V2
+      benchmark_revision: 475dd5e8703bb5fb22dd3c60b5d038b019eba1e0
+      benchmark_instance_id: python-babel__babel-1042
+      upstream_repository: python-babel/babel
+      issue_url: https://github.com/python-babel/babel/issues/928
+      pull_request_url: https://github.com/python-babel/babel/pull/1042
+      upstream_base_commit: aca7663728e08e9d60b192b11fa6626a60974929
+      resolution_commit: 946efcdddb73d4470f2dc4e689aef0477a0ca02f
+      license_spdx: BSD-3-Clause
+      retrieved_at: 2026-07-26T21:23:20Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a
+    difficulty:
+      localization: 1
+      reasoning_depth: 1
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 5
+      tier: medium
+      rationale: The one-function fix must distinguish insignificant fractional padding from significant internal zeroes while preserving scale across locale-specific decimal symbols, signs, Western and Indian grouping, malformed input, and non-strict behavior.
+    failure_pattern_id: fraction-canonicalization-assumes-all-zero-tail
+    solution_lineage_id: python-babel-babel-pr-1042
+    admission_evidence:
+      path: reports/docker-gate/research-babel-strict-grouped-decimal-trailing-zeroes.json
+      sha256: sha256:06cbab07c2a642fba08cef9be1c8424560deaa186ab487eb8c9b31eec3121971
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 8
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

@@ -64,3 +64,12 @@ regressions and failed the nine-check private oracle. Six semantic partial fixes
 test edit were rejected. The benchmark's 173 logical P2P nodes expand to 179 concrete passing cases;
 nine explicitly deselected endpoint tests are outside that P2P declaration. All containers ran
 without network, and the gate made zero model/API calls.
+
+`research-babel-strict-grouped-decimal-trailing-zeroes.json` records the eighth research admission
+and completes the two-task development-validation lane. It pins SWE-rebench V2 instance
+`python-babel__babel-1042`, base commit `aca76637...` and image `sha256:864e84fc...`. On clean harness
+commit `313af714...`, the exact production reference passed three official evaluations, while the base
+passed all 132 upstream number tests and failed nine of the 16 private checks. Seven semantic partial
+fixes and one forbidden test edit were rejected. The registered checks import submitted source from
+`/workspace` while using only the pinned image's generated CLDR data; a source-binding check enforces
+that boundary. All containers ran without network, and the gate made zero model/API calls.

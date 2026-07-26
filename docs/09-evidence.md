@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 110 pass, 2 skipped; all seven research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 116 pass, 2 skipped; all eight research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus seven research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 7/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus eight research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 8/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM, pyfakefs and Moto references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM, pyfakefs, Moto and Babel references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -359,6 +359,42 @@ pagination, filtered limits, projection and reverse ordering. The
 records every patch, manifest, result and provenance hash from clean harness
 commit `b4cc0ec8...`. This gate made zero model/API calls.
 
+## Eighth research task admission
+
+`babel-strict-grouped-decimal-trailing-zeroes` comes from SWE-rebench V2
+instance `python-babel__babel-1042`, Babel issue #928 and PR #1042. It is a
+medium `development-validation` task pinned to base commit
+`aca7663728e08e9d60b192b11fa6626a60974929` and evaluator image
+`sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a`.
+PatchLoop keeps the exact accepted production diff and excludes the benchmark
+test patch.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_76d98886b57a46ff`, `run_d0b4c5c529d042b1`, `run_bf33a6f3a4ef42f9` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_a8f6829db59a4693` | regression pass, hidden fail | rejected |
+| dot-decimal only | `run_cad3072044ae4125` | comma and Arabic symbol fail | rejected |
+| positive only | `run_6377516927944677` | signed value fail | rejected |
+| single-zero trim | `run_3d6585338f7648c3` | longer padding fail | rejected |
+| normalize returned Decimal | `run_2e67c5483f094e52` | scale preservation fail | rejected |
+| remove all fractional zeroes | `run_ee43f7dbdcbc487f` | significant internal zero fail | rejected |
+| suffix-zero bypass | `run_299c0b5d1d174afa` | malformed grouping acceptance | rejected |
+| Western grouping only | `run_a3f1007f58cf4c70` | Indian and locale grouping fail | rejected |
+| forbidden test edit | `run_e6d6853299034b7f` | hidden, scope and test-tampering fail | rejected |
+
+The base and all seven semantic partial fixes passed all 132 upstream number
+tests. The independent 16-check oracle uses values not copied from the issue or
+benchmark test patch and covers dot, comma and Arabic decimal symbols, Western,
+Indian and narrow-space grouping, signs, significant internal zeroes,
+one- through three-zero suffixes, malformed inputs, non-strict compatibility
+and Decimal scale. The immutable Git checkout omits generated CLDR data, so the
+registered checks use `/babel/babel` data from the pinned image while a
+source-binding assertion proves that `parse_decimal` comes from `/workspace`.
+The
+[Babel research admission report](../reports/docker-gate/research-babel-strict-grouped-decimal-trailing-zeroes.json)
+records every patch, manifest, result and provenance hash from clean harness
+commit `313af714...`. This gate made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -369,6 +405,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 7/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 13 research tasks are not
+calibration is 5/5, admitted research is 8/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 12 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

@@ -1,0 +1,270 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-27",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "task_version": 1,
+  "dataset_role": "development-validation",
+  "split": "dev-validation",
+  "source": {
+    "benchmark_family": "SWE-rebench-V2",
+    "benchmark_revision": "475dd5e8703bb5fb22dd3c60b5d038b019eba1e0",
+    "benchmark_split": "train",
+    "benchmark_row": 25179,
+    "benchmark_instance_id": "python-babel__babel-1042",
+    "upstream_repository": "python-babel/babel",
+    "issue_url": "https://github.com/python-babel/babel/issues/928",
+    "pull_request_url": "https://github.com/python-babel/babel/pull/1042",
+    "base_commit": "aca7663728e08e9d60b192b11fa6626a60974929",
+    "base_tree": "65feb399220abaca78c4634a29d50d57ac27fc3b",
+    "pr_head_commit": "e89a6c9c2f56c2e1a87330f45d801f8ca1f11cec",
+    "resolution_commit": "946efcdddb73d4470f2dc4e689aef0477a0ca02f",
+    "resolution_tree": "8659f9795b17d299eb63e7ffa9cc12d7a228fc40",
+    "license_spdx": "BSD-3-Clause",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_gold_patch_sha256": "sha256:ff2ca11b6df2bd0567a8ad6a4687b8373ede412f649ad892a351055a584e449a",
+    "benchmark_test_patch_sha256": "sha256:de5e5c18eb65287a221260e56dd39c6008982eb96a47e0cc66ad92cc83af5349"
+  },
+  "reference_policy": {
+    "kind": "normalized-upstream-production-only",
+    "excluded_upstream_files": [
+      "tests/test_numbers.py"
+    ],
+    "rationale": "The reference is the exact accepted production diff in babel/numbers.py and excludes the benchmark test patch. The independently authored hidden oracle uses different values and validates locale, grouping, strictness and Decimal-scale boundaries through the public parse_decimal API."
+  },
+  "runtime_data_policy": {
+    "kind": "pinned-image-generated-cldr-overlay",
+    "submitted_source_root": "/workspace",
+    "generated_data_root": "/babel/babel",
+    "rationale": "The immutable Git checkout does not track generated global.dat and locale-data files. Registered checks import submitted Python source from /workspace while resolving generated CLDR data only from the pinned evaluator image.",
+    "source_binding_check": true
+  },
+  "public_spec_hash": "sha256:dd7151171da2a60e2c772fafe7eb53840c335145206016bdc5a4f8f7486cc5cf",
+  "private_spec_hash": "sha256:bfae8a6512048e1d4019034a10396d185355317af1ab8b9835ffd28d5fd76d34",
+  "harness_git_commit": "313af714025fb67852f696ae732e33a1ffd62815",
+  "evaluator_image": "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+  "evaluator_image_digest": "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/babel",
+    "submitted_workspace": "/workspace",
+    "python_version": "3.10.19",
+    "pytest_version": "9.0.2",
+    "network": "none"
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 8,
+  "semantic_bad_patch_rejection_count": 7,
+  "independent_hidden_test_count": 16,
+  "benchmark_f2p_declared_count": 1,
+  "benchmark_p2p_declared_count": 131,
+  "upstream_regression_test_count": 132,
+  "non_p2p_network_test_deselection_count": 0,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "dot_comma_arabic_decimal_symbols": "pass",
+    "western_indian_narrow_space_grouping": "pass",
+    "negative_and_internal_zero_semantics": "pass",
+    "one_to_three_trailing_zero_runs": "pass",
+    "decimal_scale_preservation": "pass",
+    "malformed_and_wrong_locale_rejection": "pass",
+    "non_strict_compatibility": "pass",
+    "generated_cldr_data_provenance": "pass",
+    "public_api_unchanged": "pass",
+    "normalized_reference_lineage": "pass",
+    "public_private_separation": "pass",
+    "network_disabled_evaluator": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "utf8_patch_evidence": "pass",
+    "utf8_public_api_verifier": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_76d98886b57a46ff",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ff2ca11b6df2bd0567a8ad6a4687b8373ede412f649ad892a351055a584e449a",
+      "manifest_sha256": "sha256:c87c6080d541ae7a540c968d5cbd67ab3920f073eb1f7d10c137e40a1218c2d0",
+      "result_sha256": "sha256:8c04daa151cfaaadc848316d3ead49c93315ba1d7e7d7ffae4f84a2c0a6c4b2e",
+      "provenance_sha256": "sha256:7aacacd816e5ecd2a460e0cab5dcfad9b5a83d1c0d767594a0dda1bf55172502"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_d0b4c5c529d042b1",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ff2ca11b6df2bd0567a8ad6a4687b8373ede412f649ad892a351055a584e449a",
+      "manifest_sha256": "sha256:153670b2f0fdb3b6f264bb4a032a77a953d35a100df3cf072aebfbb5433ed12d",
+      "result_sha256": "sha256:840b4ab8d68543fd369dd991a88bd6bf5e7d13cfc2200241689546422091930a",
+      "provenance_sha256": "sha256:7aacacd816e5ecd2a460e0cab5dcfad9b5a83d1c0d767594a0dda1bf55172502"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_bf33a6f3a4ef42f9",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ff2ca11b6df2bd0567a8ad6a4687b8373ede412f649ad892a351055a584e449a",
+      "manifest_sha256": "sha256:55185facea38bad489b321711a43806f8e788dc5a50ce69736d0c62ffd044abe",
+      "result_sha256": "sha256:c3a7a0375441add098c2a2a2e63774f5dc3be8dc45bcde417e025dadc632dea5",
+      "provenance_sha256": "sha256:7aacacd816e5ecd2a460e0cab5dcfad9b5a83d1c0d767594a0dda1bf55172502"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_a8f6829db59a4693",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:7a2ad6ffd114fa14aae12f6c7651a34a6f584e10109bd61ff9fbb2a7b7a2dc29",
+      "result_sha256": "sha256:10c3afbf3e1c6b52c122f4802ece0a4d53187383358677d42fb826f70dd20171",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "dot-decimal-only",
+      "patch": "bad/dot-decimal-only.patch",
+      "run_id": "run_cad3072044ae4125",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:955dcdb243498a2766797a36fd087dbecd296652899597a3fad27f5da7fdfb5d",
+      "manifest_sha256": "sha256:fdf842b820dda806e384de43f55c89eea3a4e934e6296dd394cd565b51763ec6",
+      "result_sha256": "sha256:5872656d0eca9743b36af3f249c1e232da43c02a0415cd69207c7b7aece016a5",
+      "provenance_sha256": "sha256:41c2a5c93ddcb1e31c5ad5b87c194f3c042eefa99d22ecb179964390aa814a67"
+    },
+    {
+      "name": "positive-only",
+      "patch": "bad/positive-only.patch",
+      "run_id": "run_6377516927944677",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:38a003394ae7b84b324b265f1d7cb09fb294ac0cc108cbf05befcac3144b3ddd",
+      "manifest_sha256": "sha256:8c9fb0a7c96e47f70edae3d5aa5660090001ed835dcf2de896191aa4d8ff152e",
+      "result_sha256": "sha256:12f99dc503c3ee07f85963c78e566171ea29d431369e12eeedb0e05e5bb88775",
+      "provenance_sha256": "sha256:1bd8ff7318945a34aba8e5854881cb33866a5eb735cab7102f4e247d1c6aa7f7"
+    },
+    {
+      "name": "single-zero-trim",
+      "patch": "bad/single-zero-trim.patch",
+      "run_id": "run_3d6585338f7648c3",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:98913739ee39044394b119e4b8489ac49ac94912300a908bb1596a05cf68897a",
+      "manifest_sha256": "sha256:ce3be7bee0038050c82ea8fff1ef1827fba1c0cb41df8d0ba282f636b4f43bf0",
+      "result_sha256": "sha256:1df6b15e503769fe4330dd9481ab4817f83f780284c31d43305a37ae92a64c41",
+      "provenance_sha256": "sha256:7c4d3fe11efb446e036e007715bfcf8dd886481bd61e020794072fe89cb34544"
+    },
+    {
+      "name": "normalize-returned-decimal",
+      "patch": "bad/normalize-returned-decimal.patch",
+      "run_id": "run_2e67c5483f094e52",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:4f0b1c47d5d32e3aa8169a8ebefc7ef42bcbff039e1d74d9e632d3be3b43e8a4",
+      "manifest_sha256": "sha256:b90b17a55a7d0a311119f8803111f39053e8ad8168edd438d5e56d9b323e0250",
+      "result_sha256": "sha256:9eb15eb02904bbc871a6fc149adf75a4c499e94d139bac337f1f11a87366d71e",
+      "provenance_sha256": "sha256:d5936886e0b2252e3e9df4567bccde8dfc6a8f4c662e9cbaafc4f171dafb3513"
+    },
+    {
+      "name": "remove-all-fraction-zeroes",
+      "patch": "bad/remove-all-fraction-zeroes.patch",
+      "run_id": "run_ee43f7dbdcbc487f",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:3e54cb206aaaada89db6934d222f6edf1de0c93401432a530f6a3bf6b61d1248",
+      "manifest_sha256": "sha256:6269cacb5f9b8127fd5b85680976f8272a764706f707cdb289d2c3cd5f095dd5",
+      "result_sha256": "sha256:d34bebff4c53ace5982a755f021f7dfd332f5566eb440dd306d1b97c211c721a",
+      "provenance_sha256": "sha256:77a90c0f362612aae87b1869fe7771d0b29dc89df14343dd7238828f4af87924"
+    },
+    {
+      "name": "suffix-zero-bypass",
+      "patch": "bad/suffix-zero-bypass.patch",
+      "run_id": "run_299c0b5d1d174afa",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:cbc3b643497dcba0f9d1dff0b7cf7dc5d95320d0760c41ca01101f602a7832f3",
+      "manifest_sha256": "sha256:6f5b4e918c69e7c6686293ca98837b4b03af4e5af30eddc8e5d6cf8d4cd3b316",
+      "result_sha256": "sha256:34760cb296991fc2578e20aab9b926fe106cf791a442657be2cce73d89495cca",
+      "provenance_sha256": "sha256:e72f99492f4453a095ccfdc686884c7a6c1e98bb175cfd81c0df6067095bcbab"
+    },
+    {
+      "name": "western-group-only",
+      "patch": "bad/western-group-only.patch",
+      "run_id": "run_a3f1007f58cf4c70",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes"
+      ],
+      "patch_sha256": "sha256:23f4dbf06da4f788a469742ca92e02b9c561c8b6145e6a8ee2686b472513e9d0",
+      "manifest_sha256": "sha256:ec3bf74d1d06a9f3e4552e27792152d450b50f6e33919b7228f2f966977794f1",
+      "result_sha256": "sha256:190b2ec20ad542ec6d187775790497149841bb8df7688b130a1ae4ed8f0898ed",
+      "provenance_sha256": "sha256:a2d2a5facc5d709c4661be897d8013394373dfac39b64dd5eb50cd4892c01dd1"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_e6d6853299034b7f",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:strict-grouped-decimal-trailing-zeroes",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:7c4be8dd362bead1b40ebcb52b02711a225d55486270fc00e02c9267c7000f3a",
+      "manifest_sha256": "sha256:9d29d29fe0e23ace8e9ff2cb1f6e9689643b840218260557d8d50230eccdfdcf",
+      "result_sha256": "sha256:50fde04f61d5dbfa1fbee512409cedca9a4a0289b28907d821633878fe4287e3",
+      "provenance_sha256": "sha256:18c3942195b77e8dd20c1e7508454cc91dd206a2ad6a89e925e9912c72d98032"
+    }
+  ]
+}
