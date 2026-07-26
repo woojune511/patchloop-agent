@@ -1,0 +1,62 @@
+schema_version: task-public-v1
+task_id: hf-hub-xet-endpoint-propagation
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/huggingface/huggingface_hub.git
+  base_commit: 6f9b87ecda5025259c69a1eb0ae6f8ee80d05d33
+  language: python
+issue:
+  title: Custom Hub endpoint is ignored by Xet refresh metadata
+  description: |
+    A client configured with a custom Hub endpoint can request file metadata
+    from that endpoint while receiving Xet refresh metadata that still points
+    at the default Hugging Face host.
+
+    Ensure request-specific endpoint context is preserved through every file
+    metadata access path. Rebase refresh routes owned by the default Hub origin
+    onto the configured endpoint, while preserving relative routes, routes
+    already owned by another origin, and callers that do not provide an
+    explicit endpoint.
+constraints:
+  allowed_paths:
+    - src/huggingface_hub/file_download.py
+    - src/huggingface_hub/hf_api.py
+    - src/huggingface_hub/utils/_xet.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - setup.cfg
+    - requirements*.txt
+  max_changed_files: 3
+  max_diff_lines: 80
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+  - id: upstream-xet-regression
+    command:
+      - /usr/local/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - -W
+      - ignore::DeprecationWarning
+      - tests/test_xet_utils.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      XDG_CACHE_HOME: /tmp/xdg-cache
+      HF_HOME: /tmp/hf-home
+tags:
+  - swe-rebench-v2
+  - real-repository
+  - xet-metadata
+  - endpoint-propagation
+  - memory-development

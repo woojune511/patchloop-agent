@@ -12,6 +12,7 @@ from patchloop.task_loader import load_task_package
 LOGURU_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 ANYIO_TASK = Path("tasks/dev-train/anyio-interrupt-runner-cleanup")
 TOX_TASK = Path("tasks/dev-train/tox-cross-section-empty-substitution")
+HF_HUB_TASK = Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -206,3 +207,55 @@ def test_tox_admission_evidence_binds_submitted_source_and_bad_boundaries() -> N
         "policy:scope",
         "policy:test_tampering",
     ]
+
+
+def test_hf_hub_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(HF_HUB_TASK)
+
+    assert package.public.task_id == "hf-hub-xet-endpoint-propagation"
+    assert package.public.repository.url == "https://github.com/huggingface/huggingface_hub.git"
+    assert package.public.repository.base_commit == "6f9b87ecda5025259c69a1eb0ae6f8ee80d05d33"
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == [
+        "src/huggingface_hub/file_download.py",
+        "src/huggingface_hub/hf_api.py",
+        "src/huggingface_hub/utils/_xet.py",
+    ]
+    assert package.public.constraints.max_changed_files == 3
+    assert package.public.constraints.max_diff_lines == 80
+    assert package.public.constraints.public_api_changes_allowed is True
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace/src"
+
+
+def test_hf_hub_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(HF_HUB_TASK)
+    public_text = (HF_HUB_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_xet_endpoint_propagation.py" not in public_text
+    assert "parse_xet_file_data_from_response" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_hf_hub_candidate_is_traceable_to_swe_rebench_v2_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["huggingface__huggingface_hub-3180"]
+    assert candidate["benchmark_revision"] == "475dd5e8703bb5fb22dd3c60b5d038b019eba1e0"
+    assert candidate["benchmark_split"] == "train"
+    assert candidate["base_commit"] == "6f9b87ecda5025259c69a1eb0ae6f8ee80d05d33"
+    assert candidate["pr_url"] == "https://github.com/huggingface/huggingface_hub/pull/3180"
+    assert candidate["changed_files"] == "3"
+    assert candidate["f2p"] == "2"
+    assert candidate["p2p"] == "15"
+    assert candidate["proposed_lane"] == "memory-development"
+    assert candidate["status"] == "screening"
