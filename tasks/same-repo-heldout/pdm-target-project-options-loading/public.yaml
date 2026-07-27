@@ -1,0 +1,72 @@
+schema_version: task-public-v1
+task_id: pdm-target-project-options-loading
+task_version: 1
+split: same-repo-heldout
+repository:
+  url: https://github.com/pdm-project/pdm.git
+  base_commit: e96d535bb1bd64ac21575cf3490d64f737c6a668
+  language: python
+issue:
+  title: Target project command options are loaded from the caller project
+  description: |
+    When a PDM subcommand selects another project with -p or --project,
+    command-specific defaults from [tool.pdm.options] are loaded from the
+    current working project instead of the selected target.
+
+    Use only the selected project's command options. Preserve every project
+    selection form accepted by the existing CLI, including attached option
+    values and repeated options, together with normal environment, global
+    project, explicit project-object, and command-shortcut
+    semantics. Configured options must affect the final parsed command without
+    leaking defaults from the caller project. Do not change public method
+    signatures or command-line option definitions.
+constraints:
+  allowed_paths:
+    - src/pdm/core.py
+  forbidden_paths:
+    - tests/**
+    - news/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - pdm.lock
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-project-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -rA
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - --deselect
+      - tests/test_project.py::test_find_interpreters_with_PDM_IGNORE_ACTIVE_VENV[True]
+      - tests/test_project.py
+    timeout_seconds: 120
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      XDG_CACHE_HOME: /tmp/xdg-cache
+      XDG_CONFIG_HOME: /tmp/xdg-config
+      XDG_DATA_HOME: /tmp/xdg-data
+      PDM_HOME: /tmp/pdm-home
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PDM_CHECK_UPDATE: "0"
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - cli-bootstrap
+  - project-selection
+  - configured-options
+  - core-same-repo

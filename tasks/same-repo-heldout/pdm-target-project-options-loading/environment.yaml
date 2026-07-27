@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.pdm-project_1776_pdm-3759@sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93
+image_digest: sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93
+source_image_tag: swerebench/sweb.eval.x86_64.pdm-project_1776_pdm-3759:latest

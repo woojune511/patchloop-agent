@@ -1,0 +1,12 @@
+diff --git a/src/pdm/core.py b/src/pdm/core.py
+index e37cf9c643..1df33c1491 100644
+--- a/src/pdm/core.py
++++ b/src/pdm/core.py
+@@ -238,7 +238,6 @@ class Core:
+         """The main entry function"""
+         if args is None:
+             args = []
+-        args = self._get_cli_args(args, obj)
+         # Keep it for after project parsing to check if its a defined script
+         root_script = None
+         try:

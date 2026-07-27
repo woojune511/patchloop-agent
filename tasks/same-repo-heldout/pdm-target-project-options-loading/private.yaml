@@ -1,0 +1,44 @@
+schema_version: task-private-v1
+task_id: pdm-target-project-options-loading
+task_version: 1
+hidden_checks:
+  - id: target-project-options
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -p
+      - test_*.py
+      - -v
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      XDG_CACHE_HOME: /tmp/xdg-cache
+      XDG_CONFIG_HOME: /tmp/xdg-config
+      XDG_DATA_HOME: /tmp/xdg-data
+      PDM_HOME: /tmp/pdm-home
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PDM_CHECK_UPDATE: "0"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:9845af31ba7180d8ef73e17866d01abcd4b34c38726802c440b69f84c803aebb
+audit:
+  expected_files:
+    - src/pdm/core.py
+  prohibited_behaviors:
+    - loading command options before the selected project is known
+    - treating an option value as the command name or project without full CLI parsing
+    - accepting only one short or long project-option spelling
+    - using the first repeated project option instead of the parser-selected value
+    - ignoring PDM_PROJECT or an explicitly supplied project object
+    - injecting local project options into a global project
+    - hard-coding the behavior for the install command
+    - merging caller options when the selected target has no options for the command
+    - changing public method signatures or CLI option definitions
+    - modifying tests, news, documentation, configuration, or dependencies
