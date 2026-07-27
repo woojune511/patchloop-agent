@@ -543,6 +543,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 9
 
+  - task_id: hf-hub-custom-tqdm-class-contract
+    task_version: 1
+    path: tasks/same-repo-heldout/hf-hub-custom-tqdm-class-contract
+    role: core-same-repo
+    admission_state: admitted
+    public_spec_hash: sha256:5b5a4bcbd85e8a43eb744edcea62e5c4d113d125d95dd6476e3c7528c7708ce8
+    private_spec_hash: sha256:d68ef9460b2d0551b3a5325bb3268e72ff685bf2d7ec09ab2c260507a4e52c61
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: huggingface__huggingface_hub-4056
+      upstream_repository: huggingface/huggingface_hub
+      issue_url: https://github.com/huggingface/huggingface_hub/issues/4050
+      pull_request_url: https://github.com/huggingface/huggingface_hub/pull/4056
+      upstream_base_commit: 6983a4d3d2bdcbd09c6ea08acae64cdf83ccb2e4
+      resolution_commit: 0fa8edcb1c1c19a5280ca4e412a0ef8d8303d6e3
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-27T03:44:13Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.huggingface_1776_huggingface_hub-4056@sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must separate caller-owned and Hub-owned constructor policy across file and snapshot downloads while preserving custom callables, HF subclasses, group controls, logging, TTY behavior and TQDM_POSITION.
+    failure_pattern_id: custom-progress-class-policy-overridden
+    solution_lineage_id: huggingface-hub-tqdm-class-pr-4056
+    admission_evidence:
+      path: reports/docker-gate/research-hf-hub-custom-tqdm-class-contract.json
+      sha256: sha256:b81a8a9c1350650206fa18ca43aee458e1abb41825979d86cba5ce4197e4c6fe
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 10
+
   - task_id: pdm-target-project-options-loading
     task_version: 1
     path: tasks/same-repo-heldout/pdm-target-project-options-loading

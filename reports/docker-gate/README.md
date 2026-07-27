@@ -102,3 +102,22 @@ failed scope and test-tampering checks. All 14 containers ran without network an
 and submitted filesystems, and the gate made zero model/API calls. The upstream image has no configured
 user, so Docker used its default root user; this is disclosed in the report and limitations rather than
 being conflated with the native PatchLoop image's non-root smoke.
+
+`research-param-shared-rx-fanout-cache.json` records the twelfth research admission and second
+core-cross-repo held-out task. It pins SWE-rebench leaderboard instance `holoviz__param-1117`, base
+commit `833c8f05...` and image `sha256:c10bc0ad...`. On clean harness commit `4d73605a...`, the exact
+production reference passed three official evaluations, while the base passed 94 upstream reactive
+regressions and failed the ten-check private oracle. Eight semantic partials and one forbidden test edit
+were rejected. All 13 containers ran without network and with read-only submitted filesystems, and the
+gate made zero model/API calls.
+
+`research-hf-hub-custom-tqdm-class-contract.json` records the thirteenth research admission and third
+core-same-repo held-out task. It pins SWE-rebench leaderboard instance
+`huggingface__huggingface_hub-4056`, base commit `6983a4d3...` and image `sha256:cbfae263...`. On clean
+harness commit `962668e8...`, the exact two-file production reference passed three official evaluations.
+The base passed all 17 tests present in the frozen upstream file and failed nine of 15 private cases.
+Nine semantic partials and one forbidden test edit were rejected. An adversarial pre-gate review found
+an escaping combined partial in the original oracle; the strengthened oracle rejects that union and the
+evidence retains it explicitly. All 14 containers ran without network and with read-only submitted
+filesystems, and the gate made zero model/API calls. The image has no configured user, so Docker used
+its default root user.

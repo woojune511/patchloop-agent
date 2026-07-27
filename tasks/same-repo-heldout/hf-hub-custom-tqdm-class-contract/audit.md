@@ -1,6 +1,6 @@
 # Task audit: hf-hub-custom-tqdm-class-contract
 
-- Dataset role: proposed `core-same-repo`
+- Dataset role: admitted `core-same-repo`
 - Source: SWE-rebench leaderboard instance
   `huggingface__huggingface_hub-4056`, split `2026_03`
 - Frozen benchmark revision:
@@ -37,9 +37,8 @@
 
 The production-only reference is byte-for-byte identical to the accepted
 upstream changes in the two allowed source files; the separate upstream test
-patch is not included. The accepted behavior is still present on current main.
-PR #4065 later fixed a separate stderr-lock failure, and open PR #4059 describes
-its proposal as orthogonal to this custom-class contract. No revert was found.
+patch is not included. PR #4065 later fixed a separate stderr-lock failure, and
+PR #4059 describes its proposal as orthogonal to this custom-class contract.
 
 The benchmark declares 19 P2P nodes although the frozen base file contains 17
 tests. Its excluded test patch adds four nodes: two F2P nodes and two nodes
@@ -74,6 +73,34 @@ Difficulty audit:
 
 ## Admission evidence
 
-Pending the clean-commit official Docker matrix. The task remains proposed and
-must not enter the dataset manifest until the unmodified base, three reference
-runs, semantic partials, and scope/tampering corpus produce immutable evidence.
+Admitted as `core-same-repo` from clean harness commit
+`962668e887f78840fec260d705ffb114a788719f`. The official Docker matrix is
+recorded in
+`reports/docker-gate/research-hf-hub-custom-tqdm-class-contract.json`.
+
+- Reference SCRR passed three times:
+  `run_91a8053743aa45ce`, `run_8b0127ad2395461b`,
+  `run_006387b2578e4ae6`.
+- Base/no-op passed all 17 base-resident upstream tests but failed nine of 15
+  independent hidden cases: `run_ec70609f8e1248e6`.
+- All nine semantic partials were rejected:
+  `run_16d062dbc74f4a01`, `run_53188d82a1014206`,
+  `run_479fb08d999645f3`, `run_4816ec4e8aa04ef4`,
+  `run_6e2a878491334888`, `run_d14dd4bad8e9406f`,
+  `run_5068ed072e8744ca`, `run_79d02f9f0ad84027`,
+  `run_8d432cc577e34d66`.
+- The forbidden test edit was rejected by hidden acceptance, scope, and test
+  tampering policy: `run_10f9c5a6702c4be2`.
+
+An adversarial pre-gate review combined two individually rejected partials and
+proved that the original 11-case oracle incorrectly accepted a file-context fix
+plus snapshot policy regression. Before the clean commit, the oracle was
+expanded to 15 cases covering snapshot callable factories and HF subclass
+group/log policy. The combined partial then failed two hidden cases while
+passing all public and scope checks; it is retained as
+`bad/combined-foreign-only.patch` rather than omitted from the evidence.
+
+Every official run used the pinned image digest, network-disabled evaluator,
+read-only submitted workspace, and zero model/API calls. The image has no
+configured user and therefore ran as Docker's default root user; this is an
+external-image limitation, not evidence of uniform non-root isolation.

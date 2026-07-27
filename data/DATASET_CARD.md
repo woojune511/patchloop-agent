@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The twelve admitted research tasks are:
+The thirteen admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -107,11 +107,20 @@ The twelve admitted research tasks are:
   compatibility and initialization-error propagation. It records three official reference passes,
   all 36 upstream process regressions, 11 hidden checks, one base hidden failure, nine semantic
   rejections and one scope/test-tampering rejection.
+- `hf-hub-custom-tqdm-class-contract`, derived from SWE-rebench leaderboard instance
+  `huggingface__huggingface_hub-4056` and upstream Hugging Face Hub issue #4050 / PR #4056.
+  Its exact production reference separates caller-owned progress constructors from Hub-owned
+  subclass policy in both file and snapshot downloads. The 15-case independent oracle covers strict
+  custom classes, foreign upstream-tqdm subclasses, function and partial factories, existing bars,
+  offline file and snapshot flows, and Hub group/log/TTY/TQDM_POSITION behavior. It records three
+  official passes, one base hidden failure, nine semantic rejections and one scope/test-tampering
+  rejection. The public base contains 17 regressions; two additional P2P nodes exist only in the
+  excluded benchmark test patch, producing the separately disclosed benchmark count of 19.
 
-All twelve tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+All thirteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
 SWE-rebench evaluator image. Seven are MIT licensed, including both PDM tasks, both AnyIO tasks and
-SQLGlot; Hugging Face Hub, pyfakefs and Moto are Apache-2.0; Babel and Param are BSD-3-Clause.
-Together with the five calibration fixtures, the curated manifest currently contains 17 task entries.
+SQLGlot; both Hugging Face Hub tasks, pyfakefs and Moto are Apache-2.0; Babel and Param are BSD-3-Clause.
+Together with the five calibration fixtures, the curated manifest currently contains 18 task entries.
 
 ## Research dataset target
 
@@ -121,9 +130,9 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | --- | ---: | --- | ---: |
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
-| Core same-repo | 6 | prohibited | 2 |
+| Core same-repo | 6 | prohibited | 3 |
 | Core cross-repo | 6 | prohibited | 2 |
-| **Research total** | **20** |  | **12** |
+| **Research total** | **20** |  | **13** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,
@@ -143,6 +152,13 @@ and solution-lineage audits before registration. No `python-tabulate` task is cu
 `benchmark-candidate-ledger.csv` records the pinned SWE-style shortlist and
 `terminal-bench-pattern-ledger.csv` records direct-import/adaptation decisions. Candidate rows are not
 admissions.
+
+The same-repository tox #3904 candidate is explicitly excluded under the current contract. Its accepted
+solution adds `python-discovery` as a direct dependency; omitting that metadata relies on an undeclared
+transitive package, while the dependency-free architecture taxonomy was rejected in upstream review and
+later shown incomplete. PatchLoop's current binary dependency policy cannot allow only that audited
+package and metadata file, so the task can be reconsidered only after a dependency allowlist contract is
+implemented.
 
 SWE-style benchmark instances and upstream issue/PRs are the primary research candidate sources.
 Terminal-Bench 2.1 is used to shape a three-sentinel reliability overlay and external acceptance lane.

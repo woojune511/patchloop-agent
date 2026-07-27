@@ -1489,7 +1489,7 @@ def test_hf_task_public_contract_excludes_evaluator_only_material() -> None:
     )
 
 
-def test_hf_task_is_traceable_to_screening_swe_rebench_row() -> None:
+def test_hf_task_is_traceable_to_admitted_swe_rebench_row() -> None:
     with Path("data/benchmark-candidate-ledger.csv").open(
         encoding="utf-8", newline=""
     ) as handle:
@@ -1510,7 +1510,7 @@ def test_hf_task_is_traceable_to_screening_swe_rebench_row() -> None:
     assert candidate["f2p"] == "2"
     assert candidate["p2p"] == "19"
     assert candidate["proposed_lane"] == "core-same-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677"
     )
@@ -1575,6 +1575,115 @@ def test_hf_task_prepares_a_distinct_same_repository_solution_lineage() -> None:
         rows["huggingface__huggingface_hub-4056"]["pr_url"]
         != rows["huggingface__huggingface_hub-3180"]["pr_url"]
     )
+
+
+def test_hf_task_admission_evidence_binds_policy_ownership_boundaries() -> None:
+    package = load_task_package(HF_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_SAME_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_SAME_REPO
+    assert entry.failure_pattern_id == "custom-progress-class-policy-overridden"
+    assert entry.solution_lineage_id == "huggingface-hub-tqdm-class-pr-4056"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 10
+
+    development_package = load_task_package(HF_HUB_TASK)
+    development_entry = require_dataset_role(
+        task_id=development_package.public.task_id,
+        task_version=development_package.public.task_version,
+        public_spec_hash=development_package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.solution_lineage_id != development_entry.solution_lineage_id
+
+    evidence_path = Path(
+        "reports/docker-gate/research-hf-hub-custom-tqdm-class-contract.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == entry.admission_evidence.sha256
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == package.public.repository.base_commit
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "962668e887f78840fec260d705ffb114a788719f"
+    )
+    assert evidence["reference_policy"]["kind"] == "exact-upstream-production-only"
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is False
+    assert evidence["source"]["benchmark_production_patch_sha256"] == (
+        package.private.reference_patch.sha256
+    )
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 10
+    assert evidence["semantic_bad_patch_rejection_count"] == 9
+    assert evidence["independent_hidden_test_count"] == 15
+    assert evidence["independent_hidden_test_function_count"] == 13
+    assert evidence["benchmark_f2p_declared_count"] == 2
+    assert evidence["benchmark_p2p_declared_count"] == 19
+    assert evidence["benchmark_patch_added_p2p_count"] == 2
+    assert evidence["upstream_regression_test_count"] == 17
+    assert evidence["upstream_regression_collected_count"] == 17
+    assert evidence["upstream_regression_skipped_count"] == 0
+    for check_id in (
+        "submitted_source_binding",
+        "strict_foreign_constructor_ownership",
+        "foreign_upstream_subclass_ownership",
+        "context_callable_and_partial_factories",
+        "hf_subclass_group_log_and_position_policy",
+        "offline_file_download_path",
+        "offline_snapshot_foreign_aggregation",
+        "offline_snapshot_callable_and_partial_factories",
+        "offline_snapshot_hf_group_and_log_policy",
+        "combined_escaping_partial_rejected",
+        "benchmark_p2p_execution_difference_disclosed",
+        "same_repository_solution_lineage_is_distinct",
+        "public_private_separation",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 14
+    assert len({case["run_id"] for case in cases.values()}) == 14
+    assert all(case["official"] for case in cases.values())
+    for case in cases.values():
+        patch_path = HF_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        assert case["observed_success"] is case["expected_success"]
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    for case_name in (
+        "base-noop",
+        "combined-foreign-only",
+        "context-only",
+        "exact-hf-class-only",
+        "force-disable-false",
+        "hf-policy-dropped",
+        "snapshot-only",
+        "strip-name-only",
+        "unguarded-issubclass",
+        "upstream-subclass-treated-as-hf",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:custom-tqdm-class-contract"
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:custom-tqdm-class-contract",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
 
 
 def test_reverted_pypa_build_candidate_remains_excluded() -> None:

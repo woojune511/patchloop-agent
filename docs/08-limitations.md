@@ -67,6 +67,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   scope/test-tampering edit were rejected. Its digest-pinned evaluator image is
   `sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010`.
   This is deterministic evaluator admission evidence, not a live-model core result.
+- Thirteenth research task admitted: Hugging Face Hub #4056 as the third core-same-repo held-out
+  task, with three exact-production-reference passes, 17 base-resident upstream regressions,
+  15 independent hidden cases and one base hidden failure. Nine semantic partial implementations
+  and one scope/test-tampering edit were rejected. Two of the benchmark's 19 declared P2P nodes
+  exist only in the excluded benchmark test patch, so the executed and declared counts are
+  reported separately. An adversarial pre-gate review found and closed a combined-partial oracle
+  escape before admission. This is deterministic evaluator evidence, not a live-model core result.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -79,18 +86,18 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
-  The AnyIO #1134 and Param #1117 images have no configured `User` and therefore ran as Docker's
-  default root user. Network denial, a read-only root filesystem and a read-only submitted workspace
-  were enforced, but uniform non-root execution for arbitrary external images is not yet implemented.
-  The native PatchLoop image's non-root isolation smoke does not prove this property for external
-  images.
+  The AnyIO #1134, Param #1117 and Hugging Face Hub #4056 images have no configured `User` and
+  therefore ran as Docker's default root user. Network denial, a read-only root filesystem and a
+  read-only submitted workspace were enforced, but uniform non-root execution for arbitrary external
+  images is not yet implemented. The native PatchLoop image's non-root isolation smoke does not prove
+  this property for external images.
 
 ## Dataset and campaign not yet produced
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 12/20: memory-development 6/6, development-validation 2/2,
-  same-repo core 2/6 and cross-repo core 2/6.
+- Admitted research tasks are 13/20: memory-development 6/6, development-validation 2/2,
+  same-repo core 3/6 and cross-repo core 2/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.

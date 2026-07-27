@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `uv run pytest -o addopts="" -q -p no:cacheprovider --basetemp .patchloop/pytest-param-admission-summary-20260727` | 139 pass; all twelve research admissions, dataset-role gates and Docker-dependent tests included |
+| Tests | `.venv/Scripts/python -m pytest -o addopts="" -q -p no:cacheprovider --basetemp .patchloop/pytest-hf-admission-summary-20260727-final` | 145 pass, 2 skipped; all thirteen research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus twelve research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 12/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus thirteen research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 13/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759 and AnyIO #1134 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759 and AnyIO #1134 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -562,6 +562,52 @@ commit `4d73605a...`. This gate made zero model/API calls. All runs enforced
 network denial and a read-only submitted workspace; the image has no configured
 user and therefore ran as Docker's default root user.
 
+## Thirteenth research task admission
+
+`hf-hub-custom-tqdm-class-contract` comes from SWE-rebench leaderboard instance
+`huggingface__huggingface_hub-4056`, Hugging Face Hub issue #4050 and PR #4056.
+It is the third hard `core-same-repo` held-out task, pinned to base
+`6983a4d3d2bdcbd09c6ea08acae64cdf83ccb2e4` and evaluator image
+`sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677`.
+PatchLoop keeps the exact two-file accepted production patch and excludes the
+benchmark test patch. Contamination risk remains high because the public issue,
+patch and localization are available upstream.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_91a8053743aa45ce`, `run_8b0127ad2395461b`, `run_006387b2578e4ae6` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_ec70609f8e1248e6` | regression pass, hidden fail | rejected |
+| combined foreign-only policy | `run_16d062dbc74f4a01` | hidden snapshot-HF-policy fail | rejected |
+| file context only | `run_53188d82a1014206` | hidden snapshot path fail | rejected |
+| exact HF class only | `run_479fb08d999645f3` | hidden HF-subclass fail | rejected |
+| force custom `disable=False` | `run_4816ec4e8aa04ef4` | hidden constructor-ownership fail | rejected |
+| drop all HF policy | `run_6e2a878491334888` | hidden HF group/log fail | rejected |
+| snapshot path only | `run_d14dd4bad8e9406f` | hidden file path fail | rejected |
+| strip only `name` | `run_5068ed072e8744ca` | hidden `disable` ownership fail | rejected |
+| unguarded `issubclass` | `run_79d02f9f0ad84027` | hidden callable/partial fail | rejected |
+| treat every upstream subclass as HF | `run_8d432cc577e34d66` | hidden foreign-subclass fail | rejected |
+| forbidden test edit | `run_10f9c5a6702c4be2` | hidden, scope and test-tampering fail | rejected |
+
+The base passed all 17 tests present in the frozen upstream file and failed nine
+of 15 hidden cases. The benchmark declares 19 P2P nodes because its excluded
+test patch introduces two extra nodes that already pass on the base; the
+executed and declared counts are not conflated. The oracle binds imports to
+`/workspace` and exercises strict custom classes, a foreign upstream-tqdm
+subclass, function and partial factories, existing bars, fully mocked file and
+snapshot downloads, aggregation, and HF subclass group/log/TQDM_POSITION policy.
+
+Adversarial review before the clean commit combined two individually rejected
+partials and demonstrated an actual false positive in the original 11-case
+oracle: the shared file context was correct, but snapshot construction discarded
+HF-owned policy. PatchLoop added snapshot callable and HF-policy observations,
+retained the escaping union as a known-bad patch, and reran the full matrix from
+clean commit `962668e8...`. The
+[Hugging Face progress-policy admission report](../reports/docker-gate/research-hf-hub-custom-tqdm-class-contract.json)
+binds all 14 run manifests, results, provenance records and patch hashes. The
+gate made zero model/API calls and used a network-disabled, read-only submitted
+workspace. The image has no configured user and ran as Docker's default root
+user.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -572,6 +618,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 12/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 8 research tasks are not
+calibration is 5/5, admitted research is 13/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 7 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.
