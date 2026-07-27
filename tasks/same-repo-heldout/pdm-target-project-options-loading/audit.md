@@ -1,6 +1,6 @@
 # Task audit: pdm-target-project-options-loading
 
-- Dataset role: candidate `core-same-repo`
+- Dataset role: admitted `core-same-repo`
 - Source: SWE-rebench leaderboard instance `pdm-project__pdm-3759`, split `2026_03`
 - Benchmark revision: `ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b`
 - Benchmark row: 29
@@ -71,17 +71,21 @@ Difficulty audit:
 | Verification breadth | 2 | CLI spellings, repeats, environment, object/global precedence, multiple commands, and caller isolation differ. |
 | Total | 6 | Hard under `dataset-manifest-v1`. |
 
-Pre-admission authoring checks used the pinned image with network disabled:
+Official admission used the pinned image with network disabled on clean harness
+commit `ad25a8a95806d7e15597b03325af9de9108940b2`:
 
 1. the unmodified base passed 63 public regressions and failed the independent
    hidden oracle;
-2. the hardened reference passed all 11 hidden tests and the 63 public
-   regressions;
-3. the exact benchmark production patch and nine other semantic partial fixes
+2. the hardened reference passed all 11 hidden tests and 63 public regressions
+   in three independent official runs;
+3. the exact benchmark production patch and eight other semantic partial fixes
    failed hidden acceptance;
-4. the forbidden test edit applies to the base and is reserved for the official
-   scope and tampering gate.
+4. the forbidden test edit failed hidden acceptance, scope and test-tampering
+   policy;
+5. all 14 run records report `official=true` and made zero model/API calls.
 
-These authoring checks are not final admission evidence. Official run IDs,
-content hashes, and the clean harness commit are added only after the task
-package is committed and the complete evaluator matrix succeeds.
+The content-addressed
+[admission report](../../../reports/docker-gate/research-pdm-target-project-options-loading.json)
+records every run ID and patch, manifest, result and provenance hash. Its
+SHA-256 is
+`sha256:b39397b673438d3a98d125a3c34ddc1c1d58ab63527a552d08a13829ea6e5848`.

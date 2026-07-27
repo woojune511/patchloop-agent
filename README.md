@@ -11,8 +11,9 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
 SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 pyfakefs #991
 사례 여섯 개를 memory-development task로, Moto #7208과 Babel #1042를
-development-validation task로, SQLGlot #7187을 첫 core-cross-repo task로 admission했다.
-실제 OpenAI 96-run campaign과 나머지 11개 research task는 아직 완료하지 않았다. 미실행 gate는
+development-validation task로, SQLGlot #7187을 첫 core-cross-repo task로, PDM #3759를
+첫 core-same-repo task로 admission했다. 실제 OpenAI 96-run campaign과 나머지 10개
+research task는 아직 완료하지 않았다. 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 ## 구현된 핵심 경로
@@ -37,9 +38,11 @@ public.yaml → stateless context builder → model adapter
 - Memory/core/headline에서 제외되는 content-addressed calibration fixture 5개
 - SWE-rebench revision, upstream issue/PR/commit, upstream license evidence와 Docker digest를
   고정한 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs #991, Moto #7208과
-  Babel #1042, SQLGlot #7187 research task
+  Babel #1042, SQLGlot #7187, PDM #3759 research task
 - Task별 base hidden failure, reference 3회와 최소 5종의 known-bad를 기록한 admission evidence
 - 후속 upstream 회귀까지 판별해 원래 AnyIO benchmark fix를 거부하는 hardened reference/oracle
+- 실제 CLI grammar와 project precedence를 어긴 PDM #3759 benchmark fix를 거부하고
+  maintainer follow-up을 채택한 hardened reference/oracle
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 

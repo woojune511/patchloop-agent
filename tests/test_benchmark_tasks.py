@@ -20,6 +20,9 @@ BABEL_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-ze
 SQLGLOT_TASK = Path(
     "tasks/cross-repo-heldout/sqlglot-duckdb-ignore-nulls-modifier-order"
 )
+PDM_TARGET_TASK = Path(
+    "tasks/same-repo-heldout/pdm-target-project-options-loading"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -949,6 +952,186 @@ def test_sqlglot_admission_evidence_binds_modifier_order_boundaries() -> None:
         ]
     assert cases["forbidden-test-edit"]["failed_checks"] == [
         "hidden:duckdb-ignore-nulls-modifier-order",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
+
+
+def test_pdm_target_task_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(PDM_TARGET_TASK)
+
+    assert package.public.task_id == "pdm-target-project-options-loading"
+    assert package.public.split == "same-repo-heldout"
+    assert package.public.repository.url == "https://github.com/pdm-project/pdm.git"
+    assert (
+        package.public.repository.base_commit
+        == "e96d535bb1bd64ac21575cf3490d64f737c6a668"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["src/pdm/core.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 60
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace/src"
+
+
+def test_pdm_target_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(PDM_TARGET_TASK)
+    public_text = (PDM_TARGET_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_target_project_options.py" not in public_text
+    assert "_inject_cli_args" not in public_text
+    assert "ensure_project" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_pdm_target_task_is_traceable_to_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["pdm-project__pdm-3759"]
+    assert candidate["benchmark_revision"] == "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == "e96d535bb1bd64ac21575cf3490d64f737c6a668"
+    assert candidate["pr_url"] == "https://github.com/pdm-project/pdm/pull/3759"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "1"
+    assert candidate["p2p"] == "63"
+    assert candidate["proposed_lane"] == "core-same-repo"
+    assert candidate["status"] == "admitted"
+    assert candidate["environment_image"].endswith(
+        "@sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93"
+    )
+
+
+def test_pdm_target_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_text = (PDM_TARGET_TASK / "hidden/test_target_project_options.py").read_text(
+        encoding="utf-8"
+    )
+    bad_names = sorted(path.name for path in (PDM_TARGET_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\n    def test_") == 11
+    assert bad_names == [
+        "caller-fallback-when-target-missing.patch",
+        "caller-options-after-selection.patch",
+        "environment-only-selection.patch",
+        "forbidden-test-edit.patch",
+        "ignore-explicit-object.patch",
+        "inject-without-reparse.patch",
+        "install-command-only.patch",
+        "noop.patch",
+        "project-selection-no-injection.patch",
+        "short-separated-only.patch",
+        "upstream-pr-extractor.patch",
+    ]
+
+
+def test_pdm_target_admission_evidence_rejects_original_benchmark_fix() -> None:
+    package = load_task_package(PDM_TARGET_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_SAME_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_SAME_REPO
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 10
+    development_package = load_task_package(PDM_TASK)
+    development_entry = require_dataset_role(
+        task_id=development_package.public.task_id,
+        task_version=development_package.public.task_version,
+        public_spec_hash=development_package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.solution_lineage_id != development_entry.solution_lineage_id
+
+    evidence = json.loads(
+        Path(
+            "reports/docker-gate/research-pdm-target-project-options-loading.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert evidence["harness_git_commit"] == "ad25a8a95806d7e15597b03325af9de9108940b2"
+    assert (
+        evidence["reference_policy"]["kind"]
+        == "hardened-maintainer-followup-production-only"
+    )
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is True
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 10
+    assert evidence["semantic_bad_patch_rejection_count"] == 9
+    assert evidence["upstream_regression_test_count"] == 63
+    assert evidence["benchmark_f2p_declared_count"] == 1
+    assert evidence["benchmark_p2p_declared_count"] == 63
+    assert evidence["network_dependent_p2p_deselection_count"] == 1
+    assert evidence["independent_hidden_test_count"] == 11
+    for check_id in (
+        "submitted_source_binding",
+        "real_cli_short_long_and_attached_forms",
+        "repeated_project_option_last_wins",
+        "environment_project_selection",
+        "explicit_project_object_precedence",
+        "global_project_isolation",
+        "cross_command_config_injection",
+        "target_without_option_has_no_caller_fallback",
+        "hardened_followup_lineage",
+        "upstream_benchmark_production_patch_rejected",
+        "network_dependent_p2p_deselection_disclosed",
+        "same_repository_solution_lineage_is_distinct",
+        "public_private_separation",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 14
+    assert len({case["run_id"] for case in cases.values()}) == 14
+    assert all(case["official"] for case in cases.values())
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    assert cases["base-noop"]["failed_checks"] == ["hidden:target-project-options"]
+    assert cases["upstream-pr-extractor"]["patch_sha256"] == (
+        evidence["source"]["benchmark_production_patch_sha256"]
+    )
+    assert cases["upstream-pr-extractor"]["failed_checks"] == [
+        "hidden:target-project-options"
+    ]
+    assert cases["caller-options-after-selection"]["failed_checks"] == [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options",
+    ]
+    assert cases["ignore-explicit-object"]["failed_checks"] == [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options",
+    ]
+    assert cases["install-command-only"]["failed_checks"] == [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options",
+    ]
+    assert cases["project-selection-no-injection"]["failed_checks"] == [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options",
+    ]
+    for case_name in (
+        "caller-fallback-when-target-missing",
+        "environment-only-selection",
+        "inject-without-reparse",
+        "short-separated-only",
+    ):
+        assert cases[case_name]["failed_checks"] == ["hidden:target-project-options"]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:target-project-options",
         "policy:scope",
         "policy:test_tampering",
     ]

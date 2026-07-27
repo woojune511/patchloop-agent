@@ -501,6 +501,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 8
 
+  - task_id: pdm-target-project-options-loading
+    task_version: 1
+    path: tasks/same-repo-heldout/pdm-target-project-options-loading
+    role: core-same-repo
+    admission_state: admitted
+    public_spec_hash: sha256:8689001950449a6e572544dad390974efaad79a1c8f032d8c80f8a9bc4777eae
+    private_spec_hash: sha256:dc496fb958c8e70560a63cfc15be39779809eb3bd0c7eb8d64dc77a5299bd5bc
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: pdm-project__pdm-3759
+      upstream_repository: pdm-project/pdm
+      issue_url: https://github.com/pdm-project/pdm/issues/3756
+      pull_request_url: https://github.com/pdm-project/pdm/pull/3759
+      upstream_base_commit: e96d535bb1bd64ac21575cf3490d64f737c6a668
+      resolution_commit: 0765ad9c1c8a7cf9444d16225f0f25e123f3085e
+      license_spdx: MIT
+      retrieved_at: 2026-07-27T00:27:00Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.pdm-project_1776_pdm-3759@sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must order full CLI parsing, effective-project resolution, project-specific option injection and conditional reparse while preserving attached and repeated project flags, environment and explicit-object precedence, global isolation, multiple commands and no caller fallback.
+    failure_pattern_id: bootstrap-project-config-source-selection
+    solution_lineage_id: pdm-project-pdm-followup-0765ad9
+    admission_evidence:
+      path: reports/docker-gate/research-pdm-target-project-options-loading.json
+      sha256: sha256:b39397b673438d3a98d125a3c34ddc1c1d58ab63527a552d08a13829ea6e5848
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 10
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

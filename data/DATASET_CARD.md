@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The nine admitted research tasks are:
+The ten admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -83,9 +83,18 @@ The nine admitted research tasks are:
   `HAVING MAX` / `ORDER BY` / `LIMIT` negative-transfer guard. It records three official reference
   passes, all 39 upstream DuckDB tests, 21 independent hidden checks, one base hidden failure, seven
   semantic partial rejections and one scope/test-tampering rejection.
+- `pdm-target-project-options-loading`, derived from SWE-rebench leaderboard instance
+  `pdm-project__pdm-3759` and upstream PDM issue #3756 / PR #3759. The original benchmark patch scanned
+  raw arguments before the real parser and its test mocked the parser while using an invalid option
+  order. PatchLoop therefore normalizes the maintainer's immediate follow-up onto the benchmark base and
+  rejects the exact benchmark production patch. The oracle covers attached and repeated project flags,
+  environment and explicit-object precedence, global isolation, multiple commands and caller-option
+  fallback. It records three official reference passes, 63 network-independent upstream regressions,
+  11 hidden checks, one base hidden failure, nine semantic rejections and one scope/test-tampering
+  rejection. One declared P2P node that attempts an external install is explicitly deselected.
 
-All nine tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
-SWE-rebench evaluator image. Five are MIT licensed, including PDM and SQLGlot; Hugging Face Hub,
+All ten tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+SWE-rebench evaluator image. Six are MIT licensed, including both PDM tasks and SQLGlot; Hugging Face Hub,
 pyfakefs and Moto are Apache-2.0; Babel is BSD-3-Clause.
 
 ## Research dataset target
@@ -96,9 +105,9 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | --- | ---: | --- | ---: |
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
-| Core same-repo | 6 | prohibited | 0 |
+| Core same-repo | 6 | prohibited | 1 |
 | Core cross-repo | 6 | prohibited | 1 |
-| **Research total** | **20** |  | **9** |
+| **Research total** | **20** |  | **10** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

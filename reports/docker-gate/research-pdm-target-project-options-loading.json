@@ -1,0 +1,305 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-27",
+  "task_id": "pdm-target-project-options-loading",
+  "task_version": 1,
+  "dataset_role": "core-same-repo",
+  "split": "same-repo-heldout",
+  "source": {
+    "benchmark_family": "SWE-rebench-leaderboard",
+    "benchmark_revision": "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b",
+    "benchmark_split": "2026_03",
+    "benchmark_row": 29,
+    "benchmark_instance_id": "pdm-project__pdm-3759",
+    "upstream_repository": "pdm-project/pdm",
+    "issue_url": "https://github.com/pdm-project/pdm/issues/3756",
+    "pull_request_url": "https://github.com/pdm-project/pdm/pull/3759",
+    "base_commit": "e96d535bb1bd64ac21575cf3490d64f737c6a668",
+    "base_tree": "472c1574aef690fc68be530c66a22a367657b8d8",
+    "pr_head_commit": "3c486795439627902dfa38a244e5f40e718aa948",
+    "upstream_squash_merge_commit": "40034ac0af6acf6715ab961beaf14e6ef333c6d8",
+    "maintainer_followup_commit": "0765ad9c1c8a7cf9444d16225f0f25e123f3085e",
+    "resolution_commit": "0765ad9c1c8a7cf9444d16225f0f25e123f3085e",
+    "resolution_tree": "124115768b9ce752a43b345db48da10be1d7a5f2",
+    "license_spdx": "MIT",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_gold_patch_sha256": "sha256:1387d91c027a87bc4b36d602b70ac568e9ddd0d6f733816020cede93cee24294",
+    "benchmark_test_patch_sha256": "sha256:9f699b771294fdea007f96477159f39aeb50456c328cb378dfe4f0e41c6d666f",
+    "benchmark_production_patch_sha256": "sha256:8b542ad78f25ae5335106c231802fad1eb12873032ef657b6826e275b87bc88b"
+  },
+  "reference_policy": {
+    "kind": "hardened-maintainer-followup-production-only",
+    "excluded_upstream_files": [
+      "news/3756.bugfix.md",
+      "tests/test_project.py"
+    ],
+    "rejected_benchmark_production_patch": true,
+    "rationale": "The benchmark PR test mocked parse_args and used an order rejected by the real subcommand parser. The exact production patch scans raw arguments before parsing and misses attached short forms, repeat last-wins behavior, parser-derived environment/global selection, and the full project precedence policy. PatchLoop normalizes the maintainer's follow-up src/pdm/core.py behavior onto the benchmark base and keeps the exact benchmark production hunk as a known-bad case."
+  },
+  "public_spec_hash": "sha256:8689001950449a6e572544dad390974efaad79a1c8f032d8c80f8a9bc4777eae",
+  "private_spec_hash": "sha256:dc496fb958c8e70560a63cfc15be39779809eb3bd0c7eb8d64dc77a5299bd5bc",
+  "harness_git_commit": "ad25a8a95806d7e15597b03325af9de9108940b2",
+  "evaluator_image": "swerebench/sweb.eval.x86_64.pdm-project_1776_pdm-3759@sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93",
+  "evaluator_image_digest": "sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/testbed",
+    "submitted_workspace": "/workspace",
+    "python_version": "3.13.13",
+    "pytest_version": "9.0.3",
+    "network": "none"
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 10,
+  "semantic_bad_patch_rejection_count": 9,
+  "independent_hidden_test_count": 11,
+  "benchmark_f2p_declared_count": 1,
+  "benchmark_p2p_declared_count": 63,
+  "upstream_regression_test_count": 63,
+  "network_dependent_p2p_deselection_count": 1,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "real_cli_short_long_and_attached_forms": "pass",
+    "repeated_project_option_last_wins": "pass",
+    "environment_project_selection": "pass",
+    "explicit_project_object_precedence": "pass",
+    "global_project_isolation": "pass",
+    "cross_command_config_injection": "pass",
+    "target_without_option_has_no_caller_fallback": "pass",
+    "hardened_followup_lineage": "pass",
+    "upstream_benchmark_production_patch_rejected": "pass",
+    "benchmark_test_patch_excluded": "pass",
+    "network_dependent_p2p_deselection_disclosed": "pass",
+    "same_repository_solution_lineage_is_distinct": "pass",
+    "public_api_unchanged": "pass",
+    "public_private_separation": "pass",
+    "no_new_dependency": "pass",
+    "network_disabled_evaluator": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "utf8_patch_evidence": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_dc888b1a81b94a6a",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:9845af31ba7180d8ef73e17866d01abcd4b34c38726802c440b69f84c803aebb",
+      "manifest_sha256": "sha256:094d18a069f312de85d802aea39f95943b8eefe33be525cccadd98f8f1d73b17",
+      "result_sha256": "sha256:dbf235e51592d981becd0e0db27d15b1ef1206127c5af86503a3617b38bbdeb6",
+      "provenance_sha256": "sha256:3288ef52dff3ab411b807404f511c851994f5abbb95b245bfaf9d609104bf8e6"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_5de9431b97a24932",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:9845af31ba7180d8ef73e17866d01abcd4b34c38726802c440b69f84c803aebb",
+      "manifest_sha256": "sha256:9777b5b4ba0894e11e9be7af1b876deb870756e34cf08aa6e587a6b869ace22d",
+      "result_sha256": "sha256:14f47938f3eefa1195ad9fadbd5dffc89668ee0a31b6427ef6338710a14a74bd",
+      "provenance_sha256": "sha256:3288ef52dff3ab411b807404f511c851994f5abbb95b245bfaf9d609104bf8e6"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_a2436ff595514516",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:9845af31ba7180d8ef73e17866d01abcd4b34c38726802c440b69f84c803aebb",
+      "manifest_sha256": "sha256:51a3d8323f67cb5109945312c279fa60b4a6895b0a14f01cb4efbeb94019ae51",
+      "result_sha256": "sha256:0165c4c8b1093ab7ad0bd342e2d39d830516e275a9f44f03738716d7971f69c3",
+      "provenance_sha256": "sha256:3288ef52dff3ab411b807404f511c851994f5abbb95b245bfaf9d609104bf8e6"
+    },
+    {
+      "name": "caller-fallback-when-target-missing",
+      "patch": "bad/caller-fallback-when-target-missing.patch",
+      "run_id": "run_852bbd813c5b4c5c",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:986f8b353237e1281fc9e2161a3a4c25ff9ad47e2f1823f6bff4d8a0fb6e4912",
+      "manifest_sha256": "sha256:4a5a26ffd326743a3be145f05266be9dedb60c6831d72577a6782008e42e87f2",
+      "result_sha256": "sha256:def24adda437ae3356773a3f4602c4e26120e29ec3277213c7acf27d98fdaa2e",
+      "provenance_sha256": "sha256:44bbe7ccd646e21d940adc377ad23b57a20191ae729600075b3655f6b1658ef8"
+    },
+    {
+      "name": "caller-options-after-selection",
+      "patch": "bad/caller-options-after-selection.patch",
+      "run_id": "run_081e6a8b166d4535",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:23659fdc17cb2efd17df88f87094c344833dc08c775e18cf35a890c96bb449aa",
+      "manifest_sha256": "sha256:8d6a8c0d7356aec3aaaf7c877e7af741f8e8b451c5c48b2d96f2544c37bcf373",
+      "result_sha256": "sha256:85c89dff0facaaac274acd1ba19da736c4eca6c39d3b47680df577f732650d11",
+      "provenance_sha256": "sha256:4da149028be083df38fbe45ed7e65e5343f2851bb218886a4b1ddfd13d2b1d59"
+    },
+    {
+      "name": "environment-only-selection",
+      "patch": "bad/environment-only-selection.patch",
+      "run_id": "run_46fcaf6a87324578",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:144f0c8645c9cf19d0299648018fa0f076f4717b7578583eae796310a7afbcaa",
+      "manifest_sha256": "sha256:f424ea18991419a7f87441a8353f98950d7f29046405143a6bd43158084d399c",
+      "result_sha256": "sha256:92c49589fe0608c42cb9419b86548bfa4fdb1a8ccf631f8937ac93d7992796e7",
+      "provenance_sha256": "sha256:a8927a85eb347028b4363e1e7012c4fedccc6d14320edcf7fd13b45d6f9beb78"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_386caf37ef904569",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:target-project-options",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:d8243a86ccbd2a1d1a19750df71718606966f765d0d99a0867dd522f33535a3d",
+      "manifest_sha256": "sha256:07f79b884e7db175ff514b983b4ec8041fb6527b9b3473b6639dc87b79c6d807",
+      "result_sha256": "sha256:e8bca168bc0c7e1591d9b66c304d3ab4fb9090a4b4b5b1472487492c2d7dab4d",
+      "provenance_sha256": "sha256:ed36668bed6c60bb33813d8b541b8bcf69edb4240adc3c6dbd5db635829df8ec"
+    },
+    {
+      "name": "ignore-explicit-object",
+      "patch": "bad/ignore-explicit-object.patch",
+      "run_id": "run_eab9fa34934d457d",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:fcd00cd8e6c6092213ad46e1881bef8944e8037268881b5daf551011eb0905f5",
+      "manifest_sha256": "sha256:6b1689d906b6d27adf33dbc010004e759b44936cbf6fd18d4e51dabe7c85f468",
+      "result_sha256": "sha256:ac605b79e498d4e68f2cf5efdc522a7b9ecdfea55680f74d3205dbff1860f00b",
+      "provenance_sha256": "sha256:9c95921ddf76e6bc2dc4faa927139a02942468fa0abc723ae9a03ca3a6b05855"
+    },
+    {
+      "name": "inject-without-reparse",
+      "patch": "bad/inject-without-reparse.patch",
+      "run_id": "run_1d1c3454dd604b62",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:159a1c275ad855b00b1ef64346924d397e91923ddc2356c42ec1e02aefd70f0f",
+      "manifest_sha256": "sha256:9573eb008b83553b71f0e0cc09cf6e60b97e8915745c9dd0181ccb0a1104d1d9",
+      "result_sha256": "sha256:8be11c479f30c798e6401009dea6f3a040faf2a7212f828db982e0d9a20afc35",
+      "provenance_sha256": "sha256:c15ac08a4b90b39d14b2066c91edaab6e43ad24375fad6204aa5e2397f853433"
+    },
+    {
+      "name": "install-command-only",
+      "patch": "bad/install-command-only.patch",
+      "run_id": "run_473206223a554407",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:b4a1a3cd64c47c4dc703287370a19e42a2735e318871c2c171f1403d5a553689",
+      "manifest_sha256": "sha256:1e727b0e81ede14317292ba6c13f4e2c95baf47d408ab4e5795c1575c74607f5",
+      "result_sha256": "sha256:395af86b8c7314ccc0bfbf45ea5250c2d0062b905491061bfb442f3c53f6ff57",
+      "provenance_sha256": "sha256:b8772cdf88a428e2db6c4d7c0ad4569f5577ae428ed86317c94dc79f678a04a5"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_c208dfd11cdc41ad",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:4e1d7bf3d59a04c23b02f7da2bff4e932bd1de3f78f8abafca2c597ef6d1943b",
+      "result_sha256": "sha256:0c656c936ebe6075fdff8a7fe06334e9cbd4eb87478cfa08de3c7b2f333b270d",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "project-selection-no-injection",
+      "patch": "bad/project-selection-no-injection.patch",
+      "run_id": "run_f03af3d7aee34e6c",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-project-regression",
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:e1f2101e05dbdd4424c5c3d21357cfde3972372a3b73cf5b33dd81d8de1c0d97",
+      "manifest_sha256": "sha256:9a8556b8de91018da1c17ffe4bc809c73c5bad862f61154d82bcfcc3d3a3204e",
+      "result_sha256": "sha256:8054500d5ab9758d5795620adb9c4f575e0902191a65017adb795a0be9fb2596",
+      "provenance_sha256": "sha256:e9312309a7841416969f16ea77a0cd5771c1f4bfa8f1ae3c4998ff8654a81ea4"
+    },
+    {
+      "name": "short-separated-only",
+      "patch": "bad/short-separated-only.patch",
+      "run_id": "run_26aada063fef4f5d",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:585e19d9281df371405e3fb20253af059047908cd0ac290792878d10c99e0720",
+      "manifest_sha256": "sha256:891be1c090a90e6e2ce5f0ec5680bb399513162eeaa9031d1e1c880d9cefbfef",
+      "result_sha256": "sha256:24c808172045aa2c32e427408609389cc34e6e7b86d03676da64b2f06a3d39dc",
+      "provenance_sha256": "sha256:82a1a5cb9354cbab5043822ec56c82645e5bdb4b03454d0413dcf656d1f14fa8"
+    },
+    {
+      "name": "upstream-pr-extractor",
+      "patch": "bad/upstream-pr-extractor.patch",
+      "run_id": "run_9f8eb00272e8407f",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:target-project-options"
+      ],
+      "patch_sha256": "sha256:8b542ad78f25ae5335106c231802fad1eb12873032ef657b6826e275b87bc88b",
+      "manifest_sha256": "sha256:0951a942617123d7209d01eaefb207372b686cb6fcf32c05cb46cafca0540e82",
+      "result_sha256": "sha256:98e2afa8035f05011889c38b096fa0a3249b9cfd0028e76eb4576261e0d670ea",
+      "provenance_sha256": "sha256:0771303a816f3f34e4215012eaacd651f0a997d461394720e7c2721fab62bd80"
+    }
+  ]
+}

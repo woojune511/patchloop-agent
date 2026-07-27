@@ -82,3 +82,12 @@ passed all 39 upstream DuckDB tests and failed the 21-check private oracle. Seve
 implementations were rejected at hidden acceptance, including a BigQuery `HAVING MAX` negative-transfer
 mutant; a forbidden test edit additionally failed scope and test-tampering checks. All containers ran
 without network, and the gate made zero model/API calls.
+
+`research-pdm-target-project-options-loading.json` records the tenth research admission and first
+core-same-repo held-out task. It pins SWE-rebench leaderboard instance `pdm-project__pdm-3759`, base
+commit `e96d535b...` and image `sha256:7a012a5b...`. On clean harness commit `ad25a8a9...`, the
+hardened maintainer-follow-up reference passed three official evaluations, while the base passed 63
+network-independent regressions and failed the 11-check private oracle. The exact benchmark production
+patch and eight other semantic partials failed hidden acceptance; one forbidden test edit additionally
+failed scope and test-tampering checks. One declared P2P node that attempts an external install is
+explicitly deselected. All 14 containers ran without network, and the gate made zero model/API calls.

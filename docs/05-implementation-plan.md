@@ -18,11 +18,12 @@
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
 `duration-minute-boundary`, `csv-final-record-flush`는 evaluator, sandbox와 authoring workflow를
 검증하는 fixture다. 뒤의 두 package가 물리적으로 `dev-train` 아래에 있어도 memory source나
-research task로 보지 않는다. 현재 admitted research task는 9/20이며 memory-development
-task admission은 6/6, development-validation은 2/2, core-cross-repo는 1/6이다.
+research task로 보지 않는다. 현재 admitted research task는 10/20이며 memory-development
+task admission은 6/6, development-validation은 2/2, core-same-repo와 core-cross-repo는
+각각 1/6이다.
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
-smoke와 아홉 research admission은 2026-07-27까지 통과했다. Live OpenAI, 완성된 20개 research dataset, 세 sentinel stress
+smoke와 열 research admission은 2026-07-27까지 통과했다. Live OpenAI, 완성된 20개 research dataset, 세 sentinel stress
 overlay와 96-run core campaign은 아직 완료가 아니며 `docs/08-limitations.md`에서 별도로
 추적한다.
 

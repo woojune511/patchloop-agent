@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 121 pass, 2 skipped; all nine research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 126 pass, 2 skipped; all ten research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus nine research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 9/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus ten research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 10/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM, pyfakefs, Moto, Babel and SQLGlot references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs, Moto, Babel, SQLGlot and PDM #3759 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -431,6 +431,51 @@ over every SQLGlot dialect. The
 records every patch, manifest, result and provenance hash from clean harness
 commit `89f47025...`. This gate made zero model/API calls.
 
+## Tenth research task admission
+
+`pdm-target-project-options-loading` comes from SWE-rebench leaderboard instance
+`pdm-project__pdm-3759`, PDM issue #3756 and PR #3759. It is the first hard
+`core-same-repo` held-out task, pinned to base commit
+`e96d535bb1bd64ac21575cf3490d64f737c6a668` and evaluator image
+`sha256:7a012a5bfd460d638b74d3de84426cd1fa2141aec3914c4f9171071491f5ac93`.
+The development PDM #2781 task changes interpreter candidate selection in
+`src/pdm/project/core.py`; this task changes CLI bootstrap ordering in
+`src/pdm/core.py`, so their solution lineages are distinct.
+
+The benchmark PR test mocked `parse_args` and put `-p` before the subcommand,
+an order rejected by PDM's real subcommand parser. Its production patch also
+scanned raw arguments before parsing. PatchLoop therefore uses the PDM
+maintainer's immediate follow-up, normalized onto the benchmark base, as the
+hardened one-file reference. The exact benchmark production hunk remains a
+known-bad patch.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| hardened maintainer-follow-up reference | `run_dc888b1a81b94a6a`, `run_5de9431b97a24932`, `run_a2436ff595514516` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_c208dfd11cdc41ad` | regression pass, hidden fail | rejected |
+| exact benchmark PR extractor | `run_9f8eb00272e8407f` | attached/repeated/environment precedence fail | rejected |
+| caller fallback when target has no option | `run_852bbd813c5b4c5c` | target isolation fail | rejected |
+| caller options injected after selection | `run_081e6a8b166d4535` | regression and target isolation fail | rejected |
+| environment-only selection | `run_46fcaf6a87324578` | CLI selection forms fail | rejected |
+| ignore explicit object | `run_eab9fa34934d457d` | regression and object precedence fail | rejected |
+| inject without reparse | `run_1d1c3454dd604b62` | configured options have no parsed effect | rejected |
+| install command only | `run_473206223a554407` | cross-command behavior fail | rejected |
+| project selection without injection | `run_f03af3d7aee34e6c` | regression and configured-option behavior fail | rejected |
+| separated short form only | `run_26aada063fef4f5d` | long/attached/repeated forms fail | rejected |
+| forbidden test edit | `run_386caf37ef904569` | hidden, scope and test-tampering fail | rejected |
+
+The registered public file reports 63 passing regressions after explicitly
+deselecting one node that attempts an external package install under the
+mandatory network-disabled evaluator. The benchmark metadata separately
+declares one F2P and 63 P2P nodes. The independent 11-check oracle binds imports
+to `/workspace/src`; exercises separated and attached short/long forms,
+repeat-last-wins, `PDM_PROJECT`, explicit-object precedence, global isolation,
+multiple commands and no caller fallback; and preserves normal caller-project
+behavior. The
+[PDM target-project research admission report](../reports/docker-gate/research-pdm-target-project-options-loading.json)
+records every patch, manifest, result and provenance hash from clean harness
+commit `ad25a8a...`. This gate made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -441,6 +486,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 9/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 11 research tasks are not
+calibration is 5/5, admitted research is 10/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 10 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

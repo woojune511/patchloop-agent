@@ -49,6 +49,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   were rejected. Its hardened oracle covers both NULL modifiers across five value-window functions
   and a representative BigQuery modifier-chain negative-transfer guard. This is deterministic
   evaluator admission evidence, not a live-model core result.
+- Tenth research task admitted: PDM #3759 as the first core-same-repo held-out task, with three
+  hardened-reference passes, 63 network-independent upstream regressions, 11 independent hidden checks
+  and one base hidden failure. The exact benchmark production patch and eight other semantic partials
+  were rejected, as was one scope/test-tampering edit. One declared P2P node that attempts an external
+  install is explicitly deselected. This is deterministic evaluator admission evidence, not a
+  live-model core result.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -65,8 +71,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 9/20: memory-development 6/6, development-validation 2/2,
-  same-repo core 0/6 and cross-repo core 1/6.
+- Admitted research tasks are 10/20: memory-development 6/6, development-validation 2/2,
+  same-repo core 1/6 and cross-repo core 1/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.
