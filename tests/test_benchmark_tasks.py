@@ -33,6 +33,9 @@ ANYIO_PROCESS_TASK = Path(
 PARAM_TASK = Path(
     "tasks/cross-repo-heldout/param-shared-rx-fanout-cache"
 )
+MTPLX_TASK = Path(
+    "tasks/cross-repo-heldout/mtplx-mixed-content-tool-call-stream"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -1694,3 +1697,166 @@ def test_reverted_pypa_build_candidate_remains_excluded() -> None:
     assert candidate["status"] == "excluded"
     assert "PR #1039" in candidate["notes"]
     assert "revert" in candidate["notes"].lower()
+
+
+def test_mtplx_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(MTPLX_TASK)
+
+    assert package.public.task_id == "mtplx-mixed-content-tool-call-stream"
+    assert package.public.split == "cross-repo-heldout"
+    assert package.public.repository.url == "https://github.com/youssofal/MTPLX.git"
+    assert (
+        package.public.repository.base_commit
+        == "c06cc13286e86d9ff3d2e3b991eba327549c534b"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["mtplx/server/openai.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 110
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is False
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e"
+    )
+    assert package.environment.evaluator_image.endswith(
+        f"@{package.environment.image_digest}"
+    )
+
+
+def test_mtplx_visible_check_pins_base_resident_cpu_regressions() -> None:
+    package = load_task_package(MTPLX_TASK)
+    check = package.public.visible_checks[0]
+    command = check.command
+
+    assert check.id == "upstream-openai-stream-regression"
+    assert command[:3] == [
+        "/opt/conda/envs/testbed/bin/python",
+        "-m",
+        "pytest",
+    ]
+    assert "tests/test_server_openai.py" in command
+    assert "tests/test_openai_bridge.py" in command
+    assert "-k" not in command
+    assert {
+        argument for argument in command if argument.startswith("--deselect=")
+    } == {
+        "--deselect=tests/test_server_openai.py::"
+        "test_streaming_session_uses_generation_final_postcommit_without_"
+        "retokenized_tail",
+        "--deselect=tests/test_server_openai.py::"
+        "test_streaming_unsafe_postcommit_releases_without_blocking_second_request",
+        "--deselect=tests/test_server_openai.py::"
+        "test_streaming_ar_keeps_retokenized_postcommit_path",
+    }
+    assert check.environment["PYTHONPATH"] == "/workspace"
+    assert check.timeout_seconds == 120
+
+
+def test_mtplx_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(MTPLX_TASK)
+    public_text = (MTPLX_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_mixed_content_tool_call_stream.py" not in public_text
+    assert "_ToolAwareContentStreamTranslator" not in public_text
+    assert "_partial_marker_tail_len" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_mtplx_candidate_is_traceable_to_screened_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["youssofal__mtplx-21"]
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == "c06cc13286e86d9ff3d2e3b991eba327549c534b"
+    assert candidate["pr_url"] == "https://github.com/youssofal/MTPLX/pull/21"
+    assert candidate["license_spdx"] == "Apache-2.0"
+    assert candidate["gold_patch_lines"] == "131"
+    assert candidate["test_patch_lines"] == "165"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "4"
+    assert candidate["p2p"] == "5"
+    assert candidate["proposed_lane"] == "core-cross-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e"
+    )
+
+
+def test_mtplx_reference_is_source_only_and_hash_bound() -> None:
+    package = load_task_package(MTPLX_TASK)
+    reference_patch = MTPLX_TASK / package.private.reference_patch.path
+    patch_text = reference_patch.read_text(encoding="utf-8")
+    patch_lines = patch_text.splitlines()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:d8f6e6d0fa4ebc181c261816591298f13c079bebc864514fc2097f61944003d5"
+    )
+    assert sha256_bytes(reference_patch.read_bytes()) == (
+        package.private.reference_patch.sha256
+    )
+    assert sum(
+        line.startswith("+") and not line.startswith("+++") for line in patch_lines
+    ) == 77
+    assert sum(
+        line.startswith("-") and not line.startswith("---") for line in patch_lines
+    ) == 15
+    assert "diff --git a/CHANGELOG.md" not in "\n".join(patch_lines)
+    assert '+    _START_MARKER = "<tool_call>"' in patch_text
+    assert '_TOOL_CALL_BLOCK_RE.sub("", self._pending)' in patch_text
+    assert {
+        line.removeprefix("diff --git a/").split(" b/", maxsplit=1)[0]
+        for line in patch_lines
+        if line.startswith("diff --git a/")
+    } == {"mtplx/server/openai.py"}
+
+
+def test_mtplx_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_path = MTPLX_TASK / "hidden/test_mixed_content_tool_call_stream.py"
+    hidden_text = hidden_path.read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (MTPLX_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 20
+    assert "range(len(payload) + 1)" in hidden_text
+    assert "inspect.getsourcefile" in hidden_text
+    assert "argument_chunk_chars=1" in hidden_text
+    assert "_partial_marker_tail_len" not in hidden_text
+    assert "<tool_calls>" in hidden_text
+    assert "<tool_calligraphy>" in hidden_text
+    assert "_parse_generated_tool_calls" in hidden_text
+    assert bad_names == [
+        "case-sensitive-content-scan.patch",
+        "chunk-start-marker-only.patch",
+        "content-lock-removed-only.patch",
+        "current-chunk-search-only.patch",
+        "forbidden-test-edit.patch",
+        "initial-buffer-search-drops-preamble.patch",
+        "no-partial-tail-hold.patch",
+        "noop.patch",
+        "one-character-tail-hold.patch",
+        "trailing-policy-relaxed.patch",
+        "upstream-accepted-missing-delimiter-residue.patch",
+    ]
+    assert (MTPLX_TASK / "bad/noop.patch").read_bytes() == b"\n"
+    upstream_bad = (
+        MTPLX_TASK / "bad/upstream-accepted-missing-delimiter-residue.patch"
+    )
+    assert sha256_bytes(upstream_bad.read_bytes()) == (
+        "sha256:5850850bd5993c26aa1d963bf6f38eac694f0a4e799ab3c2db14fb74803094ad"
+    )
+    audit_text = (MTPLX_TASK / "audit.md").read_text(encoding="utf-8")
+    assert "not admitted" in audit_text
+    assert "20 test functions collect as 21 cases" in audit_text
+    assert "21/21 hidden cases passing" in audit_text
+    assert "passed 14 and failed" in audit_text
+    assert "no official network-disabled Docker matrix" in audit_text

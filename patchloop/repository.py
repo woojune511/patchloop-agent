@@ -25,6 +25,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/holoviz/param",
     "https://github.com/getmoto/moto.git",
     "https://github.com/getmoto/moto",
+    "https://github.com/youssofal/MTPLX.git",
+    "https://github.com/youssofal/MTPLX",
     "https://github.com/pdm-project/pdm.git",
     "https://github.com/pdm-project/pdm",
     "https://github.com/pytest-dev/pyfakefs.git",

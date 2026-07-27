@@ -1,0 +1,71 @@
+schema_version: task-public-v1
+task_id: mtplx-mixed-content-tool-call-stream
+task_version: 1
+split: cross-repo-heldout
+repository:
+  url: https://github.com/youssofal/MTPLX.git
+  base_commit: c06cc13286e86d9ff3d2e3b991eba327549c534b
+  language: python
+issue:
+  title: Preserve mixed assistant text and streamed tool calls
+  description: |
+    The OpenAI-compatible streaming bridge can receive an assistant response
+    that begins with ordinary explanatory text and later contains one or more
+    tool-call blocks. In that shape, the bridge currently treats the response
+    as text permanently: tool markup reaches the client as content and no tool
+    call is dispatched.
+
+    Make mixed responses emit the preamble as content and translate each later
+    tool block into the normal tool-call deltas. Detection must work regardless
+    of stream chunk boundaries and marker case. Preserve pure-text and
+    tool-only behavior, non-content fields, argument chunking, multiple-call
+    ordering, and the existing policy for text received after completed tool
+    calls.
+constraints:
+  allowed_paths:
+    - mtplx/server/openai.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - CHANGELOG.md
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 110
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-openai-stream-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -rA
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - tests/test_server_openai.py
+      - tests/test_openai_bridge.py
+      - --deselect=tests/test_server_openai.py::test_streaming_session_uses_generation_final_postcommit_without_retokenized_tail
+      - --deselect=tests/test_server_openai.py::test_streaming_unsafe_postcommit_releases_without_blocking_second_request
+      - --deselect=tests/test_server_openai.py::test_streaming_ar_keeps_retokenized_postcommit_path
+    timeout_seconds: 120
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - openai-compatible
+  - streaming-protocol
+  - tool-calling
+  - chunk-boundary
+  - core-cross-repo

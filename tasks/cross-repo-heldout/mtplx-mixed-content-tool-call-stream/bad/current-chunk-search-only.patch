@@ -1,0 +1,22 @@
+diff --git a/mtplx/server/openai.py b/mtplx/server/openai.py
+index 002afe89..d42ac0b4 100644
+--- a/mtplx/server/openai.py
++++ b/mtplx/server/openai.py
+@@ -1323,8 +1323,17 @@ class _ToolAwareContentStreamTranslator:
+             return []
+         if field != "content" or self._mode == "passthrough":
+             return [{field: text}]
+         if self._mode == "content":
++            marker_at = text.lower().find(self._START_MARKER)
++            if marker_at >= 0:
++                deltas: list[dict[str, Any]] = []
++                if marker_at:
++                    deltas.append({"content": text[:marker_at]})
++                self._pending = text[marker_at:]
++                self._mode = "tool"
++                deltas.extend(self._tool_deltas_if_complete(final=False))
++                return deltas
+             return [{"content": text}]
+         if self._mode == "done":
+             self._trailing += text
+             return []

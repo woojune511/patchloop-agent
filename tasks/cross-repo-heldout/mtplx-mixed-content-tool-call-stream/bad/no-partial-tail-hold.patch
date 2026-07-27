@@ -1,0 +1,50 @@
+diff --git a/mtplx/server/openai.py b/mtplx/server/openai.py
+index 002afe89..4602e8c9 100644
+--- a/mtplx/server/openai.py
++++ b/mtplx/server/openai.py
+@@ -1323,8 +1323,6 @@ class _ToolAwareContentStreamTranslator:
+             return []
+         if field != "content" or self._mode == "passthrough":
+             return [{field: text}]
+-        if self._mode == "content":
+-            return [{"content": text}]
+         if self._mode == "done":
+             self._trailing += text
+             return []
+@@ -1333,17 +1331,27 @@ class _ToolAwareContentStreamTranslator:
+         if self._mode == "tool":
+             return self._tool_deltas_if_complete(final=False)
+ 
+-        stripped = self._pending.lstrip()
+-        if not stripped:
+-            return []
+-        lowered = stripped.lower()
+-        if lowered.startswith(self._START_MARKER):
++        marker_at = self._pending.lower().find(self._START_MARKER)
++        if marker_at >= 0:
++            deltas: list[dict[str, Any]] = []
++            if marker_at:
++                preamble = self._pending[:marker_at]
++                if self._mode != "undecided" or preamble.strip():
++                    deltas.append({"content": preamble})
++            self._pending = self._pending[marker_at:]
+             self._mode = "tool"
+-            return self._tool_deltas_if_complete(final=False)
+-        if self._START_MARKER.startswith(lowered):
+-            return []
++            deltas.extend(self._tool_deltas_if_complete(final=False))
++            return deltas
++
++        if self._mode == "undecided":
++            stripped = self._pending.lstrip()
++            if not stripped:
++                return []
++            lowered = stripped.lower()
++            if self._START_MARKER.startswith(lowered):
++                return []
++            self._mode = "content"
+ 
+-        self._mode = "content"
+         content = self._pending
+         self._pending = ""
+         return [{"content": content}]

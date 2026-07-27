@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.youssofal_1776_mtplx-21@sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e
+image_digest: sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e
+source_image_tag: swerebench/sweb.eval.x86_64.youssofal_1776_mtplx-21:latest

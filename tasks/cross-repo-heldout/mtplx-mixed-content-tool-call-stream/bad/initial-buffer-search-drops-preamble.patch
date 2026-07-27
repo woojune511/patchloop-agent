@@ -1,0 +1,13 @@
+diff --git a/mtplx/server/openai.py b/mtplx/server/openai.py
+index 002afe89..d079f12e 100644
+--- a/mtplx/server/openai.py
++++ b/mtplx/server/openai.py
+@@ -1337,7 +1337,7 @@ class _ToolAwareContentStreamTranslator:
+         if not stripped:
+             return []
+         lowered = stripped.lower()
+-        if lowered.startswith(self._START_MARKER):
++        if self._START_MARKER in lowered:
+             self._mode = "tool"
+             return self._tool_deltas_if_complete(final=False)
+         if self._START_MARKER.startswith(lowered):

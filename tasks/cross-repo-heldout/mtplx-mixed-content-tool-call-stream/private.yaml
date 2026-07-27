@@ -1,0 +1,41 @@
+schema_version: task-private-v1
+task_id: mtplx-mixed-content-tool-call-stream
+task_version: 1
+hidden_checks:
+  - id: mixed-content-tool-call-stream
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - .patchloop-hidden/test_mixed_content_tool_call_stream.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:d8f6e6d0fa4ebc181c261816591298f13c079bebc864514fc2097f61944003d5
+audit:
+  expected_files:
+    - mtplx/server/openai.py
+  prohibited_behaviors:
+    - emitting tool-call markup as assistant content
+    - recognizing a marker only when it begins the first content chunk
+    - losing or duplicating preamble bytes around a chunk boundary
+    - matching markers case-sensitively
+    - treating lookalike tags as tool-call markers
+    - holding lookalike marker prefixes after later bytes disambiguate them
+    - dropping pure text or leading text before a tool call
+    - translating only the first of several tool calls
+    - changing non-content field passthrough
+    - accepting non-whitespace text after completed tool calls
+    - discarding text beside or between complete tool-call blocks
+    - changing dependencies or public APIs
+    - modifying tests, documentation, configuration, or changelog files
