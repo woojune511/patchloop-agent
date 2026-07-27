@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.huggingface_1776_huggingface_hub-4056@sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677
+image_digest: sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677
+source_image_tag: swerebench/sweb.eval.x86_64.huggingface_1776_huggingface_hub-4056:latest

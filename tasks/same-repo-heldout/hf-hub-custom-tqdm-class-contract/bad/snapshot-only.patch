@@ -1,0 +1,26 @@
+diff --git a/src/huggingface_hub/_snapshot_download.py b/src/huggingface_hub/_snapshot_download.py
+index ed72652904..988ce789c6 100644
+--- a/src/huggingface_hub/_snapshot_download.py
++++ b/src/huggingface_hub/_snapshot_download.py
+@@ -18,7 +18,7 @@
+ )
+ from .file_download import REGEX_COMMIT_HASH, DryRunFileInfo, hf_hub_download, repo_folder_name
+ from .hf_api import DatasetInfo, HfApi, ModelInfo, RepoFile, SpaceInfo
+-from .utils import OfflineModeIsEnabled, filter_repo_objects, is_tqdm_disabled, logging, validate_hf_hub_args
++from .utils import OfflineModeIsEnabled, filter_repo_objects, logging, validate_hf_hub_args
+ from .utils import tqdm as hf_tqdm
+ 
+ 
+@@ -387,12 +387,10 @@ def snapshot_download(
+     # metadata for a file.
+     bytes_progress = tqdm_class(
+         desc="Downloading (incomplete total...)",
+-        disable=is_tqdm_disabled(log_level=logger.getEffectiveLevel()),
+         total=0,
+         initial=0,
+         unit="B",
+         unit_scale=True,
+-        name="huggingface_hub.snapshot_download",
+     )
+ 
+     class _AggregatedTqdm:

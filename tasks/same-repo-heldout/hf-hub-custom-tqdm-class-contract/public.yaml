@@ -1,0 +1,67 @@
+schema_version: task-public-v1
+task_id: hf-hub-custom-tqdm-class-contract
+task_version: 1
+split: same-repo-heldout
+repository:
+  url: https://github.com/huggingface/huggingface_hub.git
+  base_commit: 6983a4d3d2bdcbd09c6ea08acae64cdf83ccb2e4
+  language: python
+issue:
+  title: Custom progress classes lose control of their rendering policy
+  description: |
+    Callers can provide a custom tqdm-compatible class for single-file and
+    snapshot downloads. The Hub currently injects its own visibility and group
+    arguments into every supplied class. This can silently hide a custom bar
+    in a non-interactive process, and classes that do not accept Hub-specific
+    arguments can fail during construction.
+
+    Let foreign custom classes and callable factories control their own
+    visibility and accepted arguments in both download paths. The Hub's own
+    progress class, including subclasses of it, must retain the existing
+    environment, logging, TTY, group-name, and TQDM_POSITION behavior. Preserve
+    the current public API and ordinary upstream progress-bar behavior.
+constraints:
+  allowed_paths:
+    - src/huggingface_hub/_snapshot_download.py
+    - src/huggingface_hub/utils/tqdm.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - setup.cfg
+    - requirements*.txt
+  max_changed_files: 2
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-tqdm-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -rA
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - tests/test_utils_tqdm.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HF_HOME: /tmp/hf-home
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - progress-bar
+  - custom-class-policy
+  - snapshot-download
+  - core-same-repo

@@ -14,6 +14,9 @@ LOGURU_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 ANYIO_TASK = Path("tasks/dev-train/anyio-interrupt-runner-cleanup")
 TOX_TASK = Path("tasks/dev-train/tox-cross-section-empty-substitution")
 HF_HUB_TASK = Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
+HF_TASK = Path(
+    "tasks/same-repo-heldout/hf-hub-custom-tqdm-class-contract"
+)
 PDM_TASK = Path("tasks/dev-train/pdm-ignore-active-venv-resolution")
 PYFAKEFS_TASK = Path("tasks/dev-train/pyfakefs-makedirs-parent-traversal")
 MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
@@ -191,6 +194,22 @@ def test_same_repository_candidates_are_not_labeled_cross_repo() -> None:
 
     assert rows["tox-dev__tox-3904"]["proposed_lane"] == "core-same-repo"
     assert rows["agronholm__anyio-1134"]["proposed_lane"] == "core-same-repo"
+
+
+def test_tox_architecture_candidate_is_excluded_by_dependency_contract() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["tox-dev__tox-3904"]
+    assert candidate["status"] == "excluded"
+    assert candidate["environment_image"].endswith(
+        "@sha256:c07d892532885ac2fc4d26e2014555455c7ce9a6ce32884d0eaa6759ba72a3c7"
+    )
+    assert "direct python-discovery dependency" in candidate["notes"]
+    assert "binary dependency policy" in candidate["notes"]
+    assert "182/182" in candidate["notes"]
 
 
 def test_tox_admission_evidence_binds_submitted_source_and_bad_boundaries() -> None:
@@ -1418,6 +1437,144 @@ def test_param_admission_evidence_binds_shared_fanout_boundaries() -> None:
     assert cases["base-noop"]["failed_checks"] == [
         "hidden:shared-rx-fanout-cache"
     ]
+
+
+def test_hf_task_has_pinned_real_repository_provenance_and_budget() -> None:
+    package = load_task_package(HF_TASK)
+
+    assert package.public.task_id == "hf-hub-custom-tqdm-class-contract"
+    assert package.public.split == "same-repo-heldout"
+    assert package.public.repository.url == (
+        "https://github.com/huggingface/huggingface_hub.git"
+    )
+    assert package.public.repository.base_commit == (
+        "6983a4d3d2bdcbd09c6ea08acae64cdf83ccb2e4"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == [
+        "src/huggingface_hub/_snapshot_download.py",
+        "src/huggingface_hub/utils/tqdm.py",
+    ]
+    assert package.public.constraints.max_changed_files == 2
+    assert package.public.constraints.max_diff_lines == 60
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is False
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677"
+    )
+    assert package.environment.evaluator_image == (
+        "swerebench/sweb.eval.x86_64.huggingface_1776_huggingface_hub-4056"
+        f"@{package.environment.image_digest}"
+    )
+    visible_check = package.public.visible_checks[0]
+    assert visible_check.id == "upstream-tqdm-regression"
+    assert visible_check.timeout_seconds == 60
+    assert visible_check.environment["PYTHONPATH"] == "/workspace/src"
+    assert package.private.hidden_checks[0].timeout_seconds == 60
+
+
+def test_hf_task_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(HF_TASK)
+    public_text = (HF_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_custom_tqdm_class_contract.py" not in public_text
+    assert "StrictProgress" not in public_text
+    assert "KeywordRecordingProgress" not in public_text
+    assert "_create_progress_bar" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_hf_task_is_traceable_to_screening_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["huggingface__huggingface_hub-4056"]
+    assert candidate["benchmark_family"] == "SWE-rebench-leaderboard"
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == "6983a4d3d2bdcbd09c6ea08acae64cdf83ccb2e4"
+    assert candidate["pr_url"] == (
+        "https://github.com/huggingface/huggingface_hub/pull/4056"
+    )
+    assert candidate["license_spdx"] == "Apache-2.0"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "2"
+    assert candidate["p2p"] == "19"
+    assert candidate["proposed_lane"] == "core-same-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:cbfae263dff792cc7c763057905869c548bf37733352ff999b3d7d4278c87677"
+    )
+
+
+def test_hf_task_reference_bytes_match_frozen_production_patch() -> None:
+    package = load_task_package(HF_TASK)
+    reference_patch = HF_TASK / package.private.reference_patch.path
+    reference_bytes = reference_patch.read_bytes()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:4ed0bca7b7370147472f34b56aa7d67aa2938cf9dd03bfa45a1786df495b04bd"
+    )
+    assert sha256_bytes(reference_bytes) == package.private.reference_patch.sha256
+    assert len(reference_bytes) == 3806
+    assert reference_bytes.count(b"diff --git ") == 2
+    assert b"diff --git a/tests/" not in reference_bytes
+
+
+def test_hf_task_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_text = (
+        HF_TASK / "hidden/test_custom_tqdm_class_contract.py"
+    ).read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (HF_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 13
+    assert bad_names == [
+        "combined-foreign-only.patch",
+        "context-only.patch",
+        "exact-hf-class-only.patch",
+        "forbidden-test-edit.patch",
+        "force-disable-false.patch",
+        "hf-policy-dropped.patch",
+        "noop.patch",
+        "snapshot-only.patch",
+        "strip-name-only.patch",
+        "unguarded-issubclass.patch",
+        "upstream-subclass-treated-as-hf.patch",
+    ]
+
+
+def test_hf_task_prepares_a_distinct_same_repository_solution_lineage() -> None:
+    package = load_task_package(HF_TASK)
+    development_package = load_task_package(HF_HUB_TASK)
+    audit_text = (HF_TASK / "audit.md").read_text(encoding="utf-8")
+
+    assert package.public.repository.url == development_package.public.repository.url
+    assert set(package.public.constraints.allowed_paths).isdisjoint(
+        development_package.public.constraints.allowed_paths
+    )
+    assert "hf-hub-xet-endpoint-propagation" in audit_text
+    assert (
+        "not a module set, trigger, failure mechanism, or solution lineage."
+        in audit_text
+    )
+
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+    assert (
+        rows["huggingface__huggingface_hub-4056"]["pr_url"]
+        != rows["huggingface__huggingface_hub-3180"]["pr_url"]
+    )
 
 
 def test_reverted_pypa_build_candidate_remains_excluded() -> None:

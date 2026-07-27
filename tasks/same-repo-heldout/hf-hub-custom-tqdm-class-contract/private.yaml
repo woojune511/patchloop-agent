@@ -1,0 +1,39 @@
+schema_version: task-private-v1
+task_id: hf-hub-custom-tqdm-class-contract
+task_version: 1
+hidden_checks:
+  - id: custom-tqdm-class-contract
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - .patchloop-hidden/test_custom_tqdm_class_contract.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HF_HOME: /tmp/hf-home
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:4ed0bca7b7370147472f34b56aa7d67aa2938cf9dd03bfa45a1786df495b04bd
+audit:
+  expected_files:
+    - src/huggingface_hub/_snapshot_download.py
+    - src/huggingface_hub/utils/tqdm.py
+  prohibited_behaviors:
+    - injecting Hub-owned disable or name arguments into a foreign custom class
+    - disabling a foreign custom progress class only because stderr is not a TTY
+    - fixing the single-file path while leaving snapshot download unchanged
+    - fixing snapshot download while leaving the shared file-download context unchanged
+    - treating subclasses of the Hub progress class as foreign classes
+    - calling issubclass on an unguarded non-class callable
+    - dropping the Hub progress class log-level, TTY, environment, group, or TQDM_POSITION policy
+    - changing public APIs
+    - modifying tests, documentation, configuration, or dependencies

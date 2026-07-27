@@ -1,0 +1,22 @@
+diff --git a/src/huggingface_hub/_snapshot_download.py b/src/huggingface_hub/_snapshot_download.py
+index ed72652904..5ff8360375 100644
+--- a/src/huggingface_hub/_snapshot_download.py
++++ b/src/huggingface_hub/_snapshot_download.py
+@@ -393,7 +393,6 @@ def snapshot_download(
+         initial=0,
+         unit="B",
+         unit_scale=True,
+-        name="huggingface_hub.snapshot_download",
+     )
+ 
+     class _AggregatedTqdm:
+diff --git a/src/huggingface_hub/utils/tqdm.py b/src/huggingface_hub/utils/tqdm.py
+index 50e8a499bc..8f661185f2 100644
+--- a/src/huggingface_hub/utils/tqdm.py
++++ b/src/huggingface_hub/utils/tqdm.py
+@@ -304,5 +304,4 @@ def _get_progress_bar_context(
+         initial=initial,
+         desc=desc,
+         disable=is_tqdm_disabled(log_level=log_level),
+-        name=name,
+     )
