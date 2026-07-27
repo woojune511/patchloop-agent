@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The sixteen admitted research tasks are:
+The seventeen admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -147,13 +147,20 @@ The sixteen admitted research tasks are:
   independent oracle runs 17 cases. The visible gate covers 101 of 110 base-resident declared P2P
   nodes: Pytest's prefix deselection initially runs 99, then two healthy prefix-sharing hash-seed
   nodes are rechecked explicitly.
+- `dagster-subset-partition-definition-selection`, derived from SWE-rebench leaderboard instance
+  `dagster-io__dagster-33605` and upstream Dagster issue #33584 / PR #33605. Its exact two-file
+  reference excludes partition definitions belonging only to unselected sibling assets or checks.
+  It records three official reference passes, 28 visible regressions, nine independent hidden
+  checks, one base/no-op hidden failure, eight semantic partial rejections and one forbidden
+  scope/test-tampering rejection. The private-v2 spec content-binds the hidden oracle; that oracle
+  is introduced only after submission and executes from the read-only evaluator workspace.
 
-All sixteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+All seventeen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
 SWE-rebench evaluator image. Eight are MIT licensed: Loguru, both PDM tasks, both AnyIO tasks,
 both tox tasks and SQLGlot. Both Hugging Face Hub tasks, pyfakefs, Moto and MTPLX are Apache-2.0;
 Babel and Param are
-BSD-3-Clause; FuseSoC is BSD-2-Clause. Together with the five calibration fixtures, the curated
-manifest currently contains 21 task entries.
+BSD-3-Clause; FuseSoC is BSD-2-Clause; Dagster is Apache-2.0. Together with the five calibration
+fixtures, the curated manifest currently contains 22 task entries.
 
 ## Research dataset target
 
@@ -164,8 +171,8 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
 | Core same-repo | 6 | prohibited | 4 |
-| Core cross-repo | 6 | prohibited | 4 |
-| **Research total** | **20** |  | **16** |
+| Core cross-repo | 6 | prohibited | 5 |
+| **Research total** | **20** |  | **17** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

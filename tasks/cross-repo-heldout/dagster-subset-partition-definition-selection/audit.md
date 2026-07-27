@@ -86,7 +86,7 @@ constructs subsettable definitions directly and checks:
 - `StepExecutionContext` delegates to the selection-aware property rather
   than scanning specs again.
 
-The draft known-bad corpus contains eight semantic partials: updating only
+The known-bad corpus contains eight semantic partials: updating only
 the `AssetsDefinition`, updating only the execution context, filtering only
 asset specs, filtering only check specs, including every check regardless of
 selection, comparing a check's asset key instead of its check key, silently
@@ -104,7 +104,26 @@ Difficulty audit:
 | Verification breadth | 2 | Asset-only, check-only, selected, unselected, compatible, conflicting and delegation cases diverge independently. |
 | Total | 7 | Hard under `dataset-manifest-v1`. |
 
-Admission remains pending. It requires a clean staging commit and an official
-network-disabled, read-only Docker matrix proving base visible pass/private
-fail, three exact-reference passes, rejection of all semantic partials, and
-scope/tampering rejection. No model-performance result is claimed here.
+## Admission result
+
+Admitted as the fifth `core-cross-repo` task on 2026-07-28. The 13-case
+official matrix ran from clean staging commit
+`26f28cf11d53f3b0e17b2a4663d0ce68afe63b27` with the exact public/private
+spec hashes and pinned image recorded above:
+
+- the exact reference passed three of three independent runs;
+- base/no-op passed all 28 visible regressions and failed the nine-test hidden
+  acceptance;
+- all eight semantic partials failed, with `always-unpartitioned` additionally
+  failing the visible regression module; and
+- the forbidden Dagster test edit failed hidden acceptance, scope and the
+  generalized test-tampering verifier.
+
+All 13 runs were `official=true`, used `--network none`, read-only root and
+submitted filesystems, and made zero model/API calls. The machine-readable
+report is
+`reports/docker-gate/research-dagster-subset-partition-definition-selection.json`
+with SHA-256
+`2d95aa36990b8cd475476a0992b0db7a8d9259d5c7a21d35c99ea3a6c551d012`.
+This is deterministic evaluator admission evidence, not agent-performance or
+memory-improvement evidence.

@@ -161,3 +161,17 @@ re-included healthy siblings. All 15 runs were `official=true` and made zero mod
 deterministic evaluator admission evidence, not agent performance or a live-model core result. The
 image has no configured `User`, so Docker used its default root user. The report SHA-256 is
 `216ccfd1f9017ca499c9902ac857a2e6d4ebc0dca1aeb1aff04e9af396485fe6`.
+
+`research-dagster-subset-partition-definition-selection.json` records the seventeenth research
+admission and fifth core-cross-repo held-out task. It pins Dagster PR #33605 through SWE-rebench
+leaderboard instance `dagster-io__dagster-33605`. On clean harness commit
+`26f28cf11d53f3b0e17b2a4663d0ce68afe63b27`, the exact two-file production reference passed all
+three repetitions. Base/no-op passed all 28 visible regressions and failed all nine cases in the
+independent hidden oracle; eight semantic partial implementations were rejected, and one forbidden
+test edit failed hidden acceptance, scope and test-tampering checks. All 13 runs were
+`official=true`. Visible tests and the hidden oracle executed read-only, with the private-v2 hidden
+artifact bound to
+`sha256:dbfd76a912a27d498092fda20e37db4d99c69fc359d8a5e1c048751e5be24c86`.
+The gate made zero model/API calls and incurred zero model cost. This is deterministic evaluator
+admission evidence, not agent performance or a live-model core result. The report SHA-256 is
+`2d95aa36990b8cd475476a0992b0db7a8d9259d5c7a21d35c99ea3a6c551d012`.

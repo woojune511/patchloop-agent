@@ -795,6 +795,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 11
 
+  - task_id: dagster-subset-partition-definition-selection
+    task_version: 1
+    path: tasks/cross-repo-heldout/dagster-subset-partition-definition-selection
+    role: core-cross-repo
+    admission_state: admitted
+    public_spec_hash: sha256:4a01b49b6cd306130daedb4f117d8fe6dc71a3c63196245210f43c4ddb59a0c0
+    private_spec_hash: sha256:042c676fa2845e184f8036d0bfb869106782cb13e4c9146efbf5ab17edd87291
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: dagster-io__dagster-33605
+      upstream_repository: dagster-io/dagster
+      issue_url: https://github.com/dagster-io/dagster/issues/33584
+      pull_request_url: https://github.com/dagster-io/dagster/pull/33605
+      upstream_base_commit: f8430dc7bf76bfab4f026165e5c5f821104298df
+      resolution_commit: 2c0b00d9b6149c5e493cbeb636a47a12db95ba6d
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-27T16:50:08Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.dagster-io_1776_dagster-33605@sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 2
+      verification_breadth: 2
+      total: 7
+      tier: hard
+      rationale: The fix must derive one effective partition definition from selected asset and asset-check keys across a subsettable multi-asset, preserve compatible definitions and real conflicts, and remove duplicated execution-context derivation.
+    failure_pattern_id: unselected-entity-partition-state-leak
+    solution_lineage_id: dagster-io-dagster-pr-33605
+    admission_evidence:
+      path: reports/docker-gate/research-dagster-subset-partition-definition-selection.json
+      sha256: sha256:2d95aa36990b8cd475476a0992b0db7a8d9259d5c7a21d35c99ea3a6c551d012
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 9
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

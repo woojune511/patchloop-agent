@@ -1,0 +1,305 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-28",
+  "task_id": "dagster-subset-partition-definition-selection",
+  "task_version": 1,
+  "dataset_role": "core-cross-repo",
+  "split": "cross-repo-heldout",
+  "source": {
+    "benchmark_family": "SWE-rebench-leaderboard",
+    "benchmark_revision": "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b",
+    "benchmark_split": "2026_03",
+    "benchmark_row": 35,
+    "benchmark_instance_id": "dagster-io__dagster-33605",
+    "upstream_repository": "dagster-io/dagster",
+    "issue_url": "https://github.com/dagster-io/dagster/issues/33584",
+    "pull_request_url": "https://github.com/dagster-io/dagster/pull/33605",
+    "base_commit": "f8430dc7bf76bfab4f026165e5c5f821104298df",
+    "base_tree": "db9b18f7592d800c8ad056e6a3f4520cfae7977e",
+    "pr_head_commit": "f1d8ab55d59431bfedb02b99b58d42911e8ce9a4",
+    "pr_head_tree": "5edfd9d7d57f67f4631136e37a7dd48bd6fcdc72",
+    "upstream_merge_commit": "2c0b00d9b6149c5e493cbeb636a47a12db95ba6d",
+    "resolution_commit": "2c0b00d9b6149c5e493cbeb636a47a12db95ba6d",
+    "resolution_tree": "14568e8433b2f4a2d700ac6dbb876ed1512d89ac",
+    "license_spdx": "Apache-2.0",
+    "license_blob_sha1": "82b6b68d6ad4d65757310c2e7dab12ccae01de36",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_production_patch_sha256": "sha256:1f0ec526d126ef8893fb40d032cc5a26b52bb1eb1b2eba56757541088ae0308e",
+    "benchmark_test_patch_sha256": "sha256:c8eb674dc7d4082c7e4ef006a65ec229c229f78405b94790cddd1d06a2ebf06a",
+    "private_hidden_artifact_sha256": "sha256:dbfd76a912a27d498092fda20e37db4d99c69fc359d8a5e1c048751e5be24c86",
+    "accepted_source_blob_sha1": {
+      "python_modules/dagster/dagster/_core/definitions/assets/definition/assets_definition.py": "641d5c12f673f6f06330e796641e009bc4db43dc",
+      "python_modules/dagster/dagster/_core/execution/context/system.py": "941d5ce1aa6c2306c5934725ea77b909a290cbef"
+    }
+  },
+  "reference_policy": {
+    "kind": "exact-upstream-production-only",
+    "excluded_upstream_files": [
+      "python_modules/dagster/dagster_tests/asset_defs_tests/test_partitioned_assets.py"
+    ],
+    "rejected_benchmark_production_patch": false,
+    "rationale": "The exact two-file accepted production patch is retained. The benchmark-added regression test remains evaluator-only, while PatchLoop uses a separately authored, hash-bound hidden oracle."
+  },
+  "public_spec_hash": "sha256:4a01b49b6cd306130daedb4f117d8fe6dc71a3c63196245210f43c4ddb59a0c0",
+  "private_spec_hash": "sha256:042c676fa2845e184f8036d0bfb869106782cb13e4c9146efbf5ab17edd87291",
+  "harness_git_commit": "26f28cf11d53f3b0e17b2a4663d0ce68afe63b27",
+  "evaluator_image": "swerebench/sweb.eval.x86_64.dagster-io_1776_dagster-33605@sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b",
+  "evaluator_image_digest": "sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/workspace",
+    "submitted_workspace": "/workspace",
+    "python_version": "3.13.13",
+    "pytest_version": "9.0.3",
+    "network": "none",
+    "root_filesystem": "read-only",
+    "workspace_mount": "read-only",
+    "visible_test_location": "read-only /workspace",
+    "hidden_oracle_location": "read-only /workspace",
+    "production_source_copy": "writable /tmp import root",
+    "execution_user": "image-default-root"
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 9,
+  "semantic_bad_patch_rejection_count": 8,
+  "independent_hidden_test_count": 9,
+  "independent_hidden_test_function_count": 9,
+  "benchmark_f2p_declared_count": 1,
+  "benchmark_p2p_declared_count": 28,
+  "benchmark_patch_added_f2p_count": 1,
+  "benchmark_patch_added_p2p_count": 0,
+  "upstream_regression_test_count": 28,
+  "upstream_regression_collected_count": 28,
+  "upstream_regression_deselected_count": 0,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "selected_nonpartitioned_ignores_unselected_asset": "pass",
+    "selected_partitioned_asset_preserved": "pass",
+    "selected_check_partition_context": "pass",
+    "unselected_check_ignored": "pass",
+    "compatible_definitions_deduplicated": "pass",
+    "conflicting_selected_definitions_rejected": "pass",
+    "execution_context_delegation": "pass",
+    "exact_upstream_production_lineage": "pass",
+    "benchmark_test_patch_excluded": "pass",
+    "private_v2_hidden_artifact_bound": "pass",
+    "visible_test_read_only": "pass",
+    "hidden_oracle_read_only": "pass",
+    "test_tampering_path_recognition": "pass",
+    "public_private_separation": "pass",
+    "no_new_dependency": "pass",
+    "public_api_unchanged": "pass",
+    "network_disabled_evaluator": "pass",
+    "read_only_root_filesystem": "pass",
+    "read_only_submitted_workspace": "pass",
+    "external_image_default_user_disclosed": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "exact_sha_shallow_checkout": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_1927909d6cd241e7",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:1f0ec526d126ef8893fb40d032cc5a26b52bb1eb1b2eba56757541088ae0308e",
+      "manifest_sha256": "sha256:fb3e80c1eae3dcf218374da505d221fb0028ee81dea7a05dc3138cffe27a2d7f",
+      "result_sha256": "sha256:df13d14d3e684064b4487d23cbdded60197581a5b076899d3b92f8344c0cfc5d",
+      "provenance_sha256": "sha256:104efba4f995668bcea15cfea3850c17b9d72ea270588cbd53aa9564dacb019c"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_bd7f5b11e51d4202",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:1f0ec526d126ef8893fb40d032cc5a26b52bb1eb1b2eba56757541088ae0308e",
+      "manifest_sha256": "sha256:f6f61e4b1e371033e8abcd82fab14b8deb5a6d9953135cf5744e4a4b34c7e059",
+      "result_sha256": "sha256:ee10a8aa4a0047b065084b1f43bd93e1194b4ff39e1b2b5969c263aaf57e7400",
+      "provenance_sha256": "sha256:104efba4f995668bcea15cfea3850c17b9d72ea270588cbd53aa9564dacb019c"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_c66f90c1fc4242cc",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:1f0ec526d126ef8893fb40d032cc5a26b52bb1eb1b2eba56757541088ae0308e",
+      "manifest_sha256": "sha256:0cfcb175d2d54fa400294463c9390b9b88bf8eabb8c6e2c80ea7c0dcad611971",
+      "result_sha256": "sha256:8f823d3aaf856066258595acaaab1d21331fa094a081637b7a4c87c895c39252",
+      "provenance_sha256": "sha256:104efba4f995668bcea15cfea3850c17b9d72ea270588cbd53aa9564dacb019c"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_2a20d874bedf450b",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:6843c69c5d10f196749d37d5e4c524c8425b33d03bf301dcc1e39a783c38956e",
+      "result_sha256": "sha256:c8c929a1fcfcc11c25546f7b24a508b92c78f68c9fa5d4683298e51ced1c451e",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "always-unpartitioned",
+      "patch": "bad/always-unpartitioned.patch",
+      "run_id": "run_d8c2b3eb40814ba8",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-partitioned-assets-regression",
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:27fe700dde4bfa9290a934727c55d84043cf3fabfe112bcaf58937f1fc5a309b",
+      "manifest_sha256": "sha256:eb580d4e0286d01dc3a7c9c6a4fb78569841447f0ac7f2536d35adcd427ae1a5",
+      "result_sha256": "sha256:c3a511f637392da7869233d0d5650a4a5674160b59843041cc14d69d9f723e93",
+      "provenance_sha256": "sha256:d9c795d7e2b3dd8d95275e3e3d5192822a482fbf3278abb280bd9796afa0bef4"
+    },
+    {
+      "name": "assets-definition-only",
+      "patch": "bad/assets-definition-only.patch",
+      "run_id": "run_7ea661da98c748f2",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:000a780b2caf9cc9031f00cd56fc8491fb84d0661ab8aba17b496f1499e001df",
+      "manifest_sha256": "sha256:516f873d6ec613498c69e9d9930585b140071cc96c63fed9091ce3928b891bb7",
+      "result_sha256": "sha256:a00ecdc3e662d87a83c043ee180ce055abf74cf4c330f61b3785de5fcb33c0ef",
+      "provenance_sha256": "sha256:9514cd5217490e875f30e3f7fa0b86a46589d871516f64b8d7f5f2bf3340e696"
+    },
+    {
+      "name": "check-asset-key-filter",
+      "patch": "bad/check-asset-key-filter.patch",
+      "run_id": "run_fb0bd8300f514af9",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:edc90becd7bd0a560b613e0dc943b76c35b2403a2c88267391ec261948fd69b3",
+      "manifest_sha256": "sha256:da3a49170ade367c715464bcb713ee3efa216f89c989970cf609518158f11782",
+      "result_sha256": "sha256:97ba292e25c7e75c4068fdf7a0f50af3f4e628a9d38e727d635eeabc557250a5",
+      "provenance_sha256": "sha256:0a69b11a7db58aff3f502ab7986682148f766287c24ec86b054e129e1b47980f"
+    },
+    {
+      "name": "execution-context-only",
+      "patch": "bad/execution-context-only.patch",
+      "run_id": "run_2682f33ade874bd9",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:2a2f1a46e78f80cc15d26971d5237ef8f226679c34af21056d106e12bfbeb942",
+      "manifest_sha256": "sha256:53349cf436735c00da3495eec5e63f1efe1864c4cce995a99ad714320119a217",
+      "result_sha256": "sha256:a6a5f419bff2f32a1aad8a89fefa21de7f196214b4e0a72a72541b69b14343e6",
+      "provenance_sha256": "sha256:160fb354bfb36618e0fe26d84a316d65923df29f59051ee9adc0dc7ad7890b6c"
+    },
+    {
+      "name": "first-selected-definition",
+      "patch": "bad/first-selected-definition.patch",
+      "run_id": "run_2204c73911354106",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:bea0666d91d3430e0066f863d9c7e69abceb4eb575e7eba748a8a872e3b5d794",
+      "manifest_sha256": "sha256:02a91806afb02591f0c88a0cc6dc58992e530bd2614f19e8b718f26255d03521",
+      "result_sha256": "sha256:6289fabac92dc2b80b8caa1580b39bb97b21646b06bbddad4fceea97d9da461b",
+      "provenance_sha256": "sha256:48faaa29e6b4e1dd08317bad24366ba39a5cb31e6ff2d55a76d2eb22c46a2eae"
+    },
+    {
+      "name": "selected-assets-only",
+      "patch": "bad/selected-assets-only.patch",
+      "run_id": "run_91a3c33dfdbc4958",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:0b60125dae550283e9971ccd215db527e96107db4e95d0dcad7dd40247ee7092",
+      "manifest_sha256": "sha256:5b2b36fa04b79e9635d179aadead4deab0389be22cc346c9ef86acbf9ebe394d",
+      "result_sha256": "sha256:a0e2735638aa95fc922efa3cd36210f9c9aef084b1ebaa88677c53e63b7dbe42",
+      "provenance_sha256": "sha256:1542e23e0d7898f02ebfa023cc7780d4009e2b3867771d70a457c35c621442ad"
+    },
+    {
+      "name": "selected-checks-only",
+      "patch": "bad/selected-checks-only.patch",
+      "run_id": "run_55ba57333f1740ec",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:b1ebc17abf682d38c2d11943fd854c076216d29115315c40a717d61440fc9ca8",
+      "manifest_sha256": "sha256:bbe075c23d68ae7490f8e217889b76a71814d01fdb21d7438291d58e3edc2469",
+      "result_sha256": "sha256:91eb32631dc596138b2c84452f2a76833f03181a0d6d6768c33b6121a23ebb5a",
+      "provenance_sha256": "sha256:8308c6dee03b54af9acdf94ae3e5d006cdf7222cb1824e7314ed012e1590a147"
+    },
+    {
+      "name": "unfiltered-check-specs",
+      "patch": "bad/unfiltered-check-specs.patch",
+      "run_id": "run_2a7f765456c44ab0",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition"
+      ],
+      "patch_sha256": "sha256:085f882e109af7d265273a1b5521d69ecd207162fe2c4cbfecb38143941f2adb",
+      "manifest_sha256": "sha256:e8add8781ab7e2228213799b5126c5db521c0c9775864ac428766adc9768f801",
+      "result_sha256": "sha256:2946efabb047de0bc8170b2a4de238a9716f3edde391f29e9c6001b7cbd98600",
+      "provenance_sha256": "sha256:59acc4bfb8f5e5105bf4a481c01e49270f47bc57d32a7157853afcc7e214cc68"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_2b6c0ba491ee4d86",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:selected-entity-partition-definition",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:5bdc38ac969d7a1d002a44a5698e80db376f2dd7b5f38175e3331c3cf5dfd33c",
+      "manifest_sha256": "sha256:5c6e0cf489616019a548d55fda3f4ef6731341c37916f0fbdb535c9b2e3de4c0",
+      "result_sha256": "sha256:d974db14a4cba36bdc8033fdb0137aaf138ab802da926185b3b224e38b101b6d",
+      "provenance_sha256": "sha256:4f20f8031dec20c19dae87d4b87efc1ed5bb400eb39e2ddc2a0dc881cec62420"
+    }
+  ]
+}

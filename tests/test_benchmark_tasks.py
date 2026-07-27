@@ -2644,12 +2644,13 @@ def test_dagster_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "28"
     assert candidate["proposed_lane"] == "core-cross-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b"
     )
-    assert "all 28 base P2P nodes" in candidate["notes"]
-    assert "official clean-harness matrix pending" in candidate["notes"]
+    assert "all 28 P2P regressions" in candidate["notes"]
+    assert "passed 3/3 official runs" in candidate["notes"]
+    assert "task-private-v2" in candidate["notes"]
 
 
 def test_dagster_reference_is_exact_production_patch_and_hash_bound() -> None:
@@ -2728,7 +2729,7 @@ def test_dagster_oracle_and_bad_patch_inventory_are_explicit() -> None:
     audit_text = (DAGSTER_TASK / "audit.md").read_text(encoding="utf-8")
     assert "all 28 base-resident p2p nodes" in audit_text.lower()
     assert "read-only `/workspace` mount" in audit_text
-    assert "Admission remains pending" in audit_text
+    assert "Admitted as the fifth `core-cross-repo`" in audit_text
 
 
 def test_dagster_private_v2_rejects_hidden_oracle_mutation(tmp_path: Path) -> None:
@@ -2742,3 +2743,154 @@ def test_dagster_private_v2_rejects_hidden_oracle_mutation(tmp_path: Path) -> No
 
     with pytest.raises(ContractError, match="hidden artifact hash mismatch"):
         load_task_package(copied_task)
+
+
+def test_dagster_admission_evidence_binds_partition_selection_boundaries() -> None:
+    package = load_task_package(DAGSTER_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_CROSS_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_CROSS_REPO
+    assert entry.failure_pattern_id == "unselected-entity-partition-state-leak"
+    assert entry.solution_lineage_id == "dagster-io-dagster-pr-33605"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 9
+
+    evidence_path = Path(
+        "reports/docker-gate/research-dagster-subset-partition-definition-selection.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == entry.admission_evidence.sha256
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == package.public.repository.base_commit
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "26f28cf11d53f3b0e17b2a4663d0ce68afe63b27"
+    )
+    assert evidence["reference_policy"]["kind"] == "exact-upstream-production-only"
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is False
+    assert evidence["source"]["benchmark_production_patch_sha256"] == (
+        package.private.reference_patch.sha256
+    )
+    assert evidence["source"]["benchmark_test_patch_sha256"] == (
+        "sha256:c8eb674dc7d4082c7e4ef006a65ec229c229f78405b94790cddd1d06a2ebf06a"
+    )
+    assert evidence["source"]["private_hidden_artifact_sha256"] == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    assert evidence["source"]["accepted_source_blob_sha1"] == {
+        "python_modules/dagster/dagster/_core/definitions/assets/definition/assets_definition.py": (
+            "641d5c12f673f6f06330e796641e009bc4db43dc"
+        ),
+        "python_modules/dagster/dagster/_core/execution/context/system.py": (
+            "941d5ce1aa6c2306c5934725ea77b909a290cbef"
+        ),
+    }
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 9
+    assert evidence["semantic_bad_patch_rejection_count"] == 8
+    assert evidence["independent_hidden_test_count"] == 9
+    assert evidence["independent_hidden_test_function_count"] == 9
+    assert evidence["benchmark_f2p_declared_count"] == 1
+    assert evidence["benchmark_p2p_declared_count"] == 28
+    assert evidence["benchmark_patch_added_f2p_count"] == 1
+    assert evidence["benchmark_patch_added_p2p_count"] == 0
+    assert evidence["upstream_regression_test_count"] == 28
+    assert evidence["upstream_regression_collected_count"] == 28
+    assert evidence["upstream_regression_deselected_count"] == 0
+    assert evidence["runtime"]["working_directory"] == "/workspace"
+    assert evidence["runtime"]["visible_test_location"] == "read-only /workspace"
+    assert evidence["runtime"]["hidden_oracle_location"] == "read-only /workspace"
+    assert evidence["runtime"]["python_version"] == "3.13.13"
+    assert evidence["runtime"]["pytest_version"] == "9.0.3"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 13
+    assert len({case["run_id"] for case in cases.values()}) == 13
+    assert {case["run_id"] for case in cases.values()} == {
+        "run_1927909d6cd241e7",
+        "run_bd7f5b11e51d4202",
+        "run_c66f90c1fc4242cc",
+        "run_2a20d874bedf450b",
+        "run_d8c2b3eb40814ba8",
+        "run_7ea661da98c748f2",
+        "run_fb0bd8300f514af9",
+        "run_2682f33ade874bd9",
+        "run_2204c73911354106",
+        "run_91a3c33dfdbc4958",
+        "run_55ba57333f1740ec",
+        "run_2a7f765456c44ab0",
+        "run_2b6c0ba491ee4d86",
+    }
+    assert all(case["official"] for case in cases.values())
+    for case in cases.values():
+        patch_path = DAGSTER_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        assert case["observed_success"] is case["expected_success"]
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    for case_name in (
+        "base-noop",
+        "assets-definition-only",
+        "check-asset-key-filter",
+        "execution-context-only",
+        "first-selected-definition",
+        "selected-assets-only",
+        "selected-checks-only",
+        "unfiltered-check-specs",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:selected-entity-partition-definition"
+        ]
+    assert cases["always-unpartitioned"]["failed_checks"] == [
+        "regression:upstream-partitioned-assets-regression",
+        "hidden:selected-entity-partition-definition",
+    ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:selected-entity-partition-definition",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
+    assert evidence["admission_checks"]["base_visible_checks"] == "pass"
+    assert evidence["admission_checks"]["base_hidden_acceptance"] == "fail"
+    for check_id in (
+        "reference_scrr_three_repetitions",
+        "known_bad_boundaries",
+        "submitted_source_binding",
+        "selected_nonpartitioned_ignores_unselected_asset",
+        "selected_partitioned_asset_preserved",
+        "selected_check_partition_context",
+        "unselected_check_ignored",
+        "compatible_definitions_deduplicated",
+        "conflicting_selected_definitions_rejected",
+        "execution_context_delegation",
+        "exact_upstream_production_lineage",
+        "benchmark_test_patch_excluded",
+        "private_v2_hidden_artifact_bound",
+        "visible_test_read_only",
+        "hidden_oracle_read_only",
+        "test_tampering_path_recognition",
+        "public_private_separation",
+        "no_new_dependency",
+        "public_api_unchanged",
+        "network_disabled_evaluator",
+        "read_only_root_filesystem",
+        "read_only_submitted_workspace",
+        "immutable_source_commit",
+        "immutable_evaluator_image",
+        "exact_sha_shallow_checkout",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"

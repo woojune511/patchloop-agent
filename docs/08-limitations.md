@@ -95,6 +95,14 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   hidden, scope and test-tampering checks. The visible surface is 99 passing cases plus two explicitly
   re-included healthy siblings out of 110 declared P2P nodes. This is deterministic evaluator
   admission evidence, not a live-model core result.
+- Seventeenth research task admitted: Dagster #33605 as the fifth core-cross-repo held-out task,
+  with three exact-production-reference passes, all 28 base-resident visible regressions and nine
+  independently authored hidden tests. Base/no-op and all eight semantic partials were rejected;
+  one forbidden test edit was rejected by hidden, scope and test-tampering checks. The
+  `task-private-v2` content hash binds the hidden oracle, and both visible tests and the hidden
+  oracle remain on read-only mounts while submitted production source is copied to a fresh
+  writable import root. All 13 official cases made zero model/API calls. This is deterministic
+  evaluator admission evidence, not live-model agent performance or a core campaign result.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -107,11 +115,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
-  The AnyIO #1134, Param #1117, Hugging Face Hub #4056, MTPLX #21, FuseSoC #776 and tox #3846
-  images have no configured `User` and therefore ran as Docker's default root user. Network denial,
-  a read-only root filesystem and a read-only submitted workspace were enforced, but uniform non-root
-  execution for arbitrary external images is not yet implemented. The native PatchLoop image's
-  non-root isolation smoke does not prove this property for external images.
+  The AnyIO #1134, Param #1117, Hugging Face Hub #4056, MTPLX #21, FuseSoC #776, tox #3846 and
+  Dagster #33605 images have no configured `User` and therefore ran as Docker's default root user.
+  Network denial, a read-only root filesystem and a read-only submitted workspace were enforced,
+  but uniform non-root execution for arbitrary external images is not yet implemented. The native
+  PatchLoop image's non-root isolation smoke does not prove this property for external images.
 - Evaluator `result.json` records an opaque `submitted_patch_artifact_id`, but the current
   `ArtifactStore` does not persist a standalone ID-to-content-hash catalog for that field. Admission
   evidence remains byte-resolvable through the persisted `provenance.diff_hash` and corresponding CAS
@@ -121,8 +129,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 16/20: memory-development 6/6, development-validation 2/2,
-  same-repo core 4/6 and cross-repo core 4/6. The remaining four research tasks are not admitted.
+- The dataset manifest contains 22 packages: five calibration fixtures and 17 admitted research tasks.
+  Research admission is 17/20: memory-development 6/6, development-validation 2/2,
+  same-repo core 4/6 and cross-repo core 5/6. The remaining three research tasks are not admitted.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.

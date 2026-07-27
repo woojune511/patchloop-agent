@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
-| Tests | `.venv/Scripts/python -m pytest -ra -p no:cacheprovider` | 169 pass, 2 skipped; all sixteen research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -p no:cacheprovider` | 184 passed, 2 skipped |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus sixteen research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 16/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus seventeen research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 17/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21 and FuseSoC #776 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21, FuseSoC #776 and Dagster #33605 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -752,6 +752,53 @@ evaluator evidence, not live-model agent performance or a core campaign result.
 The external image has no configured `User` and ran as Docker's default root
 user under the network-disabled, read-only evaluator boundary.
 
+## Seventeenth research task admission
+
+`dagster-subset-partition-definition-selection` comes from SWE-rebench
+leaderboard instance `dagster-io__dagster-33605`, Dagster issue #33584 and
+PR #33605. It is the fifth hard `core-cross-repo` held-out task, pinned to
+base commit `f8430dc7bf76bfab4f026165e5c5f821104298df` and evaluator image
+`sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b`.
+The exact two-file production reference makes the `AssetsDefinition`
+partition result depend on selected asset and asset-check keys, then delegates
+the execution context to that selection-aware property.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_1927909d6cd241e7`, `run_bd7f5b11e51d4202`, `run_c66f90c1fc4242cc` | full success ×3 | 3/3 success, `official=true` |
+| base/no-op | `run_2a20d874bedf450b` | 28 visible pass, hidden fail | rejected |
+| always unpartitioned | `run_d8c2b3eb40814ba8` | selected partition and visible regression fail | regression and hidden fail |
+| assets definition only | `run_7ea661da98c748f2` | execution-context delegation fail | rejected |
+| check asset-key filter | `run_fb0bd8300f514af9` | selected check-key semantics fail | rejected |
+| execution context only | `run_2682f33ade874bd9` | selection-aware definition fail | rejected |
+| first selected definition | `run_2204c73911354106` | incompatible-definition conflict fail | rejected |
+| selected assets only | `run_91a3c33dfdbc4958` | selected check partition fail | rejected |
+| selected checks only | `run_55ba57333f1740ec` | selected asset partition fail | rejected |
+| unfiltered check specs | `run_2a7f765456c44ab0` | unselected check isolation fail | rejected |
+| forbidden test edit | `run_2b6c0ba491ee4d86` | hidden, scope and test-tampering fail | rejected |
+
+The complete base-resident visible module passed all 28 declared P2P nodes on
+each reference run. The independently authored private oracle contains nine
+tests covering selected and unselected assets and checks, compatible
+deduplication, real conflicts and execution-context delegation. The
+`task-private-v2` spec binds the hidden artifact by content hash. Visible tests
+and the hidden oracle remain on read-only mounts; each check copies only the
+submitted Dagster production package into a fresh writable `/tmp` import root
+and asserts submitted-source binding. Base/no-op and all eight semantic
+partials were rejected, and the forbidden edit additionally failed scope and
+test-tampering enforcement.
+
+All 13 official cases ran from clean harness staging commit
+`26f28cf11d53f3b0e17b2a4663d0ce68afe63b27` with Docker networking disabled
+and read-only root and submitted filesystems. The external image has no
+configured `User` and ran as Docker's default root user. The
+[Dagster partition-selection admission report](../reports/docker-gate/research-dagster-subset-partition-definition-selection.json)
+binds every patch, manifest, result and provenance hash and has SHA-256
+`sha256:2d95aa36990b8cd475476a0992b0db7a8d9259d5c7a21d35c99ea3a6c551d012`.
+The gate made zero model/API calls and is deterministic evaluator admission
+evidence, not live-model agent performance, memory improvement or a core
+campaign result.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -762,6 +809,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 16/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 4 research tasks are not
-admitted. No live OpenAI request or paid campaign was made.
+calibration is 5/5, admitted research is 17/20, and the stress sentinels are 0/3. The 22-entry registry
+has no contract or content-hash errors; it remains `draft` because the remaining three research tasks
+are not admitted. No live OpenAI request or paid campaign was made.
