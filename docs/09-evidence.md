@@ -7,14 +7,14 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | Gate | Command | Outcome |
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
-| Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -o addopts="" -q -p no:cacheprovider --basetemp .patchloop/pytest-hf-admission-summary-20260727-final` | 145 pass, 2 skipped; all thirteen research admissions and dataset-role gates included |
+| Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
+| Tests | `.venv/Scripts/python -m pytest -ra -p no:cacheprovider` | 155 pass, 2 skipped; all fourteen research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus thirteen research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 13/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus fourteen research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 14/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759 and AnyIO #1134 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134 and MTPLX #21 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -608,6 +608,48 @@ gate made zero model/API calls and used a network-disabled, read-only submitted
 workspace. The image has no configured user and ran as Docker's default root
 user.
 
+## Fourteenth research task admission
+
+`mtplx-mixed-content-tool-call-stream` comes from SWE-rebench leaderboard
+instance `youssofal__mtplx-21`, MTPLX issue #20 and PR #21. It is the third hard
+`core-cross-repo` held-out task, pinned to base commit
+`c06cc13286e86d9ff3d2e3b991eba327549c534b` and evaluator image
+`sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e`.
+The accepted source patch fixes mixed preamble handling but also matches
+lookalike marker stems and can silently discard non-whitespace residue. PatchLoop
+therefore retains it as a known-bad and uses a one-file hardened reference with
+an exact `<tool_call>` delimiter and stream-local residue enforcement.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| hardened reference | `run_236767f9815b41e9`, `run_1e751bd099b44d82`, `run_647176898cdb411e` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_9a04e61629c74a27` | regression pass, hidden fail | rejected |
+| content lock removed only | `run_7e3a2597aa464ab3` | mixed-stream state fail | rejected |
+| chunk-start marker only | `run_c8402fc708b043ec` | arbitrary chunk-boundary fail | rejected |
+| current-chunk search only | `run_58f5c4143d9b43e4` | cross-chunk marker fail | rejected |
+| initial-buffer search, preamble dropped | `run_4b088912a14741a1` | preamble preservation fail | rejected |
+| case-sensitive scan | `run_54eb40b2aa2b4ad1` | mixed-case marker fail | rejected |
+| no partial-tail retention | `run_75d42a5562464f21` | marker split fail | rejected |
+| one-character tail only | `run_8977994330c94642` | longer marker prefix fail | rejected |
+| trailing policy relaxed | `run_b564f13cb67146e2` | residue rejection fail | rejected |
+| exact accepted upstream source patch | `run_7a98e3bcbf5c4e17` | delimiter and residue hardening fail | rejected |
+| forbidden test edit | `run_89f4d3e5fd28425a` | hidden, scope and test-tampering fail | rejected |
+
+The base/no-op run passed all 55 registered CPU/mock regressions and failed the
+21-case independent oracle. Three collected session tests are explicitly
+deselected because the benchmark image lacks the MLX runtime. All official runs
+used a network-disabled, read-only submitted workspace and made zero model/API
+calls. The image has no configured user and ran as Docker's default root user.
+
+The first clean-gate attempt exposed that a normal clone did not advertise the
+frozen base tree. PatchLoop now validates a lowercase 40-hex revision and, only
+after checkout failure, fetches that exact SHA into `FETCH_HEAD`, rechecks a
+detached `HEAD`, and rejects unavailable or mismatched revisions. Success,
+invalid-SHA and fetch-failure tests cover this path. The official matrix was then
+run from clean harness commit `82a0c23b...`. The
+[MTPLX streaming admission report](../reports/docker-gate/research-mtplx-mixed-content-tool-call-stream.json)
+binds all 14 patch, manifest, result and provenance hashes.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -618,6 +660,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 13/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 7 research tasks are not
+calibration is 5/5, admitted research is 14/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 6 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

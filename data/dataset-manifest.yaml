@@ -543,6 +543,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 9
 
+  - task_id: mtplx-mixed-content-tool-call-stream
+    task_version: 1
+    path: tasks/cross-repo-heldout/mtplx-mixed-content-tool-call-stream
+    role: core-cross-repo
+    admission_state: admitted
+    public_spec_hash: sha256:a79d5705656f3b75e5c7deae8ca3fb4fb5ca5869165934a8a234cb27961f11e0
+    private_spec_hash: sha256:29d37992a3fbe0b8f37f430e262354fd76d470f0b63bdcc10f928ffe6ae2c5b3
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: youssofal__mtplx-21
+      upstream_repository: youssofal/MTPLX
+      issue_url: https://github.com/youssofal/MTPLX/issues/20
+      pull_request_url: https://github.com/youssofal/MTPLX/pull/21
+      upstream_base_commit: c06cc13286e86d9ff3d2e3b991eba327549c534b
+      resolution_commit: 3c0028b0700dd7b60281edcd748bc7ac9edfb63f
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-27T05:32:42Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.youssofal_1776_mtplx-21@sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must recognize exact case-insensitive tool-call delimiters across arbitrary stream chunks while preserving mixed preambles, lookalike tags, ordered calls, non-content fields and the non-whitespace residue policy.
+    failure_pattern_id: streamed-tool-call-detection-stops-after-content
+    solution_lineage_id: youssofal-mtplx-pr-21-hardened-delimiter-residue
+    admission_evidence:
+      path: reports/docker-gate/research-mtplx-mixed-content-tool-call-stream.json
+      sha256: sha256:49ed0e3720f93297422cd86c64084afcc3d1feecfa4ff6b5e04f10e503eaee30
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 10
+
   - task_id: hf-hub-custom-tqdm-class-contract
     task_version: 1
     path: tasks/same-repo-heldout/hf-hub-custom-tqdm-class-contract

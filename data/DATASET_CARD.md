@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The thirteen admitted research tasks are:
+The fourteen admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -116,11 +116,22 @@ The thirteen admitted research tasks are:
   official passes, one base hidden failure, nine semantic rejections and one scope/test-tampering
   rejection. The public base contains 17 regressions; two additional P2P nodes exist only in the
   excluded benchmark test patch, producing the separately disclosed benchmark count of 19.
+- `mtplx-mixed-content-tool-call-stream`, derived from SWE-rebench leaderboard instance
+  `youssofal__mtplx-21` and upstream MTPLX issue #20 / PR #21. Its hardened reference recognizes
+  exact, case-insensitive `<tool_call>` delimiters across arbitrary chunks, preserves mixed preamble
+  and lookalike tags as content, reconstructs ordered call deltas and rejects non-whitespace residue
+  beside or between complete calls without changing the non-streaming parser. It records three
+  official reference passes, 55 base-resident OpenAI bridge regressions, 21 independent hidden
+  cases, one base hidden failure, nine semantic rejections and one scope/test-tampering rejection.
+  The exact upstream accepted source patch is one of the rejected semantic patches. The digest-pinned
+  external image has no configured `User` and therefore ran as Docker's default root user; network
+  denial and read-only root and submitted filesystems were still enforced.
 
-All thirteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+All fourteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
 SWE-rebench evaluator image. Seven are MIT licensed, including both PDM tasks, both AnyIO tasks and
-SQLGlot; both Hugging Face Hub tasks, pyfakefs and Moto are Apache-2.0; Babel and Param are BSD-3-Clause.
-Together with the five calibration fixtures, the curated manifest currently contains 18 task entries.
+SQLGlot; both Hugging Face Hub tasks, pyfakefs, Moto and MTPLX are Apache-2.0; Babel and Param are
+BSD-3-Clause. Together with the five calibration fixtures, the curated manifest currently contains
+19 task entries.
 
 ## Research dataset target
 
@@ -131,8 +142,8 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
 | Core same-repo | 6 | prohibited | 3 |
-| Core cross-repo | 6 | prohibited | 2 |
-| **Research total** | **20** |  | **13** |
+| Core cross-repo | 6 | prohibited | 3 |
+| **Research total** | **20** |  | **14** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

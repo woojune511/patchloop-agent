@@ -121,3 +121,16 @@ an escaping combined partial in the original oracle; the strengthened oracle rej
 evidence retains it explicitly. All 14 containers ran without network and with read-only submitted
 filesystems, and the gate made zero model/API calls. The image has no configured user, so Docker used
 its default root user.
+
+`research-mtplx-mixed-content-tool-call-stream.json` records the fourteenth research admission and
+third core-cross-repo held-out task. It pins SWE-rebench leaderboard instance
+`youssofal__mtplx-21`, base commit `c06cc132...` and image `sha256:32510a90...`. On clean harness
+commit `82a0c23b...`, the hardened one-file reference passed three official evaluations, while
+base/no-op passed all 55 registered CPU/mock regressions and failed the 21-case private oracle. The
+exact accepted upstream source patch was retained among nine rejected semantic patches because it
+matches lookalike marker stems and can discard non-whitespace stream residue; one forbidden test edit
+additionally failed scope and test-tampering checks. The benchmark's four F2P and five P2P nodes all
+come from its excluded test patch, and three MLX-runtime environment failures are explicitly
+deselected from the independent base-resident regression surface. All 14 containers ran without
+network and with read-only submitted filesystems, and the gate made zero model/API calls. The image
+has no configured user, so Docker used its default root user.

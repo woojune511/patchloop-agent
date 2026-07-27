@@ -1,6 +1,6 @@
 # Task audit: mtplx-mixed-content-tool-call-stream
 
-- Dataset role: proposed `core-cross-repo`; not admitted
+- Dataset role: admitted `core-cross-repo`
 - Source: SWE-rebench leaderboard instance `youssofal__mtplx-21`,
   split `2026_03`
 - Frozen benchmark revision:
@@ -56,7 +56,7 @@ metadata but not an independent base-resident regression surface.
 
 ## Visible regression selection
 
-A pre-admission image probe of `tests/test_server_openai.py` and
+An image probe of `tests/test_server_openai.py` and
 `tests/test_openai_bridge.py` on the base commit reported 55 passing nodes and
 three environment failures. The failing nodes instantiate MLX-backed session
 paths; in the Linux CPU benchmark image, the absent MLX runtime leaves a stub
@@ -71,8 +71,8 @@ The registered check runs exactly those two files with three explicit
 because it fails collection when importing `mlx` in this image. These
 exclusions are environment normalization, not task-specific acceptance
 weakening: the independent hidden oracle exercises only the CPU/mock streaming
-translator. This pre-admission probe is not an official PatchLoop Docker gate
-and has no admission run ID.
+translator. The official base/no-op evaluation later reproduced all 55
+registered regression passes with the same three explicit deselections.
 
 ## Independent acceptance design
 
@@ -100,8 +100,9 @@ lookalike tags are parameterized. They cover:
 An authoring-time adversarial probe reported 21/21 hidden cases passing for the
 hardened reference. The exact upstream accepted patch passed 14 and failed
 seven, specifically demonstrating that the added boundaries are non-degenerate.
-This probe is useful screening evidence but is not an official PatchLoop Docker
-matrix: it has no immutable run manifest or provenance artifact.
+This probe was screening evidence; the official PatchLoop Docker matrix below
+subsequently confirmed the hardened-reference and known-bad boundaries with
+immutable run manifests and provenance artifacts.
 
 The known-bad corpus contains nine semantic patches. Eight partial fixes
 represent
@@ -123,10 +124,36 @@ Difficulty audit:
 | Verification breadth | 2 | Pure text, mixed text, multiple calls, field passthrough, marker lookalikes, case, finish, and trailing policy all interact. |
 | Total | 6 | Hard under `dataset-manifest-v1`. |
 
-## Pending admission evidence
+## Admission evidence
 
-This package is authored but not admitted. The image digest is a registry
-observation; no official network-disabled Docker matrix has yet executed the
-reference, base/no-op, nine semantic bad patches, or forbidden edit. Until
-that matrix produces immutable run and provenance artifacts, this task must
-remain `screening` and must not enter held-out experiments.
+Admitted as the third `core-cross-repo` held-out task from clean harness commit
+`82a0c23b6043481010b4aa5e1202fd4189b6ffc0`. The official 14-case Docker matrix
+is recorded in
+`reports/docker-gate/research-mtplx-mixed-content-tool-call-stream.json`.
+
+- The hardened reference passed SCRR three times:
+  `run_236767f9815b41e9`, `run_1e751bd099b44d82`,
+  `run_647176898cdb411e`.
+- Base/no-op preserved all 55 registered CPU/mock regressions but failed the
+  21-case independent hidden oracle: `run_9a04e61629c74a27`.
+- All nine semantic patches were rejected by hidden acceptance:
+  - content-lock removal only: `run_7e3a2597aa464ab3`;
+  - chunk-start marker detection only: `run_c8402fc708b043ec`;
+  - current-chunk search only: `run_58f5c4143d9b43e4`;
+  - initial-buffer search that drops the preamble:
+    `run_4b088912a14741a1`;
+  - case-sensitive marker scanning: `run_54eb40b2aa2b4ad1`;
+  - no partial-marker tail retention: `run_75d42a5562464f21`;
+  - one-character tail retention only: `run_8977994330c94642`;
+  - relaxed trailing-text policy: `run_b564f13cb67146e2`; and
+  - the exact accepted upstream source patch without delimiter and residue
+    hardening: `run_7a98e3bcbf5c4e17`.
+- The forbidden test edit was rejected by hidden acceptance, scope, and
+  test-tampering policy: `run_89f4d3e5fd28425a`.
+
+Every run was `official=true`, used the pinned image with network disabled and
+a read-only submitted workspace, and made zero model/API calls. The image has
+no configured user and therefore ran as Docker's default root user. The
+evidence preserves the patch, manifest, result, and provenance hashes for each
+run and keeps the upstream accepted patch explicitly separate from PatchLoop's
+hardened reference policy.

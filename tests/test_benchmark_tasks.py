@@ -1767,7 +1767,7 @@ def test_mtplx_public_contract_excludes_evaluator_only_material() -> None:
     )
 
 
-def test_mtplx_candidate_is_traceable_to_screened_swe_rebench_row() -> None:
+def test_mtplx_admission_is_traceable_to_audited_swe_rebench_row() -> None:
     with Path("data/benchmark-candidate-ledger.csv").open(
         encoding="utf-8", newline=""
     ) as handle:
@@ -1787,7 +1787,7 @@ def test_mtplx_candidate_is_traceable_to_screened_swe_rebench_row() -> None:
     assert candidate["f2p"] == "4"
     assert candidate["p2p"] == "5"
     assert candidate["proposed_lane"] == "core-cross-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:32510a901064f5d405f3d4313a4556d924c94e72b2b0993296a43f04de83370e"
     )
@@ -1821,7 +1821,7 @@ def test_mtplx_reference_is_source_only_and_hash_bound() -> None:
     } == {"mtplx/server/openai.py"}
 
 
-def test_mtplx_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
+def test_mtplx_oracle_and_bad_patch_inventory_are_explicit() -> None:
     hidden_path = MTPLX_TASK / "hidden/test_mixed_content_tool_call_stream.py"
     hidden_text = hidden_path.read_text(encoding="utf-8")
     bad_names = sorted(path.name for path in (MTPLX_TASK / "bad").glob("*.patch"))
@@ -1855,8 +1855,99 @@ def test_mtplx_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
         "sha256:5850850bd5993c26aa1d963bf6f38eac694f0a4e799ab3c2db14fb74803094ad"
     )
     audit_text = (MTPLX_TASK / "audit.md").read_text(encoding="utf-8")
-    assert "not admitted" in audit_text
+    assert "Admitted as the third `core-cross-repo`" in audit_text
     assert "20 test functions collect as 21 cases" in audit_text
     assert "21/21 hidden cases passing" in audit_text
     assert "passed 14 and failed" in audit_text
-    assert "no official network-disabled Docker matrix" in audit_text
+
+
+def test_mtplx_admission_evidence_binds_hardened_streaming_boundaries() -> None:
+    package = load_task_package(MTPLX_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_CROSS_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_CROSS_REPO
+    assert (
+        entry.failure_pattern_id
+        == "streamed-tool-call-detection-stops-after-content"
+    )
+    assert (
+        entry.solution_lineage_id
+        == "youssofal-mtplx-pr-21-hardened-delimiter-residue"
+    )
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 10
+
+    evidence_path = Path(
+        "reports/docker-gate/research-mtplx-mixed-content-tool-call-stream.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == entry.admission_evidence.sha256
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == package.public.repository.base_commit
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "82a0c23b6043481010b4aa5e1202fd4189b6ffc0"
+    )
+    assert evidence["reference_policy"]["kind"] == (
+        "hardened-upstream-streaming-production-only"
+    )
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is True
+    assert evidence["reference_policy"]["rejected_upstream_accepted_source_patch"] is True
+    assert evidence["source"]["upstream_accepted_source_patch_sha256"] == (
+        "sha256:5850850bd5993c26aa1d963bf6f38eac694f0a4e799ab3c2db14fb74803094ad"
+    )
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 10
+    assert evidence["semantic_bad_patch_rejection_count"] == 9
+    assert evidence["independent_hidden_test_count"] == 21
+    assert evidence["independent_hidden_test_function_count"] == 20
+    assert evidence["benchmark_f2p_declared_count"] == 4
+    assert evidence["benchmark_p2p_declared_count"] == 5
+    assert evidence["upstream_regression_test_count"] == 55
+    assert evidence["upstream_regression_collected_count"] == 58
+    assert evidence["upstream_regression_deselected_count"] == 3
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 14
+    assert len({case["run_id"] for case in cases.values()}) == 14
+    assert all(case["official"] for case in cases.values())
+    for case in cases.values():
+        patch_path = MTPLX_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        assert case["observed_success"] is case["expected_success"]
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    for case_name in (
+        "base-noop",
+        "content-lock-removed-only",
+        "chunk-start-marker-only",
+        "current-chunk-search-only",
+        "initial-buffer-search-drops-preamble",
+        "case-sensitive-content-scan",
+        "no-partial-tail-hold",
+        "one-character-tail-hold",
+        "trailing-policy-relaxed",
+        "upstream-accepted-missing-delimiter-residue",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:mixed-content-tool-call-stream"
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:mixed-content-tool-call-stream",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
