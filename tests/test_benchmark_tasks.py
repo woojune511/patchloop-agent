@@ -2291,6 +2291,7 @@ def test_kubeflow_visible_check_uses_submitted_source_copy_and_related_modules()
     assert check.command[:2] == ["/bin/bash", "-lc"]
     assert "cp -a /workspace/sdk/python/kfp" in script
     assert 'export PYTHONPATH="$source_root/sdk/python"' in script
+    assert 'export PATH="/opt/conda/envs/testbed/bin:$PATH"' in script
     assert "/workspace/sdk/python/kfp/compiler/compiler_test.py" in script
     assert "/workspace/sdk/python/kfp/dsl/pipeline_task_test.py" in script
     assert "--deselect" not in script
@@ -2399,7 +2400,7 @@ def test_kubeflow_oracle_and_bad_patch_inventory_are_explicit() -> None:
         "hidden/test_exit_handler_after_dependencies.py"
     ]
     assert package.private.hidden_artifacts[0].sha256 == (
-        "sha256:72f9ebd167fe669e3fca961cb169430f350c961f4f96bf0f816ff0d6bdc4a150"
+        "sha256:77425a3ab8e3d8c8bc1afa6776a7074dac768b9f33f6e2bf815ec0a6e05d778f"
     )
     assert sha256_bytes(hidden_path.read_bytes()) == (
         package.private.hidden_artifacts[0].sha256

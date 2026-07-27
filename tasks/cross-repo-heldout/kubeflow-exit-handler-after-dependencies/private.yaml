@@ -25,7 +25,7 @@ hidden_checks:
       CI: "1"
 hidden_artifacts:
   - path: hidden/test_exit_handler_after_dependencies.py
-    sha256: sha256:72f9ebd167fe669e3fca961cb169430f350c961f4f96bf0f816ff0d6bdc4a150
+    sha256: sha256:77425a3ab8e3d8c8bc1afa6776a7074dac768b9f33f6e2bf815ec0a6e05d778f
 reference_patch:
   path: reference.patch
   sha256: sha256:ea57612615fc67d2707284b740ee5be170fa2684ad1d98e72046bf18d5d940a1

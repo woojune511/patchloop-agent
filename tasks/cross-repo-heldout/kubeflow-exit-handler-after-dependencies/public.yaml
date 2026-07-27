@@ -54,6 +54,7 @@ visible_checks:
         cp -a /workspace/sdk/python/kfp "$source_root/sdk/python/kfp"
         cd "$source_root"
         export PYTHONPATH="$source_root/sdk/python"
+        export PATH="/opt/conda/envs/testbed/bin:$PATH"
         /opt/conda/envs/testbed/bin/python -m pytest \
           --no-header -q --tb=line --color=no -p no:cacheprovider \
           /workspace/sdk/python/kfp/compiler/compiler_test.py \
