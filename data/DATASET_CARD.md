@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The ten admitted research tasks are:
+The eleven admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -92,10 +92,18 @@ The ten admitted research tasks are:
   fallback. It records three official reference passes, 63 network-independent upstream regressions,
   11 hidden checks, one base hidden failure, nine semantic rejections and one scope/test-tampering
   rejection. One declared P2P node that attempts an external install is explicitly deselected.
+- `anyio-extensionless-entrypoint-worker-main`, derived from SWE-rebench leaderboard instance
+  `agronholm__anyio-1134` and upstream AnyIO issue #1027 / PR #1134. Its exact one-file production
+  reference reconstructs extensionless entrypoints in process workers. The independent oracle checks
+  submitted-source binding, asyncio and trio, unknown suffixes, path spaces, `__main__` /
+  `__mp_main__` identity, module metadata, exactly-once loading, worker reuse, ordinary `.py`
+  compatibility and initialization-error propagation. It records three official reference passes,
+  all 36 upstream process regressions, 11 hidden checks, one base hidden failure, nine semantic
+  rejections and one scope/test-tampering rejection.
 
-All ten tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
-SWE-rebench evaluator image. Six are MIT licensed, including both PDM tasks and SQLGlot; Hugging Face Hub,
-pyfakefs and Moto are Apache-2.0; Babel is BSD-3-Clause.
+All eleven tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+SWE-rebench evaluator image. Seven are MIT licensed, including both PDM tasks, both AnyIO tasks and
+SQLGlot; Hugging Face Hub, pyfakefs and Moto are Apache-2.0; Babel is BSD-3-Clause.
 
 ## Research dataset target
 
@@ -105,9 +113,9 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | --- | ---: | --- | ---: |
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
-| Core same-repo | 6 | prohibited | 1 |
+| Core same-repo | 6 | prohibited | 2 |
 | Core cross-repo | 6 | prohibited | 1 |
-| **Research total** | **20** |  | **10** |
+| **Research total** | **20** |  | **11** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

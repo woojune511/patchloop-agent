@@ -543,6 +543,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 10
 
+  - task_id: anyio-extensionless-entrypoint-worker-main
+    task_version: 1
+    path: tasks/same-repo-heldout/anyio-extensionless-entrypoint-worker-main
+    role: core-same-repo
+    admission_state: admitted
+    public_spec_hash: sha256:f3908a8a0b8905731cecdccf51a5946c24971c388ee330800729282c0d862bed
+    private_spec_hash: sha256:4e72ae5632c5a3265b0337e3fd1d4f7060754dca2bd32c4e1e14d38f6254aed5
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: agronholm__anyio-1134
+      upstream_repository: agronholm/anyio
+      issue_url: https://github.com/agronholm/anyio/issues/1027
+      pull_request_url: https://github.com/agronholm/anyio/pull/1134
+      upstream_base_commit: 01b8d02381ba95ba11241c1ec361e908fe05b8be
+      resolution_commit: bcb2db67c8a3d96c1c514954fe1bbce58efd2d8a
+      license_spdx: MIT
+      retrieved_at: 2026-07-27T02:35:00Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1134@sha256:d7997027864d2bfb32d649e7e544381f5d1b161df8f1682c719d222d66489dc0
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must reconstruct an extensionless parent entrypoint across a process boundary while preserving module identity, metadata, pickle resolution, main-guard behavior, exactly-once execution, worker reuse and initialization failures.
+    failure_pattern_id: extensionless-main-worker-bootstrap-gap
+    solution_lineage_id: agronholm-anyio-pr-1134
+    admission_evidence:
+      path: reports/docker-gate/research-anyio-extensionless-entrypoint-worker-main.json
+      sha256: sha256:87740e635be73537c20460089942bfc0e2457fd79f7a17fa44b50eeaf13db315
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 10
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

@@ -23,6 +23,9 @@ SQLGLOT_TASK = Path(
 PDM_TARGET_TASK = Path(
     "tasks/same-repo-heldout/pdm-target-project-options-loading"
 )
+ANYIO_PROCESS_TASK = Path(
+    "tasks/same-repo-heldout/anyio-extensionless-entrypoint-worker-main"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -1132,6 +1135,170 @@ def test_pdm_target_admission_evidence_rejects_original_benchmark_fix() -> None:
         assert cases[case_name]["failed_checks"] == ["hidden:target-project-options"]
     assert cases["forbidden-test-edit"]["failed_checks"] == [
         "hidden:target-project-options",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
+
+
+def test_anyio_process_task_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(ANYIO_PROCESS_TASK)
+
+    assert package.public.task_id == "anyio-extensionless-entrypoint-worker-main"
+    assert package.public.split == "same-repo-heldout"
+    assert package.public.repository.url == "https://github.com/agronholm/anyio.git"
+    assert package.public.repository.base_commit == "01b8d02381ba95ba11241c1ec361e908fe05b8be"
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["src/anyio/to_process.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 40
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:d7997027864d2bfb32d649e7e544381f5d1b161df8f1682c719d222d66489dc0"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace/src"
+
+
+def test_anyio_process_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(ANYIO_PROCESS_TASK)
+    public_text = (ANYIO_PROCESS_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_extensionless_entrypoint_worker_main.py" not in public_text
+    assert "runpy.run_path" not in public_text
+    assert "ModuleType" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_anyio_process_task_is_traceable_to_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["agronholm__anyio-1134"]
+    assert candidate["benchmark_revision"] == "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == "01b8d02381ba95ba11241c1ec361e908fe05b8be"
+    assert candidate["pr_url"] == "https://github.com/agronholm/anyio/pull/1134"
+    assert candidate["changed_files"] == "3"
+    assert candidate["f2p"] == "4"
+    assert candidate["p2p"] == "36"
+    assert candidate["proposed_lane"] == "core-same-repo"
+    assert candidate["status"] == "admitted"
+    assert candidate["environment_image"].endswith(
+        "@sha256:d7997027864d2bfb32d649e7e544381f5d1b161df8f1682c719d222d66489dc0"
+    )
+
+
+def test_anyio_process_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_text = (
+        ANYIO_PROCESS_TASK / "hidden/test_extensionless_entrypoint_worker_main.py"
+    ).read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (ANYIO_PROCESS_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\n    def test_") == 11
+    assert bad_names == [
+        "double-entrypoint-execution.patch",
+        "drop-dunder-metadata.patch",
+        "empty-main-module.patch",
+        "extensionless-fallback-only.patch",
+        "forbidden-test-edit.patch",
+        "main-alias-only.patch",
+        "module-dict-alias.patch",
+        "noop.patch",
+        "runpy-without-content.patch",
+        "unnamed-run-path.patch",
+        "wrong-main-run-name.patch",
+    ]
+
+
+def test_anyio_process_admission_evidence_is_exact_and_distinct() -> None:
+    package = load_task_package(ANYIO_PROCESS_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_SAME_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_SAME_REPO
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 10
+    development_package = load_task_package(ANYIO_TASK)
+    development_entry = require_dataset_role(
+        task_id=development_package.public.task_id,
+        task_version=development_package.public.task_version,
+        public_spec_hash=development_package.public_spec_hash,
+        allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
+    )
+    assert entry.solution_lineage_id != development_entry.solution_lineage_id
+
+    evidence = json.loads(
+        Path(
+            "reports/docker-gate/research-anyio-extensionless-entrypoint-worker-main.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert evidence["harness_git_commit"] == "9dfc60dd4b469f17732bb3bf4eeca0e61e10bdac"
+    assert evidence["reference_policy"]["kind"] == "exact-upstream-production-only"
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is False
+    assert evidence["source"]["benchmark_production_patch_sha256"] == (
+        package.private.reference_patch.sha256
+    )
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 10
+    assert evidence["semantic_bad_patch_rejection_count"] == 9
+    assert evidence["upstream_regression_test_count"] == 36
+    assert evidence["benchmark_f2p_declared_count"] == 4
+    assert evidence["benchmark_p2p_declared_count"] == 36
+    assert evidence["independent_hidden_test_count"] == 11
+    for check_id in (
+        "submitted_source_binding",
+        "extensionless_entrypoint",
+        "unknown_suffix_entrypoint",
+        "asyncio_and_trio_backends",
+        "path_with_spaces",
+        "main_module_alias_identity",
+        "module_name_and_file_metadata",
+        "entrypoint_exactly_once",
+        "worker_reuse_without_reload",
+        "ordinary_python_script_compatibility",
+        "initialization_error_propagation",
+        "exact_upstream_production_lineage",
+        "same_repository_solution_lineage_is_distinct",
+        "public_private_separation",
+        "external_image_default_user_disclosed",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 14
+    assert len({case["run_id"] for case in cases.values()}) == 14
+    assert all(case["official"] for case in cases.values())
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)} == {
+        package.private.reference_patch.sha256
+    }
+    for case_name in (
+        "base-noop",
+        "main-alias-only",
+        "drop-dunder-metadata",
+        "double-entrypoint-execution",
+        "empty-main-module",
+        "module-dict-alias",
+        "runpy-without-content",
+        "extensionless-fallback-only",
+        "unnamed-run-path",
+    ):
+        assert cases[case_name]["failed_checks"] == ["hidden:extensionless-entrypoint-worker-main"]
+    assert cases["wrong-main-run-name"]["failed_checks"] == [
+        "regression:upstream-process-regression",
+        "hidden:extensionless-entrypoint-worker-main",
+    ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:extensionless-entrypoint-worker-main",
         "policy:scope",
         "policy:test_tampering",
     ]

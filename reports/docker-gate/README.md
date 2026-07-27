@@ -91,3 +91,14 @@ network-independent regressions and failed the 11-check private oracle. The exac
 patch and eight other semantic partials failed hidden acceptance; one forbidden test edit additionally
 failed scope and test-tampering checks. One declared P2P node that attempts an external install is
 explicitly deselected. All 14 containers ran without network, and the gate made zero model/API calls.
+
+`research-anyio-extensionless-entrypoint-worker-main.json` records the eleventh research admission
+and second core-same-repo held-out task. It pins SWE-rebench leaderboard instance
+`agronholm__anyio-1134`, base commit `01b8d023...` and image `sha256:d7997027...`. On clean harness
+commit `9dfc60dd...`, the exact one-file production reference passed three official evaluations, while
+the base passed all 36 upstream process regressions and failed the 11-check private oracle. Nine
+semantic partial implementations failed hidden acceptance; one forbidden test edit additionally
+failed scope and test-tampering checks. All 14 containers ran without network and with read-only root
+and submitted filesystems, and the gate made zero model/API calls. The upstream image has no configured
+user, so Docker used its default root user; this is disclosed in the report and limitations rather than
+being conflated with the native PatchLoop image's non-root smoke.

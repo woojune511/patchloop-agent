@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 126 pass, 2 skipped; all ten research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 131 pass, 2 skipped; all eleven research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus ten research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 10/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus eleven research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 11/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
-| Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs, Moto, Babel, SQLGlot and PDM #3759 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
+| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, PDM #3759 and AnyIO #1134 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -476,6 +476,53 @@ behavior. The
 records every patch, manifest, result and provenance hash from clean harness
 commit `ad25a8a...`. This gate made zero model/API calls.
 
+## Eleventh research task admission
+
+`anyio-extensionless-entrypoint-worker-main` comes from SWE-rebench leaderboard
+instance `agronholm__anyio-1134`, AnyIO issue #1027 and PR #1134. It is the
+second hard `core-same-repo` held-out task, pinned to base commit
+`01b8d02381ba95ba11241c1ec361e908fe05b8be` and evaluator image
+`sha256:d7997027864d2bfb32d649e7e544381f5d1b161df8f1682c719d222d66489dc0`.
+The development AnyIO #1121 task changes interrupted pytest runner cleanup in
+`src/anyio/_backends/_asyncio.py`; this task changes process-worker reconstruction
+of an extensionless entrypoint in `src/anyio/to_process.py`. Their trigger,
+failure mechanism and solution lineage are distinct.
+
+The benchmark gold also changes a changelog and an unrelated documentation
+dependency marker, while its test patch changes `tests/test_to_process.py`.
+PatchLoop keeps the exact accepted production hunk only. No semantic hardening
+or later follow-up was substituted.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_195b5bb706d8474c`, `run_cc99d8a8a0714a45`, `run_61da03d9899b4bad` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_c3ef90631f9549b4` | regression pass, hidden fail | rejected |
+| only `__main__` alias | `run_0068d719bf2c412c` | multiprocessing alias missing | rejected |
+| metadata dropped | `run_84374942f4c44310` | module name/file contract fail | rejected |
+| entrypoint executed twice | `run_9f849b88babc4de1` | exactly-once contract fail | rejected |
+| empty main module | `run_1b74ccf7e065445d` | entrypoint globals missing | rejected |
+| dictionary used as module alias | `run_d88cdcf779fa44d8` | module identity/type fail | rejected |
+| run-path result not copied | `run_7062a43e83664327` | callable/global lookup fail | rejected |
+| extensionless-only fallback | `run_ee7d3cff08a64b60` | unknown-suffix compatibility fail | rejected |
+| unnamed run path | `run_dffecd32ca814d8d` | multiprocessing module name fail | rejected |
+| `run_name="__main__"` | `run_cc5a0510264e407e` | main-guard recursion; regression and hidden fail | rejected |
+| forbidden test edit | `run_61eae9117ae04a94` | hidden, scope and test-tampering fail | rejected |
+
+The unmodified base and eight non-recursive semantic partials passed all 36
+upstream process-pool tests while failing the independent 11-check oracle. The
+oracle launches real extensionless entrypoints through AnyIO's worker path,
+binds imports to `/workspace/src`, covers asyncio and trio, an unknown suffix,
+path spaces, `__main__` / `__mp_main__` identity, module metadata, exactly-once
+loading, worker reuse, ordinary `.py` compatibility and initialization-error
+propagation. It observes behavior rather than requiring `runpy` or `ModuleType`.
+The
+[AnyIO process-worker research admission report](../reports/docker-gate/research-anyio-extensionless-entrypoint-worker-main.json)
+records every patch, manifest, result and provenance hash from clean harness
+commit `9dfc60dd...`. This gate made zero model/API calls. All runs used a
+network-disabled, read-only Docker boundary. The external evaluator image has no
+configured user and therefore ran as Docker's default root user; the limitation
+is disclosed rather than attributed to the native image's non-root smoke.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -486,6 +533,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 10/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 10 research tasks are not
+calibration is 5/5, admitted research is 11/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 9 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

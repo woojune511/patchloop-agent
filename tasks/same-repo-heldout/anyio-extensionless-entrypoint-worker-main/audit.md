@@ -1,6 +1,6 @@
 # Task audit: anyio-extensionless-entrypoint-worker-main
 
-- Dataset role: candidate `core-same-repo`
+- Dataset role: admitted `core-same-repo`
 - Source: SWE-rebench leaderboard instance `agronholm__anyio-1134`, split `2026_03`
 - Frozen benchmark revision: `ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b`
 - Benchmark row: 14
@@ -25,10 +25,10 @@
   compatibility and initialization-error propagation
 - Contamination risk: high. The issue, PR, benchmark row and accepted patch are public.
 
-The benchmark gold changes four files, but only `src/anyio/to_process.py` is
-production behavior for issue #1027. PatchLoop excludes the changelog, unrelated
-documentation dependency marker and benchmark test patch. The candidate
-reference is the exact accepted production hunk.
+The benchmark gold plus its separate test patch touch four files, but only
+`src/anyio/to_process.py` is production behavior for issue #1027. PatchLoop
+excludes the changelog, unrelated documentation dependency marker and benchmark
+test patch. The reference is the exact accepted production hunk.
 
 This task is distinct from development task `anyio-interrupt-runner-cleanup`.
 The development task changes async pytest runner cancellation in
@@ -47,15 +47,20 @@ Difficulty audit:
 | Verification breadth | 2 | Backends, path forms, module identity/metadata, execution count, worker reuse and error propagation require separate observations. |
 | Total | 6 | Hard under `dataset-manifest-v1`. |
 
-Admission requires an official network-disabled Docker matrix showing:
+The official network-disabled Docker matrix showed:
 
-1. the unmodified base passes all 36 public regressions and fails the independent
+1. the unmodified base passed all 36 public regressions and failed the independent
    hidden oracle;
-2. the exact production reference passes public and private checks three times;
+2. the exact production reference passed public and private checks three times;
 3. representative loader, alias, metadata, execution-count and scope/tampering
-   partials are rejected;
+   partials were rejected;
 4. evaluator image, task specs, patches, run artifacts and the clean harness
    commit are content-addressed.
+
+The 14-run gate is recorded in
+[`reports/docker-gate/research-anyio-extensionless-entrypoint-worker-main.json`](../../../reports/docker-gate/research-anyio-extensionless-entrypoint-worker-main.json)
+and is bound to clean harness commit
+`9dfc60dd4b469f17732bb3bf4eeca0e61e10bdac`.
 
 The hidden oracle observes actual child-process behavior. It does not import
 private helpers, require `runpy` or `ModuleType` by name, or copy the benchmark

@@ -55,6 +55,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   were rejected, as was one scope/test-tampering edit. One declared P2P node that attempts an external
   install is explicitly deselected. This is deterministic evaluator admission evidence, not a
   live-model core result.
+- Eleventh research task admitted: AnyIO #1134 as the second core-same-repo held-out task, with
+  three exact-production-reference passes, all 36 upstream process regressions, 11 independent
+  hidden checks and one base hidden failure. Nine semantic partial implementations were rejected,
+  as was one scope/test-tampering edit. Its worker bootstrap lineage is distinct from the AnyIO
+  #1121 development task. This is deterministic evaluator admission evidence, not a live-model
+  core result.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -66,13 +72,18 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
+- Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
+  The AnyIO #1134 image has no configured `User` and therefore ran as Docker's default root user.
+  Network denial, a read-only root filesystem and a read-only submitted workspace were enforced,
+  but uniform non-root execution for arbitrary external images is not yet implemented. The native
+  PatchLoop image's non-root isolation smoke does not prove this property for external images.
 
 ## Dataset and campaign not yet produced
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 10/20: memory-development 6/6, development-validation 2/2,
-  same-repo core 1/6 and cross-repo core 1/6.
+- Admitted research tasks are 11/20: memory-development 6/6, development-validation 2/2,
+  same-repo core 2/6 and cross-repo core 1/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.
