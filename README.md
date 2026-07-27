@@ -11,9 +11,10 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
 SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 pyfakefs #991
 사례 여섯 개를 memory-development task로, Moto #7208과 Babel #1042를
-development-validation task로, SQLGlot #7187, Param #1117과 MTPLX #21을 core-cross-repo task로,
+development-validation task로, SQLGlot #7187, Param #1117, MTPLX #21과 FuseSoC #776을
+core-cross-repo task로,
 PDM #3759, AnyIO #1134와 Hugging Face Hub #4056을 core-same-repo task로 admission했다.
-실제 OpenAI 96-run campaign과 나머지 6개 research task는 아직 완료하지 않았다. 미실행 gate는
+실제 OpenAI 96-run campaign과 나머지 5개 research task는 아직 완료하지 않았다. 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 ## 구현된 핵심 경로
@@ -39,7 +40,7 @@ public.yaml → stateless context builder → model adapter
 - SWE-rebench revision, upstream issue/PR/commit, upstream license evidence와 Docker digest를
   고정한 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs #991, Moto #7208과
   Babel #1042, SQLGlot #7187, Param #1117, PDM #3759, AnyIO #1134와
-  Hugging Face Hub #4056, MTPLX #21 research task
+  Hugging Face Hub #4056, MTPLX #21, FuseSoC #776 research task
 - Task별 base hidden failure, reference 3회와 최소 5종의 known-bad를 기록한 admission evidence
 - 후속 upstream 회귀까지 판별해 원래 AnyIO benchmark fix를 거부하는 hardened reference/oracle
 - 실제 CLI grammar와 project precedence를 어긴 PDM #3759 benchmark fix를 거부하고
@@ -52,6 +53,8 @@ public.yaml → stateless context builder → model adapter
   Hugging Face Hub #4056 exact-production reference와 adversarial combined-partial oracle
 - mixed content 뒤의 streamed tool call을 chunk 경계와 marker case에 무관하게 복원하고,
   lookalike tag와 non-whitespace residue를 거부하는 MTPLX #21 hardened reference/oracle
+- 여러 core-file parse failure를 discovery 중 보존하고 manager·public wrapper·missing-core
+  diagnostic까지 전달하는 FuseSoC #776 exact-production reference와 독립 oracle
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 

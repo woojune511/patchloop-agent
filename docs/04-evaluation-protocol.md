@@ -32,11 +32,11 @@ memory와 experiment 사용 가능 여부를 결정한다.
 Research dataset target은 calibration을 제외한 20개다. Core campaign은 그중 held-out 12개만
 사용한다. 세 smoke task와 기존의 쉬운 dev-train task 두 개는 calibration fixture로 유지하고,
 memory generation, core SCRR와 portfolio headline에서 제외한다. 현재 admitted research task는
-14/20이다. Memory-development entry는 SWE-rebench 계열의 Loguru #1451, AnyIO #1121,
+15/20이다. Memory-development entry는 SWE-rebench 계열의 Loguru #1451, AnyIO #1121,
 tox #3810, Hugging Face Hub #3180, PDM #2781과 pyfakefs #991이며, Moto #7208과
-Babel #1042는 development-validation 전용이다. SQLGlot #7187, Param #1117과 MTPLX #21은
-core-cross-repo held-out entry이고 PDM #3759, AnyIO #1134와 Hugging Face Hub #4056은
-core-same-repo held-out entry다. 이 여섯
+Babel #1042는 development-validation 전용이다. SQLGlot #7187, Param #1117, MTPLX #21과
+FuseSoC #776은 core-cross-repo held-out entry이고 PDM #3759, AnyIO #1134와 Hugging Face Hub #4056은
+core-same-repo held-out entry다. 이 일곱
 held-out task는 prompt, tool, retrieval, threshold와 memory tuning에 사용할 수 없다.
 
 Stress는 별도 task count가 아니다. Admitted research task에서 세 sentinel을 미리 선택해

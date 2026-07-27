@@ -2045,11 +2045,13 @@ def test_fusesoc_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "14"
     assert candidate["proposed_lane"] == "core-cross-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9"
     )
-    assert "13 of 14 declared P2P nodes pass network-disabled" in candidate["notes"]
+    assert "clean-harness official matrix" in candidate["notes"]
+    assert "12 of 14 base P2P nodes" in candidate["notes"]
+    assert "read-only source mount" in candidate["notes"]
 
 
 def test_fusesoc_reference_is_exact_production_patch_and_hash_bound() -> None:
@@ -2114,9 +2116,128 @@ def test_fusesoc_oracle_and_bad_patch_inventory_are_explicit() -> None:
     assert (FUSESOC_TASK / "bad/noop.patch").read_bytes() == b"\n"
 
     audit_text = (FUSESOC_TASK / "audit.md").read_text(encoding="utf-8")
-    assert "proposed `core-cross-repo`; not admitted" in audit_text
     assert "explicitly deselected" in audit_text
     assert "tests/test_coremanager.py::test_export" in audit_text
     assert "tests/test_coremanager.py::test_lockfile_no_file_create" in audit_text
     assert "passes 12 nodes" in audit_text
-    assert "must not enter the dataset manifest" in audit_text
+
+
+def test_fusesoc_admission_evidence_binds_parse_diagnostic_boundaries() -> None:
+    package = load_task_package(FUSESOC_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_CROSS_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_CROSS_REPO
+    assert (
+        entry.failure_pattern_id
+        == "parse-errors-discarded-before-missing-core-diagnostic"
+    )
+    assert entry.solution_lineage_id == "olofk-fusesoc-pr-776"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 9
+
+    evidence_path = Path(
+        "reports/docker-gate/research-fusesoc-retained-parse-error-diagnostics.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == entry.admission_evidence.sha256
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == package.public.repository.base_commit
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "da3105d30f0c7eb6fec65650200aedac7eb12b13"
+    )
+    assert evidence["reference_policy"]["kind"] == (
+        "exact-upstream-production-only"
+    )
+    assert (
+        evidence["reference_policy"]["rejected_benchmark_production_patch"]
+        is False
+    )
+    assert evidence["source"]["benchmark_test_patch_sha256"] == (
+        "sha256:b046536ed3628c23fec2da7ded058b365205d09e8438182f9756e6f02f6a87fb"
+    )
+    assert evidence["source"]["accepted_source_blob_sha1"] == {
+        "fusesoc/coremanager.py": "1f6d7499f629e7fb6831868c71546b269bc374ac",
+        "fusesoc/fusesoc.py": "b964aa4ea512ac8ab033787218367c5a239ad307",
+        "fusesoc/main.py": "e1f460dea5de7b683e3e45fb594f6c03db5b3db8",
+    }
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 9
+    assert evidence["semantic_bad_patch_rejection_count"] == 8
+    assert evidence["independent_hidden_test_count"] == 10
+    assert evidence["independent_hidden_test_function_count"] == 10
+    assert evidence["benchmark_f2p_declared_count"] == 1
+    assert evidence["benchmark_p2p_declared_count"] == 14
+    assert evidence["upstream_regression_test_count"] == 12
+    assert evidence["upstream_regression_collected_count"] == 14
+    assert evidence["upstream_regression_deselected_count"] == 2
+    assert evidence["runtime"]["python_version"] == "3.13.13"
+    assert evidence["runtime"]["pytest_version"] == "9.0.3"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 13
+    assert len({case["run_id"] for case in cases.values()}) == 13
+    assert all(case["official"] for case in cases.values())
+    for case in cases.values():
+        patch_path = FUSESOC_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        assert case["observed_success"] is case["expected_success"]
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    for case_name in (
+        "base-noop",
+        "manager-only-retention",
+        "wrapper-only-exposure",
+        "missing-cli-propagation",
+        "last-error-only",
+        "class-shared-errors",
+        "hard-stop-on-parse-error",
+        "import-errors-misclassified",
+        "cli-first-error-only",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:retained-parse-error-diagnostics"
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:retained-parse-error-diagnostics",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
+    assert evidence["admission_checks"]["base_visible_checks"] == "pass"
+    assert evidence["admission_checks"]["base_hidden_acceptance"] == "fail"
+    for check_id in (
+        "reference_scrr_three_repetitions",
+        "known_bad_boundaries",
+        "submitted_source_binding",
+        "multiple_parse_failures_retained",
+        "valid_core_discovery_continues",
+        "accumulation_across_scans",
+        "manager_instance_isolation",
+        "live_public_property_forwarding",
+        "all_parse_failures_rendered",
+        "import_error_behavior_unchanged",
+        "exact_public_signature_delta",
+        "exact_upstream_production_lineage",
+        "benchmark_test_patch_excluded",
+        "benchmark_p2p_execution_difference_disclosed",
+        "public_private_separation",
+        "network_disabled_evaluator",
+        "read_only_submitted_workspace",
+        "immutable_source_commit",
+        "immutable_evaluator_image",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"

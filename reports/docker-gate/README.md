@@ -134,3 +134,16 @@ come from its excluded test patch, and three MLX-runtime environment failures ar
 deselected from the independent base-resident regression surface. All 14 containers ran without
 network and with read-only submitted filesystems, and the gate made zero model/API calls. The image
 has no configured user, so Docker used its default root user.
+
+`research-fusesoc-retained-parse-error-diagnostics.json` records the fifteenth research admission
+and fourth core-cross-repo held-out task. It pins SWE-rebench leaderboard instance
+`olofk__fusesoc-776_interface`, base commit `d2e6e720...` and image `sha256:1e971791...`. On clean
+harness commit `da3105d3...`, the exact three-file production reference passed three official
+evaluations. Base/no-op passed the 12 selected visible regressions and failed the ten-case independent
+oracle; eight semantic partial implementations were rejected at hidden acceptance, and one forbidden
+test edit additionally failed scope and test-tampering checks. The visible suite collects 14
+base-resident tests but explicitly deselects the network-dependent export case and the lockfile case
+that writes beneath the read-only submitted workspace. All 13 containers ran without network and
+with read-only root and submitted filesystems. This is deterministic evaluator admission evidence,
+not agent performance. The image has no configured user, so Docker used its default root user. The
+report SHA-256 is `cef87dda16402d874b28264fcbed5bba2acf07736800c5fd297d812112081918`.

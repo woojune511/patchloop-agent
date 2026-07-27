@@ -585,6 +585,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 10
 
+  - task_id: fusesoc-retained-parse-error-diagnostics
+    task_version: 1
+    path: tasks/cross-repo-heldout/fusesoc-retained-parse-error-diagnostics
+    role: core-cross-repo
+    admission_state: admitted
+    public_spec_hash: sha256:2dd38ab34abc7ab53c0487c2d5b19dbda5b303fe2d04bf04474cc5bafef6ba31
+    private_spec_hash: sha256:e5db4a13d05518abd3a2be50c99ed8aa9536168896c27f52a4947c6773e7b66d
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: olofk__fusesoc-776_interface
+      upstream_repository: olofk/fusesoc
+      issue_url: https://github.com/olofk/fusesoc/issues/761
+      pull_request_url: https://github.com/olofk/fusesoc/pull/776
+      upstream_base_commit: d2e6e720222f57cb66d6c303a326d336c582aade
+      resolution_commit: 49eb72f296e1ccfb29ede2feab6cacdac06d3d54
+      license_spdx: BSD-2-Clause
+      retrieved_at: 2026-07-27T14:10:36Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.olofk_1776_fusesoc-776_interface@sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 2
+      verification_breadth: 2
+      total: 7
+      tier: hard
+      rationale: The fix must carry parse failures across best-effort discovery, a public wrapper and the missing-core CLI boundary while preserving multiple-error accumulation, valid-core continuation, manager isolation and non-parse ImportError behavior.
+    failure_pattern_id: parse-errors-discarded-before-missing-core-diagnostic
+    solution_lineage_id: olofk-fusesoc-pr-776
+    admission_evidence:
+      path: reports/docker-gate/research-fusesoc-retained-parse-error-diagnostics.json
+      sha256: sha256:cef87dda16402d874b28264fcbed5bba2acf07736800c5fd297d812112081918
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 9
+
   - task_id: hf-hub-custom-tqdm-class-contract
     task_version: 1
     path: tasks/same-repo-heldout/hf-hub-custom-tqdm-class-contract

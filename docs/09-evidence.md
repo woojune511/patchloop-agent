@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
-| Tests | `.venv/Scripts/python -m pytest -ra -p no:cacheprovider` | 155 pass, 2 skipped; all fourteen research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -ra -p no:cacheprovider` | 162 pass, 2 skipped; all fifteen research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus fourteen research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 14/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus fifteen research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 15/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134 and MTPLX #21 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21 and FuseSoC #776 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -650,6 +650,54 @@ run from clean harness commit `82a0c23b...`. The
 [MTPLX streaming admission report](../reports/docker-gate/research-mtplx-mixed-content-tool-call-stream.json)
 binds all 14 patch, manifest, result and provenance hashes.
 
+## Fifteenth research task admission
+
+`fusesoc-retained-parse-error-diagnostics` comes from SWE-rebench leaderboard
+instance `olofk__fusesoc-776_interface`, FuseSoC issue #761 and PR #776. It is
+the fourth hard `core-cross-repo` held-out task, pinned to base commit
+`d2e6e720222f57cb66d6c303a326d336c582aade` and evaluator image
+`sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9`.
+The exact three-file production reference retains every parse failure while
+continuing valid-core discovery, forwards the current list through `Fusesoc`
+and appends every path and parser message to the existing missing-core
+diagnostic.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_1930d4d388214a39`, `run_ecc6b25d878941dd`, `run_41a5e6e0c3a9460f` | full success ×3 | 3/3 success, `official=true` |
+| base/no-op | `run_27a35b3567fc4b75` | visible pass, hidden fail | rejected |
+| manager-only retention | `run_fd337d9d5db34b19` | wrapper/CLI fail | rejected |
+| wrapper-only exposure | `run_058153b57a3f4135` | manager retention fail | rejected |
+| missing CLI propagation | `run_7e8f97cfc9e44546` | final diagnostic fail | rejected |
+| last error only | `run_1b70b4fca4ad411c` | accumulation fail | rejected |
+| class-shared errors | `run_a55d1e200c5e4163` | instance isolation fail | rejected |
+| hard stop on parse error | `run_6df53dc5f3fe4326` | valid-core continuation fail | rejected |
+| import errors misclassified | `run_b5bf8f2a76794047` | non-parse handling fail | rejected |
+| CLI first error only | `run_e150bdb76e554d24` | complete diagnostic fail | rejected |
+| forbidden test edit | `run_03d995290fee481d` | hidden, scope and test-tampering fail | rejected |
+
+The visible file collects 14 base tests. The network-dependent `test_export`
+and the lockfile-writing `test_lockfile_no_file_create` are explicitly
+deselected under the network-none, read-only boundary; the remaining 12 pass
+with the image's testbed environment on `PATH`. The independent ten-case
+oracle binds all three production imports to `/workspace` and checks
+multi-error accumulation, valid-core continuation, instance isolation, live
+wrapper forwarding, complete CLI diagnostics and unchanged `ImportError`
+handling. Base/no-op and all eight semantic partials failed hidden acceptance
+only; the forbidden edit additionally failed scope and tampering.
+
+All 13 official cases ran from clean harness staging commit
+`da3105d30f0c7eb6fec65650200aedac7eb12b13` with Docker networking disabled
+and read-only root and submitted filesystems. The image has no configured
+`User` and ran as Docker's default root user. The public task hash is
+`sha256:2dd38ab34abc7ab53c0487c2d5b19dbda5b303fe2d04bf04474cc5bafef6ba31`
+and the private task hash is
+`sha256:e5db4a13d05518abd3a2be50c99ed8aa9536168896c27f52a4947c6773e7b66d`.
+The [FuseSoC diagnostic admission report](../reports/docker-gate/research-fusesoc-retained-parse-error-diagnostics.json)
+binds the run manifests, results, provenance records and patch hashes. Its
+SHA-256 is
+`cef87dda16402d874b28264fcbed5bba2acf07736800c5fd297d812112081918`.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -660,6 +708,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 14/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 6 research tasks are not
+calibration is 5/5, admitted research is 15/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 5 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

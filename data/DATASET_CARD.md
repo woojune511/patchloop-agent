@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The fourteen admitted research tasks are:
+The fifteen admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -126,12 +126,24 @@ The fourteen admitted research tasks are:
   The exact upstream accepted source patch is one of the rejected semantic patches. The digest-pinned
   external image has no configured `User` and therefore ran as Docker's default root user; network
   denial and read-only root and submitted filesystems were still enforced.
+- `fusesoc-retained-parse-error-diagnostics`, derived from SWE-rebench leaderboard instance
+  `olofk__fusesoc-776_interface` and upstream FuseSoC issue #761 / PR #776. Its exact production
+  reference retains every syntax/validation failure without stopping core discovery, exposes current
+  failures through the public wrapper and appends them to the existing missing-core diagnostic. The
+  ten-case independent oracle also checks valid-core continuation, accumulation across scans,
+  manager-instance isolation and unchanged `ImportError` handling. It records three official
+  reference passes, one base/no-op hidden failure, eight semantic partial rejections and one
+  scope/test-tampering rejection. The registered visible suite collects 14 base tests, explicitly
+  deselects the network-dependent export test and the read-only-incompatible lockfile test, and passes
+  the remaining 12 with the testbed environment on `PATH`. The external image has no configured
+  `User` and therefore ran as Docker's default root user while retaining network denial and read-only
+  root and submitted filesystems.
 
-All fourteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+All fifteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
 SWE-rebench evaluator image. Seven are MIT licensed, including both PDM tasks, both AnyIO tasks and
 SQLGlot; both Hugging Face Hub tasks, pyfakefs, Moto and MTPLX are Apache-2.0; Babel and Param are
-BSD-3-Clause. Together with the five calibration fixtures, the curated manifest currently contains
-19 task entries.
+BSD-3-Clause; FuseSoC is BSD-2-Clause. Together with the five calibration fixtures, the curated
+manifest currently contains 20 task entries.
 
 ## Research dataset target
 
@@ -142,8 +154,8 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
 | Core same-repo | 6 | prohibited | 3 |
-| Core cross-repo | 6 | prohibited | 3 |
-| **Research total** | **20** |  | **14** |
+| Core cross-repo | 6 | prohibited | 4 |
+| **Research total** | **20** |  | **15** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

@@ -81,6 +81,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   oracle requires an exact `<tool_call>` delimiter, preserves lookalike tags as content and rejects
   non-whitespace residue beside or between streamed calls. This is deterministic evaluator admission
   evidence, not a live-model core result.
+- Fifteenth research task admitted: FuseSoC #776 as the fourth core-cross-repo held-out task, with
+  three exact-production-reference passes, 12 selected base-resident regressions, ten independent
+  hidden cases and one base/no-op hidden failure. Eight semantic partial implementations were
+  rejected by hidden acceptance, and one forbidden test edit was rejected by hidden, scope and
+  test-tampering checks. The visible suite collects 14 tests but explicitly deselects one
+  network-dependent export test and one lockfile test incompatible with the read-only submitted
+  filesystem. This is deterministic evaluator admission evidence, not a live-model core result.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -93,18 +100,22 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
-  The AnyIO #1134, Param #1117, Hugging Face Hub #4056 and MTPLX #21 images have no configured `User` and
-  therefore ran as Docker's default root user. Network denial, a read-only root filesystem and a
-  read-only submitted workspace were enforced, but uniform non-root execution for arbitrary external
-  images is not yet implemented. The native PatchLoop image's non-root isolation smoke does not prove
-  this property for external images.
+  The AnyIO #1134, Param #1117, Hugging Face Hub #4056, MTPLX #21 and FuseSoC #776 images have no
+  configured `User` and therefore ran as Docker's default root user. Network denial, a read-only root
+  filesystem and a read-only submitted workspace were enforced, but uniform non-root execution for
+  arbitrary external images is not yet implemented. The native PatchLoop image's non-root isolation
+  smoke does not prove this property for external images.
+- Evaluator `result.json` records an opaque `submitted_patch_artifact_id`, but the current
+  `ArtifactStore` does not persist a standalone ID-to-content-hash catalog for that field. Admission
+  evidence remains byte-resolvable through the persisted `provenance.diff_hash` and corresponding CAS
+  object, but direct lookup by the opaque artifact ID alone is not yet implemented.
 
 ## Dataset and campaign not yet produced
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 14/20: memory-development 6/6, development-validation 2/2,
-  same-repo core 3/6 and cross-repo core 3/6. The remaining six research tasks are not admitted.
+- Admitted research tasks are 15/20: memory-development 6/6, development-validation 2/2,
+  same-repo core 3/6 and cross-repo core 4/6. The remaining five research tasks are not admitted.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.

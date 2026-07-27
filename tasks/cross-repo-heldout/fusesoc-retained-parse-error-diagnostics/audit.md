@@ -1,6 +1,6 @@
 # Task audit: fusesoc-retained-parse-error-diagnostics
 
-- Dataset role: proposed `core-cross-repo`; not admitted
+- Dataset role: `core-cross-repo`; admitted as the fourth task in this lane
 - Source: SWE-rebench leaderboard instance
   `olofk__fusesoc-776_interface`, split `2026_03`
 - Frozen benchmark revision:
@@ -87,12 +87,42 @@ Difficulty audit:
 | Verification breadth | 2 | Multiple failures, valid continuation, instance isolation, non-parse behavior, and CLI formatting interact. |
 | Total | 7 | Hard under `dataset-manifest-v1`. |
 
-## Admission status
+## Admission evidence
 
-This package is deliberately unregistered. The immutable benchmark and
-upstream provenance, frozen image digest, network-free visible regression
-selection, reference hash, independent oracle, and known-bad corpus are
-authoring inputs only. It must not enter the dataset manifest or count as
-`core-cross-repo` until the official PatchLoop Docker matrix proves base/no-op
-rejection, three reference passes, every semantic bad-patch rejection, scope
-and tampering enforcement, and complete artifact provenance.
+The official matrix ran from clean harness staging commit
+`da3105d30f0c7eb6fec65650200aedac7eb12b13`. All 13 cases used the exact
+digest-addressed evaluator image with Docker networking disabled and read-only
+root and submitted filesystems. The image supplied Python 3.13.13 and
+pytest 9.0.3, and its unconfigured `User` meant Docker used the image-default
+root user.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_1930d4d388214a39`, `run_ecc6b25d878941dd`, `run_41a5e6e0c3a9460f` | full success ×3 | 3/3 success, `official=true` |
+| base/no-op | `run_27a35b3567fc4b75` | visible pass, hidden fail | rejected at hidden acceptance |
+| manager-only retention | `run_fd337d9d5db34b19` | wrapper/CLI propagation fail | rejected at hidden acceptance |
+| wrapper-only exposure | `run_058153b57a3f4135` | manager retention fail | rejected at hidden acceptance |
+| missing CLI propagation | `run_7e8f97cfc9e44546` | missing-core diagnostic fail | rejected at hidden acceptance |
+| last error only | `run_1b70b4fca4ad411c` | multi-error accumulation fail | rejected at hidden acceptance |
+| class-shared errors | `run_a55d1e200c5e4163` | manager isolation fail | rejected at hidden acceptance |
+| hard stop on parse error | `run_6df53dc5f3fe4326` | valid-core continuation fail | rejected at hidden acceptance |
+| import errors misclassified | `run_b5bf8f2a76794047` | non-parse failure handling fail | rejected at hidden acceptance |
+| CLI first error only | `run_e150bdb76e554d24` | complete diagnostic fail | rejected at hidden acceptance |
+| forbidden test edit | `run_03d995290fee481d` | hidden, scope and tampering fail | rejected at all three boundaries |
+
+The three reference runs each collected 14 visible base tests, deselected
+`test_export` and `test_lockfile_no_file_create` for the documented environment
+constraints, and passed the remaining 12. The independent hidden oracle
+collected and passed all ten cases on the reference. Base/no-op and all eight
+semantic partials remained otherwise policy-compliant, so their hidden-only
+rejections isolate acceptance behavior from scope policy.
+
+The admission binds public task hash
+`sha256:2dd38ab34abc7ab53c0487c2d5b19dbda5b303fe2d04bf04474cc5bafef6ba31`,
+private task hash
+`sha256:e5db4a13d05518abd3a2be50c99ed8aa9536168896c27f52a4947c6773e7b66d`,
+the reference hash recorded above and every run's manifest, result and
+provenance artifact. The immutable run index is
+[the FuseSoC Docker admission report](../../../reports/docker-gate/research-fusesoc-retained-parse-error-diagnostics.json),
+with SHA-256
+`cef87dda16402d874b28264fcbed5bba2acf07736800c5fd297d812112081918`.
