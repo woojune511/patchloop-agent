@@ -59,7 +59,9 @@ submitted source in a fresh subprocess and replaces all host-sensitive clock
 and timezone inputs with deterministic values. Three independent fallback
 profiles exercise positive, negative, and date-rollover-derived offsets with
 different zone names, so a fixed offset or name cannot satisfy the oracle. The
-cases check:
+fake clock keeps each wall time, UTC conversion, and timestamp mutually
+consistent and supports `now(tz=...)`, `utcnow()`, `fromtimestamp()`,
+`utcfromtimestamp()`, `astimezone()`, and `combine()` paths. The cases check:
 
 1. valid negative, zero, and positive platform offsets and names remain
    authoritative (three cases);
@@ -78,6 +80,12 @@ offsets, a fixed derived-looking offset and name, wrong supported range
 exceptions, a wrong timezone-construction exception, reversed offset
 derivation, discarded fallback zone names, bypass of valid platform metadata,
 and an overly broad local-time exception catch.
+
+`equivalent/utcfromtimestamp-fallback.patch` is a positive control for
+implementation independence. It derives the same fallback through the valid
+`datetime_.utcfromtimestamp()` API rather than the accepted reference's aware
+`fromtimestamp(..., timezone.utc)` path. Admission requires this control to
+pass the same visible, hidden, and policy checks.
 
 The candidate is not admitted until a clean pinned-image evaluation proves
 base visible-pass/private-fail, the same reference passes three official

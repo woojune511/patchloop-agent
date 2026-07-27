@@ -21,7 +21,7 @@ hidden_checks:
       PATH: /opt/conda/envs/testbed/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 hidden_artifacts:
   - path: hidden/test_local_timezone_fallback.py
-    sha256: sha256:11eb2b5805d1728bb941fee7a7150734843b40526f5703f2fb10a28f97b1e50b
+    sha256: sha256:9305ebb2a03f8f68c078e537676ffccb68672b81b1b17b732b755d49520df240
 reference_patch:
   path: reference.patch
   sha256: sha256:850a97a59338efdc693016ccb96b7bfd891426fa6a0b5671e060f7830fad2cf3

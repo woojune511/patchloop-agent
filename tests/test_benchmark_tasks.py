@@ -3371,6 +3371,9 @@ def test_loguru_timezone_oracle_and_bad_patch_inventory_are_explicit() -> None:
     bad_names = sorted(
         path.name for path in (LOGURU_TIMEZONE_TASK / "bad").glob("*.patch")
     )
+    equivalent_paths = sorted(
+        (LOGURU_TIMEZONE_TASK / "equivalent").glob("*.patch")
+    )
 
     assert hidden_text.count("\ndef test_") == 5
     for marker in (
@@ -3388,6 +3391,9 @@ def test_loguru_timezone_oracle_and_bad_patch_inventory_are_explicit() -> None:
         "FALLBACK_EAST",
         "FALLBACK_WEST",
         "FALLBACK_ROLLOVER",
+        "def utcfromtimestamp",
+        "def astimezone",
+        "def combine",
     ):
         assert marker in hidden_text
     assert package.private.schema_version == "task-private-v2"
@@ -3395,7 +3401,7 @@ def test_loguru_timezone_oracle_and_bad_patch_inventory_are_explicit() -> None:
         "hidden/test_local_timezone_fallback.py"
     ]
     assert package.private.hidden_artifacts[0].sha256 == (
-        "sha256:11eb2b5805d1728bb941fee7a7150734843b40526f5703f2fb10a28f97b1e50b"
+        "sha256:9305ebb2a03f8f68c078e537676ffccb68672b81b1b17b732b755d49520df240"
     )
     assert sha256_bytes(hidden_path.read_bytes()) == (
         package.private.hidden_artifacts[0].sha256
@@ -3419,12 +3425,22 @@ def test_loguru_timezone_oracle_and_bad_patch_inventory_are_explicit() -> None:
         "wrong-timezone-exception.patch",
     ]
     assert (LOGURU_TIMEZONE_TASK / "bad/noop.patch").read_bytes() == b"\n"
+    assert [path.name for path in equivalent_paths] == [
+        "utcfromtimestamp-fallback.patch"
+    ]
+    assert sha256_bytes(equivalent_paths[0].read_bytes()) == (
+        "sha256:860a34c06e00d4e5e4e994a13445da426df68735088f1dadb0b378c9a2e409b4"
+    )
+    assert "datetime_.utcfromtimestamp(timestamp)" in equivalent_paths[0].read_text(
+        encoding="utf-8"
+    )
 
     audit_text = (LOGURU_TIMEZONE_TASK / "audit.md").read_text(encoding="utf-8")
     assert "candidate; official Docker matrix pending" in audit_text
     assert "11 independent parameter cases" in audit_text
     assert "positive, negative, and date-rollover-derived offsets" in audit_text
     assert "one no-op, nine semantic partials" in audit_text
+    assert "positive control for\nimplementation independence" in audit_text
 
 
 def test_loguru_timezone_private_v2_rejects_hidden_oracle_mutation(

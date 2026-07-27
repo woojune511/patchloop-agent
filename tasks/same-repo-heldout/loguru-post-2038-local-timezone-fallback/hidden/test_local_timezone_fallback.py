@@ -25,44 +25,95 @@ import loguru._datetime as target
 
 PROFILES = {
     "east": {
-        "utc": (2042, 5, 6, 10, 0),
-        "local": (2042, 5, 6, 13, 45),
+        "utc": (2042, 5, 6, 3, 23, 9, 123456),
+        "local": (2042, 5, 6, 7, 8, 9, 123456),
+        "offset_seconds": 13500,
         "zone": "FALLBACK_EAST",
     },
     "west": {
-        "utc": (2042, 5, 6, 10, 15),
-        "local": (2042, 5, 6, 3, 45),
+        "utc": (2042, 5, 6, 13, 38, 9, 123456),
+        "local": (2042, 5, 6, 7, 8, 9, 123456),
+        "offset_seconds": -23400,
         "zone": "FALLBACK_WEST",
     },
     "rollover": {
-        "utc": (2042, 5, 5, 23, 30),
-        "local": (2042, 5, 6, 1, 0),
+        "utc": (2042, 5, 5, 22, 8, 9, 123456),
+        "local": (2042, 5, 6, 7, 8, 9, 123456),
+        "offset_seconds": 32400,
         "zone": "FALLBACK_ROLLOVER",
     },
 }
 profile = PROFILES[sys.argv[2]]
+expected_timestamp = std_datetime.datetime(
+    *profile["utc"],
+    tzinfo=std_datetime.timezone.utc,
+).timestamp()
 
 
-class FrozenNow(std_datetime.datetime):
+class ProfileDateTime(std_datetime.datetime):
+    def astimezone(self, tz=None):
+        if tz is None:
+            local_tz = std_datetime.timezone(
+                std_datetime.timedelta(seconds=profile["offset_seconds"]),
+                profile["zone"],
+            )
+            return type(self)(*profile["local"], tzinfo=local_tz)
+        return super().astimezone(tz)
+
+
+class FrozenNow(ProfileDateTime):
     def timestamp(self):
-        return 4102444800.5
+        return expected_timestamp
 
 
 class FrozenDateTime:
     @classmethod
-    def now(cls):
-        return FrozenNow(2042, 5, 6, 7, 8, 9, 123456)
+    def now(cls, tz=None):
+        if tz is None:
+            return FrozenNow(*profile["local"])
+        return ProfileDateTime(*profile["utc"], tzinfo=std_datetime.timezone.utc).astimezone(
+            tz
+        )
+
+    @classmethod
+    def utcnow(cls):
+        return ProfileDateTime(*profile["utc"])
 
     @classmethod
     def fromtimestamp(cls, timestamp, tz=None):
-        if timestamp != 4102444800.5:
+        if timestamp != expected_timestamp:
             raise AssertionError("unexpected timestamp")
-        if tz is target.timezone.utc:
-            return std_datetime.datetime(
+        if tz is None:
+            return ProfileDateTime(*profile["local"])
+        if tz is target.timezone.utc or tz is std_datetime.timezone.utc:
+            return ProfileDateTime(
                 *profile["utc"],
                 tzinfo=std_datetime.timezone.utc,
             )
-        return std_datetime.datetime(*profile["local"])
+        return ProfileDateTime(
+            *profile["utc"],
+            tzinfo=std_datetime.timezone.utc,
+        ).astimezone(tz)
+
+    @classmethod
+    def utcfromtimestamp(cls, timestamp):
+        if timestamp != expected_timestamp:
+            raise AssertionError("unexpected timestamp")
+        return ProfileDateTime(*profile["utc"])
+
+    @classmethod
+    def combine(cls, date, time, tzinfo=None):
+        return ProfileDateTime(
+            date.year,
+            date.month,
+            date.day,
+            time.hour,
+            time.minute,
+            time.second,
+            time.microsecond,
+            tzinfo=time.tzinfo if tzinfo is None else tzinfo,
+            fold=time.fold,
+        )
 
 
 mode = sys.argv[1]
@@ -251,7 +302,7 @@ def test_platform_range_errors_use_datetime_fallback(
     [
         ("missing-both", "east", 13500, "FALLBACK_EAST"),
         ("missing-zone", "west", -23400, "FALLBACK_WEST"),
-        ("missing-gmtoff", "rollover", 5400, "FALLBACK_ROLLOVER"),
+        ("missing-gmtoff", "rollover", 32400, "FALLBACK_ROLLOVER"),
     ],
 )
 def test_unavailable_platform_timezone_fields_use_datetime_fallback(
