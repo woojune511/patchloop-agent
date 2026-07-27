@@ -1,7 +1,7 @@
 # Task audit: loguru-post-2038-local-timezone-fallback
 
-- Admission state: candidate; official Docker matrix pending
-- Proposed dataset role: `core-same-repo`
+- Admission state: admitted as the fifth `core-same-repo` task
+- Dataset role: `core-same-repo`
 - Source: SWE-rebench leaderboard aggregate `test` row 209, corresponding to
   the 2025-02 bucket, instance `Delgan__loguru-1297`
 - Frozen benchmark revision:
@@ -84,10 +84,15 @@ and an overly broad local-time exception catch.
 `equivalent/utcfromtimestamp-fallback.patch` is a positive control for
 implementation independence. It derives the same fallback through the valid
 `datetime_.utcfromtimestamp()` API rather than the accepted reference's aware
-`fromtimestamp(..., timezone.utc)` path. Admission requires this control to
-pass the same visible, hidden, and policy checks.
+`fromtimestamp(..., timezone.utc)` path. It passed the same visible, hidden,
+and policy checks in the official admission matrix.
 
-The candidate is not admitted until a clean pinned-image evaluation proves
-base visible-pass/private-fail, the same reference passes three official
-network-disabled runs, and every declared semantic and scope bad patch is
-rejected. No result in this package claims those pending observations.
+The clean pinned-image matrix from harness staging commit
+`8c5084eee3a44a44e207345950a9ffb45b23e4b1` satisfied the admission gate.
+The exact production reference passed three official network-disabled runs;
+the implementation-independent positive control passed once;
+base/no-op preserved all 43 base-resident visible tests and failed the
+11-case private oracle; all nine semantic partials were rejected; and the
+forbidden test edit was rejected by hidden, scope, and test-tampering checks.
+All 15 official cases made zero model/API calls. These are deterministic
+evaluator observations, not live-model or memory-effectiveness results.

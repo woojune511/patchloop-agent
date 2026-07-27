@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
-| Tests | `.venv/Scripts/python -m pytest -p no:cacheprovider` | 192 passed, 2 skipped |
+| Tests | `.venv/Scripts/python -m pytest -p no:cacheprovider` | 201 passed, 2 skipped |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus eighteen research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 18/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus nineteen research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 19/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21, FuseSoC #776, Dagster #33605 and Kubeflow Pipelines #13112 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru #1451/#1297, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21, FuseSoC #776, Dagster #33605 and Kubeflow Pipelines #13112 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -850,6 +850,62 @@ The gate made zero model/API calls and is deterministic evaluator admission
 evidence, not live-model agent performance, memory improvement or a core
 campaign result.
 
+## Nineteenth research task admission
+
+`loguru-post-2038-local-timezone-fallback` comes from the frozen SWE-rebench
+leaderboard aggregate `test` row 209, instance `Delgan__loguru-1297`, Loguru
+issue #1291 and PR #1297. It is the fifth hard `core-same-repo` held-out task,
+pinned to base commit `e310e2029102b5d63a679a2b64501c045aa86336` and
+evaluator image
+`sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f`.
+The reference is the exact accepted `loguru/_datetime.py` production hunk;
+the benchmark changelog hunk and test patch remain evaluator-only.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_76b8e870024a49ec`, `run_44fcae6e680445ed`, `run_f3de06b5c7d24af7` | full success ×3 | 3/3 success, `official=true` |
+| equivalent `utcfromtimestamp` solution | `run_9c5e228c646442a3` | implementation-independent full success | accepted |
+| base/no-op | `run_5643e3746f804cb7` | 43 visible pass, hidden fail | rejected |
+| always use fallback | `run_cc840d2e13634aa3` | valid platform metadata preservation fail | regression and hidden fail |
+| catch all local-time exceptions | `run_cb02eb1400664bb8` | unsupported exception propagation fail | rejected |
+| clamp invalid offset | `run_1d2ab550b6824215` | derived offset fail | rejected |
+| fixed derived-looking fallback | `run_c6e7472411484011` | multi-profile derivation fail | rejected |
+| reverse fallback offset | `run_197650ce0f014d54` | offset direction fail | rejected |
+| discard fallback zone | `run_40744cf912f047ce` | zone-name preservation fail | rejected |
+| use UTC on invalid offset | `run_2b1157c21b434842` | local offset derivation fail | rejected |
+| catch wrong local-time errors | `run_18d9696bbefb454f` | supported range-error recovery fail | rejected |
+| catch wrong timezone error | `run_9ca3c4bc27184551` | invalid offset recovery fail | rejected |
+| forbidden test edit | `run_c3e433e0ac98456f` | hidden, scope and test-tampering fail | rejected |
+
+Every reference run passed all 43 base-resident `test_datetime.py` cases and
+all 11 independently authored hidden cases. The frozen benchmark separately
+declares 34 P2P and four F2P nodes; the executed full base test module and
+declared benchmark subsets are reported without conflating their counts.
+
+The hidden oracle collects 11 subprocess cases across five test functions.
+It preserves valid negative, zero and positive platform offsets; exercises
+invalid offsets, supported range errors and each missing-field boundary; and
+propagates an unsupported `RuntimeError`. Positive, negative and date-rollover
+fallback profiles use different offsets and zone names while keeping wall
+time, UTC conversion and timestamp internally consistent. The clock double
+supports valid `now(tz=...)`, `utcfromtimestamp()`, `astimezone()` and
+`combine()` paths; the positive equivalent run proves the oracle is not tied
+to the accepted reference's exact conversion call. The `task-private-v2` spec
+binds the oracle by content hash, and both visible and hidden tests remain on
+read-only mounts while submitted production source is copied to a fresh
+writable import root.
+
+All 15 official cases ran from clean harness staging commit
+`8c5084eee3a44a44e207345950a9ffb45b23e4b1` with Docker networking disabled
+and read-only root and submitted filesystems. The external image has no
+configured `User` and ran as Docker's default root user. The
+[Loguru timezone-fallback admission report](../reports/docker-gate/research-loguru-post-2038-local-timezone-fallback.json)
+binds every patch, manifest, result and provenance hash and has SHA-256
+`sha256:044655debc7255549e8ba49cdfc339c6a0d04f2fdab3b983017efcbc7c38ffbc`.
+The gate made zero model/API calls and is deterministic evaluator admission
+evidence, not live-model agent performance, memory improvement or a core
+campaign result.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -860,6 +916,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 18/20, and the stress sentinels are 0/3. The 23-entry registry
-has no contract or content-hash errors; it remains `draft` because the remaining two research tasks
-are not admitted. No live OpenAI request or paid campaign was made.
+calibration is 5/5, admitted research is 19/20, and the stress sentinels are 0/3. The 24-entry registry
+has no contract or content-hash errors; it remains `draft` because one research task is not admitted.
+No live OpenAI request or paid campaign was made.

@@ -14,8 +14,9 @@ SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 
 development-validation task로, SQLGlot #7187, Param #1117, MTPLX #21, FuseSoC #776,
 Dagster #33605와 Kubeflow Pipelines #13112를
 core-cross-repo task로,
-PDM #3759, AnyIO #1134, Hugging Face Hub #4056과 tox #3846/#3851을 core-same-repo task로
-admission했다. 실제 OpenAI 96-run campaign과 나머지 2개 research task는 아직 완료하지 않았다.
+Loguru #1297, PDM #3759, AnyIO #1134, Hugging Face Hub #4056과 tox #3846/#3851을
+core-same-repo task로 admission했다. 실제 OpenAI 96-run campaign과 나머지 1개 research
+task는 아직 완료하지 않았다.
 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 

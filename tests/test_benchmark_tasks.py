@@ -3329,12 +3329,15 @@ def test_loguru_timezone_candidate_is_traceable_to_frozen_rebench_row() -> None:
     assert candidate["f2p"] == "4"
     assert candidate["p2p"] == "34"
     assert candidate["proposed_lane"] == "core-same-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f"
     )
     assert "row 209" in candidate["notes"]
-    assert "admission still pending" in candidate["notes"]
+    assert "passed 3/3 official runs" in candidate["notes"]
+    assert "all 43 visible tests" in candidate["notes"]
+    assert "utcfromtimestamp equivalent passed 1/1" in candidate["notes"]
+    assert "all 15 cases made zero model/API calls" in candidate["notes"]
 
 
 def test_loguru_timezone_reference_is_exact_production_patch() -> None:
@@ -3436,11 +3439,12 @@ def test_loguru_timezone_oracle_and_bad_patch_inventory_are_explicit() -> None:
     )
 
     audit_text = (LOGURU_TIMEZONE_TASK / "audit.md").read_text(encoding="utf-8")
-    assert "candidate; official Docker matrix pending" in audit_text
+    assert "admitted as the fifth `core-same-repo` task" in audit_text
     assert "11 independent parameter cases" in audit_text
     assert "positive, negative, and date-rollover-derived offsets" in audit_text
     assert "one no-op, nine semantic partials" in audit_text
     assert "positive control for\nimplementation independence" in audit_text
+    assert "All 15 official cases made zero model/API calls" in audit_text
 
 
 def test_loguru_timezone_private_v2_rejects_hidden_oracle_mutation(
@@ -3475,3 +3479,175 @@ def test_loguru_timezone_lineage_is_distinct_from_memory_development_task() -> N
     assert "PR #1451" in audit_text
     assert "platform conversion failures" in audit_text
     assert "formatting catch" in audit_text
+
+
+def test_loguru_timezone_admission_evidence_binds_fallback_boundaries() -> None:
+    package = load_task_package(LOGURU_TIMEZONE_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_SAME_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_SAME_REPO
+    assert entry.failure_pattern_id == "platform-timezone-fallback-boundary"
+    assert entry.solution_lineage_id == "delgan-loguru-pr-1297"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 10
+
+    evidence_path = Path(
+        "reports/docker-gate/research-loguru-post-2038-local-timezone-fallback.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == (
+        entry.admission_evidence.sha256
+    )
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == (
+        package.public.repository.base_commit
+    )
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "8c5084eee3a44a44e207345950a9ffb45b23e4b1"
+    )
+    assert evidence["reference_policy"]["kind"] == (
+        "exact-upstream-production-only"
+    )
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is (
+        False
+    )
+    assert evidence["source"]["benchmark_production_patch_sha256"] == (
+        package.private.reference_patch.sha256
+    )
+    assert evidence["source"]["benchmark_gold_patch_sha256"] == (
+        "sha256:62b087dc93f025037988b181ec3afea2b065fb07cbe7a9f2ec3b85f65ff886eb"
+    )
+    assert evidence["source"]["benchmark_test_patch_sha256"] == (
+        "sha256:4d90ad03fbce47a347aa7dbb83d85596d2867052eb53aa31c049ae6aec945432"
+    )
+    assert evidence["source"]["private_hidden_artifact_sha256"] == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    assert evidence["source"]["base_source_blob_sha1"] == {
+        "loguru/_datetime.py": "52fffc3b7ed9022f3f2d3974c3015f2b14d83b29"
+    }
+    assert evidence["source"]["accepted_source_blob_sha1"] == {
+        "loguru/_datetime.py": "d9b132514a3ee358236a722a94fed4e4369bd2ff"
+    }
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 10
+    assert evidence["semantic_bad_patch_rejection_count"] == 9
+    assert evidence["independent_hidden_test_count"] == 11
+    assert evidence["independent_hidden_test_function_count"] == 5
+    assert evidence["benchmark_f2p_declared_count"] == 4
+    assert evidence["benchmark_p2p_declared_count"] == 34
+    assert evidence["upstream_regression_test_count"] == 43
+    assert evidence["upstream_regression_collected_count"] == 43
+    assert evidence["upstream_regression_deselected_count"] == 0
+    assert evidence["official_run_count"] == 15
+    assert evidence["equivalent_solution_pass_count"] == 1
+    assert evidence["api_calls"] == 0
+    assert evidence["model_cost_usd"] == 0
+    assert evidence["runtime"]["working_directory"] == "/workspace"
+    assert evidence["runtime"]["network"] == "none"
+    assert evidence["runtime"]["root_filesystem"] == "read-only"
+    assert evidence["runtime"]["workspace_mount"] == "read-only"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 15
+    assert len({case["run_id"] for case in cases.values()}) == 15
+    assert {case["run_id"] for case in cases.values()} == {
+        "run_76b8e870024a49ec",
+        "run_44fcae6e680445ed",
+        "run_f3de06b5c7d24af7",
+        "run_9c5e228c646442a3",
+        "run_5643e3746f804cb7",
+        "run_cc840d2e13634aa3",
+        "run_cb02eb1400664bb8",
+        "run_1d2ab550b6824215",
+        "run_c6e7472411484011",
+        "run_197650ce0f014d54",
+        "run_40744cf912f047ce",
+        "run_2b1157c21b434842",
+        "run_18d9696bbefb454f",
+        "run_9ca3c4bc27184551",
+        "run_c3e433e0ac98456f",
+    }
+    assert all(case["official"] for case in cases.values())
+    for case in cases.values():
+        patch_path = LOGURU_TIMEZONE_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        assert case["observed_success"] is case["expected_success"]
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    assert cases["equivalent-utcfromtimestamp"]["observed_success"] is True
+    assert cases["base-noop"]["failed_checks"] == [
+        "hidden:local-timezone-fallback"
+    ]
+    assert cases["always-fallback"]["failed_checks"] == [
+        "regression:upstream-datetime-regression",
+        "hidden:local-timezone-fallback",
+    ]
+    for case_name in (
+        "broad-localtime-exception",
+        "clamp-invalid-offset",
+        "fixed-derived-fallback",
+        "reversed-fallback-offset",
+        "unnamed-fallback-zone",
+        "utc-on-invalid-offset",
+        "wrong-localtime-exceptions",
+        "wrong-timezone-exception",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:local-timezone-fallback"
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:local-timezone-fallback",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
+    assert evidence["admission_checks"]["base_visible_checks"] == "pass"
+    assert evidence["admission_checks"]["base_hidden_acceptance"] == "fail"
+    for check_id in (
+        "reference_scrr_three_repetitions",
+        "known_bad_boundaries",
+        "submitted_source_binding",
+        "valid_platform_timezone_metadata_preserved",
+        "invalid_positive_and_negative_offsets_fallback",
+        "localtime_range_errors_fallback",
+        "missing_timezone_fields_fallback",
+        "derived_positive_negative_and_rollover_offsets",
+        "derived_timezone_name_preserved",
+        "local_wall_clock_and_microseconds_preserved",
+        "unsupported_localtime_exception_propagates",
+        "broad_exception_handler_rejected",
+        "utcfromtimestamp_equivalent_solution",
+        "exact_upstream_production_lineage",
+        "benchmark_changelog_hunk_excluded",
+        "benchmark_test_patch_excluded",
+        "private_v2_hidden_artifact_bound",
+        "visible_test_read_only",
+        "hidden_oracle_read_only",
+        "test_tampering_path_recognition",
+        "same_repository_solution_lineage_is_distinct",
+        "public_private_separation",
+        "no_new_dependency",
+        "public_api_unchanged",
+        "network_disabled_evaluator",
+        "read_only_root_filesystem",
+        "read_only_submitted_workspace",
+        "immutable_source_commit",
+        "immutable_evaluator_image",
+        "exact_sha_shallow_checkout",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"

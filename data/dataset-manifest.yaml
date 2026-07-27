@@ -795,6 +795,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 11
 
+  - task_id: loguru-post-2038-local-timezone-fallback
+    task_version: 1
+    path: tasks/same-repo-heldout/loguru-post-2038-local-timezone-fallback
+    role: core-same-repo
+    admission_state: admitted
+    public_spec_hash: sha256:2909dda08ddd9b5fff00707708c9e14af747bb8c0d76ff357b5095c9c0784119
+    private_spec_hash: sha256:5096ac314ee32ede47a740c2ecb9d022886bfa67d9255b03e372f5f8d536463b
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: Delgan__loguru-1297
+      upstream_repository: Delgan/loguru
+      issue_url: https://github.com/Delgan/loguru/issues/1291
+      pull_request_url: https://github.com/Delgan/loguru/pull/1297
+      upstream_base_commit: e310e2029102b5d63a679a2b64501c045aa86336
+      resolution_commit: 258326b747761a5c2430161b9f52b04bd7644014
+      license_spdx: MIT
+      retrieved_at: 2026-07-27T20:31:11Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.delgan_1776_loguru-1297@sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must preserve valid platform timezone metadata while recovering from invalid offsets, supported localtime range failures and missing fields through a derived fallback that retains offset, zone name, local wall-clock fields and microseconds.
+    failure_pattern_id: platform-timezone-fallback-boundary
+    solution_lineage_id: delgan-loguru-pr-1297
+    admission_evidence:
+      path: reports/docker-gate/research-loguru-post-2038-local-timezone-fallback.json
+      sha256: sha256:044655debc7255549e8ba49cdfc339c6a0d04f2fdab3b983017efcbc7c38ffbc
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 10
+
   - task_id: dagster-subset-partition-definition-selection
     task_version: 1
     path: tasks/cross-repo-heldout/dagster-subset-partition-definition-selection
