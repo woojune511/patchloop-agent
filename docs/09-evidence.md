@@ -1,4 +1,4 @@
-# Implementation evidence — through 2026-07-27
+# Implementation evidence — through 2026-07-28
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
-| Tests | `.venv/Scripts/python -m pytest -ra -p no:cacheprovider` | 162 pass, 2 skipped; all fifteen research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -ra -p no:cacheprovider` | 169 pass, 2 skipped; all sixteen research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus fifteen research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 15/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus sixteen research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 16/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21 and FuseSoC #776 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21 and FuseSoC #776 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -698,6 +698,60 @@ binds the run manifests, results, provenance records and patch hashes. Its
 SHA-256 is
 `cef87dda16402d874b28264fcbed5bba2acf07736800c5fd297d812112081918`.
 
+## Sixteenth research task admission
+
+`tox-dotted-version-factor-base-python` comes from SWE-rebench leaderboard
+instance `tox-dev__tox-3846`, tox issue #3845 and PR #3846, plus follow-up
+regression issue #3850 and PR #3851. It is the fourth hard
+`core-same-repo` held-out task, pinned to base commit
+`ae05f2a33ccfe52ff22ac578ec6c8eb9f750ce4a` and evaluator image
+`sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc`.
+The benchmark patch recognizes bare `2.N` and `3.N` factors inside compound
+environment names. Its accepted release immediately regressed names containing
+multiple Python-like factors because extraction raised before
+`ignore_base_python_conflict` could apply. PatchLoop therefore combines the
+accepted #3846 grammar and #3851 conflict-policy production changes as its
+hardened reference and retains each PR in isolation as a known-bad partial.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| hardened #3846 + #3851 reference | `run_41553bac68ee4214`, `run_6917e86f2f2a4a20`, `run_0fd0206fb8144eb9` | full success ×3 | 3/3 success, `official=true` |
+| base/no-op | `run_4bd98e35f36c4fe7` | visible pass, hidden fail | rejected |
+| exact #3846 only | `run_a64d4e9fd59c4f6f` | follow-up conflict policy fail | rejected |
+| exact #3851 only | `run_a4d76dfa461c420e` | dotted-factor grammar fail | rejected |
+| major restriction only | `run_cf5d23ef8f1047e4` | compound factor fail | rejected |
+| explicit factors only | `run_2ffd9b9ee3ad4931` | classic-factor regression | regression and hidden fail |
+| first match wins | `run_0274332691db4949` | ambiguity detection fail | regression and hidden fail |
+| ignore all validation conflicts | `run_b17cf94c4e404256` | older single-factor contract fail | regression and hidden fail |
+| default-only ignore handling | `run_8b68477a7bc542dc` | validation path fail | rejected |
+| validation-only ignore handling | `run_0499c984ec814e1c` | default path fail | rejected |
+| threaded suffix stripped | `run_60fb1826103d45bf` | free-threaded factor fail | rejected |
+| dotted major range too broad | `run_7d153b8ec0e44c95` | non-Python major guard fail | regression and hidden fail |
+| forbidden test edit | `run_4efaa4b1bbe549f6` | hidden, scope and test-tampering fail | rejected |
+
+The private oracle collects 17 cases from eight functions and binds the Python
+API to submitted source. It covers compound factor positions, free-threaded
+suffixes, classic factors, whole-name CPython/PyPy normalization, rejection of
+major versions 4 and above, ambiguity diagnostics, both ignore-policy entry
+points and the older single-factor override contract. It deliberately does not
+require compound `qa-pypy-3.10`, which the accepted grammar splits into two
+recognized factors.
+
+The registered visible check covers 101 of 110 declared P2P nodes. Nine
+deterministic environment-incompatible nodes are deselected; because one pytest
+node prefix also removes two healthy siblings, those exact cases run in a
+second invocation. The observed total is therefore 99 + 2 passing cases.
+
+All 15 official runs came from clean harness commit
+`678d30a50ae27cb48623c1fbe5bc04bb65d34bad`. The
+[tox dotted-factor admission report](../reports/docker-gate/research-tox-dotted-version-factor-base-python.json)
+binds patch, manifest, result and provenance hashes and has SHA-256
+`sha256:216ccfd1f9017ca499c9902ac857a2e6d4ebc0dca1aeb1aff04e9af396485fe6`.
+The gate made zero model/API calls and is deterministic
+evaluator evidence, not live-model agent performance or a core campaign result.
+The external image has no configured `User` and ran as Docker's default root
+user under the network-disabled, read-only evaluator boundary.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -708,6 +762,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 15/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 5 research tasks are not
+calibration is 5/5, admitted research is 16/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 4 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

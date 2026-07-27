@@ -147,3 +147,17 @@ that writes beneath the read-only submitted workspace. All 13 containers ran wit
 with read-only root and submitted filesystems. This is deterministic evaluator admission evidence,
 not agent performance. The image has no configured user, so Docker used its default root user. The
 report SHA-256 is `cef87dda16402d874b28264fcbed5bba2acf07736800c5fd297d812112081918`.
+
+`research-tox-dotted-version-factor-base-python.json` records the sixteenth research admission and
+fourth core-same-repo held-out task. It pins SWE-rebench leaderboard instance
+`tox-dev__tox-3846`, base commit `ae05f2a3...` and image `sha256:269a3255...`. Because accepted PR
+#3846 immediately regressed real multiple-factor names, the hardened one-file reference combines its
+factor grammar with accepted follow-up PR #3851's conflict-policy handling. On clean harness commit
+`678d30a5...`, that reference passed three official evaluations. Base/no-op and all ten semantic
+partials failed the 17-case independent oracle; four semantic partials also failed visible regression,
+and one forbidden test edit additionally failed scope and test-tampering checks. The visible check
+covers 101 of 110 declared P2P nodes through a 99-case primary invocation plus two explicitly
+re-included healthy siblings. All 15 runs were `official=true` and made zero model/API calls. This is
+deterministic evaluator admission evidence, not agent performance or a live-model core result. The
+image has no configured `User`, so Docker used its default root user. The report SHA-256 is
+`216ccfd1f9017ca499c9902ac857a2e6d4ebc0dca1aeb1aff04e9af396485fe6`.

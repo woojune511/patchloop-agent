@@ -2269,12 +2269,12 @@ def test_tox_dotted_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
     assert candidate["f2p"] == "7"
     assert candidate["p2p"] == "110"
     assert candidate["proposed_lane"] == "core-same-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc"
     )
-    assert "upstream PR #3851" in candidate["notes"]
-    assert "101 of 110" in candidate["notes"]
+    assert "hardened #3846+#3851 reference 3/3" in candidate["notes"]
+    assert "99 plus two exact prefix-overlap rechecks" in candidate["notes"]
 
 
 def test_tox_dotted_candidate_has_pinned_real_repository_provenance() -> None:
@@ -2402,9 +2402,151 @@ def test_tox_dotted_oracle_and_bad_patch_inventory_are_explicit() -> None:
     assert (TOX_DOTTED_TASK / "bad/noop.patch").read_bytes() == b"\n"
 
     audit_text = (TOX_DOTTED_TASK / "audit.md").read_text(encoding="utf-8")
-    assert "proposed `core-same-repo`" in audit_text
+    assert "admitted `core-same-repo`" in audit_text
     assert "exact #3846 production patch" in audit_text
     assert "PR #3851" in audit_text
     assert "101" in audit_text
     assert "nine" in audit_text
-    assert "Admission remains pending" in audit_text
+    assert "All 15 runs used clean harness commit" in audit_text
+    assert "216ccfd1f9017ca499c9902ac857a2e6d4ebc0dca1aeb1aff04e9af396485fe6" in (
+        audit_text
+    )
+
+
+def test_tox_dotted_admission_evidence_binds_followup_policy_boundaries() -> None:
+    package = load_task_package(TOX_DOTTED_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_SAME_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_SAME_REPO
+    assert (
+        entry.failure_pattern_id
+        == "compound-dotted-factor-conflict-before-policy"
+    )
+    assert entry.solution_lineage_id == "tox-dev-pr-3846-followup-3851"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 11
+
+    evidence_path = Path(
+        "reports/docker-gate/research-tox-dotted-version-factor-base-python.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == entry.admission_evidence.sha256
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == package.public.repository.base_commit
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "678d30a50ae27cb48623c1fbe5bc04bb65d34bad"
+    )
+    assert evidence["reference_policy"]["kind"] == (
+        "hardened-accepted-upstream-union-production-only"
+    )
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is True
+    assert evidence["source"]["follow_up_pull_request_url"].endswith("/pull/3851")
+    assert evidence["source"]["resolution_commit"] == (
+        "5e1db72ea6e4dbef2dfedaaf6a27de11f3820973"
+    )
+    assert evidence["source"]["benchmark_gold_patch_sha256"] == (
+        "sha256:064fb6156cd9f3b2cda17dfad95f00e7ae8eca598755bc8bcdce282beaf84c85"
+    )
+    assert evidence["source"]["benchmark_test_patch_sha256"] == (
+        "sha256:bacf75f3e975c41a2ff1f150595b1f071a882d63818ec190854aae38ea091bd6"
+    )
+    assert evidence["source"]["accepted_source_blob_sha1"] == {
+        "base": "f06242261e512f6c6970f510920c79e26ac3ec45",
+        "after_pr_3846": "24798ea789a53ec4cb354b49f94bea31deac78bf",
+        "after_pr_3851": "b0093787b1e0ddde421385c350f82745ec447649",
+    }
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 11
+    assert evidence["semantic_bad_patch_rejection_count"] == 10
+    assert evidence["independent_hidden_test_count"] == 17
+    assert evidence["independent_hidden_test_function_count"] == 8
+    assert evidence["benchmark_f2p_declared_count"] == 7
+    assert evidence["benchmark_p2p_declared_count"] == 110
+    assert evidence["upstream_regression_test_count"] == 101
+    assert evidence["upstream_regression_collected_count"] == 110
+    assert evidence["upstream_regression_deselected_count"] == 9
+    assert evidence["upstream_regression_prefix_overlap_reincluded_count"] == 2
+    assert evidence["runtime"]["working_directory"] == "/workspace"
+    assert evidence["runtime"]["image_working_directory"] == "/testbed"
+    assert evidence["runtime"]["python_version"] == "3.13.13"
+    assert evidence["runtime"]["pytest_version"] == "9.0.3"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 15
+    assert len({case["run_id"] for case in cases.values()}) == 15
+    assert all(case["official"] for case in cases.values())
+    for case in cases.values():
+        patch_path = TOX_DOTTED_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        assert case["observed_success"] is case["expected_success"]
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    for case_name in (
+        "base-noop",
+        "exact-3846-partial",
+        "exact-3851-partial",
+        "restrict-major-only",
+        "ignore-default-only",
+        "ignore-validation-only",
+        "strip-compound-threaded",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:dotted-version-factor-contract"
+        ]
+    for case_name in (
+        "explicit-only-regresses-classic",
+        "first-match-no-conflict",
+        "ignore-all-validation-conflicts",
+        "wide-major-compound",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "regression:upstream-python-api-regression",
+            "hidden:dotted-version-factor-contract",
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:dotted-version-factor-contract",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
+    assert evidence["admission_checks"]["base_visible_checks"] == "pass"
+    assert evidence["admission_checks"]["base_hidden_acceptance"] == "fail"
+    for check_id in (
+        "reference_scrr_three_repetitions",
+        "known_bad_boundaries",
+        "submitted_source_binding",
+        "compound_dotted_factor_positions",
+        "free_threaded_suffix_preserved",
+        "classic_and_whole_name_factors_preserved",
+        "non_python_major_versions_rejected",
+        "multiple_factor_conflict_preserved",
+        "ignore_default_fallback",
+        "ignore_validation_preservation",
+        "single_factor_override_contract_preserved",
+        "exact_pr_3846_partial_rejected",
+        "exact_pr_3851_partial_rejected",
+        "hardened_followup_lineage",
+        "benchmark_test_patch_excluded",
+        "benchmark_p2p_execution_difference_disclosed",
+        "same_repository_solution_lineage_is_distinct",
+        "public_private_separation",
+        "network_disabled_evaluator",
+        "read_only_submitted_workspace",
+        "immutable_source_commit",
+        "immutable_evaluator_image",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"

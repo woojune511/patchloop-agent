@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The fifteen admitted research tasks are:
+The sixteen admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -138,12 +138,22 @@ The fifteen admitted research tasks are:
   the remaining 12 with the testbed environment on `PATH`. The external image has no configured
   `User` and therefore ran as Docker's default root user while retaining network denial and read-only
   root and submitted filesystems.
+- `tox-dotted-version-factor-base-python`, derived from SWE-rebench leaderboard instance
+  `tox-dev__tox-3846` and upstream tox issue #3845 / PR #3846, hardened with the accepted
+  regression follow-up issue #3850 / PR #3851. The one-file reference recognizes bare dotted
+  Python factors inside compound environment names while preserving ambiguity errors and both
+  `ignore_base_python_conflict` paths. It records three official reference passes, one base/no-op
+  hidden failure, ten semantic partial rejections and one scope/test-tampering rejection. The
+  independent oracle runs 17 cases. The visible gate covers 101 of 110 base-resident declared P2P
+  nodes: Pytest's prefix deselection initially runs 99, then two healthy prefix-sharing hash-seed
+  nodes are rechecked explicitly.
 
-All fifteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
-SWE-rebench evaluator image. Seven are MIT licensed, including both PDM tasks, both AnyIO tasks and
-SQLGlot; both Hugging Face Hub tasks, pyfakefs, Moto and MTPLX are Apache-2.0; Babel and Param are
+All sixteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+SWE-rebench evaluator image. Eight are MIT licensed: Loguru, both PDM tasks, both AnyIO tasks,
+both tox tasks and SQLGlot. Both Hugging Face Hub tasks, pyfakefs, Moto and MTPLX are Apache-2.0;
+Babel and Param are
 BSD-3-Clause; FuseSoC is BSD-2-Clause. Together with the five calibration fixtures, the curated
-manifest currently contains 20 task entries.
+manifest currently contains 21 task entries.
 
 ## Research dataset target
 
@@ -153,9 +163,9 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | --- | ---: | --- | ---: |
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
-| Core same-repo | 6 | prohibited | 3 |
+| Core same-repo | 6 | prohibited | 4 |
 | Core cross-repo | 6 | prohibited | 4 |
-| **Research total** | **20** |  | **15** |
+| **Research total** | **20** |  | **16** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

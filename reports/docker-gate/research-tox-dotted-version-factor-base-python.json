@@ -1,0 +1,351 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-28",
+  "task_id": "tox-dotted-version-factor-base-python",
+  "task_version": 1,
+  "dataset_role": "core-same-repo",
+  "split": "same-repo-heldout",
+  "source": {
+    "benchmark_family": "SWE-rebench-leaderboard",
+    "benchmark_revision": "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b",
+    "benchmark_split": "2026_03",
+    "benchmark_row": 42,
+    "benchmark_instance_id": "tox-dev__tox-3846",
+    "upstream_repository": "tox-dev/tox",
+    "issue_url": "https://github.com/tox-dev/tox/issues/3845",
+    "pull_request_url": "https://github.com/tox-dev/tox/pull/3846",
+    "follow_up_issue_url": "https://github.com/tox-dev/tox/issues/3850",
+    "follow_up_pull_request_url": "https://github.com/tox-dev/tox/pull/3851",
+    "base_commit": "ae05f2a33ccfe52ff22ac578ec6c8eb9f750ce4a",
+    "base_tree": "b3844c56ae1eaad3c77231d079b9de92c81074f6",
+    "pr_head_commit": "0971603a6f1e14cb8cba2d294b1b887f2e2c2d6b",
+    "pr_head_tree": "0ff2d5177e64aa6279e870e89b5936b51b4a99a1",
+    "upstream_squash_merge_commit": "225e22835d121582560feebe52098190712babb5",
+    "follow_up_base_commit": "20ed7c31062df4fa21ecef286513483ee7a0c7ff",
+    "follow_up_base_tree": "3567e7b3144f0820c16ec13b3bb4133ce74e1a08",
+    "follow_up_head_commit": "630c09e0dab517409bc90c17fff6df4066a17180",
+    "follow_up_head_tree": "85cd381bda9f6ad6e449c73a29d10ed84c9f1155",
+    "follow_up_squash_merge_commit": "5e1db72ea6e4dbef2dfedaaf6a27de11f3820973",
+    "resolution_commit": "5e1db72ea6e4dbef2dfedaaf6a27de11f3820973",
+    "resolution_tree": "03b491ffcbb36d943b2f7886fa6d1b47edbdff8c",
+    "license_spdx": "MIT",
+    "license_blob_sha1": "364982344fbd94d55705e1f27a9a87abaa255333",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_gold_patch_sha256": "sha256:064fb6156cd9f3b2cda17dfad95f00e7ae8eca598755bc8bcdce282beaf84c85",
+    "benchmark_production_patch_sha256": "sha256:70fe1552f895102cc50e2d29b28f890a9061e4d74e17577fa2ca122fd60d1df2",
+    "benchmark_test_patch_sha256": "sha256:bacf75f3e975c41a2ff1f150595b1f071a882d63818ec190854aae38ea091bd6",
+    "accepted_source_blob_sha1": {
+      "base": "f06242261e512f6c6970f510920c79e26ac3ec45",
+      "after_pr_3846": "24798ea789a53ec4cb354b49f94bea31deac78bf",
+      "after_pr_3851": "b0093787b1e0ddde421385c350f82745ec447649"
+    }
+  },
+  "reference_policy": {
+    "kind": "hardened-accepted-upstream-union-production-only",
+    "primary_partial_patch": "bad/exact-3846-partial.patch",
+    "primary_partial_patch_sha256": "sha256:70fe1552f895102cc50e2d29b28f890a9061e4d74e17577fa2ca122fd60d1df2",
+    "follow_up_partial_patch": "bad/exact-3851-partial.patch",
+    "follow_up_partial_patch_sha256": "sha256:35b6b5f1fd30b30de4d5e638995983abb4a3c8ed378ac78a1180e63b737d02a3",
+    "excluded_upstream_files": [
+      "docs/changelog/3845.bugfix.rst",
+      "docs/changelog/3850.bugfix.rst",
+      "docs/reference/config.rst",
+      "tests/tox_env/python/test_python_api.py"
+    ],
+    "rejected_benchmark_production_patch": true,
+    "rationale": "PR #3846 introduced compound dotted-factor recognition but immediately exposed a real conflict-policy regression. The hardened reference normalizes the accepted production hunks from PR #3846 and PR #3851 onto the frozen benchmark base. Both exact partials remain known-bad cases, and all upstream documentation and tests remain evaluator-only."
+  },
+  "public_spec_hash": "sha256:1e05ada1d2812b270851bb9770ad6071629cb48dff1114d908a197085605b3f9",
+  "private_spec_hash": "sha256:80bf4aa66ed0247cacad1bcd772de4de90ebcdafa48b64ea924330a53cf341e1",
+  "harness_git_commit": "678d30a50ae27cb48623c1fbe5bc04bb65d34bad",
+  "evaluator_image": "swerebench/sweb.eval.x86_64.tox-dev_1776_tox-3846@sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc",
+  "evaluator_image_digest": "sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/workspace",
+    "image_working_directory": "/testbed",
+    "submitted_workspace": "/workspace",
+    "python_version": "3.13.13",
+    "pytest_version": "9.0.3",
+    "network": "none",
+    "workspace_mount": "read-only",
+    "execution_user": "image-default-root"
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 11,
+  "semantic_bad_patch_rejection_count": 10,
+  "independent_hidden_test_count": 17,
+  "independent_hidden_test_function_count": 8,
+  "benchmark_f2p_declared_count": 7,
+  "benchmark_p2p_declared_count": 110,
+  "benchmark_patch_added_f2p_count": 7,
+  "benchmark_patch_added_p2p_count": 0,
+  "upstream_regression_test_count": 101,
+  "upstream_regression_collected_count": 110,
+  "upstream_regression_deselected_count": 9,
+  "upstream_regression_prefix_overlap_reincluded_count": 2,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "compound_dotted_factor_positions": "pass",
+    "free_threaded_suffix_preserved": "pass",
+    "classic_and_whole_name_factors_preserved": "pass",
+    "non_python_major_versions_rejected": "pass",
+    "multiple_factor_conflict_preserved": "pass",
+    "ignore_default_fallback": "pass",
+    "ignore_validation_preservation": "pass",
+    "single_factor_override_contract_preserved": "pass",
+    "exact_pr_3846_partial_rejected": "pass",
+    "exact_pr_3851_partial_rejected": "pass",
+    "hardened_followup_lineage": "pass",
+    "benchmark_test_patch_excluded": "pass",
+    "benchmark_p2p_execution_difference_disclosed": "pass",
+    "same_repository_solution_lineage_is_distinct": "pass",
+    "public_api_unchanged": "pass",
+    "public_private_separation": "pass",
+    "no_new_dependency": "pass",
+    "network_disabled_evaluator": "pass",
+    "read_only_submitted_workspace": "pass",
+    "external_image_default_user_disclosed": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "utf8_patch_evidence": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_41553bac68ee4214",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:3245865999cca1398bc922389d93f9f92d8729da19423fcda7e23a0275d4bb37",
+      "manifest_sha256": "sha256:4eaeb121c6bb71773e34497e9ae16caa798114748582c39cfb9e4e5a74156fe9",
+      "result_sha256": "sha256:909969514fd1e1ae63ddc3f794aa3fa137699757ec12ed43550cc5e90e9149ae",
+      "provenance_sha256": "sha256:92df9778b00f50dc803e7b018e958ff39786a3bf44b97069dd2ec857c22001ef"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_6917e86f2f2a4a20",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:3245865999cca1398bc922389d93f9f92d8729da19423fcda7e23a0275d4bb37",
+      "manifest_sha256": "sha256:ba36e9788349f7c06e59072f8f9eb2becd1bbc5425a11ac087bf2c80a48ea19a",
+      "result_sha256": "sha256:dbece5cd8e0767619ad74ccf5037ded859a52b88400c37234e33da48f3ef3e1a",
+      "provenance_sha256": "sha256:92df9778b00f50dc803e7b018e958ff39786a3bf44b97069dd2ec857c22001ef"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_0fd0206fb8144eb9",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:3245865999cca1398bc922389d93f9f92d8729da19423fcda7e23a0275d4bb37",
+      "manifest_sha256": "sha256:7b3c125dd7b3f90d62cb8ceddb22bcad8f0dc5939810e00f364cf8b989a7a284",
+      "result_sha256": "sha256:d6252e3955aa4041d69a98eb6daecf06912ec3376760d544b4a26ea4569d9919",
+      "provenance_sha256": "sha256:92df9778b00f50dc803e7b018e958ff39786a3bf44b97069dd2ec857c22001ef"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_4bd98e35f36c4fe7",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:f8b07efd8edfb6cd740b2f8e73c1c7049a74e6847c76de2b4fd3aee2bab0ff00",
+      "result_sha256": "sha256:d708ec5c434e717e460844bd62648685e85c6fad83e8fd02b99c77106eb6326b",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "exact-3846-partial",
+      "patch": "bad/exact-3846-partial.patch",
+      "run_id": "run_a64d4e9fd59c4f6f",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:70fe1552f895102cc50e2d29b28f890a9061e4d74e17577fa2ca122fd60d1df2",
+      "manifest_sha256": "sha256:241b890eccd085b7cf7cd2b3a509d3e66b3af143f3473bea2516fb7a8d0d7f99",
+      "result_sha256": "sha256:7a3a3862379e194c9335d3fc048be8824fd0ccff94f126ab6c72c7daccfacfe4",
+      "provenance_sha256": "sha256:41c36b5abbe9eb08331bd1b6cebaf411fd407dffe70020a3c5a90df597deb383"
+    },
+    {
+      "name": "exact-3851-partial",
+      "patch": "bad/exact-3851-partial.patch",
+      "run_id": "run_a4d76dfa461c420e",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:35b6b5f1fd30b30de4d5e638995983abb4a3c8ed378ac78a1180e63b737d02a3",
+      "manifest_sha256": "sha256:bddd8585ff34739e3ee8934d614b6c42cd76ddba1a6988e4da527253a79a0b0a",
+      "result_sha256": "sha256:b17321f1bcf5f274f0942152343691b7a6267368511af3bab531f52c2e3b9ad0",
+      "provenance_sha256": "sha256:c9db0114e14caf0da01808493c6dd9099ac4b08dfea42f723c148449617eb65c"
+    },
+    {
+      "name": "restrict-major-only",
+      "patch": "bad/restrict-major-only.patch",
+      "run_id": "run_cf5d23ef8f1047e4",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:9530b9d87e03f385d5e06960b121f07bb85c10368ee6210bb2636aaa8c889839",
+      "manifest_sha256": "sha256:dc78292e25582fd063e538b425deba664b6b79427d1e75b55c9a42cdc9a17e22",
+      "result_sha256": "sha256:7e4e69ed8ae0a1d2def7a4a9fb065be2b783ce4727fcd47382519ec2b01ba2ce",
+      "provenance_sha256": "sha256:39198287e20c64dec6120b9aaf80bf8d979d932a27599a3f813d2af29b176bd0"
+    },
+    {
+      "name": "explicit-only-regresses-classic",
+      "patch": "bad/explicit-only-regresses-classic.patch",
+      "run_id": "run_2ffd9b9ee3ad4931",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-python-api-regression",
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:ea81fc2be29c42652965b4c8d16c979de6a9a845d714be41577ff405cf4d3cf8",
+      "manifest_sha256": "sha256:2d558b101048fec75a8f61792a5d37d5f7d956e997aca850baf82e3891e16be3",
+      "result_sha256": "sha256:9c28bef91abe49a7d22bff185a3922a02157261e3c143defc6ec511f0b0e5a4b",
+      "provenance_sha256": "sha256:a3be47db6417cc387a286b541de2a19eb176322f3f6e1bb00022ef5586a354ab"
+    },
+    {
+      "name": "first-match-no-conflict",
+      "patch": "bad/first-match-no-conflict.patch",
+      "run_id": "run_0274332691db4949",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-python-api-regression",
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:34a91138e5f4fd732bffdd25e92458d2b82619962855790a7df797bcaf437655",
+      "manifest_sha256": "sha256:cc541c028eb94f7204d3e9433910af4c26b65c564041addbb9efe069cdcbece2",
+      "result_sha256": "sha256:ed482f039b41d99d6c9c30986b6b5ce373d4d4a532660d4f7905dc6e1ccde0d5",
+      "provenance_sha256": "sha256:8fcbf051b6631edbd9ee1b91ba23b53b41c43ba3f7655bf0fa6ec52454a88850"
+    },
+    {
+      "name": "ignore-all-validation-conflicts",
+      "patch": "bad/ignore-all-validation-conflicts.patch",
+      "run_id": "run_b17cf94c4e404256",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-python-api-regression",
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:2a1aae3ada9e4d34cd4cb5b9480b9a3c2ceb1bf9648b8ac3bc62fdd65a7a5fb5",
+      "manifest_sha256": "sha256:913f523dc9ceb0dc740fadc8fcea0eda33e9d330f6af61dbab06761ab2f0c42f",
+      "result_sha256": "sha256:b4622778c1492a843948b864b842d3d702ea8096cee26c97503f506e197abd28",
+      "provenance_sha256": "sha256:669fc1a0de334f6955cc83d9734f886ad183528710118266ed2eac764f6ea078"
+    },
+    {
+      "name": "ignore-default-only",
+      "patch": "bad/ignore-default-only.patch",
+      "run_id": "run_8b68477a7bc542dc",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:81c4faa0b5649f19fa201d3afb3c55169dea0a93d66a048be9d5ff701c5586fa",
+      "manifest_sha256": "sha256:47861a45b8c2cb672f989d34811f01b2ce9590e81892b0b71828e32b071dc7ab",
+      "result_sha256": "sha256:a6e33746689f2aceb46c2bfa42a98230290f93c9e563876222e2ab8a032ea551",
+      "provenance_sha256": "sha256:ceb3c1aa7fb3a3a14146f5becf583ad3eb1cd2e670adfff538076b3229823c11"
+    },
+    {
+      "name": "ignore-validation-only",
+      "patch": "bad/ignore-validation-only.patch",
+      "run_id": "run_0499c984ec814e1c",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:450b96e485061513aee43376f9d4a6ae9752ae71f3e13db9f529b9480f7a8eab",
+      "manifest_sha256": "sha256:0f2679852e32e9cb9173e028e9ba7e05ade1ea3d765accc97cfbee48809caf12",
+      "result_sha256": "sha256:73e05f0eba7d4b9fb2865f1b70270c26e2b2a7609bacf453d23cb5ce5b011542",
+      "provenance_sha256": "sha256:a77d6059d9e171c3d6f4dfa7c3aa5ad57c8a452a6de5146f7ef9b98a7b49acc6"
+    },
+    {
+      "name": "strip-compound-threaded",
+      "patch": "bad/strip-compound-threaded.patch",
+      "run_id": "run_60fb1826103d45bf",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:6e9d25a799968bf814975206b9729322c4ade0164566ab38aa0a0b28c8774df1",
+      "manifest_sha256": "sha256:2c585a7a4e6f64c34918d2cc20d3fa409fa44372b3316ae5d2f5ecfd317e972e",
+      "result_sha256": "sha256:7fa528dab03cea1372f3c25563b2933c3e6ba1814dfc270725d0e84e95a6d33f",
+      "provenance_sha256": "sha256:80ac982914ac97779580e534bea005dc6c471bed4f2a84aabec0add415952c2c"
+    },
+    {
+      "name": "wide-major-compound",
+      "patch": "bad/wide-major-compound.patch",
+      "run_id": "run_7d153b8ec0e44c95",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-python-api-regression",
+        "hidden:dotted-version-factor-contract"
+      ],
+      "patch_sha256": "sha256:d312edb3ec332fc03d7a987d15ee0ddc68d179eb2136b947b41ae3b84c446deb",
+      "manifest_sha256": "sha256:79b53d5ba5963a2ea86c88071a1c96f1459e0e9610950d3fdff0b7cb7d8b5806",
+      "result_sha256": "sha256:ceb711357f68ef77d55c155e0edbc6cc8e2099aacd5b3c05dba343e553addeba",
+      "provenance_sha256": "sha256:9e3ebf3e5e4b1b397e2babefd8fbc4da67be9e7696cf0d361ee5ef4502aab3e8"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_4efaa4b1bbe549f6",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:dotted-version-factor-contract",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:65f5cd5add3a595ac8deeadf79adebcdcc183c999c29513f6d394cf08f1ee290",
+      "manifest_sha256": "sha256:85e13f16319046111c75406bced9716bc70e17831df63008cca6ef14f23277d2",
+      "result_sha256": "sha256:45fa5d8bc4371aad72366c6ccd6ea6fbb1e1a7478be7866df095bc92b268b584",
+      "provenance_sha256": "sha256:d50a1dc8221a36c384d9375ddb289a44c8d74df136bde8866a87064a532e2b5a"
+    }
+  ]
+}

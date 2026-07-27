@@ -13,8 +13,9 @@ SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 
 사례 여섯 개를 memory-development task로, Moto #7208과 Babel #1042를
 development-validation task로, SQLGlot #7187, Param #1117, MTPLX #21과 FuseSoC #776을
 core-cross-repo task로,
-PDM #3759, AnyIO #1134와 Hugging Face Hub #4056을 core-same-repo task로 admission했다.
-실제 OpenAI 96-run campaign과 나머지 5개 research task는 아직 완료하지 않았다. 미실행 gate는
+PDM #3759, AnyIO #1134, Hugging Face Hub #4056과 tox #3846/#3851을 core-same-repo task로
+admission했다. 실제 OpenAI 96-run campaign과 나머지 4개 research task는 아직 완료하지 않았다.
+미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 ## 구현된 핵심 경로
@@ -55,6 +56,8 @@ public.yaml → stateless context builder → model adapter
   lookalike tag와 non-whitespace residue를 거부하는 MTPLX #21 hardened reference/oracle
 - 여러 core-file parse failure를 discovery 중 보존하고 manager·public wrapper·missing-core
   diagnostic까지 전달하는 FuseSoC #776 exact-production reference와 독립 oracle
+- compound dotted Python factor 인식과 `ignore_base_python_conflict`의 default/validation
+  경계를 함께 보존하는 tox #3846 + accepted follow-up #3851 hardened reference와 독립 oracle
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 

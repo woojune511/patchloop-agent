@@ -1,6 +1,6 @@
 # Task audit: tox-dotted-version-factor-base-python
 
-- Dataset role: proposed `core-same-repo`
+- Dataset role: admitted `core-same-repo`
 - Primary source: SWE-rebench leaderboard instance `tox-dev__tox-3846`, split
   `2026_03`
 - Frozen benchmark revision: `ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b`
@@ -61,7 +61,7 @@ accepted grammar treats `pypy` and `3.10` as separate factors in that form.
 Bare `2.N` is a valid Python-like factor and can legitimately conflict with
 another version.
 
-The draft corpus contains ten semantic partials: the exact #3846 production
+The official corpus contains ten semantic partials: the exact #3846 production
 change without its follow-up, the exact #3851 production change without the
 factor grammar, compound scanning with an overly broad major range,
 major-range restriction without compound scanning, first-match conflict
@@ -87,7 +87,50 @@ Difficulty audit:
 | Verification breadth | 2 | Main, regression, conflict, fallback, validation and legacy cases diverge independently. |
 | Total | 6 | Hard under `dataset-manifest-v1`. |
 
-Admission remains pending. It requires a clean, network-disabled Docker matrix
-showing base visible pass/private fail, three hardened-reference SCRR passes,
-rejection of the exact #3846 partial and the other semantic/scope patches, and
-content-addressed evidence. No such result is claimed by this draft.
+The clean, network-disabled official Docker matrix recorded:
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| hardened #3846 + #3851 reference | `run_41553bac68ee4214`, `run_6917e86f2f2a4a20`, `run_0fd0206fb8144eb9` | full success ×3 | 3/3 success, `official=true` |
+| base/no-op | `run_4bd98e35f36c4fe7` | visible pass, hidden fail | rejected |
+| exact #3846 without follow-up | `run_a64d4e9fd59c4f6f` | ignored-factor conflict handling fail | rejected |
+| exact #3851 without factor grammar | `run_a4d76dfa461c420e` | compound dotted-factor extraction fail | rejected |
+| restrict major only | `run_cf5d23ef8f1047e4` | compound dotted-factor extraction fail | rejected |
+| explicit factors only | `run_2ffd9b9ee3ad4931` | classic-factor regression | regression and hidden fail |
+| first match wins | `run_0274332691db4949` | conflict detection fail | regression and hidden fail |
+| ignore every validation conflict | `run_b17cf94c4e404256` | older single-factor override contract fail | regression and hidden fail |
+| ignore in default resolution only | `run_8b68477a7bc542dc` | validation conflict-policy fail | rejected |
+| ignore in validation only | `run_0499c984ec814e1c` | default-resolution conflict-policy fail | rejected |
+| strip compound threaded suffix | `run_60fb1826103d45bf` | free-threaded factor fail | rejected |
+| accept dotted major 4 and above | `run_7d153b8ec0e44c95` | non-Python dotted-factor guard fail | regression and hidden fail |
+| forbidden test edit | `run_4efaa4b1bbe549f6` | hidden, scope and test-tampering fail | rejected |
+
+The private oracle collects 17 cases from eight test functions. The registered
+visible check covers 101 of the benchmark's 110 declared P2P nodes: the first
+invocation passes 99 after nine deterministic environment-incompatible nodes
+are deselected, and a second invocation re-includes two healthy sibling nodes
+that pytest's prefix deselection also removed. Base/no-op and every semantic
+partial failed hidden acceptance; four semantic partials also failed visible
+regression. The forbidden edit passed the regression and aggregate safety
+verdicts but failed hidden acceptance, scope and test-tampering policy.
+
+All 15 runs used clean harness commit
+`678d30a50ae27cb48623c1fbe5bc04bb65d34bad`, the digest-pinned evaluator
+image and `official=true`. The public task hash is
+`sha256:1e05ada1d2812b270851bb9770ad6071629cb48dff1114d908a197085605b3f9`,
+the private task hash is
+`sha256:80bf4aa66ed0247cacad1bcd772de4de90ebcdafa48b64ea924330a53cf341e1`,
+and the hardened reference hash is
+`sha256:3245865999cca1398bc922389d93f9f92d8729da19423fcda7e23a0275d4bb37`.
+The [admission report](../../../reports/docker-gate/research-tox-dotted-version-factor-base-python.json)
+binds each patch, manifest, result and provenance artifact; its SHA-256 is
+`sha256:216ccfd1f9017ca499c9902ac857a2e6d4ebc0dca1aeb1aff04e9af396485fe6`.
+
+The external image has no configured `User`, so Docker ran it as the default
+root user. Network denial and read-only root and submitted filesystems remained
+enforced; this limitation is not conflated with the native PatchLoop image's
+separate non-root smoke.
+
+This is deterministic evaluator admission evidence with zero model calls,
+API calls, tokens and model cost. It is not a live-model task result or a core
+campaign performance measurement.

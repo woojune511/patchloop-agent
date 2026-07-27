@@ -753,6 +753,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 10
 
+  - task_id: tox-dotted-version-factor-base-python
+    task_version: 1
+    path: tasks/same-repo-heldout/tox-dotted-version-factor-base-python
+    role: core-same-repo
+    admission_state: admitted
+    public_spec_hash: sha256:1e05ada1d2812b270851bb9770ad6071629cb48dff1114d908a197085605b3f9
+    private_spec_hash: sha256:80bf4aa66ed0247cacad1bcd772de4de90ebcdafa48b64ea924330a53cf341e1
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: tox-dev__tox-3846
+      upstream_repository: tox-dev/tox
+      issue_url: https://github.com/tox-dev/tox/issues/3845
+      pull_request_url: https://github.com/tox-dev/tox/pull/3846
+      upstream_base_commit: ae05f2a33ccfe52ff22ac578ec6c8eb9f750ce4a
+      resolution_commit: 5e1db72ea6e4dbef2dfedaaf6a27de11f3820973
+      license_spdx: MIT
+      retrieved_at: 2026-07-27T14:39:20Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.tox-dev_1776_tox-3846@sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must combine compound dotted-factor grammar with both pre-policy conflict boundaries while preserving major-version filtering, free-threaded and legacy normalization, ambiguity errors, default fallback, configured-base validation and the older single-factor override contract.
+    failure_pattern_id: compound-dotted-factor-conflict-before-policy
+    solution_lineage_id: tox-dev-pr-3846-followup-3851
+    admission_evidence:
+      path: reports/docker-gate/research-tox-dotted-version-factor-base-python.json
+      sha256: sha256:216ccfd1f9017ca499c9902ac857a2e6d4ebc0dca1aeb1aff04e9af396485fe6
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 11
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1
