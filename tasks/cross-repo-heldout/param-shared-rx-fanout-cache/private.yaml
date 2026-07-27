@@ -1,0 +1,37 @@
+schema_version: task-private-v1
+task_id: param-shared-rx-fanout-cache
+task_version: 1
+hidden_checks:
+  - id: shared-rx-fanout-cache
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - .patchloop-hidden/test_shared_rx_fanout_cache.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:531f7143c3eb04494e3eae258685018c70654f4c3c403aefe10f8a5a2f700d23
+audit:
+  expected_files:
+    - param/reactive.py
+  prohibited_behaviors:
+    - caching only the first downstream consumer
+    - sharing results across independent reactive graphs
+    - reusing stale values after a source parameter changes
+    - optimizing synchronous fan-out while leaving asynchronous fan-out duplicated
+    - optimizing coroutine fan-out while leaving generator-backed fan-out duplicated
+    - suppressing or converting source exceptions
+    - reusing a shared value after attribute or method access changes branch semantics
+    - changing the public reactive API
+    - modifying tests, documentation, configuration, or dependencies

@@ -1,0 +1,16 @@
+diff --git a/tests/testreactive.py b/tests/testreactive.py
+index 0b03a10aa..e604b9864 100644
+--- a/tests/testreactive.py
++++ b/tests/testreactive.py
+@@ -773,5 +773,10 @@ def test_reactive_custom_accessor():
+ 
+ def test_reactive_set_value_attributeerror():
+     x = rx(1)
+-    with pytest.raises(AttributeError, match="'rx' has no attribute 'value'"):
++    with pytest.raises(
++        AttributeError,
++        match="'rx' has no attribute 'value'",
++    ):
+         x.value = 1
++
++    assert x.rx.value == 1

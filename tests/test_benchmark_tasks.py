@@ -8,6 +8,7 @@ from patchloop.contracts import DatasetRole
 from patchloop.dataset import require_dataset_role
 from patchloop.repository import ALLOWED_REMOTE_REPOSITORIES
 from patchloop.task_loader import load_task_package
+from patchloop.util import sha256_bytes
 
 LOGURU_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 ANYIO_TASK = Path("tasks/dev-train/anyio-interrupt-runner-cleanup")
@@ -25,6 +26,9 @@ PDM_TARGET_TASK = Path(
 )
 ANYIO_PROCESS_TASK = Path(
     "tasks/same-repo-heldout/anyio-extensionless-entrypoint-worker-main"
+)
+PARAM_TASK = Path(
+    "tasks/cross-repo-heldout/param-shared-rx-fanout-cache"
 )
 
 
@@ -1302,3 +1306,79 @@ def test_anyio_process_admission_evidence_is_exact_and_distinct() -> None:
         "policy:scope",
         "policy:test_tampering",
     ]
+
+
+def test_param_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(PARAM_TASK)
+
+    assert package.public.task_id == "param-shared-rx-fanout-cache"
+    assert package.public.split == "cross-repo-heldout"
+    assert package.public.repository.url == "https://github.com/holoviz/param.git"
+    assert (
+        package.public.repository.base_commit
+        == "833c8f05f7a47fa1476620307ef7fd447c45e6fb"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["param/reactive.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 70
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010"
+    )
+    assert package.environment.evaluator_image.endswith(f"@{package.environment.image_digest}")
+    assert package.public.visible_checks[0].environment["PYTHONPATH"] == "/workspace"
+
+
+def test_param_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(PARAM_TASK)
+    public_text = (PARAM_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_shared_rx_fanout_cache.py" not in public_text
+    assert "self._shared" not in public_text
+    assert "_is_async" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_param_candidate_is_traceable_to_screening_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["holoviz__param-1117"]
+    assert candidate["benchmark_revision"] == "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == "833c8f05f7a47fa1476620307ef7fd447c45e6fb"
+    assert candidate["pr_url"] == "https://github.com/holoviz/param/pull/1117"
+    assert candidate["license_spdx"] == "BSD-3-Clause"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "2"
+    assert candidate["p2p"] == "94"
+    assert candidate["proposed_lane"] == "core-cross-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010"
+    )
+
+
+def test_param_reference_patch_matches_frozen_benchmark_production_patch() -> None:
+    package = load_task_package(PARAM_TASK)
+    reference_patch = PARAM_TASK / package.private.reference_patch.path
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:531f7143c3eb04494e3eae258685018c70654f4c3c403aefe10f8a5a2f700d23"
+    )
+    assert sha256_bytes(reference_patch.read_bytes()) == package.private.reference_patch.sha256
+
+
+def test_reverted_pypa_build_candidate_remains_excluded() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["pypa__build-1027"]
+    assert candidate["status"] == "excluded"
+    assert "PR #1039" in candidate["notes"]
+    assert "revert" in candidate["notes"].lower()

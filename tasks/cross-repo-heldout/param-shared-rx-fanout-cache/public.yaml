@@ -1,0 +1,66 @@
+schema_version: task-public-v1
+task_id: param-shared-rx-fanout-cache
+task_version: 1
+split: cross-repo-heldout
+repository:
+  url: https://github.com/holoviz/param.git
+  base_commit: 833c8f05f7a47fa1476620307ef7fd447c45e6fb
+  language: python
+issue:
+  title: Shared reactive sources are recomputed once per downstream branch
+  description: |
+    A reactive expression can represent one expensive computation whose result
+    feeds several downstream pipelines. When multiple consumers branch from
+    that expression, evaluating the consumers currently re-runs the common
+    computation for every branch instead of reusing the shared result.
+
+    Make synchronous, coroutine, and generator-backed fan-out pipelines reuse
+    one common-source evaluation per invalidation. Repeated reads without an
+    input change must stay cached; after an input changes, all consumers must
+    observe the same newly computed value and the source must run exactly once.
+    Independent reactive graphs must not share state, and attribute or method
+    access that makes a branch semantically distinct must retain its existing
+    behavior. Preserve error propagation and the public reactive API.
+constraints:
+  allowed_paths:
+    - param/reactive.py
+  forbidden_paths:
+    - tests/**
+    - doc/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 70
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-reactive-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -rA
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - tests/testreactive.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - reactive-dag
+  - fanout
+  - cache-invalidation
+  - asynchronous-pipeline
+  - core-cross-repo
