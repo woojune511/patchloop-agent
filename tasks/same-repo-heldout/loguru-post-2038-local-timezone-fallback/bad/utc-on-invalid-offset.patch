@@ -1,0 +1,14 @@
+diff --git a/loguru/_datetime.py b/loguru/_datetime.py
+--- a/loguru/_datetime.py
++++ b/loguru/_datetime.py
+@@ -158,6 +158,9 @@ def aware_now():
+         seconds = offset.total_seconds()
+         zone = strftime("%Z")
+ 
+-    tzinfo = timezone(timedelta(seconds=seconds), zone)
++    try:
++        tzinfo = timezone(timedelta(seconds=seconds), zone)
++    except ValueError:
++        tzinfo = timezone.utc
+ 
+     return datetime.combine(now.date(), now.time().replace(tzinfo=tzinfo))

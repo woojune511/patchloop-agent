@@ -1,0 +1,41 @@
+schema_version: task-private-v2
+task_id: loguru-post-2038-local-timezone-fallback
+task_version: 1
+hidden_checks:
+  - id: local-timezone-fallback
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        cd /tmp
+        /opt/conda/envs/testbed/bin/python -m pytest \
+          --no-header -q --tb=line --color=no -p no:cacheprovider \
+          /workspace/.patchloop-hidden/test_local_timezone_fallback.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PATH: /opt/conda/envs/testbed/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+hidden_artifacts:
+  - path: hidden/test_local_timezone_fallback.py
+    sha256: sha256:11eb2b5805d1728bb941fee7a7150734843b40526f5703f2fb10a28f97b1e50b
+reference_patch:
+  path: reference.patch
+  sha256: sha256:850a97a59338efdc693016ccb96b7bfd891426fa6a0b5671e060f7830fad2cf3
+audit:
+  expected_files:
+    - loguru/_datetime.py
+  prohibited_behaviors:
+    - hard-coding UTC or an arbitrary fixed offset for fallback cases
+    - clamping an invalid platform offset instead of deriving the local offset
+    - reversing the derived local-minus-UTC offset
+    - discarding the derived local timezone name
+    - losing local wall-clock fields or microseconds
+    - ignoring valid negative, zero, or positive platform timezone metadata
+    - failing to recover from OSError or OverflowError raised by localtime
+    - failing to recover when either platform timezone field is unavailable
+    - swallowing unsupported localtime exceptions with an overly broad catch
+    - changing tests, documentation, configuration, or dependencies

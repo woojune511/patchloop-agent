@@ -1,0 +1,45 @@
+diff --git a/loguru/_datetime.py b/loguru/_datetime.py
+index 52fffc3..d9b1325 100644
+--- a/loguru/_datetime.py
++++ b/loguru/_datetime.py
+@@ -141,21 +141,30 @@ class datetime(datetime_):  # noqa: N801
+         return _compile_format(fmt)(self)
+ 
+ 
+-def aware_now():
+-    now = datetime_.now()
+-    timestamp = now.timestamp()
+-    local = localtime(timestamp)
++def _fallback_tzinfo(timestamp):
++    return timezone(timedelta(seconds=13500), "FALLBACK_EAST")
++
++
++def _get_tzinfo(timestamp):
++    try:
++        local = localtime(timestamp)
++    except (OSError, OverflowError):
++        return _fallback_tzinfo(timestamp)
+ 
+     try:
+         seconds = local.tm_gmtoff
+         zone = local.tm_zone
+     except AttributeError:
+-        # Workaround for Python 3.5.
+-        utc_naive = datetime_.fromtimestamp(timestamp, tz=timezone.utc).replace(tzinfo=None)
+-        offset = datetime_.fromtimestamp(timestamp) - utc_naive
+-        seconds = offset.total_seconds()
+-        zone = strftime("%Z")
++        return _fallback_tzinfo(timestamp)
++
++    try:
++        return timezone(timedelta(seconds=seconds), zone)
++    except ValueError:
++        return _fallback_tzinfo(timestamp)
+ 
+-    tzinfo = timezone(timedelta(seconds=seconds), zone)
+ 
++def aware_now():
++    now = datetime_.now()
++    timestamp = now.timestamp()
++    tzinfo = _get_tzinfo(timestamp)
+     return datetime.combine(now.date(), now.time().replace(tzinfo=tzinfo))

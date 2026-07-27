@@ -1,0 +1,70 @@
+schema_version: task-public-v1
+task_id: loguru-post-2038-local-timezone-fallback
+task_version: 1
+split: same-repo-heldout
+repository:
+  url: https://github.com/Delgan/loguru.git
+  base_commit: e310e2029102b5d63a679a2b64501c045aa86336
+  language: python
+issue:
+  title: Keep local timezone discovery working when platform time conversion fails
+  description: |
+    Importing Loguru can fail when the system clock is far enough in the
+    future that the platform's local-time conversion returns an invalid UTC
+    offset or cannot represent the timestamp. This has been observed on
+    Windows beyond the platform's 2038 boundary.
+
+    Make local timezone discovery fall back to an offset derived from Python
+    datetime conversions when the platform local-time call raises its
+    supported range errors, when its timezone fields are unavailable, or
+    when its reported offset cannot construct a datetime timezone.
+
+    Preserve the existing fast path and timezone name for valid platform
+    local-time data. The returned aware timestamp must keep the original
+    local wall-clock date, time, and microseconds.
+constraints:
+  allowed_paths:
+    - loguru/_datetime.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - CHANGELOG.rst
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 80
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-datetime-regression
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        source_root="$(mktemp -d /tmp/patchloop-loguru-visible-XXXXXX)"
+        cp -a /workspace/loguru "$source_root/loguru"
+        cd "$source_root"
+        export PYTHONPATH="$source_root"
+        /opt/conda/envs/testbed/bin/python -m pytest \
+          --no-header -q --tb=line --color=no -p no:cacheprovider \
+          /workspace/tests/test_datetime.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PATH: /opt/conda/envs/testbed/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - loguru
+  - datetime
+  - timezone
+  - platform-fallback
+  - same-repo
+  - core-same-repo

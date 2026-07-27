@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.delgan_1776_loguru-1297@sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f
+image_digest: sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f
+source_image_tag: swerebench/sweb.eval.x86_64.delgan_1776_loguru-1297:latest

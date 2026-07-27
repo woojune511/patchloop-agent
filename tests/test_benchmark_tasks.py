@@ -52,6 +52,9 @@ DAGSTER_TASK = Path(
 KUBEFLOW_TASK = Path(
     "tasks/cross-repo-heldout/kubeflow-exit-handler-after-dependencies"
 )
+LOGURU_TIMEZONE_TASK = Path(
+    "tasks/same-repo-heldout/loguru-post-2038-local-timezone-fallback"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -3246,3 +3249,213 @@ def test_dagster_admission_evidence_binds_partition_selection_boundaries() -> No
         "exact_sha_shallow_checkout",
     ):
         assert evidence["admission_checks"][check_id] == "pass"
+
+
+def test_loguru_timezone_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(LOGURU_TIMEZONE_TASK)
+
+    assert package.public.task_id == "loguru-post-2038-local-timezone-fallback"
+    assert package.public.split == "same-repo-heldout"
+    assert package.public.repository.url == "https://github.com/Delgan/loguru.git"
+    assert package.public.repository.base_commit == (
+        "e310e2029102b5d63a679a2b64501c045aa86336"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == ["loguru/_datetime.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 80
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is False
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f"
+    )
+    assert package.environment.evaluator_image.endswith(
+        f"@{package.environment.image_digest}"
+    )
+
+
+def test_loguru_timezone_visible_check_uses_submitted_source_copy() -> None:
+    package = load_task_package(LOGURU_TIMEZONE_TASK)
+    check = package.public.visible_checks[0]
+    script = check.command[2]
+
+    assert check.command[:2] == ["/bin/bash", "-lc"]
+    assert 'cp -a /workspace/loguru "$source_root/loguru"' in script
+    assert 'export PYTHONPATH="$source_root"' in script
+    assert "/workspace/tests/test_datetime.py" in script
+    assert "--deselect" not in script
+    assert "-k " not in script
+    assert check.timeout_seconds == 60
+    assert check.environment["PATH"].startswith("/opt/conda/envs/testbed/bin:")
+
+
+def test_loguru_timezone_public_contract_excludes_evaluator_material() -> None:
+    package = load_task_package(LOGURU_TIMEZONE_TASK)
+    public_text = (LOGURU_TIMEZONE_TASK / "public.yaml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "test_local_timezone_fallback.py" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert package.private.hidden_artifacts[0].sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_loguru_timezone_candidate_is_traceable_to_frozen_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["Delgan__loguru-1297"]
+    assert candidate["benchmark_family"] == "SWE-rebench-leaderboard"
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "test"
+    assert candidate["upstream_repository"] == "Delgan/loguru"
+    assert candidate["base_commit"] == (
+        "e310e2029102b5d63a679a2b64501c045aa86336"
+    )
+    assert candidate["pr_url"] == "https://github.com/Delgan/loguru/pull/1297"
+    assert candidate["license_spdx"] == "MIT"
+    assert candidate["gold_patch_lines"] == "67"
+    assert candidate["test_patch_lines"] == "124"
+    assert candidate["changed_files"] == "1"
+    assert candidate["f2p"] == "4"
+    assert candidate["p2p"] == "34"
+    assert candidate["proposed_lane"] == "core-same-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:8d899d1147cf88bc088afe57fc5299fdcf2fafe6a1e30ef26825577e8953362f"
+    )
+    assert "row 209" in candidate["notes"]
+    assert "admission still pending" in candidate["notes"]
+
+
+def test_loguru_timezone_reference_is_exact_production_patch() -> None:
+    package = load_task_package(LOGURU_TIMEZONE_TASK)
+    reference_path = LOGURU_TIMEZONE_TASK / package.private.reference_patch.path
+    patch_text = reference_path.read_text(encoding="utf-8")
+    patch_lines = patch_text.splitlines()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:850a97a59338efdc693016ccb96b7bfd891426fa6a0b5671e060f7830fad2cf3"
+    )
+    assert sha256_bytes(reference_path.read_bytes()) == (
+        package.private.reference_patch.sha256
+    )
+    assert sum(
+        line.startswith("+") and not line.startswith("+++") for line in patch_lines
+    ) == 28
+    assert sum(
+        line.startswith("-") and not line.startswith("---") for line in patch_lines
+    ) == 10
+    assert {
+        line.removeprefix("diff --git a/").split(" b/", maxsplit=1)[0]
+        for line in patch_lines
+        if line.startswith("diff --git a/")
+    } == {"loguru/_datetime.py"}
+    assert "tests/" not in patch_text
+    assert "CHANGELOG.rst" not in patch_text
+
+
+def test_loguru_timezone_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    package = load_task_package(LOGURU_TIMEZONE_TASK)
+    hidden_path = LOGURU_TIMEZONE_TASK / "hidden/test_local_timezone_fallback.py"
+    hidden_text = hidden_path.read_text(encoding="utf-8")
+    bad_names = sorted(
+        path.name for path in (LOGURU_TIMEZONE_TASK / "bad").glob("*.patch")
+    )
+
+    assert hidden_text.count("\ndef test_") == 5
+    for marker in (
+        "valid-negative",
+        "valid-zero",
+        "valid-positive",
+        "invalid-positive",
+        "invalid-negative",
+        "os-error",
+        "overflow-error",
+        "missing-both",
+        "missing-zone",
+        "missing-gmtoff",
+        "runtime-error",
+        "FALLBACK_EAST",
+        "FALLBACK_WEST",
+        "FALLBACK_ROLLOVER",
+    ):
+        assert marker in hidden_text
+    assert package.private.schema_version == "task-private-v2"
+    assert [artifact.path for artifact in package.private.hidden_artifacts] == [
+        "hidden/test_local_timezone_fallback.py"
+    ]
+    assert package.private.hidden_artifacts[0].sha256 == (
+        "sha256:11eb2b5805d1728bb941fee7a7150734843b40526f5703f2fb10a28f97b1e50b"
+    )
+    assert sha256_bytes(hidden_path.read_bytes()) == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    hidden_script = package.private.hidden_checks[0].command[2]
+    assert "/workspace/.patchloop-hidden/test_local_timezone_fallback.py" in (
+        hidden_script
+    )
+    assert "cp /workspace/.patchloop-hidden" not in hidden_script
+    assert bad_names == [
+        "always-fallback.patch",
+        "broad-localtime-exception.patch",
+        "clamp-invalid-offset.patch",
+        "fixed-derived-fallback.patch",
+        "forbidden-test-edit.patch",
+        "noop.patch",
+        "reversed-fallback-offset.patch",
+        "unnamed-fallback-zone.patch",
+        "utc-on-invalid-offset.patch",
+        "wrong-localtime-exceptions.patch",
+        "wrong-timezone-exception.patch",
+    ]
+    assert (LOGURU_TIMEZONE_TASK / "bad/noop.patch").read_bytes() == b"\n"
+
+    audit_text = (LOGURU_TIMEZONE_TASK / "audit.md").read_text(encoding="utf-8")
+    assert "candidate; official Docker matrix pending" in audit_text
+    assert "11 independent parameter cases" in audit_text
+    assert "positive, negative, and date-rollover-derived offsets" in audit_text
+    assert "one no-op, nine semantic partials" in audit_text
+
+
+def test_loguru_timezone_private_v2_rejects_hidden_oracle_mutation(
+    tmp_path: Path,
+) -> None:
+    copied_task = tmp_path / LOGURU_TIMEZONE_TASK.name
+    shutil.copytree(LOGURU_TIMEZONE_TASK, copied_task)
+    hidden_path = copied_task / "hidden/test_local_timezone_fallback.py"
+    hidden_path.write_text(
+        hidden_path.read_text(encoding="utf-8") + "\n# unbound mutation\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ContractError, match="hidden artifact hash mismatch"):
+        load_task_package(copied_task)
+
+
+def test_loguru_timezone_lineage_is_distinct_from_memory_development_task() -> None:
+    development = load_task_package(LOGURU_TASK)
+    held_out = load_task_package(LOGURU_TIMEZONE_TASK)
+    audit_text = (LOGURU_TIMEZONE_TASK / "audit.md").read_text(encoding="utf-8")
+
+    assert held_out.public.repository.url == development.public.repository.url
+    assert held_out.public.repository.base_commit != (
+        development.public.repository.base_commit
+    )
+    assert held_out.public.task_id != development.public.task_id
+    assert set(held_out.public.constraints.allowed_paths).isdisjoint(
+        development.public.constraints.allowed_paths
+    )
+    assert "delgan-loguru-pr-1297" in audit_text
+    assert "PR #1451" in audit_text
+    assert "platform conversion failures" in audit_text
+    assert "formatting catch" in audit_text
