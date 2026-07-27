@@ -23,6 +23,9 @@ HF_TASK = Path(
 )
 PDM_TASK = Path("tasks/dev-train/pdm-ignore-active-venv-resolution")
 PYFAKEFS_TASK = Path("tasks/dev-train/pyfakefs-makedirs-parent-traversal")
+PYFAKEFS_CAPABILITY_TASK = Path(
+    "tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities"
+)
 MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
 BABEL_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
 SQLGLOT_TASK = Path(
@@ -441,6 +444,218 @@ def test_pdm_admission_evidence_binds_resolution_semantics_and_bad_boundaries() 
         "benchmark_test_patch_accounting",
     ):
         assert evidence["admission_checks"][check_id] == "pass"
+
+
+def test_pyfakefs_capability_candidate_has_pinned_real_repository_contract() -> None:
+    package = load_task_package(PYFAKEFS_CAPABILITY_TASK)
+
+    assert package.public.task_id == "pyfakefs-file-wrapper-io-capabilities"
+    assert package.public.split == "same-repo-heldout"
+    assert package.public.repository.url == "https://github.com/pytest-dev/pyfakefs.git"
+    assert package.public.repository.base_commit == (
+        "a3685da29db2f185d4793f185ca07dfe36f3d9a9"
+    )
+    assert package.public.constraints.allowed_paths == ["pyfakefs/fake_file.py"]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 60
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is True
+    assert package.private.schema_version == "task-private-v2"
+    assert package.environment is not None
+    assert package.environment.evaluator_image.endswith(
+        "@sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91"
+    )
+
+
+def test_pyfakefs_capability_public_contract_excludes_evaluator_material() -> None:
+    package = load_task_package(PYFAKEFS_CAPABILITY_TASK)
+    public_text = (PYFAKEFS_CAPABILITY_TASK / "public.yaml").read_text(
+        encoding="utf-8"
+    )
+
+    assert "reference.patch" not in public_text
+    assert "test_file_wrapper_io_capabilities.py" not in public_text
+    assert "benchmark test" not in public_text.lower()
+    assert package.private.reference_patch.sha256 not in public_text
+    assert package.private.hidden_artifacts[0].sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_pyfakefs_capability_candidate_is_traceable_to_frozen_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["pytest-dev__pyfakefs-1269"]
+    assert candidate["benchmark_family"] == "SWE-rebench-leaderboard"
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "test"
+    assert candidate["upstream_repository"] == "pytest-dev/pyfakefs"
+    assert candidate["base_commit"] == (
+        "a3685da29db2f185d4793f185ca07dfe36f3d9a9"
+    )
+    assert candidate["pr_url"] == "https://github.com/pytest-dev/pyfakefs/pull/1269"
+    assert candidate["license_spdx"] == "Apache-2.0"
+    assert candidate["gold_patch_lines"] == "58"
+    assert candidate["test_patch_lines"] == "34"
+    assert candidate["changed_files"] == "1"
+    assert candidate["f2p"] == "1"
+    assert candidate["p2p"] == "431"
+    assert candidate["proposed_lane"] == "core-same-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91"
+    )
+    assert "row 653" in candidate["notes"]
+    assert "clean official Docker matrix pending" in candidate["notes"]
+
+
+def test_pyfakefs_capability_reference_is_exact_production_patch() -> None:
+    package = load_task_package(PYFAKEFS_CAPABILITY_TASK)
+    reference_path = (
+        PYFAKEFS_CAPABILITY_TASK / package.private.reference_patch.path
+    )
+    patch_text = reference_path.read_text(encoding="utf-8")
+    patch_lines = patch_text.splitlines()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:21f7350ac6a344e0a076a91491e41f0a08f223c32be5f4354c4db1ccc460fa7d"
+    )
+    assert sha256_bytes(reference_path.read_bytes()) == (
+        package.private.reference_patch.sha256
+    )
+    assert sum(
+        line.startswith("+") and not line.startswith("+++") for line in patch_lines
+    ) == 11
+    assert sum(
+        line.startswith("-") and not line.startswith("---") for line in patch_lines
+    ) == 3
+    assert {
+        line.removeprefix("diff --git a/").split(" b/", maxsplit=1)[0]
+        for line in patch_lines
+        if line.startswith("diff --git a/")
+    } == {"pyfakefs/fake_file.py"}
+    assert "pyfakefs/tests/" not in patch_text
+    assert "CHANGES.md" not in patch_text
+
+
+def test_pyfakefs_capability_oracle_and_patch_inventory_are_explicit() -> None:
+    package = load_task_package(PYFAKEFS_CAPABILITY_TASK)
+    hidden_path = (
+        PYFAKEFS_CAPABILITY_TASK / "hidden/test_file_wrapper_io_capabilities.py"
+    )
+    hidden_text = hidden_path.read_text(encoding="utf-8")
+    bad_names = sorted(
+        path.name for path in (PYFAKEFS_CAPABILITY_TASK / "bad").glob("*.patch")
+    )
+    equivalent_path = (
+        PYFAKEFS_CAPABILITY_TASK
+        / "equivalent/dynamic-capability-interface.patch"
+    )
+
+    assert hidden_text.count("\ndef test_") == 10
+    for marker in (
+        '("r", True, False)',
+        '("w", False, True)',
+        '("a", False, True)',
+        '("x", False, True)',
+        '("r+", True, True)',
+        '("a+b", True, True)',
+        "TextIOWrapper",
+        "handle.readable = lambda: True",
+        "handle.readable = lambda: False",
+        "actual_read_from_write_only",
+        "actual_write_to_read_only",
+    ):
+        assert marker in hidden_text
+    assert [artifact.path for artifact in package.private.hidden_artifacts] == [
+        "hidden/test_file_wrapper_io_capabilities.py"
+    ]
+    assert package.private.hidden_artifacts[0].sha256 == (
+        "sha256:3a3e796931d0bfd751d6303947f82cfc293c3ee79155321a22c2008eae2a7d2f"
+    )
+    assert sha256_bytes(hidden_path.read_bytes()) == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    assert bad_names == [
+        "always-readable.patch",
+        "always-writable.patch",
+        "capability-properties.patch",
+        "forbidden-test-edit.patch",
+        "inverted-capabilities.patch",
+        "methods-without-dispatch.patch",
+        "mirrored-capabilities.patch",
+        "noop.patch",
+        "primary-mode-only.patch",
+        "readable-only.patch",
+        "underlying-buffer-capabilities.patch",
+    ]
+    assert (PYFAKEFS_CAPABILITY_TASK / "bad/noop.patch").read_bytes() == b"\n"
+    assert sha256_bytes(equivalent_path.read_bytes()) == (
+        "sha256:9ae6bb6a86a82244b4f11e647f8815312fe0af4aaa1c3ea9dcf46008a4a0c1f8"
+    )
+    equivalent_text = equivalent_path.read_text(encoding="utf-8")
+    assert 'if name == "readable"' in equivalent_text
+    assert "def readable" not in equivalent_text
+
+    audit_text = (PYFAKEFS_CAPABILITY_TASK / "audit.md").read_text(
+        encoding="utf-8"
+    )
+    assert "screened candidate awaiting the clean official Docker matrix" in audit_text
+    assert "ten pytest functions collecting 29 cases" in audit_text
+    assert "one no-op, nine semantic partials" in audit_text
+    assert "implementation-independent positive control" in audit_text
+    assert "Medium under `dataset-manifest-v1`" in audit_text
+
+
+def test_pyfakefs_capability_private_v2_rejects_hidden_oracle_mutation(
+    tmp_path: Path,
+) -> None:
+    copied_task = tmp_path / PYFAKEFS_CAPABILITY_TASK.name
+    shutil.copytree(PYFAKEFS_CAPABILITY_TASK, copied_task)
+    hidden_path = copied_task / "hidden/test_file_wrapper_io_capabilities.py"
+    hidden_path.write_text(
+        hidden_path.read_text(encoding="utf-8") + "\n# unbound mutation\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ContractError, match="hidden artifact hash mismatch"):
+        load_task_package(copied_task)
+
+
+def test_pyfakefs_capability_lineage_is_distinct_from_memory_development() -> None:
+    development = load_task_package(PYFAKEFS_TASK)
+    held_out = load_task_package(PYFAKEFS_CAPABILITY_TASK)
+    audit_text = (PYFAKEFS_CAPABILITY_TASK / "audit.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert held_out.public.repository.url == development.public.repository.url
+    assert held_out.public.repository.base_commit != (
+        development.public.repository.base_commit
+    )
+    assert held_out.public.task_id != development.public.task_id
+    assert set(held_out.public.constraints.allowed_paths).isdisjoint(
+        development.public.constraints.allowed_paths
+    )
+    assert "pytest-dev-pyfakefs-pr-1269" in audit_text
+    assert "PR #991" in audit_text
+    assert "`pyfakefs/fake_file.py`" in audit_text
+    assert "`pyfakefs/fake_os.py`" in audit_text
+
+
+def test_pdm_admission_case_inventory_is_content_addressed() -> None:
+    package = load_task_package(PDM_TASK)
+    evidence = json.loads(
+        Path(
+            "reports/docker-gate/research-pdm-ignore-active-venv-resolution.json"
+        ).read_text(encoding="utf-8")
+    )
 
     cases = {case["name"]: case for case in evidence["cases"]}
     assert len(cases) == 11

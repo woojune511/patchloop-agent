@@ -1,0 +1,43 @@
+schema_version: task-private-v2
+task_id: pyfakefs-file-wrapper-io-capabilities
+task_version: 1
+hidden_checks:
+  - id: file-wrapper-io-capabilities
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        cd /tmp
+        /opt/conda/envs/testbed/bin/python -m pytest \
+          --no-header -q --tb=line --color=no -p no:cacheprovider \
+          /workspace/.patchloop-hidden/test_file_wrapper_io_capabilities.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PATH: /opt/conda/envs/testbed/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+hidden_artifacts:
+  - path: hidden/test_file_wrapper_io_capabilities.py
+    sha256: sha256:3a3e796931d0bfd751d6303947f82cfc293c3ee79155321a22c2008eae2a7d2f
+reference_patch:
+  path: reference.patch
+  sha256: sha256:21f7350ac6a344e0a076a91491e41f0a08f223c32be5f4354c4db1ccc460fa7d
+audit:
+  expected_files:
+    - pyfakefs/fake_file.py
+  prohibited_behaviors:
+    - treating a capability query as an attempted read or write
+    - reporting every backing in-memory stream as readable and writable
+    - ignoring update-mode capabilities denoted by a plus sign
+    - deriving writable state from readable state or vice versa
+    - exposing boolean capability properties instead of callable methods
+    - adding capability methods without using the readable contract in dynamic read and iterator guards
+    - allowing an actual read from a write-only wrapper
+    - allowing an actual write to a read-only wrapper
+    - breaking io.TextIOWrapper construction for a valid fake handle
+    - changing files outside pyfakefs/fake_file.py
+    - changing tests, changelog, documentation, configuration, or dependencies

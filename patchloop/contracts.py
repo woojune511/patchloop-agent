@@ -421,6 +421,7 @@ class DatasetTaskEntry(StrictModel):
 class DatasetPolicy(StrictModel):
     minimum_repositories: int = Field(default=2, ge=2)
     same_repo_must_overlap_development: bool = True
+    same_repo_requires_one_to_one_development_coverage: bool = True
     cross_repo_must_be_disjoint: bool = True
     research_minimum_tier: Literal["medium"] = "medium"
 

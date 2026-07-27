@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from collections import Counter
+
 import pytest
 from pydantic import ValidationError
 
@@ -14,7 +16,11 @@ from patchloop.contracts import (
     SourceProvenance,
     WorkflowType,
 )
-from patchloop.dataset import audit_dataset, require_dataset_role
+from patchloop.dataset import (
+    _same_repo_pairing_violations,
+    audit_dataset,
+    require_dataset_role,
+)
 from patchloop.task_loader import load_task_package
 
 
@@ -27,8 +33,10 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["task_count"] == 24
     assert result["calibration_task_count"] == 5
     assert result["research_task_count"] == 19
-    assert result["candidate_package_count"] == 0
-    assert result["unregistered_task_paths"] == []
+    assert result["candidate_package_count"] == 1
+    assert result["unregistered_task_paths"] == [
+        "tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities"
+    ]
     assert result["role_counts"] == {
         "calibration": 5,
         "memory-development": 6,
@@ -149,3 +157,33 @@ def test_difficulty_total_is_derived_from_dimensions() -> None:
             tier=DifficultyTier.MEDIUM,
             rationale="The supplied total is deliberately wrong.",
         )
+
+
+def test_same_repo_pairing_requires_one_task_per_development_repository() -> None:
+    assert (
+        _same_repo_pairing_violations(
+            Counter({"owner/a": 1, "owner/b": 1}),
+            Counter({"owner/a": 1, "owner/b": 1}),
+        )
+        == []
+    )
+
+    violations = _same_repo_pairing_violations(
+        Counter({"owner/a": 1, "owner/b": 1}),
+        Counter({"owner/a": 2}),
+    )
+    assert violations == [
+        "same-repo lane is missing development repositories: owner/b",
+        "same-repo lane is not one task per repository: owner/a",
+    ]
+
+
+def test_same_repo_pairing_rejects_duplicate_development_lineage_repository() -> None:
+    violations = _same_repo_pairing_violations(
+        Counter({"owner/a": 2, "owner/b": 1}),
+        Counter({"owner/a": 1, "owner/b": 1, "owner/c": 1}),
+    )
+    assert violations == [
+        "same-repo lane has repositories outside development: owner/c",
+        "memory-development lane is not one task per repository: owner/a",
+    ]

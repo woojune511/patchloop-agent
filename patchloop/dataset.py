@@ -103,6 +103,40 @@ def _repository_for(entry: DatasetTaskEntry) -> str | None:
     return repository.lower() if repository else None
 
 
+def _same_repo_pairing_violations(
+    development_counts: Counter[str], same_repo_counts: Counter[str]
+) -> list[str]:
+    violations = []
+    missing = sorted(set(development_counts) - set(same_repo_counts))
+    unexpected = sorted(set(same_repo_counts) - set(development_counts))
+    duplicated_development = sorted(
+        repository for repository, count in development_counts.items() if count != 1
+    )
+    duplicated_same_repo = sorted(
+        repository for repository, count in same_repo_counts.items() if count != 1
+    )
+    if missing:
+        violations.append(
+            "same-repo lane is missing development repositories: " + ", ".join(missing)
+        )
+    if unexpected:
+        violations.append(
+            "same-repo lane has repositories outside development: "
+            + ", ".join(unexpected)
+        )
+    if duplicated_development:
+        violations.append(
+            "memory-development lane is not one task per repository: "
+            + ", ".join(duplicated_development)
+        )
+    if duplicated_same_repo:
+        violations.append(
+            "same-repo lane is not one task per repository: "
+            + ", ".join(duplicated_same_repo)
+        )
+    return violations
+
+
 def audit_dataset(
     tasks_root: str | Path | None = None,
     *,
@@ -185,18 +219,20 @@ def audit_dataset(
         if research_counts.get(role, 0) < target
     }
 
-    development_repositories = {
+    development_repository_counts = Counter(
         repository
         for entry in research
         if entry.role == DatasetRole.MEMORY_DEVELOPMENT
         if (repository := _repository_for(entry)) is not None
-    }
-    same_repositories = {
+    )
+    same_repository_counts = Counter(
         repository
         for entry in research
         if entry.role == DatasetRole.CORE_SAME_REPO
         if (repository := _repository_for(entry)) is not None
-    }
+    )
+    development_repositories = set(development_repository_counts)
+    same_repositories = set(same_repository_counts)
     cross_repositories = {
         repository
         for entry in research
@@ -216,6 +252,25 @@ def audit_dataset(
                 "error": "same-repo tasks lack development repository coverage: "
                 + ", ".join(unexpected),
             }
+        )
+    pairing_lane_filled = (
+        research_counts.get(DatasetRole.MEMORY_DEVELOPMENT, 0)
+        == manifest.targets[DatasetRole.MEMORY_DEVELOPMENT]
+        and research_counts.get(DatasetRole.CORE_SAME_REPO, 0)
+        == manifest.targets[DatasetRole.CORE_SAME_REPO]
+    )
+    if (
+        manifest.policy.same_repo_requires_one_to_one_development_coverage
+        and pairing_lane_filled
+    ):
+        errors.extend(
+            {
+                "path": str(resolved_manifest),
+                "error": violation,
+            }
+            for violation in _same_repo_pairing_violations(
+                development_repository_counts, same_repository_counts
+            )
         )
     if manifest.policy.cross_repo_must_be_disjoint and cross_repositories.intersection(
         development_repositories

@@ -10,6 +10,7 @@ targets:
 policy:
   minimum_repositories: 2
   same_repo_must_overlap_development: true
+  same_repo_requires_one_to_one_development_coverage: true
   cross_repo_must_be_disjoint: true
   research_minimum_tier: medium
 tasks:

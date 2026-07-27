@@ -1,0 +1,72 @@
+schema_version: task-public-v1
+task_id: pyfakefs-file-wrapper-io-capabilities
+task_version: 1
+split: same-repo-heldout
+repository:
+  url: https://github.com/pytest-dev/pyfakefs.git
+  base_commit: a3685da29db2f185d4793f185ca07dfe36f3d9a9
+  language: python
+issue:
+  title: Fake file wrappers mis-handle file capability queries
+  description: |
+    A fake file object opened for writing can raise an unsupported read
+    operation when a standard-library consumer asks whether the object is
+    readable. This prevents consumers such as io.TextIOWrapper from accepting
+    otherwise valid fake file handles.
+
+    Make fake file wrappers expose the standard readable and writable
+    capability protocol for read-only, write-only, append, exclusive-create,
+    update, text, and binary modes. Capability queries must not perform the
+    operation they describe. Preserve the existing errors for actual
+    disallowed reads and writes, and keep iterator behavior consistent with
+    the reported read capability.
+constraints:
+  allowed_paths:
+    - pyfakefs/fake_file.py
+  forbidden_paths:
+    - pyfakefs/tests/**
+    - tests/**
+    - docs/**
+    - CHANGES.md
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+  - id: upstream-file-wrapper-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - -W
+      - ignore::DeprecationWarning
+      - pyfakefs/fake_filesystem_unittest.py
+      - pyfakefs/tests/fake_filesystem_test.py
+      - pyfakefs/tests/fake_open_test.py
+    timeout_seconds: 240
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - pyfakefs
+  - file-wrapper
+  - io-protocol
+  - text-io-wrapper
+  - same-repo
+  - core-same-repo

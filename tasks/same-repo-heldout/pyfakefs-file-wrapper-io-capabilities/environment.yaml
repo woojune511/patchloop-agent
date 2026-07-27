@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.pytest-dev_1776_pyfakefs-1269@sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91
+image_digest: sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91
+source_image_tag: swerebench/sweb.eval.x86_64.pytest-dev_1776_pyfakefs-1269:latest

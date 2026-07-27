@@ -149,6 +149,11 @@ Dataset manifest는 freeze 시 role별 목표를 정확히 채워야 하며 mani
 manifest에 기록한다. Calibration entry, research entry와 external acceptance 결과를 같은 headline
 분모에 합치지 않는다.
 
+`core-same-repo` lane이 목표 수를 채운 시점에는 memory-development repository 집합과 정확히
+일치해야 하며, 두 lane 모두 repository당 한 task만 가져야 한다. 단순 부분집합 검사는 같은
+repository의 held-out task를 중복해 다른 development repository를 누락하는 구성을 막지 못하므로
+freeze 전 machine audit가 1:1 pairing을 별도로 검증한다.
+
 ### Stress lane
 
 Stress는 새로운 core split이 아니라 admitted research task 중 사전 고정한 세 sentinel에 fault를
