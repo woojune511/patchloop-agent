@@ -90,6 +90,11 @@ source provenance로만 남기고 실행에는 사용하지 않는다. Environme
 assertion을 포함하지 않으며, 실제 run manifest의 `evaluator_image_digest`가 선언 digest와 다르면
 실행을 거부한다. Environment file이 없는 calibration fixture만 기본 PatchLoop image를 사용한다.
 
+Allowlist에 등록된 remote repository의 `base_commit`은 소문자 40자리 hexadecimal SHA여야 한다.
+일반 clone이 frozen commit을 advertise하지 않아 첫 checkout이 실패하면 evaluator는 branch나 tag가
+아니라 그 exact SHA만 `FETCH_HEAD`로 fetch한 뒤 detached checkout을 다시 수행한다. 최종 `HEAD`가
+선언 SHA와 정확히 일치하지 않거나 exact-SHA fetch가 실패하면 task 실행을 거부한다.
+
 ### Dataset registry and eligibility
 
 Task package가 evaluator를 통과했다는 사실만으로 memory 또는 core experiment에 사용할 수 있는 것은

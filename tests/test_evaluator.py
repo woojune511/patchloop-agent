@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -47,6 +48,100 @@ def test_remote_repository_must_be_allowlisted(tmp_path) -> None:
             "remote",
             "https://github.com/example/untrusted",
             "0" * 40,
+        )
+
+
+def test_remote_repository_revision_must_be_lowercase_hex(tmp_path) -> None:
+    manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
+    with pytest.raises(ContractError, match="full 40-character commit"):
+        manager.create(
+            "remote-invalid-revision",
+            "https://github.com/youssofal/MTPLX.git",
+            "g" * 40,
+        )
+
+
+def test_remote_repository_fetches_an_unadvertised_exact_revision(
+    tmp_path, monkeypatch
+) -> None:
+    expected_revision = "c06cc13286e86d9ff3d2e3b991eba327549c534b"
+    commands: list[list[str]] = []
+    checkout_attempts = 0
+
+    def fake_run(command, **kwargs):
+        nonlocal checkout_attempts
+        commands.append(command)
+        if command[1] == "clone":
+            Path(command[-1]).mkdir(parents=True)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if command[1] == "checkout":
+            checkout_attempts += 1
+            if checkout_attempts == 1:
+                return SimpleNamespace(
+                    returncode=128,
+                    stdout="",
+                    stderr="fatal: unable to read tree",
+                )
+        if command[1:3] == ["rev-parse", "HEAD"]:
+            return SimpleNamespace(
+                returncode=0,
+                stdout=f"{expected_revision}\n",
+                stderr="",
+            )
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr("patchloop.repository.subprocess.run", fake_run)
+    manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
+
+    workspace = manager.create(
+        "remote-exact-fetch",
+        "https://github.com/youssofal/MTPLX.git",
+        expected_revision,
+    )
+
+    assert workspace.is_dir()
+    assert checkout_attempts == 2
+    assert [
+        "git",
+        "fetch",
+        "--quiet",
+        "--no-tags",
+        "origin",
+        expected_revision,
+    ] in commands
+
+
+def test_remote_repository_reports_exact_revision_fetch_failure(
+    tmp_path, monkeypatch
+) -> None:
+    expected_revision = "c06cc13286e86d9ff3d2e3b991eba327549c534b"
+
+    def fake_run(command, **kwargs):
+        if command[1] == "clone":
+            Path(command[-1]).mkdir(parents=True)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+        if command[1] == "checkout":
+            return SimpleNamespace(
+                returncode=128,
+                stdout="",
+                stderr="fatal: unable to read tree",
+            )
+        if command[1] == "fetch":
+            return SimpleNamespace(
+                returncode=128,
+                stdout="",
+                stderr="fatal: remote error",
+            )
+        raise AssertionError(command)
+
+    monkeypatch.setattr("patchloop.repository.subprocess.run", fake_run)
+    manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
+
+    with pytest.raises(ContractError, match="exact-SHA fetch failed"):
+        manager.create(
+            "remote-exact-fetch-failure",
+            "https://github.com/youssofal/MTPLX.git",
+            expected_revision,
         )
 
 

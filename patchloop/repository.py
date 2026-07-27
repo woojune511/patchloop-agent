@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -96,7 +97,7 @@ class WorkspaceManager:
             raise ContractError(f"workspace already exists: {target}")
         target.parent.mkdir(parents=True, exist_ok=True)
         if repository_url in ALLOWED_REMOTE_REPOSITORIES:
-            if not expected_revision or len(expected_revision) != 40:
+            if not expected_revision or re.fullmatch(r"[0-9a-f]{40}", expected_revision) is None:
                 raise ContractError("remote repository revision must be a full 40-character commit")
             clone = subprocess.run(
                 ["git", "clone", "--quiet", "--no-checkout", repository_url, str(target)],
@@ -106,7 +107,31 @@ class WorkspaceManager:
             )
             if clone.returncode != 0:
                 raise ContractError(f"audited remote clone failed: {clone.stderr.strip()}")
-            _git(target, "checkout", "--quiet", "--detach", expected_revision)
+            checkout = _git(
+                target,
+                "checkout",
+                "--quiet",
+                "--detach",
+                expected_revision,
+                check=False,
+            )
+            if checkout.returncode != 0:
+                fetch = _git(
+                    target,
+                    "fetch",
+                    "--quiet",
+                    "--no-tags",
+                    "origin",
+                    expected_revision,
+                    check=False,
+                )
+                if fetch.returncode != 0:
+                    raise ContractError(
+                        "audited remote revision is unavailable: "
+                        f"checkout failed with {checkout.stderr.strip()!r}; "
+                        f"exact-SHA fetch failed with {fetch.stderr.strip()!r}"
+                    )
+                _git(target, "checkout", "--quiet", "--detach", expected_revision)
             actual_revision = _git(target, "rev-parse", "HEAD").stdout.strip()
             if actual_revision != expected_revision:
                 raise ContractError(
