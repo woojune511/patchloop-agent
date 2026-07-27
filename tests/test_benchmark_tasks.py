@@ -856,11 +856,11 @@ def test_sqlglot_candidate_is_traceable_to_swe_rebench_row() -> None:
     assert candidate["benchmark_split"] == "2026_03"
     assert candidate["base_commit"] == "0e8d0824c40ac46c5e7275180cf2eaae6810f805"
     assert candidate["pr_url"] == "https://github.com/tobymao/sqlglot/pull/7187"
-    assert candidate["changed_files"] == "3"
+    assert candidate["changed_files"] == "4"
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "38"
     assert candidate["proposed_lane"] == "core-cross-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
 
 
 def test_sqlglot_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
@@ -880,4 +880,75 @@ def test_sqlglot_staging_oracle_and_bad_patch_inventory_are_explicit() -> None:
         "missing-shared-generator-policy.patch",
         "noop.patch",
         "parser-only.patch",
+    ]
+
+
+def test_sqlglot_admission_evidence_binds_modifier_order_boundaries() -> None:
+    package = load_task_package(SQLGLOT_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_CROSS_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_CROSS_REPO
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 8
+
+    evidence = json.loads(
+        Path(
+            "reports/docker-gate/research-sqlglot-duckdb-ignore-nulls-modifier-order.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert evidence["harness_git_commit"] == "89f47025e3a8b92fc04dce99893eefa801755b33"
+    assert evidence["reference_policy"]["kind"] == "exact-upstream-production-only"
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 8
+    assert evidence["semantic_bad_patch_rejection_count"] == 7
+    assert evidence["upstream_regression_test_count"] == 39
+    assert evidence["benchmark_f2p_declared_count"] == 1
+    assert evidence["benchmark_p2p_declared_count"] == 38
+    assert evidence["independent_hidden_test_count"] == 21
+    for check_id in (
+        "submitted_source_binding",
+        "symmetric_ignore_respect_function_matrix",
+        "prefix_form_duckdb_canonicalization",
+        "argument_window_ast_separation",
+        "offset_default_named_window_and_frame_stability",
+        "bigquery_having_order_limit_negative_transfer_guard",
+        "exact_reference_lineage",
+        "contamination_and_localization_disclosure",
+        "public_private_separation",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 12
+    assert len({case["run_id"] for case in cases.values()}) == 12
+    assert all(case["official"] for case in cases.values())
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    assert cases["base-noop"]["failed_checks"] == [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+    ]
+    for case_name in (
+        "parser-only",
+        "generator-only",
+        "global-order-change",
+        "ignore-only",
+        "missing-duckdb-policy",
+        "missing-shared-generator-policy",
+        "missing-having-max-policy",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:duckdb-ignore-nulls-modifier-order"
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:duckdb-ignore-nulls-modifier-order",
+        "policy:scope",
+        "policy:test_tampering",
     ]

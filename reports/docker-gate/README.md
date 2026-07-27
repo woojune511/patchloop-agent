@@ -73,3 +73,12 @@ passed all 132 upstream number tests and failed nine of the 16 private checks. S
 fixes and one forbidden test edit were rejected. The registered checks import submitted source from
 `/workspace` while using only the pinned image's generated CLDR data; a source-binding check enforces
 that boundary. All containers ran without network, and the gate made zero model/API calls.
+
+`research-sqlglot-duckdb-ignore-nulls-modifier-order.json` records the ninth research admission and
+first core-cross-repo held-out task. It pins SWE-rebench leaderboard instance
+`tobymao__sqlglot-7187`, base commit `0e8d0824...` and image `sha256:43c43d77...`. On clean harness
+commit `89f47025...`, the exact production reference passed three official evaluations, while the base
+passed all 39 upstream DuckDB tests and failed the 21-check private oracle. Seven semantic partial
+implementations were rejected at hidden acceptance, including a BigQuery `HAVING MAX` negative-transfer
+mutant; a forbidden test edit additionally failed scope and test-tampering checks. All containers ran
+without network, and the gate made zero model/API calls.

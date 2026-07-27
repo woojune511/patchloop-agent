@@ -459,6 +459,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 8
 
+  - task_id: sqlglot-duckdb-ignore-nulls-modifier-order
+    task_version: 1
+    path: tasks/cross-repo-heldout/sqlglot-duckdb-ignore-nulls-modifier-order
+    role: core-cross-repo
+    admission_state: admitted
+    public_spec_hash: sha256:ef4a1acefe03aa8007dcc4f416c6e07ae9b48fb0bc1d4ca10e1074567753df8a
+    private_spec_hash: sha256:275146340056e9763586cf11ce5292742215789b3ca00e2ad72b4e6b24fdede1
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: tobymao__sqlglot-7187
+      upstream_repository: tobymao/sqlglot
+      issue_url: https://github.com/tobymao/sqlglot/issues/7179
+      pull_request_url: https://github.com/tobymao/sqlglot/pull/7187
+      upstream_base_commit: 0e8d0824c40ac46c5e7275180cf2eaae6810f805
+      resolution_commit: baa9974b8042eaef7897537772b1002c30e503b8
+      license_spdx: MIT
+      retrieved_at: 2026-07-26T23:43:49Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.tobymao_1776_sqlglot-7187@sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 2
+      verification_breadth: 2
+      total: 7
+      tier: hard
+      rationale: The parser must accept both NULL modifiers after argument-local ordering while the shared generator and DuckDB policy emit the dialect-specific suffix form without regressing prefix compatibility, window AST placement, or BigQuery modifier chains.
+    failure_pattern_id: dialect-specific-modifier-order-policy-gap
+    solution_lineage_id: tobymao-sqlglot-pr-7187
+    admission_evidence:
+      path: reports/docker-gate/research-sqlglot-duckdb-ignore-nulls-modifier-order.json
+      sha256: sha256:7cf5de2197790e3d498eb793d4ba28f8d4a2efe76a0de51eb8e19560606896be
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 8
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

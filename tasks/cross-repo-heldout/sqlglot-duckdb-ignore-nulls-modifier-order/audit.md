@@ -1,6 +1,6 @@
 # Task audit: sqlglot-duckdb-ignore-nulls-modifier-order
 
-- Dataset role: proposed `core-cross-repo`
+- Dataset role: admitted `core-cross-repo`
 - Source: SWE-rebench leaderboard instance `tobymao__sqlglot-7187`, split `2026_03`
 - Benchmark revision: `ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b`
 - Benchmark row: 40
@@ -10,6 +10,7 @@
 - Base tree: `c18f45f4f5928bd76f85bf85cdf3fe1eb5bc0675`
 - PR head: `1fbc1c120a1f5e8a786765d8d2c503ca27d01454`
 - Merge commit: `baa9974b8042eaef7897537772b1002c30e503b8`
+- Upstream PR files: 4 (three production modules and one test module)
 - License: MIT
 - Retrieved: `2026-07-26T23:43:49Z`
 - Benchmark production patch SHA-256:
@@ -67,15 +68,22 @@ Difficulty audit:
 | Verification breadth | 2 | IGNORE/RESPECT, prefix/trailing forms, AST placement, round trips, and cross-dialect behavior interact. |
 | Total | 7 | Hard under `dataset-manifest-v1`. |
 
-Admission requires a clean committed harness and official network-disabled
-Docker evidence showing:
+Admission evidence was captured from clean harness commit
+`89f47025e3a8b92fc04dce99893eefa801755b33` with network disabled. The
+content-addressed report is
+`reports/docker-gate/research-sqlglot-duckdb-ignore-nulls-modifier-order.json`
+(`sha256:7cf5de2197790e3d498eb793d4ba28f8d4a2efe76a0de51eb8e19560606896be`).
 
-1. the base passes all 39 upstream DuckDB methods and fails private acceptance;
-2. the production-only reference passes hidden, regression, scope, and safety
-   verdicts three times;
-3. every semantic partial fix and the forbidden test edit is rejected at its
-   intended boundary;
-4. source commit, image digest, specs, patch, manifests, results, and provenance
-   are content-addressed.
-
-Admission evidence is pending.
+- Reference SCRR passed 3/3:
+  `run_f6a17eb337ac486b`, `run_e3395c116cb747ae`,
+  `run_f8633ed259ec4c3c`.
+- Base/no-op preserved all 39 upstream DuckDB tests and failed private
+  acceptance: `run_7724db84e8d44a66`.
+- Seven semantic partial implementations preserved the upstream regression
+  check but failed private acceptance:
+  `run_1a90d9dfea954ad5`, `run_8aecaee9e8dc4742`,
+  `run_5b43cf766610458e`, `run_3b4dd9eb77954b7c`,
+  `run_effcc359b41947fc`, `run_d2125ae9d3ef40f7`,
+  `run_93483d6a5b6f4a7d`.
+- The forbidden test edit failed hidden, scope, and test-tampering checks:
+  `run_7dce9a09b23f47ab`.

@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The eight admitted research tasks are:
+The nine admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -76,10 +76,17 @@ The eight admitted research tasks are:
   seven semantic known-bad rejections and one scope/test-tampering rejection. The pinned image supplies
   generated CLDR data while a source-binding check proves that submitted code is imported from
   `/workspace`.
+- `sqlglot-duckdb-ignore-nulls-modifier-order`, derived from SWE-rebench leaderboard instance
+  `tobymao__sqlglot-7187` and upstream SQLGlot issue #7179 / PR #7187. Its hardened oracle checks
+  symmetric `IGNORE NULLS` / `RESPECT NULLS` handling across five value-window functions, DuckDB
+  prefix-to-suffix canonicalization, argument/window AST separation, and a representative BigQuery
+  `HAVING MAX` / `ORDER BY` / `LIMIT` negative-transfer guard. It records three official reference
+  passes, all 39 upstream DuckDB tests, 21 independent hidden checks, one base hidden failure, seven
+  semantic partial rejections and one scope/test-tampering rejection.
 
-All eight tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
-SWE-rebench evaluator image. Four are MIT licensed, including PDM; Hugging Face Hub, pyfakefs and
-Moto are Apache-2.0; Babel is BSD-3-Clause.
+All nine tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+SWE-rebench evaluator image. Five are MIT licensed, including PDM and SQLGlot; Hugging Face Hub,
+pyfakefs and Moto are Apache-2.0; Babel is BSD-3-Clause.
 
 ## Research dataset target
 
@@ -90,8 +97,8 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
 | Core same-repo | 6 | prohibited | 0 |
-| Core cross-repo | 6 | prohibited | 0 |
-| **Research total** | **20** |  | **8** |
+| Core cross-repo | 6 | prohibited | 1 |
+| **Research total** | **20** |  | **9** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

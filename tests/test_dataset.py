@@ -24,21 +24,20 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["calibration_ready"] is True
     assert result["research_ready"] is False
     assert result["stress_ready"] is False
-    assert result["task_count"] == 13
+    assert result["task_count"] == 14
     assert result["calibration_task_count"] == 5
-    assert result["research_task_count"] == 8
-    assert result["candidate_package_count"] == 1
-    assert result["unregistered_task_paths"] == [
-        "tasks/cross-repo-heldout/sqlglot-duckdb-ignore-nulls-modifier-order"
-    ]
+    assert result["research_task_count"] == 9
+    assert result["candidate_package_count"] == 0
+    assert result["unregistered_task_paths"] == []
     assert result["role_counts"] == {
         "calibration": 5,
         "memory-development": 6,
         "development-validation": 2,
+        "core-cross-repo": 1,
     }
     assert "memory-development" not in result["missing"]
     assert "development-validation" not in result["missing"]
-    assert result["missing"]["core-cross-repo"] == 6
+    assert result["missing"]["core-cross-repo"] == 5
     assert result["repositories"] == [
         "agronholm/anyio",
         "delgan/loguru",
@@ -47,6 +46,7 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
         "pdm-project/pdm",
         "pytest-dev/pyfakefs",
         "python-babel/babel",
+        "tobymao/sqlglot",
         "tox-dev/tox",
     ]
     assert result["repository_policy_passed"] is True
@@ -62,12 +62,12 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
 
 def test_research_tasks_have_real_benchmark_admission_evidence() -> None:
     result = audit_dataset("tasks")
-    assert result["research_task_count"] == 8
+    assert result["research_task_count"] == 9
     assert result["source_counts"] == {
         "synthetic-control": 5,
-        "benchmark-instance": 8,
+        "benchmark-instance": 9,
     }
-    assert result["difficulty_counts"] == {"easy": 5, "medium": 3, "hard": 5}
+    assert result["difficulty_counts"] == {"easy": 5, "medium": 3, "hard": 6}
 
 
 def test_first_research_task_is_eligible_only_for_memory_development() -> None:

@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 116 pass, 2 skipped; all eight research admissions and dataset-role gates included |
+| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 121 pass, 2 skipped; all nine research admissions and dataset-role gates included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus eight research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 8/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus nine research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 9/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation | network, UID, read-only workspace, host secret | all pass |
-| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM, pyfakefs, Moto and Babel references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO, tox, Hugging Face Hub, PDM, pyfakefs, Moto, Babel and SQLGlot references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -395,6 +395,42 @@ The
 records every patch, manifest, result and provenance hash from clean harness
 commit `313af714...`. This gate made zero model/API calls.
 
+## Ninth research task admission
+
+`sqlglot-duckdb-ignore-nulls-modifier-order` comes from SWE-rebench leaderboard
+instance `tobymao__sqlglot-7187`, SQLGlot issue #7179 and PR #7187. It is the
+first hard `core-cross-repo` held-out task, pinned to base commit
+`0e8d0824c40ac46c5e7275180cf2eaae6810f805` and evaluator image
+`sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303`.
+PatchLoop keeps the exact accepted three-file production diff and excludes the
+benchmark test patch. The public localization therefore matches the accepted
+patch and is disclosed as high contamination risk.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_f6a17eb337ac486b`, `run_e3395c116cb747ae`, `run_f8633ed259ec4c3c` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_7724db84e8d44a66` | regression pass, hidden fail | rejected |
+| parser only | `run_1a90d9dfea954ad5` | generator/order policy fail | rejected |
+| generator only | `run_8aecaee9e8dc4742` | trailing parse fail | rejected |
+| global order change | `run_5b43cf766610458e` | dialect isolation fail | rejected |
+| IGNORE only | `run_3b4dd9eb77954b7c` | symmetric RESPECT behavior fail | rejected |
+| missing DuckDB policy | `run_effcc359b41947fc` | dialect suffix generation fail | rejected |
+| missing shared generator policy | `run_d2125ae9d3ef40f7` | generator integration fail | rejected |
+| missing `HAVING MAX` policy | `run_93483d6a5b6f4a7d` | BigQuery modifier-chain guard fail | rejected |
+| forbidden test edit | `run_7dce9a09b23f47ab` | hidden, scope and test-tampering fail | rejected |
+
+The base and all seven semantic partial implementations passed all 39 upstream
+DuckDB tests. The independently authored 21-check oracle binds submitted modules
+to `/workspace`; checks `IGNORE NULLS` and `RESPECT NULLS` across FIRST_VALUE,
+LAST_VALUE, NTH_VALUE, LAG and LEAD; preserves offsets, defaults, named windows,
+frames and AST placement; and guards BigQuery `HAVING MAX` / `ORDER BY` / `LIMIT`
+ordering. The hardened extension uses different identifiers, clauses and values
+from the benchmark test patch and is a targeted guard, not an exhaustive claim
+over every SQLGlot dialect. The
+[SQLGlot research admission report](../reports/docker-gate/research-sqlglot-duckdb-ignore-nulls-modifier-order.json)
+records every patch, manifest, result and provenance hash from clean harness
+commit `89f47025...`. This gate made zero model/API calls.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -405,6 +441,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 8/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 12 research tasks are not
+calibration is 5/5, admitted research is 9/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 11 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.

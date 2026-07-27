@@ -1,0 +1,261 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-27",
+  "task_id": "sqlglot-duckdb-ignore-nulls-modifier-order",
+  "task_version": 1,
+  "dataset_role": "core-cross-repo",
+  "split": "cross-repo-heldout",
+  "source": {
+    "benchmark_family": "SWE-rebench-leaderboard",
+    "benchmark_revision": "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b",
+    "benchmark_split": "2026_03",
+    "benchmark_row": 40,
+    "benchmark_instance_id": "tobymao__sqlglot-7187",
+    "upstream_repository": "tobymao/sqlglot",
+    "issue_url": "https://github.com/tobymao/sqlglot/issues/7179",
+    "pull_request_url": "https://github.com/tobymao/sqlglot/pull/7187",
+    "base_commit": "0e8d0824c40ac46c5e7275180cf2eaae6810f805",
+    "base_tree": "c18f45f4f5928bd76f85bf85cdf3fe1eb5bc0675",
+    "pr_head_commit": "1fbc1c120a1f5e8a786765d8d2c503ca27d01454",
+    "resolution_commit": "baa9974b8042eaef7897537772b1002c30e503b8",
+    "resolution_tree": "30f53b7c6f5254d20fefb22390d1c12615c078a3",
+    "license_spdx": "MIT",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_gold_patch_sha256": "sha256:3f2d45f2116df6bb68432756ae243b27826d42b2a36d856caf55f22085018f7b",
+    "benchmark_test_patch_sha256": "sha256:06b0e421d8b686defbc6f6f5a2caf751296cb19dd9f2af1f5744722252f46661"
+  },
+  "reference_policy": {
+    "kind": "exact-upstream-production-only",
+    "excluded_upstream_files": [
+      "tests/dialects/test_duckdb.py"
+    ],
+    "rationale": "The reference is byte-identical to the benchmark production patch across the three accepted source files and excludes the benchmark test patch. PatchLoop discloses the resulting localization leakage and uses an independently authored 21-check hardened oracle with different identifiers, clauses, and values."
+  },
+  "public_spec_hash": "sha256:ef4a1acefe03aa8007dcc4f416c6e07ae9b48fb0bc1d4ca10e1074567753df8a",
+  "private_spec_hash": "sha256:275146340056e9763586cf11ce5292742215789b3ca00e2ad72b4e6b24fdede1",
+  "harness_git_commit": "89f47025e3a8b92fc04dce99893eefa801755b33",
+  "evaluator_image": "swerebench/sweb.eval.x86_64.tobymao_1776_sqlglot-7187@sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303",
+  "evaluator_image_digest": "sha256:43c43d77e3bed15361140767e3f3fd84811e0bad5b58f6afcba83f79b8e58303",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/testbed",
+    "submitted_workspace": "/workspace",
+    "python_version": "3.13.13",
+    "pytest_version": "9.0.3",
+    "network": "none"
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 8,
+  "semantic_bad_patch_rejection_count": 7,
+  "independent_hidden_test_count": 21,
+  "benchmark_f2p_declared_count": 1,
+  "benchmark_p2p_declared_count": 38,
+  "upstream_regression_test_count": 39,
+  "non_p2p_network_test_deselection_count": 0,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "symmetric_ignore_respect_function_matrix": "pass",
+    "prefix_form_duckdb_canonicalization": "pass",
+    "argument_window_ast_separation": "pass",
+    "offset_default_named_window_and_frame_stability": "pass",
+    "bigquery_having_order_limit_negative_transfer_guard": "pass",
+    "public_api_unchanged": "pass",
+    "exact_reference_lineage": "pass",
+    "contamination_and_localization_disclosure": "pass",
+    "public_private_separation": "pass",
+    "no_new_dependency": "pass",
+    "network_disabled_evaluator": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "utf8_patch_evidence": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_f6a17eb337ac486b",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:3f2d45f2116df6bb68432756ae243b27826d42b2a36d856caf55f22085018f7b",
+      "manifest_sha256": "sha256:536caff0660b9e50d5da97f31fd813ed0a08ddc4aadcbeb187c497412e519348",
+      "result_sha256": "sha256:9e771cadf6453571803bf098bc4cb90984b0bf29c280edea83ccad0265c476ac",
+      "provenance_sha256": "sha256:13864ec2d34e06b039cafb24d2c87af39587be84d74fd47204149c41f06f1e32"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_e3395c116cb747ae",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:3f2d45f2116df6bb68432756ae243b27826d42b2a36d856caf55f22085018f7b",
+      "manifest_sha256": "sha256:f4130148f4f5f74f6acc7d09154208cd40f806c1795abcc5c5d9cfa9a68a48a8",
+      "result_sha256": "sha256:a8ce326d95f671bdcbd25ac6e4744f45cc7eb6347500fe2b6fc8da1669f82e46",
+      "provenance_sha256": "sha256:13864ec2d34e06b039cafb24d2c87af39587be84d74fd47204149c41f06f1e32"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_f8633ed259ec4c3c",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:3f2d45f2116df6bb68432756ae243b27826d42b2a36d856caf55f22085018f7b",
+      "manifest_sha256": "sha256:fb55167d21dc58226c489cb4f9a2cd290e6c00467630691715fa81fa52d3d32b",
+      "result_sha256": "sha256:fd3bf0ec056d809adaa66b8c595e55ff4ab663460ffce4c2fab28bb9b05168e4",
+      "provenance_sha256": "sha256:13864ec2d34e06b039cafb24d2c87af39587be84d74fd47204149c41f06f1e32"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_7724db84e8d44a66",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:1930c785411c3d66a4d294cd8b2f02c38f22417a91bb130021d137b42a43b13f",
+      "result_sha256": "sha256:c4631f03fe7d0f27810f306e9d8e8a6cf77024a782559ba690ba094a4fa9d3be",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "parser-only",
+      "patch": "bad/parser-only.patch",
+      "run_id": "run_1a90d9dfea954ad5",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:c437df40fb2d3b2f60e582c7856a53217e15292ba1d86b988480e0a4e62138dd",
+      "manifest_sha256": "sha256:e5b9a83dd68ee1588e2714e09b65ea1295ff497382a10b4fb34eec8a5555cb84",
+      "result_sha256": "sha256:cdb39478988a06fda304ef1778ecd186dec3039ceb7b315034f0c97fdc789220",
+      "provenance_sha256": "sha256:aa8da6fb6e29a57ef5381ded4783146d24275dfa9f8e35b7332a2370e94da92e"
+    },
+    {
+      "name": "generator-only",
+      "patch": "bad/generator-only.patch",
+      "run_id": "run_8aecaee9e8dc4742",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:087d653f09df4eb25418c2b02e37e351ffb5c6ab15b17340cb4a115311776e53",
+      "manifest_sha256": "sha256:bbe1ba50b2b9a182d5fc12d1827bb41b1818f9b0df5a667570fe8f93cb708387",
+      "result_sha256": "sha256:1786067ffb846b32e85b04523d79f3fa9aa8792d7c1a5b004f6e31df67b59617",
+      "provenance_sha256": "sha256:f4000cea8b6eac5059d4c37a52a4f8c6c5d320dd00c7bed2e8910a2457df9c54"
+    },
+    {
+      "name": "global-order-change",
+      "patch": "bad/global-order-change.patch",
+      "run_id": "run_5b43cf766610458e",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:e25b7db7288ae9a3a2b495d8ce612a98500f53be2863e4bd9b37a5f90d755962",
+      "manifest_sha256": "sha256:4d6f7dd36eb8125d4ba06df48a238f5567174142f58a9d0c2c08cb3f7cc4b0e4",
+      "result_sha256": "sha256:455a2fc28840c7d5bef90045a13241582acb297eb91fbc52dac3734b5dc39388",
+      "provenance_sha256": "sha256:23e915e9a1e58d9da0957ed1657f31b900c44b5fd1d0122b047c594cfdeaccdd"
+    },
+    {
+      "name": "ignore-only",
+      "patch": "bad/ignore-only.patch",
+      "run_id": "run_3b4dd9eb77954b7c",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:ab5e6b1e1694a699ebee90da83543a1a747cb94f6f81fdebde6b35e48c489c5f",
+      "manifest_sha256": "sha256:6c65c5e19a77a4369f7dbd02bf82bfa6fb21f2832d0eee333a7cdb6b313cad07",
+      "result_sha256": "sha256:dcfa17a93e2668524fed300bbcf0a064d6d7b67f197b65398818dc4536fc41dd",
+      "provenance_sha256": "sha256:494174848f0c91da480827471dc44aa972f88632d78f8a0b7b264b0a067758f5"
+    },
+    {
+      "name": "missing-duckdb-policy",
+      "patch": "bad/missing-duckdb-policy.patch",
+      "run_id": "run_effcc359b41947fc",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:d6534aa79122039cefe2a12e0f63326ac971d05c9c242a822e7e2b8323ac4913",
+      "manifest_sha256": "sha256:dec6fc66c98c4e4b11c05e3c4801fd740cebbfe719b01a254019a456fed8fc9f",
+      "result_sha256": "sha256:406ed8238948477cb1e27a4b7497623dc82c95e60d5bb59b40a5dd9336612a00",
+      "provenance_sha256": "sha256:2ab6fcd5e1363f08f4ebdeda09adaae6367db6814de291f4c1807bf1cec30623"
+    },
+    {
+      "name": "missing-shared-generator-policy",
+      "patch": "bad/missing-shared-generator-policy.patch",
+      "run_id": "run_d2125ae9d3ef40f7",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:96e3e9f523903232d4e2695be822015f043422423c0c5944357102181f1e3e8b",
+      "manifest_sha256": "sha256:84e04b979acc7726e0278b5f9c2866b466175425d79304966f9eb7fe7d21380c",
+      "result_sha256": "sha256:e0035fe564e07fb43712fe8ced24868d4dd4845a61938c5875d74adca11b85bf",
+      "provenance_sha256": "sha256:6d94af4651a95f5221c6203ed5933e4bddeb80d4ad7a61f55d0ed87495990697"
+    },
+    {
+      "name": "missing-having-max-policy",
+      "patch": "bad/missing-having-max-policy.patch",
+      "run_id": "run_93483d6a5b6f4a7d",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order"
+      ],
+      "patch_sha256": "sha256:833c34f79384690a7d28b4bfd0546544970c22ed18e6fd70ae960406ebdb21d9",
+      "manifest_sha256": "sha256:a90aae17a67c06c96c077e4d7605ac482e1ce412bfdb5f0e26769fae70a849e6",
+      "result_sha256": "sha256:cbdf841786878c65c88a18cc1f3b4bdd35f3fa143c7311412e63860e4181bb64",
+      "provenance_sha256": "sha256:3f658015cb2fdd4822b35f481ad305ed2b16fe45177349674f72215fa3e888e4"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_7dce9a09b23f47ab",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:duckdb-ignore-nulls-modifier-order",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:96c3b264e3740d41568b2c94c91f82ca816e37308047628144c344c9fe66c50b",
+      "manifest_sha256": "sha256:6912d91054b6ca21cb436c134e4290e8d8678c0444148477d681025764a18e51",
+      "result_sha256": "sha256:2a27624b82a785fe0830c20b92c1489c4230e21c33933aaea91648b376e98b49",
+      "provenance_sha256": "sha256:a4494a449ad54734a6d731cc43e11d026d2187d91236b2d5676e498f25ae5bf8"
+    }
+  ]
+}
