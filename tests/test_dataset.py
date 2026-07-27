@@ -27,8 +27,10 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["task_count"] == 21
     assert result["calibration_task_count"] == 5
     assert result["research_task_count"] == 16
-    assert result["candidate_package_count"] == 0
-    assert result["unregistered_task_paths"] == []
+    assert result["candidate_package_count"] == 1
+    assert result["unregistered_task_paths"] == [
+        "tasks/cross-repo-heldout/dagster-subset-partition-definition-selection"
+    ]
     assert result["role_counts"] == {
         "calibration": 5,
         "memory-development": 6,

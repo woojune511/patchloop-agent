@@ -62,13 +62,17 @@ visible_checks:
 ### Private evaluator spec
 
 ```yaml
-schema_version: task-private-v1
+schema_version: task-private-v2
 task_id: parser-quoted-newline-001
 task_version: 1
 
 hidden_checks:
   - id: hidden_multiline_csv_tests
   - id: regression_suite
+
+hidden_artifacts:
+  - path: hidden/test_multiline_csv.py
+    sha256: "sha256:..."
 
 reference_patch:
   path: reference.patch
@@ -82,6 +86,13 @@ audit:
     - special-casing hidden test values
 ```
 
+새 research task는 `task-private-v2`를 사용한다. V2는 `hidden/` 아래의 모든 evaluator
+artifact를 `hidden_artifacts`에 빠짐없이 선언하고 SHA-256을 고정한다. Loader는 선언된
+inventory와 실제 파일 집합이 정확히 같은지, 각 content hash가 일치하는지 검사한다.
+따라서 run manifest의 `private_spec_hash`는 hidden assertion 본문을 노출하지 않으면서도
+그 content identity를 간접적으로 고정한다. 기존 admitted evidence 재해석을 피하기 위해
+`task-private-v1`은 읽기 호환만 유지하며, 새 admission에는 사용하지 않는다.
+
 `task_id + task_version + base_commit`은 평가 도중 immutable하다. Public/private의 ID와 version이 일치하지 않으면 실행을 거부한다.
 
 Benchmark dependency environment가 필요한 package는 별도 `task-environment-v1` 파일로
@@ -91,9 +102,10 @@ assertion을 포함하지 않으며, 실제 run manifest의 `evaluator_image_dig
 실행을 거부한다. Environment file이 없는 calibration fixture만 기본 PatchLoop image를 사용한다.
 
 Allowlist에 등록된 remote repository의 `base_commit`은 소문자 40자리 hexadecimal SHA여야 한다.
-일반 clone이 frozen commit을 advertise하지 않아 첫 checkout이 실패하면 evaluator는 branch나 tag가
-아니라 그 exact SHA만 `FETCH_HEAD`로 fetch한 뒤 detached checkout을 다시 수행한다. 최종 `HEAD`가
-선언 SHA와 정확히 일치하지 않거나 exact-SHA fetch가 실패하면 task 실행을 거부한다.
+Evaluator는 전체 repository 이력을 clone하지 않고 그 exact SHA만 `--depth 1`로 fetch한 뒤
+`FETCH_HEAD`를 detached checkout한다. Windows에서도 audited monorepo의 긴 경로를 보존하도록
+checkout repository에 `core.longpaths=true`를 설정한다. 최종 `HEAD`가 선언 SHA와 정확히
+일치하지 않거나 exact-SHA fetch가 실패하면 task 실행을 거부한다.
 
 ### Dataset registry and eligibility
 

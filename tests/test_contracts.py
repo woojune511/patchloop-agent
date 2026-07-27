@@ -5,8 +5,11 @@ from pydantic import ValidationError
 
 from patchloop.agent.phases import validate_transition
 from patchloop.contracts import (
+    HiddenArtifact,
     ModelConfig,
     Phase,
+    PrivateTask,
+    ReferencePatch,
     RegisteredCheck,
     TaskConstraints,
     TaskEnvironment,
@@ -65,3 +68,17 @@ def test_task_environment_requires_digest_pinned_image() -> None:
         source_image_tag="example/evaluator:latest",
     )
     assert environment.image_digest == digest
+
+
+def test_private_v2_requires_hash_bound_hidden_artifacts() -> None:
+    reference = ReferencePatch(path="reference.patch", sha256="sha256:" + ("a" * 64))
+
+    with pytest.raises(ValidationError, match="requires at least one hidden artifact"):
+        PrivateTask(
+            schema_version="task-private-v2",
+            task_id="hash-bound-hidden-oracle",
+            reference_patch=reference,
+        )
+
+    with pytest.raises(ValidationError, match="below hidden"):
+        HiddenArtifact(path="tests/oracle.py", sha256="sha256:" + ("b" * 64))

@@ -16,6 +16,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/agronholm/anyio",
     "https://github.com/Delgan/loguru.git",
     "https://github.com/Delgan/loguru",
+    "https://github.com/dagster-io/dagster.git",
+    "https://github.com/dagster-io/dagster",
     "https://github.com/astanin/python-tabulate.git",
     "https://github.com/astanin/python-tabulate",
     "https://github.com/python-babel/babel.git",
@@ -101,39 +103,35 @@ class WorkspaceManager:
         if repository_url in ALLOWED_REMOTE_REPOSITORIES:
             if not expected_revision or re.fullmatch(r"[0-9a-f]{40}", expected_revision) is None:
                 raise ContractError("remote repository revision must be a full 40-character commit")
-            clone = subprocess.run(
-                ["git", "clone", "--quiet", "--no-checkout", repository_url, str(target)],
+            initialize = subprocess.run(
+                ["git", "init", "--quiet", str(target)],
                 capture_output=True,
                 text=True,
                 check=False,
             )
-            if clone.returncode != 0:
-                raise ContractError(f"audited remote clone failed: {clone.stderr.strip()}")
-            checkout = _git(
+            if initialize.returncode != 0:
+                raise ContractError(
+                    f"audited remote checkout initialization failed: {initialize.stderr.strip()}"
+                )
+            _git(target, "config", "core.longpaths", "true")
+            _git(target, "remote", "add", "origin", repository_url)
+            fetch = _git(
                 target,
-                "checkout",
+                "fetch",
                 "--quiet",
-                "--detach",
+                "--no-tags",
+                "--depth",
+                "1",
+                "origin",
                 expected_revision,
                 check=False,
             )
-            if checkout.returncode != 0:
-                fetch = _git(
-                    target,
-                    "fetch",
-                    "--quiet",
-                    "--no-tags",
-                    "origin",
-                    expected_revision,
-                    check=False,
+            if fetch.returncode != 0:
+                raise ContractError(
+                    "audited remote revision is unavailable: "
+                    f"exact-SHA fetch failed with {fetch.stderr.strip()!r}"
                 )
-                if fetch.returncode != 0:
-                    raise ContractError(
-                        "audited remote revision is unavailable: "
-                        f"checkout failed with {checkout.stderr.strip()!r}; "
-                        f"exact-SHA fetch failed with {fetch.stderr.strip()!r}"
-                    )
-                _git(target, "checkout", "--quiet", "--detach", expected_revision)
+            _git(target, "checkout", "--quiet", "--detach", "FETCH_HEAD")
             actual_revision = _git(target, "rev-parse", "HEAD").stdout.strip()
             if actual_revision != expected_revision:
                 raise ContractError(

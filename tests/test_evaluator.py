@@ -13,7 +13,7 @@ from patchloop.runtime import build_manifest
 from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.verifier import EvaluationEngine
-from patchloop.verifier.policy import verify_public_api
+from patchloop.verifier.policy import verify_public_api, verify_test_tampering
 
 TASK = "tasks/smoke/csv-quoted-newline"
 
@@ -61,27 +61,15 @@ def test_remote_repository_revision_must_be_lowercase_hex(tmp_path) -> None:
         )
 
 
-def test_remote_repository_fetches_an_unadvertised_exact_revision(
-    tmp_path, monkeypatch
-) -> None:
+def test_remote_repository_shallow_fetches_the_exact_revision(tmp_path, monkeypatch) -> None:
     expected_revision = "c06cc13286e86d9ff3d2e3b991eba327549c534b"
     commands: list[list[str]] = []
-    checkout_attempts = 0
 
     def fake_run(command, **kwargs):
-        nonlocal checkout_attempts
         commands.append(command)
-        if command[1] == "clone":
+        if command[1] == "init":
             Path(command[-1]).mkdir(parents=True)
             return SimpleNamespace(returncode=0, stdout="", stderr="")
-        if command[1] == "checkout":
-            checkout_attempts += 1
-            if checkout_attempts == 1:
-                return SimpleNamespace(
-                    returncode=128,
-                    stdout="",
-                    stderr="fatal: unable to read tree",
-                )
         if command[1:3] == ["rev-parse", "HEAD"]:
             return SimpleNamespace(
                 returncode=0,
@@ -100,15 +88,19 @@ def test_remote_repository_fetches_an_unadvertised_exact_revision(
     )
 
     assert workspace.is_dir()
-    assert checkout_attempts == 2
     assert [
         "git",
         "fetch",
         "--quiet",
         "--no-tags",
+        "--depth",
+        "1",
         "origin",
         expected_revision,
     ] in commands
+    assert ["git", "config", "core.longpaths", "true"] in commands
+    assert ["git", "checkout", "--quiet", "--detach", "FETCH_HEAD"] in commands
+    assert all(command[1] != "clone" for command in commands)
 
 
 def test_remote_repository_reports_exact_revision_fetch_failure(
@@ -117,22 +109,16 @@ def test_remote_repository_reports_exact_revision_fetch_failure(
     expected_revision = "c06cc13286e86d9ff3d2e3b991eba327549c534b"
 
     def fake_run(command, **kwargs):
-        if command[1] == "clone":
+        if command[1] == "init":
             Path(command[-1]).mkdir(parents=True)
             return SimpleNamespace(returncode=0, stdout="", stderr="")
-        if command[1] == "checkout":
-            return SimpleNamespace(
-                returncode=128,
-                stdout="",
-                stderr="fatal: unable to read tree",
-            )
         if command[1] == "fetch":
             return SimpleNamespace(
                 returncode=128,
                 stdout="",
                 stderr="fatal: remote error",
             )
-        raise AssertionError(command)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
 
     monkeypatch.setattr("patchloop.repository.subprocess.run", fake_run)
     manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
@@ -179,6 +165,24 @@ def test_public_api_base_source_is_explicitly_decoded_as_utf8(
 
     assert outcome.passed is True
     assert outcome.details["changed_symbols"] == []
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "tests/test_parser.py",
+        "python_modules/dagster/dagster_tests/asset_defs_tests/test_partitioned_assets.py",
+        "package/component_tests/cases.py",
+        "package/test_component.py",
+        "package/component_test.py",
+        ".patchloop-hidden/oracle.py",
+    ],
+)
+def test_test_tampering_recognizes_common_test_paths(path: str) -> None:
+    outcome = verify_test_tampering(DiffSummary([path], 1, 0, ""))
+
+    assert outcome.passed is False
+    assert outcome.details["test_files"] == [path]
 
 
 @pytest.mark.parametrize(

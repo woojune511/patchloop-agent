@@ -147,18 +147,43 @@ class ReferencePatch(StrictModel):
         return safe_relative_path(value)
 
 
+class HiddenArtifact(StrictModel):
+    path: str
+    sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @field_validator("path")
+    @classmethod
+    def validate_path(cls, value: str) -> str:
+        path = safe_relative_path(value)
+        if not path.startswith("hidden/"):
+            raise ValueError("hidden artifact path must be below hidden/")
+        return path
+
+
 class AuditSpec(StrictModel):
     expected_files: list[str] = Field(default_factory=list)
     prohibited_behaviors: list[str] = Field(default_factory=list)
 
 
 class PrivateTask(StrictModel):
-    schema_version: Literal["task-private-v1"] = "task-private-v1"
+    schema_version: Literal["task-private-v1", "task-private-v2"] = "task-private-v1"
     task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
     task_version: int = Field(default=1, ge=1)
     hidden_checks: list[RegisteredCheck] = Field(default_factory=list)
+    hidden_artifacts: list[HiddenArtifact] = Field(default_factory=list)
     reference_patch: ReferencePatch
     audit: AuditSpec = Field(default_factory=AuditSpec)
+
+    @model_validator(mode="after")
+    def bind_v2_hidden_artifacts(self) -> PrivateTask:
+        if self.schema_version == "task-private-v2" and not self.hidden_artifacts:
+            raise ValueError("task-private-v2 requires at least one hidden artifact")
+        if self.schema_version == "task-private-v1" and self.hidden_artifacts:
+            raise ValueError("hidden_artifacts requires task-private-v2")
+        paths = [artifact.path for artifact in self.hidden_artifacts]
+        if len(paths) != len(set(paths)):
+            raise ValueError("hidden artifact paths must be unique")
+        return self
 
 
 class TaskEnvironment(StrictModel):

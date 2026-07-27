@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.dagster-io_1776_dagster-33605@sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b
+image_digest: sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b
+source_image_tag: swerebench/sweb.eval.x86_64.dagster-io_1776_dagster-33605:latest

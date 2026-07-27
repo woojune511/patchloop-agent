@@ -1,0 +1,76 @@
+schema_version: task-public-v1
+task_id: dagster-subset-partition-definition-selection
+task_version: 1
+split: cross-repo-heldout
+repository:
+  url: https://github.com/dagster-io/dagster.git
+  base_commit: f8430dc7bf76bfab4f026165e5c5f821104298df
+  language: python
+issue:
+  title: Derive partition context from the selected multi-asset subset
+  description: |
+    A subsettable multi-asset may contain both partitioned and
+    non-partitioned asset or asset-check specs. When a run selects only a
+    non-partitioned entity, an unselected partitioned sibling currently
+    leaks its partition definition into the execution context. This can make
+    a valid non-partitioned run fail with "Cannot access partition_key for a
+    non-partitioned run".
+
+    Make the effective partition definition reflect only the selected asset
+    and asset-check keys. Selecting a partitioned entity must still expose
+    its partition definition, compatible selected definitions must be
+    preserved, and genuinely conflicting selected definitions must retain
+    the existing error behavior.
+
+    Keep `StepExecutionContext.entity_partitions_def` consistent with the
+    selection-aware `AssetsDefinition` result. Do not special-case asset
+    names or bypass the normal partition-key checks.
+constraints:
+  allowed_paths:
+    - python_modules/dagster/dagster/_core/definitions/assets/definition/assets_definition.py
+    - python_modules/dagster/dagster/_core/execution/context/system.py
+  forbidden_paths:
+    - python_modules/dagster/dagster_tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 2
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-partitioned-assets-regression
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        source_root="$(mktemp -d /tmp/patchloop-dagster-source-XXXXXX)"
+        mkdir -p "$source_root/python_modules/dagster"
+        cp -a /workspace/python_modules/dagster/dagster \
+          "$source_root/python_modules/dagster/dagster"
+        cd "$source_root"
+        export PYTHONPATH="$source_root/python_modules/dagster"
+        /opt/conda/envs/testbed/bin/python -m pytest \
+          --no-header -q --tb=line --color=no -p no:cacheprovider \
+          /workspace/python_modules/dagster/dagster_tests/asset_defs_tests/test_partitioned_assets.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/python_modules/dagster
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PATH: /opt/conda/envs/testbed/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - dagster
+  - multi-asset
+  - partition-selection
+  - asset-checks
+  - execution-context
+  - core-cross-repo

@@ -2,10 +2,14 @@ from __future__ import annotations
 
 import csv
 import json
+import shutil
 from pathlib import Path
+
+import pytest
 
 from patchloop.contracts import DatasetRole
 from patchloop.dataset import require_dataset_role
+from patchloop.errors import ContractError
 from patchloop.repository import ALLOWED_REMOTE_REPOSITORIES
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes
@@ -41,6 +45,9 @@ FUSESOC_TASK = Path(
 )
 TOX_DOTTED_TASK = Path(
     "tasks/same-repo-heldout/tox-dotted-version-factor-base-python"
+)
+DAGSTER_TASK = Path(
+    "tasks/cross-repo-heldout/dagster-subset-partition-definition-selection"
 )
 
 
@@ -2550,3 +2557,188 @@ def test_tox_dotted_admission_evidence_binds_followup_policy_boundaries() -> Non
         "immutable_evaluator_image",
     ):
         assert evidence["admission_checks"][check_id] == "pass"
+
+
+def test_dagster_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(DAGSTER_TASK)
+
+    assert package.public.task_id == "dagster-subset-partition-definition-selection"
+    assert package.public.split == "cross-repo-heldout"
+    assert package.public.repository.url == "https://github.com/dagster-io/dagster.git"
+    assert package.public.repository.base_commit == (
+        "f8430dc7bf76bfab4f026165e5c5f821104298df"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == [
+        "python_modules/dagster/dagster/_core/definitions/assets/definition/assets_definition.py",
+        "python_modules/dagster/dagster/_core/execution/context/system.py",
+    ]
+    assert package.public.constraints.max_changed_files == 2
+    assert package.public.constraints.max_diff_lines == 60
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is False
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b"
+    )
+    assert package.environment.evaluator_image.endswith(
+        f"@{package.environment.image_digest}"
+    )
+
+
+def test_dagster_visible_check_uses_submitted_source_copy_and_all_p2p() -> None:
+    package = load_task_package(DAGSTER_TASK)
+    check = package.public.visible_checks[0]
+    command = check.command
+    script = command[2]
+
+    assert check.id == "upstream-partitioned-assets-regression"
+    assert command[:2] == ["/bin/bash", "-lc"]
+    assert "cp -a /workspace/python_modules/dagster/dagster" in script
+    assert "cp -a /workspace/python_modules/dagster " not in script
+    assert 'export PYTHONPATH="$source_root/python_modules/dagster"' in script
+    assert (
+        "/workspace/python_modules/dagster/dagster_tests/asset_defs_tests/"
+        "test_partitioned_assets.py"
+    ) in script
+    assert "--deselect" not in script
+    assert "-k " not in script
+    assert check.timeout_seconds == 90
+    assert check.environment["PATH"].startswith("/opt/conda/envs/testbed/bin:")
+
+
+def test_dagster_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(DAGSTER_TASK)
+    public_text = (DAGSTER_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_selected_entity_partition_definition.py" not in public_text
+    assert "_entity_partitions_def" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert package.private.hidden_artifacts[0].sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_dagster_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["dagster-io__dagster-33605"]
+    assert candidate["benchmark_family"] == "SWE-rebench-leaderboard"
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == (
+        "f8430dc7bf76bfab4f026165e5c5f821104298df"
+    )
+    assert candidate["pr_url"] == "https://github.com/dagster-io/dagster/pull/33605"
+    assert candidate["license_spdx"] == "Apache-2.0"
+    assert candidate["gold_patch_lines"] == "42"
+    assert candidate["test_patch_lines"] == "52"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "1"
+    assert candidate["p2p"] == "28"
+    assert candidate["proposed_lane"] == "core-cross-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:98a0b69301022cba2ac7520a8ab1891c2a490cf4ec4ba889d6ce36a29f40831b"
+    )
+    assert "all 28 base P2P nodes" in candidate["notes"]
+    assert "official clean-harness matrix pending" in candidate["notes"]
+
+
+def test_dagster_reference_is_exact_production_patch_and_hash_bound() -> None:
+    package = load_task_package(DAGSTER_TASK)
+    reference_patch = DAGSTER_TASK / package.private.reference_patch.path
+    patch_text = reference_patch.read_text(encoding="utf-8")
+    patch_lines = patch_text.splitlines()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:1f0ec526d126ef8893fb40d032cc5a26b52bb1eb1b2eba56757541088ae0308e"
+    )
+    assert sha256_bytes(reference_patch.read_bytes()) == (
+        package.private.reference_patch.sha256
+    )
+    assert sum(
+        line.startswith("+") and not line.startswith("+++") for line in patch_lines
+    ) == 12
+    assert sum(
+        line.startswith("-") and not line.startswith("---") for line in patch_lines
+    ) == 7
+    assert {
+        line.removeprefix("diff --git a/").split(" b/", maxsplit=1)[0]
+        for line in patch_lines
+        if line.startswith("diff --git a/")
+    } == {
+        "python_modules/dagster/dagster/_core/definitions/assets/definition/assets_definition.py",
+        "python_modules/dagster/dagster/_core/execution/context/system.py",
+    }
+    assert "dagster_tests/" not in patch_text
+
+
+def test_dagster_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    package = load_task_package(DAGSTER_TASK)
+    hidden_path = (
+        DAGSTER_TASK / "hidden/test_selected_entity_partition_definition.py"
+    )
+    hidden_text = hidden_path.read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (DAGSTER_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 9
+    assert "test_oracle_imports_the_submitted_source_copy" in hidden_text
+    assert "test_selected_partitioned_check_defines_partition_context" in hidden_text
+    assert "selected_asset_check_keys" in hidden_text
+    assert "StepExecutionContext.__dict__" in hidden_text
+    assert "execution context duplicated asset selection" in hidden_text
+    assert package.private.schema_version == "task-private-v2"
+    assert [artifact.path for artifact in package.private.hidden_artifacts] == [
+        "hidden/test_selected_entity_partition_definition.py"
+    ]
+    assert package.private.hidden_artifacts[0].sha256 == (
+        "sha256:dbfd76a912a27d498092fda20e37db4d99c69fc359d8a5e1c048751e5be24c86"
+    )
+    assert sha256_bytes(hidden_path.read_bytes()) == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    hidden_script = package.private.hidden_checks[0].command[2]
+    assert (
+        "/workspace/.patchloop-hidden/test_selected_entity_partition_definition.py"
+        in hidden_script
+    )
+    assert "cp /workspace/.patchloop-hidden" not in hidden_script
+    assert bad_names == [
+        "always-unpartitioned.patch",
+        "assets-definition-only.patch",
+        "check-asset-key-filter.patch",
+        "execution-context-only.patch",
+        "first-selected-definition.patch",
+        "forbidden-test-edit.patch",
+        "noop.patch",
+        "selected-assets-only.patch",
+        "selected-checks-only.patch",
+        "unfiltered-check-specs.patch",
+    ]
+    assert (DAGSTER_TASK / "bad/noop.patch").read_bytes() == b"\n"
+
+    audit_text = (DAGSTER_TASK / "audit.md").read_text(encoding="utf-8")
+    assert "all 28 base-resident p2p nodes" in audit_text.lower()
+    assert "read-only `/workspace` mount" in audit_text
+    assert "Admission remains pending" in audit_text
+
+
+def test_dagster_private_v2_rejects_hidden_oracle_mutation(tmp_path: Path) -> None:
+    copied_task = tmp_path / DAGSTER_TASK.name
+    shutil.copytree(DAGSTER_TASK, copied_task)
+    hidden_path = copied_task / "hidden/test_selected_entity_partition_definition.py"
+    hidden_path.write_text(
+        hidden_path.read_text(encoding="utf-8") + "\n# unbound mutation\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ContractError, match="hidden artifact hash mismatch"):
+        load_task_package(copied_task)

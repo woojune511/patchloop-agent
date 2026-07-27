@@ -73,11 +73,25 @@ def verify_dependencies(summary: DiffSummary, constraints: TaskConstraints) -> P
     return PolicyOutcome(not violations, violations, {"dependency_files": changed})
 
 
+def _is_test_path(path: str) -> bool:
+    normalized = PurePosixPath(path.replace("\\", "/"))
+    directories = normalized.parts[:-1]
+    filename = normalized.name
+    return (
+        any(
+            part in {"test", "tests", ".patchloop-hidden"} or part.endswith("_tests")
+            for part in directories
+        )
+        or filename.startswith("test_")
+        or filename.endswith("_test.py")
+    )
+
+
 def verify_test_tampering(summary: DiffSummary) -> PolicyOutcome:
     changed = [
         path
         for path in summary.changed_files
-        if path.startswith("tests/") or "/tests/" in path or path.startswith(".patchloop-hidden/")
+        if _is_test_path(path)
     ]
     violations = [f"test files changed: {', '.join(changed)}"] if changed else []
     return PolicyOutcome(not violations, violations, {"test_files": changed})

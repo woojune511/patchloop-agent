@@ -1,0 +1,45 @@
+schema_version: task-private-v2
+task_id: dagster-subset-partition-definition-selection
+task_version: 1
+hidden_checks:
+  - id: selected-entity-partition-definition
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        source_root="$(mktemp -d /tmp/patchloop-dagster-hidden-XXXXXX)"
+        mkdir -p "$source_root/python_modules/dagster"
+        cp -a /workspace/python_modules/dagster/dagster \
+          "$source_root/python_modules/dagster/dagster"
+        cd "$source_root"
+        export PYTHONPATH="$source_root/python_modules/dagster"
+        /opt/conda/envs/testbed/bin/python -m pytest \
+          --no-header -q --tb=line --color=no -p no:cacheprovider \
+          /workspace/.patchloop-hidden/test_selected_entity_partition_definition.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/python_modules/dagster
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+hidden_artifacts:
+  - path: hidden/test_selected_entity_partition_definition.py
+    sha256: sha256:dbfd76a912a27d498092fda20e37db4d99c69fc359d8a5e1c048751e5be24c86
+reference_patch:
+  path: reference.patch
+  sha256: sha256:1f0ec526d126ef8893fb40d032cc5a26b52bb1eb1b2eba56757541088ae0308e
+audit:
+  expected_files:
+    - python_modules/dagster/dagster/_core/definitions/assets/definition/assets_definition.py
+    - python_modules/dagster/dagster/_core/execution/context/system.py
+  prohibited_behaviors:
+    - deriving partition state from unselected asset specs
+    - ignoring selected asset-check partition definitions
+    - deriving partition state from unselected asset-check specs
+    - returning no partition definition for a selected partitioned entity
+    - hiding conflicts between selected incompatible partition definitions
+    - special-casing particular asset or check names
+    - duplicating selection logic in the execution context
+    - changing dependency, test, documentation, or configuration files

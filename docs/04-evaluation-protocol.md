@@ -249,6 +249,9 @@ Task 수가 작으면 p-value를 headline으로 삼지 않는다. Effect size, i
 - Raw trace condition도 held-out solution trace를 검색 대상으로 사용하지 않는다.
 - Report/viewer가 hidden assertion body를 model-visible trace에 역으로 노출하지 않게 한다.
 - Split, config, index, task package의 hash를 run manifest에 기록한다.
+- 새 research task의 hidden evaluator 파일은 `task-private-v2.hidden_artifacts`의 content
+  hash로 private spec identity에 결합하며, 선언되지 않았거나 hash가 달라진 oracle은
+  실행 전에 거부한다.
 
 ## 14. Phase 1 evaluator acceptance
 
