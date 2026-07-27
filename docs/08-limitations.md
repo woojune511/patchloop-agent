@@ -61,6 +61,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   as was one scope/test-tampering edit. Its worker bootstrap lineage is distinct from the AnyIO
   #1121 development task. This is deterministic evaluator admission evidence, not a live-model
   core result.
+- Twelfth research task admitted: Param #1117 as the second core-cross-repo held-out task, with
+  three exact-production-reference passes, all 94 upstream reactive regressions, ten independent
+  hidden checks and one base hidden failure. Eight semantic partial implementations and one
+  scope/test-tampering edit were rejected. Its digest-pinned evaluator image is
+  `sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010`.
+  This is deterministic evaluator admission evidence, not a live-model core result.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -73,23 +79,25 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
-  The AnyIO #1134 image has no configured `User` and therefore ran as Docker's default root user.
-  Network denial, a read-only root filesystem and a read-only submitted workspace were enforced,
-  but uniform non-root execution for arbitrary external images is not yet implemented. The native
-  PatchLoop image's non-root isolation smoke does not prove this property for external images.
+  The AnyIO #1134 and Param #1117 images have no configured `User` and therefore ran as Docker's
+  default root user. Network denial, a read-only root filesystem and a read-only submitted workspace
+  were enforced, but uniform non-root execution for arbitrary external images is not yet implemented.
+  The native PatchLoop image's non-root isolation smoke does not prove this property for external
+  images.
 
 ## Dataset and campaign not yet produced
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- Admitted research tasks are 11/20: memory-development 6/6, development-validation 2/2,
-  same-repo core 2/6 and cross-repo core 1/6.
+- Admitted research tasks are 12/20: memory-development 6/6, development-validation 2/2,
+  same-repo core 2/6 and cross-repo core 2/6.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.
 - No Terminal-Bench original or constrained coding adaptation has passed PatchLoop admission. Any future
   original benchmark run is external acceptance evidence, not a core result.
-- No 96-run OpenAI campaign, cost measurement, negative-transfer review or cross-repo result exists.
+- No 96-run OpenAI campaign, cost measurement, negative-transfer review or live-model cross-repo
+  result exists.
 - The six scripted offline runs validate harness plumbing, not model capability or memory effectiveness.
   No portfolio performance claim about a live model should be made from them.
 

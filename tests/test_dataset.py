@@ -24,9 +24,9 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["calibration_ready"] is True
     assert result["research_ready"] is False
     assert result["stress_ready"] is False
-    assert result["task_count"] == 16
+    assert result["task_count"] == 17
     assert result["calibration_task_count"] == 5
-    assert result["research_task_count"] == 11
+    assert result["research_task_count"] == 12
     assert result["candidate_package_count"] == 0
     assert result["unregistered_task_paths"] == []
     assert result["role_counts"] == {
@@ -34,16 +34,17 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
         "memory-development": 6,
         "development-validation": 2,
         "core-same-repo": 2,
-        "core-cross-repo": 1,
+        "core-cross-repo": 2,
     }
     assert "memory-development" not in result["missing"]
     assert "development-validation" not in result["missing"]
     assert result["missing"]["core-same-repo"] == 4
-    assert result["missing"]["core-cross-repo"] == 5
+    assert result["missing"]["core-cross-repo"] == 4
     assert result["repositories"] == [
         "agronholm/anyio",
         "delgan/loguru",
         "getmoto/moto",
+        "holoviz/param",
         "huggingface/huggingface_hub",
         "pdm-project/pdm",
         "pytest-dev/pyfakefs",
@@ -64,12 +65,12 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
 
 def test_research_tasks_have_real_benchmark_admission_evidence() -> None:
     result = audit_dataset("tasks")
-    assert result["research_task_count"] == 11
+    assert result["research_task_count"] == 12
     assert result["source_counts"] == {
         "synthetic-control": 5,
-        "benchmark-instance": 11,
+        "benchmark-instance": 12,
     }
-    assert result["difficulty_counts"] == {"easy": 5, "medium": 3, "hard": 8}
+    assert result["difficulty_counts"] == {"easy": 5, "medium": 3, "hard": 9}
 
 
 def test_first_research_task_is_eligible_only_for_memory_development() -> None:

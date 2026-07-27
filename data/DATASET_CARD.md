@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The eleven admitted research tasks are:
+The twelve admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -83,6 +83,13 @@ The eleven admitted research tasks are:
   `HAVING MAX` / `ORDER BY` / `LIMIT` negative-transfer guard. It records three official reference
   passes, all 39 upstream DuckDB tests, 21 independent hidden checks, one base hidden failure, seven
   semantic partial rejections and one scope/test-tampering rejection.
+- `param-shared-rx-fanout-cache`, derived from SWE-rebench leaderboard instance
+  `holoviz__param-1117` and upstream Param issue #1116 / PR #1117. Its exact production reference
+  links cloned reactive branches to one shared source evaluation while preserving invalidation and
+  branch-local accessor semantics. It records three official reference passes, all 94 upstream
+  reactive regressions, ten independent hidden checks, one base hidden failure, eight semantic
+  partial rejections and one scope/test-tampering rejection. The evaluator image is pinned by digest,
+  and the public issue, patch and one-file localization make the disclosed contamination risk high.
 - `pdm-target-project-options-loading`, derived from SWE-rebench leaderboard instance
   `pdm-project__pdm-3759` and upstream PDM issue #3756 / PR #3759. The original benchmark patch scanned
   raw arguments before the real parser and its test mocked the parser while using an invalid option
@@ -101,9 +108,10 @@ The eleven admitted research tasks are:
   all 36 upstream process regressions, 11 hidden checks, one base hidden failure, nine semantic
   rejections and one scope/test-tampering rejection.
 
-All eleven tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+All twelve tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
 SWE-rebench evaluator image. Seven are MIT licensed, including both PDM tasks, both AnyIO tasks and
-SQLGlot; Hugging Face Hub, pyfakefs and Moto are Apache-2.0; Babel is BSD-3-Clause.
+SQLGlot; Hugging Face Hub, pyfakefs and Moto are Apache-2.0; Babel and Param are BSD-3-Clause.
+Together with the five calibration fixtures, the curated manifest currently contains 17 task entries.
 
 ## Research dataset target
 
@@ -114,8 +122,8 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
 | Core same-repo | 6 | prohibited | 2 |
-| Core cross-repo | 6 | prohibited | 1 |
-| **Research total** | **20** |  | **11** |
+| Core cross-repo | 6 | prohibited | 2 |
+| **Research total** | **20** |  | **12** |
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

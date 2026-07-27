@@ -1344,7 +1344,7 @@ def test_param_public_contract_excludes_evaluator_only_material() -> None:
     )
 
 
-def test_param_candidate_is_traceable_to_screening_swe_rebench_row() -> None:
+def test_param_candidate_is_traceable_to_admitted_swe_rebench_row() -> None:
     with Path("data/benchmark-candidate-ledger.csv").open(encoding="utf-8", newline="") as handle:
         rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
 
@@ -1358,7 +1358,7 @@ def test_param_candidate_is_traceable_to_screening_swe_rebench_row() -> None:
     assert candidate["f2p"] == "2"
     assert candidate["p2p"] == "94"
     assert candidate["proposed_lane"] == "core-cross-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010"
     )
@@ -1372,6 +1372,52 @@ def test_param_reference_patch_matches_frozen_benchmark_production_patch() -> No
         "sha256:531f7143c3eb04494e3eae258685018c70654f4c3c403aefe10f8a5a2f700d23"
     )
     assert sha256_bytes(reference_patch.read_bytes()) == package.private.reference_patch.sha256
+
+
+def test_param_admission_evidence_binds_shared_fanout_boundaries() -> None:
+    package = load_task_package(PARAM_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_CROSS_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_CROSS_REPO
+    assert entry.failure_pattern_id == "shared-reactive-source-recomputed-per-branch"
+    assert entry.solution_lineage_id == "holoviz-param-pr-1117"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 9
+
+    evidence = json.loads(
+        Path(
+            "reports/docker-gate/research-param-shared-rx-fanout-cache.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert evidence["reference_policy"]["kind"] == "exact-upstream-production-only"
+    assert evidence["source"]["benchmark_production_patch_sha256"] == (
+        package.private.reference_patch.sha256
+    )
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 9
+    assert evidence["semantic_bad_patch_rejection_count"] == 8
+    assert evidence["independent_hidden_test_count"] == 10
+    assert evidence["benchmark_f2p_declared_count"] == 2
+    assert evidence["benchmark_p2p_declared_count"] == 94
+    assert evidence["upstream_regression_test_count"] == 94
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 13
+    assert len({case["run_id"] for case in cases.values()}) == 13
+    assert all(case["official"] for case in cases.values())
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    assert cases["base-noop"]["failed_checks"] == [
+        "hidden:shared-rx-fanout-cache"
+    ]
 
 
 def test_reverted_pypa_build_candidate_remains_excluded() -> None:

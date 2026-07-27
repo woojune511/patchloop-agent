@@ -65,7 +65,26 @@ Difficulty audit:
 | Verification breadth | 2 | Cache lifetime, invalidation, independent graphs, coroutines, generators, accessors, and errors interact. |
 | Total | 6 | Hard under `dataset-manifest-v1`. |
 
-Admission remains provisional until the reference, base/no-op, semantic
-known-bad, and scope/tampering cases pass from a clean harness commit. The
-official evidence report and immutable run IDs will be appended only after
-those executable gates complete.
+## Admission evidence
+
+Admitted as `core-cross-repo` from clean harness commit
+`4d73605ae3b8bffa22970342c807e04010352c17`. The official Docker matrix is
+recorded in
+`reports/docker-gate/research-param-shared-rx-fanout-cache.json`.
+
+- Reference SCRR passed three times:
+  `run_abd2492639524050`, `run_6371e12b93324023`,
+  `run_314c93a4a1f24577`.
+- Base/no-op preserved the 94 passing upstream regression tests but failed the
+  independent hidden oracle: `run_16f15bd5874c4c75`.
+- All eight semantic known-bad patches were rejected:
+  `run_972670209bdf4d59`, `run_552269843cd84065`,
+  `run_9bffaeffa42345bb`, `run_13241124090d4297`,
+  `run_cb2d851f8f9e4b31`, `run_be453108ce604ba8`,
+  `run_d653e11cc58f4928`, `run_ba0d5de8cd66404e`.
+- The forbidden test edit was rejected by hidden acceptance, scope, and test
+  tampering policy: `run_21905bc5bce74b3e`.
+
+Every run used the pinned image digest, network-disabled evaluator, read-only
+submitted workspace, and zero model/API calls. The official evidence stores
+the SHA-256 hashes of each run manifest, result, provenance record, and patch.

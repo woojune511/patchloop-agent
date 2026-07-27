@@ -501,6 +501,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 8
 
+  - task_id: param-shared-rx-fanout-cache
+    task_version: 1
+    path: tasks/cross-repo-heldout/param-shared-rx-fanout-cache
+    role: core-cross-repo
+    admission_state: admitted
+    public_spec_hash: sha256:0ec4a12c90a8c332d26ee41f162aea6a15cba7f05e68316616a49f667bd8811e
+    private_spec_hash: sha256:9dffa77b678d47f3b58ac730f4ce40300084fa69bf1976688d68d9c2c5408cb2
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: holoviz__param-1117
+      upstream_repository: holoviz/param
+      issue_url: https://github.com/holoviz/param/issues/1116
+      pull_request_url: https://github.com/holoviz/param/pull/1117
+      upstream_base_commit: 833c8f05f7a47fa1476620307ef7fd447c45e6fb
+      resolution_commit: d93e585339068de7dadc0bb26b1dc9ee096780b4
+      license_spdx: BSD-3-Clause
+      retrieved_at: 2026-07-27T04:15:00Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.holoviz_1776_param-1117@sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 6
+      tier: hard
+      rationale: The fix must distinguish shared source state from branch-local operations across synchronous, coroutine and generator resolution while preserving invalidation, accessor divergence, graph isolation and exception behavior.
+    failure_pattern_id: shared-reactive-source-recomputed-per-branch
+    solution_lineage_id: holoviz-param-pr-1117
+    admission_evidence:
+      path: reports/docker-gate/research-param-shared-rx-fanout-cache.json
+      sha256: sha256:e1ce2b5c03d06f501eca7f7980545a5bcf110fc6d933e699d6cca32d54b820d6
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 9
+
   - task_id: pdm-target-project-options-loading
     task_version: 1
     path: tasks/same-repo-heldout/pdm-target-project-options-loading

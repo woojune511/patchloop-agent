@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check .` | pass |
-| Tests | `.venv/Scripts/python -m pytest -q -p no:cacheprovider` | 131 pass, 2 skipped; all eleven research admissions and dataset-role gates included |
+| Tests | `uv run pytest -o addopts="" -q -p no:cacheprovider --basetemp .patchloop/pytest-param-admission-summary-20260727` | 139 pass; all twelve research admissions, dataset-role gates and Docker-dependent tests included |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus eleven research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 11/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus twelve research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 12/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, PDM #3759 and AnyIO #1134 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO #1121, tox, Hugging Face Hub, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759 and AnyIO #1134 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -523,6 +523,45 @@ network-disabled, read-only Docker boundary. The external evaluator image has no
 configured user and therefore ran as Docker's default root user; the limitation
 is disclosed rather than attributed to the native image's non-root smoke.
 
+## Twelfth research task admission
+
+`param-shared-rx-fanout-cache` comes from SWE-rebench leaderboard instance
+`holoviz__param-1117`, Param issue #1116 and PR #1117. It is the second hard
+`core-cross-repo` held-out task, pinned to base commit
+`833c8f05f7a47fa1476620307ef7fd447c45e6fb` and evaluator image
+`sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010`.
+PatchLoop keeps the exact accepted production hunk in `param/reactive.py` and
+excludes the benchmark test patch. The public issue, accepted patch and one-file
+localization are all available upstream, so contamination risk remains high.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_abd2492639524050`, `run_6371e12b93324023`, `run_314c93a4a1f24577` | full success ×3 | 3/3 success, `official=true` |
+| no-op | `run_16f15bd5874c4c75` | regression pass, hidden fail | rejected |
+| missing shared clone link | `run_972670209bdf4d59` | hidden shared-source fail | rejected |
+| synchronous sharing only | `run_552269843cd84065` | hidden async/generator fail | rejected |
+| async result not awaited | `run_9bffaeffa42345bb` | hidden coroutine fan-out fail | rejected |
+| generator detection omitted | `run_13241124090d4297` | regression and hidden generator fail | rejected |
+| wrong shared pointer | `run_cb2d851f8f9e4b31` | regression and hidden isolation fail | rejected |
+| self-method guard omitted | `run_be453108ce604ba8` | hidden accessor-divergence fail | rejected |
+| shared-method guard omitted | `run_d653e11cc58f4928` | regression and hidden accessor-divergence fail | rejected |
+| stale shared current value | `run_ba0d5de8cd66404e` | regression and hidden invalidation fail | rejected |
+| forbidden test edit | `run_21905bc5bce74b3e` | hidden, scope and test-tampering fail | rejected |
+
+The base checkout passed all 94 upstream reactive regressions, with seven
+skips, while failing the private ten-check oracle. Four
+semantic partials also preserved the visible suite but failed hidden
+acceptance; the other four failed both regression and hidden checks. The
+independent oracle binds submitted imports to `/workspace` and covers
+synchronous, coroutine and generator fan-out, nested sharing, independent
+graphs, repeated invalidation, property and method accessors, consumer
+isolation, and source error recovery. The
+[Param reactive fan-out research admission report](../reports/docker-gate/research-param-shared-rx-fanout-cache.json)
+records every patch, manifest, result and provenance hash from clean harness
+commit `4d73605a...`. This gate made zero model/API calls. All runs enforced
+network denial and a read-only submitted workspace; the image has no configured
+user and therefore ran as Docker's default root user.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -533,6 +572,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 11/20, and the stress sentinels are 0/3. The registry has no
-contract or content-hash errors; it remains `draft` because the remaining 9 research tasks are not
+calibration is 5/5, admitted research is 12/20, and the stress sentinels are 0/3. The registry has no
+contract or content-hash errors; it remains `draft` because the remaining 8 research tasks are not
 admitted. No live OpenAI request or paid campaign was made.
