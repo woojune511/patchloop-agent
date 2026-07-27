@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1134@sha256:d7997027864d2bfb32d649e7e544381f5d1b161df8f1682c719d222d66489dc0
+image_digest: sha256:d7997027864d2bfb32d649e7e544381f5d1b161df8f1682c719d222d66489dc0
+source_image_tag: swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1134:latest

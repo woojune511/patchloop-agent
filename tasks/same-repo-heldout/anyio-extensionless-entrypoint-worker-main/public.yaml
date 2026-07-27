@@ -1,0 +1,64 @@
+schema_version: task-public-v1
+task_id: anyio-extensionless-entrypoint-worker-main
+task_version: 1
+split: same-repo-heldout
+repository:
+  url: https://github.com/agronholm/anyio.git
+  base_commit: 01b8d02381ba95ba11241c1ec361e908fe05b8be
+  language: python
+issue:
+  title: Process workers cannot import main from extensionless entrypoints
+  description: |
+    When a program starts from a console-style entrypoint whose filename does
+    not end in .py or .pyc, the process worker cannot reconstruct the parent
+    main module. Callables defined by that entrypoint then fail to unpickle, and
+    worker code that imports __main__ cannot access the entrypoint globals.
+
+    Load ordinary extensionless and unknown-suffix entrypoint files in process
+    workers while preserving normal Python-script behavior. The worker's
+    __main__ and multiprocessing-compatible __mp_main__ names must refer to the
+    same loaded module, the entrypoint must execute only once per worker, and
+    initialization errors must still reach the caller. Do not change public
+    APIs or process-pool lifecycle behavior.
+constraints:
+  allowed_paths:
+    - src/anyio/to_process.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - uv.lock
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 40
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-process-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -rA
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - tests/test_to_process.py
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - process-worker
+  - extensionless-entrypoint
+  - main-module
+  - core-same-repo

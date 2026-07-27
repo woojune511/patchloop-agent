@@ -1,0 +1,38 @@
+schema_version: task-private-v1
+task_id: anyio-extensionless-entrypoint-worker-main
+task_version: 1
+hidden_checks:
+  - id: extensionless-entrypoint-worker-main
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - unittest
+      - discover
+      - -s
+      - .patchloop-hidden
+      - -p
+      - test_*.py
+      - -v
+    timeout_seconds: 90
+    environment:
+      PYTHONPATH: /workspace/src
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:a1c7c8066012458235dbe2e7c701af214dbbd4faddfa0fd541ad3505733fbc44
+audit:
+  expected_files:
+    - src/anyio/to_process.py
+  prohibited_behaviors:
+    - assuming the parent entrypoint has a .py or .pyc suffix
+    - leaving __main__ absent or binding it to a non-module object
+    - omitting the multiprocessing-compatible __mp_main__ alias
+    - binding __main__ and __mp_main__ to different module objects
+    - executing the parent entrypoint more than once per worker
+    - running the parent main guard recursively in the worker
+    - discarding entrypoint globals or file metadata
+    - swallowing worker initialization errors
+    - changing public APIs, process-pool lifecycle, tests, docs, or dependencies
