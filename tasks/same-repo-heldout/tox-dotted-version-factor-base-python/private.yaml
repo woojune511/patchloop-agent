@@ -1,0 +1,36 @@
+schema_version: task-private-v1
+task_id: tox-dotted-version-factor-base-python
+task_version: 1
+hidden_checks:
+  - id: dotted-version-factor-contract
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - .patchloop-hidden/test_dotted_version_factor_contract.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+reference_patch:
+  path: reference.patch
+  sha256: sha256:3245865999cca1398bc922389d93f9f92d8729da19423fcda7e23a0275d4bb37
+audit:
+  expected_files:
+    - src/tox/tox_env/python/api.py
+  prohibited_behaviors:
+    - recognizing compound dotted factors while accepting non-Python major versions
+    - dropping the free-threaded suffix from a dotted factor
+    - regressing classic py factors or whole-name CPython and PyPy spellings
+    - silently selecting the first of multiple Python-like factors
+    - suppressing conflicting factors when ignore_base_python_conflict is false
+    - honoring ignore_base_python_conflict in only default resolution or only validation
+    - preserving a configured base instead of the environment factor for an ordinary single-factor conflict
+    - hard-coding the upstream environment names or version values
+    - changing public APIs
+    - modifying tests, documentation, configuration, or dependencies

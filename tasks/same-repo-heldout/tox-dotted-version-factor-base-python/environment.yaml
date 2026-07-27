@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.tox-dev_1776_tox-3846@sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc
+image_digest: sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc
+source_image_tag: swerebench/sweb.eval.x86_64.tox-dev_1776_tox-3846:latest

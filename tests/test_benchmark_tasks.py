@@ -39,6 +39,9 @@ MTPLX_TASK = Path(
 FUSESOC_TASK = Path(
     "tasks/cross-repo-heldout/fusesoc-retained-parse-error-diagnostics"
 )
+TOX_DOTTED_TASK = Path(
+    "tasks/same-repo-heldout/tox-dotted-version-factor-base-python"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -2241,3 +2244,167 @@ def test_fusesoc_admission_evidence_binds_parse_diagnostic_boundaries() -> None:
         "immutable_evaluator_image",
     ):
         assert evidence["admission_checks"][check_id] == "pass"
+
+
+def test_tox_dotted_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["tox-dev__tox-3846"]
+    assert candidate["benchmark_family"] == "SWE-rebench-leaderboard"
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == (
+        "ae05f2a33ccfe52ff22ac578ec6c8eb9f750ce4a"
+    )
+    assert candidate["pr_url"] == "https://github.com/tox-dev/tox/pull/3846"
+    assert candidate["license_spdx"] == "MIT"
+    assert candidate["gold_patch_lines"] == "44"
+    assert candidate["test_patch_lines"] == "34"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "7"
+    assert candidate["p2p"] == "110"
+    assert candidate["proposed_lane"] == "core-same-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc"
+    )
+    assert "upstream PR #3851" in candidate["notes"]
+    assert "101 of 110" in candidate["notes"]
+
+
+def test_tox_dotted_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(TOX_DOTTED_TASK)
+
+    assert package.public.task_id == "tox-dotted-version-factor-base-python"
+    assert package.public.split == "same-repo-heldout"
+    assert package.public.repository.url == "https://github.com/tox-dev/tox.git"
+    assert package.public.repository.base_commit == (
+        "ae05f2a33ccfe52ff22ac578ec6c8eb9f750ce4a"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == [
+        "src/tox/tox_env/python/api.py"
+    ]
+    assert package.public.constraints.max_changed_files == 1
+    assert package.public.constraints.max_diff_lines == 60
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is False
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:269a32558d3aeac5f9e9b6fc451302667b83a85f260f0b915babe1838b50b3bc"
+    )
+    assert package.environment.evaluator_image.endswith(
+        f"@{package.environment.image_digest}"
+    )
+
+
+def test_tox_dotted_visible_check_discloses_image_drift_deselections() -> None:
+    package = load_task_package(TOX_DOTTED_TASK)
+    check = package.public.visible_checks[0]
+    script = check.command[2]
+
+    assert check.id == "upstream-python-api-regression"
+    assert check.command[:2] == ["/bin/bash", "-lc"]
+    assert "tests/tox_env/python/test_python_api.py" in script
+    assert "cp /testbed/src/tox/version.py" in script
+    assert script.count("--deselect ") == 9
+    for node in (
+        "test_requirements_txt",
+        "test_build_wheel_in_non_base_pkg_env",
+        "test_python_set_hash_seed",
+        "test_python_generate_hash_seed",
+        "test_python_keep_hash_seed",
+        "test_python_hash_seed_via_section_substitution",
+        "test_python_disable_hash_seed",
+        "test_python_hash_seed_from_env_and_override",
+        "test_python_hash_seed_from_env_and_disable",
+    ):
+        assert f"tests/tox_env/python/test_python_api.py::{node}" in script
+    assert check.timeout_seconds == 90
+
+
+def test_tox_dotted_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(TOX_DOTTED_TASK)
+    public_text = (TOX_DOTTED_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_dotted_version_factor_contract.py" not in public_text
+    assert "matrix-py3.12-2.18" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_tox_dotted_reference_is_hardened_upstream_union_and_hash_bound() -> None:
+    package = load_task_package(TOX_DOTTED_TASK)
+    reference_path = TOX_DOTTED_TASK / package.private.reference_patch.path
+    patch_text = reference_path.read_text(encoding="utf-8")
+    patch_lines = patch_text.splitlines()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:3245865999cca1398bc922389d93f9f92d8729da19423fcda7e23a0275d4bb37"
+    )
+    assert sha256_bytes(reference_path.read_bytes()) == (
+        package.private.reference_patch.sha256
+    )
+    assert sum(
+        line.startswith("+") and not line.startswith("+++") for line in patch_lines
+    ) == 21
+    assert sum(
+        line.startswith("-") and not line.startswith("---") for line in patch_lines
+    ) == 7
+    assert {
+        line.removeprefix("diff --git a/").split(" b/", maxsplit=1)[0]
+        for line in patch_lines
+        if line.startswith("diff --git a/")
+    } == {"src/tox/tox_env/python/api.py"}
+    assert "index f06242261e..b0093787b1" in patch_text
+    assert "diff --git a/tests/" not in patch_text
+
+
+def test_tox_dotted_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_path = (
+        TOX_DOTTED_TASK / "hidden/test_dotted_version_factor_contract.py"
+    )
+    hidden_text = hidden_path.read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (TOX_DOTTED_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 8
+    assert "@pytest.mark.parametrize" in hidden_text
+    assert "module_path.is_relative_to(source_root.resolve())" in hidden_text
+    assert "lint-3.12-docs" in hidden_text
+    assert "eslint-8.3-check" in hidden_text
+    assert "matrix-py3.12-2.18" in hidden_text
+    assert "test_default_resolution_honors_ignore_policy_in_both_directions" in hidden_text
+    assert "test_validation_honors_ignore_policy_in_both_directions" in hidden_text
+    assert "test_ignore_keeps_older_single_factor_override_contract" in hidden_text
+    assert "test_cli_uses_default_base_python_when_conflict_is_ignored" in hidden_text
+    assert bad_names == [
+        "exact-3846-partial.patch",
+        "exact-3851-partial.patch",
+        "explicit-only-regresses-classic.patch",
+        "first-match-no-conflict.patch",
+        "forbidden-test-edit.patch",
+        "ignore-all-validation-conflicts.patch",
+        "ignore-default-only.patch",
+        "ignore-validation-only.patch",
+        "noop.patch",
+        "restrict-major-only.patch",
+        "strip-compound-threaded.patch",
+        "wide-major-compound.patch",
+    ]
+    assert (TOX_DOTTED_TASK / "bad/noop.patch").read_bytes() == b"\n"
+
+    audit_text = (TOX_DOTTED_TASK / "audit.md").read_text(encoding="utf-8")
+    assert "proposed `core-same-repo`" in audit_text
+    assert "exact #3846 production patch" in audit_text
+    assert "PR #3851" in audit_text
+    assert "101" in audit_text
+    assert "nine" in audit_text
+    assert "Admission remains pending" in audit_text

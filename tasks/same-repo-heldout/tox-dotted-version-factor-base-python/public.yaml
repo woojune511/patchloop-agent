@@ -1,0 +1,76 @@
+schema_version: task-public-v1
+task_id: tox-dotted-version-factor-base-python
+task_version: 1
+split: same-repo-heldout
+repository:
+  url: https://github.com/tox-dev/tox.git
+  base_commit: ae05f2a33ccfe52ff22ac578ec6c8eb9f750ce4a
+  language: python
+issue:
+  title: Dotted Python factors must select an interpreter without bypassing conflict policy
+  description: |
+    Multi-factor environment names can contain a bare dotted Python version,
+    such as a lint or test environment qualified by `3.12`. tox currently
+    recognizes that form only when it is the entire environment name, so a
+    compound name can silently fall back to the wrong interpreter.
+
+    Recognize bare `2.N` and `3.N` factors wherever ordinary environment
+    factors are accepted, including free-threaded suffixes. Preserve classic
+    `py` factors and whole-name CPython/PyPy spellings, reject dotted factors
+    whose major version is not 2 or 3, and keep conflicting-factor detection.
+
+    A conflicting environment name must still fail by default. When
+    `ignore_base_python_conflict` is enabled, the conflict must be honored in
+    both default selection and configured-base validation: default resolution
+    falls back to `default_base_python`, while validation preserves the
+    configured base candidates. Existing single-factor conflict behavior,
+    public APIs, and unrelated interpreter discovery must remain unchanged.
+constraints:
+  allowed_paths:
+    - src/tox/tox_env/python/api.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - setup.cfg
+    - requirements*.txt
+  max_changed_files: 1
+  max_diff_lines: 60
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: upstream-python-api-regression
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        source_root="$(mktemp -d /tmp/patchloop-tox-source-XXXXXX)"
+        cp -R /workspace/src/. "$source_root/"
+        cp /testbed/src/tox/version.py "$source_root/tox/version.py"
+        export PYTHONPATH="$source_root${PYTHONPATH:+:$PYTHONPATH}"
+        /opt/conda/envs/testbed/bin/python -m pytest -q -p no:cacheprovider \
+          tests/tox_env/python/test_python_api.py \
+          --deselect tests/tox_env/python/test_python_api.py::test_requirements_txt \
+          --deselect tests/tox_env/python/test_python_api.py::test_build_wheel_in_non_base_pkg_env \
+          --deselect tests/tox_env/python/test_python_api.py::test_python_set_hash_seed \
+          --deselect tests/tox_env/python/test_python_api.py::test_python_generate_hash_seed \
+          --deselect tests/tox_env/python/test_python_api.py::test_python_keep_hash_seed \
+          --deselect tests/tox_env/python/test_python_api.py::test_python_hash_seed_via_section_substitution \
+          --deselect tests/tox_env/python/test_python_api.py::test_python_disable_hash_seed \
+          --deselect tests/tox_env/python/test_python_api.py::test_python_hash_seed_from_env_and_override \
+          --deselect tests/tox_env/python/test_python_api.py::test_python_hash_seed_from_env_and_disable
+        /opt/conda/envs/testbed/bin/python -m pytest -q -p no:cacheprovider \
+          tests/tox_env/python/test_python_api.py::test_python_set_hash_seed_negative \
+          tests/tox_env/python/test_python_api.py::test_python_set_hash_seed_incorrect
+    timeout_seconds: 90
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - interpreter-selection
+  - factor-parsing
+  - conflict-policy
+  - core-same-repo
