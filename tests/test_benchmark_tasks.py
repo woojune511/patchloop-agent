@@ -36,6 +36,9 @@ PARAM_TASK = Path(
 MTPLX_TASK = Path(
     "tasks/cross-repo-heldout/mtplx-mixed-content-tool-call-stream"
 )
+FUSESOC_TASK = Path(
+    "tasks/cross-repo-heldout/fusesoc-retained-parse-error-diagnostics"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -1951,3 +1954,169 @@ def test_mtplx_admission_evidence_binds_hardened_streaming_boundaries() -> None:
         "policy:scope",
         "policy:test_tampering",
     ]
+
+
+def test_fusesoc_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(FUSESOC_TASK)
+
+    assert package.public.task_id == "fusesoc-retained-parse-error-diagnostics"
+    assert package.public.split == "cross-repo-heldout"
+    assert package.public.repository.url == "https://github.com/olofk/fusesoc.git"
+    assert package.public.repository.base_commit == (
+        "d2e6e720222f57cb66d6c303a326d336c582aade"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == [
+        "fusesoc/coremanager.py",
+        "fusesoc/fusesoc.py",
+        "fusesoc/main.py",
+    ]
+    assert package.public.constraints.max_changed_files == 3
+    assert package.public.constraints.max_diff_lines == 80
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is True
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9"
+    )
+    assert package.environment.evaluator_image.endswith(
+        f"@{package.environment.image_digest}"
+    )
+
+
+def test_fusesoc_visible_check_pins_official_boundary_compatible_nodes() -> None:
+    package = load_task_package(FUSESOC_TASK)
+    check = package.public.visible_checks[0]
+    command = check.command
+
+    assert check.id == "upstream-coremanager-regression"
+    assert command[:3] == [
+        "/opt/conda/envs/testbed/bin/python",
+        "-m",
+        "pytest",
+    ]
+    assert "tests/test_coremanager.py" in command
+    assert "-k" not in command
+    assert {
+        argument for argument in command if argument.startswith("--deselect=")
+    } == {
+        "--deselect=tests/test_coremanager.py::test_export",
+        "--deselect=tests/test_coremanager.py::test_lockfile_no_file_create",
+    }
+    assert check.environment["PYTHONPATH"] == "/workspace"
+    assert check.environment["PATH"].startswith("/opt/conda/envs/testbed/bin:")
+    assert check.timeout_seconds == 120
+
+
+def test_fusesoc_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(FUSESOC_TASK)
+    public_text = (FUSESOC_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_retained_parse_error_diagnostics.py" not in public_text
+    assert "_manager_with_mixed_library" not in public_text
+    assert "_MissingCoreManager" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_fusesoc_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["olofk__fusesoc-776_interface"]
+    assert candidate["benchmark_family"] == "SWE-rebench-leaderboard"
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == (
+        "d2e6e720222f57cb66d6c303a326d336c582aade"
+    )
+    assert candidate["pr_url"] == "https://github.com/olofk/fusesoc/pull/776"
+    assert candidate["license_spdx"] == "BSD-2-Clause"
+    assert candidate["gold_patch_lines"] == "74"
+    assert candidate["test_patch_lines"] == "49"
+    assert candidate["changed_files"] == "3"
+    assert candidate["f2p"] == "1"
+    assert candidate["p2p"] == "14"
+    assert candidate["proposed_lane"] == "core-cross-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9"
+    )
+    assert "13 of 14 declared P2P nodes pass network-disabled" in candidate["notes"]
+
+
+def test_fusesoc_reference_is_exact_production_patch_and_hash_bound() -> None:
+    package = load_task_package(FUSESOC_TASK)
+    reference_patch = FUSESOC_TASK / package.private.reference_patch.path
+    patch_text = reference_patch.read_text(encoding="utf-8")
+    patch_lines = patch_text.splitlines()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:c25ac0f174a7b0b9d9d5d9b5d0a179856103351652a64e4da8483e8f5ed83658"
+    )
+    assert sha256_bytes(reference_patch.read_bytes()) == (
+        package.private.reference_patch.sha256
+    )
+    assert sum(
+        line.startswith("+") and not line.startswith("+++") for line in patch_lines
+    ) == 29
+    assert sum(
+        line.startswith("-") and not line.startswith("---") for line in patch_lines
+    ) == 1
+    assert {
+        line.removeprefix("diff --git a/").split(" b/", maxsplit=1)[0]
+        for line in patch_lines
+        if line.startswith("diff --git a/")
+    } == {
+        "fusesoc/coremanager.py",
+        "fusesoc/fusesoc.py",
+        "fusesoc/main.py",
+    }
+    assert "diff --git a/tests/" not in patch_text
+
+
+def test_fusesoc_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    hidden_path = (
+        FUSESOC_TASK / "hidden/test_retained_parse_error_diagnostics.py"
+    )
+    hidden_text = hidden_path.read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (FUSESOC_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 10
+    assert "inspect.getsourcefile" in hidden_text
+    assert "01-invalid-fileset.core" in hidden_text
+    assert "02-invalid-yaml.core" in hidden_text
+    assert "::healthy:1" in hidden_text
+    assert "test_core_manager_instances_do_not_share_parse_failures" in hidden_text
+    assert "second.parse_errors == []" in hidden_text
+    assert "failures.append" in hidden_text
+    assert "LegacyManager" in hidden_text
+    assert "MissingProviderCore" in hidden_text
+    assert bad_names == [
+        "class-shared-errors.patch",
+        "cli-first-error-only.patch",
+        "forbidden-test-edit.patch",
+        "hard-stop-on-parse-error.patch",
+        "import-errors-misclassified.patch",
+        "last-error-only.patch",
+        "manager-only-retention.patch",
+        "missing-cli-propagation.patch",
+        "noop.patch",
+        "wrapper-only-exposure.patch",
+    ]
+    assert (FUSESOC_TASK / "bad/noop.patch").read_bytes() == b"\n"
+
+    audit_text = (FUSESOC_TASK / "audit.md").read_text(encoding="utf-8")
+    assert "proposed `core-cross-repo`; not admitted" in audit_text
+    assert "explicitly deselected" in audit_text
+    assert "tests/test_coremanager.py::test_export" in audit_text
+    assert "tests/test_coremanager.py::test_lockfile_no_file_create" in audit_text
+    assert "passes 12 nodes" in audit_text
+    assert "must not enter the dataset manifest" in audit_text

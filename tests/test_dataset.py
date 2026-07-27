@@ -27,8 +27,10 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["task_count"] == 19
     assert result["calibration_task_count"] == 5
     assert result["research_task_count"] == 14
-    assert result["candidate_package_count"] == 0
-    assert result["unregistered_task_paths"] == []
+    assert result["candidate_package_count"] == 1
+    assert result["unregistered_task_paths"] == [
+        "tasks/cross-repo-heldout/fusesoc-retained-parse-error-diagnostics"
+    ]
     assert result["role_counts"] == {
         "calibration": 5,
         "memory-development": 6,

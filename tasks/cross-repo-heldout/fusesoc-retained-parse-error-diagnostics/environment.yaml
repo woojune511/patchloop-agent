@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.olofk_1776_fusesoc-776_interface@sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9
+image_digest: sha256:1e971791d4ce192eae296747d46dff477cb2ce2c47e08b2ed9d0108ee5a85ad9
+source_image_tag: swerebench/sweb.eval.x86_64.olofk_1776_fusesoc-776_interface:latest

@@ -1,0 +1,15 @@
+diff --git a/fusesoc/fusesoc.py b/fusesoc/fusesoc.py
+index 05909412..68942477 100644
+--- a/fusesoc/fusesoc.py
++++ b/fusesoc/fusesoc.py
+@@ -82,6 +82,10 @@ def get_libraries(self):
+     def get_core(self, name):
+         return self.cm.get_core(Vlnv(name))
+ 
++    @property
++    def parse_errors(self):
++        return self.cm.parse_errors
++
+     def get_cores(self):
+         return self.cm.get_cores()
+ 

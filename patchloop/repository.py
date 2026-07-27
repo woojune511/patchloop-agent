@@ -24,6 +24,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/huggingface/huggingface_hub",
     "https://github.com/holoviz/param.git",
     "https://github.com/holoviz/param",
+    "https://github.com/olofk/fusesoc.git",
+    "https://github.com/olofk/fusesoc",
     "https://github.com/getmoto/moto.git",
     "https://github.com/getmoto/moto",
     "https://github.com/youssofal/MTPLX.git",

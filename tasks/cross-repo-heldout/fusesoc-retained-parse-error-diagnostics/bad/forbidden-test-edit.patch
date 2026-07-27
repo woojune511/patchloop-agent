@@ -1,0 +1,12 @@
+diff --git a/tests/test_coremanager.py b/tests/test_coremanager.py
+index 55cd767d..d6913c21 100644
+--- a/tests/test_coremanager.py
++++ b/tests/test_coremanager.py
+@@ -1,6 +1,7 @@
+ # Copyright FuseSoC contributors
+ # Licensed under the 2-Clause BSD License, see LICENSE for details.
+ # SPDX-License-Identifier: BSD-2-Clause
+ 
++# Do not replace production behavior with an evaluator-side test edit.
+ import pytest
+ 

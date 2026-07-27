@@ -1,0 +1,20 @@
+diff --git a/fusesoc/coremanager.py b/fusesoc/coremanager.py
+index 46d2284c..e4acbe6a 100644
+--- a/fusesoc/coremanager.py
++++ b/fusesoc/coremanager.py
+@@ -424,6 +424,7 @@ def __init__(self, config, library_manager=None):
+         self.core2parser = Core2Parser(
+             config.resolve_env_vars_early, config.allow_additional_properties
+         )
++        self.parse_errors = []
+ 
+     def find_cores(self, library, ignored_dirs):
+         found_cores = []
+@@ -485,6 +486,7 @@ def find_cores(self, library, ignored_dirs):
+                     except SyntaxError as e:
+                         w = "Parse error. Ignoring file " + core_file + ": " + e.msg
+                         logger.warning(w)
++                        self.parse_errors.append((core_file, e.msg))
+                     except ImportError as e:
+                         w = 'Failed to register "{}" due to unknown provider: {}'
+                         logger.warning(w.format(core_file, str(e)))

@@ -1,0 +1,38 @@
+schema_version: task-private-v1
+task_id: fusesoc-retained-parse-error-diagnostics
+task_version: 1
+hidden_checks:
+  - id: retained-parse-error-diagnostics
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -q
+      - -p
+      - no:cacheprovider
+      - .patchloop-hidden/test_retained_parse_error_diagnostics.py
+    timeout_seconds: 60
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+reference_patch:
+  path: reference.patch
+  sha256: sha256:c25ac0f174a7b0b9d9d5d9b5d0a179856103351652a64e4da8483e8f5ed83658
+audit:
+  expected_files:
+    - fusesoc/coremanager.py
+    - fusesoc/fusesoc.py
+    - fusesoc/main.py
+  prohibited_behaviors:
+    - stopping library discovery after the first malformed core file
+    - retaining only the first or last parse failure
+    - sharing retained failures across CoreManager instances
+    - classifying provider ImportError failures as parse failures
+    - hiding the original missing-core diagnostic
+    - omitting a retained file path or parser message from the final diagnostic
+    - exposing a stale copy instead of the current CoreManager failures
+    - changing dependency, test, documentation, or configuration files

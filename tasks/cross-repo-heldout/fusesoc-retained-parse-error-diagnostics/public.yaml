@@ -1,0 +1,73 @@
+schema_version: task-public-v1
+task_id: fusesoc-retained-parse-error-diagnostics
+task_version: 1
+split: cross-repo-heldout
+repository:
+  url: https://github.com/olofk/fusesoc.git
+  base_commit: d2e6e720222f57cb66d6c303a326d336c582aade
+  language: python
+issue:
+  title: Retain parse failures when a requested core is missing
+  description: |
+    Library discovery currently warns and skips a malformed core file, then
+    continues scanning. If a later lookup cannot find a requested core, the
+    final error reports only that the core is missing; the earlier parse
+    warning can be lost in a long command log.
+
+    Preserve every syntax/validation failure encountered while scanning core
+    files without preventing valid cores from being registered. Expose those
+    failures through a `Fusesoc.parse_errors` property as a list of
+    `(core_file, error_message)` string tuples. When dependency resolution
+    reports a missing core, keep the existing not-found diagnostic and append
+    all retained parse failures so the likely root cause is visible.
+
+    Keep separate manager instances independent, and preserve existing
+    behavior for valid core files and failures that are not parse errors.
+constraints:
+  allowed_paths:
+    - fusesoc/coremanager.py
+    - fusesoc/fusesoc.py
+    - fusesoc/main.py
+  forbidden_paths:
+    - tests/**
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 3
+  max_diff_lines: 80
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+  - id: upstream-coremanager-regression
+    command:
+      - /opt/conda/envs/testbed/bin/python
+      - -m
+      - pytest
+      - --no-header
+      - -rA
+      - --tb=line
+      - --color=no
+      - -p
+      - no:cacheprovider
+      - tests/test_coremanager.py
+      - --deselect=tests/test_coremanager.py::test_export
+      - --deselect=tests/test_coremanager.py::test_lockfile_no_file_create
+    timeout_seconds: 120
+    environment:
+      PYTHONPATH: /workspace
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PATH: /opt/conda/envs/testbed/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - parse-diagnostics
+  - library-discovery
+  - dependency-resolution
+  - public-wrapper
+  - core-cross-repo
