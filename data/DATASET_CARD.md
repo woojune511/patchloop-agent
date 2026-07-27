@@ -28,7 +28,7 @@ patch and known-bad patches. All five are excluded from failure-memory generatio
 denominator and performance headlines. A physical directory such as `dev-train` does not override the
 dataset-manifest role.
 
-The eighteen admitted research tasks are:
+The twenty admitted research tasks are:
 
 - `loguru-invalid-format-feedback`, derived from SWE-rebench `delgan__loguru-1451` and upstream
   Loguru issue #1450 / PR #1451. Its admission evidence contains three reference passes, one base hidden
@@ -163,13 +163,26 @@ The eighteen admitted research tasks are:
   eight semantic partial rejections and one forbidden scope/test-tampering rejection. The benchmark
   declares 278 P2P nodes because its test patch adds one preservation P2P case; the base-resident
   declared P2P surface is therefore exactly 277.
+- `loguru-post-2038-local-timezone-fallback`, derived from the frozen SWE-rebench leaderboard
+  aggregate `test` instance `Delgan__loguru-1297` and upstream Loguru issue #1291 / PR #1297.
+  Its exact production reference preserves valid platform timezone metadata and derives a local
+  fallback only for invalid offsets, supported range errors and missing fields. Three official
+  reference runs and an independent `utcfromtimestamp()` equivalent passed all 43 visible and 11
+  hidden cases; base/no-op, nine semantic partials and one forbidden test edit were rejected.
+- `pyfakefs-file-wrapper-io-capabilities`, derived from the frozen SWE-rebench leaderboard
+  aggregate `test` instance `pytest-dev__pyfakefs-1269` and upstream pyfakefs issue #1265 /
+  PR #1269. Its exact production reference separates `readable()` and `writable()` capability
+  queries from actual operation guards across text, binary and update modes. Three official
+  reference runs and an independent dynamic-interface equivalent passed 431 visible tests with
+  161 skips and all 29 hidden cases; base/no-op, nine semantic partials and one forbidden test edit
+  were rejected.
 
-All eighteen tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
-SWE-rebench evaluator image. Eight are MIT licensed: Loguru, both PDM tasks, both AnyIO tasks,
-both tox tasks and SQLGlot. Both Hugging Face Hub tasks, pyfakefs, Moto and MTPLX are Apache-2.0;
-Babel and Param are
-BSD-3-Clause; FuseSoC is BSD-2-Clause; Dagster and Kubeflow Pipelines are Apache-2.0. Together with
-the five calibration fixtures, the curated manifest currently contains 23 task entries.
+All twenty tasks pin an exact upstream base commit, upstream license evidence and a digest-addressed
+SWE-rebench evaluator image. Nine are MIT licensed: both Loguru tasks, both PDM tasks, both AnyIO
+tasks, both tox tasks and SQLGlot. Both Hugging Face Hub tasks, both pyfakefs tasks, Moto, MTPLX,
+Dagster and Kubeflow Pipelines are Apache-2.0; Babel and Param are BSD-3-Clause; FuseSoC is
+BSD-2-Clause. Together with the five calibration fixtures, the curated manifest currently contains
+25 task entries.
 
 ## Research dataset target
 
@@ -179,9 +192,12 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | --- | ---: | --- | ---: |
 | Memory development | 6 | reviewed failures only | 6 |
 | Development validation | 2 | no | 2 |
-| Core same-repo | 6 | prohibited | 4 |
+| Core same-repo | 6 | prohibited | 6 |
 | Core cross-repo | 6 | prohibited | 6 |
-| **Research total** | **20** |  | **18** |
+| **Research total** | **20** |  | **20** |
+
+The research role target is filled, but the manifest remains `draft`. It is not a frozen experiment
+dataset until the three stress sentinels and fault schedule are fixed and the freeze gate passes.
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,

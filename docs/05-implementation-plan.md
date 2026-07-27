@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **Dataset expansion and external acceptance gates**
+현재 milestone: **Stress sentinel selection and experiment freeze**
 
 2026-07-28 구현 스냅샷:
 
@@ -18,16 +18,16 @@
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
 `duration-minute-boundary`, `csv-final-record-flush`는 evaluator, sandbox와 authoring workflow를
 검증하는 fixture다. 뒤의 두 package가 물리적으로 `dev-train` 아래에 있어도 memory source나
-research task로 보지 않는다. 현재 admitted research task는 19/20이며 memory-development
+research task로 보지 않는다. 현재 admitted research task는 20/20이며 memory-development
 task admission은 6/6, development-validation은 2/2, core-same-repo와 core-cross-repo는
-각각 5/6과 6/6이다. Dataset manifest에는 calibration 5개와 admitted research 19개,
-총 24개 package가 등록돼 있으며 남은 research task는 한 개다.
+각각 6/6과 6/6이다. Dataset manifest에는 calibration 5개와 admitted research 20개,
+총 25개 package가 등록돼 있다. Role target은 모두 채웠지만 stress sentinel을 고정하고
+manifest를 freeze하기 전까지 `research_ready=false`다.
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
-smoke와 열아홉 research admission은 2026-07-28까지 통과했다. Live OpenAI, 완성된 20개
-research dataset, 세 sentinel stress
-overlay와 96-run core campaign은 아직 완료가 아니며 `docs/08-limitations.md`에서 별도로
-추적한다.
+smoke와 스무 research admission은 2026-07-28까지 통과했다. Live OpenAI, 세 sentinel
+stress overlay, dataset freeze와 96-run core campaign은 아직 완료가 아니며
+`docs/08-limitations.md`에서 별도로 추적한다.
 
 ## 1. Sequencing rule
 
@@ -59,6 +59,10 @@ research task를 admission한다.
 5. Memory-development 6, development-validation 2, same-repo core 6, cross-repo core 6을 채운다.
 6. Admitted research task 중 Terminal-Bench 2.1 pattern을 적용할 sentinel 세 개를 동결한다.
 7. 원본 benchmark 호환성 run은 external acceptance lane에 남기고 core aggregate와 분리한다.
+
+2026-07-28 현재 1~5번은 executable admission evidence로 완료됐다. 다음 미완료 work item은
+6번 sentinel 선정·fault schedule 동결이며, 이 gate 전에는 manifest를 `frozen`으로 바꾸거나
+core campaign을 시작하지 않는다.
 
 ### Exit gate
 

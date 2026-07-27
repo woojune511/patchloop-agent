@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
-| Tests | `.venv/Scripts/python -m pytest -p no:cacheprovider` | 201 passed, 2 skipped |
+| Tests | `$env:UV_CACHE_DIR='.uv-cache'; uv run pytest -q -p no:cacheprovider` | 216 passed, 2 skipped |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus nineteen research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 19/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus twenty research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: research role target 20/20, stress 0/3, draft manifest, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru #1451/#1297, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21, FuseSoC #776, Dagster #33605 and Kubeflow Pipelines #13112 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru #1451/#1297, AnyIO #1121/#1134, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781/#3759, pyfakefs #991/#1269, Moto #7208, Babel #1042, SQLGlot #7187, Param #1117, MTPLX #21, FuseSoC #776, Dagster #33605 and Kubeflow Pipelines #13112 references ×3 plus declared negatives | research role target 20/20; references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -906,6 +906,41 @@ The gate made zero model/API calls and is deterministic evaluator admission
 evidence, not live-model agent performance, memory improvement or a core
 campaign result.
 
+## Twentieth research task admission
+
+`pyfakefs-file-wrapper-io-capabilities` comes from the frozen SWE-rebench
+leaderboard aggregate `test` row 653, instance `pytest-dev__pyfakefs-1269`,
+pyfakefs issue #1265 and PR #1269. It is the sixth, medium
+`core-same-repo` held-out task, paired one-to-one with the pyfakefs
+memory-development task while using a distinct base, production file, failure
+pattern and solution lineage.
+
+| Patch group | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference ×3 | `run_b9902d125f9a4a9e`, `run_41bba6a0e480483c`, `run_d0a0277614f04b49` | full success | 3/3 success, `official=true` |
+| dynamic-interface equivalent | `run_1bf5034e9a2a48fb` | implementation-independent full success | accepted |
+| base/no-op | `run_6b26a5042d6048dc` | visible pass, hidden fail | rejected |
+| nine semantic partials | nine content-addressed runs in the report | capability and guard boundaries | all rejected |
+| forbidden test edit | `run_722a1d4381a74127` | hidden, scope and tampering fail | rejected by all three |
+
+Each reference and equivalent run passed 431 visible tests with 161 skips
+(592 collected) and all 29 independently authored hidden cases. Base/no-op
+preserved the same visible result but failed 12 hidden boundary cases. The
+semantic corpus covers constant, mirrored, inverted, primary-mode-only and
+backing-buffer capability answers; missing callable methods; and methods that
+do not control internal guards.
+
+All 15 official cases ran from clean harness staging commit
+`b50b4314aa7fd209737db46f15b38aee056bbd80` with Docker networking disabled
+and read-only root and submitted filesystems. The external image has no
+configured `User` and ran as Docker's default root user. The
+[pyfakefs capability admission report](../reports/docker-gate/research-pyfakefs-file-wrapper-io-capabilities.json)
+binds every patch, manifest, result and provenance hash and has SHA-256
+`sha256:49f92f1ceab905d086d23820f0af581706ffaa8bd3e923d4cc972cac914e252e`.
+The gate made zero model/API calls and is deterministic evaluator admission
+evidence, not live-model agent performance, memory improvement or a core
+campaign result.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -916,6 +951,7 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 19/20, and the stress sentinels are 0/3. The 24-entry registry
-has no contract or content-hash errors; it remains `draft` because one research task is not admitted.
+calibration is 5/5, all research role targets are filled at 20/20, and the stress sentinels are 0/3.
+The 25-entry registry has no contract or content-hash errors; it remains `draft`, so
+`research_ready=false`, until the sentinel and freeze gate is completed.
 No live OpenAI request or paid campaign was made.

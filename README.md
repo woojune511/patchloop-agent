@@ -14,9 +14,9 @@ SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 
 development-validation task로, SQLGlot #7187, Param #1117, MTPLX #21, FuseSoC #776,
 Dagster #33605와 Kubeflow Pipelines #13112를
 core-cross-repo task로,
-Loguru #1297, PDM #3759, AnyIO #1134, Hugging Face Hub #4056과 tox #3846/#3851을
-core-same-repo task로 admission했다. 실제 OpenAI 96-run campaign과 나머지 1개 research
-task는 아직 완료하지 않았다.
+Loguru #1297, PDM #3759, AnyIO #1134, Hugging Face Hub #4056, tox #3846/#3851과
+pyfakefs #1269를 core-same-repo task로 admission했다. Research role 20/20은 채웠지만
+stress sentinel 선정·dataset freeze와 실제 OpenAI 96-run campaign은 아직 완료하지 않았다.
 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
@@ -44,7 +44,8 @@ public.yaml → stateless context builder → model adapter
   고정한 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs #991, Moto #7208과
   Babel #1042, SQLGlot #7187, Param #1117, PDM #3759, AnyIO #1134와
   Hugging Face Hub #4056, MTPLX #21, FuseSoC #776, Dagster #33605와
-  Kubeflow Pipelines #13112 research task
+  Kubeflow Pipelines #13112, tox #3846/#3851, Loguru #1297과 pyfakefs #1269
+  research task
 - Task별 base hidden failure, reference 3회와 최소 5종의 known-bad를 기록한 admission evidence
 - 후속 upstream 회귀까지 판별해 원래 AnyIO benchmark fix를 거부하는 hardened reference/oracle
 - 실제 CLI grammar와 project precedence를 어긴 PDM #3759 benchmark fix를 거부하고
@@ -70,6 +71,10 @@ public.yaml → stateless context builder → model adapter
   reference와 private-v2 hash-bound read-only oracle. 공식 reference 3/3, base-resident
   visible 277개와 15개 subtest, independent hidden 11개가 통과했고 no-op, semantic partial
   8종과 forbidden scope/test-tampering patch를 거부했다.
+- file wrapper의 `readable()`/`writable()` capability query를 실제 read/write guard와
+  분리하는 pyfakefs #1269 exact-production reference와 private-v2 29-case oracle. 공식
+  reference 3/3과 독립 dynamic-interface equivalent 1/1이 통과했고 no-op, semantic
+  partial 9종과 forbidden scope/test-tampering patch를 거부했다.
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 

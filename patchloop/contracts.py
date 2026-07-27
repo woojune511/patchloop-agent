@@ -317,7 +317,11 @@ class SourceProvenance(StrictModel):
             "license_spdx": self.license_spdx,
             "retrieved_at": self.retrieved_at,
         }
-        missing = [name for name, value in required.items() if value is None]
+        missing = [
+            name
+            for name, value in required.items()
+            if value is None or (isinstance(value, str) and not value.strip())
+        ]
         if missing:
             raise ValueError(
                 "non-synthetic dataset source is missing provenance: " + ", ".join(missing)
@@ -332,7 +336,9 @@ class SourceProvenance(StrictModel):
                 "benchmark_instance_id": self.benchmark_instance_id,
             }
             benchmark_missing = [
-                name for name, value in benchmark_required.items() if value is None
+                name
+                for name, value in benchmark_required.items()
+                if value is None or (isinstance(value, str) and not value.strip())
             ]
             if benchmark_missing:
                 raise ValueError(
@@ -398,7 +404,12 @@ class DatasetTaskEntry(StrictModel):
             raise ValueError("easy tasks are not eligible for the research dataset")
         if self.source.contamination_risk == "unknown":
             raise ValueError("research dataset entries require a contamination-risk audit")
-        if self.source.issue_url is None and self.source.pull_request_url is None:
+        if not (
+            self.source.issue_url is not None and self.source.issue_url.strip()
+        ) and not (
+            self.source.pull_request_url is not None
+            and self.source.pull_request_url.strip()
+        ):
             raise ValueError(
                 "research dataset entries require an upstream issue or pull request URL"
             )

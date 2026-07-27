@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+from urllib.parse import urlparse
 
 import yaml
 from pydantic import ValidationError
@@ -103,6 +104,19 @@ def _repository_for(entry: DatasetTaskEntry) -> str | None:
     return repository.lower() if repository else None
 
 
+def _github_repository_from_url(url: str) -> str | None:
+    parsed = urlparse(url)
+    if parsed.scheme.lower() != "https" or parsed.netloc.lower() != "github.com":
+        return None
+    path = parsed.path.strip("/")
+    if path.lower().endswith(".git"):
+        path = path[:-4]
+    parts = path.split("/")
+    if len(parts) != 2 or not all(parts):
+        return None
+    return "/".join(parts).lower()
+
+
 def _same_repo_pairing_violations(
     development_counts: Counter[str], same_repo_counts: Counter[str]
 ) -> list[str]:
@@ -183,6 +197,28 @@ def audit_dataset(
                     "private spec hash mismatch: "
                     f"{entry.private_spec_hash} != {package.private_spec_hash}"
                 )
+            if entry.role in RESEARCH_DATASET_ROLES:
+                source_repository = _repository_for(entry)
+                if source_repository is None:
+                    raise ContractError("research source repository is missing")
+                package_repository = _github_repository_from_url(
+                    package.public.repository.url
+                )
+                if package_repository != source_repository:
+                    raise ContractError(
+                        "source repository mismatch: "
+                        f"{entry.source.upstream_repository} != "
+                        f"{package.public.repository.url}"
+                    )
+                if (
+                    entry.source.upstream_base_commit
+                    != package.public.repository.base_commit
+                ):
+                    raise ContractError(
+                        "source base commit mismatch: "
+                        f"{entry.source.upstream_base_commit} != "
+                        f"{package.public.repository.base_commit}"
+                    )
             expected_split = ROLE_TO_PUBLIC_SPLIT.get(entry.role)
             if expected_split is not None and package.public.split != expected_split:
                 raise ContractError(

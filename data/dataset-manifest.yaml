@@ -838,6 +838,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 10
 
+  - task_id: pyfakefs-file-wrapper-io-capabilities
+    task_version: 1
+    path: tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities
+    role: core-same-repo
+    admission_state: admitted
+    public_spec_hash: sha256:b6c1f2dcdb9bcc072a8105c5d521b08dca206e5a1e2941653540cf1e951b9c6e
+    private_spec_hash: sha256:c5d0c8ef612e9d0b9c36e4769652879deb4d74e410983e39494005ca2cc7d213
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: pytest-dev__pyfakefs-1269
+      upstream_repository: pytest-dev/pyfakefs
+      issue_url: https://github.com/pytest-dev/pyfakefs/issues/1265
+      pull_request_url: https://github.com/pytest-dev/pyfakefs/pull/1269
+      upstream_base_commit: a3685da29db2f185d4793f185ca07dfe36f3d9a9
+      resolution_commit: 9f6d8bcd873002dd0d315b195e2675261e96d39b
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-27T21:23:39Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.pytest-dev_1776_pyfakefs-1269@sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91
+    difficulty:
+      localization: 1
+      reasoning_depth: 1
+      implementation_breadth: 1
+      verification_breadth: 2
+      total: 5
+      tier: medium
+      rationale: The fix must distinguish file-like capability introspection from attempted operations across text, binary, update and wrapper paths while preserving dynamic dispatch and existing error behavior.
+    failure_pattern_id: file-wrapper-capability-query-hits-operation-guard
+    solution_lineage_id: pytest-dev-pyfakefs-pr-1269
+    admission_evidence:
+      path: reports/docker-gate/research-pyfakefs-file-wrapper-io-capabilities.json
+      sha256: sha256:49f92f1ceab905d086d23820f0af581706ffaa8bd3e923d4cc972cac914e252e
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 10
+
   - task_id: dagster-subset-partition-definition-selection
     task_version: 1
     path: tasks/cross-repo-heldout/dagster-subset-partition-definition-selection

@@ -12,11 +12,10 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `Dataset expansion and external acceptance gates`다.
-- Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 19/20을 완료했다.
+- 현재 milestone은 `Stress sentinel selection and experiment freeze`다.
+- Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
-  5/6, core-cross-repo lane은 6/6이다. Live OpenAI, 나머지 research task 1개, stress
-  sentinel 3개와 96-run campaign은
+  6/6, core-cross-repo lane은 6/6이다. Live OpenAI, stress sentinel 3개와 96-run campaign은
   완료되지 않았다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.

@@ -1,7 +1,7 @@
 # Task audit: pyfakefs-file-wrapper-io-capabilities
 
-- Admission state: screened candidate awaiting the clean official Docker matrix
-- Proposed dataset role: `core-same-repo`
+- Admission state: admitted
+- Dataset role: `core-same-repo`
 - Source: SWE-rebench leaderboard aggregate `test` row 653, instance
   `pytest-dev__pyfakefs-1269`
 - Frozen benchmark revision:
@@ -72,7 +72,7 @@ known-bad corpus bound the intended API extension.
 This lineage is independent of the memory-development task
 `pyfakefs-makedirs-parent-traversal` from PR #991. That task changes
 `pyfakefs/fake_os.py` to preserve path-component traversal side effects. This
-candidate changes `pyfakefs/fake_file.py` to separate capability
+task changes `pyfakefs/fake_file.py` to separate capability
 introspection from actual file operations.
 
 Difficulty audit:
@@ -85,7 +85,26 @@ Difficulty audit:
 | Verification breadth | 2 | Text/binary and read/write/append/exclusive/update modes, wrapper integration, operation errors and iterator guards diverge independently. |
 | Total | 5 | Medium under `dataset-manifest-v1`; it is not inflated to hard despite the 431-test regression surface. |
 
-The candidate is not admitted by this document. Admission still requires a
-clean harness commit, base visible pass/private hidden fail, three official
-reference passes, an official equivalent-solution pass, rejection of all
-declared bad patches, and content-addressed run evidence.
+Admission evidence:
+
+- Clean harness staging commit:
+  `b50b4314aa7fd209737db46f15b38aee056bbd80`
+- Official evaluator cases: 15
+- Exact upstream reference: 3/3 full SCRR passes
+- Independent dynamic-interface equivalent: 1/1 full SCRR pass
+- Base/no-op: 431 visible passes, 161 skips, 592 collected, hidden rejection
+- Exact reference per run: 431 visible passes, 161 skips, 592 collected and
+  29/29 hidden passes
+- Negative corpus: all nine semantic partials and the forbidden test edit
+  rejected; the forbidden edit also failed scope and test-tampering checks
+- Isolation: network disabled, read-only root filesystem and read-only
+  submitted workspace
+- Model/API calls and model cost: 0 and USD 0
+- Content-addressed report:
+  `reports/docker-gate/research-pyfakefs-file-wrapper-io-capabilities.json`
+- Report SHA-256:
+  `sha256:49f92f1ceab905d086d23820f0af581706ffaa8bd3e923d4cc972cac914e252e`
+
+This evidence admits the task as the sixth `core-same-repo` task. It is
+deterministic evaluator evidence, not a live-model result or a completed core
+campaign.

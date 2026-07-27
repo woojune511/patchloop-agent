@@ -125,6 +125,14 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `8c5084eee3a44a44e207345950a9ffb45b23e4b1` and made zero model/API calls. This is
   deterministic evaluator admission evidence, not live-model agent performance or a core campaign
   result.
+- Twentieth research task admitted: pyfakefs #1269 as the sixth core-same-repo held-out task, with
+  three exact-production-reference passes over 431 visible passes, 161 skips and 29 independently
+  authored hidden cases per run. An implementation-independent dynamic capability interface also
+  passed. Base/no-op, all nine semantic partials and one forbidden test edit were rejected; the
+  forbidden edit also failed scope and test-tampering checks. All 15 official cases ran from clean
+  staging commit `b50b4314aa7fd209737db46f15b38aee056bbd80` and made zero model/API
+  calls. This completes the 20-task research role target but is deterministic evaluator evidence,
+  not live-model agent performance or a core campaign result.
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
@@ -138,7 +146,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
   The AnyIO #1134, Param #1117, Hugging Face Hub #4056, MTPLX #21, FuseSoC #776, tox #3846,
-  Dagster #33605, Kubeflow Pipelines #13112 and Loguru #1297 images have no configured `User` and
+  Dagster #33605, Kubeflow Pipelines #13112, Loguru #1297 and pyfakefs #1269 images have no
+  configured `User` and
   therefore ran
   as Docker's default root user.
   Network denial, a read-only root filesystem and a read-only submitted workspace were enforced,
@@ -148,14 +157,25 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `ArtifactStore` does not persist a standalone ID-to-content-hash catalog for that field. Admission
   evidence remains byte-resolvable through the persisted `provenance.diff_hash` and corresponding CAS
   object, but direct lookup by the opaque artifact ID alone is not yet implemented.
+- Tracked admission reports bind each raw `manifest.json`, `result.json` and `provenance.json` by
+  SHA-256, but those per-run files currently remain under the ignored local `.patchloop/artifacts`
+  store. A clean checkout can validate the report and rerun the deterministic gate, but cannot rehash
+  the original raw run files until a portable evidence bundle is exported. This limitation applies
+  to the existing admission-report family and must be closed before claiming clean-checkout raw
+  evidence inspection.
+- `RunManifest.harness_git_commit` records the harness `HEAD`, but does not yet encode or reject a
+  dirty harness worktree. The admitted gates used a manually verified clean staging commit; automatic
+  clean-worktree enforcement or a harness tree hash is still required before treating that claim as a
+  runtime-enforced invariant.
 
-## Dataset and campaign not yet produced
+## Dataset freeze and campaign not yet completed
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
-- The dataset manifest contains 24 packages: five calibration fixtures and 19 admitted research tasks.
-  Research admission is 19/20: memory-development 6/6, development-validation 2/2,
-  same-repo core 5/6 and cross-repo core 6/6. The remaining research task is not admitted.
+- The dataset manifest contains 25 packages: five calibration fixtures and 20 admitted research tasks.
+  All research role targets are filled: memory-development 6/6, development-validation 2/2,
+  same-repo core 6/6 and cross-repo core 6/6. The manifest remains `draft` and
+  `research_ready=false` until the stress sentinels and freeze gate are completed.
 - No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.

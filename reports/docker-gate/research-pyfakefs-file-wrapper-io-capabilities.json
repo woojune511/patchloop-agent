@@ -1,0 +1,354 @@
+{
+    "schema_version":  "research-task-gate-v1",
+    "executed_on":  "2026-07-28",
+    "task_id":  "pyfakefs-file-wrapper-io-capabilities",
+    "task_version":  1,
+    "dataset_role":  "core-same-repo",
+    "split":  "same-repo-heldout",
+    "source":  {
+                   "benchmark_family":  "SWE-rebench-leaderboard",
+                   "benchmark_revision":  "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b",
+                   "benchmark_split":  "test",
+                   "benchmark_row":  653,
+                   "benchmark_instance_id":  "pytest-dev__pyfakefs-1269",
+                   "upstream_repository":  "pytest-dev/pyfakefs",
+                   "issue_url":  "https://github.com/pytest-dev/pyfakefs/issues/1265",
+                   "pull_request_url":  "https://github.com/pytest-dev/pyfakefs/pull/1269",
+                   "base_commit":  "a3685da29db2f185d4793f185ca07dfe36f3d9a9",
+                   "base_tree":  "26d02d6f220a83e54f41cd1d08a16ba9c469c68f",
+                   "resolution_commit":  "9f6d8bcd873002dd0d315b195e2675261e96d39b",
+                   "license_spdx":  "Apache-2.0",
+                   "license_blob_sha1":  "67db8588217f266eb561f75fae738656325deac9",
+                   "benchmark_dataset_license":  "CC-BY-4.0",
+                   "contamination_risk":  "high",
+                   "frozen_dataset_artifact_sha256":  "sha256:1497b218db0a8259d22471812f0de12b779c699daf741b930d68bc717636f0bf",
+                   "benchmark_gold_patch_sha256":  "sha256:477352e8cb5b51653d1ac2afbde24dadf329cbc46afb98ce8a983cd2b457d9e6",
+                   "benchmark_production_patch_sha256":  "sha256:21f7350ac6a344e0a076a91491e41f0a08f223c32be5f4354c4db1ccc460fa7d",
+                   "benchmark_test_patch_sha256":  "sha256:39edf7cfec5497ae55af6ccb0b6ba3f6c0d606cc00543bfd9a074f352594e47a",
+                   "private_hidden_artifact_sha256":  "sha256:3a3e796931d0bfd751d6303947f82cfc293c3ee79155321a22c2008eae2a7d2f",
+                   "base_source_blob_sha1":  {
+                                                 "pyfakefs/fake_file.py":  "2cc3f1eda46008fafa8fafbaa19af716b50f6ff6"
+                                             },
+                   "accepted_source_blob_sha1":  {
+                                                     "pyfakefs/fake_file.py":  "293b39340acd8e75ccc1902e2bf86b5c84f64336"
+                                                 }
+               },
+    "reference_policy":  {
+                             "kind":  "exact-upstream-production-only",
+                             "excluded_upstream_files":  [
+                                                             "CHANGES.md",
+                                                             "pyfakefs/tests/fake_open_test.py"
+                                                         ],
+                             "rejected_benchmark_production_patch":  false,
+                             "rationale":  "The exact accepted pyfakefs/fake_file.py production hunk is retained. The benchmark changelog hunk and test patch remain evaluator-only, while PatchLoop uses a separately authored, hash-bound hidden oracle."
+                         },
+    "public_spec_hash":  "sha256:b6c1f2dcdb9bcc072a8105c5d521b08dca206e5a1e2941653540cf1e951b9c6e",
+    "private_spec_hash":  "sha256:c5d0c8ef612e9d0b9c36e4769652879deb4d74e410983e39494005ca2cc7d213",
+    "harness_git_commit":  "b50b4314aa7fd209737db46f15b38aee056bbd80",
+    "evaluator_image":  "swerebench/sweb.eval.x86_64.pytest-dev_1776_pyfakefs-1269@sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91",
+    "evaluator_image_digest":  "sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91",
+    "runtime":  {
+                    "platform":  "linux/amd64",
+                    "working_directory":  "/workspace",
+                    "submitted_workspace":  "/workspace",
+                    "python_executable":  "/opt/conda/envs/testbed/bin/python",
+                    "network":  "none",
+                    "root_filesystem":  "read-only",
+                    "workspace_mount":  "read-only",
+                    "visible_test_location":  "read-only /workspace/pyfakefs/fake_filesystem_unittest.py and /workspace/pyfakefs/tests/{fake_filesystem_test.py,fake_open_test.py}",
+                    "hidden_oracle_location":  "read-only /workspace/.patchloop-hidden/test_file_wrapper_io_capabilities.py",
+                    "execution_user":  "image-default-root"
+                },
+    "official":  true,
+    "official_run_count":  15,
+    "reference_pass_count":  3,
+    "equivalent_solution_pass_count":  1,
+    "base_noop_rejection_count":  1,
+    "known_bad_patch_rejection_count":  10,
+    "semantic_bad_patch_rejection_count":  9,
+    "independent_hidden_test_count":  29,
+    "independent_hidden_test_function_count":  10,
+    "reference_visible_pass_count_per_run":  431,
+    "reference_visible_skip_count_per_run":  161,
+    "reference_visible_collected_count_per_run":  592,
+    "reference_hidden_pass_count_per_run":  29,
+    "benchmark_f2p_declared_count":  1,
+    "benchmark_p2p_declared_count":  431,
+    "benchmark_patch_added_f2p_count":  1,
+    "benchmark_patch_added_p2p_count":  0,
+    "upstream_regression_test_count":  431,
+    "upstream_regression_collected_count":  592,
+    "upstream_regression_skip_count":  161,
+    "observed_timeout_count":  0,
+    "observed_output_truncation_count":  0,
+    "api_calls":  0,
+    "model_cost_usd":  0.0,
+    "admission_checks":  {
+                             "base_visible_checks":  "pass",
+                             "base_hidden_acceptance":  "fail",
+                             "reference_scrr_three_repetitions":  "pass",
+                             "dynamic_interface_equivalent_solution":  "pass",
+                             "known_bad_boundaries":  "pass",
+                             "upstream_regression_oracle":  "pass",
+                             "independent_hidden_acceptance":  "pass",
+                             "submitted_source_binding":  "pass",
+                             "complete_text_and_binary_mode_matrix":  "pass",
+                             "text_io_wrapper_construction":  "pass",
+                             "binary_text_io_write_through":  "pass",
+                             "disallowed_read_and_write_errors_preserved":  "pass",
+                             "update_mode_operations_preserved":  "pass",
+                             "readable_iterator_behavior_preserved":  "pass",
+                             "capability_override_controls_internal_guards":  "pass",
+                             "exact_upstream_production_lineage":  "pass",
+                             "benchmark_changelog_hunk_excluded":  "pass",
+                             "benchmark_test_patch_excluded":  "pass",
+                             "private_v2_hidden_artifact_bound":  "pass",
+                             "visible_test_read_only":  "pass",
+                             "hidden_oracle_read_only":  "pass",
+                             "test_tampering_path_recognition":  "pass",
+                             "same_repository_solution_lineage_is_distinct":  "pass",
+                             "public_private_separation":  "pass",
+                             "no_new_dependency":  "pass",
+                             "intentional_public_api_extension":  "pass",
+                             "network_disabled_evaluator":  "pass",
+                             "read_only_root_filesystem":  "pass",
+                             "read_only_submitted_workspace":  "pass",
+                             "external_image_default_user_disclosed":  "pass",
+                             "immutable_source_commit":  "pass",
+                             "immutable_evaluator_image":  "pass",
+                             "exact_sha_shallow_checkout":  "pass"
+                         },
+    "cases":  [
+                  {
+                      "name":  "reference-1",
+                      "patch":  "reference.patch",
+                      "run_id":  "run_b9902d125f9a4a9e",
+                      "expected_success":  true,
+                      "observed_success":  true,
+                      "official":  true,
+                      "failed_checks":  [
+
+                                        ],
+                      "patch_sha256":  "sha256:21f7350ac6a344e0a076a91491e41f0a08f223c32be5f4354c4db1ccc460fa7d",
+                      "manifest_sha256":  "sha256:30f668aaa5fdf6f1f5755265d431393de4f032c522f732a70778784b24c64233",
+                      "result_sha256":  "sha256:2fb407199b214d70974adeddb0f25a58d7d4cdb851d26740e58570982650643e",
+                      "provenance_sha256":  "sha256:02206f9ea4fff5c2e615ba9366a03657e387604662c6c6673163c545d3b6a2b6"
+                  },
+                  {
+                      "name":  "reference-2",
+                      "patch":  "reference.patch",
+                      "run_id":  "run_41bba6a0e480483c",
+                      "expected_success":  true,
+                      "observed_success":  true,
+                      "official":  true,
+                      "failed_checks":  [
+
+                                        ],
+                      "patch_sha256":  "sha256:21f7350ac6a344e0a076a91491e41f0a08f223c32be5f4354c4db1ccc460fa7d",
+                      "manifest_sha256":  "sha256:ef81d24bb4a64c6ce12575a1326ba0b06bdcca958944964efcd0b35cffe2874b",
+                      "result_sha256":  "sha256:10bcae07fcfa85838e56e9a58bbd3aa8d3a227f5af76f38f5ebe92d1e17d394f",
+                      "provenance_sha256":  "sha256:02206f9ea4fff5c2e615ba9366a03657e387604662c6c6673163c545d3b6a2b6"
+                  },
+                  {
+                      "name":  "reference-3",
+                      "patch":  "reference.patch",
+                      "run_id":  "run_d0a0277614f04b49",
+                      "expected_success":  true,
+                      "observed_success":  true,
+                      "official":  true,
+                      "failed_checks":  [
+
+                                        ],
+                      "patch_sha256":  "sha256:21f7350ac6a344e0a076a91491e41f0a08f223c32be5f4354c4db1ccc460fa7d",
+                      "manifest_sha256":  "sha256:edcd8fc62808bef0eacad7d3df8356c4b749d7445129feea9ee4646f298b5657",
+                      "result_sha256":  "sha256:631f924d9d4a84911d09db1f80667793d17324ae01b3b3a67dec61c3086a6d46",
+                      "provenance_sha256":  "sha256:02206f9ea4fff5c2e615ba9366a03657e387604662c6c6673163c545d3b6a2b6"
+                  },
+                  {
+                      "name":  "equivalent-dynamic-capability-interface",
+                      "patch":  "equivalent/dynamic-capability-interface.patch",
+                      "run_id":  "run_1bf5034e9a2a48fb",
+                      "expected_success":  true,
+                      "observed_success":  true,
+                      "official":  true,
+                      "failed_checks":  [
+
+                                        ],
+                      "patch_sha256":  "sha256:9ae6bb6a86a82244b4f11e647f8815312fe0af4aaa1c3ea9dcf46008a4a0c1f8",
+                      "manifest_sha256":  "sha256:044f527452657a3f61403d2eb71ca641a86fa9c6eb565b5b1c17cc627706fe9c",
+                      "result_sha256":  "sha256:6b4a23e50d75db9a180d4af1399736578c4324fd8724c7edbeb010e8f57464e7",
+                      "provenance_sha256":  "sha256:508eea56c24b95dd0eea056ad1862f6457e71f18464526196e2e5dbb059777a3"
+                  },
+                  {
+                      "name":  "base-noop",
+                      "patch":  "bad/noop.patch",
+                      "run_id":  "run_6b26a5042d6048dc",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+                      "manifest_sha256":  "sha256:ba83e83557e7cec15a9496e90f9436dd6f91a821a5237eb97b681eaa15e36686",
+                      "result_sha256":  "sha256:294b8f3288b7d5bf2e306c822e2fd98f4180f4a6ceae2afe5e917705cec75652",
+                      "provenance_sha256":  "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+                  },
+                  {
+                      "name":  "always-readable",
+                      "patch":  "bad/always-readable.patch",
+                      "run_id":  "run_272aef3e9f8b45df",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "regression:upstream-file-wrapper-regression",
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:149558a58aea530a3e43c20f3513a2489d54b3b903e80c31d4721390077addef",
+                      "manifest_sha256":  "sha256:c2bcda0cd1d4fe04134e94cde0183121cb4071050de5b23bde8ea9e79aafa7f2",
+                      "result_sha256":  "sha256:3f10c9ebca99380df662d7843f3aefcd08ca24f20185790db3a87a9f9554a62d",
+                      "provenance_sha256":  "sha256:74b0084c02d4497282967052199bedf39933b06285047dcb9be1f215b97850bc"
+                  },
+                  {
+                      "name":  "always-writable",
+                      "patch":  "bad/always-writable.patch",
+                      "run_id":  "run_8e37f09772804bbb",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:5f63a267f047a710b820ae76d3bf70ad99baf3842c5aa489c27e08c5b796e10b",
+                      "manifest_sha256":  "sha256:02c25279d05fef98fc50e4f9b3b54b6bd6106fca7752a92822ca127f02116ae5",
+                      "result_sha256":  "sha256:6d0943c1b3d7e037542930bf1ed9788982ed477e379b08ebb5ca39fc87028b35",
+                      "provenance_sha256":  "sha256:aba5bd484dae0e75a1d184e1f3ce50d0a10af422effc0c617f3c6dd47e98a1a5"
+                  },
+                  {
+                      "name":  "capability-properties",
+                      "patch":  "bad/capability-properties.patch",
+                      "run_id":  "run_2eba08c5e18444b7",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:dc7b3c03dfb62276335065e192cd26b962d919f7e1b89af4cdbcfb16c40f14d7",
+                      "manifest_sha256":  "sha256:2e12b2baed4ff2b950554776de5cbf9c90a4c0d483c9daee2da03a010ae3aae5",
+                      "result_sha256":  "sha256:46932f8cf566c54eebf77ec48889d1ecabd08bf85ae599acc812197946bc4ffd",
+                      "provenance_sha256":  "sha256:91725d2b53f72267028c2d5d083edff6936e4b72bfd35f798e345ae588d0a50a"
+                  },
+                  {
+                      "name":  "inverted-capabilities",
+                      "patch":  "bad/inverted-capabilities.patch",
+                      "run_id":  "run_a6035f0254c644d5",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "regression:upstream-file-wrapper-regression",
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:a645e29c1cd5ba5c5c410088f37efa5815cf2268de54d5d4e18af3dcd044b74f",
+                      "manifest_sha256":  "sha256:009776f624ad32836e158f9ce2e6dbfacb045e0b033dc777078184d03df5fd7a",
+                      "result_sha256":  "sha256:d5fc0a0a494e952025b6209f512036d2aa53dcb32e2e82fd26e7bfbdd36d65a9",
+                      "provenance_sha256":  "sha256:b083083084a5a4b9ec6bcbdc41717e93816bd6e181d668272091948f929c860b"
+                  },
+                  {
+                      "name":  "methods-without-dispatch",
+                      "patch":  "bad/methods-without-dispatch.patch",
+                      "run_id":  "run_ebee495659fb4b84",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:c5f546f6a6448ecd501c97e7974dbf08c023a321876d362fefa4b47c46130b83",
+                      "manifest_sha256":  "sha256:9ca001e58074dcd08c794458eefceb9829db0d5e547c373f8a7e24989c393622",
+                      "result_sha256":  "sha256:c4859737103079bfc6bac6980067ebbc2c2a0024bf5b4c2d0803ca09141fe938",
+                      "provenance_sha256":  "sha256:9d7dd8720a845b6d331c9d5fa6515588535b78f953b9a3540b0b61751e506cca"
+                  },
+                  {
+                      "name":  "mirrored-capabilities",
+                      "patch":  "bad/mirrored-capabilities.patch",
+                      "run_id":  "run_30af1e08c34644a1",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:1d733d1403ca835bf7a14d8fcb2320191d10351996783dd6de9590aaee6f1879",
+                      "manifest_sha256":  "sha256:995ed61c6af585127d92497bfce46828e71ece70ef4e6deaea4f744e872de503",
+                      "result_sha256":  "sha256:941bdc02aba4a53261fa95dd363ba8270875de2b4d11ebf987aec7ff57cc82c6",
+                      "provenance_sha256":  "sha256:be27470fc0e803f0460a49e46a0240422e3f240fcf4e74a2b28bbb6afa524739"
+                  },
+                  {
+                      "name":  "primary-mode-only",
+                      "patch":  "bad/primary-mode-only.patch",
+                      "run_id":  "run_2fe623b9d2b84d4a",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "regression:upstream-file-wrapper-regression",
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:a3815b77551a9f72080be8679e4c06b72c4825d89256847915c7a84890bdaea2",
+                      "manifest_sha256":  "sha256:2ca350dba64d1b6b7e18a9973a42edeb1b56da2f5b1265a6ae0bf3f3c0a8a927",
+                      "result_sha256":  "sha256:994255b776a1ceabc29318be1400fcb41b30f7019ae1d4327a8a85585737a683",
+                      "provenance_sha256":  "sha256:de9b4e43370d1f013b6a6326b43f5c9b1ad2d0588db63a7a39c88680586627d8"
+                  },
+                  {
+                      "name":  "readable-only",
+                      "patch":  "bad/readable-only.patch",
+                      "run_id":  "run_43325244972e44ff",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:c1f95cc55ef1be61e523dea0022fedf9346faba19e58c98cdfe3482815052552",
+                      "manifest_sha256":  "sha256:2664c57fa74d5c19e2ddb757b561f91cc484154dbf86ad3b22444652bd60f3f4",
+                      "result_sha256":  "sha256:bde0c61b2c3faabe81a88a07c864d3b33df7582991450c8e6653eb0714c661d3",
+                      "provenance_sha256":  "sha256:249d20cd8c62d45d8ca1515c863f40c786f4455ee8279c01a0b0720cbad62f70"
+                  },
+                  {
+                      "name":  "underlying-buffer-capabilities",
+                      "patch":  "bad/underlying-buffer-capabilities.patch",
+                      "run_id":  "run_4d3a7746a3eb4e5a",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "regression:upstream-file-wrapper-regression",
+                                            "hidden:file-wrapper-io-capabilities"
+                                        ],
+                      "patch_sha256":  "sha256:8f365fea25d43ec72fde15b4457f8779ce9152e5da86cfa7eb2770b1250c0f93",
+                      "manifest_sha256":  "sha256:f0a031a4e8dfb8c8250861ecad8066559fba97a8781bcd0a52c1ec4cfeddccb5",
+                      "result_sha256":  "sha256:891a81ad77573150f18cfbf5b3f088e835688f452d340100e08d065abbdf0af6",
+                      "provenance_sha256":  "sha256:383fe11bb195d814edfebe51a283e93d09ae9f7a19b2399d7059416d3dfd664c"
+                  },
+                  {
+                      "name":  "forbidden-test-edit",
+                      "patch":  "bad/forbidden-test-edit.patch",
+                      "run_id":  "run_722a1d4381a74127",
+                      "expected_success":  false,
+                      "observed_success":  false,
+                      "official":  true,
+                      "failed_checks":  [
+                                            "hidden:file-wrapper-io-capabilities",
+                                            "policy:scope",
+                                            "policy:test_tampering"
+                                        ],
+                      "patch_sha256":  "sha256:e06a59ddcfc474057d73b0d0737a03260be17187c60ba1d19854a53cb42beb1b",
+                      "manifest_sha256":  "sha256:9840a14db4558b245ee7b0c83460731f4f2eded2ce5d5286325747d8933e4130",
+                      "result_sha256":  "sha256:ae955f333250937df2be68570ab0fd0a5ba21c511b167c2c444390733f0064c4",
+                      "provenance_sha256":  "sha256:aa602717160b78149dfd45f69fd26b498513fe643ddcdf0fee83bf936785ccb8"
+                  }
+              ]
+}

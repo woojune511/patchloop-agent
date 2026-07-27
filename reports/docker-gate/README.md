@@ -189,3 +189,19 @@ evaluator boundaries and made zero model/API calls. The external image has no co
 Docker used its default root user. This is deterministic evaluator admission evidence, not agent
 performance or a live-model core result. The report SHA-256 is
 `c7998d064949dd5a67f05c15ff7d426ef1051f74fea7bb03e37f91c7d1d5084c`.
+
+`research-loguru-post-2038-local-timezone-fallback.json` records the nineteenth research admission
+and fifth core-same-repo held-out task. On clean staging commit `8c5084ee...`, the exact production
+reference passed three official runs and an independent `utcfromtimestamp()` equivalent passed
+once. Base/no-op, nine semantic partials and one forbidden test edit were rejected. All 15 cases
+made zero model/API calls. The report SHA-256 is
+`044655debc7255549e8ba49cdfc339c6a0d04f2fdab3b983017efcbc7c38ffbc`.
+
+`research-pyfakefs-file-wrapper-io-capabilities.json` records the twentieth research admission,
+completes the six-task core-same-repo lane and therefore fills the 20-task research role target.
+On clean staging commit `b50b4314...`, the exact production reference passed three official runs
+and an independent dynamic-interface equivalent passed once. Each successful run passed 431
+visible tests with 161 skips and 29 hidden cases. Base/no-op, nine semantic partials and one
+forbidden test edit were rejected. All 15 cases used network-disabled, read-only evaluator
+boundaries and made zero model/API calls. The report SHA-256 is
+`49f92f1ceab905d086d23820f0af581706ffaa8bd3e923d4cc972cac914e252e`.

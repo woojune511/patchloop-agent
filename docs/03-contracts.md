@@ -138,6 +138,12 @@ Research entry는 최소한 다음을 만족해야 한다.
 - Base visible pass/private hidden fail, 동일 reference의 official Docker 3회 통과와 세 개 이상의
   representative bad-patch rejection을 가리키는 content-hashed admission evidence
 
+Non-synthetic source의 repository, base commit, license와 benchmark identity는 빈 문자열을
+허용하지 않는다. Dataset audit는 research entry의 `source.upstream_repository`를 public task의 canonical GitHub
+`repository.url`과, `source.upstream_base_commit`을 public task의 `repository.base_commit`과
+각각 결속한다. Manifest provenance만 바꿔 same-repo pairing이나 source identity를 가장하는
+entry는 role count에 포함하지 않고 구조화된 audit error로 남긴다.
+
 공개 benchmark의 instruction, solution과 verifier를 그대로 복사하는 것은 admission이 아니다.
 Terminal-Bench 계열은 PatchLoop의 registered-check-only, patch-producing Python workflow와
 분리 evaluator 경계로 변환해 독립적으로 재감사한다. 원본 benchmark 실행은

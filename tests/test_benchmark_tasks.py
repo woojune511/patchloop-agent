@@ -446,7 +446,7 @@ def test_pdm_admission_evidence_binds_resolution_semantics_and_bad_boundaries() 
         assert evidence["admission_checks"][check_id] == "pass"
 
 
-def test_pyfakefs_capability_candidate_has_pinned_real_repository_contract() -> None:
+def test_pyfakefs_capability_task_has_pinned_real_repository_contract() -> None:
     package = load_task_package(PYFAKEFS_CAPABILITY_TASK)
 
     assert package.public.task_id == "pyfakefs-file-wrapper-io-capabilities"
@@ -483,7 +483,7 @@ def test_pyfakefs_capability_public_contract_excludes_evaluator_material() -> No
     )
 
 
-def test_pyfakefs_capability_candidate_is_traceable_to_frozen_rebench_row() -> None:
+def test_pyfakefs_capability_admission_is_traceable_to_frozen_rebench_row() -> None:
     with Path("data/benchmark-candidate-ledger.csv").open(
         encoding="utf-8", newline=""
     ) as handle:
@@ -507,12 +507,15 @@ def test_pyfakefs_capability_candidate_is_traceable_to_frozen_rebench_row() -> N
     assert candidate["f2p"] == "1"
     assert candidate["p2p"] == "431"
     assert candidate["proposed_lane"] == "core-same-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:02c69afcbf763a1ede2637197e0979327f7b29392f2fedeead6e2a17e8746a91"
     )
     assert "row 653" in candidate["notes"]
-    assert "clean official Docker matrix pending" in candidate["notes"]
+    assert "passed 3/3 official runs" in candidate["notes"]
+    assert "dynamic-interface equivalent passed 1/1" in candidate["notes"]
+    assert "431 visible tests with 161 skips" in candidate["notes"]
+    assert "all 15 cases made zero model/API calls" in candidate["notes"]
 
 
 def test_pyfakefs_capability_reference_is_exact_production_patch() -> None:
@@ -606,11 +609,14 @@ def test_pyfakefs_capability_oracle_and_patch_inventory_are_explicit() -> None:
     audit_text = (PYFAKEFS_CAPABILITY_TASK / "audit.md").read_text(
         encoding="utf-8"
     )
-    assert "screened candidate awaiting the clean official Docker matrix" in audit_text
+    assert "Admission state: admitted" in audit_text
     assert "ten pytest functions collecting 29 cases" in audit_text
     assert "one no-op, nine semantic partials" in audit_text
     assert "implementation-independent positive control" in audit_text
     assert "Medium under `dataset-manifest-v1`" in audit_text
+    assert "sixth `core-same-repo` task" in audit_text
+    assert "Exact upstream reference: 3/3 full SCRR passes" in audit_text
+    assert "Model/API calls and model cost: 0 and USD 0" in audit_text
 
 
 def test_pyfakefs_capability_private_v2_rejects_hidden_oracle_mutation(
@@ -647,6 +653,198 @@ def test_pyfakefs_capability_lineage_is_distinct_from_memory_development() -> No
     assert "PR #991" in audit_text
     assert "`pyfakefs/fake_file.py`" in audit_text
     assert "`pyfakefs/fake_os.py`" in audit_text
+
+
+def test_pyfakefs_capability_admission_evidence_binds_all_boundaries() -> None:
+    package = load_task_package(PYFAKEFS_CAPABILITY_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_SAME_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_SAME_REPO
+    assert entry.failure_pattern_id == (
+        "file-wrapper-capability-query-hits-operation-guard"
+    )
+    assert entry.solution_lineage_id == "pytest-dev-pyfakefs-pr-1269"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 10
+
+    evidence_path = Path(
+        "reports/docker-gate/research-pyfakefs-file-wrapper-io-capabilities.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == (
+        entry.admission_evidence.sha256
+    )
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == package.public.repository.base_commit
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "b50b4314aa7fd209737db46f15b38aee056bbd80"
+    )
+    assert evidence["reference_policy"]["kind"] == (
+        "exact-upstream-production-only"
+    )
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is (
+        False
+    )
+    assert evidence["source"]["benchmark_production_patch_sha256"] == (
+        package.private.reference_patch.sha256
+    )
+    assert evidence["source"]["benchmark_gold_patch_sha256"] == (
+        "sha256:477352e8cb5b51653d1ac2afbde24dadf329cbc46afb98ce8a983cd2b457d9e6"
+    )
+    assert evidence["source"]["benchmark_test_patch_sha256"] == (
+        "sha256:39edf7cfec5497ae55af6ccb0b6ba3f6c0d606cc00543bfd9a074f352594e47a"
+    )
+    assert evidence["source"]["private_hidden_artifact_sha256"] == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    assert evidence["source"]["base_source_blob_sha1"] == {
+        "pyfakefs/fake_file.py": "2cc3f1eda46008fafa8fafbaa19af716b50f6ff6"
+    }
+    assert evidence["source"]["accepted_source_blob_sha1"] == {
+        "pyfakefs/fake_file.py": "293b39340acd8e75ccc1902e2bf86b5c84f64336"
+    }
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["equivalent_solution_pass_count"] == 1
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 10
+    assert evidence["semantic_bad_patch_rejection_count"] == 9
+    assert evidence["independent_hidden_test_count"] == 29
+    assert evidence["independent_hidden_test_function_count"] == 10
+    assert evidence["benchmark_f2p_declared_count"] == 1
+    assert evidence["benchmark_p2p_declared_count"] == 431
+    assert evidence["upstream_regression_test_count"] == 431
+    assert evidence["upstream_regression_collected_count"] == 592
+    assert evidence["upstream_regression_skip_count"] == 161
+    assert evidence["official_run_count"] == 15
+    assert evidence["observed_timeout_count"] == 0
+    assert evidence["observed_output_truncation_count"] == 0
+    assert evidence["api_calls"] == 0
+    assert evidence["model_cost_usd"] == 0
+    assert evidence["runtime"]["working_directory"] == "/workspace"
+    assert evidence["runtime"]["network"] == "none"
+    assert evidence["runtime"]["root_filesystem"] == "read-only"
+    assert evidence["runtime"]["workspace_mount"] == "read-only"
+
+    expected_failed_checks = {
+        "reference-1": [],
+        "reference-2": [],
+        "reference-3": [],
+        "equivalent-dynamic-capability-interface": [],
+        "base-noop": ["hidden:file-wrapper-io-capabilities"],
+        "always-readable": [
+            "regression:upstream-file-wrapper-regression",
+            "hidden:file-wrapper-io-capabilities",
+        ],
+        "always-writable": ["hidden:file-wrapper-io-capabilities"],
+        "capability-properties": ["hidden:file-wrapper-io-capabilities"],
+        "inverted-capabilities": [
+            "regression:upstream-file-wrapper-regression",
+            "hidden:file-wrapper-io-capabilities",
+        ],
+        "methods-without-dispatch": ["hidden:file-wrapper-io-capabilities"],
+        "mirrored-capabilities": ["hidden:file-wrapper-io-capabilities"],
+        "primary-mode-only": [
+            "regression:upstream-file-wrapper-regression",
+            "hidden:file-wrapper-io-capabilities",
+        ],
+        "readable-only": ["hidden:file-wrapper-io-capabilities"],
+        "underlying-buffer-capabilities": [
+            "regression:upstream-file-wrapper-regression",
+            "hidden:file-wrapper-io-capabilities",
+        ],
+        "forbidden-test-edit": [
+            "hidden:file-wrapper-io-capabilities",
+            "policy:scope",
+            "policy:test_tampering",
+        ],
+    }
+    expected_run_ids = {
+        "run_b9902d125f9a4a9e",
+        "run_41bba6a0e480483c",
+        "run_d0a0277614f04b49",
+        "run_1bf5034e9a2a48fb",
+        "run_6b26a5042d6048dc",
+        "run_272aef3e9f8b45df",
+        "run_8e37f09772804bbb",
+        "run_2eba08c5e18444b7",
+        "run_a6035f0254c644d5",
+        "run_ebee495659fb4b84",
+        "run_30af1e08c34644a1",
+        "run_2fe623b9d2b84d4a",
+        "run_43325244972e44ff",
+        "run_4d3a7746a3eb4e5a",
+        "run_722a1d4381a74127",
+    }
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert set(cases) == set(expected_failed_checks)
+    assert {case["run_id"] for case in cases.values()} == expected_run_ids
+    assert all(case["official"] for case in cases.values())
+    assert all(
+        case["observed_success"] is case["expected_success"]
+        for case in cases.values()
+    )
+    for name, failed_checks in expected_failed_checks.items():
+        case = cases[name]
+        assert case["failed_checks"] == failed_checks
+        patch_path = PYFAKEFS_CAPABILITY_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        for key in ("manifest_sha256", "result_sha256", "provenance_sha256"):
+            digest = case[key]
+            assert digest.startswith("sha256:")
+            assert len(digest) == 71
+    for index in range(1, 4):
+        assert cases[f"reference-{index}"]["patch_sha256"] == (
+            package.private.reference_patch.sha256
+        )
+
+    assert evidence["admission_checks"]["base_visible_checks"] == "pass"
+    assert evidence["admission_checks"]["base_hidden_acceptance"] == "fail"
+    for check_id in (
+        "reference_scrr_three_repetitions",
+        "dynamic_interface_equivalent_solution",
+        "known_bad_boundaries",
+        "upstream_regression_oracle",
+        "independent_hidden_acceptance",
+        "submitted_source_binding",
+        "complete_text_and_binary_mode_matrix",
+        "text_io_wrapper_construction",
+        "binary_text_io_write_through",
+        "disallowed_read_and_write_errors_preserved",
+        "update_mode_operations_preserved",
+        "readable_iterator_behavior_preserved",
+        "capability_override_controls_internal_guards",
+        "exact_upstream_production_lineage",
+        "benchmark_changelog_hunk_excluded",
+        "benchmark_test_patch_excluded",
+        "private_v2_hidden_artifact_bound",
+        "visible_test_read_only",
+        "hidden_oracle_read_only",
+        "test_tampering_path_recognition",
+        "same_repository_solution_lineage_is_distinct",
+        "public_private_separation",
+        "no_new_dependency",
+        "intentional_public_api_extension",
+        "network_disabled_evaluator",
+        "read_only_root_filesystem",
+        "read_only_submitted_workspace",
+        "external_image_default_user_disclosed",
+        "immutable_source_commit",
+        "immutable_evaluator_image",
+        "exact_sha_shallow_checkout",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
 
 
 def test_pdm_admission_case_inventory_is_content_addressed() -> None:
