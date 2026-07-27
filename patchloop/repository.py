@@ -24,6 +24,8 @@ ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/python-babel/babel",
     "https://github.com/huggingface/huggingface_hub.git",
     "https://github.com/huggingface/huggingface_hub",
+    "https://github.com/kubeflow/pipelines.git",
+    "https://github.com/kubeflow/pipelines",
     "https://github.com/holoviz/param.git",
     "https://github.com/holoviz/param",
     "https://github.com/olofk/fusesoc.git",

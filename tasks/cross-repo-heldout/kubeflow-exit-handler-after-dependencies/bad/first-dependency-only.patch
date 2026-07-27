@@ -1,0 +1,30 @@
+diff --git a/sdk/python/kfp/compiler/compiler_utils.py b/sdk/python/kfp/compiler/compiler_utils.py
+index 6e99da5b600..e92ed2dca72 100644
+--- a/sdk/python/kfp/compiler/compiler_utils.py
++++ b/sdk/python/kfp/compiler/compiler_utils.py
+@@ -729,7 +729,11 @@ def get_dependencies(
+             {channel.task for channel in all_channels if channel.task})
+         # dependent tasks is tasks on which .after was called and can only be the names of PipelineTasks, not TasksGroups
+         upstream_task_names.update(
+-            {pipeline.tasks[after_task] for after_task in task.dependent_tasks})
++            {
++                pipeline.tasks[after_task]
++                if after_task in pipeline.tasks else group_name_to_group[after_task]
++                for after_task in task.dependent_tasks
++            })
+ 
+         for upstream_task in upstream_task_names:
+ 
+diff --git a/sdk/python/kfp/dsl/pipeline_task.py b/sdk/python/kfp/dsl/pipeline_task.py
+index f9e19491283..1a747fcb383 100644
+--- a/sdk/python/kfp/dsl/pipeline_task.py
++++ b/sdk/python/kfp/dsl/pipeline_task.py
+@@ -702,7 +702,7 @@ def my_pipeline():
+         for task in tasks:
+             self._run_after.append(task.name)
+             self._task_spec.dependent_tasks.append(task.name)
+-        return self
++            return self
+ 
+     @block_if_final()
+     def ignore_upstream_failure(self) -> 'PipelineTask':

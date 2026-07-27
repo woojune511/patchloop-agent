@@ -49,6 +49,9 @@ TOX_DOTTED_TASK = Path(
 DAGSTER_TASK = Path(
     "tasks/cross-repo-heldout/dagster-subset-partition-definition-selection"
 )
+KUBEFLOW_TASK = Path(
+    "tasks/cross-repo-heldout/kubeflow-exit-handler-after-dependencies"
+)
 
 
 def test_loguru_candidate_has_pinned_real_repository_provenance() -> None:
@@ -2251,6 +2254,193 @@ def test_fusesoc_admission_evidence_binds_parse_diagnostic_boundaries() -> None:
         "immutable_evaluator_image",
     ):
         assert evidence["admission_checks"][check_id] == "pass"
+
+
+def test_kubeflow_candidate_has_pinned_real_repository_provenance() -> None:
+    package = load_task_package(KUBEFLOW_TASK)
+
+    assert package.public.task_id == "kubeflow-exit-handler-after-dependencies"
+    assert package.public.split == "cross-repo-heldout"
+    assert package.public.repository.url == "https://github.com/kubeflow/pipelines.git"
+    assert package.public.repository.base_commit == (
+        "98f5b7a300ee52d6c530b429558b718ade9fdb7a"
+    )
+    assert package.public.repository.url in ALLOWED_REMOTE_REPOSITORIES
+    assert package.public.constraints.allowed_paths == [
+        "sdk/python/kfp/compiler/compiler_utils.py",
+        "sdk/python/kfp/dsl/pipeline_task.py",
+    ]
+    assert package.public.constraints.max_changed_files == 2
+    assert package.public.constraints.max_diff_lines == 110
+    assert package.public.constraints.dependency_changes_allowed is False
+    assert package.public.constraints.public_api_changes_allowed is True
+    assert package.environment is not None
+    assert package.environment.image_digest == (
+        "sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a"
+    )
+    assert package.environment.evaluator_image.endswith(
+        f"@{package.environment.image_digest}"
+    )
+
+
+def test_kubeflow_visible_check_uses_submitted_source_copy_and_related_modules() -> None:
+    package = load_task_package(KUBEFLOW_TASK)
+    check = package.public.visible_checks[0]
+    script = check.command[2]
+
+    assert check.command[:2] == ["/bin/bash", "-lc"]
+    assert "cp -a /workspace/sdk/python/kfp" in script
+    assert 'export PYTHONPATH="$source_root/sdk/python"' in script
+    assert "/workspace/sdk/python/kfp/compiler/compiler_test.py" in script
+    assert "/workspace/sdk/python/kfp/dsl/pipeline_task_test.py" in script
+    assert "--deselect" not in script
+    assert "-k " not in script
+    assert check.timeout_seconds == 180
+    assert check.environment["PATH"].startswith("/opt/conda/envs/testbed/bin:")
+
+
+def test_kubeflow_public_contract_excludes_evaluator_only_material() -> None:
+    package = load_task_package(KUBEFLOW_TASK)
+    public_text = (KUBEFLOW_TASK / "public.yaml").read_text(encoding="utf-8")
+
+    assert "test_exit_handler_after_dependencies.py" not in public_text
+    assert "_resolve_dependency_name_to_group_or_task" not in public_text
+    assert "reference.patch" not in public_text
+    assert package.private.reference_patch.sha256 not in public_text
+    assert package.private.hidden_artifacts[0].sha256 not in public_text
+    assert ".patchloop-hidden" not in "\n".join(
+        argument for check in package.public.visible_checks for argument in check.command
+    )
+
+
+def test_kubeflow_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
+    with Path("data/benchmark-candidate-ledger.csv").open(
+        encoding="utf-8", newline=""
+    ) as handle:
+        rows = {row["candidate_id"]: row for row in csv.DictReader(handle)}
+
+    candidate = rows["kubeflow__pipelines-13112"]
+    assert candidate["benchmark_family"] == "SWE-rebench-leaderboard"
+    assert candidate["benchmark_revision"] == (
+        "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b"
+    )
+    assert candidate["benchmark_split"] == "2026_03"
+    assert candidate["base_commit"] == (
+        "98f5b7a300ee52d6c530b429558b718ade9fdb7a"
+    )
+    assert candidate["pr_url"] == "https://github.com/kubeflow/pipelines/pull/13112"
+    assert candidate["license_spdx"] == "Apache-2.0"
+    assert candidate["gold_patch_lines"] == "159"
+    assert candidate["test_patch_lines"] == "189"
+    assert candidate["changed_files"] == "2"
+    assert candidate["f2p"] == "7"
+    assert candidate["p2p"] == "278"
+    assert candidate["proposed_lane"] == "core-cross-repo"
+    assert candidate["status"] == "screening"
+    assert candidate["environment_image"].endswith(
+        "@sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a"
+    )
+    assert "277 base-resident tests" in candidate["notes"]
+    assert "await official admission runs" in candidate["notes"]
+
+
+def test_kubeflow_reference_is_exact_production_patch_and_hash_bound() -> None:
+    package = load_task_package(KUBEFLOW_TASK)
+    reference_patch = KUBEFLOW_TASK / package.private.reference_patch.path
+    patch_text = reference_patch.read_text(encoding="utf-8")
+    patch_lines = patch_text.splitlines()
+
+    assert package.private.reference_patch.sha256 == (
+        "sha256:ea57612615fc67d2707284b740ee5be170fa2684ad1d98e72046bf18d5d940a1"
+    )
+    assert sha256_bytes(reference_patch.read_bytes()) == (
+        package.private.reference_patch.sha256
+    )
+    assert sum(
+        line.startswith("+") and not line.startswith("+++") for line in patch_lines
+    ) == 83
+    assert sum(
+        line.startswith("-") and not line.startswith("---") for line in patch_lines
+    ) == 15
+    assert {
+        line.removeprefix("diff --git a/").split(" b/", maxsplit=1)[0]
+        for line in patch_lines
+        if line.startswith("diff --git a/")
+    } == {
+        "sdk/python/kfp/compiler/compiler_utils.py",
+        "sdk/python/kfp/dsl/pipeline_task.py",
+    }
+    assert "_test.py" not in patch_text
+
+
+def test_kubeflow_oracle_and_bad_patch_inventory_are_explicit() -> None:
+    package = load_task_package(KUBEFLOW_TASK)
+    hidden_path = KUBEFLOW_TASK / "hidden/test_exit_handler_after_dependencies.py"
+    hidden_text = hidden_path.read_text(encoding="utf-8")
+    bad_names = sorted(path.name for path in (KUBEFLOW_TASK / "bad").glob("*.patch"))
+
+    assert hidden_text.count("\ndef test_") == 11
+    for marker in (
+        "test_oracle_imports_submitted_kfp_copy",
+        "test_after_records_exit_handler_group_name",
+        "test_compiler_depends_on_group_not_cleanup_task",
+        "test_mixed_task_and_group_dependencies_are_preserved",
+        "test_two_completed_groups_keep_requested_order",
+        "test_non_exit_group_rejected_before_dependency_mutation",
+        "test_arbitrary_dependency_rejected_before_dependency_mutation",
+        "test_unknown_recorded_dependency_has_clear_error",
+        "test_ambiguous_task_and_group_name_has_clear_error",
+        "test_inner_task_dependency_remains_illegal_after_group_exit",
+        "test_final_status_is_produced_by_depended_on_exit_group",
+    ):
+        assert marker in hidden_text
+    assert package.private.schema_version == "task-private-v2"
+    assert [artifact.path for artifact in package.private.hidden_artifacts] == [
+        "hidden/test_exit_handler_after_dependencies.py"
+    ]
+    assert package.private.hidden_artifacts[0].sha256 == (
+        "sha256:72f9ebd167fe669e3fca961cb169430f350c961f4f96bf0f816ff0d6bdc4a150"
+    )
+    assert sha256_bytes(hidden_path.read_bytes()) == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    hidden_script = package.private.hidden_checks[0].command[2]
+    assert (
+        "/workspace/.patchloop-hidden/test_exit_handler_after_dependencies.py"
+        in hidden_script
+    )
+    assert "cp /workspace/.patchloop-hidden" not in hidden_script
+    assert bad_names == [
+        "compiler-resolution-only.patch",
+        "fallback-any-group.patch",
+        "first-dependency-only.patch",
+        "forbidden-test-edit.patch",
+        "group-only-resolution.patch",
+        "noop.patch",
+        "public-validation-only.patch",
+        "resolve-group-as-exit-task.patch",
+        "task-precedence-on-collision.patch",
+        "unknown-dependency-keyerror.patch",
+    ]
+    assert (KUBEFLOW_TASK / "bad/noop.patch").read_bytes() == b"\n"
+
+    audit_text = (KUBEFLOW_TASK / "audit.md").read_text(encoding="utf-8")
+    assert "277 passing base-resident cases" in audit_text
+    assert "task-private-v2" in audit_text
+    assert "Admission remains pending" in audit_text
+
+
+def test_kubeflow_private_v2_rejects_hidden_oracle_mutation(tmp_path: Path) -> None:
+    copied_task = tmp_path / KUBEFLOW_TASK.name
+    shutil.copytree(KUBEFLOW_TASK, copied_task)
+    hidden_path = copied_task / "hidden/test_exit_handler_after_dependencies.py"
+    hidden_path.write_text(
+        hidden_path.read_text(encoding="utf-8") + "\n# unbound mutation\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ContractError, match="hidden artifact hash mismatch"):
+        load_task_package(copied_task)
 
 
 def test_tox_dotted_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:

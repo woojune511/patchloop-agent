@@ -1,0 +1,11 @@
+diff --git a/sdk/python/kfp/compiler/compiler_test.py b/sdk/python/kfp/compiler/compiler_test.py
+index d4d539b54a6..709f8ed3a44 100644
+--- a/sdk/python/kfp/compiler/compiler_test.py
++++ b/sdk/python/kfp/compiler/compiler_test.py
+@@ -15,5 +15,6 @@
+ 
+ import collections
++# PatchLoop forbidden evaluator-test mutation.
+ import json
+ import os
+ import re

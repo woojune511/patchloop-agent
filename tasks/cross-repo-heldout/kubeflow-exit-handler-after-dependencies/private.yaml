@@ -1,0 +1,45 @@
+schema_version: task-private-v2
+task_id: kubeflow-exit-handler-after-dependencies
+task_version: 1
+hidden_checks:
+  - id: exit-handler-after-dependencies
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        source_root="$(mktemp -d /tmp/patchloop-kfp-hidden-XXXXXX)"
+        mkdir -p "$source_root/sdk/python"
+        cp -a /workspace/sdk/python/kfp "$source_root/sdk/python/kfp"
+        cd "$source_root"
+        export PYTHONPATH="$source_root/sdk/python"
+        export PATCHLOOP_SUBMITTED_KFP="$source_root/sdk/python/kfp"
+        /opt/conda/envs/testbed/bin/python -m pytest \
+          --no-header -q --tb=line --color=no -p no:cacheprovider \
+          /workspace/.patchloop-hidden/test_exit_handler_after_dependencies.py
+    timeout_seconds: 120
+    environment:
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+hidden_artifacts:
+  - path: hidden/test_exit_handler_after_dependencies.py
+    sha256: sha256:72f9ebd167fe669e3fca961cb169430f350c961f4f96bf0f816ff0d6bdc4a150
+reference_patch:
+  path: reference.patch
+  sha256: sha256:ea57612615fc67d2707284b740ee5be170fa2684ad1d98e72046bf18d5d940a1
+audit:
+  expected_files:
+    - sdk/python/kfp/compiler/compiler_utils.py
+    - sdk/python/kfp/dsl/pipeline_task.py
+  prohibited_behaviors:
+    - resolving an ExitHandler dependency as its exit task instead of its group
+    - dropping ordinary task dependencies when a group dependency is present
+    - accepting non-ExitHandler task groups
+    - accepting arbitrary objects as after dependencies
+    - silently ignoring unknown dependency names
+    - preferring a task or group when a dependency name is ambiguous
+    - allowing a downstream task to depend directly on a task inside an exited group
+    - assigning task-final-status to a producer other than the depended-on ExitHandler group
+    - changing dependency, test, documentation, or configuration files

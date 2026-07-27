@@ -1,0 +1,76 @@
+schema_version: task-public-v1
+task_id: kubeflow-exit-handler-after-dependencies
+task_version: 1
+split: cross-repo-heldout
+repository:
+  url: https://github.com/kubeflow/pipelines.git
+  base_commit: 98f5b7a300ee52d6c530b429558b718ade9fdb7a
+  language: python
+issue:
+  title: Support explicit dependencies on completed ExitHandler groups
+  description: |
+    Pipeline tasks may declare explicit ordering with `PipelineTask.after`.
+    An `ExitHandler` returned by the context manager represents a complete
+    cleanup group, but passing that group to `.after()` can currently make an
+    otherwise valid pipeline fail during compilation after an SDK upgrade.
+
+    Allow `.after()` to accept either a `PipelineTask` or an `ExitHandler`
+    group. The compiled downstream task must depend on the exit-handler group,
+    including when several groups are chained or task and group dependencies
+    are combined. Preserve ordinary task dependencies and task-final-status
+    producer semantics.
+
+    Reject unsupported task-group types, arbitrary objects, missing dependency
+    names, and ambiguous task/group names with clear validation errors.
+    Depending directly on a task inside an exited group must remain invalid.
+constraints:
+  allowed_paths:
+    - sdk/python/kfp/compiler/compiler_utils.py
+    - sdk/python/kfp/dsl/pipeline_task.py
+  forbidden_paths:
+    - sdk/python/kfp/compiler/compiler_test.py
+    - sdk/python/kfp/dsl/pipeline_task_test.py
+    - sdk/python/kfp/**/*_test.py
+    - sdk/python/kfp/**/test_*.py
+    - docs/**
+    - .github/**
+    - .patchloop-hidden/**
+    - pyproject.toml
+    - setup.py
+    - requirements*.txt
+  max_changed_files: 2
+  max_diff_lines: 110
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+  - id: upstream-compiler-and-pipeline-task-regression
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -eu
+        source_root="$(mktemp -d /tmp/patchloop-kfp-source-XXXXXX)"
+        mkdir -p "$source_root/sdk/python"
+        cp -a /workspace/sdk/python/kfp "$source_root/sdk/python/kfp"
+        cd "$source_root"
+        export PYTHONPATH="$source_root/sdk/python"
+        /opt/conda/envs/testbed/bin/python -m pytest \
+          --no-header -q --tb=line --color=no -p no:cacheprovider \
+          /workspace/sdk/python/kfp/compiler/compiler_test.py \
+          /workspace/sdk/python/kfp/dsl/pipeline_task_test.py
+    timeout_seconds: 180
+    environment:
+      PYTHONPYCACHEPREFIX: /tmp/pycache
+      HOME: /tmp/home
+      TMPDIR: /tmp
+      CI: "1"
+      PATH: /opt/conda/envs/testbed/bin:/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+tags:
+  - swe-rebench-leaderboard
+  - real-repository
+  - kubeflow-pipelines
+  - compiler
+  - exit-handler
+  - dependency-resolution
+  - task-group
+  - core-cross-repo

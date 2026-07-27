@@ -1,0 +1,4 @@
+schema_version: task-environment-v1
+evaluator_image: swerebench/sweb.eval.x86_64.kubeflow_1776_pipelines-13112@sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a
+image_digest: sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a
+source_image_tag: swerebench/sweb.eval.x86_64.kubeflow_1776_pipelines-13112:latest

@@ -1,0 +1,49 @@
+diff --git a/sdk/python/kfp/compiler/compiler_utils.py b/sdk/python/kfp/compiler/compiler_utils.py
+index 6e99da5b600..9bff9b2f12f 100644
+--- a/sdk/python/kfp/compiler/compiler_utils.py
++++ b/sdk/python/kfp/compiler/compiler_utils.py
+@@ -691,6 +691,30 @@ def _get_uncommon_ancestors(
+     return (group1, group2)
+ 
+ 
++def _resolve_after_dependency(
++    dependency_name: str,
++    pipeline: pipeline_context.Pipeline,
++    group_name_to_group: Mapping[str, tasks_group.TasksGroup],
++) -> GroupOrTaskType:
++    is_task = dependency_name in pipeline.tasks
++    is_group = dependency_name in group_name_to_group
++    if is_task and is_group:
++        raise ValueError(f'Ambiguous dependency name "{dependency_name}".')
++    if is_task:
++        return pipeline.tasks[dependency_name]
++    if is_group:
++        group = group_name_to_group[dependency_name]
++        if not isinstance(group, tasks_group.ExitHandler):
++            raise ValueError(
++                f'".after()" on task group "{dependency_name}" of type '
++                f'dsl.{group.__class__.__name__} is not supported. Only '
++                'dsl.ExitHandler groups can be used as .after() '
++                'dependencies.')
++        return group
++    # Incorrectly leaks a mapping KeyError instead of a clear validation error.
++    return pipeline.tasks[dependency_name]
++
++
+ def get_dependencies(
+     pipeline: pipeline_context.Pipeline,
+     task_name_to_parent_groups: Mapping[str, List[str]],
+@@ -729,7 +753,12 @@ def get_dependencies(
+             {channel.task for channel in all_channels if channel.task})
+         # dependent tasks is tasks on which .after was called and can only be the names of PipelineTasks, not TasksGroups
+         upstream_task_names.update(
+-            {pipeline.tasks[after_task] for after_task in task.dependent_tasks})
++            {
++                _resolve_after_dependency(
++                    after_task, pipeline, group_name_to_group
++                )
++                for after_task in task.dependent_tasks
++            })
+ 
+         for upstream_task in upstream_task_names:
+ 

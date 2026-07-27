@@ -1,0 +1,18 @@
+diff --git a/sdk/python/kfp/compiler/compiler_utils.py b/sdk/python/kfp/compiler/compiler_utils.py
+index 6e99da5b600..8f314713120 100644
+--- a/sdk/python/kfp/compiler/compiler_utils.py
++++ b/sdk/python/kfp/compiler/compiler_utils.py
+@@ -729,7 +729,12 @@ def get_dependencies(
+             {channel.task for channel in all_channels if channel.task})
+         # dependent tasks is tasks on which .after was called and can only be the names of PipelineTasks, not TasksGroups
+         upstream_task_names.update(
+-            {pipeline.tasks[after_task] for after_task in task.dependent_tasks})
++            {
++                pipeline.tasks[after_task]
++                if after_task in pipeline.tasks else
++                group_name_to_group[after_task].exit_task
++                for after_task in task.dependent_tasks
++            })
+ 
+         for upstream_task in upstream_task_names:
+ 
