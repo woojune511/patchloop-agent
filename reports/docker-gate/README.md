@@ -175,3 +175,17 @@ artifact bound to
 The gate made zero model/API calls and incurred zero model cost. This is deterministic evaluator
 admission evidence, not agent performance or a live-model core result. The report SHA-256 is
 `2d95aa36990b8cd475476a0992b0db7a8d9259d5c7a21d35c99ea3a6c551d012`.
+
+`research-kubeflow-exit-handler-after-dependencies.json` records the eighteenth research admission
+and completes the six-task core-cross-repo lane. It pins Kubeflow Pipelines issue #10722 and PR
+#13112 through SWE-rebench leaderboard instance `kubeflow__pipelines-13112`. On clean harness commit
+`5e7b019e60b4d76f67e48bafe6fd1a3b309fe313`, the exact two-file production reference passed all
+three repetitions. Base/no-op passed all 277 base-resident visible tests plus 15 subtests and failed
+the 11-test independent oracle; eight semantic partial implementations were rejected, and one
+forbidden test edit failed hidden acceptance, scope and test-tampering checks. The benchmark's 278
+P2P declaration includes one preservation test added by its excluded test patch, leaving exactly
+277 base-resident P2P tests. All 13 runs were `official=true`, used network-disabled read-only
+evaluator boundaries and made zero model/API calls. The external image has no configured `User`, so
+Docker used its default root user. This is deterministic evaluator admission evidence, not agent
+performance or a live-model core result. The report SHA-256 is
+`c7998d064949dd5a67f05c15ff7d426ef1051f74fea7bb03e37f91c7d1d5084c`.

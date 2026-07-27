@@ -2337,12 +2337,13 @@ def test_kubeflow_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:
     assert candidate["f2p"] == "7"
     assert candidate["p2p"] == "278"
     assert candidate["proposed_lane"] == "core-cross-repo"
-    assert candidate["status"] == "screening"
+    assert candidate["status"] == "admitted"
     assert candidate["environment_image"].endswith(
         "@sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a"
     )
-    assert "277 base-resident tests" in candidate["notes"]
-    assert "await official admission runs" in candidate["notes"]
+    assert "passed 3/3 official runs" in candidate["notes"]
+    assert "277 base-resident visible tests" in candidate["notes"]
+    assert "all 13 cases made zero model/API calls" in candidate["notes"]
 
 
 def test_kubeflow_reference_is_exact_production_patch_and_hash_bound() -> None:
@@ -2428,7 +2429,7 @@ def test_kubeflow_oracle_and_bad_patch_inventory_are_explicit() -> None:
     audit_text = (KUBEFLOW_TASK / "audit.md").read_text(encoding="utf-8")
     assert "277 passing base-resident cases" in audit_text
     assert "task-private-v2" in audit_text
-    assert "Admission remains pending" in audit_text
+    assert "Admitted as the sixth `core-cross-repo`" in audit_text
 
 
 def test_kubeflow_private_v2_rejects_hidden_oracle_mutation(tmp_path: Path) -> None:
@@ -2442,6 +2443,166 @@ def test_kubeflow_private_v2_rejects_hidden_oracle_mutation(tmp_path: Path) -> N
 
     with pytest.raises(ContractError, match="hidden artifact hash mismatch"):
         load_task_package(copied_task)
+
+
+def test_kubeflow_admission_evidence_binds_exit_handler_boundaries() -> None:
+    package = load_task_package(KUBEFLOW_TASK)
+    entry = require_dataset_role(
+        task_id=package.public.task_id,
+        task_version=package.public.task_version,
+        public_spec_hash=package.public_spec_hash,
+        allowed_roles={DatasetRole.CORE_CROSS_REPO},
+    )
+    assert entry.role == DatasetRole.CORE_CROSS_REPO
+    assert entry.failure_pattern_id == "exit-handler-group-dependency-resolution"
+    assert entry.solution_lineage_id == "kubeflow-pipelines-pr-13112"
+    assert entry.admission_evidence is not None
+    assert entry.admission_evidence.reference_pass_runs == 3
+    assert entry.admission_evidence.rejected_bad_patches == 9
+
+    evidence_path = Path(
+        "reports/docker-gate/research-kubeflow-exit-handler-after-dependencies.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    assert sha256_bytes(evidence_path.read_bytes()) == entry.admission_evidence.sha256
+    assert evidence["task_id"] == package.public.task_id
+    assert evidence["task_version"] == package.public.task_version
+    assert evidence["dataset_role"] == entry.role.value
+    assert evidence["split"] == package.public.split
+    assert evidence["public_spec_hash"] == package.public_spec_hash
+    assert evidence["private_spec_hash"] == package.private_spec_hash
+    assert evidence["source"]["base_commit"] == package.public.repository.base_commit
+    assert evidence["evaluator_image"] == package.environment.evaluator_image
+    assert evidence["evaluator_image_digest"] == package.environment.image_digest
+    assert evidence["harness_git_commit"] == (
+        "5e7b019e60b4d76f67e48bafe6fd1a3b309fe313"
+    )
+    assert evidence["reference_policy"]["kind"] == "exact-upstream-production-only"
+    assert evidence["reference_policy"]["rejected_benchmark_production_patch"] is False
+    assert evidence["source"]["benchmark_production_patch_sha256"] == (
+        package.private.reference_patch.sha256
+    )
+    assert evidence["source"]["benchmark_test_patch_sha256"] == (
+        "sha256:fb94e7491c0121e4343d3aa246ee10e808aabfc3a88570966aad2cb99c376729"
+    )
+    assert evidence["source"]["private_hidden_artifact_sha256"] == (
+        package.private.hidden_artifacts[0].sha256
+    )
+    assert evidence["source"]["accepted_source_blob_sha1"] == {
+        "sdk/python/kfp/compiler/compiler_utils.py": (
+            "e2f16b2bce413efe92b66f630dd917f6ff2df18b"
+        ),
+        "sdk/python/kfp/dsl/pipeline_task.py": (
+            "c77529bad6e3720f328e2c0b3c0c920182db6415"
+        ),
+    }
+    assert evidence["reference_pass_count"] == 3
+    assert evidence["base_noop_rejection_count"] == 1
+    assert evidence["known_bad_patch_rejection_count"] == 9
+    assert evidence["semantic_bad_patch_rejection_count"] == 8
+    assert evidence["independent_hidden_test_count"] == 11
+    assert evidence["independent_hidden_test_function_count"] == 11
+    assert evidence["benchmark_f2p_declared_count"] == 7
+    assert evidence["benchmark_p2p_declared_count"] == 278
+    assert evidence["benchmark_patch_added_f2p_count"] == 7
+    assert evidence["benchmark_patch_added_p2p_count"] == 1
+    assert evidence["benchmark_base_resident_p2p_count"] == 277
+    assert evidence["upstream_regression_test_count"] == 277
+    assert evidence["upstream_regression_collected_count"] == 277
+    assert evidence["upstream_regression_subtest_count"] == 15
+    assert evidence["upstream_regression_deselected_count"] == 0
+    assert evidence["runtime"]["working_directory"] == "/workspace"
+    assert evidence["runtime"]["visible_test_location"] == "read-only /workspace"
+    assert evidence["runtime"]["hidden_oracle_location"] == "read-only /workspace"
+    assert evidence["runtime"]["python_version"] == "3.13.13"
+    assert evidence["runtime"]["pytest_version"] == "9.0.3"
+    assert evidence["runtime"]["execution_user"] == "image-default-root"
+    assert evidence["runtime"]["docker_config_user"] == ""
+
+    cases = {case["name"]: case for case in evidence["cases"]}
+    assert len(cases) == 13
+    assert len({case["run_id"] for case in cases.values()}) == 13
+    assert {case["run_id"] for case in cases.values()} == {
+        "run_7876f396980a4c55",
+        "run_e2930e730d104a3c",
+        "run_f4c2707cc64e4a63",
+        "run_28d458248adb4cca",
+        "run_9c0ab4f5a208424a",
+        "run_fb281c4593234662",
+        "run_f4445927f042437d",
+        "run_61a35efc95b34a2a",
+        "run_030d1c1ffa3c4e0b",
+        "run_a3d0b17e1e624efe",
+        "run_9b25341374b54dfe",
+        "run_d48f210c19244f82",
+        "run_2da8391ec73948e4",
+    }
+    assert all(case["official"] for case in cases.values())
+    for case in cases.values():
+        patch_path = KUBEFLOW_TASK / case["patch"]
+        assert sha256_bytes(patch_path.read_bytes()) == case["patch_sha256"]
+        assert case["observed_success"] is case["expected_success"]
+    assert all(cases[f"reference-{index}"]["observed_success"] for index in range(1, 4))
+    assert {
+        cases[f"reference-{index}"]["patch_sha256"] for index in range(1, 4)
+    } == {package.private.reference_patch.sha256}
+    for case_name in (
+        "base-noop",
+        "compiler-resolution-only",
+        "fallback-any-group",
+        "public-validation-only",
+        "resolve-group-as-exit-task",
+        "task-precedence-on-collision",
+        "unknown-dependency-keyerror",
+    ):
+        assert cases[case_name]["failed_checks"] == [
+            "hidden:exit-handler-after-dependencies"
+        ]
+    for case_name in ("first-dependency-only", "group-only-resolution"):
+        assert cases[case_name]["failed_checks"] == [
+            "regression:upstream-compiler-and-pipeline-task-regression",
+            "hidden:exit-handler-after-dependencies",
+        ]
+    assert cases["forbidden-test-edit"]["failed_checks"] == [
+        "hidden:exit-handler-after-dependencies",
+        "policy:scope",
+        "policy:test_tampering",
+    ]
+    assert evidence["admission_checks"]["base_visible_checks"] == "pass"
+    assert evidence["admission_checks"]["base_hidden_acceptance"] == "fail"
+    for check_id in (
+        "reference_scrr_three_repetitions",
+        "known_bad_boundaries",
+        "submitted_source_binding",
+        "after_records_exit_handler_group_name",
+        "compiled_dependency_targets_exit_handler_group",
+        "mixed_task_and_group_dependencies_preserved",
+        "chained_exit_handler_group_order_preserved",
+        "non_exit_group_rejected_before_mutation",
+        "arbitrary_dependency_rejected_before_mutation",
+        "unknown_dependency_clear_error",
+        "ambiguous_task_group_name_clear_error",
+        "inner_task_cross_group_dependency_rejected",
+        "final_status_attributed_to_exit_handler_group",
+        "exact_upstream_production_lineage",
+        "benchmark_test_patch_excluded",
+        "benchmark_p2p_decomposition_verified",
+        "private_v2_hidden_artifact_bound",
+        "visible_test_read_only",
+        "hidden_oracle_read_only",
+        "test_tampering_path_recognition",
+        "public_private_separation",
+        "no_new_dependency",
+        "public_api_change_explicitly_allowed",
+        "network_disabled_evaluator",
+        "read_only_root_filesystem",
+        "read_only_submitted_workspace",
+        "external_image_default_user_disclosed",
+        "immutable_source_commit",
+        "immutable_evaluator_image",
+        "exact_sha_shallow_checkout",
+    ):
+        assert evidence["admission_checks"][check_id] == "pass"
 
 
 def test_tox_dotted_candidate_is_traceable_to_frozen_swe_rebench_row() -> None:

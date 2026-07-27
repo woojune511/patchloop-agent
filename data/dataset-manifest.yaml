@@ -837,6 +837,48 @@ tasks:
       reference_pass_runs: 3
       rejected_bad_patches: 9
 
+  - task_id: kubeflow-exit-handler-after-dependencies
+    task_version: 1
+    path: tasks/cross-repo-heldout/kubeflow-exit-handler-after-dependencies
+    role: core-cross-repo
+    admission_state: admitted
+    public_spec_hash: sha256:dfaa69083d119046f78f532a99db3cf9eb0ca2a4b34ca73f70f62242a22d5f8c
+    private_spec_hash: sha256:bc8c6e70c15d926e24c6b7fcbcdf471b5577704ea9e46fea4f93cf47a4955798
+    source:
+      kind: benchmark-instance
+      benchmark_family: SWE-rebench-leaderboard
+      benchmark_revision: ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b
+      benchmark_instance_id: kubeflow__pipelines-13112
+      upstream_repository: kubeflow/pipelines
+      issue_url: https://github.com/kubeflow/pipelines/issues/10722
+      pull_request_url: https://github.com/kubeflow/pipelines/pull/13112
+      upstream_base_commit: 98f5b7a300ee52d6c530b429558b718ade9fdb7a
+      resolution_commit: 0e775d5c7b1d3d5ba4870992bb544edf9850198e
+      license_spdx: Apache-2.0
+      retrieved_at: 2026-07-27T18:54:27Z
+      contamination_risk: high
+      workflow_type: issue-fix
+      environment_image: swerebench/sweb.eval.x86_64.kubeflow_1776_pipelines-13112@sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a
+    difficulty:
+      localization: 1
+      reasoning_depth: 2
+      implementation_breadth: 2
+      verification_breadth: 2
+      total: 7
+      tier: hard
+      rationale: The failure appears during compiler topology construction, but the accepted change must also broaden the public task API while preserving ordinary-task, supported-group, unsupported-group, missing, ambiguous, nested-context and final-status dependency semantics.
+    failure_pattern_id: exit-handler-group-dependency-resolution
+    solution_lineage_id: kubeflow-pipelines-pr-13112
+    admission_evidence:
+      path: reports/docker-gate/research-kubeflow-exit-handler-after-dependencies.json
+      sha256: sha256:c7998d064949dd5a67f05c15ff7d426ef1051f74fea7bb03e37f91c7d1d5084c
+      official: true
+      base_visible_pass: true
+      base_hidden_fail: true
+      reference_pass: true
+      reference_pass_runs: 3
+      rejected_bad_patches: 9
+
 stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1

@@ -51,9 +51,11 @@ The registered check copies only the submitted `sdk/python/kfp` package from
 the read-only `/workspace` mount to a fresh `/tmp` source root. It runs the
 base-resident `compiler_test.py` and `pipeline_task_test.py` modules from their
 original read-only paths while importing the copied production package. The
-authoring probe observed 277 passing base-resident cases; this is one fewer
-than the benchmark's 278 declared P2P nodes and must remain disclosed in the
-admission report rather than being silently equated.
+authoring probe observed 277 passing base-resident cases. The benchmark test
+patch adds seven F2P tests and one preservation P2P test, so its 278 declared
+P2P nodes decompose into exactly 277 base-resident tests plus that one
+evaluator-only addition. The complete two-module visible surface therefore
+matches the base-resident P2P declaration.
 
 The check uses the testbed interpreter, redirects Python cache and home state
 to `/tmp`, and does not copy either visible tests or the private oracle to a
@@ -99,7 +101,24 @@ Difficulty audit:
 
 ## Admission status
 
-Admission remains pending. Required evidence is a clean staging commit followed
-by three official reference passes, base visible-pass/private-fail evidence,
-rejection of all semantic partials and the forbidden test edit, and a
-content-hashed Docker report binding every run to the frozen task hashes.
+Admitted as the sixth `core-cross-repo` task on 2026-07-28. The 13-case
+official matrix ran from clean staging commit
+`5e7b019e60b4d76f67e48bafe6fd1a3b309fe313` with the exact public/private
+spec hashes and pinned image:
+
+- the exact two-file reference passed three of three independent runs;
+- base/no-op passed all 277 visible tests plus 15 subtests and failed the
+  11-test independent hidden acceptance;
+- all eight semantic partials were rejected, with two also failing visible
+  regression coverage; and
+- the forbidden test edit failed hidden acceptance, scope and the generalized
+  test-tampering verifier.
+
+All 13 runs were `official=true`, used `--network none`, read-only root and
+submitted filesystems, and made zero model/API calls. The machine-readable
+report is
+`reports/docker-gate/research-kubeflow-exit-handler-after-dependencies.json`
+with SHA-256
+`c7998d064949dd5a67f05c15ff7d426ef1051f74fea7bb03e37f91c7d1d5084c`.
+This is deterministic evaluator admission evidence, not agent-performance or
+memory-improvement evidence.

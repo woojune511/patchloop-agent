@@ -1,0 +1,314 @@
+{
+  "schema_version": "research-task-gate-v1",
+  "executed_on": "2026-07-28",
+  "task_id": "kubeflow-exit-handler-after-dependencies",
+  "task_version": 1,
+  "dataset_role": "core-cross-repo",
+  "split": "cross-repo-heldout",
+  "source": {
+    "benchmark_family": "SWE-rebench-leaderboard",
+    "benchmark_revision": "ab4805dae879e4f4ef81bf9e5cf5afa849f7c55b",
+    "benchmark_split": "2026_03",
+    "benchmark_row": 92,
+    "benchmark_instance_id": "kubeflow__pipelines-13112",
+    "upstream_repository": "kubeflow/pipelines",
+    "issue_url": "https://github.com/kubeflow/pipelines/issues/10722",
+    "pull_request_url": "https://github.com/kubeflow/pipelines/pull/13112",
+    "base_commit": "98f5b7a300ee52d6c530b429558b718ade9fdb7a",
+    "base_tree": "24f4a3556de13ddc11b574c748b7090b9a908869",
+    "pr_head_commit": "67ac7a290bc2a07477821e1463a0b85b16e53f58",
+    "pr_head_tree": "f9421bba99e98ac49898c31add91369b07215f39",
+    "upstream_merge_commit": "0e775d5c7b1d3d5ba4870992bb544edf9850198e",
+    "resolution_commit": "0e775d5c7b1d3d5ba4870992bb544edf9850198e",
+    "resolution_tree": "f74032f91e7b1c086a93d667bb915e5ae7731a9e",
+    "license_spdx": "Apache-2.0",
+    "license_blob_sha1": "261eeb9e9f8b2b4b0d119366dda99c6fd7d35c64",
+    "benchmark_dataset_license": "CC-BY-4.0",
+    "contamination_risk": "high",
+    "benchmark_production_patch_sha256": "sha256:ea57612615fc67d2707284b740ee5be170fa2684ad1d98e72046bf18d5d940a1",
+    "benchmark_test_patch_sha256": "sha256:fb94e7491c0121e4343d3aa246ee10e808aabfc3a88570966aad2cb99c376729",
+    "private_hidden_artifact_sha256": "sha256:77425a3ab8e3d8c8bc1afa6776a7074dac768b9f33f6e2bf815ec0a6e05d778f",
+    "accepted_source_blob_sha1": {
+      "sdk/python/kfp/compiler/compiler_utils.py": "e2f16b2bce413efe92b66f630dd917f6ff2df18b",
+      "sdk/python/kfp/dsl/pipeline_task.py": "c77529bad6e3720f328e2c0b3c0c920182db6415"
+    }
+  },
+  "reference_policy": {
+    "kind": "exact-upstream-production-only",
+    "excluded_upstream_files": [
+      "sdk/python/kfp/compiler/compiler_test.py",
+      "sdk/python/kfp/dsl/pipeline_task_test.py"
+    ],
+    "rejected_benchmark_production_patch": false,
+    "rationale": "The exact two-file accepted production patch is retained. The benchmark test patch remains evaluator-only, while PatchLoop uses a separately authored, hash-bound hidden oracle."
+  },
+  "public_spec_hash": "sha256:dfaa69083d119046f78f532a99db3cf9eb0ca2a4b34ca73f70f62242a22d5f8c",
+  "private_spec_hash": "sha256:bc8c6e70c15d926e24c6b7fcbcdf471b5577704ea9e46fea4f93cf47a4955798",
+  "harness_git_commit": "5e7b019e60b4d76f67e48bafe6fd1a3b309fe313",
+  "evaluator_image": "swerebench/sweb.eval.x86_64.kubeflow_1776_pipelines-13112@sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a",
+  "evaluator_image_digest": "sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a",
+  "runtime": {
+    "platform": "linux/amd64",
+    "working_directory": "/workspace",
+    "submitted_workspace": "/workspace",
+    "python_version": "3.13.13",
+    "pytest_version": "9.0.3",
+    "network": "none",
+    "root_filesystem": "read-only",
+    "workspace_mount": "read-only",
+    "visible_test_location": "read-only /workspace",
+    "hidden_oracle_location": "read-only /workspace",
+    "production_source_copy": "writable /tmp import root",
+    "execution_user": "image-default-root",
+    "docker_config_user": ""
+  },
+  "official": true,
+  "reference_pass_count": 3,
+  "base_noop_rejection_count": 1,
+  "known_bad_patch_rejection_count": 9,
+  "semantic_bad_patch_rejection_count": 8,
+  "independent_hidden_test_count": 11,
+  "independent_hidden_test_function_count": 11,
+  "benchmark_f2p_declared_count": 7,
+  "benchmark_p2p_declared_count": 278,
+  "benchmark_patch_added_f2p_count": 7,
+  "benchmark_patch_added_p2p_count": 1,
+  "benchmark_base_resident_p2p_count": 277,
+  "upstream_regression_test_count": 277,
+  "upstream_regression_collected_count": 277,
+  "upstream_regression_subtest_count": 15,
+  "upstream_regression_deselected_count": 0,
+  "api_calls": 0,
+  "model_cost_usd": 0,
+  "admission_checks": {
+    "base_visible_checks": "pass",
+    "base_hidden_acceptance": "fail",
+    "reference_scrr_three_repetitions": "pass",
+    "known_bad_boundaries": "pass",
+    "upstream_regression_oracle": "pass",
+    "independent_hidden_acceptance": "pass",
+    "submitted_source_binding": "pass",
+    "after_records_exit_handler_group_name": "pass",
+    "compiled_dependency_targets_exit_handler_group": "pass",
+    "mixed_task_and_group_dependencies_preserved": "pass",
+    "chained_exit_handler_group_order_preserved": "pass",
+    "non_exit_group_rejected_before_mutation": "pass",
+    "arbitrary_dependency_rejected_before_mutation": "pass",
+    "unknown_dependency_clear_error": "pass",
+    "ambiguous_task_group_name_clear_error": "pass",
+    "inner_task_cross_group_dependency_rejected": "pass",
+    "final_status_attributed_to_exit_handler_group": "pass",
+    "exact_upstream_production_lineage": "pass",
+    "benchmark_test_patch_excluded": "pass",
+    "benchmark_p2p_decomposition_verified": "pass",
+    "private_v2_hidden_artifact_bound": "pass",
+    "visible_test_read_only": "pass",
+    "hidden_oracle_read_only": "pass",
+    "test_tampering_path_recognition": "pass",
+    "public_private_separation": "pass",
+    "no_new_dependency": "pass",
+    "public_api_change_explicitly_allowed": "pass",
+    "network_disabled_evaluator": "pass",
+    "read_only_root_filesystem": "pass",
+    "read_only_submitted_workspace": "pass",
+    "external_image_default_user_disclosed": "pass",
+    "immutable_source_commit": "pass",
+    "immutable_evaluator_image": "pass",
+    "exact_sha_shallow_checkout": "pass"
+  },
+  "cases": [
+    {
+      "name": "reference-1",
+      "patch": "reference.patch",
+      "run_id": "run_7876f396980a4c55",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ea57612615fc67d2707284b740ee5be170fa2684ad1d98e72046bf18d5d940a1",
+      "manifest_sha256": "sha256:7cf403a5d3d5f5165ba3d76bce4f514eb7652640a7b6eb1096033a527f19612e",
+      "result_sha256": "sha256:eb8d50dca3faff8a21eb955a2f125d0de74235a7703cc226b2e75810407eb633",
+      "provenance_sha256": "sha256:653b9d27740485ca2af71206c5a0125da47baff395fcfb4efe5c0e3f04a7f1e4"
+    },
+    {
+      "name": "reference-2",
+      "patch": "reference.patch",
+      "run_id": "run_e2930e730d104a3c",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ea57612615fc67d2707284b740ee5be170fa2684ad1d98e72046bf18d5d940a1",
+      "manifest_sha256": "sha256:fe3162d8f0ab2d719fbd83c6c85480af7f8562505006d8859239176672c463c5",
+      "result_sha256": "sha256:127568d07892ae45ef06b0bbafbccf30ea9a47d0c81f852d89a719a82f992b0c",
+      "provenance_sha256": "sha256:653b9d27740485ca2af71206c5a0125da47baff395fcfb4efe5c0e3f04a7f1e4"
+    },
+    {
+      "name": "reference-3",
+      "patch": "reference.patch",
+      "run_id": "run_f4c2707cc64e4a63",
+      "expected_success": true,
+      "observed_success": true,
+      "official": true,
+      "failed_checks": [],
+      "patch_sha256": "sha256:ea57612615fc67d2707284b740ee5be170fa2684ad1d98e72046bf18d5d940a1",
+      "manifest_sha256": "sha256:b52c3dca73496934b48c71ce16ac5192fb76a8e6d54854a835e279cd8e4cd78a",
+      "result_sha256": "sha256:84821a0aca5c1a414182a3d3e53403daa8f2008e6b2b7e339f5a9d4657417932",
+      "provenance_sha256": "sha256:653b9d27740485ca2af71206c5a0125da47baff395fcfb4efe5c0e3f04a7f1e4"
+    },
+    {
+      "name": "base-noop",
+      "patch": "bad/noop.patch",
+      "run_id": "run_28d458248adb4cca",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+      "manifest_sha256": "sha256:945eb71188805247e6c74e0106b9c92c4f1540896a63bb91744793182236642a",
+      "result_sha256": "sha256:d3201d1f4de86278e206d9e7a288287c799209818b7e0f13f7a9fcaf4a8fe96d",
+      "provenance_sha256": "sha256:89249c1ade773db8e0da6107799cba1408797c2618aca6e0df147c5be5f56fff"
+    },
+    {
+      "name": "compiler-resolution-only",
+      "patch": "bad/compiler-resolution-only.patch",
+      "run_id": "run_9c0ab4f5a208424a",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:215a7ddd1335b31ab4eef316c35eda10aa36f577fa889258fa55cc70e4839687",
+      "manifest_sha256": "sha256:36701fd460e5a3ce2bb38c4dc78929f59a9c9af68c88e353168f169472f2fbd0",
+      "result_sha256": "sha256:32c74ecd97e1618045019e50a02e365bcf47e9532c43bc7c6fdbdbfcaa6e9bd4",
+      "provenance_sha256": "sha256:913ab70ae7d6ad30cd3f729b36a43692162a0a1ce5f1a7c46f30f14522148c0e"
+    },
+    {
+      "name": "fallback-any-group",
+      "patch": "bad/fallback-any-group.patch",
+      "run_id": "run_fb281c4593234662",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:3e3a9882d3f577692c04e99cb457fa735d6d340577ab2e79a00e3162490b7db8",
+      "manifest_sha256": "sha256:ce52231a9f9172af3024c837ae2d215969e3024068781aae48e8f42ecce4592e",
+      "result_sha256": "sha256:e4fd42bc9a1be56aba133af860d12c3cbaaa71d191633b291457558c4c7019fe",
+      "provenance_sha256": "sha256:4d79eef84dfb61b52d7efbb14f8053a858a007c6530f43ad90ca1a53bf0ce106"
+    },
+    {
+      "name": "first-dependency-only",
+      "patch": "bad/first-dependency-only.patch",
+      "run_id": "run_f4445927f042437d",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-compiler-and-pipeline-task-regression",
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:e8295a9c2977df1a419c0fccaa6ecbab913e89e154010a67eb0f81aa68b6b759",
+      "manifest_sha256": "sha256:6e732916ec092bb88c4e66bfd3c52c99fc407de42df8d8cb17d354d5802fe118",
+      "result_sha256": "sha256:3f17f80f3bfa4a1c3dbc9f91cc8b953b314a1e1b0d04b88c5f8b3e235edab2cb",
+      "provenance_sha256": "sha256:c23762e037e760b166686d767d2bd910edf032c61a26f9929716543c4086f149"
+    },
+    {
+      "name": "group-only-resolution",
+      "patch": "bad/group-only-resolution.patch",
+      "run_id": "run_61a35efc95b34a2a",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "regression:upstream-compiler-and-pipeline-task-regression",
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:864c216707de3777313c8a68171591069c61ece87e4c5cc8608787126a99cf9a",
+      "manifest_sha256": "sha256:aebd7284d811c14d1ef0e45e7fbf84ce99ccd89104872d956022be759fc2b9d2",
+      "result_sha256": "sha256:20e9069fa1cf78d8b48ea6c212bb17c0802eed5b64fbe3126c4f9fb91d4b5a3c",
+      "provenance_sha256": "sha256:85d596eca62f8deda0ca24c8b4727ab88c6d70e92f66d431451207b19ff69672"
+    },
+    {
+      "name": "public-validation-only",
+      "patch": "bad/public-validation-only.patch",
+      "run_id": "run_030d1c1ffa3c4e0b",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:fce811ed7948656a14ff3d0f4f782650c60d7ddb3b3b07c2a82404fcdd8e0073",
+      "manifest_sha256": "sha256:2e3f15a4a93e9de53788cba948b0ff70748b8e1f32b36cf7c461abf4a208f697",
+      "result_sha256": "sha256:1cc88cdc967ea2193167b02c93e50463194a0ae9913db7c0d1b9d70e436a2e28",
+      "provenance_sha256": "sha256:96c7f28b0a5f5dedbfc7d7ee3fd36d4139ecceeb81d36e73836afef2dbdbbe2f"
+    },
+    {
+      "name": "resolve-group-as-exit-task",
+      "patch": "bad/resolve-group-as-exit-task.patch",
+      "run_id": "run_a3d0b17e1e624efe",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:65393682e531eb903d7d86c821ec5f739c525beebe859035e67b2d8c9345f38f",
+      "manifest_sha256": "sha256:88b09fe0918e5707e8186e64c22650d5c373fba8eed2f43eba4025849bcb930a",
+      "result_sha256": "sha256:7862c0f799ef1d69cff7d456dea763b6dcb978738d3f4d426f08b93c6302c489",
+      "provenance_sha256": "sha256:2c675c5111523c47ceba5dcc98e6c3a301be541c296072a38e5c05e9071bcc7e"
+    },
+    {
+      "name": "task-precedence-on-collision",
+      "patch": "bad/task-precedence-on-collision.patch",
+      "run_id": "run_9b25341374b54dfe",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:a7000286b86b86b38d1f4c0fb123f5c7fe31e897742694510c6a9437e3ff7f28",
+      "manifest_sha256": "sha256:65d6aa0aef0722663012e730db7b34a66b4e9033e619ce1751322c166192ee50",
+      "result_sha256": "sha256:ac566b658665fed9fbfb83c7344df32b59da974f0fe9e74d8735580a7059af72",
+      "provenance_sha256": "sha256:f85c14bfb4f1b19428f6b88fbdf4031325a96ef6ca0c565d5ac457937413fc66"
+    },
+    {
+      "name": "unknown-dependency-keyerror",
+      "patch": "bad/unknown-dependency-keyerror.patch",
+      "run_id": "run_d48f210c19244f82",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies"
+      ],
+      "patch_sha256": "sha256:6fca0f03e470b643a9bdbb2cb3729c2e9e8bdf901c998b157831326e4b7a5cda",
+      "manifest_sha256": "sha256:b021ff1857e14505e90a686f3dd252c6220f9e6caa7cbbad04ae85c987837bfb",
+      "result_sha256": "sha256:521e1833632ce9dc00762d9301c933c6b2249a1cad37bec07c8a4b57fdfb12b2",
+      "provenance_sha256": "sha256:0d97e371b45f32285d035121e14c6890f98a86fd5a77d33f116c9430dd68eb19"
+    },
+    {
+      "name": "forbidden-test-edit",
+      "patch": "bad/forbidden-test-edit.patch",
+      "run_id": "run_2da8391ec73948e4",
+      "expected_success": false,
+      "observed_success": false,
+      "official": true,
+      "failed_checks": [
+        "hidden:exit-handler-after-dependencies",
+        "policy:scope",
+        "policy:test_tampering"
+      ],
+      "patch_sha256": "sha256:9bc7a0b745c707ef0cf719e78bb9b9d9603dba1d4f5a84008cb454ca07d6b38a",
+      "manifest_sha256": "sha256:190439c0559bec4b59294ce9f6159e7e736d24d3225035c4e421a57ccb22a34f",
+      "result_sha256": "sha256:21d7a53baaa06ef2137fe4be89cd334e6e922377e70f60beb15580104eded623",
+      "provenance_sha256": "sha256:6099e819f141a7ea73c0a137c0a22137a8394b3a4e6dd84aaea8849d603d51d0"
+    }
+  ]
+}

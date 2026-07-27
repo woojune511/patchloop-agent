@@ -8,13 +8,13 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
-| Tests | `.venv/Scripts/python -m pytest -p no:cacheprovider` | 184 passed, 2 skipped |
+| Tests | `.venv/Scripts/python -m pytest -p no:cacheprovider` | 192 passed, 2 skipped |
 | Package build | `uv build` | sdist and wheel built |
-| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus seventeen research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 17/20, no contract errors |
+| Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus eighteen research packages pass |
+| Dataset audit | `patchloop dataset audit` | expected incomplete: calibration 5/5, research 18/20, no contract errors |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
-| Research admission | Loguru, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21, FuseSoC #776 and Dagster #33605 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
+| Research admission | Loguru, AnyIO #1121, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781, pyfakefs, Moto, Babel, SQLGlot, Param, PDM #3759, AnyIO #1134, MTPLX #21, FuseSoC #776, Dagster #33605 and Kubeflow Pipelines #13112 references ×3 plus declared negatives | references pass; all negative cases rejected; all `official=true` |
 | Offline agent smoke | three tasks × mock/replay on Docker | 6/6 SCRR pass, complete trace, all `official=true` |
 | Offline campaign | `patchloop evaluate --suite experiments/smoke.yaml` | 1/1 completed, 0 infra errors |
 | Report regeneration | `patchloop report --experiment offline-smoke ...` | JSON/CSV/HTML and portable evidence bundle |
@@ -799,6 +799,57 @@ The gate made zero model/API calls and is deterministic evaluator admission
 evidence, not live-model agent performance, memory improvement or a core
 campaign result.
 
+## Eighteenth research task admission
+
+`kubeflow-exit-handler-after-dependencies` comes from SWE-rebench leaderboard
+instance `kubeflow__pipelines-13112`, Kubeflow Pipelines issue #10722 and
+PR #13112. It is the sixth hard `core-cross-repo` held-out task, pinned to
+base commit `98f5b7a300ee52d6c530b429558b718ade9fdb7a` and evaluator image
+`sha256:842b24c98e1b2c1145b8826b90a95e0634a3520cd523b3d3ae6940201ec2e79a`.
+The exact two-file production reference broadens the public
+`PipelineTask.after` contract to supported `ExitHandler` groups and makes the
+compiler distinguish task, group, missing and ambiguous dependency names.
+The benchmark test patch remains evaluator-only.
+
+| Patch | Run | Expected boundary | Observed |
+| --- | --- | --- | --- |
+| exact production reference | `run_7876f396980a4c55`, `run_e2930e730d104a3c`, `run_f4c2707cc64e4a63` | full success ×3 | 3/3 success, `official=true` |
+| base/no-op | `run_28d458248adb4cca` | 277 visible pass, hidden fail | rejected |
+| compiler resolution only | `run_9c0ab4f5a208424a` | public validation fail | rejected |
+| accept any task group | `run_fb281c4593234662` | non-exit group rejection fail | rejected |
+| retain only first dependency | `run_f4445927f042437d` | mixed dependency preservation fail | regression and hidden fail |
+| group-only resolution | `run_61a35efc95b34a2a` | ordinary task dependency fail | regression and hidden fail |
+| public validation only | `run_030d1c1ffa3c4e0b` | compiler group resolution fail | rejected |
+| resolve group as exit task | `run_a3d0b17e1e624efe` | group boundary and final-status fail | rejected |
+| prefer task on collision | `run_9b25341374b54dfe` | ambiguous-name rejection fail | rejected |
+| leak unknown-name key error | `run_d48f210c19244f82` | clear missing dependency error fail | rejected |
+| forbidden test edit | `run_2da8391ec73948e4` | hidden, scope and test-tampering fail | rejected |
+
+The complete base-resident `compiler_test.py` and `pipeline_task_test.py`
+surface passed 277 tests plus 15 subtests on each reference run. The frozen
+benchmark declares 278 P2P nodes because its test patch adds one preservation
+P2P test; after excluding that evaluator-only addition, the base-resident P2P
+declaration is exactly 277. The same patch adds all seven F2P tests.
+
+The independently authored private oracle contains 11 tests covering
+submitted-source binding and ten semantic boundaries: single, mixed and
+chained group dependencies; unsupported and arbitrary inputs; missing and
+ambiguous names; nested-context rejection; and final-status attribution. The
+`task-private-v2` spec binds the oracle by content hash. Visible tests and the
+hidden oracle remain on read-only mounts while each check copies only the
+submitted KFP production package into a fresh writable `/tmp` import root.
+
+All 13 official cases ran from clean harness staging commit
+`5e7b019e60b4d76f67e48bafe6fd1a3b309fe313` with Docker networking disabled
+and read-only root and submitted filesystems. The external image has no
+configured `User` and ran as Docker's default root user. The
+[Kubeflow ExitHandler admission report](../reports/docker-gate/research-kubeflow-exit-handler-after-dependencies.json)
+binds every patch, manifest, result and provenance hash and has SHA-256
+`sha256:c7998d064949dd5a67f05c15ff7d426ef1051f74fea7bb03e37f91c7d1d5084c`.
+The gate made zero model/API calls and is deterministic evaluator admission
+evidence, not live-model agent performance, memory improvement or a core
+campaign result.
+
 ## Recovery evidence
 
 Both automated E2E and a CLI-derived run were exercised. The run was suspended immediately after the
@@ -809,6 +860,6 @@ event. Checkpoint/worktree hash corruption is separately rejected by test.
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, admitted research is 17/20, and the stress sentinels are 0/3. The 22-entry registry
-has no contract or content-hash errors; it remains `draft` because the remaining three research tasks
+calibration is 5/5, admitted research is 18/20, and the stress sentinels are 0/3. The 23-entry registry
+has no contract or content-hash errors; it remains `draft` because the remaining two research tasks
 are not admitted. No live OpenAI request or paid campaign was made.

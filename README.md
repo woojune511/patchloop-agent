@@ -6,16 +6,16 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.
 
-현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-27 현재
+현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-28 현재
 세 smoke task를 mock과 content-hashed replay로 각각 실행한 6개 agent run이 고정된 Linux Docker
 evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
 SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 pyfakefs #991
 사례 여섯 개를 memory-development task로, Moto #7208과 Babel #1042를
-development-validation task로, SQLGlot #7187, Param #1117, MTPLX #21, FuseSoC #776과
-Dagster #33605를
+development-validation task로, SQLGlot #7187, Param #1117, MTPLX #21, FuseSoC #776,
+Dagster #33605와 Kubeflow Pipelines #13112를
 core-cross-repo task로,
 PDM #3759, AnyIO #1134, Hugging Face Hub #4056과 tox #3846/#3851을 core-same-repo task로
-admission했다. 실제 OpenAI 96-run campaign과 나머지 3개 research task는 아직 완료하지 않았다.
+admission했다. 실제 OpenAI 96-run campaign과 나머지 2개 research task는 아직 완료하지 않았다.
 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
@@ -42,7 +42,8 @@ public.yaml → stateless context builder → model adapter
 - SWE-rebench revision, upstream issue/PR/commit, upstream license evidence와 Docker digest를
   고정한 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781, pyfakefs #991, Moto #7208과
   Babel #1042, SQLGlot #7187, Param #1117, PDM #3759, AnyIO #1134와
-  Hugging Face Hub #4056, MTPLX #21, FuseSoC #776, Dagster #33605 research task
+  Hugging Face Hub #4056, MTPLX #21, FuseSoC #776, Dagster #33605와
+  Kubeflow Pipelines #13112 research task
 - Task별 base hidden failure, reference 3회와 최소 5종의 known-bad를 기록한 admission evidence
 - 후속 upstream 회귀까지 판별해 원래 AnyIO benchmark fix를 거부하는 hardened reference/oracle
 - 실제 CLI grammar와 project precedence를 어긴 PDM #3759 benchmark fix를 거부하고
@@ -63,6 +64,11 @@ public.yaml → stateless context builder → model adapter
   Dagster #33605 exact two-file reference와 private-v2 hash-bound read-only oracle. 공식
   reference 3/3, visible 28개, hidden 9개가 통과했고 semantic partial 8종과
   forbidden scope/test-tampering patch를 거부했다.
+- `.after()`의 public dependency API와 compiler name resolver를 함께 확장해 일반 task와
+  `ExitHandler` group dependency를 구분하는 Kubeflow Pipelines #13112 exact two-file
+  reference와 private-v2 hash-bound read-only oracle. 공식 reference 3/3, base-resident
+  visible 277개와 15개 subtest, independent hidden 11개가 통과했고 no-op, semantic partial
+  8종과 forbidden scope/test-tampering patch를 거부했다.
 
 성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
 
