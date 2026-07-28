@@ -14,6 +14,8 @@ from patchloop.contracts import (
     DatasetManifest,
     DatasetRole,
     DatasetTaskEntry,
+    PublicTask,
+    StressLane,
 )
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root
@@ -151,6 +153,97 @@ def _same_repo_pairing_violations(
     return violations
 
 
+def select_stress_sentinels(
+    entries: list[DatasetTaskEntry],
+    public_tasks: dict[str, PublicTask],
+) -> dict[str, str]:
+    """Select the preregistered stress panel using public contracts only."""
+
+    eligible = [
+        entry
+        for entry in entries
+        if entry.role
+        in {
+            DatasetRole.CORE_SAME_REPO,
+            DatasetRole.CORE_CROSS_REPO,
+        }
+        and entry.task_id in public_tasks
+    ]
+    if len(eligible) < 3:
+        raise ContractError("stress selection requires at least three valid held-out tasks")
+
+    remaining = {entry.task_id: public_tasks[entry.task_id] for entry in eligible}
+    wide_change = min(
+        remaining.values(),
+        key=lambda task: (-task.constraints.max_changed_files, task.task_id),
+    )
+    remaining.pop(wide_change.task_id)
+
+    narrow_mutation = min(
+        remaining.values(),
+        key=lambda task: (
+            task.constraints.max_changed_files,
+            task.constraints.max_diff_lines,
+            task.task_id,
+        ),
+    )
+    remaining.pop(narrow_mutation.task_id)
+
+    missing_checks = sorted(
+        task.task_id for task in remaining.values() if not task.visible_checks
+    )
+    if missing_checks:
+        raise ContractError(
+            "stress timeout selection requires registered visible checks: "
+            + ", ".join(missing_checks)
+        )
+    longest_check = min(
+        remaining.values(),
+        key=lambda task: (
+            -max(check.timeout_seconds for check in task.visible_checks),
+            task.task_id,
+        ),
+    )
+    return {
+        "wide-change-surface": wide_change.task_id,
+        "narrow-mutation-surface": narrow_mutation.task_id,
+        "longest-visible-check": longest_check.task_id,
+    }
+
+
+def expand_stress_schedule(lane: StressLane) -> list[dict[str, object]]:
+    """Expand and deterministically order the frozen stress matrix."""
+
+    if lane.schedule is None:
+        return []
+    rows: list[dict[str, object]] = []
+    for task_id in lane.task_ids:
+        for case in lane.schedule.cases:
+            for persistent_state in case.persistent_state_modes:
+                for repetition in range(1, case.repetitions + 1):
+                    rows.append(
+                        {
+                            "schedule_id": lane.schedule.schedule_id,
+                            "task_id": task_id,
+                            "fault": case.fault,
+                            "trigger": case.trigger,
+                            "persistent_state": persistent_state,
+                            "repetition": repetition,
+                            "memory_condition": lane.schedule.memory_condition,
+                            "baseline_source": lane.schedule.baseline_source,
+                        }
+                    )
+    rows.sort(
+        key=lambda row: sha256_bytes(
+            (
+                f"{lane.schedule.seed}|{row['task_id']}|{row['fault']}|"
+                f"{row['persistent_state']}|{row['repetition']}"
+            ).encode()
+        )
+    )
+    return [{"schedule_index": index, **row} for index, row in enumerate(rows, 1)]
+
+
 def audit_dataset(
     tasks_root: str | Path | None = None,
     *,
@@ -171,11 +264,15 @@ def audit_dataset(
             "calibration_ready": False,
             "research_ready": False,
             "stress_ready": False,
+            "stress_plan_ready": False,
+            "freeze_eligible": False,
+            "freeze_blockers": ["dataset manifest contract validation failed"],
             "errors": [{"path": str(selected_manifest), "error": str(exc)}],
         }
 
     errors: list[dict[str, str]] = []
     valid_entries: list[DatasetTaskEntry] = []
+    public_tasks: dict[str, PublicTask] = {}
     for entry in manifest.tasks:
         try:
             task_path = ensure_within(repo_root, entry.path)
@@ -236,6 +333,7 @@ def audit_dataset(
                         f"{entry.admission_evidence.sha256} != {actual_hash}"
                     )
             valid_entries.append(entry)
+            public_tasks[entry.task_id] = package.public
         except ContractError as exc:
             errors.append({"path": entry.path, "task_id": entry.task_id, "error": str(exc)})
 
@@ -334,16 +432,27 @@ def audit_dataset(
         )
 
     research_task_ids = {entry.task_id for entry in research}
-    stress_errors = []
+    heldout_task_ids = {
+        entry.task_id
+        for entry in research
+        if entry.role
+        in {
+            DatasetRole.CORE_SAME_REPO,
+            DatasetRole.CORE_CROSS_REPO,
+        }
+    }
+    stress_errors: list[str] = []
     for lane in manifest.stress_lanes:
         unknown = sorted(set(lane.task_ids) - research_task_ids)
         if unknown:
             stress_errors.append(
                 f"{lane.lane_id} references non-research tasks: {', '.join(unknown)}"
             )
-        if manifest.status == "frozen" and len(lane.task_ids) != lane.sentinel_count:
+        non_heldout = sorted(set(lane.task_ids) - heldout_task_ids - set(unknown))
+        if non_heldout:
             stress_errors.append(
-                f"{lane.lane_id} has {len(lane.task_ids)}/{lane.sentinel_count} sentinels"
+                f"{lane.lane_id} references non-held-out research tasks: "
+                + ", ".join(non_heldout)
             )
     errors.extend({"path": str(resolved_manifest), "error": error} for error in stress_errors)
 
@@ -356,20 +465,88 @@ def audit_dataset(
         in {entry.path for entry in manifest.tasks if entry.role == DatasetRole.CALIBRATION}
         for error in errors
     )
+    expected_stress_selection: dict[str, str] = {}
+    selection_error = None
+    try:
+        expected_stress_selection = select_stress_sentinels(research, public_tasks)
+    except ContractError as exc:
+        selection_error = str(exc)
+
+    freeze_blockers: list[str] = []
+    if not calibration_ready:
+        freeze_blockers.append(
+            f"calibration lane has {calibration_count}/{manifest.calibration_target} valid tasks"
+        )
+    if not exact_research_counts:
+        freeze_blockers.append("research role targets are incomplete")
+    if not repository_policy_passed:
+        freeze_blockers.append("research repository policy is not satisfied")
+    if errors:
+        freeze_blockers.append("dataset audit has contract errors")
+    if selection_error is not None:
+        freeze_blockers.append(selection_error)
+    if len(manifest.stress_lanes) != 1:
+        freeze_blockers.append("dataset requires exactly one stress lane")
+
+    stress_plan_ready = False
+    expected_stress_runs = 0
+    stress_schedule_hash = None
+    if len(manifest.stress_lanes) == 1:
+        lane = manifest.stress_lanes[0]
+        selected_ids = list(expected_stress_selection.values())
+        if lane.sentinel_count != 3 or len(lane.task_ids) != 3:
+            freeze_blockers.append(
+                f"{lane.lane_id} has {len(lane.task_ids)}/3 selected sentinels"
+            )
+        if lane.task_ids != selected_ids:
+            freeze_blockers.append(
+                f"{lane.lane_id} does not match public-contract-structure-v1 selection"
+            )
+        if lane.selection_policy != "public-contract-structure-v1":
+            freeze_blockers.append(f"{lane.lane_id} is missing the frozen selection policy")
+        if set(lane.selection_rationale) != set(lane.task_ids):
+            freeze_blockers.append(
+                f"{lane.lane_id} is missing public rationale for selected sentinels"
+            )
+        if lane.schedule is None:
+            freeze_blockers.append(f"{lane.lane_id} is missing a fault schedule")
+        else:
+            schedule_rows = expand_stress_schedule(lane)
+            expected_stress_runs = len(schedule_rows)
+            stress_schedule_hash = sha256_json(lane.schedule.model_dump(mode="json"))
+            if expected_stress_runs != lane.schedule.expected_derived_runs:
+                freeze_blockers.append(
+                    f"{lane.lane_id} expands to {expected_stress_runs}/"
+                    f"{lane.schedule.expected_derived_runs} stress runs"
+                )
+        stress_plan_ready = (
+            not stress_errors
+            and lane.sentinel_count == 3
+            and len(lane.task_ids) == 3
+            and lane.task_ids == selected_ids
+            and lane.selection_policy == "public-contract-structure-v1"
+            and set(lane.selection_rationale) == set(lane.task_ids)
+            and lane.schedule is not None
+            and expected_stress_runs == 30
+        )
+
+    freeze_eligible = (
+        calibration_ready
+        and exact_research_counts
+        and repository_policy_passed
+        and not errors
+        and stress_plan_ready
+        and not freeze_blockers
+    )
     research_ready = (
         manifest.status == "frozen"
         and exact_research_counts
         and repository_policy_passed
         and not errors
     )
-    stress_ready = (
-        manifest.status == "frozen"
-        and bool(manifest.stress_lanes)
-        and not stress_errors
-        and all(len(lane.task_ids) == lane.sentinel_count for lane in manifest.stress_lanes)
-    )
+    stress_ready = manifest.status == "frozen" and stress_plan_ready
     return {
-        "complete": calibration_ready and research_ready and stress_ready,
+        "complete": manifest.status == "frozen" and freeze_eligible,
         "dataset_id": manifest.dataset_id,
         "dataset_status": manifest.status,
         "manifest_hash": manifest_hash,
@@ -377,6 +554,9 @@ def audit_dataset(
         "calibration_ready": calibration_ready,
         "research_ready": research_ready,
         "stress_ready": stress_ready,
+        "stress_plan_ready": stress_plan_ready,
+        "freeze_eligible": freeze_eligible,
+        "freeze_blockers": freeze_blockers,
         "task_count": len(valid_entries),
         "calibration_task_count": calibration_count,
         "research_task_count": len(research),
@@ -395,14 +575,41 @@ def audit_dataset(
         "headline_excluded_task_ids": sorted(
             entry.task_id for entry in valid_entries if entry.role == DatasetRole.CALIBRATION
         ),
+        "expected_stress_selection": expected_stress_selection,
+        "stress_schedule_hash": stress_schedule_hash,
+        "expected_stress_runs": expected_stress_runs,
+        "core_expected_runs": 96,
         "stress_lanes": [
             {
                 "lane_id": lane.lane_id,
                 "sentinel_count": lane.sentinel_count,
                 "selected": len(lane.task_ids),
+                "task_ids": lane.task_ids,
                 "scenarios": lane.scenarios,
+                "selection_policy": lane.selection_policy,
+                "schedule_id": lane.schedule.schedule_id if lane.schedule else None,
             }
             for lane in manifest.stress_lanes
         ],
         "errors": errors,
     }
+
+
+def require_frozen_dataset(
+    manifest_path: str | Path | None = None,
+) -> tuple[DatasetManifest, str, Path]:
+    manifest, manifest_hash, resolved_manifest = load_dataset_manifest(manifest_path)
+    audit = audit_dataset(manifest_path=resolved_manifest)
+    if manifest.status != "frozen" or not audit.get("complete"):
+        details = [
+            *(error["error"] for error in audit.get("errors", [])),
+            *audit.get("freeze_blockers", []),
+        ]
+        suffix = "; ".join(dict.fromkeys(details))
+        raise ContractError(
+            "core experiment requires a complete frozen dataset"
+            + (f": {suffix}" if suffix else "")
+        )
+    if audit.get("manifest_hash") != manifest_hash:
+        raise ContractError("dataset manifest changed during frozen-dataset audit")
+    return manifest, manifest_hash, resolved_manifest

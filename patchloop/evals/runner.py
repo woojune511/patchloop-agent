@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 
 from patchloop.agent.runner import AgentRunner
 from patchloop.contracts import DatasetRole, MemoryCondition
-from patchloop.dataset import load_dataset_manifest, require_dataset_role
+from patchloop.dataset import require_dataset_role, require_frozen_dataset
 from patchloop.errors import ContractError
 from patchloop.memory.store import latest_frozen_index
 from patchloop.runtime import runtime_root
@@ -109,9 +109,7 @@ def evaluate_suite(path: str | Path) -> dict:
     dataset_identity = None
     dataset_manifest_path = None
     if suite.core:
-        dataset, actual_dataset_hash, dataset_manifest_path = load_dataset_manifest()
-        if dataset.status != "frozen":
-            raise ContractError("core experiment requires a frozen dataset manifest")
+        dataset, actual_dataset_hash, dataset_manifest_path = require_frozen_dataset()
         if suite.dataset_manifest_hash != actual_dataset_hash:
             raise ContractError(
                 "experiment dataset manifest hash does not match the current registry"

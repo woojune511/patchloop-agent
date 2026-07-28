@@ -8,10 +8,10 @@ This is a local implementation checkpoint, not the planned core experiment resul
 | --- | --- | --- |
 | Lock consistency | `uv --cache-dir .patchloop/uv-cache lock --check` | pass, 78 packages resolved |
 | Static analysis | `.venv/Scripts/ruff check . --no-cache` | pass |
-| Tests | `$env:UV_CACHE_DIR='.uv-cache'; uv run pytest -q -p no:cacheprovider` | 216 passed, 2 skipped |
+| Tests | `$env:UV_CACHE_DIR='.uv-cache'; uv run pytest -q -p no:cacheprovider` | 224 passed, 2 skipped |
 | Package build | `uv build` | sdist and wheel built |
 | Task contract | `patchloop task validate tasks/<split>/<task>` | five calibration plus twenty research packages pass |
-| Dataset audit | `patchloop dataset audit` | expected incomplete: research role target 20/20, stress 0/3, draft manifest, no contract errors |
+| Dataset audit | `patchloop dataset audit` | pass: frozen 25-task manifest, research 20/20, stress 3/3, 30 derived runs, no blockers |
 | Docker build | pinned base, `--network=none --provenance=false`, repeated twice | stable image ID in 2/2 builds |
 | Docker isolation (native image) | network, UID, read-only workspace, host secret | all pass; external benchmark-image user remains separately disclosed |
 | Research admission | Loguru #1451/#1297, AnyIO #1121/#1134, tox #3810/#3846+#3851, Hugging Face Hub #3180/#4056, PDM #2781/#3759, pyfakefs #991/#1269, Moto #7208, Babel #1042, SQLGlot #7187, Param #1117, MTPLX #21, FuseSoC #776, Dagster #33605 and Kubeflow Pipelines #13112 references ×3 plus declared negatives | research role target 20/20; references pass; all negative cases rejected; all `official=true` |
@@ -947,11 +947,35 @@ Both automated E2E and a CLI-derived run were exercised. The run was suspended i
 durable patch checkpoint, resumed, reached the hidden evaluator and retained exactly one `PatchApplied`
 event. Checkpoint/worktree hash corruption is separately rejected by test.
 
+## Dataset freeze evidence
+
+`patchloop dataset audit` completed successfully with `complete=true`, `research_ready=true`,
+`stress_ready=true`, `freeze_eligible=true`, no errors and no freeze blockers. The frozen manifest
+contains five calibration fixtures and 20 admitted research tasks and has SHA-256
+`sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`.
+
+The `public-contract-structure-v1` selector used no private oracle, reference patch or model result.
+It selected:
+
+| Archetype | Task |
+| --- | --- |
+| widest allowed change surface | `fusesoc-retained-parse-error-diagnostics` |
+| narrowest remaining mutation surface | `anyio-extensionless-entrypoint-worker-main` |
+| longest remaining registered visible check | `pyfakefs-file-wrapper-io-capabilities` |
+
+The frozen schedule has SHA-256
+`sha256:d5a3d90f8429f24b6940d4a5cb1b78a35fa34d3fe3df9937ad6c57daba23f468`.
+It deterministically expands to 30 derived stress rows: context reset and worker restart each use
+persistent-state on/off arms with two repetitions per task, and synthetic test timeout uses the
+on arm with two repetitions per task. The baseline source is the core no-memory lane, and all stress
+rows are excluded from core metrics. This is schedule-registration evidence only; no stress row or
+live-model request was executed by this gate.
+
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. `patchloop dataset audit` still intentionally exits non-zero:
-calibration is 5/5, all research role targets are filled at 20/20, and the stress sentinels are 0/3.
-The 25-entry registry has no contract or content-hash errors; it remains `draft`, so
-`research_ready=false`, until the sentinel and freeze gate is completed.
-No live OpenAI request or paid campaign was made.
+`official_evaluation_ready=true`. The dataset freeze gate is complete, but the stress campaign is not:
+the context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
+unimplemented. The current worker path is cooperative suspension rather than external process
+termination, and the timeout path is a synthetic timeout on the first registered visible check.
+No stress schedule row, live OpenAI request or paid campaign was executed.

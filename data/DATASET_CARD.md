@@ -196,8 +196,10 @@ The research target is 20 newly admitted tasks, separate from the five calibrati
 | Core cross-repo | 6 | prohibited | 6 |
 | **Research total** | **20** |  | **20** |
 
-The research role target is filled, but the manifest remains `draft`. It is not a frozen experiment
-dataset until the three stress sentinels and fault schedule are fixed and the freeze gate passes.
+The research role target is filled and the dataset manifest is now `frozen`. The executable dataset
+audit validates all 25 packages, the exact research-role counts, repository pairing/disjointness, the
+three stress sentinels and the 30-row fault schedule. The frozen manifest hash is
+`sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`.
 
 Repeated runs of one task must stay in the same role. Development and held-out tasks may share a failure
 pattern, but not a solution lineage. Private checks and reference patches are excluded from context,
@@ -231,9 +233,31 @@ Terminal tasks that depend on unrestricted shell, runtime network, binary forens
 administration are not imported into the core suite. Code-writing candidates must first be adapted to the
 PatchLoop constrained tool, registered check, submitted patch and separate hidden evaluator contract.
 
-The three stress sentinels are selected from admitted research tasks and receive deterministic
-`context-reset`, `worker-kill-after-patch` and `test-timeout` overlays. They do not add to the 20-task
-research target and their results are not aggregated into the 96-run core campaign.
+## Frozen stress panel
+
+The `public-contract-structure-v1` policy selected three tasks from the twelve admitted held-out tasks
+without reading private specifications, hidden tests, reference patches, traces or model outcomes:
+
+| Selection archetype | Selected task | Public-contract reason |
+| --- | --- | --- |
+| Widest change surface | `fusesoc-retained-parse-error-diagnostics` | Three allowed changed files; task ID breaks the tie |
+| Narrowest remaining mutation surface | `anyio-extensionless-entrypoint-worker-main` | One file and 40 diff lines |
+| Longest remaining visible check | `pyfakefs-file-wrapper-io-capabilities` | 240-second registered-check timeout |
+
+Every sentinel receives deterministic `context-reset`, `worker-kill-after-patch` and `test-timeout`
+overlays. Context reset and worker restart each use persistent state on/off with two repetitions; timeout
+uses persistent state on with two repetitions. This Cartesian schedule expands to 30 derived runs under
+`no_memory`, with fault-free baselines coming from the matching core no-memory runs. These 30 runs do not
+add to the 20-task research target and are not aggregated into the separate 96-run core campaign.
+
+The stress schedule hash is
+`sha256:d5a3d90f8429f24b6940d4a5cb1b78a35fa34d3fe3df9937ad6c57daba23f468`.
+The selection evidence and exact schedule are documented in
+[`STRESS_SENTINELS.md`](STRESS_SENTINELS.md).
+
+Dataset freeze certifies the selected panel and schedule contract only. It does not certify completion
+of the fault runtime, persistent-state-off execution, the 30 stress runs, live OpenAI runs or the
+96-run core campaign. No recovery or stress-performance result is claimed yet.
 
 ## Intended metrics
 

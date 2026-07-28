@@ -172,9 +172,73 @@ worker-kill-after-patch
 test-timeout
 ```
 
+Frozen dataset은 정확히 하나의 stress lane을 가져야 한다. 그 lane은 admitted held-out task
+세 개, 위 세 scenario, `selection_policy: public-contract-structure-v1`, task별 공개
+selection rationale와 `stress-schedule-v1` schedule을 모두 가져야 한다.
+
+```yaml
+stress_lanes:
+  - lane_id: terminal-recovery-v1
+    benchmark_inspiration: terminal-bench-2.1
+    sentinel_count: 3
+    task_ids:
+      - fusesoc-retained-parse-error-diagnostics
+      - anyio-extensionless-entrypoint-worker-main
+      - pyfakefs-file-wrapper-io-capabilities
+    scenarios:
+      - context-reset
+      - worker-kill-after-patch
+      - test-timeout
+    selection_policy: public-contract-structure-v1
+    selection_rationale:
+      fusesoc-retained-parse-error-diagnostics: Public constraints allow the widest three-file production change surface; the task ID is the deterministic tie-break.
+      anyio-extensionless-entrypoint-worker-main: Public constraints provide the narrowest remaining mutation surface at one file and forty diff lines.
+      pyfakefs-file-wrapper-io-capabilities: Its 240-second registered visible check is the longest among the remaining held-out tasks.
+    schedule:
+      schema_version: stress-schedule-v1
+      schedule_id: terminal-recovery-v1
+      seed: 20260723
+      memory_condition: no_memory
+      task_scope: all-sentinels
+      baseline_source: core-no-memory
+      expected_derived_runs: 30
+      cases:
+        - fault: context-reset
+          trigger: after-model-call-10
+          persistent_state_modes: ["on", "off"]
+          repetitions: 2
+          arm_once: true
+        - fault: worker-kill-after-patch
+          trigger: after-first-durable-patch-checkpoint
+          persistent_state_modes: ["on", "off"]
+          repetitions: 2
+          arm_once: true
+        - fault: test-timeout
+          trigger: first-registered-visible-check
+          persistent_state_modes: ["on"]
+          repetitions: 2
+          arm_once: true
+    include_in_core_metrics: false
+```
+
+`public-contract-structure-v1`은 private spec, hidden test, reference patch와 model outcome을 읽지
+않는다. Held-out 12개 public contract에서 순서대로 다음 archetype을 고르고, 이미 선택한 task는
+다음 단계에서 제외한다.
+
+1. `max_changed_files`가 가장 큰 task. 동률이면 task ID 오름차순.
+2. `max_changed_files`, `max_diff_lines`, task ID 순으로 가장 작은 task.
+3. Registered visible check의 최대 timeout이 가장 긴 task. 동률이면 task ID 오름차순.
+
+Schedule의 세 case는 모든 sentinel에 적용한다. Derived run 수는 sentinel별로
+`(2 state mode × 2 repetition) + (2 × 2) + (1 × 2) = 10`, 전체 30개다. Fault-free baseline은
+동일 task의 core `no_memory` run을 참조하며, stress 30개는 core 96개에 더하거나 core metric에
+포함하지 않는다. Schedule hash는 schedule object의 canonical JSON SHA-256이고, dataset manifest
+hash와 함께 audit output에 기록한다.
+
 Stress lane은 `sentinel_count: 3`과 `include_in_core_metrics: false`를 고정한다. Fault-derived run은
 원본 task identity와 manifest를 보존하면서 새 run ID를 사용하고, core memory 결과와 별도로
-보고한다.
+보고한다. Dataset `frozen`은 selection과 schedule 계약이 동결됐다는 뜻이다. Fault runtime,
+persistent-state-off arm 또는 30개 stress run의 실행 완료를 뜻하지 않는다.
 
 ### Registered check
 

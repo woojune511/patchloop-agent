@@ -136,6 +136,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - Worker-kill recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
+- Frozen 25-package dataset manifest with 5/5 calibration, 20/20 research roles, three selected
+  stress sentinels and a deterministically expanded 30-run schedule. `patchloop dataset audit`
+  reports `complete=true` with no freeze blockers.
 
 ## Implemented but not yet accepted as an external gate
 
@@ -168,15 +171,26 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   clean-worktree enforcement or a harness tree hash is still required before treating that claim as a
   runtime-enforced invariant.
 
-## Dataset freeze and campaign not yet completed
+## Dataset freeze completed; campaign not yet completed
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
 - The dataset manifest contains 25 packages: five calibration fixtures and 20 admitted research tasks.
   All research role targets are filled: memory-development 6/6, development-validation 2/2,
-  same-repo core 6/6 and cross-repo core 6/6. The manifest remains `draft` and
-  `research_ready=false` until the stress sentinels and freeze gate are completed.
-- No three-sentinel Terminal-Bench-inspired stress overlay has been selected or frozen.
+  same-repo core 6/6 and cross-repo core 6/6. It is frozen at
+  `sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`;
+  the machine audit reports `research_ready=true`, `stress_ready=true` and `complete=true`.
+- The Terminal-Bench-inspired stress contract selects FuseSoC #776, AnyIO #1134 and pyfakefs #1269
+  from public task structure only. Its 30-run schedule is frozen at
+  `sha256:d5a3d90f8429f24b6940d4a5cb1b78a35fa34d3fe3df9937ad6c57daba23f468`
+  and remains excluded from core metrics. None of those 30 runs has been executed.
+- The frozen schedule is a preregistered contract, not proof that the stress runtime is complete.
+  The after-model-call-10 context-reset trigger, the `persistent_state=off` arm and a stress
+  matrix runner/report are not implemented.
+- The existing worker-kill path cooperatively suspends a run after the first durable patch
+  checkpoint; it does not terminate an external operating-system worker process.
+- The existing timeout injector synthesizes one timeout on the first registered visible check.
+  It does not yet reproduce a real environment hang or specifically target a full-suite check.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
   an admitted research task.
 - No Terminal-Bench original or constrained coding adaptation has passed PatchLoop admission. Any future

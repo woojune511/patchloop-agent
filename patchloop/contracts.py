@@ -437,6 +437,70 @@ class DatasetPolicy(StrictModel):
     research_minimum_tier: Literal["medium"] = "medium"
 
 
+class StressScheduleCase(StrictModel):
+    fault: Literal["context-reset", "worker-kill-after-patch", "test-timeout"]
+    trigger: Literal[
+        "after-model-call-10",
+        "after-first-durable-patch-checkpoint",
+        "first-registered-visible-check",
+    ]
+    persistent_state_modes: list[Literal["on", "off"]] = Field(min_length=1)
+    repetitions: Literal[2] = 2
+    arm_once: Literal[True] = True
+
+    @model_validator(mode="after")
+    def canonical_fault_case(self) -> StressScheduleCase:
+        expected = {
+            "context-reset": ("after-model-call-10", {"on", "off"}),
+            "worker-kill-after-patch": (
+                "after-first-durable-patch-checkpoint",
+                {"on", "off"},
+            ),
+            "test-timeout": ("first-registered-visible-check", {"on"}),
+        }
+        expected_trigger, expected_modes = expected[self.fault]
+        if self.trigger != expected_trigger:
+            raise ValueError(
+                f"{self.fault} requires trigger={expected_trigger}, got {self.trigger}"
+            )
+        if len(self.persistent_state_modes) != len(set(self.persistent_state_modes)):
+            raise ValueError("stress persistent_state_modes must be unique")
+        if set(self.persistent_state_modes) != expected_modes:
+            modes = ", ".join(sorted(expected_modes))
+            raise ValueError(f"{self.fault} requires persistent state modes: {modes}")
+        return self
+
+
+class StressSchedule(StrictModel):
+    schema_version: Literal["stress-schedule-v1"] = "stress-schedule-v1"
+    schedule_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    seed: Literal[20260723] = 20260723
+    memory_condition: Literal["no_memory"] = "no_memory"
+    task_scope: Literal["all-sentinels"] = "all-sentinels"
+    baseline_source: Literal["core-no-memory"] = "core-no-memory"
+    expected_derived_runs: int = Field(default=30, ge=1)
+    cases: list[StressScheduleCase] = Field(min_length=3, max_length=3)
+
+    @model_validator(mode="after")
+    def complete_fault_matrix(self) -> StressSchedule:
+        faults = [case.fault for case in self.cases]
+        expected = {
+            "context-reset",
+            "worker-kill-after-patch",
+            "test-timeout",
+        }
+        if len(faults) != len(set(faults)):
+            raise ValueError("stress schedule faults must be unique")
+        if set(faults) != expected:
+            missing = ", ".join(sorted(expected - set(faults)))
+            extra = ", ".join(sorted(set(faults) - expected))
+            raise ValueError(
+                f"stress schedule must contain the canonical fault set; "
+                f"missing={missing or 'none'}, extra={extra or 'none'}"
+            )
+        return self
+
+
 class StressLane(StrictModel):
     lane_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
     benchmark_inspiration: Literal["terminal-bench-2.1"]
@@ -445,12 +509,37 @@ class StressLane(StrictModel):
     scenarios: list[Literal["context-reset", "worker-kill-after-patch", "test-timeout"]] = Field(
         min_length=1
     )
+    selection_policy: Literal["public-contract-structure-v1"] | None = None
+    selection_rationale: dict[str, str] = Field(default_factory=dict)
+    schedule: StressSchedule | None = None
     include_in_core_metrics: Literal[False] = False
 
     @model_validator(mode="after")
-    def unique_sentinels(self) -> StressLane:
+    def validate_lane(self) -> StressLane:
         if len(self.task_ids) != len(set(self.task_ids)):
             raise ValueError("stress lane task_ids must be unique")
+        if len(self.scenarios) != len(set(self.scenarios)):
+            raise ValueError("stress lane scenarios must be unique")
+        if self.selection_rationale and set(self.selection_rationale) != set(self.task_ids):
+            raise ValueError(
+                "stress selection_rationale keys must match the selected task_ids"
+            )
+        if any(not rationale.strip() for rationale in self.selection_rationale.values()):
+            raise ValueError("stress selection rationale must not be blank")
+        if self.schedule is not None:
+            scheduled_faults = {case.fault for case in self.schedule.cases}
+            if scheduled_faults != set(self.scenarios):
+                raise ValueError("stress lane scenarios must match the schedule fault set")
+            if len(self.task_ids) == self.sentinel_count:
+                derived_runs = len(self.task_ids) * sum(
+                    len(case.persistent_state_modes) * case.repetitions
+                    for case in self.schedule.cases
+                )
+                if self.schedule.expected_derived_runs != derived_runs:
+                    raise ValueError(
+                        "stress schedule expected_derived_runs mismatch: "
+                        f"{self.schedule.expected_derived_runs} != {derived_runs}"
+                    )
         return self
 
 
@@ -513,12 +602,42 @@ class DatasetManifest(StrictModel):
             ]
             if incomplete:
                 raise ValueError("frozen dataset has incomplete roles: " + ", ".join(incomplete))
-            for lane in self.stress_lanes:
-                if len(lane.task_ids) != lane.sentinel_count:
-                    raise ValueError(
-                        f"frozen stress lane {lane.lane_id} requires "
-                        f"{lane.sentinel_count} sentinels"
-                    )
+            if len(self.stress_lanes) != 1:
+                raise ValueError("frozen dataset requires exactly one stress lane")
+            lane = self.stress_lanes[0]
+            if lane.sentinel_count != 3 or len(lane.task_ids) != 3:
+                raise ValueError("frozen stress lane requires exactly three sentinels")
+            expected_scenarios = {
+                "context-reset",
+                "worker-kill-after-patch",
+                "test-timeout",
+            }
+            if set(lane.scenarios) != expected_scenarios:
+                raise ValueError("frozen stress lane requires the canonical three scenarios")
+            if lane.selection_policy is None or lane.schedule is None:
+                raise ValueError(
+                    "frozen stress lane requires a selection policy and fault schedule"
+                )
+            if set(lane.selection_rationale) != set(lane.task_ids):
+                raise ValueError(
+                    "frozen stress lane requires rationale for every selected task"
+                )
+            eligible_sentinels = {
+                entry.task_id
+                for entry in self.tasks
+                if entry.admission_state == DatasetAdmissionState.ADMITTED
+                and entry.role
+                in {
+                    DatasetRole.CORE_SAME_REPO,
+                    DatasetRole.CORE_CROSS_REPO,
+                }
+            }
+            ineligible = sorted(set(lane.task_ids) - eligible_sentinels)
+            if ineligible:
+                raise ValueError(
+                    "frozen stress lane requires admitted held-out tasks: "
+                    + ", ".join(ineligible)
+                )
         return self
 
 

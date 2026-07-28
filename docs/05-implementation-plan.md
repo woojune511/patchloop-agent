@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **Stress sentinel selection and experiment freeze**
+현재 milestone: **No-memory development trace qualification**
 
 2026-07-28 구현 스냅샷:
 
@@ -21,13 +21,15 @@ Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
 research task로 보지 않는다. 현재 admitted research task는 20/20이며 memory-development
 task admission은 6/6, development-validation은 2/2, core-same-repo와 core-cross-repo는
 각각 6/6과 6/6이다. Dataset manifest에는 calibration 5개와 admitted research 20개,
-총 25개 package가 등록돼 있다. Role target은 모두 채웠지만 stress sentinel을 고정하고
-manifest를 freeze하기 전까지 `research_ready=false`다.
+총 25개 package가 등록돼 있다. FuseSoC #776, AnyIO #1134와 pyfakefs #1269가 public
+contract 구조만으로 stress sentinel에 선정됐고 30-run schedule과 함께 machine audit를
+통과했다. Dataset은 `frozen`이며 `research_ready=true`, `stress_ready=true`,
+`complete=true`다.
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
-smoke와 스무 research admission은 2026-07-28까지 통과했다. Live OpenAI, 세 sentinel
-stress overlay, dataset freeze와 96-run core campaign은 아직 완료가 아니며
-`docs/08-limitations.md`에서 별도로 추적한다.
+smoke, 스무 research admission과 dataset freeze는 2026-07-28까지 통과했다. 동결된
+stress schedule은 아직 실행되지 않았고, Live OpenAI와 96-run core campaign도 완료가
+아니며 `docs/08-limitations.md`에서 별도로 추적한다.
 
 ## 1. Sequencing rule
 
@@ -43,7 +45,7 @@ Evaluation foundation
   → Viewer and GitHub demo
 ```
 
-## Current dataset gate
+## Current dataset gate — completed
 
 목표: Calibration과 research evidence를 분리하고, benchmark/upstream provenance가 있는 20개
 research task를 admission한다.
@@ -60,11 +62,24 @@ research task를 admission한다.
 6. Admitted research task 중 Terminal-Bench 2.1 pattern을 적용할 sentinel 세 개를 동결한다.
 7. 원본 benchmark 호환성 run은 external acceptance lane에 남기고 core aggregate와 분리한다.
 
-2026-07-28 현재 1~5번은 executable admission evidence로 완료됐다. 다음 미완료 work item은
-6번 sentinel 선정·fault schedule 동결이며, 이 gate 전에는 manifest를 `frozen`으로 바꾸거나
-core campaign을 시작하지 않는다.
+2026-07-28 현재 1~6번은 executable admission과 machine-audit evidence로 완료됐다.
+7번 external acceptance lane은 frozen core dataset과 분리된 후속 작업이다. 다음 milestone은
+여섯 memory-development task의 no-memory development trace를 qualification하는 것이다.
 
-### Exit gate
+동결 evidence:
+
+- Manifest:
+  `sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`
+- Stress schedule:
+  `sha256:d5a3d90f8429f24b6940d4a5cb1b78a35fa34d3fe3df9937ad6c57daba23f468`
+- Sentinel: `fusesoc-retained-parse-error-diagnostics`,
+  `anyio-extensionless-entrypoint-worker-main`,
+  `pyfakefs-file-wrapper-io-capabilities`
+- Schedule: 세 task 모두 context reset과 worker restart를 persistent state on/off로 2회씩,
+  synthetic test timeout을 persistent state on으로 2회씩 실행하는 총 30개 derived run.
+  Fault-free baseline은 core no-memory run이며 stress 결과는 core aggregate에 포함하지 않는다.
+
+### Exit gate — passed
 
 - Calibration은 정확히 5개이며 memory/core/headline에서 거부된다.
 - Research role은 정확히 20개이고 easy task가 없으며 현재보다 낮은 품질 기준으로 수를 채우지

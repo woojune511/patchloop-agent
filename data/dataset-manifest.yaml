@@ -1,6 +1,6 @@
 schema_version: dataset-manifest-v1
 dataset_id: patchloop-benchmark-v1
-status: draft
+status: frozen
 calibration_target: 5
 targets:
   memory-development: 6
@@ -968,9 +968,46 @@ stress_lanes:
   - lane_id: terminal-recovery-v1
     benchmark_inspiration: terminal-bench-2.1
     sentinel_count: 3
-    task_ids: []
+    task_ids:
+      - fusesoc-retained-parse-error-diagnostics
+      - anyio-extensionless-entrypoint-worker-main
+      - pyfakefs-file-wrapper-io-capabilities
     scenarios:
       - context-reset
       - worker-kill-after-patch
       - test-timeout
+    selection_policy: public-contract-structure-v1
+    selection_rationale:
+      fusesoc-retained-parse-error-diagnostics: Public constraints allow the widest three-file production change surface; the task ID is the deterministic tie-break.
+      anyio-extensionless-entrypoint-worker-main: Public constraints provide the narrowest remaining mutation surface at one file and forty diff lines.
+      pyfakefs-file-wrapper-io-capabilities: Its 240-second registered visible check is the longest among the remaining held-out tasks.
+    schedule:
+      schema_version: stress-schedule-v1
+      schedule_id: terminal-recovery-v1
+      seed: 20260723
+      memory_condition: no_memory
+      task_scope: all-sentinels
+      baseline_source: core-no-memory
+      expected_derived_runs: 30
+      cases:
+        - fault: context-reset
+          trigger: after-model-call-10
+          persistent_state_modes:
+            - "on"
+            - "off"
+          repetitions: 2
+          arm_once: true
+        - fault: worker-kill-after-patch
+          trigger: after-first-durable-patch-checkpoint
+          persistent_state_modes:
+            - "on"
+            - "off"
+          repetitions: 2
+          arm_once: true
+        - fault: test-timeout
+          trigger: first-registered-visible-check
+          persistent_state_modes:
+            - "on"
+          repetitions: 2
+          arm_once: true
     include_in_core_metrics: false

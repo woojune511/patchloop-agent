@@ -40,8 +40,9 @@ entry이고 Loguru #1297, PDM #3759, AnyIO #1134, Hugging Face Hub #4056,
 tox #3846/#3851과 pyfakefs #1269는 core-same-repo held-out entry다. 이들
 held-out task는 prompt, tool, retrieval, threshold와 memory tuning에 사용할 수 없다.
 
-Stress는 별도 task count가 아니다. Admitted research task에서 세 sentinel을 미리 선택해
-deterministic fault를 적용하는 overlay이며 core aggregate에 포함하지 않는다.
+Stress는 별도 task count가 아니다. Admitted held-out task에서 세 sentinel을 미리 선택해
+deterministic fault를 적용하는 overlay이며 core aggregate에 포함하지 않는다. Frozen
+`public-contract-structure-v1` panel은 FuseSoC #776, AnyIO #1134와 pyfakefs #1269다.
 
 ### Minimum MVP size
 
@@ -192,11 +193,44 @@ MVP fault는 admitted research task 중 사전에 고정한 세 sentinel에 dete
 주입한다. Sentinel 선택, trigger와 schedule은 normal/core 결과를 보기 전에 manifest hash로
 freeze한다.
 
+### Sentinel selection
+
+선택은 held-out 12개의 public contract structure만 사용한다. Private spec, hidden test,
+reference patch, agent trace와 model 성공/실패는 입력이 아니다. 선택 순서는 다음과 같으며,
+앞 단계에서 고른 task는 다음 단계의 candidate에서 제외한다.
+
+| Archetype | Deterministic rule | Selected task | Public signal |
+| --- | --- | --- | --- |
+| Wide change surface | `max_changed_files` 내림차순, task ID 오름차순 | `fusesoc-retained-parse-error-diagnostics` | 3 files; 동률을 task ID로 결정 |
+| Narrow mutation surface | `max_changed_files`, `max_diff_lines`, task ID 오름차순 | `anyio-extensionless-entrypoint-worker-main` | 1 file, 40 diff lines |
+| Long visible check | remaining task의 최대 registered-check timeout 내림차순, task ID 오름차순 | `pyfakefs-file-wrapper-io-capabilities` | 240 seconds |
+
+세 archetype은 panel 다양성을 위한 선택 기준일 뿐 fault-task 전용 배정이 아니다. 선택된 세
+task 모두가 세 fault를 받는다.
+
+### Frozen schedule
+
 | Fault | Trigger | Expected behavior |
 | --- | --- | --- |
-| Context reset | 10번째 model call 후 history 제거 | Checkpoint로 context 재구성, 완료 탐색 반복 억제 |
-| Worker restart | `PatchApplied` 직후 process 종료 | 동일 run 재개, patch 중복 없이 `VERIFY`부터 진행 |
-| Test timeout | 첫 full-suite check를 강제 timeout | 무한 반복 없이 targeted strategy 또는 environment failure |
+| Context reset | 10번째 model call 직후, run당 한 번 | Checkpoint로 context 재구성, 완료 탐색 반복 억제 |
+| Worker restart | 첫 durable patch checkpoint 직후, run당 한 번 | 동일 run 재개, patch 중복 없이 `VERIFY`부터 진행 |
+| Test timeout | 첫 registered visible check, run당 한 번 | 무한 반복 없이 targeted strategy 또는 structured environment failure |
+
+Memory condition은 `no_memory`로 고정하고 fault-free 비교점은 core campaign의 같은 sentinel
+`no_memory` run이다. Context reset과 worker restart는 persistent state `on`/`off`를 각각
+task당 2회 실행한다. Test timeout은 `on`만 task당 2회 실행한다.
+
+```text
+context reset: 3 tasks × 2 state modes × 2 repetitions = 12
+worker restart: 3 tasks × 2 state modes × 2 repetitions = 12
+test timeout: 3 tasks × 1 state mode × 2 repetitions = 6
+stress derived total = 30
+```
+
+Schedule seed는 `20260723`이다. Frozen dataset manifest hash는
+`sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`,
+schedule hash는
+`sha256:d5a3d90f8429f24b6940d4a5cb1b78a35fa34d3fe3df9937ad6c57daba23f468`다.
 
 후속 stress candidate는 output truncation, forbidden modification, repeated-action loop다. Random flaky behavior 대신 fixed seed와 schedule을 쓴다.
 
@@ -206,6 +240,11 @@ runtime package download 또는 background service 조작이 필요한 원본 ta
 계약에 직접 넣지 않는다.
 
 Stress run은 core 96-run campaign의 일부가 아니며 normal/core SCRR와 별도 표로 보고한다.
+
+이 freeze는 sentinel selection과 machine-readable schedule의 사전 등록을 증명한다. Fault
+runtime의 schedule 소비, 완전한 context-reset 의미론, persistent-state-off arm과 30개 stress
+run은 아직 완료 증거가 아니다. 이 구현과 실행 gate가 통과하기 전에는 recovery 수치나 stress
+성공을 보고하지 않는다.
 
 ### Recovery success
 

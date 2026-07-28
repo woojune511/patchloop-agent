@@ -16,8 +16,9 @@ Dagster #33605와 Kubeflow Pipelines #13112를
 core-cross-repo task로,
 Loguru #1297, PDM #3759, AnyIO #1134, Hugging Face Hub #4056, tox #3846/#3851과
 pyfakefs #1269를 core-same-repo task로 admission했다. Research role 20/20은 채웠지만
-stress sentinel 선정·dataset freeze와 실제 OpenAI 96-run campaign은 아직 완료하지 않았다.
-미실행 gate는
+FuseSoC #776, AnyIO #1134와 pyfakefs #1269를 stress sentinel로 선정하고 30-run fault
+schedule을 machine audit한 뒤 dataset manifest를 동결했다. 이 동결은 실행 전 계약
+고정이며, stress run과 실제 OpenAI 96-run campaign은 아직 완료하지 않았다. 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 ## 구현된 핵심 경로
@@ -38,6 +39,7 @@ public.yaml → stateless context builder → model adapter
 - `action_id + input_hash` idempotency, context reset과 worker-kill-derived run
 - Dataset role이 `memory-development`인 reviewed failure 전용 structured/raw memory index
 - Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report
+- Content-addressed frozen dataset manifest와 3-sentinel, 30-run stress schedule audit
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
 - Memory/core/headline에서 제외되는 content-addressed calibration fixture 5개
 - SWE-rebench revision, upstream issue/PR/commit, upstream license evidence와 Docker digest를

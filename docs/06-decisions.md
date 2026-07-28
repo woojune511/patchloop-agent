@@ -26,6 +26,8 @@
 | D-016 | 기존 `mini-data-utils` 다섯 task는 calibration fixture이며 memory, core와 headline에서 제외한다. Research target은 별도의 20개다. | 쉬운 authoring/evaluator 확인 문제를 agent capability나 memory effectiveness evidence로 오해하지 않게 한다. |
 | D-017 | Research admission은 immutable provenance가 있는 benchmark instance 또는 upstream incident, medium 이상 difficulty, base failure, official reference 3회와 세 개 이상 bad-patch rejection evidence를 요구한다. | 유명 benchmark 포함 여부나 directory 이름 대신 재현 가능한 독립 audit로 데이터 품질을 결정한다. |
 | D-018 | Terminal-Bench 2.1은 세 sentinel stress overlay와 external acceptance의 참고 원천으로 사용하고 core aggregate와 분리한다. 원본 terminal task보다 constrained coding adaptation을 우선한다. | Unrestricted shell, network와 shared verifier를 PatchLoop의 고정 tool/evaluator 계약에 섞지 않으면서 실제 deployment failure pattern을 보존한다. |
+| D-019 | Stress sentinel은 held-out 12개의 public contract structure만으로 결과를 보기 전에 선택한다. `public-contract-structure-v1`은 widest change surface로 FuseSoC #776, 남은 task 중 narrowest mutation surface로 AnyIO #1134, 남은 task 중 longest visible check로 pyfakefs #1269를 고정한다. | Private oracle, reference solution과 model outcome을 선택에 사용하지 않으면서 change breadth, 좁은 mutation, 긴 check의 서로 다른 stress profile을 재현 가능하게 포함한다. |
+| D-020 | 세 sentinel 모두에 context reset, worker restart와 test timeout을 적용한다. Memory는 `no_memory`, context/worker는 persistent state on/off 각 2회, timeout은 on 2회로 총 30개 derived run이며 core 96개와 분리한다. Trigger는 각각 model call 10 직후, 첫 durable patch checkpoint 직후, 첫 registered visible check다. | Fault와 task를 임의 배정하지 않고 persistence ablation과 timeout behavior를 같은 고정 panel에서 비교하며, stress 결과가 memory core headline을 오염시키지 않게 한다. |
 
 ## Provisional defaults
 

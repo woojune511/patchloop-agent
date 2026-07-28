@@ -2,19 +2,18 @@ schema_version: experiment-v1
 experiment_id: core-YYYYMMDD
 core: true
 tasks:
-  # Exactly six same-repo held-out and six cross-repo held-out public.yaml paths.
-  - tasks/same-repo-heldout/TODO-1/public.yaml
-  - tasks/same-repo-heldout/TODO-2/public.yaml
-  - tasks/same-repo-heldout/TODO-3/public.yaml
-  - tasks/same-repo-heldout/TODO-4/public.yaml
-  - tasks/same-repo-heldout/TODO-5/public.yaml
-  - tasks/same-repo-heldout/TODO-6/public.yaml
-  - tasks/cross-repo-heldout/TODO-1/public.yaml
-  - tasks/cross-repo-heldout/TODO-2/public.yaml
-  - tasks/cross-repo-heldout/TODO-3/public.yaml
-  - tasks/cross-repo-heldout/TODO-4/public.yaml
-  - tasks/cross-repo-heldout/TODO-5/public.yaml
-  - tasks/cross-repo-heldout/TODO-6/public.yaml
+  - tasks/same-repo-heldout/anyio-extensionless-entrypoint-worker-main/public.yaml
+  - tasks/same-repo-heldout/hf-hub-custom-tqdm-class-contract/public.yaml
+  - tasks/same-repo-heldout/loguru-post-2038-local-timezone-fallback/public.yaml
+  - tasks/same-repo-heldout/pdm-target-project-options-loading/public.yaml
+  - tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities/public.yaml
+  - tasks/same-repo-heldout/tox-dotted-version-factor-base-python/public.yaml
+  - tasks/cross-repo-heldout/dagster-subset-partition-definition-selection/public.yaml
+  - tasks/cross-repo-heldout/fusesoc-retained-parse-error-diagnostics/public.yaml
+  - tasks/cross-repo-heldout/kubeflow-exit-handler-after-dependencies/public.yaml
+  - tasks/cross-repo-heldout/mtplx-mixed-content-tool-call-stream/public.yaml
+  - tasks/cross-repo-heldout/param-shared-rx-fanout-cache/public.yaml
+  - tasks/cross-repo-heldout/sqlglot-duckdb-ignore-nulls-modifier-order/public.yaml
 conditions: [no_memory, raw_trace, structured, selective_structured]
 repetitions: 2
 model: openai
@@ -32,5 +31,5 @@ retrieval_threshold: 0.72
 memory_token_budget: 2000
 embedding_model: sentence-transformers/all-MiniLM-L6-v2
 embedding_revision: PIN_AT_FREEZE
-# Replace null with the content hash emitted by `patchloop dataset audit` after freeze.
-dataset_manifest_hash: null
+# Frozen dataset/sentinel registry. Memory and live-cost gates below remain intentionally open.
+dataset_manifest_hash: sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786
