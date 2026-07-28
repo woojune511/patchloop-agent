@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -43,6 +44,34 @@ def test_docker_cli_ignores_inaccessible_install_candidates(
 
     monkeypatch.setattr(Path, "is_file", deny_stat)
     assert DockerSandbox.cli_path() is None
+
+
+def test_docker_availability_probe_uses_binary_output(monkeypatch) -> None:
+    monkeypatch.setattr(
+        DockerSandbox, "cli_path", staticmethod(lambda: "C:\\tools\\docker.exe")
+    )
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(
+            command, 0, b"\xffserver", b""
+        ),
+    )
+
+    assert DockerSandbox.available() is True
+
+
+def test_docker_identity_probe_handles_timeout(monkeypatch) -> None:
+    monkeypatch.setattr(
+        DockerSandbox, "cli_path", staticmethod(lambda: "C:\\tools\\docker.exe")
+    )
+
+    def timeout(command, **_kwargs):
+        raise subprocess.TimeoutExpired(command, 10)
+
+    monkeypatch.setattr(subprocess, "run", timeout)
+
+    assert DockerSandbox().image_identity() is None
 
 
 def test_local_sandbox_truncates_output(tmp_path) -> None:

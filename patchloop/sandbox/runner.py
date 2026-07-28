@@ -170,27 +170,33 @@ class DockerSandbox:
         docker = DockerSandbox.cli_path()
         if not docker:
             return False
-        result = subprocess.run(
-            [docker, "version", "--format", "{{.Server.Version}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
-        )
+        try:
+            result = subprocess.run(
+                [docker, "version", "--format", "{{.Server.Version}}"],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return False
         return result.returncode == 0 and bool(result.stdout.strip())
 
     def image_identity(self) -> str | None:
         docker = self.cli_path()
         if not docker:
             return None
-        result = subprocess.run(
-            [docker, "image", "inspect", self.image, "--format", "{{.Id}}"],
-            capture_output=True,
-            text=True,
-            timeout=10,
-            check=False,
-        )
-        return result.stdout.strip() if result.returncode == 0 else None
+        try:
+            result = subprocess.run(
+                [docker, "image", "inspect", self.image, "--format", "{{.Id}}"],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return None
+        if result.returncode != 0:
+            return None
+        return result.stdout.decode("utf-8", errors="replace").strip()
 
     def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult:
         docker = self.cli_path()

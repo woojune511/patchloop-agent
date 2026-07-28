@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Annotated
@@ -44,6 +45,17 @@ def _guarded(operation: Callable[[], object]) -> None:
     _emit(value)
 
 
+def _decode_probe_output(output: bytes) -> str:
+    """Decode Windows CLI output without relying on the active code page."""
+    if not output:
+        return ""
+    if output.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return output.decode("utf-16", errors="replace")
+    if b"\x00" in output:
+        return output.decode("utf-16-le", errors="replace")
+    return output.decode("utf-8", errors="replace")
+
+
 @app.command()
 def doctor() -> None:
     """Check local prerequisites without mutating external configuration."""
@@ -61,38 +73,33 @@ def doctor() -> None:
             wsl_status = subprocess.run(
                 [wsl, "--list", "--quiet"],
                 capture_output=True,
-                text=True,
                 timeout=10,
                 check=False,
             )
             if wsl_status.returncode == 0:
                 wsl_distributions = [
-                    line.replace("\x00", "").strip()
-                    for line in wsl_status.stdout.splitlines()
-                    if line.replace("\x00", "").strip()
+                    line.strip()
+                    for line in _decode_probe_output(wsl_status.stdout).splitlines()
+                    if line.strip()
                 ]
-        except subprocess.TimeoutExpired:
+        except (OSError, subprocess.TimeoutExpired):
             wsl_distributions = []
     gh_authenticated = False
     if gh:
-        gh_status = subprocess.run(
-            [gh, "auth", "status"],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            timeout=10,
-            check=False,
-        )
-        gh_authenticated = gh_status.returncode == 0
+        try:
+            gh_status = subprocess.run(
+                [gh, "auth", "status"],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            )
+            gh_authenticated = gh_status.returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            gh_authenticated = False
     checks = {
         "python": {
             "ok": True,
-            "version": subprocess.check_output(
-                [shutil.which("python") or "python", "--version"],
-                text=True,
-                stderr=subprocess.STDOUT,
-            ).strip(),
+            "version": f"Python {sys.version.split()[0]}",
         },
         "uv": {"ok": bool(uv), "path": uv},
         "git": {"ok": bool(git), "path": git},
