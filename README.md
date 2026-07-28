@@ -23,11 +23,11 @@ schedule을 machine audit한 뒤 dataset manifest를 동결했다. 이 동결은
 
 현재 live 경로에는 `experiment-v2` purpose, 비용 승인 preflight, durable execution plan,
 hash-chained campaign journal과 `trace-qualification-v1`이 구현돼 있다. Babel #1042의
-paid development-validation pilot 두 회는 2026-07-28 실행됐지만 모두 token budget
-종료 전에 patch를 제출하지 못했다. r1 qualification은 공개 marker 오진으로 실패했고,
-r2 trace artifact는 integrity와 leakage 검사를 통과했지만 evaluator에 도달하지 않았다.
-따라서 accepted live 성공 결과는 아직 없으며, 여섯 memory-development task의 12-run
-no-memory campaign도 열리지 않았다.
+paid development-validation pilot 세 회를 2026-07-28 실행했다. r1과 r2는 각각 tool
+grammar와 hunk line-count 상호운용성 문제로 evaluator 전에 실패했고, r3
+`run_3cb86f8d70094a11`은 제출 patch와 official hidden/regression/scope/safety verdict,
+trace qualification을 모두 통과했다. Accepted pilot gate는 통과했지만 여섯
+memory-development task의 12-run no-memory campaign은 아직 실행하지 않았다.
 
 ## 구현된 핵심 경로
 
@@ -180,7 +180,7 @@ feedback과 leakage scan은 동작했고 `trace-qualification-v1` artifact는 `q
 old/new 7줄을 선언하면서 실제 body는 6줄만 포함했다. 실행된 여덟 `apply_patch`가 strict
 `git apply`에서 모두 거부돼 evaluator에는 도달하지 못했다. Pilot acceptance는
 `evaluation_reached=false` 때문에 실패하며, 이 run은 trace-qualified이지만 agent
-success나 accepted pilot가 아니다. 두 pilot의 누적 비용은 `$0.668295625`다.
+success나 accepted pilot가 아니다. r1+r2 누적 비용은 `$0.668295625`다.
 
 Agent-visible gateway는 이 evidence를 근거로 raw patch의 hunk 줄 수만 `--recount`로
 재계산한다. Body 문법, context, path와 모든 deterministic policy는 그대로 검사하고,
@@ -189,11 +189,22 @@ policy rollback에도 같은 raw patch와 recount 의미를 사용한다. Rollba
 checkpoint와 recovery를 포함해 허용하지 않는다. Hidden evaluator의 patch 적용은 계속
 strict하다. 새 파일, rename/copy, binary와 metadata-only patch도 계속 거부한다.
 
-먼저 API call을 하지 않는 preflight를 실행한다.
+r3 evidence는 `run_3cb86f8d70094a11`이다. 별도 승인된 execution hash
+`sha256:03c57fb3dd0182e63645e346311ee2a46c1284d9770857240b2011b666b8bde6`로
+정확히 한 번 실행했고 `$0.16056875`를 사용했다. 11 model call과 13 tool call 뒤
+`babel/numbers.py` 한 줄을 수정한 patch를 제출했다. Official evaluator는 hidden,
+regression, scope와 safety를 모두 통과시켜 `scope_compliant_success=true`를 기록했다.
+72개 monotonic event와 15개 checkpoint의 qualification도 integrity, leakage,
+usage reconciliation과 `evaluation_reached=true`를 모두 통과했다. 세 pilot의 누적 비용은
+`$0.828864375`다. 이 결과는 accepted pilot evidence이며 12-run development campaign의
+실행 결과나 memory 효과 증거는 아니다.
+
+다음 gate인 12-run development campaign은 먼저 API call을 하지 않는 preflight만
+실행한다.
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-pilot.template.yaml `
+  --suite experiments/dev-no-memory.template.yaml `
   --preflight-only
 ```
 
@@ -202,19 +213,20 @@ manifest가 지정한 canonical task package path와 public/private spec hash, b
 digest-pinned evaluator environment와 observed Docker image identity, clean Git commit,
 OpenAI SDK, `OPENAI_API_KEY`의 존재 여부만, custom base URL 부재,
 `gpt-5.6-terra` + medium reasoning + standard mode + default service tier, 72시간 이내 공식
-가격과 한 run의 전체 budget reserve를 확인한다. Credential 값은 출력하거나 hash에 넣지
-않는다. 환경 blocker와 비용을 확인한 뒤에만 같은 hash를 invocation-only 승인으로 전달한다.
+가격과 12개 run의 전체 budget reserve를 확인한다. Credential 값은 출력하거나 hash에 넣지
+않는다. 환경 blocker와 비용을 확인한 뒤 사용자가 별도로 최대 $20를 승인한 경우에만 같은
+hash를 invocation-only 승인으로 전달한다.
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-pilot.template.yaml `
+  --suite experiments/dev-no-memory.template.yaml `
   --preflight-only `
   --approve-live-cost `
   --approved-execution-hash <sha256:...>
 
 # 위 preflight가 ready=true일 때만 별도로 실행한다.
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-pilot.template.yaml `
+  --suite experiments/dev-no-memory.template.yaml `
   --approve-live-cost `
   --approved-execution-hash <same-sha256:...>
 ```
@@ -243,18 +255,18 @@ cache write $3.125, output $15다. 가격 source는
 `gpt-5.6-terra` alias만 제공되므로 SDK version, Git commit과 72시간 execution window를
 provenance로 남긴다.
 
-Pilot가 `trace-qualification-v1`을 통과한 뒤에만 그 run ID를 no-memory development suite에
-고정하고 새 execution hash를 preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
+Accepted r3의 run ID를 no-memory development suite에 고정한 뒤 새 execution hash를
+preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
 input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
 Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
 persisted result와 agent-visible content-addressed artifact inventory를 결속한다. 필수
 `RunStarted`/`ContextBuilt`/`ModelCalled` artifact reference, cache usage 불변식과 malformed
 function-call response의 이미 과금된 usage도 검사·보존하며, development campaign
 preflight와 memory review/index admission은 현재 source evidence hash를 다시 계산한다.
-두 pilot은 이 보존 경로를 실제 provider에서 확인했다. r2 trace artifact는 qualified지만
-evaluator 미도달 때문에 pilot acceptance를 통과하지 못했다. Recount와 workspace 복원
-경계를 고친 새 clean execution hash에서 accepted pilot를 만들기 전에는 development
-campaign을 실행하지 않는다.
+세 pilot은 이 보존 경로를 실제 provider에서 확인했다. r2 trace artifact는 qualified지만
+evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
+hash에서 accepted pilot를 만들었다. 다음 paid gate는 이 r3 evidence와 새 clean harness
+commit에 결속된 12-run development campaign preflight와 별도 $20 승인이다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

@@ -1049,7 +1049,8 @@ same-action replay without duplicate `PatchApplied`, untracked/recovery guards a
 rollback. The checked-in
 [r2 evidence record](../reports/live-pilot/dev-validation-live-pilot-20260728-r2.json)
 and [portable candidate](../reports/live-pilot/artifacts/run_de8f2a2846044c01-recount-candidate.patch)
-preserve this claims boundary. No r3 paid call is part of this evidence.
+preserve this claims boundary. The r2 record intentionally stops before the separately approved r3
+execution.
 
 The corrective worktree collected 306 tests: 304 passed in the restricted test environment and the
 two Docker-only sandbox tests were skipped because that environment could not see the daemon.
@@ -1057,12 +1058,62 @@ Running `tests/test_sandbox.py` on the host with a repository-local ignored pyte
 passed all nine tests, including the two Docker isolation checks. Full Ruff and `git diff --check`
 also passed. These are harness regression results, not live-model task evidence.
 
+## Third paid live-pilot and accepted gate
+
+The r3 harness correction was committed at
+`eeeeba6aa68e9d58677e2d8218381f79285f5545`. Execution hash
+`sha256:03c57fb3dd0182e63645e346311ee2a46c1284d9770857240b2011b666b8bde6`
+was approved for one Babel #1042 row with a $2 cap and was consumed exactly once. Experiment
+`dev-validation-live-pilot-20260728-r3` completed without retry, infrastructure error,
+qualification error or not-started row. Run `run_3cb86f8d70094a11` cost `$0.16056875`:
+43,963 input, 43,930 cache-write input and 1,547 output tokens across 11 model and 13 tool calls.
+The measured cumulative r1+r2+r3 spend is `$0.828864375`.
+
+The agent-visible gateway accepted one raw model patch with hash
+`sha256:b17fefa202127323a1eae6a95c9d9dca0a60d2cb8ac8c138c2722c1fb0c2f333`.
+Its hunk declared 7/7 lines around a 6/6 body, so this is direct provider evidence that the scoped
+recount compatibility path worked. The resulting Git diff and official evaluator submission both
+hash to
+`sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743`.
+It changes one line in `babel/numbers.py`. Hidden acceptance, registered regression, scope,
+dependency, test-tampering and public-API checks all passed; the persisted result records
+`official=true`, `scope_compliant_success=true` and `outcome_kind=resolved`.
+
+The trace contains 72 contiguous events, 15 checkpoints, exactly one `PatchApplied`, no tool
+failure and one terminal `RunCompleted`. Qualification independently reconciled the 11 model and
+13 tool calls, found zero private matches, verified the approved plan and Docker provenance and
+recorded `qualified=true`, `evaluation_reached=true`. Its qualification hash is
+`sha256:5bc11b4087061921a415d94caeb0ac8370e39013f1d94a531130256fd3101811`;
+recalculation of the current plan/manifest/events/checkpoints/result/artifact inventory matches the
+recorded source evidence hash
+`sha256:f4726a1d6c2abfdf859c92135ae345dffb2075aaa9d5a7f0fc4fb7b1b0259322`.
+The four-row campaign journal hash chain and qualification hash were also recomputed from their
+serialized content. One campaign-file portability defect was found during this audit: the r3
+`CampaignCompleted.result_hash`
+`sha256:d9214929019e839a46715c55326f8725dc005d844fdc1e97ad50bb2bf2736f8d`
+hashes the intended LF serialization, while Windows `Path.write_text` persisted CRLF bytes with
+hash
+`sha256:ccc8d50f9f47c72ce56f6192558f9c6790ff24cb4a2aea5ee39d779bda4e1664`.
+Normalizing those exact bytes to LF reproduces the journal value. The raw result and journal remain
+unchanged; future runs write the exact bytes that were hashed. This defect does not alter the
+model response, evaluator verdict or qualification, whose `source_evidence_hash` separately
+includes the raw persisted run result.
+
+The checked-in
+[r3 evidence record](../reports/live-pilot/dev-validation-live-pilot-20260728-r3.json),
+[raw applied model patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11-applied-model-candidate.patch)
+and [final submitted patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11-submitted.patch)
+separate the provider tool argument from the final evaluator input and bind the ignored raw
+artifacts by SHA-256. This is an accepted single-task live pilot. It unlocks the pilot prerequisite
+for a separately preflighted and approved development campaign; it is not a 12-run result or
+evidence that memory improves performance.
+
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. The dataset freeze gate is complete, but the stress campaign is not:
+`official_evaluation_ready=true`. The dataset freeze and accepted live-pilot gates are complete, but
+the development and stress campaigns are not:
 the context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The current worker path is cooperative suspension rather than external process
 termination, and the timeout path is a synthetic timeout on the first registered visible check.
-No stress schedule row, accepted live pilot, 12-run development campaign or 96-run core campaign
-has been executed.
+No stress schedule row, 12-run development campaign or 96-run core campaign has been executed.

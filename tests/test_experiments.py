@@ -18,7 +18,7 @@ from patchloop.evals import qualification as trace_qualification
 from patchloop.evals import runner as eval_runner
 from patchloop.evals.runner import ExperimentSuite
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json, sha256_text
+from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
 
 def _core_suite_payload(dataset_manifest_hash: str) -> dict:
@@ -231,6 +231,14 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
+    byte_writes: dict[Path, bytes] = {}
+    original_write_bytes = Path.write_bytes
+
+    def record_write_bytes(path: Path, content: bytes) -> int:
+        byte_writes[path] = content
+        return original_write_bytes(path, content)
+
+    monkeypatch.setattr(Path, "write_bytes", record_write_bytes)
     preflight = eval_runner.preflight_suite(
         "experiments/dev-validation-pilot.template.yaml"
     )
@@ -295,6 +303,11 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         "CampaignCompleted",
     ]
     assert journal_rows[1]["payload"]["run_id"] == result["runs"][0]["run_id"]
+    temporary_result_path = Path(result["path"]).with_suffix(".json.tmp")
+    assert byte_writes[temporary_result_path] == Path(result["path"]).read_bytes()
+    assert journal_rows[-1]["payload"]["result_hash"] == sha256_bytes(
+        byte_writes[temporary_result_path]
+    )
     previous_hash = None
     for sequence, row in enumerate(journal_rows, start=1):
         recorded_hash = row.pop("event_hash")

@@ -1451,6 +1451,6 @@ def evaluate_suite(
         },
     )
     temporary = output.with_suffix(".json.tmp")
-    temporary.write_text(encoded_record, encoding="utf-8")
+    temporary.write_bytes(encoded_record.encode("utf-8"))
     os.replace(temporary, output)
     return {"experiment_id": suite.experiment_id, "path": str(output), **record}

@@ -1,0 +1,174 @@
+{
+  "schema_version": "live-pilot-evidence-v2",
+  "recorded_at": "2026-07-28T13:56:45.981627Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "eeeeba6aa68e9d58677e2d8218381f79285f5545",
+  "execution_hash": "sha256:03c57fb3dd0182e63645e346311ee2a46c1284d9770857240b2011b666b8bde6",
+  "pilot": {
+    "run_id": "run_3cb86f8d70094a11",
+    "outcome_kind": "resolved",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "scope_compliant_success": true,
+    "official": true,
+    "event_count": 72,
+    "checkpoint_count": 15,
+    "model_calls": 11,
+    "tool_calls": 13,
+    "tool_failures": 0,
+    "patch_applied_events": 1,
+    "usage": {
+      "input_tokens": 43963,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 43930,
+      "output_tokens": 1547,
+      "model_cost_usd": 0.16056875,
+      "wall_clock_ms": 37777
+    },
+    "verdicts": {
+      "hidden_tests": "pass",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "trace_qualification_artifact": {
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": true,
+      "private_match_count": 0,
+      "qualification_hash": "sha256:5bc11b4087061921a415d94caeb0ac8370e39013f1d94a531130256fd3101811",
+      "source_evidence_hash": "sha256:f4726a1d6c2abfdf859c92135ae345dffb2075aaa9d5a7f0fc4fb7b1b0259322"
+    },
+    "pilot_acceptance": {
+      "accepted": true,
+      "reason": "trace qualification, leakage, integrity, and evaluation-reached requirements all passed",
+      "development_campaign_pilot_gate_passed": true
+    }
+  },
+  "successful_mutation": {
+    "model_event_sequence": 39,
+    "model_artifact_id": "art_ea75b92bde4945198c377a63afda3f30",
+    "model_artifact_sha256": "sha256:9904a6be4cea520bbac81570339f84d7e8f7aa2cecb0c05412a383d12f9841f1",
+    "apply_patch_tool_event_sequence": 42,
+    "tool_result_event_sequence": 43,
+    "patch_applied_event_sequence": 44,
+    "raw_model_patch_sha256": "sha256:b17fefa202127323a1eae6a95c9d9dca0a60d2cb8ac8c138c2722c1fb0c2f333",
+    "worktree_diff_sha256": "sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743",
+    "declared_old_lines": 7,
+    "declared_new_lines": 7,
+    "actual_old_lines": 6,
+    "actual_new_lines": 6,
+    "gateway_result": "succeeded",
+    "patch_applied_exactly_once": true,
+    "raw_model_patch_is_final_submitted_diff": false
+  },
+  "submitted_patch": {
+    "artifact_id": "art_05e3d3a56b3a44098c2a654cdb6bed4b",
+    "patch_sha256": "sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743",
+    "diff_sha256": "sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743",
+    "changed_files": [
+      "babel/numbers.py"
+    ],
+    "added_lines": 1,
+    "deleted_lines": 1,
+    "official_evaluator_input": true
+  },
+  "spend_to_date": {
+    "first_pilot_usd": 0.34025875,
+    "second_pilot_usd": 0.328036875,
+    "third_pilot_usd": 0.16056875,
+    "cumulative_usd": 0.828864375
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; ignored raw bytes are not bundled in a clean checkout.",
+    "portable_artifacts": "Secret-scrubbed exact patch bytes tracked for clean-checkout hash verification. The applied model argument and final submitted Git diff retain distinct semantics."
+  },
+  "portable_artifacts": [
+    {
+      "role": "applied-model-tool-argument",
+      "path": "reports/live-pilot/artifacts/run_3cb86f8d70094a11-applied-model-candidate.patch",
+      "bytes": 686,
+      "sha256": "sha256:b17fefa202127323a1eae6a95c9d9dca0a60d2cb8ac8c138c2722c1fb0c2f333"
+    },
+    {
+      "role": "final-submitted-git-diff",
+      "path": "reports/live-pilot/artifacts/run_3cb86f8d70094a11-submitted.patch",
+      "bytes": 771,
+      "sha256": "sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-live-pilot-20260728-r3.json",
+      "bytes": 9424,
+      "sha256": "sha256:ccc8d50f9f47c72ce56f6192558f9c6790ff24cb4a2aea5ee39d779bda4e1664"
+    },
+    {
+      "path": ".patchloop/qualifications/run_3cb86f8d70094a11.json",
+      "bytes": 4751,
+      "sha256": "sha256:a904d09924b35d7c2390d6637fb39de6f67bd3718b8996b914f3f36f01adbb70"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_3cb86f8d70094a11/manifest.json",
+      "bytes": 2384,
+      "sha256": "sha256:542f0031707ecd784b130e187ad2e276f841b4fcba75553c36e8a693106b8714"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_3cb86f8d70094a11/result.json",
+      "bytes": 3909,
+      "sha256": "sha256:52fa675fb580696a2ab5ce53b8e36d88199f5964bdda9702a8554a82f8c32ef5"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_3cb86f8d70094a11/provenance.json",
+      "bytes": 186,
+      "sha256": "sha256:b3c9ecdab5a9551c685b98b451baeb55c6c957e80aa275463b12052ad602be5f"
+    },
+    {
+      "path": ".patchloop/experiments/plans/03c57fb3dd0182e63645e346311ee2a46c1284d9770857240b2011b666b8bde6.json",
+      "bytes": 5408,
+      "sha256": "sha256:03cdbc7f58fef3cab6a2f703d74c2666b9ddcbc17efeaefca8898b5f43856e00"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-live-pilot-20260728-r3.jsonl",
+      "bytes": 2665,
+      "sha256": "sha256:1e845581703976cd4240b4759c14240cfb4ad1f382e1bfd8d21ea50b804b3734"
+    },
+    {
+      "path": ".patchloop/runs/run_3cb86f8d70094a11/submitted.patch",
+      "bytes": 771,
+      "sha256": "sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/99/04a6be4cea520bbac81570339f84d7e8f7aa2cecb0c05412a383d12f9841f1",
+      "bytes": 1103,
+      "sha256": "sha256:9904a6be4cea520bbac81570339f84d7e8f7aa2cecb0c05412a383d12f9841f1"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/9c/32ed1d71e955abe7d1dbfb35cdfdbbbca9af35e3d74cb1cc011cd04a0915db",
+      "bytes": 260,
+      "sha256": "sha256:9c32ed1d71e955abe7d1dbfb35cdfdbbbca9af35e3d74cb1cc011cd04a0915db"
+    }
+  ],
+  "historical_correction": {
+    "scope": "campaign-result serialization only",
+    "journal_recorded_result_hash": "sha256:d9214929019e839a46715c55326f8725dc005d844fdc1e97ad50bb2bf2736f8d",
+    "persisted_result_file_sha256": "sha256:ccc8d50f9f47c72ce56f6192558f9c6790ff24cb4a2aea5ee39d779bda4e1664",
+    "lf_normalized_result_sha256": "sha256:d9214929019e839a46715c55326f8725dc005d844fdc1e97ad50bb2bf2736f8d",
+    "cause": "The r3 Windows writer hashed LF JSON and Path.write_text persisted CRLF bytes.",
+    "append_only_raw_evidence_preserved": true,
+    "trace_qualification_affected": false,
+    "model_or_evaluator_outcome_affected": false,
+    "future_writer_contract": "Persist the exact UTF-8 bytes used for CampaignCompleted.result_hash."
+  },
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "trace_qualification_artifact_qualified": true,
+    "accepted_live_pilot": true,
+    "live_model_task_success": true,
+    "official_scope_compliant_success": true,
+    "development_campaign_pilot_gate_passed": true,
+    "development_campaign_executed": false,
+    "core_campaign_executed": false
+  }
+}

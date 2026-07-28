@@ -153,13 +153,19 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   74,868 input, 74,811 cache-write input and 6,274 output tokens across 19 model and 22 tool calls.
   Its 111 events, 23 checkpoints, zero-match leakage scan and usage integrity produced a
   `qualified=true` trace artifact, but no patch was submitted and the evaluator was not reached.
-  Pilot acceptance therefore remains false. All nine model patch candidates declared 7/7 hunk
+  r2 pilot acceptance therefore remains false. All nine model patch candidates declared 7/7 hunk
   lines while containing 6/6; eight executed mutations failed before evaluation.
+- A third separately approved Babel #1042 pilot, `run_3cb86f8d70094a11`, cost `$0.16056875`
+  for 43,963 input, 43,930 cache-write input and 1,547 output tokens across 11 model and 13 tool
+  calls. Its one submitted patch changed one line in `babel/numbers.py`; the official hidden,
+  regression, scope and safety verdicts all passed. Its 72 events, 15 checkpoints, zero private
+  matches and reconciled usage produced a qualified, accepted trace.
 
 ## Implemented but not yet accepted as an external gate
 
 - OpenAI Responses adapter is contract-tested with a fake client and has two paid-provider failure
-  traces. No accepted live-model success exists.
+  traces plus one accepted live pilot. The accepted pilot is one development-validation task, not
+  a development/core campaign result.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
@@ -169,12 +175,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. Both pilot host preflights reached
-  `ready=true`; any corrected commit still requires a new clean execution hash and approval.
+  only after the approved plan is durably persisted. All three pilot host preflights reached
+  `ready=true`; the development campaign requires its own clean execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. Both paid pilots produced completed hash-chained
+  that blocks automatic schedule replay. All three paid pilots produced completed hash-chained
   journals. Automatic resume from an interrupted journal is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
@@ -190,20 +196,24 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   publicly disclosed marker occurrences. A forensic rescan found zero API-key, reference-hash,
   `private.yaml` or `reference.patch` matches; the scanner contract was corrected without rewriting
   the historical artifact. The second artifact is `qualified=true`, but the pilot acceptance
-  consumer separately rejects it because `evaluation_reached=false`.
+  consumer separately rejects it because `evaluation_reached=false`. The third artifact is
+  `qualified=true`, has `evaluation_reached=true`, and its official hidden/regression/scope/safety
+  verdicts all pass.
 - Cache usage enforces `cached + cache-write <= input`, and a malformed billed function-call
   response preserves usage/cost before terminating as agent failure. These are contract-tested
   paths, not paid-provider evidence.
 - Reports mark incomplete or qualification-failed matrices `analysis_ready=false`, keep
   available-case rows only as diagnostics and suppress headline, paired comparison/CI and flip
-  results. No live matrix has yet exercised this reporting boundary.
+  results. The one-row accepted pilot is not a memory-comparison matrix.
 - Failed started attempts retain run ID, usage including cached/cache-write tokens, calculated cost
-  and terminal outcome. Both paid pilots exercised this path.
+  and terminal outcome. r1 and r2 exercised this path; r3 exercised the resolved official-success
+  path.
 - Agent-visible patch application now recounts only hunk line totals and leaves the raw input/hash,
   body, context, path and deterministic policies unchanged. Policy rollback must restore the exact
   pre-call diff and zero-untracked state; rollback failure terminates as recovery error. New-file,
   rename/copy, binary and metadata-only patches remain unsupported, while the evaluator stays
-  strict. This correction is test evidence only until an r3 paid pilot reaches evaluation.
+  strict. r3 reached evaluation through this corrected path; this remains one pilot, not a
+  campaign-level reliability result.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -232,6 +242,15 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   checkout can inspect the normalized claims boundaries and rehash the portable candidate patches,
   but cannot independently rehash the complete original runs until a secret-scrubbed portable
   evidence export exists.
+- The r3 journal is internally hash-chain valid, but its `CampaignCompleted.result_hash` hashes the
+  LF result serialization while Windows persisted the experiment file with CRLF bytes. The
+  qualification remains valid because its source evidence separately hashes the raw persisted run
+  result. The original bytes are preserved and the runner now writes the exact UTF-8 bytes it
+  hashes; this correction applies to future campaigns, not retroactively to r3.
+- The r3 usage wall clock is not reconstructible by simply summing model/tool event durations.
+  Internal orchestration and evaluator setup contribute additional time, while
+  `RunCompleted.duration_ms` covers a different evaluator-wrapper interval. Token/call/cost
+  reconciliation is exact; wall-clock component attribution needs a clearer timing schema.
 - `RunManifest.harness_git_commit` records the harness `HEAD` but not a full dirty-tree hash.
   The new live-suite preflight rejects a dirty worktree before execution; older admission gates used
   manually verified clean staging commits and are not retroactively covered by that enforcement.
@@ -260,10 +279,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   an admitted research task.
 - No Terminal-Bench original or constrained coding adaptation has passed PatchLoop admission. Any future
   original benchmark run is external acceptance evidence, not a core result.
-- No 96-run OpenAI campaign, cost measurement, negative-transfer review or live-model cross-repo
+- No 96-run OpenAI campaign, campaign-level cost comparison, negative-transfer review or live-model cross-repo
   result exists.
-- Two capped Babel live pilots were executed and neither passed pilot acceptance; their cumulative
-  cost is `$0.668295625`. The $20/12-run no-memory development campaign has not been executed. The
+- Three capped Babel live pilots were executed. r1 and r2 failed acceptance; r3
+  `run_3cb86f8d70094a11` passed official SCRR and trace qualification. Their cumulative cost is
+  `$0.828864375`. The $20/12-run no-memory development campaign has not been executed. The
   2026-07-28 configured official rates—$2.50/M
   input, $0.25/M cached input, $3.125/M cache-write input and $15/M output—must be refreshed if
   older than 72 hours at invocation. Only the

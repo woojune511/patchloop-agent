@@ -347,6 +347,9 @@ sequence, `previous_event_hash`와 자신의 content hash를 가지며 append �
 `CampaignCompleted`도 같은 chain에 추가한다. 결과 JSON이 생성되기 전에 process가 종료돼도
 기존 journal이나 동시 선점 경쟁의 패자가 새 schedule 시작을 차단한다. 이 계약은 중복 paid
 call 방지 경계이며, 중단된 campaign의 자동 resume 계약은 아직 제공하지 않는다.
+`CampaignCompleted.payload.result_hash`는 persisted experiment result의 정확한 UTF-8
+bytes를 SHA-256한 값이다. 플랫폼 newline 변환으로 journal hash와 실제 파일 bytes가
+달라지지 않도록 runner는 hash한 bytes를 그대로 기록한다.
 
 ## 4. Run manifest
 

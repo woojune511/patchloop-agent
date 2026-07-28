@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **Development-validation live pilot harness correction and requalification**
+현재 milestone: **Memory-development no-memory campaign preflight and collection**
 
 2026-07-28 구현 스냅샷:
 
@@ -12,7 +12,7 @@
 | Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
 | Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | experiment-v2/preflight implemented, pilot requalification pending | Paid pilot 2회가 terminal evidence와 누적 $0.668295625 usage를 보존했으나 accepted pilot는 없음 |
+| Phase 6 evaluation | accepted pilot complete, development campaign pending | r3가 official SCRR와 trace qualification을 통과; 세 pilot 누적 비용 $0.828864375 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -91,7 +91,7 @@ task의 no-memory development trace를 qualification하는 것이다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — implementation pending acceptance
+## Current live trace gate — pilot passed, development campaign pending
 
 목표: 첫 paid call 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -100,12 +100,12 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 
 | Order | Status | Work item | Acceptance evidence |
 | ---: | --- | --- | --- |
-| 1 | implemented, external acceptance pending | `experiment-v2` explicit purpose와 exact suite shape | Wrong task/role/repetition/model/budget contract reject |
-| 2 | implemented, clean-machine acceptance pending | Canonical task/private hash/digest environment preflight, durable approved plan과 live capability | Unapproved/hash mismatch/dirty Git/wrong package/private/image/stale price reject |
+| 1 | implemented, live contract exercised | `experiment-v2` explicit purpose와 exact suite shape | Wrong task/role/repetition/model/budget contract reject |
+| 2 | implemented, r3 host accepted; clean-machine reproduction pending | Canonical task/private hash/digest environment preflight, durable approved plan과 live capability | Unapproved/hash mismatch/dirty Git/wrong package/private/image/stale price reject |
 | 3 | implemented, interrupted-run recovery pending | Paid call 전 fsync하는 hash-chained campaign journal | Existing journal이 hard-crash 뒤 새 schedule 시작을 차단; 자동 resume은 미구현 |
-| 4 | implemented, two failed live artifacts observed | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | r2 trace integrity/leakage qualification 통과, evaluator 미도달을 acceptance에서 분리 |
-| 5 | attempts 1-2 not accepted; r3 pending new hash/approval | Babel #1042 `no_memory` 1회 pilot, $2 cap | `evaluation_reached=true`인 accepted pilot artifact와 stable run ID |
-| 6 | pending pilot gate | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
+| 4 | implemented, three live artifacts observed | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | r2의 trace qualification과 r3의 accepted qualification이 원시 evidence에 결속됨 |
+| 5 | passed on r3 | Babel #1042 `no_memory` 1회 pilot, $2 cap | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass |
+| 6 | pending new preflight and approval | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 7 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
 Live suite는 `gpt-5.6-terra`, reasoning `medium`, mode `standard`, service tier `default`,
@@ -131,15 +131,18 @@ build는 현재 source hash를 다시 검증한다.
 output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
 남긴다.
 
-### Exit gate — not passed
+### Pilot gate — passed; development gate — not run
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
 - 실제 환경에서 approval을 포함한 preflight가 `ready=true`다.
 - 사용자가 $2 pilot을 별도로 승인한 뒤 한 run이 `trace-qualification-v1`과
   `evaluation_reached=true` pilot acceptance를 함께 통과한다.
-- Pilot qualification hash를 development suite에 고정하기 전에는 12-run campaign이
-  시작되지 않는다.
+- Accepted pilot run ID `run_3cb86f8d70094a11`을 development suite에 고정했다. Preflight는
+  qualification hash와 현재 `source_evidence_hash`를 artifact에서 다시 읽어 새 execution
+  hash에 결속한다.
+- 12-run campaign은 새 clean commit의 no-call preflight, exact execution hash 검토와 별도
+  $20 승인 전에는 시작하지 않는다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
 
 2026-07-28 첫 paid pilot `run_c6f13dd9a1a1472d`는 ready preflight 뒤 `$0.34025875`를
@@ -169,11 +172,25 @@ evaluator는 실행되지 않았다. 선택한 원문 patch
 strict `git apply --check`에서 실패하고 `--recount` check에서 workspace 변경 없이
 통과한다. 이 parser diagnostic도 agent success나 repetition으로 집계하지 않는다.
 
-r3 전 corrective gate는 agent-visible forward와 policy rollback에만 hunk recount를
-적용한다. Raw input hash는 유지하고 body/context/path/policy는 strict하게 검사한다.
+r3 corrective gate는 agent-visible forward와 policy rollback에만 hunk recount를
+적용했다. Raw input hash는 유지하고 body/context/path/policy는 strict하게 검사한다.
 Policy reject 뒤 pre-call diff hash 복원, duplicate `PatchApplied` 방지와 zero-untracked
-checkpoint/recovery를 executable test로 고정한다. Hidden evaluator는 strict하게 유지한다.
-수정 commit의 새 execution hash와 별도 승인이 없으면 r3 paid call을 실행하지 않는다.
+checkpoint/recovery를 executable test로 고정했다. Hidden evaluator는 strict하게 유지했다.
+
+세 번째 paid pilot은 clean harness commit
+`eeeeba6aa68e9d58677e2d8218381f79285f5545`와 별도 승인 execution hash
+`sha256:03c57fb3dd0182e63645e346311ee2a46c1284d9770857240b2011b666b8bde6`로
+정확히 한 번 실행됐다. `run_3cb86f8d70094a11`은 11 model call, 13 tool call,
+43,963 input token과 1,547 output token에 `$0.16056875`를 사용했다. Recount gateway로
+한 번의 `PatchApplied`를 만든 뒤 `babel/numbers.py` 한 줄만 바꾼 submitted patch를
+제출했다. Official evaluator의 hidden, regression, scope와 safety가 모두 pass했고
+`scope_compliant_success=true`, `outcome_kind=resolved`다. Qualification은 72개 연속 event,
+15개 checkpoint, leakage 0, reconciled usage와 `evaluation_reached=true`를 검증했으며
+qualification hash는
+`sha256:5bc11b4087061921a415d94caeb0ac8370e39013f1d94a531130256fd3101811`,
+현재 source evidence hash는
+`sha256:f4726a1d6c2abfdf859c92135ae345dffb2075aaa9d5a7f0fc4fb7b1b0259322`다.
+이 evidence로 pilot gate는 통과했지만 12-run development campaign은 아직 실행하지 않았다.
 
 ## Phase 1. Evaluation Foundation
 
