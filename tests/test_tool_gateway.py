@@ -8,6 +8,7 @@ import pytest
 from patchloop.agent.context import build_context
 from patchloop.agent.tools import TOOL_SCHEMAS, ToolGateway
 from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import EventType
 from patchloop.errors import ActionConflict, RecoveryError
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import build_manifest
@@ -238,6 +239,8 @@ def test_rejected_patch_format_is_durable_and_visible_to_next_turn(tmp_path) -> 
 
     assert result.status == "rejected"
     assert "raw Git unified diff" in (result.error_message or "")
+    assert result.output["error_details"]["stage"] == "format"
+    assert result.output["error_details"]["reason"] == "invalid_envelope"
     patch_schema = next(schema for schema in TOOL_SCHEMAS if schema["name"] == "apply_patch")
     assert "diff --git" in patch_schema["description"]
     assert "*** Begin Patch" in patch_schema["description"]
@@ -249,6 +252,89 @@ def test_rejected_patch_format_is_durable_and_visible_to_next_turn(tmp_path) -> 
     context, _ = build_context(package.public, events, None)
     assert "raw Git unified diff" in context
     assert "diff --git" in context
+
+
+def test_check_and_diff_results_are_bound_to_current_worktree(tmp_path) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_diff_binding",
+    )
+    patch = Path(
+        "tasks/smoke/csv-quoted-newline/reference.patch"
+    ).read_text(encoding="utf-8")
+
+    applied = gateway.execute(
+        "apply_patch",
+        "diff-binding-patch",
+        {"patch": patch},
+    )
+    checked = gateway.execute(
+        "run_check",
+        "diff-binding-check",
+        {"check_id": "existing-unit-tests"},
+    )
+    reviewed = gateway.execute("get_diff", "diff-binding-review", {})
+
+    diff_hash = manager.diff_summary(workspace).patch_hash
+    assert applied.output["worktree_diff_hash"] == diff_hash
+    assert checked.output["worktree_diff_hash"] == diff_hash
+    assert reviewed.output["worktree_diff_hash"] == diff_hash
+    bound_events = [
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") in {"run_check", "get_diff"}
+    ]
+    assert {event.payload["worktree_diff_hash"] for event in bound_events} == {
+        diff_hash
+    }
+
+
+def test_repeated_call_is_advisory_and_visible(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_repeat_signal",
+    )
+    arguments = {"query": "parse_rows", "path_glob": "**/*.py"}
+
+    first = gateway.execute("search_files", "search-first", arguments)
+    second = gateway.execute("search_files", "search-second", arguments)
+
+    assert first.status == second.status == "succeeded"
+    loop_events = [
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.LOOP_DETECTED
+    ]
+    assert len(loop_events) == 1
+    assert loop_events[0].payload["tool"] == "search_files"
+    assert loop_events[0].payload["enforcement"] == "advisory"
+
+
+def test_nonconsecutive_repeated_call_is_not_marked_as_loop(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_nonconsecutive_repeat",
+    )
+    repeated = {"query": "parse_rows", "path_glob": "**/*.py"}
+
+    gateway.execute("search_files", "search-first", repeated)
+    gateway.execute(
+        "read_file",
+        "read-between-searches",
+        {
+            "path": "mini_data_utils/csvlite.py",
+            "start_line": 1,
+            "end_line": 2,
+        },
+    )
+    gateway.execute("search_files", "search-after-read", repeated)
+
+    assert not [
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.LOOP_DETECTED
+    ]
 
 
 @pytest.mark.parametrize(
@@ -404,13 +490,15 @@ def test_apply_patch_rejects_preexisting_untracked_target(tmp_path) -> None:
         "+after\n"
     )
 
-    with pytest.raises(RecoveryError, match="untracked files before"):
-        gateway.execute(
-            "apply_patch",
-            "reject-preexisting-untracked",
-            {"patch": patch},
-        )
+    result = gateway.execute(
+        "apply_patch",
+        "reject-preexisting-untracked",
+        {"patch": patch},
+    )
 
+    assert result.status == "failed"
+    assert result.error_code == RecoveryError.code
+    assert result.output["fatal"] is True
     assert target.read_text(encoding="utf-8") == "before\n"
     assert manager.diff_summary(workspace).changed_files == []
     assert manager.untracked_files(workspace) == ["scratch.txt"]
@@ -487,13 +575,16 @@ def test_apply_patch_fails_closed_when_policy_rollback_fails(
 
     monkeypatch.setattr(subprocess, "run", fail_reverse)
 
-    with pytest.raises(RecoveryError, match="policy rollback failed"):
-        gateway.execute(
-            "apply_patch",
-            "force-failed-rollback",
-            {"patch": patch},
-        )
+    result = gateway.execute(
+        "apply_patch",
+        "force-failed-rollback",
+        {"patch": patch},
+    )
 
+    assert result.status == "failed"
+    assert result.error_code == RecoveryError.code
+    assert "policy rollback failed" in (result.error_message or "")
+    assert result.output["fatal"] is True
     assert "intentionally outside the task scope" in (
         workspace / "README.md"
     ).read_text(encoding="utf-8")

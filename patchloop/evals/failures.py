@@ -6,8 +6,10 @@ import uuid
 from pathlib import Path
 
 from patchloop.contracts import (
+    EventType,
     FailureRecord,
     Phase,
+    RunEvent,
     RunOutcomeKind,
     RunResult,
     VerdictState,
@@ -26,6 +28,7 @@ def classify_failure(
     *,
     root: str | Path | None = None,
     phase: Phase = Phase.REVIEW,
+    events: list[RunEvent] | None = None,
 ) -> FailureRecord | None:
     """Persist one failure record without copying private check identities.
 
@@ -47,8 +50,24 @@ def classify_failure(
         )
     ):
         return None
-    if result.outcome_kind == RunOutcomeKind.AGENT_FAILURE:
+    terminal_error_type = (result.terminal_error or {}).get("type")
+    submission_rejections = [
+        event
+        for event in events or []
+        if event.type == EventType.SUBMISSION_REJECTED
+    ]
+    if (
+        result.outcome_kind == RunOutcomeKind.AGENT_FAILURE
+        and (
+            terminal_error_type == "SubmissionProtocolError"
+            or len(submission_rejections) >= 3
+        )
+    ):
+        cause = "premature-stop"
+    elif result.outcome_kind == RunOutcomeKind.AGENT_FAILURE:
         cause = "agent-execution-failure"
+    elif result.verdicts.safety_policy == VerdictState.FAIL:
+        cause = "safety-policy-violation"
     elif result.verdicts.scope_policy == VerdictState.FAIL:
         cause = "scope-policy-violation"
     elif result.verdicts.regression_tests == VerdictState.FAIL:
@@ -65,6 +84,8 @@ def classify_failure(
     if result.outcome_kind == RunOutcomeKind.AGENT_FAILURE:
         error_type = (result.terminal_error or {}).get("type", "unknown")
         symptoms = [f"agent-error:{error_type}"]
+        if cause == "premature-stop":
+            symptoms.append("submission-gate:repeated-rejection")
     failure_identity = f"{result.run_id}:{cause}:{phase.value}"
     record = FailureRecord(
         failure_id=f"fail_{uuid.uuid5(uuid.NAMESPACE_URL, failure_identity).hex}",
@@ -72,7 +93,7 @@ def classify_failure(
         primary_cause=cause,
         observed_symptoms=symptoms,
         phase=phase,
-        recoverability="unknown",
+        recoverability="terminal" if cause == "premature-stop" else "unknown",
         evidence=[
             {
                 "verifier_result_id": item.verifier_result_id,
@@ -82,7 +103,11 @@ def classify_failure(
             if item.state != VerdictState.PASS
         ],
         confidence=1.0,
-        classification_method="deterministic-verdict-priority-v1",
+        classification_method=(
+            "deterministic-verdict-priority-v2"
+            if cause in {"premature-stop", "safety-policy-violation"}
+            else "deterministic-verdict-priority-v1"
+        ),
         review_status="unreviewed",
     )
     directory = _failure_root(root) / "failures" / split

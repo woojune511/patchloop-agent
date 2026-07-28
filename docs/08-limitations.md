@@ -133,7 +133,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   staging commit `b50b4314aa7fd209737db46f15b38aee056bbd80` and made zero model/API
   calls. This completes the 20-task research role target but is deterministic evaluator evidence,
   not live-model agent performance or a core campaign result.
-- Worker-kill recovery with duplicate-mutation assertion
+- Cooperative worker-kill-after-checkpoint recovery with duplicate-mutation assertion
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
 - Frozen 25-package dataset manifest with 5/5 calibration, 20/20 research roles, three selected
@@ -160,12 +160,19 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   calls. Its one submitted patch changed one line in `babel/numbers.py`; the official hidden,
   regression, scope and safety verdicts all passed. Its 72 events, 15 checkpoints, zero private
   matches and reconciled usage produced a qualified, accepted trace.
+- A separate model-candidate pilot, `run_d4fea5e7198b4abc`, used
+  `gpt-5.4-mini-2026-03-17`, medium effort and the strict 90,000-token budget. It cost
+  `$0.07745325` for 66,287 input and 6,164 output tokens across 16 model and 25 tool calls.
+  Prompt-token integrity, leakage, usage and trace qualification passed, but
+  `evaluation_reached=false`: legacy text `DONE` attempted an invalid `VERIFY → DONE`
+  transition after the required final-review order was lost. It is an immutable agent failure,
+  not accepted-pilot or model-quality evidence.
 
 ## Implemented gates with remaining external campaign work
 
-- OpenAI Responses adapter is contract-tested with a fake client and has two paid-provider failure
-  traces plus one accepted live pilot. The accepted pilot is one development-validation task, not
-  a development/core campaign result.
+- OpenAI Responses adapter is contract-tested with a fake client and has two Terra failure traces,
+  one accepted Terra live pilot and one separate mini model-candidate failure trace. The accepted
+  pilot is one development-validation task, not a development/core campaign result.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
@@ -185,7 +192,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
   against the plan before `RunStarted`; replacement tests stop before the model runner.
-- `trace-qualification-v1` checks approved-plan binding, required content-addressed artifact
+- Legacy `trace-qualification-v1` remains byte-stable for old runs. New
+  `trace-qualification-v2` additionally checks approved-plan binding, required content-addressed artifact
   references, event/checkpoint/result integrity, usage reconciliation, public/private leakage and
   pilot tool-loop evidence. Its `source_evidence_hash` binds plan, manifest, events, checkpoints,
   result and agent-visible artifact inventory and is recalculated at development-campaign
@@ -198,7 +206,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   the historical artifact. The second artifact is `qualified=true`, but the pilot acceptance
   consumer separately rejects it because `evaluation_reached=false`. The third artifact is
   `qualified=true`, has `evaluation_reached=true`, and its official hidden/regression/scope/safety
-  verdicts all pass.
+  verdicts all pass. It is historical v1 evidence and cannot unlock the corrected v2 campaign.
 - Cache usage enforces `cached + cache-write <= input`, and a malformed billed function-call
   response preserves usage/cost before terminating as agent failure. These are contract-tested
   paths, not paid-provider evidence.
@@ -214,6 +222,19 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   rename/copy, binary and metadata-only patches remain unsupported, while the evaluator stays
   strict. r3 reached evaluation through this corrected path; this remains one pilot, not a
   campaign-level reliability result.
+- New non-replay runs use a v2 tool/context contract that binds latest visible-check success and
+  final diff review to the exact current worktree hash, exposes a structured `finish_task`, delays
+  phase transitions until tool success and makes two premature submissions recoverable. It also
+  records review/submission lifecycle, structured patch-error stages, advisory repeat signals and
+  current-diff checkpoint state. These paths are offline-tested only; no paid live run has yet
+  validated the correction. Existing v1 traces and replays are not rewritten.
+- v2 `finish_task` now freezes exact submitted bytes in CAS before acceptance, binds that artifact
+  through `SubmissionAccepted`, evaluator input and `RunResult`, and reconciles nine tested crash
+  boundaries without duplicate lifecycle or DONE transition. This is offline evidence only.
+- The no-memory development preflight rejects a pilot unless qualification v2 records the same
+  Terra model, budget, harness commit, tool/context versions and exact runtime-contract hash.
+  Consequently `pilot_run_id` is currently empty and a newly approved v2 Terra pilot is the next
+  paid gate.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -227,10 +248,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   Network denial, a read-only root filesystem and a read-only submitted workspace were enforced,
   but uniform non-root execution for arbitrary external images is not yet implemented. The native
   PatchLoop image's non-root isolation smoke does not prove this property for external images.
-- Evaluator `result.json` records an opaque `submitted_patch_artifact_id`, but the current
-  `ArtifactStore` does not persist a standalone ID-to-content-hash catalog for that field. Admission
-  evidence remains byte-resolvable through the persisted `provenance.diff_hash` and corresponding CAS
-  object, but direct lookup by the opaque artifact ID alone is not yet implemented.
+- Historical evaluator results expose only an opaque `submitted_patch_artifact_id`. New v2
+  lifecycle evidence carries the complete public CAS artifact metadata and qualification verifies
+  its bytes, diff hash, evaluator input and result ID. A global standalone ID catalog remains
+  unimplemented for legacy artifacts.
 - Tracked admission reports bind each raw `manifest.json`, `result.json` and `provenance.json` by
   SHA-256, but those per-run files currently remain under the ignored local `.patchloop/artifacts`
   store. A clean checkout can validate the report and rerun the deterministic gate, but cannot rehash
@@ -273,6 +294,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   matrix runner/report are not implemented.
 - The existing worker-kill path cooperatively suspends a run after the first durable patch
   checkpoint; it does not terminate an external operating-system worker process.
+- `resume` currently accepts only an explicitly suspended run and has no cross-process ownership
+  claim for reclaiming a stale `RUNNING` worker. An interruption after `git apply` but before the
+  action result and `PatchApplied` event is durable therefore fails closed instead of reconciling
+  that mutation. Actual worker-process kill/restart remains a pending reliability gate.
 - The existing timeout injector synthesizes one timeout on the first registered visible check.
   It does not yet reproduce a real environment hang or specifically target a full-suite check.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
@@ -281,20 +306,22 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   original benchmark run is external acceptance evidence, not a core result.
 - No 96-run OpenAI campaign, campaign-level cost comparison, negative-transfer review or live-model cross-repo
   result exists.
-- Three capped Babel live pilots were executed. r1 and r2 failed acceptance; r3
+- Three capped Terra Babel live pilots were executed. r1 and r2 failed acceptance; r3
   `run_3cb86f8d70094a11` passed official SCRR and trace qualification. Their cumulative cost is
-  `$0.828864375`. The $20/12-run no-memory development campaign has not been executed. The
+  `$0.828864375`. All three use the legacy v1 runtime; a new v2 Terra pilot is required before the
+  $20/12-run no-memory development campaign, which has not been executed. The
   2026-07-28 configured official rates—$2.50/M
   input, $0.25/M cached input, $3.125/M cache-write input and $15/M output—must be refreshed if
   older than 72 hours at invocation. Only the
   `gpt-5.6-terra` alias, not a dated Terra snapshot, is currently recorded.
 - The exact request artifact, input-token-count reconciliation and explicit
-  `truncation=disabled` telemetry in D-031 were implemented after r1-r3. Those immutable pilot
-  traces do not contain the new fields, and no live provider run has exercised the new
-  `prompt-token-integrity-v1` qualification branch yet.
+  `truncation=disabled` telemetry in D-031 were implemented after r1-r3. Those immutable Terra
+  traces do not contain the new fields. Mini run `run_d4fea5e7198b4abc` exercised and passed the
+  `prompt-token-integrity-v1` qualification branch but did not reach evaluation.
 - A separate one-run suite pins `gpt-5.4-mini-2026-03-17`, medium effort, a 90,000 total-token
-  budget and a $2 cap to exercise that branch. It has not been executed yet and does not change
-  the frozen Terra memory-development or core comparison contract.
+  budget and a $2 cap to exercise that branch. Its terminal r1 run failed the submission lifecycle
+  before evaluation and does not change the frozen Terra memory-development or core comparison
+  contract. That exact experiment must not be rerun.
 - PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
   data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not
   assumed to be free. `model_cost_usd` is a deterministic list-price estimate, not invoice

@@ -290,6 +290,61 @@ def test_model_candidate_pilot_cannot_unlock_terra_development_campaign(
     }
 
 
+def test_legacy_runtime_pilot_cannot_unlock_v2_development_campaign(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_payload = yaml.safe_load(
+        Path("experiments/dev-no-memory.template.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    suite_payload["experiment_id"] = "dev-reject-v1-runtime-pilot"
+    suite_payload["pilot_run_id"] = "run_v1_runtime_pilot"
+    suite_path = tmp_path / "dev-reject-v1-runtime-pilot.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(suite_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    source_hash = "sha256:" + ("a" * 64)
+    monkeypatch.setattr(
+        trace_qualification,
+        "load_trace_qualification",
+        lambda *_args, **_kwargs: {
+            "schema_version": "trace-qualification-v1",
+            "run_id": "run_v1_runtime_pilot",
+            "purpose": "development-validation-live-pilot",
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "leakage_scan_passed": True,
+            "evaluation_reached": True,
+            "qualification_hash": "sha256:" + ("c" * 64),
+            "source_evidence_hash": source_hash,
+            "outcome_kind": "resolved",
+            "model_provider": "openai",
+            "memory_condition": "no_memory",
+            "fault_type": "none",
+        },
+    )
+    monkeypatch.setattr(
+        trace_qualification,
+        "calculate_source_evidence_hash",
+        lambda *_args, **_kwargs: source_hash,
+    )
+
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    pilot = preflight["pilot_qualification"]
+    assert pilot["qualified"] is False
+    assert "schema_version" in pilot["contract_mismatches"]
+    assert "tool_schema_version" in pilot["contract_mismatches"]
+    assert "runtime_contract_content_hash" in pilot["contract_mismatches"]
+    assert "QUALIFIED_PILOT_REQUIRED" in {
+        row["code"] for row in preflight["blockers"]
+    }
+
+
 def test_v2_development_campaign_rejects_an_incomplete_task_set() -> None:
     payload = yaml.safe_load(
         Path("experiments/dev-no-memory.template.yaml").read_text(encoding="utf-8")

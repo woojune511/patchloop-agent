@@ -55,6 +55,55 @@ def test_evaluator_keeps_strict_hunk_line_counts(tmp_path) -> None:
         engine.evaluate(TASK, malformed, manifest)
 
 
+def test_evaluator_binds_result_to_preaccepted_patch_artifact(
+    tmp_path,
+) -> None:
+    package = load_task_package(TASK)
+    store = ArtifactStore(tmp_path / "artifacts")
+    engine = EvaluationEngine(
+        WorkspaceManager("fixtures/repositories", tmp_path / "workspaces"),
+        LocalSandbox(),
+        store,
+    )
+    manifest = build_manifest(package, sandbox_backend="local")
+    patch = Path(f"{TASK}/reference.patch").read_text(encoding="utf-8")
+    accepted = store.put_text(patch, "text/x-diff")
+
+    result = engine.evaluate(
+        TASK,
+        accepted.path,
+        manifest,
+        submitted_patch_artifact=accepted,
+    )
+
+    assert result.submitted_patch_artifact_id == accepted.artifact_id
+
+
+def test_evaluator_rejects_patch_that_differs_from_accepted_artifact(
+    tmp_path,
+) -> None:
+    package = load_task_package(TASK)
+    store = ArtifactStore(tmp_path / "artifacts")
+    engine = EvaluationEngine(
+        WorkspaceManager("fixtures/repositories", tmp_path / "workspaces"),
+        LocalSandbox(),
+        store,
+    )
+    manifest = build_manifest(package, sandbox_backend="local")
+    accepted = store.put_text(
+        Path(f"{TASK}/reference.patch").read_text(encoding="utf-8"),
+        "text/x-diff",
+    )
+
+    with pytest.raises(ContractError, match="accepted artifact"):
+        engine.evaluate(
+            TASK,
+            f"{TASK}/bad/noop.patch",
+            manifest,
+            submitted_patch_artifact=accepted,
+        )
+
+
 def test_snapshot_content_hash_mismatch_is_rejected(tmp_path) -> None:
     manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
     with pytest.raises(ContractError, match="content hash"):

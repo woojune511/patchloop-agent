@@ -13,11 +13,15 @@ class ContractError(PatchLoopError):
     code = "CONTRACT_ERROR"
 
 
+class SubmissionProtocolError(ContractError):
+    code = "SUBMISSION_PROTOCOL_ERROR"
+
+
 class PolicyViolation(PatchLoopError):
     code = "POLICY_VIOLATION"
 
 
-class ActionConflict(PatchLoopError):
+class ActionConflict(ContractError):
     code = "ACTION_CONFLICT"
 
 

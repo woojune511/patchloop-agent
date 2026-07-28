@@ -10,6 +10,7 @@ from pathlib import Path
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    Artifact,
     RunManifest,
     RunResult,
     Usage,
@@ -17,9 +18,11 @@ from patchloop.contracts import (
     VerdictState,
     VerifierResult,
 )
+from patchloop.errors import ContractError
 from patchloop.repository import WorkspaceManager
 from patchloop.sandbox.runner import Sandbox
 from patchloop.task_loader import load_task_package
+from patchloop.util import sha256_bytes
 from patchloop.verifier.policy import (
     PolicyOutcome,
     verify_dependencies,
@@ -106,8 +109,18 @@ class EvaluationEngine:
         patch_path: str | Path,
         manifest: RunManifest,
         usage: Usage | None = None,
+        submitted_patch_artifact: Artifact | None = None,
     ) -> RunResult:
         package = load_task_package(task_dir)
+        patch_bytes = Path(patch_path).read_bytes()
+        if (
+            submitted_patch_artifact is not None
+            and sha256_bytes(patch_bytes)
+            != submitted_patch_artifact.content_hash
+        ):
+            raise ContractError(
+                "evaluator patch input does not match the accepted artifact"
+            )
         workspace = self.workspace_manager.create(
             f"{manifest.run_id}_evaluator",
             package.public.repository.url,
@@ -167,7 +180,11 @@ class EvaluationEngine:
                 safety_state,
             )
         )
-        patch_artifact = self.artifact_store.put_text(summary.patch, "text/x-diff")
+        patch_artifact = (
+            submitted_patch_artifact
+            if submitted_patch_artifact is not None
+            else self.artifact_store.put_text(summary.patch, "text/x-diff")
+        )
         elapsed = int((time.monotonic() - started) * 1000)
         final_usage = usage.model_copy(deep=True) if usage is not None else Usage()
         final_usage.wall_clock_ms += elapsed
@@ -187,7 +204,15 @@ class EvaluationEngine:
         (run_dir / "manifest.json").write_text(manifest.model_dump_json(indent=2), encoding="utf-8")
         (run_dir / "result.json").write_text(result.model_dump_json(indent=2), encoding="utf-8")
         (run_dir / "provenance.json").write_text(
-            json.dumps({"patch_hash": patch_hash, "diff_hash": summary.patch_hash}, indent=2),
+            json.dumps(
+                {
+                    "patch_hash": patch_hash,
+                    "diff_hash": summary.patch_hash,
+                    "submitted_patch_artifact_id": patch_artifact.artifact_id,
+                    "submitted_patch_content_hash": patch_artifact.content_hash,
+                },
+                indent=2,
+            ),
             encoding="utf-8",
         )
         return result

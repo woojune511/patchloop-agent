@@ -12,15 +12,18 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `Memory-development no-memory campaign preflight and collection`이다.
+- 현재 milestone은 `v2 Terra corrective pilot preflight`다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을
   machine audit한 뒤 dataset manifest를 동결했다. 앞선 두 Live OpenAI pilot은 terminal
-  agent failure로 보존돼 있다. 세 번째 pilot `run_3cb86f8d70094a11`은 official evaluator의
-  hidden/regression/scope/safety verdict와 trace qualification을 모두 통과해 pilot
-  acceptance를 충족했다.
-  Stress schedule, 12-run development campaign과 96-run core campaign은 완료되지 않았다.
+  agent failure로 보존돼 있다. 세 번째 pilot `run_3cb86f8d70094a11`은 당시 v1 계약에서
+  official hidden/regression/scope/safety verdict와 trace qualification을 통과한 historical
+  accepted pilot이다. 이후 tool/context/submission lifecycle이 v2로 바뀌었으므로 이 run은
+  현재 campaign gate를 열지 않는다. 별도 mini model-candidate pilot
+  `run_d4fea5e7198b4abc`도 evaluator 전에 실패했다. v2 교정 경로는 offline test만
+  통과했으며, 새 v2 Terra pilot, stress schedule, 12-run development campaign과 96-run
+  core campaign은 완료되지 않았다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

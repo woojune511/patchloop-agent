@@ -466,18 +466,36 @@ cached-input, cache-write-input, output rate를 보존한다. 이 값으로 term
 RunStarted        PhaseChanged       ContextBuilt
 MemoryRetrieved   ModelCalled        ToolCalled
 ToolSucceeded     ToolFailed         PatchApplied
-CheckStarted      CheckFinished      CheckpointSaved
+CheckStarted      CheckFinished      LoopDetected
+ReviewRecorded    SubmissionAttempted
+SubmissionRejected SubmissionAccepted CheckpointSaved
 FailureTagged     RunCompleted       RunFailed
 ```
 
 Event payload schema는 type별 version을 가져야 한다. Secret, full hidden assertion, raw credential을 payload에 저장하지 않는다.
 
+Submission lifecycle payload는 patch body나 model text를 복사하지 않는다. Public
+`worktree_diff_hash`, attempt number, reason code, source event/request artifact identity와
+accepted patch의 CAS artifact metadata만 남긴다. `SubmissionAccepted`는 deterministic evaluator에 넘길 orchestration 조건을
+충족했다는 뜻이며 hidden/regression/scope/safety 성공을 주장하지 않는다.
+
 새 live turn의 `ContextBuilt` artifact는 `model-request-evidence-v1`이다. API key와 HTTP
 authorization header를 제외한 exact logical Responses request body, request body hash와
-`context-build-evidence-v1`을 함께 보존한다. Context evidence는 전체 eligible event 수,
+버전된 context-build evidence를 함께 보존한다. `phase-evidence-v2`는 raw event window를
+먼저 자른 뒤 filtering하지 않고 agent-visible event를 먼저 filtering한 뒤 최근 12개를
+선택한다. Oversized tool result는 원본 JSON을 먼저 parse하고 string field를 semantic하게
+줄여 가능한 경우 valid JSON과 scalar metadata를 보존한다. 그래도 character cap을 넘는
+large list/object는 bounded top-level key와 summary fallback으로 대체한다. Context evidence는 전체 eligible event 수,
 최근-event policy로 포함·생략한 sequence, tool-result character cap 적용 여부, memory와
 component별 character 수, 최종 UTF-8 byte 수를 기록한다. 따라서 PatchLoop가 policy에 따라
 context를 줄인 경우와 provider가 input을 줄인 경우를 분리할 수 있다.
+
+v2 context의 `phase_contract`는 current phase/diff hash, current-diff completed/pending
+checks, missing evidence, allowed next actions와
+`apply_patch → run_check → get_diff → finish_task` 순서를 machine-readable하게 제공한다.
+`execution_signals.repeated_calls`는 `LoopDetected`를 요약한다. 기존 manifest의
+`context_policy_version=v1`은 과거 replay와 immutable trace 해석을 위해 기존 rendering을
+유지한다.
 
 새 live `ModelCalled` event는 `prompt_telemetry_version: prompt-token-integrity-v1`과 함께
 다음을 기록한다.
@@ -539,6 +557,18 @@ response에서는 tool call을 실행하지 않고 이미 반환된 usage를 먼
 ```
 
 Checkpoint가 참조한 event sequence나 hash를 검증할 수 없으면 자동 재개하지 않고 recovery error를 기록한다.
+v2에서 `completed_checks`는 전체 history의 한 번이라도 성공한 check가 아니라
+`worktree_diff_hash`에 대한 최신 check 결과만 뜻한다. `pending_checks`는 그 diff에서
+아직 pass하지 않은 required public check이고, `last_patch_hash`는 이후 read/check/diff와
+무관하게 마지막 성공 mutation identity를 유지한다. 이 강화는 checkpoint schema에
+default field를 추가하지 않으므로 기존 checkpoint serialization을 바꾸지 않는다.
+v2 checkpoint의 `current_plan`은 비워 두고, 다음 turn에서 실제 포함된 tool-result
+evidence까지 다시 계산한 `phase_contract.allowed_next_actions`만 authoritative하게 사용한다.
+마지막 `PatchApplied` 이전 check/review는 현재 diff hash가 우연히 과거 값으로 돌아와도
+새 mutation epoch에서 재사용하지 않는다.
+Submission readiness는 현재 non-empty diff와 같은 hash를 기록한 최신 `PatchApplied`도
+요구한다. 따라서 base repository의 visible check와 empty diff만으로 `finish_task`를
+accept하지 않는다.
 
 ## 7. Tool call contract
 
@@ -547,7 +577,7 @@ Checkpoint가 참조한 event sequence나 hash를 검증할 수 없으면 자동
 ```json
 {
   "tool": "apply_patch",
-  "tool_schema_version": "v1",
+  "tool_schema_version": "v2",
   "action_id": "act_0071",
   "run_id": "run_0041",
   "input": {},
@@ -555,14 +585,12 @@ Checkpoint가 참조한 event sequence나 hash를 검증할 수 없으면 자동
 }
 ```
 
-### `search_repo`
+### `search_files`
 
 ```json
 {
   "query": "parse_csv",
-  "path": "src",
-  "file_glob": "*.py",
-  "max_results": 20
+  "path_glob": "src/**/*.py"
 }
 ```
 
@@ -588,7 +616,7 @@ Checkpoint가 참조한 event sequence나 hash를 검증할 수 없으면 자동
 apply-patch envelope인 `*** Begin Patch` / `*** End Patch` 형식은 이 constrained tool의
 입력이 아니며 구조화된 `CONTRACT_ERROR`로 거부한다.
 
-현재 v1 tool은 기존 tracked text file의 동일 경로 수정 또는 삭제만 지원한다. 새 파일,
+현재 patch tool은 기존 tracked text file의 동일 경로 수정 또는 삭제만 지원한다. 새 파일,
 rename/copy, binary와 metadata-only patch는 agent workspace의 untracked state가 scope
 요약을 우회하지 않도록 거부한다. Agent-visible gateway는 hunk header에 선언된 old/new
 line total만 `git apply --recount`로 body에서 다시 계산한다. Hunk body 문법, context,
@@ -602,11 +630,15 @@ Forward apply 뒤에는 scope, dependency, test tampering, public API와 zero-un
 `RECOVERY_ERROR`로 run을 fail-closed한다. Checkpoint와 resume도 agent workspace에
 untracked file이 있으면 거부한다. Raw 입력은 다시 쓰지 않으므로 `input_hash`,
 `patch_hash`와 CAS evidence는 model이 보낸 원문에 결속한다. Function parameter JSON
-Schema는 바뀌지 않았으므로 `tool_schema_version`은 v1을 유지하고, 이 동작 의미는 harness
-Git commit과 D-029에 결속한다.
+Patch parameter schema 자체는 유지하지만, current-diff evidence와 structured submission을
+함께 고정하기 위해 새 run의 전체 tool surface는 v2다. 기존 v1 replay는 그대로 유지한다.
 
 동일 `action_id + input_hash`가 성공했다면 기존 result를 반환한다. 같은 action ID에 다른
 input hash가 오면 stale/conflicting action으로 거부하고 patch를 적용하지 않는다.
+
+Patch format/context/policy rejection artifact는 `error_details.stage`,
+`error_details.reason`, retry guidance와 파악 가능한 경우 corrupt line을 포함한다. Gateway가
+patch를 대신 수정하거나 느슨하게 적용하지는 않는다.
 
 ### `run_check`
 
@@ -631,6 +663,37 @@ Result 공통 필드:
   "stderr_artifact_id": "art_0103"
 }
 ```
+
+`run_check`와 `get_diff` result 및 대응 `ToolSucceeded`에는
+`worktree_diff_hash`가 반드시 들어간다. Registered check가 tracked worktree를 바꾸면
+그 결과를 acceptance evidence로 사용하지 않고 recovery error로 fail-closed한다.
+
+### `finish_task`
+
+```json
+{}
+```
+
+`finish_task`는 empty object만 받는 orchestrator action이다. 다음 조건의 논리곱을
+만족해야 한다.
+
+```text
+latest successful PatchApplied matches a non-empty current worktree_diff_hash
+AND latest required visible checks pass on that current worktree_diff_hash
+AND get_diff succeeded after those latest check events on the same diff
+AND that get_diff tool result was available and untruncated in this model request
+AND current phase is REVIEW
+```
+
+성공 시 exact patch bytes를 CAS에 먼저 동결하고 `ReviewRecorded → SubmissionAttempted
+→ ToolSucceeded → SubmissionAccepted → REVIEW→DONE → CheckpointSaved` lifecycle을
+남긴 뒤 그 CAS artifact만 evaluator에 전달한다. 현재 offline fault test에서는 각
+lifecycle boundary의 injected suspension 뒤 같은 runner가 resume할 때 `action_id`별
+durable prefix를 검증하고 누락 suffix만 보충하며 중복 event나 transition을 만들지 않는다.
+실제 OS worker 종료와 새 process의 resume ownership은 아직 구현되지 않았다. 실패 시 `SubmissionAttempted →
+SubmissionRejected`와 rejected tool result를 남기고 phase를 유지한다. 세 번째 거부만
+`SubmissionProtocolError` terminal failure가 된다. Legacy v1 replay의 text `DONE`은
+과거 artifact 재현을 위해 별도 호환 경로로만 읽는다.
 
 성공과 거부를 포함한 모든 tool result는 content-addressed artifact로 저장한다. 거부 event는
 `error_code`, public `error_message`와 artifact identity를 남기며 다음 turn의 stateless
@@ -747,7 +810,8 @@ Cause와 symptom을 구분하고, label만 단독 저장하지 않는다.
 
 ### Trace qualification과 review eligibility
 
-Live no-memory run은 `trace-qualification-v1` artifact를 content hash와 함께 별도로 남긴다.
+Legacy v1 run은 immutable `trace-qualification-v1`을 유지하고, 새 v2 run은
+`trace-qualification-v2` artifact를 content hash와 함께 별도로 남긴다.
 Qualification은 최소한 다음 경계를 검사한다.
 
 - Task/public/private hash와 frozen dataset role, experiment purpose가 일치함
@@ -762,6 +826,9 @@ Qualification은 최소한 다음 경계를 검사한다.
 - Agent-visible event/artifact에 공개 contract에 없는 private 구조 marker/hidden check ID가
   없고, 공개 여부와 무관하게 hidden artifact path/hash, reference hash 또는 현재 API key가 없음
 - Event usage, persisted result, terminal outcome과 evaluator verdict가 서로 일치함
+- v2 submission은 actual `get_diff` event, 그 결과를 포함한 다음 request,
+  `finish_task` success, same-diff accepted patch CAS artifact, `REVIEW→DONE`과 final
+  checkpoint가 하나의 lifecycle로 결속됨
 - `prompt-token-integrity-v1`을 선언한 새 trace는 모든 turn에서 exact request artifact가
   `ContextBuilt`와 결속되고, input-token pre-count와 response usage가 일치하며,
   `truncation=disabled`, `status=completed`, incomplete reason 없음과 total/reasoning token
@@ -794,7 +861,8 @@ development-validation pilot, infrastructure error, calibration/held-out run은 
 Qualification은 자기 JSON의 `qualification_hash` 외에 `source_evidence_hash`를 가진다. 이
 hash는 approved execution plan bytes, manifest, ordered events, checkpoints, state result,
 persisted result artifact hash와 agent-visible CAS artifact identity/content hash를 하나의
-canonical snapshot으로 결속한다. Qualification file을 다시 읽는 것만으로 source가 그대로라고
+canonical snapshot으로 결속한다. v2 source snapshot은 `SubmissionAccepted`에 nested된
+submitted-patch CAS object의 실제 bytes와 size도 다시 읽어 결속한다. Qualification file을 다시 읽는 것만으로 source가 그대로라고
 간주하지 않는다.
 
 Development campaign preflight도 pilot qualification을 소비할 때 현재

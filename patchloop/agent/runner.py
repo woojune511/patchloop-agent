@@ -14,22 +14,29 @@ from typing import Any
 
 from patchloop.agent.context import build_context_with_evidence
 from patchloop.agent.model import (
-    SYSTEM_PROMPT,
+    SYSTEM_PROMPT_V1,
+    SYSTEM_PROMPT_V2,
     MockModelAdapter,
     ModelAdapter,
     OpenAIResponsesAdapter,
     ReplayModelAdapter,
 )
-from patchloop.agent.phases import validate_transition
-from patchloop.agent.tools import TOOL_SCHEMAS, ToolGateway
+from patchloop.agent.phases import diff_bound_evidence, validate_transition
+from patchloop.agent.tools import (
+    TOOL_SCHEMAS_V1,
+    TOOL_SCHEMAS_V2,
+    ToolGateway,
+)
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    Artifact,
     Budget,
     Checkpoint,
     EventType,
     ExperimentRunContext,
     MemoryCondition,
     Phase,
+    PublicTask,
     RunManifest,
     RunOutcomeKind,
     RunResult,
@@ -39,7 +46,12 @@ from patchloop.contracts import (
     Usage,
     Verdicts,
 )
-from patchloop.errors import ContractError, InjectedFault, RecoveryError
+from patchloop.errors import (
+    ContractError,
+    InjectedFault,
+    RecoveryError,
+    SubmissionProtocolError,
+)
 from patchloop.evals.failures import classify_failure
 from patchloop.memory import retrieve_memory
 from patchloop.repository import WorkspaceManager
@@ -63,6 +75,7 @@ from patchloop.util import (
 from patchloop.verifier import EvaluationEngine
 
 _LIVE_AUTHORIZATION_GUARD = object()
+_MAX_RECOVERABLE_SUBMISSION_REJECTIONS = 2
 
 
 @dataclass(frozen=True)
@@ -328,6 +341,7 @@ class AgentRunner:
         adapter: ModelAdapter,
     ) -> dict[str, Any]:
         task_dir = package.root
+        system_prompt, tool_schemas = self._runtime_contract(manifest)
         sandbox = (
             self._docker_sandbox(package)
             if manifest.sandbox_backend == "docker"
@@ -352,7 +366,12 @@ class AgentRunner:
         self.state.set_run_status(manifest.run_id, RunStatus.RUNNING)
         if not self.state.list_events(manifest.run_id):
             runtime_contract = self.artifacts.put_json(
-                {"system_prompt": SYSTEM_PROMPT, "tools": TOOL_SCHEMAS}
+                {
+                    "system_prompt": system_prompt,
+                    "tools": tool_schemas,
+                    "tool_schema_version": manifest.tool_schema_version,
+                    "context_policy_version": manifest.context_policy_version,
+                }
             )
             self.state.append_event(
                 manifest.run_id,
@@ -376,10 +395,33 @@ class AgentRunner:
         phase = checkpoint.phase if checkpoint else Phase.INTAKE
         if phase == Phase.INTAKE:
             phase = self._transition(manifest.run_id, phase, Phase.REPRODUCE)
-            checkpoint = self._checkpoint(manifest, workspace, phase)
+            checkpoint = self._checkpoint(
+                manifest,
+                workspace,
+                phase,
+                task=package.public,
+            )
 
         usage = self._usage(manifest.run_id)
         try:
+            phase, checkpoint, recovered_submission = (
+                self._reconcile_submission_recovery(
+                    manifest=manifest,
+                    task=package.public,
+                    workspace=workspace,
+                    phase=phase,
+                    usage=usage,
+                )
+            )
+            usage = self._usage(manifest.run_id)
+            if recovered_submission is not None:
+                return self._evaluate(
+                    task_dir,
+                    workspace,
+                    manifest,
+                    sandbox,
+                    usage,
+                )
             while True:
                 self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -411,18 +453,26 @@ class AgentRunner:
                         },
                     )
                 built_context = build_context_with_evidence(
-                    package.public, events, checkpoint, memory_text
+                    package.public,
+                    events,
+                    checkpoint,
+                    memory_text,
+                    policy_version=manifest.context_policy_version,
                 )
                 context = built_context.rendered
                 if isinstance(adapter, OpenAIResponsesAdapter):
-                    request_body = adapter.request_payload(context, TOOL_SCHEMAS)
+                    request_body = adapter.request_payload(
+                        context,
+                        tool_schemas,
+                        system_prompt=system_prompt,
+                    )
                     request_endpoint = "/v1/responses"
                 else:
                     request_body = {
                         "model": manifest.model.model_id,
-                        "system_prompt": SYSTEM_PROMPT,
+                        "system_prompt": system_prompt,
                         "context": context,
-                        "tools": TOOL_SCHEMAS,
+                        "tools": tool_schemas,
                     }
                     request_endpoint = None
                 request_body_hash = sha256_text(canonical_json(request_body))
@@ -487,7 +537,7 @@ class AgentRunner:
                         requested_input_tokens=requested_input_tokens,
                     )
                 else:
-                    turn = adapter.next_turn(context, TOOL_SCHEMAS)
+                    turn = adapter.next_turn(context, tool_schemas)
                 model_duration_ms = int((time.monotonic() - model_started) * 1000)
                 usage.model_calls += 1
                 usage.input_tokens += turn.input_tokens
@@ -528,7 +578,7 @@ class AgentRunner:
                         ),
                     }
                 )
-                self.state.append_event(
+                model_event = self.state.append_event(
                     manifest.run_id,
                     EventType.MODEL_CALLED,
                     actor="model-adapter",
@@ -575,27 +625,160 @@ class AgentRunner:
                         f"model response rejected: {turn.error.code}"
                     )
                 if turn.done:
-                    passed_checks = {
-                        event.payload.get("check_id")
-                        for event in self.state.list_events(manifest.run_id)
-                        if event.type == EventType.TOOL_SUCCEEDED
-                        and event.payload.get("tool") == "run_check"
-                        and event.payload.get("passed") is True
-                    }
-                    required_checks = {check.id for check in package.public.visible_checks}
-                    if not required_checks.issubset(passed_checks):
-                        raise ContractError(
-                            "DONE requires every registered visible check to have a passing result"
+                    if manifest.tool_schema_version == "v1":
+                        self._validate_legacy_submission(
+                            package.public,
+                            manifest.run_id,
+                            phase,
                         )
-                    phase = self._transition(manifest.run_id, phase, Phase.DONE)
-                    checkpoint = self._checkpoint(manifest, workspace, phase, usage)
-                    return self._evaluate(task_dir, workspace, manifest, sandbox, usage)
+                        phase = self._transition(
+                            manifest.run_id,
+                            phase,
+                            Phase.DONE,
+                        )
+                        checkpoint = self._checkpoint(
+                            manifest,
+                            workspace,
+                            phase,
+                            usage,
+                            task=package.public,
+                        )
+                        return self._evaluate(
+                            task_dir,
+                            workspace,
+                            manifest,
+                            sandbox,
+                            usage,
+                        )
+                    should_stop = self._reject_unstructured_submission(
+                        manifest.run_id,
+                        workspace,
+                        correlation_id=model_event.event_id,
+                    )
+                    checkpoint = self._checkpoint(
+                        manifest,
+                        workspace,
+                        phase,
+                        usage,
+                        task=package.public,
+                    )
+                    if should_stop:
+                        raise SubmissionProtocolError(
+                            "structured finish_task submission was rejected "
+                            "three times"
+                        )
+                    continue
                 if not turn.tool_calls:
-                    raise ContractError("model returned neither a tool call nor DONE")
+                    raise ContractError(
+                        "model returned neither a tool call nor a submission"
+                    )
+                finish_calls = [
+                    call
+                    for call in turn.tool_calls
+                    if call.name == "finish_task"
+                ]
+                if finish_calls and len(turn.tool_calls) != 1:
+                    if usage.tool_calls >= manifest.budget.max_tool_calls:
+                        raise ContractError("tool call budget exhausted")
+                    finish_call = finish_calls[0]
+                    result, _, should_stop = self._finish_task(
+                        run_id=manifest.run_id,
+                        task=package.public,
+                        workspace=workspace,
+                        phase=phase,
+                        action_id=finish_call.action_id,
+                        arguments=finish_call.arguments,
+                        context_evidence=built_context.evidence,
+                        request_artifact_id=request_artifact.artifact_id,
+                        additional_missing_evidence=[
+                            "finish_task_must_be_only_action"
+                        ],
+                    )
+                    if not result.output.get("replayed"):
+                        usage.tool_calls += 1
+                        usage.wall_clock_ms += int(
+                            (
+                                result.finished_at - result.started_at
+                            ).total_seconds()
+                            * 1000
+                        )
+                    checkpoint = self._checkpoint(
+                        manifest,
+                        workspace,
+                        phase,
+                        usage,
+                        result,
+                        task=package.public,
+                    )
+                    if should_stop:
+                        raise SubmissionProtocolError(
+                            "submission preconditions were rejected three times"
+                        )
+                    continue
                 for call in turn.tool_calls:
                     if usage.tool_calls >= manifest.budget.max_tool_calls:
                         raise ContractError("tool call budget exhausted")
-                    phase = self._phase_for_tool(manifest.run_id, phase, call.name)
+                    if call.name == "finish_task":
+                        if manifest.tool_schema_version != "v2":
+                            raise ContractError(
+                                "finish_task is unavailable in tool schema v1"
+                            )
+                        result, accepted, should_stop = self._finish_task(
+                            run_id=manifest.run_id,
+                            task=package.public,
+                            workspace=workspace,
+                            phase=phase,
+                            action_id=call.action_id,
+                            arguments=call.arguments,
+                            context_evidence=built_context.evidence,
+                            request_artifact_id=request_artifact.artifact_id,
+                            additional_missing_evidence=[],
+                        )
+                        if not result.output.get("replayed"):
+                            usage.tool_calls += 1
+                            usage.wall_clock_ms += int(
+                                (
+                                    result.finished_at - result.started_at
+                                ).total_seconds()
+                                * 1000
+                            )
+                        if isinstance(adapter, MockModelAdapter) and (
+                            result.status == "succeeded"
+                        ):
+                            adapter.record_completed(call.name)
+                        if accepted:
+                            phase, checkpoint = (
+                                self._complete_accepted_submission(
+                                    manifest=manifest,
+                                    task=package.public,
+                                    workspace=workspace,
+                                    phase=phase,
+                                    usage=usage,
+                                    result=result,
+                                )
+                            )
+                        else:
+                            checkpoint = self._checkpoint(
+                                manifest,
+                                workspace,
+                                phase,
+                                usage,
+                                result,
+                                task=package.public,
+                            )
+                        if should_stop:
+                            raise SubmissionProtocolError(
+                                "submission preconditions were rejected three times"
+                            )
+                        if accepted:
+                            return self._evaluate(
+                                task_dir,
+                                workspace,
+                                manifest,
+                                sandbox,
+                                usage,
+                            )
+                        continue
                     result = gateway.execute(call.name, call.action_id, call.arguments)
                     if not result.output.get("replayed"):
                         usage.tool_calls += 1
@@ -604,7 +787,39 @@ class AgentRunner:
                         )
                     if isinstance(adapter, MockModelAdapter) and result.status == "succeeded":
                         adapter.record_completed(call.name)
-                    checkpoint = self._checkpoint(manifest, workspace, phase, usage, result)
+                    if (
+                        result.status == "failed"
+                        and result.output.get("fatal") is True
+                    ):
+                        raise RecoveryError(
+                            result.error_message
+                            or "tool execution failed with a fatal state error"
+                        )
+                    phase = self._phase_after_tool(
+                        manifest.run_id,
+                        phase,
+                        call.name,
+                        result,
+                        package.public,
+                        workspace,
+                    )
+                    checkpoint = self._checkpoint(
+                        manifest,
+                        workspace,
+                        phase,
+                        usage,
+                        result,
+                        task=package.public,
+                    )
+                    if (
+                        call.name == "run_check"
+                        and result.status == "succeeded"
+                        and result.output.get("timed_out") is True
+                    ):
+                        raise ContractError(
+                            "visible check timed out; the unchanged command "
+                            "will not be repeated"
+                        )
                     if (
                         manifest.fault.type == "worker-kill-after-patch"
                         and call.name == "apply_patch"
@@ -656,19 +871,61 @@ class AgentRunner:
     ) -> dict[str, Any]:
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         summary = WorkspaceManager.diff_summary(workspace)
+        submitted_patch_artifact: Artifact | None = None
+        if manifest.tool_schema_version == "v2":
+            accepted_events = [
+                event
+                for event in self.state.list_events(manifest.run_id)
+                if event.type == EventType.SUBMISSION_ACCEPTED
+            ]
+            if len(accepted_events) != 1:
+                raise RecoveryError(
+                    "v2 evaluation requires one accepted submission"
+                )
+            try:
+                submitted_patch_artifact = Artifact.model_validate(
+                    accepted_events[0].payload["submitted_patch_artifact"]
+                )
+                submitted_patch_bytes = Path(
+                    submitted_patch_artifact.path
+                ).read_bytes()
+            except (KeyError, OSError, TypeError, ValueError) as exc:
+                raise RecoveryError(
+                    "accepted submission patch artifact is unavailable"
+                ) from exc
+            if (
+                submitted_patch_artifact.content_hash
+                != accepted_events[0].payload.get("worktree_diff_hash")
+                or sha256_bytes(submitted_patch_bytes)
+                != submitted_patch_artifact.content_hash
+                or summary.patch_hash
+                != submitted_patch_artifact.content_hash
+            ):
+                raise RecoveryError(
+                    "accepted patch artifact, event, and worktree differ"
+                )
+        else:
+            submitted_patch_bytes = summary.patch.encode("utf-8")
         run_dir = self.root / "runs" / manifest.run_id
         run_dir.mkdir(parents=True, exist_ok=True)
         patch_path = run_dir / "submitted.patch"
-        patch_path.write_text(summary.patch, encoding="utf-8", newline="\n")
+        patch_path.write_bytes(submitted_patch_bytes)
         evaluator = EvaluationEngine(self.workspaces, sandbox, self.artifacts)
         evaluator_started = time.monotonic()
-        result = evaluator.evaluate(task_dir, patch_path, manifest, usage=usage)
+        result = evaluator.evaluate(
+            task_dir,
+            patch_path,
+            manifest,
+            usage=usage,
+            submitted_patch_artifact=submitted_patch_artifact,
+        )
         evaluator_duration_ms = int((time.monotonic() - evaluator_started) * 1000)
         failure = classify_failure(
             result,
             load_task_package(task_dir).public.split,
             root=self.root,
             phase=Phase.REVIEW,
+            events=self.state.list_events(manifest.run_id),
         )
         if failure is not None:
             self.state.append_event(
@@ -709,9 +966,15 @@ class AgentRunner:
 
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         safe_message = self._safe_error_message(error)
+        events = self.state.list_events(manifest.run_id)
+        submission_accepted = any(
+            event.type == EventType.SUBMISSION_ACCEPTED for event in events
+        )
         result = RunResult(
             run_id=manifest.run_id,
-            agent_submission_status="failed",
+            agent_submission_status=(
+                "completed" if submission_accepted else "failed"
+            ),
             evaluation_status="not_run",
             scope_compliant_success=False,
             official=False,
@@ -728,6 +991,7 @@ class AgentRunner:
             load_task_package(task_dir).public.split,
             root=self.root,
             phase=phase,
+            events=events,
         )
         if failure is not None:
             self.state.append_event(
@@ -794,6 +1058,8 @@ class AgentRunner:
         phase: Phase,
         usage: Usage | None = None,
         last_result: ToolResult | None = None,
+        *,
+        task: PublicTask | None = None,
     ) -> Checkpoint:
         if WorkspaceManager.untracked_files(workspace):
             raise RecoveryError(
@@ -814,16 +1080,65 @@ class AgentRunner:
                 if event.type == EventType.TOOL_SUCCEEDED and event.correlation_id
             )
         )
-        completed_checks = list(
-            dict.fromkeys(
-                str(event.payload["check_id"])
-                for event in self.state.list_events(manifest.run_id)
-                if event.type == EventType.TOOL_SUCCEEDED
-                and event.payload.get("tool") == "run_check"
-                and event.payload.get("passed") is True
-                and event.payload.get("check_id")
+        events = self.state.list_events(manifest.run_id)
+        if manifest.context_policy_version == "phase-evidence-v2":
+            evidence = diff_bound_evidence(
+                task or load_task_package(self._find_task(manifest)).public,
+                events,
+                summary.patch_hash,
             )
-        )
+            completed_checks = list(evidence.completed_checks)
+            pending_checks = list(evidence.pending_checks)
+            # The next model context recalculates presented-result evidence.
+            # Avoid persisting a stale tool prescription in the checkpoint.
+            current_plan = []
+            patch_events = [
+                event
+                for event in events
+                if event.type == EventType.PATCH_APPLIED
+                and event.payload.get("patch_hash")
+            ]
+            last_patch_hash = (
+                str(patch_events[-1].payload["patch_hash"])
+                if patch_events
+                else None
+            )
+            important_decisions = [
+                {
+                    "event_sequence": event.sequence,
+                    "type": event.type.value,
+                    "reason_code": event.payload.get("reason_code"),
+                    "worktree_diff_hash": event.payload.get(
+                        "worktree_diff_hash"
+                    ),
+                }
+                for event in events
+                if event.type
+                in {
+                    EventType.REVIEW_RECORDED,
+                    EventType.SUBMISSION_REJECTED,
+                    EventType.SUBMISSION_ACCEPTED,
+                }
+            ][-5:]
+        else:
+            completed_checks = list(
+                dict.fromkeys(
+                    str(event.payload["check_id"])
+                    for event in events
+                    if event.type == EventType.TOOL_SUCCEEDED
+                    and event.payload.get("tool") == "run_check"
+                    and event.payload.get("passed") is True
+                    and event.payload.get("check_id")
+                )
+            )
+            pending_checks = []
+            current_plan = []
+            important_decisions = []
+            last_patch_hash = (
+                last_result.output.get("patch_hash")
+                if last_result and last_result.status == "succeeded"
+                else None
+            )
         usage = usage or Usage()
         checkpoint = Checkpoint(
             checkpoint_id=f"ckpt_{uuid.uuid4().hex}",
@@ -831,16 +1146,15 @@ class AgentRunner:
             through_sequence=self.state.last_sequence(manifest.run_id),
             phase=phase,
             task_summary=manifest.task_id,
+            current_plan=current_plan,
             modified_files=summary.changed_files,
             completed_action_ids=completed_actions,
             completed_checks=completed_checks,
+            pending_checks=pending_checks,
+            important_decisions=important_decisions,
             repository_head=head,
             worktree_diff_hash=summary.patch_hash,
-            last_patch_hash=(
-                last_result.output.get("patch_hash")
-                if last_result and last_result.status == "succeeded"
-                else None
-            ),
+            last_patch_hash=last_patch_hash,
             remaining_budget={
                 "model_calls": manifest.budget.max_model_calls - usage.model_calls,
                 "tool_calls": manifest.budget.max_tool_calls - usage.tool_calls,
@@ -873,18 +1187,813 @@ class AgentRunner:
         )
         return target
 
-    def _phase_for_tool(self, run_id: str, phase: Phase, tool: str) -> Phase:
-        if tool == "apply_patch" and phase == Phase.REPRODUCE:
-            phase = self._transition(run_id, phase, Phase.PLAN)
-            return self._transition(run_id, phase, Phase.IMPLEMENT)
-        if tool == "apply_patch" and phase == Phase.PLAN:
-            return self._transition(run_id, phase, Phase.IMPLEMENT)
-        if tool == "apply_patch" and phase in {Phase.VERIFY, Phase.REVIEW}:
-            return self._transition(run_id, phase, Phase.IMPLEMENT)
-        if tool == "run_check" and phase == Phase.IMPLEMENT:
-            return self._transition(run_id, phase, Phase.VERIFY)
-        if tool == "get_diff" and phase == Phase.VERIFY:
-            return self._transition(run_id, phase, Phase.REVIEW)
+    @staticmethod
+    def _runtime_contract(
+        manifest: RunManifest,
+    ) -> tuple[str, list[dict[str, Any]]]:
+        if (
+            manifest.tool_schema_version == "v1"
+            and manifest.context_policy_version == "v1"
+        ):
+            return SYSTEM_PROMPT_V1, TOOL_SCHEMAS_V1
+        if (
+            manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v2"
+        ):
+            return SYSTEM_PROMPT_V2, TOOL_SCHEMAS_V2
+        raise ContractError(
+            "unsupported tool schema and context policy version combination"
+        )
+
+    def _validate_legacy_submission(
+        self,
+        task: PublicTask,
+        run_id: str,
+        phase: Phase,
+    ) -> None:
+        passed_checks = {
+            event.payload.get("check_id")
+            for event in self.state.list_events(run_id)
+            if event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool") == "run_check"
+            and event.payload.get("passed") is True
+        }
+        required_checks = {check.id for check in task.visible_checks}
+        if not required_checks.issubset(passed_checks):
+            raise ContractError(
+                "DONE requires every registered visible check to have a passing result"
+            )
+        if phase != Phase.REVIEW:
+            raise ContractError("DONE requires REVIEW phase under legacy schema v1")
+
+    def _reject_unstructured_submission(
+        self,
+        run_id: str,
+        workspace: Path,
+        *,
+        correlation_id: str,
+    ) -> bool:
+        summary = WorkspaceManager.diff_summary(workspace)
+        attempt_number = 1 + sum(
+            event.type == EventType.SUBMISSION_ATTEMPTED
+            for event in self.state.list_events(run_id)
+        )
+        self.state.append_event(
+            run_id,
+            EventType.SUBMISSION_ATTEMPTED,
+            actor="submission-gate",
+            correlation_id=correlation_id,
+            payload={
+                "attempt_number": attempt_number,
+                "worktree_diff_hash": summary.patch_hash,
+                "submission_method": "legacy_done_text",
+            },
+        )
+        self.state.append_event(
+            run_id,
+            EventType.SUBMISSION_REJECTED,
+            actor="submission-gate",
+            correlation_id=correlation_id,
+            payload={
+                "attempt_number": attempt_number,
+                "worktree_diff_hash": summary.patch_hash,
+                "submission_method": "legacy_done_text",
+                "reason_code": "structured_finish_task_required",
+                "missing_evidence": ["structured_finish_task"],
+            },
+        )
+        return self._submission_rejection_count(run_id) > (
+            _MAX_RECOVERABLE_SUBMISSION_REJECTIONS
+        )
+
+    def _finish_task(
+        self,
+        *,
+        run_id: str,
+        task: PublicTask,
+        workspace: Path,
+        phase: Phase,
+        action_id: str,
+        arguments: dict[str, Any],
+        context_evidence: dict[str, Any],
+        request_artifact_id: str,
+        additional_missing_evidence: list[str],
+    ) -> tuple[ToolResult, bool, bool]:
+        input_hash = sha256_text(
+            canonical_json({"tool": "finish_task", "input": arguments})
+        )
+        prior = self.state.get_action_result(run_id, action_id, input_hash)
+        if prior is not None:
+            accepted, should_stop = self._reconcile_finish_task_lifecycle(
+                run_id,
+                action_id,
+                input_hash,
+                prior,
+            )
+            replayed = prior.model_copy(
+                update={"output": {**prior.output, "replayed": True}}
+            )
+            return replayed, accepted, should_stop
+
+        started = utc_now()
+        summary = WorkspaceManager.diff_summary(workspace)
+        readiness = diff_bound_evidence(
+            task,
+            self.state.list_events(run_id),
+            summary.patch_hash,
+            presented_tool_results=context_evidence.get("tool_results", []),
+            phase=phase,
+        )
+        missing_evidence = list(readiness.missing_evidence)
+        missing_evidence.extend(additional_missing_evidence)
+        if arguments:
+            missing_evidence.append("empty_finish_arguments")
+        attempt_number = 1 + sum(
+            event.type == EventType.SUBMISSION_ATTEMPTED
+            for event in self.state.list_events(run_id)
+        )
+        accepted = not missing_evidence
+        if accepted:
+            submitted_patch_artifact = self.artifacts.put_text(
+                summary.patch,
+                "text/x-diff",
+            )
+            submitted_patch = submitted_patch_artifact.model_dump(mode="json")
+            artifact_payload = {
+                "tool": "finish_task",
+                "status": "succeeded",
+                "worktree_diff_hash": summary.patch_hash,
+                "accepted_for_evaluation": True,
+                "submitted_patch_artifact": submitted_patch,
+            }
+            artifact = self.artifacts.put_json(artifact_payload)
+            result = ToolResult(
+                action_id=action_id,
+                status="succeeded",
+                started_at=started,
+                finished_at=utc_now(),
+                output={
+                    "artifact_id": artifact.artifact_id,
+                    "artifact_path": artifact.path,
+                    "worktree_diff_hash": summary.patch_hash,
+                    "accepted_for_evaluation": True,
+                    "submission_attempt_number": attempt_number,
+                    "submission_method": "finish_task",
+                    "source_get_diff_sequence": readiness.review_event_sequence,
+                    "request_artifact_id": request_artifact_id,
+                    "complete_tool_result": True,
+                    "submitted_patch_artifact": submitted_patch,
+                },
+            )
+        else:
+            message = (
+                "submission is not ready: " + ", ".join(missing_evidence)
+            )
+            artifact_payload = {
+                "tool": "finish_task",
+                "status": "rejected",
+                "error_code": "SUBMISSION_NOT_READY",
+                "error_message": message,
+                "error_details": {
+                    "missing_evidence": missing_evidence,
+                    "recoverable": True,
+                },
+                "worktree_diff_hash": summary.patch_hash,
+            }
+            artifact = self.artifacts.put_json(artifact_payload)
+            result = ToolResult(
+                action_id=action_id,
+                status="rejected",
+                started_at=started,
+                finished_at=utc_now(),
+                output={
+                    "artifact_id": artifact.artifact_id,
+                    "artifact_path": artifact.path,
+                    "worktree_diff_hash": summary.patch_hash,
+                    "error_details": artifact_payload["error_details"],
+                    "submission_attempt_number": attempt_number,
+                    "submission_method": "finish_task",
+                },
+                error_code="SUBMISSION_NOT_READY",
+                error_message=message,
+            )
+        self.state.append_event(
+            run_id,
+            EventType.TOOL_CALLED,
+            actor="agent",
+            correlation_id=action_id,
+            payload={
+                "tool": "finish_task",
+                "input_hash": input_hash,
+                "recovery_result": result.model_dump(mode="json"),
+            },
+        )
+        self.state.record_action_result(run_id, action_id, input_hash, result)
+        durable_result = self.state.get_action_result(
+            run_id,
+            action_id,
+            input_hash,
+        )
+        if durable_result is None:
+            raise RecoveryError(
+                "finish_task action result was not durable after recording"
+            )
+        accepted, should_stop = self._reconcile_finish_task_lifecycle(
+            run_id,
+            action_id,
+            input_hash,
+            durable_result,
+        )
+        return durable_result, accepted, should_stop
+
+    def _reconcile_finish_task_lifecycle(
+        self,
+        run_id: str,
+        action_id: str,
+        input_hash: str,
+        result: ToolResult,
+    ) -> tuple[bool, bool]:
+        """Append only a missing suffix for one durable finish_task decision."""
+
+        attempt_number = result.output.get("submission_attempt_number")
+        diff_hash = result.output.get("worktree_diff_hash")
+        if not isinstance(attempt_number, int) or not isinstance(diff_hash, str):
+            raise RecoveryError(
+                "finish_task result lacks durable submission decision metadata"
+            )
+        accepted = bool(
+            result.status == "succeeded"
+            and result.output.get("accepted_for_evaluation") is True
+        )
+        expected: list[tuple[EventType, str, dict[str, Any]]] = [
+            (
+                EventType.TOOL_CALLED,
+                "agent",
+                {
+                    "tool": "finish_task",
+                    "input_hash": input_hash,
+                },
+            )
+        ]
+        if accepted:
+            source_sequence = result.output.get("source_get_diff_sequence")
+            request_artifact_id = result.output.get("request_artifact_id")
+            if not isinstance(source_sequence, int) or not isinstance(
+                request_artifact_id,
+                str,
+            ):
+                raise RecoveryError(
+                    "accepted finish_task result lacks final-review provenance"
+                )
+            expected.append(
+                (
+                    EventType.REVIEW_RECORDED,
+                    "submission-gate",
+                    {
+                        "worktree_diff_hash": diff_hash,
+                        "source_get_diff_sequence": source_sequence,
+                        "request_artifact_id": request_artifact_id,
+                        "complete_tool_result": True,
+                    },
+                )
+            )
+        expected.append(
+            (
+                EventType.SUBMISSION_ATTEMPTED,
+                "submission-gate",
+                {
+                    "attempt_number": attempt_number,
+                    "worktree_diff_hash": diff_hash,
+                    "submission_method": "finish_task",
+                },
+            )
+        )
+        expected.append(
+            (
+                (
+                    EventType.TOOL_SUCCEEDED
+                    if accepted
+                    else EventType.TOOL_FAILED
+                ),
+                "submission-gate",
+                {
+                    "tool": "finish_task",
+                    "status": result.status,
+                    "artifact_id": result.output.get("artifact_id"),
+                    "artifact_path": result.output.get("artifact_path"),
+                    "worktree_diff_hash": diff_hash,
+                    "error_code": result.error_code,
+                    "error_message": result.error_message,
+                    "duration_ms": int(
+                        (
+                            result.finished_at - result.started_at
+                        ).total_seconds()
+                        * 1000
+                    ),
+                    "submitted_patch_artifact": result.output.get(
+                        "submitted_patch_artifact"
+                    ),
+                },
+            )
+        )
+        if accepted:
+            expected.append(
+                (
+                    EventType.SUBMISSION_ACCEPTED,
+                    "submission-gate",
+                    {
+                        "attempt_number": attempt_number,
+                        "worktree_diff_hash": diff_hash,
+                        "accepted_for": "deterministic_evaluation",
+                        "evaluation_success_claimed": False,
+                        "submitted_patch_artifact": result.output.get(
+                            "submitted_patch_artifact"
+                        ),
+                    },
+                )
+            )
+        else:
+            missing_evidence = (
+                result.output.get("error_details", {}).get(
+                    "missing_evidence",
+                    [],
+                )
+            )
+            expected.append(
+                (
+                    EventType.SUBMISSION_REJECTED,
+                    "submission-gate",
+                    {
+                        "attempt_number": attempt_number,
+                        "worktree_diff_hash": diff_hash,
+                        "submission_method": "finish_task",
+                        "reason_code": "submission_preconditions_missing",
+                        "missing_evidence": missing_evidence,
+                    },
+                )
+            )
+
+        relevant_types = {
+            EventType.TOOL_CALLED,
+            EventType.TOOL_SUCCEEDED,
+            EventType.TOOL_FAILED,
+            EventType.REVIEW_RECORDED,
+            EventType.SUBMISSION_ATTEMPTED,
+            EventType.SUBMISSION_REJECTED,
+            EventType.SUBMISSION_ACCEPTED,
+        }
+        existing = [
+            event
+            for event in self.state.list_events(run_id)
+            if event.correlation_id == action_id
+            and event.type in relevant_types
+        ]
+        expected_types = [item[0] for item in expected]
+        existing_types = [event.type for event in existing]
+        if existing_types != expected_types[: len(existing_types)]:
+            raise RecoveryError(
+                "finish_task lifecycle is not a valid durable prefix"
+            )
+        for event, (_, actor, payload) in zip(
+            existing,
+            expected[: len(existing)],
+            strict=True,
+        ):
+            if event.actor != actor or any(
+                event.payload.get(key) != value
+                for key, value in payload.items()
+            ):
+                raise RecoveryError(
+                    "finish_task lifecycle conflicts with its action result"
+                )
+        for event_type, actor, payload in expected[len(existing) :]:
+            self.state.append_event(
+                run_id,
+                event_type,
+                actor=actor,
+                correlation_id=action_id,
+                payload=payload,
+            )
+        return (
+            accepted,
+            (
+                not accepted
+                and self._submission_rejection_count(run_id)
+                > _MAX_RECOVERABLE_SUBMISSION_REJECTIONS
+            ),
+        )
+
+    def _submission_rejection_count(self, run_id: str) -> int:
+        return sum(
+            event.type == EventType.SUBMISSION_REJECTED
+            for event in self.state.list_events(run_id)
+        )
+
+    def _reconcile_submission_recovery(
+        self,
+        *,
+        manifest: RunManifest,
+        task: PublicTask,
+        workspace: Path,
+        phase: Phase,
+        usage: Usage,
+    ) -> tuple[Phase, Checkpoint | None, ToolResult | None]:
+        """Repair an interrupted v2 submission before another model call."""
+
+        checkpoint = self.state.latest_checkpoint(manifest.run_id)
+        if manifest.tool_schema_version != "v2":
+            return phase, checkpoint, None
+        self._reconcile_unstructured_submission_lifecycle(manifest.run_id)
+        calls: dict[str, Any] = {}
+        for event in self.state.list_events(manifest.run_id):
+            if (
+                event.type == EventType.TOOL_CALLED
+                and event.payload.get("tool") == "finish_task"
+            ):
+                if event.correlation_id is None:
+                    raise RecoveryError(
+                        "finish_task ToolCalled event lacks correlation identity"
+                    )
+                if event.correlation_id in calls:
+                    raise RecoveryError(
+                        "finish_task action has duplicate ToolCalled events"
+                    )
+                calls[event.correlation_id] = event
+
+        accepted_results: list[ToolResult] = []
+        latest_rejected: ToolResult | None = None
+        for action_id, call_event in calls.items():
+            input_hash = call_event.payload.get("input_hash")
+            if not isinstance(input_hash, str):
+                raise RecoveryError(
+                    "finish_task ToolCalled event lacks its input hash"
+                )
+            result = self.state.get_action_result(
+                manifest.run_id,
+                action_id,
+                input_hash,
+            )
+            if result is None:
+                result = self._restore_finish_task_action_result(
+                    manifest.run_id,
+                    action_id,
+                    input_hash,
+                    call_event.payload.get("recovery_result"),
+                )
+            accepted, _ = self._reconcile_finish_task_lifecycle(
+                manifest.run_id,
+                action_id,
+                input_hash,
+                result,
+            )
+            if accepted:
+                accepted_results.append(result)
+            else:
+                latest_rejected = result
+
+        if len(accepted_results) > 1:
+            raise RecoveryError(
+                "run contains more than one accepted finish_task action"
+            )
+        rejection_count = self._submission_rejection_count(manifest.run_id)
+        if (
+            accepted_results
+            and rejection_count
+            > _MAX_RECOVERABLE_SUBMISSION_REJECTIONS
+        ):
+            raise RecoveryError(
+                "submission was accepted after the terminal rejection limit"
+            )
+        if accepted_results:
+            phase, checkpoint = self._complete_accepted_submission(
+                manifest=manifest,
+                task=task,
+                workspace=workspace,
+                phase=phase,
+                usage=usage,
+                result=accepted_results[0],
+            )
+            return phase, checkpoint, accepted_results[0]
+
+        if rejection_count > _MAX_RECOVERABLE_SUBMISSION_REJECTIONS:
+            raise SubmissionProtocolError(
+                "submission preconditions were rejected three times"
+            )
+        if latest_rejected is not None:
+            rejected_event = next(
+                event
+                for event in reversed(
+                    self.state.list_events(manifest.run_id)
+                )
+                if event.type == EventType.SUBMISSION_REJECTED
+                and event.correlation_id == latest_rejected.action_id
+            )
+            checkpoint = self.state.latest_checkpoint(manifest.run_id)
+            if (
+                checkpoint is None
+                or checkpoint.through_sequence < rejected_event.sequence
+            ):
+                checkpoint = self._checkpoint(
+                    manifest,
+                    workspace,
+                    phase,
+                    usage,
+                    latest_rejected,
+                    task=task,
+                )
+            else:
+                self._ensure_checkpoint_event(checkpoint)
+        return phase, checkpoint, None
+
+    def _restore_finish_task_action_result(
+        self,
+        run_id: str,
+        action_id: str,
+        input_hash: str,
+        raw_result: Any,
+    ) -> ToolResult:
+        try:
+            result = ToolResult.model_validate(raw_result)
+        except (TypeError, ValueError) as exc:
+            raise RecoveryError(
+                "interrupted finish_task lacks a recoverable action result"
+            ) from exc
+        if result.action_id != action_id:
+            raise RecoveryError(
+                "finish_task recovery result has a conflicting action identity"
+            )
+        self.state.record_action_result(
+            run_id,
+            action_id,
+            input_hash,
+            result,
+        )
+        restored = self.state.get_action_result(
+            run_id,
+            action_id,
+            input_hash,
+        )
+        if restored is None:
+            raise RecoveryError(
+                "restored finish_task action result was not durable"
+            )
+        return restored
+
+    def _reconcile_unstructured_submission_lifecycle(
+        self,
+        run_id: str,
+    ) -> None:
+        attempts = [
+            event
+            for event in self.state.list_events(run_id)
+            if event.type == EventType.SUBMISSION_ATTEMPTED
+            and event.payload.get("submission_method")
+            == "legacy_done_text"
+        ]
+        for attempt in attempts:
+            if attempt.correlation_id is None:
+                raise RecoveryError(
+                    "v2 legacy-DONE rejection lacks correlation identity"
+                )
+            outcomes = [
+                event
+                for event in self.state.list_events(run_id)
+                if event.type == EventType.SUBMISSION_REJECTED
+                and event.correlation_id == attempt.correlation_id
+            ]
+            if len(outcomes) > 1:
+                raise RecoveryError(
+                    "legacy-DONE attempt has duplicate rejection outcomes"
+                )
+            expected_payload = {
+                "attempt_number": attempt.payload.get("attempt_number"),
+                "worktree_diff_hash": attempt.payload.get(
+                    "worktree_diff_hash"
+                ),
+                "submission_method": "legacy_done_text",
+                "reason_code": "structured_finish_task_required",
+                "missing_evidence": ["structured_finish_task"],
+            }
+            if outcomes:
+                outcome = outcomes[0]
+                if (
+                    outcome.sequence <= attempt.sequence
+                    or any(
+                        outcome.payload.get(key) != value
+                        for key, value in expected_payload.items()
+                    )
+                ):
+                    raise RecoveryError(
+                        "legacy-DONE rejection conflicts with its attempt"
+                    )
+                continue
+            self.state.append_event(
+                run_id,
+                EventType.SUBMISSION_REJECTED,
+                actor="submission-gate",
+                correlation_id=attempt.correlation_id,
+                payload=expected_payload,
+            )
+
+    def _complete_accepted_submission(
+        self,
+        *,
+        manifest: RunManifest,
+        task: PublicTask,
+        workspace: Path,
+        phase: Phase,
+        usage: Usage,
+        result: ToolResult,
+    ) -> tuple[Phase, Checkpoint]:
+        diff_hash = result.output.get("worktree_diff_hash")
+        summary = WorkspaceManager.diff_summary(workspace)
+        if not isinstance(diff_hash, str) or summary.patch_hash != diff_hash:
+            raise RecoveryError(
+                "accepted submission does not match the current worktree diff"
+            )
+        try:
+            submitted_patch_artifact = Artifact.model_validate(
+                result.output["submitted_patch_artifact"]
+            )
+            submitted_patch_bytes = Path(
+                submitted_patch_artifact.path
+            ).read_bytes()
+        except (KeyError, OSError, TypeError, ValueError) as exc:
+            raise RecoveryError(
+                "accepted finish_task lacks its immutable patch artifact"
+            ) from exc
+        if (
+            submitted_patch_artifact.content_hash != diff_hash
+            or sha256_bytes(submitted_patch_bytes) != diff_hash
+        ):
+            raise RecoveryError(
+                "accepted finish_task patch artifact does not match its diff"
+            )
+        accepted_events = [
+            event
+            for event in self.state.list_events(manifest.run_id)
+            if event.type == EventType.SUBMISSION_ACCEPTED
+        ]
+        if (
+            len(accepted_events) != 1
+            or accepted_events[0].correlation_id != result.action_id
+            or accepted_events[0].payload.get("worktree_diff_hash")
+            != diff_hash
+            or accepted_events[0].payload.get(
+                "submitted_patch_artifact"
+            )
+            != submitted_patch_artifact.model_dump(mode="json")
+        ):
+            raise RecoveryError(
+                "accepted finish_task lacks one matching lifecycle event"
+            )
+        accepted_event = accepted_events[0]
+        done_transitions = [
+            event
+            for event in self.state.list_events(manifest.run_id)
+            if event.type == EventType.PHASE_CHANGED
+            and event.sequence > accepted_event.sequence
+            and event.payload.get("from") == Phase.REVIEW.value
+            and event.payload.get("to") == Phase.DONE.value
+        ]
+        if len(done_transitions) > 1:
+            raise RecoveryError(
+                "accepted submission has duplicate DONE transitions"
+            )
+        if done_transitions:
+            phase = Phase.DONE
+            done_transition = done_transitions[0]
+        else:
+            if phase != Phase.REVIEW:
+                raise RecoveryError(
+                    "accepted submission cannot transition to DONE "
+                    f"from {phase.value}"
+                )
+            phase = self._transition(
+                manifest.run_id,
+                phase,
+                Phase.DONE,
+            )
+            done_transition = next(
+                event
+                for event in reversed(
+                    self.state.list_events(manifest.run_id)
+                )
+                if event.type == EventType.PHASE_CHANGED
+                and event.payload.get("from") == Phase.REVIEW.value
+                and event.payload.get("to") == Phase.DONE.value
+            )
+
+        checkpoint = self.state.latest_checkpoint(manifest.run_id)
+        if (
+            checkpoint is not None
+            and checkpoint.phase == Phase.DONE
+            and checkpoint.worktree_diff_hash == diff_hash
+            and checkpoint.through_sequence >= done_transition.sequence
+        ):
+            self._ensure_checkpoint_event(checkpoint)
+            return phase, checkpoint
+        if (
+            checkpoint is not None
+            and checkpoint.through_sequence >= done_transition.sequence
+        ):
+            raise RecoveryError(
+                "checkpoint after submission acceptance is not a DONE checkpoint"
+            )
+        checkpoint = self._checkpoint(
+            manifest,
+            workspace,
+            phase,
+            usage,
+            result,
+            task=task,
+        )
+        return phase, checkpoint
+
+    def _ensure_checkpoint_event(self, checkpoint: Checkpoint) -> None:
+        events = [
+            event
+            for event in self.state.list_events(checkpoint.run_id)
+            if event.type == EventType.CHECKPOINT_SAVED
+            and event.payload.get("checkpoint_id")
+            == checkpoint.checkpoint_id
+        ]
+        if len(events) > 1:
+            raise RecoveryError(
+                "checkpoint has duplicate CheckpointSaved events"
+            )
+        expected = {
+            "checkpoint_id": checkpoint.checkpoint_id,
+            "through_sequence": checkpoint.through_sequence,
+            "worktree_diff_hash": checkpoint.worktree_diff_hash,
+        }
+        if events:
+            if any(
+                events[0].payload.get(key) != value
+                for key, value in expected.items()
+            ):
+                raise RecoveryError(
+                    "CheckpointSaved event conflicts with durable checkpoint"
+                )
+            return
+        self.state.append_event(
+            checkpoint.run_id,
+            EventType.CHECKPOINT_SAVED,
+            actor="state-store",
+            payload=expected,
+        )
+
+    def _phase_after_tool(
+        self,
+        run_id: str,
+        phase: Phase,
+        tool: str,
+        result: ToolResult,
+        task: PublicTask,
+        workspace: Path,
+    ) -> Phase:
+        if result.status != "succeeded":
+            return phase
+        if tool == "apply_patch":
+            if phase == Phase.REPRODUCE:
+                phase = self._transition(run_id, phase, Phase.PLAN)
+                return self._transition(run_id, phase, Phase.IMPLEMENT)
+            if phase == Phase.PLAN:
+                return self._transition(run_id, phase, Phase.IMPLEMENT)
+            if phase in {Phase.VERIFY, Phase.REVIEW}:
+                return self._transition(run_id, phase, Phase.IMPLEMENT)
+            return phase
+        if tool == "run_check":
+            if phase == Phase.REVIEW:
+                phase = self._transition(run_id, phase, Phase.IMPLEMENT)
+            if result.output.get("passed") is True:
+                if phase == Phase.IMPLEMENT:
+                    return self._transition(run_id, phase, Phase.VERIFY)
+                return phase
+            if phase == Phase.VERIFY:
+                return self._transition(run_id, phase, Phase.IMPLEMENT)
+            return phase
+        if tool == "get_diff":
+            summary = WorkspaceManager.diff_summary(workspace)
+            evidence = diff_bound_evidence(
+                task,
+                self.state.list_events(run_id),
+                summary.patch_hash,
+            )
+            if (
+                not evidence.mutation_present
+                or evidence.pending_checks
+                or evidence.review_event_sequence is None
+            ):
+                return phase
+            if phase == Phase.REPRODUCE:
+                phase = self._transition(run_id, phase, Phase.PLAN)
+            if phase == Phase.PLAN:
+                phase = self._transition(run_id, phase, Phase.IMPLEMENT)
+            if phase == Phase.IMPLEMENT:
+                phase = self._transition(run_id, phase, Phase.VERIFY)
+            if phase == Phase.VERIFY:
+                return self._transition(run_id, phase, Phase.REVIEW)
         return phase
 
     @staticmethod
@@ -907,7 +2016,11 @@ class AgentRunner:
         self, model: str, manifest: RunManifest, completed_tools: list[str]
     ) -> ModelAdapter:
         if model == "mock":
-            return MockModelAdapter(manifest.task_id, completed_tools)
+            return MockModelAdapter(
+                manifest.task_id,
+                completed_tools,
+                structured_finish=manifest.tool_schema_version == "v2",
+            )
         if model.startswith("replay:"):
             normalized_model, replay_path, replay_hash = self._replay_identity(model)
             if (
@@ -995,8 +2108,7 @@ class AgentRunner:
             elif event.type == EventType.TOOL_CALLED:
                 usage.tool_calls += 1
             elif event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}:
-                if event.actor == "tool-gateway":
-                    usage.wall_clock_ms += int(event.payload.get("duration_ms", 0))
+                usage.wall_clock_ms += int(event.payload.get("duration_ms", 0))
         manifest = self.state.get_manifest(run_id)
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         return usage

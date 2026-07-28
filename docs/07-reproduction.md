@@ -50,7 +50,8 @@ location. Set `PATCHLOOP_DOCKER_CLI` to an existing CLI path for a non-standard 
 
 ## Recovery demonstration
 
-Start with any completed mock run ID:
+This is a cooperative fault-injection demonstration after a durable patch checkpoint, not an
+operating-system process kill. Start with any completed mock run ID:
 
 ```powershell
 uv run patchloop inject-fault --run <baseline-run-id> --fault worker-kill-after-patch
@@ -66,8 +67,8 @@ CI never performs live calls. The checked-in live files are contracts, not proof
 
 - `experiments/dev-validation-pilot.template.yaml`: terminal Terra r3 contract; historical
   inspection only, never rerun
-- `experiments/dev-validation-gpt54mini-pilot.yaml`: Babel #1042, dated mini snapshot,
-  `no_memory` × 1, strict 90,000-token run budget, $2 cap
+- `experiments/dev-validation-gpt54mini-pilot.yaml`: terminal mini r1 contract;
+  historical inspection only, never rerun
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -87,35 +88,17 @@ uv run patchloop evaluate `
   --preflight-only
 ```
 
-The unapproved command intentionally exits with code 2 after printing JSON. Copy its
-`execution_hash` and inspect every blocker. It checks the frozen dataset/role/hash, the manifest's
-canonical task package path, public/private spec hash and base commit, the digest-pinned task
-environment and observed Docker image identity, clean commit, SDK, API-key presence without its
-value, absence of custom base URLs, exact mini snapshot/medium/default settings, strict 90,000-token
-budget, price age/rates and full-run budget reserve.
+The checked-in mini suite now refers to terminal experiment
+`dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
+`run_d4fea5e7198b4abc` passed prompt-token trace qualification but failed before evaluation, so the
+command above is inspection-only and should report the existing journal/terminal state. Do not add
+approval flags or execute this suite again.
 
-After the user separately approves at most $2, validate the same execution identity:
-
-```powershell
-uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-pilot.yaml `
-  --preflight-only `
-  --approve-live-cost `
-  --approved-execution-hash <sha256:...>
-```
-
-Only if this returns `ready=true`, execute with the same two approval flags:
-
-```powershell
-uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-pilot.yaml `
-  --approve-live-cost `
-  --approved-execution-hash <same-sha256:...>
-```
-
-Approval is invocation-only. Editing `live_cost_approved` or `approved_execution_hash` in YAML does
-not authorize spending. A Git change, image/SDK change, suite change or pilot qualification change
-produces a different execution hash.
+A corrective live retry requires the harness change to be committed, a new experiment ID and suite
+snapshot, a clean no-call preflight, review of its new execution hash and a separate user cost
+approval. This guide intentionally does not provide a ready-to-copy paid retry command before that
+new contract exists. Editing approval fields in YAML, deleting the old journal or changing only an
+experiment ID does not authorize spending.
 
 The paid command first persists
 `.patchloop/experiments/plans/<execution-hash>.json` as an approved
@@ -152,9 +135,8 @@ message. Hidden evaluator patch application remains strict.
 The resulting r3 `run_3cb86f8d70094a11` created a `trace-qualification-v1` artifact with
 `qualified=true`, `trace_integrity_passed=true`, `leakage_scan_passed=true` and
 `evaluation_reached=true`, and its official hidden/regression/scope/safety verdicts all passed.
-The development suite records that run ID. Return the worktree to a committed clean state, run the
-no-call development preflight, inspect its exact execution hash and separately approve at most $20
-before the 12-run campaign. The r3 pilot approval does not authorize the development campaign.
+This remains historical v1 evidence. The development suite intentionally leaves `pilot_run_id`
+empty because a v1 runtime cannot authorize the corrected v2 tool/context/lifecycle contract.
 
 Qualification also records a `source_evidence_hash` over the approved plan, manifest, ordered
 events, checkpoints, state/persisted result and agent-visible CAS artifact inventory. Required
@@ -171,26 +153,29 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure or qualification error
 and records remaining rows as not started.
 
-Three paid pilot calls exist when this guide was updated: two immutable failures and one accepted r3
-success. Their cumulative measured cost is `$0.828864375`. Docker availability, exact images,
+Four paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
+Terra r3 success and one immutable mini model-candidate failure. Their cumulative measured
+list-price cost is `$0.906317625`. Docker availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
 the separate 12-run development campaign.
 
-After checking in the r3 evidence and returning to a clean commit, generate the next gate without
-calling the model:
+After committing the v2 correction and returning to a clean worktree, create a new Terra
+development-validation pilot config and run its no-call preflight. It requires a new experiment
+ID, exact execution hash and separate approval capped at $2. Do not reuse the terminal r1-r3 or
+mini experiment IDs.
 
 ```powershell
 git status --short
 uv run patchloop evaluate `
-  --suite experiments/dev-no-memory.template.yaml `
+  --suite <new-v2-terra-pilot.yaml> `
   --preflight-only
 ```
 
-The suite contains `pilot_run_id: run_3cb86f8d70094a11`. Preflight reloads its immutable
-qualification, recomputes `source_evidence_hash`, and binds both identities into the new execution
-hash. The unapproved no-call command is expected to report approval blockers. Do not run the
-12-row suite until that exact hash, the cost reserve and every blocker have been reviewed and the
-user separately approves at most $20.
+Only after that run reaches the evaluator and produces a qualified
+`trace-qualification-v2` may its run ID be inserted into
+`experiments/dev-no-memory.template.yaml`. Development preflight then verifies the same model,
+budget, harness commit, tool/context versions and exact runtime-contract hash before producing a
+separate 12-row execution hash. That campaign still requires a distinct approval capped at $20.
 
 If a campaign halts or a row fails qualification, `patchloop report` may still export row-level
 CSV and available-case diagnostics for investigation. Confirm `analysis_ready=true` before using

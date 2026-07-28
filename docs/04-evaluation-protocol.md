@@ -112,12 +112,14 @@ Memory entry를 만들기 전에 live harness 자체를 development-validation t
 Frozen sequence는 다음과 같다.
 
 1. Babel #1042 development-validation task를 `no_memory`로 1회 실행한다.
-2. 그 run의 `trace-qualification-v1`이 trace integrity, leakage와 function-tool-loop를
-   통과했는지 확인하고, 별도 pilot acceptance에서 `evaluation_reached=true`인지 검사한다.
+2. 그 run의 `trace-qualification-v2`가 trace integrity, leakage, function-tool-loop와
+   v2 submission lifecycle을 통과했는지 확인하고, 별도 pilot acceptance에서
+   `evaluation_reached=true`인지 검사한다.
    성공 patch일 필요는 없지만 infrastructure error나 evaluator 미도달은 accepted pilot가
    아니다.
-3. Trace-qualified이면서 acceptance를 통과한 pilot run ID와 qualification hash를 다음
-   suite에 고정한다.
+3. Trace-qualified이면서 acceptance를 통과하고 development suite와 동일한 model,
+   budget, harness commit, tool/context runtime-contract hash를 가진 pilot run ID와
+   qualification hash를 다음 suite에 고정한다. Historical v1 pilot은 이 gate를 열지 않는다.
 4. Frozen memory-development 여섯 task를 `no_memory`로 task당 2회, 총 12회 실행한다.
 5. Qualification된 failure만 human review queue에 넣는다. Resolved run도 trace evidence로
    남지만 memory candidate는 아니다.
@@ -153,6 +155,31 @@ limit로 생략된 event 수와 12,000-character tool-result cap 적용을 별�
 따라서 `request count == response usage`여도 context builder가 의도적으로 제외한 evidence가
 있을 수 있고, 이를 “전체 과거 trace가 모델에 전달됐다”는 뜻으로 해석하지 않는다.
 
+새 `phase-evidence-v2` block은 eligible event를 먼저 고른 뒤 최근 12개를 선택하고,
+oversized tool artifact를 JSON parse 뒤 semantic field truncation한다. Final review
+acceptance에는 `get_diff` result가 available하고 `truncated=false`였다는 exact
+`ContextBuilt` evidence가 필요하다. 단순히 과거 어느 시점에 `get_diff`를 호출했거나
+passing check가 한 번 있었다는 사실은 제출 조건이 아니다.
+
+Agent submission protocol은 다음 순서를 고정한다.
+
+```text
+successful non-empty mutation
+→ every registered visible check passes on current diff hash
+→ get_diff succeeds after those checks on the same hash
+→ complete get_diff result is included in the next model request
+→ finish_task
+→ accepted patch bytes are frozen in CAS
+→ deterministic evaluator
+```
+
+뒤의 mutation은 앞선 check/review를 무효화하며, diff hash가 과거 값으로 되돌아와도
+이전 mutation epoch의 evidence를 재사용하지 않는다. Tool/patch 실패는 phase를 전이시키지
+않는다. 조기 `finish_task`는 즉시 run을 버리지 않고 structured reason을 다음 turn에
+돌려주며 두 번까지 복구를 허용한다. 세 번째 rejection은 `premature-stop`으로 분류한다.
+`SubmissionAccepted`는 evaluator 진입 승인이고 SCRR 성공은 evaluator의 별도 verdict다.
+Legacy v1 trace에는 새 lifecycle event를 합성하지 않는다.
+
 ## 5. Controlled variables
 
 한 experiment block 안에서 다음을 고정한다.
@@ -160,6 +187,7 @@ limit로 생략된 event 수와 12,000-character tool-result cap 적용을 별�
 - Model ID 또는 immutable snapshot과 sampling parameters
 - System prompt와 output schema
 - Tool schema와 retry/loop policy
+- Context policy와 submission lifecycle version
 - Repository base commit과 task version
 - Agent/evaluator container digest
 - Max model calls, tool calls, total tokens, wall clock
@@ -388,12 +416,14 @@ success/failure flip은 생성하지 않는다. 누락 row를 제외한 교집�
 - Memory builder가 private spec, hidden test, reference patch를 읽지 못하게 한다.
 - Failure classifier는 hidden check ID를 저장하지 않고 공개 check type/state와 opaque evidence
   locator만 저장한다.
-- `trace-qualification-v1` leakage scan은 private token의 본문을 결과에 복사하지 않고 match
+- `trace-qualification-v1`/`v2` leakage scan은 private token의 본문을 결과에 복사하지 않고 match
   count만 남긴다. 공개 contract에 이미 있는 generic structure marker/hidden check ID만
   예외로 하고 reference/hidden artifact identity와 API key는 항상 private로 검사한다.
 - Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
-  result와 agent-visible artifact inventory를 결속하며 development campaign preflight와
-  review/index admission 때 다시 계산한다.
+  result, agent-visible artifact inventory와 v2 accepted-patch CAS bytes를 결속하며
+  development campaign preflight와 review/index admission 때 다시 계산한다. v2 final-review
+  검사는 sidecar뿐 아니라 hashed request body의 user context를 parse해 exact `get_diff`
+  event와 complete patch payload가 실제 포함됐는지도 확인한다.
 - Review는 원본 failure record를 수정하지 않고 이전 review hash를 잇는 append-only
   `failure-review-v1` history로 기록한다.
 - Raw trace condition도 held-out solution trace를 검색 대상으로 사용하지 않는다.

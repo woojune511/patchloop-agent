@@ -7,9 +7,16 @@ from types import SimpleNamespace
 
 import pytest
 
-from patchloop.agent.model import ModelTurn, ModelTurnError, OpenAIResponsesAdapter
+from patchloop.agent.model import (
+    MOCK_TASK_SCRIPTS,
+    ModelTurn,
+    ModelTurnError,
+    OpenAIResponsesAdapter,
+    RequestedTool,
+)
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
 from patchloop.contracts import (
+    Artifact,
     Budget,
     EventType,
     ExperimentPurpose,
@@ -90,9 +97,26 @@ def test_offline_mock_agent_creates_complete_trace(
     assert runner.state.get_manifest(result["run_id"]).task_id == task_id
     assert [event.sequence for event in events] == list(range(1, len(events) + 1))
     assert sum(event.type == EventType.MODEL_CALLED for event in events) == 5
-    assert sum(event.type == EventType.TOOL_CALLED for event in events) == 4
+    assert sum(event.type == EventType.TOOL_CALLED for event in events) == 5
     assert any(event.type == EventType.PATCH_APPLIED for event in events)
+    assert any(event.type == EventType.REVIEW_RECORDED for event in events)
+    assert any(event.type == EventType.SUBMISSION_ATTEMPTED for event in events)
+    assert any(event.type == EventType.SUBMISSION_ACCEPTED for event in events)
     assert any(event.type == EventType.RUN_COMPLETED for event in events)
+    accepted = next(
+        event
+        for event in events
+        if event.type == EventType.SUBMISSION_ACCEPTED
+    )
+    submitted_artifact = Artifact.model_validate(
+        accepted.payload["submitted_patch_artifact"]
+    )
+    assert result["submitted_patch_artifact_id"] == (
+        submitted_artifact.artifact_id
+    )
+    assert sha256_bytes(Path(submitted_artifact.path).read_bytes()) == (
+        accepted.payload["worktree_diff_hash"]
+    )
     workspace = tmp_path / "runtime" / "workspaces" / result["run_id"] / "repo"
     assert not (workspace / ".patchloop-hidden").exists()
     result_path = (
@@ -527,6 +551,323 @@ def test_billed_model_parse_error_preserves_usage_and_cost(
     )
 
 
+def test_submission_gate_recovers_from_early_and_stale_review_attempts(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class RecoveringSubmissionAdapter:
+        def __init__(self) -> None:
+            script = MOCK_TASK_SCRIPTS["csv-quoted-newline"]
+            self.turns = [
+                RequestedTool("apply_patch", "recover-patch", {"patch": script.patch}),
+                RequestedTool("get_diff", "recover-early-diff", {}),
+                RequestedTool("finish_task", "recover-early-finish", {}),
+                RequestedTool(
+                    "run_check",
+                    "recover-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool("finish_task", "recover-stale-finish", {}),
+                RequestedTool("get_diff", "recover-final-diff", {}),
+                RequestedTool("finish_task", "recover-final-finish", {}),
+            ]
+            self.offset = 0
+
+        def next_turn(self, _context, _tools):
+            call = self.turns[self.offset]
+            self.offset += 1
+            return ModelTurn(tool_calls=[call])
+
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args: RecoveringSubmissionAdapter(),
+    )
+
+    result = runner.start(TASK, model="mock")
+    events = runner.state.list_events(result["run_id"])
+
+    assert result["scope_compliant_success"] is True
+    assert result["usage"]["tool_calls"] == 7
+    assert sum(
+        event.type == EventType.SUBMISSION_REJECTED for event in events
+    ) == 2
+    assert sum(
+        event.type == EventType.SUBMISSION_ACCEPTED for event in events
+    ) == 1
+    review = next(
+        event for event in events if event.type == EventType.REVIEW_RECORDED
+    )
+    accepted = next(
+        event for event in events if event.type == EventType.SUBMISSION_ACCEPTED
+    )
+    accepted_attempt = next(
+        event
+        for event in events
+        if event.type == EventType.SUBMISSION_ATTEMPTED
+        and event.correlation_id == accepted.correlation_id
+    )
+    assert review.sequence < accepted_attempt.sequence < accepted.sequence
+    assert review.payload["worktree_diff_hash"] == accepted.payload[
+        "worktree_diff_hash"
+    ]
+
+
+def test_submission_gate_rejects_noop_after_passing_checks_and_diff_review(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class NoopSubmissionAdapter:
+        def __init__(self) -> None:
+            self.turns = [
+                RequestedTool(
+                    "run_check",
+                    "noop-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool("get_diff", "noop-diff", {}),
+                RequestedTool("finish_task", "noop-finish-1", {}),
+                RequestedTool("finish_task", "noop-finish-2", {}),
+                RequestedTool("finish_task", "noop-finish-3", {}),
+            ]
+            self.offset = 0
+
+        def next_turn(self, _context, _tools):
+            call = self.turns[self.offset]
+            self.offset += 1
+            return ModelTurn(tool_calls=[call])
+
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args: NoopSubmissionAdapter(),
+    )
+
+    result = runner.start(TASK, model="mock")
+    events = runner.state.list_events(result["run_id"])
+    rejections = [
+        event
+        for event in events
+        if event.type == EventType.SUBMISSION_REJECTED
+    ]
+
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert len(rejections) == 3
+    assert all(
+        "successful_mutation_current_diff"
+        in event.payload["missing_evidence"]
+        for event in rejections
+    )
+    assert not any(
+        event.type == EventType.SUBMISSION_ACCEPTED for event in events
+    )
+
+
+def test_later_patch_invalidates_prior_passing_check(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class StaleCheckAdapter:
+        def __init__(self) -> None:
+            script = MOCK_TASK_SCRIPTS["csv-quoted-newline"]
+            second_patch = (
+                "diff --git a/mini_data_utils/csvlite.py "
+                "b/mini_data_utils/csvlite.py\n"
+                "--- a/mini_data_utils/csvlite.py\n"
+                "+++ b/mini_data_utils/csvlite.py\n"
+                "@@ -1,4 +1,4 @@\n"
+                '-\"\"\"A deliberately small CSV reader with one audited defect.\"\"\"\n'
+                '+\"\"\"A deliberately small CSV reader with one repaired defect.\"\"\"\n'
+                " \n"
+                " import csv\n"
+                " import io\n"
+            )
+            self.turns = [
+                RequestedTool("apply_patch", "stale-first-patch", {"patch": script.patch}),
+                RequestedTool(
+                    "run_check",
+                    "stale-first-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool(
+                    "apply_patch",
+                    "stale-second-patch",
+                    {"patch": second_patch},
+                ),
+                RequestedTool("get_diff", "stale-early-diff", {}),
+                RequestedTool("finish_task", "stale-early-finish", {}),
+                RequestedTool(
+                    "run_check",
+                    "stale-second-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool("get_diff", "stale-final-diff", {}),
+                RequestedTool("finish_task", "stale-final-finish", {}),
+            ]
+            self.offset = 0
+
+        def next_turn(self, _context, _tools):
+            call = self.turns[self.offset]
+            self.offset += 1
+            return ModelTurn(tool_calls=[call])
+
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args: StaleCheckAdapter(),
+    )
+
+    result = runner.start(TASK, model="mock")
+    events = runner.state.list_events(result["run_id"])
+
+    assert result["scope_compliant_success"] is True
+    check_events = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "run_check"
+    ]
+    assert len(check_events) == 2
+    assert check_events[0].payload["worktree_diff_hash"] != check_events[1].payload[
+        "worktree_diff_hash"
+    ]
+    rejected = next(
+        event for event in events if event.type == EventType.SUBMISSION_REJECTED
+    )
+    assert "visible_checks_current_diff" in rejected.payload["missing_evidence"]
+    checkpoint = runner.state.latest_checkpoint(result["run_id"])
+    assert checkpoint is not None
+    assert checkpoint.completed_checks == ["existing-unit-tests"]
+    assert checkpoint.pending_checks == []
+
+
+def test_rejected_patch_does_not_advance_phase_and_exposes_stage(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class InvalidPatchAdapter:
+        def __init__(self) -> None:
+            self.offset = 0
+
+        def next_turn(self, _context, _tools):
+            self.offset += 1
+            if self.offset == 1:
+                return ModelTurn(
+                    tool_calls=[
+                        RequestedTool(
+                            "apply_patch",
+                            "invalid-envelope",
+                            {"patch": "*** Begin Patch\n*** End Patch"},
+                        )
+                    ]
+                )
+            return ModelTurn(text="cannot continue")
+
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args: InvalidPatchAdapter(),
+    )
+
+    result = runner.start(TASK, model="mock")
+    events = runner.state.list_events(result["run_id"])
+
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    checkpoint = runner.state.latest_checkpoint(result["run_id"])
+    assert checkpoint is not None
+    assert checkpoint.phase == Phase.REPRODUCE
+    failed_patch = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("tool") == "apply_patch"
+    )
+    assert failed_patch.payload["error_details"]["stage"] == "format"
+    assert not any(
+        event.type == EventType.PHASE_CHANGED
+        and event.payload.get("to") in {"PLAN", "IMPLEMENT"}
+        for event in events
+    )
+
+
+def test_three_submission_rejections_are_terminal_and_classified(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class PrematureSubmissionAdapter:
+        def __init__(self) -> None:
+            self.offset = 0
+
+        def next_turn(self, _context, _tools):
+            self.offset += 1
+            return ModelTurn(
+                tool_calls=[
+                    RequestedTool(
+                        "finish_task",
+                        f"premature-finish-{self.offset}",
+                        {},
+                    )
+                ]
+            )
+
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args: PrematureSubmissionAdapter(),
+    )
+
+    result = runner.start(TASK, model="mock")
+    events = runner.state.list_events(result["run_id"])
+
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert result["terminal_error"]["type"] == "SubmissionProtocolError"
+    assert sum(
+        event.type == EventType.SUBMISSION_REJECTED for event in events
+    ) == 3
+    failure_files = list((tmp_path / "runtime" / "failures").rglob("*.json"))
+    assert len(failure_files) == 1
+    failure = json.loads(failure_files[0].read_text(encoding="utf-8"))
+    assert failure["primary_cause"] == "premature-stop"
+    assert failure["recoverability"] == "terminal"
+
+
+def test_evaluator_error_keeps_accepted_agent_submission(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+
+    def fail_evaluator(*_args, **_kwargs):
+        raise RuntimeError("synthetic evaluator outage")
+
+    monkeypatch.setattr(
+        "patchloop.agent.runner.EvaluationEngine.evaluate",
+        fail_evaluator,
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+
+    result = runner.start(TASK, model="mock")
+    events = runner.state.list_events(result["run_id"])
+
+    assert result["outcome_kind"] == RunOutcomeKind.INFRASTRUCTURE_ERROR.value
+    assert result["agent_submission_status"] == "completed"
+    assert result["evaluation_status"] == "not_run"
+    assert any(
+        event.type == EventType.SUBMISSION_ACCEPTED for event in events
+    )
+    assert events[-1].type == EventType.RUN_FAILED
+
+
 def test_fault_clone_preserves_replay_adapter_identity(monkeypatch) -> None:
     package = load_task_package(Path(TASK).parent)
     replay_model = f"replay:{SMOKE_REPLAYS['csv-quoted-newline']}"
@@ -710,6 +1051,48 @@ def test_run_check_untracked_output_fails_as_infrastructure_error(
     assert result["evaluation_status"] == "not_run"
 
 
+def test_run_check_tracked_mutation_closes_tool_evidence_and_usage(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    real_run_check = LocalSandbox.run_check
+
+    def run_check_and_mutate_tracked_file(self, workspace, check):
+        result = real_run_check(self, workspace, check)
+        target = workspace / "mini_data_utils" / "csvlite.py"
+        target.write_text(
+            target.read_text(encoding="utf-8") + "\n# check mutation\n",
+            encoding="utf-8",
+        )
+        return result
+
+    monkeypatch.setattr(
+        LocalSandbox,
+        "run_check",
+        run_check_and_mutate_tracked_file,
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+
+    result = runner.start(TASK, model="mock")
+    events = runner.state.list_events(result["run_id"])
+    failed_checks = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("tool") == "run_check"
+    ]
+
+    assert result["outcome_kind"] == RunOutcomeKind.INFRASTRUCTURE_ERROR.value
+    assert result["terminal_error"]["type"] == "RecoveryError"
+    assert len(failed_checks) == 1
+    assert failed_checks[0].payload["error_code"] == "RECOVERY_ERROR"
+    assert Path(failed_checks[0].payload["artifact_path"]).is_file()
+    assert result["usage"]["tool_calls"] == sum(
+        event.type == EventType.TOOL_CALLED for event in events
+    )
+
+
 def test_timeout_fault_is_recorded_without_repeating_command(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
     package = load_task_package("tasks/smoke/csv-quoted-newline")
@@ -732,5 +1115,5 @@ def test_timeout_fault_is_recorded_without_repeating_command(tmp_path, monkeypat
         and event.payload.get("timed_out") is True
     ]
     assert len(timed_out_checks) == 1
-    assert sum(event.type == EventType.TOOL_CALLED for event in events) == 4
+    assert sum(event.type == EventType.TOOL_CALLED for event in events) == 3
     assert events[-1].type == EventType.RUN_FAILED

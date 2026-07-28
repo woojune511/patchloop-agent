@@ -7,7 +7,7 @@ import httpx
 
 from patchloop.contracts import EventType, RunEvent
 from patchloop.util import utc_now
-from patchloop.web import _build_trace_view, app
+from patchloop.web import _build_trace_view, _checkpoint_action_label, app
 
 
 def _event(
@@ -103,6 +103,125 @@ def test_trace_view_prioritizes_critical_path_and_collapses_turns() -> None:
     assert trace["turns"][0]["tool_label"] == "run_check"
     assert trace["turns"][0]["tone"] == "bad"
     assert trace["turns"][0]["open"] is True
+    assert trace["lifecycle"]["submission"]["label"] == (
+        "legacy lifecycle telemetry unavailable"
+    )
+
+
+def test_trace_view_surfaces_review_and_submission_lifecycle() -> None:
+    events = [
+        _event(1, EventType.RUN_STARTED, {"task_id": "viewer-test"}),
+        _event(
+            2,
+            EventType.REVIEW_RECORDED,
+            {"source_get_diff_sequence": 1, "worktree_diff_hash": "sha256:diff"},
+        ),
+        _event(
+            3,
+            EventType.SUBMISSION_ATTEMPTED,
+            {"attempt_number": 1, "submission_method": "finish_task"},
+        ),
+        _event(
+            4,
+            EventType.SUBMISSION_ACCEPTED,
+            {"accepted_for": "deterministic_evaluation"},
+        ),
+        _event(
+            5,
+            EventType.RUN_COMPLETED,
+            {"scope_compliant_success": False},
+        ),
+    ]
+
+    trace = _build_trace_view(events)
+
+    assert trace["lifecycle"]["review"]["label"] == "final diff review recorded"
+    assert trace["lifecycle"]["submission"]["label"] == (
+        "submission accepted for evaluator"
+    )
+    assert [item["event"].sequence for item in trace["critical"]] == [
+        1,
+        2,
+        3,
+        4,
+        5,
+    ]
+
+
+def test_v2_trace_distinguishes_no_submission_from_incomplete_attempt() -> None:
+    no_submission = _build_trace_view(
+        [_event(1, EventType.RUN_STARTED)],
+        tool_schema_version="v2",
+    )
+    incomplete = _build_trace_view(
+        [
+            _event(1, EventType.RUN_STARTED),
+            _event(
+                2,
+                EventType.SUBMISSION_ATTEMPTED,
+                {
+                    "attempt_number": 1,
+                    "worktree_diff_hash": "sha256:diff",
+                },
+            ),
+        ],
+        tool_schema_version="v2",
+    )
+
+    assert no_submission["lifecycle"]["submission"]["label"] == (
+        "submission not attempted"
+    )
+    assert no_submission["lifecycle"]["review"]["label"] == (
+        "final diff review not reached"
+    )
+    assert incomplete["lifecycle"]["submission"]["label"] == (
+        "1 submission attempt(s) have no recorded outcome"
+    )
+    assert incomplete["lifecycle"]["review"]["label"] == (
+        "final diff review not recorded"
+    )
+
+
+def test_checkpoint_action_label_does_not_call_empty_plan_complete() -> None:
+    pending = SimpleNamespace(
+        phase=SimpleNamespace(value="VERIFY"),
+        current_plan=[],
+    )
+    done = SimpleNamespace(
+        phase=SimpleNamespace(value="DONE"),
+        current_plan=[],
+    )
+
+    assert _checkpoint_action_label(pending) == (
+        "recomputed in the next model context"
+    )
+    assert _checkpoint_action_label(done) == "submission complete"
+
+
+def test_failed_visible_check_is_bad_and_opens_its_turn() -> None:
+    events = [
+        _event(1, EventType.CONTEXT_BUILT),
+        _event(2, EventType.MODEL_CALLED),
+        _event(3, EventType.TOOL_CALLED, {"tool": "run_check"}),
+        _event(
+            4,
+            EventType.TOOL_SUCCEEDED,
+            {
+                "tool": "run_check",
+                "check_id": "visible",
+                "passed": False,
+                "timed_out": False,
+            },
+        ),
+    ]
+
+    trace = _build_trace_view(events, tool_schema_version="v2")
+
+    assert trace["turns"][0]["tone"] == "bad"
+    assert trace["turns"][0]["open"] is True
+    assert trace["critical"][0]["event"].sequence == 4
+    assert trace["critical"][0]["tone"] == "bad"
+    assert trace["critical"][0]["summary"] == "run_check failed · visible"
 
 
 def test_run_route_renders_summary_before_collapsible_raw_trace(
@@ -128,6 +247,7 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
     manifest = SimpleNamespace(
         run_id="run_viewer_test",
         task_id="viewer-test",
+        tool_schema_version="v1",
         memory=SimpleNamespace(condition=SimpleNamespace(value="no_memory")),
         model=SimpleNamespace(
             model_id="gpt-test",
@@ -185,6 +305,7 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
     assert "Critical path" in response.text
     assert "Model turns" in response.text
     assert "All 6 raw events" in response.text
+    assert "legacy lifecycle telemetry unavailable" in response.text
     assert response.text.index("Critical path") < response.text.index(
         "All 6 raw events"
     )

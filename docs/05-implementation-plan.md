@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **Memory-development no-memory campaign preflight and collection**
+현재 milestone: **v2 Terra corrective pilot preflight**
 
 2026-07-28 구현 스냅샷:
 
@@ -9,11 +9,11 @@
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
-| Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
+| Phase 3 state machine | done (v2 corrective gate offline-verified) | Current-diff check/review와 structured submission gate |
+| Phase 4 recovery | partial (cooperative offline) | Same-process suspend/resume와 9개 injected submission boundary에서 duplicate mutation/lifecycle 0; 실제 OS worker kill/restart 미검증 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | accepted pilot complete, development campaign pending | r3가 official SCRR와 trace qualification을 통과; 세 pilot 누적 비용 $0.828864375 |
-| Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
+| Phase 6 evaluation | historical v1 pilot complete, v2 pilot pending | r3가 당시 official SCRR와 v1 qualification을 통과했지만 v2 campaign gate에는 재사용하지 않음 |
+| Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
 `duration-minute-boundary`, `csv-final-record-flush`는 evaluator, sandbox와 authoring workflow를
@@ -33,7 +33,9 @@ stress schedule은 아직 실행되지 않았고, Live OpenAI와 96-run core cam
 
 ## 1. Sequencing rule
 
-다음 phase는 현재 phase의 exit gate가 executable evidence로 통과한 뒤 시작한다. UI와 GitHub 연동은 Phase 6의 core experiment가 재현된 뒤에만 시작한다.
+다음 phase는 현재 phase의 exit gate가 executable evidence로 통과한 뒤 시작한다. 현재
+read-only trace viewer는 pilot 진단을 위한 선행 도구다. Condition comparison dashboard와
+GitHub 연동은 Phase 6의 core experiment가 재현된 뒤에만 시작한다.
 
 ```text
 Evaluation foundation
@@ -91,7 +93,7 @@ task의 no-memory development trace를 qualification하는 것이다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — pilot passed, development campaign pending
+## Current live trace gate — historical v1 pilot passed, v2 pilot pending
 
 목표: 첫 paid call 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -103,10 +105,11 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 1 | implemented, live contract exercised | `experiment-v2` explicit purpose와 exact suite shape | Wrong task/role/repetition/model/budget contract reject |
 | 2 | implemented, r3 host accepted; clean-machine reproduction pending | Canonical task/private hash/digest environment preflight, durable approved plan과 live capability | Unapproved/hash mismatch/dirty Git/wrong package/private/image/stale price reject |
 | 3 | implemented, interrupted-run recovery pending | Paid call 전 fsync하는 hash-chained campaign journal | Existing journal이 hard-crash 뒤 새 schedule 시작을 차단; 자동 resume은 미구현 |
-| 4 | implemented, three live artifacts observed | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | r2의 trace qualification과 r3의 accepted qualification이 원시 evidence에 결속됨 |
-| 5 | passed on r3 | Babel #1042 `no_memory` 1회 pilot, $2 cap | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass |
-| 6 | pending new preflight and approval | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
-| 7 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
+| 4 | implemented, legacy artifacts preserved | Source-evidence-bound `trace-qualification-v1`/`v2`와 sanitized failure linkage | v1 artifact byte stability, v2 runtime/lifecycle/provenance binding |
+| 5 | historical v1 evidence only | Babel #1042 `no_memory` r3 pilot | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass; current v2 gate에는 부적격 |
+| 6 | pending clean commit, preflight and approval | Corrected v2 Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, evaluator reached |
+| 7 | blocked on order 6 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
+| 8 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
 Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
 `standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.
@@ -136,6 +139,24 @@ exact count와 생성 응답 `usage.input_tokens`를 대조하고 `truncation=di
 status, incomplete reason 없음과 total/reasoning token 불변식을 qualification에서 검사한다.
 기존 r1~r3는 새 telemetry가 없는 immutable legacy evidence이며 새 필드를 소급 생성하지 않는다.
 
+### 2026-07-29 model-candidate pilot corrective gate
+
+`run_d4fea5e7198b4abc`는 mini dated snapshot, medium, 90,000-token 계약으로 실행돼
+exact prompt-token telemetry를 남겼지만 `VERIFY → DONE` 전이 오류로 evaluator 전에
+끝났다. 이 terminal run과 qualification은 수정하지 않는다.
+
+후속 harness change는 새 non-replay manifest만 `tool_schema_version=v2`와
+`context_policy_version=phase-evidence-v2`로 생성한다. Current worktree diff에 결합된
+최신 visible check, 그 뒤의 `get_diff`, complete/untruncated result가 다음 request에
+포함됐다는 evidence와 `finish_task`를 제출 gate로 사용한다. 두 번의 recoverable
+submission rejection, 세 번째 `premature-stop`, 성공 뒤 phase 전이, structured patch
+error, advisory repeat signal, current-diff checkpoint와 viewer lifecycle을 offline test로
+검증했다. 기존 v1 replay와 r1~r3 및 mini r1 trace는 그대로 유지한다.
+
+이 corrective gate는 아직 live model로 재검증하지 않았다. 새 paid retry는 change를
+commit한 뒤 새 experiment ID/config, clean execution hash, no-call preflight와 별도
+사용자 비용 승인이 있어야 한다.
+
 2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
 output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
 남긴다.
@@ -147,16 +168,16 @@ generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 9
 runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더한 운영상 안전
 margin이다.
 
-### Pilot gate — passed; development gate — not run
+### Historical v1 pilot — passed; current v2 pilot gate — not run
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
 - 실제 환경에서 approval을 포함한 preflight가 `ready=true`다.
-- 사용자가 $2 pilot을 별도로 승인한 뒤 한 run이 `trace-qualification-v1`과
-  `evaluation_reached=true` pilot acceptance를 함께 통과한다.
-- Accepted pilot run ID `run_3cb86f8d70094a11`을 development suite에 고정했다. Preflight는
-  qualification hash와 현재 `source_evidence_hash`를 artifact에서 다시 읽어 새 execution
-  hash에 결속한다.
+- 사용자가 $2 pilot을 별도로 승인한 뒤 historical r3가 `trace-qualification-v1`과
+  `evaluation_reached=true` 당시 acceptance를 함께 통과했다.
+- 새 v2 development suite는 r3를 고정하지 않는다. 같은 Terra model/budget, harness
+  commit, tool/context runtime-contract hash의 `trace-qualification-v2` pilot이 새로
+  통과하기 전에는 `pilot_run_id`를 비워 두고 preflight를 차단한다.
 - 12-run campaign은 새 clean commit의 no-call preflight, exact execution hash 검토와 별도
   $20 승인 전에는 시작하지 않는다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
@@ -244,7 +265,8 @@ patchloop eval-task tasks/dev/task_001
 ### Work items
 
 - Provider-neutral model adapter와 deterministic mock/replay adapter
-- `list_tree`, `search_repo`, `read_file`, `apply_patch`, `run_check`, `inspect_diff`
+- `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff`
+- Structured `finish_task` orchestrator action과 current-diff submission gate
 - Tool schema/policy gateway와 action identity
 - Basic ReAct loop와 stop/budget policy
 - Model/tool event logging과 usage accounting
@@ -267,7 +289,7 @@ patchloop eval-task tasks/dev/task_001
 - 허용된 backward transition과 invalid transition guard
 - Phase별 required artifact schema
 - Context builder와 remaining-budget section
-- `write_checkpoint`, `finish_task` orchestrator action
+- Runner-owned durable checkpoint와 agent-visible `finish_task` orchestrator action
 
 ### Exit gate
 
@@ -295,6 +317,14 @@ patchloop eval-task tasks/dev/task_001
 - Patch와 완료 action을 중복 적용하지 않는다.
 - Corrupt checkpoint/hash mismatch는 안전하게 fail한다.
 - 정상/장애 run 모두 evaluator 결과까지 연결된다.
+
+현재 executable evidence는 fault injector가 첫 durable patch checkpoint 또는 선택한
+submission lifecycle event 뒤 `InjectedFault`로 run을 cooperative하게 `suspended` 상태로
+만들고, 같은 Python process와 `AgentRunner` instance에서 `resume`하는 offline test다.
+실제 operating-system worker process 종료, interpreter 재시작 뒤의 resume, OpenAI live
+run resume와 중단된 paid campaign journal resume은 검증하거나 구현하지 않았다. 따라서
+위 exit gate 중 duplicate mutation/lifecycle과 corrupt-state fail-closed 경계만 통과했으며,
+실제 worker kill/restart recovery gate는 아직 pending이다.
 
 ## Phase 5. Failure Taxonomy and Memory
 
@@ -347,16 +377,17 @@ patchloop eval-task tasks/dev/task_001
 
 ## Phase 7. Viewer and GitHub Demo
 
-목표: 핵심 evidence를 빠르게 검토할 수 있게 하고 portfolio demo를 완성한다.
+목표: 핵심 evidence를 빠르게 검토할 수 있게 하고 portfolio demo를 완성한다. 현재는
+run trace 진단 subset만 구현됐고 comparison/dashboard 및 GitHub demo는 pending이다.
 
 ### Minimal viewer
 
-- Run list와 task/condition/status/cost
-- Run timeline과 model/tool detail
-- Patch diff와 checkpoint history
-- Verifier result와 failure classification
-- Retrieved memory와 no-match decision
-- Condition comparison과 task heatmap
+- Implemented: Run list와 task/condition/status/cost
+- Implemented: critical path, collapsed model turns와 raw event payload
+- Implemented: Patch diff, checkpoint history와 raw verifier result
+- Implemented: Retrieved memory event 표시
+- Pending: structured failure-record view와 no-match summary
+- Pending: Condition comparison과 task heatmap
 
 ### GitHub demo
 

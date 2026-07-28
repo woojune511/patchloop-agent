@@ -77,6 +77,11 @@ class EventType(StrEnum):
     PATCH_APPLIED = "PatchApplied"
     CHECK_STARTED = "CheckStarted"
     CHECK_FINISHED = "CheckFinished"
+    REVIEW_RECORDED = "ReviewRecorded"
+    SUBMISSION_ATTEMPTED = "SubmissionAttempted"
+    SUBMISSION_REJECTED = "SubmissionRejected"
+    SUBMISSION_ACCEPTED = "SubmissionAccepted"
+    LOOP_DETECTED = "LoopDetected"
     CHECKPOINT_SAVED = "CheckpointSaved"
     FAILURE_TAGGED = "FailureTagged"
     FAULT_INJECTED = "FaultInjected"
@@ -787,7 +792,7 @@ class Checkpoint(StrictModel):
 
 class ToolCall(StrictModel):
     tool: str
-    tool_schema_version: Literal["v1"] = "v1"
+    tool_schema_version: Literal["v1", "v2"] = "v1"
     action_id: str
     run_id: str
     input: dict[str, Any] = Field(default_factory=dict)

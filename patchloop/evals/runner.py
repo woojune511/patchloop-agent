@@ -15,7 +15,9 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
+from patchloop.agent.model import SYSTEM_PROMPT_V2
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
+from patchloop.agent.tools import TOOL_SCHEMAS_V2
 from patchloop.contracts import (
     Budget,
     DatasetRole,
@@ -390,7 +392,27 @@ def _openai_sdk_state() -> dict[str, Any]:
     return {"installed": installed_version is not None, "version": installed_version}
 
 
-def _pilot_qualification(run_id: str | None) -> dict[str, Any]:
+def _expected_runtime_contract_hash() -> str:
+    content = json.dumps(
+        {
+            "system_prompt": SYSTEM_PROMPT_V2,
+            "tools": TOOL_SCHEMAS_V2,
+            "tool_schema_version": "v2",
+            "context_policy_version": "phase-evidence-v2",
+        },
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    )
+    return sha256_bytes(content.encode("utf-8"))
+
+
+def _pilot_qualification(
+    run_id: str | None,
+    suite: ExperimentSuite,
+    *,
+    expected_harness_commit: str,
+) -> dict[str, Any]:
     if run_id is None:
         return {"run_id": None, "qualified": False, "reason": "missing pilot_run_id"}
     try:
@@ -414,7 +436,60 @@ def _pilot_qualification(run_id: str | None) -> dict[str, Any]:
             "qualification_hash": payload.get("qualification_hash"),
             "reason": "pilot source evidence hash mismatch",
         }
-    required = (
+    expected_runtime_hash = _expected_runtime_contract_hash()
+    contract_mismatches = [
+        field
+        for field, actual, expected in (
+            ("schema_version", payload.get("schema_version"), "trace-qualification-v2"),
+            ("model_provider", payload.get("model_provider"), "openai"),
+            ("model_id", payload.get("model_id"), suite.model_id),
+            (
+                "reasoning_effort",
+                payload.get("reasoning_effort"),
+                suite.reasoning_effort,
+            ),
+            (
+                "reasoning_mode",
+                payload.get("reasoning_mode"),
+                suite.reasoning_mode,
+            ),
+            ("service_tier", payload.get("service_tier"), suite.service_tier),
+            (
+                "max_output_tokens",
+                payload.get("max_output_tokens"),
+                suite.max_output_tokens,
+            ),
+            (
+                "budget",
+                payload.get("budget"),
+                suite.budget.model_dump(mode="json"),
+            ),
+            (
+                "harness_git_commit",
+                payload.get("harness_git_commit"),
+                expected_harness_commit,
+            ),
+            ("tool_schema_version", payload.get("tool_schema_version"), "v2"),
+            (
+                "context_policy_version",
+                payload.get("context_policy_version"),
+                "phase-evidence-v2",
+            ),
+            (
+                "runtime_contract_content_hash",
+                payload.get("runtime_contract_content_hash"),
+                expected_runtime_hash,
+            ),
+            (
+                "memory_condition",
+                payload.get("memory_condition"),
+                MemoryCondition.NO_MEMORY.value,
+            ),
+            ("fault_type", payload.get("fault_type"), "none"),
+        )
+        if actual != expected
+    ]
+    evidence_required = (
         payload.get("purpose")
         == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT.value
         and payload.get("qualified") is True
@@ -422,6 +497,7 @@ def _pilot_qualification(run_id: str | None) -> dict[str, Any]:
         and payload.get("leakage_scan_passed") is True
         and payload.get("evaluation_reached") is True
     )
+    required = evidence_required and not contract_mismatches
     return {
         "run_id": run_id,
         "qualified": required,
@@ -429,6 +505,21 @@ def _pilot_qualification(run_id: str | None) -> dict[str, Any]:
         "source_evidence_hash": recorded_source_hash,
         "purpose": payload.get("purpose"),
         "outcome_kind": payload.get("outcome_kind"),
+        "runtime_contract_content_hash": payload.get(
+            "runtime_contract_content_hash"
+        ),
+        "expected_runtime_contract_content_hash": expected_runtime_hash,
+        "contract_mismatches": contract_mismatches,
+        "reason": (
+            None
+            if required
+            else (
+                "pilot runtime/model contract mismatch: "
+                + ", ".join(contract_mismatches)
+                if contract_mismatches
+                else "pilot evidence requirements are not satisfied"
+            )
+        ),
     }
 
 
@@ -680,7 +771,11 @@ def preflight_suite(
         ),
     }
     pilot_qualification = (
-        _pilot_qualification(suite.pilot_run_id)
+        _pilot_qualification(
+            suite.pilot_run_id,
+            suite,
+            expected_harness_commit=str(git_state.get("commit")),
+        )
         if suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
         else {"run_id": None, "qualified": None}
     )

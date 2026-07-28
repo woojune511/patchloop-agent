@@ -91,6 +91,10 @@ def build_manifest(
         public_spec_hash=package.public_spec_hash,
         private_spec_hash=package.private_spec_hash,
         harness_git_commit=git_commit(),
+        tool_schema_version="v1" if provider == "replay" else "v2",
+        context_policy_version=(
+            "v1" if provider == "replay" else "phase-evidence-v2"
+        ),
         model=ModelConfig(
             provider=provider,
             model_id=model_id,

@@ -22,12 +22,24 @@ schedule을 machine audit한 뒤 dataset manifest를 동결했다. 이 동결은
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 현재 live 경로에는 `experiment-v2` purpose, 비용 승인 preflight, durable execution plan,
-hash-chained campaign journal과 `trace-qualification-v1`이 구현돼 있다. Babel #1042의
+hash-chained campaign journal과 legacy `trace-qualification-v1`/신규
+`trace-qualification-v2`가 구현돼 있다. Babel #1042의
 paid development-validation pilot 세 회를 2026-07-28 실행했다. r1과 r2는 각각 tool
 grammar와 hunk line-count 상호운용성 문제로 evaluator 전에 실패했고, r3
 `run_3cb86f8d70094a11`은 제출 patch와 official hidden/regression/scope/safety verdict,
-trace qualification을 모두 통과했다. Accepted pilot gate는 통과했지만 여섯
-memory-development task의 12-run no-memory campaign은 아직 실행하지 않았다.
+당시 v1 trace qualification을 모두 통과했다. 이후 tool/context/lifecycle 계약이 v2로
+바뀌었으므로 이 historical pilot은 새 campaign을 열지 않는다. 여섯 memory-development
+task의 12-run no-memory campaign도 아직 실행하지 않았다.
+
+2026-07-29의 별도 model-candidate pilot `run_d4fea5e7198b4abc`는
+`gpt-5.4-mini-2026-03-17`로 exact prompt-token telemetry를 확인했지만, agent가
+`VERIFY`에서 legacy `DONE`을 반환해 evaluator 전에 종료됐다. 이 immutable run은
+16 model call, 25 tool call, 66,287 input + 6,164 output token과 `$0.07745325`를
+기록했으며 성공이나 accepted pilot가 아니다. 원인 뒤에는 새 run용
+`tool_schema_version=v2`/`phase-evidence-v2`를 구현했다. 현재-diff check,
+완전한 final `get_diff` 제시와 구조화 `finish_task`를 제출 조건으로 묶고, 잘못된
+제출은 두 번까지 model-visible rejection으로 돌려준다. 이 교정은 offline test만
+통과했으며 live 재실행 evidence는 아직 없다.
 
 ## 구현된 핵심 경로
 
@@ -44,9 +56,11 @@ public.yaml → stateless context builder → model adapter
 - Mock/replay/OpenAI Responses adapters; OpenAI adapter는 `store=false`, current-turn context를 사용
 - 새 live turn은 exact logical request와 context-policy omission evidence를 CAS에 저장하고,
   Responses input-token pre-count와 실제 usage를 대조하며 `truncation=disabled`를 강제
-- Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff` 도구만 허용
+- Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff`와
+  orchestrator control `finish_task`만 허용
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
-- `action_id + input_hash` idempotency, context reset과 worker-kill-derived run
+- `action_id + input_hash` idempotency, context reset과 cooperative
+  worker-kill-after-checkpoint fault run; 실제 OS worker restart는 pending
 - Dataset role이 `memory-development`인 reviewed failure 전용 structured/raw memory index
 - Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report. 불완전하거나
   qualification-failed인 matrix는 diagnostic으로만 남기고 headline/paired 결과를 억제
@@ -93,7 +107,9 @@ public.yaml → stateless context builder → model adapter
   reference 3/3과 독립 dynamic-interface equivalent 1/1이 통과했고 no-op, semantic
   partial 9종과 forbidden scope/test-tampering patch를 거부했다.
 
-성공은 agent의 `DONE`이 아니라 다음 evaluator 결과의 논리곱이다.
+새 run에서 agent 제출은 `DONE` 문자열이 아니라 current-diff evidence gate를 통과한
+`finish_task`다. `SubmissionAccepted`도 정답 판정이 아니라 evaluator에 넘길 수 있다는
+뜻이며, 성공은 다음 evaluator 결과의 논리곱이다.
 
 ```text
 hidden acceptance
@@ -201,11 +217,13 @@ r3 evidence는 `run_3cb86f8d70094a11`이다. 별도 승인된 execution hash
 regression, scope와 safety를 모두 통과시켜 `scope_compliant_success=true`를 기록했다.
 72개 monotonic event와 15개 checkpoint의 qualification도 integrity, leakage,
 usage reconciliation과 `evaluation_reached=true`를 모두 통과했다. 세 pilot의 누적 비용은
-`$0.828864375`다. 이 결과는 accepted pilot evidence이며 12-run development campaign의
-실행 결과나 memory 효과 증거는 아니다.
+`$0.828864375`다. 이 결과는 historical v1 accepted-pilot evidence이며, 현재 v2
+development campaign의 선행 gate나 memory 효과 증거는 아니다.
 
-다음 gate인 12-run development campaign은 먼저 API call을 하지 않는 preflight만
-실행한다.
+다음 paid gate는 새 v2 Terra development-validation pilot이다. 먼저 correction을
+commit해 clean harness commit을 만든 뒤, API call을 하지 않는 pilot preflight를
+실행한다. 아래 12-run development campaign preflight는 그 pilot이 evaluator에 도달하고
+`trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만 실행한다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -260,11 +278,13 @@ cache write $3.125, output $15다. 가격 source는
 `gpt-5.6-terra` alias만 제공되므로 SDK version, Git commit과 72시간 execution window를
 provenance로 남긴다.
 
-Accepted r3의 run ID를 no-memory development suite에 고정한 뒤 새 execution hash를
-preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
+새 v2 Terra pilot이 model, budget, harness commit, runtime-contract hash와
+`trace-qualification-v2`를 모두 통과한 뒤에만 그 run ID를 no-memory development
+suite에 넣고 새 execution hash를 preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
 input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
 Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
-persisted result와 agent-visible content-addressed artifact inventory를 결속한다. 필수
+persisted result와 agent-visible content-addressed artifact inventory를 결속한다. v2는
+`SubmissionAccepted` 안의 nested submitted-patch CAS bytes도 직접 다시 hash한다. 필수
 `RunStarted`/`ContextBuilt`/`ModelCalled` artifact reference, cache usage 불변식과 malformed
 function-call response의 이미 과금된 usage도 검사·보존하며, development campaign
 preflight와 memory review/index admission은 현재 source evidence hash를 다시 계산한다.
@@ -282,8 +302,9 @@ count와 4,096-token response allowance가 남은 90,000 안에 함께 들어가
 call을 시작하지 않는다.
 세 pilot은 기존 usage/source-evidence 보존 경로를 실제 provider에서 확인했다. r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
-hash에서 accepted pilot를 만들었다. 다음 paid gate는 이 r3 evidence와 새 clean harness
-commit에 결속된 12-run development campaign preflight와 별도 $20 승인이다.
+hash에서 v1 accepted pilot를 만들었다. 다음 paid gate는 새 clean harness commit에
+결속된 v2 Terra pilot의 no-call preflight와 별도 $2 승인이다. 그 pilot이 통과하기 전에는
+12-run development campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

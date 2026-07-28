@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.contracts import (
+    Artifact,
     Budget,
     DatasetRole,
     EventType,
@@ -30,7 +31,12 @@ from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
-QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v1"
+LEGACY_QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v1"
+QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v2"
+_SUPPORTED_QUALIFICATION_SCHEMA_VERSIONS = {
+    LEGACY_QUALIFICATION_SCHEMA_VERSION,
+    QUALIFICATION_SCHEMA_VERSION,
+}
 _TERRA_MODEL_ID = "gpt-5.6-terra"
 _GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 _GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
@@ -50,6 +56,8 @@ _REQUIRED_ARTIFACT_EVENTS = {
     EventType.MODEL_CALLED,
 }
 _SOURCE_EVIDENCE_SCHEMA_VERSION = "trace-source-evidence-v1"
+_SOURCE_EVIDENCE_SCHEMA_VERSION_V2 = "trace-source-evidence-v2"
+_EMPTY_DIFF_HASH = sha256_text("")
 
 
 def _runtime_root(root: str | Path | None) -> Path:
@@ -61,7 +69,7 @@ def qualification_path(run_id: str, *, root: str | Path | None = None) -> Path:
 
 
 def _checked_payload(payload: dict[str, Any]) -> dict[str, Any]:
-    if payload.get("schema_version") != QUALIFICATION_SCHEMA_VERSION:
+    if payload.get("schema_version") not in _SUPPORTED_QUALIFICATION_SCHEMA_VERSIONS:
         raise ContractError("unsupported trace qualification schema")
     source_hash = payload.get("source_evidence_hash")
     if (
@@ -102,6 +110,92 @@ def _result_for_run(state: StateStore, run_id: str) -> RunResult | None:
         return None
     raw = matches[0]["result"]
     return RunResult.model_validate(raw) if raw is not None else None
+
+
+def _v2_checkpoint_event_integrity(
+    checkpoints,
+    events,
+) -> tuple[bool, dict[str, Any]]:
+    """Require a bijection between durable checkpoints and their trace events."""
+
+    checkpoint_events = [event for event in events if event.type == EventType.CHECKPOINT_SAVED]
+    durable_by_id = {checkpoint.checkpoint_id: checkpoint for checkpoint in checkpoints}
+    events_by_id: dict[str, list[Any]] = {}
+    invalid_id_sequences: list[int] = []
+    for event in checkpoint_events:
+        checkpoint_id = event.payload.get("checkpoint_id")
+        if not isinstance(checkpoint_id, str):
+            invalid_id_sequences.append(event.sequence)
+            continue
+        events_by_id.setdefault(checkpoint_id, []).append(event)
+
+    durable_ids = set(durable_by_id)
+    event_ids = set(events_by_id)
+    missing_event_ids = sorted(durable_ids - event_ids)
+    orphan_event_ids = sorted(event_ids - durable_ids)
+    duplicate_event_ids = sorted(
+        checkpoint_id
+        for checkpoint_id, matching_events in events_by_id.items()
+        if len(matching_events) != 1
+    )
+    payload_mismatches: list[dict[str, Any]] = []
+    for checkpoint_id in sorted(durable_ids & event_ids):
+        matching_events = events_by_id[checkpoint_id]
+        if len(matching_events) != 1:
+            continue
+        event = matching_events[0]
+        checkpoint = durable_by_id[checkpoint_id]
+        mismatched_fields: list[str] = []
+        through_sequence = event.payload.get("through_sequence")
+        if type(through_sequence) is not int or through_sequence != checkpoint.through_sequence:
+            mismatched_fields.append("through_sequence")
+        worktree_diff_hash = event.payload.get("worktree_diff_hash")
+        if (
+            not isinstance(worktree_diff_hash, str)
+            or worktree_diff_hash != checkpoint.worktree_diff_hash
+        ):
+            mismatched_fields.append("worktree_diff_hash")
+        if mismatched_fields:
+            payload_mismatches.append(
+                {
+                    "checkpoint_id": checkpoint_id,
+                    "fields": mismatched_fields,
+                }
+            )
+
+    passed = bool(checkpoints) and not any(
+        (
+            len(checkpoint_events) != len(checkpoints),
+            invalid_id_sequences,
+            missing_event_ids,
+            orphan_event_ids,
+            duplicate_event_ids,
+            payload_mismatches,
+        )
+    )
+    return passed, {
+        "checkpoint_event_count": len(checkpoint_events),
+        "missing_checkpoint_event_ids": missing_event_ids,
+        "orphan_checkpoint_event_ids": orphan_event_ids,
+        "duplicate_checkpoint_event_ids": duplicate_event_ids,
+        "invalid_checkpoint_event_sequences": invalid_id_sequences,
+        "checkpoint_payload_mismatches": payload_mismatches,
+    }
+
+
+def _runtime_contract_content_hash(events) -> str | None:
+    candidates = [
+        event
+        for event in events
+        if event.type == EventType.RUN_STARTED
+        and isinstance(event.payload.get("artifact_path"), str)
+    ]
+    if len(candidates) != 1:
+        return None
+    try:
+        return sha256_bytes(Path(candidates[0].payload["artifact_path"]).read_bytes())
+    except OSError:
+        return None
 
 
 def _failure_records(root: Path, split: str, run_id: str) -> list[FailureRecord]:
@@ -160,8 +254,7 @@ def _execution_plan_matches(
         or plan.get("blockers") != []
         or not isinstance(approval, dict)
         or approval.get("invocation_approve_live_cost") is not True
-        or approval.get("invocation_approved_execution_hash")
-        != experiment.execution_hash
+        or approval.get("invocation_approved_execution_hash") != experiment.execution_hash
         or approval.get("matches_execution_hash") is not True
         or plan.get("experiment_id") != experiment.experiment_id
         or plan.get("purpose") != experiment.purpose.value
@@ -177,9 +270,7 @@ def _execution_plan_matches(
     ):
         return False
     matching_tasks = [
-        row
-        for row in tasks
-        if isinstance(row, dict) and row.get("task_id") == manifest.task_id
+        row for row in tasks if isinstance(row, dict) and row.get("task_id") == manifest.task_id
     ]
     if len(matching_tasks) != 1:
         return False
@@ -197,8 +288,7 @@ def _execution_plan_matches(
     matching_rows = [
         row
         for row in schedule
-        if isinstance(row, dict)
-        and row.get("schedule_row_id") == experiment.schedule_row_id
+        if isinstance(row, dict) and row.get("schedule_row_id") == experiment.schedule_row_id
     ]
     if len(matching_rows) != 1:
         return False
@@ -207,11 +297,7 @@ def _execution_plan_matches(
         row.get("order") == experiment.schedule_order
         and row.get("task_id") == manifest.task_id
         and row.get("dataset_role")
-        == (
-            experiment.dataset_role.value
-            if experiment.dataset_role is not None
-            else None
-        )
+        == (experiment.dataset_role.value if experiment.dataset_role is not None else None)
         and row.get("condition") == manifest.memory.condition.value
         and row.get("repetition") == experiment.repetition
     )
@@ -241,9 +327,7 @@ def _artifact_evidence(
         raw_id = event.payload.get("artifact_id")
         path_present = isinstance(raw_path, str) and bool(raw_path.strip())
         id_present = isinstance(raw_id, str) and bool(raw_id.strip())
-        if event.type in _REQUIRED_ARTIFACT_EVENTS and not (
-            path_present and id_present
-        ):
+        if event.type in _REQUIRED_ARTIFACT_EVENTS and not (path_present and id_present):
             integrity = False
             missing_identities.append(event.type.value)
         if not path_present:
@@ -298,12 +382,271 @@ def _artifact_evidence(
 
     lower_markers = {token.lower() for token in private_tokens if token}
     matches = sum(
-        1
-        for text in texts
-        for marker in lower_markers
-        if marker and marker in text.lower()
+        1 for text in texts for marker in lower_markers if marker and marker in text.lower()
     )
     return integrity, scanned, matches, evidence, sorted(missing_identities)
+
+
+def _accepted_patch_artifact_evidence(
+    *,
+    root: Path,
+    events,
+) -> tuple[bool, list[dict[str, Any]]]:
+    """Bind accepted v2 patch bytes, not only their nested event metadata."""
+
+    artifact_root = (root / "artifacts").resolve()
+    integrity = True
+    evidence: list[dict[str, Any]] = []
+    for event in events:
+        if event.type != EventType.SUBMISSION_ACCEPTED:
+            continue
+        raw_artifact = event.payload.get("submitted_patch_artifact")
+        item: dict[str, Any] = {
+            "event_id": event.event_id,
+            "artifact_id": (
+                raw_artifact.get("artifact_id") if isinstance(raw_artifact, dict) else None
+            ),
+            "declared_content_hash": (
+                raw_artifact.get("content_hash") if isinstance(raw_artifact, dict) else None
+            ),
+            "actual_content_hash": None,
+            "declared_size_bytes": (
+                raw_artifact.get("size_bytes") if isinstance(raw_artifact, dict) else None
+            ),
+            "actual_size_bytes": None,
+        }
+        try:
+            artifact = Artifact.model_validate(raw_artifact)
+            path = Path(artifact.path).resolve()
+            relative = path.relative_to(artifact_root)
+            parts = relative.parts
+            if (
+                len(parts) != 4
+                or parts[0:2] != ("objects", "sha256")
+                or len(parts[2]) != 2
+                or len(parts[3]) != 62
+            ):
+                raise ValueError("accepted patch is not stored at a CAS path")
+            content = path.read_bytes()
+            actual_hash = sha256_bytes(content)
+            path_hash = f"sha256:{parts[2]}{parts[3]}"
+            item["actual_content_hash"] = actual_hash
+            item["actual_size_bytes"] = len(content)
+            if (
+                actual_hash != artifact.content_hash
+                or actual_hash != path_hash
+                or len(content) != artifact.size_bytes
+            ):
+                integrity = False
+        except (OSError, TypeError, ValueError):
+            integrity = False
+        evidence.append(item)
+    return integrity, evidence
+
+
+def _request_context(request_body: Any) -> str | None:
+    """Extract the exact user context from PatchLoop's Responses request."""
+
+    if not isinstance(request_body, dict):
+        return None
+    inputs = request_body.get("input")
+    if not isinstance(inputs, list):
+        return None
+    user_messages = [
+        item for item in inputs if isinstance(item, dict) and item.get("role") == "user"
+    ]
+    if len(user_messages) != 1:
+        return None
+    content = user_messages[0].get("content")
+    return content if isinstance(content, str) else None
+
+
+def _complete_get_diff_in_request(
+    *,
+    context_event,
+    source_event,
+    accepted_diff: str,
+) -> tuple[bool, bool]:
+    """Validate the request body and prove it contains the full get_diff result."""
+
+    request_valid = False
+    complete_source = False
+    try:
+        request_evidence = json.loads(
+            Path(str(context_event.payload["artifact_path"])).read_text(encoding="utf-8")
+        )
+        if not isinstance(request_evidence, dict):
+            return False, False
+        request_body = request_evidence["request_body"]
+        recorded_request_hash = request_evidence["request_body_hash"]
+        calculated_request_hash = sha256_text(canonical_json(request_body))
+        rendered_context = _request_context(request_body)
+        request_valid = bool(
+            request_evidence.get("schema_version") == "model-request-evidence-v1"
+            and isinstance(recorded_request_hash, str)
+            and recorded_request_hash == calculated_request_hash
+            and context_event.payload.get("request_body_hash") == calculated_request_hash
+            and isinstance(rendered_context, str)
+            and context_event.payload.get("context_hash") == sha256_text(rendered_context)
+        )
+        if not request_valid or rendered_context is None:
+            return request_valid, False
+
+        rendered_payload = json.loads(rendered_context)
+        if not isinstance(rendered_payload, dict):
+            return request_valid, False
+        recent_events = rendered_payload.get("recent_events", [])
+        if not isinstance(recent_events, list):
+            return request_valid, False
+        source_artifact = json.loads(
+            Path(str(source_event.payload["artifact_path"])).read_text(encoding="utf-8")
+        )
+        if not isinstance(source_artifact, dict):
+            return request_valid, False
+        expected_rendered_event = {
+            "sequence": source_event.sequence,
+            "type": source_event.type.value,
+            "actor": source_event.actor,
+            "payload": {
+                **source_event.payload,
+                "tool_result": source_artifact,
+            },
+        }
+        actual_matches = [item for item in recent_events if item == expected_rendered_event]
+        context_build = request_evidence.get("context_build", {})
+        presented_results = (
+            context_build.get("tool_results", []) if isinstance(context_build, dict) else []
+        )
+        sidecar_matches = [
+            item
+            for item in presented_results
+            if isinstance(item, dict)
+            and item.get("event_sequence") == source_event.sequence
+            and item.get("tool") == "get_diff"
+            and item.get("worktree_diff_hash") == accepted_diff
+            and item.get("artifact_id") == source_event.payload.get("artifact_id")
+            and item.get("available") is True
+            and item.get("truncated") is False
+        ]
+        complete_source = bool(
+            len(actual_matches) == 1
+            and len(sidecar_matches) == 1
+            and source_artifact.get("patch_hash") == accepted_diff
+            and source_artifact.get("worktree_diff_hash") == accepted_diff
+            and isinstance(source_artifact.get("patch"), str)
+            and sha256_text(source_artifact["patch"]) == accepted_diff
+        )
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+        return False, False
+    return request_valid, complete_source
+
+
+def _ordered_submission_evidence(
+    *,
+    task,
+    events,
+    accepted_event,
+    source_event,
+    accepted_diff: str,
+) -> tuple[bool, dict[str, Any]]:
+    """Reconstruct apply -> current-diff checks -> get_diff for accepted v2 runs."""
+
+    mutations = [
+        event
+        for event in events
+        if event.type == EventType.PATCH_APPLIED and event.sequence < accepted_event.sequence
+    ]
+    mutation = mutations[-1] if mutations else None
+    mutation_ok = bool(
+        mutation is not None
+        and accepted_diff != _EMPTY_DIFF_HASH
+        and mutation.payload.get("worktree_diff_hash") == accepted_diff
+    )
+    apply_call_ok = False
+    if mutation is not None and mutation.correlation_id is not None:
+        apply_successes = [
+            event
+            for event in events
+            if event.type == EventType.TOOL_SUCCEEDED
+            and event.correlation_id == mutation.correlation_id
+            and event.payload.get("tool") == "apply_patch"
+            and event.payload.get("worktree_diff_hash") == accepted_diff
+            and event.sequence < mutation.sequence
+        ]
+        apply_calls = [
+            event
+            for event in events
+            if event.type == EventType.TOOL_CALLED
+            and event.correlation_id == mutation.correlation_id
+            and event.payload.get("tool") == "apply_patch"
+            and apply_successes
+            and event.sequence < apply_successes[0].sequence
+        ]
+        apply_call_ok = len(apply_successes) == 1 and len(apply_calls) == 1
+
+    check_sequences: dict[str, int | None] = {}
+    checks_ok = mutation is not None
+    for check in task.visible_checks:
+        candidates = [
+            event
+            for event in events
+            if mutation is not None
+            and mutation.sequence < event.sequence < accepted_event.sequence
+            and event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool") == "run_check"
+            and event.payload.get("check_id") == check.id
+        ]
+        latest = candidates[-1] if candidates else None
+        check_sequences[check.id] = latest.sequence if latest is not None else None
+        checks_ok = bool(
+            checks_ok
+            and latest is not None
+            and latest.payload.get("passed") is True
+            and latest.payload.get("worktree_diff_hash") == accepted_diff
+            and source_event is not None
+            and latest.sequence < source_event.sequence
+        )
+    get_diff_events = [
+        event
+        for event in events
+        if mutation is not None
+        and mutation.sequence < event.sequence < accepted_event.sequence
+        and event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "get_diff"
+        and event.payload.get("worktree_diff_hash") == accepted_diff
+    ]
+    source_calls = [
+        event
+        for event in events
+        if source_event is not None
+        and event.type == EventType.TOOL_CALLED
+        and event.correlation_id == source_event.correlation_id
+        and event.payload.get("tool") == "get_diff"
+        and event.sequence < source_event.sequence
+    ]
+    source_order_ok = bool(
+        mutation is not None
+        and source_event is not None
+        and mutation.sequence < source_event.sequence < accepted_event.sequence
+        and get_diff_events
+        and get_diff_events[-1].event_id == source_event.event_id
+        and len(source_calls) == 1
+    )
+    ordered = mutation_ok and apply_call_ok and checks_ok and source_order_ok
+    return ordered, {
+        "mutation_sequence": mutation.sequence if mutation is not None else None,
+        "mutation_valid": mutation_ok,
+        "apply_call_valid": apply_call_ok,
+        "visible_checks_valid": checks_ok,
+        "visible_check_sequences": check_sequences,
+        "latest_get_diff_valid": bool(
+            get_diff_events
+            and source_event is not None
+            and get_diff_events[-1].event_id == source_event.event_id
+        ),
+        "get_diff_call_valid": len(source_calls) == 1,
+        "source_order_valid": source_order_ok,
+    }
 
 
 def _private_leak_tokens(
@@ -318,11 +661,7 @@ def _private_leak_tokens(
         ".patchloop-hidden",
         *(check.id for check in package.private.hidden_checks),
     }
-    tokens = {
-        token
-        for token in disclosure_tolerant
-        if token and token.lower() not in public_text
-    }
+    tokens = {token for token in disclosure_tolerant if token and token.lower() not in public_text}
 
     if package.private.reference_patch.sha256:
         tokens.add(package.private.reference_patch.sha256)
@@ -371,22 +710,23 @@ def calculate_source_evidence_hash(
         "schema_version": _SOURCE_EVIDENCE_SCHEMA_VERSION,
         "manifest": manifest.model_dump(mode="json"),
         "events": [event.model_dump(mode="json") for event in events],
-        "checkpoints": [
-            checkpoint.model_dump(mode="json") for checkpoint in checkpoints
-        ],
+        "checkpoints": [checkpoint.model_dump(mode="json") for checkpoint in checkpoints],
         # Preserve source-evidence hashes when backward-compatible result fields
         # gain defaults after an immutable run was recorded.
         "result": (
-            result.model_dump(mode="json", exclude_unset=True)
-            if result is not None
-            else None
+            result.model_dump(mode="json", exclude_unset=True) if result is not None else None
         ),
         "persisted_result_hash": persisted_result_hash,
         "agent_visible_artifacts": artifacts,
-        "execution_plan_hash": (
-            sha256_bytes(plan_bytes) if plan_bytes is not None else None
-        ),
+        "execution_plan_hash": (sha256_bytes(plan_bytes) if plan_bytes is not None else None),
     }
+    if manifest.tool_schema_version == "v2":
+        _, accepted_patch_artifacts = _accepted_patch_artifact_evidence(
+            root=run_root,
+            events=events,
+        )
+        snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V2
+        snapshot["accepted_patch_artifacts"] = accepted_patch_artifacts
     return sha256_text(canonical_json(snapshot))
 
 
@@ -409,6 +749,31 @@ def qualify_run(
     events = state.list_events(run_id)
     checkpoints = state.list_checkpoints(run_id)
     result = _result_for_run(state, run_id)
+    path = qualification_path(run_id, root=run_root)
+    if path.is_file():
+        existing = load_trace_qualification(run_id, root=run_root)
+        if existing["schema_version"] == LEGACY_QUALIFICATION_SCHEMA_VERSION:
+            if manifest.tool_schema_version != "v1":
+                raise ContractError("legacy trace qualification does not match the run contract")
+            task_identity = (
+                manifest.task_id == package.public.task_id
+                and manifest.task_version == package.public.task_version
+                and manifest.public_spec_hash == package.public_spec_hash
+                and manifest.private_spec_hash == package.private_spec_hash
+            )
+            if not task_identity:
+                raise ContractError("legacy trace qualification task identity mismatch")
+            _, current_dataset_hash, _ = load_dataset_manifest(dataset_manifest_path)
+            if existing.get("dataset_manifest_hash") != current_dataset_hash:
+                raise ContractError("legacy trace qualification dataset manifest changed")
+            current_source_hash = calculate_source_evidence_hash(
+                run_id,
+                root=run_root,
+                require_valid_plan=False,
+            )
+            if existing["source_evidence_hash"] != current_source_hash:
+                raise ContractError("legacy trace qualification source evidence changed")
+            return existing
 
     checks: list[dict[str, Any]] = []
 
@@ -429,9 +794,7 @@ def qualify_run(
 
     terminals = [event for event in events if event.type in _TERMINAL_EVENTS]
     terminal_ok = (
-        len(terminals) == 1
-        and bool(events)
-        and events[-1].event_id == terminals[0].event_id
+        len(terminals) == 1 and bool(events) and events[-1].event_id == terminals[0].event_id
     )
     terminal_type = terminals[0].type.value if len(terminals) == 1 else None
     add(
@@ -441,6 +804,14 @@ def qualify_run(
         terminal_type=terminal_type,
     )
 
+    lifecycle_types = {
+        EventType.REVIEW_RECORDED,
+        EventType.SUBMISSION_ATTEMPTED,
+        EventType.SUBMISSION_REJECTED,
+        EventType.SUBMISSION_ACCEPTED,
+    }
+    lifecycle_events = [event for event in events if event.type in lifecycle_types]
+    structured_lifecycle_contract = bool(manifest.tool_schema_version != "v1" or lifecycle_events)
     event_types = {event.type for event in events}
     required_missing = sorted(
         event_type.value
@@ -452,21 +823,307 @@ def qualify_run(
         }
         if event_type not in event_types
     )
-    checkpoint_ids = {
-        event.payload.get("checkpoint_id")
-        for event in events
-        if event.type == EventType.CHECKPOINT_SAVED
-    }
-    durable_ids = {checkpoint.checkpoint_id for checkpoint in checkpoints}
-    required_trace = not required_missing and bool(checkpoints) and checkpoint_ids.issubset(
-        durable_ids
-    )
-    add(
-        "required_trace_evidence",
-        required_trace,
-        missing_event_types=required_missing,
-        checkpoint_count=len(checkpoints),
-    )
+    if structured_lifecycle_contract:
+        checkpoint_integrity, checkpoint_details = _v2_checkpoint_event_integrity(
+            checkpoints, events
+        )
+        add(
+            "required_trace_evidence",
+            not required_missing and checkpoint_integrity,
+            missing_event_types=required_missing,
+            checkpoint_count=len(checkpoints),
+            **checkpoint_details,
+        )
+    else:
+        checkpoint_ids = {
+            event.payload.get("checkpoint_id")
+            for event in events
+            if event.type == EventType.CHECKPOINT_SAVED
+        }
+        durable_ids = {checkpoint.checkpoint_id for checkpoint in checkpoints}
+        required_trace = (
+            not required_missing and bool(checkpoints) and checkpoint_ids.issubset(durable_ids)
+        )
+        add(
+            "required_trace_evidence",
+            required_trace,
+            missing_event_types=required_missing,
+            checkpoint_count=len(checkpoints),
+        )
+
+    lifecycle_evidence: dict[str, Any] = {}
+    if manifest.tool_schema_version == "v1" and not lifecycle_events:
+        lifecycle_ok = True
+        lifecycle_mode = "legacy-unavailable"
+    elif not lifecycle_events and result is not None and result.evaluation_status != "completed":
+        lifecycle_ok = True
+        lifecycle_mode = "structured-v2-no-submission"
+    else:
+        lifecycle_mode = "structured-v2"
+        reviews = [event for event in lifecycle_events if event.type == EventType.REVIEW_RECORDED]
+        attempts = [
+            event for event in lifecycle_events if event.type == EventType.SUBMISSION_ATTEMPTED
+        ]
+        rejections = [
+            event for event in lifecycle_events if event.type == EventType.SUBMISSION_REJECTED
+        ]
+        acceptances = [
+            event for event in lifecycle_events if event.type == EventType.SUBMISSION_ACCEPTED
+        ]
+
+        def submission_key(event) -> tuple[str, ...] | None:
+            if event.correlation_id:
+                return ("correlation", event.correlation_id)
+            attempt_number = event.payload.get("attempt_number")
+            diff_hash = event.payload.get("worktree_diff_hash")
+            if isinstance(attempt_number, int) and isinstance(diff_hash, str):
+                return ("attempt", str(attempt_number), diff_hash)
+            return None
+
+        attempts_by_key: dict[tuple[str, ...], Any] = {}
+        duplicate_attempt_keys = False
+        for attempt_event in attempts:
+            key = submission_key(attempt_event)
+            if key is None or key in attempts_by_key:
+                duplicate_attempt_keys = True
+                continue
+            attempts_by_key[key] = attempt_event
+        outcomes = [*rejections, *acceptances]
+        outcomes_by_key: dict[tuple[str, ...], list[Any]] = {}
+        unkeyed_outcomes = 0
+        for outcome_event in outcomes:
+            key = submission_key(outcome_event)
+            if key is None:
+                unkeyed_outcomes += 1
+                continue
+            outcomes_by_key.setdefault(key, []).append(outcome_event)
+        paired_attempts = all(
+            len(outcomes_by_key.get(key, [])) == 1
+            and attempt_event.sequence < outcomes_by_key[key][0].sequence
+            for key, attempt_event in attempts_by_key.items()
+        )
+        orphan_outcomes = [key for key in outcomes_by_key if key not in attempts_by_key]
+        lifecycle_ok = bool(
+            attempts
+            and len(attempts_by_key) == len(attempts)
+            and not duplicate_attempt_keys
+            and paired_attempts
+            and not orphan_outcomes
+            and unkeyed_outcomes == 0
+            and len(outcomes) == len(attempts)
+            and len(acceptances) <= 1
+        )
+        lifecycle_evidence.update(
+            {
+                "attempt_count": len(attempts),
+                "paired_attempt_count": sum(
+                    len(outcomes_by_key.get(key, [])) == 1 for key in attempts_by_key
+                ),
+                "orphan_outcome_count": len(orphan_outcomes) + unkeyed_outcomes,
+            }
+        )
+        if acceptances:
+            accepted = acceptances[0]
+            accepted_key = submission_key(accepted)
+            matching_reviews = [
+                review for review in reviews if review.correlation_id == accepted.correlation_id
+            ]
+            attempt = attempts_by_key.get(accepted_key) if accepted_key is not None else None
+            review = matching_reviews[0] if len(matching_reviews) == 1 else None
+            accepted_diff = accepted.payload.get("worktree_diff_hash")
+            submitted_patch_valid = False
+            submitted_patch_payload = accepted.payload.get("submitted_patch_artifact")
+            (
+                accepted_patch_artifact_integrity,
+                accepted_patch_artifact_evidence,
+            ) = _accepted_patch_artifact_evidence(
+                root=run_root,
+                events=events,
+            )
+            try:
+                submitted_patch_artifact = Artifact.model_validate(submitted_patch_payload)
+                submitted_patch_valid = bool(
+                    accepted_patch_artifact_integrity
+                    and len(accepted_patch_artifact_evidence) == 1
+                    and submitted_patch_artifact.content_hash == accepted_diff
+                    and sha256_bytes(Path(submitted_patch_artifact.path).read_bytes())
+                    == accepted_diff
+                    and result is not None
+                    and result.submitted_patch_artifact_id == submitted_patch_artifact.artifact_id
+                )
+            except (OSError, TypeError, ValueError):
+                submitted_patch_valid = False
+            source_sequence = (
+                review.payload.get("source_get_diff_sequence") if review is not None else None
+            )
+            source_event = (
+                next(
+                    (event for event in events if event.sequence == source_sequence),
+                    None,
+                )
+                if isinstance(source_sequence, int)
+                else None
+            )
+            source_ok = bool(
+                source_event is not None
+                and source_event.type == EventType.TOOL_SUCCEEDED
+                and source_event.payload.get("tool") == "get_diff"
+                and source_event.payload.get("worktree_diff_hash") == accepted_diff
+            )
+            request_artifact_id = (
+                review.payload.get("request_artifact_id") if review is not None else None
+            )
+            matching_contexts = [
+                event
+                for event in events
+                if event.type == EventType.CONTEXT_BUILT
+                and event.payload.get("artifact_id") == request_artifact_id
+                and source_event is not None
+                and source_event.sequence < event.sequence
+                and review is not None
+                and event.sequence < review.sequence
+            ]
+            context_event = matching_contexts[0] if len(matching_contexts) == 1 else None
+            matching_model_calls = [
+                event
+                for event in events
+                if event.type == EventType.MODEL_CALLED
+                and event.payload.get("request_artifact_id") == request_artifact_id
+                and context_event is not None
+                and context_event.sequence < event.sequence
+                and review is not None
+                and event.sequence < review.sequence
+            ]
+            finish_calls = [
+                event
+                for event in events
+                if event.type == EventType.TOOL_CALLED
+                and event.correlation_id == accepted.correlation_id
+                and event.payload.get("tool") == "finish_task"
+            ]
+            finish_call = finish_calls[0] if len(finish_calls) == 1 else None
+            request_context_ok = (
+                context_event is not None
+                and len(matching_model_calls) == 1
+                and finish_call is not None
+                and matching_model_calls[0].sequence < finish_call.sequence
+                and review is not None
+                and finish_call.sequence < review.sequence
+            )
+            request_body_valid = False
+            complete_source_in_context = False
+            if (
+                request_context_ok
+                and context_event is not None
+                and source_event is not None
+                and isinstance(accepted_diff, str)
+            ):
+                (
+                    request_body_valid,
+                    complete_source_in_context,
+                ) = _complete_get_diff_in_request(
+                    context_event=context_event,
+                    source_event=source_event,
+                    accepted_diff=accepted_diff,
+                )
+            ordered_submission_ok = False
+            ordered_submission_details: dict[str, Any] = {}
+            if source_event is not None and isinstance(accepted_diff, str):
+                (
+                    ordered_submission_ok,
+                    ordered_submission_details,
+                ) = _ordered_submission_evidence(
+                    task=package.public,
+                    events=events,
+                    accepted_event=accepted,
+                    source_event=source_event,
+                    accepted_diff=accepted_diff,
+                )
+            finish_successes = [
+                event
+                for event in events
+                if event.type == EventType.TOOL_SUCCEEDED
+                and event.correlation_id == accepted.correlation_id
+                and event.payload.get("tool") == "finish_task"
+            ]
+            finish_success = finish_successes[0] if len(finish_successes) == 1 else None
+            finish_success_ok = bool(
+                attempt is not None
+                and finish_success is not None
+                and attempt.sequence < finish_success.sequence < accepted.sequence
+                and finish_success.payload.get("worktree_diff_hash") == accepted_diff
+                and finish_success.payload.get("submitted_patch_artifact")
+                == submitted_patch_payload
+            )
+            done_transitions = [
+                event
+                for event in events
+                if event.type == EventType.PHASE_CHANGED
+                and event.sequence > accepted.sequence
+                and event.payload.get("from") == "REVIEW"
+                and event.payload.get("to") == "DONE"
+            ]
+            done_transition = done_transitions[0] if len(done_transitions) == 1 else None
+            final_checkpoint = checkpoints[-1] if checkpoints else None
+            final_checkpoint_ok = bool(
+                done_transition is not None
+                and final_checkpoint is not None
+                and final_checkpoint.phase.value == "DONE"
+                and final_checkpoint.worktree_diff_hash == accepted_diff
+                and final_checkpoint.through_sequence >= done_transition.sequence
+            )
+            lifecycle_ok = bool(
+                lifecycle_ok
+                and len(matching_reviews) == 1
+                and attempt is not None
+                and review is not None
+                and review.sequence < attempt.sequence < accepted.sequence
+                and accepted.payload.get("worktree_diff_hash")
+                == review.payload.get("worktree_diff_hash")
+                == attempt.payload.get("worktree_diff_hash")
+                and review.payload.get("complete_tool_result") is True
+                and source_ok
+                and request_context_ok
+                and request_body_valid
+                and complete_source_in_context
+                and ordered_submission_ok
+                and finish_success_ok
+                and submitted_patch_valid
+                and final_checkpoint_ok
+                and accepted.payload.get("accepted_for") == "deterministic_evaluation"
+                and accepted.payload.get("evaluation_success_claimed") is False
+                and result is not None
+                and result.agent_submission_status == "completed"
+            )
+            lifecycle_evidence.update(
+                {
+                    "source_get_diff_valid": source_ok,
+                    "review_context_valid": request_context_ok,
+                    "request_body_valid": request_body_valid,
+                    "complete_source_in_context": complete_source_in_context,
+                    "ordered_submission_valid": ordered_submission_ok,
+                    **ordered_submission_details,
+                    "finish_tool_success_valid": finish_success_ok,
+                    "submitted_patch_artifact_valid": submitted_patch_valid,
+                    "done_checkpoint_valid": final_checkpoint_ok,
+                }
+            )
+        elif result is not None and result.evaluation_status == "completed":
+            lifecycle_ok = False
+    if structured_lifecycle_contract:
+        add(
+            "submission_lifecycle",
+            lifecycle_ok,
+            mode=lifecycle_mode,
+            lifecycle_event_count=len(lifecycle_events),
+            accepted_count=sum(
+                event.type == EventType.SUBMISSION_ACCEPTED for event in lifecycle_events
+            ),
+            rejected_count=sum(
+                event.type == EventType.SUBMISSION_REJECTED for event in lifecycle_events
+            ),
+            **lifecycle_evidence,
+        )
 
     no_memory = manifest.memory.condition == MemoryCondition.NO_MEMORY
     no_retrieval = EventType.MEMORY_RETRIEVED not in event_types
@@ -476,9 +1133,7 @@ def qualify_run(
         "no_memory_boundary",
         no_memory_ok,
         condition=manifest.memory.condition.value,
-        retrieval_event_count=sum(
-            event.type == EventType.MEMORY_RETRIEVED for event in events
-        ),
+        retrieval_event_count=sum(event.type == EventType.MEMORY_RETRIEVED for event in events),
         index_declared=not no_index,
     )
 
@@ -491,8 +1146,7 @@ def qualify_run(
         and manifest.model.max_output_tokens == 4096
     )
     terra_model_contract = (
-        manifest.model.model_id == _TERRA_MODEL_ID
-        and manifest.budget == Budget()
+        manifest.model.model_id == _TERRA_MODEL_ID and manifest.budget == Budget()
     )
     mini_pilot_contract = (
         manifest.experiment is not None
@@ -501,9 +1155,7 @@ def qualify_run(
         and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
         and manifest.budget == _GPT54_MINI_PILOT_BUDGET
     )
-    model_contract_ok = common_model_contract and (
-        terra_model_contract or mini_pilot_contract
-    )
+    model_contract_ok = common_model_contract and (terra_model_contract or mini_pilot_contract)
     model_contract_details = {
         "model_id": manifest.model.model_id,
         "reasoning_effort": manifest.model.reasoning_effort,
@@ -512,9 +1164,7 @@ def qualify_run(
         "max_output_tokens": manifest.model.max_output_tokens,
     }
     if manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID:
-        model_contract_details["max_total_tokens"] = (
-            manifest.budget.max_total_tokens
-        )
+        model_contract_details["max_total_tokens"] = manifest.budget.max_total_tokens
     add(
         "frozen_model_contract",
         model_contract_ok,
@@ -540,15 +1190,11 @@ def qualify_run(
         dataset_entry = None
     experiment = manifest.experiment
     purpose_roles = {
-        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT: {
-            DatasetRole.DEVELOPMENT_VALIDATION
-        },
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT: {DatasetRole.DEVELOPMENT_VALIDATION},
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT: {
             DatasetRole.DEVELOPMENT_VALIDATION
         },
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY: {
-            DatasetRole.MEMORY_DEVELOPMENT
-        },
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY: {DatasetRole.MEMORY_DEVELOPMENT},
         ExperimentPurpose.CORE: {
             DatasetRole.CORE_SAME_REPO,
             DatasetRole.CORE_CROSS_REPO,
@@ -561,8 +1207,7 @@ def qualify_run(
     )
     canonical_package_ok = bool(
         dataset_entry is not None
-        and Path(package.root).resolve()
-        == (repository_root() / dataset_entry.path).resolve()
+        and Path(package.root).resolve() == (repository_root() / dataset_entry.path).resolve()
     )
     private_evaluator_ok = bool(
         dataset_entry is not None
@@ -605,9 +1250,7 @@ def qualify_run(
         execution_plan_ok,
         plan_present=execution_plan is not None,
         plan_content_hash=(
-            sha256_bytes(execution_plan_bytes)
-            if execution_plan_bytes is not None
-            else None
+            sha256_bytes(execution_plan_bytes) if execution_plan_bytes is not None else None
         ),
         ready=bool(execution_plan is not None and execution_plan.get("ready") is True),
         approval_matches=bool(
@@ -650,11 +1293,27 @@ def qualify_run(
         events=events,
         private_tokens=private_tokens,
     )
+    accepted_patch_artifact_count = 0
+    if manifest.tool_schema_version == "v2":
+        (
+            accepted_patch_artifact_integrity,
+            accepted_patch_artifact_evidence,
+        ) = _accepted_patch_artifact_evidence(
+            root=run_root,
+            events=events,
+        )
+        artifact_integrity = artifact_integrity and accepted_patch_artifact_integrity
+        accepted_patch_artifact_count = len(accepted_patch_artifact_evidence)
+    artifact_details = {
+        "scanned_artifact_count": artifact_count,
+        "missing_required_artifact_events": missing_artifact_identities,
+    }
+    if manifest.tool_schema_version == "v2":
+        artifact_details["accepted_patch_artifact_count"] = accepted_patch_artifact_count
     add(
         "agent_visible_artifacts",
         artifact_integrity,
-        scanned_artifact_count=artifact_count,
-        missing_required_artifact_events=missing_artifact_identities,
+        **artifact_details,
     )
     leakage_ok = leak_matches == 0
     add("public_private_boundary", leakage_ok, private_match_count=leak_matches)
@@ -663,8 +1322,7 @@ def qualify_run(
     tool_events = [event for event in events if event.type == EventType.TOOL_CALLED]
     context_events = [event for event in events if event.type == EventType.CONTEXT_BUILT]
     telemetry_declared = any(
-        event.payload.get("prompt_telemetry_version") is not None
-        for event in model_events
+        event.payload.get("prompt_telemetry_version") is not None for event in model_events
     )
     telemetry_contract_required = bool(
         experiment is not None
@@ -682,17 +1340,14 @@ def qualify_run(
         prompt_telemetry_ok = len(context_events) == len(model_events)
         for index, model_event in enumerate(model_events):
             payload = model_event.payload
-            context_event = (
-                context_events[index] if index < len(context_events) else None
-            )
+            context_event = context_events[index] if index < len(context_events) else None
             requested_input_tokens = payload.get("requested_input_tokens")
             input_tokens = int(payload.get("input_tokens", 0))
             output_tokens = int(payload.get("output_tokens", 0))
             total_tokens = payload.get("total_tokens")
             reasoning_tokens = int(payload.get("reasoning_output_tokens", 0))
             event_ok = bool(
-                payload.get("prompt_telemetry_version")
-                == "prompt-token-integrity-v1"
+                payload.get("prompt_telemetry_version") == "prompt-token-integrity-v1"
                 and isinstance(requested_input_tokens, int)
                 and requested_input_tokens == input_tokens
                 and payload.get("input_token_count_match") is True
@@ -706,8 +1361,7 @@ def qualify_run(
                 and payload.get("response_incomplete_reason") is None
                 and payload.get("response_model") == manifest.model.model_id
                 and context_event is not None
-                and payload.get("request_artifact_id")
-                == context_event.payload.get("artifact_id")
+                and payload.get("request_artifact_id") == context_event.payload.get("artifact_id")
                 and payload.get("request_artifact_path")
                 == context_event.payload.get("artifact_path")
                 and payload.get("request_body_hash")
@@ -733,33 +1387,22 @@ def qualify_run(
             int(event.payload.get("cached_input_tokens", 0)) for event in model_events
         ),
         "cache_write_input_tokens": sum(
-            int(event.payload.get("cache_write_input_tokens", 0))
-            for event in model_events
+            int(event.payload.get("cache_write_input_tokens", 0)) for event in model_events
         ),
-        "output_tokens": sum(
-            int(event.payload.get("output_tokens", 0)) for event in model_events
-        ),
+        "output_tokens": sum(int(event.payload.get("output_tokens", 0)) for event in model_events),
         "reasoning_output_tokens": sum(
-            int(event.payload.get("reasoning_output_tokens", 0))
-            for event in model_events
+            int(event.payload.get("reasoning_output_tokens", 0)) for event in model_events
         ),
         "model_calls": len(model_events),
         "input_token_count_calls": sum(
-            int(event.payload.get("input_token_count_calls", 0))
-            for event in model_events
+            int(event.payload.get("input_token_count_calls", 0)) for event in model_events
         ),
         "tool_calls": len(tool_events),
     }
     usage_matches = bool(
         result is not None
-        and all(
-            getattr(result.usage, field) == value
-            for field, value in expected_usage.items()
-        )
-        and abs(
-            result.usage.model_cost_usd
-            - calculate_model_cost(result.usage, manifest.model)
-        )
+        and all(getattr(result.usage, field) == value for field, value in expected_usage.items())
+        and abs(result.usage.model_cost_usd - calculate_model_cost(result.usage, manifest.model))
         <= 1e-9
     )
     add(
@@ -769,9 +1412,7 @@ def qualify_run(
         tool_event_count=len(tool_events),
     )
 
-    persisted_result_path = (
-        run_root / "artifacts" / "runs" / run_id / "result.json"
-    )
+    persisted_result_path = run_root / "artifacts" / "runs" / run_id / "result.json"
     try:
         persisted_result = RunResult.model_validate_json(
             persisted_result_path.read_text(encoding="utf-8")
@@ -788,17 +1429,12 @@ def qualify_run(
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
     }
     pilot_tool_ok = bool(
-        experiment is None
-        or experiment.purpose not in pilot_purposes
-        or tool_events
+        experiment is None or experiment.purpose not in pilot_purposes or tool_events
     )
     add(
         "pilot_tool_loop",
         pilot_tool_ok,
-        required=bool(
-            experiment is not None
-            and experiment.purpose in pilot_purposes
-        ),
+        required=bool(experiment is not None and experiment.purpose in pilot_purposes),
         tool_event_count=len(tool_events),
     )
 
@@ -835,11 +1471,7 @@ def qualify_run(
         verdicts_terminal=terminal_verdicts,
     )
 
-    outcome = (
-        result.outcome_kind
-        if result is not None
-        else RunOutcomeKind.INFRASTRUCTURE_ERROR
-    )
+    outcome = result.outcome_kind if result is not None else RunOutcomeKind.INFRASTRUCTURE_ERROR
     if evaluation_reached and not terminal_verdicts:
         outcome = RunOutcomeKind.INFRASTRUCTURE_ERROR
     records = _failure_records(run_root, package.public.split, run_id)
@@ -854,9 +1486,7 @@ def qualify_run(
     }
     if failure_expected:
         failure_linked = (
-            len(records) == 1
-            and len(tagged_ids) == 1
-            and tagged_ids[0] == records[0].failure_id
+            len(records) == 1 and len(tagged_ids) == 1 and tagged_ids[0] == records[0].failure_id
         )
     else:
         failure_linked = not records and not tagged_ids
@@ -864,10 +1494,7 @@ def qualify_run(
     failure_record_hash = (
         sha256_bytes(
             (
-                run_root
-                / "failures"
-                / package.public.split
-                / f"{failure_record_id}.json"
+                run_root / "failures" / package.public.split / f"{failure_record_id}.json"
             ).read_bytes()
         )
         if failure_record_id is not None
@@ -896,6 +1523,8 @@ def qualify_run(
         "terminal_result_integrity",
         "failure_record_linkage",
     }
+    if structured_lifecycle_contract:
+        trace_check_ids.add("submission_lifecycle")
     trace_integrity = all(
         check["passed"] for check in checks if check["check_id"] in trace_check_ids
     )
@@ -916,7 +1545,11 @@ def qualify_run(
         require_valid_plan=False,
     )
     payload: dict[str, Any] = {
-        "schema_version": QUALIFICATION_SCHEMA_VERSION,
+        "schema_version": (
+            QUALIFICATION_SCHEMA_VERSION
+            if structured_lifecycle_contract
+            else LEGACY_QUALIFICATION_SCHEMA_VERSION
+        ),
         "run_id": run_id,
         "qualified": qualified,
         "trace_integrity_passed": trace_integrity,
@@ -938,9 +1571,23 @@ def qualify_run(
         "source_evidence_hash": source_evidence_hash,
         "checks": checks,
     }
+    if structured_lifecycle_contract:
+        payload.update(
+            {
+                "model_id": manifest.model.model_id,
+                "reasoning_effort": manifest.model.reasoning_effort,
+                "reasoning_mode": manifest.model.reasoning_mode,
+                "service_tier": manifest.model.service_tier,
+                "max_output_tokens": manifest.model.max_output_tokens,
+                "budget": manifest.budget.model_dump(mode="json"),
+                "harness_git_commit": manifest.harness_git_commit,
+                "tool_schema_version": manifest.tool_schema_version,
+                "context_policy_version": manifest.context_policy_version,
+                "runtime_contract_content_hash": (_runtime_contract_content_hash(events)),
+            }
+        )
     payload["qualification_hash"] = sha256_text(canonical_json(payload))
 
-    path = qualification_path(run_id, root=run_root)
     path.parent.mkdir(parents=True, exist_ok=True)
     encoded = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
     if path.exists():

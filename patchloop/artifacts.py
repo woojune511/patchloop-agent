@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from pathlib import Path
 from typing import Any
 
 from patchloop.contracts import Artifact
+from patchloop.errors import RecoveryError
 from patchloop.util import sha256_bytes, utc_now
 
 
@@ -22,8 +24,29 @@ class ArtifactStore:
         hex_digest = digest.split(":", 1)[1]
         path = self.objects / hex_digest[:2] / hex_digest[2:]
         path.parent.mkdir(parents=True, exist_ok=True)
-        if not path.exists():
-            path.write_bytes(content)
+        if path.exists():
+            try:
+                existing = path.read_bytes()
+            except OSError as exc:
+                raise RecoveryError(
+                    f"content-addressed artifact is unreadable: {digest}"
+                ) from exc
+            if sha256_bytes(existing) != digest:
+                raise RecoveryError(
+                    f"content-addressed artifact failed integrity check: {digest}"
+                )
+        else:
+            temporary = path.with_name(
+                f".{path.name}.{uuid.uuid4().hex}.tmp"
+            )
+            try:
+                with temporary.open("xb") as stream:
+                    stream.write(content)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.replace(temporary, path)
+            finally:
+                temporary.unlink(missing_ok=True)
         return Artifact(
             artifact_id=f"art_{uuid.uuid4().hex}",
             content_hash=digest,

@@ -13,13 +13,24 @@ from patchloop.contracts import ModelConfig
 from patchloop.errors import ContractError
 from patchloop.util import sha256_bytes
 
-SYSTEM_PROMPT = (
+SYSTEM_PROMPT_V1 = (
     "You are a constrained coding agent. Use only supplied tools. "
     "Inspect evidence, apply a minimal patch, run registered checks, "
     "review the diff, then answer exactly DONE. "
     "The apply_patch tool accepts only a raw Git unified diff beginning with "
     "'diff --git'; never use '*** Begin Patch' or '*** End Patch' markers."
 )
+SYSTEM_PROMPT_V2 = (
+    "You are a constrained coding agent. Use only supplied tools. "
+    "Inspect repository evidence, apply a minimal patch, and run every registered "
+    "visible check against the exact current diff. After the checks pass, call "
+    "get_diff and review its complete result on the next turn. Then call "
+    "finish_task to submit; never use DONE text as a substitute. Any later patch "
+    "invalidates prior check and review evidence. "
+    "The apply_patch tool accepts only a raw Git unified diff beginning with "
+    "'diff --git'; never use '*** Begin Patch' or '*** End Patch' markers."
+)
+SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 
 
 @dataclass(frozen=True)
@@ -149,9 +160,16 @@ MOCK_TASK_SCRIPTS: dict[str, MockTaskScript] = {
 class MockModelAdapter:
     """Deterministic offline adapter backed only by public smoke scripts."""
 
-    def __init__(self, task_id: str, completed_tools: list[str] | None = None) -> None:
+    def __init__(
+        self,
+        task_id: str,
+        completed_tools: list[str] | None = None,
+        *,
+        structured_finish: bool = True,
+    ) -> None:
         self.task_id = task_id
         self.completed_tools = list(completed_tools or [])
+        self.structured_finish = structured_finish
         try:
             self.script = MOCK_TASK_SCRIPTS[task_id]
         except KeyError as exc:
@@ -198,6 +216,17 @@ class MockModelAdapter:
                 text="Review the final scoped diff.",
                 tool_calls=[
                     RequestedTool("get_diff", f"mock-{self.task_id}-review", {})
+                ],
+            )
+        if self.structured_finish:
+            return ModelTurn(
+                text="Submit the reviewed current diff.",
+                tool_calls=[
+                    RequestedTool(
+                        "finish_task",
+                        f"mock-{self.task_id}-finish",
+                        {},
+                    )
                 ],
             )
         return ModelTurn(text="DONE", done=True)
@@ -274,6 +303,8 @@ class OpenAIResponsesAdapter:
         self,
         context: str,
         tools: list[dict[str, Any]],
+        *,
+        system_prompt: str = SYSTEM_PROMPT,
     ) -> dict[str, Any]:
         reasoning: dict[str, str] = {
             "effort": self.config.reasoning_effort,
@@ -294,7 +325,7 @@ class OpenAIResponsesAdapter:
             "input": [
                 {
                     "role": "system",
-                    "content": SYSTEM_PROMPT,
+                    "content": system_prompt,
                 },
                 {"role": "user", "content": context},
             ],

@@ -18,11 +18,27 @@
   </div>
   <div class="status-stack">
     <span class="pill {{ row.status }}">{{ row.status }}</span>
+    <span class="pill {{ trace.lifecycle.review.tone }}">{{ trace.lifecycle.review.label }}</span>
+    <span class="pill {{ trace.lifecycle.submission.tone }}">{{ trace.lifecycle.submission.label }}</span>
     {% if qualification %}
       <span class="pill {{ 'completed' if qualification.qualified else 'failed' }}">trace qualified={{ qualification.qualified | lower }}</span>
     {% endif %}
   </div>
 </section>
+
+{% if checkpoint %}
+<section class="qualification-strip">
+  <div><span>Current phase</span><strong>{{ checkpoint.phase.value }}</strong></div>
+  {% if manifest.context_policy_version == "phase-evidence-v2" %}
+    <div><span>Current-diff checks</span><strong>{{ checkpoint.completed_checks | length }} passed / {{ checkpoint.pending_checks | length }} pending</strong></div>
+    <div><span>Next allowed actions</span><strong>{{ checkpoint_action_label }}</strong></div>
+  {% else %}
+    <div><span>Check semantics</span><strong>legacy history, not diff-bound</strong></div>
+    <div><span>Submission evidence</span><strong>legacy telemetry unavailable</strong></div>
+  {% endif %}
+  <div><span>Current diff</span><strong><code>{{ checkpoint.worktree_diff_hash }}</code></strong></div>
+</section>
+{% endif %}
 
 <section class="cards">
   <article><h2>Model calls</h2><strong>{{ row.result.usage.model_calls if row.result else 0 }}</strong><p>{{ manifest.model.model_id }}</p></article>

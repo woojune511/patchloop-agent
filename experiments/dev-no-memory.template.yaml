@@ -23,9 +23,9 @@ budget:
   max_total_tokens: 80000
   wall_clock_timeout_seconds: 900
 seed: 20260723
-# Accepted r3 pilot. Preflight reloads its immutable qualification and
-# recalculates source_evidence_hash; no separate hash field is accepted here.
-pilot_run_id: run_3cb86f8d70094a11
+# A newly approved v2 Terra pilot must be inserted here. Historical r3 used
+# tool/context contract v1 and intentionally cannot unlock this v2 campaign.
+pilot_run_id: null
 # Deprecated config placeholders stay false/null. Paid approval is invocation-only:
 # run --preflight-only, then pass its hash with both live approval flags.
 live_cost_approved: false
