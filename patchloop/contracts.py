@@ -33,6 +33,20 @@ class MemoryCondition(StrEnum):
     SELECTIVE_STRUCTURED = "selective_structured"
 
 
+class ExperimentPurpose(StrEnum):
+    OFFLINE_SMOKE = "offline-smoke"
+    DEVELOPMENT_VALIDATION_LIVE_PILOT = "development-validation-live-pilot"
+    MEMORY_DEVELOPMENT_NO_MEMORY = "memory-development-no-memory"
+    CORE = "core"
+
+
+class RunOutcomeKind(StrEnum):
+    RESOLVED = "resolved"
+    TASK_FAILURE = "task_failure"
+    AGENT_FAILURE = "agent_failure"
+    INFRASTRUCTURE_ERROR = "infrastructure_error"
+
+
 class VerdictState(StrEnum):
     PASS = "pass"
     FAIL = "fail"
@@ -224,6 +238,22 @@ class DatasetRole(StrEnum):
     CORE_SAME_REPO = "core-same-repo"
     CORE_CROSS_REPO = "core-cross-repo"
     EXTERNAL_ACCEPTANCE = "external-acceptance"
+
+
+class ExperimentRunContext(StrictModel):
+    experiment_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]+$")
+    purpose: ExperimentPurpose
+    suite_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    execution_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    dataset_manifest_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    dataset_role: DatasetRole | None = None
+    schedule_seed: int
+    schedule_order: int = Field(ge=1)
+    schedule_row_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    repetition: int = Field(ge=1)
 
 
 class DatasetAdmissionState(StrEnum):
@@ -653,10 +683,14 @@ class ModelConfig(StrictModel):
     model_id: str
     provider_sdk_version: str | None = None
     replay_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
-    reasoning_effort: str = "medium"
+    reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = "medium"
+    reasoning_mode: Literal["standard", "pro"] = "standard"
+    service_tier: Literal["default", "flex", "priority"] = "default"
     temperature: float = 0
-    max_output_tokens: int = 4096
+    max_output_tokens: int = Field(default=4096, ge=1)
     input_price_per_million_usd: float | None = Field(default=None, ge=0)
+    cached_input_price_per_million_usd: float | None = Field(default=None, ge=0)
+    cache_write_input_price_per_million_usd: float | None = Field(default=None, ge=0)
     output_price_per_million_usd: float | None = Field(default=None, ge=0)
 
     @model_validator(mode="after")
@@ -700,6 +734,7 @@ class RunManifest(StrictModel):
     evaluator_image_digest: str | None = None
     fault: FaultSpec = Field(default_factory=FaultSpec)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
+    experiment: ExperimentRunContext | None = None
     created_at: datetime
 
 
@@ -786,12 +821,26 @@ class Verdicts(StrictModel):
 
 
 class Usage(StrictModel):
-    input_tokens: int = 0
-    output_tokens: int = 0
-    model_cost_usd: float = 0
-    model_calls: int = 0
-    tool_calls: int = 0
-    wall_clock_ms: int = 0
+    model_config = ConfigDict(extra="forbid", frozen=False, validate_assignment=True)
+
+    input_tokens: int = Field(default=0, ge=0)
+    cached_input_tokens: int = Field(default=0, ge=0)
+    cache_write_input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    model_cost_usd: float = Field(default=0, ge=0)
+    model_calls: int = Field(default=0, ge=0)
+    tool_calls: int = Field(default=0, ge=0)
+    wall_clock_ms: int = Field(default=0, ge=0)
+
+    @model_validator(mode="after")
+    def validate_input_token_breakdown(self) -> Usage:
+        accounted_input = self.cached_input_tokens + self.cache_write_input_tokens
+        if accounted_input > self.input_tokens:
+            raise ValueError(
+                "cached_input_tokens + cache_write_input_tokens "
+                "must not exceed input_tokens"
+            )
+        return self
 
 
 class RunResult(StrictModel):
@@ -805,6 +854,19 @@ class RunResult(StrictModel):
     usage: Usage = Field(default_factory=Usage)
     submitted_patch_artifact_id: str | None = None
     verifier_results: list[VerifierResult] = Field(default_factory=list)
+    outcome_kind: RunOutcomeKind | None = None
+    terminal_error: dict[str, str] | None = None
+
+    @model_validator(mode="after")
+    def derive_outcome_kind(self) -> RunResult:
+        if self.outcome_kind is None:
+            if self.scope_compliant_success:
+                self.outcome_kind = RunOutcomeKind.RESOLVED
+            elif self.evaluation_status == "completed":
+                self.outcome_kind = RunOutcomeKind.TASK_FAILURE
+            else:
+                self.outcome_kind = RunOutcomeKind.AGENT_FAILURE
+        return self
 
 
 class FailureRecord(StrictModel):

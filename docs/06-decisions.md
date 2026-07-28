@@ -28,6 +28,11 @@
 | D-018 | Terminal-Bench 2.1은 세 sentinel stress overlay와 external acceptance의 참고 원천으로 사용하고 core aggregate와 분리한다. 원본 terminal task보다 constrained coding adaptation을 우선한다. | Unrestricted shell, network와 shared verifier를 PatchLoop의 고정 tool/evaluator 계약에 섞지 않으면서 실제 deployment failure pattern을 보존한다. |
 | D-019 | Stress sentinel은 held-out 12개의 public contract structure만으로 결과를 보기 전에 선택한다. `public-contract-structure-v1`은 widest change surface로 FuseSoC #776, 남은 task 중 narrowest mutation surface로 AnyIO #1134, 남은 task 중 longest visible check로 pyfakefs #1269를 고정한다. | Private oracle, reference solution과 model outcome을 선택에 사용하지 않으면서 change breadth, 좁은 mutation, 긴 check의 서로 다른 stress profile을 재현 가능하게 포함한다. |
 | D-020 | 세 sentinel 모두에 context reset, worker restart와 test timeout을 적용한다. Memory는 `no_memory`, context/worker는 persistent state on/off 각 2회, timeout은 on 2회로 총 30개 derived run이며 core 96개와 분리한다. Trigger는 각각 model call 10 직후, 첫 durable patch checkpoint 직후, 첫 registered visible check다. | Fault와 task를 임의 배정하지 않고 persistence ablation과 timeout behavior를 같은 고정 panel에서 비교하며, stress 결과가 memory core headline을 오염시키지 않게 한다. |
+| D-021 | 새 suite는 `experiment-v2`의 explicit purpose를 사용한다. 첫 live gate는 Babel #1042 development-validation `no_memory` 1회($2 cap), 다음 gate는 frozen memory-development 6 task의 `no_memory` 각 2회, 총 12 run($20 cap)이다. | 한 번의 작은 tool-loop/trace 검증 없이 12개 paid run을 시작하지 않고, validation trace가 memory source로 섞이지 않게 한다. |
+| D-022 | Paid approval은 checked-in config가 아니라 invocation의 `--approve-live-cost`와 exact preflight `--approved-execution-hash` 조합이다. Preflight는 dataset/role/hash와 canonical package path, public/private spec hash, digest-pinned environment/observed Docker identity, clean commit, API key 존재만, custom base URL 부재, SDK/model config, 72시간 공식 가격과 budget reserve를 검사한다. Live capability는 이 승인을 포함한 durable execution plan에서만 발급하며 direct live run/resume/fault를 차단한다. | 승인 후 task/private oracle/config/환경이 달라진 실행과 우회 경로를 막고 secret을 artifact에 넣지 않으면서 비용 권한을 한 exact execution으로 제한한다. |
+| D-023 | Live no-memory attempt는 `trace-qualification-v1`을 거쳐야 하며 memory candidate는 qualified memory-development failure로 제한한다. Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints, result와 agent-visible artifact inventory를 결속하고 review/index admission 때 다시 계산한다. Failure는 hidden check ID를 제거하고 append-only hash-chained human review를 통과해야 memory build에 들어간다. | 실패 trace에서 배우되 solution/private oracle 누출, stale qualification과 자동 self-approval을 막고 원시 판정과 사람의 review history를 덮어쓰지 않는다. |
+| D-024 | Paid campaign은 `CampaignStarted`와 각 `RunStarted`를 model call 전에 append-only hash chain에 flush와 fsync한다. 기존 journal은 hard-crash 뒤 같은 experiment의 새 schedule 시작을 차단한다. 중단된 campaign의 자동 resume은 구현될 때까지 제공한다고 주장하지 않는다. | Process 종료와 최종 result JSON 사이의 창에서도 이미 시작한 paid row를 잊고 중복 호출하는 것을 막으며, 구현되지 않은 recovery 의미론을 분리한다. |
+| D-025 | Predeclared matrix가 불완전하거나 qualification-failed이면 report는 `analysis_ready=false` available-case diagnostic만 제공하고 headline metrics, paired difference/CI와 success/failure flip을 억제한다. | Infrastructure halt나 누락 repetition의 불균형 분모를 정상적인 memory 효과 비교로 오해하지 않게 한다. |
 
 ## Provisional defaults
 
@@ -58,10 +63,13 @@
 | Q-001 | 첫 audited fixture repository를 자체 제작할지 외부 OSS snapshot을 사용할지 | License, realism, reproducibility | P1.3 시작 전 |
 | Q-003 | Scope verifier의 diff-line 계산 규칙을 add/delete 합계로 할지 | `max_diff_lines` 재현성 | P1.7 시작 전 |
 | Q-004 | Test tampering의 초기 deterministic 범위를 어디까지 볼지 | False positive와 task authoring burden | P1.7 시작 전 |
-| Q-005 | Live model provider와 fixed model identifier를 무엇으로 할지 | 실제 실험 비용과 reproducibility | Phase 2 종료 전 |
 | Q-006 | Raw trace retrieval candidate pool을 same-repo dev run으로 제한할지 | Fairness와 leakage | Phase 5 시작 전 |
 | Q-007 | Similarity embedding을 local model로 고정할지 | Offline reproducibility와 품질 | Phase 5 시작 전 |
 | Q-008 | Small-sample bootstrap의 resampling unit을 task로만 둘지, repetition hierarchy를 반영할지 | Confidence interval 해석 | Phase 6 시작 전 |
+
+Q-005는 D-021/D-022로 해결했다. 현재는 `gpt-5.6-terra` alias,
+medium/standard/default와 SDK/Git/time provenance를 고정하며, dated snapshot이 공개되면
+core freeze 전에 새 decision으로 재검토한다.
 
 ## Decision change template
 

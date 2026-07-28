@@ -7,17 +7,25 @@ import uuid
 from pathlib import Path
 
 from patchloop.contracts import DatasetRole, FailurePattern, FailureRecord, MemoryEntry
-from patchloop.dataset import load_dataset_manifest, require_dataset_role
+from patchloop.dataset import require_dataset_role, require_frozen_dataset
 from patchloop.errors import ContractError, RecoveryError
+from patchloop.evals.qualification import (
+    calculate_source_evidence_hash,
+    load_trace_qualification,
+)
 from patchloop.runtime import runtime_root
 from patchloop.state import StateStore
-from patchloop.util import canonical_json, sha256_text, utc_now
+from patchloop.util import canonical_json, sha256_bytes, sha256_text, utc_now
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 
-def index_root() -> Path:
-    root = runtime_root() / "memory" / "indexes"
+def _runtime_root(root: str | Path | None = None) -> Path:
+    return Path(root) if root is not None else runtime_root()
+
+
+def index_root(root: str | Path | None = None) -> Path:
+    root = _runtime_root(root) / "memory" / "indexes"
     root.mkdir(parents=True, exist_ok=True)
     return root
 
@@ -26,8 +34,10 @@ def _require_memory_source(
     record: FailureRecord,
     *,
     dataset_manifest_path: str | Path | None = None,
-) -> tuple[str, str]:
-    state = StateStore(runtime_root() / "state.sqlite3")
+    root: str | Path | None = None,
+) -> tuple[str, str, str, str]:
+    source_root = _runtime_root(root)
+    state = StateStore(source_root / "state.sqlite3")
     try:
         manifest = state.get_manifest(record.run_id)
     except RecoveryError as exc:
@@ -39,8 +49,72 @@ def _require_memory_source(
         allowed_roles={DatasetRole.MEMORY_DEVELOPMENT},
         manifest_path=dataset_manifest_path,
     )
-    _, dataset_hash, _ = load_dataset_manifest(dataset_manifest_path)
-    return entry.role.value, dataset_hash
+    _, dataset_hash, _ = require_frozen_dataset(dataset_manifest_path)
+    qualification = load_trace_qualification(record.run_id, root=source_root)
+    if not qualification.get("qualified"):
+        raise ContractError(f"failure source trace did not pass qualification: {record.run_id}")
+    if not qualification.get("memory_candidate_eligible"):
+        raise ContractError(
+            f"failure source is not eligible for memory generation: {record.run_id}"
+        )
+    if qualification.get("failure_record_id") != record.failure_id:
+        raise ContractError("trace qualification does not link this failure record")
+    record_path = (
+        source_root / "failures" / "dev-train" / f"{record.failure_id}.json"
+    )
+    if qualification.get("failure_record_hash") != sha256_bytes(record_path.read_bytes()):
+        raise ContractError("failure record changed after trace qualification")
+    if qualification.get("dataset_manifest_hash") != dataset_hash:
+        raise ContractError("failure source run does not match the frozen dataset manifest")
+    current_source_hash = calculate_source_evidence_hash(
+        record.run_id,
+        root=source_root,
+    )
+    if qualification.get("source_evidence_hash") != current_source_hash:
+        raise ContractError("source evidence changed after trace qualification")
+    return (
+        entry.role.value,
+        dataset_hash,
+        str(qualification["qualification_hash"]),
+        current_source_hash,
+    )
+
+
+def _review_history_path(failure_path: Path) -> Path:
+    return failure_path.with_suffix(".review-history.jsonl")
+
+
+def _review_history(failure_path: Path) -> list[dict]:
+    path = _review_history_path(failure_path)
+    if not path.is_file():
+        return []
+    history: list[dict] = []
+    previous_hash: str | None = None
+    expected_failure_id = failure_path.stem
+    for line_number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            item = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ContractError(
+                f"invalid review history at {path.name}:{line_number}"
+            ) from exc
+        if not isinstance(item, dict):
+            raise ContractError(f"invalid review history at {path.name}:{line_number}")
+        recorded_hash = item.get("review_hash")
+        unhashed = {key: value for key, value in item.items() if key != "review_hash"}
+        if (
+            item.get("schema_version") != "failure-review-v1"
+            or item.get("failure_id") != expected_failure_id
+            or item.get("previous_review_hash") != previous_hash
+            or not isinstance(recorded_hash, str)
+            or sha256_text(canonical_json(unhashed)) != recorded_hash
+        ):
+            raise ContractError(f"broken review history chain at {path.name}:{line_number}")
+        history.append(item)
+        previous_hash = recorded_hash
+    return history
 
 
 def review_failure(
@@ -50,33 +124,54 @@ def review_failure(
     approve: bool,
     reviewer: str = "human",
     dataset_manifest_path: str | Path | None = None,
+    root: str | Path | None = None,
 ) -> dict:
     if split != "dev-train":
         raise ContractError("only dev-train failures may enter the memory review queue")
-    path = runtime_root() / "failures" / split / f"{failure_id}.json"
+    source_root = _runtime_root(root)
+    path = source_root / "failures" / split / f"{failure_id}.json"
     if not path.exists():
         raise ContractError(f"unknown failure record: {failure_id}")
     original = path.read_bytes()
     record = FailureRecord.model_validate_json(original)
-    dataset_role, dataset_manifest_hash = _require_memory_source(
+    (
+        dataset_role,
+        dataset_manifest_hash,
+        qualification_hash,
+        source_evidence_hash,
+    ) = _require_memory_source(
         record,
         dataset_manifest_path=dataset_manifest_path,
+        root=source_root,
     )
-    record.review_status = "reviewed" if approve else "rejected"
-    path.write_text(record.model_dump_json(indent=2), encoding="utf-8")
-    audit = {
+    history = _review_history(path)
+    audit: dict = {
+        "schema_version": "failure-review-v1",
+        "review_id": f"review_{uuid.uuid4().hex}",
         "failure_id": failure_id,
-        "decision": record.review_status,
+        "run_id": record.run_id,
+        "decision": "reviewed" if approve else "rejected",
         "reviewer": reviewer,
         "reviewed_at": utc_now().isoformat(),
-        "pre_review_hash": sha256_text(original.decode("utf-8")),
-        "post_review_hash": sha256_text(path.read_text(encoding="utf-8")),
+        "failure_record_hash": sha256_bytes(original),
+        "qualification_hash": qualification_hash,
+        "source_evidence_hash": source_evidence_hash,
         "dataset_role": dataset_role,
         "dataset_manifest_hash": dataset_manifest_hash,
+        "previous_review_hash": (
+            history[-1]["review_hash"] if history else None
+        ),
     }
-    audit_path = path.with_suffix(".review-audit")
-    audit_path.write_text(json.dumps(audit, indent=2), encoding="utf-8")
-    return {**audit, "record_path": str(path), "audit_path": str(audit_path)}
+    audit["review_hash"] = sha256_text(canonical_json(audit))
+    audit_path = _review_history_path(path)
+    with audit_path.open("a", encoding="utf-8", newline="\n") as stream:
+        stream.write(canonical_json(audit) + "\n")
+    return {
+        **audit,
+        "record_path": str(path),
+        "audit_path": str(audit_path),
+        "history_length": len(history) + 1,
+    }
 
 
 def _entry_from_failure(record: FailureRecord, version: str) -> MemoryEntry:
@@ -97,7 +192,7 @@ def _entry_from_failure(record: FailureRecord, version: str) -> MemoryEntry:
         ],
         do_not_apply_when=["The current repository evidence does not match the recorded symptoms."],
         source_run_ids=[record.run_id],
-        validation_count=1,
+        validation_count=0,
         confidence=record.confidence,
     )
 
@@ -146,23 +241,52 @@ def build_index_from_failures(
     split: str = "dev-train",
     embedding_revision: str | None = None,
     dataset_manifest_path: str | Path | None = None,
+    root: str | Path | None = None,
 ) -> dict:
     if split != "dev-train":
         raise ContractError("memory entries may only be built from the dev-train split")
-    dataset, dataset_manifest_hash, _ = load_dataset_manifest(dataset_manifest_path)
+    source_root = _runtime_root(root)
+    dataset, dataset_manifest_hash, _ = require_frozen_dataset(dataset_manifest_path)
     version = f"idx_{utc_now().strftime('%Y%m%dT%H%M%SZ')}_{uuid.uuid4().hex[:8]}"
-    source_dir = runtime_root() / "failures" / split
+    source_dir = source_root / "failures" / split
     entries: list[MemoryEntry] = []
     rejected = []
     for path in sorted(source_dir.glob("*.json")) if source_dir.exists() else []:
         record = FailureRecord.model_validate_json(path.read_text(encoding="utf-8"))
-        if record.review_status != "reviewed":
+        history = _review_history(path)
+        if not history or history[-1].get("decision") != "reviewed":
             rejected.append({"path": str(path), "reason": "not reviewed"})
             continue
-        _require_memory_source(
-            record,
-            dataset_manifest_path=dataset_manifest_path,
-        )
+        try:
+            (
+                dataset_role,
+                source_dataset_hash,
+                qualification_hash,
+                source_evidence_hash,
+            ) = _require_memory_source(
+                record,
+                dataset_manifest_path=dataset_manifest_path,
+                root=source_root,
+            )
+        except ContractError as exc:
+            rejected.append({"path": str(path), "reason": str(exc)})
+            continue
+        latest_review = history[-1]
+        failure_record_hash = sha256_bytes(path.read_bytes())
+        if (
+            latest_review.get("failure_record_hash") != failure_record_hash
+            or latest_review.get("qualification_hash") != qualification_hash
+            or latest_review.get("source_evidence_hash") != source_evidence_hash
+            or latest_review.get("dataset_role") != dataset_role
+            or latest_review.get("dataset_manifest_hash") != source_dataset_hash
+        ):
+            rejected.append(
+                {
+                    "path": str(path),
+                    "reason": "review provenance no longer matches the qualified source",
+                }
+            )
+            continue
         entries.append(_entry_from_failure(record, version))
     embeddings = _build_embeddings(entries, embedding_revision)
     payload = {
@@ -185,7 +309,7 @@ def build_index_from_failures(
     if leaks:
         raise ContractError(f"memory leak scan failed: {', '.join(leaks)}")
     payload["content_hash"] = sha256_text(canonical_json(payload))
-    directory = index_root() / version
+    directory = index_root(source_root) / version
     directory.mkdir(parents=True, exist_ok=False)
     index_path = directory / "index.json"
     index_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")

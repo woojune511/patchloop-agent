@@ -21,6 +21,11 @@ def clone_with_fault(baseline_run_id: str, fault: str) -> dict:
         raise ContractError(f"unknown fault type: {fault}")
     runner = AgentRunner()
     baseline = runner.state.get_manifest(baseline_run_id)
+    if baseline.model.provider == "openai":
+        raise ContractError(
+            "direct live fault injection is disabled; an approved reliability suite "
+            "is not implemented"
+        )
     fault_type = FAULT_ALIASES[fault]
     derived = baseline.model_copy(
         update={
@@ -31,7 +36,11 @@ def clone_with_fault(baseline_run_id: str, fault: str) -> dict:
         deep=True,
     )
     task_dir = runner._find_task(baseline)
-    model = "mock" if baseline.model.provider == "mock" else "openai"
+    model = (
+        baseline.model.model_id
+        if baseline.model.provider == "replay"
+        else baseline.model.provider
+    )
     result = runner.start(
         task_dir,
         model=model,

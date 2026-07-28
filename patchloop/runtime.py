@@ -9,12 +9,14 @@ from pathlib import Path
 
 from patchloop.contracts import (
     Budget,
+    ExperimentRunContext,
     FaultSpec,
     MemoryCondition,
     MemoryConfig,
     ModelConfig,
     RunManifest,
     TaskPackage,
+    Usage,
 )
 from patchloop.util import utc_now
 
@@ -58,8 +60,15 @@ def build_manifest(
     agent_image_digest: str | None = None,
     evaluator_image_digest: str | None = None,
     input_price_per_million_usd: float | None = None,
+    cached_input_price_per_million_usd: float | None = None,
+    cache_write_input_price_per_million_usd: float | None = None,
     output_price_per_million_usd: float | None = None,
+    reasoning_effort: str = "medium",
+    reasoning_mode: str = "standard",
+    service_tier: str = "default",
+    max_output_tokens: int = 4096,
     replay_hash: str | None = None,
+    experiment_context: ExperimentRunContext | None = None,
 ) -> RunManifest:
     sdk_version = None
     if provider == "openai":
@@ -87,7 +96,15 @@ def build_manifest(
             model_id=model_id,
             provider_sdk_version=sdk_version,
             replay_hash=replay_hash,
+            reasoning_effort=reasoning_effort,
+            reasoning_mode=reasoning_mode,
+            service_tier=service_tier,
+            max_output_tokens=max_output_tokens,
             input_price_per_million_usd=input_price_per_million_usd,
+            cached_input_price_per_million_usd=cached_input_price_per_million_usd,
+            cache_write_input_price_per_million_usd=(
+                cache_write_input_price_per_million_usd
+            ),
             output_price_per_million_usd=output_price_per_million_usd,
         ),
         budget=budget or Budget(),
@@ -96,5 +113,41 @@ def build_manifest(
         evaluator_image_digest=evaluator_image_digest,
         fault=fault or FaultSpec(),
         memory=memory_config,
+        experiment=experiment_context,
         created_at=utc_now(),
     )
+
+
+def calculate_model_cost(usage: Usage, config: ModelConfig) -> float:
+    """Calculate direct token cost without double-counting cache reads or writes."""
+
+    if (
+        config.input_price_per_million_usd is None
+        or config.output_price_per_million_usd is None
+    ):
+        return 0.0
+    cached_tokens = min(usage.cached_input_tokens, usage.input_tokens)
+    cache_write_tokens = min(
+        usage.cache_write_input_tokens,
+        max(0, usage.input_tokens - cached_tokens),
+    )
+    uncached_tokens = max(
+        0,
+        usage.input_tokens - cached_tokens - cache_write_tokens,
+    )
+    cached_price = (
+        config.cached_input_price_per_million_usd
+        if config.cached_input_price_per_million_usd is not None
+        else config.input_price_per_million_usd
+    )
+    cache_write_price = (
+        config.cache_write_input_price_per_million_usd
+        if config.cache_write_input_price_per_million_usd is not None
+        else config.input_price_per_million_usd
+    )
+    return (
+        uncached_tokens * config.input_price_per_million_usd
+        + cached_tokens * cached_price
+        + cache_write_tokens * cache_write_price
+        + usage.output_tokens * config.output_price_per_million_usd
+    ) / 1_000_000

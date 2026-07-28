@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **No-memory development trace qualification**
+현재 milestone: **Development-validation live pilot preflight acceptance**
 
 2026-07-28 구현 스냅샷:
 
@@ -11,8 +11,8 @@
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
 | Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
 | Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
-| Phase 5 memory | implemented, trace/index gate pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | implemented, core campaign pending | Seeded smoke와 task bootstrap report 실행 |
+| Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
+| Phase 6 evaluation | experiment-v2/preflight implemented, acceptance와 campaign pending | Seeded smoke와 task bootstrap report 실행; paid run 0 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -63,8 +63,9 @@ research task를 admission한다.
 7. 원본 benchmark 호환성 run은 external acceptance lane에 남기고 core aggregate와 분리한다.
 
 2026-07-28 현재 1~6번은 executable admission과 machine-audit evidence로 완료됐다.
-7번 external acceptance lane은 frozen core dataset과 분리된 후속 작업이다. 다음 milestone은
-여섯 memory-development task의 no-memory development trace를 qualification하는 것이다.
+7번 external acceptance lane은 frozen core dataset과 분리된 후속 작업이다. 다음 단계는
+Babel development-validation live pilot preflight를 acceptance한 뒤 여섯 memory-development
+task의 no-memory development trace를 qualification하는 것이다.
 
 동결 evidence:
 
@@ -89,6 +90,59 @@ research task를 admission한다.
 - Same-repo repository coverage와 cross-repo disjointness, solution-lineage uniqueness가
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
+
+## Current live trace gate — implementation pending acceptance
+
+목표: 첫 paid call 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
+trace를 증명한 뒤에만 12-run development campaign을 연다.
+
+### Frozen sequence
+
+| Order | Status | Work item | Acceptance evidence |
+| ---: | --- | --- | --- |
+| 1 | implemented, external acceptance pending | `experiment-v2` explicit purpose와 exact suite shape | Wrong task/role/repetition/model/budget contract reject |
+| 2 | implemented, clean-machine acceptance pending | Canonical task/private hash/digest environment preflight, durable approved plan과 live capability | Unapproved/hash mismatch/dirty Git/wrong package/private/image/stale price reject |
+| 3 | implemented, interrupted-run recovery pending | Paid call 전 fsync하는 hash-chained campaign journal | Existing journal이 hard-crash 뒤 새 schedule 시작을 차단; 자동 resume은 미구현 |
+| 4 | implemented, live artifact pending | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | Missing plan/artifact/event, source mutation, leak/usage mismatch reject |
+| 5 | pending paid approval | Babel #1042 `no_memory` 1회 pilot, $2 cap | Qualified pilot artifact와 stable run ID |
+| 6 | pending pilot gate | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
+| 7 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
+
+Live suite는 `gpt-5.6-terra`, reasoning `medium`, mode `standard`, service tier `default`,
+4,096 max output token과 기본 run budget을 고정한다. Dataset hash는
+`sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`다.
+
+Preflight는 frozen dataset role/hash, manifest의 canonical task path, public/private hash와
+base commit, task별 digest-pinned environment/observed Docker image, clean Git commit, SDK와
+API key 존재 여부, custom base URL 부재, 72시간 price age, official rate와 budget reserve를
+검사한다. Checked-in config는 승인 권한을 갖지 않는다. `--approve-live-cost`와 preflight가
+출력한 exact `--approved-execution-hash`를 실제 실행 invocation에 다시 제공해야 한다.
+Paid runner는 승인된 execution plan을 durable하게 저장한 뒤에만 capability를 받는다.
+Campaign과 row start journal event는 model call 전에 append, flush, fsync되므로 hard crash 뒤
+같은 experiment를 자동으로 다시 시작하지 않는다. 중단된 journal의 자동 resume은 후속
+work item이다.
+
+Qualification은 필수 event의 content-addressed artifact reference와 usage/cache 불변식을
+검사하고, plan/manifest/events/checkpoints/result/artifact inventory를
+`source_evidence_hash`로 결속한다. Human review와 index build는 현재 source hash를 다시
+검증한다.
+
+2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
+output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
+남긴다.
+
+### Exit gate — not passed
+
+- 관련 unit/integration test와 Ruff가 통과한다.
+- Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
+- 실제 환경에서 approval을 포함한 preflight가 `ready=true`다.
+- 사용자가 $2 pilot을 별도로 승인한 뒤 한 run이 `trace-qualification-v1`을 통과한다.
+- Pilot qualification hash를 development suite에 고정하기 전에는 12-run campaign이
+  시작되지 않는다.
+- Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
+
+이 문서 시점에는 paid live call, pilot result, 12-run development result가 없다. Docker,
+credential, clean-worktree와 price-age blocker는 실제 preflight 전까지 미확인 상태다.
 
 ## Phase 1. Evaluation Foundation
 
@@ -222,6 +276,8 @@ patchloop eval-task tasks/dev/task_001
 - 세 sentinel stress 결과를 core aggregate와 분리한다.
 - Raw result에서 report를 다시 생성할 수 있다.
 - Task-level matrix와 confidence interval이 생성된다.
+- Matrix가 불완전하거나 qualification-failed이면 `analysis_ready=false` diagnostic만 만들고
+  headline, paired CI와 flip 결과를 억제한다.
 - 모든 headline 수치가 raw row와 run artifact로 추적된다.
 - Negative 또는 inconclusive 결과도 변경 없이 보고한다.
 

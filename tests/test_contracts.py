@@ -13,8 +13,10 @@ from patchloop.contracts import (
     RegisteredCheck,
     TaskConstraints,
     TaskEnvironment,
+    Usage,
 )
 from patchloop.errors import ContractError
+from patchloop.runtime import calculate_model_cost
 
 
 def test_unknown_fields_are_rejected() -> None:
@@ -52,6 +54,41 @@ def test_non_replay_model_rejects_replay_hash() -> None:
             model_id="mock-v1",
             replay_hash="sha256:" + ("a" * 64),
         )
+
+
+def test_model_cost_accounts_for_cache_reads_and_writes_without_double_counting() -> None:
+    config = ModelConfig(
+        provider="openai",
+        model_id="gpt-5.6-terra",
+        input_price_per_million_usd=2.50,
+        cached_input_price_per_million_usd=0.25,
+        cache_write_input_price_per_million_usd=3.125,
+        output_price_per_million_usd=15.0,
+    )
+    usage = Usage(
+        input_tokens=1_000_000,
+        cached_input_tokens=200_000,
+        cache_write_input_tokens=100_000,
+        output_tokens=100_000,
+    )
+
+    assert calculate_model_cost(usage, config) == pytest.approx(3.6125)
+
+
+def test_usage_rejects_cache_breakdown_larger_than_total_input() -> None:
+    with pytest.raises(ValidationError, match="must not exceed input_tokens"):
+        Usage(
+            input_tokens=100,
+            cached_input_tokens=80,
+            cache_write_input_tokens=21,
+        )
+
+
+def test_usage_rejects_invalid_cache_breakdown_on_mutation() -> None:
+    usage = Usage(input_tokens=100, cached_input_tokens=80)
+
+    with pytest.raises(ValidationError, match="must not exceed input_tokens"):
+        usage.cache_write_input_tokens = 21
 
 
 def test_task_environment_requires_digest_pinned_image() -> None:

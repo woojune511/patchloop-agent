@@ -218,7 +218,15 @@ def run(
     """Run the durable constrained coding agent and hidden evaluator."""
     from patchloop.agent.runner import run_from_cli
 
-    _guarded(lambda: run_from_cli(task, model=model, memory_condition=memory))
+    def operation() -> object:
+        if model != "mock" and not model.startswith("replay:"):
+            raise ContractError(
+                "direct live runs are disabled; use `patchloop evaluate --suite ...` "
+                "with an approved experiment-v2 execution hash"
+            )
+        return run_from_cli(task, model=model, memory_condition=memory)
+
+    _guarded(operation)
 
 
 @app.command()
@@ -243,11 +251,52 @@ def inject_fault(
 @app.command()
 def evaluate(
     suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False)],
+    preflight_only: Annotated[
+        bool,
+        typer.Option(
+            "--preflight-only",
+            help="Inspect all live gates without constructing an agent or making API calls.",
+        ),
+    ] = False,
+    approve_live_cost: Annotated[
+        bool,
+        typer.Option(
+            "--approve-live-cost",
+            help="Authorize paid execution for this invocation only.",
+        ),
+    ] = False,
+    approved_execution_hash: Annotated[
+        str | None,
+        typer.Option(
+            "--approved-execution-hash",
+            help="Exact execution hash printed by a clean preflight.",
+        ),
+    ] = None,
 ) -> None:
     """Execute a seeded experiment suite after all freeze gates pass."""
-    from patchloop.evals.runner import evaluate_suite
+    from patchloop.evals.runner import evaluate_suite, preflight_suite
 
-    _guarded(lambda: evaluate_suite(suite))
+    if preflight_only:
+        try:
+            result = preflight_suite(
+                suite,
+                approve_live_cost=approve_live_cost,
+                approved_execution_hash=approved_execution_hash,
+            )
+        except PatchLoopError as exc:
+            _emit({"ok": False, "error": exc.code, "message": str(exc), "details": exc.details})
+            raise typer.Exit(code=1) from exc
+        _emit(result)
+        if not result["ready"]:
+            raise typer.Exit(code=2)
+        return
+    _guarded(
+        lambda: evaluate_suite(
+            suite,
+            approve_live_cost=approve_live_cost,
+            approved_execution_hash=approved_execution_hash,
+        )
+    )
 
 
 @app.command()

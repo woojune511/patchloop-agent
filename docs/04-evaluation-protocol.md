@@ -106,6 +106,32 @@ evaluator 계약으로 변환한 뒤 재감사한다. 원본 Harbor run과 adapt
 
 첫 핵심 결과표는 A~D만 사용한다. Human feedback은 별도 확장 실험이다.
 
+### No-memory development trace acquisition
+
+Memory entry를 만들기 전에 live harness 자체를 development-validation task 하나로 검증한다.
+Frozen sequence는 다음과 같다.
+
+1. Babel #1042 development-validation task를 `no_memory`로 1회 실행한다.
+2. 그 run이 `trace-qualification-v1`의 trace integrity, leakage, evaluator-reached와
+   function-tool-loop gate를 통과했는지 확인한다. 성공 patch일 필요는 없지만 infrastructure
+   error는 pilot qualification이 아니다.
+3. Qualified pilot run ID와 qualification hash를 다음 suite에 고정한다.
+4. Frozen memory-development 여섯 task를 `no_memory`로 task당 2회, 총 12회 실행한다.
+5. Qualification된 failure만 human review queue에 넣는다. Resolved run도 trace evidence로
+   남지만 memory candidate는 아니다.
+
+Pilot의 cost limit은 $2, 12-run development campaign은 $20다. 이 두 실행은 core SCRR
+분모에 포함하지 않는다. Development-validation trace도 memory source가 아니다.
+
+각 started attempt는 resolved/task failure뿐 아니라 agent/infrastructure failure도 stable run
+ID, event, checkpoint, usage와 terminal outcome을 남긴다. Usage는 uncached input, cached
+input, cache-write input, output token을 분리하며 2026-07-28 공식 rate로 비용을 계산한다.
+Cached input과 cache-write input의 합은 total input을 넘을 수 없다. Provider가 이미 과금한
+응답의 function-call argument가 malformed여도 그 response usage와 비용을 먼저 남긴 뒤
+agent failure로 종료한다.
+Infrastructure 또는 qualification error가 발생하면 campaign을 중단하고 나머지 schedule row는
+`not_started` reason과 함께 남긴다. 실패를 같은 run ID로 재실행하거나 결과를 덮어쓰지 않는다.
+
 ## 5. Controlled variables
 
 한 experiment block 안에서 다음을 고정한다.
@@ -121,6 +147,31 @@ evaluator 계약으로 변환한 뒤 재감사한다. 원본 Harbor run과 adapt
 - Fault schedule(정상 실험은 `none`)
 
 Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는다. Provider가 immutable model snapshot을 제공하지 않으면 실행 시점과 provider revision을 기록하고 limitation으로 보고한다.
+
+현재 live development block은 `gpt-5.6-terra`, reasoning `medium`, mode `standard`,
+service tier `default`, max output 4,096 token과 run budget
+`20 model call / 50 tool call / 80,000 total token / 900초`를 고정한다. 현재 공식 catalog에는
+dated Terra snapshot이 없으므로 alias, OpenAI SDK version, clean harness Git commit과
+execution window를 provenance로 사용한다.
+
+Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
+execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
+`--approved-execution-hash`를 함께 전달한다. Hash는 suite, frozen dataset/task/schedule,
+Git commit, canonical dataset package path, public/private spec hash, digest-pinned environment와
+observed Docker identity, SDK와 선행 pilot qualification을 결속한다. Preflight는 API key의
+값이 아니라 존재 여부만 보고, custom OpenAI base URL을 거부한다.
+
+Ready preflight는 durable `experiment-execution-plan-v1`을 먼저 저장한다.
+`CampaignStarted`를 append-only hash chain에 flush와 fsync한 뒤 그 plan에서만 live
+capability를 발급하고, 각 `RunStarted`도 해당 paid call 전에 fsync한다. Hard crash 뒤 남은
+journal은 같은 experiment의 자동 재실행을 차단한다. 중단된 campaign을 자동 resume하는
+기능은 아직 없으므로 journal을
+삭제하거나 새 experiment ID로 우회하지 않고 별도 recovery 절차가 마련될 때까지 보존한다.
+
+2026-07-28 공식 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing)은 1M
+token당 input $2.50, cached input $0.25, cache write $3.125, output $15다. Preflight는
+verification age가 72시간을 넘거나 rate가 다르면 실행하지 않으며, 남은 cost limit에서 한
+run의 frozen budget reserve를 확보할 수 없는 경우 다음 run을 시작하지 않는다.
 
 ## 6. Selective retrieval policy
 
@@ -178,12 +229,18 @@ Memory utilization과 negative-transfer 원인은 자동 metric만으로 단정�
 2. Task public/private package를 audit하고 reference patch가 성공하는지 확인한다.
 3. Known-bad/no-op/out-of-scope patch가 적절히 실패하는지 확인한다.
 4. Harness, model, budget, container, evaluator config를 hash한다.
-5. Development run으로 pipeline을 검증한다.
-6. Memory index와 retrieval config를 freeze한다.
-7. Condition/task/repetition 실행 순서를 seed 기반으로 섞는다.
-8. 각 run의 manifest, raw event, artifact, verifier result를 immutable하게 저장한다.
-9. 사전 정의된 aggregation script로 paired result를 계산한다.
-10. Task-level matrix, aggregate, confidence interval, failure trace를 함께 공개한다.
+5. `--preflight-only`로 canonical task/private evaluator, live environment, price, budget
+   reserve와 execution hash를 검토한다.
+6. Explicit invocation approval을 durable execution plan으로 저장하고 campaign/run start를
+   journal에 fsync한 뒤 Babel development-validation pilot을 실행하고 trace를 qualification한다.
+7. Qualified pilot hash에 결속된 여섯 task × 2 no-memory development campaign을 실행한다.
+8. Eligible failure의 append-only human review를 거쳐 memory index와 retrieval config를
+   freeze한다.
+9. Condition/task/repetition 실행 순서를 seed 기반으로 섞는다.
+10. 각 run의 manifest, raw event, checkpoint, result, artifact와 verifier result를
+    immutable하게 저장하고 `source_evidence_hash`로 결속한다.
+11. 사전 정의된 aggregation script로 paired result를 계산한다.
+12. Task-level matrix, aggregate, confidence interval, failure trace를 함께 공개한다.
 
 실패한 run을 동일 ID로 다시 실행해 결과를 덮어쓰지 않는다. Retry는 새 attempt ID로 연결한다.
 
@@ -280,12 +337,27 @@ Human approval는 autonomous agent 비교를 바꾸므로 main ablation에 넣�
 
 Task 수가 작으면 p-value를 headline으로 삼지 않는다. Effect size, interval, task evidence를 함께 제시한다. Negative result도 그대로 보고한다.
 
+Predeclared task × condition × repetition matrix가 완전하지 않거나 infrastructure,
+`not_started`, missing terminal result 또는 trace qualification failure가 하나라도 있으면
+report는 `analysis_ready=false`와 exclusion reason을 기록한다. 이때 available-case 수치와
+CSV는 복구·진단용으로만 표시하고 `headline_metrics`, paired difference/CI와
+success/failure flip은 생성하지 않는다. 누락 row를 제외한 교집합을 정식 비교처럼 보고해서는
+안 된다.
+
 ## 13. Leakage controls
 
 - Held-out task를 development prompt/taxonomy tuning에 사용하지 않는다.
 - Calibration fixture와 external acceptance trace를 memory source로 사용하지 않는다.
 - Held-out evaluation 동안 memory index를 변경하지 않는다.
 - Memory builder가 private spec, hidden test, reference patch를 읽지 못하게 한다.
+- Failure classifier는 hidden check ID를 저장하지 않고 공개 check type/state와 opaque evidence
+  locator만 저장한다.
+- `trace-qualification-v1` leakage scan은 private token의 본문을 결과에 복사하지 않고 match
+  count만 남긴다.
+- Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
+  result와 agent-visible artifact inventory를 결속하며 review/index admission 때 다시 계산한다.
+- Review는 원본 failure record를 수정하지 않고 이전 review hash를 잇는 append-only
+  `failure-review-v1` history로 기록한다.
 - Raw trace condition도 held-out solution trace를 검색 대상으로 사용하지 않는다.
 - Report/viewer가 hidden assertion body를 model-visible trace에 역으로 노출하지 않게 한다.
 - Split, config, index, task package의 hash를 run manifest에 기록한다.

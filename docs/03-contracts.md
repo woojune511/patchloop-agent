@@ -254,7 +254,95 @@ output_limit_bytes: 200000
 
 Command는 task editor가 등록한다. Agent가 executable, argument, environment를 덮어쓸 수 없다.
 
-## 3. Run manifest
+## 3. Experiment suite와 live preflight
+
+`experiment-v2`는 모든 suite에 `purpose`를 명시한다. 기존 offline smoke와 core template의
+`experiment-v1`은 읽기 호환만 유지하며 새 live 실행에는 사용하지 않는다.
+
+| Purpose | Exact contract |
+| --- | --- |
+| `offline-smoke` | `model=mock`; API 호출 없음 |
+| `development-validation-live-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, $2 상한 |
+| `memory-development-no-memory` | frozen memory-development 여섯 task, `no_memory`, repetition 2, 총 12 run, $20 상한 |
+| `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
+
+두 development live purpose는 다음 값을 고정한다.
+
+```yaml
+model: openai
+model_id: gpt-5.6-terra
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+max_output_tokens: 4096
+budget:
+  max_model_calls: 20
+  max_tool_calls: 50
+  max_total_tokens: 80000
+  wall_clock_timeout_seconds: 900
+seed: 20260723
+```
+
+Pilot task는
+`tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml`로 exact match한다.
+Development campaign은 frozen registry의 memory-development 여섯 task가 정확히 한 번씩
+suite에 선언돼야 한다. 다른 role, 일부 집합, 중복 task 또는 다른 repetition은 schema 또는
+preflight에서 거부한다. Development campaign은 먼저 성공 여부와 무관하게 trace integrity,
+public/private boundary와 evaluator 도달을 만족한 qualified pilot의 run ID와 qualification
+hash를 요구한다.
+
+Paid approval은 checked-in YAML 상태가 아니다. `live_cost_approved`와
+`approved_execution_hash`는 이전 schema를 읽기 위한 deprecated field이며 값을 바꿔도 실행
+권한을 주지 않는다. 실행자는 먼저 `--preflight-only`가 반환한 exact `execution_hash`를
+검토하고, 실제 paid invocation에 다음 두 값을 함께 제공해야 한다.
+
+```text
+--approve-live-cost
+--approved-execution-hash sha256:<exact execution hash>
+```
+
+Execution hash는 approval field를 제외한 normalized suite, frozen dataset identity, task의
+canonical package path/public spec/private spec/base commit, seeded schedule hash, clean Git
+commit, digest-pinned environment와 observed Docker image identity, OpenAI SDK version과
+선행 pilot qualification hash를 결속한다. Suite가 manifest의 canonical package가 아닌
+복제 경로를 가리키거나 현재 private evaluator hash가 registry와 다르거나 digest-pinned
+environment가 없으면 paid execution 전에 거부한다. Preflight는 매 invocation마다 다음도
+다시 확인한다.
+
+- Frozen dataset status와 manifest hash, task role/split
+- Clean Git worktree와 commit identity
+- 모든 evaluator image의 digest identity와 Docker server availability
+- `OPENAI_API_KEY` 존재 여부만 확인하고 credential value는 출력·저장하지 않음
+- `OPENAI_BASE_URL`, `OPENAI_API_BASE`가 설정되지 않았음
+- Terra alias, medium reasoning, standard mode, default service tier와 SDK provenance
+- 72시간 이내의 공식 price source/rate와 positive estimate
+- 한 run의 frozen token/output budget을 모두 예약해도 campaign cost limit을 넘지 않음
+- 동일 experiment result가 아직 존재하지 않음
+
+2026-07-28의 공식 [API pricing](https://developers.openai.com/api/docs/pricing)은 1M token당
+input $2.50, cached input $0.25, cache write $3.125, output $15다. 현재 model catalog에는
+dated Terra snapshot 없이 `gpt-5.6-terra` alias만 있으므로 model ID와 SDK version, Git
+commit, 실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을
+거부하고 다시 확인한다.
+
+`patchloop run --model openai`, OpenAI run의 direct `resume`, direct `inject-fault`는 승인된
+suite 경로를 우회할 수 없도록 거부한다.
+
+Ready preflight는 paid runner를 만들기 전에
+`.patchloop/experiments/plans/<execution-hash>.json`에
+`experiment-execution-plan-v1`을 저장한다. Live execution capability는 이 plan이
+`ready=true`, blocker 없음, invocation approval과 exact execution hash 일치를 다시
+증명할 때만 발급된다. In-memory flag나 임의로 만든 manifest만으로 capability를 만들 수 없다.
+
+Campaign은 별도의 `experiment-journal-event-v1` JSONL을 사용한다. 각 event는 monotonic
+sequence, `previous_event_hash`와 자신의 content hash를 가지며 append 뒤 flush와 fsync한다.
+`CampaignStarted`는 capability 발급과 첫 model call 전에, 각 `RunStarted`는 stable run ID와
+함께 해당 row의 model call 전에 기록한다. `RunTerminal`, `RunNotStarted`,
+`CampaignCompleted`도 같은 chain에 추가한다. 결과 JSON이 생성되기 전에 process가 종료돼도
+기존 journal이 새 schedule 시작을 차단한다. 이 계약은 중복 paid call 방지 경계이며, 중단된
+campaign의 자동 resume 계약은 아직 제공하지 않는다.
+
+## 4. Run manifest
 
 ```yaml
 schema_version: run-manifest-v1
@@ -312,7 +400,27 @@ Manifest는 run 시작 전에 finalize하며 이후 수정하지 않는다. 계�
 `replay_hash`는 해당 JSONL bytes의 SHA-256이다. Resume은 둘을 다시 검증해 source가 이동하거나
 변조된 경우 실행을 거부한다. 다른 provider에서는 `replay_hash`를 허용하지 않는다.
 
-## 4. Event envelope
+Approved suite가 만든 run은 optional `experiment` context를 반드시 채운다.
+
+```yaml
+experiment:
+  experiment_id: dev-validation-live-pilot-20260728
+  purpose: development-validation-live-pilot
+  suite_hash: "sha256:..."
+  execution_hash: "sha256:..."
+  dataset_manifest_hash: "sha256:..."
+  dataset_role: development-validation
+  schedule_seed: 20260723
+  schedule_order: 1
+  schedule_row_id: "sha256:..."
+  repetition: 1
+```
+
+OpenAI model block은 provider SDK version, reasoning effort/mode, service tier와 input,
+cached-input, cache-write-input, output rate를 보존한다. 이 값으로 terminal usage의 model cost를
+재계산할 수 있어야 한다.
+
+## 5. Event envelope
 
 ```json
 {
@@ -343,7 +451,7 @@ FailureTagged     RunCompleted       RunFailed
 
 Event payload schema는 type별 version을 가져야 한다. Secret, full hidden assertion, raw credential을 payload에 저장하지 않는다.
 
-## 5. Checkpoint
+## 6. Checkpoint
 
 ```json
 {
@@ -383,7 +491,7 @@ Event payload schema는 type별 version을 가져야 한다. Secret, full hidden
 
 Checkpoint가 참조한 event sequence나 hash를 검증할 수 없으면 자동 재개하지 않고 recovery error를 기록한다.
 
-## 6. Tool call contract
+## 7. Tool call contract
 
 모든 mutating 또는 비용이 큰 tool call은 다음 공통 envelope를 사용한다.
 
@@ -456,7 +564,7 @@ Result 공통 필드:
 }
 ```
 
-## 7. Verifier result and final outcome
+## 8. Verifier result and final outcome
 
 ```json
 {
@@ -490,6 +598,8 @@ Result 공통 필드:
   },
   "usage": {
     "input_tokens": 0,
+    "cached_input_tokens": 0,
+    "cache_write_input_tokens": 0,
     "output_tokens": 0,
     "model_cost_usd": 0,
     "model_calls": 0,
@@ -504,7 +614,19 @@ Skipped, infrastructure error, policy rejection을 `false`와 혼합하지 않�
 
 `scope_policy_passed`는 단일 검사 결과가 아니라 allowed/forbidden path, diff size, dependency, test tampering, public API 정책의 deterministic aggregation이다. 구성 검사 하나라도 `fail | error | not_run`이면 scope policy를 pass로 만들 수 없다. 개별 구성 결과는 별도 `VerifierResult`로 보존한다.
 
-## 8. Failure record
+Live suite의 각 시작된 attempt는 성공 여부와 관계없이 stable run ID를 가진다. Terminal
+failure도 `RunFailed` event와 `RunResult`를 저장하며 usage에는 input, cached input,
+cache-write input, output token과 계산된 model cost가 포함된다. Experiment row는 terminal
+outcome, infrastructure error와 qualification 결과를 연결한다. 첫 infrastructure 또는
+qualification error 뒤의 schedule row는 새 API call 없이 `not_started`로 보존한다.
+
+`cached_input_tokens + cache_write_input_tokens <= input_tokens`는 schema 불변식이다. 이미
+응답을 받은 뒤 function-call argument JSON이 malformed인 경우에도 adapter는 응답 usage를
+먼저 구조화하고 `ModelCalled`와 terminal failure에 보존한 뒤 agent failure로 종료한다. 이미
+과금된 response usage를 parsing exception 때문에 버리거나 cache token 초과분을 조용히
+clamp한 값으로 qualification해서는 안 된다.
+
+## 9. Failure record
 
 ```yaml
 schema_version: failure-v1
@@ -538,7 +660,48 @@ UNKNOWN
 
 Cause와 symptom을 구분하고, label만 단독 저장하지 않는다.
 
-## 9. Failure memory entry
+### Trace qualification과 review eligibility
+
+Live no-memory run은 `trace-qualification-v1` artifact를 content hash와 함께 별도로 남긴다.
+Qualification은 최소한 다음 경계를 검사한다.
+
+- Task/public/private hash와 frozen dataset role, experiment purpose가 일치함
+- Event sequence가 1부터 연속이고 terminal event가 정확히 하나이며 마지막 event임
+- `RunStarted`, `ContextBuilt`, `ModelCalled`, durable checkpoint evidence가 존재함
+- 위 세 필수 event가 `artifact_id`와 content-addressed `artifact_path`를 모두 가지며,
+  path가 가리키는 bytes의 SHA-256이 CAS identity와 일치함
+- `no_memory` manifest에 retrieval event나 index identity가 없음
+- OpenAI/Terra/medium/standard/default, fault-free와 exact Docker provenance가 일치함
+- Durable approved execution plan의 suite/dataset/task/private evaluator/schedule row가
+  run manifest와 일치함
+- Agent-visible event/artifact에 private filename, hidden check ID, hidden artifact path,
+  reference hash 또는 현재 API key가 없음
+- Event usage, persisted result, terminal outcome과 evaluator verdict가 서로 일치함
+- Pilot은 적어도 한 tool call을 포함해 실제 function-tool loop를 통과함
+
+Leak scan은 private token의 값이나 일치 문자열을 artifact에 다시 기록하지 않고 match count만
+남긴다. Deterministic failure record도 hidden `check_id`를 복사하지 않는다. 공개
+`check_type:state`, opaque verifier result ID와 artifact ID만 저장한다.
+
+Qualification된 모든 run이 memory source가 되는 것은 아니다.
+`memory_candidate_eligible=true`는 `memory-development` role,
+`memory-development-no-memory` purpose, `no_memory`, fault-free, qualification 통과와
+`task_failure | agent_failure` outcome을 모두 만족할 때만 가능하다. Resolved run,
+development-validation pilot, infrastructure error, calibration/held-out run은 후보가 아니다.
+
+Qualification은 자기 JSON의 `qualification_hash` 외에 `source_evidence_hash`를 가진다. 이
+hash는 approved execution plan bytes, manifest, ordered events, checkpoints, state result,
+persisted result artifact hash와 agent-visible CAS artifact identity/content hash를 하나의
+canonical snapshot으로 결속한다. Qualification file을 다시 읽는 것만으로 source가 그대로라고
+간주하지 않는다.
+
+Human review는 원래 `FailureRecord`를 수정하지 않는다.
+`failure-review-v1` JSONL에 decision, failure/qualification/dataset hash와 이전 review hash를
+연결해 append-only chain으로 쌓는다. Review 시작과 memory index build는 각각 현재
+`source_evidence_hash`를 다시 계산한다. Memory builder는 가장 최근 decision이 `reviewed`이고
+현재 source hash가 qualification과 review provenance에 모두 일치할 때만 entry를 만든다.
+
+## 10. Failure memory entry
 
 ```yaml
 schema_version: memory-entry-v1
@@ -575,7 +738,7 @@ confidence: 0.83
 
 Memory에는 raw solution, reference patch, hidden test text를 넣지 않는다. `do_not_apply_when`은 required field다.
 
-## 10. Retrieval decision
+## 11. Retrieval decision
 
 ```json
 {

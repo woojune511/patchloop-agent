@@ -62,8 +62,97 @@ checkpoint evidence and a final evaluator result.
 
 ## Live API gate
 
-Do not set `live_cost_approved: true` until the dated Terra model alias/snapshot, SDK version and price
-estimate have been recorded and the user has approved the projected spend. CI never performs live calls.
+CI never performs live calls. The checked-in live files are contracts, not proof of a paid run:
+
+- `experiments/dev-validation-pilot.template.yaml`: Babel #1042, `no_memory` × 1, $2 cap
+- `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
+  `no_memory` × 2 = 12 runs, $20 cap
+
+As of 2026-07-28 the official
+[OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for Terra is $2.50/M uncached
+input, $0.25/M cached input, $3.125/M cache-write input and $15/M output. The model catalog exposes
+the `gpt-5.6-terra` alias but no dated Terra snapshot. Recheck the price within 72 hours of every
+live invocation and record the installed SDK version, clean Git commit and execution timestamp.
+
+Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENAI_BASE_URL` and
+`OPENAI_API_BASE` unset. Then run the no-call preflight first:
+
+```powershell
+git status --short
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-pilot.template.yaml `
+  --preflight-only
+```
+
+The unapproved command intentionally exits with code 2 after printing JSON. Copy its
+`execution_hash` and inspect every blocker. It checks the frozen dataset/role/hash, the manifest's
+canonical task package path, public/private spec hash and base commit, the digest-pinned task
+environment and observed Docker image identity, clean commit, SDK, API-key presence without its
+value, absence of custom base URLs, `gpt-5.6-terra`/medium/standard/default settings, price
+age/rates and full-run budget reserve.
+
+After the user separately approves at most $2, validate the same execution identity:
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-pilot.template.yaml `
+  --preflight-only `
+  --approve-live-cost `
+  --approved-execution-hash <sha256:...>
+```
+
+Only if this returns `ready=true`, execute with the same two approval flags:
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-pilot.template.yaml `
+  --approve-live-cost `
+  --approved-execution-hash <same-sha256:...>
+```
+
+Approval is invocation-only. Editing `live_cost_approved` or `approved_execution_hash` in YAML does
+not authorize spending. A Git change, image/SDK change, suite change or pilot qualification change
+produces a different execution hash.
+
+The paid command first persists
+`.patchloop/experiments/plans/<execution-hash>.json` as an approved
+`experiment-execution-plan-v1`. It appends and fsyncs `CampaignStarted`, then issues the live
+capability from that durable plan. Each row's stable-ID `RunStarted` is also appended and fsynced to
+`.patchloop/experiments/journals/<experiment-id>.jsonl` before any model call for that scope. Each
+journal row links `previous_event_hash` to its own content hash. If the process hard-crashes, a
+later preflight reports `EXPERIMENT_JOURNAL_EXISTS` instead of automatically starting the paid
+schedule again. Automatic journal resume is not implemented: preserve and inspect the journal;
+do not delete it or change the experiment ID merely to bypass this guard.
+
+The pilot must create a `trace-qualification-v1` artifact with
+`qualified=true`, `trace_integrity_passed=true`, `leakage_scan_passed=true` and
+`evaluation_reached=true`. Record that run ID in the development suite, return the worktree to a
+committed clean state, rerun the no-call preflight and separately approve at most $20 before the
+12-run campaign. Do not start the development campaign from an unqualified pilot.
+
+Qualification also records a `source_evidence_hash` over the approved plan, manifest, ordered
+events, checkpoints, state/persisted result and agent-visible CAS artifact inventory. Required
+`RunStarted`, `ContextBuilt` and `ModelCalled` events need both artifact ID and path, and the bytes
+must match their content-addressed identity. Review and memory-index admission recalculate the
+current source hash; copying a previously qualified JSON beside changed or missing evidence is not
+enough. Usage validation rejects cached plus cache-write input above total input, while malformed
+function-call arguments still retain the already billed response usage and calculated cost.
+
+Direct `patchloop run --model openai`, direct resume of an OpenAI run and direct fault injection
+from an OpenAI baseline are blocked; all paid calls go through an approved suite. A failed started
+attempt still persists its run ID, events, usage including cached/cache-write tokens, calculated
+cost and terminal outcome. The suite halts after the first infrastructure or qualification error
+and records remaining rows as not started.
+
+No paid call or live-model result existed when this guide was updated. Docker availability, exact
+images, credential presence, clean-worktree state and price age may still appear as preflight
+blockers on a given machine.
+
+If a campaign halts or a row fails qualification, `patchloop report` may still export row-level
+CSV and available-case diagnostics for investigation. Confirm `analysis_ready=true` before using
+any aggregate as a result. With an incomplete or qualification-failed matrix the report sets
+`analysis_ready=false`, labels the basis `available-case-diagnostic-not-for-headlines`, and
+suppresses headline metrics, paired differences/intervals and success/failure flips.
 
 ## Memory freeze gate
 

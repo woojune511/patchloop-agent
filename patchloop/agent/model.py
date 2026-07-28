@@ -28,13 +28,27 @@ class RequestedTool:
 
 
 @dataclass(frozen=True)
+class ModelTurnError:
+    """A provider response that was billed but cannot be safely executed."""
+
+    code: str
+    message: str
+
+
+@dataclass(frozen=True)
 class ModelTurn:
     text: str = ""
     tool_calls: list[RequestedTool] = field(default_factory=list)
     done: bool = False
     input_tokens: int = 0
+    cached_input_tokens: int = 0
+    cache_write_input_tokens: int = 0
     output_tokens: int = 0
     response_id: str | None = None
+    response_model: str | None = None
+    response_service_tier: str | None = None
+    system_fingerprint: str | None = None
+    error: ModelTurnError | None = None
 
 
 class ModelAdapter(Protocol):
@@ -216,8 +230,13 @@ class ReplayModelAdapter:
             tool_calls=calls,
             done=raw.get("done", False),
             input_tokens=raw.get("input_tokens", 0),
+            cached_input_tokens=raw.get("cached_input_tokens", 0),
+            cache_write_input_tokens=raw.get("cache_write_input_tokens", 0),
             output_tokens=raw.get("output_tokens", 0),
             response_id=raw.get("response_id"),
+            response_model=raw.get("response_model"),
+            response_service_tier=raw.get("response_service_tier"),
+            system_fingerprint=raw.get("system_fingerprint"),
         )
 
 
@@ -241,29 +260,72 @@ class OpenAIResponsesAdapter:
             tools=tools,
             store=False,
             reasoning={
+                "mode": self.config.reasoning_mode,
                 "effort": self.config.reasoning_effort,
                 "context": "current_turn",
             },
+            service_tier=self.config.service_tier,
             max_output_tokens=self.config.max_output_tokens,
         )
+        usage = getattr(response, "usage", None)
+        input_details = getattr(usage, "input_tokens_details", None) if usage else None
+        cached_input_tokens = int(
+            (getattr(input_details, "cached_tokens", 0) if input_details else 0)
+            or 0
+        )
+        cache_write_input_tokens = int(
+            (getattr(input_details, "cache_write_tokens", 0) if input_details else 0)
+            or 0
+        )
+        if usage is not None:
+            cache_write_input_tokens = int(
+                getattr(
+                    usage,
+                    "cache_write_tokens",
+                    cache_write_input_tokens,
+                )
+                or 0
+            )
         calls: list[RequestedTool] = []
+        parse_error: ModelTurnError | None = None
         for item in response.output:
             if getattr(item, "type", None) != "function_call":
                 continue
+            try:
+                arguments = json.loads(item.arguments)
+            except (json.JSONDecodeError, TypeError):
+                parse_error = ModelTurnError(
+                    code="invalid_tool_arguments_json",
+                    message="provider function-call arguments were not valid JSON",
+                )
+                break
+            if not isinstance(arguments, dict):
+                parse_error = ModelTurnError(
+                    code="invalid_tool_arguments_type",
+                    message="provider function-call arguments were not a JSON object",
+                )
+                break
             calls.append(
                 RequestedTool(
                     name=item.name,
                     action_id=item.call_id,
-                    arguments=json.loads(item.arguments),
+                    arguments=arguments,
                 )
             )
-        usage = getattr(response, "usage", None)
+        if parse_error is not None:
+            calls = []
         text = response.output_text or ""
         return ModelTurn(
             text=text,
             tool_calls=calls,
-            done=text.strip() == "DONE" and not calls,
-            input_tokens=getattr(usage, "input_tokens", 0) if usage else 0,
-            output_tokens=getattr(usage, "output_tokens", 0) if usage else 0,
+            done=parse_error is None and text.strip() == "DONE" and not calls,
+            input_tokens=int(getattr(usage, "input_tokens", 0) or 0) if usage else 0,
+            cached_input_tokens=cached_input_tokens,
+            cache_write_input_tokens=cache_write_input_tokens,
+            output_tokens=int(getattr(usage, "output_tokens", 0) or 0) if usage else 0,
             response_id=response.id,
+            response_model=getattr(response, "model", None),
+            response_service_tier=getattr(response, "service_tier", None),
+            system_fingerprint=getattr(response, "system_fingerprint", None),
+            error=parse_error,
         )

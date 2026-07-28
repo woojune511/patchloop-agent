@@ -42,8 +42,99 @@ def _task_bootstrap(task_values: dict[str, float], *, seed: int, samples: int = 
 def _task_means(runs: list[dict], metric: Callable[[dict | None], float]) -> dict[str, float]:
     values: dict[str, list[float]] = defaultdict(list)
     for run in runs:
+        if not _is_research_outcome(run):
+            continue
         values[run["task_id"]].append(metric(run["result"]))
     return {task_id: mean(repetitions) for task_id, repetitions in values.items()}
+
+
+def _is_research_outcome(run: dict) -> bool:
+    result = run.get("result")
+    return bool(
+        run.get("attempt_status") != "not_started"
+        and run.get("infrastructure_error") is None
+        and run.get("qualification_error") is None
+        and (
+            run.get("qualification") is None
+            or run["qualification"].get("qualified") is True
+        )
+        and result is not None
+        and result.get("outcome_kind") != "infrastructure_error"
+    )
+
+
+def _exclusion_reason(run: dict) -> str | None:
+    if run.get("attempt_status") == "not_started":
+        return "not_started"
+    result = run.get("result")
+    if run.get("infrastructure_error") is not None or (
+        result is not None and result.get("outcome_kind") == "infrastructure_error"
+    ):
+        return "infrastructure_error"
+    if run.get("qualification_error") is not None or (
+        run.get("qualification") is not None
+        and run["qualification"].get("qualified") is not True
+    ):
+        return "trace_qualification_failure"
+    if result is None:
+        return "missing_terminal_result"
+    return None
+
+
+def _analysis_readiness(raw: dict) -> dict:
+    reasons: list[str] = []
+    runs = raw.get("runs", [])
+    suite = raw.get("suite")
+    expected_runs = raw.get("expected_runs")
+    if not isinstance(expected_runs, int) or len(runs) != expected_runs:
+        reasons.append("scheduled row count does not match expected_runs")
+    if any(_exclusion_reason(run) is not None for run in runs):
+        reasons.append("one or more scheduled rows are not analysis-eligible outcomes")
+    if not isinstance(suite, dict):
+        reasons.append("predeclared suite matrix is unavailable")
+    else:
+        repetitions = suite.get("repetitions")
+        conditions = suite.get("conditions")
+        tasks = suite.get("tasks")
+        if (
+            not isinstance(repetitions, int)
+            or not isinstance(conditions, list)
+            or not isinstance(tasks, list)
+        ):
+            reasons.append("predeclared suite matrix is incomplete")
+        else:
+            observed_task_ids = {run.get("task_id") for run in runs}
+            if None in observed_task_ids or len(observed_task_ids) != len(tasks):
+                reasons.append("observed task identities do not match the suite task count")
+            expected_repetitions = set(range(1, repetitions + 1))
+            for condition in conditions:
+                condition_rows = [
+                    run for run in runs if run.get("condition") == condition
+                ]
+                condition_tasks = {run.get("task_id") for run in condition_rows}
+                if condition_tasks != observed_task_ids:
+                    reasons.append(f"condition {condition} has an incomplete task set")
+                    continue
+                for task_id in condition_tasks:
+                    repetitions_seen = {
+                        run.get("repetition")
+                        for run in condition_rows
+                        if run.get("task_id") == task_id
+                    }
+                    if repetitions_seen != expected_repetitions:
+                        reasons.append(
+                            f"condition {condition} task {task_id} "
+                            "has incomplete repetitions"
+                        )
+    return {
+        "analysis_ready": not reasons,
+        "analysis_basis": (
+            "complete-predeclared-matrix"
+            if not reasons
+            else "available-case-diagnostic-not-for-headlines"
+        ),
+        "analysis_blockers": list(dict.fromkeys(reasons)),
+    }
 
 
 def _result_metric(result: dict | None, name: str) -> float:
@@ -56,7 +147,7 @@ def _result_metric(result: dict | None, name: str) -> float:
     if name == "regression_free":
         return float(result["verdicts"]["regression_tests"] == "pass")
     if name == "scope_violation":
-        return float(result["verdicts"]["scope_policy"] != "pass")
+        return float(result["verdicts"]["scope_policy"] == "fail")
     raise ValueError(name)
 
 
@@ -78,6 +169,7 @@ def _flip_counts(runs: list[dict]) -> dict:
             run["result"] and run["result"]["scope_compliant_success"]
         )
         for run in runs
+        if _is_research_outcome(run)
     }
     counts: dict[str, dict[str, int]] = defaultdict(
         lambda: {"failure_to_success": 0, "success_to_failure": 0, "unchanged": 0}
@@ -238,7 +330,7 @@ def build_report(experiment: str, output: str | Path) -> dict:
     for run in raw["runs"]:
         result = run["result"]
         by_condition[run["condition"]].append(run)
-        usage = result["usage"] if result else {}
+        usage = run.get("usage") or (result["usage"] if result else {})
         rows.append(
             {
                 "task_id": run["task_id"],
@@ -252,28 +344,59 @@ def build_report(experiment: str, output: str | Path) -> dict:
                 "input_tokens": usage.get("input_tokens", 0),
                 "output_tokens": usage.get("output_tokens", 0),
                 "model_cost_usd": usage.get("model_cost_usd", 0),
-                "run_id": result["run_id"] if result else "",
+                "run_id": run.get("run_id") or (result["run_id"] if result else ""),
+                "attempt_status": run.get(
+                    "attempt_status",
+                    "terminal" if result else "not_started",
+                ),
+                "outcome_kind": result.get("outcome_kind", "") if result else "",
                 "infrastructure_error": json.dumps(run["infrastructure_error"] or {}),
+                "qualification_status": (
+                    run.get("qualification", {}).get("qualified")
+                    if run.get("qualification") is not None
+                    else ""
+                ),
+                "qualification_error": json.dumps(
+                    run.get("qualification_error") or {}
+                ),
+                "analysis_included": int(_is_research_outcome(run)),
+                "exclusion_reason": _exclusion_reason(run) or "",
             }
         )
 
+    readiness = _analysis_readiness(raw)
     metrics = {}
     task_scrr_by_condition = {}
     for condition, condition_runs in sorted(by_condition.items()):
+        research_runs = [run for run in condition_runs if _is_research_outcome(run)]
         task_scrr = _task_means(condition_runs, lambda result: _result_metric(result, "scrr"))
         task_scrr_by_condition[condition] = task_scrr
         scrr = _task_bootstrap(task_scrr, seed=raw["schedule_seed"])
-        successes = sum(_result_metric(run["result"], "scrr") for run in condition_runs)
+        successes = sum(_result_metric(run["result"], "scrr") for run in research_runs)
         total_cost = sum(
-            float(run["result"]["usage"].get("model_cost_usd", 0))
+            float(
+                (run.get("usage") or (run["result"]["usage"] if run["result"] else {})).get(
+                    "model_cost_usd",
+                    0,
+                )
+            )
             for run in condition_runs
-            if run["result"]
         )
         total_tokens = [
-            int(run["result"]["usage"].get("input_tokens", 0))
-            + int(run["result"]["usage"].get("output_tokens", 0))
+            int(
+                (run.get("usage") or (run["result"]["usage"] if run["result"] else {})).get(
+                    "input_tokens",
+                    0,
+                )
+            )
+            + int(
+                (run.get("usage") or (run["result"]["usage"] if run["result"] else {})).get(
+                    "output_tokens",
+                    0,
+                )
+            )
             for run in condition_runs
-            if run["result"]
+            if run.get("usage") or run["result"]
         ]
         by_split = {}
         for split in sorted({run.get("split", "unknown") for run in condition_runs}):
@@ -301,7 +424,20 @@ def build_report(experiment: str, output: str | Path) -> dict:
                 seed=raw["schedule_seed"],
             ),
             "by_split": by_split,
-            "runs": len(condition_runs),
+            "runs": len(research_runs),
+            "scheduled_runs": len(condition_runs),
+            "infrastructure_runs": sum(
+                _exclusion_reason(run) == "infrastructure_error"
+                for run in condition_runs
+            ),
+            "qualification_excluded_runs": sum(
+                _exclusion_reason(run) == "trace_qualification_failure"
+                for run in condition_runs
+            ),
+            "not_started_runs": sum(
+                run.get("attempt_status") == "not_started"
+                for run in condition_runs
+            ),
             "total_cost_usd": total_cost,
             "cost_per_success_usd": total_cost / successes if successes else None,
             "mean_total_tokens": mean(total_tokens) if total_tokens else 0,
@@ -319,12 +455,19 @@ def build_report(experiment: str, output: str | Path) -> dict:
             "bootstrap_samples": 10_000,
             "seed": raw["schedule_seed"],
             "interval": "95% percentile",
+            "analysis_basis": readiness["analysis_basis"],
         },
+        **readiness,
         "metrics": metrics,
-        "paired_scrr_difference_vs_no_memory": _paired_differences(
-            task_scrr_by_condition, raw["schedule_seed"]
+        "headline_metrics": metrics if readiness["analysis_ready"] else None,
+        "paired_scrr_difference_vs_no_memory": (
+            _paired_differences(task_scrr_by_condition, raw["schedule_seed"])
+            if readiness["analysis_ready"]
+            else None
         ),
-        "success_failure_flips_vs_no_memory": _flip_counts(raw["runs"]),
+        "success_failure_flips_vs_no_memory": (
+            _flip_counts(raw["runs"]) if readiness["analysis_ready"] else None
+        ),
         "infrastructure_errors": raw["infrastructure_errors"],
     }
     (output_dir / "report.json").write_text(
@@ -343,9 +486,18 @@ def build_report(experiment: str, output: str | Path) -> dict:
         "</tr>"
         for condition, values in metrics.items()
     )
+    readiness_banner = (
+        "<p><strong>Headline analysis ready.</strong></p>"
+        if readiness["analysis_ready"]
+        else (
+            "<p><strong>Diagnostic available-case output only; not valid for "
+            "headline comparison.</strong></p>"
+        )
+    )
     (output_dir / "report.html").write_text(
         "<!doctype html><meta charset='utf-8'><title>PatchLoop report</title>"
         f"<h1>Experiment {html.escape(experiment)}</h1>"
+        f"{readiness_banner}"
         "<table><thead><tr><th>Condition</th><th>SCRR</th><th>95% CI</th>"
         f"<th>Tasks</th></tr></thead><tbody>{table_rows}</tbody></table>",
         encoding="utf-8",

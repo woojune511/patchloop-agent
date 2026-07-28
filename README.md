@@ -21,6 +21,12 @@ schedule을 machine audit한 뒤 dataset manifest를 동결했다. 이 동결은
 고정이며, stress run과 실제 OpenAI 96-run campaign은 아직 완료하지 않았다. 미실행 gate는
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
+현재 live 경로에는 `experiment-v2` purpose, 비용 승인 preflight, durable execution plan,
+hash-chained campaign journal과 `trace-qualification-v1`이 구현돼 있지만 clean-machine
+acceptance와 실제 실행은 남아 있다. Babel #1042 한 건의 development-validation pilot과
+여섯 memory-development task의 12-run no-memory campaign template가 있지만,
+**아직 유료 API call이나 live-model 결과는 없다.**
+
 ## 구현된 핵심 경로
 
 ```text
@@ -38,7 +44,12 @@ public.yaml → stateless context builder → model adapter
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
 - `action_id + input_hash` idempotency, context reset과 worker-kill-derived run
 - Dataset role이 `memory-development`인 reviewed failure 전용 structured/raw memory index
-- Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report
+- Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report. 불완전하거나
+  qualification-failed인 matrix는 diagnostic으로만 남기고 headline/paired 결과를 억제
+- 목적을 명시하는 `experiment-v2`, durable approved execution plan에서만 발급되는
+  execution-hash-bound live capability와 source-evidence-bound trace qualification
+- API call 전에 `CampaignStarted`와 각 `RunStarted`를 fsync하는 append-only,
+  hash-chained campaign journal
 - Content-addressed frozen dataset manifest와 3-sentinel, 30-run stress schedule audit
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
 - Memory/core/headline에서 제외되는 content-addressed calibration fixture 5개
@@ -128,8 +139,10 @@ patchloop run --task <public.yaml> --model <mock|openai|replay:path> --memory <c
 patchloop resume --run-id <run-id>
 patchloop memory build --split dev-train
 patchloop memory freeze --index <index-id>
-patchloop evaluate --suite <experiment.yaml>
+patchloop evaluate --suite <experiment.yaml> [--preflight-only]
+  [--approve-live-cost --approved-execution-hash <sha256:...>]
 patchloop inject-fault --run <baseline-run-id> --fault <type>
+patchloop memory review --failure-id <id> --approve|--reject
 patchloop report --experiment <id> --output <directory>
 patchloop github import-issue <url> --output <public.yaml>
 patchloop github draft-pr --run-id <id> --repo <checkout>
@@ -139,14 +152,73 @@ patchloop serve
 ## Live/OpenAI와 공식 campaign gate
 
 Responses API adapter는 host process에서만 API key를 읽고 container, checkpoint, event payload에
-전달하지 않는다. `experiments/core.template.yaml`은 다음 조건을 모두 만족하지 않으면 validation에
-실패한다.
+전달하지 않는다. 현재 live sequence는 다음 두 config로 고정한다.
 
-- 정확히 12개 held-out task, 네 memory 조건, task당 2회
-- frozen dataset manifest content hash와 role 검증
-- exact embedding revision
-- dated price estimate가 $150 상한 이하
-- `live_cost_approved: true`라는 명시적 승인
+| Purpose | Task/condition/repetition | 상한 |
+| --- | --- | ---: |
+| `development-validation-live-pilot` | Babel #1042, `no_memory`, 1회 | $2 |
+| `memory-development-no-memory` | frozen memory-development 6개, `no_memory`, 각 2회(12 run) | $20 |
+
+먼저 API call을 하지 않는 preflight를 실행한다.
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-pilot.template.yaml `
+  --preflight-only
+```
+
+출력의 `execution_hash`와 blocker를 검토한다. Preflight는 frozen dataset/role/hash,
+manifest가 지정한 canonical task package path와 public/private spec hash, base commit,
+digest-pinned evaluator environment와 observed Docker image identity, clean Git commit,
+OpenAI SDK, `OPENAI_API_KEY`의 존재 여부만, custom base URL 부재,
+`gpt-5.6-terra` + medium reasoning + standard mode + default service tier, 72시간 이내 공식
+가격과 한 run의 전체 budget reserve를 확인한다. Credential 값은 출력하거나 hash에 넣지
+않는다. 환경 blocker와 비용을 확인한 뒤에만 같은 hash를 invocation-only 승인으로 전달한다.
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-pilot.template.yaml `
+  --preflight-only `
+  --approve-live-cost `
+  --approved-execution-hash <sha256:...>
+
+# 위 preflight가 ready=true일 때만 별도로 실행한다.
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-pilot.template.yaml `
+  --approve-live-cost `
+  --approved-execution-hash <same-sha256:...>
+```
+
+Checked-in `live_cost_approved`와 `approved_execution_hash` 값은 승인 권한이 아니며 compatibility
+필드일 뿐이다. 승인 두 flag는 해당 invocation과 exact execution hash에만 유효하다. Direct
+`patchloop run --model openai`, live `resume`, live `inject-fault`는 이 gate를 우회하지 못하게
+차단된다.
+
+`ready=true`인 paid invocation은 승인 내용과 preflight evidence를
+`experiment-execution-plan-v1`으로 먼저 durable하게 저장한다. `CampaignStarted`를
+append-only hash chain에 flush와 fsync한 뒤 그 plan에서 live capability를 발급하고, 각 row의
+stable run ID를 가진 `RunStarted`도 fsync한 다음 model call을 허용한다. Process가
+hard-crash해도 journal이
+남아 같은 experiment를 새 schedule로 자동 재실행하지 못하지만, **중단된 journal의 자동
+resume은 아직 구현되지 않았다.**
+
+2026-07-28에 확인한 공식 Terra API rate는 1M token당 input $2.50, cached input $0.25,
+cache write $3.125, output $15다. 가격 source는
+[OpenAI API pricing](https://developers.openai.com/api/docs/pricing)이며 preflight 시점 기준
+72시간을 넘으면 다시 확인해야 한다. 현재 model page에는 dated snapshot 없이
+`gpt-5.6-terra` alias만 제공되므로 SDK version, Git commit과 72시간 execution window를
+provenance로 남긴다.
+
+Pilot가 `trace-qualification-v1`을 통과한 뒤에만 그 run ID를 no-memory development suite에
+고정하고 새 execution hash를 preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
+input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
+Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
+persisted result와 agent-visible content-addressed artifact inventory를 결속한다. 필수
+`RunStarted`/`ContextBuilt`/`ModelCalled` artifact reference, cache usage 불변식과 malformed
+function-call response의 이미 과금된 usage도 검사·보존하며, memory review/index admission은
+현재 source evidence hash를 다시 계산한다.
+다만 이 문서 작성 시점에는 paid call을 실행하지 않았고 Docker, credential, clean-worktree 같은
+현재 환경 blocker가 남아 있을 수 있다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),
