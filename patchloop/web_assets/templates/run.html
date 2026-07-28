@@ -1,15 +1,52 @@
 {% extends "base.html" %}
 {% block title %}{{ manifest.run_id }} · PatchLoop{% endblock %}
 {% block content %}
-<div class="run-title"><div><h1>{{ manifest.run_id }}</h1><p>{{ manifest.task_id }} · {{ manifest.memory.condition.value }}</p></div>
-<a class="button" href="/runs/{{ manifest.run_id }}/patch">Download patch</a></div>
-<section class="cards">
-  <article><h2>Boundary outcome</h2><strong>{{ row.result.scope_compliant_success if row.result else "pending" }}</strong><p>official={{ row.result.official if row.result else "—" }}</p></article>
-  <article><h2>Model</h2><strong>{{ manifest.model.model_id }}</strong><p>{{ manifest.model.reasoning_effort }} · store=false</p></article>
-  <article><h2>Checkpoint</h2><strong>{{ checkpoint.phase.value if checkpoint else "none" }}</strong><p>seq {{ checkpoint.through_sequence if checkpoint else "—" }}</p></article>
+<div class="run-title">
+  <div><h1>{{ manifest.run_id }}</h1><p>{{ manifest.task_id }} · {{ manifest.memory.condition.value }}</p></div>
+  {% if patch_available %}
+    <a class="button" href="/runs/{{ manifest.run_id }}/patch">Download submitted patch</a>
+  {% else %}
+    <span class="button disabled">No submitted patch</span>
+  {% endif %}
+</div>
+
+<section class="outcome-banner {{ outcome.tone }}">
+  <div>
+    <span class="eyebrow">Boundary outcome</span>
+    <h2>{{ outcome.label }}</h2>
+    <p>{{ outcome.description }}</p>
+  </div>
+  <div class="status-stack">
+    <span class="pill {{ row.status }}">{{ row.status }}</span>
+    {% if qualification %}
+      <span class="pill {{ 'completed' if qualification.qualified else 'failed' }}">trace qualified={{ qualification.qualified | lower }}</span>
+    {% endif %}
+  </div>
 </section>
-<section><h2>Event trace</h2><div id="events" hx-get="/runs/{{ manifest.run_id }}/events" hx-trigger="load">Loading trace…</div></section>
-<section><h2>Submitted diff</h2><pre class="diff">{{ patch_text or "No patch submitted" }}</pre></section>
+
+<section class="cards">
+  <article><h2>Model calls</h2><strong>{{ row.result.usage.model_calls if row.result else 0 }}</strong><p>{{ manifest.model.model_id }}</p></article>
+  <article><h2>Tool calls</h2><strong>{{ row.result.usage.tool_calls if row.result else 0 }}</strong><p>{{ trace.event_count }} durable events</p></article>
+  <article><h2>Total tokens</h2><strong>{{ "{:,}".format((row.result.usage.input_tokens + row.result.usage.output_tokens) if row.result else 0) }}</strong><p>{{ "{:,}".format(row.result.usage.input_tokens if row.result else 0) }} input · {{ "{:,}".format(row.result.usage.output_tokens if row.result else 0) }} output</p></article>
+  <article><h2>List-price cost</h2><strong>${{ "%.6f"|format(row.result.usage.model_cost_usd if row.result else 0) }}</strong><p>{{ manifest.model.reasoning_effort }} reasoning · store=false</p></article>
+</section>
+
+{% if qualification %}
+<section class="qualification-strip">
+  <div><span>Trace integrity</span><strong>{{ qualification.trace_integrity_passed | lower }}</strong></div>
+  <div><span>Leakage scan</span><strong>{{ qualification.leakage_scan_passed | lower }}</strong></div>
+  <div><span>Evaluator reached</span><strong>{{ qualification.evaluation_reached | lower }}</strong></div>
+  <div><span>Outcome</span><strong>{{ qualification.outcome_kind }}</strong></div>
+</section>
+{% endif %}
+
+<section>
+  <h2>Trace</h2>
+  <p class="lede">Start with the critical path. Expand a model turn only when you need its tools or raw payload.</p>
+  {% include "events.html" %}
+</section>
+
+<section><h2>Submitted diff</h2><pre class="diff">{{ patch_text or "No patch was submitted. Patch/check activity may still appear in the trace and checkpoints." }}</pre></section>
 <section><h2>Checkpoint history</h2>
   <table><thead><tr><th>Sequence</th><th>Phase</th><th>Files</th><th>Diff hash</th></tr></thead><tbody>
   {% for item in checkpoints %}<tr><td>{{ item.through_sequence }}</td><td>{{ item.phase.value }}</td><td>{{ item.modified_files | join(", ") or "—" }}</td><td><code>{{ item.worktree_diff_hash }}</code></td></tr>{% endfor %}

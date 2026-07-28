@@ -130,7 +130,9 @@ uv run patchloop report --experiment offline-smoke --output reports/offline-smok
 uv run patchloop serve
 ```
 
-Viewer는 `http://127.0.0.1:8000`에서 run manifest, trace, patch, verifier 결과를 보여준다.
+Viewer는 `http://127.0.0.1:8000`에서 run manifest, outcome·usage·prompt-integrity 요약,
+critical path, 접이식 model turn/raw trace, patch와 verifier 결과를 보여준다. 원시 event
+payload는 삭제하지 않고 기본 화면에서만 접어 둔다.
 
 ## CLI
 

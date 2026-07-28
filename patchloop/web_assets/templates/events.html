@@ -1,5 +1,61 @@
-<ol class="timeline">
-{% for event in events %}
-  <li><span class="seq">{{ event.sequence }}</span><div><strong>{{ event.type.value }}</strong><small>{{ event.actor }} · {{ event.timestamp }}</small><pre>{{ event.payload | tojson(indent=2) }}</pre></div></li>
+<div class="trace-integrity-grid">
+  <article>
+    <span>Prompt count</span>
+    {% if trace.telemetry.available %}
+      <strong>{{ trace.telemetry.matched_turns }}/{{ trace.telemetry.turn_count }}</strong>
+      <small>pre-count matched response usage</small>
+    {% else %}
+      <strong>legacy</strong><small>turn-level telemetry unavailable</small>
+    {% endif %}
+  </article>
+  <article><span>Provider truncation</span><strong>{{ trace.telemetry.provider_truncations }}</strong><small>{{ trace.telemetry.completed_turns }}/{{ trace.telemetry.turn_count }} responses completed</small></article>
+  <article><span>Context policy</span><strong>{{ trace.telemetry.omitted_events_total }}</strong><small>turn-cumulative omissions · max {{ trace.telemetry.max_omitted_events }}</small></article>
+  <article><span>Tool-result truncation</span><strong>{{ trace.telemetry.truncated_tool_results }}</strong><small>{{ trace.telemetry.request_artifacts }}/{{ trace.telemetry.turn_count }} request artifacts bound</small></article>
+</div>
+
+<h3>Critical path</h3>
+<ol class="critical-path">
+{% for item in trace.critical %}
+  <li class="{{ item.tone }}">
+    <span class="seq">{{ item.event.sequence }}</span>
+    <div><strong>{{ item.event.type.value }}</strong><p>{{ item.summary }}</p><small>{{ item.event.actor }} · {{ item.event.timestamp }}</small></div>
+  </li>
 {% endfor %}
 </ol>
+
+<h3>Model turns <span class="count">{{ trace.model_turn_count }}</span></h3>
+<div class="turn-list">
+{% for turn in trace.turns %}
+  <details class="turn {{ turn.tone }}" {% if turn.open %}open{% endif %}>
+    <summary>
+      <span class="turn-number">Turn {{ turn.number }}</span>
+      <strong>{{ turn.tool_label }}</strong>
+      <span>{{ turn.token_label }}</span>
+      {% if turn.prompt_match is true %}<span class="check">count ✓</span>{% elif turn.prompt_match is false %}<span class="mismatch">count mismatch</span>{% endif %}
+    </summary>
+    <div class="event-list">
+    {% for item in turn.events %}
+      <article class="event-row {{ item.tone }}">
+        <span class="seq">{{ item.event.sequence }}</span>
+        <div>
+          <strong>{{ item.event.type.value }}</strong>
+          <p>{{ item.summary }}</p>
+          <small>{{ item.event.actor }} · {{ item.event.timestamp }}</small>
+          <details class="payload"><summary>Raw payload</summary><pre>{{ item.event.payload | tojson(indent=2) }}</pre></details>
+        </div>
+      </article>
+    {% endfor %}
+    </div>
+  </details>
+{% endfor %}
+</div>
+
+<details class="raw-trace">
+  <summary>All {{ trace.event_count }} raw events</summary>
+  <p class="lede">Append-only source evidence. Use this only when the summarized path is insufficient.</p>
+  <ol class="timeline">
+  {% for item in trace.raw_events %}
+    <li><span class="seq">{{ item.event.sequence }}</span><div><strong>{{ item.event.type.value }}</strong><small>{{ item.event.actor }} · {{ item.event.timestamp }}</small><pre>{{ item.event.payload | tojson(indent=2) }}</pre></div></li>
+  {% endfor %}
+  </ol>
+</details>
