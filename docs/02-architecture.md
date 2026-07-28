@@ -110,13 +110,20 @@ MVP agent-visible tool을 작게 유지한다.
 | `list_tree` | bounded repository 탐색 | result count/depth 제한 |
 | `search_repo` | text/symbol 검색 | path/glob/max result 필요 |
 | `read_file` | line-bounded read | repository-relative path only |
-| `apply_patch` | text-only raw Git unified diff 적용 | stable action ID와 path/scope policy 필요 |
+| `apply_patch` | 기존 tracked text file에 raw Git unified diff 적용 | hunk count만 recount; stable action ID, zero-untracked와 path/scope policy 필요 |
 | `run_check` | registered check 실행 | arbitrary command 금지 |
 | `inspect_diff` | current diff와 정책 signal 확인 | state path 제외 |
 | `write_checkpoint` | structured durable state 요청 | repository 밖에 저장 |
 | `finish_task` | final submission control signal | required artifacts가 있어야 허용 |
 
 `finish_task`는 shell/repository tool이 아니라 orchestrator control action이다.
+
+Agent-visible `apply_patch`는 model이 만든 hunk header의 old/new line total만 body에서
+재계산한다. Patch body 문법, context와 path matching은 Git이 그대로 검사하며
+deterministic verifier도 완화하지 않는다. Policy reject는 같은 raw patch를 reverse
+recount한 뒤 pre-call diff hash를 재확인한다. Rollback 실패, 복원 불일치 또는 agent
+workspace의 untracked file은 recovery error로 run을 중단한다. 이 호환 계층은 agent
+gateway에만 있으며 hidden evaluator와 fixture evaluator의 patch 적용은 strict하다.
 
 ## 6. Persistent state
 

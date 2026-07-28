@@ -695,6 +695,10 @@ class AgentRunner:
         usage: Usage | None = None,
         last_result: ToolResult | None = None,
     ) -> Checkpoint:
+        if WorkspaceManager.untracked_files(workspace):
+            raise RecoveryError(
+                "agent workspace contains untracked files at checkpoint"
+            )
         summary = WorkspaceManager.diff_summary(workspace)
         head = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -838,6 +842,10 @@ class AgentRunner:
         checkpoint = self.state.latest_checkpoint(manifest.run_id)
         if checkpoint is None:
             raise RecoveryError("run has events but no durable checkpoint")
+        if WorkspaceManager.untracked_files(workspace):
+            raise RecoveryError(
+                "agent workspace contains untracked files during recovery"
+            )
         summary = WorkspaceManager.diff_summary(workspace)
         if summary.patch_hash != checkpoint.worktree_diff_hash:
             raise RecoveryError("workspace diff hash does not match the latest durable checkpoint")

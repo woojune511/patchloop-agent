@@ -175,6 +175,15 @@ class WorkspaceManager:
         return digest
 
     @staticmethod
+    def untracked_files(workspace: Path) -> list[str]:
+        output = _git(workspace, "ls-files", "--others", "-z").stdout
+        return sorted(
+            path.replace("\\", "/")
+            for path in output.split("\0")
+            if path
+        )
+
+    @staticmethod
     def diff_summary(workspace: Path) -> DiffSummary:
         patch = _git(workspace, "diff", "--no-ext-diff", "--binary").stdout
         numstat = _git(workspace, "diff", "--numstat").stdout

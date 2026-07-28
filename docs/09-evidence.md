@@ -1007,6 +1007,56 @@ cause; it is not an agent submission or a pilot success. The checked-in
 [live-pilot evidence record](../reports/live-pilot/dev-validation-live-pilot-20260728.json)
 binds the local raw files, immutable qualification and diagnostic evaluator result by SHA-256.
 
+## Second paid live-pilot and recount evidence
+
+After the r1 tool feedback, leakage filtering, execution ownership and source-evidence fixes were
+committed, execution hash
+`sha256:c7fe89287ed3310885f548954917c810b699a54ea420b3a7551d9863ebd839a3`
+was separately approved for exactly one r2 row with a $2 cap. The run used clean harness commit
+`34673def916401efb97bb4bd02dec9dd927db36e` and produced
+`run_de8f2a2846044c01`. It cost `$0.328036875`: 74,868 input tokens, 74,811
+cache-write input tokens and 6,274 output tokens across 19 model and 22 tool calls. Cumulative
+r1+r2 spend is `$0.668295625`.
+
+The r2 run preserved 111 monotonic events and 23 checkpoints with zero infrastructure or
+qualification errors. Its immutable `trace-qualification-v1` artifact is `qualified=true`:
+trace integrity and leakage passed, private match count was zero, usage reconciled and the
+source-evidence hash is
+`sha256:84079a25b6b3cdc84df440e8e5a943aaa462eafb161b1fc487f221cc97f0b451`.
+This does **not** mean the pilot passed its acceptance gate. No submitted patch or evaluator verdict
+exists and `evaluation_reached=false`; the development-campaign consumer therefore rejects this
+run and the 12-run campaign remains locked.
+
+The model emitted nine `apply_patch` candidates, seven of them byte-distinct. Eight reached the
+gateway and all eight failed with `corrupt patch`; the ninth was produced in the response that
+crossed the token budget before tool execution. Every candidate declared seven old and seven new
+lines in its hunk header while its body contained six old and six new lines. The candidates changed
+line offsets and code variants in response to visible errors, but never repaired this manual count.
+Model event 51 proposed the same tuple-membership code edit as the r1 official-passing
+counterfactual. Its exact raw patch has SHA-256
+`sha256:f041469f1d938452c6e25c54aa1e6b816247be0525920184a77be493f7111695`.
+Strict `git apply --check` rejects that file; `git apply --check --recount` accepts it and leaves the
+workspace unchanged. This is parser/interoperability evidence, not an agent submission, evaluator
+result, pilot success or repetition.
+
+The corrective contract applies `--recount` only to the agent-visible forward apply and the reverse
+rollback of the same raw patch. The raw input/hash, hunk body, context, path and deterministic
+policies remain unchanged, and hidden evaluator application stays strict. Policy rejection must
+restore the exact pre-call diff hash. Reverse failure, restoration mismatch or untracked agent
+workspace state is a recovery error; new-file, rename/copy, binary and metadata-only patches remain
+rejected. Regression tests cover the r2-style 7/7-versus-6/6 patch, non-empty baseline rollback,
+same-action replay without duplicate `PatchApplied`, untracked/recovery guards and fail-closed
+rollback. The checked-in
+[r2 evidence record](../reports/live-pilot/dev-validation-live-pilot-20260728-r2.json)
+and [portable candidate](../reports/live-pilot/artifacts/run_de8f2a2846044c01-recount-candidate.patch)
+preserve this claims boundary. No r3 paid call is part of this evidence.
+
+The corrective worktree collected 306 tests: 304 passed in the restricted test environment and the
+two Docker-only sandbox tests were skipped because that environment could not see the daemon.
+Running `tests/test_sandbox.py` on the host with a repository-local ignored pytest temp directory
+passed all nine tests, including the two Docker isolation checks. Full Ruff and `git diff --check`
+also passed. These are harness regression results, not live-model task evidence.
+
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
@@ -1014,5 +1064,5 @@ binds the local raw files, immutable qualification and diagnostic evaluator resu
 the context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The current worker path is cooperative suspension rather than external process
 termination, and the timeout path is a synthetic timeout on the first registered visible check.
-No stress schedule row, qualified live pilot, 12-run development campaign or 96-run core campaign
+No stress schedule row, accepted live pilot, 12-run development campaign or 96-run core campaign
 has been executed.

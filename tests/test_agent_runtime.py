@@ -13,11 +13,13 @@ from patchloop.contracts import (
     ExperimentPurpose,
     ExperimentRunContext,
     FaultSpec,
+    Phase,
     RunOutcomeKind,
 )
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.evals.faults import clone_with_fault
 from patchloop.runtime import build_manifest
+from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, utc_now
 
@@ -569,6 +571,77 @@ def test_resume_rejects_checkpoint_worktree_mismatch(tmp_path, monkeypatch) -> N
     runner.state.save_checkpoint(corrupt)
     with pytest.raises(RecoveryError, match="diff hash"):
         runner.resume(manifest.run_id)
+
+
+def test_resume_rejects_untracked_workspace_state(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_untracked_recovery",
+        sandbox_backend="local",
+        fault=FaultSpec(type="worker-kill-after-patch"),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    suspended = runner.start(TASK, model="mock", manifest=manifest)
+    assert suspended["status"] == "suspended"
+    workspace = runner.root / "workspaces" / manifest.run_id / "repo"
+    (workspace / "untracked-agent-state.txt").write_text(
+        "must not survive recovery",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RecoveryError, match="untracked files during recovery"):
+        runner.resume(manifest.run_id)
+
+
+def test_checkpoint_rejects_untracked_workspace_state(tmp_path) -> None:
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_untracked_checkpoint",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    runner.state.create_run(manifest)
+    workspace = runner.workspaces.create(
+        manifest.run_id,
+        package.public.repository.url,
+        package.public.repository.base_commit,
+    )
+    (workspace / "untracked-agent-state.txt").write_text(
+        "must not enter a checkpoint",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(RecoveryError, match="untracked files at checkpoint"):
+        runner._checkpoint(manifest, workspace, Phase.INTAKE)
+
+
+def test_run_check_untracked_output_fails_as_infrastructure_error(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    real_run_check = LocalSandbox.run_check
+
+    def run_check_and_leave_untracked(self, workspace, check):
+        result = real_run_check(self, workspace, check)
+        (workspace / "untracked-check-output.txt").write_text(
+            "must not enter a checkpoint",
+            encoding="utf-8",
+        )
+        return result
+
+    monkeypatch.setattr(LocalSandbox, "run_check", run_check_and_leave_untracked)
+    runner = AgentRunner(tmp_path / "runtime")
+
+    result = runner.start(TASK, model="mock")
+
+    assert result["outcome_kind"] == RunOutcomeKind.INFRASTRUCTURE_ERROR.value
+    assert result["terminal_error"]["type"] == "RecoveryError"
+    assert "untracked files at checkpoint" in result["terminal_error"]["message"]
+    assert result["evaluation_status"] == "not_run"
 
 
 def test_timeout_fault_is_recorded_without_repeating_command(tmp_path, monkeypatch) -> None:

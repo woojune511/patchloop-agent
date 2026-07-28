@@ -1,0 +1,144 @@
+{
+  "schema_version": "live-pilot-evidence-v2",
+  "recorded_at": "2026-07-28T08:53:45.4755406Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "34673def916401efb97bb4bd02dec9dd927db36e",
+  "execution_hash": "sha256:c7fe89287ed3310885f548954917c810b699a54ea420b3a7551d9863ebd839a3",
+  "pilot": {
+    "run_id": "run_de8f2a2846044c01",
+    "outcome_kind": "agent_failure",
+    "agent_submission_status": "failed",
+    "evaluation_status": "not_run",
+    "official": false,
+    "terminal_error": "token budget exceeded",
+    "event_count": 111,
+    "checkpoint_count": 23,
+    "model_calls": 19,
+    "tool_calls": 22,
+    "usage": {
+      "input_tokens": 74868,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 74811,
+      "output_tokens": 6274,
+      "model_cost_usd": 0.328036875,
+      "wall_clock_ms": 84801
+    },
+    "patch_attempts": {
+      "model_outputs_with_apply_patch": 9,
+      "unique_patch_payloads": 7,
+      "executed_apply_patch_calls": 8,
+      "failed_apply_patch_calls": 8,
+      "common_error": "patch application failed: error: corrupt patch at <stdin>:12",
+      "declared_old_lines": 7,
+      "declared_new_lines": 7,
+      "actual_old_lines": 6,
+      "actual_new_lines": 6
+    },
+    "trace_qualification_artifact": {
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": false,
+      "private_match_count": 0,
+      "qualification_hash": "sha256:9130f037aa15bd0c51b0339a99b5ee9c5ee26c1e7f605f8d4cb7551f263e8395",
+      "source_evidence_hash": "sha256:84079a25b6b3cdc84df440e8e5a943aaa462eafb161b1fc487f221cc97f0b451"
+    },
+    "pilot_acceptance": {
+      "accepted": false,
+      "reason": "evaluation_reached is false",
+      "development_campaign_unlocked": false
+    },
+    "failure_record_id": "fail_b0321c79a2335403bb66a88f01774e1c"
+  },
+  "selected_recount_candidate": {
+    "model_event_sequence": 51,
+    "model_event_id": "evt_2541c45efa0a4dc8b757a03db45205ee",
+    "model_artifact_id": "art_29d7d00fd9e14cbbac80e60ac5774800",
+    "model_artifact_sha256": "sha256:4769cc3f9e2165fee3e286549a3d7d9563569d11b8659cbc9f3a3b742abd5a9a",
+    "patch_sha256": "sha256:f041469f1d938452c6e25c54aa1e6b816247be0525920184a77be493f7111695",
+    "strict_git_apply_check_passed": false,
+    "recount_git_apply_check_passed": true,
+    "recount_git_apply_check_stderr": "",
+    "workspace_changed_by_checks": false,
+    "same_code_edit_as_first_pilot_official_counterfactual": true,
+    "official_evaluator_run": null,
+    "count_as_agent_success": false,
+    "count_as_pilot_repetition": false
+  },
+  "root_cause": {
+    "category": "agent-gateway unified-diff interoperability",
+    "finding": "Every model-generated hunk declared seven old/new lines but contained six; strict git apply rejected otherwise coherent patches before policy or evaluator execution.",
+    "corrective_contract": "The agent-visible gateway recounts hunk totals on forward apply and policy rollback. Raw input/hash, body, context, and paths remain strict. Rollback must restore the pre-call diff and zero-untracked state or raise RecoveryError. The evaluator remains strict. New-file, rename, copy, binary, metadata-only, and out-of-scope patches remain rejected."
+  },
+  "spend_to_date": {
+    "first_pilot_usd": 0.34025875,
+    "second_pilot_usd": 0.328036875,
+    "cumulative_usd": 0.668295625
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; ignored raw bytes are not bundled in a clean checkout.",
+    "portable_artifacts": "Secret-scrubbed model patch bytes tracked for clean-checkout hash verification."
+  },
+  "portable_artifacts": [
+    {
+      "path": "reports/live-pilot/artifacts/run_de8f2a2846044c01-recount-candidate.patch",
+      "bytes": 654,
+      "sha256": "sha256:f041469f1d938452c6e25c54aa1e6b816247be0525920184a77be493f7111695"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-live-pilot-20260728-r2.json",
+      "bytes": 5815,
+      "sha256": "sha256:69302959268a367b12ab417202d2b99d30bde20534a77faf8025dea3c572e08b"
+    },
+    {
+      "path": ".patchloop/qualifications/run_de8f2a2846044c01.json",
+      "bytes": 4861,
+      "sha256": "sha256:9cd5683d9f2eff5781d791a05acc67ca5c90b725815d441490b0a6713e857241"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_de8f2a2846044c01/manifest.json",
+      "bytes": 2384,
+      "sha256": "sha256:a11873ad9925ea0b6bf8335f0bf1b5ad71f438534d4ea4d9e772e7cbcb659404"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_de8f2a2846044c01/result.json",
+      "bytes": 827,
+      "sha256": "sha256:c78e093ec2103877e01231fe9087ce24e54b5db77b99bd742786735a89a9d730"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_de8f2a2846044c01/provenance.json",
+      "bytes": 105,
+      "sha256": "sha256:0511eb8fbc36b7a1d202772317fedf4ec99c9cb9775c7f503552b5a9cd8bc93a"
+    },
+    {
+      "path": ".patchloop/experiments/plans/c7fe89287ed3310885f548954917c810b699a54ea420b3a7551d9863ebd839a3.json",
+      "bytes": 5408,
+      "sha256": "sha256:2e9b3290f5db7e71070f15c7ca9598bbd4c84a8ac7c87f4f12d68008c38b0c02"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-live-pilot-20260728-r2.jsonl",
+      "bytes": 2671,
+      "sha256": "sha256:6b051133fe704c4b8e1098d15ab19dd8f2b198db84b1a01c3b65d6cbe454114e"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/47/69cc3f9e2165fee3e286549a3d7d9563569d11b8659cbc9f3a3b742abd5a9a",
+      "bytes": 1070,
+      "sha256": "sha256:4769cc3f9e2165fee3e286549a3d7d9563569d11b8659cbc9f3a3b742abd5a9a"
+    },
+    {
+      "path": ".patchloop/failures/dev-validation/fail_b0321c79a2335403bb66a88f01774e1c.json",
+      "bytes": 442,
+      "sha256": "sha256:0ea9a6d1f17c2554dd7e65393c70df09ea427b872b817a326eb8914e2084682f"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "trace_qualification_artifact_qualified": true,
+    "accepted_live_pilot": false,
+    "live_model_task_success": false,
+    "development_campaign_unlocked": false,
+    "recount_parser_diagnostic_passed": true
+  }
+}

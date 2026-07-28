@@ -130,16 +130,26 @@ suite snapshot in the approved plan, then rechecks each task package and generat
 against the plan before writing `RunStarted`. A replaced suite/task therefore stops before a model
 call instead of borrowing an older approval hash.
 
-A terminal unqualified pilot is also immutable. A corrective retry is a new experiment only after
+A terminal pilot that fails acceptance is also immutable. A corrective retry is a new experiment only after
 the original result, qualification, journal and root-cause evidence are preserved, the harness fix
 is committed, and the retry receives a new preflight hash and separate user approval. The current
-checked-in pilot template uses `dev-validation-live-pilot-20260728-r2` for this reason.
+checked-in pilot template uses `dev-validation-live-pilot-20260728-r3` for this reason. r1
+`run_c6f13dd9a1a1472d` and r2 `run_de8f2a2846044c01` remain immutable; neither unlocks the
+development campaign. r2's trace artifact passed integrity/leakage qualification, but
+`evaluation_reached=false` makes the pilot acceptance consumer reject it.
+
+The r3 harness recounts only hunk line totals in the agent-visible gateway. It preserves the exact
+raw patch for hashing, validates body/context/path and all policy checks, and uses the same raw
+patch with reverse recount on rejection. It then verifies the pre-call diff hash and zero-untracked
+workspace invariant. Rollback failure or state mismatch is a recovery error, not a recoverable tool
+message. Hidden evaluator patch application remains strict. Run unit/recovery tests and inspect the
+clean commit before generating the new r3 execution hash.
 
 The pilot must create a `trace-qualification-v1` artifact with
 `qualified=true`, `trace_integrity_passed=true`, `leakage_scan_passed=true` and
 `evaluation_reached=true`. Record that run ID in the development suite, return the worktree to a
 committed clean state, rerun the no-call preflight and separately approve at most $20 before the
-12-run campaign. Do not start the development campaign from an unqualified pilot.
+12-run campaign. Do not start the development campaign from a pilot that failed acceptance.
 
 Qualification also records a `source_evidence_hash` over the approved plan, manifest, ordered
 events, checkpoints, state/persisted result and agent-visible CAS artifact inventory. Required

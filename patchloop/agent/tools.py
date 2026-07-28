@@ -8,7 +8,7 @@ from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import EventType, PublicTask, ToolResult
-from patchloop.errors import ContractError, PolicyViolation
+from patchloop.errors import ContractError, PolicyViolation, RecoveryError
 from patchloop.repository import WorkspaceManager
 from patchloop.sandbox.runner import Sandbox
 from patchloop.state import StateStore
@@ -62,7 +62,9 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "type": "function",
         "name": "apply_patch",
         "description": (
-            "Apply a raw Git unified diff within the task's allowed paths. "
+            "Apply a raw Git unified diff to existing tracked text files within "
+            "the task's allowed paths. New files, renames, copies, and binary "
+            "patches are not supported. "
             "The patch must begin with 'diff --git' and contain ---/+++/@@ lines. "
             "Do not use '*** Begin Patch' or '*** End Patch' markers."
         ),
@@ -100,6 +102,22 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
 ]
 
 _EVENT_ERROR_MESSAGE_LIMIT = 2_000
+_UNSUPPORTED_PATCH_METADATA = (
+    "new file mode ",
+    "rename from ",
+    "rename to ",
+    "copy from ",
+    "copy to ",
+)
+
+
+def _header_path(header: str) -> str:
+    path = header[4:].split("\t", 1)[0]
+    if path.startswith('"') and path.endswith('"'):
+        path = path[1:-1]
+    if path.startswith(("a/", "b/")):
+        return path[2:]
+    return path
 
 
 def _validate_raw_git_patch(patch: str) -> None:
@@ -121,6 +139,14 @@ def _validate_raw_git_patch(patch: str) -> None:
             raise ContractError("apply_patch does not allow content before the first diff header")
 
     for section in sections:
+        if any(
+            line.startswith(_UNSUPPORTED_PATCH_METADATA)
+            for line in section
+        ):
+            raise ContractError(
+                "apply_patch only supports in-place tracked text changes; "
+                "new files, renames, and copies are forbidden"
+            )
         old_header = next(
             (index for index, line in enumerate(section) if line.startswith("--- ")),
             None,
@@ -142,6 +168,17 @@ def _validate_raw_git_patch(patch: str) -> None:
             raise ContractError(
                 "each diff section must contain ordered '---', '+++', and '@@' "
                 "headers; binary and metadata-only patches are forbidden"
+            )
+        old_path = _header_path(section[old_header])
+        new_path = _header_path(section[new_header])
+        if old_path == "/dev/null":
+            raise ContractError(
+                "apply_patch only supports tracked files; new-file patches are forbidden"
+            )
+        if new_path != "/dev/null" and old_path != new_path:
+            raise ContractError(
+                "apply_patch only supports in-place changes; "
+                "rename and copy patches are forbidden"
             )
 
 
@@ -318,8 +355,14 @@ class ToolGateway:
         if len(patch.encode("utf-8")) > 500_000:
             raise PolicyViolation("patch exceeds the tool input limit")
         _validate_raw_git_patch(patch)
+        baseline = WorkspaceManager.diff_summary(self.workspace)
+        baseline_untracked = WorkspaceManager.untracked_files(self.workspace)
+        if baseline_untracked:
+            raise RecoveryError(
+                "agent workspace contains untracked files before patch application"
+            )
         completed = subprocess.run(
-            ["git", "apply", "--whitespace=nowarn", "-"],
+            ["git", "apply", "--recount", "--whitespace=nowarn", "-"],
             cwd=self.workspace,
             input=patch.encode("utf-8"),
             capture_output=True,
@@ -328,25 +371,27 @@ class ToolGateway:
         if completed.returncode != 0:
             error = completed.stderr.decode("utf-8", errors="replace").strip()
             raise ContractError(f"patch application failed: {error}")
-        summary = WorkspaceManager.diff_summary(self.workspace)
-        outcomes = [
-            verify_scope(summary, self.task.constraints),
-            verify_dependencies(summary, self.task.constraints),
-            verify_test_tampering(summary),
-            verify_public_api(summary, self.task.constraints, self.workspace),
-        ]
-        violations = [item for outcome in outcomes for item in outcome.violations]
+        try:
+            summary = WorkspaceManager.diff_summary(self.workspace)
+            outcomes = [
+                verify_scope(summary, self.task.constraints),
+                verify_dependencies(summary, self.task.constraints),
+                verify_test_tampering(summary),
+                verify_public_api(summary, self.task.constraints, self.workspace),
+            ]
+            violations = [
+                item for outcome in outcomes for item in outcome.violations
+            ]
+            untracked = WorkspaceManager.untracked_files(self.workspace)
+            if untracked:
+                violations.append(
+                    "patch produced untracked files: " + ", ".join(untracked)
+                )
+        except Exception:
+            self._rollback_patch(patch, baseline.patch_hash)
+            raise
         if violations:
-            rollback = subprocess.run(
-                ["git", "apply", "--reverse", "--whitespace=nowarn", "-"],
-                cwd=self.workspace,
-                input=patch.encode("utf-8"),
-                capture_output=True,
-                check=False,
-            )
-            if rollback.returncode != 0:
-                error = rollback.stderr.decode("utf-8", errors="replace").strip()
-                raise ContractError(f"policy rollback failed: {error}")
+            self._rollback_patch(patch, baseline.patch_hash)
             raise PolicyViolation("; ".join(violations))
         return {
             "patch_hash": sha256_text(patch),
@@ -354,6 +399,36 @@ class ToolGateway:
             "changed_files": summary.changed_files,
             "diff_lines": summary.diff_lines,
         }
+
+    def _rollback_patch(self, patch: str, baseline_diff_hash: str) -> None:
+        rollback = subprocess.run(
+            [
+                "git",
+                "apply",
+                "--reverse",
+                "--recount",
+                "--whitespace=nowarn",
+                "-",
+            ],
+            cwd=self.workspace,
+            input=patch.encode("utf-8"),
+            capture_output=True,
+            check=False,
+        )
+        if rollback.returncode != 0:
+            error = rollback.stderr.decode("utf-8", errors="replace").strip()
+            raise RecoveryError(f"policy rollback failed: {error}")
+        try:
+            restored = WorkspaceManager.diff_summary(self.workspace)
+            untracked = WorkspaceManager.untracked_files(self.workspace)
+        except Exception as exc:
+            raise RecoveryError(
+                "policy rollback state could not be verified"
+            ) from exc
+        if restored.patch_hash != baseline_diff_hash or untracked:
+            raise RecoveryError(
+                "policy rollback did not restore the pre-call workspace state"
+            )
 
     def _run_check(self, check_id: str) -> dict[str, Any]:
         checks = {check.id: check for check in self.task.visible_checks}

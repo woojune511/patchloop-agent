@@ -23,10 +23,11 @@ schedule을 machine audit한 뒤 dataset manifest를 동결했다. 이 동결은
 
 현재 live 경로에는 `experiment-v2` purpose, 비용 승인 preflight, durable execution plan,
 hash-chained campaign journal과 `trace-qualification-v1`이 구현돼 있다. Babel #1042의
-첫 paid development-validation pilot은 2026-07-28 실행됐지만 agent가 token budget
-종료 전에 patch를 제출하지 못했다. 별도로, 당시 qualification artifact는 공개 marker
-오진 때문에 `qualified=false`였다. 따라서 live 성공 결과는 아직 없으며, 여섯
-memory-development task의 12-run no-memory campaign도 열리지 않았다.
+paid development-validation pilot 두 회는 2026-07-28 실행됐지만 모두 token budget
+종료 전에 patch를 제출하지 못했다. r1 qualification은 공개 marker 오진으로 실패했고,
+r2 trace artifact는 integrity와 leakage 검사를 통과했지만 evaluator에 도달하지 않았다.
+따라서 accepted live 성공 결과는 아직 없으며, 여섯 memory-development task의 12-run
+no-memory campaign도 열리지 않았다.
 
 ## 구현된 핵심 경로
 
@@ -172,6 +173,22 @@ candidate의 코드 내용은 바꾸지 않고 envelope만 Git diff로 변환한
 Docker evaluator에서 모든 verdict를 통과했다. 이는 tool-contract 원인 evidence이지
 원래 agent run의 성공으로 집계하지 않는다.
 
+r2 evidence는 `run_de8f2a2846044c01`이다. 비용은 `$0.328036875`, model/tool call은
+19/22, input/cache-write/output token은 74,868/74,811/6,274였다. 수정된 gateway
+feedback과 leakage scan은 동작했고 `trace-qualification-v1` artifact는 `qualified=true`를
+기록했다. 그러나 아홉 model output의 patch candidate(고유 7개)가 모두 hunk header에
+old/new 7줄을 선언하면서 실제 body는 6줄만 포함했다. 실행된 여덟 `apply_patch`가 strict
+`git apply`에서 모두 거부돼 evaluator에는 도달하지 못했다. Pilot acceptance는
+`evaluation_reached=false` 때문에 실패하며, 이 run은 trace-qualified이지만 agent
+success나 accepted pilot가 아니다. 두 pilot의 누적 비용은 `$0.668295625`다.
+
+Agent-visible gateway는 이 evidence를 근거로 raw patch의 hunk 줄 수만 `--recount`로
+재계산한다. Body 문법, context, path와 모든 deterministic policy는 그대로 검사하고,
+policy rollback에도 같은 raw patch와 recount 의미를 사용한다. Rollback 실패나 pre-call
+상태 불복원은 `RecoveryError`로 fail-closed하며, agent workspace의 untracked file은
+checkpoint와 recovery를 포함해 허용하지 않는다. Hidden evaluator의 patch 적용은 계속
+strict하다. 새 파일, rename/copy, binary와 metadata-only patch도 계속 거부한다.
+
 먼저 API call을 하지 않는 preflight를 실행한다.
 
 ```powershell
@@ -234,9 +251,10 @@ persisted result와 agent-visible content-addressed artifact inventory를 결속
 `RunStarted`/`ContextBuilt`/`ModelCalled` artifact reference, cache usage 불변식과 malformed
 function-call response의 이미 과금된 usage도 검사·보존하며, development campaign
 preflight와 memory review/index admission은 현재 source evidence hash를 다시 계산한다.
-첫 pilot은 이 보존 경로를 실제 provider에서 확인했지만 qualification에 실패했다. Tool
-contract feedback과 공개 marker 오진을 수정한 새 clean execution hash로 pilot를 다시
-통과시키기 전에는 development campaign을 실행하지 않는다.
+두 pilot은 이 보존 경로를 실제 provider에서 확인했다. r2 trace artifact는 qualified지만
+evaluator 미도달 때문에 pilot acceptance를 통과하지 못했다. Recount와 workspace 복원
+경계를 고친 새 clean execution hash에서 accepted pilot를 만들기 전에는 development
+campaign을 실행하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

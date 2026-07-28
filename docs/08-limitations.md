@@ -149,11 +149,17 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606`
   passed every official Docker verdict in evaluator run `run_4299e6b326de4c1c`. This isolates the
   tool-contract failure but is not counted as an agent submission, pilot success or repetition.
+- A second paid Babel #1042 pilot, `run_de8f2a2846044c01`, cost `$0.328036875` for
+  74,868 input, 74,811 cache-write input and 6,274 output tokens across 19 model and 22 tool calls.
+  Its 111 events, 23 checkpoints, zero-match leakage scan and usage integrity produced a
+  `qualified=true` trace artifact, but no patch was submitted and the evaluator was not reached.
+  Pilot acceptance therefore remains false. All nine model patch candidates declared 7/7 hunk
+  lines while containing 6/6; eight executed mutations failed before evaluation.
 
 ## Implemented but not yet accepted as an external gate
 
-- OpenAI Responses adapter is contract-tested with a fake client and has one paid-provider failure
-  trace. No qualified live-model success exists.
+- OpenAI Responses adapter is contract-tested with a fake client and has two paid-provider failure
+  traces. No accepted live-model success exists.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
@@ -163,13 +169,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. The first pilot's host preflight reached
+  only after the approved plan is durably persisted. Both pilot host preflights reached
   `ready=true`; any corrected commit still requires a new clean execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. The first paid pilot produced a completed hash-chained
-  journal. Automatic resume from an interrupted journal is not implemented.
+  that blocks automatic schedule replay. Both paid pilots produced completed hash-chained
+  journals. Automatic resume from an interrupted journal is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
   against the plan before `RunStarted`; replacement tests stop before the model runner.
@@ -183,7 +189,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `qualified=false`: evaluation was not reached, and its original leakage scan also counted 41
   publicly disclosed marker occurrences. A forensic rescan found zero API-key, reference-hash,
   `private.yaml` or `reference.patch` matches; the scanner contract was corrected without rewriting
-  the historical artifact.
+  the historical artifact. The second artifact is `qualified=true`, but the pilot acceptance
+  consumer separately rejects it because `evaluation_reached=false`.
 - Cache usage enforces `cached + cache-write <= input`, and a malformed billed function-call
   response preserves usage/cost before terminating as agent failure. These are contract-tested
   paths, not paid-provider evidence.
@@ -191,7 +198,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   available-case rows only as diagnostics and suppress headline, paired comparison/CI and flip
   results. No live matrix has yet exercised this reporting boundary.
 - Failed started attempts retain run ID, usage including cached/cache-write tokens, calculated cost
-  and terminal outcome. The first paid pilot exercised this path.
+  and terminal outcome. Both paid pilots exercised this path.
+- Agent-visible patch application now recounts only hunk line totals and leaves the raw input/hash,
+  body, context, path and deterministic policies unchanged. Policy rollback must restore the exact
+  pre-call diff and zero-untracked state; rollback failure terminates as recovery error. New-file,
+  rename/copy, binary and metadata-only patches remain unsupported, while the evaluator stays
+  strict. This correction is test evidence only until an r3 paid pilot reaches evaluation.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -215,10 +227,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   the original raw run files until a portable evidence bundle is exported. This limitation applies
   to the existing admission-report family and must be closed before claiming clean-checkout raw
   evidence inspection.
-- The checked-in first-live-pilot evidence record likewise binds the local plan, journal, trace
-  qualification, model candidate and diagnostic evaluator files by SHA-256 but does not bundle
-  those ignored raw bytes. A clean checkout can inspect the normalized claims boundary but cannot
-  independently rehash the original run until a secret-scrubbed portable evidence export exists.
+- The checked-in live-pilot evidence records likewise bind the local plans, journals, trace
+  qualifications and model candidates by SHA-256 but do not bundle all ignored raw bytes. A clean
+  checkout can inspect the normalized claims boundaries and rehash the portable candidate patches,
+  but cannot independently rehash the complete original runs until a secret-scrubbed portable
+  evidence export exists.
 - `RunManifest.harness_git_commit` records the harness `HEAD` but not a full dirty-tree hash.
   The new live-suite preflight rejects a dirty worktree before execution; older admission gates used
   manually verified clean staging commits and are not retroactively covered by that enforcement.
@@ -249,8 +262,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   original benchmark run is external acceptance evidence, not a core result.
 - No 96-run OpenAI campaign, cost measurement, negative-transfer review or live-model cross-repo
   result exists.
-- One capped Babel live pilot was executed and failed qualification; the $20/12-run no-memory
-  development campaign has not been executed. The 2026-07-28 configured official rates—$2.50/M
+- Two capped Babel live pilots were executed and neither passed pilot acceptance; their cumulative
+  cost is `$0.668295625`. The $20/12-run no-memory development campaign has not been executed. The
+  2026-07-28 configured official rates—$2.50/M
   input, $0.25/M cached input, $3.125/M cache-write input and $15/M output—must be refreshed if
   older than 72 hours at invocation. Only the
   `gpt-5.6-terra` alias, not a dated Terra snapshot, is currently recorded.

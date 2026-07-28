@@ -12,7 +12,7 @@
 | Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
 | Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | experiment-v2/preflight implemented, pilot requalification pending | Paid pilot 1회가 terminal evidence와 $0.34025875 usage를 보존했으나 unqualified |
+| Phase 6 evaluation | experiment-v2/preflight implemented, pilot requalification pending | Paid pilot 2회가 terminal evidence와 누적 $0.668295625 usage를 보존했으나 accepted pilot는 없음 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -103,8 +103,8 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 1 | implemented, external acceptance pending | `experiment-v2` explicit purpose와 exact suite shape | Wrong task/role/repetition/model/budget contract reject |
 | 2 | implemented, clean-machine acceptance pending | Canonical task/private hash/digest environment preflight, durable approved plan과 live capability | Unapproved/hash mismatch/dirty Git/wrong package/private/image/stale price reject |
 | 3 | implemented, interrupted-run recovery pending | Paid call 전 fsync하는 hash-chained campaign journal | Existing journal이 hard-crash 뒤 새 schedule 시작을 차단; 자동 resume은 미구현 |
-| 4 | implemented, failed live artifact observed | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | 첫 pilot trace integrity/usage linkage 통과, 공개 marker 오진은 수정 후 재검증 필요 |
-| 5 | attempt 1 unqualified; retry pending new approval | Babel #1042 `no_memory` 1회 pilot, $2 cap | Qualified pilot artifact와 stable run ID |
+| 4 | implemented, two failed live artifacts observed | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | r2 trace integrity/leakage qualification 통과, evaluator 미도달을 acceptance에서 분리 |
+| 5 | attempts 1-2 not accepted; r3 pending new hash/approval | Babel #1042 `no_memory` 1회 pilot, $2 cap | `evaluation_reached=true`인 accepted pilot artifact와 stable run ID |
 | 6 | pending pilot gate | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 7 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
@@ -136,7 +136,8 @@ output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/G
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
 - 실제 환경에서 approval을 포함한 preflight가 `ready=true`다.
-- 사용자가 $2 pilot을 별도로 승인한 뒤 한 run이 `trace-qualification-v1`을 통과한다.
+- 사용자가 $2 pilot을 별도로 승인한 뒤 한 run이 `trace-qualification-v1`과
+  `evaluation_reached=true` pilot acceptance를 함께 통과한다.
 - Pilot qualification hash를 development suite에 고정하기 전에는 12-run campaign이
   시작되지 않는다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
@@ -155,6 +156,24 @@ candidate를 내용 변경 없이 raw Git diff로 변환한 사후 진단 patch
 official evaluator run `run_4299e6b326de4c1c`에서 모든 verdict를 통과했다. 이 run은
 format-only counterfactual evidence이며 agent success나 pilot repetition으로 집계하지
 않는다. 12-run development result는 아직 없다.
+
+두 번째 paid pilot `run_de8f2a2846044c01`은 별도 승인 hash
+`sha256:c7fe89287ed3310885f548954917c810b699a54ea420b3a7551d9863ebd839a3`로
+정확히 한 번 실행됐고 `$0.328036875`를 사용했다. 19 model call과 22 tool call,
+111 event와 23 checkpoint가 보존됐으며 leakage match는 0이다. Trace qualification
+artifact 자체는 `qualified=true`지만 `evaluation_reached=false`이므로 pilot acceptance는
+실패한다. Agent가 낸 아홉 patch candidate(고유 7개)는 모두 hunk header에 old/new 7줄을
+선언하고 실제 body는 6줄만 포함했다. 실행된 여덟 mutation은 `corrupt patch`로 거부됐고
+evaluator는 실행되지 않았다. 선택한 원문 patch
+`sha256:f041469f1d938452c6e25c54aa1e6b816247be0525920184a77be493f7111695`는
+strict `git apply --check`에서 실패하고 `--recount` check에서 workspace 변경 없이
+통과한다. 이 parser diagnostic도 agent success나 repetition으로 집계하지 않는다.
+
+r3 전 corrective gate는 agent-visible forward와 policy rollback에만 hunk recount를
+적용한다. Raw input hash는 유지하고 body/context/path/policy는 strict하게 검사한다.
+Policy reject 뒤 pre-call diff hash 복원, duplicate `PatchApplied` 방지와 zero-untracked
+checkpoint/recovery를 executable test로 고정한다. Hidden evaluator는 strict하게 유지한다.
+수정 commit의 새 execution hash와 별도 승인이 없으면 r3 paid call을 실행하지 않는다.
 
 ## Phase 1. Evaluation Foundation
 

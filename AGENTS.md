@@ -16,8 +16,9 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을
-  machine audit한 뒤 dataset manifest를 동결했다. 첫 Live OpenAI pilot은 terminal
-  agent failure와 immutable unqualified trace를 남겼으며 qualified pilot는 아직 없다.
+  machine audit한 뒤 dataset manifest를 동결했다. 두 Live OpenAI pilot은 모두 terminal
+  agent failure로 끝났다. r2 trace artifact 자체는 qualified지만 evaluator에 도달하지
+  않아 pilot acceptance는 실패했으며, accepted pilot는 아직 없다.
   Stress schedule, 12-run development campaign과 96-run core campaign은 완료되지 않았다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.

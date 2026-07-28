@@ -287,9 +287,9 @@ Pilot task는
 `tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml`로 exact match한다.
 Development campaign은 frozen registry의 memory-development 여섯 task가 정확히 한 번씩
 suite에 선언돼야 한다. 다른 role, 일부 집합, 중복 task 또는 다른 repetition은 schema 또는
-preflight에서 거부한다. Development campaign은 먼저 성공 여부와 무관하게 trace integrity,
-public/private boundary와 evaluator 도달을 만족한 qualified pilot의 run ID와 qualification
-hash를 요구한다.
+preflight에서 거부한다. Development campaign은 먼저 성공 여부와 무관하게 trace
+qualification과 `evaluation_reached=true`를 함께 만족한 accepted pilot의 run ID와
+qualification hash를 요구한다.
 
 Paid approval은 checked-in YAML 상태가 아니다. `live_cost_approved`와
 `approved_execution_hash`는 이전 schema를 읽기 위한 deprecated field이며 값을 바꿔도 실행
@@ -545,6 +545,23 @@ Checkpoint가 참조한 event sequence나 hash를 검증할 수 없으면 자동
 apply-patch envelope인 `*** Begin Patch` / `*** End Patch` 형식은 이 constrained tool의
 입력이 아니며 구조화된 `CONTRACT_ERROR`로 거부한다.
 
+현재 v1 tool은 기존 tracked text file의 동일 경로 수정 또는 삭제만 지원한다. 새 파일,
+rename/copy, binary와 metadata-only patch는 agent workspace의 untracked state가 scope
+요약을 우회하지 않도록 거부한다. Agent-visible gateway는 hunk header에 선언된 old/new
+line total만 `git apply --recount`로 body에서 다시 계산한다. Hunk body 문법, context,
+파일 경로와 Git 적용 가능성은 완화하지 않는다. Hidden evaluator와
+`WorkspaceManager.apply_patch`는 `--recount` 없이 strict patch를 요구한다.
+
+Forward apply 뒤에는 scope, dependency, test tampering, public API와 zero-untracked
+불변식을 모두 검사한다. 거부 또는 post-apply 검사 예외가 발생하면 같은 raw patch를
+`--reverse --recount`로 적용하고 pre-call worktree diff hash와 zero-untracked 상태를
+재확인한다. Reverse 실패나 정확한 복원 실패는 일반 tool rejection으로 삼키지 않고
+`RECOVERY_ERROR`로 run을 fail-closed한다. Checkpoint와 resume도 agent workspace에
+untracked file이 있으면 거부한다. Raw 입력은 다시 쓰지 않으므로 `input_hash`,
+`patch_hash`와 CAS evidence는 model이 보낸 원문에 결속한다. Function parameter JSON
+Schema는 바뀌지 않았으므로 `tool_schema_version`은 v1을 유지하고, 이 동작 의미는 harness
+Git commit과 D-029에 결속한다.
+
 동일 `action_id + input_hash`가 성공했다면 기존 result를 반환한다. 같은 action ID에 다른
 input hash가 오면 stale/conflicting action으로 거부하고 patch를 적용하지 않는다.
 
@@ -691,6 +708,11 @@ Qualification은 최소한 다음 경계를 검사한다.
   없고, 공개 여부와 무관하게 hidden artifact path/hash, reference hash 또는 현재 API key가 없음
 - Event usage, persisted result, terminal outcome과 evaluator verdict가 서로 일치함
 - Pilot은 적어도 한 tool call을 포함해 실제 function-tool loop를 통과함
+
+`qualified=true`는 trace artifact가 자기 outcome과 provenance를 일관되게 보존했다는 뜻이다.
+Development-validation pilot acceptance는 여기에 `evaluation_reached=true`를 추가로 요구한다.
+따라서 evaluator 이전 agent failure도 trace qualification은 통과할 수 있지만 development
+campaign을 열지는 못한다.
 
 Leak scan은 private token의 값이나 일치 문자열을 artifact에 다시 기록하지 않고 match count만
 남긴다. Canonical public spec에 이미 있는 generic structure marker와 hidden check ID만

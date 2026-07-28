@@ -35,6 +35,26 @@ def test_reference_patch_passes_hidden_regression_and_scope(tmp_path) -> None:
     assert result.official is False
 
 
+def test_evaluator_keeps_strict_hunk_line_counts(tmp_path) -> None:
+    package = load_task_package(TASK)
+    manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
+    engine = EvaluationEngine(
+        manager,
+        LocalSandbox(),
+        ArtifactStore(tmp_path / "artifacts"),
+    )
+    manifest = build_manifest(package, sandbox_backend="local")
+    patch = Path(f"{TASK}/reference.patch").read_text(encoding="utf-8")
+    malformed = tmp_path / "miscounted.patch"
+    malformed.write_text(
+        patch.replace("@@ -1,13 +1,11 @@", "@@ -1,99 +1,77 @@"),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ContractError, match="corrupt patch"):
+        engine.evaluate(TASK, malformed, manifest)
+
+
 def test_snapshot_content_hash_mismatch_is_rejected(tmp_path) -> None:
     manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
     with pytest.raises(ContractError, match="content hash"):

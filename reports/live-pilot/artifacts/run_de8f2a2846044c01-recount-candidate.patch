@@ -1,0 +1,11 @@
+diff --git a/babel/numbers.py b/babel/numbers.py
+--- a/babel/numbers.py
++++ b/babel/numbers.py
+@@ -1100,7 +1100,7 @@ def parse_decimal(
+     if strict and group_symbol in string:
+         proper = format_decimal(parsed, locale=locale, decimal_quantization=False, numbering_system=numbering_system)
+-        if string != proper and string.rstrip('0') != (proper + decimal_symbol):
++        if string != proper and string.rstrip('0') not in (proper, proper + decimal_symbol):
+             try:
+                 parsed_alt = decimal.Decimal(string.replace(decimal_symbol, '')
+                                                    .replace(group_symbol, '.'))

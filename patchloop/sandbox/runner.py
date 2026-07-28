@@ -67,7 +67,12 @@ class LocalSandbox:
         command = list(declared_command)
         if command[0] in {"python", "python3"}:
             command[0] = sys.executable
-        env = {"PATH": os.environ.get("PATH", ""), "PYTHONPATH": str(workspace)}
+        env = {
+            "PATH": os.environ.get("PATH", ""),
+            "PYTHONPATH": str(workspace),
+            "PYTHONDONTWRITEBYTECODE": "1",
+            "PYTEST_ADDOPTS": "-p no:cacheprovider",
+        }
         env.update(check.environment)
         started = time.monotonic()
         try:

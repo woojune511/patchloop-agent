@@ -112,10 +112,12 @@ Memory entry를 만들기 전에 live harness 자체를 development-validation t
 Frozen sequence는 다음과 같다.
 
 1. Babel #1042 development-validation task를 `no_memory`로 1회 실행한다.
-2. 그 run이 `trace-qualification-v1`의 trace integrity, leakage, evaluator-reached와
-   function-tool-loop gate를 통과했는지 확인한다. 성공 patch일 필요는 없지만 infrastructure
-   error는 pilot qualification이 아니다.
-3. Qualified pilot run ID와 qualification hash를 다음 suite에 고정한다.
+2. 그 run의 `trace-qualification-v1`이 trace integrity, leakage와 function-tool-loop를
+   통과했는지 확인하고, 별도 pilot acceptance에서 `evaluation_reached=true`인지 검사한다.
+   성공 patch일 필요는 없지만 infrastructure error나 evaluator 미도달은 accepted pilot가
+   아니다.
+3. Trace-qualified이면서 acceptance를 통과한 pilot run ID와 qualification hash를 다음
+   suite에 고정한다.
 4. Frozen memory-development 여섯 task를 `no_memory`로 task당 2회, 총 12회 실행한다.
 5. Qualification된 failure만 human review queue에 넣는다. Resolved run도 trace evidence로
    남지만 memory candidate는 아니다.
@@ -238,7 +240,8 @@ Memory utilization과 negative-transfer 원인은 자동 metric만으로 단정�
    reserve와 execution hash를 검토한다.
 6. Explicit invocation approval을 durable execution plan으로 저장하고 campaign/run start를
    journal에 fsync한 뒤 Babel development-validation pilot을 실행하고 trace를 qualification한다.
-7. Qualified pilot hash에 결속된 여섯 task × 2 no-memory development campaign을 실행한다.
+7. Trace qualification과 `evaluation_reached=true` acceptance를 함께 통과한 pilot hash에
+   결속된 여섯 task × 2 no-memory development campaign을 실행한다.
 8. Eligible failure의 append-only human review를 거쳐 memory index와 retrieval config를
    freeze한다.
 9. Condition/task/repetition 실행 순서를 seed 기반으로 섞는다.
