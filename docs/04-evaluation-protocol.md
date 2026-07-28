@@ -360,10 +360,15 @@ runtime package download 또는 background service 조작이 필요한 원본 ta
 
 Stress run은 core 96-run campaign의 일부가 아니며 normal/core SCRR와 별도 표로 보고한다.
 
-이 freeze는 sentinel selection과 machine-readable schedule의 사전 등록을 증명한다. Fault
-runtime의 schedule 소비, 완전한 context-reset 의미론, persistent-state-off arm과 30개 stress
-run은 아직 완료 증거가 아니다. 이 구현과 실행 gate가 통과하기 전에는 recovery 수치나 stress
-성공을 보고하지 않는다.
+이 freeze는 sentinel selection과 machine-readable schedule의 사전 등록을 증명한다.
+Local mock E2E에서는 single-file smoke patch의 유일한 atomic postimage replacement 뒤,
+outcome persistence 전에 실제 worker process를 종료했다. 새 interpreter는 stale
+`RUNNING`을 reclaim해 같은 run ID로 evaluator까지 완료했고, 동시에 resume한 contender는
+event/status를 바꾸지 않았으며 `ToolCalled(apply_patch)=1`, `PatchApplied=1`이었다.
+Multi-file mixed/partial recovery는 unit test evidence다. 다만 fault runtime의 schedule
+소비, 완전한 context-reset 의미론, persistent-state-off arm과 30개 stress run은 아직 완료
+증거가 아니다. 이 실행 gate가 통과하기 전에는 campaign recovery 수치나 stress 성공을
+보고하지 않는다.
 
 ### Recovery success
 

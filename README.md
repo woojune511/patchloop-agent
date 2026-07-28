@@ -6,7 +6,7 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.
 
-현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-28 현재
+현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-29 현재
 세 smoke task를 mock과 content-hashed replay로 각각 실행한 6개 agent run이 고정된 Linux Docker
 evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
 SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 pyfakefs #991
@@ -59,8 +59,10 @@ public.yaml → stateless context builder → model adapter
 - Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff`와
   orchestrator control `finish_task`만 허용
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
-- `action_id + input_hash` idempotency, context reset과 cooperative
-  worker-kill-after-checkpoint fault run; 실제 OS worker restart는 pending
+- `action_id + input_hash` idempotency, OS-held per-run ownership과 stale `RUNNING` reclaim,
+  context reset 및 offline local mock의 fresh-process hard-kill recovery
+- v2 patch의 raw input, pre/post file image와 expected diff를 CAS에 준비한 뒤 mutation하고,
+  중간 종료 시 pre/post/partial/unknown 상태를 판별해 duplicate apply 없이 복구
 - Dataset role이 `memory-development`인 reviewed failure 전용 structured/raw memory index
 - Seeded experiment runner, task-level bootstrap CI, JSON/CSV/HTML report. 불완전하거나
   qualification-failed인 matrix는 diagnostic으로만 남기고 headline/paired 결과를 억제
@@ -204,11 +206,25 @@ old/new 7줄을 선언하면서 실제 body는 6줄만 포함했다. 실행된 �
 success나 accepted pilot가 아니다. r1+r2 누적 비용은 `$0.668295625`다.
 
 Agent-visible gateway는 이 evidence를 근거로 raw patch의 hunk 줄 수만 `--recount`로
-재계산한다. Body 문법, context, path와 모든 deterministic policy는 그대로 검사하고,
-policy rollback에도 같은 raw patch와 recount 의미를 사용한다. Rollback 실패나 pre-call
-상태 불복원은 `RecoveryError`로 fail-closed하며, agent workspace의 untracked file은
-checkpoint와 recovery를 포함해 허용하지 않는다. Hidden evaluator의 patch 적용은 계속
-strict하다. 새 파일, rename/copy, binary와 metadata-only patch도 계속 거부한다.
+재계산한다. Body 문법, context, path와 모든 deterministic policy는 그대로 검사한다.
+Legacy v1 policy rollback은 같은 raw patch를 reverse recount하고, v2는 durable intent의
+검증된 preimage를 복원한다. Rollback 실패나 pre-call 상태 불복원은 `RecoveryError`로
+fail-closed하며, agent workspace의 untracked file은 checkpoint와 recovery를 포함해
+허용하지 않는다. Hidden evaluator의 patch 적용은 계속 strict하다. 새 파일, rename/copy,
+binary와 metadata-only patch도 계속 거부한다.
+
+새 v2 run은 raw patch를 `ToolCalled` CAS에 보존하고, target별 pre/post image와
+baseline/expected diff를 `PatchPrepared` intent CAS에 기록한 뒤에만 실제 mutation을 시작한다.
+모든 target을 먼저 검증하고 postimage를 atomic replace/delete한다. Single-file smoke
+patch의 유일한 postimage replacement 뒤 outcome 기록 전에 worker를 종료하는 local
+subprocess E2E에서 새 process가 같은 run lock을 획득해 재적용하지 않고 완료한다.
+Multi-file partial state의 preimage 복원은 별도 unit test로 검증한다. CAS 변조, untracked
+file 또는 제3의 파일 상태는 `RecoveryError`로 fail-closed한다.
+
+Evaluator도 manifest/result/provenance와 verifier stdout artifact를 원자적으로 기록한 뒤
+hash-bound evaluation receipt를 만든다. Receipt bundle과 참조된 verifier CAS, 그리고 새
+v2의 accepted submitted-patch CAS가 검증될 때만 resume이 evaluator를 재실행하지 않으며,
+terminal result/status/event는 한 SQLite transaction으로 확정한다.
 
 r3 evidence는 `run_3cb86f8d70094a11`이다. 별도 승인된 execution hash
 `sha256:03c57fb3dd0182e63645e346311ee2a46c1284d9770857240b2011b666b8bde6`로

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import uuid
 from pathlib import Path
 
@@ -119,7 +120,17 @@ def classify_failure(
         if existing != record:
             raise ContractError(f"failure record identity conflict: {record.failure_id}")
     else:
-        path.write_text(content, encoding="utf-8")
+        temporary = path.with_name(
+            f".{path.name}.{uuid.uuid4().hex}.tmp"
+        )
+        try:
+            with temporary.open("x", encoding="utf-8") as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
     return record
 
 

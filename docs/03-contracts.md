@@ -465,7 +465,8 @@ cached-input, cache-write-input, output rate를 보존한다. 이 값으로 term
 ```text
 RunStarted        PhaseChanged       ContextBuilt
 MemoryRetrieved   ModelCalled        ToolCalled
-ToolSucceeded     ToolFailed         PatchApplied
+PatchPrepared     ToolSucceeded      ToolFailed
+ToolReplayed      PatchApplied
 CheckStarted      CheckFinished      LoopDetected
 ReviewRecorded    SubmissionAttempted
 SubmissionRejected SubmissionAccepted CheckpointSaved
@@ -623,18 +624,54 @@ line total만 `git apply --recount`로 body에서 다시 계산한다. Hunk body
 파일 경로와 Git 적용 가능성은 완화하지 않는다. Hidden evaluator와
 `WorkspaceManager.apply_patch`는 `--recount` 없이 strict patch를 요구한다.
 
-Forward apply 뒤에는 scope, dependency, test tampering, public API와 zero-untracked
-불변식을 모두 검사한다. 거부 또는 post-apply 검사 예외가 발생하면 같은 raw patch를
-`--reverse --recount`로 적용하고 pre-call worktree diff hash와 zero-untracked 상태를
-재확인한다. Reverse 실패나 정확한 복원 실패는 일반 tool rejection으로 삼키지 않고
-`RECOVERY_ERROR`로 run을 fail-closed한다. Checkpoint와 resume도 agent workspace에
-untracked file이 있으면 거부한다. Raw 입력은 다시 쓰지 않으므로 `input_hash`,
-`patch_hash`와 CAS evidence는 model이 보낸 원문에 결속한다. Function parameter JSON
+Mutation 뒤에는 scope, dependency, test tampering, public API와 zero-untracked 불변식을
+모두 검사한다. v2의 거부 또는 post-mutation 검사 예외는 intent의 검증된 preimage로
+복원하고 pre-call worktree diff hash와 zero-untracked 상태를 재확인한다. Legacy v1만 같은
+raw patch를 `--reverse --recount`로 적용한다. Rollback 실패나 정확한 복원 실패는 일반 tool
+rejection으로 삼키지 않고 `RECOVERY_ERROR`로 run을 fail-closed한다. Checkpoint와 resume도
+agent workspace에 untracked file이 있으면 거부한다. Raw 입력은 다시 쓰지 않으므로
+`input_hash`, `patch_hash`와 CAS evidence는 model이 보낸 원문에 결속한다. Function parameter JSON
 Patch parameter schema 자체는 유지하지만, current-diff evidence와 structured submission을
 함께 고정하기 위해 새 run의 전체 tool surface는 v2다. 기존 v1 replay는 그대로 유지한다.
 
+v2의 mutating lifecycle은 다음 순서다.
+
+```text
+ToolCalled(raw patch CAS)
+→ PatchPrepared(patch-mutation-intent-v1 CAS)
+→ all-target preflight
+→ atomic postimage replace/delete
+→ action_results + ToolSucceeded/ToolFailed + optional PatchApplied atomic commit
+→ phase transition + checkpoint
+```
+
+Intent는 baseline/expected worktree diff hash와 각 touched tracked regular file의 path, mode,
+Git mode, preimage CAS, postimage CAS 또는 deletion marker를 가진다. v2는 target 전체를
+검증한 뒤 각 postimage를 atomic replace/delete한다. Policy 또는 post-validation 오류가
+나면 검증된 preimage로 모든 target을 복원하고 baseline을 다시 확인한다. Direct
+`git apply --recount`와 `--reverse --recount` rollback은 legacy v1에만 남는다. 새 owner는
+최신 checkpoint 뒤의 미완료 patch를 다음처럼 판정한다.
+
+```text
+all pre    apply once
+all post   finalize without another forward apply
+mixed      restore every verified preimage, verify baseline, then apply once
+unknown    RECOVERY_ERROR without overwriting the unknown state
+```
+
+Raw patch, intent와 nested pre/post CAS는 v2 source evidence와 leak scan에 포함된다.
+동일 action/result의 재기록은 canonical result JSON까지 같아야 하며, 같은 input hash라도
+다른 result를 허용하지 않는다.
+
 동일 `action_id + input_hash`가 성공했다면 기존 result를 반환한다. 같은 action ID에 다른
 input hash가 오면 stale/conflicting action으로 거부하고 patch를 적용하지 않는다.
+
+v2 non-mutating tool은 normalized input CAS를 `ToolCalled`에 보존한다. Durable outcome 없이
+중단된 `read_file`, `search_files`, `run_check`, `get_diff`는 workspace가 마지막 checkpoint와
+같을 때만 같은 action identity로 재실행하고 원래 call을 `ToolSucceeded`/`ToolFailed`로
+닫는다. 이미 durable result가 있는 v2 action을 다시 호출한 idempotency cache hit만
+`ToolReplayed`를 남긴다. v1은 기존 event 순서와 source hash 호환성을 위해 cached outcome을
+legacy `ToolSucceeded`/`ToolFailed`로 다시 나타낸다.
 
 Patch format/context/policy rejection artifact는 `error_details.stage`,
 `error_details.reason`, retry guidance와 파악 가능한 경우 corrupt line을 포함한다. Gateway가
@@ -690,8 +727,12 @@ AND current phase is REVIEW
 남긴 뒤 그 CAS artifact만 evaluator에 전달한다. 현재 offline fault test에서는 각
 lifecycle boundary의 injected suspension 뒤 같은 runner가 resume할 때 `action_id`별
 durable prefix를 검증하고 누락 suffix만 보충하며 중복 event나 transition을 만들지 않는다.
-실제 OS worker 종료와 새 process의 resume ownership은 아직 구현되지 않았다. 실패 시 `SubmissionAttempted →
-SubmissionRejected`와 rejected tool result를 남기고 phase를 유지한다. 세 번째 거부만
+별도 subprocess E2E는 single-file smoke patch의 유일한 atomic postimage replacement 뒤,
+outcome persistence 전에 실제 worker를 종료한다. 새 interpreter가 stale `RUNNING`을
+reclaim해 같은 run ID로 evaluator까지 완료하며 duplicate `ToolCalled`/`PatchApplied`가
+없음을 검증한다. Multi-file mixed/partial reconciliation은 별도 unit test evidence다. 실패 시
+`SubmissionAttempted → SubmissionRejected`와
+rejected tool result를 남기고 phase를 유지한다. 세 번째 거부만
 `SubmissionProtocolError` terminal failure가 된다. Legacy v1 replay의 text `DONE`은
 과거 artifact 재현을 위해 별도 호환 경로로만 읽는다.
 
@@ -709,12 +750,20 @@ context builder가 이 결과를 다시 제공한다. Private evaluator는 agent
   "run_id": "run_0041",
   "check_type": "hidden_acceptance",
   "check_id": "hidden_multiline_csv_tests",
-  "passed": true,
+  "state": "pass",
   "duration_ms": 412,
   "evidence_artifact_ids": ["art_0200"],
   "details": {
     "tests_passed": 4,
-    "tests_failed": 0
+    "tests_failed": 0,
+    "evidence_artifacts": [{
+      "artifact_id": "art_0200",
+      "content_hash": "sha256:...",
+      "media_type": "text/plain",
+      "size_bytes": 120,
+      "path": "objects/sha256/...",
+      "created_at": "2026-07-29T00:00:00Z"
+    }]
   }
 }
 ```
@@ -726,11 +775,12 @@ context builder가 이 결과를 다시 제공한다. Private evaluator는 agent
   "agent_submission_status": "completed",
   "evaluation_status": "completed",
   "scope_compliant_success": true,
+  "official": true,
   "verdicts": {
-    "hidden_tests_passed": true,
-    "regression_tests_passed": true,
-    "scope_policy_passed": true,
-    "safety_policy_passed": true
+    "hidden_tests": "pass",
+    "regression_tests": "pass",
+    "scope_policy": "pass",
+    "safety_policy": "pass"
   },
   "usage": {
     "input_tokens": 0,
@@ -747,6 +797,15 @@ context builder가 이 결과를 다시 제공한다. Private evaluator는 agent
   "submitted_patch_artifact_id": "art_0180"
 }
 ```
+
+새 evaluator bundle의 각 executed verifier는 opaque ID뿐 아니라
+`details.evidence_artifacts`에 full Artifact descriptor를 남긴다. Provenance는
+`verifier-evidence-v1`과 같은 descriptor 목록을 보존한다. Runner는
+`evaluation-receipt-v1`의 manifest/result/provenance hash, run/diff/result-artifact
+identity, duration과 모든 verifier CAS bytes를 검증한 경우에만 완료된 evaluation을
+재사용한다. v2 accepted submission이 있으면 그 submitted-patch descriptor와 bytes도
+동일해야 한다. Terminal result/status/event와 optional `FailureTagged`는 한 SQLite
+transaction으로 확정한다.
 
 Skipped, infrastructure error, policy rejection을 `false`와 혼합하지 않는다. 각 verdict는 내부적으로 `pass | fail | error | not_run` 상태를 보존하고, SCRR 성공은 네 항목이 모두 `pass`일 때만 true다.
 
@@ -862,7 +921,10 @@ Qualification은 자기 JSON의 `qualification_hash` 외에 `source_evidence_has
 hash는 approved execution plan bytes, manifest, ordered events, checkpoints, state result,
 persisted result artifact hash와 agent-visible CAS artifact identity/content hash를 하나의
 canonical snapshot으로 결속한다. v2 source snapshot은 `SubmissionAccepted`에 nested된
-submitted-patch CAS object의 실제 bytes와 size도 다시 읽어 결속한다. Qualification file을 다시 읽는 것만으로 source가 그대로라고
+submitted-patch CAS object의 실제 bytes와 size도 다시 읽어 결속한다. Modern evaluator
+receipt가 있는 fresh v1/v2 run은 receipt, manifest/result/provenance 실제 hash와 verifier
+evidence CAS도 다시 읽어 결속한다. Receipt가 없는 historical v1 artifact는 기존 source
+hash 경로를 유지한다. Qualification file을 다시 읽는 것만으로 source가 그대로라고
 간주하지 않는다.
 
 Development campaign preflight도 pilot qualification을 소비할 때 현재

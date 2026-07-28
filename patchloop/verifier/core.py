@@ -87,6 +87,9 @@ class EvaluationEngine:
                         "timed_out": outcome.timed_out,
                         "truncated": outcome.truncated,
                         "artifact_path": artifact.path,
+                        "evidence_artifacts": [
+                            artifact.model_dump(mode="json")
+                        ],
                     },
                 )
             )
@@ -122,7 +125,7 @@ class EvaluationEngine:
                 "evaluator patch input does not match the accepted artifact"
             )
         workspace = self.workspace_manager.create(
-            f"{manifest.run_id}_evaluator",
+            f"eval_{uuid.uuid4().hex}",
             package.public.repository.url,
             package.public.repository.base_commit,
         )
@@ -201,18 +204,35 @@ class EvaluationEngine:
         )
         run_dir = Path(self.artifact_store.root) / "runs" / manifest.run_id
         run_dir.mkdir(parents=True, exist_ok=True)
-        (run_dir / "manifest.json").write_text(manifest.model_dump_json(indent=2), encoding="utf-8")
-        (run_dir / "result.json").write_text(result.model_dump_json(indent=2), encoding="utf-8")
-        (run_dir / "provenance.json").write_text(
+        self.artifact_store.write_text_atomic(
+            run_dir / "manifest.json",
+            manifest.model_dump_json(indent=2),
+        )
+        self.artifact_store.write_text_atomic(
+            run_dir / "result.json",
+            result.model_dump_json(indent=2),
+        )
+        self.artifact_store.write_text_atomic(
+            run_dir / "provenance.json",
             json.dumps(
                 {
                     "patch_hash": patch_hash,
                     "diff_hash": summary.patch_hash,
                     "submitted_patch_artifact_id": patch_artifact.artifact_id,
                     "submitted_patch_content_hash": patch_artifact.content_hash,
+                    "verifier_evidence_schema_version": (
+                        "verifier-evidence-v1"
+                    ),
+                    "verifier_evidence_artifacts": [
+                        raw_artifact
+                        for verifier_result in results
+                        for raw_artifact in verifier_result.details.get(
+                            "evidence_artifacts",
+                            [],
+                        )
+                    ],
                 },
                 indent=2,
             ),
-            encoding="utf-8",
         )
         return result

@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import copy
+import json
+import os
 import re
+import stat
 import subprocess
-from pathlib import Path
+import tempfile
+import uuid
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import EventType, PublicTask, ToolResult
+from patchloop.contracts import Artifact, Checkpoint, EventType, PublicTask, ToolResult
 from patchloop.errors import ContractError, PolicyViolation, RecoveryError
 from patchloop.repository import WorkspaceManager
 from patchloop.sandbox.runner import Sandbox
@@ -138,6 +143,8 @@ TOOL_SCHEMAS = TOOL_SCHEMAS_V2
 _EVENT_ERROR_MESSAGE_LIMIT = 2_000
 _UNSUPPORTED_PATCH_METADATA = (
     "new file mode ",
+    "old mode ",
+    "new mode ",
     "rename from ",
     "rename to ",
     "copy from ",
@@ -206,7 +213,8 @@ def _validate_raw_git_patch(patch: str) -> None:
         ):
             raise _patch_contract_error(
                 "apply_patch only supports in-place tracked text changes; "
-                "new files, renames, and copies are forbidden",
+                "new files, mode/symlink changes, renames, and copies "
+                "are forbidden",
                 reason="unsupported_metadata",
             )
         old_header = next(
@@ -247,6 +255,29 @@ def _validate_raw_git_patch(patch: str) -> None:
             )
 
 
+def _patch_paths(patch: str) -> list[str]:
+    paths: list[str] = []
+    sections: list[list[str]] = []
+    for line in patch.splitlines():
+        if line.startswith("diff --git "):
+            sections.append([line])
+        elif sections:
+            sections[-1].append(line)
+    for section in sections:
+        old_header = next(line for line in section if line.startswith("--- "))
+        path = safe_relative_path(
+            _header_path(old_header),
+            field_name="patch path",
+        )
+        if path in paths:
+            raise _patch_contract_error(
+                f"patch contains duplicate file section: {path}",
+                reason="duplicate_file_section",
+            )
+        paths.append(path)
+    return paths
+
+
 class ToolGateway:
     def __init__(
         self,
@@ -257,6 +288,7 @@ class ToolGateway:
         state: StateStore,
         artifacts: ArtifactStore,
         sandbox: Sandbox,
+        tool_schema_version: str = "v2",
     ) -> None:
         self.run_id = run_id
         self.workspace = workspace
@@ -264,6 +296,7 @@ class ToolGateway:
         self.state = state
         self.artifacts = artifacts
         self.sandbox = sandbox
+        self.tool_schema_version = tool_schema_version
 
     def execute(self, name: str, action_id: str, arguments: dict[str, Any]) -> ToolResult:
         input_hash = sha256_text(canonical_json({"tool": name, "input": arguments}))
@@ -271,7 +304,15 @@ class ToolGateway:
         if prior is not None:
             self.state.append_event(
                 self.run_id,
-                EventType.TOOL_SUCCEEDED if prior.status == "succeeded" else EventType.TOOL_FAILED,
+                (
+                    EventType.TOOL_REPLAYED
+                    if self.tool_schema_version == "v2"
+                    else (
+                        EventType.TOOL_SUCCEEDED
+                        if prior.status == "succeeded"
+                        else EventType.TOOL_FAILED
+                    )
+                ),
                 actor="idempotency-store",
                 correlation_id=action_id,
                 payload={
@@ -324,19 +365,62 @@ class ToolGateway:
                 },
             )
         started = utc_now()
+        patch_artifact: Artifact | None = None
+        input_artifact: Artifact | None = None
+        if self.tool_schema_version == "v2" and name != "apply_patch":
+            input_artifact = self.artifacts.put_json(
+                {"tool": name, "input": arguments}
+            )
+        if (
+            self.tool_schema_version == "v2"
+            and name == "apply_patch"
+            and isinstance(arguments.get("patch"), str)
+        ):
+            patch_artifact = self.artifacts.put_text(
+                str(arguments["patch"]),
+                media_type="text/x-diff",
+            )
+        call_payload: dict[str, Any] = {
+            "tool": name,
+            "input_hash": input_hash,
+            "normalized_call_hash": normalized_call_hash,
+        }
+        if input_artifact is not None:
+            call_payload["input_artifact"] = input_artifact.model_dump(
+                mode="json"
+            )
+        if patch_artifact is not None:
+            call_payload["patch_artifact"] = patch_artifact.model_dump(mode="json")
+            call_payload["artifact_id"] = patch_artifact.artifact_id
+            call_payload["artifact_path"] = patch_artifact.path
+        elif input_artifact is not None:
+            call_payload["artifact_id"] = input_artifact.artifact_id
+            call_payload["artifact_path"] = input_artifact.path
         self.state.append_event(
             self.run_id,
             EventType.TOOL_CALLED,
             actor="agent",
             correlation_id=action_id,
-            payload={
-                "tool": name,
-                "input_hash": input_hash,
-                "normalized_call_hash": normalized_call_hash,
-            },
+            payload=call_payload,
         )
         try:
-            output = self._dispatch(name, arguments)
+            if (
+                self.tool_schema_version == "v2"
+                and name == "apply_patch"
+                and patch_artifact is not None
+            ):
+                intent = self._prepare_patch_mutation(
+                    action_id,
+                    input_hash,
+                    str(arguments["patch"]),
+                    patch_artifact,
+                )
+                output = self._apply_patch(
+                    str(arguments["patch"]),
+                    intent=intent,
+                )
+            else:
+                output = self._dispatch(name, arguments)
             artifact = self.artifacts.put_json(output)
             result = ToolResult(
                 action_id=action_id,
@@ -349,95 +433,688 @@ class ToolGateway:
                     **output,
                 },
             )
-            event_type = EventType.TOOL_SUCCEEDED
         except (ContractError, PolicyViolation, TypeError, ValueError) as exc:
-            error_payload = {
-                "tool": name,
-                "status": "rejected",
-                "error_code": getattr(exc, "code", "INVALID_TOOL_INPUT"),
-                "error_message": str(exc),
-                "error_details": getattr(exc, "details", {}),
-            }
-            artifact = self.artifacts.put_json(error_payload)
-            result = ToolResult(
-                action_id=action_id,
-                status="rejected",
-                started_at=started,
-                finished_at=utc_now(),
-                output={
-                    "artifact_id": artifact.artifact_id,
-                    "artifact_path": artifact.path,
-                    "error_details": getattr(exc, "details", {}),
-                },
-                error_code=getattr(exc, "code", "INVALID_TOOL_INPUT"),
-                error_message=str(exc),
+            result = self._error_result(
+                name,
+                action_id,
+                started,
+                exc,
+                fatal=False,
             )
-            event_type = EventType.TOOL_FAILED
         except RecoveryError as exc:
-            error_payload = {
-                "tool": name,
-                "status": "failed",
-                "error_code": exc.code,
-                "error_message": str(exc),
-                "error_details": {
-                    **exc.details,
-                    "fatal": True,
-                },
+            result = self._error_result(
+                name,
+                action_id,
+                started,
+                exc,
+                fatal=True,
+            )
+        self._complete_result(name, input_hash, result)
+        return result
+
+    def _error_result(
+        self,
+        name: str,
+        action_id: str,
+        started,
+        error: Exception,
+        *,
+        fatal: bool,
+    ) -> ToolResult:
+        details = dict(getattr(error, "details", {}))
+        if fatal:
+            details["fatal"] = True
+        status = "failed" if fatal else "rejected"
+        error_payload = {
+            "tool": name,
+            "status": status,
+            "error_code": getattr(error, "code", "INVALID_TOOL_INPUT"),
+            "error_message": str(error),
+            "error_details": details,
+        }
+        artifact = self.artifacts.put_json(error_payload)
+        output: dict[str, Any] = {
+            "artifact_id": artifact.artifact_id,
+            "artifact_path": artifact.path,
+            "error_details": details,
+        }
+        if fatal:
+            output["fatal"] = True
+        return ToolResult(
+            action_id=action_id,
+            status=status,
+            started_at=started,
+            finished_at=utc_now(),
+            output=output,
+            error_code=getattr(error, "code", "INVALID_TOOL_INPUT"),
+            error_message=str(error),
+        )
+
+    @staticmethod
+    def _result_event_payload(name: str, result: ToolResult) -> dict[str, Any]:
+        return {
+            "tool": name,
+            "status": result.status,
+            "artifact_id": result.output.get("artifact_id"),
+            "artifact_path": result.output.get("artifact_path"),
+            "error_code": result.error_code,
+            "error_message": (
+                result.error_message[:_EVENT_ERROR_MESSAGE_LIMIT]
+                if result.error_message
+                else None
+            ),
+            "check_id": result.output.get("check_id"),
+            "passed": result.output.get("passed"),
+            "timed_out": result.output.get("timed_out"),
+            "worktree_diff_hash": result.output.get("worktree_diff_hash"),
+            "patch_hash": result.output.get("patch_hash"),
+            "error_details": result.output.get("error_details"),
+            "duration_ms": int(
+                (result.finished_at - result.started_at).total_seconds() * 1000
+            ),
+        }
+
+    def _complete_result(
+        self,
+        name: str,
+        input_hash: str,
+        result: ToolResult,
+    ) -> None:
+        patch_payload = None
+        if name == "apply_patch" and result.status == "succeeded":
+            patch_payload = {
+                "patch_hash": result.output["patch_hash"],
+                "worktree_diff_hash": result.output["worktree_diff_hash"],
             }
-            artifact = self.artifacts.put_json(error_payload)
+        self.state.complete_action(
+            self.run_id,
+            result.action_id,
+            input_hash,
+            result,
+            outcome_type=(
+                EventType.TOOL_SUCCEEDED
+                if result.status == "succeeded"
+                else EventType.TOOL_FAILED
+            ),
+            outcome_payload=self._result_event_payload(name, result),
+            patch_payload=patch_payload,
+        )
+
+    def reconcile_interrupted_patch(
+        self,
+        checkpoint: Checkpoint,
+    ) -> ToolResult | None:
+        """Complete one v2 patch action that crossed a hard process boundary."""
+
+        if self.tool_schema_version != "v2":
+            return None
+        events = self.state.list_events(self.run_id)
+        calls = [
+            event
+            for event in events
+            if event.sequence > checkpoint.through_sequence
+            and event.type == EventType.TOOL_CALLED
+            and event.payload.get("tool") == "apply_patch"
+        ]
+        if not calls:
+            return None
+        if len(calls) != 1:
+            raise RecoveryError(
+                "recovery found multiple patch calls after the latest checkpoint"
+            )
+        call = calls[0]
+        if call.correlation_id is None:
+            raise RecoveryError("interrupted patch call lacks an action identity")
+        action_id = call.correlation_id
+        input_hash = call.payload.get("input_hash")
+        if not isinstance(input_hash, str):
+            raise RecoveryError("interrupted patch call lacks its input hash")
+        prior = self.state.get_action_result(
+            self.run_id,
+            action_id,
+            input_hash,
+        )
+        prepared_events = [
+            event
+            for event in events
+            if event.sequence > call.sequence
+            and event.type == EventType.PATCH_PREPARED
+            and event.correlation_id == action_id
+        ]
+        if len(prepared_events) > 1:
+            raise RecoveryError("interrupted patch has duplicate prepared intents")
+
+        current = WorkspaceManager.diff_summary(self.workspace)
+        if WorkspaceManager.untracked_files(self.workspace):
+            raise RecoveryError(
+                "agent workspace contains untracked files during patch recovery"
+            )
+        if prior is not None:
+            if prior.status == "succeeded":
+                if not prepared_events:
+                    raise RecoveryError(
+                        "successful interrupted patch lacks a prepared intent"
+                    )
+                intent, patch = self._load_patch_intent(
+                    call,
+                    prepared_events[0],
+                )
+                state = self._classify_patch_state(intent)
+                if state != "post":
+                    raise RecoveryError(
+                        "successful interrupted patch is not in its prepared post-state"
+                    )
+                if (
+                    current.patch_hash
+                    != prior.output.get("worktree_diff_hash")
+                    or sha256_text(patch) != prior.output.get("patch_hash")
+                ):
+                    raise RecoveryError(
+                        "successful interrupted patch conflicts with its durable result"
+                    )
+            elif current.patch_hash != checkpoint.worktree_diff_hash:
+                raise RecoveryError(
+                    "failed interrupted patch did not restore its checkpoint state"
+                )
+            self._complete_result("apply_patch", input_hash, prior)
+            return prior
+
+        started = call.timestamp
+        try:
+            patch = self._load_call_patch(call)
+            if prepared_events:
+                intent, prepared_patch = self._load_patch_intent(
+                    call,
+                    prepared_events[0],
+                )
+                if prepared_patch != patch:
+                    raise RecoveryError(
+                        "prepared patch bytes conflict with ToolCalled evidence"
+                    )
+            else:
+                if current.patch_hash != checkpoint.worktree_diff_hash:
+                    raise RecoveryError(
+                        "workspace changed before a durable patch intent was recorded"
+                    )
+                patch_artifact = Artifact.model_validate(
+                    call.payload.get("patch_artifact")
+                )
+                intent = self._prepare_patch_mutation(
+                    action_id,
+                    input_hash,
+                    patch,
+                    patch_artifact,
+                )
+            if (
+                intent.get("baseline_worktree_diff_hash")
+                != checkpoint.worktree_diff_hash
+            ):
+                raise RecoveryError(
+                    "prepared patch baseline does not match the durable checkpoint"
+                )
+            state = self._classify_patch_state(intent)
+            if state == "mixed":
+                hypothetical = self._hypothetical_preimage_diff_hash(
+                    intent
+                )
+                if (
+                    hypothetical
+                    != intent["baseline_worktree_diff_hash"]
+                ):
+                    raise RecoveryError(
+                        "mixed patch state includes changes outside "
+                        "the prepared mutation"
+                    )
+                self._restore_patch_preimages(intent)
+                state = "pre"
+            if state == "pre":
+                output = self._apply_patch(patch, intent=intent)
+            elif state == "post":
+                output = self._finalize_applied_patch(
+                    patch,
+                    str(intent["baseline_worktree_diff_hash"]),
+                    expected_diff_hash=str(
+                        intent["expected_worktree_diff_hash"]
+                    ),
+                    intent=intent,
+                )
+            else:
+                raise RecoveryError(
+                    f"unsupported interrupted patch state: {state}"
+                )
+            artifact = self.artifacts.put_json(output)
             result = ToolResult(
                 action_id=action_id,
-                status="failed",
+                status="succeeded",
                 started_at=started,
                 finished_at=utc_now(),
                 output={
                     "artifact_id": artifact.artifact_id,
                     "artifact_path": artifact.path,
-                    "error_details": error_payload["error_details"],
-                    "fatal": True,
-                },
-                error_code=exc.code,
-                error_message=str(exc),
-            )
-            event_type = EventType.TOOL_FAILED
-        self.state.record_action_result(self.run_id, action_id, input_hash, result)
-        self.state.append_event(
-            self.run_id,
-            event_type,
-            actor="tool-gateway",
-            correlation_id=action_id,
-            payload={
-                "tool": name,
-                "status": result.status,
-                "artifact_id": result.output.get("artifact_id"),
-                "artifact_path": result.output.get("artifact_path"),
-                "error_code": result.error_code,
-                "error_message": (
-                    result.error_message[:_EVENT_ERROR_MESSAGE_LIMIT]
-                    if result.error_message
-                    else None
-                ),
-                "check_id": result.output.get("check_id"),
-                "passed": result.output.get("passed"),
-                "timed_out": result.output.get("timed_out"),
-                "worktree_diff_hash": result.output.get("worktree_diff_hash"),
-                "patch_hash": result.output.get("patch_hash"),
-                "error_details": result.output.get("error_details"),
-                "duration_ms": int((result.finished_at - result.started_at).total_seconds() * 1000),
-            },
-        )
-        if name == "apply_patch" and result.status == "succeeded":
-            self.state.append_event(
-                self.run_id,
-                EventType.PATCH_APPLIED,
-                actor="tool-gateway",
-                correlation_id=action_id,
-                payload={
-                    "patch_hash": output["patch_hash"],
-                    "worktree_diff_hash": output["worktree_diff_hash"],
+                    **output,
                 },
             )
+        except (ContractError, PolicyViolation, TypeError, ValueError) as exc:
+            result = self._error_result(
+                "apply_patch",
+                action_id,
+                started,
+                exc,
+                fatal=False,
+            )
+        except RecoveryError as exc:
+            result = self._error_result(
+                "apply_patch",
+                action_id,
+                started,
+                exc,
+                fatal=True,
+            )
+        self._complete_result("apply_patch", input_hash, result)
         return result
+
+    def reconcile_interrupted_action(
+        self,
+        checkpoint: Checkpoint,
+    ) -> tuple[str, ToolResult] | None:
+        """Complete one non-mutating v2 action without another ToolCalled."""
+
+        if self.tool_schema_version != "v2":
+            return None
+        events = self.state.list_events(self.run_id)
+        calls = [
+            event
+            for event in events
+            if event.sequence > checkpoint.through_sequence
+            and event.type == EventType.TOOL_CALLED
+            and event.payload.get("tool")
+            not in {"apply_patch", "finish_task"}
+        ]
+        if not calls:
+            return None
+        if len(calls) != 1:
+            raise RecoveryError(
+                "recovery found multiple non-patch calls after "
+                "the latest checkpoint"
+            )
+        call = calls[0]
+        if call.correlation_id is None:
+            raise RecoveryError(
+                "interrupted tool call lacks an action identity"
+            )
+        name, arguments, input_hash = self._load_call_input(call)
+        outcomes = [
+            event
+            for event in events
+            if event.sequence > call.sequence
+            and event.correlation_id == call.correlation_id
+            and event.type
+            in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+        ]
+        if len(outcomes) > 1:
+            raise RecoveryError(
+                "interrupted tool call has duplicate durable outcomes"
+            )
+        prior = self.state.get_action_result(
+            self.run_id,
+            call.correlation_id,
+            input_hash,
+        )
+        if outcomes and prior is None:
+            raise RecoveryError(
+                "tool outcome exists without its atomic action result"
+            )
+        if prior is not None:
+            self._complete_result(name, input_hash, prior)
+            return name, prior
+
+        started = call.timestamp
+        try:
+            output = self._dispatch(name, arguments)
+            artifact = self.artifacts.put_json(output)
+            result = ToolResult(
+                action_id=call.correlation_id,
+                status="succeeded",
+                started_at=started,
+                finished_at=utc_now(),
+                output={
+                    "artifact_id": artifact.artifact_id,
+                    "artifact_path": artifact.path,
+                    **output,
+                },
+            )
+        except (ContractError, PolicyViolation, TypeError, ValueError) as exc:
+            result = self._error_result(
+                name,
+                call.correlation_id,
+                started,
+                exc,
+                fatal=False,
+            )
+        except RecoveryError as exc:
+            result = self._error_result(
+                name,
+                call.correlation_id,
+                started,
+                exc,
+                fatal=True,
+            )
+        self._complete_result(name, input_hash, result)
+        return name, result
+
+    def _load_call_input(self, call) -> tuple[str, dict[str, Any], str]:
+        try:
+            artifact = Artifact.model_validate(
+                call.payload["input_artifact"]
+            )
+            raw = self.artifacts.read_bytes(artifact)
+            value = json.loads(raw.decode("utf-8", errors="strict"))
+            name = value["tool"]
+            arguments = value["input"]
+        except (
+            KeyError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise RecoveryError(
+                "interrupted tool call lacks valid input evidence"
+            ) from exc
+        if (
+            not isinstance(name, str)
+            or name != call.payload.get("tool")
+            or name in {"apply_patch", "finish_task"}
+            or not isinstance(arguments, dict)
+            or call.payload.get("artifact_id") != artifact.artifact_id
+            or call.payload.get("artifact_path") != artifact.path
+        ):
+            raise RecoveryError(
+                "interrupted tool input conflicts with ToolCalled evidence"
+            )
+        input_hash = sha256_text(
+            canonical_json({"tool": name, "input": arguments})
+        )
+        if input_hash != call.payload.get("input_hash"):
+            raise RecoveryError(
+                "interrupted tool input does not match its call hash"
+            )
+        return name, arguments, input_hash
+
+    def _load_call_patch(self, call) -> str:
+        try:
+            artifact = Artifact.model_validate(
+                call.payload["patch_artifact"]
+            )
+            content = self.artifacts.read_bytes(artifact)
+            patch = content.decode("utf-8", errors="strict")
+        except (KeyError, TypeError, ValueError, UnicodeDecodeError) as exc:
+            raise RecoveryError(
+                "interrupted patch lacks valid raw input evidence"
+            ) from exc
+        expected_input_hash = sha256_text(
+            canonical_json({"tool": "apply_patch", "input": {"patch": patch}})
+        )
+        if expected_input_hash != call.payload.get("input_hash"):
+            raise RecoveryError(
+                "interrupted patch input does not match its ToolCalled hash"
+            )
+        return patch
+
+    def _load_patch_intent(
+        self,
+        call,
+        prepared_event,
+    ) -> tuple[dict[str, Any], str]:
+        try:
+            artifact = Artifact.model_validate(
+                prepared_event.payload["intent_artifact"]
+            )
+            raw = self.artifacts.read_bytes(artifact)
+            intent = json.loads(raw.decode("utf-8", errors="strict"))
+        except (
+            KeyError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise RecoveryError(
+                "prepared patch intent artifact is invalid"
+            ) from exc
+        if not isinstance(intent, dict):
+            raise RecoveryError("prepared patch intent must be a JSON object")
+        if (
+            intent.get("schema_version") != "patch-mutation-intent-v1"
+            or intent.get("run_id") != self.run_id
+            or intent.get("action_id") != call.correlation_id
+            or intent.get("input_hash") != call.payload.get("input_hash")
+            or prepared_event.payload.get("content_hash")
+            != artifact.content_hash
+            or prepared_event.payload.get("baseline_worktree_diff_hash")
+            != intent.get("baseline_worktree_diff_hash")
+            or prepared_event.payload.get("expected_worktree_diff_hash")
+            != intent.get("expected_worktree_diff_hash")
+        ):
+            raise RecoveryError(
+                "prepared patch intent conflicts with its event identity"
+            )
+        patch = self._load_call_patch(call)
+        try:
+            intent_patch_artifact = Artifact.model_validate(
+                intent["patch_artifact"]
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            raise RecoveryError(
+                "prepared patch intent lacks its raw patch artifact"
+            ) from exc
+        if (
+            intent_patch_artifact.model_dump(mode="json")
+            != call.payload.get("patch_artifact")
+            or self.artifacts.read_bytes(intent_patch_artifact)
+            != patch.encode("utf-8")
+        ):
+            raise RecoveryError(
+                "prepared patch artifact conflicts with ToolCalled evidence"
+            )
+        files = intent.get("files")
+        if not isinstance(files, list) or not files:
+            raise RecoveryError("prepared patch intent has no file images")
+        paths: list[str] = []
+        try:
+            for entry in files:
+                if (
+                    not isinstance(entry, dict)
+                    or set(entry)
+                    != {
+                        "path",
+                        "mode",
+                        "git_mode",
+                        "preimage_artifact",
+                        "postimage_artifact",
+                    }
+                    or type(entry["mode"]) is not int
+                    or not 0 <= entry["mode"] <= 0o7777
+                    or entry["git_mode"] not in {"100644", "100755"}
+                ):
+                    raise ValueError("invalid file image entry")
+                path = safe_relative_path(
+                    str(entry["path"]),
+                    field_name="prepared patch path",
+                )
+                preimage_artifact = Artifact.model_validate(
+                    entry["preimage_artifact"]
+                )
+                self.artifacts.read_bytes(preimage_artifact)
+                postimage_raw = entry["postimage_artifact"]
+                if postimage_raw is not None:
+                    postimage_artifact = Artifact.model_validate(
+                        postimage_raw
+                    )
+                    self.artifacts.read_bytes(postimage_artifact)
+                paths.append(path)
+        except (ContractError, KeyError, TypeError, ValueError) as exc:
+            raise RecoveryError(
+                "prepared patch contains invalid file image evidence"
+            ) from exc
+        try:
+            patch_paths = _patch_paths(patch)
+        except ContractError as exc:
+            raise RecoveryError(
+                "prepared patch raw input no longer satisfies its contract"
+            ) from exc
+        if paths != patch_paths:
+            raise RecoveryError(
+                "prepared patch file images do not match the raw patch"
+            )
+        return intent, patch
+
+    def _classify_patch_state(self, intent: dict[str, Any]) -> str:
+        states: list[str] = []
+        for entry in intent["files"]:
+            try:
+                path = safe_relative_path(
+                    str(entry["path"]),
+                    field_name="prepared patch path",
+                )
+                pre_artifact = Artifact.model_validate(
+                    entry["preimage_artifact"]
+                )
+                post_raw = entry.get("postimage_artifact")
+                post_artifact = (
+                    Artifact.model_validate(post_raw)
+                    if post_raw is not None
+                    else None
+                )
+                preimage = self.artifacts.read_bytes(pre_artifact)
+                postimage = (
+                    self.artifacts.read_bytes(post_artifact)
+                    if post_artifact is not None
+                    else None
+                )
+                mode = int(entry["mode"])
+            except (ContractError, KeyError, TypeError, ValueError) as exc:
+                raise RecoveryError(
+                    "prepared patch contains invalid file image evidence"
+                ) from exc
+            target = self._prepared_workspace_target(path, recovery=True)
+            if target.exists():
+                target_stat = target.lstat()
+                if not stat.S_ISREG(target_stat.st_mode):
+                    raise RecoveryError(
+                        f"prepared patch target is no longer a regular file: {path}"
+                    )
+                if stat.S_IMODE(target_stat.st_mode) != mode:
+                    raise RecoveryError(
+                        f"prepared patch target mode changed: {path}"
+                    )
+                current = target.read_bytes()
+                if current == preimage:
+                    states.append("pre")
+                elif postimage is not None and current == postimage:
+                    states.append("post")
+                else:
+                    raise RecoveryError(
+                        f"prepared patch target is in an unknown state: {path}"
+                    )
+            elif postimage is None:
+                states.append("post")
+            else:
+                raise RecoveryError(
+                    f"prepared patch target is unexpectedly missing: {path}"
+                )
+
+        summary = WorkspaceManager.diff_summary(self.workspace)
+        state_set = set(states)
+        if state_set == {"pre"}:
+            if summary.patch_hash != intent["baseline_worktree_diff_hash"]:
+                raise RecoveryError(
+                    "pre-state files do not match the prepared baseline diff"
+                )
+            return "pre"
+        if state_set == {"post"}:
+            if summary.patch_hash != intent["expected_worktree_diff_hash"]:
+                raise RecoveryError(
+                    "post-state files do not match the prepared expected diff"
+                )
+            return "post"
+        if state_set == {"pre", "post"}:
+            return "mixed"
+        raise RecoveryError("prepared patch has an invalid file-state classification")
+
+    def _restore_patch_preimages(self, intent: dict[str, Any]) -> None:
+        recovery_root = self.artifacts.root / "recovery-tmp" / self.run_id
+        recovery_root.mkdir(parents=True, exist_ok=True)
+        for entry in intent["files"]:
+            path = safe_relative_path(
+                str(entry["path"]),
+                field_name="prepared patch path",
+            )
+            artifact = Artifact.model_validate(entry["preimage_artifact"])
+            preimage = self.artifacts.read_bytes(artifact)
+            target = self._prepared_workspace_target(path, recovery=True)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temporary = recovery_root / f"{uuid.uuid4().hex}.tmp"
+            try:
+                with temporary.open("xb") as stream:
+                    stream.write(preimage)
+                    stream.flush()
+                    os.fsync(stream.fileno())
+                os.chmod(temporary, int(entry["mode"]))
+                os.replace(temporary, target)
+            finally:
+                temporary.unlink(missing_ok=True)
+        restored = WorkspaceManager.diff_summary(self.workspace)
+        if (
+            restored.patch_hash != intent["baseline_worktree_diff_hash"]
+            or WorkspaceManager.untracked_files(self.workspace)
+        ):
+            raise RecoveryError(
+                "prepared patch preimages did not restore the durable baseline"
+            )
+
+    def _prepared_workspace_target(
+        self,
+        path: str,
+        *,
+        recovery: bool,
+    ) -> Path:
+        safe = safe_relative_path(path, field_name="prepared patch path")
+        root = self.workspace.resolve()
+        parts = PurePosixPath(safe).parts
+        target = root.joinpath(*parts)
+        cursor = root
+        for part in parts:
+            cursor = cursor / part
+            is_junction = bool(
+                getattr(cursor, "is_junction", lambda: False)()
+            )
+            if cursor.is_symlink() or is_junction:
+                message = (
+                    "prepared patch path contains a symlink or junction: "
+                    f"{safe}"
+                )
+                if recovery:
+                    raise RecoveryError(message)
+                raise _patch_contract_error(
+                    message,
+                    reason="unsupported_target",
+                    stage="policy",
+                )
+        resolved_target = target.resolve(strict=False)
+        if (
+            os.path.commonpath([str(root), str(resolved_target)])
+            != str(root)
+        ):
+            message = f"prepared patch path escapes workspace: {safe}"
+            if recovery:
+                raise RecoveryError(message)
+            raise _patch_contract_error(
+                message,
+                reason="unsupported_target",
+                stage="policy",
+            )
+        return target
 
     def _normalized_call_hash(
         self,
@@ -514,7 +1191,13 @@ class ToolGateway:
                         return {"query": query, "matches": matches, "truncated": True}
         return {"query": query, "matches": matches, "truncated": False}
 
-    def _apply_patch(self, patch: str) -> dict[str, Any]:
+    def _prepare_patch_mutation(
+        self,
+        action_id: str,
+        input_hash: str,
+        patch: str,
+        patch_artifact: Artifact,
+    ) -> dict[str, Any]:
         if len(patch.encode("utf-8")) > 500_000:
             raise PolicyViolation(
                 "patch exceeds the tool input limit",
@@ -531,24 +1214,488 @@ class ToolGateway:
             raise RecoveryError(
                 "agent workspace contains untracked files before patch application"
             )
-        completed = subprocess.run(
-            ["git", "apply", "--recount", "--whitespace=nowarn", "-"],
-            cwd=self.workspace,
-            input=patch.encode("utf-8"),
-            capture_output=True,
-            check=False,
+        paths = _patch_paths(patch)
+        expected_diff_hash = self._preview_expected_diff_hash(
+            patch,
+            baseline.patch_hash,
         )
-        if completed.returncode != 0:
-            error = completed.stderr.decode("utf-8", errors="replace").strip()
-            line_match = re.search(r"(?:corrupt patch at line|patch at line) (\d+)", error)
-            raise _patch_contract_error(
-                f"patch application failed: {error}",
-                reason="git_apply_failed",
-                stage="syntax" if line_match else "context",
-                line=int(line_match.group(1)) if line_match else None,
+        if expected_diff_hash == baseline.patch_hash:
+            raise PolicyViolation(
+                "patch does not change the tracked worktree",
+                details={
+                    "stage": "policy",
+                    "reason": "no_effect",
+                    "guidance": "Submit a patch that changes the implicated tracked code.",
+                },
             )
+        files = self._prepare_file_images(patch, paths)
+        intent = {
+            "schema_version": "patch-mutation-intent-v1",
+            "run_id": self.run_id,
+            "action_id": action_id,
+            "input_hash": input_hash,
+            "patch_artifact": patch_artifact.model_dump(mode="json"),
+            "baseline_worktree_diff_hash": baseline.patch_hash,
+            "expected_worktree_diff_hash": expected_diff_hash,
+            "files": files,
+        }
+        artifact = self.artifacts.put_json(intent)
+        self.state.append_event(
+            self.run_id,
+            EventType.PATCH_PREPARED,
+            actor="tool-gateway",
+            correlation_id=action_id,
+            payload={
+                "schema_version": "patch-mutation-intent-v1",
+                "artifact_id": artifact.artifact_id,
+                "artifact_path": artifact.path,
+                "content_hash": artifact.content_hash,
+                "size_bytes": artifact.size_bytes,
+                "intent_artifact": artifact.model_dump(mode="json"),
+                "baseline_worktree_diff_hash": baseline.patch_hash,
+                "expected_worktree_diff_hash": expected_diff_hash,
+            },
+        )
+        return intent
+
+    def _preview_expected_diff_hash(
+        self,
+        patch: str,
+        baseline_diff_hash: str,
+    ) -> str:
+        with tempfile.TemporaryDirectory(prefix="patchloop-index-") as temporary:
+            index_path = Path(temporary) / "index"
+            object_path = Path(temporary) / "objects"
+            object_path.mkdir()
+            git_objects = subprocess.run(
+                ["git", "rev-parse", "--git-path", "objects"],
+                cwd=self.workspace,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=False,
+            )
+            if git_objects.returncode != 0:
+                raise RecoveryError(
+                    "patch preview could not resolve the repository object store"
+                )
+            alternate_objects = Path(git_objects.stdout.strip())
+            if not alternate_objects.is_absolute():
+                alternate_objects = (
+                    self.workspace / alternate_objects
+                ).resolve()
+            environment = os.environ.copy()
+            environment["GIT_INDEX_FILE"] = str(index_path)
+            environment["GIT_OBJECT_DIRECTORY"] = str(object_path)
+            environment["GIT_ALTERNATE_OBJECT_DIRECTORIES"] = str(
+                alternate_objects
+            )
+
+            def run(*args: str, input_bytes: bytes | None = None) -> bytes:
+                completed = subprocess.run(
+                    ["git", *args],
+                    cwd=self.workspace,
+                    env=environment,
+                    input=input_bytes,
+                    capture_output=True,
+                    check=False,
+                )
+                if completed.returncode != 0:
+                    message = completed.stderr.decode(
+                        "utf-8",
+                        errors="replace",
+                    ).strip()
+                    raise ContractError(
+                        f"patch preview failed during git {' '.join(args)}: {message}"
+                    )
+                return completed.stdout
+
+            run("read-tree", "HEAD")
+            run("add", "-u", "--", ".")
+            baseline_patch = run(
+                "diff",
+                "--cached",
+                "--no-ext-diff",
+                "--binary",
+            ).decode("utf-8", errors="strict")
+            if sha256_text(baseline_patch) != baseline_diff_hash:
+                raise RecoveryError(
+                    "temporary patch preview does not match the current worktree"
+                )
+            try:
+                run(
+                    "apply",
+                    "--cached",
+                    "--recount",
+                    "--whitespace=nowarn",
+                    "-",
+                    input_bytes=patch.encode("utf-8"),
+                )
+            except ContractError as exc:
+                raise _patch_contract_error(
+                    f"patch application failed during preparation: {exc}",
+                    reason="git_apply_failed",
+                    stage="context",
+                ) from exc
+            expected_patch = run(
+                "diff",
+                "--cached",
+                "--no-ext-diff",
+                "--binary",
+            ).decode("utf-8", errors="strict")
+        return sha256_text(expected_patch)
+
+    def _hypothetical_preimage_diff_hash(
+        self,
+        intent: dict[str, Any],
+    ) -> str:
+        """Hash current tracked state with touched paths reset in a temp index."""
+
+        with tempfile.TemporaryDirectory(
+            prefix="patchloop-reconcile-index-"
+        ) as temporary:
+            index_path = Path(temporary) / "index"
+            object_path = Path(temporary) / "objects"
+            object_path.mkdir()
+            git_objects = subprocess.run(
+                ["git", "rev-parse", "--git-path", "objects"],
+                cwd=self.workspace,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                check=False,
+            )
+            if git_objects.returncode != 0:
+                raise RecoveryError(
+                    "mixed-state preview could not resolve the object store"
+                )
+            alternate_objects = Path(git_objects.stdout.strip())
+            if not alternate_objects.is_absolute():
+                alternate_objects = (
+                    self.workspace / alternate_objects
+                ).resolve()
+            environment = os.environ.copy()
+            environment["GIT_INDEX_FILE"] = str(index_path)
+            environment["GIT_OBJECT_DIRECTORY"] = str(object_path)
+            environment["GIT_ALTERNATE_OBJECT_DIRECTORIES"] = str(
+                alternate_objects
+            )
+
+            def run(
+                *args: str,
+                input_bytes: bytes | None = None,
+            ) -> bytes:
+                completed = subprocess.run(
+                    ["git", *args],
+                    cwd=self.workspace,
+                    env=environment,
+                    input=input_bytes,
+                    capture_output=True,
+                    check=False,
+                )
+                if completed.returncode != 0:
+                    message = completed.stderr.decode(
+                        "utf-8",
+                        errors="replace",
+                    ).strip()
+                    raise RecoveryError(
+                        "mixed-state preview failed during "
+                        f"git {' '.join(args)}: {message}"
+                    )
+                return completed.stdout
+
+            run("read-tree", "HEAD")
+            run("add", "-u", "--", ".")
+            for entry in intent["files"]:
+                path = safe_relative_path(
+                    str(entry["path"]),
+                    field_name="prepared patch path",
+                )
+                preimage = self.artifacts.read_bytes(
+                    Artifact.model_validate(entry["preimage_artifact"])
+                )
+                object_id = run(
+                    "hash-object",
+                    "-w",
+                    "--stdin",
+                    input_bytes=preimage,
+                ).decode("ascii").strip()
+                run(
+                    "update-index",
+                    "--add",
+                    "--cacheinfo",
+                    str(entry["git_mode"]),
+                    object_id,
+                    path,
+                )
+            patch = run(
+                "diff",
+                "--cached",
+                "--no-ext-diff",
+                "--binary",
+            ).decode("utf-8", errors="strict")
+        return sha256_text(patch)
+
+    def _prepare_file_images(
+        self,
+        patch: str,
+        paths: list[str],
+    ) -> list[dict[str, Any]]:
+        entries: list[dict[str, Any]] = []
+        with tempfile.TemporaryDirectory(prefix="patchloop-preview-") as temporary:
+            scratch = Path(temporary)
+            initialize = subprocess.run(
+                ["git", "init", "--quiet"],
+                cwd=scratch,
+                capture_output=True,
+                check=False,
+            )
+            if initialize.returncode != 0:
+                raise RecoveryError("patch preview repository initialization failed")
+            for path in paths:
+                source = self._prepared_workspace_target(
+                    path,
+                    recovery=False,
+                )
+                tracked = subprocess.run(
+                    ["git", "ls-files", "--stage", "-z", "--", path],
+                    cwd=self.workspace,
+                    capture_output=True,
+                    check=False,
+                )
+                tracked_entries = [
+                    item
+                    for item in tracked.stdout.split(b"\0")
+                    if item
+                ]
+                git_mode = None
+                if len(tracked_entries) == 1:
+                    try:
+                        stage, tracked_path = tracked_entries[0].split(
+                            b"\t",
+                            1,
+                        )
+                        stage_fields = stage.decode("ascii").split()
+                        decoded_path = tracked_path.decode("utf-8")
+                        if (
+                            len(stage_fields) == 3
+                            and stage_fields[2] == "0"
+                            and decoded_path.replace("\\", "/") == path
+                        ):
+                            git_mode = stage_fields[0]
+                    except (UnicodeDecodeError, ValueError):
+                        git_mode = None
+                source_stat = source.lstat() if source.exists() else None
+                if (
+                    tracked.returncode != 0
+                    or git_mode not in {"100644", "100755"}
+                    or source_stat is None
+                    or not stat.S_ISREG(source_stat.st_mode)
+                ):
+                    raise _patch_contract_error(
+                        f"patch target must be an existing tracked regular file: {path}",
+                        reason="unsupported_target",
+                        stage="policy",
+                    )
+                preimage = source.read_bytes()
+                pre_artifact = self.artifacts.put_bytes(preimage)
+                target = ensure_within(scratch, path)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(preimage)
+                os.chmod(target, stat.S_IMODE(source_stat.st_mode))
+                entries.append(
+                    {
+                        "path": path,
+                        "mode": stat.S_IMODE(source_stat.st_mode),
+                        "git_mode": git_mode,
+                        "preimage_artifact": pre_artifact.model_dump(mode="json"),
+                    }
+                )
+
+            completed = subprocess.run(
+                ["git", "apply", "--recount", "--whitespace=nowarn", "-"],
+                cwd=scratch,
+                input=patch.encode("utf-8"),
+                capture_output=True,
+                check=False,
+            )
+            if completed.returncode != 0:
+                error = completed.stderr.decode(
+                    "utf-8",
+                    errors="replace",
+                ).strip()
+                raise _patch_contract_error(
+                    f"patch preview application failed: {error}",
+                    reason="git_apply_failed",
+                    stage="context",
+                )
+            for entry in entries:
+                target = ensure_within(scratch, str(entry["path"]))
+                entry["postimage_artifact"] = (
+                    self.artifacts.put_bytes(target.read_bytes()).model_dump(
+                        mode="json"
+                    )
+                    if target.exists()
+                    else None
+                )
+        return entries
+
+    def _apply_patch(
+        self,
+        patch: str,
+        *,
+        intent: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if len(patch.encode("utf-8")) > 500_000:
+            raise PolicyViolation(
+                "patch exceeds the tool input limit",
+                details={
+                    "stage": "policy",
+                    "reason": "input_too_large",
+                    "guidance": "Reduce the patch to the smallest scoped change.",
+                },
+            )
+        _validate_raw_git_patch(patch)
+        baseline = WorkspaceManager.diff_summary(self.workspace)
+        baseline_untracked = WorkspaceManager.untracked_files(self.workspace)
+        if baseline_untracked:
+            raise RecoveryError(
+                "agent workspace contains untracked files before patch application"
+            )
+        expected_diff_hash = None
+        if intent is not None:
+            if (
+                intent.get("baseline_worktree_diff_hash")
+                != baseline.patch_hash
+            ):
+                raise RecoveryError(
+                    "prepared patch baseline does not match the current worktree"
+                )
+            expected_diff_hash = intent.get("expected_worktree_diff_hash")
+            self._apply_patch_postimages(intent)
+        else:
+            completed = subprocess.run(
+                ["git", "apply", "--recount", "--whitespace=nowarn", "-"],
+                cwd=self.workspace,
+                input=patch.encode("utf-8"),
+                capture_output=True,
+                check=False,
+            )
+            if completed.returncode != 0:
+                error = completed.stderr.decode(
+                    "utf-8",
+                    errors="replace",
+                ).strip()
+                line_match = re.search(
+                    r"(?:corrupt patch at line|patch at line) (\d+)",
+                    error,
+                )
+                raise _patch_contract_error(
+                    f"patch application failed: {error}",
+                    reason="git_apply_failed",
+                    stage="syntax" if line_match else "context",
+                    line=(
+                        int(line_match.group(1))
+                        if line_match
+                        else None
+                    ),
+                )
+        return self._finalize_applied_patch(
+            patch,
+            baseline.patch_hash,
+            expected_diff_hash=expected_diff_hash,
+            intent=intent,
+        )
+
+    def _apply_patch_postimages(self, intent: dict[str, Any]) -> None:
+        recovery_root = self.artifacts.root / "recovery-tmp" / self.run_id
+        recovery_root.mkdir(parents=True, exist_ok=True)
+        prepared: list[tuple[dict[str, Any], str, Path, bytes | None]] = []
+        for entry in intent["files"]:
+            try:
+                path = safe_relative_path(
+                    str(entry["path"]),
+                    field_name="prepared patch path",
+                )
+                target = self._prepared_workspace_target(
+                    path,
+                    recovery=True,
+                )
+                preimage = self.artifacts.read_bytes(
+                    Artifact.model_validate(entry["preimage_artifact"])
+                )
+                mode = int(entry["mode"])
+                post_raw = entry.get("postimage_artifact")
+                postimage = (
+                    self.artifacts.read_bytes(
+                        Artifact.model_validate(post_raw)
+                    )
+                    if post_raw is not None
+                    else None
+                )
+                target_stat = (
+                    target.lstat() if target.exists() else None
+                )
+            except (ContractError, KeyError, TypeError, ValueError) as exc:
+                raise RecoveryError(
+                    "prepared patch contains invalid file image evidence"
+                ) from exc
+            if target_stat is None or not stat.S_ISREG(target_stat.st_mode):
+                raise RecoveryError(
+                    f"prepared patch target is not in its pre-state: {path}"
+                )
+            if (
+                target.read_bytes() != preimage
+                or stat.S_IMODE(target_stat.st_mode) != mode
+            ):
+                raise RecoveryError(
+                    f"prepared patch target is not in its pre-state: {path}"
+                )
+            prepared.append((entry, path, target, postimage))
+
+        try:
+            for entry, _, target, postimage in prepared:
+                if postimage is None:
+                    target.unlink()
+                    continue
+                temporary = recovery_root / f"{uuid.uuid4().hex}.tmp"
+                try:
+                    with temporary.open("xb") as stream:
+                        stream.write(postimage)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    os.chmod(temporary, int(entry["mode"]))
+                    os.replace(temporary, target)
+                finally:
+                    temporary.unlink(missing_ok=True)
+        except Exception as exc:
+            try:
+                self._restore_patch_preimages(intent)
+            except Exception as rollback_error:
+                raise RecoveryError(
+                    "prepared patch write failed and preimage restoration failed"
+                ) from rollback_error
+            raise RecoveryError(
+                "prepared patch write failed; preimages were restored"
+            ) from exc
+
+    def _finalize_applied_patch(
+        self,
+        patch: str,
+        baseline_diff_hash: str,
+        *,
+        expected_diff_hash: str | None = None,
+        intent: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         try:
             summary = WorkspaceManager.diff_summary(self.workspace)
+            if (
+                expected_diff_hash is not None
+                and summary.patch_hash != expected_diff_hash
+            ):
+                raise RecoveryError(
+                    "applied patch does not match its prepared post-state"
+                )
             outcomes = [
                 verify_scope(summary, self.task.constraints),
                 verify_dependencies(summary, self.task.constraints),
@@ -564,10 +1711,18 @@ class ToolGateway:
                     "patch produced untracked files: " + ", ".join(untracked)
                 )
         except Exception:
-            self._rollback_patch(patch, baseline.patch_hash)
+            self._rollback_patch(
+                patch,
+                baseline_diff_hash,
+                intent=intent,
+            )
             raise
         if violations:
-            self._rollback_patch(patch, baseline.patch_hash)
+            self._rollback_patch(
+                patch,
+                baseline_diff_hash,
+                intent=intent,
+            )
             raise PolicyViolation(
                 "; ".join(violations),
                 details={
@@ -583,7 +1738,16 @@ class ToolGateway:
             "diff_lines": summary.diff_lines,
         }
 
-    def _rollback_patch(self, patch: str, baseline_diff_hash: str) -> None:
+    def _rollback_patch(
+        self,
+        patch: str,
+        baseline_diff_hash: str,
+        *,
+        intent: dict[str, Any] | None = None,
+    ) -> None:
+        if intent is not None:
+            self._restore_patch_preimages(intent)
+            return
         rollback = subprocess.run(
             [
                 "git",

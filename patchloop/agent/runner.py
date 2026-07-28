@@ -50,6 +50,7 @@ from patchloop.errors import (
     ContractError,
     InjectedFault,
     RecoveryError,
+    RunOwnershipConflict,
     SubmissionProtocolError,
 )
 from patchloop.evals.failures import classify_failure
@@ -62,7 +63,7 @@ from patchloop.runtime import (
     runtime_root,
 )
 from patchloop.sandbox import DockerSandbox, LocalSandbox, TimeoutOnceSandbox
-from patchloop.state import StateStore
+from patchloop.state import RunOwnershipCoordinator, StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import (
     canonical_json,
@@ -76,6 +77,7 @@ from patchloop.verifier import EvaluationEngine
 
 _LIVE_AUTHORIZATION_GUARD = object()
 _MAX_RECOVERABLE_SUBMISSION_REJECTIONS = 2
+_EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
 
 
 @dataclass(frozen=True)
@@ -135,6 +137,7 @@ class AgentRunner:
         self.root = Path(root) if root else runtime_root()
         self.state = StateStore(self.root / "state.sqlite3")
         self.artifacts = ArtifactStore(self.root / "artifacts")
+        self.ownership = RunOwnershipCoordinator(self.root / "worker-locks")
         self.workspaces = WorkspaceManager(
             repository_root() / "fixtures" / "repositories", self.root / "workspaces"
         )
@@ -158,6 +161,7 @@ class AgentRunner:
         budget: Budget | None = None,
         experiment_context: ExperimentRunContext | None = None,
         live_authorization: LiveExecutionAuthorization | None = None,
+        _allowed_worker_statuses: set[RunStatus] | None = None,
     ) -> dict[str, Any]:
         task_dir = self._task_dir(task_path)
         package = load_task_package(task_dir)
@@ -197,90 +201,107 @@ class AgentRunner:
         if selected_provider == "openai":
             self._require_live_authorization(manifest, live_authorization)
 
-        if manifest is not None and not self.state.has_run(manifest.run_id):
-            self.state.create_run(manifest)
-
-        try:
-            docker_sandbox = self._docker_sandbox(package)
-            backend = (
-                "docker"
-                if DockerSandbox.available() and docker_sandbox.image_identity() is not None
-                else "local"
+        docker_sandbox = self._docker_sandbox(package)
+        backend = (
+            "docker"
+            if DockerSandbox.available() and docker_sandbox.image_identity() is not None
+            else "local"
+        )
+        if package.environment is not None:
+            image_identity = docker_sandbox.image_identity()
+            if backend != "docker":
+                raise ContractError(
+                    "task requires its digest-pinned Docker evaluator image, "
+                    "but it is unavailable"
+                )
+            if image_identity != package.environment.image_digest:
+                raise ContractError(
+                    "task evaluator image identity does not match environment.yaml: "
+                    f"{image_identity} != {package.environment.image_digest}"
+                )
+        if manifest is None:
+            selected_model_id = (
+                "mock-v1" if selected_provider == "mock" else normalized_model
             )
-            if package.environment is not None:
-                image_identity = docker_sandbox.image_identity()
-                if backend != "docker":
-                    raise ContractError(
-                        "task requires its digest-pinned Docker evaluator image, "
-                        "but it is unavailable"
+            image_identity = (
+                docker_sandbox.image_identity() if backend == "docker" else None
+            )
+            manifest = build_manifest(
+                package,
+                provider=selected_provider,
+                model_id=selected_model_id,
+                memory_condition=memory_condition,
+                sandbox_backend=backend,
+                agent_image_digest=image_identity,
+                evaluator_image_digest=image_identity,
+                input_price_per_million_usd=input_price_per_million_usd,
+                cached_input_price_per_million_usd=cached_input_price_per_million_usd,
+                cache_write_input_price_per_million_usd=(
+                    cache_write_input_price_per_million_usd
+                ),
+                output_price_per_million_usd=output_price_per_million_usd,
+                reasoning_effort=reasoning_effort,
+                reasoning_mode=reasoning_mode,
+                service_tier=service_tier,
+                max_output_tokens=max_output_tokens,
+                budget=budget,
+                replay_hash=replay_hash,
+                experiment_context=experiment_context,
+            )
+        allowed_statuses = _allowed_worker_statuses or {RunStatus.CREATED}
+        with self.ownership.acquire(manifest.run_id) as worker:
+            self.state.claim_run_for_worker(
+                manifest.run_id,
+                owner_id=worker.owner_id,
+                owner_pid=worker.pid,
+                owner_hostname=worker.hostname,
+                allowed_statuses=allowed_statuses,
+                manifest=manifest,
+            )
+            try:
+                workspace = self.root / "workspaces" / manifest.run_id / "repo"
+                if not workspace.exists():
+                    workspace = self.workspaces.create(
+                        manifest.run_id,
+                        package.public.repository.url,
+                        package.public.repository.base_commit,
                     )
-                if image_identity != package.environment.image_digest:
-                    raise ContractError(
-                        "task evaluator image identity does not match environment.yaml: "
-                        f"{image_identity} != {package.environment.image_digest}"
+                self.workspaces.validate_managed_workspace(workspace)
+                if self.state.latest_checkpoint(manifest.run_id) is None:
+                    self.workspaces.validate_pristine(
+                        workspace,
+                        package.public.repository.url,
+                        package.public.repository.base_commit,
                     )
-            if manifest is None:
-                selected_model_id = (
-                    "mock-v1" if selected_provider == "mock" else normalized_model
-                )
-                image_identity = (
-                    docker_sandbox.image_identity() if backend == "docker" else None
-                )
-                manifest = build_manifest(
+                return self._execute(
                     package,
-                    provider=selected_provider,
-                    model_id=selected_model_id,
-                    memory_condition=memory_condition,
-                    sandbox_backend=backend,
-                    agent_image_digest=image_identity,
-                    evaluator_image_digest=image_identity,
-                    input_price_per_million_usd=input_price_per_million_usd,
-                    cached_input_price_per_million_usd=cached_input_price_per_million_usd,
-                    cache_write_input_price_per_million_usd=(
-                        cache_write_input_price_per_million_usd
-                    ),
-                    output_price_per_million_usd=output_price_per_million_usd,
-                    reasoning_effort=reasoning_effort,
-                    reasoning_mode=reasoning_mode,
-                    service_tier=service_tier,
-                    max_output_tokens=max_output_tokens,
-                    budget=budget,
-                    replay_hash=replay_hash,
-                    experiment_context=experiment_context,
+                    workspace,
+                    manifest,
+                    normalized_model,
                 )
-                self.state.create_run(manifest)
-            workspace = self.root / "workspaces" / manifest.run_id / "repo"
-            if not workspace.exists():
-                workspace = self.workspaces.create(
-                    manifest.run_id,
-                    package.public.repository.url,
-                    package.public.repository.base_commit,
+            except RunOwnershipConflict:
+                raise
+            except Exception as exc:
+                events = self.state.list_events(manifest.run_id)
+                if any(
+                    event.type in {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
+                    for event in events
+                ):
+                    raise
+                if self._evaluation_receipt_path(
+                    manifest.run_id
+                ).exists():
+                    raise
+                checkpoint = self.state.latest_checkpoint(manifest.run_id)
+                self._terminal_failure(
+                    task_dir,
+                    manifest,
+                    checkpoint.phase if checkpoint is not None else Phase.INTAKE,
+                    self._usage(manifest.run_id),
+                    exc,
+                    RunOutcomeKind.INFRASTRUCTURE_ERROR,
                 )
-            elif self.state.list_events(manifest.run_id):
-                self._reconcile_workspace(manifest, workspace)
-            adapter = self._model_adapter(
-                normalized_model, manifest, self._completed_tools(manifest.run_id)
-            )
-            return self._execute(package, workspace, manifest, adapter)
-        except Exception as exc:
-            if manifest is None or not self.state.has_run(manifest.run_id):
                 raise
-            events = self.state.list_events(manifest.run_id)
-            if any(
-                event.type in {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
-                for event in events
-            ):
-                raise
-            checkpoint = self.state.latest_checkpoint(manifest.run_id)
-            self._terminal_failure(
-                task_dir,
-                manifest,
-                checkpoint.phase if checkpoint is not None else Phase.INTAKE,
-                self._usage(manifest.run_id),
-                exc,
-                RunOutcomeKind.INFRASTRUCTURE_ERROR,
-            )
-            raise
 
     def resume(
         self,
@@ -289,9 +310,6 @@ class AgentRunner:
         live_authorization: LiveExecutionAuthorization | None = None,
     ) -> dict[str, Any]:
         manifest = self.state.get_manifest(run_id)
-        run_rows = [row for row in self.state.list_runs() if row["run_id"] == run_id]
-        if len(run_rows) != 1 or run_rows[0]["status"] != RunStatus.SUSPENDED.value:
-            raise RecoveryError("only a suspended run may be resumed")
         task_dir = self._find_task(manifest)
         if manifest.model.provider == "mock":
             model = "mock"
@@ -305,6 +323,11 @@ class AgentRunner:
             memory_condition=manifest.memory.condition,
             manifest=manifest,
             live_authorization=live_authorization,
+            _allowed_worker_statuses={
+                RunStatus.CREATED,
+                RunStatus.SUSPENDED,
+                RunStatus.RUNNING,
+            },
         )
 
     @staticmethod
@@ -338,7 +361,7 @@ class AgentRunner:
         package: TaskPackage,
         workspace: Path,
         manifest: RunManifest,
-        adapter: ModelAdapter,
+        model: str,
     ) -> dict[str, Any]:
         task_dir = package.root
         system_prompt, tool_schemas = self._runtime_contract(manifest)
@@ -362,9 +385,87 @@ class AgentRunner:
             state=self.state,
             artifacts=self.artifacts,
             sandbox=gateway_sandbox,
+            tool_schema_version=manifest.tool_schema_version,
         )
-        self.state.set_run_status(manifest.run_id, RunStatus.RUNNING)
-        if not self.state.list_events(manifest.run_id):
+        existing_events = self.state.list_events(manifest.run_id)
+        checkpoint = self.state.latest_checkpoint(manifest.run_id)
+        recovered_initial_phase: Phase | None = None
+        if existing_events:
+            if checkpoint is None:
+                recovered_initial_phase = self._recover_initial_prefix(
+                    manifest,
+                    workspace,
+                    existing_events,
+                )
+            else:
+                self._reconcile_workspace_head(checkpoint, workspace)
+                recovered_patch = gateway.reconcile_interrupted_patch(
+                    checkpoint
+                )
+                recovered_tool: tuple[str, ToolResult] | None = None
+                if recovered_patch is not None:
+                    recovered_tool = ("apply_patch", recovered_patch)
+                else:
+                    # Only a prepared patch may legitimately move the
+                    # worktree away from the last checkpoint. Validate the
+                    # old durable boundary before replaying a read/check
+                    # action or promoting any event suffix into a checkpoint.
+                    self._reconcile_checkpoint_workspace(
+                        checkpoint,
+                        workspace,
+                    )
+                    recovered_tool = (
+                        gateway.reconcile_interrupted_action(checkpoint)
+                    )
+                if recovered_tool is not None:
+                    tool_name, recovered_result = recovered_tool
+                    if (
+                        recovered_result.status == "failed"
+                        and recovered_result.output.get("fatal") is True
+                    ):
+                        raise RecoveryError(
+                            recovered_result.error_message
+                            or "interrupted tool recovery failed"
+                        )
+                    phase = self._phase_after_checkpoint(checkpoint)
+                    phase = self._phase_after_tool(
+                        manifest.run_id,
+                        phase,
+                        tool_name,
+                        recovered_result,
+                        package.public,
+                        workspace,
+                    )
+                    checkpoint = self._checkpoint(
+                        manifest,
+                        workspace,
+                        phase,
+                        self._usage(manifest.run_id),
+                        recovered_result,
+                        task=package.public,
+                    )
+                else:
+                    phase = self._phase_after_checkpoint(checkpoint)
+                    suffix_events = [
+                        event
+                        for event in self.state.list_events(
+                            manifest.run_id
+                        )
+                        if event.sequence > checkpoint.through_sequence
+                        and event.type != EventType.CHECKPOINT_SAVED
+                    ]
+                    if suffix_events:
+                        checkpoint = self._checkpoint(
+                            manifest,
+                            workspace,
+                            phase,
+                            self._usage(manifest.run_id),
+                            task=package.public,
+                        )
+                    else:
+                        self._ensure_checkpoint_event(checkpoint)
+                self._reconcile_workspace(manifest, workspace)
+        else:
             runtime_contract = self.artifacts.put_json(
                 {
                     "system_prompt": system_prompt,
@@ -392,9 +493,14 @@ class AgentRunner:
                     payload={"fault": manifest.fault.type},
                 )
         checkpoint = self.state.latest_checkpoint(manifest.run_id)
-        phase = checkpoint.phase if checkpoint else Phase.INTAKE
+        phase = (
+            checkpoint.phase
+            if checkpoint
+            else recovered_initial_phase or Phase.INTAKE
+        )
         if phase == Phase.INTAKE:
             phase = self._transition(manifest.run_id, phase, Phase.REPRODUCE)
+        if checkpoint is None:
             checkpoint = self._checkpoint(
                 manifest,
                 workspace,
@@ -422,6 +528,11 @@ class AgentRunner:
                     sandbox,
                     usage,
                 )
+            adapter = self._model_adapter(
+                model,
+                manifest,
+                self._completed_tools(manifest.run_id),
+            )
             while True:
                 self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -847,6 +958,8 @@ class AgentRunner:
                 "resume_command": f"patchloop resume --run-id {manifest.run_id}",
             }
         except Exception as exc:
+            if self._evaluation_receipt_path(manifest.run_id).exists():
+                raise
             outcome_kind = (
                 RunOutcomeKind.AGENT_FAILURE
                 if isinstance(exc, ContractError)
@@ -886,10 +999,16 @@ class AgentRunner:
                 submitted_patch_artifact = Artifact.model_validate(
                     accepted_events[0].payload["submitted_patch_artifact"]
                 )
-                submitted_patch_bytes = Path(
-                    submitted_patch_artifact.path
-                ).read_bytes()
-            except (KeyError, OSError, TypeError, ValueError) as exc:
+                submitted_patch_bytes = self.artifacts.read_bytes(
+                    submitted_patch_artifact
+                )
+            except (
+                KeyError,
+                OSError,
+                RecoveryError,
+                TypeError,
+                ValueError,
+            ) as exc:
                 raise RecoveryError(
                     "accepted submission patch artifact is unavailable"
                 ) from exc
@@ -909,49 +1028,337 @@ class AgentRunner:
         run_dir = self.root / "runs" / manifest.run_id
         run_dir.mkdir(parents=True, exist_ok=True)
         patch_path = run_dir / "submitted.patch"
-        patch_path.write_bytes(submitted_patch_bytes)
-        evaluator = EvaluationEngine(self.workspaces, sandbox, self.artifacts)
-        evaluator_started = time.monotonic()
-        result = evaluator.evaluate(
-            task_dir,
+        self._write_runtime_bytes_atomic(
             patch_path,
+            submitted_patch_bytes,
+        )
+        completed_evaluation = self._load_completed_evaluation(
             manifest,
-            usage=usage,
+            expected_patch_hash=summary.patch_hash,
             submitted_patch_artifact=submitted_patch_artifact,
+            expected_official=sandbox.official,
         )
-        evaluator_duration_ms = int((time.monotonic() - evaluator_started) * 1000)
-        failure = classify_failure(
-            result,
-            load_task_package(task_dir).public.split,
-            root=self.root,
-            phase=Phase.REVIEW,
-            events=self.state.list_events(manifest.run_id),
-        )
-        if failure is not None:
-            self.state.append_event(
-                manifest.run_id,
-                EventType.FAILURE_TAGGED,
-                actor="failure-classifier",
-                payload={
-                    "failure_id": failure.failure_id,
-                    "primary_cause": failure.primary_cause,
-                    "classification_method": failure.classification_method,
-                },
+        if completed_evaluation is None:
+            evaluator = EvaluationEngine(
+                self.workspaces,
+                sandbox,
+                self.artifacts,
             )
-        self.state.append_event(
+            evaluator_started = time.monotonic()
+            result = evaluator.evaluate(
+                task_dir,
+                patch_path,
+                manifest,
+                usage=usage,
+                submitted_patch_artifact=submitted_patch_artifact,
+            )
+            evaluator_duration_ms = int(
+                (time.monotonic() - evaluator_started) * 1000
+            )
+            self._persist_evaluation_receipt(
+                manifest,
+                result,
+                evaluator_duration_ms=evaluator_duration_ms,
+                expected_patch_hash=summary.patch_hash,
+                submitted_patch_artifact=submitted_patch_artifact,
+                expected_official=sandbox.official,
+            )
+        else:
+            result, evaluator_duration_ms = completed_evaluation
+        classification_error: dict[str, str] | None = None
+        try:
+            failure = classify_failure(
+                result,
+                load_task_package(task_dir).public.split,
+                root=self.root,
+                phase=Phase.REVIEW,
+                events=self.state.list_events(manifest.run_id),
+            )
+        except (ContractError, OSError, ValueError) as exc:
+            failure = None
+            classification_error = {
+                "type": type(exc).__name__,
+                "message": self._safe_error_message(exc),
+            }
+        failure_payload = None
+        if failure is not None:
+            failure_payload = {
+                "failure_id": failure.failure_id,
+                "primary_cause": failure.primary_cause,
+                "classification_method": failure.classification_method,
+            }
+        self.state.finalize_run(
             manifest.run_id,
-            EventType.RUN_COMPLETED,
+            status=RunStatus.COMPLETED,
+            result=result,
+            event_type=EventType.RUN_COMPLETED,
             actor="evaluator",
             payload={
                 "scope_compliant_success": result.scope_compliant_success,
                 "official": result.official,
                 "duration_ms": evaluator_duration_ms,
+                "failure_classification_error": classification_error,
             },
-        )
-        self.state.set_run_status(
-            manifest.run_id, RunStatus.COMPLETED, result.model_dump(mode="json")
+            failure_payload=failure_payload,
         )
         return result.model_dump(mode="json")
+
+    def _load_completed_evaluation(
+        self,
+        manifest: RunManifest,
+        *,
+        expected_patch_hash: str,
+        submitted_patch_artifact: Artifact | None,
+        expected_official: bool,
+    ) -> tuple[RunResult, int] | None:
+        receipt_path = self._evaluation_receipt_path(manifest.run_id)
+        if not receipt_path.exists():
+            return None
+        try:
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RecoveryError(
+                "completed evaluation receipt is unreadable"
+            ) from exc
+        if not isinstance(receipt, dict):
+            raise RecoveryError("completed evaluation receipt is malformed")
+        file_hashes = receipt.get("file_hashes")
+        duration_ms = receipt.get("evaluator_duration_ms")
+        result_artifact_id = receipt.get(
+            "submitted_patch_artifact_id"
+        )
+        if (
+            receipt.get("schema_version") != _EVALUATION_RECEIPT_SCHEMA
+            or receipt.get("run_id") != manifest.run_id
+            or receipt.get("worktree_diff_hash") != expected_patch_hash
+            or not isinstance(result_artifact_id, str)
+            or not result_artifact_id
+            or (
+                submitted_patch_artifact is not None
+                and result_artifact_id
+                != submitted_patch_artifact.artifact_id
+            )
+            or not isinstance(duration_ms, int)
+            or duration_ms < 0
+            or not isinstance(file_hashes, dict)
+            or set(file_hashes)
+            != {"manifest.json", "result.json", "provenance.json"}
+        ):
+            raise RecoveryError(
+                "completed evaluation receipt conflicts with the run"
+            )
+        result = self._validate_completed_evaluation_files(
+            manifest,
+            file_hashes=file_hashes,
+            expected_patch_hash=expected_patch_hash,
+            expected_result_artifact_id=result_artifact_id,
+            submitted_patch_artifact=submitted_patch_artifact,
+            expected_official=expected_official,
+        )
+        return result, duration_ms
+
+    def _persist_evaluation_receipt(
+        self,
+        manifest: RunManifest,
+        result: RunResult,
+        *,
+        evaluator_duration_ms: int,
+        expected_patch_hash: str,
+        submitted_patch_artifact: Artifact | None,
+        expected_official: bool,
+    ) -> None:
+        run_dir = self.artifacts.root / "runs" / manifest.run_id
+        result_artifact_id = result.submitted_patch_artifact_id
+        if not isinstance(result_artifact_id, str) or not result_artifact_id:
+            raise RecoveryError(
+                "completed evaluation lacks its submitted patch artifact"
+            )
+        if (
+            submitted_patch_artifact is not None
+            and result_artifact_id
+            != submitted_patch_artifact.artifact_id
+        ):
+            raise RecoveryError(
+                "completed evaluation patch artifact conflicts with "
+                "the accepted submission"
+            )
+        file_hashes: dict[str, str] = {}
+        for name in ("manifest.json", "result.json", "provenance.json"):
+            try:
+                file_hashes[name] = sha256_bytes(
+                    (run_dir / name).read_bytes()
+                )
+            except OSError as exc:
+                raise RecoveryError(
+                    "evaluator did not persist a complete result bundle"
+                ) from exc
+        persisted = self._validate_completed_evaluation_files(
+            manifest,
+            file_hashes=file_hashes,
+            expected_patch_hash=expected_patch_hash,
+            expected_result_artifact_id=result_artifact_id,
+            submitted_patch_artifact=submitted_patch_artifact,
+            expected_official=expected_official,
+        )
+        if persisted != result:
+            raise RecoveryError(
+                "evaluator return value differs from its persisted result"
+            )
+        receipt = {
+            "schema_version": _EVALUATION_RECEIPT_SCHEMA,
+            "run_id": manifest.run_id,
+            "worktree_diff_hash": expected_patch_hash,
+            "submitted_patch_artifact_id": result_artifact_id,
+            "evaluator_duration_ms": evaluator_duration_ms,
+            "file_hashes": file_hashes,
+        }
+        self.artifacts.write_text_atomic(
+            run_dir / "evaluation-receipt.json",
+            json.dumps(receipt, indent=2, sort_keys=True),
+        )
+
+    def _validate_completed_evaluation_files(
+        self,
+        manifest: RunManifest,
+        *,
+        file_hashes: dict[str, Any],
+        expected_patch_hash: str,
+        expected_result_artifact_id: str,
+        submitted_patch_artifact: Artifact | None,
+        expected_official: bool,
+    ) -> RunResult:
+        run_dir = self.artifacts.root / "runs" / manifest.run_id
+        contents: dict[str, bytes] = {}
+        try:
+            for name in (
+                "manifest.json",
+                "result.json",
+                "provenance.json",
+            ):
+                declared_hash = file_hashes.get(name)
+                content = (run_dir / name).read_bytes()
+                if (
+                    not isinstance(declared_hash, str)
+                    or sha256_bytes(content) != declared_hash
+                ):
+                    raise RecoveryError(
+                        "completed evaluation file hash does not match "
+                        f"its receipt: {name}"
+                    )
+                contents[name] = content
+            persisted_manifest = RunManifest.model_validate_json(
+                contents["manifest.json"]
+            )
+            result = RunResult.model_validate_json(
+                contents["result.json"]
+            )
+            provenance = json.loads(contents["provenance.json"])
+        except RecoveryError:
+            raise
+        except (
+            OSError,
+            TypeError,
+            ValueError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise RecoveryError(
+                "completed evaluation bundle is invalid"
+            ) from exc
+        if not isinstance(provenance, dict):
+            raise RecoveryError(
+                "completed evaluation provenance is malformed"
+            )
+        verifier_evidence = self._validated_verifier_evidence(result)
+        if (
+            persisted_manifest != manifest
+            or result.run_id != manifest.run_id
+            or result.evaluation_status != "completed"
+            or result.official is not expected_official
+            or provenance.get("patch_hash") != expected_patch_hash
+            or provenance.get("diff_hash") != expected_patch_hash
+            or provenance.get("submitted_patch_content_hash")
+            != expected_patch_hash
+            or provenance.get("submitted_patch_artifact_id")
+            != expected_result_artifact_id
+            or result.submitted_patch_artifact_id
+            != expected_result_artifact_id
+            or provenance.get("verifier_evidence_schema_version")
+            != "verifier-evidence-v1"
+            or provenance.get("verifier_evidence_artifacts")
+            != verifier_evidence
+        ):
+            raise RecoveryError(
+                "completed evaluation bundle conflicts with immutable run "
+                "evidence"
+            )
+        if (
+            submitted_patch_artifact is not None
+            and (
+                submitted_patch_artifact.artifact_id
+                != expected_result_artifact_id
+                or submitted_patch_artifact.content_hash
+                != expected_patch_hash
+            )
+        ):
+            raise RecoveryError(
+                "accepted patch artifact conflicts with completed evaluation"
+            )
+        return result
+
+    def _validated_verifier_evidence(
+        self,
+        result: RunResult,
+    ) -> list[dict[str, Any]]:
+        evidence: list[dict[str, Any]] = []
+        for verifier_result in result.verifier_results:
+            raw_artifacts = verifier_result.details.get(
+                "evidence_artifacts"
+            )
+            if not verifier_result.evidence_artifact_ids:
+                if raw_artifacts not in (None, []):
+                    raise RecoveryError(
+                        "verifier result has unreferenced evidence artifacts"
+                    )
+                continue
+            if (
+                not isinstance(raw_artifacts, list)
+                or len(raw_artifacts)
+                != len(verifier_result.evidence_artifact_ids)
+            ):
+                raise RecoveryError(
+                    "verifier result lacks complete evidence descriptors"
+                )
+            descriptors: list[dict[str, Any]] = []
+            for expected_id, raw_artifact in zip(
+                verifier_result.evidence_artifact_ids,
+                raw_artifacts,
+                strict=True,
+            ):
+                try:
+                    artifact = Artifact.model_validate(raw_artifact)
+                    self.artifacts.read_bytes(artifact)
+                except (RecoveryError, TypeError, ValueError) as exc:
+                    raise RecoveryError(
+                        "verifier evidence artifact failed integrity "
+                        "validation"
+                    ) from exc
+                if artifact.artifact_id != expected_id:
+                    raise RecoveryError(
+                        "verifier evidence identity conflicts with its result"
+                    )
+                descriptors.append(
+                    artifact.model_dump(mode="json")
+                )
+            evidence.extend(descriptors)
+        return evidence
+
+    def _evaluation_receipt_path(self, run_id: str) -> Path:
+        return (
+            self.artifacts.root
+            / "runs"
+            / run_id
+            / "evaluation-receipt.json"
+        )
 
     def _terminal_failure(
         self,
@@ -993,44 +1400,26 @@ class AgentRunner:
             phase=phase,
             events=events,
         )
+        failure_payload = None
         if failure is not None:
-            self.state.append_event(
-                manifest.run_id,
-                EventType.FAILURE_TAGGED,
-                actor="failure-classifier",
-                payload={
-                    "failure_id": failure.failure_id,
-                    "primary_cause": failure.primary_cause,
-                    "classification_method": failure.classification_method,
-                },
-            )
-        self.state.append_event(
-            manifest.run_id,
-            EventType.RUN_FAILED,
-            actor="runner",
-            payload={
-                "outcome_kind": outcome_kind.value,
-                "error_type": type(error).__name__,
-                "message": safe_message,
-                "model_cost_usd": usage.model_cost_usd,
-            },
-        )
-        self.state.set_run_status(
-            manifest.run_id,
-            RunStatus.FAILED,
-            result.model_dump(mode="json"),
-        )
+            failure_payload = {
+                "failure_id": failure.failure_id,
+                "primary_cause": failure.primary_cause,
+                "classification_method": failure.classification_method,
+        }
         run_dir = self.artifacts.root / "runs" / manifest.run_id
         run_dir.mkdir(parents=True, exist_ok=True)
-        (run_dir / "manifest.json").write_text(
+        (run_dir / "evaluation-receipt.json").unlink(missing_ok=True)
+        self.artifacts.write_text_atomic(
+            run_dir / "manifest.json",
             manifest.model_dump_json(indent=2),
-            encoding="utf-8",
         )
-        (run_dir / "result.json").write_text(
+        self.artifacts.write_text_atomic(
+            run_dir / "result.json",
             result.model_dump_json(indent=2),
-            encoding="utf-8",
         )
-        (run_dir / "provenance.json").write_text(
+        self.artifacts.write_text_atomic(
+            run_dir / "provenance.json",
             json.dumps(
                 {
                     "evaluation_reached": False,
@@ -1039,7 +1428,20 @@ class AgentRunner:
                 },
                 indent=2,
             ),
-            encoding="utf-8",
+        )
+        self.state.finalize_run(
+            manifest.run_id,
+            status=RunStatus.FAILED,
+            result=result,
+            event_type=EventType.RUN_FAILED,
+            actor="runner",
+            payload={
+                "outcome_kind": outcome_kind.value,
+                "error_type": type(error).__name__,
+                "message": safe_message,
+                "model_cost_usd": usage.model_cost_usd,
+            },
+            failure_payload=failure_payload,
         )
         return result.model_dump(mode="json")
 
@@ -1050,6 +1452,33 @@ class AgentRunner:
         if api_key:
             message = message.replace(api_key, "[REDACTED]")
         return message[:2_000]
+
+    def _write_runtime_bytes_atomic(
+        self,
+        path: Path,
+        content: bytes,
+    ) -> None:
+        try:
+            root = self.root.resolve()
+            resolved = path.resolve()
+        except OSError as exc:
+            raise RecoveryError(
+                "runtime artifact path cannot be resolved"
+            ) from exc
+        if not resolved.is_relative_to(root) or path.is_symlink():
+            raise RecoveryError("runtime artifact path escapes the run root")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_name(
+            f".{path.name}.{uuid.uuid4().hex}.tmp"
+        )
+        try:
+            with temporary.open("xb") as stream:
+                stream.write(content)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
 
     def _checkpoint(
         self,
@@ -2055,6 +2484,13 @@ class AgentRunner:
         checkpoint = self.state.latest_checkpoint(manifest.run_id)
         if checkpoint is None:
             raise RecoveryError("run has events but no durable checkpoint")
+        self._reconcile_checkpoint_workspace(checkpoint, workspace)
+
+    def _reconcile_checkpoint_workspace(
+        self,
+        checkpoint: Checkpoint,
+        workspace: Path,
+    ) -> None:
         if WorkspaceManager.untracked_files(workspace):
             raise RecoveryError(
                 "agent workspace contains untracked files during recovery"
@@ -2062,6 +2498,111 @@ class AgentRunner:
         summary = WorkspaceManager.diff_summary(workspace)
         if summary.patch_hash != checkpoint.worktree_diff_hash:
             raise RecoveryError("workspace diff hash does not match the latest durable checkpoint")
+        self._reconcile_workspace_head(checkpoint, workspace)
+
+    def _recover_initial_prefix(
+        self,
+        manifest: RunManifest,
+        workspace: Path,
+        events,
+    ) -> Phase:
+        """Recover the narrow startup prefix before the first checkpoint."""
+
+        expected_fault = (
+            manifest.fault.type
+            if manifest.fault.type in {"context-reset", "test-timeout"}
+            else None
+        )
+        types = [event.type for event in events]
+        allowed_prefix = [EventType.RUN_STARTED]
+        if types[:1] != allowed_prefix:
+            raise RecoveryError(
+                "run without a checkpoint has an invalid startup prefix"
+            )
+        run_started = events[0]
+        try:
+            runtime_artifact = Path(
+                str(run_started.payload["artifact_path"])
+            )
+        except KeyError as exc:
+            raise RecoveryError(
+                "startup prefix lacks its runtime contract artifact"
+            ) from exc
+        if (
+            run_started.actor != "runner"
+            or run_started.payload.get("task_id") != manifest.task_id
+            or not runtime_artifact.is_file()
+        ):
+            raise RecoveryError(
+                "startup prefix conflicts with the immutable run contract"
+            )
+
+        index = 1
+        if expected_fault is not None and len(events) > index:
+            fault_event = events[index]
+            if (
+                fault_event.type != EventType.FAULT_INJECTED
+                or fault_event.actor != "fault-injector"
+                or fault_event.payload != {"fault": expected_fault}
+            ):
+                raise RecoveryError(
+                    "run without a checkpoint has an invalid fault prefix"
+                )
+            index += 1
+        if expected_fault is not None and len(events) == 1:
+            self.state.append_event(
+                manifest.run_id,
+                EventType.FAULT_INJECTED,
+                actor="fault-injector",
+                payload={"fault": expected_fault},
+            )
+
+        phase = Phase.INTAKE
+        if len(events) > index:
+            transition = events[index]
+            if (
+                transition.type != EventType.PHASE_CHANGED
+                or transition.actor != "phase-machine"
+                or transition.payload
+                != {
+                    "from": Phase.INTAKE.value,
+                    "to": Phase.REPRODUCE.value,
+                }
+            ):
+                raise RecoveryError(
+                    "run without a checkpoint has an invalid phase prefix"
+                )
+            phase = Phase.REPRODUCE
+            index += 1
+        if len(events) != index:
+            raise RecoveryError(
+                "run without a checkpoint contains non-startup events"
+            )
+        if WorkspaceManager.untracked_files(workspace):
+            raise RecoveryError(
+                "startup workspace contains untracked files"
+            )
+        summary = WorkspaceManager.diff_summary(workspace)
+        if summary.patch_hash != sha256_text(""):
+            raise RecoveryError(
+                "startup workspace changed before its first checkpoint"
+            )
+        head = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if head.returncode != 0 or not head.stdout.strip():
+            raise RecoveryError("startup workspace has no valid Git HEAD")
+        return phase
+
+    @staticmethod
+    def _reconcile_workspace_head(
+        checkpoint: Checkpoint,
+        workspace: Path,
+    ) -> None:
         head = subprocess.run(
             ["git", "rev-parse", "HEAD"],
             cwd=workspace,
@@ -2071,6 +2612,29 @@ class AgentRunner:
         ).stdout.strip()
         if head != checkpoint.repository_head:
             raise RecoveryError("workspace HEAD does not match the latest durable checkpoint")
+
+    def _phase_after_checkpoint(self, checkpoint: Checkpoint) -> Phase:
+        phase = checkpoint.phase
+        for event in self.state.list_events(checkpoint.run_id):
+            if (
+                event.sequence <= checkpoint.through_sequence
+                or event.type != EventType.PHASE_CHANGED
+            ):
+                continue
+            try:
+                source = Phase(str(event.payload["from"]))
+                target = Phase(str(event.payload["to"]))
+            except (KeyError, ValueError) as exc:
+                raise RecoveryError(
+                    "phase transition after checkpoint is malformed"
+                ) from exc
+            if source != phase:
+                raise RecoveryError(
+                    "phase transition after checkpoint is not contiguous"
+                )
+            validate_transition(source, target)
+            phase = target
+        return phase
 
     def _completed_tools(self, run_id: str) -> list[str]:
         return [

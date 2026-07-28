@@ -238,7 +238,7 @@ def run(
 
 @app.command()
 def resume(run_id: Annotated[str, typer.Option("--run-id")]) -> None:
-    """Resume a suspended run after checkpoint/worktree reconciliation."""
+    """Resume a suspended or abandoned RUNNING run after reconciliation."""
     from patchloop.agent.runner import resume_from_cli
 
     _guarded(lambda: resume_from_cli(run_id))

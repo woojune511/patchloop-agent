@@ -3,14 +3,14 @@
 상태: **Implementation baseline active**  
 현재 milestone: **v2 Terra corrective pilot preflight**
 
-2026-07-28 구현 스냅샷:
+2026-07-29 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
 | Phase 3 state machine | done (v2 corrective gate offline-verified) | Current-diff check/review와 structured submission gate |
-| Phase 4 recovery | partial (cooperative offline) | Same-process suspend/resume와 9개 injected submission boundary에서 duplicate mutation/lifecycle 0; 실제 OS worker kill/restart 미검증 |
+| Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
 | Phase 6 evaluation | historical v1 pilot complete, v2 pilot pending | r3가 당시 official SCRR와 v1 qualification을 통과했지만 v2 campaign gate에는 재사용하지 않음 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
@@ -318,13 +318,26 @@ patchloop eval-task tasks/dev/task_001
 - Corrupt checkpoint/hash mismatch는 안전하게 fail한다.
 - 정상/장애 run 모두 evaluator 결과까지 연결된다.
 
-현재 executable evidence는 fault injector가 첫 durable patch checkpoint 또는 선택한
-submission lifecycle event 뒤 `InjectedFault`로 run을 cooperative하게 `suspended` 상태로
-만들고, 같은 Python process와 `AgentRunner` instance에서 `resume`하는 offline test다.
-실제 operating-system worker process 종료, interpreter 재시작 뒤의 resume, OpenAI live
-run resume와 중단된 paid campaign journal resume은 검증하거나 구현하지 않았다. 따라서
-위 exit gate 중 duplicate mutation/lifecycle과 corrupt-state fail-closed 경계만 통과했으며,
-실제 worker kill/restart recovery gate는 아직 pending이다.
+현재 executable evidence는 두 층이다. 기존 fault injector는 첫 durable patch checkpoint
+또는 submission lifecycle event 뒤 cooperative `suspended` resume을 검증한다. 별도
+subprocess E2E는 v2 raw patch와 pre/post intent가 durable해진 뒤 single-file smoke patch의
+유일한 atomic postimage replacement와 outcome persistence 사이에서 실제 worker를 강제
+종료한다. 살아 있는 동안 두 번째 process의 claim은 run을 변경하지 않고 거부되며, 종료 뒤
+세 번째 fresh interpreter가 stale `RUNNING`을 같은 run ID로 reclaim한다. Recovery는 이미
+적용된 patch를 다시 적용하지 않고 evaluator 성공까지 완료하며
+`ToolCalled(apply_patch)=1`, `PatchApplied=1`을 보존한다. Multi-file partial을 포함한
+pre/post/mixed/unknown-state, CAS tamper, policy rollback과 corrupt checkpoint는 별도 unit
+test로 fail-closed를 확인했다.
+
+Evaluator manifest/result/provenance와 verifier stdout은 atomic write와 CAS로 보존하고,
+완전한 hash-bound evaluation receipt가 있을 때만 fresh process가 evaluator를 재실행하지
+않는다. Receipt 이후 terminal finalize가 중단돼도 같은 evaluator 결과를 재사용하며,
+failure classification을 포함한 terminal event/result/status는 한 SQLite transaction으로
+닫힌다.
+
+이로써 offline/local Phase 4 exit gate는 통과했다. OpenAI live run resume, 중단된 paid
+campaign journal resume, frozen 30-run stress schedule의 process supervisor와
+`persistent_state=off` arm은 별도 미구현 범위이며 이 결과로 완료됐다고 주장하지 않는다.
 
 ## Phase 5. Failure Taxonomy and Memory
 

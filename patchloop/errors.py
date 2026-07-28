@@ -29,5 +29,9 @@ class RecoveryError(PatchLoopError):
     code = "RECOVERY_ERROR"
 
 
+class RunOwnershipConflict(RecoveryError):
+    code = "RUN_OWNERSHIP_CONFLICT"
+
+
 class InjectedFault(PatchLoopError):
     code = "INJECTED_FAULT"

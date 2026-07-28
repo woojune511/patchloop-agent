@@ -50,8 +50,8 @@ location. Set `PATCHLOOP_DOCKER_CLI` to an existing CLI path for a non-standard 
 
 ## Recovery demonstration
 
-This is a cooperative fault-injection demonstration after a durable patch checkpoint, not an
-operating-system process kill. Start with any completed mock run ID:
+The CLI demonstration remains a cooperative fault injection after a durable patch checkpoint.
+Start with any completed mock run ID:
 
 ```powershell
 uv run patchloop inject-fault --run <baseline-run-id> --fault worker-kill-after-patch
@@ -60,6 +60,21 @@ uv run patchloop resume --run-id <fault-run-id>
 
 Inspect the derived run in the viewer. It must have one `PatchApplied`, one `FaultInjected`, durable
 checkpoint evidence and a final evaluator result.
+
+The actual operating-system kill/fresh-interpreter gate is executable without Docker, network or
+an API key:
+
+```powershell
+.venv\Scripts\python.exe -m pytest -q tests/test_process_recovery.py
+```
+
+The test uses a single-file smoke patch and holds the first process after its only atomic postimage
+replacement but before outcome persistence. It verifies that a concurrent resume returns
+`RUN_OWNERSHIP_CONFLICT` without changing run state, terminates that process, then uses another
+Python process to reclaim stale `RUNNING`. The final evidence requires the same run ID, one patch
+call, one `PatchPrepared`, one `PatchApplied`, one `RunCompleted`, no `RunFailed`, two distinct
+worker claims and a successful evaluator result. Multi-file mixed/partial reconciliation is covered
+by unit tests rather than this process-kill E2E.
 
 ## Live API gate
 
@@ -146,6 +161,11 @@ memory-index admission recalculate the current source hash; copying a previously
 beside changed or missing evidence is not enough. Usage validation rejects cached plus cache-write
 input above total input, while malformed
 function-call arguments still retain the already billed response usage and calculated cost.
+For a new v2 patch, this inventory also rehashes the `PatchPrepared` intent and every nested raw
+patch, preimage and postimage CAS object.
+Completed v2 evaluation evidence additionally rehashes the receipt, manifest, result, provenance
+and every verifier evidence CAS object. A valid receipt lets a fresh process finish the same run
+without rerunning the evaluator after a crash between evaluation and terminal commit.
 
 Direct `patchloop run --model openai`, direct resume of an OpenAI run and direct fault injection
 from an OpenAI baseline are blocked; all paid calls go through an approved suite. A failed started

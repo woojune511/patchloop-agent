@@ -72,6 +72,8 @@ class EventType(StrEnum):
     MEMORY_RETRIEVED = "MemoryRetrieved"
     MODEL_CALLED = "ModelCalled"
     TOOL_CALLED = "ToolCalled"
+    TOOL_REPLAYED = "ToolReplayed"
+    PATCH_PREPARED = "PatchPrepared"
     TOOL_SUCCEEDED = "ToolSucceeded"
     TOOL_FAILED = "ToolFailed"
     PATCH_APPLIED = "PatchApplied"

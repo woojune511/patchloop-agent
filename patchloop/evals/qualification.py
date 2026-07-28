@@ -15,8 +15,10 @@ from patchloop.contracts import (
     ExperimentPurpose,
     FailureRecord,
     MemoryCondition,
+    RunManifest,
     RunOutcomeKind,
     RunResult,
+    RunStatus,
     TaskPackage,
     VerdictState,
 )
@@ -29,7 +31,12 @@ from patchloop.errors import ContractError, RecoveryError
 from patchloop.runtime import calculate_model_cost, repository_root, runtime_root
 from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json, sha256_bytes, sha256_text
+from patchloop.util import (
+    canonical_json,
+    safe_relative_path,
+    sha256_bytes,
+    sha256_text,
+)
 
 LEGACY_QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v1"
 QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v2"
@@ -47,6 +54,8 @@ _AGENT_VISIBLE_ARTIFACT_EVENTS = {
     EventType.CONTEXT_BUILT,
     EventType.MEMORY_RETRIEVED,
     EventType.MODEL_CALLED,
+    EventType.TOOL_CALLED,
+    EventType.PATCH_PREPARED,
     EventType.TOOL_SUCCEEDED,
     EventType.TOOL_FAILED,
 }
@@ -57,6 +66,7 @@ _REQUIRED_ARTIFACT_EVENTS = {
 }
 _SOURCE_EVIDENCE_SCHEMA_VERSION = "trace-source-evidence-v1"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V2 = "trace-source-evidence-v2"
+_SOURCE_EVIDENCE_SCHEMA_VERSION_V3 = "trace-source-evidence-v3"
 _EMPTY_DIFF_HASH = sha256_text("")
 
 
@@ -444,6 +454,487 @@ def _accepted_patch_artifact_evidence(
     return integrity, evidence
 
 
+def _nested_cas_artifact_evidence(
+    *,
+    artifact_root: Path,
+    event_id: str,
+    role: str,
+    raw_artifact: Any,
+) -> tuple[bool, dict[str, Any], bytes | None]:
+    item: dict[str, Any] = {
+        "event_id": event_id,
+        "role": role,
+        "artifact_id": (
+            raw_artifact.get("artifact_id")
+            if isinstance(raw_artifact, dict)
+            else None
+        ),
+        "declared_content_hash": (
+            raw_artifact.get("content_hash")
+            if isinstance(raw_artifact, dict)
+            else None
+        ),
+        "declared_path": (
+            raw_artifact.get("path")
+            if isinstance(raw_artifact, dict)
+            else None
+        ),
+        "actual_content_hash": None,
+        "declared_size_bytes": (
+            raw_artifact.get("size_bytes")
+            if isinstance(raw_artifact, dict)
+            else None
+        ),
+        "actual_size_bytes": None,
+    }
+    try:
+        artifact = Artifact.model_validate(raw_artifact)
+        path = Path(artifact.path).resolve()
+        relative = path.relative_to(artifact_root)
+        parts = relative.parts
+        if (
+            len(parts) != 4
+            or parts[0:2] != ("objects", "sha256")
+            or len(parts[2]) != 2
+            or len(parts[3]) != 62
+        ):
+            raise ValueError("artifact is not stored at a CAS path")
+        content = path.read_bytes()
+        actual_hash = sha256_bytes(content)
+        path_hash = f"sha256:{parts[2]}{parts[3]}"
+        item["actual_content_hash"] = actual_hash
+        item["actual_size_bytes"] = len(content)
+        valid = bool(
+            actual_hash == artifact.content_hash
+            and actual_hash == path_hash
+            and len(content) == artifact.size_bytes
+        )
+        return valid, item, content
+    except (OSError, TypeError, ValueError):
+        return False, item, None
+
+
+def _qualification_patch_paths(patch: str) -> list[str]:
+    """Extract the ordered, unique in-place paths from a raw Git diff."""
+
+    sections: list[list[str]] = []
+    for line in patch.splitlines():
+        if line.startswith("diff --git "):
+            sections.append([line])
+        elif sections:
+            sections[-1].append(line)
+        elif line.strip():
+            raise ValueError("content before the first diff section")
+    if not sections:
+        raise ValueError("raw patch has no diff sections")
+    paths: list[str] = []
+    for section in sections:
+        old_headers = [
+            line for line in section if line.startswith("--- ")
+        ]
+        new_headers = [
+            line for line in section if line.startswith("+++ ")
+        ]
+        if len(old_headers) != 1 or len(new_headers) != 1:
+            raise ValueError("raw patch has ambiguous file headers")
+
+        def normalized(header: str) -> str:
+            value = header[4:].split("\t", 1)[0]
+            if value.startswith('"') and value.endswith('"'):
+                value = value[1:-1]
+            if value.startswith(("a/", "b/")):
+                value = value[2:]
+            return value
+
+        old_path = safe_relative_path(
+            normalized(old_headers[0]),
+            field_name="patch path",
+        )
+        new_path = normalized(new_headers[0])
+        if new_path != "/dev/null":
+            new_path = safe_relative_path(
+                new_path,
+                field_name="patch path",
+            )
+            if new_path != old_path:
+                raise ValueError("raw patch changes its file path")
+        if old_path in paths:
+            raise ValueError("raw patch repeats a file path")
+        paths.append(old_path)
+    return paths
+
+
+def _verifier_artifact_evidence(
+    *,
+    root: Path,
+    result: RunResult | None,
+    required: bool,
+) -> tuple[bool, list[dict[str, Any]]]:
+    """Bind private evaluator outputs without copying their contents."""
+
+    if result is None:
+        return not required, []
+    artifact_root = (root / "artifacts").resolve()
+    integrity = True
+    evidence: list[dict[str, Any]] = []
+    referenced = 0
+    for verifier_result in result.verifier_results:
+        artifact_ids = verifier_result.evidence_artifact_ids
+        raw_artifacts = verifier_result.details.get(
+            "evidence_artifacts"
+        )
+        if not artifact_ids:
+            if raw_artifacts not in (None, []):
+                integrity = False
+            continue
+        referenced += len(artifact_ids)
+        if (
+            not isinstance(raw_artifacts, list)
+            or len(raw_artifacts) != len(artifact_ids)
+        ):
+            integrity = False
+            continue
+        for expected_id, raw_artifact in zip(
+            artifact_ids,
+            raw_artifacts,
+            strict=True,
+        ):
+            valid, item, _ = _nested_cas_artifact_evidence(
+                artifact_root=artifact_root,
+                event_id=verifier_result.verifier_result_id,
+                role=f"verifier:{verifier_result.check_type}",
+                raw_artifact=raw_artifact,
+            )
+            if item.get("artifact_id") != expected_id:
+                valid = False
+            evidence.append(item)
+            integrity = integrity and valid
+    if required and len(evidence) != referenced:
+        integrity = False
+    return integrity, evidence
+
+
+def _evaluation_receipt_evidence(
+    *,
+    root: Path,
+    run_id: str,
+    manifest: RunManifest,
+    result: RunResult | None,
+) -> tuple[bool, dict[str, Any]]:
+    """Validate the evaluator-ready marker and every file hash it binds."""
+
+    run_dir = root / "artifacts" / "runs" / run_id
+    receipt_path = run_dir / "evaluation-receipt.json"
+    item: dict[str, Any] = {
+        "receipt_content_hash": None,
+        "declared_file_hashes": None,
+        "actual_file_hashes": {},
+        "worktree_diff_hash": None,
+        "submitted_patch_artifact_id": None,
+        "evaluator_duration_ms": None,
+    }
+    try:
+        receipt_bytes = receipt_path.read_bytes()
+        item["receipt_content_hash"] = sha256_bytes(receipt_bytes)
+        receipt = json.loads(receipt_bytes)
+        if not isinstance(receipt, dict):
+            raise ValueError("receipt is not an object")
+        file_hashes = receipt.get("file_hashes")
+        duration_ms = receipt.get("evaluator_duration_ms")
+        item["declared_file_hashes"] = file_hashes
+        item["worktree_diff_hash"] = receipt.get(
+            "worktree_diff_hash"
+        )
+        item["submitted_patch_artifact_id"] = receipt.get(
+            "submitted_patch_artifact_id"
+        )
+        item["evaluator_duration_ms"] = duration_ms
+        if (
+            receipt.get("schema_version")
+            != "evaluation-receipt-v1"
+            or receipt.get("run_id") != run_id
+            or not isinstance(duration_ms, int)
+            or duration_ms < 0
+            or not isinstance(file_hashes, dict)
+            or set(file_hashes)
+            != {"manifest.json", "result.json", "provenance.json"}
+        ):
+            raise ValueError("receipt contract mismatch")
+        contents: dict[str, bytes] = {}
+        for name in ("manifest.json", "result.json", "provenance.json"):
+            content = (run_dir / name).read_bytes()
+            actual_hash = sha256_bytes(content)
+            item["actual_file_hashes"][name] = actual_hash
+            if file_hashes.get(name) != actual_hash:
+                raise ValueError("receipt file hash mismatch")
+            contents[name] = content
+        persisted_manifest = RunManifest.model_validate_json(
+            contents["manifest.json"]
+        )
+        persisted_result = RunResult.model_validate_json(
+            contents["result.json"]
+        )
+        provenance = json.loads(contents["provenance.json"])
+        if not isinstance(provenance, dict):
+            raise ValueError("provenance is not an object")
+        verifier_descriptors = [
+            raw_artifact
+            for verifier_result in persisted_result.verifier_results
+            for raw_artifact in verifier_result.details.get(
+                "evidence_artifacts",
+                [],
+            )
+        ]
+        patch_hash = receipt.get("worktree_diff_hash")
+        submitted_id = receipt.get("submitted_patch_artifact_id")
+        if (
+            persisted_manifest != manifest
+            or result is None
+            or persisted_result != result
+            or persisted_result.run_id != run_id
+            or persisted_result.evaluation_status != "completed"
+            or persisted_result.submitted_patch_artifact_id
+            != submitted_id
+            or provenance.get("patch_hash") != patch_hash
+            or provenance.get("diff_hash") != patch_hash
+            or provenance.get("submitted_patch_content_hash")
+            != patch_hash
+            or provenance.get("submitted_patch_artifact_id")
+            != submitted_id
+            or provenance.get("verifier_evidence_schema_version")
+            != "verifier-evidence-v1"
+            or provenance.get("verifier_evidence_artifacts")
+            != verifier_descriptors
+        ):
+            raise ValueError("receipt evidence mismatch")
+        return True, item
+    except (
+        OSError,
+        TypeError,
+        ValueError,
+        json.JSONDecodeError,
+    ):
+        return False, item
+
+
+def _patch_intent_artifact_evidence(
+    *,
+    root: Path,
+    events,
+    private_tokens: set[str],
+) -> tuple[bool, int, int, list[dict[str, Any]]]:
+    """Bind every CAS object needed to classify an interrupted v2 patch."""
+
+    artifact_root = (root / "artifacts").resolve()
+    integrity = True
+    evidence: list[dict[str, Any]] = []
+    texts: list[str] = []
+    scanned = 0
+    for event in events:
+        if event.type != EventType.PATCH_PREPARED:
+            continue
+        valid, item, content = _nested_cas_artifact_evidence(
+            artifact_root=artifact_root,
+            event_id=event.event_id,
+            role="patch-intent",
+            raw_artifact=event.payload.get("intent_artifact"),
+        )
+        evidence.append(item)
+        integrity = integrity and valid
+        if content is None:
+            continue
+        scanned += 1
+        texts.append(content.decode("utf-8", errors="replace"))
+        try:
+            intent = json.loads(content.decode("utf-8", errors="strict"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            integrity = False
+            continue
+        matching_calls = [
+            candidate
+            for candidate in events
+            if candidate.type == EventType.TOOL_CALLED
+            and candidate.sequence < event.sequence
+            and candidate.correlation_id == event.correlation_id
+            and candidate.payload.get("tool") == "apply_patch"
+        ]
+        matching_call = matching_calls[0] if len(matching_calls) == 1 else None
+        if (
+            not isinstance(intent, dict)
+            or intent.get("schema_version") != "patch-mutation-intent-v1"
+            or intent.get("run_id") != event.run_id
+            or intent.get("action_id") != event.correlation_id
+            or matching_call is None
+            or intent.get("input_hash")
+            != matching_call.payload.get("input_hash")
+            or intent.get("patch_artifact")
+            != matching_call.payload.get("patch_artifact")
+            or not isinstance(intent.get("patch_artifact"), dict)
+            or matching_call.payload.get("artifact_id")
+            != intent["patch_artifact"].get("artifact_id")
+            or matching_call.payload.get("artifact_path")
+            != intent["patch_artifact"].get("path")
+            or intent.get("baseline_worktree_diff_hash")
+            != event.payload.get("baseline_worktree_diff_hash")
+            or intent.get("expected_worktree_diff_hash")
+            != event.payload.get("expected_worktree_diff_hash")
+            or event.payload.get("artifact_id") != item["artifact_id"]
+            or event.payload.get("artifact_path") != item["declared_path"]
+            or event.payload.get("content_hash") != item["actual_content_hash"]
+            or event.payload.get("size_bytes") != item["actual_size_bytes"]
+        ):
+            integrity = False
+            continue
+        nested: list[tuple[str, Any]] = [
+            ("raw-patch", intent.get("patch_artifact"))
+        ]
+        files = intent.get("files")
+        if not isinstance(files, list) or not files:
+            integrity = False
+            continue
+        intent_paths: list[str] = []
+        for index, file_entry in enumerate(files):
+            if (
+                not isinstance(file_entry, dict)
+                or set(file_entry)
+                != {
+                    "path",
+                    "mode",
+                    "git_mode",
+                    "preimage_artifact",
+                    "postimage_artifact",
+                }
+                or type(file_entry.get("mode")) is not int
+                or not 0 <= file_entry["mode"] <= 0o7777
+                or file_entry.get("git_mode")
+                not in {"100644", "100755"}
+            ):
+                integrity = False
+                continue
+            try:
+                path = safe_relative_path(
+                    str(file_entry["path"]),
+                    field_name="prepared patch path",
+                )
+            except ContractError:
+                integrity = False
+                continue
+            if path in intent_paths:
+                integrity = False
+                continue
+            intent_paths.append(path)
+            nested.append(
+                (
+                    f"preimage:{index}:{path}",
+                    file_entry.get("preimage_artifact"),
+                )
+            )
+            if file_entry.get("postimage_artifact") is not None:
+                nested.append(
+                    (
+                        f"postimage:{index}:{path}",
+                        file_entry.get("postimage_artifact"),
+                    )
+                )
+        raw_patch_content: bytes | None = None
+        for role, raw_artifact in nested:
+            nested_valid, nested_item, nested_content = (
+                _nested_cas_artifact_evidence(
+                    artifact_root=artifact_root,
+                    event_id=event.event_id,
+                    role=role,
+                    raw_artifact=raw_artifact,
+                )
+            )
+            evidence.append(nested_item)
+            integrity = integrity and nested_valid
+            if nested_content is not None:
+                scanned += 1
+                texts.append(
+                    nested_content.decode("utf-8", errors="replace")
+                )
+                if role == "raw-patch":
+                    raw_patch_content = nested_content
+        if raw_patch_content is None:
+            integrity = False
+            continue
+        try:
+            raw_patch = raw_patch_content.decode("utf-8", errors="strict")
+        except UnicodeDecodeError:
+            integrity = False
+            continue
+        expected_input_hash = sha256_text(
+            canonical_json(
+                {
+                    "tool": "apply_patch",
+                    "input": {"patch": raw_patch},
+                }
+            )
+        )
+        if (
+            intent.get("input_hash") != expected_input_hash
+            or matching_call is None
+            or matching_call.payload.get("input_hash")
+            != expected_input_hash
+        ):
+            integrity = False
+        try:
+            raw_patch_paths = _qualification_patch_paths(raw_patch)
+        except (ContractError, ValueError):
+            integrity = False
+            continue
+        if intent_paths != raw_patch_paths:
+            integrity = False
+        expected_patch_hash = sha256_text(raw_patch)
+        outcomes = [
+            candidate
+            for candidate in events
+            if candidate.type
+            in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+            and candidate.correlation_id == event.correlation_id
+            and candidate.payload.get("tool") == "apply_patch"
+        ]
+        applications = [
+            candidate
+            for candidate in events
+            if candidate.type == EventType.PATCH_APPLIED
+            and candidate.correlation_id == event.correlation_id
+        ]
+        if len(outcomes) != 1 or outcomes[0].sequence <= event.sequence:
+            integrity = False
+            continue
+        outcome = outcomes[0]
+        if outcome.type == EventType.TOOL_SUCCEEDED:
+            if (
+                len(applications) != 1
+                or not outcome.sequence < applications[0].sequence
+                or outcome.payload.get("patch_hash")
+                != expected_patch_hash
+                or applications[0].payload.get("patch_hash")
+                != expected_patch_hash
+                or outcome.payload.get("worktree_diff_hash")
+                != intent.get("expected_worktree_diff_hash")
+                or applications[0].payload.get("worktree_diff_hash")
+                != intent.get("expected_worktree_diff_hash")
+            ):
+                integrity = False
+        elif (
+            applications
+            or outcome.payload.get("status")
+            not in {"failed", "rejected"}
+        ):
+            integrity = False
+
+    lower_markers = {token.lower() for token in private_tokens if token}
+    matches = sum(
+        1
+        for text in texts
+        for marker in lower_markers
+        if marker and marker in text.lower()
+    )
+    return integrity, scanned, matches, evidence
+
+
 def _request_context(request_body: Any) -> str | None:
     """Extract the exact user context from PatchLoop's Responses request."""
 
@@ -563,6 +1054,7 @@ def _ordered_submission_evidence(
         and mutation.payload.get("worktree_diff_hash") == accepted_diff
     )
     apply_call_ok = False
+    patch_intent_ok = False
     if mutation is not None and mutation.correlation_id is not None:
         apply_successes = [
             event
@@ -582,7 +1074,23 @@ def _ordered_submission_evidence(
             and apply_successes
             and event.sequence < apply_successes[0].sequence
         ]
-        apply_call_ok = len(apply_successes) == 1 and len(apply_calls) == 1
+        prepared_intents = [
+            event
+            for event in events
+            if event.type == EventType.PATCH_PREPARED
+            and event.correlation_id == mutation.correlation_id
+            and apply_calls
+            and apply_successes
+            and apply_calls[0].sequence
+            < event.sequence
+            < apply_successes[0].sequence
+        ]
+        patch_intent_ok = len(prepared_intents) == 1
+        apply_call_ok = bool(
+            len(apply_successes) == 1
+            and len(apply_calls) == 1
+            and patch_intent_ok
+        )
 
     check_sequences: dict[str, int | None] = {}
     checks_ok = mutation is not None
@@ -637,6 +1145,7 @@ def _ordered_submission_evidence(
         "mutation_sequence": mutation.sequence if mutation is not None else None,
         "mutation_valid": mutation_ok,
         "apply_call_valid": apply_call_ok,
+        "patch_intent_valid": patch_intent_ok,
         "visible_checks_valid": checks_ok,
         "visible_check_sequences": check_sequences,
         "latest_get_diff_valid": bool(
@@ -690,6 +1199,7 @@ def calculate_source_evidence_hash(
         manifest = state.get_manifest(run_id)
         events = state.list_events(run_id)
         checkpoints = state.list_checkpoints(run_id)
+        worker_claims = state.list_worker_claims(run_id)
         result = _result_for_run(state, run_id)
     except (RecoveryError, ValueError) as exc:
         raise ContractError(f"source evidence is unavailable: {run_id}") from exc
@@ -725,8 +1235,50 @@ def calculate_source_evidence_hash(
             root=run_root,
             events=events,
         )
-        snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V2
+        snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V3
         snapshot["accepted_patch_artifacts"] = accepted_patch_artifacts
+        if any(event.type == EventType.PATCH_PREPARED for event in events):
+            _, _, _, patch_intent_artifacts = (
+                _patch_intent_artifact_evidence(
+                    root=run_root,
+                    events=events,
+                    private_tokens=set(),
+                )
+            )
+            snapshot["patch_intent_artifacts"] = patch_intent_artifacts
+        snapshot["worker_claims"] = worker_claims
+    verifier_evidence_declared = bool(
+        result is not None
+        and any(
+            "evidence_artifacts" in verifier_result.details
+            for verifier_result in result.verifier_results
+        )
+    )
+    receipt_path = (
+        run_root
+        / "artifacts"
+        / "runs"
+        / run_id
+        / "evaluation-receipt.json"
+    )
+    if verifier_evidence_declared or receipt_path.exists():
+        # Fresh v1/replay runs also use the modern evaluator receipt. Bind
+        # those new artifacts without changing hashes for historical v1 runs
+        # that have neither receipt nor full verifier descriptors.
+        snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V3
+        _, verifier_evidence = _verifier_artifact_evidence(
+            root=run_root,
+            result=result,
+            required=True,
+        )
+        _, receipt_evidence = _evaluation_receipt_evidence(
+            root=run_root,
+            run_id=run_id,
+            manifest=manifest,
+            result=result,
+        )
+        snapshot["verifier_evidence_artifacts"] = verifier_evidence
+        snapshot["evaluation_receipt"] = receipt_evidence
     return sha256_text(canonical_json(snapshot))
 
 
@@ -748,6 +1300,7 @@ def qualify_run(
     package = load_task_package(task_dir)
     events = state.list_events(run_id)
     checkpoints = state.list_checkpoints(run_id)
+    worker_claims = state.list_worker_claims(run_id)
     result = _result_for_run(state, run_id)
     path = qualification_path(run_id, root=run_root)
     if path.is_file():
@@ -791,6 +1344,54 @@ def qualify_run(
 
     contiguous = [event.sequence for event in events] == list(range(1, len(events) + 1))
     add("contiguous_events", contiguous, event_count=len(events))
+    if manifest.tool_schema_version == "v2":
+        claim_ids = [claim.get("claim_id") for claim in worker_claims]
+        owner_ids = [claim.get("owner_id") for claim in worker_claims]
+        claimed_at = [claim.get("claimed_at") for claim in worker_claims]
+        claims_ok = all(
+            claim.get("run_id") == run_id
+            and isinstance(claim.get("owner_id"), str)
+            and bool(claim["owner_id"])
+            and isinstance(claim.get("owner_pid"), int)
+            and claim["owner_pid"] > 0
+            and isinstance(claim.get("owner_hostname"), str)
+            and bool(claim["owner_hostname"])
+            and claim.get("prior_status")
+            in {
+                RunStatus.CREATED.value,
+                RunStatus.SUSPENDED.value,
+                RunStatus.RUNNING.value,
+            }
+            and claim.get("reclaimed")
+            == (claim.get("prior_status") == RunStatus.RUNNING.value)
+            for claim in worker_claims
+        )
+        claims_ok = bool(
+            claims_ok
+            and worker_claims
+            and worker_claims[0].get("prior_status")
+            == RunStatus.CREATED.value
+            and all(
+                claim.get("prior_status")
+                in {
+                    RunStatus.SUSPENDED.value,
+                    RunStatus.RUNNING.value,
+                }
+                for claim in worker_claims[1:]
+            )
+            and len(set(claim_ids)) == len(claim_ids)
+            and len(set(owner_ids)) == len(owner_ids)
+            and claimed_at == sorted(claimed_at)
+        )
+        add(
+            "worker_claim_provenance",
+            claims_ok,
+            claim_count=len(worker_claims),
+            running_reclaim_count=sum(
+                claim.get("reclaimed") is True
+                for claim in worker_claims
+            ),
+        )
 
     terminals = [event for event in events if event.type in _TERMINAL_EVENTS]
     terminal_ok = (
@@ -1294,6 +1895,7 @@ def qualify_run(
         private_tokens=private_tokens,
     )
     accepted_patch_artifact_count = 0
+    patch_intent_artifact_count = 0
     if manifest.tool_schema_version == "v2":
         (
             accepted_patch_artifact_integrity,
@@ -1304,17 +1906,97 @@ def qualify_run(
         )
         artifact_integrity = artifact_integrity and accepted_patch_artifact_integrity
         accepted_patch_artifact_count = len(accepted_patch_artifact_evidence)
+        has_patch_prepared = any(
+            event.type == EventType.PATCH_PREPARED for event in events
+        )
+        has_patch_applied = any(
+            event.type == EventType.PATCH_APPLIED for event in events
+        )
+        patch_intent_required = has_patch_prepared or has_patch_applied
+        if patch_intent_required:
+            (
+                patch_intent_integrity,
+                patch_intent_scanned,
+                patch_intent_matches,
+                patch_intent_evidence,
+            ) = _patch_intent_artifact_evidence(
+                root=run_root,
+                events=events,
+                private_tokens=private_tokens,
+            )
+            artifact_integrity = bool(
+                artifact_integrity
+                and patch_intent_integrity
+                and (not has_patch_applied or has_patch_prepared)
+            )
+            artifact_count += patch_intent_scanned
+            leak_matches += patch_intent_matches
+            patch_intent_artifact_count = len(patch_intent_evidence)
     artifact_details = {
         "scanned_artifact_count": artifact_count,
         "missing_required_artifact_events": missing_artifact_identities,
     }
     if manifest.tool_schema_version == "v2":
         artifact_details["accepted_patch_artifact_count"] = accepted_patch_artifact_count
+        if any(
+            event.type
+            in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED}
+            for event in events
+        ):
+            artifact_details["patch_intent_artifact_count"] = (
+                patch_intent_artifact_count
+            )
     add(
         "agent_visible_artifacts",
         artifact_integrity,
         **artifact_details,
     )
+    verifier_evidence_declared = bool(
+        result is not None
+        and any(
+            "evidence_artifacts" in verifier_result.details
+            for verifier_result in result.verifier_results
+        )
+    )
+    evaluation_receipt_path = (
+        run_root
+        / "artifacts"
+        / "runs"
+        / run_id
+        / "evaluation-receipt.json"
+    )
+    if verifier_evidence_declared or evaluation_receipt_path.exists():
+        (
+            verifier_artifact_integrity,
+            verifier_artifact_evidence,
+        ) = _verifier_artifact_evidence(
+            root=run_root,
+            result=result,
+            required=True,
+        )
+        (
+            evaluation_receipt_integrity,
+            evaluation_receipt_evidence,
+        ) = _evaluation_receipt_evidence(
+            root=run_root,
+            run_id=run_id,
+            manifest=manifest,
+            result=result,
+        )
+        add(
+            "verifier_evidence_artifacts",
+            verifier_artifact_integrity
+            and evaluation_receipt_integrity,
+            evidence_artifact_count=len(
+                verifier_artifact_evidence
+            ),
+            evaluation_receipt_present=evaluation_receipt_path.is_file(),
+            evaluation_receipt_content_hash=(
+                evaluation_receipt_evidence.get(
+                    "receipt_content_hash"
+                )
+            ),
+        )
     leakage_ok = leak_matches == 0
     add("public_private_boundary", leakage_ok, private_match_count=leak_matches)
 
@@ -1516,6 +2198,7 @@ def qualify_run(
         "no_memory_boundary",
         "approved_execution_plan",
         "agent_visible_artifacts",
+        "verifier_evidence_artifacts",
         "prompt_token_integrity",
         "usage_reconciliation",
         "persisted_result",
@@ -1525,6 +2208,7 @@ def qualify_run(
     }
     if structured_lifecycle_contract:
         trace_check_ids.add("submission_lifecycle")
+        trace_check_ids.add("worker_claim_provenance")
     trace_integrity = all(
         check["passed"] for check in checks if check["check_id"] in trace_check_ids
     )

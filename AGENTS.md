@@ -21,8 +21,9 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   official hidden/regression/scope/safety verdict와 trace qualification을 통과한 historical
   accepted pilot이다. 이후 tool/context/submission lifecycle이 v2로 바뀌었으므로 이 run은
   현재 campaign gate를 열지 않는다. 별도 mini model-candidate pilot
-  `run_d4fea5e7198b4abc`도 evaluator 전에 실패했다. v2 교정 경로는 offline test만
-  통과했으며, 새 v2 Terra pilot, stress schedule, 12-run development campaign과 96-run
+  `run_d4fea5e7198b4abc`도 evaluator 전에 실패했다. v2 교정 경로와 실제 subprocess
+  hard-kill 뒤 stale `RUNNING` reclaim은 offline test만 통과했으며, 새 v2 Terra pilot,
+  stress schedule, 12-run development campaign과 96-run
   core campaign은 완료되지 않았다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.

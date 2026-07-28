@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
+import shutil
+import subprocess
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,6 +18,7 @@ from patchloop.agent.model import (
     RequestedTool,
 )
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
+from patchloop.agent.tools import ToolGateway
 from patchloop.contracts import (
     Artifact,
     Budget,
@@ -24,13 +28,18 @@ from patchloop.contracts import (
     FaultSpec,
     Phase,
     RunOutcomeKind,
+    RunResult,
+    RunStatus,
+    VerdictState,
 )
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.evals.faults import clone_with_fault
+from patchloop.evals.qualification import qualify_run
 from patchloop.runtime import build_manifest
 from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, utc_now
+from patchloop.verifier import EvaluationEngine
 
 TASK = "tasks/smoke/csv-quoted-newline/public.yaml"
 SMOKE_TASKS = {
@@ -160,7 +169,55 @@ def test_offline_replay_agent_creates_hashed_complete_trace(
     assert manifest.model.replay_hash == sha256_bytes(Path(replay_path).read_bytes())
     assert sum(event.type == EventType.MODEL_CALLED for event in events) == 5
     assert sum(event.type == EventType.TOOL_CALLED for event in events) == 4
+    receipt = json.loads(
+        (
+            tmp_path
+            / "runtime"
+            / "artifacts"
+            / "runs"
+            / result["run_id"]
+            / "evaluation-receipt.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert (
+        receipt["submitted_patch_artifact_id"]
+        == result["submitted_patch_artifact_id"]
+    )
+    qualification = qualify_run(
+        result["run_id"],
+        task_dir=Path(task_path).parent,
+        root=tmp_path / "runtime",
+    )
+    verifier_evidence = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "verifier_evidence_artifacts"
+    )
+    assert verifier_evidence["passed"] is True
     _assert_public_trace_boundary(runner, result["run_id"], task_path)
+    persisted_result = json.loads(
+        (
+            tmp_path
+            / "runtime"
+            / "artifacts"
+            / "runs"
+            / result["run_id"]
+            / "result.json"
+        ).read_text(encoding="utf-8")
+    )
+    verifier_artifact = persisted_result["verifier_results"][0][
+        "details"
+    ]["evidence_artifacts"][0]
+    Path(verifier_artifact["path"]).write_bytes(b"tampered")
+    with pytest.raises(
+        ContractError,
+        match="legacy trace qualification source evidence changed",
+    ):
+        qualify_run(
+            result["run_id"],
+            task_dir=Path(task_path).parent,
+            root=tmp_path / "runtime",
+        )
 
 
 def test_replay_path_must_be_repository_relative(tmp_path, monkeypatch) -> None:
@@ -925,6 +982,913 @@ def test_worker_restart_resumes_without_duplicate_patch(tmp_path, monkeypatch) -
     assert sum(event.type == EventType.PATCH_APPLIED for event in events) == 1
 
 
+def test_worker_restart_reuses_completed_evaluation_before_terminal_commit(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_evaluation_receipt_recovery",
+        sandbox_backend="local",
+    )
+    runtime = tmp_path / "runtime"
+    runner = AgentRunner(runtime)
+    real_finalize = runner.state.finalize_run
+
+    def stop_before_terminal_commit(*_args, **_kwargs):
+        raise SystemExit("synthetic process death before terminal commit")
+
+    monkeypatch.setattr(
+        runner.state,
+        "finalize_run",
+        stop_before_terminal_commit,
+    )
+    with pytest.raises(
+        SystemExit,
+        match="synthetic process death",
+    ):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    receipt_path = (
+        runtime
+        / "artifacts"
+        / "runs"
+        / manifest.run_id
+        / "evaluation-receipt.json"
+    )
+    assert receipt_path.is_file()
+    persisted_before = (
+        receipt_path.parent / "result.json"
+    ).read_bytes()
+    evaluator_workspaces = sorted(
+        (runtime / "workspaces").glob("eval_*")
+    )
+    assert len(evaluator_workspaces) == 1
+    assert runner.state.get_run_status(manifest.run_id) == RunStatus.RUNNING
+
+    monkeypatch.setattr(runner.state, "finalize_run", real_finalize)
+    fresh_runner = AgentRunner(runtime)
+
+    def unavailable_model_adapter(*_args, **_kwargs):
+        raise AssertionError(
+            "evaluation-only recovery must not construct a model adapter"
+        )
+
+    monkeypatch.setattr(
+        fresh_runner,
+        "_model_adapter",
+        unavailable_model_adapter,
+    )
+    resumed = fresh_runner.resume(manifest.run_id)
+
+    assert resumed["scope_compliant_success"] is True
+    assert (
+        receipt_path.parent / "result.json"
+    ).read_bytes() == persisted_before
+    assert sorted(
+        (runtime / "workspaces").glob("eval_*")
+    ) == evaluator_workspaces
+    events = runner.state.list_events(manifest.run_id)
+    assert sum(event.type == EventType.RUN_COMPLETED for event in events) == 1
+    assert sum(event.type == EventType.FAILURE_TAGGED for event in events) == 0
+
+
+def test_worker_restart_reuses_failed_evaluation_and_failure_record(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    from patchloop.evals.failures import classify_failure as real_classify
+
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_failed_eval_receipt",
+        sandbox_backend="local",
+    )
+    runtime = tmp_path / "runtime"
+    real_evaluate = EvaluationEngine.evaluate
+
+    def evaluate_as_task_failure(self, *args, **kwargs):
+        result = real_evaluate(self, *args, **kwargs)
+        result.scope_compliant_success = False
+        result.verdicts.hidden_tests = VerdictState.FAIL
+        result.outcome_kind = RunOutcomeKind.TASK_FAILURE
+        run_dir = (
+            self.artifact_store.root / "runs" / result.run_id
+        )
+        self.artifact_store.write_text_atomic(
+            run_dir / "result.json",
+            result.model_dump_json(indent=2),
+        )
+        return result
+
+    def stop_after_failure_record(*args, **kwargs):
+        record = real_classify(*args, **kwargs)
+        assert record is not None
+        raise SystemExit(
+            "synthetic process death after failure classification"
+        )
+
+    monkeypatch.setattr(
+        EvaluationEngine,
+        "evaluate",
+        evaluate_as_task_failure,
+    )
+    monkeypatch.setattr(
+        "patchloop.agent.runner.classify_failure",
+        stop_after_failure_record,
+    )
+    runner = AgentRunner(runtime)
+    with pytest.raises(
+        SystemExit,
+        match="after failure classification",
+    ):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    receipt_path = (
+        runtime
+        / "artifacts"
+        / "runs"
+        / manifest.run_id
+        / "evaluation-receipt.json"
+    )
+    result_path = receipt_path.parent / "result.json"
+    result_before = result_path.read_bytes()
+    failure_files = list((runtime / "failures").rglob("*.json"))
+    assert len(failure_files) == 1
+    evaluator_workspaces = sorted(
+        (runtime / "workspaces").glob("eval_*")
+    )
+    assert len(evaluator_workspaces) == 1
+
+    monkeypatch.setattr(
+        "patchloop.agent.runner.classify_failure",
+        real_classify,
+    )
+    resumed = AgentRunner(runtime).resume(manifest.run_id)
+
+    assert resumed["scope_compliant_success"] is False
+    assert resumed["verdicts"]["hidden_tests"] == VerdictState.FAIL.value
+    assert result_path.read_bytes() == result_before
+    assert sorted(
+        (runtime / "workspaces").glob("eval_*")
+    ) == evaluator_workspaces
+    events = runner.state.list_events(manifest.run_id)
+    assert sum(event.type == EventType.FAILURE_TAGGED for event in events) == 1
+    assert sum(event.type == EventType.RUN_COMPLETED for event in events) == 1
+    assert len(list((runtime / "failures").rglob("*.json"))) == 1
+
+
+@pytest.mark.parametrize(
+    "tamper_target",
+    ["verifier-cas", "provenance"],
+)
+def test_evaluation_receipt_rejects_tampered_evidence(
+    tmp_path,
+    monkeypatch,
+    tamper_target,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    result = runner.start(TASK, model="mock")
+    manifest = runner.state.get_manifest(result["run_id"])
+    accepted = next(
+        event
+        for event in runner.state.list_events(result["run_id"])
+        if event.type == EventType.SUBMISSION_ACCEPTED
+    )
+    submitted_patch = Artifact.model_validate(
+        accepted.payload["submitted_patch_artifact"]
+    )
+    persisted = RunResult.model_validate_json(
+        (
+            runner.artifacts.root
+            / "runs"
+            / result["run_id"]
+            / "result.json"
+        ).read_text(encoding="utf-8")
+    )
+    if tamper_target == "verifier-cas":
+        raw_evidence = next(
+            verifier.details["evidence_artifacts"][0]
+            for verifier in persisted.verifier_results
+            if verifier.evidence_artifact_ids
+        )
+        verifier_artifact = Artifact.model_validate(raw_evidence)
+        Path(verifier_artifact.path).write_bytes(
+            b"tampered verifier evidence"
+        )
+        error_match = "verifier evidence artifact"
+    else:
+        provenance_path = (
+            runner.artifacts.root
+            / "runs"
+            / result["run_id"]
+            / "provenance.json"
+        )
+        provenance_path.write_bytes(
+            provenance_path.read_bytes() + b"\n"
+        )
+        error_match = "file hash"
+    workspace = (
+        runner.root
+        / "workspaces"
+        / result["run_id"]
+        / "repo"
+    )
+    expected_patch_hash = runner.workspaces.diff_summary(
+        workspace
+    ).patch_hash
+
+    with pytest.raises(
+        RecoveryError,
+        match=error_match,
+    ):
+        runner._load_completed_evaluation(
+            manifest,
+            expected_patch_hash=expected_patch_hash,
+            submitted_patch_artifact=submitted_patch,
+            expected_official=False,
+        )
+
+
+def test_created_run_can_be_resumed_without_a_prior_worker_claim(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_created_resume",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    runner.state.create_run(manifest)
+
+    result = runner.resume(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    claims = runner.state.list_worker_claims(manifest.run_id)
+    assert len(claims) == 1
+    assert claims[0]["prior_status"] == RunStatus.CREATED.value
+
+
+def test_resume_recovers_run_started_before_first_checkpoint(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_started_prefix_recovery",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_transition = runner._transition
+
+    def crash_before_transition(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    monkeypatch.setattr(runner, "_transition", crash_before_transition)
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+    monkeypatch.setattr(runner, "_transition", original_transition)
+
+    result = AgentRunner(runner.root).resume(manifest.run_id)
+    events = runner.state.list_events(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    assert sum(event.type == EventType.RUN_STARTED for event in events) == 1
+    assert (
+        sum(
+            event.type == EventType.PHASE_CHANGED
+            and event.payload
+            == {"from": Phase.INTAKE.value, "to": Phase.REPRODUCE.value}
+            for event in events
+        )
+        == 1
+    )
+
+
+def test_resume_recovers_phase_change_before_first_checkpoint(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_phase_prefix_recovery",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_checkpoint = runner._checkpoint
+
+    def crash_before_checkpoint(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    monkeypatch.setattr(runner, "_checkpoint", crash_before_checkpoint)
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+    monkeypatch.setattr(runner, "_checkpoint", original_checkpoint)
+
+    result = AgentRunner(runner.root).resume(manifest.run_id)
+    events = runner.state.list_events(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    assert (
+        sum(
+            event.type == EventType.PHASE_CHANGED
+            and event.payload
+            == {"from": Phase.INTAKE.value, "to": Phase.REPRODUCE.value}
+            for event in events
+        )
+        == 1
+    )
+
+
+@pytest.mark.parametrize(
+    ("tool_name", "expected_transition"),
+    [
+        (
+            "run_check",
+            {
+                "from": Phase.IMPLEMENT.value,
+                "to": Phase.VERIFY.value,
+            },
+        ),
+        (
+            "get_diff",
+            {
+                "from": Phase.VERIFY.value,
+                "to": Phase.REVIEW.value,
+            },
+        ),
+    ],
+)
+def test_resume_replays_missing_tool_phase_suffix_once(
+    tmp_path,
+    monkeypatch,
+    tool_name,
+    expected_transition,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id=f"run_phase_suffix_{tool_name}",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_phase_after_tool = runner._phase_after_tool
+    crashed = False
+
+    def crash_after_outcome(
+        run_id,
+        phase,
+        observed_tool,
+        result,
+        task,
+        workspace,
+    ):
+        nonlocal crashed
+        if observed_tool == tool_name and not crashed:
+            crashed = True
+            raise SystemExit(86)
+        return original_phase_after_tool(
+            run_id,
+            phase,
+            observed_tool,
+            result,
+            task,
+            workspace,
+        )
+
+    monkeypatch.setattr(
+        runner,
+        "_phase_after_tool",
+        crash_after_outcome,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    result = AgentRunner(runner.root).resume(manifest.run_id)
+    events = runner.state.list_events(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    assert (
+        sum(
+            event.type == EventType.TOOL_CALLED
+            and event.payload.get("tool") == tool_name
+            for event in events
+        )
+        == 1
+    )
+    assert (
+        sum(
+            event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool") == tool_name
+            for event in events
+        )
+        == 1
+    )
+    assert (
+        sum(
+            event.type == EventType.PHASE_CHANGED
+            and event.payload == expected_transition
+            for event in events
+        )
+        == 1
+    )
+
+
+def test_resume_completes_get_diff_from_orphan_tool_call(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_get_diff_call_recovery",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_dispatch = ToolGateway._dispatch
+    crashed = False
+
+    def crash_after_get_diff_call(self, name, arguments):
+        nonlocal crashed
+        if name == "get_diff" and not crashed:
+            crashed = True
+            raise SystemExit(86)
+        return original_dispatch(self, name, arguments)
+
+    monkeypatch.setattr(
+        ToolGateway,
+        "_dispatch",
+        crash_after_get_diff_call,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    result = AgentRunner(runner.root).resume(manifest.run_id)
+    events = runner.state.list_events(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    assert (
+        sum(
+            event.type == EventType.TOOL_CALLED
+            and event.payload.get("tool") == "get_diff"
+            for event in events
+        )
+        == 1
+    )
+    assert (
+        sum(
+            event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool") == "get_diff"
+            for event in events
+        )
+        == 1
+    )
+
+
+def test_resume_does_not_promote_orphan_read_over_external_staged_change(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_orphan_read_external_change",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_dispatch = ToolGateway._dispatch
+    crashed = False
+
+    def crash_after_get_diff_call(self, name, arguments):
+        nonlocal crashed
+        if name == "get_diff" and not crashed:
+            crashed = True
+            raise SystemExit(86)
+        return original_dispatch(self, name, arguments)
+
+    monkeypatch.setattr(
+        ToolGateway,
+        "_dispatch",
+        crash_after_get_diff_call,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    checkpoints_before = runner.state.list_checkpoints(manifest.run_id)
+    workspace = (
+        runner.root / "workspaces" / manifest.run_id / "repo"
+    )
+    readme = workspace / "README.md"
+    changed = readme.read_bytes() + b"\nexternal staged change\n"
+    readme.write_bytes(changed)
+    subprocess.run(
+        ["git", "add", "README.md"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+    )
+
+    with pytest.raises(RecoveryError, match="diff hash"):
+        AgentRunner(runner.root).resume(manifest.run_id)
+
+    assert readme.read_bytes() == changed
+    checkpoints_after = runner.state.list_checkpoints(manifest.run_id)
+    assert [item.checkpoint_id for item in checkpoints_after] == [
+        item.checkpoint_id for item in checkpoints_before
+    ]
+
+
+def test_resume_does_not_promote_completed_read_over_external_change(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_completed_read_external_change",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_phase_after_tool = runner._phase_after_tool
+    crashed = False
+
+    def crash_after_get_diff_outcome(
+        run_id,
+        phase,
+        tool_name,
+        result,
+        task,
+        workspace,
+    ):
+        nonlocal crashed
+        if tool_name == "get_diff" and not crashed:
+            crashed = True
+            raise SystemExit(86)
+        return original_phase_after_tool(
+            run_id,
+            phase,
+            tool_name,
+            result,
+            task,
+            workspace,
+        )
+
+    monkeypatch.setattr(
+        runner,
+        "_phase_after_tool",
+        crash_after_get_diff_outcome,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    checkpoints_before = runner.state.list_checkpoints(manifest.run_id)
+    workspace = (
+        runner.root / "workspaces" / manifest.run_id / "repo"
+    )
+    readme = workspace / "README.md"
+    changed = readme.read_bytes() + b"\nexternal tracked change\n"
+    readme.write_bytes(changed)
+
+    with pytest.raises(RecoveryError, match="diff hash"):
+        AgentRunner(runner.root).resume(manifest.run_id)
+
+    assert readme.read_bytes() == changed
+    checkpoints_after = runner.state.list_checkpoints(manifest.run_id)
+    assert [item.checkpoint_id for item in checkpoints_after] == [
+        item.checkpoint_id for item in checkpoints_before
+    ]
+
+
+@pytest.mark.parametrize(
+    "crash_point",
+    ["before-run-started", "after-run-started"],
+)
+def test_pre_checkpoint_resume_rejects_different_clean_base(
+    tmp_path,
+    monkeypatch,
+    crash_point,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id=f"run_wrong_base_{crash_point.replace('-', '_')}",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+
+    def crash(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    if crash_point == "before-run-started":
+        monkeypatch.setattr(runner, "_execute", crash)
+    else:
+        monkeypatch.setattr(runner, "_transition", crash)
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    workspace = (
+        runner.root / "workspaces" / manifest.run_id / "repo"
+    )
+    readme = workspace / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8") + "\nwrong clean base\n",
+        encoding="utf-8",
+    )
+    subprocess.run(
+        ["git", "add", "README.md"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "commit", "-qm", "different clean base"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+    )
+
+    with pytest.raises(ContractError, match="immutable base revision"):
+        AgentRunner(runner.root).resume(manifest.run_id)
+
+    assert runner.state.get_run_status(manifest.run_id) == RunStatus.FAILED
+    assert runner.state.list_checkpoints(manifest.run_id) == []
+    assert not [
+        event
+        for event in runner.state.list_events(manifest.run_id)
+        if event.type == EventType.MODEL_CALLED
+    ]
+
+
+def test_fatal_interrupted_patch_does_not_promote_unknown_checkpoint(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_unknown_patch_recovery",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_finalize = ToolGateway._finalize_applied_patch
+
+    def crash_after_mutation(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    monkeypatch.setattr(
+        ToolGateway,
+        "_finalize_applied_patch",
+        crash_after_mutation,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+    monkeypatch.setattr(
+        ToolGateway,
+        "_finalize_applied_patch",
+        original_finalize,
+    )
+    checkpoints_before = runner.state.list_checkpoints(manifest.run_id)
+    target = (
+        runner.root
+        / "workspaces"
+        / manifest.run_id
+        / "repo"
+        / "mini_data_utils"
+        / "csvlite.py"
+    )
+    unknown = target.read_text(encoding="utf-8").replace(
+        'newline=""',
+        "newline=None",
+    )
+    target.write_text(unknown, encoding="utf-8")
+
+    with pytest.raises(RecoveryError, match="unknown state"):
+        AgentRunner(runner.root).resume(manifest.run_id)
+
+    checkpoints_after = runner.state.list_checkpoints(manifest.run_id)
+    assert [item.checkpoint_id for item in checkpoints_after] == [
+        item.checkpoint_id for item in checkpoints_before
+    ]
+    assert target.read_text(encoding="utf-8") == unknown
+    assert runner.state.get_run_status(manifest.run_id) == RunStatus.FAILED
+    events = runner.state.list_events(manifest.run_id)
+    assert (
+        sum(
+            event.type == EventType.TOOL_FAILED
+            and event.payload.get("tool") == "apply_patch"
+            and event.payload.get("error_details", {}).get("fatal") is True
+            for event in events
+        )
+        == 1
+    )
+    assert sum(event.type == EventType.PATCH_APPLIED for event in events) == 0
+
+
+def test_resume_rejects_replaced_workspace_root_before_patch_recovery(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_replaced_workspace_root",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_apply_postimages = ToolGateway._apply_patch_postimages
+
+    def crash_before_postimage_write(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    monkeypatch.setattr(
+        ToolGateway,
+        "_apply_patch_postimages",
+        crash_before_postimage_write,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+    monkeypatch.setattr(
+        ToolGateway,
+        "_apply_patch_postimages",
+        original_apply_postimages,
+    )
+
+    workspace = (
+        runner.root / "workspaces" / manifest.run_id / "repo"
+    )
+    external = tmp_path / "external-identical-workspace"
+    backup = workspace.with_name("repo.backup")
+    shutil.copytree(workspace, external)
+    workspace.rename(backup)
+    external_target = external / "mini_data_utils" / "csvlite.py"
+    external_before = external_target.read_bytes()
+    linked = False
+    try:
+        if os.name == "nt":
+            linked_result = subprocess.run(
+                [
+                    "cmd",
+                    "/c",
+                    "mklink",
+                    "/J",
+                    str(workspace),
+                    str(external),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if linked_result.returncode != 0:
+                pytest.skip(
+                    "Windows junction creation is unavailable: "
+                    f"{linked_result.stderr.strip()}"
+                )
+        else:
+            workspace.symlink_to(
+                external,
+                target_is_directory=True,
+            )
+        linked = True
+
+        with pytest.raises(
+            ContractError,
+            match="symlink or junction",
+        ):
+            AgentRunner(runner.root).resume(manifest.run_id)
+
+        assert external_target.read_bytes() == external_before
+        assert not any(
+            event.type == EventType.PATCH_APPLIED
+            for event in runner.state.list_events(manifest.run_id)
+        )
+    finally:
+        if linked:
+            if workspace.is_symlink():
+                workspace.unlink()
+            else:
+                workspace.rmdir()
+        if backup.exists():
+            backup.rename(workspace)
+
+
+def test_malformed_prepared_mode_is_fatal_without_checkpoint_promotion(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id="run_malformed_mode_recovery",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_put_json = runner.artifacts.put_json
+    original_finalize = ToolGateway._finalize_applied_patch
+
+    def persist_malformed_mode(value):
+        if (
+            isinstance(value, dict)
+            and value.get("schema_version")
+            == "patch-mutation-intent-v1"
+        ):
+            value = json.loads(json.dumps(value))
+            value["files"][0]["mode"] = "not-an-int"
+        return original_put_json(value)
+
+    def crash_after_mutation(*_args, **_kwargs):
+        raise SystemExit(86)
+
+    monkeypatch.setattr(
+        runner.artifacts,
+        "put_json",
+        persist_malformed_mode,
+    )
+    monkeypatch.setattr(
+        ToolGateway,
+        "_finalize_applied_patch",
+        crash_after_mutation,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+    monkeypatch.setattr(
+        ToolGateway,
+        "_finalize_applied_patch",
+        original_finalize,
+    )
+    checkpoints_before = runner.state.list_checkpoints(manifest.run_id)
+
+    with pytest.raises(RecoveryError, match="file image evidence"):
+        AgentRunner(runner.root).resume(manifest.run_id)
+
+    checkpoints_after = runner.state.list_checkpoints(manifest.run_id)
+    assert [item.checkpoint_id for item in checkpoints_after] == [
+        item.checkpoint_id for item in checkpoints_before
+    ]
+    assert runner.state.get_run_status(manifest.run_id) == RunStatus.FAILED
+
+
 def test_replay_worker_restart_preserves_source_identity(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
     replay_path = SMOKE_REPLAYS["config-falsy-override"]
@@ -1051,7 +2015,7 @@ def test_run_check_untracked_output_fails_as_infrastructure_error(
     assert result["evaluation_status"] == "not_run"
 
 
-def test_run_check_tracked_mutation_closes_tool_evidence_and_usage(
+def test_run_check_staged_tracked_mutation_closes_tool_evidence_and_usage(
     tmp_path,
     monkeypatch,
 ) -> None:
@@ -1064,6 +2028,12 @@ def test_run_check_tracked_mutation_closes_tool_evidence_and_usage(
         target.write_text(
             target.read_text(encoding="utf-8") + "\n# check mutation\n",
             encoding="utf-8",
+        )
+        subprocess.run(
+            ["git", "add", "mini_data_utils/csvlite.py"],
+            cwd=workspace,
+            check=True,
+            capture_output=True,
         )
         return result
 

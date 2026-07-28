@@ -128,10 +128,11 @@ shell/repository tool이 아니라 orchestrator control action이다.
 
 Agent-visible `apply_patch`는 model이 만든 hunk header의 old/new line total만 body에서
 재계산한다. Patch body 문법, context와 path matching은 Git이 그대로 검사하며
-deterministic verifier도 완화하지 않는다. Policy reject는 같은 raw patch를 reverse
-recount한 뒤 pre-call diff hash를 재확인한다. Rollback 실패, 복원 불일치 또는 agent
-workspace의 untracked file은 recovery error로 run을 중단한다. 이 호환 계층은 agent
-gateway에만 있으며 hidden evaluator와 fixture evaluator의 patch 적용은 strict하다.
+deterministic verifier도 완화하지 않는다. v2는 intent의 검증된 preimage로 policy reject를
+rollback하고 pre-call diff hash를 재확인한다. Legacy v1만 같은 raw patch를 reverse
+recount한다. Rollback 실패, 복원 불일치 또는 agent workspace의 untracked file은 recovery
+error로 run을 중단한다. 이 호환 계층은 agent gateway에만 있으며 hidden evaluator와
+fixture evaluator의 patch 적용은 strict하다.
 
 ## 6. Persistent state
 
@@ -156,18 +157,41 @@ Logical storage layout은 source repository와 분리한다.
   file을 fsync한 뒤 atomic replace하고, 기존 object는 재사용 전에 bytes hash를 검증한다.
 - 동일 action ID와 input hash의 완료 기록이 있으면 recovery에서 재실행하지 않는다.
 - 중단된 action은 tool별 reconciliation 정책으로 completed/failed/unknown을 결정한다.
+- Run 전체 lifetime에는 Windows/Linux kernel advisory lock을 하나 유지한다. Lock을 얻은
+  worker만 SQLite status를 `RUNNING`으로 claim할 수 있고, 살아 있는 owner와 경쟁한
+  resume은 run event/status를 바꾸지 않고 `RUN_OWNERSHIP_CONFLICT`로 끝난다. OS process가
+  죽으면 lock은 커널이 해제하며 다음 process는 stale `RUNNING`을 원자적으로 reclaim한다.
+- v2 patch는 `ToolCalled(raw patch CAS) → PatchPrepared(pre/post image CAS) → mutation →
+  action result/ToolSucceeded/PatchApplied atomic transaction` 순서를 사용한다. Recovery는
+  모든 target이 pre면 한 번 적용하고, post면 재적용하지 않으며, mixed면 검증된 preimage로
+  baseline을 복원한 뒤 한 번 적용한다. Unknown state나 CAS 손상은 fail-closed한다.
+- `read_file`, `search_files`, `run_check`, `get_diff`도 v2에서는 normalized input CAS를
+  먼저 기록한다. Outcome 없이 중단되면 workspace가 checkpoint와 정확히 같은지 확인한 뒤
+  원래 `ToolCalled`를 재사용해 `ToolSucceeded`/`ToolFailed`로 닫는다. 이미 durable result가
+  있는 v2 action을 같은 identity로 다시 호출한 cache hit만 `ToolReplayed`를 남긴다.
+- Managed workspace는 정확한 `{workspace_root}/{run_id}/repo` layout, symlink/junction 부재와
+  resolved-root containment를 매 recovery 전에 검증한다. Worktree evidence는 staged와
+  unstaged tracked 변경을 함께 포함하는 `git diff HEAD`다.
+- Evaluator는 manifest/result/provenance와 verifier evidence CAS를 완성한 뒤 hash-bound
+  evaluation receipt를 기록한다. 완전한 receipt만 재사용하며, `FailureTagged?`,
+  terminal event, result와 status는 한 SQLite transaction으로 확정한다.
 - `finish_task`는 correlation별 lifecycle prefix와 durable recovery result를 대조해
   누락 suffix, DONE transition과 checkpoint event만 보충한다.
 
 ### Recovery algorithm
 
-1. 마지막 valid event sequence와 checkpoint를 읽는다.
-2. Checkpoint가 참조하는 event와 artifact hash를 검증한다.
-3. Target repository HEAD, worktree diff, submitted patch hash를 비교한다.
-4. 완료·진행 중·미실행 action을 분류한다.
-5. 현재 phase와 budget을 복원한다.
-6. Structured state로 새 context를 만든다.
-7. 첫 미완료 action부터 실행한다.
+1. Per-run OS lock을 얻고, 최초 start는 manifest insert와 `CREATED → RUNNING`을 한
+   transaction으로 처리한다. Resume은 `CREATED | SUSPENDED | RUNNING → RUNNING` claim을
+   원자적으로 남긴다.
+2. 마지막 valid event sequence와 checkpoint를 읽는다.
+3. Checkpoint가 참조하는 event와 artifact hash를 검증한다.
+4. Target repository HEAD와 중단된 patch의 pre/post image를 먼저 대조한다.
+5. 중단된 patch가 없다면 generic action 재실행이나 checkpoint 승격 전에 현재
+   `git diff HEAD`가 마지막 checkpoint와 정확히 같은지 확인한다.
+6. Patch outcome/phase/checkpoint의 누락된 durable suffix를 보충한다.
+7. 최종 worktree diff와 checkpoint, submitted patch hash를 비교한다.
+8. 현재 phase와 budget을 복원한다.
+9. Structured state로 새 context를 만들고 첫 미완료 action부터 실행한다.
 
 ## 7. Context construction
 

@@ -133,7 +133,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   staging commit `b50b4314aa7fd209737db46f15b38aee056bbd80` and made zero model/API
   calls. This completes the 20-task research role target but is deterministic evaluator evidence,
   not live-model agent performance or a core campaign result.
-- Cooperative worker-kill-after-checkpoint recovery with duplicate-mutation assertion
+- Cooperative checkpoint fault recovery plus real subprocess kill/fresh-interpreter reclaim after
+  a single-file smoke patch's only atomic postimage replacement and before outcome persistence,
+  with active-owner exclusion and duplicate-mutation assertions
 - One-run offline experiment and raw-derived report
 - Unit/integration/recovery/viewer route tests
 - Frozen 25-package dataset manifest with 5/5 calibration, 20/20 research roles, three selected
@@ -222,6 +224,17 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   rename/copy, binary and metadata-only patches remain unsupported, while the evaluator stays
   strict. r3 reached evaluation through this corrected path; this remains one pilot, not a
   campaign-level reliability result.
+- v2 patch mutation now writes raw patch and pre/post image intent CAS before touching the target,
+  performs all-target preflight followed by atomic postimage replace/delete, atomically closes
+  action outcome plus `PatchApplied`, and includes nested recovery artifacts in source evidence.
+  Unit tests cover pre, post, multi-file mixed/partial, unknown, tampered and policy-rejected
+  states. A local subprocess E2E kills the owning process after a single-file smoke patch's only
+  atomic postimage replacement but before outcome persistence; a fresh interpreter reclaims stale
+  `RUNNING`, avoids a second apply and reaches evaluator success.
+- Evaluator manifest/result/provenance, submitted patch and verifier evidence use atomic/CAS-backed
+  writes. A hash-bound receipt permits evaluator reuse after a crash before terminal commit, while
+  terminal failure/result/status/event are committed together. This is local integrity and recovery
+  evidence, not protection against an attacker able to rewrite the database and every artifact.
 - New non-replay runs use a v2 tool/context contract that binds latest visible-check success and
   final diff review to the exact current worktree hash, exposes a structured `finish_task`, delays
   phase transitions until tool success and makes two premature submissions recoverable. It also
@@ -292,12 +305,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - The frozen schedule is a preregistered contract, not proof that the stress runtime is complete.
   The after-model-call-10 context-reset trigger, the `persistent_state=off` arm and a stress
   matrix runner/report are not implemented.
-- The existing worker-kill path cooperatively suspends a run after the first durable patch
-  checkpoint; it does not terminate an external operating-system worker process.
-- `resume` currently accepts only an explicitly suspended run and has no cross-process ownership
-  claim for reclaiming a stale `RUNNING` worker. An interruption after `git apply` but before the
-  action result and `PatchApplied` event is durable therefore fails closed instead of reconciling
-  that mutation. Actual worker-process kill/restart remains a pending reliability gate.
+- The CLI `worker-kill-after-patch` injector still cooperatively suspends after a durable patch
+  checkpoint; the actual process termination is currently exercised by the isolated subprocess
+  E2E rather than a production stress supervisor.
+- Offline mock/replay resume accepts a free-lock stale `RUNNING` run, but direct OpenAI resume and
+  interrupted paid campaign journal resume remain intentionally blocked. The OS lock/SQLite claim
+  implementation is local-filesystem oriented and has not been validated as a distributed lease.
 - The existing timeout injector synthesizes one timeout on the first registered visible check.
   It does not yet reproduce a real environment hang or specifically target a full-suite check.
 - The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import shutil
 import subprocess
@@ -98,64 +99,189 @@ class WorkspaceManager:
     def create(
         self, run_id: str, repository_url: str, expected_revision: str | None = None
     ) -> Path:
-        target = self.workspace_root / run_id / "repo"
-        if target.exists():
+        run_root = (self.workspace_root / run_id).resolve()
+        if run_root.parent != self.workspace_root:
+            raise ContractError(f"invalid workspace run ID: {run_id!r}")
+        target = run_root / "repo"
+        staging = run_root / "repo.initializing"
+        if target.exists() or target.is_symlink():
             raise ContractError(f"workspace already exists: {target}")
-        target.parent.mkdir(parents=True, exist_ok=True)
-        if repository_url in ALLOWED_REMOTE_REPOSITORIES:
-            if not expected_revision or re.fullmatch(r"[0-9a-f]{40}", expected_revision) is None:
-                raise ContractError("remote repository revision must be a full 40-character commit")
-            initialize = subprocess.run(
-                ["git", "init", "--quiet", str(target)],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if initialize.returncode != 0:
-                raise ContractError(
-                    f"audited remote checkout initialization failed: {initialize.stderr.strip()}"
-                )
-            _git(target, "config", "core.longpaths", "true")
-            _git(target, "remote", "add", "origin", repository_url)
-            fetch = _git(
-                target,
-                "fetch",
-                "--quiet",
-                "--no-tags",
-                "--depth",
-                "1",
-                "origin",
-                expected_revision,
-                check=False,
-            )
-            if fetch.returncode != 0:
-                raise ContractError(
-                    "audited remote revision is unavailable: "
-                    f"exact-SHA fetch failed with {fetch.stderr.strip()!r}"
-                )
-            _git(target, "checkout", "--quiet", "--detach", "FETCH_HEAD")
-            actual_revision = _git(target, "rev-parse", "HEAD").stdout.strip()
-            if actual_revision != expected_revision:
-                raise ContractError(
-                    f"remote checkout mismatch: expected {expected_revision}, got {actual_revision}"
-                )
-            return target
-        if not repository_url.startswith("snapshot://"):
-            raise ContractError(f"repository URL is not allowlisted: {repository_url}")
-        source = self.resolve_repository(repository_url)
-        actual_revision = directory_hash(source)
-        if expected_revision and expected_revision != actual_revision:
+        run_root.mkdir(parents=True, exist_ok=True)
+        if staging.is_symlink():
             raise ContractError(
-                "snapshot content hash does not match repository.base_commit: "
-                f"expected {expected_revision}, got {actual_revision}"
+                f"workspace staging path is an unexpected symlink: {staging}"
             )
-        shutil.copytree(source, target)
-        _git(target, "init", "-q")
-        _git(target, "config", "user.email", "patchloop@example.invalid")
-        _git(target, "config", "user.name", "PatchLoop Evaluator")
-        _git(target, "add", ".")
-        _git(target, "commit", "-qm", "audited base snapshot")
+        if staging.exists():
+            shutil.rmtree(staging)
+        try:
+            if repository_url in ALLOWED_REMOTE_REPOSITORIES:
+                if (
+                    not expected_revision
+                    or re.fullmatch(r"[0-9a-f]{40}", expected_revision) is None
+                ):
+                    raise ContractError(
+                        "remote repository revision must be a full "
+                        "40-character commit"
+                    )
+                initialize = subprocess.run(
+                    ["git", "init", "--quiet", str(staging)],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if initialize.returncode != 0:
+                    raise ContractError(
+                        "audited remote checkout initialization failed: "
+                        f"{initialize.stderr.strip()}"
+                    )
+                _git(staging, "config", "core.longpaths", "true")
+                _git(staging, "remote", "add", "origin", repository_url)
+                fetch = _git(
+                    staging,
+                    "fetch",
+                    "--quiet",
+                    "--no-tags",
+                    "--depth",
+                    "1",
+                    "origin",
+                    expected_revision,
+                    check=False,
+                )
+                if fetch.returncode != 0:
+                    raise ContractError(
+                        "audited remote revision is unavailable: "
+                        f"exact-SHA fetch failed with {fetch.stderr.strip()!r}"
+                    )
+                _git(staging, "checkout", "--quiet", "--detach", "FETCH_HEAD")
+                actual_revision = _git(
+                    staging,
+                    "rev-parse",
+                    "HEAD",
+                ).stdout.strip()
+                if actual_revision != expected_revision:
+                    raise ContractError(
+                        "remote checkout mismatch: expected "
+                        f"{expected_revision}, got {actual_revision}"
+                    )
+            else:
+                if not repository_url.startswith("snapshot://"):
+                    raise ContractError(
+                        f"repository URL is not allowlisted: {repository_url}"
+                    )
+                source = self.resolve_repository(repository_url)
+                actual_revision = directory_hash(source)
+                if expected_revision and expected_revision != actual_revision:
+                    raise ContractError(
+                        "snapshot content hash does not match "
+                        "repository.base_commit: "
+                        f"expected {expected_revision}, got {actual_revision}"
+                    )
+                shutil.copytree(source, staging)
+                _git(staging, "init", "-q")
+                _git(
+                    staging,
+                    "config",
+                    "user.email",
+                    "patchloop@example.invalid",
+                )
+                _git(
+                    staging,
+                    "config",
+                    "user.name",
+                    "PatchLoop Evaluator",
+                )
+                _git(staging, "add", ".")
+                _git(staging, "commit", "-qm", "audited base snapshot")
+            os.replace(staging, target)
+        except BaseException:
+            if staging.exists() and not staging.is_symlink():
+                shutil.rmtree(staging)
+            raise
         return target
+
+    def validate_pristine(
+        self,
+        workspace: str | Path,
+        repository_url: str,
+        expected_revision: str,
+    ) -> None:
+        """Prove an eventless/pre-checkpoint workspace is the manifest base."""
+
+        resolved = self.validate_managed_workspace(workspace)
+        status = _git(
+            resolved,
+            "status",
+            "--porcelain=v1",
+            "--untracked-files=all",
+        ).stdout
+        if status:
+            raise ContractError(
+                "pre-checkpoint workspace is not a clean base checkout"
+            )
+        if repository_url.startswith("snapshot://"):
+            actual_revision = directory_hash(resolved)
+        elif repository_url in ALLOWED_REMOTE_REPOSITORIES:
+            actual_revision = _git(
+                resolved,
+                "rev-parse",
+                "HEAD",
+            ).stdout.strip()
+        else:
+            raise ContractError(
+                f"repository URL is not allowlisted: {repository_url}"
+            )
+        if actual_revision != expected_revision:
+            raise ContractError(
+                "pre-checkpoint workspace does not match the immutable "
+                f"base revision: {actual_revision} != {expected_revision}"
+            )
+
+    def validate_managed_workspace(
+        self,
+        workspace: str | Path,
+    ) -> Path:
+        """Reject replaced workspace roots before reading or mutating them."""
+
+        target = Path(workspace).absolute()
+        try:
+            relative = target.relative_to(self.workspace_root)
+        except ValueError as exc:
+            raise ContractError(
+                "workspace root is outside the managed workspace directory"
+            ) from exc
+        if (
+            len(relative.parts) != 2
+            or relative.parts[-1] != "repo"
+        ):
+            raise ContractError(
+                "workspace root does not have the managed run layout"
+            )
+        cursor = self.workspace_root
+        root_is_junction = bool(
+            getattr(cursor, "is_junction", lambda: False)()
+        )
+        if cursor.is_symlink() or root_is_junction:
+            raise ContractError(
+                "managed workspace root is a symlink or junction"
+            )
+        for part in relative.parts:
+            cursor = cursor / part
+            is_junction = bool(
+                getattr(cursor, "is_junction", lambda: False)()
+            )
+            if cursor.is_symlink() or is_junction:
+                raise ContractError(
+                    "workspace path contains a symlink or junction"
+                )
+        resolved = target.resolve()
+        if (
+            not resolved.is_dir()
+            or not resolved.is_relative_to(self.workspace_root)
+        ):
+            raise ContractError(
+                "workspace root is outside the managed workspace directory"
+            )
+        return resolved
 
     @staticmethod
     def apply_patch(workspace: Path, patch_path: str | Path) -> str:
@@ -185,8 +311,14 @@ class WorkspaceManager:
 
     @staticmethod
     def diff_summary(workspace: Path) -> DiffSummary:
-        patch = _git(workspace, "diff", "--no-ext-diff", "--binary").stdout
-        numstat = _git(workspace, "diff", "--numstat").stdout
+        patch = _git(
+            workspace,
+            "diff",
+            "HEAD",
+            "--no-ext-diff",
+            "--binary",
+        ).stdout
+        numstat = _git(workspace, "diff", "HEAD", "--numstat").stdout
         changed_files: list[str] = []
         added = deleted = 0
         for line in numstat.splitlines():
