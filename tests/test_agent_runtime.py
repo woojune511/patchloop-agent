@@ -309,6 +309,63 @@ def test_agent_runner_rejects_model_selector_manifest_mismatch(
     assert runner.state.has_run(manifest.run_id) is False
 
 
+def test_agent_runner_rejects_task_package_manifest_mismatch(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_task_binding_mismatch",
+        provider="mock",
+        model_id="mock-v1",
+    ).model_copy(update={"public_spec_hash": "sha256:" + ("f" * 64)})
+    runner = AgentRunner(tmp_path / "runtime")
+
+    with pytest.raises(ContractError, match="immutable run manifest"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    assert runner.state.has_run(manifest.run_id) is False
+
+
+def test_agent_runner_uses_one_validated_task_snapshot_before_model_turn(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    original_package = load_task_package(Path(TASK).parent)
+    replacement = original_package.model_copy(
+        update={"private_spec_hash": "sha256:" + ("f" * 64)}
+    )
+    loads = []
+
+    def changing_loader(_task_dir):
+        loads.append(len(loads) + 1)
+        return original_package if len(loads) == 1 else replacement
+
+    class StopAtModelTurn:
+        @staticmethod
+        def next_turn(_context, _tools):
+            assert loads == [1]
+            raise SystemExit("stop at model boundary")
+
+    manifest = build_manifest(
+        original_package,
+        run_id="run_task_snapshot_probe",
+        provider="mock",
+        model_id="mock-v1",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr("patchloop.agent.runner.load_task_package", changing_loader)
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_args, **_kwargs: StopAtModelTurn())
+
+    with pytest.raises(SystemExit, match="stop at model boundary"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    assert loads == [1]
+
+
 def test_startup_failure_persists_terminal_infrastructure_attempt(
     tmp_path,
     monkeypatch,

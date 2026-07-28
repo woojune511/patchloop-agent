@@ -16,7 +16,9 @@ from patchloop.util import sha256_bytes
 SYSTEM_PROMPT = (
     "You are a constrained coding agent. Use only supplied tools. "
     "Inspect evidence, apply a minimal patch, run registered checks, "
-    "review the diff, then answer exactly DONE."
+    "review the diff, then answer exactly DONE. "
+    "The apply_patch tool accepts only a raw Git unified diff beginning with "
+    "'diff --git'; never use '*** Begin Patch' or '*** End Patch' markers."
 )
 
 

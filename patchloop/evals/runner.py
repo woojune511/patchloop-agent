@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import os
 import random
@@ -21,6 +22,8 @@ from patchloop.contracts import (
     ExperimentPurpose,
     ExperimentRunContext,
     MemoryCondition,
+    RunManifest,
+    TaskPackage,
 )
 from patchloop.dataset import require_dataset_role, require_frozen_dataset
 from patchloop.errors import ContractError
@@ -265,10 +268,20 @@ def _append_campaign_event(
     }
     event["event_hash"] = sha256_text(canonical_json(event))
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a", encoding="utf-8", newline="\n") as stream:
-        stream.write(canonical_json(event) + "\n")
-        stream.flush()
-        os.fsync(stream.fileno())
+    exclusive_start = sequence == 1 and previous_event_hash is None
+    try:
+        with path.open(
+            "x" if exclusive_start else "a",
+            encoding="utf-8",
+            newline="\n",
+        ) as stream:
+            stream.write(canonical_json(event) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+    except FileExistsError as exc:
+        raise ContractError(
+            "campaign journal already exists; refusing duplicate schedule ownership"
+        ) from exc
     return str(event["event_hash"])
 
 
@@ -332,11 +345,26 @@ def _pilot_qualification(run_id: str | None) -> dict[str, Any]:
     if run_id is None:
         return {"run_id": None, "qualified": False, "reason": "missing pilot_run_id"}
     try:
-        from patchloop.evals.qualification import load_trace_qualification
+        from patchloop.evals.qualification import (
+            calculate_source_evidence_hash,
+            load_trace_qualification,
+        )
 
-        payload = load_trace_qualification(run_id)
+        payload = load_trace_qualification(run_id, root=runtime_root())
+        current_source_hash = calculate_source_evidence_hash(
+            run_id,
+            root=runtime_root(),
+        )
     except (ContractError, FileNotFoundError) as exc:
         return {"run_id": run_id, "qualified": False, "reason": str(exc)}
+    recorded_source_hash = payload["source_evidence_hash"]
+    if not hmac.compare_digest(recorded_source_hash, current_source_hash):
+        return {
+            "run_id": run_id,
+            "qualified": False,
+            "qualification_hash": payload.get("qualification_hash"),
+            "reason": "pilot source evidence hash mismatch",
+        }
     required = (
         payload.get("purpose")
         == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT.value
@@ -349,6 +377,7 @@ def _pilot_qualification(run_id: str | None) -> dict[str, Any]:
         "run_id": run_id,
         "qualified": required,
         "qualification_hash": payload.get("qualification_hash"),
+        "source_evidence_hash": recorded_source_hash,
         "purpose": payload.get("purpose"),
         "outcome_kind": payload.get("outcome_kind"),
     }
@@ -827,6 +856,134 @@ def _persisted_attempt_result(runner: AgentRunner, run_id: str) -> dict | None:
     return None
 
 
+def _assert_task_package_matches_preflight(
+    package: TaskPackage,
+    task_row: dict[str, Any],
+) -> None:
+    environment = package.environment
+    actual = {
+        "task_id": package.public.task_id,
+        "task_version": package.public.task_version,
+        "split": package.public.split,
+        "public_spec_hash": package.public_spec_hash,
+        "private_spec_hash": package.private_spec_hash,
+        "base_commit": package.public.repository.base_commit,
+        "evaluator_image": (
+            environment.evaluator_image if environment is not None else None
+        ),
+        "evaluator_image_digest": (
+            environment.image_digest if environment is not None else None
+        ),
+    }
+    expected = {key: task_row[key] for key in actual}
+    canonical_task_path = task_row.get("canonical_task_path")
+    canonical_path_matches = (
+        canonical_task_path is None
+        or Path(package.root).resolve()
+        == ensure_within(repository_root(), canonical_task_path).resolve()
+    )
+    if actual != expected or not canonical_path_matches:
+        raise ContractError(
+            "task package changed since the approved preflight: "
+            f"{task_row['task_id']}"
+        )
+
+
+def _assert_manifest_matches_preflight(
+    manifest: RunManifest,
+    *,
+    suite: ExperimentSuite,
+    preflight: dict[str, Any],
+    item: dict[str, Any],
+) -> None:
+    expected = {
+        "task": {
+            "task_id": item["task_id"],
+            "task_version": item["task_version"],
+            "base_commit": item["base_commit"],
+            "public_spec_hash": item["public_spec_hash"],
+            "private_spec_hash": item["private_spec_hash"],
+        },
+        "model": {
+            "provider": suite.model,
+            "model_id": suite.model_id,
+            "provider_sdk_version": (
+                preflight["environment"]["openai_sdk"]["version"]
+                if suite.model == "openai"
+                else None
+            ),
+            "reasoning_effort": suite.reasoning_effort,
+            "reasoning_mode": suite.reasoning_mode,
+            "service_tier": suite.service_tier,
+            "max_output_tokens": suite.max_output_tokens,
+            "input_price_per_million_usd": suite.input_price_per_million_usd,
+            "cached_input_price_per_million_usd": (
+                suite.cached_input_price_per_million_usd
+            ),
+            "cache_write_input_price_per_million_usd": (
+                suite.cache_write_input_price_per_million_usd
+            ),
+            "output_price_per_million_usd": suite.output_price_per_million_usd,
+        },
+        "budget": suite.budget.model_dump(mode="json"),
+        "sandbox": {
+            "backend": "docker" if item["evaluator_image_digest"] is not None else "local",
+            "agent_image_digest": item["evaluator_image_digest"],
+            "evaluator_image_digest": item["evaluator_image_digest"],
+        },
+        "memory": {
+            "condition": item["condition"],
+            "max_context_tokens": suite.memory_token_budget,
+        },
+        "experiment": {
+            "experiment_id": suite.experiment_id,
+            "purpose": suite.purpose.value,
+            "suite_hash": preflight["suite_hash"],
+            "execution_hash": preflight["execution_hash"],
+            "dataset_manifest_hash": (
+                preflight["dataset"]["manifest_hash"]
+                if preflight["dataset"] is not None
+                else None
+            ),
+            "dataset_role": item["dataset_role"],
+            "schedule_seed": suite.seed,
+            "schedule_order": item["order"],
+            "schedule_row_id": item["schedule_row_id"],
+            "repetition": item["repetition"],
+        },
+    }
+    actual = {
+        "task": {
+            "task_id": manifest.task_id,
+            "task_version": manifest.task_version,
+            "base_commit": manifest.base_commit,
+            "public_spec_hash": manifest.public_spec_hash,
+            "private_spec_hash": manifest.private_spec_hash,
+        },
+        "model": {
+            key: getattr(manifest.model, key)
+            for key in expected["model"]
+        },
+        "budget": manifest.budget.model_dump(mode="json"),
+        "sandbox": {
+            "backend": manifest.sandbox_backend,
+            "agent_image_digest": manifest.agent_image_digest,
+            "evaluator_image_digest": manifest.evaluator_image_digest,
+        },
+        "memory": {
+            "condition": manifest.memory.condition.value,
+            "max_context_tokens": manifest.memory.max_context_tokens,
+        },
+        "experiment": (
+            manifest.experiment.model_dump(mode="json")
+            if manifest.experiment is not None
+            else None
+        ),
+    }
+    if actual != expected:
+        raise ContractError("run manifest does not match the approved execution plan")
+
+
 def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
     from patchloop.evals.qualification import qualify_run
 
@@ -934,7 +1091,9 @@ def evaluate_suite(
             },
         )
 
-    suite = load_suite(path)
+    suite = ExperimentSuite.model_validate(preflight["suite"])
+    if not hmac.compare_digest(_suite_hash(suite), preflight["suite_hash"]):
+        raise ContractError("approved preflight suite hash mismatch")
     plan = _persist_preflight_plan(preflight)
     if suite.model == "openai":
         _assert_live_environment_unchanged(preflight)
@@ -1052,6 +1211,10 @@ def evaluate_suite(
                 task_path.parent if task_path.is_file() else task_path
             )
         package = task_packages[task]
+        task_row = next(
+            row for row in preflight["tasks"] if row["task_id"] == item["task_id"]
+        )
+        _assert_task_package_matches_preflight(package, task_row)
         evaluator_digest = item["evaluator_image_digest"]
         sandbox_backend = "docker" if evaluator_digest is not None else "local"
         experiment_context = ExperimentRunContext(
@@ -1096,6 +1259,12 @@ def evaluate_suite(
             service_tier=suite.service_tier,
             max_output_tokens=suite.max_output_tokens,
             experiment_context=experiment_context,
+        )
+        _assert_manifest_matches_preflight(
+            manifest,
+            suite=suite,
+            preflight=preflight,
+            item={**task_row, **item},
         )
         journal_sequence += 1
         journal_hash = _append_campaign_event(

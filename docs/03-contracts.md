@@ -328,19 +328,25 @@ commit, 실행 시점을 함께 남긴다. Price verification이 72시간을 넘
 `patchloop run --model openai`, OpenAI run의 direct `resume`, direct `inject-fault`는 승인된
 suite 경로를 우회할 수 없도록 거부한다.
 
+실행 단계는 suite 경로를 다시 읽지 않고 approved plan의 normalized suite snapshot을
+재검증해 사용한다. 각 row에서는 task package identity를 plan의 canonical path/spec/base/image와
+다시 대조하고, 생성한 `RunManifest`의 task/model/budget/sandbox/memory/experiment identity가
+plan과 정확히 일치한 뒤에만 `RunStarted`를 기록한다.
+
 Ready preflight는 paid runner를 만들기 전에
 `.patchloop/experiments/plans/<execution-hash>.json`에
 `experiment-execution-plan-v1`을 저장한다. Live execution capability는 이 plan이
 `ready=true`, blocker 없음, invocation approval과 exact execution hash 일치를 다시
 증명할 때만 발급된다. In-memory flag나 임의로 만든 manifest만으로 capability를 만들 수 없다.
 
-Campaign은 별도의 `experiment-journal-event-v1` JSONL을 사용한다. 각 event는 monotonic
+Campaign은 별도의 `experiment-journal-event-v1` JSONL을 사용한다. 최초
+`CampaignStarted`는 exclusive create로 journal ownership을 원자적으로 선점하고, 각 event는 monotonic
 sequence, `previous_event_hash`와 자신의 content hash를 가지며 append 뒤 flush와 fsync한다.
 `CampaignStarted`는 capability 발급과 첫 model call 전에, 각 `RunStarted`는 stable run ID와
 함께 해당 row의 model call 전에 기록한다. `RunTerminal`, `RunNotStarted`,
 `CampaignCompleted`도 같은 chain에 추가한다. 결과 JSON이 생성되기 전에 process가 종료돼도
-기존 journal이 새 schedule 시작을 차단한다. 이 계약은 중복 paid call 방지 경계이며, 중단된
-campaign의 자동 resume 계약은 아직 제공하지 않는다.
+기존 journal이나 동시 선점 경쟁의 패자가 새 schedule 시작을 차단한다. 이 계약은 중복 paid
+call 방지 경계이며, 중단된 campaign의 자동 resume 계약은 아직 제공하지 않는다.
 
 ## 4. Run manifest
 
@@ -531,14 +537,16 @@ Checkpoint가 참조한 event sequence나 hash를 검증할 수 없으면 자동
 
 ```json
 {
-  "patch": "...unified diff...",
-  "expected_file_hashes": {
-    "src/parser.py": "sha256:..."
-  }
+  "patch": "diff --git a/src/parser.py b/src/parser.py\n--- a/src/parser.py\n+++ b/src/parser.py\n@@ ..."
 }
 ```
 
-Expected hash mismatch는 stale write이며 patch를 부분 적용하지 않는다. 동일 `action_id + input_hash`가 성공했다면 기존 result를 반환한다. 같은 action ID에 다른 input hash가 오면 conflict로 거부한다.
+`patch`는 `diff --git`으로 시작하는 raw Git unified diff다. OpenAI built-in
+apply-patch envelope인 `*** Begin Patch` / `*** End Patch` 형식은 이 constrained tool의
+입력이 아니며 구조화된 `CONTRACT_ERROR`로 거부한다.
+
+동일 `action_id + input_hash`가 성공했다면 기존 result를 반환한다. 같은 action ID에 다른
+input hash가 오면 stale/conflicting action으로 거부하고 patch를 적용하지 않는다.
 
 ### `run_check`
 
@@ -563,6 +571,11 @@ Result 공통 필드:
   "stderr_artifact_id": "art_0103"
 }
 ```
+
+성공과 거부를 포함한 모든 tool result는 content-addressed artifact로 저장한다. 거부 event는
+`error_code`, public `error_message`와 artifact identity를 남기며 다음 turn의 stateless
+context builder가 이 결과를 다시 제공한다. Private evaluator는 agent tool gateway를
+통과하지 않으므로 hidden assertion이나 reference material은 이 feedback에 포함되지 않는다.
 
 ## 8. Verifier result and final outcome
 
@@ -674,13 +687,15 @@ Qualification은 최소한 다음 경계를 검사한다.
 - OpenAI/Terra/medium/standard/default, fault-free와 exact Docker provenance가 일치함
 - Durable approved execution plan의 suite/dataset/task/private evaluator/schedule row가
   run manifest와 일치함
-- Agent-visible event/artifact에 private filename, hidden check ID, hidden artifact path,
-  reference hash 또는 현재 API key가 없음
+- Agent-visible event/artifact에 공개 contract에 없는 private 구조 marker/hidden check ID가
+  없고, 공개 여부와 무관하게 hidden artifact path/hash, reference hash 또는 현재 API key가 없음
 - Event usage, persisted result, terminal outcome과 evaluator verdict가 서로 일치함
 - Pilot은 적어도 한 tool call을 포함해 실제 function-tool loop를 통과함
 
 Leak scan은 private token의 값이나 일치 문자열을 artifact에 다시 기록하지 않고 match count만
-남긴다. Deterministic failure record도 hidden `check_id`를 복사하지 않는다. 공개
+남긴다. Canonical public spec에 이미 있는 generic structure marker와 hidden check ID만
+disclosure-tolerant로 취급하며, reference/hidden artifact identity와 API key는 항상 private다.
+Deterministic failure record도 hidden `check_id`를 복사하지 않는다. 공개
 `check_type:state`, opaque verifier result ID와 artifact ID만 저장한다.
 
 Qualification된 모든 run이 memory source가 되는 것은 아니다.
@@ -694,6 +709,9 @@ hash는 approved execution plan bytes, manifest, ordered events, checkpoints, st
 persisted result artifact hash와 agent-visible CAS artifact identity/content hash를 하나의
 canonical snapshot으로 결속한다. Qualification file을 다시 읽는 것만으로 source가 그대로라고
 간주하지 않는다.
+
+Development campaign preflight도 pilot qualification을 소비할 때 현재
+`source_evidence_hash`를 다시 계산해 불일치나 원본 부재를 차단한다.
 
 Human review는 원래 `FailureRecord`를 수정하지 않는다.
 `failure-review-v1` JSONL에 decision, failure/qualification/dataset hash와 이전 review hash를

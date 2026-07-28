@@ -34,6 +34,7 @@ from patchloop.contracts import (
     RunOutcomeKind,
     RunResult,
     RunStatus,
+    TaskPackage,
     ToolResult,
     Usage,
     Verdicts,
@@ -150,6 +151,25 @@ class AgentRunner:
         else:
             raise ContractError(f"unknown model adapter: {model}")
 
+        if manifest is not None:
+            package_identity = (
+                package.public.task_id,
+                package.public.task_version,
+                package.public.repository.base_commit,
+                package.public_spec_hash,
+                package.private_spec_hash,
+            )
+            manifest_identity = (
+                manifest.task_id,
+                manifest.task_version,
+                manifest.base_commit,
+                manifest.public_spec_hash,
+                manifest.private_spec_hash,
+            )
+            if package_identity != manifest_identity:
+                raise ContractError(
+                    "task package does not match the immutable run manifest"
+                )
         if manifest is not None and manifest.model.provider != selected_provider:
             raise ContractError(
                 "model selector does not match the immutable run manifest provider"
@@ -221,7 +241,7 @@ class AgentRunner:
             adapter = self._model_adapter(
                 normalized_model, manifest, self._completed_tools(manifest.run_id)
             )
-            return self._execute(package.root, workspace, manifest, adapter)
+            return self._execute(package, workspace, manifest, adapter)
         except Exception as exc:
             if manifest is None or not self.state.has_run(manifest.run_id):
                 raise
@@ -295,12 +315,12 @@ class AgentRunner:
 
     def _execute(
         self,
-        task_dir: str | Path,
+        package: TaskPackage,
         workspace: Path,
         manifest: RunManifest,
         adapter: ModelAdapter,
     ) -> dict[str, Any]:
-        package = load_task_package(task_dir)
+        task_dir = package.root
         sandbox = (
             self._docker_sandbox(package)
             if manifest.sandbox_backend == "docker"

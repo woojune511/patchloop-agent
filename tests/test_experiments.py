@@ -14,6 +14,7 @@ from patchloop.cli import app
 from patchloop.contracts import DatasetRole, ExperimentPurpose
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
+from patchloop.evals import qualification as trace_qualification
 from patchloop.evals import runner as eval_runner
 from patchloop.evals.runner import ExperimentSuite
 from patchloop.task_loader import load_task_package
@@ -122,6 +123,54 @@ def test_v2_development_campaign_has_exact_twelve_run_matrix(
         "APPROVAL_HASH_MISMATCH",
         "QUALIFIED_PILOT_REQUIRED",
     }
+
+
+def test_development_campaign_rejects_stale_pilot_source_evidence(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_payload = yaml.safe_load(
+        Path("experiments/dev-no-memory.template.yaml").read_text(encoding="utf-8")
+    )
+    suite_payload["experiment_id"] = "dev-stale-pilot-source"
+    suite_payload["pilot_run_id"] = "run_qualified_pilot"
+    suite_path = tmp_path / "dev-stale-pilot-source.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(suite_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    stored_source_hash = "sha256:" + ("a" * 64)
+    monkeypatch.setattr(
+        trace_qualification,
+        "load_trace_qualification",
+        lambda *_args, **_kwargs: {
+            "run_id": "run_qualified_pilot",
+            "purpose": "development-validation-live-pilot",
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "leakage_scan_passed": True,
+            "evaluation_reached": True,
+            "qualification_hash": "sha256:" + ("c" * 64),
+            "source_evidence_hash": stored_source_hash,
+            "outcome_kind": "resolved",
+        },
+    )
+    monkeypatch.setattr(
+        trace_qualification,
+        "calculate_source_evidence_hash",
+        lambda *_args, **_kwargs: "sha256:" + ("b" * 64),
+    )
+
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert "QUALIFIED_PILOT_REQUIRED" in {
+        row["code"] for row in preflight["blockers"]
+    }
+    assert preflight["pilot_qualification"]["qualified"] is False
+    assert preflight["pilot_qualification"]["reason"] == (
+        "pilot source evidence hash mismatch"
+    )
 
 
 def test_v2_development_campaign_rejects_an_incomplete_task_set() -> None:
@@ -262,6 +311,130 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
     }.issubset({row["code"] for row in retry["blockers"]})
 
 
+def test_paid_execution_uses_the_suite_snapshot_approved_by_preflight(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_payload = yaml.safe_load(
+        Path("experiments/dev-validation-pilot.template.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    suite_payload["experiment_id"] = "pilot-suite-snapshot"
+    suite_path = tmp_path / "pilot-suite-snapshot.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(suite_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    approved = eval_runner.preflight_suite(suite_path)
+    original_preflight = eval_runner.preflight_suite
+
+    def preflight_then_replace_suite(*args, **kwargs):
+        preflight = original_preflight(*args, **kwargs)
+        replaced = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
+        replaced["experiment_id"] = "pilot-suite-snapshot-replaced"
+        suite_path.write_text(
+            yaml.safe_dump(replaced, sort_keys=False),
+            encoding="utf-8",
+        )
+        return preflight
+
+    captured = []
+
+    class FakeRunner:
+        def start(self, _task, *, manifest, **_kwargs):
+            captured.append(manifest)
+            return {
+                "run_id": manifest.run_id,
+                "outcome_kind": "task_failure",
+                "usage": {"model_cost_usd": 0.0},
+            }
+
+    monkeypatch.setattr(eval_runner, "preflight_suite", preflight_then_replace_suite)
+    monkeypatch.setattr(eval_runner, "AgentRunner", FakeRunner)
+    monkeypatch.setattr(
+        eval_runner,
+        "_qualify_terminal_run",
+        lambda run_id, _task: {
+            "run_id": run_id,
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "evaluation_reached": True,
+            "qualification_hash": "sha256:" + ("e" * 64),
+        },
+    )
+
+    result = eval_runner.evaluate_suite(
+        suite_path,
+        approve_live_cost=True,
+        approved_execution_hash=approved["execution_hash"],
+    )
+
+    assert result["experiment_id"] == "pilot-suite-snapshot"
+    assert len(captured) == 1
+    assert captured[0].experiment.experiment_id == "pilot-suite-snapshot"
+    assert captured[0].model.model_id == "gpt-5.6-terra"
+
+
+def test_paid_execution_rejects_task_package_replacement_before_run_start(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_payload = yaml.safe_load(
+        Path("experiments/dev-validation-pilot.template.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    suite_payload["experiment_id"] = "pilot-task-snapshot"
+    suite_path = tmp_path / "pilot-task-snapshot.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(suite_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    approved = eval_runner.preflight_suite(suite_path)
+    original_loader = eval_runner.load_task_package
+    replace_task = False
+
+    def mark_post_preflight(_preflight):
+        nonlocal replace_task
+        replace_task = True
+
+    def load_replaced_task(path):
+        package = original_loader(path)
+        if not replace_task:
+            return package
+        return package.model_copy(
+            update={"private_spec_hash": "sha256:" + ("f" * 64)}
+        )
+
+    class FakeRunner:
+        def start(self, *_args, **_kwargs):
+            pytest.fail("replaced task package must not reach the model runner")
+
+    monkeypatch.setattr(
+        eval_runner,
+        "_assert_live_environment_unchanged",
+        mark_post_preflight,
+    )
+    monkeypatch.setattr(eval_runner, "load_task_package", load_replaced_task)
+    monkeypatch.setattr(eval_runner, "AgentRunner", FakeRunner)
+
+    with pytest.raises(ContractError, match="task package changed"):
+        eval_runner.evaluate_suite(
+            suite_path,
+            approve_live_cost=True,
+            approved_execution_hash=approved["execution_hash"],
+        )
+
+    journal_path = Path(approved["journal_path"])
+    journal_rows = [
+        json.loads(line) for line in journal_path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert [row["event_type"] for row in journal_rows] == ["CampaignStarted"]
+
+
 def test_hard_crash_journal_blocks_duplicate_paid_schedule(
     tmp_path: Path,
     monkeypatch,
@@ -297,6 +470,50 @@ def test_hard_crash_journal_blocks_duplicate_paid_schedule(
         "CampaignStarted",
         "RunStarted",
     ]
+
+
+def test_atomic_journal_claim_blocks_a_racing_paid_invocation(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    preflight = eval_runner.preflight_suite(
+        "experiments/dev-validation-pilot.template.yaml"
+    )
+    journal_path = Path(preflight["journal_path"])
+
+    def claim_journal_after_preflight(_preflight):
+        journal_path.parent.mkdir(parents=True, exist_ok=True)
+        journal_path.write_text("claimed-by-racing-invocation\n", encoding="utf-8")
+
+    class ForbiddenRunner:
+        def __init__(self):
+            pytest.fail("a losing journal claimant must not construct AgentRunner")
+
+    monkeypatch.setattr(
+        eval_runner,
+        "_assert_live_environment_unchanged",
+        claim_journal_after_preflight,
+    )
+    monkeypatch.setattr(eval_runner, "AgentRunner", ForbiddenRunner)
+    monkeypatch.setattr(
+        eval_runner,
+        "issue_live_execution_authorization",
+        lambda *_args, **_kwargs: pytest.fail(
+            "a losing journal claimant must not receive live authorization"
+        ),
+    )
+
+    with pytest.raises(ContractError, match="duplicate schedule ownership"):
+        eval_runner.evaluate_suite(
+            "experiments/dev-validation-pilot.template.yaml",
+            approve_live_cost=True,
+            approved_execution_hash=preflight["execution_hash"],
+        )
+
+    assert journal_path.read_text(encoding="utf-8") == (
+        "claimed-by-racing-invocation\n"
+    )
 
 
 def test_environment_drift_after_preflight_stops_before_agent(

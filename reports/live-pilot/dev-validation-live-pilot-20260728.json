@@ -1,0 +1,141 @@
+{
+  "schema_version": "live-pilot-evidence-v1",
+  "recorded_at": "2026-07-28T07:40:56.958537+00:00",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "636d0cf973203f2e0521fe41ec4675562c34ccbd",
+  "execution_hash": "sha256:e078a32eff4ab1b0a7c02a7aca6c97115e968bb57bb9e618b42d69fa943f6513",
+  "pilot": {
+    "run_id": "run_c6f13dd9a1a1472d",
+    "outcome_kind": "agent_failure",
+    "agent_submission_status": "failed",
+    "evaluation_status": "not_run",
+    "official": false,
+    "terminal_error": "token budget exceeded",
+    "event_count": 113,
+    "checkpoint_count": 23,
+    "model_calls": 20,
+    "tool_calls": 22,
+    "failed_apply_patch_calls": 8,
+    "usage": {
+      "input_tokens": 73730,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 73670,
+      "output_tokens": 7326,
+      "model_cost_usd": 0.34025875,
+      "wall_clock_ms": 103068
+    },
+    "qualification": {
+      "qualified": false,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": false,
+      "evaluation_reached": false,
+      "qualification_hash": "sha256:e847188eef80de51c794672a82654f9af309e5bb1391fb937626afef9c9328b6",
+      "source_evidence_hash": "sha256:167391e8978e628538961aa1b915c75d0d89636b2ed3c025c5ba8f8281c35813",
+      "historical_artifact_is_immutable": true
+    },
+    "forensic_leak_match_counts": {
+      "public_hidden_root_marker": 20,
+      "public_task_id_overlap": 21,
+      "api_key": 0,
+      "reference_hash": 0,
+      "private_yaml": 0,
+      "reference_patch": 0
+    }
+  },
+  "first_rejected_candidate": {
+    "model_event_sequence": 25,
+    "model_event_id": "evt_e3875676ed9943fa8ca628eea26f1091",
+    "model_artifact_id": "art_18350b01464640dd9acb4ef92dedb791",
+    "model_artifact_sha256": "sha256:f49ed21caf105f9219521cefa65ed7600c21b07f738890863f3393ef07f8364e",
+    "submitted_envelope": "openai-marker-envelope",
+    "gateway_required_envelope": "raw-git-unified-diff"
+  },
+  "format_only_counterfactual": {
+    "run_id": "run_4299e6b326de4c1c",
+    "patch_sha256": "sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606",
+    "diff_sha256": "sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743",
+    "code_edit_changed_from_model_candidate": false,
+    "official": true,
+    "scope_compliant_success": true,
+    "verdicts": {
+      "hidden_tests": "pass",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "model_calls": 0,
+    "model_cost_usd": 0.0,
+    "count_as_agent_success": false,
+    "count_as_pilot_repetition": false
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; ignored raw bytes are not bundled in a clean checkout.",
+    "portable_artifacts": "Secret-scrubbed diagnostic bytes tracked for clean-checkout hash verification."
+  },
+  "portable_artifacts": [
+    {
+      "path": "reports/live-pilot/artifacts/run_c6f13dd9a1a1472d-candidate.patch",
+      "bytes": 741,
+      "sha256": "sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-live-pilot-20260728.json",
+      "bytes": 6075,
+      "sha256": "sha256:2b9a52fd44be63181d7a0507b79a9c56ed2ced93ee1f84760411648bc818cb33"
+    },
+    {
+      "path": ".patchloop/qualifications/run_c6f13dd9a1a1472d.json",
+      "bytes": 4865,
+      "sha256": "sha256:849390689b487ebe60170521708fd1eb9dc51ff3f4ccd7884fc15e462938fab6"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_c6f13dd9a1a1472d/manifest.json",
+      "bytes": 2381,
+      "sha256": "sha256:e96524d86878583873fad72a11d420b5db4bc1a5068a7d01534fb67475b3f16c"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_c6f13dd9a1a1472d/result.json",
+      "bytes": 827,
+      "sha256": "sha256:a816262e452105fe2f4079822f7058f7ef9b312bc3d979c3912fdb3092bc03bf"
+    },
+    {
+      "path": ".patchloop/experiments/plans/e078a32eff4ab1b0a7c02a7aca6c97115e968bb57bb9e618b42d69fa943f6513.json",
+      "bytes": 5399,
+      "sha256": "sha256:aff1814f759bc60b1cbc44579cc2140b23da819b874be4f69ea4e91839ae48ae"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-live-pilot-20260728.jsonl",
+      "bytes": 2686,
+      "sha256": "sha256:eb1f6b33e0f4a90b95c6c499cc5e5328148aaabba30d086818b7a7bc854a0c0c"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/f4/9ed21caf105f9219521cefa65ed7600c21b07f738890863f3393ef07f8364e",
+      "bytes": 652,
+      "sha256": "sha256:f49ed21caf105f9219521cefa65ed7600c21b07f738890863f3393ef07f8364e"
+    },
+    {
+      "path": ".patchloop/analysis/run_c6f13dd9a1a1472d-candidate.patch",
+      "bytes": 741,
+      "sha256": "sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_4299e6b326de4c1c/result.json",
+      "bytes": 3887,
+      "sha256": "sha256:c44cd4e32adf3a07c8960cfc50497c99e7845f3af558ac1b297a997c9b9de7e5"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_4299e6b326de4c1c/provenance.json",
+      "bytes": 186,
+      "sha256": "sha256:daaba45b40f319d5c28c5ed7e67dab680fec869e04dab96ae43ed6fa23d12169"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "terminal_failure_persistence_exercised": true,
+    "qualified_live_pilot": false,
+    "live_model_task_success": false,
+    "development_campaign_unlocked": false
+  }
+}

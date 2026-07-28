@@ -15,6 +15,7 @@ from patchloop.contracts import (
     MemoryCondition,
     RunOutcomeKind,
     RunResult,
+    TaskPackage,
     VerdictState,
 )
 from patchloop.dataset import (
@@ -291,13 +292,7 @@ def _artifact_evidence(
         evidence.append(item)
         scanned += 1
 
-    generic_markers = {
-        "private.yaml",
-        "reference.patch",
-        ".patchloop-hidden",
-    }
-    lower_markers = {marker.lower() for marker in generic_markers}
-    lower_markers.update(token.lower() for token in private_tokens if token)
+    lower_markers = {token.lower() for token in private_tokens if token}
     matches = sum(
         1
         for text in texts
@@ -305,6 +300,33 @@ def _artifact_evidence(
         if marker and marker in text.lower()
     )
     return integrity, scanned, matches, evidence, sorted(missing_identities)
+
+
+def _private_leak_tokens(
+    package: TaskPackage,
+    *,
+    api_key: str | None,
+) -> set[str]:
+    public_text = canonical_json(package.public.model_dump(mode="json")).lower()
+    disclosure_tolerant = {
+        "private.yaml",
+        "reference.patch",
+        ".patchloop-hidden",
+        *(check.id for check in package.private.hidden_checks),
+    }
+    tokens = {
+        token
+        for token in disclosure_tolerant
+        if token and token.lower() not in public_text
+    }
+
+    if package.private.reference_patch.sha256:
+        tokens.add(package.private.reference_patch.sha256)
+    for artifact in package.private.hidden_artifacts:
+        tokens.update({artifact.path, artifact.sha256})
+    if api_key:
+        tokens.add(api_key)
+    return tokens
 
 
 def calculate_source_evidence_hash(
@@ -580,13 +602,10 @@ def qualify_run(
         evaluator_image_matches=manifest.evaluator_image_digest == expected_image_digest,
     )
 
-    private_tokens = {check.id for check in package.private.hidden_checks}
-    if package.private.reference_patch.sha256:
-        private_tokens.add(package.private.reference_patch.sha256)
-    private_tokens.update(artifact.path for artifact in package.private.hidden_artifacts)
-    api_key = os.environ.get("OPENAI_API_KEY")
-    if api_key:
-        private_tokens.add(api_key)
+    private_tokens = _private_leak_tokens(
+        package,
+        api_key=os.environ.get("OPENAI_API_KEY"),
+    )
     (
         artifact_integrity,
         artifact_count,

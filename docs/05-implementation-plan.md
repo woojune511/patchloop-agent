@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **Development-validation live pilot preflight acceptance**
+현재 milestone: **Development-validation live pilot harness correction and requalification**
 
 2026-07-28 구현 스냅샷:
 
@@ -12,7 +12,7 @@
 | Phase 3 state machine | done | Transition guard와 turn별 context 재구성 |
 | Phase 4 recovery | done (offline) | Kill-after-patch resume, duplicate mutation 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | experiment-v2/preflight implemented, acceptance와 campaign pending | Seeded smoke와 task bootstrap report 실행; paid run 0 |
+| Phase 6 evaluation | experiment-v2/preflight implemented, pilot requalification pending | Paid pilot 1회가 terminal evidence와 $0.34025875 usage를 보존했으나 unqualified |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -103,8 +103,8 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 1 | implemented, external acceptance pending | `experiment-v2` explicit purpose와 exact suite shape | Wrong task/role/repetition/model/budget contract reject |
 | 2 | implemented, clean-machine acceptance pending | Canonical task/private hash/digest environment preflight, durable approved plan과 live capability | Unapproved/hash mismatch/dirty Git/wrong package/private/image/stale price reject |
 | 3 | implemented, interrupted-run recovery pending | Paid call 전 fsync하는 hash-chained campaign journal | Existing journal이 hard-crash 뒤 새 schedule 시작을 차단; 자동 resume은 미구현 |
-| 4 | implemented, live artifact pending | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | Missing plan/artifact/event, source mutation, leak/usage mismatch reject |
-| 5 | pending paid approval | Babel #1042 `no_memory` 1회 pilot, $2 cap | Qualified pilot artifact와 stable run ID |
+| 4 | implemented, failed live artifact observed | Source-evidence-bound `trace-qualification-v1`과 sanitized failure linkage | 첫 pilot trace integrity/usage linkage 통과, 공개 marker 오진은 수정 후 재검증 필요 |
+| 5 | attempt 1 unqualified; retry pending new approval | Babel #1042 `no_memory` 1회 pilot, $2 cap | Qualified pilot artifact와 stable run ID |
 | 6 | pending pilot gate | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 7 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
@@ -124,8 +124,8 @@ work item이다.
 
 Qualification은 필수 event의 content-addressed artifact reference와 usage/cache 불변식을
 검사하고, plan/manifest/events/checkpoints/result/artifact inventory를
-`source_evidence_hash`로 결속한다. Human review와 index build는 현재 source hash를 다시
-검증한다.
+`source_evidence_hash`로 결속한다. Development campaign preflight, human review와 index
+build는 현재 source hash를 다시 검증한다.
 
 2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
 output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
@@ -141,8 +141,20 @@ output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/G
   시작되지 않는다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
 
-이 문서 시점에는 paid live call, pilot result, 12-run development result가 없다. Docker,
-credential, clean-worktree와 price-age blocker는 실제 preflight 전까지 미확인 상태다.
+2026-07-28 첫 paid pilot `run_c6f13dd9a1a1472d`는 ready preflight 뒤 `$0.34025875`를
+사용했다. 20 model call과 22 tool call 동안 agent가 `*** Begin Patch` envelope를 반복해
+mutation 8회가 거부됐고, input 73,730 + output 7,326 token으로 80,000-token budget을
+넘겨 submission 전에 종료됐다. Evaluator는 실행되지 않았고 qualification은 false다.
+Agent failure와 별개로 qualification의 유일한 failed check는 leak scanner였다. 41 match는
+API key가 아니라 공개 contract의 `.patchloop-hidden` marker
+20건과 public task ID에 포함된 hidden-check 문자열 21건이었다. 기존 trace와 qualification은
+수정하지 않으며, failed-tool feedback과 patch-format 안내 및 공개 marker filtering을
+고친 새 commit/hash에서 별도 승인된 pilot로 exit gate를 다시 평가한다. 첫 model
+candidate를 내용 변경 없이 raw Git diff로 변환한 사후 진단 patch
+`sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606`는
+official evaluator run `run_4299e6b326de4c1c`에서 모든 verdict를 통과했다. 이 run은
+format-only counterfactual evidence이며 agent success나 pilot repetition으로 집계하지
+않는다. 12-run development result는 아직 없다.
 
 ## Phase 1. Evaluation Foundation
 

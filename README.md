@@ -22,10 +22,11 @@ schedule을 machine audit한 뒤 dataset manifest를 동결했다. 이 동결은
 [Current limitations](docs/08-limitations.md)에 분리했다.
 
 현재 live 경로에는 `experiment-v2` purpose, 비용 승인 preflight, durable execution plan,
-hash-chained campaign journal과 `trace-qualification-v1`이 구현돼 있지만 clean-machine
-acceptance와 실제 실행은 남아 있다. Babel #1042 한 건의 development-validation pilot과
-여섯 memory-development task의 12-run no-memory campaign template가 있지만,
-**아직 유료 API call이나 live-model 결과는 없다.**
+hash-chained campaign journal과 `trace-qualification-v1`이 구현돼 있다. Babel #1042의
+첫 paid development-validation pilot은 2026-07-28 실행됐지만 agent가 token budget
+종료 전에 patch를 제출하지 못했다. 별도로, 당시 qualification artifact는 공개 marker
+오진 때문에 `qualified=false`였다. 따라서 live 성공 결과는 아직 없으며, 여섯
+memory-development task의 12-run no-memory campaign도 열리지 않았다.
 
 ## 구현된 핵심 경로
 
@@ -48,7 +49,7 @@ public.yaml → stateless context builder → model adapter
   qualification-failed인 matrix는 diagnostic으로만 남기고 headline/paired 결과를 억제
 - 목적을 명시하는 `experiment-v2`, durable approved execution plan에서만 발급되는
   execution-hash-bound live capability와 source-evidence-bound trace qualification
-- API call 전에 `CampaignStarted`와 각 `RunStarted`를 fsync하는 append-only,
+- 최초 `CampaignStarted`를 exclusive create하고 API call 전에 각 `RunStarted`를 fsync하는 append-only,
   hash-chained campaign journal
 - Content-addressed frozen dataset manifest와 3-sentinel, 30-run stress schedule audit
 - FastAPI/Jinja/HTMX trace viewer와 host-only `gh` Issue/Draft PR adapter
@@ -159,6 +160,18 @@ Responses API adapter는 host process에서만 API key를 읽고 container, chec
 | `development-validation-live-pilot` | Babel #1042, `no_memory`, 1회 | $2 |
 | `memory-development-no-memory` | frozen memory-development 6개, `no_memory`, 각 2회(12 run) | $20 |
 
+첫 pilot evidence는 `run_c6f13dd9a1a1472d`다. 실제 비용은 `$0.34025875`, model/tool call은
+20/22, input/cache-write/output token은 73,730/73,670/7,326이었다. Agent는 Git unified
+diff 대신 `*** Begin Patch` envelope를 반복해 모든 mutation이 거부됐고 80,000-token
+budget을 넘긴 마지막 응답 뒤 terminal agent failure가 기록됐다. Submitted patch와
+evaluator verdict는 없으며 이 run은 성능 성공이나 qualified pilot가 아니다. 당시
+leakage scan의 41 match는 공개 task contract에 이미 있던 marker의 오진이었고 API key
+match는 0이었다. 원본 qualification은 immutable하게 실패 상태로 보존한다. 첫 model
+candidate의 코드 내용은 바꾸지 않고 envelope만 Git diff로 변환한 사후 진단 patch
+`sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606`는 별도
+Docker evaluator에서 모든 verdict를 통과했다. 이는 tool-contract 원인 evidence이지
+원래 agent run의 성공으로 집계하지 않는다.
+
 먼저 API call을 하지 않는 preflight를 실행한다.
 
 ```powershell
@@ -195,12 +208,16 @@ Checked-in `live_cost_approved`와 `approved_execution_hash` 값은 승인 권�
 차단된다.
 
 `ready=true`인 paid invocation은 승인 내용과 preflight evidence를
-`experiment-execution-plan-v1`으로 먼저 durable하게 저장한다. `CampaignStarted`를
-append-only hash chain에 flush와 fsync한 뒤 그 plan에서 live capability를 발급하고, 각 row의
+`experiment-execution-plan-v1`으로 먼저 durable하게 저장한다. `CampaignStarted`로 journal을
+원자적으로 exclusive create하고 flush와 fsync한 뒤 그 plan에서 live capability를 발급한다. 각 row의
 stable run ID를 가진 `RunStarted`도 fsync한 다음 model call을 허용한다. Process가
 hard-crash해도 journal이
 남아 같은 experiment를 새 schedule로 자동 재실행하지 못하지만, **중단된 journal의 자동
 resume은 아직 구현되지 않았다.**
+
+실행기는 suite 파일을 승인 뒤 다시 읽지 않고 plan의 normalized suite snapshot을 사용한다.
+각 task package와 생성 manifest의 task/model/budget/environment identity도 plan과 대조한
+뒤에만 `RunStarted`와 model call로 넘어간다.
 
 2026-07-28에 확인한 공식 Terra API rate는 1M token당 input $2.50, cached input $0.25,
 cache write $3.125, output $15다. 가격 source는
@@ -215,10 +232,11 @@ input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualif
 Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
 persisted result와 agent-visible content-addressed artifact inventory를 결속한다. 필수
 `RunStarted`/`ContextBuilt`/`ModelCalled` artifact reference, cache usage 불변식과 malformed
-function-call response의 이미 과금된 usage도 검사·보존하며, memory review/index admission은
-현재 source evidence hash를 다시 계산한다.
-다만 이 문서 작성 시점에는 paid call을 실행하지 않았고 Docker, credential, clean-worktree 같은
-현재 환경 blocker가 남아 있을 수 있다.
+function-call response의 이미 과금된 usage도 검사·보존하며, development campaign
+preflight와 memory review/index admission은 현재 source evidence hash를 다시 계산한다.
+첫 pilot은 이 보존 경로를 실제 provider에서 확인했지만 qualification에 실패했다. Tool
+contract feedback과 공개 marker 오진을 수정한 새 clean execution hash로 pilot를 다시
+통과시키기 전에는 development campaign을 실행하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

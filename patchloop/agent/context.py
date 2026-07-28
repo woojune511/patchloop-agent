@@ -12,7 +12,7 @@ from patchloop.util import sha256_text
 def _context_event(event: RunEvent) -> dict:
     payload = dict(event.payload)
     artifact_path = payload.get("artifact_path")
-    if event.type.value == "ToolSucceeded" and artifact_path:
+    if event.type.value in {"ToolSucceeded", "ToolFailed"} and artifact_path:
         try:
             raw = Path(artifact_path).read_text(encoding="utf-8")
             if len(raw) > 12_000:

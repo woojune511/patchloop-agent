@@ -1,5 +1,5 @@
 schema_version: experiment-v2
-experiment_id: dev-validation-live-pilot-20260728
+experiment_id: dev-validation-live-pilot-20260728-r2
 purpose: development-validation-live-pilot
 tasks:
   - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml

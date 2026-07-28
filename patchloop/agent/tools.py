@@ -61,7 +61,11 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
     {
         "type": "function",
         "name": "apply_patch",
-        "description": "Apply a unified diff within the task's allowed paths.",
+        "description": (
+            "Apply a raw Git unified diff within the task's allowed paths. "
+            "The patch must begin with 'diff --git' and contain ---/+++/@@ lines. "
+            "Do not use '*** Begin Patch' or '*** End Patch' markers."
+        ),
         "parameters": {
             "type": "object",
             "properties": {"patch": {"type": "string"}},
@@ -94,6 +98,51 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "strict": True,
     },
 ]
+
+_EVENT_ERROR_MESSAGE_LIMIT = 2_000
+
+
+def _validate_raw_git_patch(patch: str) -> None:
+    if "\x00" in patch or "GIT binary patch" in patch or "Binary files " in patch:
+        raise ContractError("apply_patch accepts text patches only; binary patches are forbidden")
+    if not patch.lstrip().startswith("diff --git "):
+        raise ContractError(
+            "apply_patch requires a raw Git unified diff beginning with "
+            "'diff --git'; do not use '*** Begin Patch' markers"
+        )
+
+    sections: list[list[str]] = []
+    for line in patch.splitlines():
+        if line.startswith("diff --git "):
+            sections.append([line])
+        elif sections:
+            sections[-1].append(line)
+        elif line.strip():
+            raise ContractError("apply_patch does not allow content before the first diff header")
+
+    for section in sections:
+        old_header = next(
+            (index for index, line in enumerate(section) if line.startswith("--- ")),
+            None,
+        )
+        new_header = next(
+            (index for index, line in enumerate(section) if line.startswith("+++ ")),
+            None,
+        )
+        hunk_header = next(
+            (index for index, line in enumerate(section) if line.startswith("@@ ")),
+            None,
+        )
+        if (
+            old_header is None
+            or new_header is None
+            or hunk_header is None
+            or not old_header < new_header < hunk_header
+        ):
+            raise ContractError(
+                "each diff section must contain ordered '---', '+++', and '@@' "
+                "headers; binary and metadata-only patches are forbidden"
+            )
 
 
 class ToolGateway:
@@ -129,6 +178,12 @@ class ToolGateway:
                     "artifact_id": prior.output.get("artifact_id"),
                     "artifact_path": prior.output.get("artifact_path"),
                     "replayed": True,
+                    "error_code": prior.error_code,
+                    "error_message": (
+                        prior.error_message[:_EVENT_ERROR_MESSAGE_LIMIT]
+                        if prior.error_message
+                        else None
+                    ),
                     "duration_ms": 0,
                 },
             )
@@ -158,11 +213,22 @@ class ToolGateway:
             )
             event_type = EventType.TOOL_SUCCEEDED
         except (ContractError, PolicyViolation, TypeError, ValueError) as exc:
+            error_payload = {
+                "tool": name,
+                "status": "rejected",
+                "error_code": getattr(exc, "code", "INVALID_TOOL_INPUT"),
+                "error_message": str(exc),
+            }
+            artifact = self.artifacts.put_json(error_payload)
             result = ToolResult(
                 action_id=action_id,
                 status="rejected",
                 started_at=started,
                 finished_at=utc_now(),
+                output={
+                    "artifact_id": artifact.artifact_id,
+                    "artifact_path": artifact.path,
+                },
                 error_code=getattr(exc, "code", "INVALID_TOOL_INPUT"),
                 error_message=str(exc),
             )
@@ -179,6 +245,11 @@ class ToolGateway:
                 "artifact_id": result.output.get("artifact_id"),
                 "artifact_path": result.output.get("artifact_path"),
                 "error_code": result.error_code,
+                "error_message": (
+                    result.error_message[:_EVENT_ERROR_MESSAGE_LIMIT]
+                    if result.error_message
+                    else None
+                ),
                 "check_id": result.output.get("check_id"),
                 "passed": result.output.get("passed"),
                 "timed_out": result.output.get("timed_out"),
@@ -246,6 +317,7 @@ class ToolGateway:
     def _apply_patch(self, patch: str) -> dict[str, Any]:
         if len(patch.encode("utf-8")) > 500_000:
             raise PolicyViolation("patch exceeds the tool input limit")
+        _validate_raw_git_patch(patch)
         completed = subprocess.run(
             ["git", "apply", "--whitespace=nowarn", "-"],
             cwd=self.workspace,

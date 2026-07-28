@@ -59,6 +59,9 @@ def test_openai_adapter_disables_provider_state() -> None:
     assert responses.kwargs["reasoning"]["context"] == "current_turn"
     assert responses.kwargs["service_tier"] == "default"
     assert "previous_response_id" not in responses.kwargs
+    system_prompt = responses.kwargs["input"][0]["content"]
+    assert "diff --git" in system_prompt
+    assert "*** Begin Patch" in system_prompt
     assert turn.tool_calls[0].name == "get_diff"
     assert turn.cached_input_tokens == 4
     assert turn.cache_write_input_tokens == 2

@@ -162,11 +162,16 @@ observed Docker identity, SDK와 선행 pilot qualification을 결속한다. Pre
 값이 아니라 존재 여부만 보고, custom OpenAI base URL을 거부한다.
 
 Ready preflight는 durable `experiment-execution-plan-v1`을 먼저 저장한다.
-`CampaignStarted`를 append-only hash chain에 flush와 fsync한 뒤 그 plan에서만 live
-capability를 발급하고, 각 `RunStarted`도 해당 paid call 전에 fsync한다. Hard crash 뒤 남은
-journal은 같은 experiment의 자동 재실행을 차단한다. 중단된 campaign을 자동 resume하는
+`CampaignStarted`로 journal을 원자적으로 exclusive create하고 flush와 fsync한 뒤 그
+plan에서만 live capability를 발급한다. 동시 invocation의 선점 패자는 authorization 전에
+중단하며, 각 `RunStarted`도 해당 paid call 전에 fsync한다. Hard crash 뒤 남은 journal은
+같은 experiment의 자동 재실행을 차단한다. 중단된 campaign을 자동 resume하는
 기능은 아직 없으므로 journal을
 삭제하거나 새 experiment ID로 우회하지 않고 별도 recovery 절차가 마련될 때까지 보존한다.
+
+승인 후 suite 경로는 다시 읽지 않으며 plan의 normalized suite snapshot만 실행 입력으로 쓴다.
+각 task package와 생성 manifest도 plan의 task/model/budget/environment identity와 다시
+대조하고, 불일치하면 `RunStarted`와 model call 전에 중단한다.
 
 2026-07-28 공식 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing)은 1M
 token당 input $2.50, cached input $0.25, cache write $3.125, output $15다. Preflight는
@@ -353,9 +358,11 @@ success/failure flip은 생성하지 않는다. 누락 row를 제외한 교집�
 - Failure classifier는 hidden check ID를 저장하지 않고 공개 check type/state와 opaque evidence
   locator만 저장한다.
 - `trace-qualification-v1` leakage scan은 private token의 본문을 결과에 복사하지 않고 match
-  count만 남긴다.
+  count만 남긴다. 공개 contract에 이미 있는 generic structure marker/hidden check ID만
+  예외로 하고 reference/hidden artifact identity와 API key는 항상 private로 검사한다.
 - Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
-  result와 agent-visible artifact inventory를 결속하며 review/index admission 때 다시 계산한다.
+  result와 agent-visible artifact inventory를 결속하며 development campaign preflight와
+  review/index admission 때 다시 계산한다.
 - Review는 원본 failure record를 수정하지 않고 이전 review hash를 잇는 append-only
   `failure-review-v1` history로 기록한다.
 - Raw trace condition도 held-out solution trace를 검색 대상으로 사용하지 않는다.

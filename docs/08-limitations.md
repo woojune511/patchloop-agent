@@ -139,10 +139,21 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - Frozen 25-package dataset manifest with 5/5 calibration, 20/20 research roles, three selected
   stress sentinels and a deterministically expanded 30-run schedule. `patchloop dataset audit`
   reports `complete=true` with no freeze blockers.
+- One paid Babel #1042 development-validation pilot,
+  `run_c6f13dd9a1a1472d`, executed through the approved Responses API path and preserved a stable
+  run ID, 113 events, 23 checkpoints, usage and terminal failure. It cost `$0.34025875` for
+  73,730 input, 73,670 cache-write input and 7,326 output tokens across 20 model and 22 tool calls.
+  It did not submit a patch or reach the evaluator and is not a qualified or successful pilot.
+- A zero-model-call counterfactual diagnostic converted the first rejected model candidate's
+  envelope to raw Git diff without changing its code edit. Patch
+  `sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606`
+  passed every official Docker verdict in evaluator run `run_4299e6b326de4c1c`. This isolates the
+  tool-contract failure but is not counted as an agent submission, pilot success or repetition.
 
 ## Implemented but not yet accepted as an external gate
 
-- OpenAI Responses adapter is contract-tested with a fake client; no paid live model call was made.
+- OpenAI Responses adapter is contract-tested with a fake client and has one paid-provider failure
+  trace. No qualified live-model success exists.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
@@ -152,26 +163,35 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. Current-machine readiness has not yet been
-  accepted; one or more environment blockers may remain.
-- The campaign journal is append-only and hash-chained. It fsyncs `CampaignStarted` and each
-  stable-ID `RunStarted` before the corresponding model-call scope, so a hard crash leaves a guard
-  that blocks automatic schedule replay. Automatic resume from an interrupted journal is not
-  implemented, and this path has no paid-run evidence yet.
+  only after the approved plan is durably persisted. The first pilot's host preflight reached
+  `ready=true`; any corrected commit still requires a new clean execution hash and approval.
+- The campaign journal is append-only and hash-chained. The first `CampaignStarted`
+  exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
+  model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
+  that blocks automatic schedule replay. The first paid pilot produced a completed hash-chained
+  journal. Automatic resume from an interrupted journal is not implemented.
+- Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
+  source path. Task package and run-manifest task/model/budget/environment identities are checked
+  against the plan before `RunStarted`; replacement tests stop before the model runner.
 - `trace-qualification-v1` checks approved-plan binding, required content-addressed artifact
   references, event/checkpoint/result integrity, usage reconciliation, public/private leakage and
   pilot tool-loop evidence. Its `source_evidence_hash` binds plan, manifest, events, checkpoints,
-  result and agent-visible artifact inventory and is recalculated at review/index admission. Only
+  result and agent-visible artifact inventory and is recalculated at development-campaign
+  preflight and review/index admission. Only
   qualified memory-development failures are eligible for append-only human review; classifier
-  output omits hidden check IDs. No live qualification artifact exists yet.
+  output omits hidden check IDs. The first live qualification artifact is immutable and
+  `qualified=false`: evaluation was not reached, and its original leakage scan also counted 41
+  publicly disclosed marker occurrences. A forensic rescan found zero API-key, reference-hash,
+  `private.yaml` or `reference.patch` matches; the scanner contract was corrected without rewriting
+  the historical artifact.
 - Cache usage enforces `cached + cache-write <= input`, and a malformed billed function-call
   response preserves usage/cost before terminating as agent failure. These are contract-tested
   paths, not paid-provider evidence.
 - Reports mark incomplete or qualification-failed matrices `analysis_ready=false`, keep
   available-case rows only as diagnostics and suppress headline, paired comparison/CI and flip
   results. No live matrix has yet exercised this reporting boundary.
-- Failed started attempts are designed to retain run ID, usage including cached/cache-write tokens,
-  calculated cost and terminal outcome. This persistence path has no paid-run evidence yet.
+- Failed started attempts retain run ID, usage including cached/cache-write tokens, calculated cost
+  and terminal outcome. The first paid pilot exercised this path.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -195,6 +215,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   the original raw run files until a portable evidence bundle is exported. This limitation applies
   to the existing admission-report family and must be closed before claiming clean-checkout raw
   evidence inspection.
+- The checked-in first-live-pilot evidence record likewise binds the local plan, journal, trace
+  qualification, model candidate and diagnostic evaluator files by SHA-256 but does not bundle
+  those ignored raw bytes. A clean checkout can inspect the normalized claims boundary but cannot
+  independently rehash the original run until a secret-scrubbed portable evidence export exists.
 - `RunManifest.harness_git_commit` records the harness `HEAD` but not a full dirty-tree hash.
   The new live-suite preflight rejects a dirty worktree before execution; older admission gates used
   manually verified clean staging commits and are not retroactively covered by that enforcement.
@@ -225,9 +249,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   original benchmark run is external acceptance evidence, not a core result.
 - No 96-run OpenAI campaign, cost measurement, negative-transfer review or live-model cross-repo
   result exists.
-- No $2 Babel live pilot or $20/12-run no-memory development campaign has been executed. The
-  2026-07-28 configured official rates—$2.50/M input, $0.25/M cached input, $3.125/M cache-write
-  input and $15/M output—must be refreshed if older than 72 hours at invocation. Only the
+- One capped Babel live pilot was executed and failed qualification; the $20/12-run no-memory
+  development campaign has not been executed. The 2026-07-28 configured official rates—$2.50/M
+  input, $0.25/M cached input, $3.125/M cache-write input and $15/M output—must be refreshed if
+  older than 72 hours at invocation. Only the
   `gpt-5.6-terra` alias, not a dated Terra snapshot, is currently recorded.
 - The six scripted offline runs validate harness plumbing, not model capability or memory effectiveness.
   No portfolio performance claim about a live model should be made from them.

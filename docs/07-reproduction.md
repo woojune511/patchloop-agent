@@ -116,13 +116,24 @@ produces a different execution hash.
 
 The paid command first persists
 `.patchloop/experiments/plans/<execution-hash>.json` as an approved
-`experiment-execution-plan-v1`. It appends and fsyncs `CampaignStarted`, then issues the live
-capability from that durable plan. Each row's stable-ID `RunStarted` is also appended and fsynced to
+`experiment-execution-plan-v1`. It exclusive-creates the journal with `CampaignStarted`, fsyncs it,
+then issues the live capability from that durable plan. A concurrent invocation that loses this
+atomic claim stops before authorization. Each row's stable-ID `RunStarted` is also appended and fsynced to
 `.patchloop/experiments/journals/<experiment-id>.jsonl` before any model call for that scope. Each
 journal row links `previous_event_hash` to its own content hash. If the process hard-crashes, a
 later preflight reports `EXPERIMENT_JOURNAL_EXISTS` instead of automatically starting the paid
 schedule again. Automatic journal resume is not implemented: preserve and inspect the journal;
 do not delete it or change the experiment ID merely to bypass this guard.
+
+Execution does not reload the suite path after preflight. It validates and uses the normalized
+suite snapshot in the approved plan, then rechecks each task package and generated run manifest
+against the plan before writing `RunStarted`. A replaced suite/task therefore stops before a model
+call instead of borrowing an older approval hash.
+
+A terminal unqualified pilot is also immutable. A corrective retry is a new experiment only after
+the original result, qualification, journal and root-cause evidence are preserved, the harness fix
+is committed, and the retry receives a new preflight hash and separate user approval. The current
+checked-in pilot template uses `dev-validation-live-pilot-20260728-r2` for this reason.
 
 The pilot must create a `trace-qualification-v1` artifact with
 `qualified=true`, `trace_integrity_passed=true`, `leakage_scan_passed=true` and
@@ -133,9 +144,10 @@ committed clean state, rerun the no-call preflight and separately approve at mos
 Qualification also records a `source_evidence_hash` over the approved plan, manifest, ordered
 events, checkpoints, state/persisted result and agent-visible CAS artifact inventory. Required
 `RunStarted`, `ContextBuilt` and `ModelCalled` events need both artifact ID and path, and the bytes
-must match their content-addressed identity. Review and memory-index admission recalculate the
-current source hash; copying a previously qualified JSON beside changed or missing evidence is not
-enough. Usage validation rejects cached plus cache-write input above total input, while malformed
+must match their content-addressed identity. Development-campaign preflight, review and
+memory-index admission recalculate the current source hash; copying a previously qualified JSON
+beside changed or missing evidence is not enough. Usage validation rejects cached plus cache-write
+input above total input, while malformed
 function-call arguments still retain the already billed response usage and calculated cost.
 
 Direct `patchloop run --model openai`, direct resume of an OpenAI run and direct fault injection

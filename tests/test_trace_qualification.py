@@ -27,6 +27,7 @@ from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
 from patchloop.evals.failures import classify_failure
 from patchloop.evals.qualification import (
+    _private_leak_tokens,
     calculate_source_evidence_hash,
     load_trace_qualification,
     qualify_run,
@@ -39,6 +40,7 @@ from patchloop.util import utc_now
 
 MEMORY_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 PILOT_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
+V2_TASK = Path("tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities")
 HASH = "sha256:" + ("a" * 64)
 
 
@@ -321,6 +323,26 @@ def test_resolved_live_pilot_is_qualified_but_not_memory_eligible(tmp_path) -> N
     assert qualification["memory_candidate_eligible"] is False
 
 
+def test_publicly_disclosed_private_marker_does_not_fail_leak_scan(tmp_path) -> None:
+    package = load_task_package(PILOT_TASK)
+    hidden_id = package.private.hidden_checks[0].id
+    assert hidden_id in package.public.task_id
+    assert ".patchloop-hidden" in json.dumps(package.public.model_dump(mode="json"))
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        context_text=json.dumps(package.public.model_dump(mode="json")),
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    assert qualification["qualified"] is True
+    assert qualification["leakage_scan_passed"] is True
+
+
 def test_terminal_agent_failure_is_qualified_and_memory_eligible(tmp_path) -> None:
     run_id, _, failure_id = _terminal_trace(tmp_path, agent_failure=True)
 
@@ -355,6 +377,67 @@ def test_private_token_leak_fails_without_copying_token_to_artifact(
     assert hidden_id not in persisted
     assert api_key not in persisted
     assert package.private.reference_patch.sha256 not in persisted
+
+
+def test_undisclosed_reference_hash_still_fails_leak_scan(tmp_path) -> None:
+    package = load_task_package(MEMORY_TASK)
+    reference_hash = package.private.reference_patch.sha256
+    assert reference_hash not in json.dumps(package.public.model_dump(mode="json"))
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        context_text=f"leaked oracle hash: {reference_hash}",
+    )
+
+    qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+    assert qualification["qualified"] is False
+    assert qualification["leakage_scan_passed"] is False
+
+
+def test_undisclosed_hidden_artifact_hash_fails_leak_scan(tmp_path) -> None:
+    package = load_task_package(V2_TASK)
+    hidden_hash = package.private.hidden_artifacts[0].sha256
+    assert hidden_hash not in json.dumps(package.public.model_dump(mode="json"))
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=V2_TASK,
+        purpose=ExperimentPurpose.CORE,
+        role=DatasetRole.CORE_SAME_REPO,
+        resolved=True,
+        context_text=f"leaked hidden artifact hash: {hidden_hash}",
+    )
+
+    qualification = qualify_run(run_id, task_dir=V2_TASK, root=tmp_path)
+    public_private = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "public_private_boundary"
+    )
+
+    assert public_private["passed"] is False
+    assert qualification["leakage_scan_passed"] is False
+
+
+def test_oracle_identities_remain_private_if_public_spec_is_contaminated() -> None:
+    package = load_task_package(V2_TASK)
+    hidden_artifact = package.private.hidden_artifacts[0]
+    reference_hash = package.private.reference_patch.sha256
+    contaminated_issue = package.public.issue.model_copy(
+        update={
+            "description": (
+                f"{package.public.issue.description}\n"
+                f"{reference_hash} {hidden_artifact.path} {hidden_artifact.sha256}"
+            )
+        }
+    )
+    contaminated_public = package.public.model_copy(update={"issue": contaminated_issue})
+    contaminated_package = package.model_copy(update={"public": contaminated_public})
+
+    tokens = _private_leak_tokens(contaminated_package, api_key=None)
+
+    assert reference_hash in tokens
+    assert hidden_artifact.path in tokens
+    assert hidden_artifact.sha256 in tokens
 
 
 def test_modified_content_addressed_artifact_fails_trace_integrity(tmp_path) -> None:

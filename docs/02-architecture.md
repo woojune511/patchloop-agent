@@ -110,7 +110,7 @@ MVP agent-visible tool을 작게 유지한다.
 | `list_tree` | bounded repository 탐색 | result count/depth 제한 |
 | `search_repo` | text/symbol 검색 | path/glob/max result 필요 |
 | `read_file` | line-bounded read | repository-relative path only |
-| `apply_patch` | unified diff 적용 | expected hash와 action ID 필요 |
+| `apply_patch` | text-only raw Git unified diff 적용 | stable action ID와 path/scope policy 필요 |
 | `run_check` | registered check 실행 | arbitrary command 금지 |
 | `inspect_diff` | current diff와 정책 signal 확인 | state path 제외 |
 | `write_checkpoint` | structured durable state 요청 | repository 밖에 저장 |

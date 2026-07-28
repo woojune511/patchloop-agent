@@ -971,6 +971,42 @@ on arm with two repetitions per task. The baseline source is the core no-memory 
 rows are excluded from core metrics. This is schedule-registration evidence only; no stress row or
 live-model request was executed by this gate.
 
+## First paid live-pilot evidence
+
+On 2026-07-28, the approved Babel #1042 development-validation execution hash
+`sha256:e078a32eff4ab1b0a7c02a7aca6c97115e968bb57bb9e618b42d69fa943f6513`
+reached `ready=true` on clean harness commit
+`636d0cf973203f2e0521fe41ec4675562c34ccbd` and ran exactly one schedule row.
+Run `run_c6f13dd9a1a1472d` persisted 113 monotonic events, 23 checkpoints, the approved plan,
+hash-chained campaign journal, terminal result and immutable qualification artifact.
+
+The attempt cost `$0.34025875`: 73,730 input tokens, 73,670 cache-write input tokens and 7,326
+output tokens across 20 model and 22 tool calls. All eight failed mutations used an OpenAI-style
+`*** Begin Patch` envelope while the constrained gateway accepted only raw Git unified diff.
+The next-turn context exposed only `CONTRACT_ERROR`, not the actionable `git apply` error, so the
+agent repeated the rejected mutation until the total-token budget was exceeded. No submitted patch
+or evaluator verdict exists.
+
+The immutable qualification artifact is `qualified=false`. Its only failed deterministic check was
+the original public/private scan: all 41 matches were false positives already disclosed in the
+public contract—20 `.patchloop-hidden` forbidden-path markers and 21 occurrences of the hidden-check
+name embedded in the public task ID. A separate forensic count found zero API-key, reference-hash,
+`private.yaml` or `reference.patch` matches. The historical trace and qualification are retained
+unchanged; corrected tool feedback and scanner logic require a fresh commit, execution hash,
+preflight and explicit paid approval.
+
+For diagnosis only, the first rejected model candidate was converted from its marker envelope to a
+raw Git diff without changing the proposed one-line code edit. The resulting patch has SHA-256
+`sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606`
+and diff hash
+`sha256:5992cb41eb18d9924dcea456fead9bc414489500b88b9371114bdfcf1f8ef743`.
+Official Docker evaluator run `run_4299e6b326de4c1c` passed hidden acceptance, all registered
+number regressions, scope, dependency, test-tampering and public-API policy in 4,078 ms with zero
+model calls. This format-only counterfactual isolates the gateway grammar as the immediate failure
+cause; it is not an agent submission or a pilot success. The checked-in
+[live-pilot evidence record](../reports/live-pilot/dev-validation-live-pilot-20260728.json)
+binds the local raw files, immutable qualification and diagnostic evaluator result by SHA-256.
+
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
@@ -978,4 +1014,5 @@ live-model request was executed by this gate.
 the context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The current worker path is cooperative suspension rather than external process
 termination, and the timeout path is a synthetic timeout on the first registered visible check.
-No stress schedule row, live OpenAI request or paid campaign was executed.
+No stress schedule row, qualified live pilot, 12-run development campaign or 96-run core campaign
+has been executed.
