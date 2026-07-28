@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.contracts import (
+    Budget,
     DatasetRole,
     EventType,
     ExperimentPurpose,
@@ -30,6 +31,9 @@ from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
 QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v1"
+_TERRA_MODEL_ID = "gpt-5.6-terra"
+_GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
+_GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 
 _TERMINAL_EVENTS = {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
 _AGENT_VISIBLE_ARTIFACT_EVENTS = {
@@ -370,7 +374,13 @@ def calculate_source_evidence_hash(
         "checkpoints": [
             checkpoint.model_dump(mode="json") for checkpoint in checkpoints
         ],
-        "result": result.model_dump(mode="json") if result is not None else None,
+        # Preserve source-evidence hashes when backward-compatible result fields
+        # gain defaults after an immutable run was recorded.
+        "result": (
+            result.model_dump(mode="json", exclude_unset=True)
+            if result is not None
+            else None
+        ),
         "persisted_result_hash": persisted_result_hash,
         "agent_visible_artifacts": artifacts,
         "execution_plan_hash": (
@@ -474,21 +484,41 @@ def qualify_run(
 
     provider_ok = manifest.model.provider == "openai"
     add("live_openai_provider", provider_ok, provider=manifest.model.provider)
-    model_contract_ok = (
-        manifest.model.model_id == "gpt-5.6-terra"
-        and manifest.model.reasoning_effort == "medium"
+    common_model_contract = (
+        manifest.model.reasoning_effort == "medium"
         and manifest.model.reasoning_mode == "standard"
         and manifest.model.service_tier == "default"
         and manifest.model.max_output_tokens == 4096
     )
+    terra_model_contract = (
+        manifest.model.model_id == _TERRA_MODEL_ID
+        and manifest.budget == Budget()
+    )
+    mini_pilot_contract = (
+        manifest.experiment is not None
+        and manifest.experiment.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
+        and manifest.budget == _GPT54_MINI_PILOT_BUDGET
+    )
+    model_contract_ok = common_model_contract and (
+        terra_model_contract or mini_pilot_contract
+    )
+    model_contract_details = {
+        "model_id": manifest.model.model_id,
+        "reasoning_effort": manifest.model.reasoning_effort,
+        "reasoning_mode": manifest.model.reasoning_mode,
+        "service_tier": manifest.model.service_tier,
+        "max_output_tokens": manifest.model.max_output_tokens,
+    }
+    if manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID:
+        model_contract_details["max_total_tokens"] = (
+            manifest.budget.max_total_tokens
+        )
     add(
         "frozen_model_contract",
         model_contract_ok,
-        model_id=manifest.model.model_id,
-        reasoning_effort=manifest.model.reasoning_effort,
-        reasoning_mode=manifest.model.reasoning_mode,
-        service_tier=manifest.model.service_tier,
-        max_output_tokens=manifest.model.max_output_tokens,
+        **model_contract_details,
     )
     fault_ok = manifest.fault.type == "none" and EventType.FAULT_INJECTED not in event_types
     add("fault_free", fault_ok, fault=manifest.fault.type)
@@ -511,6 +541,9 @@ def qualify_run(
     experiment = manifest.experiment
     purpose_roles = {
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT: {
+            DatasetRole.DEVELOPMENT_VALIDATION
+        },
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT: {
             DatasetRole.DEVELOPMENT_VALIDATION
         },
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY: {
@@ -628,6 +661,72 @@ def qualify_run(
 
     model_events = [event for event in events if event.type == EventType.MODEL_CALLED]
     tool_events = [event for event in events if event.type == EventType.TOOL_CALLED]
+    context_events = [event for event in events if event.type == EventType.CONTEXT_BUILT]
+    telemetry_declared = any(
+        event.payload.get("prompt_telemetry_version") is not None
+        for event in model_events
+    )
+    telemetry_contract_required = bool(
+        experiment is not None
+        and experiment.purpose
+        in {
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+            ExperimentPurpose.CORE,
+        }
+    )
+    telemetry_required = telemetry_contract_required or telemetry_declared
+    prompt_telemetry_ok = not telemetry_required or telemetry_declared
+    prompt_telemetry_failures: list[int] = []
+    if telemetry_declared:
+        prompt_telemetry_ok = len(context_events) == len(model_events)
+        for index, model_event in enumerate(model_events):
+            payload = model_event.payload
+            context_event = (
+                context_events[index] if index < len(context_events) else None
+            )
+            requested_input_tokens = payload.get("requested_input_tokens")
+            input_tokens = int(payload.get("input_tokens", 0))
+            output_tokens = int(payload.get("output_tokens", 0))
+            total_tokens = payload.get("total_tokens")
+            reasoning_tokens = int(payload.get("reasoning_output_tokens", 0))
+            event_ok = bool(
+                payload.get("prompt_telemetry_version")
+                == "prompt-token-integrity-v1"
+                and isinstance(requested_input_tokens, int)
+                and requested_input_tokens == input_tokens
+                and payload.get("input_token_count_match") is True
+                and payload.get("input_token_count_calls") == 1
+                and isinstance(total_tokens, int)
+                and total_tokens == input_tokens + output_tokens
+                and payload.get("total_token_count_match") is True
+                and reasoning_tokens <= output_tokens
+                and payload.get("response_status") == "completed"
+                and payload.get("response_truncation") == "disabled"
+                and payload.get("response_incomplete_reason") is None
+                and payload.get("response_model") == manifest.model.model_id
+                and context_event is not None
+                and payload.get("request_artifact_id")
+                == context_event.payload.get("artifact_id")
+                and payload.get("request_artifact_path")
+                == context_event.payload.get("artifact_path")
+                and payload.get("request_body_hash")
+                == context_event.payload.get("request_body_hash")
+            )
+            if not event_ok:
+                prompt_telemetry_ok = False
+                prompt_telemetry_failures.append(model_event.sequence)
+    elif telemetry_contract_required:
+        prompt_telemetry_failures.extend(event.sequence for event in model_events)
+    add(
+        "prompt_token_integrity",
+        prompt_telemetry_ok,
+        required=telemetry_required,
+        declared=telemetry_declared,
+        model_event_count=len(model_events),
+        failed_event_sequences=prompt_telemetry_failures,
+    )
+
     expected_usage = {
         "input_tokens": sum(int(event.payload.get("input_tokens", 0)) for event in model_events),
         "cached_input_tokens": sum(
@@ -640,7 +739,15 @@ def qualify_run(
         "output_tokens": sum(
             int(event.payload.get("output_tokens", 0)) for event in model_events
         ),
+        "reasoning_output_tokens": sum(
+            int(event.payload.get("reasoning_output_tokens", 0))
+            for event in model_events
+        ),
         "model_calls": len(model_events),
+        "input_token_count_calls": sum(
+            int(event.payload.get("input_token_count_calls", 0))
+            for event in model_events
+        ),
         "tool_calls": len(tool_events),
     }
     usage_matches = bool(
@@ -676,9 +783,13 @@ def qualify_run(
     )
     add("persisted_result", persisted_result_ok, artifact_present=persisted_result is not None)
 
+    pilot_purposes = {
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+    }
     pilot_tool_ok = bool(
         experiment is None
-        or experiment.purpose != ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        or experiment.purpose not in pilot_purposes
         or tool_events
     )
     add(
@@ -686,8 +797,7 @@ def qualify_run(
         pilot_tool_ok,
         required=bool(
             experiment is not None
-            and experiment.purpose
-            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            and experiment.purpose in pilot_purposes
         ),
         tool_event_count=len(tool_events),
     )
@@ -779,6 +889,7 @@ def qualify_run(
         "no_memory_boundary",
         "approved_execution_plan",
         "agent_visible_artifacts",
+        "prompt_token_integrity",
         "usage_reconciliation",
         "persisted_result",
         "pilot_tool_loop",

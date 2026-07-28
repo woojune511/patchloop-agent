@@ -9,6 +9,7 @@ import pytest
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    Budget,
     Checkpoint,
     DatasetRole,
     EventType,
@@ -150,6 +151,10 @@ def _terminal_trace(
     agent_failure: bool = False,
     context_text: str = "public task context",
     write_execution_plan: bool = True,
+    prompt_telemetry: bool = True,
+    prompt_mismatch: bool = False,
+    model_id: str = "gpt-5.6-terra",
+    budget: Budget | None = None,
 ) -> tuple[str, RunResult, str]:
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
@@ -159,8 +164,9 @@ def _terminal_trace(
         package,
         run_id=run_id,
         provider="openai",
-        model_id="gpt-5.6-terra",
+        model_id=model_id,
         sandbox_backend="docker",
+        budget=budget,
         agent_image_digest=(
             package.environment.image_digest if package.environment is not None else None
         ),
@@ -205,20 +211,44 @@ def _terminal_trace(
         run_id,
         EventType.CONTEXT_BUILT,
         actor="context-builder",
-        payload={"artifact_id": context.artifact_id, "artifact_path": context.path},
+        payload={
+            "artifact_id": context.artifact_id,
+            "artifact_path": context.path,
+            **({"request_body_hash": HASH} if prompt_telemetry else {}),
+        },
     )
+    model_payload = {
+        "artifact_id": model.artifact_id,
+        "artifact_path": model.path,
+        "input_tokens": 0,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 0,
+    }
+    if prompt_telemetry:
+        model_payload.update(
+            {
+                "prompt_telemetry_version": "prompt-token-integrity-v1",
+                "requested_input_tokens": 1 if prompt_mismatch else 0,
+                "input_token_count_match": not prompt_mismatch,
+                "input_token_count_calls": 1,
+                "reasoning_output_tokens": 0,
+                "total_tokens": 0,
+                "total_token_count_match": True,
+                "response_status": "completed",
+                "response_truncation": "disabled",
+                "response_incomplete_reason": None,
+                "response_model": model_id,
+                "request_artifact_id": context.artifact_id,
+                "request_artifact_path": context.path,
+                "request_body_hash": HASH,
+            }
+        )
     state.append_event(
         run_id,
         EventType.MODEL_CALLED,
         actor="model-adapter",
-        payload={
-            "artifact_id": model.artifact_id,
-            "artifact_path": model.path,
-            "input_tokens": 0,
-            "cached_input_tokens": 0,
-            "cache_write_input_tokens": 0,
-            "output_tokens": 0,
-        },
+        payload=model_payload,
     )
     state.append_event(
         run_id,
@@ -251,12 +281,18 @@ def _terminal_trace(
             scope_compliant_success=False,
             official=False,
             verdicts=Verdicts(),
-            usage=Usage(model_calls=1, tool_calls=1),
+            usage=Usage(
+                model_calls=1,
+                input_token_count_calls=1 if prompt_telemetry else 0,
+                tool_calls=1,
+            ),
             outcome_kind=RunOutcomeKind.AGENT_FAILURE,
             terminal_error={"type": "ContractError", "message": "public failure"},
         )
     else:
         result = _result(run_id, resolved=resolved, hidden_check_id=hidden_id)
+        if prompt_telemetry:
+            result.usage.input_token_count_calls = 1
     failure_id = ""
     failure = classify_failure(
         result,
@@ -305,6 +341,108 @@ def test_live_memory_development_failure_is_qualified_and_eligible(tmp_path) -> 
     assert load_trace_qualification(run_id, root=tmp_path) == qualification
 
 
+def test_memory_development_requires_prompt_token_telemetry(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(tmp_path, prompt_telemetry=False)
+
+    qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    assert prompt_check["passed"] is False
+    assert prompt_check["details"]["required"] is True
+    assert prompt_check["details"]["declared"] is False
+    assert qualification["qualified"] is False
+    assert qualification["memory_candidate_eligible"] is False
+
+
+def test_prompt_token_telemetry_is_enforced_when_declared(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(tmp_path, prompt_telemetry=True)
+
+    qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    assert prompt_check["passed"] is True
+    assert prompt_check["details"]["required"] is True
+    assert qualification["qualified"] is True
+
+
+def test_gpt54mini_pilot_contract_is_qualified(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=90_000),
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    model_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "frozen_model_contract"
+    )
+    assert model_check["passed"] is True
+    assert model_check["details"]["model_id"] == "gpt-5.4-mini-2026-03-17"
+    assert model_check["details"]["max_total_tokens"] == 90_000
+    assert qualification["qualified"] is True
+
+
+def test_gpt54mini_pilot_requires_prompt_token_telemetry(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=False,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=90_000),
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    assert prompt_check["passed"] is False
+    assert prompt_check["details"]["required"] is True
+    assert prompt_check["details"]["declared"] is False
+    assert prompt_check["details"]["failed_event_sequences"] == [3]
+    assert qualification["qualified"] is False
+
+
+def test_prompt_token_count_mismatch_fails_qualification(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        prompt_telemetry=True,
+        prompt_mismatch=True,
+    )
+
+    qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    assert prompt_check["passed"] is False
+    assert prompt_check["details"]["failed_event_sequences"] == [3]
+    assert qualification["qualified"] is False
+
+
 def test_resolved_live_pilot_is_qualified_but_not_memory_eligible(tmp_path) -> None:
     run_id, _, _ = _terminal_trace(
         tmp_path,
@@ -312,6 +450,7 @@ def test_resolved_live_pilot_is_qualified_but_not_memory_eligible(tmp_path) -> N
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
+        prompt_telemetry=False,
     )
 
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
@@ -334,6 +473,7 @@ def test_publicly_disclosed_private_marker_does_not_fail_leak_scan(tmp_path) -> 
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
+        prompt_telemetry=False,
         context_text=json.dumps(package.public.model_dump(mode="json")),
     )
 

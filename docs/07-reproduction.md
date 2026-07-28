@@ -64,15 +64,18 @@ checkpoint evidence and a final evaluator result.
 
 CI never performs live calls. The checked-in live files are contracts, not proof of a paid run:
 
-- `experiments/dev-validation-pilot.template.yaml`: Babel #1042, `no_memory` × 1, $2 cap
+- `experiments/dev-validation-pilot.template.yaml`: terminal Terra r3 contract; historical
+  inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-pilot.yaml`: Babel #1042, dated mini snapshot,
+  `no_memory` × 1, strict 90,000-token run budget, $2 cap
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
 As of 2026-07-28 the official
-[OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for Terra is $2.50/M uncached
-input, $0.25/M cached input, $3.125/M cache-write input and $15/M output. The model catalog exposes
-the `gpt-5.6-terra` alias but no dated Terra snapshot. Recheck the price within 72 hours of every
-live invocation and record the installed SDK version, clean Git commit and execution timestamp.
+[OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the mini pilot is $0.75/M
+uncached input, $0.075/M cached input and $4.50/M output, with no separate published cache-write
+rate. The suite pins `gpt-5.4-mini-2026-03-17`. Recheck the price within 72 hours of every live
+invocation and record the installed SDK version, clean Git commit and execution timestamp.
 
 Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENAI_BASE_URL` and
 `OPENAI_API_BASE` unset. Then run the no-call preflight first:
@@ -80,7 +83,7 @@ Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENA
 ```powershell
 git status --short
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-pilot.template.yaml `
+  --suite experiments/dev-validation-gpt54mini-pilot.yaml `
   --preflight-only
 ```
 
@@ -88,14 +91,14 @@ The unapproved command intentionally exits with code 2 after printing JSON. Copy
 `execution_hash` and inspect every blocker. It checks the frozen dataset/role/hash, the manifest's
 canonical task package path, public/private spec hash and base commit, the digest-pinned task
 environment and observed Docker image identity, clean commit, SDK, API-key presence without its
-value, absence of custom base URLs, `gpt-5.6-terra`/medium/standard/default settings, price
-age/rates and full-run budget reserve.
+value, absence of custom base URLs, exact mini snapshot/medium/default settings, strict 90,000-token
+budget, price age/rates and full-run budget reserve.
 
 After the user separately approves at most $2, validate the same execution identity:
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-pilot.template.yaml `
+  --suite experiments/dev-validation-gpt54mini-pilot.yaml `
   --preflight-only `
   --approve-live-cost `
   --approved-execution-hash <sha256:...>
@@ -105,7 +108,7 @@ Only if this returns `ready=true`, execute with the same two approval flags:
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-pilot.template.yaml `
+  --suite experiments/dev-validation-gpt54mini-pilot.yaml `
   --approve-live-cost `
   --approved-execution-hash <same-sha256:...>
 ```
@@ -130,11 +133,12 @@ suite snapshot in the approved plan, then rechecks each task package and generat
 against the plan before writing `RunStarted`. A replaced suite/task therefore stops before a model
 call instead of borrowing an older approval hash.
 
-A terminal pilot is immutable whether it passes or fails acceptance. A corrective retry is a new experiment only after
-the original result, qualification, journal and root-cause evidence are preserved, the harness fix
-is committed, and the retry receives a new preflight hash and separate user approval. The checked-in
-pilot template names the terminal `dev-validation-live-pilot-20260728-r3` experiment and must not be
-rerun. r1
+A terminal pilot is immutable whether it passes or fails acceptance. A corrective retry is a new
+experiment only after the original result, qualification, journal and root-cause evidence are
+preserved, the harness fix is committed, and the retry receives a new preflight hash and separate
+user approval. The Terra pilot template names the terminal
+`dev-validation-live-pilot-20260728-r3` experiment and must not be rerun; it is not the suite used
+by the commands above. r1
 `run_c6f13dd9a1a1472d` and r2 `run_de8f2a2846044c01` remain immutable; neither unlocks the
 development campaign. r2's trace artifact passed integrity/leakage qualification, but
 `evaluation_reached=false` makes the pilot acceptance consumer reject it.

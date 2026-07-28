@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 
 from patchloop.evals import report as report_module
@@ -63,6 +64,15 @@ def test_report_reaggregates_at_task_level(tmp_path, monkeypatch) -> None:
     report = json.loads((tmp_path / "report" / "report.json").read_text(encoding="utf-8"))
     assert report["metrics"]["no_memory"]["scrr"]["estimate"] == 0.75
     assert report["metrics"]["no_memory"]["scrr"]["tasks"] == 2
+    with (tmp_path / "report" / "runs.csv").open(
+        newline="",
+        encoding="utf-8",
+    ) as handle:
+        row = next(csv.DictReader(handle))
+    assert row["cached_input_tokens"] == "0"
+    assert row["cache_write_input_tokens"] == "0"
+    assert row["reasoning_output_tokens"] == "0"
+    assert row["input_token_count_calls"] == "0"
 
 
 def test_report_separates_infrastructure_and_not_started_rows(

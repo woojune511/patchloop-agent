@@ -35,13 +35,30 @@ from patchloop.util import canonical_json, ensure_within, sha256_bytes, sha256_t
 
 OFFICIAL_PRICING_URL = "https://developers.openai.com/api/docs/pricing"
 PRICING_MAX_AGE = timedelta(hours=72)
-OFFICIAL_PRICES = {
-    "input_price_per_million_usd": 2.5,
-    "cached_input_price_per_million_usd": 0.25,
-    "cache_write_input_price_per_million_usd": 3.125,
-    "output_price_per_million_usd": 15.0,
+TERRA_MODEL_ID = "gpt-5.6-terra"
+GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
+PRICE_FIELDS = (
+    "input_price_per_million_usd",
+    "cached_input_price_per_million_usd",
+    "cache_write_input_price_per_million_usd",
+    "output_price_per_million_usd",
+)
+OFFICIAL_PRICES_BY_MODEL = {
+    TERRA_MODEL_ID: {
+        "input_price_per_million_usd": 2.5,
+        "cached_input_price_per_million_usd": 0.25,
+        "cache_write_input_price_per_million_usd": 3.125,
+        "output_price_per_million_usd": 15.0,
+    },
+    GPT54_MINI_PILOT_MODEL_ID: {
+        "input_price_per_million_usd": 0.75,
+        "cached_input_price_per_million_usd": 0.075,
+        "cache_write_input_price_per_million_usd": None,
+        "output_price_per_million_usd": 4.5,
+    },
 }
 DEFAULT_BUDGET = Budget()
+GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 
 PILOT_TASK = (
     "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml"
@@ -170,6 +187,24 @@ class ExperimentSuite(BaseModel):
                     "Babel task, no_memory, and one repetition"
                 )
             self._require_live_defaults(cost_limit=2)
+        elif (
+            self.purpose
+            == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        ):
+            if (
+                [_normalized_task_path(task) for task in self.tasks] != [PILOT_TASK]
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+            ):
+                raise ValueError(
+                    "development-validation model-candidate pilot requires exactly "
+                    "the frozen Babel task, no_memory, and one repetition"
+                )
+            self._require_live_defaults(
+                cost_limit=2,
+                model_id=GPT54_MINI_PILOT_MODEL_ID,
+                budget=GPT54_MINI_PILOT_BUDGET,
+            )
         elif self.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
             if (
                 {_normalized_task_path(task) for task in self.tasks}
@@ -197,20 +232,34 @@ class ExperimentSuite(BaseModel):
             raise ValueError("research campaign requires a frozen dataset manifest hash")
         return self
 
-    def _require_live_defaults(self, *, cost_limit: float) -> None:
+    def _require_live_defaults(
+        self,
+        *,
+        cost_limit: float,
+        model_id: str = TERRA_MODEL_ID,
+        budget: Budget | None = None,
+    ) -> None:
         if (
             self.model != "openai"
-            or self.model_id != "gpt-5.6-terra"
             or self.reasoning_effort != "medium"
             or self.reasoning_mode != "standard"
             or self.service_tier != "default"
         ):
             raise ValueError(
-                "live research purpose requires gpt-5.6-terra, medium reasoning, "
+                "live research purpose requires OpenAI, medium reasoning, "
                 "standard mode, and default service tier"
             )
-        if self.budget != DEFAULT_BUDGET or self.max_output_tokens != 4096:
-            raise ValueError("live research purpose requires the frozen default run budget")
+        expected_budget = budget or DEFAULT_BUDGET
+        if (
+            self.model_id != model_id
+            or self.budget != expected_budget
+            or self.max_output_tokens != 4096
+        ):
+            raise ValueError(
+                "live research purpose requires the frozen "
+                f"{model_id} model/run-budget contract "
+                f"(max_total_tokens={expected_budget.max_total_tokens})"
+            )
         if self.cost_limit_usd != cost_limit:
             raise ValueError(
                 f"{self.purpose.value} requires cost_limit_usd={cost_limit:g}"
@@ -456,7 +505,10 @@ def _expected_role_and_split(
     purpose: ExperimentPurpose,
     split: str,
 ) -> tuple[set[DatasetRole], DatasetRole | None]:
-    if purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
+    if purpose in {
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+    }:
         return {DatasetRole.DEVELOPMENT_VALIDATION}, DatasetRole.DEVELOPMENT_VALIDATION
     if purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
         return {DatasetRole.MEMORY_DEVELOPMENT}, DatasetRole.MEMORY_DEVELOPMENT
@@ -583,7 +635,11 @@ def preflight_suite(
             "experiment task paths must resolve to unique task identities",
         )
     if (
-        suite.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        suite.purpose
+        in {
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+        }
         and loaded_ids != {PILOT_TASK_ID}
     ):
         _block(
@@ -639,20 +695,22 @@ def preflight_suite(
         pilot_qualification=pilot_qualification,
     )
 
+    expected_prices = OFFICIAL_PRICES_BY_MODEL.get(suite.model_id)
     pricing = {
+        "model_id": suite.model_id,
         "verified_at": (
             suite.pricing_verified_at.isoformat() if suite.pricing_verified_at else None
         ),
         "source_url": suite.pricing_source_url,
         **{
             field: getattr(suite, field)
-            for field in OFFICIAL_PRICES
+            for field in PRICE_FIELDS
         },
         "maximum_age_hours": int(PRICING_MAX_AGE.total_seconds() / 3600),
     }
     configured_prices = [
         getattr(suite, field)
-        for field in OFFICIAL_PRICES
+        for field in PRICE_FIELDS
         if getattr(suite, field) is not None
     ]
     per_run_cost_reserve = (
@@ -737,12 +795,20 @@ def preflight_suite(
                         "PRICING_STALE",
                         "pricing verification is older than 72 hours",
                     )
-        for field, expected in OFFICIAL_PRICES.items():
+        if expected_prices is None:
+            _block(
+                blockers,
+                "MODEL_PRICING_UNSUPPORTED",
+                f"no verified pricing contract exists for {suite.model_id}",
+            )
+        for field in PRICE_FIELDS:
+            expected = expected_prices.get(field) if expected_prices is not None else None
             if getattr(suite, field) != expected:
                 _block(
                     blockers,
                     "PRICING_RATE_MISMATCH",
-                    f"{field} must equal the verified Terra rate {expected:g}",
+                    f"{field} must equal the verified {suite.model_id} rate "
+                    f"{expected if expected is not None else 'null'}",
                 )
         if suite.estimated_cost_usd <= 0:
             _block(
@@ -1129,6 +1195,7 @@ def evaluate_suite(
     )
     qualification_required = suite.purpose in {
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
     }
     halt_reason: dict[str, str] | None = None

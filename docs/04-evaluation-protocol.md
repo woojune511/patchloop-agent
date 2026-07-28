@@ -127,12 +127,31 @@ Pilot의 cost limit은 $2, 12-run development campaign은 $20다. 이 두 실행
 
 각 started attempt는 resolved/task failure뿐 아니라 agent/infrastructure failure도 stable run
 ID, event, checkpoint, usage와 terminal outcome을 남긴다. Usage는 uncached input, cached
-input, cache-write input, output token을 분리하며 2026-07-28 공식 rate로 비용을 계산한다.
+input, cache-write input, output token과 reasoning-output breakdown을 분리하며 2026-07-28
+공식 rate로 비용을 계산한다.
 Cached input과 cache-write input의 합은 total input을 넘을 수 없다. Provider가 이미 과금한
 응답의 function-call argument가 malformed여도 그 response usage와 비용을 먼저 남긴 뒤
 agent failure로 종료한다.
 Infrastructure 또는 qualification error가 발생하면 campaign을 중단하고 나머지 schedule row는
 `not_started` reason과 함께 남긴다. 실패를 같은 run ID로 재실행하거나 결과를 덮어쓰지 않는다.
+
+새 live turn은 생성 call 전에 같은 model/input/tools/reasoning payload를
+[Responses input-token count endpoint](https://developers.openai.com/api/docs/guides/token-counting)로
+계산한다. Exact logical request와 context-builder omission/truncation manifest를 CAS에 남기고,
+생성 응답의 `usage.input_tokens`와 count를 turn별로 대조한다. 생성 요청은
+`truncation=disabled`를 명시하므로 provider가 오래된 input item을 조용히 버릴 수 없다.
+Context 초과는 400/provider failure로, count mismatch와 incomplete response는
+qualification failure로 가시화한다. Input-token count call 수는 별도로 기록하며 생성
+model-call budget이나 model token cost에 합치지 않는다.
+
+Count 뒤에는 현재 누적 input+output, 새 exact input과 manifest의 full
+`max_output_tokens`를 합쳐 run budget과 비교한다. 합계가 상한을 넘으면 generation을
+호출하지 않고 structured agent failure로 종료한다.
+
+이 비교는 PatchLoop 자체 context policy를 대체하지 않는다. Context artifact는 최근 event
+limit로 생략된 event 수와 12,000-character tool-result cap 적용을 별도 필드로 기록한다.
+따라서 `request count == response usage`여도 context builder가 의도적으로 제외한 evidence가
+있을 수 있고, 이를 “전체 과거 trace가 모델에 전달됐다”는 뜻으로 해석하지 않는다.
 
 ## 5. Controlled variables
 
@@ -150,11 +169,14 @@ Infrastructure 또는 qualification error가 발생하면 campaign을 중단하�
 
 Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는다. Provider가 immutable model snapshot을 제공하지 않으면 실행 시점과 provider revision을 기록하고 limitation으로 보고한다.
 
-현재 live development block은 `gpt-5.6-terra`, reasoning `medium`, mode `standard`,
-service tier `default`, max output 4,096 token과 run budget
+현재 memory-development와 core live block은 `gpt-5.6-terra`, reasoning `medium`, mode
+`standard`, service tier `default`, max output 4,096 token과 run budget
 `20 model call / 50 tool call / 80,000 total token / 900초`를 고정한다. 현재 공식 catalog에는
 dated Terra snapshot이 없으므로 alias, OpenAI SDK version, clean harness Git commit과
-execution window를 provenance로 사용한다.
+execution window를 provenance로 사용한다. D-031 provider telemetry를 검증하는 별도
+development-validation pilot은 `gpt-5.4-mini-2026-03-17`, medium, default tier,
+per-call output 4,096과 run 전체 input+output 90,000 token을 고정한다. 이 one-run pilot은
+core headline 비교에 포함하지 않는다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
@@ -179,6 +201,10 @@ plan에서만 live capability를 발급한다. 동시 invocation의 선점 패�
 token당 input $2.50, cached input $0.25, cache write $3.125, output $15다. Preflight는
 verification age가 72시간을 넘거나 rate가 다르면 실행하지 않으며, 남은 cost limit에서 한
 run의 frozen budget reserve를 확보할 수 없는 경우 다음 run을 시작하지 않는다.
+
+같은 시점의 `gpt-5.4-mini` standard rate는 input $0.75/M, cached input $0.075/M,
+output $4.50/M이며 별도 cache-write rate는 없다. Mini pilot preflight는 model ID와 이
+price profile을 함께 검증하며 $2 cap 안에 보수적 $0.423432 run reserve를 요구한다.
 
 ## 6. Selective retrieval policy
 
@@ -338,6 +364,8 @@ Human approval는 autonomous agent 비교를 바꾸므로 main ablation에 넣�
 - Normal과 stress 결과 분리
 - Calibration, external acceptance와 research/core 분모 분리
 - Token, cost, duration, tool call
+- Turn별 request input-token count 대 response usage, provider truncation/incomplete status,
+  context-policy omission과 tool-result truncation
 - Success flip과 failure flip task 목록
 - Memory가 도움/방해된 대표 trace
 - Infrastructure error와 exclusion ledger

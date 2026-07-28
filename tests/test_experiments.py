@@ -72,7 +72,7 @@ def _ready_live_environment(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
-        lambda: datetime(2026, 7, 28, 12, tzinfo=UTC),
+        lambda: datetime(2026, 7, 29, 0, tzinfo=UTC),
     )
     monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
 
@@ -99,6 +99,78 @@ def test_live_campaign_approval_is_an_invocation_preflight_gate(
     )
     assert approved["ready"] is True
     assert approved["execution_hash"] == unapproved["execution_hash"]
+
+
+def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_path = "experiments/dev-validation-gpt54mini-pilot.yaml"
+
+    unapproved = eval_runner.preflight_suite(suite_path)
+
+    assert {row["code"] for row in unapproved["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert unapproved["purpose"] == (
+        "development-validation-model-candidate-pilot"
+    )
+    assert unapproved["suite"]["model_id"] == "gpt-5.4-mini-2026-03-17"
+    assert unapproved["suite"]["budget"]["max_total_tokens"] == 90_000
+    assert unapproved["suite"]["max_output_tokens"] == 4096
+    assert unapproved["pricing"]["input_price_per_million_usd"] == 0.75
+    assert unapproved["pricing"]["cached_input_price_per_million_usd"] == 0.075
+    assert unapproved["pricing"]["cache_write_input_price_per_million_usd"] is None
+    assert unapproved["pricing"]["output_price_per_million_usd"] == 4.5
+    assert unapproved["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
+        (90_000 + 4096) * 4.5 / 1_000_000
+    )
+
+    approved = eval_runner.preflight_suite(
+        suite_path,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+    assert approved["ready"] is True
+
+
+def test_gpt54mini_pilot_rejects_non_frozen_token_budget() -> None:
+    payload = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-pilot.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    payload["budget"]["max_total_tokens"] = 80_000
+
+    with pytest.raises(ValidationError, match="max_total_tokens=90000"):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_gpt54mini_pilot_preflight_rejects_wrong_price(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    payload = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-pilot.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    payload["experiment_id"] = "gpt54mini-wrong-price"
+    payload["input_price_per_million_usd"] = 2.5
+    suite_path = tmp_path / "gpt54mini-wrong-price.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert "PRICING_RATE_MISMATCH" in {
+        row["code"] for row in preflight["blockers"]
+    }
 
 
 def test_v2_development_campaign_has_exact_twelve_run_matrix(
@@ -171,6 +243,51 @@ def test_development_campaign_rejects_stale_pilot_source_evidence(
     assert preflight["pilot_qualification"]["reason"] == (
         "pilot source evidence hash mismatch"
     )
+
+
+def test_model_candidate_pilot_cannot_unlock_terra_development_campaign(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_payload = yaml.safe_load(
+        Path("experiments/dev-no-memory.template.yaml").read_text(encoding="utf-8")
+    )
+    suite_payload["experiment_id"] = "dev-reject-model-candidate-pilot"
+    suite_payload["pilot_run_id"] = "run_model_candidate_pilot"
+    suite_path = tmp_path / "dev-reject-model-candidate-pilot.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(suite_payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    source_hash = "sha256:" + ("a" * 64)
+    monkeypatch.setattr(
+        trace_qualification,
+        "load_trace_qualification",
+        lambda *_args, **_kwargs: {
+            "run_id": "run_model_candidate_pilot",
+            "purpose": "development-validation-model-candidate-pilot",
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "leakage_scan_passed": True,
+            "evaluation_reached": True,
+            "qualification_hash": "sha256:" + ("c" * 64),
+            "source_evidence_hash": source_hash,
+            "outcome_kind": "resolved",
+        },
+    )
+    monkeypatch.setattr(
+        trace_qualification,
+        "calculate_source_evidence_hash",
+        lambda *_args, **_kwargs: source_hash,
+    )
+
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert preflight["pilot_qualification"]["qualified"] is False
+    assert "QUALIFIED_PILOT_REQUIRED" in {
+        row["code"] for row in preflight["blockers"]
+    }
 
 
 def test_v2_development_campaign_rejects_an_incomplete_task_set() -> None:

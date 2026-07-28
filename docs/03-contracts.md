@@ -263,10 +263,11 @@ Command는 task editor가 등록한다. Agent가 executable, argument, environme
 | --- | --- |
 | `offline-smoke` | `model=mock`; API 호출 없음 |
 | `development-validation-live-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, $2 상한 |
+| `development-validation-model-candidate-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, dated candidate model, $2 상한; Terra 선행 gate와 분리 |
 | `memory-development-no-memory` | frozen memory-development 여섯 task, `no_memory`, repetition 2, 총 12 run, $20 상한 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
-두 development live purpose는 다음 값을 고정한다.
+Terra comparison purpose는 다음 값을 고정한다.
 
 ```yaml
 model: openai
@@ -324,6 +325,17 @@ input $2.50, cached input $0.25, cache write $3.125, output $15다. 현재 model
 dated Terra snapshot 없이 `gpt-5.6-terra` alias만 있으므로 model ID와 SDK version, Git
 commit, 실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을
 거부하고 다시 확인한다.
+
+D-031 telemetry를 실제 provider에서 검증하는 별도 one-run pilot은
+`experiments/dev-validation-gpt54mini-pilot.yaml`에 고정한다. 이 suite만
+`development-validation-model-candidate-pilot` purpose를 사용하며 기존
+`development-validation-live-pilot` 선행 gate를 충족하지 않는다.
+`gpt-5.4-mini-2026-03-17`, medium effort, default tier, `max_output_tokens: 4096`,
+`max_total_tokens: 90000`을 허용한다. 공식 standard rate는 input $0.75/M, cached input
+$0.075/M, output $4.50/M이고 cache-write rate는 `null`이다. 90,000은 run 전체
+input+output 누적 상한이며 memory-development/core의 Terra 계약을 바꾸지 않는다.
+Generation 전에 exact input count와 manifest의 full per-call output allowance가 남은
+budget에 함께 들어가는지 검사하므로 마지막 response가 이 상한을 넘도록 시작하지 않는다.
 
 `patchloop run --model openai`, OpenAI run의 direct `resume`, direct `inject-fault`는 승인된
 suite 경로를 우회할 수 없도록 거부한다.
@@ -459,6 +471,34 @@ FailureTagged     RunCompleted       RunFailed
 ```
 
 Event payload schema는 type별 version을 가져야 한다. Secret, full hidden assertion, raw credential을 payload에 저장하지 않는다.
+
+새 live turn의 `ContextBuilt` artifact는 `model-request-evidence-v1`이다. API key와 HTTP
+authorization header를 제외한 exact logical Responses request body, request body hash와
+`context-build-evidence-v1`을 함께 보존한다. Context evidence는 전체 eligible event 수,
+최근-event policy로 포함·생략한 sequence, tool-result character cap 적용 여부, memory와
+component별 character 수, 최종 UTF-8 byte 수를 기록한다. 따라서 PatchLoop가 policy에 따라
+context를 줄인 경우와 provider가 input을 줄인 경우를 분리할 수 있다.
+
+새 live `ModelCalled` event는 `prompt_telemetry_version: prompt-token-integrity-v1`과 함께
+다음을 기록한다.
+
+```text
+requested_input_tokens        Responses input-token-count endpoint의 exact count
+input_tokens                  생성 응답 usage의 실제 input count
+input_token_count_match       위 두 값의 일치 여부
+cached/cache-write input      provider usage breakdown
+output/reasoning output       전체 output과 그 안의 reasoning token
+total_tokens                  input + output reconciliation
+response_status               completed | incomplete | failed
+response_truncation           요청과 응답의 truncation policy
+response_incomplete_reason    max_output_tokens 등의 provider reason
+response_model                요청한 dated snapshot과 실제 provider model의 일치
+request artifact identity     같은 turn의 ContextBuilt request와 결속
+```
+
+Responses request는 `truncation: disabled`를 명시한다. Context window를 넘으면 앞부분을
+조용히 제거하지 않고 provider error로 종료해야 한다. Input-token count mismatch나 incomplete
+response에서는 tool call을 실행하지 않고 이미 반환된 usage를 먼저 보존한다.
 
 ## 6. Checkpoint
 
@@ -634,8 +674,10 @@ context builder가 이 결과를 다시 제공한다. Private evaluator는 agent
     "cached_input_tokens": 0,
     "cache_write_input_tokens": 0,
     "output_tokens": 0,
+    "reasoning_output_tokens": 0,
     "model_cost_usd": 0,
     "model_calls": 0,
+    "input_token_count_calls": 0,
     "tool_calls": 0,
     "wall_clock_ms": 0
   },
@@ -658,6 +700,16 @@ qualification error 뒤의 schedule row는 새 API call 없이 `not_started`로 
 먼저 구조화하고 `ModelCalled`와 terminal failure에 보존한 뒤 agent failure로 종료한다. 이미
 과금된 response usage를 parsing exception 때문에 버리거나 cache token 초과분을 조용히
 clamp한 값으로 qualification해서는 안 된다.
+
+`reasoning_output_tokens <= output_tokens`도 불변식이다. `output_tokens`는 화면에 보이는
+text만이 아니라 reasoning, tool/message framing 등 provider가 생성한 모든 output token을
+포함하므로 예산과 비용은 전체 `output_tokens`로 계산한다. `input_token_count_calls`는 생성
+model call과 구분한 observability count이며 model-call budget이나 model token cost에 더하지
+않는다.
+
+`model_cost_usd`는 manifest에 동결한 공식 list-price profile로 재계산한 direct token-cost
+estimate다. Account invoice나 data-sharing incentive 적용 증거가 아니며, PatchLoop의
+function-tool run은 무료라고 가정하지 않는다.
 
 ## 9. Failure record
 
@@ -710,12 +762,22 @@ Qualification은 최소한 다음 경계를 검사한다.
 - Agent-visible event/artifact에 공개 contract에 없는 private 구조 marker/hidden check ID가
   없고, 공개 여부와 무관하게 hidden artifact path/hash, reference hash 또는 현재 API key가 없음
 - Event usage, persisted result, terminal outcome과 evaluator verdict가 서로 일치함
+- `prompt-token-integrity-v1`을 선언한 새 trace는 모든 turn에서 exact request artifact가
+  `ContextBuilt`와 결속되고, input-token pre-count와 response usage가 일치하며,
+  `truncation=disabled`, `status=completed`, incomplete reason 없음과 total/reasoning token
+  불변식을 만족함
 - Pilot은 적어도 한 tool call을 포함해 실제 function-tool loop를 통과함
 
 `qualified=true`는 trace artifact가 자기 outcome과 provenance를 일관되게 보존했다는 뜻이다.
 Development-validation pilot acceptance는 여기에 `evaluation_reached=true`를 추가로 요구한다.
 따라서 evaluator 이전 agent failure도 trace qualification은 통과할 수 있지만 development
 campaign을 열지는 못한다.
+
+r1~r3처럼 D-031 이전에 생성된 immutable `development-validation-live-pilot`에는
+`prompt_telemetry_version`이 없다. Qualification은 이 legacy absence 자체를 실패로
+소급하지 않는다. 반면 model-candidate pilot, memory-development와 core purpose는
+telemetry 자체가 없으면 fail-closed하며, 한 event라도 새 telemetry version을 선언한
+trace는 모든 model event에서 새 prompt-token integrity 계약을 만족해야 한다.
 
 Leak scan은 private token의 값이나 일치 문자열을 artifact에 다시 기록하지 않고 match count만
 남긴다. Canonical public spec에 이미 있는 generic structure marker와 hidden check ID만

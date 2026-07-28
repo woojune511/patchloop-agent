@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from patchloop.agent.context import build_context
+from patchloop.agent.context import build_context_with_evidence
 from patchloop.agent.model import (
     SYSTEM_PROMPT,
     MockModelAdapter,
@@ -52,7 +52,14 @@ from patchloop.runtime import (
 from patchloop.sandbox import DockerSandbox, LocalSandbox, TimeoutOnceSandbox
 from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
-from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, utc_now
+from patchloop.util import (
+    canonical_json,
+    ensure_within,
+    safe_relative_path,
+    sha256_bytes,
+    sha256_text,
+    utc_now,
+)
 from patchloop.verifier import EvaluationEngine
 
 _LIVE_AUTHORIZATION_GUARD = object()
@@ -403,29 +410,92 @@ class AgentRunner:
                             "artifact_path": retrieval_artifact.path,
                         },
                     )
-                context, context_hash = build_context(
+                built_context = build_context_with_evidence(
                     package.public, events, checkpoint, memory_text
                 )
-                context_artifact = self.artifacts.put_text(context, "application/json")
+                context = built_context.rendered
+                if isinstance(adapter, OpenAIResponsesAdapter):
+                    request_body = adapter.request_payload(context, TOOL_SCHEMAS)
+                    request_endpoint = "/v1/responses"
+                else:
+                    request_body = {
+                        "model": manifest.model.model_id,
+                        "system_prompt": SYSTEM_PROMPT,
+                        "context": context,
+                        "tools": TOOL_SCHEMAS,
+                    }
+                    request_endpoint = None
+                request_body_hash = sha256_text(canonical_json(request_body))
+                request_artifact = self.artifacts.put_json(
+                    {
+                        "schema_version": "model-request-evidence-v1",
+                        "provider": manifest.model.provider,
+                        "endpoint": request_endpoint,
+                        "request_body": request_body,
+                        "request_body_hash": request_body_hash,
+                        "context_build": built_context.evidence,
+                    }
+                )
                 self.state.append_event(
                     manifest.run_id,
                     EventType.CONTEXT_BUILT,
                     actor="context-builder",
                     payload={
-                        "context_hash": context_hash,
-                        "artifact_id": context_artifact.artifact_id,
-                        "artifact_path": context_artifact.path,
+                        "context_hash": built_context.content_hash,
+                        "context_characters": built_context.evidence[
+                            "rendered_characters"
+                        ],
+                        "context_bytes": built_context.evidence["rendered_bytes"],
+                        "eligible_event_count": built_context.evidence["events"][
+                            "eligible_count"
+                        ],
+                        "included_event_count": built_context.evidence["events"][
+                            "included_count"
+                        ],
+                        "omitted_event_count": built_context.evidence["events"][
+                            "omitted_count"
+                        ],
+                        "truncated_tool_result_count": sum(
+                            bool(item["truncated"])
+                            for item in built_context.evidence["tool_results"]
+                        ),
+                        "request_body_hash": request_body_hash,
+                        "artifact_id": request_artifact.artifact_id,
+                        "artifact_path": request_artifact.path,
+                        "artifact_role": "model-request-evidence",
                         "provider_state_used": False,
                     },
                 )
                 model_started = time.monotonic()
-                turn = adapter.next_turn(context, TOOL_SCHEMAS)
+                if isinstance(adapter, OpenAIResponsesAdapter):
+                    requested_input_tokens = adapter.count_input_tokens(request_body)
+                    remaining_tokens = (
+                        manifest.budget.max_total_tokens
+                        - usage.input_tokens
+                        - usage.output_tokens
+                    )
+                    if (
+                        requested_input_tokens + manifest.model.max_output_tokens
+                        > remaining_tokens
+                    ):
+                        raise ContractError(
+                            "remaining token budget cannot fund the exact input "
+                            "plus one bounded model response"
+                        )
+                    turn = adapter.execute_request(
+                        request_body,
+                        requested_input_tokens=requested_input_tokens,
+                    )
+                else:
+                    turn = adapter.next_turn(context, TOOL_SCHEMAS)
                 model_duration_ms = int((time.monotonic() - model_started) * 1000)
                 usage.model_calls += 1
                 usage.input_tokens += turn.input_tokens
                 usage.cached_input_tokens += turn.cached_input_tokens
                 usage.cache_write_input_tokens += turn.cache_write_input_tokens
                 usage.output_tokens += turn.output_tokens
+                usage.reasoning_output_tokens += turn.reasoning_output_tokens
+                usage.input_token_count_calls += turn.input_token_count_calls
                 usage.wall_clock_ms += model_duration_ms
                 turn_artifact = self.artifacts.put_json(
                     {
@@ -436,6 +506,18 @@ class AgentRunner:
                         "response_model": turn.response_model,
                         "response_service_tier": turn.response_service_tier,
                         "system_fingerprint": turn.system_fingerprint,
+                        "response_status": turn.response_status,
+                        "response_truncation": turn.response_truncation,
+                        "response_incomplete_reason": turn.response_incomplete_reason,
+                        "requested_input_tokens": turn.requested_input_tokens,
+                        "input_tokens": turn.input_tokens,
+                        "cached_input_tokens": turn.cached_input_tokens,
+                        "cache_write_input_tokens": turn.cache_write_input_tokens,
+                        "output_tokens": turn.output_tokens,
+                        "reasoning_output_tokens": turn.reasoning_output_tokens,
+                        "total_tokens": turn.total_tokens,
+                        "input_token_count_match": turn.input_token_count_match,
+                        "total_token_count_match": turn.total_token_count_match,
                         "response_error": (
                             {
                                 "code": turn.error.code,
@@ -458,9 +540,27 @@ class AgentRunner:
                         "cached_input_tokens": turn.cached_input_tokens,
                         "cache_write_input_tokens": turn.cache_write_input_tokens,
                         "output_tokens": turn.output_tokens,
+                        "reasoning_output_tokens": turn.reasoning_output_tokens,
+                        "total_tokens": turn.total_tokens,
+                        "requested_input_tokens": turn.requested_input_tokens,
+                        "input_token_count_match": turn.input_token_count_match,
+                        "total_token_count_match": turn.total_token_count_match,
+                        "input_token_count_calls": turn.input_token_count_calls,
+                        "prompt_telemetry_version": (
+                            "prompt-token-integrity-v1"
+                            if turn.requested_input_tokens is not None
+                            else None
+                        ),
+                        "request_artifact_id": request_artifact.artifact_id,
+                        "request_artifact_path": request_artifact.path,
+                        "request_artifact_hash": request_artifact.content_hash,
+                        "request_body_hash": request_body_hash,
                         "response_model": turn.response_model,
                         "response_service_tier": turn.response_service_tier,
                         "system_fingerprint": turn.system_fingerprint,
+                        "response_status": turn.response_status,
+                        "response_truncation": turn.response_truncation,
+                        "response_incomplete_reason": turn.response_incomplete_reason,
                         "response_error_code": (
                             turn.error.code if turn.error is not None else None
                         ),
@@ -885,6 +985,12 @@ class AgentRunner:
                     event.payload.get("cache_write_input_tokens", 0)
                 )
                 usage.output_tokens += int(event.payload.get("output_tokens", 0))
+                usage.reasoning_output_tokens += int(
+                    event.payload.get("reasoning_output_tokens", 0)
+                )
+                usage.input_token_count_calls += int(
+                    event.payload.get("input_token_count_calls", 0)
+                )
                 usage.wall_clock_ms += int(event.payload.get("duration_ms", 0))
             elif event.type == EventType.TOOL_CALLED:
                 usage.tool_calls += 1

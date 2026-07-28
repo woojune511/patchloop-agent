@@ -36,6 +36,9 @@ class MemoryCondition(StrEnum):
 class ExperimentPurpose(StrEnum):
     OFFLINE_SMOKE = "offline-smoke"
     DEVELOPMENT_VALIDATION_LIVE_PILOT = "development-validation-live-pilot"
+    DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT = (
+        "development-validation-model-candidate-pilot"
+    )
     MEMORY_DEVELOPMENT_NO_MEMORY = "memory-development-no-memory"
     CORE = "core"
 
@@ -827,8 +830,10 @@ class Usage(StrictModel):
     cached_input_tokens: int = Field(default=0, ge=0)
     cache_write_input_tokens: int = Field(default=0, ge=0)
     output_tokens: int = Field(default=0, ge=0)
+    reasoning_output_tokens: int = Field(default=0, ge=0)
     model_cost_usd: float = Field(default=0, ge=0)
     model_calls: int = Field(default=0, ge=0)
+    input_token_count_calls: int = Field(default=0, ge=0)
     tool_calls: int = Field(default=0, ge=0)
     wall_clock_ms: int = Field(default=0, ge=0)
 
@@ -840,6 +845,8 @@ class Usage(StrictModel):
                 "cached_input_tokens + cache_write_input_tokens "
                 "must not exceed input_tokens"
             )
+        if self.reasoning_output_tokens > self.output_tokens:
+            raise ValueError("reasoning_output_tokens must not exceed output_tokens")
         return self
 
 

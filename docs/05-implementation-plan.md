@@ -108,8 +108,11 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 6 | pending new preflight and approval | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 7 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
-Live suite는 `gpt-5.6-terra`, reasoning `medium`, mode `standard`, service tier `default`,
-4,096 max output token과 기본 run budget을 고정한다. Dataset hash는
+Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
+`standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.
+D-031 telemetry의 별도 development-validation provider pilot만
+`gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run total
+90,000 token을 허용한다. 이 pilot은 Terra/core 비교 계약을 변경하지 않는다. Dataset hash는
 `sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`다.
 
 Preflight는 frozen dataset role/hash, manifest의 canonical task path, public/private hash와
@@ -127,9 +130,22 @@ Qualification은 필수 event의 content-addressed artifact reference와 usage/c
 `source_evidence_hash`로 결속한다. Development campaign preflight, human review와 index
 build는 현재 source hash를 다시 검증한다.
 
+D-031 이후 새 live trace는 exact logical Responses request와 context-policy omission/truncation
+evidence를 `ContextBuilt` CAS artifact에 보존한다. 각 turn은 input-token count endpoint의
+exact count와 생성 응답 `usage.input_tokens`를 대조하고 `truncation=disabled`, completed
+status, incomplete reason 없음과 total/reasoning token 불변식을 qualification에서 검사한다.
+기존 r1~r3는 새 telemetry가 없는 immutable legacy evidence이며 새 필드를 소급 생성하지 않는다.
+
 2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
 output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
 남긴다.
+
+2026-07-28 UTC에 다시 확인한 `gpt-5.4-mini` standard rate는 1M token당 input $0.75,
+cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 않았다. 90,000-token
+pilot은 exact input과 full 4,096-token response allowance가 남은 budget 안에 없으면
+generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 90,000-token
+runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더한 운영상 안전
+margin이다.
 
 ### Pilot gate — passed; development gate — not run
 

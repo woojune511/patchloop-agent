@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 import uuid
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
-from patchloop.agent.model import ModelTurn, ModelTurnError
+from patchloop.agent.model import ModelTurn, ModelTurnError, OpenAIResponsesAdapter
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
 from patchloop.contracts import (
+    Budget,
     EventType,
     ExperimentPurpose,
     ExperimentRunContext,
@@ -218,6 +220,70 @@ def test_agent_failure_persists_run_id_usage_cost_and_terminal_artifacts(
         / "result.json"
     )
     assert json.loads(result_path.read_text(encoding="utf-8"))["run_id"] == manifest.run_id
+
+
+def test_live_runner_refuses_generation_that_cannot_fit_remaining_token_budget(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    class CountingOnlyResponses:
+        def __init__(self) -> None:
+            self.input_tokens = SimpleNamespace(count=self.count)
+            self.create_called = False
+
+        @staticmethod
+        def count(**_kwargs):
+            return SimpleNamespace(input_tokens=10)
+
+        def create(self, **_kwargs):
+            self.create_called = True
+            raise AssertionError("generation must not start past the strict token budget")
+
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package(Path(TASK).parent)
+    execution_hash = "sha256:" + ("d" * 64)
+    manifest = build_manifest(
+        package,
+        run_id="run_strict_live_token_budget",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=4_105),
+        experiment_context=ExperimentRunContext(
+            experiment_id="strict-live-token-budget-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("b" * 64),
+            repetition=1,
+        ),
+    )
+    responses = CountingOnlyResponses()
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(responses=responses),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_: adapter)
+    _write_approved_execution_plan(tmp_path / "runtime", execution_hash)
+
+    result = runner.start(
+        TASK,
+        model="openai",
+        manifest=manifest,
+        live_authorization=issue_live_execution_authorization(
+            execution_hash,
+            root=tmp_path / "runtime",
+        ),
+    )
+
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert result["usage"]["model_calls"] == 0
+    assert result["terminal_error"]["message"].startswith(
+        "remaining token budget cannot fund"
+    )
+    assert responses.create_called is False
 
 
 def test_agent_runner_rejects_live_model_without_campaign_capability(

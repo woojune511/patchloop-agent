@@ -42,14 +42,23 @@ class ModelTurn:
     text: str = ""
     tool_calls: list[RequestedTool] = field(default_factory=list)
     done: bool = False
+    requested_input_tokens: int | None = None
     input_tokens: int = 0
     cached_input_tokens: int = 0
     cache_write_input_tokens: int = 0
     output_tokens: int = 0
+    reasoning_output_tokens: int = 0
+    total_tokens: int = 0
+    input_token_count_match: bool | None = None
+    total_token_count_match: bool | None = None
+    input_token_count_calls: int = 0
     response_id: str | None = None
     response_model: str | None = None
     response_service_tier: str | None = None
     system_fingerprint: str | None = None
+    response_status: str | None = None
+    response_truncation: str | None = None
+    response_incomplete_reason: str | None = None
     error: ModelTurnError | None = None
 
 
@@ -231,14 +240,26 @@ class ReplayModelAdapter:
             text=raw.get("text", ""),
             tool_calls=calls,
             done=raw.get("done", False),
+            requested_input_tokens=raw.get("requested_input_tokens"),
             input_tokens=raw.get("input_tokens", 0),
             cached_input_tokens=raw.get("cached_input_tokens", 0),
             cache_write_input_tokens=raw.get("cache_write_input_tokens", 0),
             output_tokens=raw.get("output_tokens", 0),
+            reasoning_output_tokens=raw.get("reasoning_output_tokens", 0),
+            total_tokens=raw.get(
+                "total_tokens",
+                raw.get("input_tokens", 0) + raw.get("output_tokens", 0),
+            ),
+            input_token_count_match=raw.get("input_token_count_match"),
+            total_token_count_match=raw.get("total_token_count_match"),
+            input_token_count_calls=raw.get("input_token_count_calls", 0),
             response_id=raw.get("response_id"),
             response_model=raw.get("response_model"),
             response_service_tier=raw.get("response_service_tier"),
             system_fingerprint=raw.get("system_fingerprint"),
+            response_status=raw.get("response_status"),
+            response_truncation=raw.get("response_truncation"),
+            response_incomplete_reason=raw.get("response_incomplete_reason"),
         )
 
 
@@ -249,28 +270,71 @@ class OpenAIResponsesAdapter:
         self.config = config
         self.client = client or OpenAI()
 
-    def next_turn(self, context: str, tools: list[dict[str, Any]]) -> ModelTurn:
-        response = self.client.responses.create(
-            model=self.config.model_id,
-            input=[
+    def request_payload(
+        self,
+        context: str,
+        tools: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        reasoning: dict[str, str] = {
+            "effort": self.config.reasoning_effort,
+        }
+        # reasoning.mode and persisted-reasoning context are GPT-5.6 controls.
+        # Older GPT-5 reasoning models remain stateless here because PatchLoop
+        # does not use previous_response_id and rebuilds every turn from durable
+        # public state.
+        if self.config.model_id.startswith("gpt-5.6"):
+            reasoning.update(
+                {
+                    "mode": self.config.reasoning_mode,
+                    "context": "current_turn",
+                }
+            )
+        return {
+            "model": self.config.model_id,
+            "input": [
                 {
                     "role": "system",
                     "content": SYSTEM_PROMPT,
                 },
                 {"role": "user", "content": context},
             ],
-            tools=tools,
-            store=False,
-            reasoning={
-                "mode": self.config.reasoning_mode,
-                "effort": self.config.reasoning_effort,
-                "context": "current_turn",
-            },
-            service_tier=self.config.service_tier,
-            max_output_tokens=self.config.max_output_tokens,
+            "tools": tools,
+            "store": False,
+            "reasoning": reasoning,
+            "service_tier": self.config.service_tier,
+            "max_output_tokens": self.config.max_output_tokens,
+            "truncation": "disabled",
+        }
+
+    @staticmethod
+    def _token_count_payload(request: dict[str, Any]) -> dict[str, Any]:
+        return {
+            key: request[key]
+            for key in (
+                "model",
+                "input",
+                "tools",
+                "reasoning",
+                "truncation",
+            )
+        }
+
+    def count_input_tokens(self, request: dict[str, Any]) -> int:
+        counted = self.client.responses.input_tokens.count(
+            **self._token_count_payload(request)
         )
+        return int(counted.input_tokens)
+
+    def execute_request(
+        self,
+        request: dict[str, Any],
+        *,
+        requested_input_tokens: int,
+    ) -> ModelTurn:
+        response = self.client.responses.create(**request)
         usage = getattr(response, "usage", None)
         input_details = getattr(usage, "input_tokens_details", None) if usage else None
+        output_details = getattr(usage, "output_tokens_details", None) if usage else None
         cached_input_tokens = int(
             (getattr(input_details, "cached_tokens", 0) if input_details else 0)
             or 0
@@ -288,32 +352,82 @@ class OpenAIResponsesAdapter:
                 )
                 or 0
             )
+        input_tokens = (
+            int(getattr(usage, "input_tokens", 0) or 0) if usage else 0
+        )
+        output_tokens = (
+            int(getattr(usage, "output_tokens", 0) or 0) if usage else 0
+        )
+        reasoning_output_tokens = int(
+            (getattr(output_details, "reasoning_tokens", 0) if output_details else 0)
+            or 0
+        )
+        raw_total_tokens = getattr(usage, "total_tokens", None) if usage else None
+        total_tokens = (
+            int(raw_total_tokens)
+            if raw_total_tokens is not None
+            else input_tokens + output_tokens
+        )
+        input_token_count_match = bool(
+            usage is not None and requested_input_tokens == input_tokens
+        )
+        total_token_count_match = bool(
+            usage is not None and total_tokens == input_tokens + output_tokens
+        )
+        response_status = getattr(response, "status", None)
+        response_truncation = getattr(response, "truncation", None)
+        incomplete_details = getattr(response, "incomplete_details", None)
+        if isinstance(incomplete_details, dict):
+            response_incomplete_reason = incomplete_details.get("reason")
+        else:
+            response_incomplete_reason = getattr(incomplete_details, "reason", None)
+
         calls: list[RequestedTool] = []
         parse_error: ModelTurnError | None = None
-        for item in response.output:
-            if getattr(item, "type", None) != "function_call":
-                continue
-            try:
-                arguments = json.loads(item.arguments)
-            except (json.JSONDecodeError, TypeError):
-                parse_error = ModelTurnError(
-                    code="invalid_tool_arguments_json",
-                    message="provider function-call arguments were not valid JSON",
-                )
-                break
-            if not isinstance(arguments, dict):
-                parse_error = ModelTurnError(
-                    code="invalid_tool_arguments_type",
-                    message="provider function-call arguments were not a JSON object",
-                )
-                break
-            calls.append(
-                RequestedTool(
-                    name=item.name,
-                    action_id=item.call_id,
-                    arguments=arguments,
-                )
+        if not input_token_count_match:
+            parse_error = ModelTurnError(
+                code="input_token_count_mismatch",
+                message=(
+                    "preflight input token count did not match billed response usage"
+                ),
             )
+        elif response_status not in {None, "completed"} or response_incomplete_reason:
+            parse_error = ModelTurnError(
+                code="incomplete_response",
+                message=(
+                    "provider response was incomplete"
+                    + (
+                        f": {response_incomplete_reason}"
+                        if response_incomplete_reason
+                        else ""
+                    )
+                ),
+            )
+        else:
+            for item in response.output:
+                if getattr(item, "type", None) != "function_call":
+                    continue
+                try:
+                    arguments = json.loads(item.arguments)
+                except (json.JSONDecodeError, TypeError):
+                    parse_error = ModelTurnError(
+                        code="invalid_tool_arguments_json",
+                        message="provider function-call arguments were not valid JSON",
+                    )
+                    break
+                if not isinstance(arguments, dict):
+                    parse_error = ModelTurnError(
+                        code="invalid_tool_arguments_type",
+                        message="provider function-call arguments were not a JSON object",
+                    )
+                    break
+                calls.append(
+                    RequestedTool(
+                        name=item.name,
+                        action_id=item.call_id,
+                        arguments=arguments,
+                    )
+                )
         if parse_error is not None:
             calls = []
         text = response.output_text or ""
@@ -321,13 +435,30 @@ class OpenAIResponsesAdapter:
             text=text,
             tool_calls=calls,
             done=parse_error is None and text.strip() == "DONE" and not calls,
-            input_tokens=int(getattr(usage, "input_tokens", 0) or 0) if usage else 0,
+            requested_input_tokens=requested_input_tokens,
+            input_tokens=input_tokens,
             cached_input_tokens=cached_input_tokens,
             cache_write_input_tokens=cache_write_input_tokens,
-            output_tokens=int(getattr(usage, "output_tokens", 0) or 0) if usage else 0,
+            output_tokens=output_tokens,
+            reasoning_output_tokens=reasoning_output_tokens,
+            total_tokens=total_tokens,
+            input_token_count_match=input_token_count_match,
+            total_token_count_match=total_token_count_match,
+            input_token_count_calls=1,
             response_id=response.id,
             response_model=getattr(response, "model", None),
             response_service_tier=getattr(response, "service_tier", None),
             system_fingerprint=getattr(response, "system_fingerprint", None),
+            response_status=response_status,
+            response_truncation=response_truncation,
+            response_incomplete_reason=response_incomplete_reason,
             error=parse_error,
+        )
+
+    def next_turn(self, context: str, tools: list[dict[str, Any]]) -> ModelTurn:
+        request = self.request_payload(context, tools)
+        requested_input_tokens = self.count_input_tokens(request)
+        return self.execute_request(
+            request,
+            requested_input_tokens=requested_input_tokens,
         )

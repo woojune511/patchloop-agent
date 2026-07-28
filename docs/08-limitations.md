@@ -161,7 +161,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   regression, scope and safety verdicts all passed. Its 72 events, 15 checkpoints, zero private
   matches and reconciled usage produced a qualified, accepted trace.
 
-## Implemented but not yet accepted as an external gate
+## Implemented gates with remaining external campaign work
 
 - OpenAI Responses adapter is contract-tested with a fake client and has two paid-provider failure
   traces plus one accepted live pilot. The accepted pilot is one development-validation task, not
@@ -288,6 +288,17 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   input, $0.25/M cached input, $3.125/M cache-write input and $15/M output—must be refreshed if
   older than 72 hours at invocation. Only the
   `gpt-5.6-terra` alias, not a dated Terra snapshot, is currently recorded.
+- The exact request artifact, input-token-count reconciliation and explicit
+  `truncation=disabled` telemetry in D-031 were implemented after r1-r3. Those immutable pilot
+  traces do not contain the new fields, and no live provider run has exercised the new
+  `prompt-token-integrity-v1` qualification branch yet.
+- A separate one-run suite pins `gpt-5.4-mini-2026-03-17`, medium effort, a 90,000 total-token
+  budget and a $2 cap to exercise that branch. It has not been executed yet and does not change
+  the frozen Terra memory-development or core comparison contract.
+- PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
+  data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not
+  assumed to be free. `model_cost_usd` is a deterministic list-price estimate, not invoice
+  evidence; any incentive must be verified separately in the Usage and Costs dashboards.
 - The six scripted offline runs validate harness plumbing, not model capability or memory effectiveness.
   No portfolio performance claim about a live model should be made from them.
 

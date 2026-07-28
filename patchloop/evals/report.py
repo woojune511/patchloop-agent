@@ -342,7 +342,20 @@ def build_report(experiment: str, output: str | Path) -> dict:
                 "regression_free": int(_result_metric(result, "regression_free")),
                 "scope_violation": int(_result_metric(result, "scope_violation")),
                 "input_tokens": usage.get("input_tokens", 0),
+                "cached_input_tokens": usage.get("cached_input_tokens", 0),
+                "cache_write_input_tokens": usage.get(
+                    "cache_write_input_tokens",
+                    0,
+                ),
                 "output_tokens": usage.get("output_tokens", 0),
+                "reasoning_output_tokens": usage.get(
+                    "reasoning_output_tokens",
+                    0,
+                ),
+                "input_token_count_calls": usage.get(
+                    "input_token_count_calls",
+                    0,
+                ),
                 "model_cost_usd": usage.get("model_cost_usd", 0),
                 "run_id": run.get("run_id") or (result["run_id"] if result else ""),
                 "attempt_status": run.get(

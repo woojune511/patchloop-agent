@@ -91,6 +91,14 @@ def test_usage_rejects_invalid_cache_breakdown_on_mutation() -> None:
         usage.cache_write_input_tokens = 21
 
 
+def test_usage_rejects_reasoning_breakdown_larger_than_output() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="reasoning_output_tokens must not exceed output_tokens",
+    ):
+        Usage(output_tokens=10, reasoning_output_tokens=11)
+
+
 def test_task_environment_requires_digest_pinned_image() -> None:
     digest = "sha256:" + ("a" * 64)
     with pytest.raises(ValidationError, match="immutable image digest"):

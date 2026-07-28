@@ -42,6 +42,8 @@ public.yaml → stateless context builder → model adapter
 - Local smoke와 Docker 공식 backend (`--network none`, resource limits, read-only root)
 - Reference/no-op/regression/forbidden/dependency/tampering/public-API patch evaluator
 - Mock/replay/OpenAI Responses adapters; OpenAI adapter는 `store=false`, current-turn context를 사용
+- 새 live turn은 exact logical request와 context-policy omission evidence를 CAS에 저장하고,
+  Responses input-token pre-count와 실제 usage를 대조하며 `truncation=disabled`를 강제
 - Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff` 도구만 허용
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
 - `action_id + input_hash` idempotency, context reset과 worker-kill-derived run
@@ -159,6 +161,7 @@ Responses API adapter는 host process에서만 API key를 읽고 container, chec
 | Purpose | Task/condition/repetition | 상한 |
 | --- | --- | ---: |
 | `development-validation-live-pilot` | Babel #1042, `no_memory`, 1회 | $2 |
+| `development-validation-model-candidate-pilot` | Babel #1042, mini dated snapshot, `no_memory`, 1회 | $2 |
 | `memory-development-no-memory` | frozen memory-development 6개, `no_memory`, 각 2회(12 run) | $20 |
 
 첫 pilot evidence는 `run_c6f13dd9a1a1472d`다. 실제 비용은 `$0.34025875`, model/tool call은
@@ -263,14 +266,27 @@ persisted result와 agent-visible content-addressed artifact inventory를 결속
 `RunStarted`/`ContextBuilt`/`ModelCalled` artifact reference, cache usage 불변식과 malformed
 function-call response의 이미 과금된 usage도 검사·보존하며, development campaign
 preflight와 memory review/index admission은 현재 source evidence hash를 다시 계산한다.
-세 pilot은 이 보존 경로를 실제 provider에서 확인했다. r2 trace artifact는 qualified지만
+새 D-031 live trace는 여기에 exact request artifact, context builder가 최근-event/tool-result
+cap으로 생략한 양, input-token count endpoint의 예상치와 생성 응답의 실제
+`usage.input_tokens`, reasoning-output breakdown, response status·truncation·incomplete reason을
+turn별로 추가한다. 요청은 `truncation=disabled`이므로 provider의 silent input truncation은
+허용하지 않는다. r1~r3는 이 필드가 도입되기 전 immutable legacy evidence로 유지한다.
+이 경로의 첫 provider 검증용 suite는
+`experiments/dev-validation-gpt54mini-pilot.yaml`이며
+`gpt-5.4-mini-2026-03-17` + medium, run total 90,000 token, per-call output 4,096,
+$2 cap으로 고정한다. 별도 `development-validation-model-candidate-pilot` purpose이므로
+기존 Terra memory/core 계약의 선행 gate나 결과로 집계하지 않는다. 매 turn의 exact input
+count와 4,096-token response allowance가 남은 90,000 안에 함께 들어가지 않으면 generation
+call을 시작하지 않는다.
+세 pilot은 기존 usage/source-evidence 보존 경로를 실제 provider에서 확인했다. r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
 hash에서 accepted pilot를 만들었다. 다음 paid gate는 이 r3 evidence와 새 clean harness
 commit에 결속된 12-run development campaign preflight와 별도 $20 승인이다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),
-[GPT-5.6 Terra model page](https://developers.openai.com/api/docs/models/gpt-5.6-terra)의 계약을 따른다.
+[GPT-5.6 Terra model page](https://developers.openai.com/api/docs/models/gpt-5.6-terra)와
+[GPT-5.4 mini model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini)의 계약을 따른다.
 
 ## 문서
 
