@@ -246,8 +246,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   boundaries without duplicate lifecycle or DONE transition. This is offline evidence only.
 - The no-memory development preflight rejects a pilot unless qualification v2 records the same
   Terra model, budget, harness commit, tool/context versions and exact runtime-contract hash.
-  Consequently `pilot_run_id` is currently empty and a newly approved v2 Terra pilot is the next
-  paid gate.
+  Before that campaign gate, a separately approved mini r2 diagnostic may validate the corrected
+  v2 lifecycle at lower list-price exposure, but it cannot populate `pilot_run_id`. Consequently
+  `pilot_run_id` is currently empty and a newly approved v2 Terra pilot remains the next paid
+  campaign gate.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -334,7 +336,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - A separate one-run suite pins `gpt-5.4-mini-2026-03-17`, medium effort, a 90,000 total-token
   budget and a $2 cap to exercise that branch. Its terminal r1 run failed the submission lifecycle
   before evaluation and does not change the frozen Terra memory-development or core comparison
-  contract. That exact experiment must not be rerun.
+  contract. That exact experiment must not be rerun. A new r2 suite is a pending corrective
+  diagnostic with its own clean execution hash and approval; even a successful r2 does not satisfy
+  the v2 Terra pilot requirement.
 - PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
   data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not
   assumed to be free. `model_cost_usd` is a deterministic list-price estimate, not invoice

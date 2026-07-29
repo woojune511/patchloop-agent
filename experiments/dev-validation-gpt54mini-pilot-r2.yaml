@@ -1,0 +1,38 @@
+schema_version: experiment-v2
+experiment_id: dev-validation-gpt54mini-pilot-20260729-r2
+purpose: development-validation-model-candidate-pilot
+tasks:
+  - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+conditions:
+  - no_memory
+repetitions: 1
+model: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+max_output_tokens: 4096
+budget:
+  max_model_calls: 20
+  max_tool_calls: 50
+  max_total_tokens: 90000
+  wall_clock_timeout_seconds: 900
+seed: 20260723
+# Paid approval is invocation-only. Run --preflight-only, review the exact
+# execution hash from a clean committed worktree, then obtain separate approval.
+live_cost_approved: false
+approved_execution_hash: null
+pilot_run_id: null
+estimated_cost_usd: 0.43
+cost_limit_usd: 2
+pricing_verified_at: 2026-07-29T01:28:14Z
+pricing_source_url: https://developers.openai.com/api/docs/pricing
+input_price_per_million_usd: 0.75
+cached_input_price_per_million_usd: 0.075
+cache_write_input_price_per_million_usd: null
+output_price_per_million_usd: 4.5
+retrieval_threshold: 0.72
+memory_token_budget: 2000
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+embedding_revision: PIN_AT_FREEZE
+dataset_manifest_hash: sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786

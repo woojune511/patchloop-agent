@@ -202,9 +202,10 @@ Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는
 `20 model call / 50 tool call / 80,000 total token / 900초`를 고정한다. 현재 공식 catalog에는
 dated Terra snapshot이 없으므로 alias, OpenAI SDK version, clean harness Git commit과
 execution window를 provenance로 사용한다. D-031 provider telemetry를 검증하는 별도
-development-validation pilot은 `gpt-5.4-mini-2026-03-17`, medium, default tier,
-per-call output 4,096과 run 전체 input+output 90,000 token을 고정한다. 이 one-run pilot은
-core headline 비교에 포함하지 않는다.
+development-validation model-candidate pilot은 `gpt-5.4-mini-2026-03-17`, medium,
+default tier, per-call output 4,096과 run 전체 input+output 90,000 token을 고정한다.
+Terminal r1과 v2 corrective r2는 별도 experiment ID로 보존하며, 이 diagnostic lane은
+core headline 비교나 Terra 선행 gate에 포함하지 않는다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
@@ -230,7 +231,7 @@ token당 input $2.50, cached input $0.25, cache write $3.125, output $15다. Pre
 verification age가 72시간을 넘거나 rate가 다르면 실행하지 않으며, 남은 cost limit에서 한
 run의 frozen budget reserve를 확보할 수 없는 경우 다음 run을 시작하지 않는다.
 
-같은 시점의 `gpt-5.4-mini` standard rate는 input $0.75/M, cached input $0.075/M,
+2026-07-29 UTC에 다시 확인한 `gpt-5.4-mini` standard rate는 input $0.75/M, cached input $0.075/M,
 output $4.50/M이며 별도 cache-write rate는 없다. Mini pilot preflight는 model ID와 이
 price profile을 함께 검증하며 $2 cap 안에 보수적 $0.423432 run reserve를 요구한다.
 

@@ -236,10 +236,12 @@ usage reconciliation과 `evaluation_reached=true`를 모두 통과했다. 세 pi
 `$0.828864375`다. 이 결과는 historical v1 accepted-pilot evidence이며, 현재 v2
 development campaign의 선행 gate나 memory 효과 증거는 아니다.
 
-다음 paid gate는 새 v2 Terra development-validation pilot이다. 먼저 correction을
-commit해 clean harness commit을 만든 뒤, API call을 하지 않는 pilot preflight를
-실행한다. 아래 12-run development campaign preflight는 그 pilot이 evaluator에 도달하고
-`trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만 실행한다.
+다음 immediate paid gate는 v2 submission/recovery 계약을 저비용 snapshot에서 다시 확인하는
+mini r2 model-candidate diagnostic이다. Terminal r1 suite는 재사용하지 않고
+`experiments/dev-validation-gpt54mini-pilot-r2.yaml`을 별도 clean commit에 고정한다.
+이 diagnostic이 통과해도 Terra 선행 gate를 열지는 않는다. 이후 새 v2 Terra
+development-validation pilot이 evaluator에 도달하고 `trace-qualification-v2`를 통과해
+`pilot_run_id`에 고정된 뒤에만 아래 12-run development campaign preflight를 실행한다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -309,18 +311,20 @@ cap으로 생략한 양, input-token count endpoint의 예상치와 생성 응�
 `usage.input_tokens`, reasoning-output breakdown, response status·truncation·incomplete reason을
 turn별로 추가한다. 요청은 `truncation=disabled`이므로 provider의 silent input truncation은
 허용하지 않는다. r1~r3는 이 필드가 도입되기 전 immutable legacy evidence로 유지한다.
-이 경로의 첫 provider 검증용 suite는
-`experiments/dev-validation-gpt54mini-pilot.yaml`이며
+이 경로의 terminal r1 provider suite는
+`experiments/dev-validation-gpt54mini-pilot.yaml`이고, v2 corrective retry는
+`experiments/dev-validation-gpt54mini-pilot-r2.yaml`이며
 `gpt-5.4-mini-2026-03-17` + medium, run total 90,000 token, per-call output 4,096,
 $2 cap으로 고정한다. 별도 `development-validation-model-candidate-pilot` purpose이므로
 기존 Terra memory/core 계약의 선행 gate나 결과로 집계하지 않는다. 매 turn의 exact input
 count와 4,096-token response allowance가 남은 90,000 안에 함께 들어가지 않으면 generation
 call을 시작하지 않는다.
-세 pilot은 기존 usage/source-evidence 보존 경로를 실제 provider에서 확인했다. r2 trace artifact는 qualified지만
+세 Terra pilot과 mini r1은 기존 usage/source-evidence 보존 경로를 실제 provider에서
+확인했다. Terra r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
-hash에서 v1 accepted pilot를 만들었다. 다음 paid gate는 새 clean harness commit에
-결속된 v2 Terra pilot의 no-call preflight와 별도 $2 승인이다. 그 pilot이 통과하기 전에는
-12-run development campaign을 승인하지 않는다.
+hash에서 v1 accepted pilot를 만들었다. 다음 immediate paid gate는 새 clean harness
+commit에 결속된 mini r2 diagnostic의 no-call preflight와 별도 $2 승인이다. 그 뒤에도
+별도 v2 Terra pilot이 통과하기 전에는 12-run development campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

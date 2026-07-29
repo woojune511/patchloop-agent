@@ -72,7 +72,7 @@ def _ready_live_environment(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
-        lambda: datetime(2026, 7, 29, 0, tzinfo=UTC),
+        lambda: datetime(2026, 7, 29, 2, tzinfo=UTC),
     )
     monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
 
@@ -106,7 +106,7 @@ def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    suite_path = "experiments/dev-validation-gpt54mini-pilot.yaml"
+    suite_path = "experiments/dev-validation-gpt54mini-pilot-r2.yaml"
 
     unapproved = eval_runner.preflight_suite(suite_path)
 
@@ -136,9 +136,37 @@ def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
     assert approved["ready"] is True
 
 
+def test_gpt54mini_corrective_retry_preserves_terminal_r1_contract() -> None:
+    terminal = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-pilot.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    retry = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-pilot-r2.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert terminal["experiment_id"] == (
+        "dev-validation-gpt54mini-pilot-20260729-r1"
+    )
+    assert retry["experiment_id"] == (
+        "dev-validation-gpt54mini-pilot-20260729-r2"
+    )
+    assert retry["live_cost_approved"] is False
+    assert retry["approved_execution_hash"] is None
+    ignored = {"experiment_id", "pricing_verified_at"}
+    assert {
+        key: value for key, value in terminal.items() if key not in ignored
+    } == {
+        key: value for key, value in retry.items() if key not in ignored
+    }
+
+
 def test_gpt54mini_pilot_rejects_non_frozen_token_budget() -> None:
     payload = yaml.safe_load(
-        Path("experiments/dev-validation-gpt54mini-pilot.yaml").read_text(
+        Path("experiments/dev-validation-gpt54mini-pilot-r2.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -154,7 +182,7 @@ def test_gpt54mini_pilot_preflight_rejects_wrong_price(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     payload = yaml.safe_load(
-        Path("experiments/dev-validation-gpt54mini-pilot.yaml").read_text(
+        Path("experiments/dev-validation-gpt54mini-pilot-r2.yaml").read_text(
             encoding="utf-8"
         )
     )

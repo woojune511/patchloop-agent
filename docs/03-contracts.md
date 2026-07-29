@@ -326,8 +326,9 @@ dated Terra snapshot 없이 `gpt-5.6-terra` alias만 있으므로 model ID와 SD
 commit, 실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을
 거부하고 다시 확인한다.
 
-D-031 telemetry를 실제 provider에서 검증하는 별도 one-run pilot은
-`experiments/dev-validation-gpt54mini-pilot.yaml`에 고정한다. 이 suite만
+D-031 telemetry를 실제 provider에서 검증한 terminal r1은
+`experiments/dev-validation-gpt54mini-pilot.yaml`에 보존한다. v2 corrective retry는
+`experiments/dev-validation-gpt54mini-pilot-r2.yaml`에 별도 고정한다. 두 suite는
 `development-validation-model-candidate-pilot` purpose를 사용하며 기존
 `development-validation-live-pilot` 선행 gate를 충족하지 않는다.
 `gpt-5.4-mini-2026-03-17`, medium effort, default tier, `max_output_tokens: 4096`,

@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **v2 Terra corrective pilot preflight**
+현재 milestone: **v2 mini corrective diagnostic preflight**
 
 2026-07-29 구현 스냅샷:
 
@@ -107,9 +107,10 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 3 | implemented, interrupted-run recovery pending | Paid call 전 fsync하는 hash-chained campaign journal | Existing journal이 hard-crash 뒤 새 schedule 시작을 차단; 자동 resume은 미구현 |
 | 4 | implemented, legacy artifacts preserved | Source-evidence-bound `trace-qualification-v1`/`v2`와 sanitized failure linkage | v1 artifact byte stability, v2 runtime/lifecycle/provenance binding |
 | 5 | historical v1 evidence only | Babel #1042 `no_memory` r3 pilot | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass; current v2 gate에는 부적격 |
-| 6 | pending clean commit, preflight and approval | Corrected v2 Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, evaluator reached |
-| 7 | blocked on order 6 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
-| 8 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
+| 6 | pending clean commit, preflight and approval | Corrected v2 mini model-candidate diagnostic 1회, $2 cap | D-031 telemetry, v2 submission/evaluator lifecycle과 `trace-qualification-v2`; Terra gate와 분리 |
+| 7 | blocked on order 6 | Corrected v2 Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, evaluator reached |
+| 8 | blocked on order 7 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
+| 9 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
 Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
 `standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.
@@ -153,15 +154,16 @@ submission rejection, 세 번째 `premature-stop`, 성공 뒤 phase 전이, stru
 error, advisory repeat signal, current-diff checkpoint와 viewer lifecycle을 offline test로
 검증했다. 기존 v1 replay와 r1~r3 및 mini r1 trace는 그대로 유지한다.
 
-이 corrective gate는 아직 live model로 재검증하지 않았다. 새 paid retry는 change를
-commit한 뒤 새 experiment ID/config, clean execution hash, no-call preflight와 별도
-사용자 비용 승인이 있어야 한다.
+이 corrective gate는 아직 live model로 재검증하지 않았다. Terminal r1 suite는 재사용하지
+않는다. 새 r2는 `experiments/dev-validation-gpt54mini-pilot-r2.yaml`의 새 experiment ID,
+clean execution hash, no-call preflight와 별도 사용자 비용 승인이 있어야 한다. 성공해도
+Terra pilot 선행 gate를 대신하지 않는다.
 
 2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
 output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
 남긴다.
 
-2026-07-28 UTC에 다시 확인한 `gpt-5.4-mini` standard rate는 1M token당 input $0.75,
+2026-07-29 UTC에 다시 확인한 `gpt-5.4-mini` standard rate는 1M token당 input $0.75,
 cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 않았다. 90,000-token
 pilot은 exact input과 full 4,096-token response allowance가 남은 budget 안에 없으면
 generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 90,000-token

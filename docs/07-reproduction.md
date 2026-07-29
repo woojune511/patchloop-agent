@@ -84,6 +84,8 @@ CI never performs live calls. The checked-in live files are contracts, not proof
   inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot.yaml`: terminal mini r1 contract;
   historical inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
+  preflight only until its exact clean execution hash receives separate approval
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -103,17 +105,25 @@ uv run patchloop evaluate `
   --preflight-only
 ```
 
-The checked-in mini suite now refers to terminal experiment
+The original checked-in mini suite refers to terminal experiment
 `dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
 `run_d4fea5e7198b4abc` passed prompt-token trace qualification but failed before evaluation, so the
 command above is inspection-only and should report the existing journal/terminal state. Do not add
 approval flags or execute this suite again.
 
-A corrective live retry requires the harness change to be committed, a new experiment ID and suite
-snapshot, a clean no-call preflight, review of its new execution hash and a separate user cost
-approval. This guide intentionally does not provide a ready-to-copy paid retry command before that
-new contract exists. Editing approval fields in YAML, deleting the old journal or changing only an
-experiment ID does not authorize spending.
+The corrective r2 contract is separate. After committing it, run this command without approval
+flags:
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-pilot-r2.yaml `
+  --preflight-only
+```
+
+Review its blockers, clean commit, task/image/SDK identities, reserve and exact execution hash.
+Do not run the paid form until the user separately approves that exact hash and a maximum of $2.
+Editing approval fields in YAML or deleting the old journal does not authorize spending. A
+successful mini r2 remains diagnostic and does not unlock the Terra memory-development gate.
 
 The paid command first persists
 `.patchloop/experiments/plans/<execution-hash>.json` as an approved
