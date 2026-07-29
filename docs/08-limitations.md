@@ -176,8 +176,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `trace-qualification-v2`, but hidden acceptance failed while regression, scope and safety
   passed. It is an immutable qualified task failure, not an accepted pilot. Its stateless retry
   also retained the first rejected patch's hash/error without restoring its body, so D-037
-  was not satisfied by that run. The v3 repair is offline-tested, but provider-side retry evidence
-  still requires a new separately approved diagnostic.
+  was not satisfied by that run. The v3 repair and hash-bound diagnostic consumer are offline-tested,
+  but provider-side retry evidence still requires the unexecuted r3 suite's new clean hash and
+  separate approval.
 
 ## Implemented gates with remaining external campaign work
 
@@ -189,6 +190,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
   $20 cap. This is an execution contract, not a completed experiment.
+- The unexecuted `dev-validation-gpt54mini-d037-r3.yaml` suite binds
+  `experiment-diagnostic-v1` to its execution hash. Its post-run consumer separates generic
+  qualification from a `passed`, `inconclusive` or `failed` retry exercise, requires evaluator
+  arrival for pass, and stores only sanitized counts/sequences. This is offline contract evidence,
+  not provider validation.
 - A no-call preflight checks frozen dataset identity/role, canonical task package path,
   public/private spec hash, digest-pinned environment and observed Docker identity, clean Git
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
@@ -222,7 +228,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - Cache usage enforces `cached + cache-write <= input`, and a malformed billed function-call
   response preserves usage/cost before terminating as agent failure. These are contract-tested
   paths, not paid-provider evidence.
-- Reports mark incomplete or qualification-failed matrices `analysis_ready=false`, keep
+- Reports mark incomplete, qualification-failed or required-trace-exercise-excluded matrices
+  `analysis_ready=false`, keep
   available-case rows only as diagnostics and suppress headline, paired comparison/CI and flip
   results. The one-row accepted pilot is not a memory-comparison matrix.
 - Failed started attempts retain run ID, usage including cached/cache-write tokens, calculated cost
@@ -262,8 +269,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   Terra model, budget, harness commit, tool/context versions and exact runtime-contract hash.
   Mini r2 validated much of the corrected v2 lifecycle at lower list-price exposure, but it cannot
   populate `pilot_run_id` and exposed the D-037 retry-context gap. Consequently `pilot_run_id` is
-  currently empty. Offline context hardening is complete; the next gate is a new separately
-  approved mini diagnostic. A newly approved tool-v2/context-v3 Terra pilot remains required before
+  currently empty. Offline context hardening and the suite-specific machine gate are complete; the
+  next gate is a clean preflight and separately approved r3 mini diagnostic. A newly approved
+  tool-v2/context-v3 Terra pilot remains required before
   the campaign.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
@@ -353,7 +361,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   before evaluation and does not change the frozen Terra memory-development or core comparison
   contract. Terminal r2 reached evaluation and qualified but failed task acceptance and exposed a
   rejected-patch continuity gap. Neither exact experiment may be rerun. D-037 is now implemented
-  and offline-tested; a new mini diagnostic still requires a new clean execution hash and approval.
+  and offline-tested; its new r3 suite and machine postcondition exist, but the mini diagnostic still
+  requires a new clean execution hash and approval.
   Even a successful mini run does not satisfy the tool-v2/context-v3 Terra pilot requirement. The
   two mini runs' calculated list-price total is `$0.155418`; all five paid pilot runs total
   `$0.984282375`.

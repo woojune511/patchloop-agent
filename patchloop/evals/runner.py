@@ -83,6 +83,35 @@ def _normalized_task_path(value: str) -> str:
     return value.replace("\\", "/").removeprefix("./")
 
 
+class ExperimentDiagnostic(BaseModel):
+    """One execution-hash-bound trace exercise required by a diagnostic suite."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal["experiment-diagnostic-v1"] = (
+        "experiment-diagnostic-v1"
+    )
+    profile: Literal["d037-rejected-patch-retry-v1"]
+    required_trace_features: list[
+        Literal["rejected_patch_retry_context"]
+    ] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_profile(self) -> ExperimentDiagnostic:
+        if len(set(self.required_trace_features)) != len(
+            self.required_trace_features
+        ):
+            raise ValueError("diagnostic trace features must be unique")
+        if self.required_trace_features != [
+            "rejected_patch_retry_context"
+        ]:
+            raise ValueError(
+                "d037 diagnostic requires exactly "
+                "rejected_patch_retry_context"
+            )
+        return self
+
+
 class ExperimentSuite(BaseModel):
     """Human-authored, immutable campaign configuration.
 
@@ -116,6 +145,7 @@ class ExperimentSuite(BaseModel):
         default=None,
         pattern=r"^run_[a-zA-Z0-9_-]+$",
     )
+    diagnostic: ExperimentDiagnostic | None = None
     estimated_cost_usd: float = Field(default=0, ge=0)
     cost_limit_usd: float = Field(default=150, ge=0)
     pricing_verified_at: datetime | None = None
@@ -169,6 +199,15 @@ class ExperimentSuite(BaseModel):
             )
             if self.purpose != legacy_purpose:
                 raise ValueError("experiment-v1 purpose conflicts with the legacy core flag")
+        if self.diagnostic is not None and (
+            self.schema_version != "experiment-v2"
+            or self.purpose
+            != ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        ):
+            raise ValueError(
+                "diagnostic profiles are allowed only for an experiment-v2 "
+                "development-validation model-candidate pilot"
+            )
 
         if self.purpose == ExperimentPurpose.OFFLINE_SMOKE:
             if self.schema_version == "experiment-v2" and self.model != "mock":
@@ -524,7 +563,16 @@ def _pilot_qualification(
 
 
 def _suite_hash(suite: ExperimentSuite) -> str:
-    return sha256_text(canonical_json(suite.model_dump(mode="json")))
+    return sha256_text(canonical_json(_suite_payload(suite)))
+
+
+def _suite_payload(suite: ExperimentSuite) -> dict[str, Any]:
+    """Preserve historical suite identities when the new field is absent."""
+
+    payload = suite.model_dump(mode="json")
+    if payload.get("diagnostic") is None:
+        payload.pop("diagnostic", None)
+    return payload
 
 
 def _execution_hash(
@@ -538,7 +586,7 @@ def _execution_hash(
     openai_sdk: dict[str, Any],
     pilot_qualification: dict[str, Any],
 ) -> str:
-    payload = suite.model_dump(mode="json")
+    payload = _suite_payload(suite)
     payload.pop("live_cost_approved", None)
     payload.pop("approved_execution_hash", None)
     return sha256_text(
@@ -981,7 +1029,7 @@ def preflight_suite(
         "schema_version": "experiment-preflight-v1",
         "experiment_id": suite.experiment_id,
         "purpose": suite.purpose.value,
-        "suite": suite.model_dump(mode="json"),
+        "suite": _suite_payload(suite),
         "suite_hash": suite_hash,
         "execution_hash": execution_hash,
         "schedule_hash": schedule_hash,
@@ -1153,7 +1201,7 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
         run_id,
         task_dir=task_path.parent if task_path.is_file() else task_path,
     )
-    return {
+    summary = {
         key: payload.get(key)
         for key in (
             "schema_version",
@@ -1169,6 +1217,224 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
             "failure_record_id",
             "qualification_hash",
         )
+    }
+    raw_checks = payload.get("checks")
+    if not isinstance(raw_checks, list):
+        raw_checks = []
+    retry_checks = [
+        check
+        for check in raw_checks
+        if (
+            isinstance(check, dict)
+            and check.get("check_id")
+            == "rejected_patch_retry_context"
+        )
+    ]
+    retry_feature: dict[str, Any] = {
+        "check_count": len(retry_checks),
+        "check_passed": None,
+        "rejected_candidate_count": None,
+        "retry_episode_count": None,
+        "verified_retry_count": None,
+        "failed_source_failure_sequences": None,
+    }
+    if len(retry_checks) == 1:
+        check = retry_checks[0]
+        details = check.get("details")
+        if not isinstance(details, dict):
+            details = {}
+        failed_sequences = details.get(
+            "failed_source_failure_sequences"
+        )
+        check_passed = check.get("passed")
+        rejected_count = details.get("rejected_candidate_count")
+        episode_count = details.get("retry_episode_count")
+        verified_count = details.get("verified_retry_count")
+        safe_failed_sequences = (
+            list(failed_sequences)
+            if (
+                isinstance(failed_sequences, list)
+                and all(
+                    type(sequence) is int and sequence >= 1
+                    for sequence in failed_sequences
+                )
+            )
+            else None
+        )
+        retry_feature.update(
+            {
+                "check_passed": (
+                    check_passed
+                    if type(check_passed) is bool
+                    else None
+                ),
+                "rejected_candidate_count": (
+                    rejected_count
+                    if type(rejected_count) is int
+                    and rejected_count >= 0
+                    else None
+                ),
+                "retry_episode_count": (
+                    episode_count
+                    if type(episode_count) is int
+                    and episode_count >= 0
+                    else None
+                ),
+                "verified_retry_count": (
+                    verified_count
+                    if type(verified_count) is int
+                    and verified_count >= 0
+                    else None
+                ),
+                "failed_source_failure_sequences": safe_failed_sequences,
+            }
+        )
+    summary["trace_features"] = {
+        "rejected_patch_retry_context": retry_feature
+    }
+    return summary
+
+
+def _diagnostic_result(
+    suite: ExperimentSuite,
+    qualification: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Evaluate the suite-specific exercise without changing qualification."""
+
+    if suite.diagnostic is None:
+        return None
+    feature_name = suite.diagnostic.required_trace_features[0]
+    trace_features = (
+        qualification.get("trace_features")
+        if isinstance(qualification, dict)
+        else None
+    )
+    feature = (
+        trace_features.get(feature_name)
+        if isinstance(trace_features, dict)
+        else None
+    )
+    status = "failed"
+    reason_code = "qualification_unavailable"
+    if isinstance(qualification, dict):
+        if qualification.get("qualified") is not True:
+            reason_code = "qualification_not_passed"
+        elif qualification.get("evaluation_reached") is not True:
+            reason_code = "evaluation_not_reached"
+        else:
+            reason_code = "qualification_feature_unavailable"
+    sanitized_feature = {
+        "check_count": None,
+        "check_passed": None,
+        "rejected_candidate_count": None,
+        "retry_episode_count": None,
+        "verified_retry_count": None,
+        "failed_source_failure_sequences": None,
+    }
+    if isinstance(feature, dict):
+        check_count = feature.get("check_count")
+        check_passed = feature.get("check_passed")
+        rejected_count = feature.get("rejected_candidate_count")
+        episode_count = feature.get("retry_episode_count")
+        verified_count = feature.get("verified_retry_count")
+        failed_sequences = feature.get(
+            "failed_source_failure_sequences"
+        )
+        evidence_types_valid = bool(
+            type(check_count) is int
+            and check_count >= 0
+            and type(rejected_count) is int
+            and rejected_count >= 0
+            and type(episode_count) is int
+            and episode_count >= 0
+            and type(verified_count) is int
+            and verified_count >= 0
+            and isinstance(failed_sequences, list)
+            and all(
+                type(sequence) is int and sequence >= 1
+                for sequence in failed_sequences
+            )
+        )
+        if evidence_types_valid:
+            sanitized_feature = {
+                "check_count": check_count,
+                "check_passed": check_passed,
+                "rejected_candidate_count": rejected_count,
+                "retry_episode_count": episode_count,
+                "verified_retry_count": verified_count,
+                "failed_source_failure_sequences": list(
+                    failed_sequences
+                ),
+            }
+        else:
+            sanitized_feature["check_count"] = (
+                check_count
+                if type(check_count) is int and check_count >= 0
+                else None
+            )
+            sanitized_feature["check_passed"] = (
+                check_passed
+                if type(check_passed) is bool
+                else None
+            )
+        if qualification.get("qualified") is not True:
+            reason_code = "qualification_not_passed"
+        elif qualification.get("evaluation_reached") is not True:
+            reason_code = "evaluation_not_reached"
+        elif check_count != 1:
+            reason_code = "qualification_check_cardinality"
+        elif check_passed is not True:
+            reason_code = "qualification_check_failed"
+        elif not evidence_types_valid:
+            reason_code = "qualification_evidence_malformed"
+        elif episode_count == 0:
+            status = "inconclusive"
+            reason_code = "retry_episode_not_observed"
+        elif (
+            verified_count == episode_count
+            and not failed_sequences
+        ):
+            status = "passed"
+            reason_code = None
+        else:
+            reason_code = "retry_episode_not_fully_verified"
+    return {
+        "schema_version": "experiment-diagnostic-result-v1",
+        "profile": suite.diagnostic.profile,
+        "required_trace_features": list(
+            suite.diagnostic.required_trace_features
+        ),
+        "status": status,
+        "reason_code": reason_code,
+        "qualification_hash": (
+            qualification.get("qualification_hash")
+            if isinstance(qualification, dict)
+            else None
+        ),
+        "features": {feature_name: sanitized_feature},
+    }
+
+
+def _diagnostic_error(
+    diagnostic: dict[str, Any] | None,
+) -> dict[str, str] | None:
+    if diagnostic is None or diagnostic.get("status") == "passed":
+        return None
+    status = diagnostic.get("status")
+    error_type = (
+        "TraceExerciseInconclusive"
+        if status == "inconclusive"
+        else "TraceExerciseFailed"
+    )
+    return {
+        "type": error_type,
+        "message": (
+            "required trace exercise was not observed"
+            if status == "inconclusive"
+            else "required trace exercise did not satisfy its contract"
+        ),
+        "profile": str(diagnostic.get("profile")),
+        "reason_code": str(diagnostic.get("reason_code")),
     }
 
 
@@ -1315,6 +1581,8 @@ def evaluate_suite(
                 "infrastructure_error": None,
                 "qualification": None,
                 "qualification_error": None,
+                "diagnostic": None,
+                "diagnostic_error": None,
                 "not_started_reason": halt_reason,
             }
             results.append(row)
@@ -1348,6 +1616,8 @@ def evaluate_suite(
                 "infrastructure_error": None,
                 "qualification": None,
                 "qualification_error": None,
+                "diagnostic": None,
+                "diagnostic_error": None,
                 "not_started_reason": halt_reason,
             }
             results.append(row)
@@ -1473,9 +1743,13 @@ def evaluate_suite(
             actual_model_cost_usd += float(usage.get("model_cost_usd", 0))
         qualification = None
         qualification_error = None
+        diagnostic = _diagnostic_result(suite, qualification)
+        diagnostic_error = _diagnostic_error(diagnostic)
         if result is not None and qualification_required:
             try:
                 qualification = _qualify_terminal_run(manifest.run_id, task)
+                diagnostic = _diagnostic_result(suite, qualification)
+                diagnostic_error = _diagnostic_error(diagnostic)
                 if qualification.get("qualified") is not True:
                     qualification_error = {
                         "type": "TraceQualificationFailed",
@@ -1499,6 +1773,8 @@ def evaluate_suite(
                 "infrastructure_error": infrastructure_error,
                 "qualification": qualification,
                 "qualification_error": qualification_error,
+                "diagnostic": diagnostic,
+                "diagnostic_error": diagnostic_error,
                 "not_started_reason": None,
             }
         )
@@ -1532,6 +1808,16 @@ def evaluate_suite(
                     if qualification_error is not None
                     else None
                 ),
+                "diagnostic_status": (
+                    diagnostic.get("status")
+                    if diagnostic is not None
+                    else None
+                ),
+                "diagnostic_error_type": (
+                    diagnostic_error["type"]
+                    if diagnostic_error is not None
+                    else None
+                ),
             },
         )
         if infrastructure_error is not None:
@@ -1550,7 +1836,20 @@ def evaluate_suite(
                     f"{qualification_error['type']}"
                 ),
             }
+        elif diagnostic_error is not None:
+            halt_reason = {
+                "type": "TraceExerciseHalt",
+                "message": (
+                    "campaign halted after required trace exercise failed: "
+                    f"{diagnostic_error['type']}"
+                ),
+            }
 
+    diagnostic_rows = [
+        row["diagnostic"]
+        for row in results
+        if row.get("diagnostic") is not None
+    ]
     record = {
         "schema_version": "experiment-result-v2",
         "experiment_id": suite.experiment_id,
@@ -1571,6 +1870,39 @@ def evaluate_suite(
         "qualification_errors": sum(
             row["qualification_error"] is not None for row in results
         ),
+        "diagnostic_errors": sum(
+            row.get("diagnostic_error") is not None for row in results
+        ),
+        "diagnostic_gate": (
+            {
+                "profile": suite.diagnostic.profile,
+                "required_trace_features": list(
+                    suite.diagnostic.required_trace_features
+                ),
+                "passed": bool(
+                    len(diagnostic_rows) == len(preflight["schedule"])
+                    and diagnostic_rows
+                    and all(
+                        item.get("status") == "passed"
+                        for item in diagnostic_rows
+                    )
+                ),
+                "passed_runs": sum(
+                    item.get("status") == "passed"
+                    for item in diagnostic_rows
+                ),
+                "inconclusive_runs": sum(
+                    item.get("status") == "inconclusive"
+                    for item in diagnostic_rows
+                ),
+                "failed_runs": sum(
+                    item.get("status") == "failed"
+                    for item in diagnostic_rows
+                ),
+            }
+            if suite.diagnostic is not None
+            else None
+        ),
         "not_started_runs": sum(
             row["attempt_status"] == "not_started" for row in results
         ),
@@ -1582,7 +1914,7 @@ def evaluate_suite(
             "path": str(journal_path),
             "last_event_hash_before_completion": journal_hash,
         },
-        "suite": suite.model_dump(mode="json"),
+        "suite": _suite_payload(suite),
         "preflight": {
             key: preflight[key]
             for key in (

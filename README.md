@@ -59,8 +59,9 @@ reason을 바로 다음 request 한 번에만 복원한다. Full request와 outp
 token budget을 넘으면 input count까지만 수행하고 `ModelGenerationBlocked`와 구조화
 terminal error를 남긴 채 generation을 호출하지 않는다. Qualification은 candidate/result
 CAS와 실제 request body, 첫 consumer와 stale-block 부재를 다시 대조한다. 이 경로는 전체
-offline suite에서 통과했지만 실제 provider retry를 exercise한 새 mini diagnostic은 아직
-실행하지 않았다.
+offline suite에서 통과했다. 새 r3 suite에는 retry episode를 실제 관찰해야 하는 별도
+hash-bound diagnostic consumer도 구현했지만, 실제 provider retry를 exercise한 run은 아직
+없다.
 
 ## 구현된 핵심 경로
 
@@ -264,12 +265,27 @@ Mini r2 model-candidate diagnostic은 execution hash
 정확히 한 번 실행돼 terminal evidence로 고정됐다. 실행/telemetry/lifecycle은 완주했지만
 task acceptance는 실패했고, post-run audit에서 새 D-037 retry-context target이 충족되지
 않았음이 확인됐다. D-037의 hash-bound next-turn rehydration과 qualification은 이후
-offline 구현/test를 통과했다. 다음 gate는 새 experiment ID, clean execution hash와 별도
-승인으로 rejected mutation retry를 실제 provider에서 exercise하는 mini diagnostic이다.
+offline 구현/test를 통과했다. 새
+`experiments/dev-validation-gpt54mini-d037-r3.yaml`은 execution hash에
+`experiment-diagnostic-v1` 요구를 결속하고, evaluator 도달·retry episode 1개 이상·모든
+episode 검증·failed source sequence 0을 별도로 검사한다. Evaluator에 도달했지만 episode가
+없으면 task/qualification failure가 아니라 diagnostic inconclusive이고, evaluator 미도달은
+diagnostic failure다. 이 suite는 아직 실행하지 않았으며 다음 gate는 clean execution hash와
+별도 승인으로 rejected mutation retry를 실제 provider에서 exercise하는 것이다.
 새 Terra development-validation pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
 harness gate와 별도로 보고한다.
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-d037-r3.yaml `
+  --preflight-only
+```
+
+이 preflight는 API를 호출하지 않는다. Harness 변경을 commit한 clean worktree에서 출력한
+exact hash와 blocker를 검토하고, 별도 비용 승인을 받기 전에는 approval flag를 추가하지
+않는다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -341,7 +357,8 @@ turn별로 추가한다. 요청은 `truncation=disabled`이므로 provider의 si
 허용하지 않는다. r1~r3는 이 필드가 도입되기 전 immutable legacy evidence로 유지한다.
 이 경로의 terminal r1 provider suite는
 `experiments/dev-validation-gpt54mini-pilot.yaml`이고, v2 corrective retry는
-`experiments/dev-validation-gpt54mini-pilot-r2.yaml`이며
+`experiments/dev-validation-gpt54mini-pilot-r2.yaml`이다. 미실행 D-037 exercise suite는
+`experiments/dev-validation-gpt54mini-d037-r3.yaml`이며 세 suite 모두
 `gpt-5.4-mini-2026-03-17` + medium, run total 90,000 token, per-call output 4,096,
 $2 cap으로 고정한다. 별도 `development-validation-model-candidate-pilot` purpose이므로
 기존 Terra memory/core 계약의 선행 gate나 결과로 집계하지 않는다. 매 turn의 exact input
@@ -352,7 +369,8 @@ call을 시작하지 않는다.
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
 hash에서 v1 accepted pilot를 만들었다. Mini r2는 v2 evaluator 경로에 도달했지만 hidden
 acceptance는 실패했고 post-run audit에서 D-037 target이 충족되지 않았음이 확인됐다.
-D-037 offline implementation/test는 완료됐지만 새 live mini diagnostic은 아직 없다.
+D-037 offline implementation/test와 suite-specific machine gate는 완료됐지만 새 live mini
+diagnostic은 아직 없다.
 별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run development campaign을
 승인하지 않는다.
 

@@ -1183,11 +1183,20 @@ the remaining run budget, it persists the request, appends `ModelGenerationBlock
 `MODEL_GENERATION_BUDGET_EXCEEDED` without a second Responses generation call. Qualification v2
 adds `rejected_patch_retry_context` only for v3 manifests and independently rehashes the candidate,
 result and request. Missing/hash-only/wrong-reason/tampered/stale blocks fail; a v3 trace with no
-rejection passes the conditional contract but does not satisfy the future diagnostic's exercise
+rejection passes the conditional contract but does not satisfy the r3 diagnostic's exercise
 requirement. The qualifier recomputes remaining budget from preceding model usage and binds the
 complete block payload to both terminal `RunFailed` and `RunResult.terminal_error`; fabricated
 remaining budget or terminal error identity fails. Historical phase-evidence-v2 qualification and
 source evidence remain unchanged.
+
+The unexecuted `experiments/dev-validation-gpt54mini-d037-r3.yaml` adds a hash-bound
+`experiment-diagnostic-v1` requirement without changing generic qualification. Its consumer stores
+only sanitized counts/sequences and requires evaluator arrival, one or more retry episodes, exact
+equality between observed and verified episode counts, and no failed source sequence. A zero-episode
+qualified run that reached the evaluator is `TraceExerciseInconclusive`; evaluator non-arrival,
+missing, duplicate, malformed or partially verified evidence is `TraceExerciseFailed`. Removing the
+diagnostic block changes the execution hash and an old approval is rejected before runner or journal
+construction. Report output keeps both states separate from `trace_qualification_failure`.
 
 Executed evidence:
 
@@ -1201,8 +1210,11 @@ Executed evidence:
 .venv\Scripts\python.exe -m pytest tests/test_live_pilot_evidence.py -q
 15 passed
 
+.venv\Scripts\python.exe -m pytest tests/test_experiments.py tests/test_report.py -q
+50 passed
+
 .venv\Scripts\python.exe -m pytest -q
-450 passed, 2 skipped
+463 passed, 2 skipped
 
 .venv\Scripts\ruff.exe check patchloop tests
 All checks passed
@@ -1213,9 +1225,9 @@ passed
 
 The two skips are Docker sandbox tests whose explicit reason was `Docker daemon unavailable` in
 this execution environment. No OpenAI generation, paid API call, hidden evaluator campaign,
-stress row, memory-development run or core run was executed for this gate. A new mini diagnostic
-with a new experiment ID, clean execution hash and separate approval is still required to exercise
-the retry against the real provider.
+stress row, memory-development run or core run was executed for this gate. The r3 mini diagnostic
+suite exists but remains unexecuted; a clean execution hash and separate approval are still required
+to exercise the retry against the real provider.
 
 ## Open gates
 

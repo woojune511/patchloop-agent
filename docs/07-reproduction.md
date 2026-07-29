@@ -87,6 +87,8 @@ is preserved separately under `reports/live-pilot/`:
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
   terminal r2 contract, historical inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-d037-r3.yaml`: unexecuted D-037 exercise diagnostic;
+  new clean preflight hash and separate approval required
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -185,8 +187,8 @@ without rerunning the evaluator after a crash between evaluation and terminal co
 Direct `patchloop run --model openai`, direct resume of an OpenAI run and direct fault injection
 from an OpenAI baseline are blocked; all paid calls go through an approved suite. A failed started
 attempt still persists its run ID, events, usage including cached/cache-write tokens, calculated
-cost and terminal outcome. The suite halts after the first infrastructure or qualification error
-and records remaining rows as not started.
+cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
+trace-exercise error and records remaining rows as not started.
 
 Five paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
 historical Terra r3 success and two immutable mini model-candidate failures. Their cumulative
@@ -209,17 +211,33 @@ git status --short
 .venv\Scripts\python.exe -m pytest
 ```
 
-After those checks, create a new mini diagnostic with a new experiment ID, clean execution hash
-and separate approval; do not reuse either terminal mini experiment.
+After those checks, inspect the new, unexecuted r3 diagnostic. This command is preflight-only and
+must not make an API call:
 
 ```powershell
 uv run patchloop evaluate `
-  --suite <new-mini-diagnostic.yaml> `
+  --suite experiments/dev-validation-gpt54mini-d037-r3.yaml `
   --preflight-only
 ```
 
-The mini diagnostic remains outside the Terra gate even if it succeeds. It must actually exercise
-a rejected mutating-tool retry to validate D-037; ordinary task completion alone is insufficient.
+Its `experiment-diagnostic-v1` requirement is part of the execution hash. Removing or changing the
+requirement invalidates the reviewed approval hash. The mini diagnostic remains outside the Terra
+gate even if it succeeds. It must actually exercise a rejected mutating-tool retry to validate
+D-037; ordinary task completion alone is insufficient. The machine predicate is:
+
+```text
+evaluation_reached == true
+AND retry_episode_count >= 1
+AND verified_retry_count == retry_episode_count
+AND failed_source_failure_sequences == []
+```
+
+A zero-episode run that reached the evaluator is `TraceExerciseInconclusive`, not a task or generic
+qualification failure. Evaluator non-arrival is `TraceExerciseFailed`. Only a `passed` diagnostic
+completes this gate. Do not add approval flags until the harness changes
+are committed, this exact clean preflight hash has been reviewed and the user separately approves
+one run and its cost cap.
+
 Afterward create a separately approved Terra development-validation pilot. Only after that run
 reaches the evaluator and produces a qualified `trace-qualification-v2` may its run ID be inserted
 into
@@ -227,9 +245,10 @@ into
 budget, harness commit, tool/context versions and exact runtime-contract hash before producing a
 separate 12-row execution hash. That campaign still requires a distinct approval capped at $20.
 
-If a campaign halts or a row fails qualification, `patchloop report` may still export row-level
-CSV and available-case diagnostics for investigation. Confirm `analysis_ready=true` before using
-any aggregate as a result. With an incomplete or qualification-failed matrix the report sets
+If a campaign halts or a row fails qualification/required trace exercise, `patchloop report` may
+still export row-level CSV and available-case diagnostics for investigation. Qualification failure,
+diagnostic inconclusive and diagnostic failure have separate exclusion reasons. Confirm
+`analysis_ready=true` before using any aggregate as a result. With an incomplete or excluded matrix the report sets
 `analysis_ready=false`, labels the basis `available-case-diagnostic-not-for-headlines`, and
 suppresses headline metrics, paired differences/intervals and success/failure flips.
 

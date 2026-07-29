@@ -338,6 +338,42 @@ input+output 누적 상한이며 memory-development/core의 Terra 계약을 바�
 Generation 전에 exact input count와 manifest의 full per-call output allowance가 남은
 budget에 함께 들어가는지 검사하므로 마지막 response가 이 상한을 넘도록 시작하지 않는다.
 
+새 D-037 provider diagnostic은
+`experiments/dev-validation-gpt54mini-d037-r3.yaml`에 다음 execution-hash-bound 요구를
+선언한다.
+
+```yaml
+diagnostic:
+  schema_version: experiment-diagnostic-v1
+  profile: d037-rejected-patch-retry-v1
+  required_trace_features:
+    - rejected_patch_retry_context
+```
+
+이 block은 `experiment-v2`의 `development-validation-model-candidate-pilot`에서만 허용되며
+feature는 정확히 한 번 선언해야 한다. Normalized suite, execution hash와 durable approved
+plan이 이 block을 포함하므로 승인 뒤 제거·변경하면 hash가 달라지고 실행 전에 거부된다.
+Block이 없는 historical r1/r2 suite는 기존 normalized identity를 유지한다.
+
+일반 trace qualification은 rejection이 없으면 조건부 retry 계약을 통과할 수 있다. Diagnostic
+consumer는 qualification의 patch/error body를 복사하지 않고 count와 failure sequence만 읽어
+다음 predicate를 별도로 판정한다.
+
+```text
+evaluation_reached == true
+AND retry_episode_count >= 1
+AND verified_retry_count == retry_episode_count
+AND failed_source_failure_sequences == []
+```
+
+`rejected_candidate_count`는 여러 rejection이 한 retry episode의 latest candidate로 수렴할 수
+있어 gate의 분모로 사용하지 않는다. Evaluator에 도달했지만 episode가 0이면 generic
+qualification이나 task outcome을 실패로 바꾸지 않고 `TraceExerciseInconclusive`로 기록한다.
+Evaluator에 도달하지 못했거나 episode가 관찰됐지만 완전히 검증되지 않았거나 check evidence가
+없거나 중복·malformed이면 `TraceExerciseFailed`다.
+Run row는 `qualification`/`qualification_error`와 `diagnostic`/`diagnostic_error`를 분리해
+보존한다.
+
 `patchloop run --model openai`, OpenAI run의 direct `resume`, direct `inject-fault`는 승인된
 suite 경로를 우회할 수 없도록 거부한다.
 

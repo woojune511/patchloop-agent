@@ -202,6 +202,19 @@ Mini r2 `run_4a9737ec91964dca`는
 `context_policy_version=phase-evidence-v2`인 immutable diagnostic이며 새 gate의 통과
 evidence로 소급 해석하지 않는다.
 
+D-037 r3 suite의 machine consumer는 generic qualification과 별도로 다음 세 상태를 낸다.
+
+| Diagnostic status | 조건 | 해석 |
+| --- | --- | --- |
+| `passed` | qualification 통과, `evaluation_reached=true`, retry episode 1개 이상, 모든 episode 검증, failed source sequence 없음 | 요청한 retry exercise와 evaluator 경로가 관찰·검증됨 |
+| `inconclusive` | qualification과 evaluator 도달은 통과했지만 retry episode가 0 | Agent/task/qualification 실패가 아니라 exercise 미관찰 |
+| `failed` | evaluator 미도달, check 부재·중복·malformed 또는 일부 episode 검증 실패 | D-037 diagnostic 계약 실패 |
+
+Requirement는 suite와 execution hash에 포함되고, 관찰 결과는 qualification hash에 결속된
+sanitized count/sequence만 저장한다. Patch body와 rejection error body는 diagnostic result에
+복사하지 않는다. 한 row짜리 r3 diagnostic은 `passed`일 때만 gate를 연다. `inconclusive`나
+`failed`여도 evaluator의 task outcome과 generic trace qualification 원본은 그대로 보존한다.
+
 ## 5. Controlled variables
 
 한 experiment block 안에서 다음을 고정한다.
@@ -430,7 +443,8 @@ Human approval는 autonomous agent 비교를 바꾸므로 main ablation에 넣�
 Task 수가 작으면 p-value를 headline으로 삼지 않는다. Effect size, interval, task evidence를 함께 제시한다. Negative result도 그대로 보고한다.
 
 Predeclared task × condition × repetition matrix가 완전하지 않거나 infrastructure,
-`not_started`, missing terminal result 또는 trace qualification failure가 하나라도 있으면
+`not_started`, missing terminal result, trace qualification failure 또는 required trace
+exercise의 inconclusive/failure가 하나라도 있으면
 report는 `analysis_ready=false`와 exclusion reason을 기록한다. 이때 available-case 수치와
 CSV는 복구·진단용으로만 표시하고 `headline_metrics`, paired difference/CI와
 success/failure flip은 생성하지 않는다. 누락 row를 제외한 교집합을 정식 비교처럼 보고해서는

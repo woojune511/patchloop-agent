@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **new mini D-037 diagnostic preflight**
+현재 milestone: **clean D-037 mini diagnostic preflight**
 
 2026-07-29 구현 스냅샷:
 
@@ -12,7 +12,7 @@
 | Phase 3 state machine | tool v2/context v3 retry hardening offline-complete | Current-diff submission gate와 exact rejected-patch next-request rehydration, structured no-generation budget event 검증 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | historical v1 pilot complete, D-037 offline gate complete, new mini diagnostic pending | Mini r2의 gap은 immutable evidence로 보존; v3 qualification은 offline 통과했지만 provider retry는 아직 미실행 |
+| Phase 6 evaluation | historical v1 pilot complete, D-037 diagnostic contract offline-complete, clean preflight pending | Mini r2의 gap은 immutable evidence로 보존; v3 qualification과 hash-bound exercise gate는 offline 통과했지만 provider retry는 아직 미실행 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -93,7 +93,7 @@ task의 no-memory development trace를 qualification하는 것이다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — retry context offline-complete, new mini diagnostic pending
+## Current live trace gate — diagnostic contract offline-complete, clean preflight pending
 
 목표: 첫 paid call 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -109,10 +109,20 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 5 | historical v1 evidence only | Babel #1042 `no_memory` r3 pilot | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass; current v2 gate에는 부적격 |
 | 6 | completed; task acceptance failed | Corrected v2 mini model-candidate diagnostic 1회, $2 cap | `run_4a9737ec91964dca`: telemetry, submission/evaluator lifecycle과 qualification pass; hidden acceptance fail |
 | 7 | done (offline) | `phase-evidence-v3` rejected mutating-tool argument의 bounded next-turn rehydration과 qualification check | Exact candidate/reason, tamper/stale/v2 compatibility, generation-before-budget guard와 full regression 통과 |
-| 8 | next; new hash/approval required | 새 mini model-candidate diagnostic 1회, 새 hash/승인 | Rejected mutation retry를 실제 exercise하고 context/lifecycle/evaluator/qualification 확인; task outcome은 별도 보고 |
+| 8 | machine gate implemented; clean preflight/hash/approval pending | 새 mini model-candidate diagnostic 1회, 새 hash/승인 | Rejected mutation retry를 실제 exercise하고 context/lifecycle/evaluator/qualification 확인; task outcome은 별도 보고 |
 | 9 | blocked on order 8 | Corrected Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
 | 10 | blocked on order 9 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
+
+Order 8의 suite는 `experiments/dev-validation-gpt54mini-d037-r3.yaml`이다. 승인 hash에는
+`experiment-diagnostic-v1` 요구가 포함된다. Post-run gate는
+`evaluation_reached=true`, `retry_episode_count >= 1`,
+`verified_retry_count == retry_episode_count`, `failed_source_failure_sequences == []`를
+요구한다. Evaluator에 도달했지만 rejection이 발생하지 않으면 일반 qualification이나 task
+outcome을 실패로 바꾸지 않고 diagnostic `inconclusive`로 종료한다. Evaluator 미도달은
+diagnostic failure다.
+따라서 clean preflight와 별도 승인 이후에도 실제 provider trace가 이 predicate를 통과해야만
+order 8이 완료된다.
 
 Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
 `standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.
@@ -174,8 +184,9 @@ failure를 일으켰다거나 첫 candidate가 통과했을 것이라는 반사�
 Provider prompt cut은 관찰되지 않았고, 별도로 PatchLoop context-selection gap은 남는다.
 Terminal r1/r2 suite와 run은 재사용하지 않는다. 다음 paid 실행 전에 rejected mutation
 candidate의 bounded/hash-bound body와 rejection reason을 다음 turn에 함께 제공하고 이를
-offline qualification test로 고정한다. 이후 새 experiment ID, clean hash와 별도 사용자
-승인을 받아 mini diagnostic을 다시 실행한다. Mini 결과는 성공하더라도 Terra pilot
+offline qualification과 suite-specific machine gate로 고정한다. 이후 새 experiment ID,
+clean hash와 별도 사용자 승인을 받아 mini diagnostic을 다시 실행한다. Mini 결과는
+성공하더라도 Terra pilot
 선행 gate를 대신하지 않는다.
 
 2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,

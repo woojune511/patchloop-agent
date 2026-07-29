@@ -54,9 +54,14 @@ def _is_research_outcome(run: dict) -> bool:
         run.get("attempt_status") != "not_started"
         and run.get("infrastructure_error") is None
         and run.get("qualification_error") is None
+        and run.get("diagnostic_error") is None
         and (
             run.get("qualification") is None
             or run["qualification"].get("qualified") is True
+        )
+        and (
+            run.get("diagnostic") is None
+            or run["diagnostic"].get("status") == "passed"
         )
         and result is not None
         and result.get("outcome_kind") != "infrastructure_error"
@@ -76,6 +81,21 @@ def _exclusion_reason(run: dict) -> str | None:
         and run["qualification"].get("qualified") is not True
     ):
         return "trace_qualification_failure"
+    diagnostic_error = run.get("diagnostic_error")
+    diagnostic = run.get("diagnostic")
+    if diagnostic_error is not None or (
+        diagnostic is not None and diagnostic.get("status") != "passed"
+    ):
+        if (
+            diagnostic_error is not None
+            and diagnostic_error.get("type")
+            == "TraceExerciseInconclusive"
+        ) or (
+            diagnostic is not None
+            and diagnostic.get("status") == "inconclusive"
+        ):
+            return "trace_exercise_inconclusive"
+        return "trace_exercise_failure"
     if result is None:
         return "missing_terminal_result"
     return None
@@ -372,6 +392,14 @@ def build_report(experiment: str, output: str | Path) -> dict:
                 "qualification_error": json.dumps(
                     run.get("qualification_error") or {}
                 ),
+                "diagnostic_status": (
+                    run.get("diagnostic", {}).get("status")
+                    if run.get("diagnostic") is not None
+                    else ""
+                ),
+                "diagnostic_error": json.dumps(
+                    run.get("diagnostic_error") or {}
+                ),
                 "analysis_included": int(_is_research_outcome(run)),
                 "exclusion_reason": _exclusion_reason(run) or "",
             }
@@ -445,6 +473,14 @@ def build_report(experiment: str, output: str | Path) -> dict:
             ),
             "qualification_excluded_runs": sum(
                 _exclusion_reason(run) == "trace_qualification_failure"
+                for run in condition_runs
+            ),
+            "diagnostic_inconclusive_runs": sum(
+                _exclusion_reason(run) == "trace_exercise_inconclusive"
+                for run in condition_runs
+            ),
+            "diagnostic_failed_runs": sum(
+                _exclusion_reason(run) == "trace_exercise_failure"
                 for run in condition_runs
             ),
             "not_started_runs": sum(

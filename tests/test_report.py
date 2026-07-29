@@ -204,6 +204,69 @@ def test_report_excludes_trace_qualification_failures_from_research_metrics(
     assert report["analysis_ready"] is False
 
 
+def test_report_separates_inconclusive_trace_exercise_from_qualification(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    result = _result("run_diagnostic_inconclusive", True)
+    result["outcome_kind"] = "resolved"
+    raw = {
+        "schedule_seed": 20260723,
+        "infrastructure_errors": 0,
+        "runs": [
+            {
+                "task_id": "a",
+                "split": "dev-validation",
+                "condition": "no_memory",
+                "repetition": 1,
+                "attempt_status": "terminal",
+                "run_id": result["run_id"],
+                "usage": result["usage"],
+                "result": result,
+                "infrastructure_error": None,
+                "qualification": {"qualified": True},
+                "qualification_error": None,
+                "diagnostic": {
+                    "profile": "d037-rejected-patch-retry-v1",
+                    "status": "inconclusive",
+                    "reason_code": "retry_episode_not_observed",
+                },
+                "diagnostic_error": {
+                    "type": "TraceExerciseInconclusive",
+                    "message": "required trace exercise was not observed",
+                },
+            }
+        ],
+    }
+    runtime = tmp_path / ".patchloop"
+    experiment_dir = runtime / "experiments"
+    experiment_dir.mkdir(parents=True)
+    (experiment_dir / "report-diagnostic.json").write_text(
+        json.dumps(raw),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(report_module, "runtime_root", lambda: runtime)
+
+    report_module.build_report("report-diagnostic", tmp_path / "report")
+    report = json.loads(
+        (tmp_path / "report" / "report.json").read_text(encoding="utf-8")
+    )
+    metrics = report["metrics"]["no_memory"]
+    with (tmp_path / "report" / "runs.csv").open(
+        newline="",
+        encoding="utf-8",
+    ) as handle:
+        row = next(csv.DictReader(handle))
+
+    assert metrics["runs"] == 0
+    assert metrics["qualification_excluded_runs"] == 0
+    assert metrics["diagnostic_inconclusive_runs"] == 1
+    assert metrics["diagnostic_failed_runs"] == 0
+    assert row["diagnostic_status"] == "inconclusive"
+    assert row["exclusion_reason"] == "trace_exercise_inconclusive"
+    assert report["analysis_ready"] is False
+
+
 def test_report_marks_only_complete_predeclared_matrix_headline_ready(
     tmp_path,
     monkeypatch,

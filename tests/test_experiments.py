@@ -77,6 +77,35 @@ def _ready_live_environment(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
 
 
+def _retry_qualification(
+    *,
+    retry_episode_count: int,
+    verified_retry_count: int,
+    failed_source_failure_sequences: list[int],
+    check_count: int = 1,
+    check_passed: bool = True,
+) -> dict:
+    return {
+        "run_id": "run_diagnostic",
+        "qualified": True,
+        "trace_integrity_passed": True,
+        "evaluation_reached": True,
+        "qualification_hash": "sha256:" + ("d" * 64),
+        "trace_features": {
+            "rejected_patch_retry_context": {
+                "check_count": check_count,
+                "check_passed": check_passed,
+                "rejected_candidate_count": retry_episode_count,
+                "retry_episode_count": retry_episode_count,
+                "verified_retry_count": verified_retry_count,
+                "failed_source_failure_sequences": (
+                    failed_source_failure_sequences
+                ),
+            }
+        },
+    }
+
+
 def test_expected_runtime_contract_hash_uses_phase_evidence_v3() -> None:
     encoded = json.dumps(
         {
@@ -150,6 +179,301 @@ def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
         approved_execution_hash=unapproved["execution_hash"],
     )
     assert approved["ready"] is True
+
+
+def test_d037_r3_pilot_binds_exact_diagnostic_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    r1 = eval_runner.load_suite(
+        "experiments/dev-validation-gpt54mini-pilot.yaml"
+    )
+    r2 = eval_runner.load_suite(
+        "experiments/dev-validation-gpt54mini-pilot-r2.yaml"
+    )
+    suite_path = "experiments/dev-validation-gpt54mini-d037-r3.yaml"
+    r3 = eval_runner.load_suite(suite_path)
+
+    assert r1.diagnostic is None
+    assert r2.diagnostic is None
+    assert r3.diagnostic is not None
+    assert r3.diagnostic.profile == "d037-rejected-patch-retry-v1"
+    assert r3.diagnostic.required_trace_features == [
+        "rejected_patch_retry_context"
+    ]
+    historical_payload = r2.model_dump(mode="json")
+    historical_payload.pop("diagnostic")
+    assert eval_runner._suite_hash(r2) == sha256_text(
+        canonical_json(historical_payload)
+    )
+    r2_yaml = yaml.safe_load(
+        Path(
+            "experiments/dev-validation-gpt54mini-pilot-r2.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    r3_yaml = yaml.safe_load(
+        Path(suite_path).read_text(encoding="utf-8")
+    )
+    r3_yaml.pop("diagnostic")
+    r3_yaml["experiment_id"] = r2_yaml["experiment_id"]
+    assert r3_yaml == r2_yaml
+
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert {row["code"] for row in preflight["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert preflight["suite"]["diagnostic"] == {
+        "schema_version": "experiment-diagnostic-v1",
+        "profile": "d037-rejected-patch-retry-v1",
+        "required_trace_features": [
+            "rejected_patch_retry_context"
+        ],
+    }
+
+
+def test_d037_diagnostic_is_rejected_outside_model_candidate_pilot() -> None:
+    payload = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-d037-r3.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    payload["purpose"] = "development-validation-live-pilot"
+
+    with pytest.raises(
+        ValidationError,
+        match="diagnostic profiles are allowed only",
+    ):
+        ExperimentSuite.model_validate(payload)
+
+
+@pytest.mark.parametrize(
+    "required_features",
+    [
+        [
+            "rejected_patch_retry_context",
+            "rejected_patch_retry_context",
+        ],
+        ["unknown_feature"],
+    ],
+)
+def test_d037_diagnostic_rejects_invalid_feature_contract(
+    required_features: list[str],
+) -> None:
+    payload = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-d037-r3.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    payload["diagnostic"]["required_trace_features"] = required_features
+
+    with pytest.raises(ValidationError):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_d037_diagnostic_removal_invalidates_approved_execution_hash(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    payload = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-d037-r3.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    payload["experiment_id"] = "d037-hash-binding"
+    suite_path = tmp_path / "d037-hash-binding.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    diagnostic_preflight = eval_runner.preflight_suite(suite_path)
+    payload.pop("diagnostic")
+    suite_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    modified_preflight = eval_runner.preflight_suite(
+        suite_path,
+        approve_live_cost=True,
+        approved_execution_hash=diagnostic_preflight["execution_hash"],
+    )
+
+    assert (
+        modified_preflight["execution_hash"]
+        != diagnostic_preflight["execution_hash"]
+    )
+    assert "APPROVAL_HASH_MISMATCH" in {
+        row["code"] for row in modified_preflight["blockers"]
+    }
+
+    class ForbiddenRunner:
+        def __init__(self):
+            pytest.fail(
+                "changed diagnostic contract must stop before runner creation"
+            )
+
+    monkeypatch.setattr(eval_runner, "AgentRunner", ForbiddenRunner)
+    with pytest.raises(ContractError, match="approved execution hash"):
+        eval_runner.evaluate_suite(
+            suite_path,
+            approve_live_cost=True,
+            approved_execution_hash=diagnostic_preflight[
+                "execution_hash"
+            ],
+        )
+    assert not (
+        tmp_path
+        / "runtime"
+        / "experiments"
+        / "journals"
+        / "d037-hash-binding.jsonl"
+    ).exists()
+
+
+@pytest.mark.parametrize(
+    ("qualification", "expected_status", "expected_reason"),
+    [
+        (
+            _retry_qualification(
+                retry_episode_count=1,
+                verified_retry_count=1,
+                failed_source_failure_sequences=[],
+            ),
+            "passed",
+            None,
+        ),
+        (
+            _retry_qualification(
+                retry_episode_count=0,
+                verified_retry_count=0,
+                failed_source_failure_sequences=[],
+            ),
+            "inconclusive",
+            "retry_episode_not_observed",
+        ),
+        (
+            _retry_qualification(
+                retry_episode_count=2,
+                verified_retry_count=1,
+                failed_source_failure_sequences=[42],
+            ),
+            "failed",
+            "retry_episode_not_fully_verified",
+        ),
+        (
+            {
+                **_retry_qualification(
+                    retry_episode_count=1,
+                    verified_retry_count=1,
+                    failed_source_failure_sequences=[],
+                ),
+                "evaluation_reached": False,
+            },
+            "failed",
+            "evaluation_not_reached",
+        ),
+    ],
+)
+def test_d037_diagnostic_truth_table(
+    qualification: dict,
+    expected_status: str,
+    expected_reason: str | None,
+) -> None:
+    suite = eval_runner.load_suite(
+        "experiments/dev-validation-gpt54mini-d037-r3.yaml"
+    )
+
+    diagnostic = eval_runner._diagnostic_result(suite, qualification)
+
+    assert diagnostic is not None
+    assert diagnostic["status"] == expected_status
+    assert diagnostic["reason_code"] == expected_reason
+
+
+def test_d037_diagnostic_rejects_missing_or_duplicate_qualification_check() -> None:
+    suite = eval_runner.load_suite(
+        "experiments/dev-validation-gpt54mini-d037-r3.yaml"
+    )
+
+    missing = _retry_qualification(
+        retry_episode_count=1,
+        verified_retry_count=1,
+        failed_source_failure_sequences=[],
+        check_count=0,
+    )
+    duplicate = _retry_qualification(
+        retry_episode_count=1,
+        verified_retry_count=1,
+        failed_source_failure_sequences=[],
+        check_count=2,
+    )
+    unqualified = _retry_qualification(
+        retry_episode_count=1,
+        verified_retry_count=1,
+        failed_source_failure_sequences=[],
+    )
+    unqualified["qualified"] = False
+
+    assert eval_runner._diagnostic_result(
+        suite,
+        missing,
+    )["reason_code"] == "qualification_check_cardinality"
+    assert eval_runner._diagnostic_result(
+        suite,
+        duplicate,
+    )["reason_code"] == "qualification_check_cardinality"
+    assert eval_runner._diagnostic_result(
+        suite,
+        unqualified,
+    )["reason_code"] == "qualification_not_passed"
+
+
+def test_d037_qualification_summary_does_not_copy_malformed_bodies(
+    monkeypatch,
+) -> None:
+    secret_body = "PRIVATE_PATCH_OR_ERROR_BODY"
+    monkeypatch.setattr(
+        trace_qualification,
+        "qualify_run",
+        lambda *_args, **_kwargs: {
+            "qualified": True,
+            "checks": [
+                {
+                    "check_id": "rejected_patch_retry_context",
+                    "passed": secret_body,
+                    "details": {
+                        "rejected_candidate_count": secret_body,
+                        "retry_episode_count": secret_body,
+                        "verified_retry_count": secret_body,
+                        "failed_source_failure_sequences": [
+                            secret_body
+                        ],
+                    },
+                }
+            ],
+        },
+    )
+
+    summary = eval_runner._qualify_terminal_run(
+        "run_sanitized",
+        "tasks/dev-validation/"
+        "babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+    )
+    feature = summary["trace_features"][
+        "rejected_patch_retry_context"
+    ]
+
+    assert feature["check_count"] == 1
+    assert feature["check_passed"] is None
+    assert feature["rejected_candidate_count"] is None
+    assert feature["retry_episode_count"] is None
+    assert feature["verified_retry_count"] is None
+    assert feature["failed_source_failure_sequences"] is None
+    assert secret_body not in json.dumps(summary)
 
 
 def test_gpt54mini_corrective_retry_preserves_terminal_r1_contract() -> None:
@@ -538,6 +862,77 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         "EXPERIMENT_RESULT_EXISTS",
         "EXPERIMENT_JOURNAL_EXISTS",
     }.issubset({row["code"] for row in retry["blockers"]})
+
+
+def test_d037_pilot_keeps_inconclusive_exercise_separate_from_qualification(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    payload = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-d037-r3.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    payload["experiment_id"] = "d037-inconclusive-integration"
+    suite_path = tmp_path / "d037-inconclusive-integration.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    class FakeRunner:
+        def start(self, _task, *, manifest, **_):
+            return {
+                "run_id": manifest.run_id,
+                "outcome_kind": "task_failure",
+                "usage": {
+                    "model_cost_usd": 0.0,
+                    "model_calls": 1,
+                    "tool_calls": 0,
+                    "input_tokens": 10,
+                    "output_tokens": 5,
+                },
+            }
+
+    monkeypatch.setattr(eval_runner, "AgentRunner", FakeRunner)
+    monkeypatch.setattr(
+        eval_runner,
+        "_qualify_terminal_run",
+        lambda run_id, _task: {
+            **_retry_qualification(
+                retry_episode_count=0,
+                verified_retry_count=0,
+                failed_source_failure_sequences=[],
+            ),
+            "run_id": run_id,
+        },
+    )
+
+    result = eval_runner.evaluate_suite(
+        suite_path,
+        approve_live_cost=True,
+        approved_execution_hash=preflight["execution_hash"],
+    )
+    run = result["runs"][0]
+
+    assert run["qualification"]["qualified"] is True
+    assert run["qualification_error"] is None
+    assert run["diagnostic"]["status"] == "inconclusive"
+    assert run["diagnostic_error"]["type"] == "TraceExerciseInconclusive"
+    assert result["qualification_errors"] == 0
+    assert result["diagnostic_errors"] == 1
+    assert result["diagnostic_gate"] == {
+        "profile": "d037-rejected-patch-retry-v1",
+        "required_trace_features": [
+            "rejected_patch_retry_context"
+        ],
+        "passed": False,
+        "passed_runs": 0,
+        "inconclusive_runs": 1,
+        "failed_runs": 0,
+    }
 
 
 def test_paid_execution_uses_the_suite_snapshot_approved_by_preflight(
