@@ -1162,8 +1162,9 @@ The checked-in
 [applied model argument](../reports/live-pilot/artifacts/run_4a9737ec91964dca-applied-model-candidate.patch)
 and [final submitted task-failure diff](../reports/live-pilot/artifacts/run_4a9737ec91964dca-submitted.patch)
 bind the portable bytes and local-only evidence hashes without bundling provider payloads or
-private evaluator output. The mini lane's calculated cumulative cost is `$0.155418`; all five paid
-pilot runs total `$0.984282375`. R2 validates telemetry, the normal v2 submission path, evaluator
+private evaluator output. At the r2 checkpoint, the mini lane's calculated cumulative cost was
+`$0.155418` and all five paid pilot runs totaled `$0.984282375`. R2 validates telemetry, the normal
+v2 submission path, evaluator
 receipt and qualification, but it is not an accepted pilot and cannot unlock the Terra or
 development campaign gate.
 
@@ -1189,7 +1190,7 @@ complete block payload to both terminal `RunFailed` and `RunResult.terminal_erro
 remaining budget or terminal error identity fails. Historical phase-evidence-v2 qualification and
 source evidence remain unchanged.
 
-The unexecuted `experiments/dev-validation-gpt54mini-d037-r3.yaml` adds a hash-bound
+The terminal `experiments/dev-validation-gpt54mini-d037-r3.yaml` added a hash-bound
 `experiment-diagnostic-v1` requirement without changing generic qualification. Its consumer stores
 only sanitized counts/sequences and requires evaluator arrival, one or more retry episodes, exact
 equality between observed and verified episode counts, and no failed source sequence. A zero-episode
@@ -1198,23 +1199,76 @@ missing, duplicate, malformed or partially verified evidence is `TraceExerciseFa
 diagnostic block changes the execution hash and an old approval is rejected before runner or journal
 construction. Report output keeps both states separate from `trace_qualification_failure`.
 
+### D-037 r3 terminal provider evidence
+
+Execution hash
+`sha256:c33a50abe48b554c37d95de4833d1d17ede816f4d128b9adc22e88c010e138e6`
+was consumed exactly once by `run_e90f7c52aa134182` at harness commit
+`11a83c2cdff06978dc961e7b3b3c0caada3b386e`. The run used 8 model calls and
+12 tool calls, all `search_files` or `read_file`. Its 57 events and 13 checkpoints contain no
+`PatchPrepared`, `PatchApplied`, submission or evaluator event.
+
+All eight request pre-counts matched provider input usage. Total usage was 54,851 input and
+6,079 output tokens, including 5,535 reasoning tokens, for 60,930/90,000 tokens and a calculated
+list-price cost of `$0.06849375`. At model event 55, requested and reported input were both 6,943.
+The response then used exactly 4,096 output tokens, of which 3,989 were reasoning tokens, and
+returned `status=incomplete`, `reason=max_output_tokens` with no complete tool call. This is
+per-call output-ceiling evidence, not provider input truncation or total run-budget exhaustion.
+
+Trace qualification passed 21 of 22 checks. Leakage and all aggregate private-boundary checks
+passed; `prompt_token_integrity` failed at event 55 because the response was incomplete.
+`evaluation_reached=false`. The conditional D-037 feature itself reported zero rejected
+candidates, zero retry episodes, zero verified episodes and no failed source sequence. The suite
+diagnostic is therefore `failed/qualification_not_passed`, not `inconclusive`. The run neither
+validates nor falsifies rejected-patch rehydration and cannot unlock the Terra or development
+campaign gate.
+
+The checked-in
+[mini D-037 r3 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r3.json)
+binds the experiment result, journal, approved plan, qualification, manifest, result, provenance,
+failure record and terminal request/response objects by SHA-256 without bundling raw provider or
+private evaluator payloads. The three mini runs now total `$0.22391175`; all six paid pilots total
+`$1.052776125` at configured list prices. Invoice charges and free daily usage treatment remain
+unverified.
+
+### D-037 r4 corrective contract - offline only
+
+`experiments/dev-validation-gpt54mini-d037-r4.yaml` is a new, unexecuted suite. It keeps the dated
+mini snapshot, medium/default settings, task, condition, repetition and $2 cap fixed, while binding
+`max_output_tokens=25,000` and `max_total_tokens=120,000` together under
+`d037-rejected-patch-retry-v2`. The pair follows the initial reasoning/output-space recommendation
+in the official
+[reasoning guide](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning)
+and remains below the
+[model snapshot's published maximum output](https://developers.openai.com/api/docs/models/gpt-5.4-mini).
+Partial 4,096/120,000 or 25,000/90,000 contracts are rejected; historical mini and Terra contracts
+remain accepted for their immutable evidence. Post-run qualification reparses and rehashes the
+complete canonical approved-plan suite and compares its diagnostic/model/output/budget contract
+with the run manifest. It also rehashes the raw schedule and recomputes the execution hash from the
+suite, dataset, tasks, Git commit, Docker images, SDK state and pilot-qualification hash. Profile
+omission, v1 substitution, partial pairs, arbitrary copied hashes and input tampering fail.
+
+The preflight reserves `$0.6525` at the largest configured token price for one run, below the $2
+cap. This is a conservative authorization reserve, not predicted or measured spend. The change
+does not add automatic retry after an incomplete provider response because a naive next loop could
+move the immediate-next-request boundary past the rejected patch. A future exact-retry policy would
+need its own original-request identity, logical-turn/attempt correlation, usage persistence,
+crash-ambiguity and qualification-pairing contract.
+
 Executed evidence:
 
 ```text
 .venv\Scripts\python.exe -m pytest tests/test_trace_qualification.py -q
-57 passed
-
-.venv\Scripts\python.exe -m pytest tests/test_agent_runtime.py -q
-54 passed
+68 passed
 
 .venv\Scripts\python.exe -m pytest tests/test_live_pilot_evidence.py -q
-15 passed
+18 passed
 
-.venv\Scripts\python.exe -m pytest tests/test_experiments.py tests/test_report.py -q
-50 passed
+.venv\Scripts\python.exe -m pytest tests/test_experiments.py -q
+49 passed
 
 .venv\Scripts\python.exe -m pytest -q
-463 passed, 2 skipped
+481 passed, 2 skipped
 
 .venv\Scripts\ruff.exe check patchloop tests
 All checks passed
@@ -1224,10 +1278,9 @@ passed
 ```
 
 The two skips are Docker sandbox tests whose explicit reason was `Docker daemon unavailable` in
-this execution environment. No OpenAI generation, paid API call, hidden evaluator campaign,
-stress row, memory-development run or core run was executed for this gate. The r3 mini diagnostic
-suite exists but remains unexecuted; a clean execution hash and separate approval are still required
-to exercise the retry against the real provider.
+that offline execution environment. Those commands made no OpenAI generation or paid API call.
+The later r3 provider run above is separate immutable evidence and still did not execute a hidden
+evaluator campaign, stress row, memory-development run or core run.
 
 ## Open gates
 
@@ -1238,6 +1291,9 @@ the context-reset trigger, persistent-state-off arm and stress matrix runner/rep
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
 subprocess E2E has exercised actual process termination and fresh-interpreter stale-`RUNNING`
 reclaim. The timeout path remains a synthetic timeout on the first registered visible check.
-Rejected mutating-tool input rehydration is offline-qualified but has not been exercised by a new
-live provider run. No stress schedule row, 12-run development campaign or 96-run core campaign
-has been executed.
+Rejected mutating-tool input rehydration is offline-qualified. A new live provider run was
+attempted, but it produced no rejected mutation or retry episode before its incomplete response, so
+the rehydration contract remains unexercised live. The new r4 corrective output-allowance contract
+and experiment ID passed full offline verification but remain offline-only; a clean committed
+preflight hash and separate approval are required before another diagnostic. No stress schedule row, 12-run
+development campaign or 96-run core campaign has been executed.

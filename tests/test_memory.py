@@ -18,6 +18,12 @@ from patchloop.contracts import (
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
 from patchloop.evals.qualification import calculate_source_evidence_hash
+from patchloop.evals.runner import (
+    MEMORY_DEVELOPMENT_TASKS,
+    ExperimentSuite,
+    _execution_hash,
+    _suite_payload,
+)
 from patchloop.memory import store as memory_store
 from patchloop.memory.retrieval import retrieve_memory
 from patchloop.runtime import build_manifest
@@ -147,11 +153,71 @@ def _write_qualification(
     state = StateStore(tmp_path / "state.sqlite3")
     manifest = state.get_manifest(run_id)
     hash_value = "sha256:" + ("a" * 64)
+    manifest.model.provider = "openai"
+    manifest.model.model_id = "gpt-5.6-terra"
+    manifest.model.provider_sdk_version = "test"
+    suite = ExperimentSuite.model_validate(
+        {
+            "schema_version": "experiment-v2",
+            "experiment_id": "memory-role-test",
+            "purpose": "memory-development-no-memory",
+            "tasks": sorted(MEMORY_DEVELOPMENT_TASKS),
+            "conditions": ["no_memory"],
+            "repetitions": 2,
+            "model": "openai",
+            "model_id": "gpt-5.6-terra",
+            "cost_limit_usd": 20,
+            "dataset_manifest_hash": dataset_manifest_hash,
+        }
+    )
+    suite_payload = _suite_payload(suite)
+    suite_hash = sha256_text(canonical_json(suite_payload))
+    dataset = {"manifest_hash": dataset_manifest_hash}
+    tasks = [
+        {
+            "task_id": manifest.task_id,
+            "task_version": manifest.task_version,
+            "public_spec_hash": manifest.public_spec_hash,
+            "private_spec_hash": manifest.private_spec_hash,
+            "base_commit": manifest.base_commit,
+            "evaluator_image_digest": manifest.evaluator_image_digest,
+        }
+    ]
+    schedule = [
+        {
+            "order": 1,
+            "schedule_row_id": hash_value,
+            "task_id": manifest.task_id,
+            "dataset_role": DatasetRole.MEMORY_DEVELOPMENT.value,
+            "condition": manifest.memory.condition.value,
+            "repetition": 1,
+        }
+    ]
+    schedule_hash = sha256_text(canonical_json(schedule))
+    environment = {
+        "git": {"commit": manifest.harness_git_commit},
+        "docker": {"images": []},
+        "openai_sdk": {
+            "installed": True,
+            "version": manifest.model.provider_sdk_version,
+        },
+    }
+    pilot_qualification: dict[str, object] = {}
+    execution_hash = _execution_hash(
+        suite,
+        dataset=dataset,
+        task_rows=tasks,
+        schedule_hash=schedule_hash,
+        git_state=environment["git"],
+        docker_state=environment["docker"],
+        openai_sdk=environment["openai_sdk"],
+        pilot_qualification=pilot_qualification,
+    )
     manifest.experiment = ExperimentRunContext(
         experiment_id="memory-role-test",
         purpose=ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
-        suite_hash=hash_value,
-        execution_hash=hash_value,
+        suite_hash=suite_hash,
+        execution_hash=execution_hash,
         dataset_manifest_hash=dataset_manifest_hash,
         dataset_role=DatasetRole.MEMORY_DEVELOPMENT,
         schedule_seed=20260723,
@@ -170,36 +236,19 @@ def _write_qualification(
         "purpose": manifest.experiment.purpose.value,
         "suite_hash": manifest.experiment.suite_hash,
         "execution_hash": manifest.experiment.execution_hash,
-        "suite": {
-            "experiment_id": manifest.experiment.experiment_id,
-            "purpose": manifest.experiment.purpose.value,
-        },
-        "dataset": {"manifest_hash": dataset_manifest_hash},
-        "tasks": [
-            {
-                "task_id": manifest.task_id,
-                "task_version": manifest.task_version,
-                "public_spec_hash": manifest.public_spec_hash,
-                "private_spec_hash": manifest.private_spec_hash,
-                "base_commit": manifest.base_commit,
-                "evaluator_image_digest": manifest.evaluator_image_digest,
-            }
-        ],
-        "schedule": [
-            {
-                "order": 1,
-                "schedule_row_id": manifest.experiment.schedule_row_id,
-                "task_id": manifest.task_id,
-                "dataset_role": DatasetRole.MEMORY_DEVELOPMENT.value,
-                "condition": manifest.memory.condition.value,
-                "repetition": 1,
-            }
-        ],
+        "schedule_hash": schedule_hash,
+        "expected_runs": len(schedule),
+        "suite": suite_payload,
+        "dataset": dataset,
+        "tasks": tasks,
+        "schedule": schedule,
+        "environment": environment,
         "approval": {
             "invocation_approve_live_cost": True,
             "invocation_approved_execution_hash": manifest.experiment.execution_hash,
             "matches_execution_hash": True,
         },
+        "pilot_qualification": pilot_qualification,
         "blockers": [],
         "ready": True,
     }

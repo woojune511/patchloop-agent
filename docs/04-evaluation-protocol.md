@@ -202,7 +202,8 @@ Mini r2 `run_4a9737ec91964dca`는
 `context_policy_version=phase-evidence-v2`인 immutable diagnostic이며 새 gate의 통과
 evidence로 소급 해석하지 않는다.
 
-D-037 r3 suite의 machine consumer는 generic qualification과 별도로 다음 세 상태를 낸다.
+D-037 diagnostic suite의 machine consumer는 generic qualification과 별도로 다음 세 상태를
+낸다.
 
 | Diagnostic status | 조건 | 해석 |
 | --- | --- | --- |
@@ -212,8 +213,24 @@ D-037 r3 suite의 machine consumer는 generic qualification과 별도로 다음 
 
 Requirement는 suite와 execution hash에 포함되고, 관찰 결과는 qualification hash에 결속된
 sanitized count/sequence만 저장한다. Patch body와 rejection error body는 diagnostic result에
-복사하지 않는다. 한 row짜리 r3 diagnostic은 `passed`일 때만 gate를 연다. `inconclusive`나
+복사하지 않는다. 한 row짜리 diagnostic은 `passed`일 때만 gate를 연다. `inconclusive`나
 `failed`여도 evaluator의 task outcome과 generic trace qualification 원본은 그대로 보존한다.
+
+Terminal r3 `run_e90f7c52aa134182`는 8회 input pre-count가 모두 provider usage와
+일치했지만 event 55에서 4,096 output token 중 3,989를 reasoning에 사용하고
+`incomplete/max_output_tokens`로 끝났다. 전체 run은 60,930/90,000 token이어서 input
+prompt truncation이나 total-budget exhaustion이 아니다. Mutation/rejection/evaluator가
+없었으므로 generic qualification과 diagnostic은 실패했고, D-037 exercise는 미관찰이다.
+
+Corrective r4 profile은 official
+[reasoning guide](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning)의
+초기 권고에 맞춰
+`max_output_tokens=25,000`, total run budget `120,000`을 함께 고정한다. Historical mini
+r1~r3는 4,096/90,000으로 그대로 qualification한다. V2 profile은 자동 provider retry를
+추가하지 않으며, 각 generation 전에 exact input + 25,000 full allowance가 남은 120,000
+budget 안에 들어가는지 같은 방식으로 검사한다. Post-run qualifier는 approved plan의
+canonical suite hash와 diagnostic/model/output/budget 계약을 manifest에 다시 결속하고,
+schedule 및 Git/Docker/SDK/pilot-qualification 입력으로 execution hash를 재계산한다.
 
 ## 5. Controlled variables
 
@@ -237,10 +254,11 @@ Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는
 `20 model call / 50 tool call / 80,000 total token / 900초`를 고정한다. 현재 공식 catalog에는
 dated Terra snapshot이 없으므로 alias, OpenAI SDK version, clean harness Git commit과
 execution window를 provenance로 사용한다. D-031 provider telemetry를 검증하는 별도
-development-validation model-candidate pilot은 `gpt-5.4-mini-2026-03-17`, medium,
-default tier, per-call output 4,096과 run 전체 input+output 90,000 token을 고정한다.
-Terminal r1과 v2 corrective r2는 별도 experiment ID로 보존하며, 이 diagnostic lane은
-core headline 비교나 Terra 선행 gate에 포함하지 않는다.
+development-validation model-candidate pilot의 historical r1~r3는
+`gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run 전체
+input+output 90,000 token을 고정한다. 새 D-037 corrective r4만 hash-bound diagnostic
+profile v2에서 25,000/120,000 pair를 허용한다. 모든 suite는 별도 experiment ID로
+보존하며, 이 diagnostic lane은 core headline 비교나 Terra 선행 gate에 포함하지 않는다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와

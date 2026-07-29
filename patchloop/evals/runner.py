@@ -61,6 +61,8 @@ OFFICIAL_PRICES_BY_MODEL = {
 }
 DEFAULT_BUDGET = Budget()
 GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
+GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
+GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 
 PILOT_TASK = (
     "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml"
@@ -91,7 +93,10 @@ class ExperimentDiagnostic(BaseModel):
     schema_version: Literal["experiment-diagnostic-v1"] = (
         "experiment-diagnostic-v1"
     )
-    profile: Literal["d037-rejected-patch-retry-v1"]
+    profile: Literal[
+        "d037-rejected-patch-retry-v1",
+        "d037-rejected-patch-retry-v2",
+    ]
     required_trace_features: list[
         Literal["rejected_patch_retry_context"]
     ] = Field(min_length=1)
@@ -241,11 +246,24 @@ class ExperimentSuite(BaseModel):
                     "development-validation model-candidate pilot requires exactly "
                     "the frozen Babel task, no_memory, and one repetition"
                 )
-            self._require_live_defaults(
-                cost_limit=2,
-                model_id=GPT54_MINI_PILOT_MODEL_ID,
-                budget=GPT54_MINI_PILOT_BUDGET,
-            )
+            if (
+                self.diagnostic is not None
+                and self.diagnostic.profile == "d037-rejected-patch-retry-v2"
+            ):
+                self._require_live_defaults(
+                    cost_limit=2,
+                    model_id=GPT54_MINI_PILOT_MODEL_ID,
+                    budget=GPT54_MINI_D037_CORRECTIVE_BUDGET,
+                    max_output_tokens=(
+                        GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
+                    ),
+                )
+            else:
+                self._require_live_defaults(
+                    cost_limit=2,
+                    model_id=GPT54_MINI_PILOT_MODEL_ID,
+                    budget=GPT54_MINI_PILOT_BUDGET,
+                )
         elif self.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
             if (
                 {_normalized_task_path(task) for task in self.tasks}
@@ -279,6 +297,7 @@ class ExperimentSuite(BaseModel):
         cost_limit: float,
         model_id: str = TERRA_MODEL_ID,
         budget: Budget | None = None,
+        max_output_tokens: int = 4096,
     ) -> None:
         if (
             self.model != "openai"
@@ -294,7 +313,7 @@ class ExperimentSuite(BaseModel):
         if (
             self.model_id != model_id
             or self.budget != expected_budget
-            or self.max_output_tokens != 4096
+            or self.max_output_tokens != max_output_tokens
         ):
             raise ValueError(
                 "live research purpose requires the frozen "

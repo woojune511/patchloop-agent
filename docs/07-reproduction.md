@@ -87,8 +87,10 @@ is preserved separately under `reports/live-pilot/`:
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
   terminal r2 contract, historical inspection only, never rerun
-- `experiments/dev-validation-gpt54mini-d037-r3.yaml`: unexecuted D-037 exercise diagnostic;
-  new clean preflight hash and separate approval required
+- `experiments/dev-validation-gpt54mini-d037-r3.yaml`: terminal D-037 exercise diagnostic;
+  historical inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-d037-r4.yaml`: unexecuted corrective D-037 diagnostic;
+  25,000 per-call / 120,000 total token contract, preflight only until separately approved
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -132,6 +134,20 @@ body. The checked-in
 [mini r2 evidence record](../reports/live-pilot/dev-validation-gpt54mini-pilot-20260729-r2.json)
 preserves aggregate verdicts and portable patch hashes without private evaluator details.
 
+The D-037 r3 contract is terminal as well. Approved execution hash
+`sha256:c33a50abe48b554c37d95de4833d1d17ede816f4d128b9adc22e88c010e138e6`
+was consumed exactly once by `run_e90f7c52aa134182`. The run made eight model calls and twelve
+search/read tool calls, using 54,851 input and 6,079 output tokens for a calculated list-price
+cost of `$0.06849375`. All eight input pre-counts matched provider usage. The final response used
+the full 4,096-token per-call output allowance, including 3,989 reasoning tokens, and returned
+`incomplete/max_output_tokens` without a complete tool call. The run therefore ended before any
+patch, rejection, submission or evaluator execution. Qualification failed only
+`prompt_token_integrity`; the D-037 feature had zero episodes and the diagnostic failed
+`qualification_not_passed`. This is not evidence of input prompt truncation, total 90,000-token
+budget exhaustion, or D-037 success/failure. The
+[mini D-037 r3 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r3.json)
+binds the aggregate result and local artifact identities.
+
 The paid command first persists
 `.patchloop/experiments/plans/<execution-hash>.json` as an approved
 `experiment-execution-plan-v1`. It exclusive-creates the journal with `CampaignStarted`, fsyncs it,
@@ -158,13 +174,13 @@ by the commands above. r1
 development campaign. r2's trace artifact passed integrity/leakage qualification, but
 `evaluation_reached=false` makes the pilot acceptance consumer reject it.
 
-The r3 harness recounts only hunk line totals in the agent-visible gateway. It preserves the exact
+The historical Terra r3 harness recounts only hunk line totals in the agent-visible gateway. It preserves the exact
 raw patch for hashing, validates body/context/path and all policy checks, and uses the same raw
 patch with reverse recount on rejection. It then verifies the pre-call diff hash and zero-untracked
 workspace invariant. Rollback failure or state mismatch is a recovery error, not a recoverable tool
 message. Hidden evaluator patch application remains strict.
 
-The resulting r3 `run_3cb86f8d70094a11` created a `trace-qualification-v1` artifact with
+The resulting historical Terra r3 `run_3cb86f8d70094a11` created a `trace-qualification-v1` artifact with
 `qualified=true`, `trace_integrity_passed=true`, `leakage_scan_passed=true` and
 `evaluation_reached=true`, and its official hidden/regression/scope/safety verdicts all passed.
 This remains historical v1 evidence. The development suite intentionally leaves `pilot_run_id`
@@ -190,19 +206,26 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
 trace-exercise error and records remaining rows as not started.
 
-Five paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
-historical Terra r3 success and two immutable mini model-candidate failures. Their cumulative
-calculated list-price cost is `$0.984282375`; actual invoice incentives were not verified. Docker
+Six paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
+historical Terra r3 success and three immutable mini model-candidate failures. Their cumulative
+calculated list-price cost is `$1.052776125`; actual invoice or free daily usage treatment was not
+verified. Docker
 availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
 the separate 12-run development campaign.
 
-Before another paid call, verify the implemented D-037 offline gate. The next request after a
+The D-037 offline gate remains implemented. The next request after a
 rejected mutating-tool call receives the exact budget-bounded candidate bytes, content hash and
 structured rejection reason. New manifests activate it as
 `context_policy_version=phase-evidence-v3`; qualification rehashes the candidate/result CAS and
 actual request, and the token guard records a no-generation event when the full request plus
-response allowance cannot fit. The old mini r2 remains an immutable v2 trace.
+response allowance cannot fit. Mini r2 and r3 remain immutable traces. The corrective r4 contract
+now fixes `max_output_tokens=25,000` and `max_total_tokens=120,000` together under diagnostic
+profile `d037-rejected-patch-retry-v2`; changing only one member is rejected. Before another paid
+call, use the completed full-offline evidence, commit the change, obtain a new clean execution hash
+and separate approval. Do not use a naive runner `continue` after an incomplete response: without an
+explicit original-request/logical-turn contract it can move the D-037 latest-model boundary past
+the rejected candidate.
 
 ```powershell
 git status --short
@@ -211,8 +234,8 @@ git status --short
 .venv\Scripts\python.exe -m pytest
 ```
 
-After those checks, inspect the new, unexecuted r3 diagnostic. This command is preflight-only and
-must not make an API call:
+The r3 diagnostic is now terminal. This command is inspection-only and must never be given approval
+flags:
 
 ```powershell
 uv run patchloop evaluate `
@@ -220,10 +243,30 @@ uv run patchloop evaluate `
   --preflight-only
 ```
 
-Its `experiment-diagnostic-v1` requirement is part of the execution hash. Removing or changing the
-requirement invalidates the reviewed approval hash. The mini diagnostic remains outside the Terra
-gate even if it succeeds. It must actually exercise a rejected mutating-tool retry to validate
-D-037; ordinary task completion alone is insufficient. The machine predicate is:
+It should report the existing journal/result blocker. Do not delete those artifacts or rerun the
+suite. Its `experiment-diagnostic-v1` requirement was part of the consumed execution hash. The mini
+diagnostic remains outside the Terra gate.
+
+The new r4 suite is not approved and has not called the provider. From a clean committed worktree,
+load `OPENAI_API_KEY` into the host process without printing it and run only:
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-d037-r4.yaml `
+  --preflight-only
+```
+
+The preflight must show model `gpt-5.4-mini-2026-03-17`, diagnostic profile
+`d037-rejected-patch-retry-v2`, `max_output_tokens=25000`,
+`budget.max_total_tokens=120000`, and a one-run conservative authorization reserve of `$0.6525`
+at the 2026-07-29 configured rates. With
+`live_cost_approved=false` and no approved hash in the checked-in suite, the expected authorization
+blockers are `LIVE_COST_NOT_APPROVED` and `APPROVAL_HASH_MISMATCH`; these blockers confirm that no
+paid run is authorized. Review the newly produced execution hash and request separate approval
+before adding invocation-only approval values. Never reuse the r3 hash.
+
+R4 must actually exercise a rejected mutating-tool retry to validate D-037; ordinary task
+completion alone is insufficient. The machine predicate remains:
 
 ```text
 evaluation_reached == true
@@ -233,10 +276,11 @@ AND failed_source_failure_sequences == []
 ```
 
 A zero-episode run that reached the evaluator is `TraceExerciseInconclusive`, not a task or generic
-qualification failure. Evaluator non-arrival is `TraceExerciseFailed`. Only a `passed` diagnostic
-completes this gate. Do not add approval flags until the harness changes
-are committed, this exact clean preflight hash has been reviewed and the user separately approves
-one run and its cost cap.
+qualification failure. Evaluator non-arrival is `TraceExerciseFailed`. R3 is the latter because
+generic qualification failed before evaluation; its zero episode is not an inconclusive result.
+Only a future `passed` diagnostic completes this gate. The full offline checks have passed; do not
+add approval flags until the corrective contract is committed, a new clean preflight hash has been
+reviewed and the user separately approves one run and its cost cap.
 
 Afterward create a separately approved Terra development-validation pilot. Only after that run
 reaches the evaluator and produces a qualified `trace-qualification-v2` may its run ID be inserted

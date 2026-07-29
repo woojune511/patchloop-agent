@@ -59,9 +59,14 @@ reason을 바로 다음 request 한 번에만 복원한다. Full request와 outp
 token budget을 넘으면 input count까지만 수행하고 `ModelGenerationBlocked`와 구조화
 terminal error를 남긴 채 generation을 호출하지 않는다. Qualification은 candidate/result
 CAS와 실제 request body, 첫 consumer와 stale-block 부재를 다시 대조한다. 이 경로는 전체
-offline suite에서 통과했다. 새 r3 suite에는 retry episode를 실제 관찰해야 하는 별도
-hash-bound diagnostic consumer도 구현했지만, 실제 provider retry를 exercise한 run은 아직
-없다.
+offline suite에서 통과했다. Terminal mini D-037 r3 suite에는 retry episode를 실제 관찰해야
+하는 별도 hash-bound diagnostic consumer도 구현했다. 승인된 mini D-037 r3
+`run_e90f7c52aa134182`는 실제
+provider에서 실행됐지만 mutation 전에 여덟 번째 응답이 per-call 4,096-token ceiling에
+도달해 incomplete로 끝났다. 8회 input pre-count는 모두 provider usage와 일치했고 input
+prompt cut은 관찰되지 않았지만 evaluator와 rejected retry episode에는 도달하지 못했다.
+따라서 이 terminal run은 D-037을 검증하거나 반증하지 않으며 Terra/development gate를
+열지 않는다.
 
 ## 구현된 핵심 경로
 
@@ -250,7 +255,7 @@ hash-bound evaluation receipt를 만든다. Receipt bundle과 참조된 verifier
 v2의 accepted submitted-patch CAS가 검증될 때만 resume이 evaluator를 재실행하지 않으며,
 terminal result/status/event는 한 SQLite transaction으로 확정한다.
 
-r3 evidence는 `run_3cb86f8d70094a11`이다. 별도 승인된 execution hash
+Historical Terra r3 evidence는 `run_3cb86f8d70094a11`이다. 별도 승인된 execution hash
 `sha256:03c57fb3dd0182e63645e346311ee2a46c1284d9770857240b2011b666b8bde6`로
 정확히 한 번 실행했고 `$0.16056875`를 사용했다. 11 model call과 13 tool call 뒤
 `babel/numbers.py` 한 줄을 수정한 patch를 제출했다. Official evaluator는 hidden,
@@ -270,22 +275,32 @@ offline 구현/test를 통과했다. 새
 `experiment-diagnostic-v1` 요구를 결속하고, evaluator 도달·retry episode 1개 이상·모든
 episode 검증·failed source sequence 0을 별도로 검사한다. Evaluator에 도달했지만 episode가
 없으면 task/qualification failure가 아니라 diagnostic inconclusive이고, evaluator 미도달은
-diagnostic failure다. 이 suite는 아직 실행하지 않았으며 다음 gate는 clean execution hash와
-별도 승인으로 rejected mutation retry를 실제 provider에서 exercise하는 것이다.
+diagnostic failure다. 승인 hash
+`sha256:c33a50abe48b554c37d95de4833d1d17ede816f4d128b9adc22e88c010e138e6`
+는 r3 `run_e90f7c52aa134182`에서 정확히 한 번 사용됐다. Run은 8 model call과 12개
+search/read tool call, input 54,851 + output 6,079 token, 계산상 `$0.06849375`를 사용했다.
+Event 55의 요청/실제 input 6,943은 일치했지만 output 4,096 중 reasoning이 3,989를 사용한
+상태에서 `incomplete/max_output_tokens`가 발생했다. Patch·rejection·submission·evaluator는
+모두 0이고 qualification 21/22 중 `prompt_token_integrity`만 실패했으므로 diagnostic은
+`failed/qualification_not_passed`다. 이는 90,000-token 전체 budget 고갈이나 prompt
+truncation이 아니다. 이 suite/run은 재실행하지 않으며 aggregate와 artifact identity는
+[mini D-037 r3 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r3.json)에
+보존한다.
+
+다음 corrective contract는
+`experiments/dev-validation-gpt54mini-d037-r4.yaml`로 분리했다. 공식
+[reasoning guide](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning)의
+초기 권고에 맞춰 per-call 25,000 token과 total 120,000 token을 profile v2에 함께 고정하고,
+historical mini r1~r3와 Terra/core 계약은 바꾸지 않는다. 자동 incomplete-response retry도
+추가하지 않았다. Full offline 검증은 통과했으며 clean commit 뒤 새 execution hash·별도 승인을 받아야만
+rejected mutation retry를 실제 provider에서 exercise할 수 있다.
 새 Terra development-validation pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
 harness gate와 별도로 보고한다.
 
-```powershell
-uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-d037-r3.yaml `
-  --preflight-only
-```
-
-이 preflight는 API를 호출하지 않는다. Harness 변경을 commit한 clean worktree에서 출력한
-exact hash와 blocker를 검토하고, 별도 비용 승인을 받기 전에는 approval flag를 추가하지
-않는다.
+기존 mini D-037 r3 suite는 terminal inspection 전용이다. Journal이나 result를 삭제하거나 approval
+flag를 다시 전달하지 않는다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -354,23 +369,34 @@ preflight와 memory review/index admission은 현재 source evidence hash를 다
 cap으로 생략한 양, input-token count endpoint의 예상치와 생성 응답의 실제
 `usage.input_tokens`, reasoning-output breakdown, response status·truncation·incomplete reason을
 turn별로 추가한다. 요청은 `truncation=disabled`이므로 provider의 silent input truncation은
-허용하지 않는다. r1~r3는 이 필드가 도입되기 전 immutable legacy evidence로 유지한다.
+허용하지 않는다. Historical Terra r1~r3는 이 필드가 도입되기 전 immutable legacy
+evidence로 유지한다.
 이 경로의 terminal r1 provider suite는
 `experiments/dev-validation-gpt54mini-pilot.yaml`이고, v2 corrective retry는
-`experiments/dev-validation-gpt54mini-pilot-r2.yaml`이다. 미실행 D-037 exercise suite는
-`experiments/dev-validation-gpt54mini-d037-r3.yaml`이며 세 suite 모두
+`experiments/dev-validation-gpt54mini-pilot-r2.yaml`이다. Terminal D-037 exercise suite는
+`experiments/dev-validation-gpt54mini-d037-r3.yaml`이며 세 suite 모두 당시
 `gpt-5.4-mini-2026-03-17` + medium, run total 90,000 token, per-call output 4,096,
 $2 cap으로 고정한다. 별도 `development-validation-model-candidate-pilot` purpose이므로
 기존 Terra memory/core 계약의 선행 gate나 결과로 집계하지 않는다. 매 turn의 exact input
 count와 4,096-token response allowance가 남은 90,000 안에 함께 들어가지 않으면 generation
 call을 시작하지 않는다.
-세 Terra pilot과 mini r1/r2는 usage/source-evidence 보존 경로를 실제 provider에서
+새 r4 corrective suite만 diagnostic profile v2로 per-call 25,000과 total 120,000을
+허용한다. 이 pair는 suite schema와 post-run approved-plan qualification에서 함께
+검증되며 일부만 바꾼 suite는 거부된다. Qualifier는 schedule hash, Git/Docker/SDK 상태와
+pilot qualification을 포함한 execution hash도 preflight 공식으로 다시 계산한다.
+2026-07-29 configured rates로 계산한
+conservative authorization reserve는 `$0.6525`로 $2 cap 아래지만, checked-in suite는
+승인 권한이 아니고 이 문서 갱신에서는 provider call을 실행하지 않았다. 25,000은
+[GPT-5.4 mini model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini)의
+published 128,000 max output 안이다.
+세 Terra pilot과 historical mini r1/r2/r3는 usage/source-evidence 보존 경로를 실제 provider에서
 확인했다. Terra r2 trace artifact는 qualified지만
-evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
+evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, historical Terra r3가 별도 clean execution
 hash에서 v1 accepted pilot를 만들었다. Mini r2는 v2 evaluator 경로에 도달했지만 hidden
 acceptance는 실패했고 post-run audit에서 D-037 target이 충족되지 않았음이 확인됐다.
-D-037 offline implementation/test와 suite-specific machine gate는 완료됐지만 새 live mini
-diagnostic은 아직 없다.
+Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D-037 target을
+exercise하지 못했다. 세 mini run의 누적 계산 비용은 `$0.22391175`, 여섯 paid pilot의
+계산상 총액은 `$1.052776125`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다.
 별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run development campaign을
 승인하지 않는다.
 

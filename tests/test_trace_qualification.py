@@ -35,6 +35,15 @@ from patchloop.evals.qualification import (
     load_trace_qualification,
     qualify_run,
 )
+from patchloop.evals.runner import (
+    MEMORY_DEVELOPMENT_TASKS,
+    ExperimentSuite,
+    _execution_hash,
+    _suite_payload,
+)
+from patchloop.evals.runner import (
+    PILOT_TASK as PILOT_TASK_PATH,
+)
 from patchloop.memory.store import review_failure
 from patchloop.runtime import build_manifest
 from patchloop.state import StateStore
@@ -60,52 +69,194 @@ def _execution_plan_path_for_test(root: Path, execution_hash: str) -> Path:
     return root / "experiments" / "plans" / f"{execution_hash.removeprefix('sha256:')}.json"
 
 
+def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
+    assert manifest.experiment is not None
+    purpose = manifest.experiment.purpose
+    if purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
+        tasks = sorted(MEMORY_DEVELOPMENT_TASKS)
+        conditions = ["no_memory"]
+        repetitions = 2
+        cost_limit = 20
+        embedding_revision = "PIN_AT_FREEZE"
+        model_id = "gpt-5.6-terra"
+        budget = Budget()
+        max_output_tokens = 4096
+        diagnostic = None
+    elif purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT:
+        tasks = [PILOT_TASK_PATH]
+        conditions = ["no_memory"]
+        repetitions = 1
+        cost_limit = 2
+        embedding_revision = "PIN_AT_FREEZE"
+        model_id = "gpt-5.4-mini-2026-03-17"
+        corrective = (
+            manifest.budget.max_total_tokens == 120_000
+            or manifest.model.max_output_tokens == 25_000
+        )
+        budget = (
+            Budget(max_total_tokens=120_000)
+            if corrective
+            else Budget(max_total_tokens=90_000)
+        )
+        max_output_tokens = 25_000 if corrective else 4096
+        diagnostic = (
+            {
+                "schema_version": "experiment-diagnostic-v1",
+                "profile": "d037-rejected-patch-retry-v2",
+                "required_trace_features": ["rejected_patch_retry_context"],
+            }
+            if corrective
+            else None
+        )
+    elif purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
+        tasks = [PILOT_TASK_PATH]
+        conditions = ["no_memory"]
+        repetitions = 1
+        cost_limit = 2
+        embedding_revision = "PIN_AT_FREEZE"
+        model_id = "gpt-5.6-terra"
+        budget = Budget()
+        max_output_tokens = 4096
+        diagnostic = None
+    else:
+        tasks = [f"qualification-core-task-{index}" for index in range(12)]
+        conditions = [
+            "no_memory",
+            "raw_trace",
+            "structured",
+            "selective_structured",
+        ]
+        repetitions = 2
+        cost_limit = 150
+        embedding_revision = "test-revision"
+        model_id = "gpt-5.6-terra"
+        budget = Budget()
+        max_output_tokens = 4096
+        diagnostic = None
+
+    return ExperimentSuite.model_validate(
+        {
+            "schema_version": "experiment-v2",
+            "experiment_id": manifest.experiment.experiment_id,
+            "purpose": purpose.value,
+            "tasks": tasks,
+            "conditions": conditions,
+            "repetitions": repetitions,
+            "model": "openai",
+            "model_id": model_id,
+            "reasoning_effort": "medium",
+            "reasoning_mode": "standard",
+            "service_tier": "default",
+            "max_output_tokens": max_output_tokens,
+            "budget": budget.model_dump(mode="json"),
+            "seed": manifest.experiment.schedule_seed,
+            "diagnostic": diagnostic,
+            "live_cost_approved": False,
+            "approved_execution_hash": None,
+            "pilot_run_id": None,
+            "estimated_cost_usd": 0,
+            "cost_limit_usd": cost_limit,
+            "pricing_verified_at": None,
+            "pricing_source_url": None,
+            "input_price_per_million_usd": (
+                manifest.model.input_price_per_million_usd
+            ),
+            "cached_input_price_per_million_usd": (
+                manifest.model.cached_input_price_per_million_usd
+            ),
+            "cache_write_input_price_per_million_usd": (
+                manifest.model.cache_write_input_price_per_million_usd
+            ),
+            "output_price_per_million_usd": (
+                manifest.model.output_price_per_million_usd
+            ),
+            "retrieval_threshold": 0.72,
+            "memory_token_budget": manifest.memory.max_context_tokens,
+            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "embedding_revision": embedding_revision,
+            "dataset_manifest_hash": dataset_hash,
+        }
+    )
+
+
 def _write_execution_plan(
     root: Path,
     *,
     manifest,
     dataset_hash: str,
+    suite_overrides: dict[str, object] | None = None,
 ) -> Path:
     assert manifest.experiment is not None
     experiment = manifest.experiment
+    suite = _suite_for_manifest(manifest, dataset_hash=dataset_hash)
+    suite_payload = _suite_payload(suite)
+    if suite_overrides is not None:
+        suite_payload.update(suite_overrides)
+    experiment.suite_hash = sha256_text(canonical_json(suite_payload))
+    dataset = {"manifest_hash": dataset_hash}
+    tasks = [
+        {
+            "task_id": manifest.task_id,
+            "task_version": manifest.task_version,
+            "public_spec_hash": manifest.public_spec_hash,
+            "private_spec_hash": manifest.private_spec_hash,
+            "base_commit": manifest.base_commit,
+            "evaluator_image_digest": manifest.evaluator_image_digest,
+        }
+    ]
+    schedule = [
+        {
+            "order": experiment.schedule_order,
+            "schedule_row_id": experiment.schedule_row_id,
+            "task_id": manifest.task_id,
+            "dataset_role": (
+                experiment.dataset_role.value
+                if experiment.dataset_role is not None
+                else None
+            ),
+            "condition": manifest.memory.condition.value,
+            "repetition": experiment.repetition,
+        }
+    ]
+    schedule_hash = sha256_text(canonical_json(schedule))
+    environment = {
+        "git": {"commit": manifest.harness_git_commit},
+        "docker": {"images": []},
+        "openai_sdk": {
+            "installed": True,
+            "version": manifest.model.provider_sdk_version,
+        },
+    }
+    pilot_qualification: dict[str, object] = {}
+    experiment.execution_hash = _execution_hash(
+        suite,
+        dataset=dataset,
+        task_rows=tasks,
+        schedule_hash=schedule_hash,
+        git_state=environment["git"],
+        docker_state=environment["docker"],
+        openai_sdk=environment["openai_sdk"],
+        pilot_qualification=pilot_qualification,
+    )
     payload = {
         "schema_version": "experiment-execution-plan-v1",
         "experiment_id": experiment.experiment_id,
         "purpose": experiment.purpose.value,
         "suite_hash": experiment.suite_hash,
         "execution_hash": experiment.execution_hash,
-        "suite": {
-            "experiment_id": experiment.experiment_id,
-            "purpose": experiment.purpose.value,
-        },
-        "dataset": {"manifest_hash": dataset_hash},
-        "tasks": [
-            {
-                "task_id": manifest.task_id,
-                "task_version": manifest.task_version,
-                "public_spec_hash": manifest.public_spec_hash,
-                "private_spec_hash": manifest.private_spec_hash,
-                "base_commit": manifest.base_commit,
-                "evaluator_image_digest": manifest.evaluator_image_digest,
-            }
-        ],
-        "schedule": [
-            {
-                "order": experiment.schedule_order,
-                "schedule_row_id": experiment.schedule_row_id,
-                "task_id": manifest.task_id,
-                "dataset_role": (
-                    experiment.dataset_role.value if experiment.dataset_role is not None else None
-                ),
-                "condition": manifest.memory.condition.value,
-                "repetition": experiment.repetition,
-            }
-        ],
+        "schedule_hash": schedule_hash,
+        "expected_runs": len(schedule),
+        "suite": suite_payload,
+        "dataset": dataset,
+        "tasks": tasks,
+        "schedule": schedule,
+        "environment": environment,
         "approval": {
             "invocation_approve_live_cost": True,
             "invocation_approved_execution_hash": experiment.execution_hash,
             "matches_execution_hash": True,
         },
+        "pilot_qualification": pilot_qualification,
         "blockers": [],
         "ready": True,
     }
@@ -157,6 +308,7 @@ def _terminal_trace(
     prompt_mismatch: bool = False,
     model_id: str = "gpt-5.6-terra",
     budget: Budget | None = None,
+    max_output_tokens: int = 4096,
     malformed_lifecycle: bool = False,
     complete_review_context: bool = True,
     actual_review_context: bool = True,
@@ -174,6 +326,7 @@ def _terminal_trace(
     rejected_retry_context: str | None = None,
     stale_rejected_retry_context: bool = False,
     force_v3_contract: bool = False,
+    execution_plan_suite_overrides: dict[str, object] | None = None,
 ) -> tuple[str, RunResult, str]:
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
@@ -186,6 +339,7 @@ def _terminal_trace(
         model_id=model_id,
         sandbox_backend="docker",
         budget=budget,
+        max_output_tokens=max_output_tokens,
         agent_image_digest=(
             package.environment.image_digest if package.environment is not None else None
         ),
@@ -219,6 +373,7 @@ def _terminal_trace(
             tmp_path,
             manifest=manifest,
             dataset_hash=dataset_hash,
+            suite_overrides=execution_plan_suite_overrides,
         )
     state = StateStore(tmp_path / "state.sqlite3")
     state.create_run(manifest)
@@ -1718,6 +1873,107 @@ def test_gpt54mini_pilot_contract_is_qualified(tmp_path) -> None:
     assert qualification["qualified"] is True
 
 
+def test_gpt54mini_d037_corrective_contract_is_qualified(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=120_000),
+        max_output_tokens=25_000,
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    model_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "frozen_model_contract"
+    )
+    assert model_check["passed"] is True
+    assert model_check["details"]["model_id"] == "gpt-5.4-mini-2026-03-17"
+    assert model_check["details"]["max_total_tokens"] == 120_000
+    assert model_check["details"]["max_output_tokens"] == 25_000
+    plan_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+    assert plan_check["passed"] is True
+    assert qualification["qualified"] is True
+
+
+@pytest.mark.parametrize(
+    "suite_overrides",
+    [
+        {"diagnostic": None},
+        {
+            "diagnostic": {
+                "schema_version": "experiment-diagnostic-v1",
+                "profile": "d037-rejected-patch-retry-v1",
+                "required_trace_features": ["rejected_patch_retry_context"],
+            }
+        },
+        {"budget": Budget(max_total_tokens=90_000).model_dump(mode="json")},
+        {"max_output_tokens": 4096},
+        {"model_id": "gpt-5.6-terra"},
+    ],
+)
+def test_gpt54mini_d037_corrective_plan_tampering_is_rejected(
+    tmp_path,
+    suite_overrides: dict[str, object],
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=120_000),
+        max_output_tokens=25_000,
+        execution_plan_suite_overrides=suite_overrides,
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    plan_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+    assert plan_check["passed"] is False
+    assert qualification["qualified"] is False
+
+
+def test_gpt54mini_d037_partial_corrective_contract_is_rejected(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=90_000),
+        max_output_tokens=25_000,
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    model_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "frozen_model_contract"
+    )
+    assert model_check["passed"] is False
+    assert qualification["qualified"] is False
+
+
 def test_gpt54mini_pilot_requires_prompt_token_telemetry(tmp_path) -> None:
     run_id, _, _ = _terminal_trace(
         tmp_path,
@@ -1962,7 +2218,12 @@ def test_trace_without_approved_execution_plan_is_not_qualified(tmp_path) -> Non
 
 def test_execution_plan_schedule_row_must_match_run_manifest(tmp_path) -> None:
     run_id, _, _ = _terminal_trace(tmp_path)
-    plan_path = _execution_plan_path_for_test(tmp_path, HASH)
+    manifest = StateStore(tmp_path / "state.sqlite3").get_manifest(run_id)
+    assert manifest.experiment is not None
+    plan_path = _execution_plan_path_for_test(
+        tmp_path,
+        manifest.experiment.execution_hash,
+    )
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     plan["schedule"][0]["dataset_role"] = DatasetRole.CORE_CROSS_REPO.value
     plan_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
@@ -1978,7 +2239,12 @@ def test_execution_plan_schedule_row_must_match_run_manifest(tmp_path) -> None:
 
 def test_execution_plan_private_evaluator_identity_must_match_manifest(tmp_path) -> None:
     run_id, _, _ = _terminal_trace(tmp_path)
-    plan_path = _execution_plan_path_for_test(tmp_path, HASH)
+    manifest = StateStore(tmp_path / "state.sqlite3").get_manifest(run_id)
+    assert manifest.experiment is not None
+    plan_path = _execution_plan_path_for_test(
+        tmp_path,
+        manifest.experiment.execution_hash,
+    )
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     plan["tasks"][0]["private_spec_hash"] = "sha256:" + ("f" * 64)
     plan_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
@@ -1990,6 +2256,79 @@ def test_execution_plan_private_evaluator_identity_must_match_manifest(tmp_path)
         check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
     assert plan_check["passed"] is False
+
+
+def test_execution_plan_rejects_arbitrary_self_consistent_execution_hash(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(tmp_path)
+    state = StateStore(tmp_path / "state.sqlite3")
+    manifest = state.get_manifest(run_id)
+    assert manifest.experiment is not None
+    original_path = _execution_plan_path_for_test(
+        tmp_path,
+        manifest.experiment.execution_hash,
+    )
+    plan = json.loads(original_path.read_text(encoding="utf-8"))
+    arbitrary_hash = "sha256:" + ("f" * 64)
+    manifest.experiment.execution_hash = arbitrary_hash
+    plan["execution_hash"] = arbitrary_hash
+    plan["approval"]["invocation_approved_execution_hash"] = arbitrary_hash
+    with sqlite3.connect(tmp_path / "state.sqlite3") as connection:
+        connection.execute(
+            "UPDATE runs SET manifest_json = ? WHERE run_id = ?",
+            (canonical_json(manifest.model_dump(mode="json")), run_id),
+        )
+    arbitrary_path = _execution_plan_path_for_test(tmp_path, arbitrary_hash)
+    original_path.rename(arbitrary_path)
+    arbitrary_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
+
+    qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+    plan_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+    assert plan_check["passed"] is False
+    assert qualification["qualified"] is False
+
+
+@pytest.mark.parametrize(
+    "tamper_target",
+    ["environment", "schedule_hash", "pilot_qualification"],
+)
+def test_execution_plan_hash_inputs_cannot_be_tampered(
+    tmp_path,
+    tamper_target: str,
+) -> None:
+    run_id, _, _ = _terminal_trace(tmp_path)
+    manifest = StateStore(tmp_path / "state.sqlite3").get_manifest(run_id)
+    assert manifest.experiment is not None
+    plan_path = _execution_plan_path_for_test(
+        tmp_path,
+        manifest.experiment.execution_hash,
+    )
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    if tamper_target == "environment":
+        plan["environment"]["git"]["commit"] = "f" * 40
+    elif tamper_target == "schedule_hash":
+        plan["schedule_hash"] = "sha256:" + ("f" * 64)
+    else:
+        plan["pilot_qualification"]["qualification_hash"] = (
+            "sha256:" + ("f" * 64)
+        )
+    plan_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
+
+    qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+    plan_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+    assert plan_check["passed"] is False
+    assert qualification["qualified"] is False
 
 
 def test_noncanonical_copy_of_dataset_package_is_not_qualified(tmp_path) -> None:

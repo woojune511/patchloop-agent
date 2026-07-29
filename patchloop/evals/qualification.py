@@ -47,6 +47,7 @@ _SUPPORTED_QUALIFICATION_SCHEMA_VERSIONS = {
 _TERRA_MODEL_ID = "gpt-5.6-terra"
 _GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 _GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
+_GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
 
 _TERMINAL_EVENTS = {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
 _AGENT_VISIBLE_ARTIFACT_EVENTS = {
@@ -255,9 +256,12 @@ def _execution_plan_matches(
         return False
     approval = plan.get("approval")
     dataset = plan.get("dataset")
+    environment = plan.get("environment")
+    pilot_qualification = plan.get("pilot_qualification")
     schedule = plan.get("schedule")
     suite = plan.get("suite")
     tasks = plan.get("tasks")
+    schedule_hash = plan.get("schedule_hash")
     if (
         plan.get("schema_version") != "experiment-execution-plan-v1"
         or plan.get("ready") is not True
@@ -275,9 +279,69 @@ def _execution_plan_matches(
         or suite.get("purpose") != experiment.purpose.value
         or not isinstance(dataset, dict)
         or dataset.get("manifest_hash") != experiment.dataset_manifest_hash
+        or not isinstance(environment, dict)
+        or not isinstance(environment.get("git"), dict)
+        or not isinstance(environment.get("docker"), dict)
+        or not isinstance(environment.get("openai_sdk"), dict)
+        or not isinstance(pilot_qualification, dict)
         or not isinstance(schedule, list)
+        or not isinstance(schedule_hash, str)
+        or schedule_hash != sha256_text(canonical_json(schedule))
+        or plan.get("expected_runs") != len(schedule)
         or not isinstance(tasks, list)
     ):
+        return False
+    try:
+        # Keep post-run qualification independent from the plan's own declared
+        # suite hash. Re-parse the complete frozen suite, require its canonical
+        # payload, and recalculate the hash using the same contract as preflight.
+        from patchloop.evals.runner import (
+            ExperimentSuite,
+            _execution_hash,
+            _suite_hash,
+            _suite_payload,
+        )
+
+        parsed_suite = ExperimentSuite.model_validate(suite)
+        normalized_suite = _suite_payload(parsed_suite)
+        expected_execution_hash = _execution_hash(
+            parsed_suite,
+            dataset=dataset,
+            task_rows=tasks,
+            schedule_hash=schedule_hash,
+            git_state=environment["git"],
+            docker_state=environment["docker"],
+            openai_sdk=environment["openai_sdk"],
+            pilot_qualification=pilot_qualification,
+        )
+    except (ImportError, TypeError, ValueError):
+        return False
+    suite_contract_matches = bool(
+        canonical_json(suite) == canonical_json(normalized_suite)
+        and _suite_hash(parsed_suite) == experiment.suite_hash
+        and expected_execution_hash == experiment.execution_hash
+        and parsed_suite.model == manifest.model.provider
+        and parsed_suite.model_id == manifest.model.model_id
+        and parsed_suite.reasoning_effort == manifest.model.reasoning_effort
+        and parsed_suite.reasoning_mode == manifest.model.reasoning_mode
+        and parsed_suite.service_tier == manifest.model.service_tier
+        and parsed_suite.max_output_tokens == manifest.model.max_output_tokens
+        and parsed_suite.input_price_per_million_usd
+        == manifest.model.input_price_per_million_usd
+        and parsed_suite.cached_input_price_per_million_usd
+        == manifest.model.cached_input_price_per_million_usd
+        and parsed_suite.cache_write_input_price_per_million_usd
+        == manifest.model.cache_write_input_price_per_million_usd
+        and parsed_suite.output_price_per_million_usd
+        == manifest.model.output_price_per_million_usd
+        and parsed_suite.budget == manifest.budget
+        and parsed_suite.memory_token_budget == manifest.memory.max_context_tokens
+        and parsed_suite.seed == experiment.schedule_seed
+        and parsed_suite.dataset_manifest_hash
+        == experiment.dataset_manifest_hash
+        and manifest.memory.condition in parsed_suite.conditions
+    )
+    if not suite_contract_matches:
         return False
     matching_tasks = [
         row for row in tasks if isinstance(row, dict) and row.get("task_id") == manifest.task_id
@@ -2011,17 +2075,28 @@ def qualify_run(
         manifest.model.reasoning_effort == "medium"
         and manifest.model.reasoning_mode == "standard"
         and manifest.model.service_tier == "default"
-        and manifest.model.max_output_tokens == 4096
     )
     terra_model_contract = (
-        manifest.model.model_id == _TERRA_MODEL_ID and manifest.budget == Budget()
+        manifest.model.model_id == _TERRA_MODEL_ID
+        and manifest.budget == Budget()
+        and manifest.model.max_output_tokens == 4096
+    )
+    mini_budget_and_output_contract = (
+        (
+            manifest.budget == _GPT54_MINI_PILOT_BUDGET
+            and manifest.model.max_output_tokens == 4096
+        )
+        or (
+            manifest.budget == _GPT54_MINI_D037_CORRECTIVE_BUDGET
+            and manifest.model.max_output_tokens == 25_000
+        )
     )
     mini_pilot_contract = (
         manifest.experiment is not None
         and manifest.experiment.purpose
         == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
         and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
-        and manifest.budget == _GPT54_MINI_PILOT_BUDGET
+        and mini_budget_and_output_contract
     )
     model_contract_ok = common_model_contract and (terra_model_contract or mini_pilot_contract)
     model_contract_details = {

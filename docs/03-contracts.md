@@ -328,7 +328,8 @@ commit, 실행 시점을 함께 남긴다. Price verification이 72시간을 넘
 
 D-031 telemetry를 실제 provider에서 검증한 terminal r1은
 `experiments/dev-validation-gpt54mini-pilot.yaml`에 보존한다. v2 corrective retry는
-`experiments/dev-validation-gpt54mini-pilot-r2.yaml`에 별도 고정한다. 두 suite는
+`experiments/dev-validation-gpt54mini-pilot-r2.yaml`에 별도 고정한다. D-037 r3는
+`experiments/dev-validation-gpt54mini-d037-r3.yaml`에 보존한다. 세 suite는
 `development-validation-model-candidate-pilot` purpose를 사용하며 기존
 `development-validation-live-pilot` 선행 gate를 충족하지 않는다.
 `gpt-5.4-mini-2026-03-17`, medium effort, default tier, `max_output_tokens: 4096`,
@@ -354,6 +355,39 @@ diagnostic:
 feature는 정확히 한 번 선언해야 한다. Normalized suite, execution hash와 durable approved
 plan이 이 block을 포함하므로 승인 뒤 제거·변경하면 hash가 달라지고 실행 전에 거부된다.
 Block이 없는 historical r1/r2 suite는 기존 normalized identity를 유지한다.
+
+R3 `run_e90f7c52aa134182`는 rejected mutation 전에 per-call 4,096-token allowance를
+reasoning에서 소진해 `incomplete/max_output_tokens`로 끝났다. 이 terminal suite/run은
+재실행하지 않는다. Corrective r4는
+`experiments/dev-validation-gpt54mini-d037-r4.yaml`과 다음 profile로 별도 versioning한다.
+
+```yaml
+max_output_tokens: 25000
+budget:
+  max_model_calls: 20
+  max_tool_calls: 50
+  max_total_tokens: 120000
+  wall_clock_timeout_seconds: 900
+diagnostic:
+  schema_version: experiment-diagnostic-v1
+  profile: d037-rejected-patch-retry-v2
+  required_trace_features:
+    - rejected_patch_retry_context
+```
+
+V2 profile은 위 output/total-budget pair를 모두 요구한다. 일부만 바꾸거나 v1 profile에
+새 budget을 붙이면 suite validation에서 거부한다. Post-run qualification도 approved
+plan의 complete canonical suite를 다시 parse/hash하고 profile, model, reasoning mode,
+service tier, output allowance, budget과 pricing을 run manifest에 대조한다. 또한 raw
+schedule hash를 다시 계산하고 suite/dataset/tasks/Git commit/Docker images/SDK/pilot
+qualification hash로 execution hash를 재구성해 plan·approval·manifest의 값과 대조한다. 공식
+[reasoning guide](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning)의
+초기 25,000-token reasoning/output 권고와
+[현재 mini snapshot](https://developers.openai.com/api/docs/models/gpt-5.4-mini)의
+128,000-token max output 안에 있다. 2026-07-29 suite rate와 conservative
+preflight authorization reserve로 계산한 `$0.6525`는 기존 $2 approval cap 아래다.
+이것은 predicted/measured spend나 tight billing upper bound가 아니며, historical mini
+r1~r3와 Terra/core 계약을 바꾸지 않고 incomplete response 자동 retry도 추가하지 않는다.
 
 일반 trace qualification은 rejection이 없으면 조건부 retry 계약을 통과할 수 있다. Diagnostic
 consumer는 qualification의 patch/error body를 복사하지 않고 count와 failure sequence만 읽어

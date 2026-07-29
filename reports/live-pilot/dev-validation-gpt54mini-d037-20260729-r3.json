@@ -1,0 +1,282 @@
+{
+  "schema_version": "live-pilot-evidence-v3",
+  "recorded_at": "2026-07-29T13:12:33.1383979Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "11a83c2cdff06978dc961e7b3b3c0caada3b386e",
+  "execution_hash": "sha256:c33a50abe48b554c37d95de4833d1d17ede816f4d128b9adc22e88c010e138e6",
+  "retry_lineage": {
+    "terminal_r2": {
+      "experiment_id": "dev-validation-gpt54mini-pilot-20260729-r2",
+      "run_id": "run_4a9737ec91964dca",
+      "outcome_kind": "task_failure",
+      "evaluation_status": "completed",
+      "immutable": true,
+      "execution_hash": "sha256:fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca"
+    },
+    "d037_r3": {
+      "experiment_id": "dev-validation-gpt54mini-d037-20260729-r3",
+      "run_id": "run_e90f7c52aa134182",
+      "distinct_experiment_and_run": true,
+      "immutable": true
+    }
+  },
+  "campaign": {
+    "purpose": "development-validation-model-candidate-pilot",
+    "suite_hash": "sha256:3d1f71b4fc38c2b29beb93274948590e37f5b3ad6b3f3146426d6de574d78fa8",
+    "schedule_hash": "sha256:a1fd6c0cf84a12033ffb6faa234b9d159dc9bde771e473056cb678abea0440bb",
+    "schedule_row_id": "sha256:5d2f007e8a7401cdf31c8b33de08dc37bd2db491db37006ed598156bdbe55409",
+    "expected_runs": 1,
+    "completed_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 1,
+    "diagnostic_errors": 1,
+    "not_started_runs": 0,
+    "halt_reason": "QualificationFailureHalt",
+    "execution_plan": {
+      "canonical_content_hash": "sha256:c0a8b165ee67b65c72aa86c717cd36b7a1c190380b62f5da09a8c8c0b0892867",
+      "persisted_file_sha256": "sha256:120229dff5f0f4bf48b1500394da79d18d9640ebc13348b16e42fd0dd1efaffd"
+    },
+    "journal": {
+      "event_count": 4,
+      "hash_chain_valid": true,
+      "last_event_hash_before_completion": "sha256:3286424063658f7b13bae39a4e411475345b1523e9326db61f455c6b7f21650a",
+      "final_event_hash": "sha256:dd269f608f2817f1a2a982417e48f126a67a8cf21eab3a80e08d7b9bb6c5b1af",
+      "result_hash": "sha256:2d2d4fb71bc51ad60f1a599e09b1a9eae2ba9eb6b58a051b89b49a578e2a8d82",
+      "result_exact_bytes_match": true
+    }
+  },
+  "pilot": {
+    "run_id": "run_e90f7c52aa134182",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 4096,
+    "outcome_kind": "agent_failure",
+    "agent_submission_status": "failed",
+    "evaluation_status": "not_run",
+    "scope_compliant_success": false,
+    "official": false,
+    "event_count": 57,
+    "checkpoint_count": 13,
+    "worker_claim_count": 1,
+    "model_calls": 8,
+    "input_token_count_calls": 8,
+    "tool_calls": 12,
+    "tool_failures": 0,
+    "patch_prepared_events": 0,
+    "patch_applied_events": 0,
+    "submission_attempted_events": 0,
+    "usage": {
+      "input_tokens": 54851,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 6079,
+      "reasoning_output_tokens": 5535,
+      "total_tokens": 60930,
+      "max_total_tokens": 90000,
+      "remaining_total_tokens": 29070,
+      "model_cost_usd": 0.06849375,
+      "wall_clock_ms": 57705
+    },
+    "verdicts": {
+      "hidden_tests": "not_run",
+      "regression_tests": "not_run",
+      "scope_policy": "not_run",
+      "safety_policy": "not_run"
+    }
+  },
+  "trace_activity": {
+    "context_built_events": 8,
+    "tool_succeeded_events": 12,
+    "action_results": 12,
+    "tool_breakdown": {
+      "search_files": 7,
+      "read_file": 5
+    },
+    "mutation_attempts": 0,
+    "rejected_patch_candidates": 0,
+    "submitted_patch": null,
+    "evaluator_runs": 0
+  },
+  "prompt_token_integrity": {
+    "model_call_count": 8,
+    "requested_input_tokens": [
+      1970,
+      6952,
+      8388,
+      8898,
+      9176,
+      6171,
+      6353,
+      6943
+    ],
+    "provider_reported_input_tokens": [
+      1970,
+      6952,
+      8388,
+      8898,
+      9176,
+      6171,
+      6353,
+      6943
+    ],
+    "exact_input_count_matches": 8,
+    "completed_response_count": 7,
+    "incomplete_response_count": 1,
+    "truncation_mode": "disabled",
+    "prompt_cut_observed": false,
+    "boundary": "Input-token equality shows provider delivery of each constructed request. It does not prove that PatchLoop selected every older event for context."
+  },
+  "terminal_response": {
+    "model_event_sequence": 55,
+    "requested_input_tokens": 6943,
+    "provider_reported_input_tokens": 6943,
+    "input_token_count_match": true,
+    "output_tokens": 4096,
+    "reasoning_output_tokens": 3989,
+    "total_tokens": 11039,
+    "total_token_count_match": true,
+    "response_status": "incomplete",
+    "response_incomplete_reason": "max_output_tokens",
+    "response_truncation": "disabled",
+    "response_error_code": "incomplete_response",
+    "visible_text_present": false,
+    "complete_tool_call_present": false,
+    "direct_cause": "The response reached the per-call output ceiling before producing a complete tool call.",
+    "not_total_run_budget_exhaustion": true,
+    "not_input_prompt_truncation": true
+  },
+  "trace_qualification_artifact": {
+    "schema_version": "trace-qualification-v2",
+    "qualified": false,
+    "trace_integrity_passed": false,
+    "leakage_scan_passed": true,
+    "evaluation_reached": false,
+    "private_match_count": 0,
+    "check_count": 22,
+    "passed_check_count": 21,
+    "failed_check_name": "prompt_token_integrity",
+    "failed_event_sequences": [
+      55
+    ],
+    "memory_candidate_eligible": false,
+    "qualification_hash": "sha256:59c389c5fbc730e4f7b6e06bf221d238832e47b609a43030d8f566996ce98885",
+    "source_evidence_hash": "sha256:e154de999d2d577bc32cdc13d503ae684d51e1016c02fcd733a8a7a7d0a7cbf3",
+    "runtime_contract_content_hash": "sha256:3a8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff"
+  },
+  "d037_retry_feature": {
+    "conditional_check_passed": true,
+    "rejected_candidate_count": 0,
+    "retry_episode_count": 0,
+    "verified_retry_count": 0,
+    "failed_source_failure_sequences": [],
+    "live_retry_exercised": false,
+    "live_retry_validated": false,
+    "interpretation": "The conditional trace check passed vacuously because no rejected mutation occurred. This run neither validates nor falsifies D-037 rehydration."
+  },
+  "diagnostic_gate": {
+    "profile": "d037-rejected-patch-retry-v1",
+    "status": "failed",
+    "reason_code": "qualification_not_passed",
+    "passed_runs": 0,
+    "inconclusive_runs": 0,
+    "failed_runs": 1,
+    "ready_for_v2_terra_pilot": false
+  },
+  "failure_record": {
+    "failure_id": "fail_7be5281bfc475c4fb1a785bfdf640797",
+    "content_hash": "sha256:a3031b80121319ab13c4567d76eda2a285b19aaee32a90d2782ad1d7de807645",
+    "primary_cause": "agent-execution-failure",
+    "phase": "REPRODUCE",
+    "recoverability": "unknown",
+    "classification_method": "deterministic-verdict-priority-v1",
+    "review_status": "unreviewed"
+  },
+  "spend_to_date": {
+    "mini_r1_usd": 0.07745325,
+    "mini_r2_usd": 0.07796475,
+    "mini_r3_usd": 0.06849375,
+    "mini_lane_cumulative_usd": 0.22391175,
+    "historical_terra_lane_cumulative_usd": 0.828864375,
+    "all_paid_pilot_list_price_total_usd": 1.052776125,
+    "approved_r3_cap_usd": 2.0,
+    "invoice_charge_verified": false,
+    "free_daily_usage_applied": "unknown"
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; raw provider payloads and evaluator-only details are not bundled in a clean checkout.",
+    "portable_artifacts": "No patch artifact exists because the run made no mutation and submitted no patch.",
+    "private_evaluator_details": "The evaluator was not reached; private task data remains excluded."
+  },
+  "portable_artifacts": [],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-gpt54mini-d037-20260729-r3.json",
+      "bytes": 7995,
+      "sha256": "sha256:2d2d4fb71bc51ad60f1a599e09b1a9eae2ba9eb6b58a051b89b49a578e2a8d82"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-gpt54mini-d037-20260729-r3.jsonl",
+      "bytes": 2786,
+      "sha256": "sha256:ce5260ac4a9c97b761432709d6121ac97ae7e5fad6c14b991b7991391a699851"
+    },
+    {
+      "path": ".patchloop/experiments/plans/c33a50abe48b554c37d95de4833d1d17ede816f4d128b9adc22e88c010e138e6.json",
+      "bytes": 5716,
+      "sha256": "sha256:120229dff5f0f4bf48b1500394da79d18d9640ebc13348b16e42fd0dd1efaffd"
+    },
+    {
+      "path": ".patchloop/qualifications/run_e90f7c52aa134182.json",
+      "bytes": 7148,
+      "sha256": "sha256:f383d45615f0b441ad36e772578b8bcd9f1897d64513a7197987b38a3c71c005"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_e90f7c52aa134182/manifest.json",
+      "bytes": 2365,
+      "sha256": "sha256:6771e10bbc6e54a763a8e8cee149d0d60f1e93810a849ba6fb414fb5ec3403f9"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_e90f7c52aa134182/result.json",
+      "bytes": 915,
+      "sha256": "sha256:696f61ba9b6b2c93cc5ed288d9834de236d58c320a460fbf1ce3a0b44291eb75"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_e90f7c52aa134182/provenance.json",
+      "bytes": 135,
+      "sha256": "sha256:6c7de65372bb14f650cb9e0c84bd3d0983d048d7c97323198f5a5d44e7718e3c"
+    },
+    {
+      "path": ".patchloop/failures/dev-validation/fail_7be5281bfc475c4fb1a785bfdf640797.json",
+      "bytes": 442,
+      "sha256": "sha256:a3031b80121319ab13c4567d76eda2a285b19aaee32a90d2782ad1d7de807645"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/94/86d3b233979e2fe75620381f598cbf85fa58d09a4ad731980d4d4d3b4292ca",
+      "bytes": 30795,
+      "sha256": "sha256:9486d3b233979e2fe75620381f598cbf85fa58d09a4ad731980d4d4d3b4292ca"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/d1/cb3c6bc27a11587755eaebd7d479f81cb7978aa407b66c265b6b63e8dbc639",
+      "bytes": 774,
+      "sha256": "sha256:d1cb3c6bc27a11587755eaebd7d479f81cb7978aa407b66c265b6b63e8dbc639"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "provider_input_truncation_observed": false,
+    "terminal_response_completed": false,
+    "trace_qualification_artifact_qualified": false,
+    "evaluation_reached": false,
+    "d037_live_retry_exercised": false,
+    "d037_live_retry_validated": false,
+    "live_model_task_success": false,
+    "official_scope_compliant_success": false,
+    "accepted_live_pilot": false,
+    "mini_r3_substitutes_for_terra_pilot": false,
+    "development_campaign_unlocked": false,
+    "development_campaign_executed": false,
+    "core_campaign_executed": false
+  }
+}

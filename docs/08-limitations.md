@@ -176,36 +176,43 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `trace-qualification-v2`, but hidden acceptance failed while regression, scope and safety
   passed. It is an immutable qualified task failure, not an accepted pilot. Its stateless retry
   also retained the first rejected patch's hash/error without restoring its body, so D-037
-  was not satisfied by that run. The v3 repair and hash-bound diagnostic consumer are offline-tested,
-  but provider-side retry evidence still requires the unexecuted r3 suite's new clean hash and
-  separate approval.
+  was not satisfied by that run. The v3 repair and hash-bound diagnostic consumer are offline-tested.
+- The separately approved D-037 r3 `run_e90f7c52aa134182` cost `$0.06849375` for
+  54,851 input and 6,079 output tokens across 8 model and 12 search/read tool calls. All eight
+  input pre-counts matched provider usage, but event 55 used the full 4,096-token response
+  allowance, including 3,989 reasoning tokens, and returned
+  `incomplete/max_output_tokens`. It made no mutation, rejected patch, submission or evaluator
+  run. Qualification passed 21/22 checks and failed only `prompt_token_integrity`; the D-037
+  feature had zero retry episodes, so the diagnostic failed `qualification_not_passed`. This is
+  immutable provider-path failure evidence, not prompt truncation, total run-budget exhaustion,
+  D-037 validation/falsification or model task-quality evidence.
 
 ## Implemented gates with remaining external campaign work
 
 - OpenAI Responses adapter is contract-tested with a fake client and has two Terra failure traces,
-  one accepted historical Terra live pilot and two separate mini model-candidate failure traces.
+  one accepted historical Terra live pilot and three separate mini model-candidate failure traces.
   The accepted
   pilot is one development-validation task, not a development/core campaign result.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
   $20 cap. This is an execution contract, not a completed experiment.
-- The unexecuted `dev-validation-gpt54mini-d037-r3.yaml` suite binds
-  `experiment-diagnostic-v1` to its execution hash. Its post-run consumer separates generic
+- The terminal `dev-validation-gpt54mini-d037-r3.yaml` suite bound
+  `experiment-diagnostic-v1` to its consumed execution hash. Its post-run consumer separates generic
   qualification from a `passed`, `inconclusive` or `failed` retry exercise, requires evaluator
-  arrival for pass, and stores only sanitized counts/sequences. This is offline contract evidence,
-  not provider validation.
+  arrival for pass, and stores only sanitized counts/sequences. R3 validated the consumer's
+  failure path but did not exercise a rejected-patch retry.
 - A no-call preflight checks frozen dataset identity/role, canonical task package path,
   public/private spec hash, digest-pinned environment and observed Docker identity, clean Git
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. All five paid-pilot host preflights reached
+  only after the approved plan is durably persisted. All six paid-pilot host preflights reached
   `ready=true`; the development campaign requires its own clean execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. All five paid pilots produced completed hash-chained
+  that blocks automatic schedule replay. All six paid pilots produced completed hash-chained
   journals. Automatic resume from an interrupted journal is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
@@ -233,14 +240,14 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   available-case rows only as diagnostics and suppress headline, paired comparison/CI and flip
   results. The one-row accepted pilot is not a memory-comparison matrix.
 - Failed started attempts retain run ID, usage including cached/cache-write tokens, calculated cost
-  and terminal outcome. r1 and r2 exercised this path; r3 exercised the resolved official-success
-  path.
+  and terminal outcome. Historical Terra r1 and r2 exercised this path; historical Terra r3
+  `run_3cb86f8d70094a11` exercised the resolved official-success path.
 - Agent-visible patch application now recounts only hunk line totals and leaves the raw input/hash,
   body, context, path and deterministic policies unchanged. Policy rollback must restore the exact
   pre-call diff and zero-untracked state; rollback failure terminates as recovery error. New-file,
   rename/copy, binary and metadata-only patches remain unsupported, while the evaluator stays
-  strict. r3 reached evaluation through this corrected path; this remains one pilot, not a
-  campaign-level reliability result.
+  strict. Historical Terra r3 `run_3cb86f8d70094a11` reached evaluation through this corrected
+  path; this remains one pilot, not a campaign-level reliability result.
 - v2 patch mutation now writes raw patch and pre/post image intent CAS before touching the target,
   performs all-target preflight followed by atomic postimage replace/delete, atomically closes
   action outcome plus `PatchApplied`, and includes nested recovery artifacts in source evidence.
@@ -269,10 +276,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   Terra model, budget, harness commit, tool/context versions and exact runtime-contract hash.
   Mini r2 validated much of the corrected v2 lifecycle at lower list-price exposure, but it cannot
   populate `pilot_run_id` and exposed the D-037 retry-context gap. Consequently `pilot_run_id` is
-  currently empty. Offline context hardening and the suite-specific machine gate are complete; the
-  next gate is a clean preflight and separately approved r3 mini diagnostic. A newly approved
-  tool-v2/context-v3 Terra pilot remains required before
-  the campaign.
+  currently empty. Offline context hardening and the suite-specific machine gate are complete;
+  terminal mini r3 failed on its per-call output ceiling before exercising the retry. Corrective r4
+  now binds `max_output_tokens=25,000` and `max_total_tokens=120,000` under a new diagnostic profile,
+  and its full offline suite passes. It remains offline-only until a clean committed preflight hash
+  and separate approval are complete. A newly approved tool-v2/context-v3 Terra pilot remains required
+  before the campaign.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -301,13 +310,14 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   checkout can inspect the normalized claims boundaries and rehash the portable candidate patches,
   but cannot independently rehash the complete original runs until a secret-scrubbed portable
   evidence export exists.
-- The r3 journal is internally hash-chain valid, but its `CampaignCompleted.result_hash` hashes the
-  LF result serialization while Windows persisted the experiment file with CRLF bytes. The
-  qualification remains valid because its source evidence separately hashes the raw persisted run
-  result. The original bytes are preserved and the runner now writes the exact UTF-8 bytes it
-  hashes; this correction applies to future campaigns, not retroactively to r3.
-- The r3 usage wall clock is not reconstructible by simply summing model/tool event durations.
-  Internal orchestration and evaluator setup contribute additional time, while
+- The historical Terra r3 journal for `run_3cb86f8d70094a11` is internally hash-chain valid, but
+  its `CampaignCompleted.result_hash` hashes the LF result serialization while Windows persisted
+  the experiment file with CRLF bytes. The qualification remains valid because its source evidence
+  separately hashes the raw persisted run result. The original bytes are preserved and the runner
+  now writes the exact UTF-8 bytes it hashes; this correction applies to future campaigns, not
+  retroactively to that run.
+- The historical Terra r3 usage wall clock is not reconstructible by simply summing model/tool event
+  durations. Internal orchestration and evaluator setup contribute additional time, while
   `RunCompleted.duration_ms` covers a different evaluator-wrapper interval. Token/call/cost
   reconciliation is exact; wall-clock component attribution needs a clearer timing schema.
 - `RunManifest.harness_git_commit` records the harness `HEAD` but not a full dirty-tree hash.
@@ -356,16 +366,23 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `truncation=disabled` telemetry in D-031 were implemented after r1-r3. Those immutable Terra
   traces do not contain the new fields. Mini run `run_d4fea5e7198b4abc` exercised and passed the
   `prompt-token-integrity-v1` qualification branch but did not reach evaluation.
-- A separate one-run suite pins `gpt-5.4-mini-2026-03-17`, medium effort, a 90,000 total-token
-  budget and a $2 cap to exercise that branch. Its terminal r1 run failed the submission lifecycle
+- Three historical one-run mini suites pinned `gpt-5.4-mini-2026-03-17`, medium effort,
+  4,096 per-call / 90,000 total tokens and a $2 cap. Terminal r1 failed the submission lifecycle
   before evaluation and does not change the frozen Terra memory-development or core comparison
   contract. Terminal r2 reached evaluation and qualified but failed task acceptance and exposed a
-  rejected-patch continuity gap. Neither exact experiment may be rerun. D-037 is now implemented
-  and offline-tested; its new r3 suite and machine postcondition exist, but the mini diagnostic still
-  requires a new clean execution hash and approval.
+  rejected-patch continuity gap. Terminal r3 then failed on
+  `incomplete/max_output_tokens` before mutation or evaluation. None of the three exact
+  experiments may be rerun. D-037 is implemented and offline-tested, but the mini diagnostic still
+  requires the newly named, offline-verified r4 suite to receive a new clean execution hash and
+  approval. R4 raises the static response allowance rather than automatically
+  retrying an incomplete response; exact retry would require a separately versioned
+  original-request/logical-turn/crash-recovery contract. The unexecuted r4 alone pins
+  25,000/120,000 under profile v2; it removes the observed output-ceiling confounder but does not
+  guarantee a rejected mutation or diagnostic pass. Evaluator arrival with zero retry episodes
+  remains `inconclusive`.
   Even a successful mini run does not satisfy the tool-v2/context-v3 Terra pilot requirement. The
-  two mini runs' calculated list-price total is `$0.155418`; all five paid pilot runs total
-  `$0.984282375`.
+  three mini runs' calculated list-price total is `$0.22391175`; all six paid pilot runs total
+  `$1.052776125`.
   These are usage-based estimates, not verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
   data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not

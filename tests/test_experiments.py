@@ -234,6 +234,75 @@ def test_d037_r3_pilot_binds_exact_diagnostic_contract(
     }
 
 
+def test_d037_r4_binds_corrective_output_allowance_and_budget(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_path = "experiments/dev-validation-gpt54mini-d037-r4.yaml"
+
+    suite = eval_runner.load_suite(suite_path)
+
+    assert suite.diagnostic is not None
+    assert suite.diagnostic.profile == "d037-rejected-patch-retry-v2"
+    assert suite.max_output_tokens == 25_000
+    assert suite.budget.max_total_tokens == 120_000
+    assert suite.estimated_cost_usd == pytest.approx(0.66)
+
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert {row["code"] for row in preflight["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert preflight["suite"]["diagnostic"]["profile"] == (
+        "d037-rejected-patch-retry-v2"
+    )
+    assert preflight["suite"]["max_output_tokens"] == 25_000
+    assert preflight["suite"]["budget"]["max_total_tokens"] == 120_000
+    assert preflight["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
+        (120_000 + 25_000) * 4.5 / 1_000_000
+    )
+    assert preflight["pricing"]["budget_upper_bound_usd"] == pytest.approx(
+        0.6525
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("max_output_tokens", 4096),
+        ("budget", {"max_total_tokens": 90_000}),
+        (
+            "diagnostic",
+            {
+                "schema_version": "experiment-diagnostic-v1",
+                "profile": "d037-rejected-patch-retry-v1",
+                "required_trace_features": [
+                    "rejected_patch_retry_context"
+                ],
+            },
+        ),
+    ],
+)
+def test_d037_r4_rejects_partial_corrective_contract(
+    field: str,
+    value: object,
+) -> None:
+    payload = yaml.safe_load(
+        Path("experiments/dev-validation-gpt54mini-d037-r4.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    if field == "budget":
+        payload["budget"].update(value)
+    else:
+        payload[field] = value
+
+    with pytest.raises(ValidationError):
+        ExperimentSuite.model_validate(payload)
+
+
 def test_d037_diagnostic_is_rejected_outside_model_candidate_pilot() -> None:
     payload = yaml.safe_load(
         Path("experiments/dev-validation-gpt54mini-d037-r3.yaml").read_text(

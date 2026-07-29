@@ -12,10 +12,13 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `clean D-037 mini diagnostic preflight`다. Rejected-patch retry context와
-  execution-hash-bound `experiment-diagnostic-v1` consumer는 offline evidence를 통과했지만
-  실제 provider retry는 아직 검증하지 않았다. 새 r3 suite의 clean execution hash를 만들고
-  별도 비용 승인을 받기 전에는 mini diagnostic,
+- 현재 milestone은 `D-037 r4 clean commit and preflight`이다.
+  Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
+  offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
+  생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
+  Terminal r3 evidence와 원인은 보존됐다. 새 r4는 official reasoning guidance에 맞춘
+  25,000 per-call / 120,000 total token pair를 hash-bound profile v2로 분리했고 full
+  offline 검증을 통과했다. Clean execution hash와 별도 비용 승인을 받기 전에는 후속 mini diagnostic,
   tool-v2/context-v3 Terra pilot 또는 memory-development campaign을 실행하지 않는다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
@@ -31,8 +34,11 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   failure다. 이 trace는 stateless retry context가 직전 rejected patch의 hash와 오류만
   보존하고 patch body는 복원하지 않는 gap도 드러냈다. 새 `phase-evidence-v3`는 exact
   candidate/reason next-request rehydration, CAS/request qualification과 structured
-  no-generation budget event를 offline test로 검증했다. 새 r3 suite는 실제 retry episode가
-  없으면 qualification 실패가 아닌 diagnostic inconclusive로 분리하지만 아직 live run은 없다.
+  no-generation budget event를 offline test로 검증했다. D-037 r3
+  `run_e90f7c52aa134182`는 input pre-count 8/8 일치와 leakage pass를 보존했지만, event 55의
+  응답이 `max_output_tokens=4096`에서 incomplete가 되어 evaluator 전에 terminal
+  agent/qualification/diagnostic failure로 끝났다. Mutation과 rejected retry episode는
+  0개이므로 이 run은 D-037을 검증하거나 반증하지 않으며 재실행하지 않는다.
   실제 subprocess hard-kill 뒤 stale
   `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 Terra pilot, stress schedule,
   12-run development campaign과 96-run core campaign은 완료되지 않았다.
