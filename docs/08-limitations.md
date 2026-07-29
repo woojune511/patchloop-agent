@@ -169,11 +169,20 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `evaluation_reached=false`: legacy text `DONE` attempted an invalid `VERIFY → DONE`
   transition after the required final-review order was lost. It is an immutable agent failure,
   not accepted-pilot or model-quality evidence.
+- Its separately approved v2 corrective retry, `run_4a9737ec91964dca`, cost `$0.07796475`
+  for 58,695 input and 7,543 output tokens across 10 model and 13 tool calls. All ten request
+  pre-counts matched provider usage; responses were completed with truncation disabled. The run
+  followed current-diff check, complete diff review, `finish_task`, evaluator receipt and
+  `trace-qualification-v2`, but hidden acceptance failed while regression, scope and safety
+  passed. It is an immutable qualified task failure, not an accepted pilot. Its stateless retry
+  also retained the first rejected patch's hash/error without restoring its body, so D-037
+  context continuity remains an open engineering gate.
 
 ## Implemented gates with remaining external campaign work
 
 - OpenAI Responses adapter is contract-tested with a fake client and has two Terra failure traces,
-  one accepted Terra live pilot and one separate mini model-candidate failure trace. The accepted
+  one accepted historical Terra live pilot and two separate mini model-candidate failure traces.
+  The accepted
   pilot is one development-validation task, not a development/core campaign result.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
@@ -184,12 +193,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. All three pilot host preflights reached
+  only after the approved plan is durably persisted. All five paid-pilot host preflights reached
   `ready=true`; the development campaign requires its own clean execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. All three paid pilots produced completed hash-chained
+  that blocks automatic schedule replay. All five paid pilots produced completed hash-chained
   journals. Automatic resume from an interrupted journal is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
@@ -239,17 +248,19 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   final diff review to the exact current worktree hash, exposes a structured `finish_task`, delays
   phase transitions until tool success and makes two premature submissions recoverable. It also
   records review/submission lifecycle, structured patch-error stages, advisory repeat signals and
-  current-diff checkpoint state. These paths are offline-tested only; no paid live run has yet
-  validated the correction. Existing v1 traces and replays are not rewritten.
+  current-diff checkpoint state. Mini r2 validated the final check/review/submission/evaluator
+  path live, but its rejected-patch retry request omitted the candidate body and its submitted
+  patch failed hidden acceptance. Existing v1 traces and replays are not rewritten.
 - v2 `finish_task` now freezes exact submitted bytes in CAS before acceptance, binds that artifact
   through `SubmissionAccepted`, evaluator input and `RunResult`, and reconciles nine tested crash
-  boundaries without duplicate lifecycle or DONE transition. This is offline evidence only.
+  boundaries without duplicate lifecycle or DONE transition. Mini r2 exercised the normal live
+  path; crash-boundary recovery remains offline evidence.
 - The no-memory development preflight rejects a pilot unless qualification v2 records the same
   Terra model, budget, harness commit, tool/context versions and exact runtime-contract hash.
-  Before that campaign gate, a separately approved mini r2 diagnostic may validate the corrected
-  v2 lifecycle at lower list-price exposure, but it cannot populate `pilot_run_id`. Consequently
-  `pilot_run_id` is currently empty and a newly approved v2 Terra pilot remains the next paid
-  campaign gate.
+  Mini r2 validated much of the corrected v2 lifecycle at lower list-price exposure, but it cannot
+  populate `pilot_run_id` and exposed the D-037 retry-context gap. Consequently `pilot_run_id` is
+  currently empty. The next gate is offline context hardening, followed by a new separately
+  approved mini diagnostic; a newly approved v2 Terra pilot remains required before the campaign.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -336,9 +347,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - A separate one-run suite pins `gpt-5.4-mini-2026-03-17`, medium effort, a 90,000 total-token
   budget and a $2 cap to exercise that branch. Its terminal r1 run failed the submission lifecycle
   before evaluation and does not change the frozen Terra memory-development or core comparison
-  contract. That exact experiment must not be rerun. A new r2 suite is a pending corrective
-  diagnostic with its own clean execution hash and approval; even a successful r2 does not satisfy
-  the v2 Terra pilot requirement.
+  contract. Terminal r2 reached evaluation and qualified but failed task acceptance and exposed a
+  rejected-patch continuity gap. Neither exact experiment may be rerun. After D-037 is implemented
+  and offline-tested, a new mini diagnostic requires a new clean execution hash and approval; even
+  a successful mini run does not satisfy the v2 Terra pilot requirement. The two mini runs'
+  calculated list-price total is `$0.155418`; all five paid pilot runs total `$0.984282375`.
+  These are usage-based estimates, not verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
   data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not
   assumed to be free. `model_cost_usd` is a deterministic list-price estimate, not invoice

@@ -742,6 +742,18 @@ rejected tool result를 남기고 phase를 유지한다. 세 번째 거부만
 context builder가 이 결과를 다시 제공한다. Private evaluator는 agent tool gateway를
 통과하지 않으므로 hidden assertion이나 reference material은 이 feedback에 포함되지 않는다.
 
+새 `context_policy_version=phase-evidence-v3`로 D-037을 선언한 run은
+model-originated mutating-tool call이 거부된 경우 바로 다음 request가
+result만이 아니라 latest rejected input의 exact agent-visible bytes와 content hash도
+함께 제공해야 한다. Context builder는 event의 CAS descriptor를 모델에게 보여주는 것으로
+충족했다고 보지 않고 실제 bytes를 CAS에서 읽어 request에 넣는다. Exact candidate와
+structured rejection reason이 full per-call budget 안에 함께 들어가지 않으면 generation을
+시작하지 않고 structured budget failure를 남긴다. 이 retry block은 public/model-originated
+content만 허용하며 private evaluator artifact는 참조하지 않는다. 현재 mini r2 evidence는
+이 version 도입 전 `phase-evidence-v2` trace로 보존하고, 구현 상태는
+`docs/05-implementation-plan.md`에서
+추적한다.
+
 ## 8. Verifier result and final outcome
 
 ```json

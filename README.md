@@ -38,8 +38,19 @@ task의 12-run no-memory campaign도 아직 실행하지 않았다.
 기록했으며 성공이나 accepted pilot가 아니다. 원인 뒤에는 새 run용
 `tool_schema_version=v2`/`phase-evidence-v2`를 구현했다. 현재-diff check,
 완전한 final `get_diff` 제시와 구조화 `finish_task`를 제출 조건으로 묶고, 잘못된
-제출은 두 번까지 model-visible rejection으로 돌려준다. 이 교정은 offline test만
-통과했으며 live 재실행 evidence는 아직 없다.
+제출은 두 번까지 model-visible rejection으로 돌려준다.
+
+별도 승인된 r2 `run_4a9737ec91964dca`는 이 v2 경로를 실제 provider에서 실행했다.
+10 model call, 13 tool call, 58,695 input + 7,543 output token과 계산상 `$0.07796475`를
+사용했다. Final check → complete diff → review → `finish_task` → official evaluator →
+receipt 순서와 `trace-qualification-v2`는 통과했지만 hidden acceptance가 실패해
+`scope_compliant_success=false`인 task failure다. Prompt token은 10/10 정확히 일치했고
+provider truncation도 없었다. 다만 첫 rejected patch 뒤 stateless context가 patch hash와
+오류는 보존하면서 body는 복원하지 않은 continuity gap이 확인됐다. 따라서 이 run은
+accepted pilot가 아니며 Terra 또는 development campaign gate를 열지 않는다. Aggregate
+verdict와 hash-bound artifact는
+[mini r2 evidence record](reports/live-pilot/dev-validation-gpt54mini-pilot-20260729-r2.json)에
+보존했다.
 
 ## 구현된 핵심 경로
 
@@ -236,12 +247,18 @@ usage reconciliation과 `evaluation_reached=true`를 모두 통과했다. 세 pi
 `$0.828864375`다. 이 결과는 historical v1 accepted-pilot evidence이며, 현재 v2
 development campaign의 선행 gate나 memory 효과 증거는 아니다.
 
-다음 immediate paid gate는 v2 submission/recovery 계약을 저비용 snapshot에서 다시 확인하는
-mini r2 model-candidate diagnostic이다. Terminal r1 suite는 재사용하지 않고
-`experiments/dev-validation-gpt54mini-pilot-r2.yaml`을 별도 clean commit에 고정한다.
-이 diagnostic이 통과해도 Terra 선행 gate를 열지는 않는다. 이후 새 v2 Terra
-development-validation pilot이 evaluator에 도달하고 `trace-qualification-v2`를 통과해
-`pilot_run_id`에 고정된 뒤에만 아래 12-run development campaign preflight를 실행한다.
+Mini r2 model-candidate diagnostic은 execution hash
+`sha256:fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca`로
+정확히 한 번 실행돼 terminal evidence로 고정됐다. 실행/telemetry/lifecycle은 완주했지만
+task acceptance는 실패했고, post-run audit에서 새 D-037 retry-context target이 충족되지
+않았음이 확인됐다. 다음 gate는
+새 paid call이 아니라 rejected mutating-tool argument를 hash-bound·크기 제한된 형태로
+다음 turn에 복원하고 이를 qualification에서 검사하는 offline 구현과 test다. 그 뒤 새
+experiment ID, clean execution hash와 별도 승인으로 rejected mutation retry를 실제로
+exercise하는 mini diagnostic을 다시 실행한다. 새 Terra development-validation pilot이
+evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
+아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
+harness gate와 별도로 보고한다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -319,12 +336,13 @@ $2 cap으로 고정한다. 별도 `development-validation-model-candidate-pilot`
 기존 Terra memory/core 계약의 선행 gate나 결과로 집계하지 않는다. 매 turn의 exact input
 count와 4,096-token response allowance가 남은 90,000 안에 함께 들어가지 않으면 generation
 call을 시작하지 않는다.
-세 Terra pilot과 mini r1은 기존 usage/source-evidence 보존 경로를 실제 provider에서
+세 Terra pilot과 mini r1/r2는 usage/source-evidence 보존 경로를 실제 provider에서
 확인했다. Terra r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
-hash에서 v1 accepted pilot를 만들었다. 다음 immediate paid gate는 새 clean harness
-commit에 결속된 mini r2 diagnostic의 no-call preflight와 별도 $2 승인이다. 그 뒤에도
-별도 v2 Terra pilot이 통과하기 전에는 12-run development campaign을 승인하지 않는다.
+hash에서 v1 accepted pilot를 만들었다. Mini r2는 v2 evaluator 경로에 도달했지만 hidden
+acceptance는 실패했고 post-run audit에서 D-037 target이 충족되지 않았음이 확인됐다.
+다음 immediate gate는 이를 고치는 offline implementation/test이며, 별도 v2 Terra
+pilot이 통과하기 전에는 12-run development campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

@@ -78,18 +78,19 @@ by unit tests rather than this process-kill E2E.
 
 ## Live API gate
 
-CI never performs live calls. The checked-in live files are contracts, not proof of a paid run:
+CI never performs live calls. The checked-in suite files are contracts; measured paid-run evidence
+is preserved separately under `reports/live-pilot/`:
 
 - `experiments/dev-validation-pilot.template.yaml`: terminal Terra r3 contract; historical
   inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot.yaml`: terminal mini r1 contract;
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
-  preflight only until its exact clean execution hash receives separate approval
+  terminal r2 contract, historical inspection only, never rerun
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
-As of 2026-07-28 the official
+As of 2026-07-29 the official
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the mini pilot is $0.75/M
 uncached input, $0.075/M cached input and $4.50/M output, with no separate published cache-write
 rate. The suite pins `gpt-5.4-mini-2026-03-17`. Recheck the price within 72 hours of every live
@@ -111,8 +112,8 @@ The original checked-in mini suite refers to terminal experiment
 command above is inspection-only and should report the existing journal/terminal state. Do not add
 approval flags or execute this suite again.
 
-The corrective r2 contract is separate. After committing it, run this command without approval
-flags:
+The corrective r2 contract is also terminal. This inspection-only command should now report the
+existing result/journal blockers:
 
 ```powershell
 uv run patchloop evaluate `
@@ -120,10 +121,14 @@ uv run patchloop evaluate `
   --preflight-only
 ```
 
-Review its blockers, clean commit, task/image/SDK identities, reserve and exact execution hash.
-Do not run the paid form until the user separately approves that exact hash and a maximum of $2.
-Editing approval fields in YAML or deleting the old journal does not authorize spending. A
-successful mini r2 remains diagnostic and does not unlock the Terra memory-development gate.
+Do not add approval flags, delete the journal or execute this suite again. Its separately approved
+hash `sha256:fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca`
+was consumed exactly once by `run_4a9737ec91964dca`. The run reached the official evaluator and
+passed v2 trace qualification, but hidden acceptance failed. It also showed that the stateless
+retry after a rejected patch retained the candidate hash and error without restoring the candidate
+body. The checked-in
+[mini r2 evidence record](../reports/live-pilot/dev-validation-gpt54mini-pilot-20260729-r2.json)
+preserves aggregate verdicts and portable patch hashes without private evaluator details.
 
 The paid command first persists
 `.patchloop/experiments/plans/<execution-hash>.json` as an approved
@@ -183,26 +188,31 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure or qualification error
 and records remaining rows as not started.
 
-Four paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
-Terra r3 success and one immutable mini model-candidate failure. Their cumulative measured
-list-price cost is `$0.906317625`. Docker availability, exact images,
+Five paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
+historical Terra r3 success and two immutable mini model-candidate failures. Their cumulative
+calculated list-price cost is `$0.984282375`; actual invoice incentives were not verified. Docker
+availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
 the separate 12-run development campaign.
 
-After committing the v2 correction and returning to a clean worktree, create a new Terra
-development-validation pilot config and run its no-call preflight. It requires a new experiment
-ID, exact execution hash and separate approval capped at $2. Do not reuse the terminal r1-r3 or
-mini experiment IDs.
+Before another paid call, implement D-037: the next request after a rejected mutating-tool call
+must receive the exact bounded candidate bytes, content hash and structured rejection reason.
+New manifests activate it as `context_policy_version=phase-evidence-v3`; offline tests and
+qualification must prove that behavior. Then create a new mini diagnostic with a new experiment
+ID, clean execution hash and separate approval; do not reuse either terminal mini experiment.
 
 ```powershell
 git status --short
 uv run patchloop evaluate `
-  --suite <new-v2-terra-pilot.yaml> `
+  --suite <new-mini-diagnostic.yaml> `
   --preflight-only
 ```
 
-Only after that run reaches the evaluator and produces a qualified
-`trace-qualification-v2` may its run ID be inserted into
+The mini diagnostic remains outside the Terra gate even if it succeeds. It must actually exercise
+a rejected mutating-tool retry to validate D-037; ordinary task completion alone is insufficient.
+Afterward create a separately approved Terra development-validation pilot. Only after that run
+reaches the evaluator and produces a qualified `trace-qualification-v2` may its run ID be inserted
+into
 `experiments/dev-no-memory.template.yaml`. Development preflight then verifies the same model,
 budget, harness commit, tool/context versions and exact runtime-contract hash before producing a
 separate 12-row execution hash. That campaign still requires a distinct approval capped at $20.

@@ -1108,12 +1108,74 @@ artifacts by SHA-256. This is an accepted single-task live pilot. It unlocks the
 for a separately preflighted and approved development campaign; it is not a 12-run result or
 evidence that memory improves performance.
 
+## Mini model-candidate r1/r2 evidence
+
+D-031 prompt-token telemetry was exercised in a separate model-candidate lane that cannot satisfy
+the Terra campaign prerequisite. Terminal r1 `run_d4fea5e7198b4abc` used
+`gpt-5.4-mini-2026-03-17`, medium effort and a 90,000-token run budget. It preserved exact
+request-count telemetry but ended before evaluation when legacy text `DONE` attempted an invalid
+phase transition. The run cost a calculated `$0.07745325` and remains an immutable agent failure.
+
+The corrected v2 suite was committed at
+`ff33d18a520de6fd8949ce9d873e26241b4382ae`. Its exact execution hash
+`sha256:fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca`
+was approved for one row with a $2 cap and consumed exactly once. Experiment
+`dev-validation-gpt54mini-pilot-20260729-r2` completed 1/1 rows with no infrastructure,
+qualification or not-started entry. Run `run_4a9737ec91964dca` used 58,695 input and 7,543
+output tokens, including 6,501 reasoning tokens, across 10 model and 13 tool calls. Its calculated
+list-price cost is `$0.07796475`; the actual invoice or shared-traffic incentive was not verified.
+
+The v2 submission order was exercised end to end. One patch was applied at event 35, the
+current-diff visible check passed at 55, a complete `get_diff` followed at 61, the model received
+that diff at 64/65 and called `finish_task` at 66. Review, submission attempt, acceptance and DONE
+were recorded at 67, 68, 70 and 71, with `finish_task` success at 69 and no later mutation. The
+evaluator receipt binds the final
+submitted diff
+`sha256:6df7ac37bd5d31d5e5dc55bb20eb76fecb1941b694171ee8be80ee9af968c29e`
+to the run manifest, result and provenance. The 74-event, 14-checkpoint trace passed all 22
+`trace-qualification-v2` checks. Its qualification hash is
+`sha256:88c763f2617d4b40c0f4c50229831d1dcdbf0477d7ae05aa99c4241538d10a43`;
+recalculation of current durable evidence matches source hash
+`sha256:468ff2df25cb24ef1152e32388b191b77fb529873dc8790155f3055a55503250`.
+The four-row campaign journal hash chain and exact experiment-result byte hash also match.
+
+This trace qualification is not task success. The official evaluator reported aggregate hidden
+acceptance failure while regression, scope and safety passed, so
+`scope_compliant_success=false` and `outcome_kind=task_failure`. The submitted change removed
+grouping symbols before deciding whether the input differed only by trailing zeroes. That loses
+the grouping/separator structure which the public task explicitly requires strict mode to
+preserve. No private assertion, input or check identifier is included in the tracked evidence.
+
+The first model patch attempt was rejected during preparation when a non-Git marker remained
+after the diff; it never reached the evaluator.
+On the following stateless request, PatchLoop preserved its content hash and structured error but
+did not restore the 1,326-byte candidate body. With `store=false`, no previous provider response
+and no agent-visible CAS-read tool, exact retry continuity was not guaranteed. The separately
+submitted candidate contained the public-contract defect described above. This trace does not
+prove that the missing body caused that defect or hidden failure, nor that the rejected candidate
+would have passed. All ten input-token pre-counts exactly matched provider usage, every response
+was completed with truncation disabled and no incomplete reason, so provider prompt truncation
+was not observed. The PatchLoop context-selection gap remains distinct from API delivery integrity.
+
+The checked-in
+[mini r2 evidence record](../reports/live-pilot/dev-validation-gpt54mini-pilot-20260729-r2.json),
+[applied model argument](../reports/live-pilot/artifacts/run_4a9737ec91964dca-applied-model-candidate.patch)
+and [final submitted task-failure diff](../reports/live-pilot/artifacts/run_4a9737ec91964dca-submitted.patch)
+bind the portable bytes and local-only evidence hashes without bundling provider payloads or
+private evaluator output. The mini lane's calculated cumulative cost is `$0.155418`; all five paid
+pilot runs total `$0.984282375`. R2 validates telemetry, the normal v2 submission path, evaluator
+receipt and qualification, but it is not an accepted pilot and cannot unlock the Terra or
+development campaign gate. D-037 rejected-patch context rehydration and offline qualification
+tests are the next executable gate.
+
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. The dataset freeze and accepted live-pilot gates are complete, but
-the development and stress campaigns are not:
+`official_evaluation_ready=true`. The dataset freeze is complete and the accepted pilot is
+historical v1 evidence, but the current v2 development and stress campaigns are not complete:
 the context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
-unimplemented. The current worker path is cooperative suspension rather than external process
-termination, and the timeout path is a synthetic timeout on the first registered visible check.
-No stress schedule row, 12-run development campaign or 96-run core campaign has been executed.
+unimplemented. The production stress injector still uses cooperative suspension, while an isolated
+subprocess E2E has exercised actual process termination and fresh-interpreter stale-`RUNNING`
+reclaim. The timeout path remains a synthetic timeout on the first registered visible check.
+Rejected mutating-tool input rehydration is also not implemented. No stress schedule row, 12-run
+development campaign or 96-run core campaign has been executed.

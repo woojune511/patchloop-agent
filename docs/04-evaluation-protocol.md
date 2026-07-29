@@ -180,6 +180,17 @@ successful non-empty mutation
 `SubmissionAccepted`는 evaluator 진입 승인이고 SCRR 성공은 evaluator의 별도 verdict다.
 Legacy v1 trace에는 새 lifecycle event를 합성하지 않는다.
 
+`context_policy_version=phase-evidence-v3`로 D-037 target을 선언한 trace는 latest
+rejected mutating-tool input의 exact CAS
+bytes, content hash와 rejection reason이 바로 다음 model request에 함께 있었는지
+qualification에서 다시 검사한다. Hash descriptor나 error만 포함한 경우, candidate가
+context cap에서 잘린 경우, 또는 model이 읽을 수 없는 CAS locator만 제공한 경우는
+`rejected_patch_retry_context` failure다. Candidate와 full response allowance가 budget에
+들어가지 않아 generation을 시작하지 않은 structured budget failure는 trace integrity와
+구분해 보고한다. Mini r2 `run_4a9737ec91964dca`는
+`context_policy_version=phase-evidence-v2`인 immutable diagnostic이며 새 gate의 통과
+evidence로 소급 해석하지 않는다.
+
 ## 5. Controlled variables
 
 한 experiment block 안에서 다음을 고정한다.

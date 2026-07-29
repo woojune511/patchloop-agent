@@ -1,0 +1,312 @@
+{
+  "schema_version": "live-pilot-evidence-v3",
+  "recorded_at": "2026-07-29T01:43:06.022270Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "ff33d18a520de6fd8949ce9d873e26241b4382ae",
+  "execution_hash": "sha256:fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca",
+  "retry_lineage": {
+    "terminal_r1": {
+      "experiment_id": "dev-validation-gpt54mini-pilot-20260729-r1",
+      "run_id": "run_d4fea5e7198b4abc",
+      "outcome_kind": "agent_failure",
+      "evaluation_status": "not_run",
+      "immutable": true,
+      "execution_hash": "sha256:86fb73140404ba4326710d3be7088171055f2be03d0d19ffd7bd5d56006349a9",
+      "qualification_hash": "sha256:ef289b20a7e3f953d546fbc7c037a0e4bc49d910dbbceb686800484cd4ab2b64",
+      "source_evidence_hash": "sha256:efdd54f63f201de7a13098eae199a31db975d18a15ab7fb5963889097f63ad65",
+      "qualification_file_sha256": "sha256:82b196df2e0e54dc7708ad6b37201185e9b8bc3c25ce03f2cb7fdd0bc8f72903"
+    },
+    "corrective_r2": {
+      "experiment_id": "dev-validation-gpt54mini-pilot-20260729-r2",
+      "run_id": "run_4a9737ec91964dca",
+      "distinct_experiment_and_run": true
+    }
+  },
+  "campaign": {
+    "purpose": "development-validation-model-candidate-pilot",
+    "suite_hash": "sha256:3154d6f61d985d42ed52d19b8eda4252e0ce5b8b8f4b16f6ac72a9ed41af5aeb",
+    "schedule_hash": "sha256:feb2b060f1a44ce4ea3e483aa51b184dcabae0815403a54f459164d5a5869d83",
+    "schedule_row_id": "sha256:a724b43cd764097bb6eb9ff518f0438de1f44c6f32b6dcb7e09b904d62d57858",
+    "expected_runs": 1,
+    "completed_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "not_started_runs": 0,
+    "halt_reason": null,
+    "execution_plan": {
+      "canonical_content_hash": "sha256:f6daae802c86d6e28a66884e78d5c9d8f94ef043a0cc43d13bdeba93032ecf28",
+      "persisted_file_sha256": "sha256:1c50974c92ba91150caef7c48341d0c6a79d7dbf86278b0bf92ed0aa7c2a15c0"
+    },
+    "journal": {
+      "event_count": 4,
+      "hash_chain_valid": true,
+      "last_event_hash": "sha256:6a2f633a73514ca0997298ef512b9d49f1b86b137c4ed8bd65db85a1c23048fb",
+      "result_hash": "sha256:34112db6f6642d1b7d1c9ae06b72d0365c2887464a4426fa379d7da5338de5db",
+      "result_exact_bytes_match": true
+    }
+  },
+  "pilot": {
+    "run_id": "run_4a9737ec91964dca",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "outcome_kind": "task_failure",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "scope_compliant_success": false,
+    "official": true,
+    "event_count": 74,
+    "checkpoint_count": 14,
+    "worker_claim_count": 1,
+    "model_calls": 10,
+    "input_token_count_calls": 10,
+    "tool_calls": 13,
+    "tool_failures": 1,
+    "patch_applied_events": 1,
+    "usage": {
+      "input_tokens": 58695,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 7543,
+      "reasoning_output_tokens": 6501,
+      "total_tokens": 66238,
+      "max_total_tokens": 90000,
+      "model_cost_usd": 0.07796475,
+      "wall_clock_ms": 78350
+    },
+    "verdicts": {
+      "hidden_tests": "fail",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "trace_qualification_artifact": {
+      "schema_version": "trace-qualification-v2",
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": true,
+      "private_match_count": 0,
+      "check_count": 22,
+      "passed_check_count": 22,
+      "memory_candidate_eligible": false,
+      "qualification_hash": "sha256:88c763f2617d4b40c0f4c50229831d1dcdbf0477d7ae05aa99c4241538d10a43",
+      "source_evidence_hash": "sha256:468ff2df25cb24ef1152e32388b191b77fb529873dc8790155f3055a55503250",
+      "runtime_contract_content_hash": "sha256:81ee5dd7321f54a3cc61849b70cacd92eb70dd688fbcc8e1325735bd326680e0"
+    }
+  },
+  "submission_lifecycle": {
+    "patch_applied_sequence": 35,
+    "current_diff_visible_check_sequence": 55,
+    "post_check_get_diff_sequence": 61,
+    "review_phase_sequence": 62,
+    "final_model_call_sequence": 65,
+    "finish_task_sequence": 66,
+    "review_recorded_sequence": 67,
+    "submission_attempted_sequence": 68,
+    "finish_task_succeeded_sequence": 69,
+    "submission_accepted_sequence": 70,
+    "done_phase_sequence": 71,
+    "same_diff_preserved": true,
+    "complete_diff_in_final_request": true,
+    "mutation_after_review": false
+  },
+  "mutations": {
+    "rejected_attempt": {
+      "tool_call_sequence": 27,
+      "tool_failed_sequence": 28,
+      "patch_sha256": "sha256:34816a5ca544453a45f16481b868f470623227a2ab46e2f26d9461bec6421067",
+      "bytes": 1326,
+      "failure_category": "contract_error",
+      "reason": "non-Git marker remained after the unified diff",
+      "official_evaluator_run": null,
+      "counterfactual_success_claimed": false
+    },
+    "applied_attempt": {
+      "tool_call_sequence": 32,
+      "patch_prepared_sequence": 33,
+      "tool_succeeded_sequence": 34,
+      "patch_applied_sequence": 35,
+      "raw_model_patch_sha256": "sha256:da03a2b275ae0bb2222d4cfe1d7d16690e19252f3673c30ef79ffc3f72660dc4",
+      "worktree_diff_sha256": "sha256:6df7ac37bd5d31d5e5dc55bb20eb76fecb1941b694171ee8be80ee9af968c29e",
+      "gateway_result": "succeeded",
+      "patch_applied_exactly_once": true,
+      "raw_model_patch_is_final_submitted_diff": false
+    }
+  },
+  "context_rehydration_diagnostic": {
+    "retry_context_sequence": 30,
+    "retry_model_call_sequence": 31,
+    "retry_request_artifact_id": "art_b448dfc7664241368d98957892d0ee2f",
+    "retry_request_artifact_sha256": "sha256:51b2fcfa7e788635c06d93dc56d741f5d25d2490fab5b34420e3e8b3dc5b2e70",
+    "retry_request_bytes": 30463,
+    "provider_state_used": false,
+    "previous_response_id_used": false,
+    "rejected_patch_content_hash_present": true,
+    "rejected_patch_raw_bytes_present": false,
+    "structured_failure_present": true,
+    "provider_truncation_observed": false,
+    "inference": "The stateless retry retained the rejected candidate identity and error but not its body, so solution continuity was not guaranteed.",
+    "audit_basis": "post-run D-037 target audit",
+    "qualification_check_active_in_run": false,
+    "followup_required": true
+  },
+  "prompt_token_integrity": {
+    "model_call_count": 10,
+    "exact_input_count_matches": 10,
+    "all_responses_completed": true,
+    "truncation_mode": "disabled",
+    "incomplete_response_count": 0,
+    "prompt_cut_observed": false,
+    "boundary": "Token equality proves provider delivery of the constructed request, not completeness of PatchLoop's selected context."
+  },
+  "submitted_patch": {
+    "artifact_id": "art_d5ea9dd2372949369be9b869f0f18e1c",
+    "patch_sha256": "sha256:6df7ac37bd5d31d5e5dc55bb20eb76fecb1941b694171ee8be80ee9af968c29e",
+    "diff_sha256": "sha256:6df7ac37bd5d31d5e5dc55bb20eb76fecb1941b694171ee8be80ee9af968c29e",
+    "changed_files": [
+      "babel/numbers.py"
+    ],
+    "added_lines": 9,
+    "deleted_lines": 0,
+    "official_evaluator_input": true,
+    "task_acceptance": "fail"
+  },
+  "failure_record": {
+    "failure_id": "fail_4c443156db2b5034affa5bd4326d5d6c",
+    "content_hash": "sha256:e47d19f50f17b520c5cb794eaa057aec4e80f347894bb8847b95849fc863ed1b",
+    "primary_cause": "hidden-acceptance-failure",
+    "phase": "REVIEW",
+    "classification_method": "deterministic-verdict-priority-v1",
+    "review_status": "unreviewed"
+  },
+  "evaluation_receipt": {
+    "receipt_sha256": "sha256:d17afa992e888a4f0f21946e8e71c9fc62d0fca3f92a2a9b3ed2f68e2fd0506b",
+    "worktree_diff_hash": "sha256:6df7ac37bd5d31d5e5dc55bb20eb76fecb1941b694171ee8be80ee9af968c29e",
+    "evaluator_duration_ms": 4750,
+    "bundle_validated": true
+  },
+  "spend_to_date": {
+    "mini_r1_usd": 0.07745325,
+    "mini_r2_usd": 0.07796475,
+    "mini_lane_cumulative_usd": 0.155418,
+    "historical_terra_lane_cumulative_usd": 0.828864375,
+    "all_paid_pilot_list_price_total_usd": 0.984282375,
+    "invoice_charge_verified": false
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; evaluator-only details and raw provider payloads are not bundled in a clean checkout.",
+    "portable_artifacts": "Secret-scanned exact applied tool argument and final submitted diff are tracked for clean-checkout hash verification.",
+    "private_evaluator_details": "Only aggregate verdicts are reported; hidden identifiers, assertions, inputs, and stdout remain excluded."
+  },
+  "portable_artifacts": [
+    {
+      "role": "applied-model-tool-argument",
+      "path": "reports/live-pilot/artifacts/run_4a9737ec91964dca-applied-model-candidate.patch",
+      "bytes": 1458,
+      "sha256": "sha256:da03a2b275ae0bb2222d4cfe1d7d16690e19252f3673c30ef79ffc3f72660dc4"
+    },
+    {
+      "role": "final-submitted-task-failure-diff",
+      "path": "reports/live-pilot/artifacts/run_4a9737ec91964dca-submitted.patch",
+      "bytes": 1017,
+      "sha256": "sha256:6df7ac37bd5d31d5e5dc55bb20eb76fecb1941b694171ee8be80ee9af968c29e"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-gpt54mini-pilot-20260729-r2.json",
+      "bytes": 10674,
+      "sha256": "sha256:34112db6f6642d1b7d1c9ae06b72d0365c2887464a4426fa379d7da5338de5db"
+    },
+    {
+      "path": ".patchloop/qualifications/run_4a9737ec91964dca.json",
+      "bytes": 7661,
+      "sha256": "sha256:b348822d64cd604bea620c206f6f7a2858010f0eda97e4628e708921cbdeb6b0"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_4a9737ec91964dca/manifest.json",
+      "bytes": 2366,
+      "sha256": "sha256:3d331f48191f6cb34f91852498e7764016c07fc8c66af4c7b2f00dedbe7313de"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_4a9737ec91964dca/result.json",
+      "bytes": 4970,
+      "sha256": "sha256:c115fe327749923bf5ece651474a11741efae14b726e1a7e1a3ba24c5d053fa8"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_4a9737ec91964dca/provenance.json",
+      "bytes": 1399,
+      "sha256": "sha256:aff9b02d2e39250cf676198adfbd4cd4b443607b08b268ff912695b2f554ec92"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_4a9737ec91964dca/evaluation-receipt.json",
+      "bytes": 599,
+      "sha256": "sha256:d17afa992e888a4f0f21946e8e71c9fc62d0fca3f92a2a9b3ed2f68e2fd0506b"
+    },
+    {
+      "path": ".patchloop/experiments/plans/fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca.json",
+      "bytes": 5502,
+      "sha256": "sha256:1c50974c92ba91150caef7c48341d0c6a79d7dbf86278b0bf92ed0aa7c2a15c0"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-gpt54mini-pilot-20260729-r2.jsonl",
+      "bytes": 2690,
+      "sha256": "sha256:85ea24b874da5641460416221832c4d6f58a2a8718876341a3ee541fe278d028"
+    },
+    {
+      "path": ".patchloop/runs/run_4a9737ec91964dca/submitted.patch",
+      "bytes": 1017,
+      "sha256": "sha256:6df7ac37bd5d31d5e5dc55bb20eb76fecb1941b694171ee8be80ee9af968c29e"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/34/816a5ca544453a45f16481b868f470623227a2ab46e2f26d9461bec6421067",
+      "bytes": 1326,
+      "sha256": "sha256:34816a5ca544453a45f16481b868f470623227a2ab46e2f26d9461bec6421067"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/da/03a2b275ae0bb2222d4cfe1d7d16690e19252f3673c30ef79ffc3f72660dc4",
+      "bytes": 1458,
+      "sha256": "sha256:da03a2b275ae0bb2222d4cfe1d7d16690e19252f3673c30ef79ffc3f72660dc4"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/51/b2fcfa7e788635c06d93dc56d741f5d25d2490fab5b34420e3e8b3dc5b2e70",
+      "bytes": 30463,
+      "sha256": "sha256:51b2fcfa7e788635c06d93dc56d741f5d25d2490fab5b34420e3e8b3dc5b2e70"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/96/057999174eba8a1340089439d4687dc4e5b1a44a43de02e307de549939a5ab",
+      "bytes": 2285,
+      "sha256": "sha256:96057999174eba8a1340089439d4687dc4e5b1a44a43de02e307de549939a5ab"
+    },
+    {
+      "path": ".patchloop/failures/dev-validation/fail_4c443156db2b5034affa5bd4326d5d6c.json",
+      "bytes": 604,
+      "sha256": "sha256:e47d19f50f17b520c5cb794eaa057aec4e80f347894bb8847b95849fc863ed1b"
+    }
+  ],
+  "diagnostic_gate": {
+    "telemetry_and_submission_path_exercised": true,
+    "evaluator_and_receipt_path_exercised": true,
+    "task_acceptance_passed": false,
+    "rejected_patch_retry_context_complete": false,
+    "engineering_followup_required": true,
+    "ready_for_v2_terra_pilot": false,
+    "readiness_basis": "post-run engineering sequencing decision, not an r2 qualification check"
+  },
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "prompt_token_integrity_passed": true,
+    "trace_qualification_artifact_qualified": true,
+    "evaluation_reached": true,
+    "v2_submission_lifecycle_passed": true,
+    "live_model_task_success": false,
+    "official_scope_compliant_success": false,
+    "accepted_live_pilot": false,
+    "mini_r2_substitutes_for_terra_pilot": false,
+    "development_campaign_unlocked": false,
+    "development_campaign_executed": false,
+    "core_campaign_executed": false
+  }
+}

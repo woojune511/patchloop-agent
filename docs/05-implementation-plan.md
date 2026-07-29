@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **v2 mini corrective diagnostic preflight**
+현재 milestone: **rejected-patch retry context hardening**
 
 2026-07-29 구현 스냅샷:
 
@@ -9,10 +9,10 @@
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | done (v2 corrective gate offline-verified) | Current-diff check/review와 structured submission gate |
+| Phase 3 state machine | v2 submission gate live-verified; retry context gap open | Current-diff check/review/`finish_task`는 live 통과, rejected patch body rehydration은 미구현 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | historical v1 pilot complete, v2 pilot pending | r3가 당시 official SCRR와 v1 qualification을 통과했지만 v2 campaign gate에는 재사용하지 않음 |
+| Phase 6 evaluation | historical v1 pilot complete, mini v2 diagnostic complete, Terra v2 pilot pending | Mini r2는 v2 evaluator/qualification을 통과했지만 task acceptance 실패; post-run audit에서 D-037 target 미충족 확인 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -28,8 +28,8 @@ contract 구조만으로 stress sentinel에 선정됐고 30-run schedule과 함�
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
 smoke, 스무 research admission과 dataset freeze는 2026-07-28까지 통과했다. 동결된
-stress schedule은 아직 실행되지 않았고, Live OpenAI와 96-run core campaign도 완료가
-아니며 `docs/08-limitations.md`에서 별도로 추적한다.
+stress schedule은 아직 실행되지 않았고, Live OpenAI development campaign과 96-run core
+campaign도 완료가 아니며 `docs/08-limitations.md`에서 별도로 추적한다.
 
 ## 1. Sequencing rule
 
@@ -93,7 +93,7 @@ task의 no-memory development trace를 qualification하는 것이다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — historical v1 pilot passed, v2 pilot pending
+## Current live trace gate — mini v2 diagnostic complete, retry context hardening pending
 
 목표: 첫 paid call 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -107,10 +107,12 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 3 | implemented, interrupted-run recovery pending | Paid call 전 fsync하는 hash-chained campaign journal | Existing journal이 hard-crash 뒤 새 schedule 시작을 차단; 자동 resume은 미구현 |
 | 4 | implemented, legacy artifacts preserved | Source-evidence-bound `trace-qualification-v1`/`v2`와 sanitized failure linkage | v1 artifact byte stability, v2 runtime/lifecycle/provenance binding |
 | 5 | historical v1 evidence only | Babel #1042 `no_memory` r3 pilot | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass; current v2 gate에는 부적격 |
-| 6 | pending clean commit, preflight and approval | Corrected v2 mini model-candidate diagnostic 1회, $2 cap | D-031 telemetry, v2 submission/evaluator lifecycle과 `trace-qualification-v2`; Terra gate와 분리 |
-| 7 | blocked on order 6 | Corrected v2 Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, evaluator reached |
-| 8 | blocked on order 7 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
-| 9 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
+| 6 | completed; task acceptance failed | Corrected v2 mini model-candidate diagnostic 1회, $2 cap | `run_4a9737ec91964dca`: telemetry, submission/evaluator lifecycle과 qualification pass; hidden acceptance fail |
+| 7 | in progress | `phase-evidence-v3` rejected mutating-tool argument의 bounded next-turn rehydration과 qualification check | Candidate bytes + rejection reason을 stateless retry가 함께 수신; private/CAS budget boundary 유지 |
+| 8 | blocked on order 7 | 새 mini model-candidate diagnostic 1회, 새 hash/승인 | Rejected mutation retry를 실제 exercise하고 context/lifecycle/evaluator/qualification 확인; task outcome은 별도 보고 |
+| 9 | blocked on order 8 | Corrected Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
+| 10 | blocked on order 9 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
+| 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
 Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
 `standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.
@@ -154,10 +156,26 @@ submission rejection, 세 번째 `premature-stop`, 성공 뒤 phase 전이, stru
 error, advisory repeat signal, current-diff checkpoint와 viewer lifecycle을 offline test로
 검증했다. 기존 v1 replay와 r1~r3 및 mini r1 trace는 그대로 유지한다.
 
-이 corrective gate는 아직 live model로 재검증하지 않았다. Terminal r1 suite는 재사용하지
-않는다. 새 r2는 `experiments/dev-validation-gpt54mini-pilot-r2.yaml`의 새 experiment ID,
-clean execution hash, no-call preflight와 별도 사용자 비용 승인이 있어야 한다. 성공해도
-Terra pilot 선행 gate를 대신하지 않는다.
+이 corrective gate는 clean harness commit
+`ff33d18a520de6fd8949ce9d873e26241b4382ae`, 별도 승인 execution hash
+`sha256:fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca`로
+정확히 한 번 live 재검증했다. R2 `run_4a9737ec91964dca`는 final check, complete diff,
+structured `finish_task`, evaluator receipt와 `trace-qualification-v2` 22/22 check를
+통과했다. 10번의 input-token pre-count도 provider usage와 모두 일치했고 truncation이나
+incomplete response는 없었다.
+
+그러나 official hidden acceptance가 실패해 task success는 아니다. 첫 patch는 잘못 붙은
+marker 때문에 거부됐는데, `store=false`/provider-state 미사용인 다음 request는 그 patch의
+content hash와 structured error만 포함하고 raw candidate body는 복원하지 않았다. 따라서
+stateless retry continuity는 보장되지 않았다. 이후 제출된 별도 candidate에는 공개
+계약만으로 확인 가능한 grouping/separator 제거 결함이 있었다. Trace는 body 누락이 hidden
+failure를 일으켰다거나 첫 candidate가 통과했을 것이라는 반사실을 증명하지 않는다.
+Provider prompt cut은 관찰되지 않았고, 별도로 PatchLoop context-selection gap은 남는다.
+Terminal r1/r2 suite와 run은 재사용하지 않는다. 다음 paid 실행 전에 rejected mutation
+candidate의 bounded/hash-bound body와 rejection reason을 다음 turn에 함께 제공하고 이를
+offline qualification test로 고정한다. 이후 새 experiment ID, clean hash와 별도 사용자
+승인을 받아 mini diagnostic을 다시 실행한다. Mini 결과는 성공하더라도 Terra pilot
+선행 gate를 대신하지 않는다.
 
 2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
 output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
@@ -170,7 +188,7 @@ generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 9
 runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더한 운영상 안전
 margin이다.
 
-### Historical v1 pilot — passed; current v2 pilot gate — not run
+### Historical v1 pilot — passed; mini v2 diagnostic — qualified task failure
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
@@ -179,7 +197,8 @@ margin이다.
   `evaluation_reached=true` 당시 acceptance를 함께 통과했다.
 - 새 v2 development suite는 r3를 고정하지 않는다. 같은 Terra model/budget, harness
   commit, tool/context runtime-contract hash의 `trace-qualification-v2` pilot이 새로
-  통과하기 전에는 `pilot_run_id`를 비워 두고 preflight를 차단한다.
+  evaluator에 도달하기 전에는 `pilot_run_id`를 비워 두고 preflight를 차단한다. Pilot
+  task success는 이 harness acceptance와 별도 outcome으로 보고한다.
 - 12-run campaign은 새 clean commit의 no-call preflight, exact execution hash 검토와 별도
   $20 승인 전에는 시작하지 않는다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
@@ -229,7 +248,8 @@ qualification hash는
 `sha256:5bc11b4087061921a415d94caeb0ac8370e39013f1d94a531130256fd3101811`,
 현재 source evidence hash는
 `sha256:f4726a1d6c2abfdf859c92135ae345dffb2075aaa9d5a7f0fc4fb7b1b0259322`다.
-이 evidence로 pilot gate는 통과했지만 12-run development campaign은 아직 실행하지 않았다.
+이 evidence는 당시 v1 pilot gate만 통과했으며, 현재 v2 development campaign gate에는
+재사용하지 않는다. 12-run development campaign은 아직 실행하지 않았다.
 
 ## Phase 1. Evaluation Foundation
 
