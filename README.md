@@ -47,7 +47,7 @@ receipt 순서와 `trace-qualification-v2`는 통과했지만 hidden acceptance�
 `scope_compliant_success=false`인 task failure다. Prompt token은 10/10 정확히 일치했고
 provider truncation도 없었다. 다만 첫 rejected patch 뒤 stateless context가 patch hash와
 오류는 보존하면서 body는 복원하지 않은 continuity gap이 확인됐다. 따라서 이 run은
-accepted pilot가 아니며 Terra 또는 development campaign gate를 열지 않는다. Aggregate
+accepted pilot가 아니며 현재 primary development campaign gate를 열지 않는다. Aggregate
 verdict와 hash-bound artifact는
 [mini r2 evidence record](reports/live-pilot/dev-validation-gpt54mini-pilot-20260729-r2.json)에
 보존했다.
@@ -65,7 +65,7 @@ offline suite에서 통과했다. Terminal mini D-037 r3 suite에는 retry episo
 provider에서 실행됐지만 mutation 전에 여덟 번째 응답이 per-call 4,096-token ceiling에
 도달해 incomplete로 끝났다. 8회 input pre-count는 모두 provider usage와 일치했고 input
 prompt cut은 관찰되지 않았지만 evaluator와 rejected retry episode에는 도달하지 못했다.
-따라서 이 terminal run은 D-037을 검증하거나 반증하지 않으며 Terra/development gate를
+따라서 이 terminal run은 D-037을 검증하거나 반증하지 않으며 primary development gate를
 열지 않는다.
 
 별도 승인 hash
@@ -99,7 +99,7 @@ rejection이나 automatic retry는 추가하지 않으므로 r5가 evaluator에 
 `trace-qualification-v2` 23/23을 통과했다. 사용량은 121,366 input + 9,913 output token,
 계산상 `$0.135633`이다. 그러나 rejected candidate와 retry episode가 모두 0이므로 D-037
 diagnostic은 `retry_episode_not_observed`로 terminal inconclusive다. 이 run은 task 성공
-evidence이지만 D-037을 검증하거나 반증하지 않고 Terra/development gate를 열지 않으며,
+evidence이지만 D-037을 검증하거나 반증하지 않고 primary development gate를 열지 않으며,
 계약대로 자동 재실행하지 않는다. Aggregate evidence는
 [mini D-037 r5 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r5.json)에
 보존했다.
@@ -123,6 +123,14 @@ rejection 1회, verified retry 1회, rejected action `PatchApplied` 0회와 eval
 효과가 아니다. Aggregate evidence는
 [mini D-037 r6 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json)에
 보존하며 같은 hash/run을 재실행하지 않는다.
+
+D-045는 사용자의 비용·snapshot 고정 선택을 반영해 앞으로의 primary pilot,
+memory-development와 core 비교 모델을 `gpt-5.4-mini-2026-03-17`로 통일했다. Reasoning은
+medium, mode는 standard, service tier는 default이며, r5/r6에서 output/tail-budget
+confounder 없이 완주한 25,000 per-call output과 200,000 run-total budget을 모든 조건에
+같게 적용한다. Historical Terra와 mini r1-r6의 당시 purpose와 판정은 바꾸지 않는다. 다음
+paid gate는 controlled fault가 없는 별도 `development-validation-live-pilot`이며 새 clean
+execution hash와 최대 $2 승인이 필요하다.
 
 ## 구현된 핵심 경로
 
@@ -261,12 +269,13 @@ patchloop serve
 ## Live/OpenAI와 공식 campaign gate
 
 Responses API adapter는 host process에서만 API key를 읽고 container, checkpoint, event payload에
-전달하지 않는다. 현재 live sequence는 다음 두 config로 고정한다.
+전달하지 않는다. 현재 live sequence는 primary config와 historical diagnostic lane으로
+분리한다.
 
 | Purpose | Task/condition/repetition | 상한 |
 | --- | --- | ---: |
-| `development-validation-live-pilot` | Babel #1042, `no_memory`, 1회 | $2 |
-| `development-validation-model-candidate-pilot` | Babel #1042, mini dated snapshot, `no_memory`, 1회 | $2 |
+| `development-validation-live-pilot` | Babel #1042, mini dated snapshot, `no_memory`, 1회 | $2 |
+| `development-validation-model-candidate-pilot` | Historical mini diagnostics only; 재실행 금지 | $2 |
 | `memory-development-no-memory` | frozen memory-development 6개, `no_memory`, 각 2회(12 run) | $20 |
 
 첫 pilot evidence는 `run_c6f13dd9a1a1472d`다. 실제 비용은 `$0.34025875`, model/tool call은
@@ -347,7 +356,7 @@ Corrective contract는
 `experiments/dev-validation-gpt54mini-d037-r4.yaml`로 분리했다. 공식
 [reasoning guide](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning)의
 초기 권고에 맞춰 per-call 25,000 token과 total 120,000 token을 profile v2에 함께 고정하고,
-historical mini r1~r3와 Terra/core 계약은 바꾸지 않는다. 자동 incomplete-response retry도
+historical mini r1~r3와 당시 Terra/core 계약은 바꾸지 않는다. 자동 incomplete-response retry도
 추가하지 않았다. Full offline 검증 뒤 승인된 execution hash로 r4를 정확히 한 번 실행했으며,
 13개 응답은 모두 completed였지만 `REVIEW`의 다음 호출이 total-budget reservation에 의해
 provider 전에 차단됐다. Qualification 21/22의 유일한 실패는 실제 token mismatch가 아니라
@@ -361,14 +370,27 @@ block을 고정한 뒤 별도 hash로 정확히 한 번 실행됐다. `run_0ad86
 task와 trace qualification은 통과했지만 rejected candidate가 없어 diagnostic은
 inconclusive다. R4와 r5의 승인이나 hash는 재사용하지 않는다. D-043의 별도 r6/profile v4는
 controlled rejection을 도입한 뒤 새 hash로 한 번 실행됐고, exact retry와 evaluator gate를
-통과했다. R6도 immutable하며 재실행하지 않는다. 다음은 별도로 승인된 Terra
-development-validation pilot이
+통과했다. R6도 immutable하며 재실행하지 않는다. 다음은 별도로 승인된 fault-free mini
+development-validation campaign pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
 harness gate와 별도로 보고한다.
 
 기존 mini D-037 r3, r4, r5와 r6 suite는 terminal inspection 전용이다. Journal이나 result를
 삭제하거나 approval flag를 다시 전달하지 않는다.
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml `
+  --preflight-only
+```
+
+과거 Terra r3의 `experiments/dev-validation-pilot.template.yaml`은 evidence 해석을 위해
+원래 계약 그대로 남아 있으며 preflight가 `HISTORICAL_SUITE_IMMUTABLE`로 재실행을 차단한다.
+새 primary suite와 execution hash만 승인 후보가 된다.
+
+새 hash와 최대 $2 승인을 받은 fault-free pilot이 evaluator와 qualification을 통과한 뒤
+그 run ID를 development suite의 `pilot_run_id`에 넣고 별도 preflight를 실행한다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -380,8 +402,9 @@ uv run patchloop evaluate `
 manifest가 지정한 canonical task package path와 public/private spec hash, base commit,
 digest-pinned evaluator environment와 observed Docker image identity, clean Git commit,
 OpenAI SDK, `OPENAI_API_KEY`의 존재 여부만, custom base URL 부재,
-`gpt-5.6-terra` + medium reasoning + standard mode + default service tier, 72시간 이내 공식
-가격과 12개 run의 전체 budget reserve를 확인한다. Credential 값은 출력하거나 hash에 넣지
+`gpt-5.4-mini-2026-03-17` + medium reasoning + standard mode + default service tier,
+25,000/200,000 budget, 72시간 이내 공식 가격과 12개 run의 전체 budget reserve를 확인한다.
+Credential 값은 출력하거나 hash에 넣지
 않는다. 환경 blocker와 비용을 확인한 뒤 사용자가 별도로 최대 $20를 승인한 경우에만 같은
 hash를 invocation-only 승인으로 전달한다.
 
@@ -416,14 +439,14 @@ resume은 아직 구현되지 않았다.**
 각 task package와 생성 manifest의 task/model/budget/environment identity도 plan과 대조한
 뒤에만 `RunStarted`와 model call로 넘어간다.
 
-2026-07-28에 확인한 공식 Terra API rate는 1M token당 input $2.50, cached input $0.25,
-cache write $3.125, output $15다. 가격 source는
-[OpenAI API pricing](https://developers.openai.com/api/docs/pricing)이며 preflight 시점 기준
-72시간을 넘으면 다시 확인해야 한다. 현재 model page에는 dated snapshot 없이
-`gpt-5.6-terra` alias만 제공되므로 SDK version, Git commit과 72시간 execution window를
-provenance로 남긴다.
+2026-07-29T22:39:42Z에 다시 확인한 공식 mini standard rate는 1M token당 input $0.75,
+cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 않았다. 가격 source는
+[OpenAI API pricing](https://developers.openai.com/api/docs/pricing)이고 model page는
+`gpt-5.4-mini-2026-03-17`을 current snapshot, 400,000 context, 272,000 max input,
+128,000 max output으로 게시한다. Preflight 시점 기준 72시간을 넘으면 가격을 다시 확인하며
+SDK version, Git commit과 execution window를 provenance로 남긴다.
 
-새 tool-v2/context-v3 Terra pilot이 model, budget, harness commit, runtime-contract hash와
+새 tool-v2/context-v3 mini campaign pilot이 model, budget, harness commit, runtime-contract hash와
 `trace-qualification-v2`를 모두 통과한 뒤에만 그 run ID를 no-memory development
 suite에 넣고 새 execution hash를 preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
 input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
@@ -445,7 +468,7 @@ evidence로 유지한다.
 `experiments/dev-validation-gpt54mini-d037-r3.yaml`이며 세 suite 모두 당시
 `gpt-5.4-mini-2026-03-17` + medium, run total 90,000 token, per-call output 4,096,
 $2 cap으로 고정한다. 별도 `development-validation-model-candidate-pilot` purpose이므로
-기존 Terra memory/core 계약의 선행 gate나 결과로 집계하지 않는다. 매 turn의 exact input
+새 primary campaign pilot이나 결과로 집계하지 않는다. 매 turn의 exact input
 count와 4,096-token response allowance가 남은 90,000 안에 함께 들어가지 않으면 generation
 call을 시작하지 않는다.
 새 r4 corrective suite만 diagnostic profile v2로 per-call 25,000과 total 120,000을
@@ -478,7 +501,7 @@ exercise하지 못했다. Mini r5는 official task와 qualification을 통과했
 harness retry branch와 evaluator 도달을 검증했지만 natural recovery rate는 측정하지 않는다.
 여섯 mini run의 누적 계산 비용은 `$0.62150025`, 아홉 paid pilot의 계산상 총액은
 `$1.450364625`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5와 r6는
-자동 재실행하지 않는다. 별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run
+자동 재실행하지 않는다. 별도 tool-v2/context-v3 mini campaign pilot이 통과하기 전에는 12-run
 development campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),

@@ -208,13 +208,17 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 - OpenAI Responses adapter is contract-tested with a fake client and has two Terra failure traces,
   one accepted historical Terra live pilot, four mini model-candidate failure traces and one
-  official mini task success with an inconclusive D-037 diagnostic.
+  official mini task success with an inconclusive D-037 diagnostic, plus one controlled mini
+  diagnostic pass.
   The accepted
   pilot is one development-validation task, not a development/core campaign result.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
-  $20 cap. This is an execution contract, not a completed experiment.
+  $20 cap. D-045 fixes future primary runs to `gpt-5.4-mini-2026-03-17`,
+  25,000 per-call output and 200,000 run-total tokens. The historical Terra r3 suite remains
+  readable but preflight-blocked; the new primary suite has not called the provider.
+  This is an execution contract, not a completed experiment.
 - The terminal `dev-validation-gpt54mini-d037-r3.yaml` suite bound
   `experiment-diagnostic-v1` to its consumed execution hash. Its post-run consumer separates generic
   qualification from a `passed`, `inconclusive` or `failed` retry exercise, requires evaluator
@@ -223,7 +227,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - A no-call preflight checks frozen dataset identity/role, canonical task package path,
   public/private spec hash, digest-pinned environment and observed Docker identity, clean Git
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
-  Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
+  primary mini snapshot/medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
   only after the approved plan is durably persisted. All nine paid-pilot host preflights reached
   `ready=true`; the development campaign requires its own clean execution hash and approval.
@@ -284,14 +288,16 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   current-diff checkpoint state. Mini r2 validated the final check/review/submission/evaluator
   path live, but its rejected-patch retry request omitted the candidate body and its submitted
   patch failed hidden acceptance. D-037 now restores exact rejected candidate/reason bytes on the
-  first next request and qualifies them against CAS; this repair has only offline evidence.
+  first next request and qualifies them against CAS; this repair has offline evidence and one
+  controlled provider exercise, but no natural-rejection rate evidence.
   Existing v1/v2 traces and replays are not rewritten.
 - v2 `finish_task` now freezes exact submitted bytes in CAS before acceptance, binds that artifact
   through `SubmissionAccepted`, evaluator input and `RunResult`, and reconciles nine tested crash
   boundaries without duplicate lifecycle or DONE transition. Mini r2 exercised the normal live
   path; crash-boundary recovery remains offline evidence.
 - The no-memory development preflight rejects a pilot unless qualification v2 records the same
-  Terra model, budget, harness commit, tool/context versions and exact runtime-contract hash.
+  primary mini model, 25,000/200,000 budget, harness commit, tool/context versions and exact
+  runtime-contract hash.
   Mini r2 validated much of the corrected v2 lifecycle at lower list-price exposure, but it cannot
   populate `pilot_run_id` and exposed the D-037 retry-context gap. Consequently `pilot_run_id` is
   currently empty. Offline context hardening and the suite-specific machine gate are complete;
@@ -309,8 +315,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   exact next-request recovery plus evaluator arrival. The single approved r6 provider run passed
   that gate, official task evaluation and trace qualification. This proves the harness branch for
   one controlled intervention, not natural model-error recovery frequency, recovery rate, memory
-  benefit or Terra quality. A tool-v2/context-v3 Terra pilot still requires a separate clean hash
-  and approval.
+  benefit or primary campaign quality. A fault-free tool-v2/context-v3 mini pilot still requires a
+  separate clean hash and approval.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -385,20 +391,19 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   result exists.
 - Three capped Terra Babel live pilots were executed. r1 and r2 failed acceptance; r3
   `run_3cb86f8d70094a11` passed official SCRR and trace qualification. Their cumulative cost is
-  `$0.828864375`. All three use the legacy v1 runtime; a new tool-v2/context-v3 Terra pilot is
-  required before the $20/12-run no-memory development campaign, which has not been executed. The
-  2026-07-28 configured official rates—$2.50/M
-  input, $0.25/M cached input, $3.125/M cache-write input and $15/M output—must be refreshed if
-  older than 72 hours at invocation. Only the
-  `gpt-5.6-terra` alias, not a dated Terra snapshot, is currently recorded.
+  `$0.828864375`. All three use the legacy v1 runtime. Their 2026-07-28 configured rates were
+  $2.50/M input, $0.25/M cached input, $3.125/M cache-write input and $15/M output, and only the
+  `gpt-5.6-terra` alias was recorded. D-045 preserves these facts but supersedes Terra for future
+  runs; the required tool-v2/context-v3 pilot now uses the dated mini primary contract.
 - The exact request artifact, input-token-count reconciliation and explicit
   `truncation=disabled` telemetry in D-031 were implemented after r1-r3. Those immutable Terra
   traces do not contain the new fields. Mini run `run_d4fea5e7198b4abc` exercised and passed the
   `prompt-token-integrity-v1` qualification branch but did not reach evaluation.
 - Three historical one-run mini suites pinned `gpt-5.4-mini-2026-03-17`, medium effort,
   4,096 per-call / 90,000 total tokens and a $2 cap. Terminal r1 failed the submission lifecycle
-  before evaluation and does not change the frozen Terra memory-development or core comparison
-  contract. Terminal r2 reached evaluation and qualified but failed task acceptance and exposed a
+  before evaluation and did not change the then-current Terra memory-development or core comparison
+  contract. D-045 later changed only future primary runs. Terminal r2 reached evaluation and
+  qualified but failed task acceptance and exposed a
   rejected-patch continuity gap. Terminal r3 then failed on
   `incomplete/max_output_tokens` before mutation or evaluation. None of the three exact
   experiments may be rerun. A fourth terminal suite r4 pinned 25,000/120,000 under profile v2 and
@@ -415,13 +420,14 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   result. It has no synthetic rejection or automatic retry, so the result is terminal rather than
   a reason to spend again.
   The controlled r6 result validates one deliberate retry branch but does not satisfy the
-  tool-v2/context-v3 Terra pilot requirement. The six mini runs' calculated list-price total is
+  fault-free primary mini pilot purpose. The six mini runs' calculated list-price total is
   `$0.62150025`; all nine paid pilot runs total `$1.450364625`.
   These are usage-based estimates, not verified invoice charges.
-- PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
-  data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not
-  assumed to be free. `model_cost_usd` is a deterministic list-price estimate, not invoice
-  evidence; any incentive must be verified separately in the Usage and Costs dashboards.
+- PatchLoop preflights this function-tool run at official list prices. The account UI reports
+  possible complimentary shared-traffic usage, but applicability to this exact function-tool
+  invocation and invoice treatment has not been verified. `model_cost_usd` is therefore a
+  deterministic list-price estimate, not invoice evidence; any incentive must be checked
+  separately in the Usage and Costs dashboards.
 - The six scripted offline runs validate harness plumbing, not model capability or memory effectiveness.
   No portfolio performance claim about a live model should be made from them.
 

@@ -44,11 +44,16 @@ _SUPPORTED_QUALIFICATION_SCHEMA_VERSIONS = {
     LEGACY_QUALIFICATION_SCHEMA_VERSION,
     QUALIFICATION_SCHEMA_VERSION,
 }
-_TERRA_MODEL_ID = "gpt-5.6-terra"
+_LEGACY_TERRA_MODEL_ID = "gpt-5.6-terra"
 _GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 _GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 _GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
 _GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
+_CAMPAIGN_PURPOSES = {
+    ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+    ExperimentPurpose.CORE,
+}
 
 _TERMINAL_EVENTS = {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
 _AGENT_VISIBLE_ARTIFACT_EVENTS = {
@@ -2481,10 +2486,17 @@ def qualify_run(
         and manifest.model.reasoning_mode == "standard"
         and manifest.model.service_tier == "default"
     )
-    terra_model_contract = (
-        manifest.model.model_id == _TERRA_MODEL_ID
+    legacy_terra_model_contract = (
+        manifest.model.model_id == _LEGACY_TERRA_MODEL_ID
         and manifest.budget == Budget()
         and manifest.model.max_output_tokens == 4096
+    )
+    mini_campaign_contract = (
+        manifest.experiment is not None
+        and manifest.experiment.purpose in _CAMPAIGN_PURPOSES
+        and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
+        and manifest.budget == _GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+        and manifest.model.max_output_tokens == 25_000
     )
     mini_budget_and_output_contract = (
         (
@@ -2507,7 +2519,11 @@ def qualify_run(
         and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
         and mini_budget_and_output_contract
     )
-    model_contract_ok = common_model_contract and (terra_model_contract or mini_pilot_contract)
+    model_contract_ok = common_model_contract and (
+        legacy_terra_model_contract
+        or mini_campaign_contract
+        or mini_pilot_contract
+    )
     model_contract_details = {
         "model_id": manifest.model.model_id,
         "reasoning_effort": manifest.model.reasoning_effort,
@@ -2875,12 +2891,19 @@ def qualify_run(
     )
     telemetry_contract_required = bool(
         experiment is not None
-        and experiment.purpose
-        in {
-            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
-            ExperimentPurpose.CORE,
-        }
+        and (
+            experiment.purpose
+            in {
+                ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                ExperimentPurpose.CORE,
+            }
+            or (
+                experiment.purpose
+                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
+            )
+        )
     )
     telemetry_required = telemetry_contract_required or telemetry_declared
     prompt_telemetry_ok = not telemetry_required or telemetry_declared

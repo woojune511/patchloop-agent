@@ -38,8 +38,12 @@ from patchloop.util import canonical_json, ensure_within, sha256_bytes, sha256_t
 
 OFFICIAL_PRICING_URL = "https://developers.openai.com/api/docs/pricing"
 PRICING_MAX_AGE = timedelta(hours=72)
-TERRA_MODEL_ID = "gpt-5.6-terra"
+LEGACY_TERRA_MODEL_ID = "gpt-5.6-terra"
 GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
+CAMPAIGN_MODEL_ID = GPT54_MINI_PILOT_MODEL_ID
+HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS = frozenset(
+    {"dev-validation-live-pilot-20260728-r3"}
+)
 PRICE_FIELDS = (
     "input_price_per_million_usd",
     "cached_input_price_per_million_usd",
@@ -47,7 +51,7 @@ PRICE_FIELDS = (
     "output_price_per_million_usd",
 )
 OFFICIAL_PRICES_BY_MODEL = {
-    TERRA_MODEL_ID: {
+    LEGACY_TERRA_MODEL_ID: {
         "input_price_per_million_usd": 2.5,
         "cached_input_price_per_million_usd": 0.25,
         "cache_write_input_price_per_million_usd": 3.125,
@@ -60,11 +64,12 @@ OFFICIAL_PRICES_BY_MODEL = {
         "output_price_per_million_usd": 4.5,
     },
 }
-DEFAULT_BUDGET = Budget()
 GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
 GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
+CAMPAIGN_BUDGET = GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
 
 PILOT_TASK = (
     "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml"
@@ -125,7 +130,7 @@ class ExperimentSuite(BaseModel):
     """Human-authored, immutable campaign configuration.
 
     Version 2 gives every suite an explicit purpose. Version 1 remains loadable
-    for the existing offline smoke and frozen core template only.
+    for historical offline/core artifacts only.
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -138,7 +143,7 @@ class ExperimentSuite(BaseModel):
     conditions: list[MemoryCondition] = Field(min_length=1)
     repetitions: int = Field(default=2, ge=1, le=20)
     model: Literal["mock", "openai"] = "mock"
-    model_id: str = "gpt-5.6-terra"
+    model_id: str = CAMPAIGN_MODEL_ID
     reasoning_effort: Literal["medium"] = "medium"
     reasoning_mode: Literal["standard"] = "standard"
     service_tier: Literal["default"] = "default"
@@ -236,7 +241,15 @@ class ExperimentSuite(BaseModel):
                     "development-validation live pilot requires exactly the frozen "
                     "Babel task, no_memory, and one repetition"
                 )
-            self._require_live_defaults(cost_limit=2)
+            if self.experiment_id in HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS:
+                self._require_live_defaults(
+                    cost_limit=2,
+                    model_id=LEGACY_TERRA_MODEL_ID,
+                    budget=Budget(),
+                    max_output_tokens=4096,
+                )
+            else:
+                self._require_live_defaults(cost_limit=2)
         elif (
             self.purpose
             == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
@@ -282,6 +295,7 @@ class ExperimentSuite(BaseModel):
                     cost_limit=2,
                     model_id=GPT54_MINI_PILOT_MODEL_ID,
                     budget=GPT54_MINI_PILOT_BUDGET,
+                    max_output_tokens=4096,
                 )
         elif self.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
             if (
@@ -314,9 +328,9 @@ class ExperimentSuite(BaseModel):
         self,
         *,
         cost_limit: float,
-        model_id: str = TERRA_MODEL_ID,
+        model_id: str = CAMPAIGN_MODEL_ID,
         budget: Budget | None = None,
-        max_output_tokens: int = 4096,
+        max_output_tokens: int = CAMPAIGN_MAX_OUTPUT_TOKENS,
     ) -> None:
         if (
             self.model != "openai"
@@ -328,7 +342,7 @@ class ExperimentSuite(BaseModel):
                 "live research purpose requires OpenAI, medium reasoning, "
                 "standard mode, and default service tier"
             )
-        expected_budget = budget or DEFAULT_BUDGET
+        expected_budget = budget or CAMPAIGN_BUDGET
         if (
             self.model_id != model_id
             or self.budget != expected_budget
@@ -919,6 +933,12 @@ def preflight_suite(
     pricing["budget_upper_bound_usd"] = theoretical_cost_upper_bound
 
     if suite.model == "openai":
+        if suite.experiment_id in HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS:
+            _block(
+                blockers,
+                "HISTORICAL_SUITE_IMMUTABLE",
+                "this terminal historical suite is inspectable but must never be rerun",
+            )
         if suite.schema_version != "experiment-v2":
             _block(
                 blockers,

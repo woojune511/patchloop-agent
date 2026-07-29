@@ -1,6 +1,6 @@
-schema_version: experiment-v1
+schema_version: experiment-v2
 experiment_id: core-YYYYMMDD
-core: true
+purpose: core
 tasks:
   - tasks/same-repo-heldout/anyio-extensionless-entrypoint-worker-main/public.yaml
   - tasks/same-repo-heldout/hf-hub-custom-tqdm-class-contract/public.yaml
@@ -17,16 +17,28 @@ tasks:
 conditions: [no_memory, raw_trace, structured, selective_structured]
 repetitions: 2
 model: openai
-model_id: gpt-5.6-terra
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+max_output_tokens: 25000
+budget:
+  max_model_calls: 20
+  max_tool_calls: 50
+  max_total_tokens: 200000
+  wall_clock_timeout_seconds: 900
 seed: 20260723
-# Set true only after dated price verification and explicit user approval.
+# Deprecated config placeholders stay false/null. Paid approval is invocation-only.
 live_cost_approved: false
-estimated_cost_usd: 0
+approved_execution_hash: null
+estimated_cost_usd: 97.2
 cost_limit_usd: 150
-pricing_verified_at: null
-pricing_source_url: https://developers.openai.com/api/docs/models/gpt-5.6-terra
-input_price_per_million_usd: null
-output_price_per_million_usd: null
+pricing_verified_at: 2026-07-29T22:39:42Z
+pricing_source_url: https://developers.openai.com/api/docs/pricing
+input_price_per_million_usd: 0.75
+cached_input_price_per_million_usd: 0.075
+cache_write_input_price_per_million_usd: null
+output_price_per_million_usd: 4.5
 retrieval_threshold: 0.72
 memory_token_budget: 2000
 embedding_model: sentence-transformers/all-MiniLM-L6-v2

@@ -83,6 +83,8 @@ is preserved separately under `reports/live-pilot/`:
 
 - `experiments/dev-validation-pilot.template.yaml`: terminal Terra r3 contract; historical
   inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`: current fault-free primary
+  campaign-pilot contract; no provider call has been made
 - `experiments/dev-validation-gpt54mini-pilot.yaml`: terminal mini r1 contract;
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
@@ -99,7 +101,7 @@ is preserved separately under `reports/live-pilot/`:
   `no_memory` × 2 = 12 runs, $20 cap
 
 As of 2026-07-29 the official
-[OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the mini pilot is $0.75/M
+[OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the primary mini contract is $0.75/M
 uncached input, $0.075/M cached input and $4.50/M output, with no separate published cache-write
 rate. The suite pins `gpt-5.4-mini-2026-03-17`. Recheck the price within 72 hours of every live
 invocation and record the installed SDK version, clean Git commit and execution timestamp.
@@ -110,15 +112,26 @@ Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENA
 ```powershell
 git status --short
 uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml `
+  --preflight-only
+```
+
+This is the current primary campaign-pilot preflight and makes no provider call. Review its blockers,
+model/budget/pricing snapshot and exact execution hash. Do not add approval flags until the clean
+hash has been separately approved with the $2 cap.
+
+The original checked-in mini suite refers to terminal experiment
+`dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
+`run_d4fea5e7198b4abc` passed prompt-token trace qualification but failed before evaluation.
+Inspect it only with:
+
+```powershell
+uv run patchloop evaluate `
   --suite experiments/dev-validation-gpt54mini-pilot.yaml `
   --preflight-only
 ```
 
-The original checked-in mini suite refers to terminal experiment
-`dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
-`run_d4fea5e7198b4abc` passed prompt-token trace qualification but failed before evaluation, so the
-command above is inspection-only and should report the existing journal/terminal state. Do not add
-approval flags or execute this suite again.
+Do not add approval flags or execute this historical suite again.
 
 The corrective r2 contract is also terminal. This inspection-only command should now report the
 existing result/journal blockers:
@@ -281,7 +294,7 @@ uv run patchloop evaluate `
 
 It should report the existing journal/result blocker. Do not delete those artifacts or rerun the
 suite. Each `experiment-diagnostic-v1` requirement was part of its consumed execution hash. The
-mini diagnostic remains outside the Terra gate.
+mini diagnostic remains outside the current primary campaign gate.
 
 R4 was required to exercise a rejected mutating-tool retry to validate D-037; ordinary progress
 alone was insufficient. It stopped before submission, so the machine predicate remains unmet:
@@ -329,8 +342,8 @@ official task evaluation and trace qualification; its aggregate is preserved in
 [the r6 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json).
 Inspect the existing result and never invoke that suite/hash again.
 
-After that disposition gate is resolved, create a separately approved Terra
-development-validation pilot. Only after that run
+After that diagnostic gate, run the separately approved fault-free
+`gpt-5.4-mini-2026-03-17` primary development-validation pilot. Only after that run
 reaches the evaluator and produces a qualified `trace-qualification-v2` may its run ID be inserted
 into
 `experiments/dev-no-memory.template.yaml`. Development preflight then verifies the same model,

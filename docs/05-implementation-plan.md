@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **tool-v2/context-v3 Terra pilot preflight gate**
+현재 milestone: **tool-v2/context-v3 gpt-5.4-mini campaign-pilot preflight gate**
 
 2026-07-30 구현 스냅샷:
 
@@ -70,7 +70,7 @@ research task를 admission한다.
 terminal qualification evidence → 새 experiment/hash의 별도 승인 → terminal r5
 inconclusive 보존 → D-043 controlled r6 profile의 offline 구현 → 승인된 r6
 `run_73f5aaf7328a4ea5`의 terminal diagnostic pass까지 진행됐다. 다음은 별도 clean
-execution hash와 승인을 받아 tool-v2/context-v3 Terra pilot을 수행하고,
+execution hash와 승인을 받아 D-045의 fault-free tool-v2/context-v3 mini campaign pilot을 수행하고,
 그 pilot이 evaluator와 `trace-qualification-v2`를 통과한 뒤 여섯 memory-development
 task의 12-run no-memory campaign을 시작한다.
 
@@ -98,7 +98,7 @@ task의 12-run no-memory campaign을 시작한다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — r3/r4 frozen, r5 terminal inconclusive
+## Current live trace gate — mini primary campaign contract frozen
 
 목표: 각 paid invocation 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -117,7 +117,7 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 8 | terminal inconclusive | R5 mini model-candidate diagnostic 1회, 새 hash/승인 | `run_0ad8676d42614fbf`: official task와 qualification pass, rejected/retry 0; 자동 재실행 금지 |
 | 8a | completed (offline) | D-037 controlled diagnostic offline contract | V4 profile, first prepared candidate one-shot rejection, crash-safe no-mutation, exact next request, fail-closed qualifier와 529 passed/2 skipped broad regression |
 | 8b | completed; immutable | Controlled r6 provider diagnostic 1회, $2 cap | `run_73f5aaf7328a4ea5`: controlled/verified retry 1/1, rejected action mutation 0, evaluator·official task·qualification pass |
-| 9 | blocked on new hash/approval | Corrected Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
+| 9 | blocked on new hash/approval | Fault-free mini development-validation campaign pilot 1회, $2 cap | `gpt-5.4-mini-2026-03-17`, 25,000/200,000, runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
 | 10 | blocked on order 9 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
@@ -211,17 +211,19 @@ regression 뒤 r6는 commit `1333ab968e2f144b632c0cb5ca341ebd30e0ca4e`, executio
 controlled rejection 1회, verified retry 1회, rejected action mutation 0회, official
 hidden/regression/scope/safety와 qualification 23/23을 통과했다. 138,262 input + 13,800
 output token, 계산상 `$0.1657965`를 사용했다. 이 controlled result는 자연 error recovery
-rate나 memory 효과를 측정하지 않는다. Order 9는 별도 Terra hash와 승인 전에는 실행하지
+rate나 memory 효과를 측정하지 않는다. D-045는 Order 9와 이후 primary campaign을 dated
+mini snapshot으로 전환했다. Order 9는 별도 fault-free mini hash와 승인 전에는 실행하지
 않는다.
 
-Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
-`standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.
+Memory-development와 core live suite는 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode
+`standard`, service tier `default`, 25,000 max output token과 200,000 run-total budget을
+고정한다.
 D-031 telemetry의 historical development-validation provider pilot r1~r3는
 `gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run total
 90,000 token을 허용한다. Corrective r4만 diagnostic profile v2와 함께 25,000/120,000
 pair를 허용하고, 후속 r5 profile v3와 controlled r6 profile v4만 25,000/200,000 pair와
-`model-generation-block-v1`을 허용한다. 이 mini lane은 Terra/core 비교 계약을 변경하지
-않는다. Dataset hash는
+`model-generation-block-v1`을 허용한다. 이 historical diagnostic lane은 primary pilot
+purpose를 충족하지 않는다. Dataset hash는
 `sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`다.
 
 Preflight는 frozen dataset role/hash, manifest의 canonical task path, public/private hash와
@@ -279,8 +281,8 @@ Terminal r1/r2 suite와 run은 재사용하지 않는다. 다음 paid 실행 전
 candidate의 bounded/hash-bound body와 rejection reason을 다음 turn에 함께 제공하고 이를
 offline qualification과 suite-specific machine gate로 고정한다. 이후 새 experiment ID,
 clean hash와 별도 사용자 승인을 받아 mini diagnostic을 다시 실행한다. Mini 결과는
-성공하더라도 Terra pilot
-선행 gate를 대신하지 않는다.
+성공하더라도 당시 Terra pilot 선행 gate를 대신하지 않는다. D-045 이후에도 이 historical
+diagnostic purpose는 새 primary mini pilot purpose를 대신하지 않는다.
 
 그 후 commit `11a83c2cdff06978dc961e7b3b3c0caada3b386e`와 execution hash
 `sha256:c33a50abe48b554c37d95de4833d1d17ede816f4d128b9adc22e88c010e138e6`로
@@ -306,25 +308,23 @@ commit/execution hash와 별도 사용자 승인 아래 정확히 한 번 실행
 `run_0ad8676d42614fbf`는 evaluator에 도달했지만 natural rejection이 발생하지 않아
 inconclusive로 보존됐고 automatic retry하지 않는다.
 
-2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
-output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
-남긴다.
-
-2026-07-29 UTC에 다시 확인한 `gpt-5.4-mini` standard rate는 1M token당 input $0.75,
+2026-07-29T22:39:42Z에 다시 확인한 `gpt-5.4-mini` standard rate는 1M token당 input $0.75,
 cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 않았다. 90,000-token
 pilot은 exact input과 full 4,096-token response allowance가 남은 budget 안에 없으면
 generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 90,000-token
 runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더한 운영상 안전
-margin이다.
+margin이다. D-045 primary contract의 run reserve는 25,000/200,000에서 `$1.0125`,
+12-run은 `$12.15`, 96-run은 `$97.20`이다.
 
-### Historical Terra v1 pilot passed; mini r2 task failure; mini r3/r4 frozen, r5 inconclusive
+### Historical pilots preserved; current mini campaign pilot pending
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
 - 실제 환경에서 approval을 포함한 preflight가 `ready=true`다.
 - 사용자가 $2 pilot을 별도로 승인한 뒤 historical r3가 `trace-qualification-v1`과
   `evaluation_reached=true` 당시 acceptance를 함께 통과했다.
-- 새 v2 development suite는 r3를 고정하지 않는다. 같은 Terra model/budget, harness
+- 새 v2 development suite는 historical r3/r5/r6를 고정하지 않는다. 같은 primary mini
+  model/budget, harness
   commit, tool/context runtime-contract hash의 `trace-qualification-v2` pilot이 새로
   evaluator에 도달하기 전에는 `pilot_run_id`를 비워 두고 preflight를 차단한다. Pilot
   task success는 이 harness acceptance와 별도 outcome으로 보고한다.

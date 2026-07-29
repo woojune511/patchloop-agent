@@ -154,8 +154,10 @@ def _write_qualification(
     manifest = state.get_manifest(run_id)
     hash_value = "sha256:" + ("a" * 64)
     manifest.model.provider = "openai"
-    manifest.model.model_id = "gpt-5.6-terra"
+    manifest.model.model_id = "gpt-5.4-mini-2026-03-17"
+    manifest.model.max_output_tokens = 25_000
     manifest.model.provider_sdk_version = "test"
+    manifest.budget.max_total_tokens = 200_000
     suite = ExperimentSuite.model_validate(
         {
             "schema_version": "experiment-v2",
@@ -165,7 +167,14 @@ def _write_qualification(
             "conditions": ["no_memory"],
             "repetitions": 2,
             "model": "openai",
-            "model_id": "gpt-5.6-terra",
+            "model_id": "gpt-5.4-mini-2026-03-17",
+            "max_output_tokens": 25_000,
+            "budget": {
+                "max_model_calls": 20,
+                "max_tool_calls": 50,
+                "max_total_tokens": 200_000,
+                "wall_clock_timeout_seconds": 900,
+            },
             "cost_limit_usd": 20,
             "dataset_manifest_hash": dataset_manifest_hash,
         }

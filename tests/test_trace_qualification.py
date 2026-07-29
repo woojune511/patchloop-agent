@@ -79,9 +79,9 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
         repetitions = 2
         cost_limit = 20
         embedding_revision = "PIN_AT_FREEZE"
-        model_id = "gpt-5.6-terra"
-        budget = Budget()
-        max_output_tokens = 4096
+        model_id = manifest.model.model_id
+        budget = manifest.budget
+        max_output_tokens = manifest.model.max_output_tokens
         diagnostic = None
     elif purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT:
         tasks = [PILOT_TASK_PATH]
@@ -132,9 +132,9 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
         repetitions = 1
         cost_limit = 2
         embedding_revision = "PIN_AT_FREEZE"
-        model_id = "gpt-5.6-terra"
-        budget = Budget()
-        max_output_tokens = 4096
+        model_id = manifest.model.model_id
+        budget = manifest.budget
+        max_output_tokens = manifest.model.max_output_tokens
         diagnostic = None
     else:
         tasks = [f"qualification-core-task-{index}" for index in range(12)]
@@ -147,9 +147,9 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
         repetitions = 2
         cost_limit = 150
         embedding_revision = "test-revision"
-        model_id = "gpt-5.6-terra"
-        budget = Budget()
-        max_output_tokens = 4096
+        model_id = manifest.model.model_id
+        budget = manifest.budget
+        max_output_tokens = manifest.model.max_output_tokens
         diagnostic = None
 
     return ExperimentSuite.model_validate(
@@ -324,9 +324,9 @@ def _terminal_trace(
     write_execution_plan: bool = True,
     prompt_telemetry: bool = True,
     prompt_mismatch: bool = False,
-    model_id: str = "gpt-5.6-terra",
+    model_id: str = "gpt-5.4-mini-2026-03-17",
     budget: Budget | None = None,
-    max_output_tokens: int = 4096,
+    max_output_tokens: int | None = None,
     malformed_lifecycle: bool = False,
     complete_review_context: bool = True,
     actual_review_context: bool = True,
@@ -354,15 +354,36 @@ def _terminal_trace(
     _, dataset_hash, _ = load_dataset_manifest()
     outcome_label = "agent" if agent_failure else ("resolved" if resolved else "failure")
     run_id = f"run_qualification_{outcome_label}"
+    effective_budget = budget
+    if effective_budget is None:
+        effective_budget = (
+            Budget(max_total_tokens=200_000)
+            if model_id == "gpt-5.4-mini-2026-03-17"
+            else Budget()
+        )
+    effective_max_output_tokens = max_output_tokens
+    if effective_max_output_tokens is None:
+        effective_max_output_tokens = (
+            4096
+            if (
+                model_id == "gpt-5.4-mini-2026-03-17"
+                and effective_budget.max_total_tokens == 90_000
+            )
+            else (
+                25_000
+                if model_id == "gpt-5.4-mini-2026-03-17"
+                else 4096
+            )
+        )
     manifest = build_manifest(
         package,
         run_id=run_id,
         provider="openai",
         model_id=model_id,
         sandbox_backend="docker",
-        budget=budget,
+        budget=effective_budget,
         fault=fault,
-        max_output_tokens=max_output_tokens,
+        max_output_tokens=effective_max_output_tokens,
         agent_image_digest=(
             package.environment.image_digest if package.environment is not None else None
         ),
@@ -1149,12 +1170,14 @@ def test_live_memory_development_failure_is_qualified_and_eligible(tmp_path) -> 
     qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
 
     assert qualification["schema_version"] == "trace-qualification-v2"
-    assert qualification["model_id"] == "gpt-5.6-terra"
+    assert qualification["model_id"] == "gpt-5.4-mini-2026-03-17"
     assert qualification["reasoning_effort"] == "medium"
     assert qualification["reasoning_mode"] == "standard"
     assert qualification["service_tier"] == "default"
-    assert qualification["max_output_tokens"] == 4096
-    assert qualification["budget"] == Budget().model_dump(mode="json")
+    assert qualification["max_output_tokens"] == 25_000
+    assert qualification["budget"] == Budget(
+        max_total_tokens=200_000
+    ).model_dump(mode="json")
     assert qualification["harness_git_commit"]
     assert qualification["tool_schema_version"] == "v2"
     assert qualification["context_policy_version"] == "phase-evidence-v2"
@@ -2461,7 +2484,7 @@ def test_resolved_live_pilot_is_qualified_but_not_memory_eligible(tmp_path) -> N
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
-        prompt_telemetry=False,
+        prompt_telemetry=True,
     )
 
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
@@ -2471,6 +2494,28 @@ def test_resolved_live_pilot_is_qualified_but_not_memory_eligible(tmp_path) -> N
     assert qualification["dataset_role"] == "development-validation"
     assert qualification["outcome_kind"] == "resolved"
     assert qualification["memory_candidate_eligible"] is False
+
+
+def test_primary_mini_live_pilot_requires_prompt_token_telemetry(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=False,
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    assert prompt_check["passed"] is False
+    assert prompt_check["details"]["required"] is True
+    assert qualification["qualified"] is False
 
 
 def test_publicly_disclosed_private_marker_does_not_fail_leak_scan(tmp_path) -> None:
@@ -2484,7 +2529,7 @@ def test_publicly_disclosed_private_marker_does_not_fail_leak_scan(tmp_path) -> 
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
-        prompt_telemetry=False,
+        prompt_telemetry=True,
         context_text=json.dumps(package.public.model_dump(mode="json")),
     )
 

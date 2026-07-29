@@ -318,17 +318,18 @@ schedule에는 포함하지 않는다.
 
 Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는다. Provider가 immutable model snapshot을 제공하지 않으면 실행 시점과 provider revision을 기록하고 limitation으로 보고한다.
 
-현재 memory-development와 core live block은 `gpt-5.6-terra`, reasoning `medium`, mode
-`standard`, service tier `default`, max output 4,096 token과 run budget
-`20 model call / 50 tool call / 80,000 total token / 900초`를 고정한다. 현재 공식 catalog에는
-dated Terra snapshot이 없으므로 alias, OpenAI SDK version, clean harness Git commit과
-execution window를 provenance로 사용한다. D-031 provider telemetry를 검증하는 별도
+현재 development-validation, memory-development와 core primary live block은
+`gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode `standard`, service tier `default`,
+max output 25,000 token과 run budget
+`20 model call / 50 tool call / 200,000 total token / 900초`를 고정한다. OpenAI SDK version,
+clean harness Git commit과 execution window도 provenance로 사용한다. D-031 provider
+telemetry를 검증했던 별도
 development-validation model-candidate pilot의 historical r1~r3는
 `gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run 전체
 input+output 90,000 token을 고정한다. 새 D-037 corrective r4만 hash-bound diagnostic
 profile v2에서 25,000/120,000 pair를 허용하고, 후속 r5 profile v3와 controlled r6
 profile v4만 25,000/200,000 pair와 `model-generation-block-v1`을 허용한다. 모든 suite는 별도
-experiment ID로 보존하며, 이 diagnostic lane은 core headline 비교나 Terra 선행 gate에
+experiment ID로 보존하며, 이 diagnostic lane은 core headline 비교나 primary 선행 gate에
 포함하지 않는다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
@@ -350,16 +351,13 @@ plan에서만 live capability를 발급한다. 동시 invocation의 선점 패�
 각 task package와 생성 manifest도 plan의 task/model/budget/environment identity와 다시
 대조하고, 불일치하면 `RunStarted`와 model call 전에 중단한다.
 
-2026-07-28 공식 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing)은 1M
-token당 input $2.50, cached input $0.25, cache write $3.125, output $15다. Preflight는
-verification age가 72시간을 넘거나 rate가 다르면 실행하지 않으며, 남은 cost limit에서 한
-run의 frozen budget reserve를 확보할 수 없는 경우 다음 run을 시작하지 않는다.
-
-2026-07-29 UTC에 다시 확인한 `gpt-5.4-mini` standard rate는 input $0.75/M, cached input $0.075/M,
-output $4.50/M이며 별도 cache-write rate는 없다. Mini pilot preflight는 model ID와 이
-price profile을 함께 검증하며 $2 cap 안에 보수적 $0.423432 run reserve를 요구한다.
-R5 diagnostic은 200,000 total과 25,000 response allowance를 같은 최고 rate로 예약해
-`$1.0125`를 요구한다. 이는 authorization reserve이지 예측 지출이나 invoice 증거가 아니다.
+2026-07-29T22:39:42Z에 다시 확인한
+[OpenAI API pricing](https://developers.openai.com/api/docs/pricing)의 `gpt-5.4-mini`
+standard rate는 input $0.75/M, cached input $0.075/M, output $4.50/M이며 별도
+cache-write rate는 없다. Preflight는 verification age가 72시간을 넘거나 rate가 다르면
+실행하지 않는다. Primary 200,000 total과 25,000 response allowance를 최고 rate로 예약한
+authorization reserve는 run당 `$1.0125`, 12-run `$12.15`, 96-run `$97.20`이다.
+이는 예측 지출이나 invoice·무료 사용 증거가 아니다.
 
 ## 6. Selective retrieval policy
 

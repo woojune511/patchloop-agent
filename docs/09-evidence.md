@@ -2,6 +2,22 @@
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
+## D-045 future primary contract
+
+Future development-validation, memory-development and core suites now share the dated
+`gpt-5.4-mini-2026-03-17` snapshot, medium reasoning, standard mode, default service tier,
+25,000 per-call output and 200,000 run-total tokens. At the official standard list rates
+rechecked at `2026-07-29T22:39:42Z`, the conservative authorization reserves are `$1.0125`
+per run, `$12.15` for 12 runs and `$97.20` for 96 runs.
+
+The terminal Terra r3 suite remains byte-preserved as
+`experiments/dev-validation-pilot.template.yaml`; it is readable for historical interpretation
+but preflight-blocked with `HISTORICAL_SUITE_IMMUTABLE`. The new no-fault primary contract is
+`experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`. No provider call or pilot outcome
+is claimed for that suite. Its clean execution hash and separate $2 approval remain the next gate.
+Contract/qualification targeted tests passed 137/137, and the full offline suite passed
+534 with 2 skips. Ruff and `git diff --check` also passed.
+
 ## Latest paid diagnostic evidence
 
 The separately approved r6 execution hash
@@ -20,7 +36,7 @@ was consumed exactly once by `run_73f5aaf7328a4ea5` on clean harness commit
 | D-037 diagnostic | controlled rejection 1, verified retry 1, rejected-action mutation 0; terminal `passed` |
 
 The run validates the exact D-037 rehydration branch under one deliberate intervention and unlocks
-only the separately approved Terra pilot preflight. It does not estimate natural rejection
+only the separately approved fault-free primary mini pilot preflight. It does not estimate natural rejection
 frequency, recovery rate or memory benefit. The frozen contract forbids automatic rerun. The
 machine-readable
 [r6 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json)
@@ -1138,13 +1154,13 @@ and [final submitted patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11
 separate the provider tool argument from the final evaluator input and bind the ignored raw
 artifacts by SHA-256. This is an accepted single-task live pilot. It unlocks the pilot prerequisite
 under the then-current v1 contract, but it does not unlock the current tool-v2/context-v3 campaign
-gate. A new separately approved Terra pilot is required. It is not a 12-run result or evidence that
+gate. A new separately approved primary mini pilot is required. It is not a 12-run result or evidence that
 memory improves performance.
 
 ## Mini model-candidate r1/r2 evidence
 
 D-031 prompt-token telemetry was exercised in a separate model-candidate lane that cannot satisfy
-the Terra campaign prerequisite. Terminal r1 `run_d4fea5e7198b4abc` used
+the current primary campaign prerequisite. Terminal r1 `run_d4fea5e7198b4abc` used
 `gpt-5.4-mini-2026-03-17`, medium effort and a 90,000-token run budget. It preserved exact
 request-count telemetry but ended before evaluation when legacy text `DONE` attempted an invalid
 phase transition. The run cost a calculated `$0.07745325` and remains an immutable agent failure.
@@ -1198,7 +1214,7 @@ bind the portable bytes and local-only evidence hashes without bundling provider
 private evaluator output. At the r2 checkpoint, the mini lane's calculated cumulative cost was
 `$0.155418` and all five paid pilot runs totaled `$0.984282375`. R2 validates telemetry, the normal
 v2 submission path, evaluator
-receipt and qualification, but it is not an accepted pilot and cannot unlock the Terra or
+receipt and qualification, but it is not an accepted pilot and cannot unlock the primary
 development campaign gate.
 
 ## 2026-07-29 D-037 rejected-patch retry continuity - offline evidence
@@ -1253,7 +1269,7 @@ passed; `prompt_token_integrity` failed at event 55 because the response was inc
 `evaluation_reached=false`. The conditional D-037 feature itself reported zero rejected
 candidates, zero retry episodes, zero verified episodes and no failed source sequence. The suite
 diagnostic is therefore `failed/qualification_not_passed`, not `inconclusive`. The run neither
-validates nor falsifies rejected-patch rehydration and cannot unlock the Terra or development
+validates nor falsifies rejected-patch rehydration and cannot unlock the primary development
 campaign gate.
 
 The checked-in
@@ -1464,7 +1480,7 @@ persisted result hash were independently rechecked. The portable aggregate is
 `reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json`.
 
 This validates the D-037 harness branch under one deliberate intervention. It does not estimate
-natural rejection frequency or recovery rate, and it is not evidence of memory benefit or Terra
+natural rejection frequency or recovery rate, and it is not evidence of memory benefit or primary
 campaign quality. The consumed suite/hash/run are immutable and must not be rerun.
 
 ## Open gates
@@ -1479,6 +1495,7 @@ reclaim. The timeout path remains a synthetic timeout on the first registered vi
 Rejected mutating-tool input rehydration is offline-qualified and was exercised live once by the
 controlled r6 diagnostic. R4 remains a terminal budget failure and zero-rejection r5 remains
 terminal inconclusive; neither is rerun or reinterpreted. R6 validates the harness branch but not a
-natural recovery rate. The next step is a separately approved tool-v2/context-v3 Terra pilot with
+natural recovery rate. The next step is a separately approved fault-free tool-v2/context-v3
+`gpt-5.4-mini-2026-03-17` primary pilot with
 its own clean execution hash. No stress schedule row, 12-run development campaign or 96-run core
 campaign has been executed.

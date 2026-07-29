@@ -263,23 +263,23 @@ Command는 task editor가 등록한다. Agent가 executable, argument, environme
 | --- | --- |
 | `offline-smoke` | `model=mock`; API 호출 없음 |
 | `development-validation-live-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, $2 상한 |
-| `development-validation-model-candidate-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, dated candidate model, $2 상한; Terra 선행 gate와 분리 |
+| `development-validation-model-candidate-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, dated candidate model, $2 상한; primary campaign gate와 분리된 historical diagnostic lane |
 | `memory-development-no-memory` | frozen memory-development 여섯 task, `no_memory`, repetition 2, 총 12 run, $20 상한 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
-Terra comparison purpose는 다음 값을 고정한다.
+Primary comparison purpose는 다음 값을 고정한다.
 
 ```yaml
 model: openai
-model_id: gpt-5.6-terra
+model_id: gpt-5.4-mini-2026-03-17
 reasoning_effort: medium
 reasoning_mode: standard
 service_tier: default
-max_output_tokens: 4096
+max_output_tokens: 25000
 budget:
   max_model_calls: 20
   max_tool_calls: 50
-  max_total_tokens: 80000
+  max_total_tokens: 200000
   wall_clock_timeout_seconds: 900
 seed: 20260723
 ```
@@ -315,16 +315,22 @@ environment가 없으면 paid execution 전에 거부한다. Preflight는 매 in
 - 모든 evaluator image의 digest identity와 Docker server availability
 - `OPENAI_API_KEY` 존재 여부만 확인하고 credential value는 출력·저장하지 않음
 - `OPENAI_BASE_URL`, `OPENAI_API_BASE`가 설정되지 않았음
-- Terra alias, medium reasoning, standard mode, default service tier와 SDK provenance
+- dated mini snapshot, medium reasoning, standard mode, default service tier와 SDK provenance
 - 72시간 이내의 공식 price source/rate와 positive estimate
 - 한 run의 frozen token/output budget을 모두 예약해도 campaign cost limit을 넘지 않음
 - 동일 experiment result가 아직 존재하지 않음
 
-2026-07-28의 공식 [API pricing](https://developers.openai.com/api/docs/pricing)은 1M token당
-input $2.50, cached input $0.25, cache write $3.125, output $15다. 현재 model catalog에는
-dated Terra snapshot 없이 `gpt-5.6-terra` alias만 있으므로 model ID와 SDK version, Git
-commit, 실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을
-거부하고 다시 확인한다.
+2026-07-29T22:39:42Z에 재확인한 공식
+[API pricing](https://developers.openai.com/api/docs/pricing)은 1M token당 input $0.75,
+cached input $0.075, output $4.50이며 별도 cache-write rate는 없다. Primary model은
+dated snapshot `gpt-5.4-mini-2026-03-17`이고, model ID와 SDK version, Git commit,
+실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을 거부하고
+다시 확인한다.
+
+과거 Terra r3 계약 `experiments/dev-validation-pilot.template.yaml`은 당시 suite identity를
+그대로 보존한다. Loader는 historical evidence 해석을 위해 이를 읽을 수 있지만 preflight는
+항상 `HISTORICAL_SUITE_IMMUTABLE`로 차단한다. 새 primary pilot은 별도
+`experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`과 새 execution hash를 사용한다.
 
 D-031 telemetry를 실제 provider에서 검증한 terminal r1은
 `experiments/dev-validation-gpt54mini-pilot.yaml`에 보존한다. v2 corrective retry는
@@ -335,7 +341,8 @@ D-031 telemetry를 실제 provider에서 검증한 terminal r1은
 `gpt-5.4-mini-2026-03-17`, medium effort, default tier, `max_output_tokens: 4096`,
 `max_total_tokens: 90000`을 허용한다. 공식 standard rate는 input $0.75/M, cached input
 $0.075/M, output $4.50/M이고 cache-write rate는 `null`이다. 90,000은 run 전체
-input+output 누적 상한이며 memory-development/core의 Terra 계약을 바꾸지 않는다.
+input+output 누적 상한이다. 이 historical diagnostic purpose와 4,096/90,000 계약은
+같은 model snapshot을 쓰더라도 primary mini purpose의 25,000/200,000 계약을 충족하지 않는다.
 Generation 전에 exact input count와 manifest의 full per-call output allowance가 남은
 budget에 함께 들어가는지 검사하므로 마지막 response가 이 상한을 넘도록 시작하지 않는다.
 
@@ -540,12 +547,12 @@ model:
   model_id: fixed-model-id
   replay_hash: null
   temperature: 0
-  max_output_tokens: 4096
+  max_output_tokens: 25000
 
 budget:
   max_model_calls: 20
   max_tool_calls: 50
-  max_total_tokens: 80000
+  max_total_tokens: 200000
   wall_clock_timeout_seconds: 900
 
 environment:
@@ -1106,7 +1113,7 @@ Qualification은 최소한 다음 경계를 검사한다.
 - 위 세 필수 event가 `artifact_id`와 content-addressed `artifact_path`를 모두 가지며,
   path가 가리키는 bytes의 SHA-256이 CAS identity와 일치함
 - `no_memory` manifest에 retrieval event나 index identity가 없음
-- OpenAI/Terra/medium/standard/default, fault-free와 exact Docker provenance가 일치함
+- primary mini snapshot/medium/standard/default, fault-free와 exact Docker provenance가 일치함
 - Durable approved execution plan의 suite/dataset/task/private evaluator/schedule row가
   run manifest와 일치함
 - Agent-visible event/artifact에 공개 contract에 없는 private 구조 marker/hidden check ID가
@@ -1126,9 +1133,10 @@ Development-validation pilot acceptance는 여기에 `evaluation_reached=true`�
 따라서 evaluator 이전 agent failure도 trace qualification은 통과할 수 있지만 development
 campaign을 열지는 못한다.
 
-r1~r3처럼 D-031 이전에 생성된 immutable `development-validation-live-pilot`에는
+r1~r3처럼 D-031 이전에 생성된 immutable Terra `development-validation-live-pilot`에는
 `prompt_telemetry_version`이 없다. Qualification은 이 legacy absence 자체를 실패로
-소급하지 않는다. 반면 model-candidate pilot, memory-development와 core purpose는
+소급하지 않는다. 반면 새 primary mini development-validation pilot,
+model-candidate pilot, memory-development와 core purpose는
 telemetry 자체가 없으면 fail-closed하며, 한 event라도 새 telemetry version을 선언한
 trace는 모든 model event에서 새 prompt-token integrity 계약을 만족해야 한다.
 
