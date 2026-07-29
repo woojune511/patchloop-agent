@@ -62,6 +62,7 @@ OFFICIAL_PRICES_BY_MODEL = {
 DEFAULT_BUDGET = Budget()
 GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
+GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 
 PILOT_TASK = (
@@ -96,6 +97,7 @@ class ExperimentDiagnostic(BaseModel):
     profile: Literal[
         "d037-rejected-patch-retry-v1",
         "d037-rejected-patch-retry-v2",
+        "d037-rejected-patch-retry-v3",
     ]
     required_trace_features: list[
         Literal["rejected_patch_retry_context"]
@@ -246,14 +248,25 @@ class ExperimentSuite(BaseModel):
                     "development-validation model-candidate pilot requires exactly "
                     "the frozen Babel task, no_memory, and one repetition"
                 )
-            if (
-                self.diagnostic is not None
-                and self.diagnostic.profile == "d037-rejected-patch-retry-v2"
-            ):
+            diagnostic_profile = (
+                self.diagnostic.profile
+                if self.diagnostic is not None
+                else None
+            )
+            if diagnostic_profile in {
+                "d037-rejected-patch-retry-v2",
+                "d037-rejected-patch-retry-v3",
+            }:
+                corrective_budget = (
+                    GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+                    if diagnostic_profile
+                    == "d037-rejected-patch-retry-v3"
+                    else GPT54_MINI_D037_CORRECTIVE_BUDGET
+                )
                 self._require_live_defaults(
                     cost_limit=2,
                     model_id=GPT54_MINI_PILOT_MODEL_ID,
-                    budget=GPT54_MINI_D037_CORRECTIVE_BUDGET,
+                    budget=corrective_budget,
                     max_output_tokens=(
                         GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
                     ),

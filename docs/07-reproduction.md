@@ -91,6 +91,8 @@ is preserved separately under `reports/live-pilot/`:
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-d037-r4.yaml`: terminal corrective D-037 diagnostic;
   consumed 25,000 per-call / 120,000 total token contract, inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-d037-r5.yaml`: D-041 profile-v3 diagnostic contract;
+  strict 25,000 per-call / 200,000 total, no provider run without fresh hash and approval
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -230,6 +232,14 @@ after an incomplete response: without an
 explicit original-request/logical-turn contract it can move the D-037 latest-model boundary past
 the rejected candidate.
 
+D-041 fixes the next r5 contract without changing that strict admission rule. Its 200,000-token
+diagnostic budget is derived as
+`91,437 + 3 × (10,031 + 25,000) = 196,530`, rounded up. The conservative reserve is
+`(200,000 + 25,000) × $4.50/M = $1.0125`, below the unchanged $2 cap. Newly emitted exact-request
+no-generation payloads use `model-generation-block-v1`; a correctly bound generic block can preserve
+trace qualification without being counted as a rejected-patch retry. Historical unversioned r4
+remains 21/22. R5 injects no synthetic rejection and has no automatic retry.
+
 ```powershell
 git status --short
 .venv\Scripts\python.exe -m pytest tests/test_context.py tests/test_agent_runtime.py tests/test_trace_qualification.py
@@ -267,11 +277,10 @@ AND failed_source_failure_sequences == []
 A zero-episode run that reached the evaluator is `TraceExerciseInconclusive`, not a task or generic
 qualification failure. Evaluator non-arrival is `TraceExerciseFailed`. R3 is the latter because
 generic qualification failed before evaluation; r4 is also failed because its generic REVIEW
-budget block is not a retry-bound terminal block and evaluation was not reached. Neither zero
-episode is an inconclusive result. Before a future paid diagnostic, define and offline-test the
-total-budget/reservation policy and the qualification meaning of a generic terminal budget block.
-Then use a new experiment ID, clean execution hash and separate user approval. Never reuse either
-consumed hash.
+budget block is unversioned and evaluation was not reached. Neither zero episode is an
+inconclusive result. R5 passed the D-041 offline contract tests and must next use its new experiment
+ID, a clean execution hash and separate user approval. If it reaches evaluation with zero retry
+episodes, it is inconclusive and is not automatically rerun. Never reuse either consumed hash.
 
 Afterward create a separately approved Terra development-validation pilot. Only after that run
 reaches the evaluator and produces a qualified `trace-qualification-v2` may its run ID be inserted

@@ -6,7 +6,7 @@ PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.
 
-현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-29 현재
+현재 저장소에는 evaluator-first MVP와 offline end-to-end 경로가 구현되어 있다. 2026-07-30 현재
 세 smoke task를 mock과 content-hashed replay로 각각 실행한 6개 agent run이 고정된 Linux Docker
 evaluator에서 모두 공식 통과했다. 쉬운 자체 task 다섯 개는 calibration fixture로만 남기고,
 SWE-rebench 계열의 실제 Loguru, AnyIO, tox, Hugging Face Hub, PDM #2781과 pyfakefs #991
@@ -77,6 +77,19 @@ final diff와 `REVIEW` 진입까지 진행했지만, 14번째 request의 exact i
 response allowance 25,000이 남은 28,563-token run budget에 들어가지 않아 local guard가
 provider generation 전에 차단했다. 제출·evaluator·rejected retry episode는 모두 0이므로
 r4 역시 D-037을 검증하거나 반증하지 않고 gate를 열지 않는다.
+
+D-041은 다음 diagnostic을 새 r5/profile v3로 분리한다. Per-call allowance 25,000과
+`exact input + full allowance`가 남은 budget 안에 들어가야 한다는 strict runtime 의미는
+바꾸지 않고, diagnostic-only total token budget만 200,000으로 고정한다. 이 값은 r4가
+사용한 91,437-token prefix에 당시 가장 큰 exact input 10,031과 25,000 allowance로 된
+tail reservation 세 개를 더한 196,530을 올림한 것이다. 새로 생성되는
+`exact_request_budget_exceeded` terminal event만 `model-generation-block-v1` payload를
+사용한다. 이 versioned generic block은 retry
+candidate가 없어도 trace integrity evidence로 인정할 수 있지만 D-037 retry episode나 gate
+통과로 세지 않는다. Historical unversioned r4는 21/22 qualification 그대로다. Synthetic
+rejection이나 automatic retry는 추가하지 않으므로 r5가 evaluator에 도달하고도 rejection이
+없으면 diagnostic은 inconclusive이며 자동 재실행하지 않는다. 이 offline 계약은 targeted
+191 test, full 504 passed/2 skipped와 Ruff를 통과했다. R5 provider run은 아직 없다.
 
 ## 구현된 핵심 경로
 
@@ -309,8 +322,10 @@ retry candidate가 없는 generic terminal budget block을 현재 v3 qualifier�
 않는 계약 경계다. Aggregate와 artifact identity는
 [mini D-037 r4 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r4.json)에
 보존한다. 이 suite/run은 terminal inspection 전용이며 재실행하지 않는다. 후속 paid
-diagnostic 전에 total-budget/reservation과 generic terminal budget-block qualification을
-별도 offline 계약으로 먼저 해결해야 한다.
+diagnostic은 D-041의 새 r5/profile v3에서만 허용한다. R5는 strict 25,000-token response
+reservation을 유지하고 total budget을 200,000으로 고정하며, 새
+`model-generation-block-v1` generic terminal block의 retry-independent trace-integrity
+의미는 offline에서 검증됐다. 이미 소비된 r4 승인이나 hash는 재사용하지 않는다.
 새 Terra development-validation pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
@@ -407,6 +422,13 @@ conservative authorization reserve는 `$0.6525`로 $2 cap 아래지만, checked-
 실행한 뒤 terminal evidence로 동결했다. 25,000은
 [GPT-5.4 mini model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini)의
 published 128,000 max output 안이다.
+후속 r5 profile v3는 historical pair를 바꾸지 않고 diagnostic-only 25,000/200,000 pair를
+별도 experiment ID로 사용한다. `91,437 + 3 × (10,031 + 25,000) = 196,530`을 올림한
+200,000이며, 같은 보수적 preflight 공식의 reserve는
+`(200,000 + 25,000) × $4.50/M = $1.0125`로 $2 cap 아래다. Runtime은 계속 exact input과
+full 25,000 allowance가 남은 total budget에 함께 들어갈 때만 generation을 시작한다.
+Generic terminal block은 새 `model-generation-block-v1`일 때만 retry와 독립된 valid trace
+evidence가 되며, retry episode나 diagnostic pass를 만들지 않는다.
 세 Terra pilot과 historical mini r1/r2/r3/r4는 usage/source-evidence 보존 경로를 실제 provider에서
 확인했다. Terra r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, historical Terra r3가 별도 clean execution
@@ -417,7 +439,8 @@ Mini r4는 모든 generated response가 completed였지만 REVIEW 전 total-budg
 Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D-037 target을
 exercise하지 못했다. 네 mini run의 누적 계산 비용은 `$0.32007075`, 일곱 paid pilot의
 계산상 총액은 `$1.148935125`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다.
-새 budget/qualification offline contract와 별도 승인 D-037 diagnostic을 먼저 통과하고,
+새 r5 budget/qualification offline contract는 통과했다. 이제 별도 승인 D-037 diagnostic을
+통과하고,
 그 뒤 별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run development
 campaign을 승인하지 않는다.
 

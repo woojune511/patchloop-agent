@@ -1,9 +1,9 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-037 r4 evidence preservation and total-budget follow-up**
+현재 milestone: **D-037 r5 separately approved provider diagnostic gate**
 
-2026-07-29 구현 스냅샷:
+2026-07-30 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
@@ -12,7 +12,7 @@
 | Phase 3 state machine | tool v2/context v3 retry hardening offline-complete | Current-diff submission gate와 exact rejected-patch next-request rehydration, structured no-generation budget event 검증 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | historical v1 pilot complete, D-037 r3/r4 failures preserved | Mini r2 gap과 r3 output ceiling은 immutable; r4는 25k output ceiling을 제거했지만 REVIEW 전 total-budget guard로 종료, retry/evaluator 미도달 |
+| Phase 6 evaluation | historical v1 pilot complete, D-037 r3/r4 failures preserved, r5 offline contract complete | R5 profile v3는 strict 25k reservation과 diagnostic-only 200k total, versioned generic terminal block을 executable evidence로 고정; provider 미실행 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -66,8 +66,8 @@ research task를 admission한다.
 
 2026-07-28 현재 1~6번은 executable admission과 machine-audit evidence로 완료됐다.
 7번 external acceptance lane은 frozen core dataset과 분리된 후속 작업이다. 현재 다음
-단계는 r4 evidence 고정 → total-budget/reservation과 generic terminal budget-block
-qualification의 offline 계약 보완 → 새 experiment/hash의 별도 승인 → D-037 diagnostic
+단계는 완료된 D-041 r5 25,000/200,000 contract와 `model-generation-block-v1` generic
+terminal qualification evidence → 새 experiment/hash의 별도 승인 → D-037 diagnostic
 pass다. 이후 tool-v2/context-v3 Terra pilot을 수행하고,
 그 pilot이 evaluator와 `trace-qualification-v2`를 통과한 뒤 여섯 memory-development
 task의 12-run no-memory campaign을 시작한다.
@@ -96,7 +96,7 @@ task의 12-run no-memory campaign을 시작한다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — r3/r4 frozen, budget-policy follow-up pending
+## Current live trace gate — r3/r4 frozen, r5 provider diagnostic pending
 
 목표: 각 paid invocation 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -112,7 +112,7 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 5 | historical v1 evidence only | Babel #1042 `no_memory` r3 pilot | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass; current v2 gate에는 부적격 |
 | 6 | completed; task acceptance failed | Corrected v2 mini model-candidate diagnostic 1회, $2 cap | `run_4a9737ec91964dca`: telemetry, submission/evaluator lifecycle과 qualification pass; hidden acceptance fail |
 | 7 | done (offline) | `phase-evidence-v3` rejected mutating-tool argument의 bounded next-turn rehydration과 qualification check | Exact candidate/reason, tamper/stale/v2 compatibility, generation-before-budget guard와 full regression 통과 |
-| 8 | r3/r4 failed; both immutable | 새 mini model-candidate diagnostic 1회, 새 hash/승인 | R3는 per-call output ceiling, r4는 REVIEW 전 total-budget reservation으로 종료; retry/evaluator 미도달 |
+| 8 | r3/r4 immutable; r5 offline contract passed, paid run pending | 새 mini model-candidate diagnostic 1회, 새 hash/승인 | R5 strict 25k/200k, `model-generation-block-v1`; evaluator 도달과 실제 verified retry episode 필요 |
 | 9 | blocked on order 8 | Corrected Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
 | 10 | blocked on order 9 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
@@ -166,16 +166,38 @@ Qualification은 21/22다. 유일한 failed check `prompt_token_integrity`에는
 model event가 없으며, 실패 원인은 retry candidate가 없는 generic terminal budget block을
 현재 `phase-evidence-v3` validator가 valid terminal block으로 인정하지 않는 점이다.
 따라서 r4는 r3의 incomplete-response confounder를 제거했지만 D-037을 검증하거나 반증하지
-않는다. R4 suite/run은 재실행하지 않는다. Order 8은 total budget과 per-call reservation의
-관계, generic terminal budget-block qualification을 offline에서 별도 version으로 고정하고
-새 experiment/hash의 독립 승인 아래 실제 retry predicate를 통과해야 완료된다.
+않는다. R4 suite/run은 재실행하지 않는다.
+
+D-041은 Order 8의 후속 r5를 `d037-rejected-patch-retry-v3`로 고정한다. Runtime의 strict
+exact-input + full 25,000 response reservation 의미는 바꾸지 않고 diagnostic-only total을
+200,000으로 둔다.
+
+```text
+91,437 r4 prefix
++ 3 × (10,031 largest observed exact input + 25,000 allowance)
+= 196,530
+→ rounded frozen budget 200,000
+```
+
+새로 생성되는 exact-request terminal block만 `model-generation-block-v1` payload를 사용한다. Request,
+recomputed budget와 terminal result가 결속된 versioned generic block은 retry candidate가
+없어도 valid trace evidence지만 D-037 episode나 gate pass는 아니다. Historical unversioned
+r4는 qualification 21/22로 그대로 보존하며, historical unversioned retry block은 읽기
+호환한다. R5는 synthetic rejection, runtime semantic change와 automatic retry를 추가하지
+않는다. Evaluator에 도달했지만 zero-episode이면 inconclusive로 끝내고 자동 재실행하지
+않는다. Conservative authorization reserve는
+`(200,000 + 25,000) × $4.50/M = $1.0125`로 $2 cap 아래다. 이 계약은 targeted 191 test,
+full 504 passed/2 skipped와 Ruff로 통과했다. Order 8은 새 experiment/hash 승인 아래 실제
+retry predicate까지 통과해야 완료된다.
 
 Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
 `standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.
 D-031 telemetry의 historical development-validation provider pilot r1~r3는
 `gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run total
 90,000 token을 허용한다. Corrective r4만 diagnostic profile v2와 함께 25,000/120,000
-pair를 허용한다. 이 mini lane은 Terra/core 비교 계약을 변경하지 않는다. Dataset hash는
+pair를 허용하고, 후속 r5 profile v3만 25,000/200,000 pair와
+`model-generation-block-v1`을 허용한다. 이 mini lane은 Terra/core 비교 계약을 변경하지
+않는다. Dataset hash는
 `sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`다.
 
 Preflight는 frozen dataset role/hash, manifest의 canonical task path, public/private hash와
@@ -254,6 +276,12 @@ r4를 한 번 실행했다. `run_826c1c7fb3d242c2`는 84,082 input + 7,355 outpu
 통과했으나 submission/evaluator/retry episode는 0이다. Terminal r4 suite와 run도
 재사용하지 않는다.
 
+후속 r5는 위 r4 prefix와 세 tail reservation에서 산출한 200,000-token budget,
+25,000-token per-call allowance와 `$1.0125` conservative reserve를 사용한다. Provider
+실행은 offline contract evidence, clean commit/execution hash와 별도 사용자 승인 뒤
+한 번만 허용한다. Natural rejection이 발생하지 않으면 evaluator 도달 시 inconclusive로
+보존하고 automatic retry하지 않는다.
+
 2026-07-28 공식 rate는 1M token당 input $2.50, cached input $0.25, cache write $3.125,
 output $15다. 현재 dated Terra snapshot은 제공되지 않아 alias와 SDK/Git/time provenance를
 남긴다.
@@ -265,7 +293,7 @@ generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 9
 runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더한 운영상 안전
 margin이다.
 
-### Historical Terra v1 pilot passed; mini r2 qualified task failure; mini r3/r4 diagnostic failures
+### Historical Terra v1 pilot passed; mini r2 task failure; mini r3/r4 frozen, r5 pending
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.

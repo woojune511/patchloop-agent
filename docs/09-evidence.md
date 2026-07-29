@@ -1105,8 +1105,9 @@ The checked-in
 and [final submitted patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11-submitted.patch)
 separate the provider tool argument from the final evaluator input and bind the ignored raw
 artifacts by SHA-256. This is an accepted single-task live pilot. It unlocks the pilot prerequisite
-for a separately preflighted and approved development campaign; it is not a 12-run result or
-evidence that memory improves performance.
+under the then-current v1 contract, but it does not unlock the current tool-v2/context-v3 campaign
+gate. A new separately approved Terra pilot is required. It is not a 12-run result or evidence that
+memory improves performance.
 
 ## Mini model-candidate r1/r2 evidence
 
@@ -1321,6 +1322,69 @@ that offline execution environment. Those commands made no OpenAI generation or 
 The r3 and r4 provider runs above are separate immutable evidence and neither executed a hidden
 evaluator campaign, stress row, memory-development run or core run.
 
+### D-041 r5 diagnostic contract decision
+
+R4 supplies the sizing evidence for a new, separately identified r5 diagnostic profile v3. The
+runtime rule remains strict: an exact request input and the complete 25,000-token response
+allowance must both fit before a generation starts. The diagnostic-only total budget is 200,000,
+derived before execution from the preserved r4 prefix and three tail reservations:
+
+```text
+91,437 + 3 × (10,031 + 25,000) = 196,530
+196,530 rounded up = 200,000
+```
+
+Here 10,031 is the largest exact input observed among r4's completed generation requests. At the
+configured maximum token rate, the existing conservative preflight formula gives
+`(200,000 + 25,000) × $4.50/M = $1.0125`, below the unchanged $2 cap. This is authorization
+reserve arithmetic, not measured r5 usage or invoice evidence. It is also a planning reserve rather
+than a guarantee that a future candidate-bearing retry request cannot exceed the observed maximum.
+
+New exact-request no-generation event payloads use `model-generation-block-v1`. Qualification may accept a
+generic versioned block as internally consistent terminal trace evidence when its request,
+recomputed budget, no-generation state and terminal error agree, even if no retry candidate is
+present. Such a block does not create a rejected candidate, retry episode or D-037 gate pass.
+Historical unversioned retry blocks remain readable, while r4's unversioned generic block and
+21/22 qualification remain immutable.
+
+R5 does not inject a synthetic rejection, alter runtime reservation semantics or automatically
+retry an incomplete/inconclusive run. If the agent reaches the evaluator without a rejected
+mutation, the diagnostic is inconclusive and terminal. No r5 provider call, measured usage,
+evaluator verdict or D-037 pass is claimed in this section.
+
+The D-041 offline implementation was verified without an OpenAI generation:
+
+```text
+.venv\Scripts\python.exe -m pytest tests/test_agent_runtime.py tests/test_experiments.py tests/test_trace_qualification.py -q
+191 passed
+
+.venv\Scripts\python.exe -m pytest -q
+504 passed, 2 skipped
+
+.venv\Scripts\ruff.exe check patchloop tests
+All checks passed
+
+git diff --check
+passed
+```
+
+The tests cover zero-model-call and post-model generic blocks, request/budget/retry-mode/terminal
+tampering, historical unversioned retry readability, r4 immutable evidence, the exact r5
+25,000/200,000 suite pair and partial-contract rejection.
+
+Direct read-only requalification against the preserved local source evidence also returned the
+original artifacts unchanged:
+
+```text
+run_4a9737ec91964dca  sha256:88c763f2617d4b40c0f4c50229831d1dcdbf0477d7ae05aa99c4241538d10a43  qualified=true   22/22
+run_e90f7c52aa134182 sha256:59c389c5fbc730e4f7b6e06bf221d238832e47b609a43030d8f566996ce98885  qualified=false  21/22
+run_826c1c7fb3d242c2 sha256:84747b5ee19fec786792313471247202875d68f02752ea68f4078fbe5fc311f4  qualified=false  21/22
+```
+
+The compatibility rule ignores only the historical neutral
+`binding_required=false` / `binding_valid=true` detail-shape pair. Recomputed check outcomes and
+all other fields must still match; a non-neutral change remains an immutable-artifact error.
+
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
@@ -1333,8 +1397,8 @@ reclaim. The timeout path remains a synthetic timeout on the first registered vi
 Rejected mutating-tool input rehydration is offline-qualified. A new live provider run was
 attempted with the r4 output allowance and all generated responses completed, but the run produced
 no rejected mutation or retry episode before its total-budget guard stopped the REVIEW turn. The
-rehydration contract remains unexercised live. Before another diagnostic, a new offline contract
-must resolve total-budget/response-reservation sizing and generic terminal budget-block
-qualification; only then may a new experiment ID, clean execution hash and separate approval be
-used. No stress schedule row, 12-run development campaign or 96-run core campaign has been
-executed.
+rehydration contract remains unexercised live. D-041 fixes the r5 sizing and generic
+`model-generation-block-v1` meaning, and executable offline evidence now passes. The next step is
+the new experiment ID's clean execution hash and separate approval. A zero-rejection r5 is
+inconclusive and is not automatically rerun. No stress schedule row, 12-run development campaign
+or 96-run core campaign has been executed.

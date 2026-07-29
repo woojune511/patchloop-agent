@@ -395,7 +395,42 @@ R4 `run_826c1c7fb3d242c2`는 위 contract와 승인 execution hash를 정확히 
 차단됐다. Retry candidate가 없는 이 generic terminal budget block은 현재 retry-specific
 validator에서 valid terminal block으로 인정되지 않아 qualification은 21/22다. Suite와
 run은 terminal evidence로 보존하며 같은 experiment ID나 승인 hash를 재사용하지 않는다.
-후속 budget/qualification 의미는 새 version과 offline test를 요구한다.
+Historical unversioned generic block과 qualification 21/22도 소급 변경하지 않는다.
+
+D-041의 후속 r5는 새 experiment ID와
+`d037-rejected-patch-retry-v3` profile을 사용한다.
+
+```yaml
+max_output_tokens: 25000
+budget:
+  max_model_calls: 20
+  max_tool_calls: 50
+  max_total_tokens: 200000
+  wall_clock_timeout_seconds: 900
+diagnostic:
+  schema_version: experiment-diagnostic-v1
+  profile: d037-rejected-patch-retry-v3
+  required_trace_features:
+    - rejected_patch_retry_context
+```
+
+V3는 runtime reservation 의미를 바꾸지 않는다. 매 generation 전에 exact input과 full
+25,000-token response allowance가 남은 200,000-token total budget에 함께 들어가야 한다.
+200,000은 r4가 이미 소비한 91,437-token prefix에 r4에서 관찰한 가장 큰 exact input
+10,031과 25,000 allowance로 된 tail reservation 세 개를 더한
+`91,437 + 3 × (10,031 + 25,000) = 196,530`을 올림한 diagnostic-only 값이다. 이는
+Terra/core와 historical mini budget을 바꾸지 않는다. 같은 보수적 preflight 공식의
+authorization reserve는 `(200,000 + 25,000) × $4.50/M = $1.0125`로 $2 cap 아래다.
+
+V3는 새로 생성되는 `exact_request_budget_exceeded` terminal event에
+`schema_version: model-generation-block-v1`을 요구한다. 이 payload가 request artifact,
+recomputed remaining budget와 terminal error에 정확히 결속되면 retry candidate가 없는
+generic block도 valid trace evidence가 될 수 있다. 그러나 generic block은
+`rejected_candidate_count`, `retry_episode_count` 또는 D-037 gate를 증가시키지 않는다.
+Historical unversioned retry block은 읽기 호환을 유지하지만 r4의 unversioned generic block은
+당시 판정 그대로 invalid다. R5는 synthetic rejection이나 incomplete-response automatic
+retry를 추가하지 않는다. Evaluator에 도달한 zero-episode r5는 inconclusive로 보존하며
+자동으로 다시 실행하지 않는다.
 
 일반 trace qualification은 rejection이 없으면 조건부 retry 계약을 통과할 수 있다. Diagnostic
 consumer는 qualification의 patch/error body를 복사하지 않고 count와 failure sequence만 읽어
@@ -866,6 +901,7 @@ token budget을 넘으면 request artifact와 다음 event를 남기고 response
 {
   "type": "ModelGenerationBlocked",
   "payload": {
+    "schema_version": "model-generation-block-v1",
     "reason_code": "exact_request_budget_exceeded",
     "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
     "generation_started": false,
@@ -884,6 +920,13 @@ manifest의 `max_total_tokens`로 다시 계산한다. 또한 위 payload 전체
 `RunFailed.error_details`와 `RunResult.terminal_error.details`에 동일하게 결속되고,
 terminal error type/code가 `ModelGenerationBudgetError` /
 `MODEL_GENERATION_BUDGET_EXCEEDED`인지 확인한다.
+
+`model-generation-block-v1`은 retry-specific evidence와 terminal budget evidence를
+분리한다. Retry context가 있으면 candidate hash까지 기존 D-037 조건으로 검증하고, 없으면
+request와 budget/terminal binding만 검증한다. 후자의 성공은 prompt telemetry와 trace
+integrity를 보존할 뿐 retry episode를 합성하지 않는다. Version 도입 전의 retry-bound block은
+historical read compatibility를 유지하고, version이 없는 generic block은 새 의미로
+재qualification하지 않는다.
 
 현재 mini r2 evidence는 이 version 도입 전 `phase-evidence-v2` trace로 그대로 보존한다.
 

@@ -195,6 +195,15 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   the failed `prompt_token_integrity` result is a retry-specific terminal-block contract mismatch,
   not token mismatch. Rejected candidate and retry episode counts were zero, so r4 removes r3's
   per-call output-ceiling confounder but still does not validate or falsify D-037.
+- D-041 fixes, but has not yet provider-executed, a separate r5 profile v3. It retains strict
+  exact-input + full 25,000 response reservation and sets a diagnostic-only 200,000-token total
+  from `91,437 + 3 × (10,031 + 25,000) = 196,530`, rounded up. Its conservative reserve is
+  `$1.0125` under the $2 cap. A new `model-generation-block-v1` generic terminal block may preserve
+  trace integrity without a retry candidate, but cannot count as a D-037 episode or gate pass.
+  The three-tail arithmetic is an evidence-based planning reserve, not a guarantee that a future
+  retry request will be no larger than r4's observed 10,031-token maximum.
+  R5 does not synthesize a rejection or retry automatically, so evaluator arrival with zero
+  episodes remains a possible inconclusive terminal result and will not be rerun automatically.
 
 ## Implemented gates with remaining external campaign work
 
@@ -292,9 +301,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   reservation before submission or evaluation. The r4 trace also shows that the current v3
   qualifier accepts terminal no-generation blocks only when bound to a rejected retry candidate;
   a generic budget block fails qualification even when all completed token telemetry matches.
-  A new offline budget/qualification contract, a separately approved D-037 diagnostic pass, and
-  then a newly approved tool-v2/context-v3 Terra pilot remain required in that order before the
-  campaign.
+  D-041 now fixes the r5 offline contract at strict 25,000/200,000 and versions newly emitted
+  exact-request generic terminal blocks as `model-generation-block-v1`; the old r4 result remains 21/22.
+  Executable offline evidence passed with 504 tests and 2 expected skips. A separately approved
+  D-037 diagnostic pass, and then a newly approved tool-v2/context-v3 Terra pilot remain required
+  in that order before the campaign.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -390,11 +401,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   automatically retrying an incomplete response. All 13 generations completed, but the next
   REVIEW turn was locally blocked because exact input plus the full 25,000 allowance exceeded the
   remaining total budget. Exact provider retry would require a separately versioned
-  original-request/logical-turn/crash-recovery contract. A future diagnostic also needs an
-  offline-fixed total-budget/reservation policy and an explicit generic terminal budget-block
-  qualification contract. R4 removes the observed output-ceiling confounder but produced no
+  original-request/logical-turn/crash-recovery contract. D-041 fixes the next diagnostic at
+  profile v3, strict 25,000/200,000 and `model-generation-block-v1` without changing runtime
+  reservation semantics. R4 removes the observed output-ceiling confounder but produced no
   rejected mutation or diagnostic pass. Evaluator arrival with zero retry episodes remains
-  `inconclusive`; r4 did not reach the evaluator and is `failed`.
+  `inconclusive`; r4 did not reach the evaluator and is `failed`. R5 has no synthetic rejection or
+  automatic retry, so an inconclusive result is terminal rather than a reason to spend again.
   Even a successful mini run does not satisfy the tool-v2/context-v3 Terra pilot requirement. The
   four mini runs' calculated list-price total is `$0.32007075`; all seven paid pilot runs total
   `$1.148935125`.

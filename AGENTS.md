@@ -12,7 +12,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-037 r4 evidence preservation and total-budget follow-up`이다.
+- 현재 milestone은 `D-037 r5 separately approved provider diagnostic gate`다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -21,9 +21,18 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   offline 검증 뒤 provider에서 정확히 한 번 실행했다. 모든 13개 generation은 completed였지만
   `REVIEW` turn 직전 남은 28,563 token으로 exact input 8,583 + response allowance 25,000을
   보장할 수 없어 local guard가 provider call 전에 종료했다. 제출·evaluator·retry episode는
-  0개이고 D-037은 여전히 검증 또는 반증되지 않았다. 이 r4를 immutable evidence로 보존하고,
-  total-budget/reservation과 generic terminal budget-block qualification의 후속 계약을
-  offline evidence로 닫은 뒤 새 D-037 diagnostic을 먼저 통과해야 한다. 그 전에는
+  0개이고 D-037은 여전히 검증 또는 반증되지 않았다. 이 r4를 immutable evidence로 보존한다.
+  D-041은 새 r5 profile v3에 strict exact-input + full 25,000 response reservation을 그대로
+  유지하고 diagnostic-only total token budget을 200,000으로 고정한다. 이는 r4의 91,437-token
+  prefix에 당시 최대 exact input 10,031과 25,000 allowance의 tail reservation 세 개를 더한
+  196,530을 올림한 값이다. 새 `model-generation-block-v1` exact-request payload가 결속된
+  generic terminal budget block은 retry 유무와 무관하게 valid trace evidence가 될 수 있지만 D-037 episode로
+  세거나 gate를 열지는 않는다. Unversioned r4 qualification 21/22는 그대로 유지한다.
+  Synthetic rejection, runtime reservation 의미 변경과 automatic retry는 도입하지 않는다.
+  R5가 evaluator에 도달해도 rejection이 없으면 inconclusive로 보존하고 자동 재실행하지 않는다.
+  이 계약은 2026-07-30 targeted 191-test, full 504-pass/2-skip와 Ruff evidence로 닫혔다.
+  다음에는 clean commit에서 새 hash를 만들고 별도 승인받은 D-037 diagnostic을 먼저
+  통과해야 한다. 그 전에는
   tool-v2/context-v3 Terra pilot을, Terra pilot이 통과하기 전에는 memory-development
   campaign을 실행하지 않는다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
@@ -51,6 +60,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   rejected retry에는 도달하지 못했다. Qualification 21/22의 유일한 실패는 token mismatch가
   아니라 retry candidate가 없는 generic budget-block을 현재 v3 qualifier가 terminal-valid로
   보지 않는 계약 경계다. 이 run도 재실행하지 않는다.
+  후속 r5는 25,000 per-call / 200,000 total의 profile v3와
+  `model-generation-block-v1`만 새로 허용하며, provider에서는 아직 실행하지 않았다.
   실제 subprocess hard-kill 뒤 stale
   `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 Terra pilot, stress schedule,
   12-run development campaign과 96-run core campaign은 완료되지 않았다.

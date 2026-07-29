@@ -48,6 +48,7 @@ _TERRA_MODEL_ID = "gpt-5.6-terra"
 _GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 _GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 _GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
+_GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
 
 _TERMINAL_EVENTS = {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
 _AGENT_VISIBLE_ARTIFACT_EVENTS = {
@@ -96,6 +97,40 @@ def _checked_payload(payload: dict[str, Any]) -> dict[str, Any]:
     if sha256_text(canonical_json(unhashed)) != recorded_hash:
         raise ContractError("trace qualification content hash mismatch")
     return payload
+
+
+def _normalized_qualification_semantics(
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Ignore one historical, semantically neutral v2 detail-shape change."""
+
+    normalized = json.loads(json.dumps(payload))
+    normalized.pop("qualification_hash", None)
+    checks = normalized.get("checks")
+    if not isinstance(checks, list):
+        return normalized
+    for check in checks:
+        if (
+            isinstance(check, dict)
+            and check.get("check_id") == "terminal_result_integrity"
+            and isinstance(check.get("details"), dict)
+        ):
+            details = check["details"]
+            if (
+                details.get("model_generation_block_binding_required")
+                is False
+                and details.get("model_generation_block_binding_valid")
+                is True
+            ):
+                details.pop(
+                    "model_generation_block_binding_required",
+                    None,
+                )
+                details.pop(
+                    "model_generation_block_binding_valid",
+                    None,
+                )
+    return normalized
 
 
 def load_trace_qualification(
@@ -961,13 +996,28 @@ def _request_context(request_body: Any) -> str | None:
     return content if isinstance(content, str) else None
 
 
-def _request_evidence_payload(context_event) -> tuple[bool, dict[str, Any] | None]:
+def _request_evidence_payload(
+    context_event,
+    *,
+    artifact_root: Path | None = None,
+) -> tuple[bool, dict[str, Any] | None]:
     """Load and validate one content-addressed model request artifact."""
 
     try:
-        request_evidence = json.loads(
-            Path(str(context_event.payload["artifact_path"])).read_text(encoding="utf-8")
-        )
+        artifact_path = Path(str(context_event.payload["artifact_path"])).resolve()
+        content = artifact_path.read_bytes()
+        if artifact_root is not None:
+            relative = artifact_path.relative_to(artifact_root.resolve())
+            parts = relative.parts
+            if (
+                len(parts) != 4
+                or parts[0:2] != ("objects", "sha256")
+                or len(parts[2]) != 2
+                or len(parts[3]) != 62
+                or sha256_bytes(content) != f"sha256:{parts[2]}{parts[3]}"
+            ):
+                return False, None
+        request_evidence = json.loads(content.decode("utf-8"))
         if not isinstance(request_evidence, dict):
             return False, None
         request_body = request_evidence["request_body"]
@@ -983,19 +1033,172 @@ def _request_evidence_payload(context_event) -> tuple[bool, dict[str, Any] | Non
             and context_event.payload.get("context_hash") == sha256_text(rendered_context)
         )
         return valid, request_evidence if valid else None
-    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+    except (
+        KeyError,
+        OSError,
+        TypeError,
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ):
         return False, None
 
 
-def _v3_generation_block_valid(
+def _request_runtime_contract_valid(
+    request_body: Any,
+    manifest: RunManifest,
+) -> bool:
+    """Bind a no-generation request to the frozen adapter/runtime contract."""
+
+    from patchloop.agent.model import SYSTEM_PROMPT_V1, SYSTEM_PROMPT_V2
+    from patchloop.agent.tools import TOOL_SCHEMAS_V1, TOOL_SCHEMAS_V2
+
+    if (
+        manifest.tool_schema_version == "v1"
+        and manifest.context_policy_version == "v1"
+    ):
+        system_prompt = SYSTEM_PROMPT_V1
+        tools = TOOL_SCHEMAS_V1
+    elif (
+        manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version
+        in {"phase-evidence-v2", "phase-evidence-v3"}
+    ):
+        system_prompt = SYSTEM_PROMPT_V2
+        tools = TOOL_SCHEMAS_V2
+    else:
+        return False
+
+    reasoning: dict[str, str] = {
+        "effort": manifest.model.reasoning_effort,
+    }
+    if manifest.model.model_id.startswith("gpt-5.6"):
+        reasoning.update(
+            {
+                "mode": manifest.model.reasoning_mode,
+                "context": "current_turn",
+            }
+        )
+    if not isinstance(request_body, dict):
+        return False
+    inputs = request_body.get("input")
+    return bool(
+        set(request_body)
+        == {
+            "model",
+            "input",
+            "tools",
+            "store",
+            "reasoning",
+            "service_tier",
+            "max_output_tokens",
+            "truncation",
+        }
+        and isinstance(inputs, list)
+        and len(inputs) == 2
+        and inputs[0] == {"role": "system", "content": system_prompt}
+        and isinstance(inputs[1], dict)
+        and set(inputs[1]) == {"role", "content"}
+        and inputs[1].get("role") == "user"
+        and isinstance(inputs[1].get("content"), str)
+        and request_body.get("model") == manifest.model.model_id
+        and request_body.get("tools") == tools
+        and request_body.get("store") is False
+        and request_body.get("reasoning") == reasoning
+        and request_body.get("service_tier")
+        == manifest.model.service_tier
+        and request_body.get("max_output_tokens")
+        == manifest.model.max_output_tokens
+        and request_body.get("truncation") == "disabled"
+    )
+
+
+def _exact_request_generation_block_valid(
     *,
+    root: Path,
     manifest: RunManifest,
     events,
     context_event,
     blocked_event,
-    candidate_content_hash: str,
+    expected_retry_candidate_hash: str | None,
 ) -> bool:
-    """Validate the intentional no-generation budget outcome for one retry."""
+    """Validate one exact-request no-generation block in generic or retry mode."""
+
+    payload = blocked_event.payload
+    schema_version = payload.get("schema_version")
+    legacy_retry_block = bool(
+        schema_version is None and isinstance(expected_retry_candidate_hash, str)
+    )
+    if (
+        schema_version != "model-generation-block-v1"
+        and not legacy_retry_block
+    ):
+        return False
+
+    request_valid, request_evidence = _request_evidence_payload(
+        context_event,
+        artifact_root=(root / "artifacts"),
+    )
+    rendered_payload = None
+    retry_build_evidence = None
+    if request_valid and request_evidence is not None:
+        try:
+            request_body = request_evidence["request_body"]
+            rendered_context = _request_context(request_body)
+            rendered_payload = json.loads(str(rendered_context))
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            request_body = None
+            rendered_payload = None
+        context_build = request_evidence.get("context_build")
+        if isinstance(context_build, dict):
+            retry_build_evidence = context_build.get(
+                "rejected_mutation_retry"
+            )
+    else:
+        request_body = None
+
+    if expected_retry_candidate_hash is None:
+        retry_mode_valid = bool(
+            schema_version == "model-generation-block-v1"
+            and payload.get("retry_context_present") is False
+            and payload.get("retry_candidate_content_hash") is None
+            and isinstance(rendered_payload, dict)
+            and "rejected_mutation_retry" in rendered_payload
+            and rendered_payload["rejected_mutation_retry"] is None
+            and isinstance(retry_build_evidence, dict)
+            and retry_build_evidence.get("included") is False
+            and retry_build_evidence.get("truncated") is False
+        )
+    else:
+        rendered_retry = (
+            rendered_payload.get("rejected_mutation_retry")
+            if isinstance(rendered_payload, dict)
+            else None
+        )
+        rendered_candidate = (
+            rendered_retry.get("candidate")
+            if isinstance(rendered_retry, dict)
+            else None
+        )
+        build_candidate = (
+            retry_build_evidence.get("candidate")
+            if isinstance(retry_build_evidence, dict)
+            else None
+        )
+        retry_mode_valid = bool(
+            payload.get("retry_context_present") is True
+            and payload.get("retry_candidate_content_hash")
+            == expected_retry_candidate_hash
+            and isinstance(rendered_candidate, dict)
+            and rendered_candidate.get("content_hash")
+            == expected_retry_candidate_hash
+            and isinstance(retry_build_evidence, dict)
+            and retry_build_evidence.get("included") is True
+            and retry_build_evidence.get("truncated") is False
+            and isinstance(build_candidate, dict)
+            and build_candidate.get("content_hash")
+            == expected_retry_candidate_hash
+        )
 
     requested = blocked_event.payload.get("requested_input_tokens")
     remaining = blocked_event.payload.get("remaining_tokens")
@@ -1020,9 +1223,15 @@ def _v3_generation_block_valid(
     expected_remaining = (
         manifest.budget.max_total_tokens - preceding_token_usage
     )
+    trailing_events = [
+        event for event in events if event.sequence > blocked_event.sequence
+    ]
     return bool(
-        blocked_event.type == EventType.MODEL_GENERATION_BLOCKED
-        and blocked_event.sequence > context_event.sequence
+        request_valid
+        and _request_runtime_contract_valid(request_body, manifest)
+        and retry_mode_valid
+        and blocked_event.type == EventType.MODEL_GENERATION_BLOCKED
+        and blocked_event.sequence == context_event.sequence + 1
         and blocked_event.payload.get("reason_code") == "exact_request_budget_exceeded"
         and blocked_event.payload.get("error_code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
         and blocked_event.payload.get("generation_started") is False
@@ -1039,10 +1248,16 @@ def _v3_generation_block_valid(
         and remaining == expected_remaining
         and type(max_output) is int
         and max_output == manifest.model.max_output_tokens
+        and isinstance(request_body, dict)
+        and request_body.get("max_output_tokens") == max_output
         and requested + max_output > remaining
         and blocked_event.payload.get("input_token_count_calls") == 1
-        and blocked_event.payload.get("retry_context_present") is True
-        and blocked_event.payload.get("retry_candidate_content_hash") == candidate_content_hash
+        and sum(event.type == EventType.RUN_FAILED for event in trailing_events) == 1
+        and trailing_events[-1].type == EventType.RUN_FAILED
+        and all(
+            event.type in {EventType.FAILURE_TAGGED, EventType.RUN_FAILED}
+            for event in trailing_events
+        )
     )
 
 
@@ -1278,12 +1493,13 @@ def _rejected_patch_retry_context_evidence(
         else:
             blocked_ok = bool(
                 isinstance(patch_hash, str)
-                and _v3_generation_block_valid(
+                and _exact_request_generation_block_valid(
+                    root=root,
                     manifest=manifest,
                     events=events,
                     context_event=context_event,
                     blocked_event=consumer,
-                    candidate_content_hash=patch_hash,
+                    expected_retry_candidate_hash=patch_hash,
                 )
             )
             episode_ok = episode_ok and blocked_ok
@@ -1641,27 +1857,47 @@ def qualify_run(
     path = qualification_path(run_id, root=run_root)
     if path.is_file():
         existing = load_trace_qualification(run_id, root=run_root)
-        if existing["schema_version"] == LEGACY_QUALIFICATION_SCHEMA_VERSION:
+        existing_is_legacy = (
+            existing["schema_version"]
+            == LEGACY_QUALIFICATION_SCHEMA_VERSION
+        )
+        task_identity = (
+            manifest.task_id == package.public.task_id
+            and manifest.task_version == package.public.task_version
+            and manifest.public_spec_hash == package.public_spec_hash
+            and manifest.private_spec_hash == package.private_spec_hash
+        )
+        if not task_identity:
+            raise ContractError(
+                "legacy trace qualification task identity mismatch"
+                if existing_is_legacy
+                else "trace qualification task identity mismatch"
+            )
+        _, current_dataset_hash, _ = load_dataset_manifest(
+            dataset_manifest_path
+        )
+        if existing.get("dataset_manifest_hash") != current_dataset_hash:
+            raise ContractError(
+                "legacy trace qualification dataset manifest changed"
+                if existing_is_legacy
+                else "trace qualification dataset manifest changed"
+            )
+        current_source_hash = calculate_source_evidence_hash(
+            run_id,
+            root=run_root,
+            require_valid_plan=False,
+        )
+        if existing["source_evidence_hash"] != current_source_hash:
+            raise ContractError(
+                "legacy trace qualification source evidence changed"
+                if existing_is_legacy
+                else f"trace qualification is immutable: {run_id}"
+            )
+        if existing_is_legacy:
             if manifest.tool_schema_version != "v1":
-                raise ContractError("legacy trace qualification does not match the run contract")
-            task_identity = (
-                manifest.task_id == package.public.task_id
-                and manifest.task_version == package.public.task_version
-                and manifest.public_spec_hash == package.public_spec_hash
-                and manifest.private_spec_hash == package.private_spec_hash
-            )
-            if not task_identity:
-                raise ContractError("legacy trace qualification task identity mismatch")
-            _, current_dataset_hash, _ = load_dataset_manifest(dataset_manifest_path)
-            if existing.get("dataset_manifest_hash") != current_dataset_hash:
-                raise ContractError("legacy trace qualification dataset manifest changed")
-            current_source_hash = calculate_source_evidence_hash(
-                run_id,
-                root=run_root,
-                require_valid_plan=False,
-            )
-            if existing["source_evidence_hash"] != current_source_hash:
-                raise ContractError("legacy trace qualification source evidence changed")
+                raise ContractError(
+                    "legacy trace qualification does not match the run contract"
+                )
             return existing
 
     checks: list[dict[str, Any]] = []
@@ -2090,6 +2326,10 @@ def qualify_run(
             manifest.budget == _GPT54_MINI_D037_CORRECTIVE_BUDGET
             and manifest.model.max_output_tokens == 25_000
         )
+        or (
+            manifest.budget == _GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+            and manifest.model.max_output_tokens == 25_000
+        )
     )
     mini_pilot_contract = (
         manifest.experiment is not None
@@ -2343,7 +2583,13 @@ def qualify_run(
     generation_blocked_events = [
         event for event in events if event.type == EventType.MODEL_GENERATION_BLOCKED
     ]
+    versioned_generation_block_declared = any(
+        event.payload.get("schema_version")
+        == "model-generation-block-v1"
+        for event in generation_blocked_events
+    )
     terminal_generation_block_ok = False
+    terminal_generation_block_kind: str | None = None
     if (
         manifest.context_policy_version == "phase-evidence-v3"
         and len(generation_blocked_events) == 1
@@ -2352,20 +2598,74 @@ def qualify_run(
         blocked_event = generation_blocked_events[0]
         blocked_context = context_events[-1]
         candidate_hash = blocked_event.payload.get("retry_candidate_content_hash")
+        retry_context_present = blocked_event.payload.get(
+            "retry_context_present"
+        )
+        expected_retry_candidate_hash = (
+            candidate_hash
+            if retry_context_present is True and isinstance(candidate_hash, str)
+            else None
+        )
+        retry_mode_shape_valid = bool(
+            (
+                retry_context_present is True
+                and isinstance(candidate_hash, str)
+            )
+            or (
+                retry_context_present is False
+                and candidate_hash is None
+            )
+        )
+        retry_source_binding_valid = bool(
+            retry_context_present is not True
+            or (
+                rejected_patch_retry_context_ok
+                and rejected_patch_retry_context_details.get(
+                    "retry_episode_count"
+                )
+                >= 1
+                and rejected_patch_retry_context_details.get(
+                    "model_generation_blocked_count"
+                )
+                == 1
+                and candidate_hash
+                in rejected_patch_retry_context_details.get(
+                    "verified_candidate_content_hashes",
+                    [],
+                )
+                and not rejected_patch_retry_context_details.get(
+                    "failed_source_failure_sequences"
+                )
+            )
+        )
         terminal_generation_block_ok = bool(
-            isinstance(candidate_hash, str)
-            and _v3_generation_block_valid(
+            retry_mode_shape_valid
+            and retry_source_binding_valid
+            and _exact_request_generation_block_valid(
+                root=run_root,
                 manifest=manifest,
                 events=events,
                 context_event=blocked_context,
                 blocked_event=blocked_event,
-                candidate_content_hash=candidate_hash,
+                expected_retry_candidate_hash=(
+                    expected_retry_candidate_hash
+                ),
             )
             and not any(event.sequence > blocked_context.sequence for event in model_events)
             and all(event.sequence < blocked_event.sequence for event in context_events[:-1])
         )
-    telemetry_declared = any(
+        if terminal_generation_block_ok:
+            terminal_generation_block_kind = (
+                "rejected_patch_retry"
+                if retry_context_present is True
+                else "generic"
+            )
+    model_telemetry_declared = any(
         event.payload.get("prompt_telemetry_version") is not None for event in model_events
+    )
+    terminal_block_telemetry_declared = terminal_generation_block_ok
+    telemetry_declared = bool(
+        model_telemetry_declared or terminal_block_telemetry_declared
     )
     telemetry_contract_required = bool(
         experiment is not None
@@ -2383,7 +2683,13 @@ def qualify_run(
         matched_context_events = (
             context_events[:-1] if terminal_generation_block_ok else context_events
         )
-        prompt_telemetry_ok = len(matched_context_events) == len(model_events)
+        prompt_telemetry_ok = bool(
+            len(matched_context_events) == len(model_events)
+            and (
+                not generation_blocked_events
+                or terminal_generation_block_ok
+            )
+        )
         for index, model_event in enumerate(model_events):
             payload = model_event.payload
             context_event = (
@@ -2433,6 +2739,10 @@ def qualify_run(
                 "terminal_generation_block_valid": (terminal_generation_block_ok),
             }
         )
+        if versioned_generation_block_declared:
+            prompt_telemetry_details[
+                "terminal_generation_block_kind"
+            ] = terminal_generation_block_kind
     add(
         "prompt_token_integrity",
         prompt_telemetry_ok,
@@ -2524,19 +2834,36 @@ def qualify_run(
             and result.outcome_kind
             in {RunOutcomeKind.AGENT_FAILURE, RunOutcomeKind.INFRASTRUCTURE_ERROR}
         )
-    generation_block_terminal_binding_required = terminal_generation_block_ok
+    generation_block_contract_declared = any(
+        "schema_version" in event.payload
+        for event in generation_blocked_events
+    )
+    generation_block_terminal_binding_required = bool(
+        terminal_generation_block_ok
+        or generation_block_contract_declared
+    )
     generation_block_terminal_binding_ok = True
     if generation_block_terminal_binding_required:
-        blocked_event = generation_blocked_events[0]
+        blocked_event = (
+            generation_blocked_events[0]
+            if len(generation_blocked_events) == 1
+            else None
+        )
         terminal_event = terminals[0] if len(terminals) == 1 else None
         terminal_error = (
             result.terminal_error
             if result is not None and isinstance(result.terminal_error, dict)
             else None
         )
-        expected_details = blocked_event.payload
+        expected_details = (
+            blocked_event.payload
+            if blocked_event is not None
+            else None
+        )
         generation_block_terminal_binding_ok = bool(
-            result is not None
+            terminal_generation_block_ok
+            and blocked_event is not None
+            and result is not None
             and result.outcome_kind == RunOutcomeKind.AGENT_FAILURE
             and terminal_event is not None
             and terminal_event.type == EventType.RUN_FAILED
@@ -2554,19 +2881,27 @@ def qualify_run(
             == terminal_error.get("message")
         )
         evaluation_ok = evaluation_ok and generation_block_terminal_binding_ok
+    terminal_result_details: dict[str, Any] = {
+        "result_present": result is not None,
+        "evaluation_reached": evaluation_reached,
+        "official": bool(result is not None and result.official),
+        "verdicts_terminal": terminal_verdicts,
+    }
+    if generation_blocked_events:
+        terminal_result_details.update(
+            {
+                "model_generation_block_binding_required": (
+                    generation_block_terminal_binding_required
+                ),
+                "model_generation_block_binding_valid": (
+                    generation_block_terminal_binding_ok
+                ),
+            }
+        )
     add(
         "terminal_result_integrity",
         evaluation_ok,
-        result_present=result is not None,
-        evaluation_reached=evaluation_reached,
-        official=bool(result is not None and result.official),
-        verdicts_terminal=terminal_verdicts,
-        model_generation_block_binding_required=(
-            generation_block_terminal_binding_required
-        ),
-        model_generation_block_binding_valid=(
-            generation_block_terminal_binding_ok
-        ),
+        **terminal_result_details,
     )
 
     outcome = result.outcome_kind if result is not None else RunOutcomeKind.INFRASTRUCTURE_ERROR
@@ -2694,8 +3029,12 @@ def qualify_run(
     encoded = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
     if path.exists():
         existing = load_trace_qualification(run_id, root=run_root)
-        if existing != payload:
+        if (
+            _normalized_qualification_semantics(existing)
+            != _normalized_qualification_semantics(payload)
+        ):
             raise ContractError(f"trace qualification is immutable: {run_id}")
+        return existing
     else:
         path.write_text(encoded, encoding="utf-8")
     return payload

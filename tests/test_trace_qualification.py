@@ -89,25 +89,37 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
         cost_limit = 2
         embedding_revision = "PIN_AT_FREEZE"
         model_id = "gpt-5.4-mini-2026-03-17"
-        corrective = (
-            manifest.budget.max_total_tokens == 120_000
-            or manifest.model.max_output_tokens == 25_000
+        diagnostic_profile_by_total_budget = {
+            120_000: "d037-rejected-patch-retry-v2",
+            200_000: "d037-rejected-patch-retry-v3",
+        }
+        diagnostic_profile = diagnostic_profile_by_total_budget.get(
+            manifest.budget.max_total_tokens
         )
-        budget = (
-            Budget(max_total_tokens=120_000)
-            if corrective
-            else Budget(max_total_tokens=90_000)
-        )
-        max_output_tokens = 25_000 if corrective else 4096
-        diagnostic = (
-            {
+        if diagnostic_profile is not None:
+            budget = Budget(
+                max_total_tokens=manifest.budget.max_total_tokens
+            )
+            max_output_tokens = 25_000
+            diagnostic = {
+                "schema_version": "experiment-diagnostic-v1",
+                "profile": diagnostic_profile,
+                "required_trace_features": ["rejected_patch_retry_context"],
+            }
+        elif manifest.model.max_output_tokens == 25_000:
+            # Preserve an invalid partial contract for negative qualification
+            # tests rather than silently normalizing it to a valid profile.
+            budget = Budget(max_total_tokens=120_000)
+            max_output_tokens = 25_000
+            diagnostic = {
                 "schema_version": "experiment-diagnostic-v1",
                 "profile": "d037-rejected-patch-retry-v2",
                 "required_trace_features": ["rejected_patch_retry_context"],
             }
-            if corrective
-            else None
-        )
+        else:
+            budget = Budget(max_total_tokens=90_000)
+            max_output_tokens = 4096
+            diagnostic = None
     elif purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
         tasks = [PILOT_TASK_PATH]
         conditions = ["no_memory"]
@@ -1597,6 +1609,91 @@ def test_legacy_v1_qualification_is_byte_stable_when_requalified(tmp_path) -> No
     assert path.read_bytes() == original_bytes
 
 
+def test_structured_v2_neutral_detail_shape_is_byte_stable_when_requalified(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(tmp_path, prompt_telemetry=True)
+
+    historical = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+    path = tmp_path / "qualifications" / f"{run_id}.json"
+    terminal_check = next(
+        check
+        for check in historical["checks"]
+        if check["check_id"] == "terminal_result_integrity"
+    )
+    terminal_check["details"].update(
+        {
+            "model_generation_block_binding_required": False,
+            "model_generation_block_binding_valid": True,
+        }
+    )
+    historical["qualification_hash"] = sha256_text(
+        canonical_json(
+            {
+                key: value
+                for key, value in historical.items()
+                if key != "qualification_hash"
+            }
+        )
+    )
+    path.write_text(
+        json.dumps(
+            historical,
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    original_bytes = path.read_bytes()
+
+    reloaded = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+
+    assert reloaded == historical
+    assert path.read_bytes() == original_bytes
+
+
+def test_structured_v2_non_neutral_qualification_change_is_rejected(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(tmp_path, prompt_telemetry=True)
+
+    tampered = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+    path = tmp_path / "qualifications" / f"{run_id}.json"
+    prompt_check = next(
+        check
+        for check in tampered["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    prompt_check["passed"] = False
+    tampered["qualified"] = False
+    tampered["qualification_hash"] = sha256_text(
+        canonical_json(
+            {
+                key: value
+                for key, value in tampered.items()
+                if key != "qualification_hash"
+            }
+        )
+    )
+    path.write_text(
+        json.dumps(
+            tampered,
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ContractError, match="trace qualification is immutable"):
+        qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+
 def test_structured_submission_lifecycle_must_bind_same_diff(tmp_path) -> None:
     run_id, _, _ = _terminal_trace(tmp_path, malformed_lifecycle=True)
 
@@ -1896,6 +1993,39 @@ def test_gpt54mini_d037_corrective_contract_is_qualified(tmp_path) -> None:
     assert model_check["passed"] is True
     assert model_check["details"]["model_id"] == "gpt-5.4-mini-2026-03-17"
     assert model_check["details"]["max_total_tokens"] == 120_000
+    assert model_check["details"]["max_output_tokens"] == 25_000
+    plan_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+    assert plan_check["passed"] is True
+    assert qualification["qualified"] is True
+
+
+def test_gpt54mini_d037_tail_reserve_contract_is_qualified(tmp_path) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=200_000),
+        max_output_tokens=25_000,
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+
+    model_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "frozen_model_contract"
+    )
+    assert model_check["passed"] is True
+    assert model_check["details"]["model_id"] == "gpt-5.4-mini-2026-03-17"
+    assert model_check["details"]["max_total_tokens"] == 200_000
     assert model_check["details"]["max_output_tokens"] == 25_000
     plan_check = next(
         check

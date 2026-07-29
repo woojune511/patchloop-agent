@@ -247,6 +247,32 @@ input + full allowance 33,583이 커 generation 전에 차단됐다.
 REVIEW phase까지는 도달했지만 submission·evaluator·rejected retry는 0개다. 따라서
 diagnostic은 `failed/qualification_not_passed`이고 D-037은 검증 또는 반증되지 않았다.
 
+D-041 r5 profile v3는 per-call 25,000-token allowance와 strict reservation rule을 유지하고
+diagnostic-only total budget을 200,000으로 올린다. 산출 근거는 r4의 terminal prefix
+91,437과 세 tail generation의 보수적 reservation이다.
+
+```text
+largest observed exact input = 10,031
+one tail reservation = 10,031 + 25,000 = 35,031
+r4 prefix + three tails = 91,437 + 3 × 35,031 = 196,530
+frozen diagnostic total budget = 200,000
+```
+
+각 generation은 계속 exact input과 full 25,000 allowance가 남은 total budget 안에 함께
+들어갈 때만 시작한다. 새 exact-request terminal block payload는
+`model-generation-block-v1`이다.
+Qualification은 이 versioned payload의 request identity, recomputed remaining budget,
+no-generation 상태와 terminal result binding을 retry context 유무와 독립적으로 검사한다.
+따라서 valid generic budget block은 trace integrity를 실패시키지 않지만 retry episode 또는
+D-037 pass로 세지 않는다. Historical unversioned generic r4 block과 21/22 qualification은
+그대로 유지한다.
+
+R5에는 synthetic rejection이나 automatic provider retry를 넣지 않는다. Agent가 자연스럽게
+rejected mutation을 만들지 않고 evaluator까지 도달하면 generic qualification과 task outcome을
+보존한 채 `inconclusive/retry_episode_not_observed`다. 이 결과는 자동 재실행 사유가 아니다.
+Evaluator 미도달은 기존대로 diagnostic failure다. R5는 새 experiment ID, clean execution
+hash와 별도 비용 승인으로 최대 한 번 실행한다.
+
 ## 5. Controlled variables
 
 한 experiment block 안에서 다음을 고정한다.
@@ -272,8 +298,10 @@ execution window를 provenance로 사용한다. D-031 provider telemetry를 검�
 development-validation model-candidate pilot의 historical r1~r3는
 `gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run 전체
 input+output 90,000 token을 고정한다. 새 D-037 corrective r4만 hash-bound diagnostic
-profile v2에서 25,000/120,000 pair를 허용한다. 모든 suite는 별도 experiment ID로
-보존하며, 이 diagnostic lane은 core headline 비교나 Terra 선행 gate에 포함하지 않는다.
+profile v2에서 25,000/120,000 pair를 허용하고, 후속 r5 profile v3만
+25,000/200,000 pair와 `model-generation-block-v1`을 허용한다. 모든 suite는 별도
+experiment ID로 보존하며, 이 diagnostic lane은 core headline 비교나 Terra 선행 gate에
+포함하지 않는다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
@@ -302,6 +330,8 @@ run의 frozen budget reserve를 확보할 수 없는 경우 다음 run을 시작
 2026-07-29 UTC에 다시 확인한 `gpt-5.4-mini` standard rate는 input $0.75/M, cached input $0.075/M,
 output $4.50/M이며 별도 cache-write rate는 없다. Mini pilot preflight는 model ID와 이
 price profile을 함께 검증하며 $2 cap 안에 보수적 $0.423432 run reserve를 요구한다.
+R5 diagnostic은 200,000 total과 25,000 response allowance를 같은 최고 rate로 예약해
+`$1.0125`를 요구한다. 이는 authorization reserve이지 예측 지출이나 invoice 증거가 아니다.
 
 ## 6. Selective retrieval policy
 

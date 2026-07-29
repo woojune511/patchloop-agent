@@ -36,7 +36,10 @@ from patchloop.contracts import (
 )
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.evals.faults import clone_with_fault
-from patchloop.evals.qualification import qualify_run
+from patchloop.evals.qualification import (
+    _request_runtime_contract_valid,
+    qualify_run,
+)
 from patchloop.runtime import build_manifest
 from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
@@ -69,6 +72,46 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     assert AgentRunner._runtime_contract(current) == AgentRunner._runtime_contract(legacy_v2)
     assert replay.tool_schema_version == "v1"
     assert replay.context_policy_version == "v1"
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("model", "gpt-wrong"),
+        ("truncation", "auto"),
+        ("store", True),
+        ("reasoning", {"effort": "low"}),
+        ("service_tier", "priority"),
+        ("tools", []),
+    ],
+)
+def test_no_generation_request_must_match_the_full_runtime_contract(
+    field: str,
+    replacement: object,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id=f"run_request_contract_{field}",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+    )
+    system_prompt, tools = AgentRunner._runtime_contract(manifest)
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(),
+    )
+    request = adapter.request_payload(
+        "{}",
+        tools,
+        system_prompt=system_prompt,
+    )
+
+    assert _request_runtime_contract_valid(request, manifest) is True
+
+    tampered = json.loads(json.dumps(request))
+    tampered[field] = replacement
+    assert _request_runtime_contract_valid(tampered, manifest) is False
 
 
 def _write_approved_execution_plan(root: Path, execution_hash: str) -> None:
@@ -177,6 +220,42 @@ class _RejectedPatchResponses:
             model_id=self.model_id,
             output_text="cannot continue",
             response_id="resp_after_rejection",
+        )
+
+
+class _GenericBudgetBlockResponses:
+    def __init__(
+        self,
+        *,
+        model_id: str,
+        input_token_counts: list[int],
+    ) -> None:
+        self.model_id = model_id
+        self.input_token_counts = input_token_counts
+        self.count_requests: list[dict[str, Any]] = []
+        self.create_requests: list[dict[str, Any]] = []
+        self.input_tokens = SimpleNamespace(count=self.count)
+
+    def count(self, **request):
+        index = len(self.count_requests)
+        self.count_requests.append(request)
+        return SimpleNamespace(input_tokens=self.input_token_counts[index])
+
+    def create(self, **request):
+        if self.create_requests:
+            raise AssertionError(
+                "second generation must not start after exact budget rejection"
+            )
+        self.create_requests.append(request)
+        return _fake_openai_response(
+            input_tokens=self.input_token_counts[0],
+            model_id=self.model_id,
+            tool_call=RequestedTool(
+                "search_files",
+                "generic-budget-search",
+                {"query": "parse", "path_glob": "**/*.py"},
+            ),
+            response_id="resp_before_generic_budget_block",
         )
 
 
@@ -431,6 +510,33 @@ def test_live_runner_refuses_generation_that_cannot_fit_remaining_token_budget(
     assert result["usage"]["model_calls"] == 0
     assert result["terminal_error"]["message"].startswith("remaining token budget cannot fund")
     assert responses.create_called is False
+    events = runner.state.list_events(manifest.run_id)
+    blocked = next(
+        event
+        for event in events
+        if event.type == EventType.MODEL_GENERATION_BLOCKED
+    )
+    assert blocked.payload["schema_version"] == "model-generation-block-v1"
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    terminal_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "terminal_result_integrity"
+    )
+    assert prompt_check["passed"] is True
+    assert prompt_check["details"]["model_event_count"] == 0
+    assert prompt_check["details"]["declared"] is True
+    assert prompt_check["details"]["terminal_generation_block_kind"] == "generic"
+    assert terminal_check["passed"] is True
 
 
 def test_live_v3_retry_request_contains_exact_rejected_patch_context(
@@ -584,6 +690,56 @@ def _run_live_v3_retry_budget_block(
     return runner, result, manifest, responses, patch
 
 
+def _run_live_v3_generic_budget_block(
+    tmp_path,
+    monkeypatch,
+    *,
+    run_id: str,
+):
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package(Path(TASK).parent)
+    execution_hash = "sha256:" + ("9" * 64)
+    manifest = build_manifest(
+        package,
+        run_id=run_id,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=5_000),
+        experiment_context=ExperimentRunContext(
+            experiment_id="live-v3-generic-budget-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("b" * 64),
+            repetition=1,
+        ),
+    )
+    responses = _GenericBudgetBlockResponses(
+        model_id=manifest.model.model_id,
+        input_token_counts=[100, 1_000],
+    )
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(responses=responses),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_: adapter)
+    _write_approved_execution_plan(tmp_path / "runtime", execution_hash)
+
+    result = runner.start(
+        TASK,
+        model="openai",
+        manifest=manifest,
+        live_authorization=issue_live_execution_authorization(
+            execution_hash,
+            root=tmp_path / "runtime",
+        ),
+    )
+    return runner, result, manifest, responses
+
+
 def test_live_v3_retry_request_budget_block_precedes_second_generation(
     tmp_path,
     monkeypatch,
@@ -601,6 +757,7 @@ def test_live_v3_retry_request_budget_block_precedes_second_generation(
     assert len(blocked_events) == 1
     blocked = blocked_events[0]
     expected_payload = {
+        "schema_version": "model-generation-block-v1",
         "reason_code": "exact_request_budget_exceeded",
         "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
         "generation_started": False,
@@ -664,9 +821,288 @@ def test_live_v3_retry_request_budget_block_precedes_second_generation(
     assert retry_check["details"]["model_generation_blocked_count"] == 1
     assert prompt_check["passed"] is True
     assert prompt_check["details"]["terminal_generation_block_valid"] is True
+    assert (
+        prompt_check["details"]["terminal_generation_block_kind"]
+        == "rejected_patch_retry"
+    )
     assert terminal_check["passed"] is True
     assert terminal_check["details"]["model_generation_block_binding_required"] is True
     assert terminal_check["details"]["model_generation_block_binding_valid"] is True
+
+
+def test_unversioned_retry_budget_block_remains_read_compatible(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    runner, _, manifest, _, _ = _run_live_v3_retry_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id="run_live_v3_legacy_retry_budget",
+    )
+    database = tmp_path / "runtime" / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (manifest.run_id,),
+        ).fetchall()
+        for sequence, event_json in rows:
+            event = json.loads(event_json)
+            if event["type"] == EventType.MODEL_GENERATION_BLOCKED.value:
+                event["payload"].pop("schema_version")
+            elif event["type"] == EventType.RUN_FAILED.value:
+                event["payload"]["error_details"].pop("schema_version")
+            else:
+                continue
+            connection.execute(
+                "UPDATE events SET event_json = ? "
+                "WHERE run_id = ? AND sequence = ?",
+                (json.dumps(event), manifest.run_id, sequence),
+            )
+
+        result_json = connection.execute(
+            "SELECT result_json FROM runs WHERE run_id = ?",
+            (manifest.run_id,),
+        ).fetchone()[0]
+        persisted_result = json.loads(result_json)
+        persisted_result["terminal_error"]["details"].pop("schema_version")
+        connection.execute(
+            "UPDATE runs SET result_json = ? WHERE run_id = ?",
+            (json.dumps(persisted_result), manifest.run_id),
+        )
+
+    result_path = (
+        tmp_path
+        / "runtime"
+        / "artifacts"
+        / "runs"
+        / manifest.run_id
+        / "result.json"
+    )
+    result_path.write_text(
+        json.dumps(persisted_result, indent=2),
+        encoding="utf-8",
+    )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    assert checks["rejected_patch_retry_context"]["passed"] is True
+    assert checks["prompt_token_integrity"]["passed"] is True
+    assert checks["terminal_result_integrity"]["passed"] is True
+
+
+def test_retry_budget_block_requires_a_verified_rejected_patch_source(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    runner, _, manifest, _, _ = _run_live_v3_retry_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id="run_live_v3_retry_without_source",
+    )
+    database = tmp_path / "runtime" / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (manifest.run_id,),
+        ).fetchall()
+        sequence, event_json = next(
+            (sequence, event_json)
+            for sequence, event_json in rows
+            if json.loads(event_json)["type"] == EventType.TOOL_FAILED.value
+        )
+        event = json.loads(event_json)
+        event["payload"]["tool"] = "read_file"
+        connection.execute(
+            "UPDATE events SET event_json = ? "
+            "WHERE run_id = ? AND sequence = ?",
+            (json.dumps(event), manifest.run_id, sequence),
+        )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    assert checks["rejected_patch_retry_context"]["details"][
+        "retry_episode_count"
+    ] == 0
+    assert checks["prompt_token_integrity"]["passed"] is False
+    assert checks["terminal_result_integrity"]["passed"] is False
+    assert qualification["qualified"] is False
+
+
+def test_live_v3_generic_request_budget_block_validates_prompt_and_terminal(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    runner, result, manifest, responses = _run_live_v3_generic_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id="run_live_v3_generic_budget",
+    )
+
+    events = runner.state.list_events(manifest.run_id)
+    blocked = next(
+        event
+        for event in events
+        if event.type == EventType.MODEL_GENERATION_BLOCKED
+    )
+    assert blocked.payload == {
+        "schema_version": "model-generation-block-v1",
+        "reason_code": "exact_request_budget_exceeded",
+        "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "generation_started": False,
+        "request_artifact_id": blocked.payload["request_artifact_id"],
+        "request_artifact_path": blocked.payload["request_artifact_path"],
+        "request_body_hash": blocked.payload["request_body_hash"],
+        "requested_input_tokens": 1_000,
+        "remaining_tokens": 4_899,
+        "max_output_tokens": 4_096,
+        "input_token_count_calls": 1,
+        "retry_context_present": False,
+        "retry_candidate_content_hash": None,
+    }
+    assert len(responses.count_requests) == 2
+    assert len(responses.create_requests) == 1
+    assert result["usage"]["model_calls"] == 1
+    assert result["usage"]["input_token_count_calls"] == 2
+    assert result["terminal_error"]["details"] == blocked.payload
+
+    request_evidence = json.loads(
+        Path(blocked.payload["request_artifact_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    rendered_context = json.loads(
+        next(
+            item["content"]
+            for item in request_evidence["request_body"]["input"]
+            if item["role"] == "user"
+        )
+    )
+    assert rendered_context["rejected_mutation_retry"] is None
+    assert (
+        request_evidence["context_build"]["rejected_mutation_retry"]["included"]
+        is False
+    )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    retry_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    terminal_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "terminal_result_integrity"
+    )
+    assert retry_check["passed"] is True
+    assert retry_check["details"]["retry_episode_count"] == 0
+    assert retry_check["details"]["model_generation_blocked_count"] == 0
+    assert prompt_check["passed"] is True
+    assert prompt_check["details"]["terminal_generation_block_valid"] is True
+    assert prompt_check["details"]["terminal_generation_block_kind"] == "generic"
+    assert terminal_check["passed"] is True
+    assert terminal_check["details"]["model_generation_block_binding_required"] is True
+    assert terminal_check["details"]["model_generation_block_binding_valid"] is True
+
+
+@pytest.mark.parametrize(
+    ("event_type", "field", "replacement", "failed_check_id"),
+    [
+        (
+            EventType.MODEL_GENERATION_BLOCKED,
+            "remaining_tokens",
+            1,
+            "prompt_token_integrity",
+        ),
+        (
+            EventType.MODEL_GENERATION_BLOCKED,
+            "retry_context_present",
+            True,
+            "prompt_token_integrity",
+        ),
+        (
+            EventType.MODEL_GENERATION_BLOCKED,
+            "request_body_hash",
+            "sha256:" + ("f" * 64),
+            "prompt_token_integrity",
+        ),
+        (
+            EventType.RUN_FAILED,
+            "error_code",
+            "CONTRACT_ERROR",
+            "terminal_result_integrity",
+        ),
+    ],
+)
+def test_v3_generic_budget_block_qualification_rejects_tampering(
+    tmp_path,
+    monkeypatch,
+    event_type,
+    field,
+    replacement,
+    failed_check_id,
+) -> None:
+    runner, _, manifest, _ = _run_live_v3_generic_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id=f"run_live_v3_generic_tamper_{field}",
+    )
+    database = tmp_path / "runtime" / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (manifest.run_id,),
+        ).fetchall()
+        sequence, event_json = next(
+            (sequence, event_json)
+            for sequence, event_json in rows
+            if json.loads(event_json)["type"] == event_type.value
+        )
+        event = json.loads(event_json)
+        event["payload"][field] = replacement
+        connection.execute(
+            "UPDATE events SET event_json = ? "
+            "WHERE run_id = ? AND sequence = ?",
+            (json.dumps(event), manifest.run_id, sequence),
+        )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    failed_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == failed_check_id
+    )
+    assert failed_check["passed"] is False
 
 
 @pytest.mark.parametrize(

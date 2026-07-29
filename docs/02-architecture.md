@@ -182,6 +182,13 @@ Logical storage layout은 source repository와 분리한다.
   structured reason을 첫 후속 request에만 넣는다. 이 bytes는 checkpoint나 대상 repository에
   복사하지 않는다. Full request와 output allowance가 token budget을 넘으면 request CAS와
   `ModelGenerationBlocked`를 남기고 provider generation 전에 fail-closed한다.
+- D-041 r5에서도 generation admission은 exact input과 full per-call allowance가 남은 total
+  budget에 함께 들어가야 한다는 strict rule을 유지한다. 새 exact-request no-generation
+  event payload는 `model-generation-block-v1`로 versioning한다. 이 versioned terminal block은 retry
+  candidate가 없어도 request, recomputed budget과 terminal result가 모두 결속되면 valid
+  trace evidence지만, rejected-patch retry episode 또는 D-037 gate evidence는 아니다.
+  Historical unversioned retry block은 읽기 호환하고, unversioned generic r4 block은 당시
+  qualification 21/22로 immutable하게 유지한다.
 
 ### Recovery algorithm
 

@@ -2816,6 +2816,8 @@ class AgentRunner:
                 else None
             ),
         }
+        if reason_code == "exact_request_budget_exceeded":
+            payload["schema_version"] = "model-generation-block-v1"
         self.state.append_event(
             manifest.run_id,
             EventType.MODEL_GENERATION_BLOCKED,
