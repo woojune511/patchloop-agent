@@ -94,7 +94,7 @@ is preserved separately under `reports/live-pilot/`:
 - `experiments/dev-validation-gpt54mini-d037-r5.yaml`: D-041 profile-v3 diagnostic contract;
   consumed strict 25,000 per-call / 200,000 total contract; terminal inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-d037-r6.yaml`: D-043 profile-v4 controlled diagnostic;
-  offline-tested but unapproved and not run against the provider
+  consumed exact hash once; terminal inspection only, never rerun
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -210,15 +210,16 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
 trace-exercise error and records remaining rows as not started.
 
-Eight paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
-historical Terra r3 success, four terminal mini failures and one official mini task success whose
-D-037 diagnostic is inconclusive. Their cumulative calculated list-price cost is `$1.284568125`;
-actual invoice or free daily usage treatment was not verified. Docker
+Nine paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
+historical Terra r3 success, four terminal mini failures, one official mini task success whose
+D-037 diagnostic is inconclusive, and one official controlled mini diagnostic pass. Their
+cumulative calculated list-price cost is `$1.450364625`; actual invoice or free daily usage
+treatment was not verified. Docker
 availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
 the separate 12-run development campaign.
 
-The D-037 offline gate remains implemented. The next request after a
+The D-037 offline gate and its single controlled live exercise are complete. The next request after a
 rejected mutating-tool call receives the exact budget-bounded candidate bytes, content hash and
 structured rejection reason. New manifests activate it as
 `context_policy_version=phase-evidence-v3`; qualification rehashes the candidate/result CAS and
@@ -320,6 +321,13 @@ execution hash is reviewed. Do not pass approval flags without a new explicit ap
 hash and the $2 cap. R6 may run at most once. It must show exactly one controlled rejection, zero
 `PatchApplied` for that rejected action, exact next-request rehydration and evaluator arrival.
 Official task success remains a separate result.
+
+The approved hash
+`sha256:d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b`
+was consumed exactly once by `run_73f5aaf7328a4ea5`. The run passed the controlled diagnostic,
+official task evaluation and trace qualification; its aggregate is preserved in
+[the r6 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json).
+Inspect the existing result and never invoke that suite/hash again.
 
 After that disposition gate is resolved, create a separately approved Terra
 development-validation pilot. Only after that run

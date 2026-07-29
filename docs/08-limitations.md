@@ -225,12 +225,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. All eight paid-pilot host preflights reached
+  only after the approved plan is durably persisted. All nine paid-pilot host preflights reached
   `ready=true`; the development campaign requires its own clean execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. All eight paid pilots produced completed hash-chained
+  that blocks automatic schedule replay. All nine paid pilots produced completed hash-chained
   journals. Automatic resume from an interrupted journal is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
@@ -304,11 +304,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   D-041 fixed the r5 contract at strict 25,000/200,000 and versioned newly emitted exact-request
   generic terminal blocks as `model-generation-block-v1`; the old r4 result remains 21/22. R5
   then passed official task evaluation and trace qualification but had zero retry episodes, so
-  the D-037 diagnostic is inconclusive. D-043 now implements a separately versioned controlled
-  r6 diagnostic offline: it rejects the first preflight-valid prepared patch before mutation and
-  requires exact next-request recovery plus evaluator arrival. This proves a harness branch, not
-  natural model-error recovery or memory benefit. No r6 provider call or live D-037 pass exists
-  yet, so a newly approved tool-v2/context-v3 Terra pilot remains blocked.
+  the D-037 diagnostic is inconclusive. D-043 then introduced a separately versioned controlled
+  r6 diagnostic: it rejects the first preflight-valid prepared patch before mutation and requires
+  exact next-request recovery plus evaluator arrival. The single approved r6 provider run passed
+  that gate, official task evaluation and trace qualification. This proves the harness branch for
+  one controlled intervention, not natural model-error recovery frequency, recovery rate, memory
+  benefit or Terra quality. A tool-v2/context-v3 Terra pilot still requires a separate clean hash
+  and approval.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -412,9 +414,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   passed the task and generic qualification, and produced exactly this zero-episode inconclusive
   result. It has no synthetic rejection or automatic retry, so the result is terminal rather than
   a reason to spend again.
-  Even a successful mini run does not satisfy the tool-v2/context-v3 Terra pilot requirement. The
-  five mini runs' calculated list-price total is `$0.45570375`; all eight paid pilot runs total
-  `$1.284568125`.
+  The controlled r6 result validates one deliberate retry branch but does not satisfy the
+  tool-v2/context-v3 Terra pilot requirement. The six mini runs' calculated list-price total is
+  `$0.62150025`; all nine paid pilot runs total `$1.450364625`.
   These are usage-based estimates, not verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
   data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not

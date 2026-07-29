@@ -115,7 +115,14 @@ contract로 candidate bytes·hash·structured reason을 exact rehydrate한다. Q
 controlled rejection 1회, 그 action의 `PatchApplied` 0회, 전체 retry 검증과 evaluator
 도달을 함께 요구한다. Invalid patch는 injection을 소모하지 않고, crash 뒤 resume도
 prepared patch를 적용하지 않는다. 이 경로는 현재 offline evidence만 있으며 r6 provider
-call, measured usage, evaluator verdict 또는 D-037 live pass는 아직 없다.
+call 전에는 live claim을 만들지 않았다. 이후 승인된 r6 `run_73f5aaf7328a4ea5`가 controlled
+rejection 1회, verified retry 1회, rejected action `PatchApplied` 0회와 evaluator 도달을
+모두 충족했다. Official hidden/regression/scope/safety와 trace qualification 23/23도
+통과했으며, 138,262 input + 13,800 output token과 계산상 `$0.1657965`를 기록했다. 이
+결과는 D-037 harness branch의 live validation이지 자연 model-error recovery rate나 memory
+효과가 아니다. Aggregate evidence는
+[mini D-037 r6 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json)에
+보존하며 같은 hash/run을 재실행하지 않는다.
 
 ## 구현된 핵심 경로
 
@@ -352,14 +359,15 @@ diagnostic은 D-041의 새 r5/profile v3에서만 허용됐다. R5는 strict 25,
 reservation과 200,000 total budget, 새 `model-generation-block-v1` generic terminal
 block을 고정한 뒤 별도 hash로 정확히 한 번 실행됐다. `run_0ad8676d42614fbf`는 official
 task와 trace qualification은 통과했지만 rejected candidate가 없어 diagnostic은
-inconclusive다. R4와 r5의 승인이나 hash는 재사용하지 않는다. 현재 다음 단계는 새 paid
-run이 아니라 D-037 provider gate의 disposition을 offline에서 계약화하는 일이다. 그
-결정 뒤 별도로 승인된 Terra development-validation pilot이
+inconclusive다. R4와 r5의 승인이나 hash는 재사용하지 않는다. D-043의 별도 r6/profile v4는
+controlled rejection을 도입한 뒤 새 hash로 한 번 실행됐고, exact retry와 evaluator gate를
+통과했다. R6도 immutable하며 재실행하지 않는다. 다음은 별도로 승인된 Terra
+development-validation pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
 harness gate와 별도로 보고한다.
 
-기존 mini D-037 r3, r4와 r5 suite는 terminal inspection 전용이다. Journal이나 result를
+기존 mini D-037 r3, r4, r5와 r6 suite는 terminal inspection 전용이다. Journal이나 result를
 삭제하거나 approval flag를 다시 전달하지 않는다.
 
 ```powershell
@@ -457,7 +465,7 @@ published 128,000 max output 안이다.
 full 25,000 allowance가 남은 total budget에 함께 들어갈 때만 generation을 시작한다.
 Generic terminal block은 새 `model-generation-block-v1`일 때만 retry와 독립된 valid trace
 evidence가 되며, retry episode나 diagnostic pass를 만들지 않는다.
-세 Terra pilot과 historical mini r1/r2/r3/r4/r5는 usage/source-evidence 보존 경로를 실제 provider에서
+세 Terra pilot과 historical mini r1/r2/r3/r4/r5/r6는 usage/source-evidence 보존 경로를 실제 provider에서
 확인했다. Terra r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, historical Terra r3가 별도 clean execution
 hash에서 v1 accepted pilot를 만들었다. Mini r2는 v2 evaluator 경로에 도달했지만 hidden
@@ -466,11 +474,12 @@ Mini r4는 모든 generated response가 completed였지만 REVIEW 전 total-budg
 끝나 evaluator와 D-037 retry에는 도달하지 못했다.
 Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D-037 target을
 exercise하지 못했다. Mini r5는 official task와 qualification을 통과했지만 rejection이
-없어 D-037 diagnostic은 inconclusive다. 다섯 mini run의 누적 계산 비용은 `$0.45570375`,
-여덟 paid pilot의 계산상 총액은 `$1.284568125`이며 실제 invoice/free daily usage 적용
-여부는 확인하지 않았다. R5는 자동 재실행하지 않는다. D-037 provider gate의 후속 계약을
-offline에서 결정하고, 그 뒤 별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run development
-campaign을 승인하지 않는다.
+없어 D-037 diagnostic은 inconclusive다. Mini r6는 deliberate controlled rejection으로
+harness retry branch와 evaluator 도달을 검증했지만 natural recovery rate는 측정하지 않는다.
+여섯 mini run의 누적 계산 비용은 `$0.62150025`, 아홉 paid pilot의 계산상 총액은
+`$1.450364625`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5와 r6는
+자동 재실행하지 않는다. 별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run
+development campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

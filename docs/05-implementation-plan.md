@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-037 controlled diagnostic offline gate**
+현재 milestone: **tool-v2/context-v3 Terra pilot preflight gate**
 
 2026-07-30 구현 스냅샷:
 
@@ -12,7 +12,7 @@
 | Phase 3 state machine | tool v2/context v3 retry hardening offline-complete | Current-diff submission gate와 exact rejected-patch next-request rehydration, structured no-generation budget event 검증 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | historical v1 pilot complete, D-037 r3/r4 failures와 r5 inconclusive 보존, controlled r6 offline contract implemented | R6는 one-shot pre-mutation rejection/recovery/qualification offline pass; provider call 미실행 |
+| Phase 6 evaluation | historical v1 pilot complete, D-037 r3/r4 failures·r5 inconclusive·r6 controlled pass 보존 | R6 `run_73f5aaf7328a4ea5`: controlled/verified retry 1/1, official task와 qualification 23/23 pass |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -68,10 +68,9 @@ research task를 admission한다.
 7번 external acceptance lane은 frozen core dataset과 분리된 후속 작업이다. 현재 다음
 단계는 완료된 D-041 r5 25,000/200,000 contract와 `model-generation-block-v1` generic
 terminal qualification evidence → 새 experiment/hash의 별도 승인 → terminal r5
-inconclusive 보존 → D-043 controlled r6 profile의 offline 구현까지 진행됐다. 다음은
-offline acceptance evidence를 모두 확인하고 clean execution hash를 만든 뒤 별도 승인을
-받아 r6를 최대 한 번 실행하는 일이다. 그 run이 D-037 gate를 해소한 뒤
-tool-v2/context-v3 Terra pilot을 수행하고,
+inconclusive 보존 → D-043 controlled r6 profile의 offline 구현 → 승인된 r6
+`run_73f5aaf7328a4ea5`의 terminal diagnostic pass까지 진행됐다. 다음은 별도 clean
+execution hash와 승인을 받아 tool-v2/context-v3 Terra pilot을 수행하고,
 그 pilot이 evaluator와 `trace-qualification-v2`를 통과한 뒤 여섯 memory-development
 task의 12-run no-memory campaign을 시작한다.
 
@@ -117,8 +116,8 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 7 | done (offline) | `phase-evidence-v3` rejected mutating-tool argument의 bounded next-turn rehydration과 qualification check | Exact candidate/reason, tamper/stale/v2 compatibility, generation-before-budget guard와 full regression 통과 |
 | 8 | terminal inconclusive | R5 mini model-candidate diagnostic 1회, 새 hash/승인 | `run_0ad8676d42614fbf`: official task와 qualification pass, rejected/retry 0; 자동 재실행 금지 |
 | 8a | completed (offline) | D-037 controlled diagnostic offline contract | V4 profile, first prepared candidate one-shot rejection, crash-safe no-mutation, exact next request, fail-closed qualifier와 529 passed/2 skipped broad regression |
-| 8b | blocked on clean hash/approval | Controlled r6 provider diagnostic 1회, $2 cap | controlled rejection 1, verified retry, evaluator 도달; task verdict와 분리 |
-| 9 | blocked on order 8b | Corrected Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
+| 8b | completed; immutable | Controlled r6 provider diagnostic 1회, $2 cap | `run_73f5aaf7328a4ea5`: controlled/verified retry 1/1, rejected action mutation 0, evaluator·official task·qualification pass |
+| 9 | blocked on new hash/approval | Corrected Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
 | 10 | blocked on order 9 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
@@ -206,8 +205,14 @@ verified retry가 모두 0이어서 suite diagnostic은
 `inconclusive/retry_episode_not_observed`다. 이는 task나 generic qualification 실패가
 아니며 D-037을 검증하거나 반증하지 않는다. D-041 계약대로 r5는 자동 재실행하지 않는다.
 Order 8의 live observation은 terminal이다. Order 8a의 controlled disposition과 broad
-regression은 offline 완료됐지만 별도 r6 hash/승인/run이 남았으므로 Order 8b 전에 Order 9를
-실행하지 않는다.
+regression 뒤 r6는 commit `1333ab968e2f144b632c0cb5ca341ebd30e0ca4e`, execution hash
+`sha256:d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b`로 정확히 한 번
+실행됐다. `run_73f5aaf7328a4ea5`는 19/19 exact input telemetry와 completed response,
+controlled rejection 1회, verified retry 1회, rejected action mutation 0회, official
+hidden/regression/scope/safety와 qualification 23/23을 통과했다. 138,262 input + 13,800
+output token, 계산상 `$0.1657965`를 사용했다. 이 controlled result는 자연 error recovery
+rate나 memory 효과를 측정하지 않는다. Order 9는 별도 Terra hash와 승인 전에는 실행하지
+않는다.
 
 Memory-development와 core live suite는 `gpt-5.6-terra`, reasoning `medium`, mode
 `standard`, service tier `default`, 4,096 max output token과 기본 run budget을 고정한다.

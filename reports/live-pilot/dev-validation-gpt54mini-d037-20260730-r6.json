@@ -1,0 +1,392 @@
+{
+  "schema_version": "live-pilot-evidence-v6",
+  "recorded_at": "2026-07-29T21:53:20.1832095Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "1333ab968e2f144b632c0cb5ca341ebd30e0ca4e",
+  "execution_hash": "sha256:d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b",
+  "retry_lineage": {
+    "terminal_r5": {
+      "experiment_id": "dev-validation-gpt54mini-d037-20260730-r5",
+      "run_id": "run_0ad8676d42614fbf",
+      "outcome_kind": "resolved",
+      "diagnostic_status": "inconclusive",
+      "immutable": true
+    },
+    "controlled_r6": {
+      "experiment_id": "dev-validation-gpt54mini-d037-20260730-r6",
+      "run_id": "run_73f5aaf7328a4ea5",
+      "outcome_kind": "resolved",
+      "diagnostic_status": "passed",
+      "distinct_experiment_and_run": true,
+      "immutable": true
+    }
+  },
+  "campaign": {
+    "purpose": "development-validation-model-candidate-pilot",
+    "suite_hash": "sha256:133c8625b0505f82cfdd5978b3c2746fe2fecc78dac222a08d21437560a5178b",
+    "schedule_hash": "sha256:c3f863aa98009596a9823e516dd4f40047e62c22831257dab6b35ea367ca099e",
+    "schedule_row_id": "sha256:966b4507e90926364c985a1dda6573964ba003c745cfc0199a34ad93176c022f",
+    "expected_runs": 1,
+    "completed_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "not_started_runs": 0,
+    "halt_reason": null,
+    "execution_plan": {
+      "canonical_content_hash": "sha256:2aae3653dd387af17fe48dc4df1cda1d5e33b9ab955240f813aad23e54be0a08",
+      "persisted_file_sha256": "sha256:722f60792b102a04f282fb018feaaceb10636b277b559473aaf09bd21b9e7b35"
+    },
+    "journal": {
+      "event_count": 4,
+      "hash_chain_valid": true,
+      "last_event_hash_before_completion": "sha256:dfa1e73de5e181632fe6306de66df1bcf85f9130fbb1ac342604ed219fb02848",
+      "final_event_hash": "sha256:1bf08189a9f120c09f7ea99ea3876b30f20942651b4e83ebd41d4c309269b2ce",
+      "result_hash": "sha256:ef78e9c8412cea825acea86c3adcb5df6cc92dfc043c13778f18d0c0e21b7779",
+      "result_exact_bytes_match": true
+    }
+  },
+  "pilot": {
+    "run_id": "run_73f5aaf7328a4ea5",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "max_total_tokens": 200000,
+    "fault": {
+      "type": "controlled-reject-first-prepared-patch",
+      "trigger_after": 1
+    },
+    "outcome_kind": "resolved",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "scope_compliant_success": true,
+    "official": true,
+    "event_count": 149,
+    "checkpoint_count": 33,
+    "worker_claim_count": 1,
+    "model_calls": 19,
+    "input_token_count_calls": 19,
+    "tool_calls": 32,
+    "tool_failures": 1,
+    "patch_prepared_events": 2,
+    "patch_applied_events": 1,
+    "submission_attempted_events": 1,
+    "submission_rejected_events": 0,
+    "submission_accepted_events": 1,
+    "usage": {
+      "input_tokens": 138262,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 13800,
+      "reasoning_output_tokens": 12182,
+      "total_tokens": 152062,
+      "remaining_total_tokens": 47938,
+      "model_cost_usd": 0.1657965,
+      "wall_clock_ms": 134777
+    },
+    "verdicts": {
+      "hidden_tests": "pass",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    }
+  },
+  "trace_activity": {
+    "context_built_events": 19,
+    "tool_succeeded_events": 31,
+    "tool_breakdown": {
+      "search_files": 15,
+      "read_file": 12,
+      "apply_patch": 2,
+      "run_check": 1,
+      "get_diff": 1,
+      "finish_task": 1
+    },
+    "registered_check_attempts": 1,
+    "registered_check_passes": 1,
+    "mutation_attempts": 2,
+    "rejected_patch_candidates": 1,
+    "controlled_rejection_events": 1,
+    "controlled_rejected_action_patch_applied_events": 0,
+    "submitted_patch_artifact_id": "art_7a08593acbb840e69e37d7e7078913f0",
+    "submitted_patch_hash": "sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d",
+    "evaluator_runs": 1,
+    "terminal_phase": "DONE",
+    "review_recorded": true,
+    "submission_order_valid": true,
+    "changed_files": [
+      "babel/numbers.py"
+    ],
+    "added_lines": 1,
+    "deleted_lines": 1
+  },
+  "controlled_rejection_evidence": {
+    "schema_version": "controlled-rejection-v1",
+    "fault_type": "controlled-reject-first-prepared-patch",
+    "trigger": "first-preflight-valid-apply-patch",
+    "trigger_after": 1,
+    "source_call_sequence": 86,
+    "source_prepared_sequence": 87,
+    "source_failure_sequence": 88,
+    "candidate_artifact_id": "art_ba3dd5c7cc764aea8bea4b6051394c16",
+    "candidate_content_hash": "sha256:05eef2c55f098b3fa23d7dfce417e5271fbfe24a5009f3b4b5506c9546cea97b",
+    "prepared_intent_content_hash": "sha256:b9eb8e62403cd1b704f9cf51fdee8eb387499a41fca767bed723acb124fb3d9e",
+    "result_content_hash": "sha256:296cd4ed3393855238c471aa884e726764c416a7de71a0ad6294d8e3f0443884",
+    "baseline_worktree_diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "expected_worktree_diff_hash": "sha256:81b19f04fb9a66652294778cf77c7c13f5ca5da344c767d9cd387bafae485f3c",
+    "observed_worktree_diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "worktree_mutated": false,
+    "patch_applied_for_rejected_action": 0,
+    "next_context_sequence": 90,
+    "next_model_sequence": 91,
+    "next_request_artifact_hash": "sha256:6d8072cb326a1bdc86e982aeda404c7fedc85f7f399bb45be530119a037bd477",
+    "next_request_candidate_body_rehydrated": true,
+    "next_request_candidate_hash_rehydrated": true,
+    "next_request_structured_reason_rehydrated": true,
+    "next_request_truncated": false
+  },
+  "prompt_token_integrity": {
+    "model_call_count": 19,
+    "input_token_count_call_count": 19,
+    "requested_input_tokens": [
+      1983,
+      5196,
+      6715,
+      6626,
+      5814,
+      6707,
+      6830,
+      6228,
+      6494,
+      9589,
+      10412,
+      11925,
+      8928,
+      9096,
+      7559,
+      7344,
+      5799,
+      7631,
+      7386
+    ],
+    "provider_reported_input_tokens": [
+      1983,
+      5196,
+      6715,
+      6626,
+      5814,
+      6707,
+      6830,
+      6228,
+      6494,
+      9589,
+      10412,
+      11925,
+      8928,
+      9096,
+      7559,
+      7344,
+      5799,
+      7631,
+      7386
+    ],
+    "exact_input_count_matches": 19,
+    "total_token_count_matches": 19,
+    "completed_generation_count": 19,
+    "incomplete_generation_count": 0,
+    "truncation_mode": "disabled",
+    "provider_prompt_cut_observed": false,
+    "previous_response_id_used_count": 0,
+    "store_true_count": 0,
+    "maximum_context_policy_omitted_event_count": 91,
+    "total_context_policy_omitted_event_count": 869,
+    "truncated_tool_result_count": 0,
+    "maximum_completed_output_tokens": 6124,
+    "boundary": "Exact input-token equality and disabled provider truncation show delivery of every executed logical request, including the immediate controlled-retry request. Context-policy event omission is local selection and remains separately recorded."
+  },
+  "trace_qualification_artifact": {
+    "schema_version": "trace-qualification-v2",
+    "qualified": true,
+    "trace_integrity_passed": true,
+    "leakage_scan_passed": true,
+    "evaluation_reached": true,
+    "private_match_count": 0,
+    "check_count": 23,
+    "passed_check_count": 23,
+    "failed_check_names": [],
+    "failed_event_sequences": [],
+    "terminal_generation_block_valid": false,
+    "memory_candidate_eligible": false,
+    "qualification_hash": "sha256:cd3dedfdfd19e246755952daf20779eb5cc85c2ff26f7709dd8aeca8ebbb2c6a",
+    "source_evidence_hash": "sha256:d48e0a6c0fe0385df7939522d8886da47f8f1b3009e042117b270ac73665884b",
+    "runtime_contract_content_hash": "sha256:3a8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff"
+  },
+  "d037_retry_feature": {
+    "conditional_check_passed": true,
+    "rejected_candidate_count": 1,
+    "retry_episode_count": 1,
+    "verified_retry_count": 1,
+    "failed_source_failure_sequences": [],
+    "controlled_rejection_count": 1,
+    "verified_controlled_rejection_count": 1,
+    "failed_controlled_source_failure_sequences": [],
+    "controlled_patch_applied_sequences": [],
+    "live_retry_exercised": true,
+    "live_retry_validated": true,
+    "interpretation": "This run validates PatchLoop's hash-bound immediate-next-request rehydration and no-mutation controlled boundary under profile v4. Because the rejection was deliberately injected, it does not show natural model-error recovery or improved model quality."
+  },
+  "diagnostic_gate": {
+    "profile": "d037-rejected-patch-retry-v4",
+    "status": "passed",
+    "reason_code": null,
+    "passed_runs": 1,
+    "inconclusive_runs": 0,
+    "failed_runs": 0,
+    "automatic_rerun_allowed": false,
+    "ready_for_v2_terra_pilot": true
+  },
+  "spend_to_date": {
+    "mini_r1_usd": 0.07745325,
+    "mini_r2_usd": 0.07796475,
+    "mini_r3_usd": 0.06849375,
+    "mini_r4_usd": 0.096159,
+    "mini_r5_usd": 0.135633,
+    "mini_r6_usd": 0.1657965,
+    "mini_lane_cumulative_usd": 0.62150025,
+    "historical_terra_lane_cumulative_usd": 0.828864375,
+    "all_paid_pilot_list_price_total_usd": 1.450364625,
+    "approved_r6_cap_usd": 2.0,
+    "preflight_authorization_reserve_usd": 1.0125,
+    "invoice_charge_verified": false,
+    "free_daily_usage_applied": "unknown"
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; raw provider payloads and evaluator-only details are not bundled in a clean checkout.",
+    "portable_artifacts": "The controlled-rejected tool argument and evaluator-accepted final patch touch public source only. Their distinct roles are preserved and neither contains hidden evaluator evidence.",
+    "private_evaluator_details": "Only aggregate verdicts and public-source scope counts are checked in."
+  },
+  "portable_artifacts": [
+    {
+      "role": "controlled-rejected-model-candidate",
+      "path": "reports/live-pilot/artifacts/run_73f5aaf7328a4ea5-controlled-rejected-model-candidate.patch",
+      "bytes": 1287,
+      "sha256": "sha256:05eef2c55f098b3fa23d7dfce417e5271fbfe24a5009f3b4b5506c9546cea97b"
+    },
+    {
+      "role": "submitted-model-candidate",
+      "path": "reports/live-pilot/artifacts/run_73f5aaf7328a4ea5-submitted-model-candidate.patch",
+      "bytes": 763,
+      "sha256": "sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-gpt54mini-d037-20260730-r6.json",
+      "bytes": 12619,
+      "sha256": "sha256:ef78e9c8412cea825acea86c3adcb5df6cc92dfc043c13778f18d0c0e21b7779"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-gpt54mini-d037-20260730-r6.jsonl",
+      "bytes": 2741,
+      "sha256": "sha256:18cfc5673a5ac93b886fbffc787ca3c561f176f1a755ea83513d58d5b9c7ccc6"
+    },
+    {
+      "path": ".patchloop/experiments/plans/d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b.json",
+      "bytes": 5714,
+      "sha256": "sha256:722f60792b102a04f282fb018feaaceb10636b277b559473aaf09bd21b9e7b35"
+    },
+    {
+      "path": ".patchloop/qualifications/run_73f5aaf7328a4ea5.json",
+      "bytes": 8875,
+      "sha256": "sha256:7b49a7ca65bc518bfdc2909f590e2f151c94f6ff9fc73ad86165fd6278ed5fb2"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_73f5aaf7328a4ea5/manifest.json",
+      "bytes": 2398,
+      "sha256": "sha256:aca97933779b73f7e6cebbe69c0aa209b6dead98b2a5932463baad001a68c545"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_73f5aaf7328a4ea5/result.json",
+      "bytes": 4967,
+      "sha256": "sha256:00b8840f54f9b76a5444bd8ca26798f5165af6715439270f456dcc62f437c40d"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_73f5aaf7328a4ea5/provenance.json",
+      "bytes": 1398,
+      "sha256": "sha256:5be6aa636ee544d247bea219af56045254117547522cdec1b276d6883abf4f93"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_73f5aaf7328a4ea5/evaluation-receipt.json",
+      "bytes": 599,
+      "sha256": "sha256:1808e27a6d37665677ebb3689544ea72d3d5676579f493dac355de7693090d0d"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/3a/8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff",
+      "bytes": 3787,
+      "sha256": "sha256:3a8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/05/eef2c55f098b3fa23d7dfce417e5271fbfe24a5009f3b4b5506c9546cea97b",
+      "bytes": 1287,
+      "sha256": "sha256:05eef2c55f098b3fa23d7dfce417e5271fbfe24a5009f3b4b5506c9546cea97b"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/b9/eb8e62403cd1b704f9cf51fdee8eb387499a41fca767bed723acb124fb3d9e",
+      "bytes": 2009,
+      "sha256": "sha256:b9eb8e62403cd1b704f9cf51fdee8eb387499a41fca767bed723acb124fb3d9e"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/29/6cd4ed3393855238c471aa884e726764c416a7de71a0ad6294d8e3f0443884",
+      "bytes": 1330,
+      "sha256": "sha256:296cd4ed3393855238c471aa884e726764c416a7de71a0ad6294d8e3f0443884"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/6d/8072cb326a1bdc86e982aeda404c7fedc85f7f399bb45be530119a037bd477",
+      "bytes": 50350,
+      "sha256": "sha256:6d8072cb326a1bdc86e982aeda404c7fedc85f7f399bb45be530119a037bd477"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/03/72c5331fdbe6d0e827cea1f3df1f85f4e27c29b71eaaae4ad762bc314d393f",
+      "bytes": 861,
+      "sha256": "sha256:0372c5331fdbe6d0e827cea1f3df1f85f4e27c29b71eaaae4ad762bc314d393f"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/9c/a2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d",
+      "bytes": 763,
+      "sha256": "sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/af/1579a3207260a9da8465393c7f585eb07fc0ccf36d0439ae8eafe7d58a742d",
+      "bytes": 10395,
+      "sha256": "sha256:af1579a3207260a9da8465393c7f585eb07fc0ccf36d0439ae8eafe7d58a742d"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/03/4844e83253f45cd5cc83d1392e36a7b19cd53422f7340d76d22e81fd5c43a2",
+      "bytes": 586,
+      "sha256": "sha256:034844e83253f45cd5cc83d1392e36a7b19cd53422f7340d76d22e81fd5c43a2"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "executed_request_token_counts_match": true,
+    "provider_input_truncation_observed": false,
+    "incomplete_model_generation_observed": false,
+    "trace_qualification_artifact_qualified": true,
+    "evaluation_reached": true,
+    "official_model_candidate_task_success": true,
+    "controlled_d037_retry_exercised": true,
+    "controlled_d037_retry_validated": true,
+    "natural_rejection_recovery_validated": false,
+    "model_quality_improvement_measured": false,
+    "cross_run_memory_effect_measured": false,
+    "accepted_d037_diagnostic": true,
+    "ready_for_v2_terra_pilot": true,
+    "mini_r6_substitutes_for_terra_pilot": false,
+    "development_campaign_unlocked": false,
+    "development_campaign_executed": false,
+    "core_campaign_executed": false
+  }
+}

@@ -1445,3 +1445,360 @@ def test_mini_d037_r5_checked_evidence_has_no_private_or_provider_payload() -> N
     private_tokens = _private_leak_tokens(package, api_key=None)
     leaked = sorted(token for token in private_tokens if token in checked_text)
     assert leaked == []
+
+
+def test_mini_d037_r6_preserves_controlled_retry_success_without_model_quality_claim() -> None:
+    path = Path("reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == "live-pilot-evidence-v6"
+    assert payload["execution_hash"] == (
+        "sha256:d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b"
+    )
+    assert payload["harness_commit"] == (
+        "1333ab968e2f144b632c0cb5ca341ebd30e0ca4e"
+    )
+
+    lineage = payload["retry_lineage"]
+    assert lineage["terminal_r5"]["run_id"] == "run_0ad8676d42614fbf"
+    assert lineage["terminal_r5"]["diagnostic_status"] == "inconclusive"
+    assert lineage["terminal_r5"]["immutable"] is True
+    assert lineage["controlled_r6"]["run_id"] == "run_73f5aaf7328a4ea5"
+    assert lineage["controlled_r6"]["diagnostic_status"] == "passed"
+    assert lineage["controlled_r6"]["distinct_experiment_and_run"] is True
+    assert lineage["controlled_r6"]["immutable"] is True
+
+    campaign = payload["campaign"]
+    assert campaign["expected_runs"] == campaign["completed_runs"] == 1
+    assert campaign["infrastructure_errors"] == 0
+    assert campaign["qualification_errors"] == 0
+    assert campaign["diagnostic_errors"] == 0
+    assert campaign["not_started_runs"] == 0
+    assert campaign["halt_reason"] is None
+    assert campaign["journal"]["hash_chain_valid"] is True
+    assert campaign["journal"]["result_exact_bytes_match"] is True
+
+    pilot = payload["pilot"]
+    assert pilot["run_id"] == "run_73f5aaf7328a4ea5"
+    assert pilot["model_id"] == "gpt-5.4-mini-2026-03-17"
+    assert pilot["max_output_tokens"] == 25_000
+    assert pilot["max_total_tokens"] == 200_000
+    assert pilot["fault"] == {
+        "type": "controlled-reject-first-prepared-patch",
+        "trigger_after": 1,
+    }
+    assert pilot["outcome_kind"] == "resolved"
+    assert pilot["agent_submission_status"] == "completed"
+    assert pilot["evaluation_status"] == "completed"
+    assert pilot["scope_compliant_success"] is True
+    assert pilot["official"] is True
+    assert set(pilot["verdicts"].values()) == {"pass"}
+    assert pilot["event_count"] == 149
+    assert pilot["checkpoint_count"] == 33
+    assert pilot["model_calls"] == pilot["input_token_count_calls"] == 19
+    assert pilot["tool_calls"] == 32
+    assert pilot["tool_failures"] == 1
+    assert pilot["patch_prepared_events"] == 2
+    assert pilot["patch_applied_events"] == 1
+    assert pilot["submission_attempted_events"] == 1
+    assert pilot["submission_rejected_events"] == 0
+    assert pilot["submission_accepted_events"] == 1
+
+    usage = pilot["usage"]
+    assert usage["input_tokens"] + usage["output_tokens"] == usage["total_tokens"]
+    assert usage["total_tokens"] == 152_062
+    assert usage["remaining_total_tokens"] == 47_938
+    assert usage["reasoning_output_tokens"] <= usage["output_tokens"]
+    assert usage["model_cost_usd"] == pytest.approx(0.1657965)
+
+    activity = payload["trace_activity"]
+    assert sum(activity["tool_breakdown"].values()) == pilot["tool_calls"]
+    assert activity["mutation_attempts"] == 2
+    assert activity["rejected_patch_candidates"] == 1
+    assert activity["controlled_rejection_events"] == 1
+    assert activity["controlled_rejected_action_patch_applied_events"] == 0
+    assert activity["terminal_phase"] == "DONE"
+    assert activity["review_recorded"] is True
+    assert activity["submission_order_valid"] is True
+    assert activity["changed_files"] == ["babel/numbers.py"]
+    assert activity["added_lines"] == activity["deleted_lines"] == 1
+
+    controlled = payload["controlled_rejection_evidence"]
+    assert controlled["schema_version"] == "controlled-rejection-v1"
+    assert controlled["source_call_sequence"] == 86
+    assert controlled["source_prepared_sequence"] == 87
+    assert controlled["source_failure_sequence"] == 88
+    assert controlled["candidate_content_hash"] == (
+        "sha256:05eef2c55f098b3fa23d7dfce417e5271fbfe24a5009f3b4b5506c9546cea97b"
+    )
+    assert (
+        controlled["baseline_worktree_diff_hash"]
+        == controlled["observed_worktree_diff_hash"]
+    )
+    assert controlled["worktree_mutated"] is False
+    assert controlled["patch_applied_for_rejected_action"] == 0
+    assert controlled["next_context_sequence"] == 90
+    assert controlled["next_model_sequence"] == 91
+    assert controlled["next_request_candidate_body_rehydrated"] is True
+    assert controlled["next_request_candidate_hash_rehydrated"] is True
+    assert controlled["next_request_structured_reason_rehydrated"] is True
+    assert controlled["next_request_truncated"] is False
+
+    telemetry = payload["prompt_token_integrity"]
+    assert telemetry["requested_input_tokens"] == (
+        telemetry["provider_reported_input_tokens"]
+    )
+    assert sum(telemetry["requested_input_tokens"]) == usage["input_tokens"]
+    assert telemetry["exact_input_count_matches"] == telemetry["model_call_count"] == 19
+    assert telemetry["total_token_count_matches"] == 19
+    assert telemetry["completed_generation_count"] == 19
+    assert telemetry["incomplete_generation_count"] == 0
+    assert telemetry["truncation_mode"] == "disabled"
+    assert telemetry["provider_prompt_cut_observed"] is False
+    assert telemetry["previous_response_id_used_count"] == 0
+    assert telemetry["store_true_count"] == 0
+    assert telemetry["truncated_tool_result_count"] == 0
+    assert telemetry["maximum_context_policy_omitted_event_count"] == 91
+    assert telemetry["maximum_completed_output_tokens"] == 6_124
+
+    qualification = payload["trace_qualification_artifact"]
+    assert qualification["qualified"] is True
+    assert qualification["trace_integrity_passed"] is True
+    assert qualification["leakage_scan_passed"] is True
+    assert qualification["evaluation_reached"] is True
+    assert qualification["passed_check_count"] == qualification["check_count"] == 23
+    assert qualification["failed_check_names"] == []
+    assert qualification["failed_event_sequences"] == []
+
+    feature = payload["d037_retry_feature"]
+    assert feature["conditional_check_passed"] is True
+    assert feature["rejected_candidate_count"] == 1
+    assert feature["retry_episode_count"] == 1
+    assert feature["verified_retry_count"] == 1
+    assert feature["failed_source_failure_sequences"] == []
+    assert feature["controlled_rejection_count"] == 1
+    assert feature["verified_controlled_rejection_count"] == 1
+    assert feature["failed_controlled_source_failure_sequences"] == []
+    assert feature["controlled_patch_applied_sequences"] == []
+    assert feature["live_retry_exercised"] is True
+    assert feature["live_retry_validated"] is True
+    assert "does not show natural model-error recovery" in feature["interpretation"]
+
+    diagnostic = payload["diagnostic_gate"]
+    assert diagnostic["profile"] == "d037-rejected-patch-retry-v4"
+    assert diagnostic["status"] == "passed"
+    assert diagnostic["reason_code"] is None
+    assert diagnostic["passed_runs"] == 1
+    assert diagnostic["inconclusive_runs"] == 0
+    assert diagnostic["failed_runs"] == 0
+    assert diagnostic["automatic_rerun_allowed"] is False
+    assert diagnostic["ready_for_v2_terra_pilot"] is True
+
+    spend = payload["spend_to_date"]
+    assert (
+        spend["mini_r1_usd"]
+        + spend["mini_r2_usd"]
+        + spend["mini_r3_usd"]
+        + spend["mini_r4_usd"]
+        + spend["mini_r5_usd"]
+        + spend["mini_r6_usd"]
+    ) == pytest.approx(spend["mini_lane_cumulative_usd"])
+    assert (
+        spend["historical_terra_lane_cumulative_usd"]
+        + spend["mini_lane_cumulative_usd"]
+    ) == pytest.approx(spend["all_paid_pilot_list_price_total_usd"])
+    assert spend["all_paid_pilot_list_price_total_usd"] == pytest.approx(
+        1.450364625
+    )
+    assert spend["invoice_charge_verified"] is False
+
+    claims = payload["claims_boundary"]
+    assert claims["paid_provider_path_exercised"] is True
+    assert claims["executed_request_token_counts_match"] is True
+    assert claims["trace_qualification_artifact_qualified"] is True
+    assert claims["evaluation_reached"] is True
+    assert claims["official_model_candidate_task_success"] is True
+    assert claims["controlled_d037_retry_exercised"] is True
+    assert claims["controlled_d037_retry_validated"] is True
+    assert claims["natural_rejection_recovery_validated"] is False
+    assert claims["model_quality_improvement_measured"] is False
+    assert claims["cross_run_memory_effect_measured"] is False
+    assert claims["accepted_d037_diagnostic"] is True
+    assert claims["ready_for_v2_terra_pilot"] is True
+    assert claims["mini_r6_substitutes_for_terra_pilot"] is False
+    assert claims["development_campaign_unlocked"] is False
+
+
+def test_mini_d037_r6_artifacts_are_hash_bound_when_available() -> None:
+    path = Path("reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert len(payload["portable_artifacts"]) == 2
+    rejected_candidate = _artifact_for_role(
+        payload,
+        "controlled-rejected-model-candidate",
+    )
+    submitted_candidate = _artifact_for_role(payload, "submitted-model-candidate")
+    _assert_artifact_identity(rejected_candidate)
+    _assert_artifact_identity(submitted_candidate)
+    assert rejected_candidate["sha256"] != submitted_candidate["sha256"]
+
+    artifacts = payload["raw_local_artifacts"]
+    anchor = Path(artifacts[0]["path"])
+    if not anchor.is_file():
+        pytest.skip("raw local mini-r6 evidence is not bundled")
+
+    missing = [artifact["path"] for artifact in artifacts if not Path(artifact["path"]).is_file()]
+    assert not missing
+    for artifact in artifacts:
+        _assert_artifact_identity(artifact)
+
+    for portable in (rejected_candidate, submitted_candidate):
+        raw = next(
+            artifact
+            for artifact in artifacts
+            if artifact["sha256"] == portable["sha256"]
+        )
+        assert Path(raw["path"]).read_bytes() == Path(portable["path"]).read_bytes()
+
+    journal_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["path"].endswith(
+            "/dev-validation-gpt54mini-d037-20260730-r6.jsonl"
+        )
+    )
+    journal_rows = [
+        json.loads(line)
+        for line in Path(journal_artifact["path"]).read_text(encoding="utf-8").splitlines()
+    ]
+    previous_hash = None
+    for expected_sequence, journal_row in enumerate(journal_rows, start=1):
+        recorded_hash = journal_row.pop("event_hash")
+        assert journal_row["sequence"] == expected_sequence
+        assert journal_row["previous_event_hash"] == previous_hash
+        assert sha256_text(canonical_json(journal_row)) == recorded_hash
+        previous_hash = recorded_hash
+    assert previous_hash == payload["campaign"]["journal"]["final_event_hash"]
+    assert journal_rows[-1]["payload"]["result_hash"] == sha256_bytes(
+        Path(artifacts[0]["path"]).read_bytes()
+    )
+
+    plan_artifact = next(
+        artifact for artifact in artifacts if "/experiments/plans/" in artifact["path"]
+    )
+    plan_payload = json.loads(Path(plan_artifact["path"]).read_text(encoding="utf-8"))
+    assert sha256_text(canonical_json(plan_payload)) == (
+        payload["campaign"]["execution_plan"]["canonical_content_hash"]
+    )
+
+    qualification = load_trace_qualification("run_73f5aaf7328a4ea5")
+    assert qualification["qualification_hash"] == (
+        payload["trace_qualification_artifact"]["qualification_hash"]
+    )
+    assert len(qualification["checks"]) == (
+        payload["trace_qualification_artifact"]["check_count"]
+    )
+    assert sum(check["passed"] for check in qualification["checks"]) == (
+        payload["trace_qualification_artifact"]["passed_check_count"]
+    )
+    retry = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    controlled = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "controlled_diagnostic_boundary"
+    )
+    assert retry["passed"] is True
+    assert retry["details"]["retry_episode_count"] == 1
+    assert retry["details"]["verified_retry_count"] == 1
+    assert controlled["passed"] is True
+    assert controlled["details"]["controlled_rejection_count"] == 1
+    assert controlled["details"]["verified_controlled_rejection_count"] == 1
+    assert controlled["details"]["controlled_patch_applied_sequences"] == []
+    assert calculate_source_evidence_hash("run_73f5aaf7328a4ea5") == (
+        payload["trace_qualification_artifact"]["source_evidence_hash"]
+    )
+
+    result_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["path"].endswith("/run_73f5aaf7328a4ea5/result.json")
+    )
+    result_payload = json.loads(Path(result_artifact["path"]).read_text(encoding="utf-8"))
+    assert result_payload["official"] is True
+    assert result_payload["scope_compliant_success"] is True
+    assert result_payload["submitted_patch_artifact_id"] == (
+        payload["trace_activity"]["submitted_patch_artifact_id"]
+    )
+
+
+def test_mini_d037_r6_checked_evidence_has_no_private_or_provider_payload() -> None:
+    path = Path("reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert set(payload) == {
+        "schema_version",
+        "recorded_at",
+        "task_id",
+        "harness_commit",
+        "execution_hash",
+        "retry_lineage",
+        "campaign",
+        "pilot",
+        "trace_activity",
+        "controlled_rejection_evidence",
+        "prompt_token_integrity",
+        "trace_qualification_artifact",
+        "d037_retry_feature",
+        "diagnostic_gate",
+        "spend_to_date",
+        "evidence_policy",
+        "portable_artifacts",
+        "raw_local_artifacts",
+        "claims_boundary",
+    }
+
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {nested for child in value.values() for nested in walk_keys(child)}
+        if isinstance(value, list):
+            return {nested for child in value for nested in walk_keys(child)}
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    assert payload["evidence_policy"]["raw_local_artifacts"].endswith(
+        "not bundled in a clean checkout."
+    )
+
+    checked_text = path.read_text(encoding="utf-8")
+    for artifact in payload["portable_artifacts"]:
+        checked_text += Path(artifact["path"]).read_text(encoding="utf-8")
+    package = load_task_package("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    leaked = sorted(token for token in private_tokens if token in checked_text)
+    assert leaked == []

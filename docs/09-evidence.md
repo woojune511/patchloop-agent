@@ -4,33 +4,35 @@ This is a local implementation checkpoint, not the planned core experiment resul
 
 ## Latest paid diagnostic evidence
 
-The separately approved r5 execution hash
-`sha256:97249f05deda8e59118fdac0dd6f62f44c18b086ecb16bface2cc4d0f41a3a12`
-was consumed exactly once by `run_0ad8676d42614fbf` on clean harness commit
-`a323bfe4bde46cb0e797a2c8eefacad3c2e8d7d1`.
+The separately approved r6 execution hash
+`sha256:d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b`
+was consumed exactly once by `run_73f5aaf7328a4ea5` on clean harness commit
+`1333ab968e2f144b632c0cb5ca341ebd30e0ca4e`.
 
 | Boundary | Observed |
 | --- | --- |
 | Provider/model | `gpt-5.4-mini-2026-03-17`, medium, default tier |
 | Budget | 25,000 per call, 200,000 total, $2 approved cap |
-| Usage | 121,366 input + 9,913 output = 131,279 tokens; `$0.135633` calculated |
-| Token integrity | 18/18 exact input counts matched; 18/18 completed; truncation disabled |
-| Agent/evaluator | one submitted patch; hidden/regression/scope/safety all pass; `official=true` |
+| Usage | 138,262 input + 13,800 output = 152,062 tokens; `$0.1657965` calculated |
+| Token integrity | 19/19 exact input counts matched; 19/19 completed; truncation disabled |
+| Agent/evaluator | one controlled rejection, one applied/submitted patch; hidden/regression/scope/safety all pass; `official=true` |
 | Trace | `trace-qualification-v2` 23/23, leakage and source-evidence binding pass |
-| D-037 diagnostic | rejected candidate 0, retry episode 0; terminal `inconclusive` |
+| D-037 diagnostic | controlled rejection 1, verified retry 1, rejected-action mutation 0; terminal `passed` |
 
-The task and generic trace succeeded, but no rejected mutation occurred. Therefore this run neither
-validates nor falsifies D-037 and does not unlock the Terra or development campaign. The frozen
-contract forbids automatic rerun. The machine-readable
-[r5 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r5.json)
-separates the official task outcome from the diagnostic outcome and includes the exact portable
-public-source patch. Five mini runs total `$0.45570375`; all eight paid pilots total
-`$1.284568125` at configured list prices. Invoice and free-usage treatment remain unverified.
+The run validates the exact D-037 rehydration branch under one deliberate intervention and unlocks
+only the separately approved Terra pilot preflight. It does not estimate natural rejection
+frequency, recovery rate or memory benefit. The frozen contract forbids automatic rerun. The
+machine-readable
+[r6 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json)
+separates the controlled intervention, official task outcome and claims boundary, and includes
+distinct rejected and accepted public-source patches. Six mini runs total `$0.62150025`; all nine
+paid pilots total `$1.450364625` at configured list prices. Invoice and free-usage treatment remain
+unverified.
 
-Post-capture verification passed 24 live-evidence tests, 53 experiment tests and 71 trace-
-qualification tests. Ruff and `git diff --check` also passed. The earlier D-041 implementation
-baseline remains the 504-pass/2-skip full suite; this evidence-only change does not claim a new
-completed full-suite run.
+Post-capture verification passed all 27 live-evidence tests against the local raw artifacts,
+including journal/result/CAS hash binding and private/provider-payload exclusion. Ruff and
+`git diff --check` also passed. The D-043 implementation baseline remains the separately executed
+529-pass/2-skip full suite; this evidence-only follow-up does not claim a new full-suite run.
 
 ## Executed gates
 
@@ -1322,9 +1324,10 @@ The checked-in
 binds the aggregate result, journal, approved plan, qualification, manifest, result, provenance,
 failure record, patch intent/candidate and terminal request evidence by SHA-256. Only the
 agent-generated public-source candidate patch is bundled; it was not submitted or accepted. The
-four-mini subtotal through r4 was `$0.32007075`. After the terminal r5 recorded above, five mini
-runs total `$0.45570375` and all eight paid pilots total `$1.284568125` at configured list prices.
-Invoice charges and free daily usage treatment remain unverified.
+four-mini subtotal through r4 was `$0.32007075`. Terminal r5 raised the mini subtotal to
+`$0.45570375`; controlled r6 raises it to `$0.62150025`, and all nine paid pilots total
+`$1.450364625` at configured list prices. Invoice charges and free daily usage treatment remain
+unverified.
 
 Executed evidence:
 
@@ -1416,7 +1419,7 @@ The compatibility rule ignores only the historical neutral
 `binding_required=false` / `binding_valid=true` detail-shape pair. Recomputed check outcomes and
 all other fields must still match; a non-neutral change remains an immutable-artifact error.
 
-### D-043 controlled diagnostic offline evidence
+### D-043 controlled diagnostic offline and live evidence
 
 The terminal r5 result made another opportunistic paid rerun inappropriate: it reached the
 evaluator successfully but naturally produced zero rejected mutations. D-043 therefore introduces
@@ -1448,9 +1451,21 @@ skips. Ruff and `git diff --check` also passed. Corruption tests prove a malform
 duplicate declaration, preceding `PatchPrepared` or event interleaved before the controlled failure
 fails closed instead of consuming or reinjecting the diagnostic fault.
 
-No provider generation, measured token usage, official evaluator result or live D-037 pass is
-claimed by this section. `experiments/dev-validation-gpt54mini-d037-r6.yaml` remains unapproved and
-must receive a new clean execution hash and explicit $2 approval before its single allowed run.
+The offline contract was then committed as
+`1333ab968e2f144b632c0cb5ca341ebd30e0ca4e` and approved once with execution hash
+`sha256:d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b`.
+`run_73f5aaf7328a4ea5` produced one adjacent controlled rejection at event 88, zero
+`PatchApplied` for that action, one fully verified retry, evaluator arrival and official
+hidden/regression/scope/safety pass. Qualification recomputation passed 23/23 with hash
+`sha256:cd3dedfdfd19e246755952daf20779eb5cc85c2ff26f7709dd8aeca8ebbb2c6a`.
+All 19 provider requests were completed and their exact input pre-count matched reported usage:
+138,262 input + 13,800 output token, calculated cost `$0.1657965`. The four-event journal chain and
+persisted result hash were independently rechecked. The portable aggregate is
+`reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json`.
+
+This validates the D-037 harness branch under one deliberate intervention. It does not estimate
+natural rejection frequency or recovery rate, and it is not evidence of memory benefit or Terra
+campaign quality. The consumed suite/hash/run are immutable and must not be rerun.
 
 ## Open gates
 
@@ -1461,11 +1476,9 @@ the context-reset trigger, persistent-state-off arm and stress matrix runner/rep
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
 subprocess E2E has exercised actual process termination and fresh-interpreter stale-`RUNNING`
 reclaim. The timeout path remains a synthetic timeout on the first registered visible check.
-Rejected mutating-tool input rehydration is offline-qualified. A new live provider run was
-attempted with the r4 output allowance and all generated responses completed, but the run produced
-no rejected mutation or retry episode before its total-budget guard stopped the REVIEW turn. The
-rehydration contract remains unexercised live. D-041 fixes the r5 sizing and generic
-`model-generation-block-v1` meaning, and executable offline evidence now passes. The next step is
-the new experiment ID's clean execution hash and separate approval. A zero-rejection r5 is
-inconclusive and is not automatically rerun. No stress schedule row, 12-run development campaign
-or 96-run core campaign has been executed.
+Rejected mutating-tool input rehydration is offline-qualified and was exercised live once by the
+controlled r6 diagnostic. R4 remains a terminal budget failure and zero-rejection r5 remains
+terminal inconclusive; neither is rerun or reinterpreted. R6 validates the harness branch but not a
+natural recovery rate. The next step is a separately approved tool-v2/context-v3 Terra pilot with
+its own clean execution hash. No stress schedule row, 12-run development campaign or 96-run core
+campaign has been executed.
