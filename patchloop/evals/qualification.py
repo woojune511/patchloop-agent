@@ -465,25 +465,15 @@ def _nested_cas_artifact_evidence(
         "event_id": event_id,
         "role": role,
         "artifact_id": (
-            raw_artifact.get("artifact_id")
-            if isinstance(raw_artifact, dict)
-            else None
+            raw_artifact.get("artifact_id") if isinstance(raw_artifact, dict) else None
         ),
         "declared_content_hash": (
-            raw_artifact.get("content_hash")
-            if isinstance(raw_artifact, dict)
-            else None
+            raw_artifact.get("content_hash") if isinstance(raw_artifact, dict) else None
         ),
-        "declared_path": (
-            raw_artifact.get("path")
-            if isinstance(raw_artifact, dict)
-            else None
-        ),
+        "declared_path": (raw_artifact.get("path") if isinstance(raw_artifact, dict) else None),
         "actual_content_hash": None,
         "declared_size_bytes": (
-            raw_artifact.get("size_bytes")
-            if isinstance(raw_artifact, dict)
-            else None
+            raw_artifact.get("size_bytes") if isinstance(raw_artifact, dict) else None
         ),
         "actual_size_bytes": None,
     }
@@ -529,12 +519,8 @@ def _qualification_patch_paths(patch: str) -> list[str]:
         raise ValueError("raw patch has no diff sections")
     paths: list[str] = []
     for section in sections:
-        old_headers = [
-            line for line in section if line.startswith("--- ")
-        ]
-        new_headers = [
-            line for line in section if line.startswith("+++ ")
-        ]
+        old_headers = [line for line in section if line.startswith("--- ")]
+        new_headers = [line for line in section if line.startswith("+++ ")]
         if len(old_headers) != 1 or len(new_headers) != 1:
             raise ValueError("raw patch has ambiguous file headers")
 
@@ -580,18 +566,13 @@ def _verifier_artifact_evidence(
     referenced = 0
     for verifier_result in result.verifier_results:
         artifact_ids = verifier_result.evidence_artifact_ids
-        raw_artifacts = verifier_result.details.get(
-            "evidence_artifacts"
-        )
+        raw_artifacts = verifier_result.details.get("evidence_artifacts")
         if not artifact_ids:
             if raw_artifacts not in (None, []):
                 integrity = False
             continue
         referenced += len(artifact_ids)
-        if (
-            not isinstance(raw_artifacts, list)
-            or len(raw_artifacts) != len(artifact_ids)
-        ):
+        if not isinstance(raw_artifacts, list) or len(raw_artifacts) != len(artifact_ids):
             integrity = False
             continue
         for expected_id, raw_artifact in zip(
@@ -642,22 +623,16 @@ def _evaluation_receipt_evidence(
         file_hashes = receipt.get("file_hashes")
         duration_ms = receipt.get("evaluator_duration_ms")
         item["declared_file_hashes"] = file_hashes
-        item["worktree_diff_hash"] = receipt.get(
-            "worktree_diff_hash"
-        )
-        item["submitted_patch_artifact_id"] = receipt.get(
-            "submitted_patch_artifact_id"
-        )
+        item["worktree_diff_hash"] = receipt.get("worktree_diff_hash")
+        item["submitted_patch_artifact_id"] = receipt.get("submitted_patch_artifact_id")
         item["evaluator_duration_ms"] = duration_ms
         if (
-            receipt.get("schema_version")
-            != "evaluation-receipt-v1"
+            receipt.get("schema_version") != "evaluation-receipt-v1"
             or receipt.get("run_id") != run_id
             or not isinstance(duration_ms, int)
             or duration_ms < 0
             or not isinstance(file_hashes, dict)
-            or set(file_hashes)
-            != {"manifest.json", "result.json", "provenance.json"}
+            or set(file_hashes) != {"manifest.json", "result.json", "provenance.json"}
         ):
             raise ValueError("receipt contract mismatch")
         contents: dict[str, bytes] = {}
@@ -668,12 +643,8 @@ def _evaluation_receipt_evidence(
             if file_hashes.get(name) != actual_hash:
                 raise ValueError("receipt file hash mismatch")
             contents[name] = content
-        persisted_manifest = RunManifest.model_validate_json(
-            contents["manifest.json"]
-        )
-        persisted_result = RunResult.model_validate_json(
-            contents["result.json"]
-        )
+        persisted_manifest = RunManifest.model_validate_json(contents["manifest.json"])
+        persisted_result = RunResult.model_validate_json(contents["result.json"])
         provenance = json.loads(contents["provenance.json"])
         if not isinstance(provenance, dict):
             raise ValueError("provenance is not an object")
@@ -693,18 +664,13 @@ def _evaluation_receipt_evidence(
             or persisted_result != result
             or persisted_result.run_id != run_id
             or persisted_result.evaluation_status != "completed"
-            or persisted_result.submitted_patch_artifact_id
-            != submitted_id
+            or persisted_result.submitted_patch_artifact_id != submitted_id
             or provenance.get("patch_hash") != patch_hash
             or provenance.get("diff_hash") != patch_hash
-            or provenance.get("submitted_patch_content_hash")
-            != patch_hash
-            or provenance.get("submitted_patch_artifact_id")
-            != submitted_id
-            or provenance.get("verifier_evidence_schema_version")
-            != "verifier-evidence-v1"
-            or provenance.get("verifier_evidence_artifacts")
-            != verifier_descriptors
+            or provenance.get("submitted_patch_content_hash") != patch_hash
+            or provenance.get("submitted_patch_artifact_id") != submitted_id
+            or provenance.get("verifier_evidence_schema_version") != "verifier-evidence-v1"
+            or provenance.get("verifier_evidence_artifacts") != verifier_descriptors
         ):
             raise ValueError("receipt evidence mismatch")
         return True, item
@@ -765,15 +731,12 @@ def _patch_intent_artifact_evidence(
             or intent.get("run_id") != event.run_id
             or intent.get("action_id") != event.correlation_id
             or matching_call is None
-            or intent.get("input_hash")
-            != matching_call.payload.get("input_hash")
-            or intent.get("patch_artifact")
-            != matching_call.payload.get("patch_artifact")
+            or intent.get("input_hash") != matching_call.payload.get("input_hash")
+            or intent.get("patch_artifact") != matching_call.payload.get("patch_artifact")
             or not isinstance(intent.get("patch_artifact"), dict)
             or matching_call.payload.get("artifact_id")
             != intent["patch_artifact"].get("artifact_id")
-            or matching_call.payload.get("artifact_path")
-            != intent["patch_artifact"].get("path")
+            or matching_call.payload.get("artifact_path") != intent["patch_artifact"].get("path")
             or intent.get("baseline_worktree_diff_hash")
             != event.payload.get("baseline_worktree_diff_hash")
             or intent.get("expected_worktree_diff_hash")
@@ -785,9 +748,7 @@ def _patch_intent_artifact_evidence(
         ):
             integrity = False
             continue
-        nested: list[tuple[str, Any]] = [
-            ("raw-patch", intent.get("patch_artifact"))
-        ]
+        nested: list[tuple[str, Any]] = [("raw-patch", intent.get("patch_artifact"))]
         files = intent.get("files")
         if not isinstance(files, list) or not files:
             integrity = False
@@ -806,8 +767,7 @@ def _patch_intent_artifact_evidence(
                 }
                 or type(file_entry.get("mode")) is not int
                 or not 0 <= file_entry["mode"] <= 0o7777
-                or file_entry.get("git_mode")
-                not in {"100644", "100755"}
+                or file_entry.get("git_mode") not in {"100644", "100755"}
             ):
                 integrity = False
                 continue
@@ -838,21 +798,17 @@ def _patch_intent_artifact_evidence(
                 )
         raw_patch_content: bytes | None = None
         for role, raw_artifact in nested:
-            nested_valid, nested_item, nested_content = (
-                _nested_cas_artifact_evidence(
-                    artifact_root=artifact_root,
-                    event_id=event.event_id,
-                    role=role,
-                    raw_artifact=raw_artifact,
-                )
+            nested_valid, nested_item, nested_content = _nested_cas_artifact_evidence(
+                artifact_root=artifact_root,
+                event_id=event.event_id,
+                role=role,
+                raw_artifact=raw_artifact,
             )
             evidence.append(nested_item)
             integrity = integrity and nested_valid
             if nested_content is not None:
                 scanned += 1
-                texts.append(
-                    nested_content.decode("utf-8", errors="replace")
-                )
+                texts.append(nested_content.decode("utf-8", errors="replace"))
                 if role == "raw-patch":
                     raw_patch_content = nested_content
         if raw_patch_content is None:
@@ -874,8 +830,7 @@ def _patch_intent_artifact_evidence(
         if (
             intent.get("input_hash") != expected_input_hash
             or matching_call is None
-            or matching_call.payload.get("input_hash")
-            != expected_input_hash
+            or matching_call.payload.get("input_hash") != expected_input_hash
         ):
             integrity = False
         try:
@@ -889,8 +844,7 @@ def _patch_intent_artifact_evidence(
         outcomes = [
             candidate
             for candidate in events
-            if candidate.type
-            in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+            if candidate.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
             and candidate.correlation_id == event.correlation_id
             and candidate.payload.get("tool") == "apply_patch"
         ]
@@ -908,29 +862,20 @@ def _patch_intent_artifact_evidence(
             if (
                 len(applications) != 1
                 or not outcome.sequence < applications[0].sequence
-                or outcome.payload.get("patch_hash")
-                != expected_patch_hash
-                or applications[0].payload.get("patch_hash")
-                != expected_patch_hash
+                or outcome.payload.get("patch_hash") != expected_patch_hash
+                or applications[0].payload.get("patch_hash") != expected_patch_hash
                 or outcome.payload.get("worktree_diff_hash")
                 != intent.get("expected_worktree_diff_hash")
                 or applications[0].payload.get("worktree_diff_hash")
                 != intent.get("expected_worktree_diff_hash")
             ):
                 integrity = False
-        elif (
-            applications
-            or outcome.payload.get("status")
-            not in {"failed", "rejected"}
-        ):
+        elif applications or outcome.payload.get("status") not in {"failed", "rejected"}:
             integrity = False
 
     lower_markers = {token.lower() for token in private_tokens if token}
     matches = sum(
-        1
-        for text in texts
-        for marker in lower_markers
-        if marker and marker in text.lower()
+        1 for text in texts for marker in lower_markers if marker and marker in text.lower()
     )
     return integrity, scanned, matches, evidence
 
@@ -952,6 +897,357 @@ def _request_context(request_body: Any) -> str | None:
     return content if isinstance(content, str) else None
 
 
+def _request_evidence_payload(context_event) -> tuple[bool, dict[str, Any] | None]:
+    """Load and validate one content-addressed model request artifact."""
+
+    try:
+        request_evidence = json.loads(
+            Path(str(context_event.payload["artifact_path"])).read_text(encoding="utf-8")
+        )
+        if not isinstance(request_evidence, dict):
+            return False, None
+        request_body = request_evidence["request_body"]
+        recorded_request_hash = request_evidence["request_body_hash"]
+        calculated_request_hash = sha256_text(canonical_json(request_body))
+        rendered_context = _request_context(request_body)
+        valid = bool(
+            request_evidence.get("schema_version") == "model-request-evidence-v1"
+            and isinstance(recorded_request_hash, str)
+            and recorded_request_hash == calculated_request_hash
+            and context_event.payload.get("request_body_hash") == calculated_request_hash
+            and isinstance(rendered_context, str)
+            and context_event.payload.get("context_hash") == sha256_text(rendered_context)
+        )
+        return valid, request_evidence if valid else None
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+        return False, None
+
+
+def _v3_generation_block_valid(
+    *,
+    manifest: RunManifest,
+    events,
+    context_event,
+    blocked_event,
+    candidate_content_hash: str,
+) -> bool:
+    """Validate the intentional no-generation budget outcome for one retry."""
+
+    requested = blocked_event.payload.get("requested_input_tokens")
+    remaining = blocked_event.payload.get("remaining_tokens")
+    max_output = blocked_event.payload.get("max_output_tokens")
+    preceding_token_usage = 0
+    for event in events:
+        if (
+            event.type != EventType.MODEL_CALLED
+            or event.sequence >= blocked_event.sequence
+        ):
+            continue
+        input_tokens = event.payload.get("input_tokens")
+        output_tokens = event.payload.get("output_tokens")
+        if (
+            type(input_tokens) is not int
+            or input_tokens < 0
+            or type(output_tokens) is not int
+            or output_tokens < 0
+        ):
+            return False
+        preceding_token_usage += input_tokens + output_tokens
+    expected_remaining = (
+        manifest.budget.max_total_tokens - preceding_token_usage
+    )
+    return bool(
+        blocked_event.type == EventType.MODEL_GENERATION_BLOCKED
+        and blocked_event.sequence > context_event.sequence
+        and blocked_event.payload.get("reason_code") == "exact_request_budget_exceeded"
+        and blocked_event.payload.get("error_code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
+        and blocked_event.payload.get("generation_started") is False
+        and blocked_event.payload.get("request_artifact_id")
+        == context_event.payload.get("artifact_id")
+        and blocked_event.payload.get("request_artifact_path")
+        == context_event.payload.get("artifact_path")
+        and blocked_event.payload.get("request_body_hash")
+        == context_event.payload.get("request_body_hash")
+        and type(requested) is int
+        and requested >= 0
+        and type(remaining) is int
+        and remaining >= 0
+        and remaining == expected_remaining
+        and type(max_output) is int
+        and max_output == manifest.model.max_output_tokens
+        and requested + max_output > remaining
+        and blocked_event.payload.get("input_token_count_calls") == 1
+        and blocked_event.payload.get("retry_context_present") is True
+        and blocked_event.payload.get("retry_candidate_content_hash") == candidate_content_hash
+    )
+
+
+def _rejected_patch_retry_context_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events,
+) -> tuple[bool, dict[str, Any]]:
+    """Prove every v3 rejected patch episode is rehydrated in its next request."""
+
+    failures = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_FAILED
+        and event.actor == "tool-gateway"
+        and event.payload.get("tool") == "apply_patch"
+        and event.payload.get("status") == "rejected"
+    ]
+    contexts = [event for event in events if event.type == EventType.CONTEXT_BUILT]
+    model_events = [event for event in events if event.type == EventType.MODEL_CALLED]
+    blocked_events = [event for event in events if event.type == EventType.MODEL_GENERATION_BLOCKED]
+    failures_by_context: dict[str, list[Any]] = {}
+    missing_context_sequences: list[int] = []
+    context_by_id: dict[str, Any] = {}
+    for failure in failures:
+        next_context = next(
+            (context for context in contexts if context.sequence > failure.sequence),
+            None,
+        )
+        if next_context is None:
+            missing_context_sequences.append(failure.sequence)
+            continue
+        context_by_id[next_context.event_id] = next_context
+        failures_by_context.setdefault(next_context.event_id, []).append(failure)
+
+    failed_sequences = list(missing_context_sequences)
+    verified_sequences: list[int] = []
+    verified_candidate_hashes: list[str] = []
+    blocked_sequences: list[int] = []
+    artifact_root = (root / "artifacts").resolve()
+
+    for context_id, grouped_failures in sorted(
+        failures_by_context.items(),
+        key=lambda item: context_by_id[item[0]].sequence,
+    ):
+        context_event = context_by_id[context_id]
+        failure = max(grouped_failures, key=lambda event: event.sequence)
+        action_id = failure.correlation_id
+        calls = [
+            event
+            for event in events
+            if event.type == EventType.TOOL_CALLED
+            and event.actor == "agent"
+            and event.payload.get("tool") == "apply_patch"
+            and event.correlation_id == action_id
+            and event.sequence < failure.sequence
+        ]
+        call = calls[0] if len(calls) == 1 else None
+        episode_ok = bool(isinstance(action_id, str) and action_id and call is not None)
+        patch = None
+        patch_hash = None
+        patch_size = None
+        input_hash = None
+        if call is not None:
+            candidate_ok, candidate_evidence, candidate_bytes = _nested_cas_artifact_evidence(
+                artifact_root=artifact_root,
+                event_id=call.event_id,
+                role="rejected-patch-candidate",
+                raw_artifact=call.payload.get("patch_artifact"),
+            )
+            episode_ok = bool(
+                episode_ok
+                and candidate_ok
+                and call.payload.get("artifact_id") == candidate_evidence.get("artifact_id")
+                and call.payload.get("artifact_path") == candidate_evidence.get("declared_path")
+            )
+            if candidate_bytes is not None:
+                try:
+                    patch = candidate_bytes.decode("utf-8")
+                except UnicodeDecodeError:
+                    episode_ok = False
+                patch_hash = candidate_evidence.get("actual_content_hash")
+                patch_size = candidate_evidence.get("actual_size_bytes")
+            input_hash = call.payload.get("input_hash")
+            if isinstance(patch, str):
+                episode_ok = bool(
+                    episode_ok
+                    and isinstance(input_hash, str)
+                    and input_hash
+                    == sha256_text(
+                        canonical_json(
+                            {
+                                "tool": "apply_patch",
+                                "input": {"patch": patch},
+                            }
+                        )
+                    )
+                )
+
+        rejection = None
+        result_ok, result_evidence, result_bytes = _nested_cas_artifact_evidence(
+            artifact_root=artifact_root,
+            event_id=failure.event_id,
+            role="rejected-patch-result",
+            raw_artifact=failure.payload.get("result_artifact"),
+        )
+        episode_ok = bool(
+            episode_ok
+            and result_ok
+            and failure.payload.get("artifact_id") == result_evidence.get("artifact_id")
+            and failure.payload.get("artifact_path") == result_evidence.get("declared_path")
+        )
+        if result_bytes is not None:
+            try:
+                result_payload = json.loads(result_bytes.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                result_payload = None
+            if isinstance(result_payload, dict):
+                rejection = {
+                    "status": result_payload.get("status"),
+                    "error_code": result_payload.get("error_code"),
+                    "error_message": result_payload.get("error_message"),
+                    "error_details": result_payload.get("error_details"),
+                }
+                event_message = failure.payload.get("error_message")
+                episode_ok = bool(
+                    episode_ok
+                    and result_payload.get("tool") == "apply_patch"
+                    and rejection["status"] == "rejected"
+                    and isinstance(rejection["error_code"], str)
+                    and isinstance(rejection["error_message"], str)
+                    and isinstance(rejection["error_details"], dict)
+                    and failure.payload.get("status") == rejection["status"]
+                    and failure.payload.get("error_code") == rejection["error_code"]
+                    and failure.payload.get("error_details") == rejection["error_details"]
+                    and isinstance(event_message, str)
+                    and rejection["error_message"].startswith(event_message)
+                )
+            else:
+                episode_ok = False
+
+        request_valid, request_evidence = _request_evidence_payload(context_event)
+        rendered_payload = None
+        if request_valid and request_evidence is not None:
+            rendered_context = _request_context(request_evidence["request_body"])
+            try:
+                rendered_payload = json.loads(str(rendered_context))
+            except (TypeError, ValueError, json.JSONDecodeError):
+                rendered_payload = None
+        expected_retry = {
+            "schema_version": "rejected-mutation-retry-v1",
+            "tool": "apply_patch",
+            "action_id": action_id,
+            "source_call_sequence": call.sequence if call is not None else None,
+            "source_failure_sequence": failure.sequence,
+            "candidate": {
+                "patch": patch,
+                "content_hash": patch_hash,
+                "size_bytes": patch_size,
+                "input_hash": input_hash,
+            },
+            "rejection": rejection,
+        }
+        episode_ok = bool(
+            episode_ok
+            and request_valid
+            and isinstance(rendered_payload, dict)
+            and rendered_payload.get("rejected_mutation_retry") == expected_retry
+        )
+
+        next_context_sequence = min(
+            (
+                candidate.sequence
+                for candidate in contexts
+                if candidate.sequence > context_event.sequence
+            ),
+            default=None,
+        )
+        consumers = [
+            event
+            for event in [*model_events, *blocked_events]
+            if event.sequence > context_event.sequence
+            and (next_context_sequence is None or event.sequence < next_context_sequence)
+        ]
+        consumers.sort(key=lambda event: event.sequence)
+        consumer = consumers[0] if len(consumers) == 1 else None
+        if consumer is None:
+            episode_ok = False
+        elif consumer.type == EventType.MODEL_CALLED:
+            episode_ok = bool(
+                episode_ok
+                and consumer.payload.get("request_artifact_id")
+                == context_event.payload.get("artifact_id")
+                and consumer.payload.get("request_artifact_path")
+                == context_event.payload.get("artifact_path")
+                and consumer.payload.get("request_body_hash")
+                == context_event.payload.get("request_body_hash")
+            )
+            next_failure_sequence = min(
+                (
+                    candidate.sequence
+                    for candidate in failures
+                    if candidate.sequence > consumer.sequence
+                ),
+                default=None,
+            )
+            later_contexts = [
+                candidate
+                for candidate in contexts
+                if candidate.sequence > consumer.sequence
+                and (next_failure_sequence is None or candidate.sequence < next_failure_sequence)
+            ]
+            for later_context in later_contexts:
+                later_valid, later_request = _request_evidence_payload(later_context)
+                later_payload = None
+                if later_valid and later_request is not None:
+                    later_rendered = _request_context(later_request["request_body"])
+                    try:
+                        later_payload = json.loads(str(later_rendered))
+                    except (
+                        TypeError,
+                        ValueError,
+                        json.JSONDecodeError,
+                    ):
+                        later_payload = None
+                episode_ok = bool(
+                    episode_ok
+                    and isinstance(later_payload, dict)
+                    and "rejected_mutation_retry" in later_payload
+                    and later_payload["rejected_mutation_retry"] is None
+                )
+        else:
+            blocked_ok = bool(
+                isinstance(patch_hash, str)
+                and _v3_generation_block_valid(
+                    manifest=manifest,
+                    events=events,
+                    context_event=context_event,
+                    blocked_event=consumer,
+                    candidate_content_hash=patch_hash,
+                )
+            )
+            episode_ok = episode_ok and blocked_ok
+            episode_ok = bool(
+                episode_ok
+                and not any(candidate.sequence > consumer.sequence for candidate in contexts)
+            )
+            if blocked_ok:
+                blocked_sequences.append(consumer.sequence)
+
+        if episode_ok and isinstance(patch_hash, str):
+            verified_sequences.append(failure.sequence)
+            verified_candidate_hashes.append(patch_hash)
+        else:
+            failed_sequences.append(failure.sequence)
+
+    passed = not failed_sequences and len(verified_sequences) == len(failures_by_context)
+    return passed, {
+        "rejected_candidate_count": len(failures),
+        "retry_episode_count": len(failures_by_context),
+        "verified_retry_count": len(verified_sequences),
+        "model_generation_blocked_count": len(blocked_sequences),
+        "verified_source_failure_sequences": sorted(verified_sequences),
+        "failed_source_failure_sequences": sorted(set(failed_sequences)),
+        "verified_candidate_content_hashes": sorted(verified_candidate_hashes),
+    }
+
+
 def _complete_get_diff_in_request(
     *,
     context_event,
@@ -963,23 +1259,11 @@ def _complete_get_diff_in_request(
     request_valid = False
     complete_source = False
     try:
-        request_evidence = json.loads(
-            Path(str(context_event.payload["artifact_path"])).read_text(encoding="utf-8")
-        )
-        if not isinstance(request_evidence, dict):
+        request_valid, request_evidence = _request_evidence_payload(context_event)
+        if not request_valid or request_evidence is None:
             return False, False
         request_body = request_evidence["request_body"]
-        recorded_request_hash = request_evidence["request_body_hash"]
-        calculated_request_hash = sha256_text(canonical_json(request_body))
         rendered_context = _request_context(request_body)
-        request_valid = bool(
-            request_evidence.get("schema_version") == "model-request-evidence-v1"
-            and isinstance(recorded_request_hash, str)
-            and recorded_request_hash == calculated_request_hash
-            and context_event.payload.get("request_body_hash") == calculated_request_hash
-            and isinstance(rendered_context, str)
-            and context_event.payload.get("context_hash") == sha256_text(rendered_context)
-        )
         if not request_valid or rendered_context is None:
             return request_valid, False
 
@@ -1081,15 +1365,11 @@ def _ordered_submission_evidence(
             and event.correlation_id == mutation.correlation_id
             and apply_calls
             and apply_successes
-            and apply_calls[0].sequence
-            < event.sequence
-            < apply_successes[0].sequence
+            and apply_calls[0].sequence < event.sequence < apply_successes[0].sequence
         ]
         patch_intent_ok = len(prepared_intents) == 1
         apply_call_ok = bool(
-            len(apply_successes) == 1
-            and len(apply_calls) == 1
-            and patch_intent_ok
+            len(apply_successes) == 1 and len(apply_calls) == 1 and patch_intent_ok
         )
 
     check_sequences: dict[str, int | None] = {}
@@ -1238,12 +1518,10 @@ def calculate_source_evidence_hash(
         snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V3
         snapshot["accepted_patch_artifacts"] = accepted_patch_artifacts
         if any(event.type == EventType.PATCH_PREPARED for event in events):
-            _, _, _, patch_intent_artifacts = (
-                _patch_intent_artifact_evidence(
-                    root=run_root,
-                    events=events,
-                    private_tokens=set(),
-                )
+            _, _, _, patch_intent_artifacts = _patch_intent_artifact_evidence(
+                root=run_root,
+                events=events,
+                private_tokens=set(),
             )
             snapshot["patch_intent_artifacts"] = patch_intent_artifacts
         snapshot["worker_claims"] = worker_claims
@@ -1254,13 +1532,7 @@ def calculate_source_evidence_hash(
             for verifier_result in result.verifier_results
         )
     )
-    receipt_path = (
-        run_root
-        / "artifacts"
-        / "runs"
-        / run_id
-        / "evaluation-receipt.json"
-    )
+    receipt_path = run_root / "artifacts" / "runs" / run_id / "evaluation-receipt.json"
     if verifier_evidence_declared or receipt_path.exists():
         # Fresh v1/replay runs also use the modern evaluator receipt. Bind
         # those new artifacts without changing hashes for historical v1 runs
@@ -1362,15 +1634,13 @@ def qualify_run(
                 RunStatus.SUSPENDED.value,
                 RunStatus.RUNNING.value,
             }
-            and claim.get("reclaimed")
-            == (claim.get("prior_status") == RunStatus.RUNNING.value)
+            and claim.get("reclaimed") == (claim.get("prior_status") == RunStatus.RUNNING.value)
             for claim in worker_claims
         )
         claims_ok = bool(
             claims_ok
             and worker_claims
-            and worker_claims[0].get("prior_status")
-            == RunStatus.CREATED.value
+            and worker_claims[0].get("prior_status") == RunStatus.CREATED.value
             and all(
                 claim.get("prior_status")
                 in {
@@ -1387,10 +1657,7 @@ def qualify_run(
             "worker_claim_provenance",
             claims_ok,
             claim_count=len(worker_claims),
-            running_reclaim_count=sum(
-                claim.get("reclaimed") is True
-                for claim in worker_claims
-            ),
+            running_reclaim_count=sum(claim.get("reclaimed") is True for claim in worker_claims),
         )
 
     terminals = [event for event in events if event.type in _TERMINAL_EVENTS]
@@ -1906,12 +2173,8 @@ def qualify_run(
         )
         artifact_integrity = artifact_integrity and accepted_patch_artifact_integrity
         accepted_patch_artifact_count = len(accepted_patch_artifact_evidence)
-        has_patch_prepared = any(
-            event.type == EventType.PATCH_PREPARED for event in events
-        )
-        has_patch_applied = any(
-            event.type == EventType.PATCH_APPLIED for event in events
-        )
+        has_patch_prepared = any(event.type == EventType.PATCH_PREPARED for event in events)
+        has_patch_applied = any(event.type == EventType.PATCH_APPLIED for event in events)
         patch_intent_required = has_patch_prepared or has_patch_applied
         if patch_intent_required:
             (
@@ -1939,18 +2202,28 @@ def qualify_run(
     if manifest.tool_schema_version == "v2":
         artifact_details["accepted_patch_artifact_count"] = accepted_patch_artifact_count
         if any(
-            event.type
-            in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED}
-            for event in events
+            event.type in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED} for event in events
         ):
-            artifact_details["patch_intent_artifact_count"] = (
-                patch_intent_artifact_count
-            )
+            artifact_details["patch_intent_artifact_count"] = patch_intent_artifact_count
     add(
         "agent_visible_artifacts",
         artifact_integrity,
         **artifact_details,
     )
+    if manifest.context_policy_version == "phase-evidence-v3":
+        (
+            rejected_patch_retry_context_ok,
+            rejected_patch_retry_context_details,
+        ) = _rejected_patch_retry_context_evidence(
+            root=run_root,
+            manifest=manifest,
+            events=events,
+        )
+        add(
+            "rejected_patch_retry_context",
+            rejected_patch_retry_context_ok,
+            **rejected_patch_retry_context_details,
+        )
     verifier_evidence_declared = bool(
         result is not None
         and any(
@@ -1958,13 +2231,7 @@ def qualify_run(
             for verifier_result in result.verifier_results
         )
     )
-    evaluation_receipt_path = (
-        run_root
-        / "artifacts"
-        / "runs"
-        / run_id
-        / "evaluation-receipt.json"
-    )
+    evaluation_receipt_path = run_root / "artifacts" / "runs" / run_id / "evaluation-receipt.json"
     if verifier_evidence_declared or evaluation_receipt_path.exists():
         (
             verifier_artifact_integrity,
@@ -1985,16 +2252,11 @@ def qualify_run(
         )
         add(
             "verifier_evidence_artifacts",
-            verifier_artifact_integrity
-            and evaluation_receipt_integrity,
-            evidence_artifact_count=len(
-                verifier_artifact_evidence
-            ),
+            verifier_artifact_integrity and evaluation_receipt_integrity,
+            evidence_artifact_count=len(verifier_artifact_evidence),
             evaluation_receipt_present=evaluation_receipt_path.is_file(),
             evaluation_receipt_content_hash=(
-                evaluation_receipt_evidence.get(
-                    "receipt_content_hash"
-                )
+                evaluation_receipt_evidence.get("receipt_content_hash")
             ),
         )
     leakage_ok = leak_matches == 0
@@ -2003,6 +2265,30 @@ def qualify_run(
     model_events = [event for event in events if event.type == EventType.MODEL_CALLED]
     tool_events = [event for event in events if event.type == EventType.TOOL_CALLED]
     context_events = [event for event in events if event.type == EventType.CONTEXT_BUILT]
+    generation_blocked_events = [
+        event for event in events if event.type == EventType.MODEL_GENERATION_BLOCKED
+    ]
+    terminal_generation_block_ok = False
+    if (
+        manifest.context_policy_version == "phase-evidence-v3"
+        and len(generation_blocked_events) == 1
+        and context_events
+    ):
+        blocked_event = generation_blocked_events[0]
+        blocked_context = context_events[-1]
+        candidate_hash = blocked_event.payload.get("retry_candidate_content_hash")
+        terminal_generation_block_ok = bool(
+            isinstance(candidate_hash, str)
+            and _v3_generation_block_valid(
+                manifest=manifest,
+                events=events,
+                context_event=blocked_context,
+                blocked_event=blocked_event,
+                candidate_content_hash=candidate_hash,
+            )
+            and not any(event.sequence > blocked_context.sequence for event in model_events)
+            and all(event.sequence < blocked_event.sequence for event in context_events[:-1])
+        )
     telemetry_declared = any(
         event.payload.get("prompt_telemetry_version") is not None for event in model_events
     )
@@ -2019,10 +2305,15 @@ def qualify_run(
     prompt_telemetry_ok = not telemetry_required or telemetry_declared
     prompt_telemetry_failures: list[int] = []
     if telemetry_declared:
-        prompt_telemetry_ok = len(context_events) == len(model_events)
+        matched_context_events = (
+            context_events[:-1] if terminal_generation_block_ok else context_events
+        )
+        prompt_telemetry_ok = len(matched_context_events) == len(model_events)
         for index, model_event in enumerate(model_events):
             payload = model_event.payload
-            context_event = context_events[index] if index < len(context_events) else None
+            context_event = (
+                matched_context_events[index] if index < len(matched_context_events) else None
+            )
             requested_input_tokens = payload.get("requested_input_tokens")
             input_tokens = int(payload.get("input_tokens", 0))
             output_tokens = int(payload.get("output_tokens", 0))
@@ -2054,13 +2345,23 @@ def qualify_run(
                 prompt_telemetry_failures.append(model_event.sequence)
     elif telemetry_contract_required:
         prompt_telemetry_failures.extend(event.sequence for event in model_events)
+    prompt_telemetry_details: dict[str, Any] = {
+        "required": telemetry_required,
+        "declared": telemetry_declared,
+        "model_event_count": len(model_events),
+        "failed_event_sequences": prompt_telemetry_failures,
+    }
+    if manifest.context_policy_version == "phase-evidence-v3":
+        prompt_telemetry_details.update(
+            {
+                "model_generation_blocked_count": len(generation_blocked_events),
+                "terminal_generation_block_valid": (terminal_generation_block_ok),
+            }
+        )
     add(
         "prompt_token_integrity",
         prompt_telemetry_ok,
-        required=telemetry_required,
-        declared=telemetry_declared,
-        model_event_count=len(model_events),
-        failed_event_sequences=prompt_telemetry_failures,
+        **prompt_telemetry_details,
     )
 
     expected_usage = {
@@ -2078,6 +2379,10 @@ def qualify_run(
         "model_calls": len(model_events),
         "input_token_count_calls": sum(
             int(event.payload.get("input_token_count_calls", 0)) for event in model_events
+        )
+        + sum(
+            int(event.payload.get("input_token_count_calls", 0))
+            for event in generation_blocked_events
         ),
         "tool_calls": len(tool_events),
     }
@@ -2144,6 +2449,36 @@ def qualify_run(
             and result.outcome_kind
             in {RunOutcomeKind.AGENT_FAILURE, RunOutcomeKind.INFRASTRUCTURE_ERROR}
         )
+    generation_block_terminal_binding_required = terminal_generation_block_ok
+    generation_block_terminal_binding_ok = True
+    if generation_block_terminal_binding_required:
+        blocked_event = generation_blocked_events[0]
+        terminal_event = terminals[0] if len(terminals) == 1 else None
+        terminal_error = (
+            result.terminal_error
+            if result is not None and isinstance(result.terminal_error, dict)
+            else None
+        )
+        expected_details = blocked_event.payload
+        generation_block_terminal_binding_ok = bool(
+            result is not None
+            and result.outcome_kind == RunOutcomeKind.AGENT_FAILURE
+            and terminal_event is not None
+            and terminal_event.type == EventType.RUN_FAILED
+            and terminal_error is not None
+            and terminal_error.get("type") == "ModelGenerationBudgetError"
+            and terminal_error.get("code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
+            and terminal_error.get("details") == expected_details
+            and isinstance(terminal_error.get("message"), str)
+            and terminal_event.payload.get("error_type")
+            == "ModelGenerationBudgetError"
+            and terminal_event.payload.get("error_code")
+            == "MODEL_GENERATION_BUDGET_EXCEEDED"
+            and terminal_event.payload.get("error_details") == expected_details
+            and terminal_event.payload.get("message")
+            == terminal_error.get("message")
+        )
+        evaluation_ok = evaluation_ok and generation_block_terminal_binding_ok
     add(
         "terminal_result_integrity",
         evaluation_ok,
@@ -2151,6 +2486,12 @@ def qualify_run(
         evaluation_reached=evaluation_reached,
         official=bool(result is not None and result.official),
         verdicts_terminal=terminal_verdicts,
+        model_generation_block_binding_required=(
+            generation_block_terminal_binding_required
+        ),
+        model_generation_block_binding_valid=(
+            generation_block_terminal_binding_ok
+        ),
     )
 
     outcome = result.outcome_kind if result is not None else RunOutcomeKind.INFRASTRUCTURE_ERROR
@@ -2209,6 +2550,8 @@ def qualify_run(
     if structured_lifecycle_contract:
         trace_check_ids.add("submission_lifecycle")
         trace_check_ids.add("worker_claim_provenance")
+    if manifest.context_policy_version == "phase-evidence-v3":
+        trace_check_ids.add("rejected_patch_retry_context")
     trace_integrity = all(
         check["passed"] for check in checks if check["check_id"] in trace_check_ids
     )

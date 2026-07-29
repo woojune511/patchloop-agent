@@ -177,6 +177,11 @@ Logical storage layout은 source repository와 분리한다.
   terminal event, result와 status는 한 SQLite transaction으로 확정한다.
 - `finish_task`는 correlation별 lifecycle prefix와 durable recovery result를 대조해
   누락 suffix, DONE transition과 checkpoint event만 보충한다.
+- `phase-evidence-v3` context builder는 최신 model turn 뒤 rejected `apply_patch`의
+  correlated candidate/result CAS를 외부 run state에서 다시 검증하고, exact candidate와
+  structured reason을 첫 후속 request에만 넣는다. 이 bytes는 checkpoint나 대상 repository에
+  복사하지 않는다. Full request와 output allowance가 token budget을 넘으면 request CAS와
+  `ModelGenerationBlocked`를 남기고 provider generation 전에 fail-closed한다.
 
 ### Recovery algorithm
 

@@ -3,10 +3,12 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sqlite3
 import subprocess
 import uuid
 from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
@@ -38,7 +40,7 @@ from patchloop.evals.qualification import qualify_run
 from patchloop.runtime import build_manifest
 from patchloop.sandbox import LocalSandbox
 from patchloop.task_loader import load_task_package
-from patchloop.util import sha256_bytes, utc_now
+from patchloop.util import sha256_bytes, sha256_text, utc_now
 from patchloop.verifier import EvaluationEngine
 
 TASK = "tasks/smoke/csv-quoted-newline/public.yaml"
@@ -47,18 +49,30 @@ SMOKE_TASKS = {
     "config-falsy-override": "tasks/smoke/config-falsy-override/public.yaml",
     "path-prefix-boundary": "tasks/smoke/path-prefix-boundary/public.yaml",
 }
-SMOKE_REPLAYS = {
-    task_id: f"replays/smoke/{task_id}.jsonl" for task_id in SMOKE_TASKS
-}
+SMOKE_REPLAYS = {task_id: f"replays/smoke/{task_id}.jsonl" for task_id in SMOKE_TASKS}
+
+
+def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> None:
+    package = load_task_package(Path(TASK).parent)
+    current = build_manifest(package, run_id="run_current_context_contract")
+    legacy_v2 = current.model_copy(update={"context_policy_version": "phase-evidence-v2"})
+    replay = build_manifest(
+        package,
+        run_id="run_replay_context_contract",
+        provider="replay",
+        model_id="replay:replays/smoke/csv-quoted-newline.jsonl",
+        replay_hash="sha256:" + ("a" * 64),
+    )
+
+    assert current.tool_schema_version == "v2"
+    assert current.context_policy_version == "phase-evidence-v3"
+    assert AgentRunner._runtime_contract(current) == AgentRunner._runtime_contract(legacy_v2)
+    assert replay.tool_schema_version == "v1"
+    assert replay.context_policy_version == "v1"
 
 
 def _write_approved_execution_plan(root: Path, execution_hash: str) -> None:
-    path = (
-        root
-        / "experiments"
-        / "plans"
-        / f"{execution_hash.removeprefix('sha256:')}.json"
-    )
+    path = root / "experiments" / "plans" / f"{execution_hash.removeprefix('sha256:')}.json"
     path.parent.mkdir(parents=True)
     path.write_text(
         json.dumps(
@@ -76,6 +90,94 @@ def _write_approved_execution_plan(root: Path, execution_hash: str) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _fake_openai_response(
+    *,
+    input_tokens: int,
+    model_id: str,
+    output_text: str = "",
+    tool_call: RequestedTool | None = None,
+    response_id: str,
+) -> SimpleNamespace:
+    output = []
+    if tool_call is not None:
+        output.append(
+            SimpleNamespace(
+                type="function_call",
+                name=tool_call.name,
+                call_id=tool_call.action_id,
+                arguments=json.dumps(tool_call.arguments),
+            )
+        )
+    output_tokens = 1
+    return SimpleNamespace(
+        id=response_id,
+        model=model_id,
+        service_tier="default",
+        system_fingerprint="test-fingerprint",
+        status="completed",
+        truncation="disabled",
+        incomplete_details=None,
+        output=output,
+        output_text=output_text,
+        usage=SimpleNamespace(
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            total_tokens=input_tokens + output_tokens,
+            input_tokens_details=SimpleNamespace(
+                cached_tokens=0,
+                cache_write_tokens=0,
+            ),
+            output_tokens_details=SimpleNamespace(reasoning_tokens=0),
+        ),
+    )
+
+
+class _RejectedPatchResponses:
+    def __init__(
+        self,
+        *,
+        patch: str,
+        model_id: str,
+        input_token_counts: list[int],
+        allow_second_create: bool,
+    ) -> None:
+        self.patch = patch
+        self.model_id = model_id
+        self.input_token_counts = input_token_counts
+        self.allow_second_create = allow_second_create
+        self.count_requests: list[dict[str, Any]] = []
+        self.create_requests: list[dict[str, Any]] = []
+        self.input_tokens = SimpleNamespace(count=self.count)
+
+    def count(self, **request):
+        index = len(self.count_requests)
+        self.count_requests.append(request)
+        return SimpleNamespace(input_tokens=self.input_token_counts[index])
+
+    def create(self, **request):
+        index = len(self.create_requests)
+        if index == 1 and not self.allow_second_create:
+            raise AssertionError("second generation must not start after exact budget rejection")
+        self.create_requests.append(request)
+        if index == 0:
+            return _fake_openai_response(
+                input_tokens=self.input_token_counts[0],
+                model_id=self.model_id,
+                tool_call=RequestedTool(
+                    "apply_patch",
+                    "rejected-live-patch",
+                    {"patch": self.patch},
+                ),
+                response_id="resp_rejected_patch",
+            )
+        return _fake_openai_response(
+            input_tokens=self.input_token_counts[1],
+            model_id=self.model_id,
+            output_text="cannot continue",
+            response_id="resp_after_rejection",
+        )
 
 
 def _assert_public_trace_boundary(runner: AgentRunner, run_id: str, task_path: str) -> None:
@@ -112,30 +214,16 @@ def test_offline_mock_agent_creates_complete_trace(
     assert any(event.type == EventType.SUBMISSION_ATTEMPTED for event in events)
     assert any(event.type == EventType.SUBMISSION_ACCEPTED for event in events)
     assert any(event.type == EventType.RUN_COMPLETED for event in events)
-    accepted = next(
-        event
-        for event in events
-        if event.type == EventType.SUBMISSION_ACCEPTED
-    )
-    submitted_artifact = Artifact.model_validate(
-        accepted.payload["submitted_patch_artifact"]
-    )
-    assert result["submitted_patch_artifact_id"] == (
-        submitted_artifact.artifact_id
-    )
-    assert sha256_bytes(Path(submitted_artifact.path).read_bytes()) == (
-        accepted.payload["worktree_diff_hash"]
+    accepted = next(event for event in events if event.type == EventType.SUBMISSION_ACCEPTED)
+    submitted_artifact = Artifact.model_validate(accepted.payload["submitted_patch_artifact"])
+    assert result["submitted_patch_artifact_id"] == (submitted_artifact.artifact_id)
+    assert (
+        sha256_bytes(Path(submitted_artifact.path).read_bytes())
+        == (accepted.payload["worktree_diff_hash"])
     )
     workspace = tmp_path / "runtime" / "workspaces" / result["run_id"] / "repo"
     assert not (workspace / ".patchloop-hidden").exists()
-    result_path = (
-        tmp_path
-        / "runtime"
-        / "artifacts"
-        / "runs"
-        / result["run_id"]
-        / "result.json"
-    )
+    result_path = tmp_path / "runtime" / "artifacts" / "runs" / result["run_id"] / "result.json"
     persisted = json.loads(result_path.read_text(encoding="utf-8"))
     assert persisted["usage"] == result["usage"]
     _assert_public_trace_boundary(runner, result["run_id"], task_path)
@@ -143,10 +231,7 @@ def test_offline_mock_agent_creates_complete_trace(
 
 @pytest.mark.parametrize(
     ("task_id", "task_path", "replay_path"),
-    [
-        (task_id, task_path, SMOKE_REPLAYS[task_id])
-        for task_id, task_path in SMOKE_TASKS.items()
-    ],
+    [(task_id, task_path, SMOKE_REPLAYS[task_id]) for task_id, task_path in SMOKE_TASKS.items()],
 )
 def test_offline_replay_agent_creates_hashed_complete_trace(
     tmp_path,
@@ -179,10 +264,7 @@ def test_offline_replay_agent_creates_hashed_complete_trace(
             / "evaluation-receipt.json"
         ).read_text(encoding="utf-8")
     )
-    assert (
-        receipt["submitted_patch_artifact_id"]
-        == result["submitted_patch_artifact_id"]
-    )
+    assert receipt["submitted_patch_artifact_id"] == result["submitted_patch_artifact_id"]
     qualification = qualify_run(
         result["run_id"],
         task_dir=Path(task_path).parent,
@@ -196,18 +278,11 @@ def test_offline_replay_agent_creates_hashed_complete_trace(
     assert verifier_evidence["passed"] is True
     _assert_public_trace_boundary(runner, result["run_id"], task_path)
     persisted_result = json.loads(
-        (
-            tmp_path
-            / "runtime"
-            / "artifacts"
-            / "runs"
-            / result["run_id"]
-            / "result.json"
-        ).read_text(encoding="utf-8")
+        (tmp_path / "runtime" / "artifacts" / "runs" / result["run_id"] / "result.json").read_text(
+            encoding="utf-8"
+        )
     )
-    verifier_artifact = persisted_result["verifier_results"][0][
-        "details"
-    ]["evidence_artifacts"][0]
+    verifier_artifact = persisted_result["verifier_results"][0]["details"]["evidence_artifacts"][0]
     Path(verifier_artifact["path"]).write_bytes(b"tampered")
     with pytest.raises(
         ContractError,
@@ -292,14 +367,7 @@ def test_agent_failure_persists_run_id_usage_cost_and_terminal_artifacts(
     events = runner.state.list_events(manifest.run_id)
     assert events[-1].type == EventType.RUN_FAILED
     assert sum(event.type == EventType.RUN_FAILED for event in events) == 1
-    result_path = (
-        tmp_path
-        / "runtime"
-        / "artifacts"
-        / "runs"
-        / manifest.run_id
-        / "result.json"
-    )
+    result_path = tmp_path / "runtime" / "artifacts" / "runs" / manifest.run_id / "result.json"
     assert json.loads(result_path.read_text(encoding="utf-8"))["run_id"] == manifest.run_id
 
 
@@ -361,10 +429,308 @@ def test_live_runner_refuses_generation_that_cannot_fit_remaining_token_budget(
 
     assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
     assert result["usage"]["model_calls"] == 0
-    assert result["terminal_error"]["message"].startswith(
-        "remaining token budget cannot fund"
-    )
+    assert result["terminal_error"]["message"].startswith("remaining token budget cannot fund")
     assert responses.create_called is False
+
+
+def test_live_v3_retry_request_contains_exact_rejected_patch_context(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package(Path(TASK).parent)
+    execution_hash = "sha256:" + ("7" * 64)
+    patch = "*** Begin Patch\n*** Update File: mini_data_utils/csvlite.py\n*** End Patch"
+    manifest = build_manifest(
+        package,
+        run_id="run_live_v3_rejected_patch_context",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=20_000),
+        experiment_context=ExperimentRunContext(
+            experiment_id="live-v3-rejected-patch-context-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("b" * 64),
+            repetition=1,
+        ),
+    )
+    responses = _RejectedPatchResponses(
+        patch=patch,
+        model_id=manifest.model.model_id,
+        input_token_counts=[100, 200],
+        allow_second_create=True,
+    )
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(responses=responses),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_: adapter)
+    _write_approved_execution_plan(tmp_path / "runtime", execution_hash)
+
+    result = runner.start(
+        TASK,
+        model="openai",
+        manifest=manifest,
+        live_authorization=issue_live_execution_authorization(
+            execution_hash,
+            root=tmp_path / "runtime",
+        ),
+    )
+
+    events = runner.state.list_events(manifest.run_id)
+    patch_call = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "apply_patch"
+    )
+    patch_failure = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_FAILED and event.correlation_id == patch_call.correlation_id
+    )
+    second_context = json.loads(
+        next(
+            item["content"]
+            for item in responses.create_requests[1]["input"]
+            if item["role"] == "user"
+        )
+    )
+    retry = second_context["rejected_mutation_retry"]
+    candidate_artifact = Artifact.model_validate(patch_call.payload["patch_artifact"])
+
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert result["usage"]["model_calls"] == 2
+    assert len(responses.count_requests) == 2
+    assert len(responses.create_requests) == 2
+    assert retry["action_id"] == "rejected-live-patch"
+    assert retry["source_call_sequence"] == patch_call.sequence
+    assert retry["source_failure_sequence"] == patch_failure.sequence
+    assert retry["candidate"] == {
+        "patch": patch,
+        "content_hash": sha256_text(patch),
+        "size_bytes": len(patch.encode("utf-8")),
+        "input_hash": patch_call.payload["input_hash"],
+    }
+    assert retry["candidate"]["content_hash"] == candidate_artifact.content_hash
+    assert retry["rejection"] == {
+        "status": "rejected",
+        "error_code": patch_failure.payload["error_code"],
+        "error_message": patch_failure.payload["error_message"],
+        "error_details": patch_failure.payload["error_details"],
+    }
+    context_events = [event for event in events if event.type == EventType.CONTEXT_BUILT]
+    request_evidence = json.loads(
+        Path(context_events[-1].payload["artifact_path"]).read_text(encoding="utf-8")
+    )
+    assert request_evidence["context_build"]["rejected_mutation_retry"]["included"] is True
+    assert request_evidence["context_build"]["rejected_mutation_retry"]["truncated"] is False
+
+
+def _run_live_v3_retry_budget_block(
+    tmp_path,
+    monkeypatch,
+    *,
+    run_id: str,
+):
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package(Path(TASK).parent)
+    execution_hash = "sha256:" + ("8" * 64)
+    patch = "*** Begin Patch\n*** Update File: mini_data_utils/csvlite.py\n*** End Patch"
+    manifest = build_manifest(
+        package,
+        run_id=run_id,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=5_000),
+        experiment_context=ExperimentRunContext(
+            experiment_id="live-v3-rejected-patch-budget-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("b" * 64),
+            repetition=1,
+        ),
+    )
+    responses = _RejectedPatchResponses(
+        patch=patch,
+        model_id=manifest.model.model_id,
+        input_token_counts=[100, 1_000],
+        allow_second_create=False,
+    )
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(responses=responses),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_: adapter)
+    _write_approved_execution_plan(tmp_path / "runtime", execution_hash)
+
+    result = runner.start(
+        TASK,
+        model="openai",
+        manifest=manifest,
+        live_authorization=issue_live_execution_authorization(
+            execution_hash,
+            root=tmp_path / "runtime",
+        ),
+    )
+    return runner, result, manifest, responses, patch
+
+
+def test_live_v3_retry_request_budget_block_precedes_second_generation(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    runner, result, manifest, responses, patch = (
+        _run_live_v3_retry_budget_block(
+            tmp_path,
+            monkeypatch,
+            run_id="run_live_v3_rejected_patch_budget",
+        )
+    )
+
+    events = runner.state.list_events(manifest.run_id)
+    blocked_events = [event for event in events if event.type == EventType.MODEL_GENERATION_BLOCKED]
+    assert len(blocked_events) == 1
+    blocked = blocked_events[0]
+    expected_payload = {
+        "reason_code": "exact_request_budget_exceeded",
+        "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "generation_started": False,
+        "request_artifact_id": blocked.payload["request_artifact_id"],
+        "request_artifact_path": blocked.payload["request_artifact_path"],
+        "request_body_hash": blocked.payload["request_body_hash"],
+        "requested_input_tokens": 1_000,
+        "remaining_tokens": 4_899,
+        "max_output_tokens": 4_096,
+        "input_token_count_calls": 1,
+        "retry_context_present": True,
+        "retry_candidate_content_hash": sha256_text(patch),
+    }
+
+    assert blocked.payload == expected_payload
+    assert len(responses.count_requests) == 2
+    assert len(responses.create_requests) == 1
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert result["usage"]["model_calls"] == 1
+    assert result["usage"]["input_token_count_calls"] == 2
+    assert result["terminal_error"]["type"] == "ModelGenerationBudgetError"
+    assert result["terminal_error"]["code"] == "MODEL_GENERATION_BUDGET_EXCEEDED"
+    assert result["terminal_error"]["details"] == expected_payload
+    assert sum(event.type == EventType.MODEL_CALLED for event in events) == 1
+    request_evidence = json.loads(
+        Path(blocked.payload["request_artifact_path"]).read_text(encoding="utf-8")
+    )
+    second_context = json.loads(
+        next(
+            item["content"]
+            for item in request_evidence["request_body"]["input"]
+            if item["role"] == "user"
+        )
+    )
+    assert second_context["rejected_mutation_retry"]["candidate"]["patch"] == patch
+    assert request_evidence["context_build"]["rejected_mutation_retry"]["included"] is True
+    assert blocked.sequence < next(
+        event.sequence for event in events if event.type == EventType.RUN_FAILED
+    )
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    retry_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    prompt_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "prompt_token_integrity"
+    )
+    terminal_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "terminal_result_integrity"
+    )
+    assert retry_check["passed"] is True
+    assert retry_check["details"]["model_generation_blocked_count"] == 1
+    assert prompt_check["passed"] is True
+    assert prompt_check["details"]["terminal_generation_block_valid"] is True
+    assert terminal_check["passed"] is True
+    assert terminal_check["details"]["model_generation_block_binding_required"] is True
+    assert terminal_check["details"]["model_generation_block_binding_valid"] is True
+
+
+@pytest.mark.parametrize(
+    ("event_type", "field", "replacement", "failed_check_id"),
+    [
+        (
+            EventType.MODEL_GENERATION_BLOCKED,
+            "remaining_tokens",
+            1,
+            "rejected_patch_retry_context",
+        ),
+        (
+            EventType.RUN_FAILED,
+            "error_code",
+            "CONTRACT_ERROR",
+            "terminal_result_integrity",
+        ),
+    ],
+)
+def test_v3_budget_block_qualification_rejects_tampered_binding(
+    tmp_path,
+    monkeypatch,
+    event_type,
+    field,
+    replacement,
+    failed_check_id,
+) -> None:
+    runner, _, manifest, _, _ = _run_live_v3_retry_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id=f"run_live_v3_budget_tamper_{field}",
+    )
+    database = tmp_path / "runtime" / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (manifest.run_id,),
+        ).fetchall()
+        sequence, event_json = next(
+            (sequence, event_json)
+            for sequence, event_json in rows
+            if json.loads(event_json)["type"] == event_type.value
+        )
+        event = json.loads(event_json)
+        event["payload"][field] = replacement
+        connection.execute(
+            "UPDATE events SET event_json = ? "
+            "WHERE run_id = ? AND sequence = ?",
+            (json.dumps(event), manifest.run_id, sequence),
+        )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    failed_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == failed_check_id
+    )
+    assert failed_check["passed"] is False
+    assert qualification["qualified"] is False
 
 
 def test_agent_runner_rejects_live_model_without_campaign_capability(
@@ -484,9 +850,7 @@ def test_agent_runner_uses_one_validated_task_snapshot_before_model_turn(
 ) -> None:
     monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
     original_package = load_task_package(Path(TASK).parent)
-    replacement = original_package.model_copy(
-        update={"private_spec_hash": "sha256:" + ("f" * 64)}
-    )
+    replacement = original_package.model_copy(update={"private_spec_hash": "sha256:" + ("f" * 64)})
     loads = []
 
     def changing_loader(_task_dir):
@@ -536,20 +900,11 @@ def test_startup_failure_persists_terminal_infrastructure_attempt(
     with pytest.raises(OSError, match="synthetic workspace failure"):
         runner.start(TASK, model="mock", manifest=manifest)
 
-    row = next(
-        row for row in runner.state.list_runs() if row["run_id"] == manifest.run_id
-    )
+    row = next(row for row in runner.state.list_runs() if row["run_id"] == manifest.run_id)
     assert row["status"] == "failed"
     assert row["result"]["outcome_kind"] == "infrastructure_error"
     assert runner.state.list_events(manifest.run_id)[-1].type == EventType.RUN_FAILED
-    assert (
-        tmp_path
-        / "runtime"
-        / "artifacts"
-        / "runs"
-        / manifest.run_id
-        / "result.json"
-    ).is_file()
+    assert (tmp_path / "runtime" / "artifacts" / "runs" / manifest.run_id / "result.json").is_file()
 
 
 def test_billed_model_parse_error_preserves_usage_and_cost(
@@ -593,9 +948,7 @@ def test_billed_model_parse_error_preserves_usage_and_cost(
     result = runner.start(TASK, model="mock", manifest=manifest)
 
     assert result["outcome_kind"] == "agent_failure"
-    assert result["terminal_error"]["message"].endswith(
-        "invalid_tool_arguments_json"
-    )
+    assert result["terminal_error"]["message"].endswith("invalid_tool_arguments_json")
     assert result["usage"]["input_tokens"] == 1_000
     assert result["usage"]["model_cost_usd"] == pytest.approx(0.0036125)
     model_event = next(
@@ -603,9 +956,7 @@ def test_billed_model_parse_error_preserves_usage_and_cost(
         for event in runner.state.list_events(manifest.run_id)
         if event.type == EventType.MODEL_CALLED
     )
-    assert model_event.payload["response_error_code"] == (
-        "invalid_tool_arguments_json"
-    )
+    assert model_event.payload["response_error_code"] == ("invalid_tool_arguments_json")
 
 
 def test_submission_gate_recovers_from_early_and_stale_review_attempts(
@@ -648,18 +999,10 @@ def test_submission_gate_recovers_from_early_and_stale_review_attempts(
 
     assert result["scope_compliant_success"] is True
     assert result["usage"]["tool_calls"] == 7
-    assert sum(
-        event.type == EventType.SUBMISSION_REJECTED for event in events
-    ) == 2
-    assert sum(
-        event.type == EventType.SUBMISSION_ACCEPTED for event in events
-    ) == 1
-    review = next(
-        event for event in events if event.type == EventType.REVIEW_RECORDED
-    )
-    accepted = next(
-        event for event in events if event.type == EventType.SUBMISSION_ACCEPTED
-    )
+    assert sum(event.type == EventType.SUBMISSION_REJECTED for event in events) == 2
+    assert sum(event.type == EventType.SUBMISSION_ACCEPTED for event in events) == 1
+    review = next(event for event in events if event.type == EventType.REVIEW_RECORDED)
+    accepted = next(event for event in events if event.type == EventType.SUBMISSION_ACCEPTED)
     accepted_attempt = next(
         event
         for event in events
@@ -667,9 +1010,7 @@ def test_submission_gate_recovers_from_early_and_stale_review_attempts(
         and event.correlation_id == accepted.correlation_id
     )
     assert review.sequence < accepted_attempt.sequence < accepted.sequence
-    assert review.payload["worktree_diff_hash"] == accepted.payload[
-        "worktree_diff_hash"
-    ]
+    assert review.payload["worktree_diff_hash"] == accepted.payload["worktree_diff_hash"]
 
 
 def test_submission_gate_rejects_noop_after_passing_checks_and_diff_review(
@@ -706,22 +1047,15 @@ def test_submission_gate_rejects_noop_after_passing_checks_and_diff_review(
 
     result = runner.start(TASK, model="mock")
     events = runner.state.list_events(result["run_id"])
-    rejections = [
-        event
-        for event in events
-        if event.type == EventType.SUBMISSION_REJECTED
-    ]
+    rejections = [event for event in events if event.type == EventType.SUBMISSION_REJECTED]
 
     assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
     assert len(rejections) == 3
     assert all(
-        "successful_mutation_current_diff"
-        in event.payload["missing_evidence"]
+        "successful_mutation_current_diff" in event.payload["missing_evidence"]
         for event in rejections
     )
-    assert not any(
-        event.type == EventType.SUBMISSION_ACCEPTED for event in events
-    )
+    assert not any(event.type == EventType.SUBMISSION_ACCEPTED for event in events)
 
 
 def test_later_patch_invalidates_prior_passing_check(
@@ -737,8 +1071,8 @@ def test_later_patch_invalidates_prior_passing_check(
                 "--- a/mini_data_utils/csvlite.py\n"
                 "+++ b/mini_data_utils/csvlite.py\n"
                 "@@ -1,4 +1,4 @@\n"
-                '-\"\"\"A deliberately small CSV reader with one audited defect.\"\"\"\n'
-                '+\"\"\"A deliberately small CSV reader with one repaired defect.\"\"\"\n'
+                '-"""A deliberately small CSV reader with one audited defect."""\n'
+                '+"""A deliberately small CSV reader with one repaired defect."""\n'
                 " \n"
                 " import csv\n"
                 " import io\n"
@@ -787,16 +1121,14 @@ def test_later_patch_invalidates_prior_passing_check(
     check_events = [
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "run_check"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "run_check"
     ]
     assert len(check_events) == 2
-    assert check_events[0].payload["worktree_diff_hash"] != check_events[1].payload[
-        "worktree_diff_hash"
-    ]
-    rejected = next(
-        event for event in events if event.type == EventType.SUBMISSION_REJECTED
+    assert (
+        check_events[0].payload["worktree_diff_hash"]
+        != check_events[1].payload["worktree_diff_hash"]
     )
+    rejected = next(event for event in events if event.type == EventType.SUBMISSION_REJECTED)
     assert "visible_checks_current_diff" in rejected.payload["missing_evidence"]
     checkpoint = runner.state.latest_checkpoint(result["run_id"])
     assert checkpoint is not None
@@ -844,13 +1176,11 @@ def test_rejected_patch_does_not_advance_phase_and_exposes_stage(
     failed_patch = next(
         event
         for event in events
-        if event.type == EventType.TOOL_FAILED
-        and event.payload.get("tool") == "apply_patch"
+        if event.type == EventType.TOOL_FAILED and event.payload.get("tool") == "apply_patch"
     )
     assert failed_patch.payload["error_details"]["stage"] == "format"
     assert not any(
-        event.type == EventType.PHASE_CHANGED
-        and event.payload.get("to") in {"PLAN", "IMPLEMENT"}
+        event.type == EventType.PHASE_CHANGED and event.payload.get("to") in {"PLAN", "IMPLEMENT"}
         for event in events
     )
 
@@ -888,9 +1218,7 @@ def test_three_submission_rejections_are_terminal_and_classified(
 
     assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
     assert result["terminal_error"]["type"] == "SubmissionProtocolError"
-    assert sum(
-        event.type == EventType.SUBMISSION_REJECTED for event in events
-    ) == 3
+    assert sum(event.type == EventType.SUBMISSION_REJECTED for event in events) == 3
     failure_files = list((tmp_path / "runtime" / "failures").rglob("*.json"))
     assert len(failure_files) == 1
     failure = json.loads(failure_files[0].read_text(encoding="utf-8"))
@@ -919,9 +1247,7 @@ def test_evaluator_error_keeps_accepted_agent_submission(
     assert result["outcome_kind"] == RunOutcomeKind.INFRASTRUCTURE_ERROR.value
     assert result["agent_submission_status"] == "completed"
     assert result["evaluation_status"] == "not_run"
-    assert any(
-        event.type == EventType.SUBMISSION_ACCEPTED for event in events
-    )
+    assert any(event.type == EventType.SUBMISSION_ACCEPTED for event in events)
     assert events[-1].type == EventType.RUN_FAILED
 
 
@@ -933,9 +1259,7 @@ def test_fault_clone_preserves_replay_adapter_identity(monkeypatch) -> None:
         run_id="run_replay_fault_baseline",
         provider="replay",
         model_id=replay_model,
-        replay_hash=sha256_bytes(
-            Path(SMOKE_REPLAYS["csv-quoted-newline"]).read_bytes()
-        ),
+        replay_hash=sha256_bytes(Path(SMOKE_REPLAYS["csv-quoted-newline"]).read_bytes()),
     )
     captured = {}
 
@@ -1014,20 +1338,10 @@ def test_worker_restart_reuses_completed_evaluation_before_terminal_commit(
     ):
         runner.start(TASK, model="mock", manifest=manifest)
 
-    receipt_path = (
-        runtime
-        / "artifacts"
-        / "runs"
-        / manifest.run_id
-        / "evaluation-receipt.json"
-    )
+    receipt_path = runtime / "artifacts" / "runs" / manifest.run_id / "evaluation-receipt.json"
     assert receipt_path.is_file()
-    persisted_before = (
-        receipt_path.parent / "result.json"
-    ).read_bytes()
-    evaluator_workspaces = sorted(
-        (runtime / "workspaces").glob("eval_*")
-    )
+    persisted_before = (receipt_path.parent / "result.json").read_bytes()
+    evaluator_workspaces = sorted((runtime / "workspaces").glob("eval_*"))
     assert len(evaluator_workspaces) == 1
     assert runner.state.get_run_status(manifest.run_id) == RunStatus.RUNNING
 
@@ -1035,9 +1349,7 @@ def test_worker_restart_reuses_completed_evaluation_before_terminal_commit(
     fresh_runner = AgentRunner(runtime)
 
     def unavailable_model_adapter(*_args, **_kwargs):
-        raise AssertionError(
-            "evaluation-only recovery must not construct a model adapter"
-        )
+        raise AssertionError("evaluation-only recovery must not construct a model adapter")
 
     monkeypatch.setattr(
         fresh_runner,
@@ -1047,12 +1359,8 @@ def test_worker_restart_reuses_completed_evaluation_before_terminal_commit(
     resumed = fresh_runner.resume(manifest.run_id)
 
     assert resumed["scope_compliant_success"] is True
-    assert (
-        receipt_path.parent / "result.json"
-    ).read_bytes() == persisted_before
-    assert sorted(
-        (runtime / "workspaces").glob("eval_*")
-    ) == evaluator_workspaces
+    assert (receipt_path.parent / "result.json").read_bytes() == persisted_before
+    assert sorted((runtime / "workspaces").glob("eval_*")) == evaluator_workspaces
     events = runner.state.list_events(manifest.run_id)
     assert sum(event.type == EventType.RUN_COMPLETED for event in events) == 1
     assert sum(event.type == EventType.FAILURE_TAGGED for event in events) == 0
@@ -1082,9 +1390,7 @@ def test_worker_restart_reuses_failed_evaluation_and_failure_record(
         result.scope_compliant_success = False
         result.verdicts.hidden_tests = VerdictState.FAIL
         result.outcome_kind = RunOutcomeKind.TASK_FAILURE
-        run_dir = (
-            self.artifact_store.root / "runs" / result.run_id
-        )
+        run_dir = self.artifact_store.root / "runs" / result.run_id
         self.artifact_store.write_text_atomic(
             run_dir / "result.json",
             result.model_dump_json(indent=2),
@@ -1094,9 +1400,7 @@ def test_worker_restart_reuses_failed_evaluation_and_failure_record(
     def stop_after_failure_record(*args, **kwargs):
         record = real_classify(*args, **kwargs)
         assert record is not None
-        raise SystemExit(
-            "synthetic process death after failure classification"
-        )
+        raise SystemExit("synthetic process death after failure classification")
 
     monkeypatch.setattr(
         EvaluationEngine,
@@ -1114,20 +1418,12 @@ def test_worker_restart_reuses_failed_evaluation_and_failure_record(
     ):
         runner.start(TASK, model="mock", manifest=manifest)
 
-    receipt_path = (
-        runtime
-        / "artifacts"
-        / "runs"
-        / manifest.run_id
-        / "evaluation-receipt.json"
-    )
+    receipt_path = runtime / "artifacts" / "runs" / manifest.run_id / "evaluation-receipt.json"
     result_path = receipt_path.parent / "result.json"
     result_before = result_path.read_bytes()
     failure_files = list((runtime / "failures").rglob("*.json"))
     assert len(failure_files) == 1
-    evaluator_workspaces = sorted(
-        (runtime / "workspaces").glob("eval_*")
-    )
+    evaluator_workspaces = sorted((runtime / "workspaces").glob("eval_*"))
     assert len(evaluator_workspaces) == 1
 
     monkeypatch.setattr(
@@ -1139,9 +1435,7 @@ def test_worker_restart_reuses_failed_evaluation_and_failure_record(
     assert resumed["scope_compliant_success"] is False
     assert resumed["verdicts"]["hidden_tests"] == VerdictState.FAIL.value
     assert result_path.read_bytes() == result_before
-    assert sorted(
-        (runtime / "workspaces").glob("eval_*")
-    ) == evaluator_workspaces
+    assert sorted((runtime / "workspaces").glob("eval_*")) == evaluator_workspaces
     events = runner.state.list_events(manifest.run_id)
     assert sum(event.type == EventType.FAILURE_TAGGED for event in events) == 1
     assert sum(event.type == EventType.RUN_COMPLETED for event in events) == 1
@@ -1169,16 +1463,11 @@ def test_evaluation_receipt_rejects_tampered_evidence(
         for event in runner.state.list_events(result["run_id"])
         if event.type == EventType.SUBMISSION_ACCEPTED
     )
-    submitted_patch = Artifact.model_validate(
-        accepted.payload["submitted_patch_artifact"]
-    )
+    submitted_patch = Artifact.model_validate(accepted.payload["submitted_patch_artifact"])
     persisted = RunResult.model_validate_json(
-        (
-            runner.artifacts.root
-            / "runs"
-            / result["run_id"]
-            / "result.json"
-        ).read_text(encoding="utf-8")
+        (runner.artifacts.root / "runs" / result["run_id"] / "result.json").read_text(
+            encoding="utf-8"
+        )
     )
     if tamper_target == "verifier-cas":
         raw_evidence = next(
@@ -1187,30 +1476,14 @@ def test_evaluation_receipt_rejects_tampered_evidence(
             if verifier.evidence_artifact_ids
         )
         verifier_artifact = Artifact.model_validate(raw_evidence)
-        Path(verifier_artifact.path).write_bytes(
-            b"tampered verifier evidence"
-        )
+        Path(verifier_artifact.path).write_bytes(b"tampered verifier evidence")
         error_match = "verifier evidence artifact"
     else:
-        provenance_path = (
-            runner.artifacts.root
-            / "runs"
-            / result["run_id"]
-            / "provenance.json"
-        )
-        provenance_path.write_bytes(
-            provenance_path.read_bytes() + b"\n"
-        )
+        provenance_path = runner.artifacts.root / "runs" / result["run_id"] / "provenance.json"
+        provenance_path.write_bytes(provenance_path.read_bytes() + b"\n")
         error_match = "file hash"
-    workspace = (
-        runner.root
-        / "workspaces"
-        / result["run_id"]
-        / "repo"
-    )
-    expected_patch_hash = runner.workspaces.diff_summary(
-        workspace
-    ).patch_hash
+    workspace = runner.root / "workspaces" / result["run_id"] / "repo"
+    expected_patch_hash = runner.workspaces.diff_summary(workspace).patch_hash
 
     with pytest.raises(
         RecoveryError,
@@ -1282,8 +1555,7 @@ def test_resume_recovers_run_started_before_first_checkpoint(
     assert (
         sum(
             event.type == EventType.PHASE_CHANGED
-            and event.payload
-            == {"from": Phase.INTAKE.value, "to": Phase.REPRODUCE.value}
+            and event.payload == {"from": Phase.INTAKE.value, "to": Phase.REPRODUCE.value}
             for event in events
         )
         == 1
@@ -1322,8 +1594,7 @@ def test_resume_recovers_phase_change_before_first_checkpoint(
     assert (
         sum(
             event.type == EventType.PHASE_CHANGED
-            and event.payload
-            == {"from": Phase.INTAKE.value, "to": Phase.REPRODUCE.value}
+            and event.payload == {"from": Phase.INTAKE.value, "to": Phase.REPRODUCE.value}
             for event in events
         )
         == 1
@@ -1404,24 +1675,21 @@ def test_resume_replays_missing_tool_phase_suffix_once(
     assert result["scope_compliant_success"] is True
     assert (
         sum(
-            event.type == EventType.TOOL_CALLED
-            and event.payload.get("tool") == tool_name
+            event.type == EventType.TOOL_CALLED and event.payload.get("tool") == tool_name
             for event in events
         )
         == 1
     )
     assert (
         sum(
-            event.type == EventType.TOOL_SUCCEEDED
-            and event.payload.get("tool") == tool_name
+            event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == tool_name
             for event in events
         )
         == 1
     )
     assert (
         sum(
-            event.type == EventType.PHASE_CHANGED
-            and event.payload == expected_transition
+            event.type == EventType.PHASE_CHANGED and event.payload == expected_transition
             for event in events
         )
         == 1
@@ -1467,16 +1735,14 @@ def test_resume_completes_get_diff_from_orphan_tool_call(
     assert result["scope_compliant_success"] is True
     assert (
         sum(
-            event.type == EventType.TOOL_CALLED
-            and event.payload.get("tool") == "get_diff"
+            event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "get_diff"
             for event in events
         )
         == 1
     )
     assert (
         sum(
-            event.type == EventType.TOOL_SUCCEEDED
-            and event.payload.get("tool") == "get_diff"
+            event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "get_diff"
             for event in events
         )
         == 1
@@ -1517,9 +1783,7 @@ def test_resume_does_not_promote_orphan_read_over_external_staged_change(
         runner.start(TASK, model="mock", manifest=manifest)
 
     checkpoints_before = runner.state.list_checkpoints(manifest.run_id)
-    workspace = (
-        runner.root / "workspaces" / manifest.run_id / "repo"
-    )
+    workspace = runner.root / "workspaces" / manifest.run_id / "repo"
     readme = workspace / "README.md"
     changed = readme.read_bytes() + b"\nexternal staged change\n"
     readme.write_bytes(changed)
@@ -1588,9 +1852,7 @@ def test_resume_does_not_promote_completed_read_over_external_change(
         runner.start(TASK, model="mock", manifest=manifest)
 
     checkpoints_before = runner.state.list_checkpoints(manifest.run_id)
-    workspace = (
-        runner.root / "workspaces" / manifest.run_id / "repo"
-    )
+    workspace = runner.root / "workspaces" / manifest.run_id / "repo"
     readme = workspace / "README.md"
     changed = readme.read_bytes() + b"\nexternal tracked change\n"
     readme.write_bytes(changed)
@@ -1636,9 +1898,7 @@ def test_pre_checkpoint_resume_rejects_different_clean_base(
     with pytest.raises(SystemExit, match="86"):
         runner.start(TASK, model="mock", manifest=manifest)
 
-    workspace = (
-        runner.root / "workspaces" / manifest.run_id / "repo"
-    )
+    workspace = runner.root / "workspaces" / manifest.run_id / "repo"
     readme = workspace / "README.md"
     readme.write_text(
         readme.read_text(encoding="utf-8") + "\nwrong clean base\n",
@@ -1703,12 +1963,7 @@ def test_fatal_interrupted_patch_does_not_promote_unknown_checkpoint(
     )
     checkpoints_before = runner.state.list_checkpoints(manifest.run_id)
     target = (
-        runner.root
-        / "workspaces"
-        / manifest.run_id
-        / "repo"
-        / "mini_data_utils"
-        / "csvlite.py"
+        runner.root / "workspaces" / manifest.run_id / "repo" / "mini_data_utils" / "csvlite.py"
     )
     unknown = target.read_text(encoding="utf-8").replace(
         'newline=""',
@@ -1771,9 +2026,7 @@ def test_resume_rejects_replaced_workspace_root_before_patch_recovery(
         original_apply_postimages,
     )
 
-    workspace = (
-        runner.root / "workspaces" / manifest.run_id / "repo"
-    )
+    workspace = runner.root / "workspaces" / manifest.run_id / "repo"
     external = tmp_path / "external-identical-workspace"
     backup = workspace.with_name("repo.backup")
     shutil.copytree(workspace, external)
@@ -1798,8 +2051,7 @@ def test_resume_rejects_replaced_workspace_root_before_patch_recovery(
             )
             if linked_result.returncode != 0:
                 pytest.skip(
-                    "Windows junction creation is unavailable: "
-                    f"{linked_result.stderr.strip()}"
+                    f"Windows junction creation is unavailable: {linked_result.stderr.strip()}"
                 )
         else:
             workspace.symlink_to(
@@ -1848,11 +2100,7 @@ def test_malformed_prepared_mode_is_fatal_without_checkpoint_promotion(
     original_finalize = ToolGateway._finalize_applied_patch
 
     def persist_malformed_mode(value):
-        if (
-            isinstance(value, dict)
-            and value.get("schema_version")
-            == "patch-mutation-intent-v1"
-        ):
+        if isinstance(value, dict) and value.get("schema_version") == "patch-mutation-intent-v1":
             value = json.loads(json.dumps(value))
             value["files"][0]["mode"] = "not-an-int"
         return original_put_json(value)
@@ -2049,8 +2297,7 @@ def test_run_check_staged_tracked_mutation_closes_tool_evidence_and_usage(
     failed_checks = [
         event
         for event in events
-        if event.type == EventType.TOOL_FAILED
-        and event.payload.get("tool") == "run_check"
+        if event.type == EventType.TOOL_FAILED and event.payload.get("tool") == "run_check"
     ]
 
     assert result["outcome_kind"] == RunOutcomeKind.INFRASTRUCTURE_ERROR.value

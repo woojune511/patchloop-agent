@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **rejected-patch retry context hardening**
+현재 milestone: **new mini D-037 diagnostic preflight**
 
 2026-07-29 구현 스냅샷:
 
@@ -9,10 +9,10 @@
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | v2 submission gate live-verified; retry context gap open | Current-diff check/review/`finish_task`는 live 통과, rejected patch body rehydration은 미구현 |
+| Phase 3 state machine | tool v2/context v3 retry hardening offline-complete | Current-diff submission gate와 exact rejected-patch next-request rehydration, structured no-generation budget event 검증 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | historical v1 pilot complete, mini v2 diagnostic complete, Terra v2 pilot pending | Mini r2는 v2 evaluator/qualification을 통과했지만 task acceptance 실패; post-run audit에서 D-037 target 미충족 확인 |
+| Phase 6 evaluation | historical v1 pilot complete, D-037 offline gate complete, new mini diagnostic pending | Mini r2의 gap은 immutable evidence로 보존; v3 qualification은 offline 통과했지만 provider retry는 아직 미실행 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -93,7 +93,7 @@ task의 no-memory development trace를 qualification하는 것이다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — mini v2 diagnostic complete, retry context hardening pending
+## Current live trace gate — retry context offline-complete, new mini diagnostic pending
 
 목표: 첫 paid call 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -108,8 +108,8 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 4 | implemented, legacy artifacts preserved | Source-evidence-bound `trace-qualification-v1`/`v2`와 sanitized failure linkage | v1 artifact byte stability, v2 runtime/lifecycle/provenance binding |
 | 5 | historical v1 evidence only | Babel #1042 `no_memory` r3 pilot | `run_3cb86f8d70094a11`, `evaluation_reached=true`, official SCRR pass; current v2 gate에는 부적격 |
 | 6 | completed; task acceptance failed | Corrected v2 mini model-candidate diagnostic 1회, $2 cap | `run_4a9737ec91964dca`: telemetry, submission/evaluator lifecycle과 qualification pass; hidden acceptance fail |
-| 7 | in progress | `phase-evidence-v3` rejected mutating-tool argument의 bounded next-turn rehydration과 qualification check | Candidate bytes + rejection reason을 stateless retry가 함께 수신; private/CAS budget boundary 유지 |
-| 8 | blocked on order 7 | 새 mini model-candidate diagnostic 1회, 새 hash/승인 | Rejected mutation retry를 실제 exercise하고 context/lifecycle/evaluator/qualification 확인; task outcome은 별도 보고 |
+| 7 | done (offline) | `phase-evidence-v3` rejected mutating-tool argument의 bounded next-turn rehydration과 qualification check | Exact candidate/reason, tamper/stale/v2 compatibility, generation-before-budget guard와 full regression 통과 |
+| 8 | next; new hash/approval required | 새 mini model-candidate diagnostic 1회, 새 hash/승인 | Rejected mutation retry를 실제 exercise하고 context/lifecycle/evaluator/qualification 확인; task outcome은 별도 보고 |
 | 9 | blocked on order 8 | Corrected Terra development-validation pilot 1회, $2 cap | same model/budget/runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
 | 10 | blocked on order 9 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
@@ -148,8 +148,9 @@ status, incomplete reason 없음과 total/reasoning token 불변식을 qualifica
 exact prompt-token telemetry를 남겼지만 `VERIFY → DONE` 전이 오류로 evaluator 전에
 끝났다. 이 terminal run과 qualification은 수정하지 않는다.
 
-후속 harness change는 새 non-replay manifest만 `tool_schema_version=v2`와
-`context_policy_version=phase-evidence-v2`로 생성한다. Current worktree diff에 결합된
+당시 D-033 harness change는 새 non-replay manifest를 `tool_schema_version=v2`와
+`context_policy_version=phase-evidence-v2`로 생성했다. D-037 이후의 새 non-replay
+manifest는 tool v2를 유지하고 context만 `phase-evidence-v3`로 올린다. Current worktree diff에 결합된
 최신 visible check, 그 뒤의 `get_diff`, complete/untruncated result가 다음 request에
 포함됐다는 evidence와 `finish_task`를 제출 gate로 사용한다. 두 번의 recoverable
 submission rejection, 세 번째 `premature-stop`, 성공 뒤 phase 전이, structured patch

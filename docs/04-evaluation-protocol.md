@@ -187,7 +187,18 @@ qualification에서 다시 검사한다. Hash descriptor나 error만 포함한 �
 context cap에서 잘린 경우, 또는 model이 읽을 수 없는 CAS locator만 제공한 경우는
 `rejected_patch_retry_context` failure다. Candidate와 full response allowance가 budget에
 들어가지 않아 generation을 시작하지 않은 structured budget failure는 trace integrity와
-구분해 보고한다. Mini r2 `run_4a9737ec91964dca`는
+구분해 보고한다. Qualification은 correlated `ToolCalled`와 `ToolFailed`의 nested CAS
+descriptor 및 top-level identity를 다시 확인하고, 첫 후속 `ContextBuilt` request의
+`rejected_mutation_retry`를 byte-for-byte 대조한다. 그 request는 첫 후속
+`ModelCalled`에 결속되거나 exact-token count 뒤 `ModelGenerationBlocked`로 닫혀야 한다.
+Qualification은 기록된 `remaining_tokens`를 신뢰하지 않고 선행 model usage에서
+재계산하며, block payload를 terminal `RunFailed`와 `RunResult.terminal_error`에
+동일하게 결속한다.
+같은 source failure를 가리키는 retry block이 다음 model turn 뒤에도 남아 있으면
+next-turn-only 계약 위반이다. Check detail에는 sequence, count와 content hash만 남기고
+patch/error body는 복사하지 않는다. Rejection이 없는 v3 trace는 이 조건을 vacuously
+통과하지만, D-037 mini diagnostic은 별도로 적어도 한 retry episode를 실제 실행해야 한다.
+Mini r2 `run_4a9737ec91964dca`는
 `context_policy_version=phase-evidence-v2`인 immutable diagnostic이며 새 gate의 통과
 evidence로 소급 해석하지 않는다.
 

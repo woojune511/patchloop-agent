@@ -71,6 +71,7 @@ class EventType(StrEnum):
     CONTEXT_BUILT = "ContextBuilt"
     MEMORY_RETRIEVED = "MemoryRetrieved"
     MODEL_CALLED = "ModelCalled"
+    MODEL_GENERATION_BLOCKED = "ModelGenerationBlocked"
     TOOL_CALLED = "ToolCalled"
     TOOL_REPLAYED = "ToolReplayed"
     PATCH_PREPARED = "PatchPrepared"
@@ -869,7 +870,7 @@ class RunResult(StrictModel):
     submitted_patch_artifact_id: str | None = None
     verifier_results: list[VerifierResult] = Field(default_factory=list)
     outcome_kind: RunOutcomeKind | None = None
-    terminal_error: dict[str, str] | None = None
+    terminal_error: dict[str, Any] | None = None
 
     @model_validator(mode="after")
     def derive_outcome_kind(self) -> RunResult:

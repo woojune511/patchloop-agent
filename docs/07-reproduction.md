@@ -195,14 +195,24 @@ availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
 the separate 12-run development campaign.
 
-Before another paid call, implement D-037: the next request after a rejected mutating-tool call
-must receive the exact bounded candidate bytes, content hash and structured rejection reason.
-New manifests activate it as `context_policy_version=phase-evidence-v3`; offline tests and
-qualification must prove that behavior. Then create a new mini diagnostic with a new experiment
-ID, clean execution hash and separate approval; do not reuse either terminal mini experiment.
+Before another paid call, verify the implemented D-037 offline gate. The next request after a
+rejected mutating-tool call receives the exact budget-bounded candidate bytes, content hash and
+structured rejection reason. New manifests activate it as
+`context_policy_version=phase-evidence-v3`; qualification rehashes the candidate/result CAS and
+actual request, and the token guard records a no-generation event when the full request plus
+response allowance cannot fit. The old mini r2 remains an immutable v2 trace.
 
 ```powershell
 git status --short
+.venv\Scripts\python.exe -m pytest tests/test_context.py tests/test_agent_runtime.py tests/test_trace_qualification.py
+.venv\Scripts\python.exe -m pytest tests/test_live_pilot_evidence.py
+.venv\Scripts\python.exe -m pytest
+```
+
+After those checks, create a new mini diagnostic with a new experiment ID, clean execution hash
+and separate approval; do not reuse either terminal mini experiment.
+
+```powershell
 uv run patchloop evaluate `
   --suite <new-mini-diagnostic.yaml> `
   --preflight-only

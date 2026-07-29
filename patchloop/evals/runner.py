@@ -398,7 +398,7 @@ def _expected_runtime_contract_hash() -> str:
             "system_prompt": SYSTEM_PROMPT_V2,
             "tools": TOOL_SCHEMAS_V2,
             "tool_schema_version": "v2",
-            "context_policy_version": "phase-evidence-v2",
+            "context_policy_version": "phase-evidence-v3",
         },
         indent=2,
         sort_keys=True,
@@ -473,7 +473,7 @@ def _pilot_qualification(
             (
                 "context_policy_version",
                 payload.get("context_policy_version"),
-                "phase-evidence-v2",
+                "phase-evidence-v3",
             ),
             (
                 "runtime_contract_content_hash",

@@ -483,9 +483,10 @@ accepted patch의 CAS artifact metadata만 남긴다. `SubmissionAccepted`는 de
 
 새 live turn의 `ContextBuilt` artifact는 `model-request-evidence-v1`이다. API key와 HTTP
 authorization header를 제외한 exact logical Responses request body, request body hash와
-버전된 context-build evidence를 함께 보존한다. `phase-evidence-v2`는 raw event window를
-먼저 자른 뒤 filtering하지 않고 agent-visible event를 먼저 filtering한 뒤 최근 12개를
-선택한다. Oversized tool result는 원본 JSON을 먼저 parse하고 string field를 semantic하게
+버전된 context-build evidence를 함께 보존한다. `phase-evidence-v2`와 이를 상속하는
+`phase-evidence-v3`는 raw event window를 먼저 자른 뒤 filtering하지 않고 agent-visible
+event를 먼저 filtering한 뒤 최근 12개를 선택한다. Oversized tool result는 원본 JSON을 먼저
+parse하고 string field를 semantic하게
 줄여 가능한 경우 valid JSON과 scalar metadata를 보존한다. 그래도 character cap을 넘는
 large list/object는 bounded top-level key와 summary fallback으로 대체한다. Context evidence는 전체 eligible event 수,
 최근-event policy로 포함·생략한 sequence, tool-result character cap 적용 여부, memory와
@@ -749,10 +750,64 @@ result만이 아니라 latest rejected input의 exact agent-visible bytes와 con
 충족했다고 보지 않고 실제 bytes를 CAS에서 읽어 request에 넣는다. Exact candidate와
 structured rejection reason이 full per-call budget 안에 함께 들어가지 않으면 generation을
 시작하지 않고 structured budget failure를 남긴다. 이 retry block은 public/model-originated
-content만 허용하며 private evaluator artifact는 참조하지 않는다. 현재 mini r2 evidence는
-이 version 도입 전 `phase-evidence-v2` trace로 보존하고, 구현 상태는
-`docs/05-implementation-plan.md`에서
-추적한다.
+content만 허용하며 private evaluator artifact는 참조하지 않는다.
+
+```json
+{
+  "rejected_mutation_retry": {
+    "schema_version": "rejected-mutation-retry-v1",
+    "tool": "apply_patch",
+    "action_id": "act_0071",
+    "source_call_sequence": 27,
+    "source_failure_sequence": 29,
+    "candidate": {
+      "patch": "diff --git ...",
+      "content_hash": "sha256:...",
+      "size_bytes": 1326,
+      "input_hash": "sha256:..."
+    },
+    "rejection": {
+      "status": "rejected",
+      "error_code": "CONTRACT_ERROR",
+      "error_message": "public structured reason",
+      "error_details": {"stage": "syntax", "reason": "git_apply_failed"}
+    }
+  }
+}
+```
+
+Candidate와 rejection result의 nested artifact descriptor는 각각 top-level
+`ToolCalled`/`ToolFailed` artifact identity와 일치해야 하며, builder는 두 CAS object의
+path·size·SHA-256과 UTF-8을 다시 확인한다. Candidate는 일반 tool-result character cap으로
+자르지 않는다. 최신 `ModelCalled` 뒤 여러 rejected patch가 있으면 마지막 것만 선택하고,
+새 `ModelCalled` 뒤에는 block을 제거한다. Exact input과 full output allowance가 남은
+token budget을 넘으면 request artifact와 다음 event를 남기고 response generation은 호출하지
+않는다.
+
+```json
+{
+  "type": "ModelGenerationBlocked",
+  "payload": {
+    "reason_code": "exact_request_budget_exceeded",
+    "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+    "generation_started": false,
+    "requested_input_tokens": 1000,
+    "remaining_tokens": 4899,
+    "max_output_tokens": 4096,
+    "input_token_count_calls": 1,
+    "retry_context_present": true,
+    "retry_candidate_content_hash": "sha256:..."
+  }
+}
+```
+
+Qualification은 `remaining_tokens`를 block 이전 `ModelCalled`의 input/output usage와
+manifest의 `max_total_tokens`로 다시 계산한다. 또한 위 payload 전체가 terminal
+`RunFailed.error_details`와 `RunResult.terminal_error.details`에 동일하게 결속되고,
+terminal error type/code가 `ModelGenerationBudgetError` /
+`MODEL_GENERATION_BUDGET_EXCEEDED`인지 확인한다.
+
+현재 mini r2 evidence는 이 version 도입 전 `phase-evidence-v2` trace로 그대로 보존한다.
 
 ## 8. Verifier result and final outcome
 

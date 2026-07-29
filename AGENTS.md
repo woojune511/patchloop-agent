@@ -12,9 +12,10 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `rejected-patch retry context hardening`이다. 이 변경을 offline evidence로
-  검증하기 전에는 `v2 Terra corrective pilot`을 실행하거나 memory-development campaign
-  gate를 열지 않는다.
+- 현재 milestone은 `new mini D-037 diagnostic preflight`다. Rejected-patch retry context는
+  offline evidence를 통과했지만 실제 provider retry는 아직 검증하지 않았다. 새 experiment
+  ID와 clean execution hash를 만들고 별도 비용 승인을 받기 전에는 mini diagnostic,
+  tool-v2/context-v3 Terra pilot 또는 memory-development campaign을 실행하지 않는다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을
@@ -27,8 +28,11 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `run_4a9737ec91964dca`는 telemetry, submission lifecycle, evaluator receipt와
   `trace-qualification-v2`를 통과했지만 hidden acceptance가 실패한 immutable task
   failure다. 이 trace는 stateless retry context가 직전 rejected patch의 hash와 오류만
-  보존하고 patch body는 복원하지 않는 gap도 드러냈다. 실제 subprocess hard-kill 뒤 stale
-  `RUNNING` reclaim은 offline test만 통과했으며, v2 Terra pilot, stress schedule,
+  보존하고 patch body는 복원하지 않는 gap도 드러냈다. 새 `phase-evidence-v3`는 exact
+  candidate/reason next-request rehydration, CAS/request qualification과 structured
+  no-generation budget event를 offline test로 검증했지만 새 live mini run은 없다.
+  실제 subprocess hard-kill 뒤 stale
+  `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 Terra pilot, stress schedule,
   12-run development campaign과 96-run core campaign은 완료되지 않았다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.

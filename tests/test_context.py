@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from patchloop.agent.context import (
     RECENT_EVENT_LIMIT,
     TOOL_RESULT_CHARACTER_LIMIT,
@@ -10,9 +12,84 @@ from patchloop.agent.context import (
     build_context_with_evidence,
 )
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import EventType, RunEvent
+from patchloop.contracts import Artifact, EventType, RunEvent
+from patchloop.errors import RecoveryError
 from patchloop.task_loader import load_task_package
-from patchloop.util import utc_now
+from patchloop.util import canonical_json, sha256_text, utc_now
+
+
+def _rejected_patch_events(
+    *,
+    artifact_store: ArtifactStore,
+    artifact,
+    patch: str,
+    action_id: str = "rejected-patch-action",
+) -> tuple[list[RunEvent], str, dict[str, str], Artifact]:
+    input_hash = sha256_text(canonical_json({"tool": "apply_patch", "input": {"patch": patch}}))
+    error_details = {
+        "stage": "format",
+        "reason": "invalid_envelope",
+    }
+    error_artifact = artifact_store.put_json(
+        {
+            "tool": "apply_patch",
+            "status": "rejected",
+            "error_code": "CONTRACT_ERROR",
+            "error_message": "patch must use a raw Git unified diff",
+            "error_details": error_details,
+        }
+    )
+    return (
+        [
+            RunEvent(
+                event_id="event-model",
+                run_id="run_test",
+                sequence=1,
+                type=EventType.MODEL_CALLED,
+                timestamp=utc_now(),
+                actor="model-adapter",
+                payload={},
+            ),
+            RunEvent(
+                event_id="event-patch-call",
+                run_id="run_test",
+                sequence=2,
+                type=EventType.TOOL_CALLED,
+                timestamp=utc_now(),
+                actor="agent",
+                correlation_id=action_id,
+                payload={
+                    "tool": "apply_patch",
+                    "input_hash": input_hash,
+                    "patch_artifact": artifact.model_dump(mode="json"),
+                    "artifact_id": artifact.artifact_id,
+                    "artifact_path": artifact.path,
+                },
+            ),
+            RunEvent(
+                event_id="event-patch-failure",
+                run_id="run_test",
+                sequence=3,
+                type=EventType.TOOL_FAILED,
+                timestamp=utc_now(),
+                actor="tool-gateway",
+                correlation_id=action_id,
+                payload={
+                    "tool": "apply_patch",
+                    "status": "rejected",
+                    "error_code": "CONTRACT_ERROR",
+                    "error_message": "patch must use a raw Git unified diff",
+                    "error_details": error_details,
+                    "artifact_id": error_artifact.artifact_id,
+                    "artifact_path": error_artifact.path,
+                    "result_artifact": error_artifact.model_dump(mode="json"),
+                },
+            ),
+        ],
+        input_hash,
+        error_details,
+        error_artifact,
+    )
 
 
 def test_context_rehydrates_recent_public_tool_result(tmp_path) -> None:
@@ -75,11 +152,7 @@ def test_context_records_policy_omission_and_tool_result_truncation(tmp_path) ->
     assert built.evidence["events"]["included_count"] == RECENT_EVENT_LIMIT
     assert built.evidence["events"]["omitted_count"] == 1
     tool_result = built.evidence["tool_results"][0]
-    assert {
-        key: value
-        for key, value in tool_result.items()
-        if key != "included_characters"
-    } == {
+    assert {key: value for key, value in tool_result.items() if key != "included_characters"} == {
         "event_sequence": RECENT_EVENT_LIMIT + 1,
         "original_characters": original_characters,
         "truncated": True,
@@ -102,11 +175,7 @@ def test_context_evidence_filters_before_selecting_recent_window() -> None:
             event_id=f"event-{sequence}",
             run_id="run_test",
             sequence=sequence,
-            type=(
-                EventType.PHASE_CHANGED
-                if sequence == 1
-                else EventType.MODEL_CALLED
-            ),
+            type=(EventType.PHASE_CHANGED if sequence == 1 else EventType.MODEL_CALLED),
             timestamp=utc_now(),
             actor="runner",
             payload={},
@@ -132,11 +201,7 @@ def test_legacy_context_policy_preserves_raw_window_and_truncation(tmp_path) -> 
             event_id=f"event-{sequence}",
             run_id="run_test",
             sequence=sequence,
-            type=(
-                EventType.TOOL_SUCCEEDED
-                if sequence == 1
-                else EventType.MODEL_CALLED
-            ),
+            type=(EventType.TOOL_SUCCEEDED if sequence == 1 else EventType.MODEL_CALLED),
             timestamp=utc_now(),
             actor="runner",
             payload=(
@@ -171,10 +236,7 @@ def test_semantic_truncation_remains_bounded_for_large_result_lists(
 ) -> None:
     artifact = ArtifactStore(tmp_path / "artifacts").put_json(
         {
-            "matches": [
-                {"path": f"module_{index}.py", "text": "x" * 200}
-                for index in range(500)
-            ],
+            "matches": [{"path": f"module_{index}.py", "text": "x" * 200} for index in range(500)],
             "truncated": False,
         }
     )
@@ -204,10 +266,7 @@ def test_semantic_truncation_remains_bounded_for_large_result_lists(
 
 def test_semantic_truncation_bounds_oversized_object_keys(tmp_path) -> None:
     artifact = ArtifactStore(tmp_path / "artifacts").put_json(
-        {
-            f"{'k' * 1_000}-{index}": {"value": "x" * 500}
-            for index in range(50)
-        }
+        {f"{'k' * 1_000}-{index}": {"value": "x" * 500} for index in range(50)}
     )
     event = RunEvent(
         event_id="event-large-keys",
@@ -283,3 +342,182 @@ def test_next_context_keeps_current_turn_loop_signal_outside_recent_window() -> 
             "enforcement": "advisory",
         }
     ]
+
+
+def test_v3_rehydrates_exact_large_rejected_patch_outside_recent_window(
+    tmp_path,
+) -> None:
+    artifact_store = ArtifactStore(tmp_path / "artifacts")
+    patch = (
+        "diff --git a/module.py b/module.py\n"
+        "--- a/module.py\n"
+        "+++ b/module.py\n"
+        "@@ -1 +1 @@\n"
+        "-old\n"
+        f"+{'x' * (TOOL_RESULT_CHARACTER_LIMIT + 1)}\n"
+    )
+    artifact = artifact_store.put_text(patch, media_type="text/x-diff")
+    events, input_hash, error_details, error_artifact = _rejected_patch_events(
+        artifact_store=artifact_store,
+        artifact=artifact,
+        patch=patch,
+    )
+    events.extend(
+        RunEvent(
+            event_id=f"event-filler-{sequence}",
+            run_id="run_test",
+            sequence=sequence,
+            type=EventType.PHASE_CHANGED,
+            timestamp=utc_now(),
+            actor="phase-machine",
+            payload={"from": "REPRODUCE", "to": "REPRODUCE"},
+        )
+        for sequence in range(4, RECENT_EVENT_LIMIT + 6)
+    )
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+
+    built = build_context_with_evidence(
+        task,
+        events,
+        None,
+        policy_version="phase-evidence-v3",
+        artifact_store=artifact_store,
+    )
+    rendered = json.loads(built.rendered)
+
+    assert len(patch) > TOOL_RESULT_CHARACTER_LIMIT
+    assert 2 not in built.evidence["events"]["included_sequences"]
+    assert 3 not in built.evidence["events"]["included_sequences"]
+    assert rendered["rejected_mutation_retry"] == {
+        "schema_version": "rejected-mutation-retry-v1",
+        "tool": "apply_patch",
+        "action_id": "rejected-patch-action",
+        "source_call_sequence": 2,
+        "source_failure_sequence": 3,
+        "candidate": {
+            "patch": patch,
+            "content_hash": artifact.content_hash,
+            "size_bytes": artifact.size_bytes,
+            "input_hash": input_hash,
+        },
+        "rejection": {
+            "status": "rejected",
+            "error_code": "CONTRACT_ERROR",
+            "error_message": "patch must use a raw Git unified diff",
+            "error_details": error_details,
+        },
+    }
+    assert built.evidence["rejected_mutation_retry"] == {
+        "included": True,
+        "truncated": False,
+        "action_id": "rejected-patch-action",
+        "source_call_sequence": 2,
+        "source_failure_sequence": 3,
+        "candidate": {
+            "artifact_id": artifact.artifact_id,
+            "content_hash": artifact.content_hash,
+            "size_bytes": artifact.size_bytes,
+            "input_hash": input_hash,
+        },
+        "rejection": {
+            "artifact_id": error_artifact.artifact_id,
+            "content_hash": error_artifact.content_hash,
+            "size_bytes": error_artifact.size_bytes,
+        },
+    }
+    assert (
+        "field truncated for model context"
+        not in rendered["rejected_mutation_retry"]["candidate"]["patch"]
+    )
+
+
+def test_v3_rejected_patch_retry_expires_after_next_model_turn(tmp_path) -> None:
+    artifact_store = ArtifactStore(tmp_path / "artifacts")
+    patch = "diff --git a/module.py b/module.py\n"
+    artifact = artifact_store.put_text(patch, media_type="text/x-diff")
+    events, _, _, _ = _rejected_patch_events(
+        artifact_store=artifact_store,
+        artifact=artifact,
+        patch=patch,
+    )
+    events.append(
+        RunEvent(
+            event_id="event-next-model",
+            run_id="run_test",
+            sequence=4,
+            type=EventType.MODEL_CALLED,
+            timestamp=utc_now(),
+            actor="model-adapter",
+            payload={},
+        )
+    )
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+
+    built = build_context_with_evidence(
+        task,
+        events,
+        None,
+        policy_version="phase-evidence-v3",
+        artifact_store=artifact_store,
+    )
+    rendered = json.loads(built.rendered)
+
+    assert rendered.get("rejected_mutation_retry") is None
+    assert built.evidence["rejected_mutation_retry"] == {
+        "included": False,
+        "truncated": False,
+    }
+
+
+def test_v2_context_does_not_rehydrate_rejected_patch_candidate(tmp_path) -> None:
+    artifact_store = ArtifactStore(tmp_path / "artifacts")
+    patch = "diff --git a/module.py b/module.py\n"
+    artifact = artifact_store.put_text(patch, media_type="text/x-diff")
+    events, _, _, _ = _rejected_patch_events(
+        artifact_store=artifact_store,
+        artifact=artifact,
+        patch=patch,
+    )
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+
+    built = build_context_with_evidence(
+        task,
+        events,
+        None,
+        policy_version="phase-evidence-v2",
+        artifact_store=artifact_store,
+    )
+    rendered = json.loads(built.rendered)
+
+    assert "rejected_mutation_retry" not in rendered
+    assert "rejected_mutation_retry" not in built.evidence
+    assert patch not in built.rendered
+    assert built.evidence["schema_version"] == "context-build-evidence-v2"
+
+
+def test_v3_rejected_patch_retry_fails_closed_on_tampered_candidate_cas(
+    tmp_path,
+) -> None:
+    artifact_store = ArtifactStore(tmp_path / "artifacts")
+    patch = "diff --git a/module.py b/module.py\n"
+    artifact = artifact_store.put_text(patch, media_type="text/x-diff")
+    events, _, _, _ = _rejected_patch_events(
+        artifact_store=artifact_store,
+        artifact=artifact,
+        patch=patch,
+    )
+    Path(artifact.path).write_text(
+        patch + "tampered",
+        encoding="utf-8",
+        newline="",
+    )
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+
+    with pytest.raises(RecoveryError, match="artifact"):
+        build_context_with_evidence(
+            task,
+            events,
+            None,
+            policy_version="phase-evidence-v3",
+            artifact_store=artifact_store,
+        )

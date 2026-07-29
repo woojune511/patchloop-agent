@@ -52,6 +52,16 @@ verdict와 hash-bound artifact는
 [mini r2 evidence record](reports/live-pilot/dev-validation-gpt54mini-pilot-20260729-r2.json)에
 보존했다.
 
+이후 D-037 offline gate에서 새 non-replay manifest의 context policy를
+`phase-evidence-v3`로 올렸다. 최신 model turn에서 거부된 `apply_patch`는 candidate/result
+CAS와 canonical input hash를 다시 검증한 뒤 exact patch bytes·content hash·structured
+reason을 바로 다음 request 한 번에만 복원한다. Full request와 output allowance가 남은
+token budget을 넘으면 input count까지만 수행하고 `ModelGenerationBlocked`와 구조화
+terminal error를 남긴 채 generation을 호출하지 않는다. Qualification은 candidate/result
+CAS와 실제 request body, 첫 consumer와 stale-block 부재를 다시 대조한다. 이 경로는 전체
+offline suite에서 통과했지만 실제 provider retry를 exercise한 새 mini diagnostic은 아직
+실행하지 않았다.
+
 ## 구현된 핵심 경로
 
 ```text
@@ -67,6 +77,8 @@ public.yaml → stateless context builder → model adapter
 - Mock/replay/OpenAI Responses adapters; OpenAI adapter는 `store=false`, current-turn context를 사용
 - 새 live turn은 exact logical request와 context-policy omission evidence를 CAS에 저장하고,
   Responses input-token pre-count와 실제 usage를 대조하며 `truncation=disabled`를 강제
+- `phase-evidence-v3`는 rejected patch 원문과 structured error를 CAS에서 다음 request로
+  exact rehydrate하고, 요청+응답 allowance가 budget을 넘으면 provider generation 전에 차단
 - Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff`와
   orchestrator control `finish_task`만 허용
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
@@ -251,11 +263,10 @@ Mini r2 model-candidate diagnostic은 execution hash
 `sha256:fc2649790241f9623ea259a05957a38d1063472a9f17998e9e489b5b3fad21ca`로
 정확히 한 번 실행돼 terminal evidence로 고정됐다. 실행/telemetry/lifecycle은 완주했지만
 task acceptance는 실패했고, post-run audit에서 새 D-037 retry-context target이 충족되지
-않았음이 확인됐다. 다음 gate는
-새 paid call이 아니라 rejected mutating-tool argument를 hash-bound·크기 제한된 형태로
-다음 turn에 복원하고 이를 qualification에서 검사하는 offline 구현과 test다. 그 뒤 새
-experiment ID, clean execution hash와 별도 승인으로 rejected mutation retry를 실제로
-exercise하는 mini diagnostic을 다시 실행한다. 새 Terra development-validation pilot이
+않았음이 확인됐다. D-037의 hash-bound next-turn rehydration과 qualification은 이후
+offline 구현/test를 통과했다. 다음 gate는 새 experiment ID, clean execution hash와 별도
+승인으로 rejected mutation retry를 실제 provider에서 exercise하는 mini diagnostic이다.
+새 Terra development-validation pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
 harness gate와 별도로 보고한다.
@@ -313,7 +324,7 @@ cache write $3.125, output $15다. 가격 source는
 `gpt-5.6-terra` alias만 제공되므로 SDK version, Git commit과 72시간 execution window를
 provenance로 남긴다.
 
-새 v2 Terra pilot이 model, budget, harness commit, runtime-contract hash와
+새 tool-v2/context-v3 Terra pilot이 model, budget, harness commit, runtime-contract hash와
 `trace-qualification-v2`를 모두 통과한 뒤에만 그 run ID를 no-memory development
 suite에 넣고 새 execution hash를 preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
 input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
@@ -341,8 +352,9 @@ call을 시작하지 않는다.
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, r3가 별도 clean execution
 hash에서 v1 accepted pilot를 만들었다. Mini r2는 v2 evaluator 경로에 도달했지만 hidden
 acceptance는 실패했고 post-run audit에서 D-037 target이 충족되지 않았음이 확인됐다.
-다음 immediate gate는 이를 고치는 offline implementation/test이며, 별도 v2 Terra
-pilot이 통과하기 전에는 12-run development campaign을 승인하지 않는다.
+D-037 offline implementation/test는 완료됐지만 새 live mini diagnostic은 아직 없다.
+별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run development campaign을
+승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

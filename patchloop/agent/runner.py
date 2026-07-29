@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from patchloop.agent.context import build_context_with_evidence
+from patchloop.agent.context import BuiltContext, build_context_with_evidence
 from patchloop.agent.model import (
     SYSTEM_PROMPT_V1,
     SYSTEM_PROMPT_V2,
@@ -49,6 +49,7 @@ from patchloop.contracts import (
 from patchloop.errors import (
     ContractError,
     InjectedFault,
+    ModelGenerationBudgetError,
     RecoveryError,
     RunOwnershipConflict,
     SubmissionProtocolError,
@@ -534,7 +535,8 @@ class AgentRunner:
                 self._completed_tools(manifest.run_id),
             )
             while True:
-                self._assert_budget(manifest, usage)
+                if manifest.context_policy_version != "phase-evidence-v3":
+                    self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
                 memory_text, retrieval = retrieve_memory(
                     run_id=manifest.run_id,
@@ -569,6 +571,7 @@ class AgentRunner:
                     checkpoint,
                     memory_text,
                     policy_version=manifest.context_policy_version,
+                    artifact_store=self.artifacts,
                 )
                 context = built_context.rendered
                 if isinstance(adapter, OpenAIResponsesAdapter):
@@ -627,6 +630,19 @@ class AgentRunner:
                         "provider_state_used": False,
                     },
                 )
+                if manifest.context_policy_version == "phase-evidence-v3":
+                    pre_generation_reason = self._pre_generation_budget_reason(
+                        manifest,
+                        usage,
+                    )
+                    if pre_generation_reason is not None:
+                        self._block_model_generation(
+                            manifest=manifest,
+                            built_context=built_context,
+                            request_artifact=request_artifact,
+                            request_body_hash=request_body_hash,
+                            reason_code=pre_generation_reason,
+                        )
                 model_started = time.monotonic()
                 if isinstance(adapter, OpenAIResponsesAdapter):
                     requested_input_tokens = adapter.count_input_tokens(request_body)
@@ -639,6 +655,18 @@ class AgentRunner:
                         requested_input_tokens + manifest.model.max_output_tokens
                         > remaining_tokens
                     ):
+                        if manifest.context_policy_version == "phase-evidence-v3":
+                            usage.input_token_count_calls += 1
+                            self._block_model_generation(
+                                manifest=manifest,
+                                built_context=built_context,
+                                request_artifact=request_artifact,
+                                request_body_hash=request_body_hash,
+                                reason_code="exact_request_budget_exceeded",
+                                requested_input_tokens=requested_input_tokens,
+                                remaining_tokens=remaining_tokens,
+                                input_token_count_calls=1,
+                            )
                         raise ContractError(
                             "remaining token budget cannot fund the exact input "
                             "plus one bounded model response"
@@ -648,6 +676,18 @@ class AgentRunner:
                         requested_input_tokens=requested_input_tokens,
                     )
                 else:
+                    if (
+                        manifest.context_policy_version == "phase-evidence-v3"
+                        and usage.input_tokens + usage.output_tokens
+                        >= manifest.budget.max_total_tokens
+                    ):
+                        self._block_model_generation(
+                            manifest=manifest,
+                            built_context=built_context,
+                            request_artifact=request_artifact,
+                            request_body_hash=request_body_hash,
+                            reason_code="token_budget_exhausted",
+                        )
                     turn = adapter.next_turn(context, tool_schemas)
                 model_duration_ms = int((time.monotonic() - model_started) * 1000)
                 usage.model_calls += 1
@@ -1377,6 +1417,16 @@ class AgentRunner:
         submission_accepted = any(
             event.type == EventType.SUBMISSION_ACCEPTED for event in events
         )
+        terminal_error: dict[str, Any] = {
+            "type": type(error).__name__,
+            "message": safe_message,
+        }
+        error_code = getattr(error, "code", None)
+        if isinstance(error_code, str):
+            terminal_error["code"] = error_code
+        error_details = self._safe_error_details(error)
+        if error_details:
+            terminal_error["details"] = error_details
         result = RunResult(
             run_id=manifest.run_id,
             agent_submission_status=(
@@ -1388,10 +1438,7 @@ class AgentRunner:
             verdicts=Verdicts(),
             usage=usage,
             outcome_kind=outcome_kind,
-            terminal_error={
-                "type": type(error).__name__,
-                "message": safe_message,
-            },
+            terminal_error=terminal_error,
         )
         failure = classify_failure(
             result,
@@ -1425,6 +1472,7 @@ class AgentRunner:
                     "evaluation_reached": False,
                     "outcome_kind": outcome_kind.value,
                     "error_type": type(error).__name__,
+                    "error_code": error_code,
                 },
                 indent=2,
             ),
@@ -1438,6 +1486,8 @@ class AgentRunner:
             payload={
                 "outcome_kind": outcome_kind.value,
                 "error_type": type(error).__name__,
+                "error_code": error_code,
+                "error_details": error_details or None,
                 "message": safe_message,
                 "model_cost_usd": usage.model_cost_usd,
             },
@@ -1452,6 +1502,29 @@ class AgentRunner:
         if api_key:
             message = message.replace(api_key, "[REDACTED]")
         return message[:2_000]
+
+    @staticmethod
+    def _safe_error_details(error: Exception) -> dict[str, Any]:
+        raw = getattr(error, "details", None)
+        if not isinstance(raw, dict) or not raw:
+            return {}
+        api_key = os.environ.get("OPENAI_API_KEY")
+
+        def redact(value: Any) -> Any:
+            if isinstance(value, str):
+                return value.replace(api_key, "[REDACTED]") if api_key else value
+            if isinstance(value, list):
+                return [redact(item) for item in value]
+            if isinstance(value, dict):
+                return {
+                    str(key): redact(item)
+                    for key, item in value.items()
+                }
+            if value is None or isinstance(value, (bool, int, float)):
+                return value
+            return str(value)
+
+        return redact(raw)
 
     def _write_runtime_bytes_atomic(
         self,
@@ -1510,7 +1583,10 @@ class AgentRunner:
             )
         )
         events = self.state.list_events(manifest.run_id)
-        if manifest.context_policy_version == "phase-evidence-v2":
+        if manifest.context_policy_version in {
+            "phase-evidence-v2",
+            "phase-evidence-v3",
+        }:
             evidence = diff_bound_evidence(
                 task or load_task_package(self._find_task(manifest)).public,
                 events,
@@ -1627,7 +1703,8 @@ class AgentRunner:
             return SYSTEM_PROMPT_V1, TOOL_SCHEMAS_V1
         if (
             manifest.tool_schema_version == "v2"
-            and manifest.context_policy_version == "phase-evidence-v2"
+            and manifest.context_policy_version
+            in {"phase-evidence-v2", "phase-evidence-v3"}
         ):
             return SYSTEM_PROMPT_V2, TOOL_SCHEMAS_V2
         raise ContractError(
@@ -2673,9 +2750,86 @@ class AgentRunner:
                 usage.tool_calls += 1
             elif event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}:
                 usage.wall_clock_ms += int(event.payload.get("duration_ms", 0))
+            elif event.type == EventType.MODEL_GENERATION_BLOCKED:
+                usage.input_token_count_calls += int(
+                    event.payload.get("input_token_count_calls", 0)
+                )
         manifest = self.state.get_manifest(run_id)
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         return usage
+
+    @staticmethod
+    def _pre_generation_budget_reason(
+        manifest: RunManifest,
+        usage: Usage,
+    ) -> str | None:
+        if usage.model_calls >= manifest.budget.max_model_calls:
+            return "model_call_budget_exhausted"
+        if usage.tool_calls >= manifest.budget.max_tool_calls:
+            return "tool_call_budget_exhausted"
+        if (
+            usage.wall_clock_ms
+            >= manifest.budget.wall_clock_timeout_seconds * 1000
+        ):
+            return "wall_clock_budget_exhausted"
+        return None
+
+    def _block_model_generation(
+        self,
+        *,
+        manifest: RunManifest,
+        built_context: BuiltContext,
+        request_artifact: Artifact,
+        request_body_hash: str,
+        reason_code: str,
+        requested_input_tokens: int | None = None,
+        remaining_tokens: int | None = None,
+        input_token_count_calls: int = 0,
+    ) -> None:
+        retry_evidence = built_context.evidence.get(
+            "rejected_mutation_retry"
+        )
+        retry_present = bool(
+            isinstance(retry_evidence, dict)
+            and retry_evidence.get("included") is True
+        )
+        retry_candidate = (
+            retry_evidence.get("candidate", {})
+            if isinstance(retry_evidence, dict)
+            else {}
+        )
+        payload = {
+            "reason_code": reason_code,
+            "error_code": ModelGenerationBudgetError.code,
+            "generation_started": False,
+            "request_artifact_id": request_artifact.artifact_id,
+            "request_artifact_path": request_artifact.path,
+            "request_body_hash": request_body_hash,
+            "requested_input_tokens": requested_input_tokens,
+            "remaining_tokens": remaining_tokens,
+            "max_output_tokens": manifest.model.max_output_tokens,
+            "input_token_count_calls": input_token_count_calls,
+            "retry_context_present": retry_present,
+            "retry_candidate_content_hash": (
+                retry_candidate.get("content_hash")
+                if isinstance(retry_candidate, dict)
+                else None
+            ),
+        }
+        self.state.append_event(
+            manifest.run_id,
+            EventType.MODEL_GENERATION_BLOCKED,
+            actor="budget-guard",
+            payload=payload,
+        )
+        if reason_code == "exact_request_budget_exceeded":
+            message = (
+                "remaining token budget cannot fund the exact input plus one "
+                "bounded model response"
+            )
+        else:
+            message = f"model generation blocked: {reason_code}"
+        raise ModelGenerationBudgetError(message, details=payload)
 
     def _assert_budget(self, manifest: RunManifest, usage: Usage) -> None:
         if usage.model_calls >= manifest.budget.max_model_calls:

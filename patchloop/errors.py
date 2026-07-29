@@ -17,6 +17,10 @@ class SubmissionProtocolError(ContractError):
     code = "SUBMISSION_PROTOCOL_ERROR"
 
 
+class ModelGenerationBudgetError(ContractError):
+    code = "MODEL_GENERATION_BUDGET_EXCEEDED"
+
+
 class PolicyViolation(PatchLoopError):
     code = "POLICY_VIOLATION"
 

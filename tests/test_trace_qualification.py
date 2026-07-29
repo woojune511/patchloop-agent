@@ -171,6 +171,9 @@ def _terminal_trace(
     duplicate_checkpoint_event: bool = False,
     include_apply_replay: bool = False,
     include_rejected_mutation: bool = False,
+    rejected_retry_context: str | None = None,
+    stale_rejected_retry_context: bool = False,
+    force_v3_contract: bool = False,
 ) -> tuple[str, RunResult, str]:
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
@@ -193,6 +196,12 @@ def _terminal_trace(
     if legacy_contract:
         manifest.tool_schema_version = "v1"
         manifest.context_policy_version = "v1"
+    elif rejected_retry_context is not None or force_v3_contract:
+        manifest.context_policy_version = "phase-evidence-v3"
+    else:
+        # This fixture primarily exercises the immutable v2 qualification
+        # contract. v3 is opted into explicitly by the retry-context cases.
+        manifest.context_policy_version = "phase-evidence-v2"
     manifest.experiment = ExperimentRunContext(
         experiment_id="qualification-test",
         purpose=purpose,
@@ -235,6 +244,7 @@ def _terminal_trace(
     }
     get_diff_result = artifacts.put_json(get_diff_payload)
     review_model = artifacts.put_text("public model response: finish_task")
+    last_retry_payload: dict[str, object] | None = None
 
     def request_artifact(
         rendered_context: str,
@@ -376,21 +386,15 @@ def _terminal_trace(
         preimage = artifacts.put_bytes(b"before\n")
         postimage = artifacts.put_bytes(b"after\n")
         if include_rejected_mutation:
-            rejected_preimage = artifacts.put_bytes(
-                b"rejected-before\n"
-            )
-            rejected_postimage = artifacts.put_bytes(
-                b"rejected-after\n"
-            )
+            rejected_preimage = artifacts.put_bytes(b"rejected-before\n")
+            rejected_postimage = artifacts.put_bytes(b"rejected-after\n")
             rejected_intent = artifacts.put_json(
                 {
                     "schema_version": "patch-mutation-intent-v1",
                     "run_id": run_id,
                     "action_id": "qualification-rejected-apply",
                     "input_hash": patch_input_hash,
-                    "patch_artifact": submitted_patch.model_dump(
-                        mode="json"
-                    ),
+                    "patch_artifact": submitted_patch.model_dump(mode="json"),
                     "baseline_worktree_diff_hash": sha256_text(""),
                     "expected_worktree_diff_hash": DIFF_HASH,
                     "files": [
@@ -398,12 +402,8 @@ def _terminal_trace(
                             "path": "example.py",
                             "mode": 0o644,
                             "git_mode": "100644",
-                            "preimage_artifact": rejected_preimage.model_dump(
-                                mode="json"
-                            ),
-                            "postimage_artifact": rejected_postimage.model_dump(
-                                mode="json"
-                            ),
+                            "preimage_artifact": rejected_preimage.model_dump(mode="json"),
+                            "postimage_artifact": rejected_postimage.model_dump(mode="json"),
                         }
                     ],
                 }
@@ -416,9 +416,7 @@ def _terminal_trace(
                 payload={
                     "tool": "apply_patch",
                     "input_hash": patch_input_hash,
-                    "patch_artifact": submitted_patch.model_dump(
-                        mode="json"
-                    ),
+                    "patch_artifact": submitted_patch.model_dump(mode="json"),
                     "artifact_id": submitted_patch.artifact_id,
                     "artifact_path": submitted_patch.path,
                 },
@@ -434,23 +432,104 @@ def _terminal_trace(
                     "artifact_path": rejected_intent.path,
                     "content_hash": rejected_intent.content_hash,
                     "size_bytes": rejected_intent.size_bytes,
-                    "intent_artifact": rejected_intent.model_dump(
-                        mode="json"
-                    ),
+                    "intent_artifact": rejected_intent.model_dump(mode="json"),
                     "baseline_worktree_diff_hash": sha256_text(""),
                     "expected_worktree_diff_hash": DIFF_HASH,
                 },
             )
-            state.append_event(
-                run_id,
-                EventType.TOOL_FAILED,
-                actor="tool-gateway",
-                correlation_id="qualification-rejected-apply",
-                payload={
+            if rejected_retry_context is None:
+                state.append_event(
+                    run_id,
+                    EventType.TOOL_FAILED,
+                    actor="tool-gateway",
+                    correlation_id="qualification-rejected-apply",
+                    payload={
+                        "tool": "apply_patch",
+                        "status": "rejected",
+                    },
+                )
+            else:
+                rejected_result_payload = {
                     "tool": "apply_patch",
                     "status": "rejected",
-                },
-            )
+                    "error_code": "CONTRACT_ERROR",
+                    "error_message": "public rejected patch",
+                    "error_details": {"reason": "invalid public patch"},
+                }
+                rejected_result = artifacts.put_json(rejected_result_payload)
+                rejected_failure = state.append_event(
+                    run_id,
+                    EventType.TOOL_FAILED,
+                    actor="tool-gateway",
+                    correlation_id="qualification-rejected-apply",
+                    payload={
+                        "tool": "apply_patch",
+                        "status": "rejected",
+                        "artifact_id": rejected_result.artifact_id,
+                        "artifact_path": rejected_result.path,
+                        "result_artifact": rejected_result.model_dump(mode="json"),
+                        "error_code": "CONTRACT_ERROR",
+                        "error_message": "public rejected patch",
+                        "error_details": {"reason": "invalid public patch"},
+                    },
+                )
+                retry_payload = {
+                    "schema_version": "rejected-mutation-retry-v1",
+                    "tool": "apply_patch",
+                    "action_id": "qualification-rejected-apply",
+                    "source_call_sequence": rejected_failure.sequence - 2,
+                    "source_failure_sequence": rejected_failure.sequence,
+                    "candidate": {
+                        "patch": PATCH_TEXT,
+                        "content_hash": submitted_patch.content_hash,
+                        "size_bytes": submitted_patch.size_bytes,
+                        "input_hash": patch_input_hash,
+                    },
+                    "rejection": {
+                        "status": "rejected",
+                        "error_code": "CONTRACT_ERROR",
+                        "error_message": "public rejected patch",
+                        "error_details": {"reason": "invalid public patch"},
+                    },
+                }
+                last_retry_payload = retry_payload
+                if rejected_retry_context == "hash-only":
+                    retry_payload["candidate"].pop("patch")
+                elif rejected_retry_context == "wrong-reason":
+                    retry_payload["rejection"]["error_code"] = "POLICY_VIOLATION"
+                retry_rendered_context = json.dumps(
+                    {
+                        "public_task": package.public.model_dump(mode="json"),
+                        "task_context": context_text,
+                        "recent_events": [],
+                        "rejected_mutation_retry": retry_payload,
+                    },
+                    ensure_ascii=False,
+                    default=str,
+                )
+                retry_context, retry_request_hash = request_artifact(retry_rendered_context)
+                state.append_event(
+                    run_id,
+                    EventType.CONTEXT_BUILT,
+                    actor="context-builder",
+                    payload={
+                        "artifact_id": retry_context.artifact_id,
+                        "artifact_path": retry_context.path,
+                        "request_body_hash": retry_request_hash,
+                        "context_hash": sha256_text(retry_rendered_context),
+                    },
+                )
+                retry_model = artifacts.put_text("public model response: corrected patch")
+                state.append_event(
+                    run_id,
+                    EventType.MODEL_CALLED,
+                    actor="model-adapter",
+                    payload=model_payload(
+                        retry_model,
+                        retry_context,
+                        request_hash=retry_request_hash,
+                    ),
+                )
         patch_intent = artifacts.put_json(
             {
                 "schema_version": "patch-mutation-intent-v1",
@@ -570,16 +649,19 @@ def _terminal_trace(
             "tool_result": get_diff_payload,
         },
     }
+    review_context_payload = {
+        "public_task": package.public.model_dump(mode="json"),
+        "task_context": context_text,
+        "recent_events": (
+            [rendered_get_diff_event] if complete_review_context and actual_review_context else []
+        ),
+    }
+    if manifest.context_policy_version == "phase-evidence-v3":
+        review_context_payload["rejected_mutation_retry"] = (
+            last_retry_payload if stale_rejected_retry_context else None
+        )
     review_rendered_context = json.dumps(
-        {
-            "public_task": package.public.model_dump(mode="json"),
-            "task_context": context_text,
-            "recent_events": (
-                [rendered_get_diff_event]
-                if complete_review_context and actual_review_context
-                else []
-            ),
-        },
+        review_context_payload,
         ensure_ascii=False,
         default=str,
     )
@@ -778,6 +860,14 @@ def _terminal_trace(
     result.usage.tool_calls = sum(
         event.type == EventType.TOOL_CALLED for event in state.list_events(run_id)
     )
+    result.usage.model_calls = sum(
+        event.type == EventType.MODEL_CALLED for event in state.list_events(run_id)
+    )
+    result.usage.input_token_count_calls = sum(
+        int(event.payload.get("input_token_count_calls", 0))
+        for event in state.list_events(run_id)
+        if event.type == EventType.MODEL_CALLED
+    )
     failure_id = ""
     failure = classify_failure(
         result,
@@ -796,11 +886,7 @@ def _terminal_trace(
         run_id,
         status=RunStatus.FAILED if agent_failure else RunStatus.COMPLETED,
         result=result,
-        event_type=(
-            EventType.RUN_FAILED
-            if agent_failure
-            else EventType.RUN_COMPLETED
-        ),
+        event_type=(EventType.RUN_FAILED if agent_failure else EventType.RUN_COMPLETED),
         actor="runner" if agent_failure else "evaluator",
     )
     result_path = tmp_path / "artifacts" / "runs" / run_id / "result.json"
@@ -893,20 +979,19 @@ def test_v2_source_hash_binds_patch_intent_preimage_bytes(
         for event in runner.state.list_events(run_id)
         if event.type == EventType.PATCH_PREPARED
     )
-    intent = json.loads(
-        Path(prepared.payload["artifact_path"]).read_text(encoding="utf-8")
-    )
-    preimage = Artifact.model_validate(
-        intent["files"][0]["preimage_artifact"]
-    )
+    intent = json.loads(Path(prepared.payload["artifact_path"]).read_text(encoding="utf-8"))
+    preimage = Artifact.model_validate(intent["files"][0]["preimage_artifact"])
 
     Path(preimage.path).write_bytes(b"tampered preimage")
 
-    assert calculate_source_evidence_hash(
-        run_id,
-        root=tmp_path,
-        require_valid_plan=False,
-    ) != source_hash
+    assert (
+        calculate_source_evidence_hash(
+            run_id,
+            root=tmp_path,
+            require_valid_plan=False,
+        )
+        != source_hash
+    )
 
 
 def test_v2_source_hash_binds_verifier_evidence_bytes(
@@ -929,13 +1014,7 @@ def test_v2_source_hash_binds_verifier_evidence_bytes(
         require_valid_plan=False,
     )
     persisted = RunResult.model_validate_json(
-        (
-            tmp_path
-            / "artifacts"
-            / "runs"
-            / run_id
-            / "result.json"
-        ).read_text(encoding="utf-8")
+        (tmp_path / "artifacts" / "runs" / run_id / "result.json").read_text(encoding="utf-8")
     )
     raw_evidence = next(
         verifier.details["evidence_artifacts"][0]
@@ -944,15 +1023,16 @@ def test_v2_source_hash_binds_verifier_evidence_bytes(
     )
     verifier_artifact = Artifact.model_validate(raw_evidence)
 
-    Path(verifier_artifact.path).write_bytes(
-        b"tampered verifier output"
-    )
+    Path(verifier_artifact.path).write_bytes(b"tampered verifier output")
 
-    assert calculate_source_evidence_hash(
-        run_id,
-        root=tmp_path,
-        require_valid_plan=False,
-    ) != source_hash
+    assert (
+        calculate_source_evidence_hash(
+            run_id,
+            root=tmp_path,
+            require_valid_plan=False,
+        )
+        != source_hash
+    )
 
 
 def test_v2_qualification_requires_patch_prepared_lifecycle(tmp_path) -> None:
@@ -960,21 +1040,18 @@ def test_v2_qualification_requires_patch_prepared_lifecycle(tmp_path) -> None:
     database = tmp_path / "state.sqlite3"
     with sqlite3.connect(database) as connection:
         rows = connection.execute(
-            "SELECT sequence, event_json FROM events "
-            "WHERE run_id = ? ORDER BY sequence",
+            "SELECT sequence, event_json FROM events WHERE run_id = ? ORDER BY sequence",
             (run_id,),
         ).fetchall()
         sequence, raw_event = next(
             (sequence, raw_event)
             for sequence, raw_event in rows
-            if json.loads(raw_event)["type"]
-            == EventType.PATCH_PREPARED.value
+            if json.loads(raw_event)["type"] == EventType.PATCH_PREPARED.value
         )
         event = json.loads(raw_event)
         event["type"] = EventType.TOOL_REPLAYED.value
         connection.execute(
-            "UPDATE events SET event_json = ? "
-            "WHERE run_id = ? AND sequence = ?",
+            "UPDATE events SET event_json = ? WHERE run_id = ? AND sequence = ?",
             (json.dumps(event), run_id, sequence),
         )
 
@@ -982,15 +1059,11 @@ def test_v2_qualification_requires_patch_prepared_lifecycle(tmp_path) -> None:
 
     assert qualification["qualified"] is False
     lifecycle = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "submission_lifecycle"
+        check for check in qualification["checks"] if check["check_id"] == "submission_lifecycle"
     )
     assert lifecycle["details"]["patch_intent_valid"] is False
     artifacts = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "agent_visible_artifacts"
+        check for check in qualification["checks"] if check["check_id"] == "agent_visible_artifacts"
     )
     assert artifacts["passed"] is False
 
@@ -1002,23 +1075,19 @@ def test_v2_patch_intent_binds_tool_call_top_level_patch_artifact(
     database = tmp_path / "state.sqlite3"
     with sqlite3.connect(database) as connection:
         rows = connection.execute(
-            "SELECT sequence, event_json FROM events "
-            "WHERE run_id = ? ORDER BY sequence",
+            "SELECT sequence, event_json FROM events WHERE run_id = ? ORDER BY sequence",
             (run_id,),
         ).fetchall()
         sequence, raw_event = next(
             (sequence, raw_event)
             for sequence, raw_event in rows
-            if json.loads(raw_event)["type"]
-            == EventType.TOOL_CALLED.value
-            and json.loads(raw_event)["payload"].get("tool")
-            == "apply_patch"
+            if json.loads(raw_event)["type"] == EventType.TOOL_CALLED.value
+            and json.loads(raw_event)["payload"].get("tool") == "apply_patch"
         )
         event = json.loads(raw_event)
         event["payload"]["artifact_id"] = "art_tampered_top_level"
         connection.execute(
-            "UPDATE events SET event_json = ? "
-            "WHERE run_id = ? AND sequence = ?",
+            "UPDATE events SET event_json = ? WHERE run_id = ? AND sequence = ?",
             (json.dumps(event), run_id, sequence),
         )
 
@@ -1029,9 +1098,7 @@ def test_v2_patch_intent_binds_tool_call_top_level_patch_artifact(
     )
 
     artifacts = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "agent_visible_artifacts"
+        check for check in qualification["checks"] if check["check_id"] == "agent_visible_artifacts"
     )
     assert artifacts["passed"] is False
     assert qualification["qualified"] is False
@@ -1042,21 +1109,18 @@ def test_v2_patch_intent_binds_applied_patch_hash(tmp_path) -> None:
     database = tmp_path / "state.sqlite3"
     with sqlite3.connect(database) as connection:
         rows = connection.execute(
-            "SELECT sequence, event_json FROM events "
-            "WHERE run_id = ? ORDER BY sequence",
+            "SELECT sequence, event_json FROM events WHERE run_id = ? ORDER BY sequence",
             (run_id,),
         ).fetchall()
         sequence, raw_event = next(
             (sequence, raw_event)
             for sequence, raw_event in rows
-            if json.loads(raw_event)["type"]
-            == EventType.PATCH_APPLIED.value
+            if json.loads(raw_event)["type"] == EventType.PATCH_APPLIED.value
         )
         event = json.loads(raw_event)
         event["payload"]["patch_hash"] = "sha256:" + ("f" * 64)
         connection.execute(
-            "UPDATE events SET event_json = ? "
-            "WHERE run_id = ? AND sequence = ?",
+            "UPDATE events SET event_json = ? WHERE run_id = ? AND sequence = ?",
             (json.dumps(event), run_id, sequence),
         )
 
@@ -1067,9 +1131,7 @@ def test_v2_patch_intent_binds_applied_patch_hash(tmp_path) -> None:
     )
 
     artifacts = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "agent_visible_artifacts"
+        check for check in qualification["checks"] if check["check_id"] == "agent_visible_artifacts"
     )
     assert artifacts["passed"] is False
     assert qualification["qualified"] is False
@@ -1089,11 +1151,14 @@ def test_v2_source_hash_binds_worker_claim_provenance(tmp_path) -> None:
             (run_id,),
         )
 
-    assert calculate_source_evidence_hash(
-        run_id,
-        root=tmp_path,
-        require_valid_plan=False,
-    ) != qualification["source_evidence_hash"]
+    assert (
+        calculate_source_evidence_hash(
+            run_id,
+            root=tmp_path,
+            require_valid_plan=False,
+        )
+        != qualification["source_evidence_hash"]
+    )
     with pytest.raises(ContractError, match="qualification is immutable"):
         qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
 
@@ -1114,9 +1179,7 @@ def test_idempotent_apply_replay_does_not_duplicate_success_lifecycle(
 
     assert qualification["qualified"] is True
     lifecycle = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "submission_lifecycle"
+        check for check in qualification["checks"] if check["check_id"] == "submission_lifecycle"
     )
     assert lifecycle["details"]["ordered_submission_valid"] is True
 
@@ -1136,13 +1199,180 @@ def test_rejected_prepared_patch_before_success_remains_qualified(
     )
 
     assert qualification["qualified"] is True
+    assert all(
+        check["check_id"] != "rejected_patch_retry_context" for check in qualification["checks"]
+    )
     artifacts = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "agent_visible_artifacts"
+        check for check in qualification["checks"] if check["check_id"] == "agent_visible_artifacts"
     )
     assert artifacts["passed"] is True
     assert artifacts["details"]["patch_intent_artifact_count"] == 8
+
+
+def test_v3_qualification_binds_exact_rejected_patch_retry_context(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        include_rejected_mutation=True,
+        rejected_retry_context="exact",
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+
+    retry = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    assert retry["passed"] is True
+    assert retry["details"]["rejected_candidate_count"] == 1
+    assert retry["details"]["retry_episode_count"] == 1
+    assert retry["details"]["verified_retry_count"] == 1
+    assert retry["details"]["model_generation_blocked_count"] == 0
+    assert len(retry["details"]["verified_candidate_content_hashes"]) == 1
+    assert retry["details"]["failed_source_failure_sequences"] == []
+    assert qualification["qualified"] is True
+
+
+def test_v3_retry_context_contract_passes_vacuously_without_rejection(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        resolved=True,
+        force_v3_contract=True,
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+
+    retry = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    assert retry["passed"] is True
+    assert retry["details"]["rejected_candidate_count"] == 0
+    assert retry["details"]["retry_episode_count"] == 0
+    assert retry["details"]["verified_retry_count"] == 0
+    assert qualification["qualified"] is True
+
+
+@pytest.mark.parametrize(
+    "retry_context",
+    ["hash-only", "wrong-reason"],
+)
+def test_v3_qualification_rejects_incomplete_retry_context(
+    tmp_path,
+    retry_context,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        include_rejected_mutation=True,
+        rejected_retry_context=retry_context,
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+
+    retry = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    assert retry["passed"] is False
+    assert retry["details"]["verified_retry_count"] == 0
+    assert len(retry["details"]["failed_source_failure_sequences"]) == 1
+    assert qualification["trace_integrity_passed"] is False
+    assert qualification["qualified"] is False
+
+
+@pytest.mark.parametrize(
+    "tamper_target",
+    ["nested-content-hash", "top-level-artifact-id"],
+)
+def test_v3_qualification_rejects_tampered_result_identity(
+    tmp_path,
+    tamper_target,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        include_rejected_mutation=True,
+        rejected_retry_context="exact",
+    )
+    database = tmp_path / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events WHERE run_id = ? ORDER BY sequence",
+            (run_id,),
+        ).fetchall()
+        sequence, raw_event = next(
+            (sequence, raw_event)
+            for sequence, raw_event in rows
+            if json.loads(raw_event)["type"] == EventType.TOOL_FAILED.value
+            and json.loads(raw_event)["payload"].get("tool") == "apply_patch"
+        )
+        event = json.loads(raw_event)
+        if tamper_target == "nested-content-hash":
+            event["payload"]["result_artifact"]["content_hash"] = "sha256:" + ("f" * 64)
+        else:
+            event["payload"]["artifact_id"] = "art_tampered_top_level"
+        connection.execute(
+            "UPDATE events SET event_json = ? WHERE run_id = ? AND sequence = ?",
+            (json.dumps(event), run_id, sequence),
+        )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+
+    retry = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    assert retry["passed"] is False
+    assert qualification["qualified"] is False
+
+
+def test_v3_qualification_rejects_stale_retry_block_after_consumer(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        include_rejected_mutation=True,
+        rejected_retry_context="exact",
+        stale_rejected_retry_context=True,
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+
+    retry = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    assert retry["passed"] is False
+    assert retry["details"]["verified_retry_count"] == 0
+    assert qualification["trace_integrity_passed"] is False
+    assert qualification["qualified"] is False
 
 
 def test_rejected_prepared_patch_still_binds_its_private_cas(
@@ -1160,16 +1390,10 @@ def test_rejected_prepared_patch_still_binds_its_private_cas(
         and event.correlation_id == "qualification-rejected-apply"
     )
     intent = json.loads(
-        Path(rejected_prepared.payload["artifact_path"]).read_text(
-            encoding="utf-8"
-        )
+        Path(rejected_prepared.payload["artifact_path"]).read_text(encoding="utf-8")
     )
-    rejected_preimage = Artifact.model_validate(
-        intent["files"][0]["preimage_artifact"]
-    )
-    Path(rejected_preimage.path).write_bytes(
-        b"tampered rejected preimage"
-    )
+    rejected_preimage = Artifact.model_validate(intent["files"][0]["preimage_artifact"])
+    Path(rejected_preimage.path).write_bytes(b"tampered rejected preimage")
 
     qualification = qualify_run(
         run_id,
@@ -1178,9 +1402,7 @@ def test_rejected_prepared_patch_still_binds_its_private_cas(
     )
 
     artifacts = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "agent_visible_artifacts"
+        check for check in qualification["checks"] if check["check_id"] == "agent_visible_artifacts"
     )
     assert artifacts["passed"] is False
     assert qualification["qualified"] is False
@@ -1874,9 +2096,7 @@ def test_failure_record_write_does_not_leave_partial_target(
     )
     assert record is not None
     path = failure_dir / f"{record.failure_id}.json"
-    assert json.loads(path.read_text(encoding="utf-8"))["failure_id"] == (
-        record.failure_id
-    )
+    assert json.loads(path.read_text(encoding="utf-8"))["failure_id"] == (record.failure_id)
 
 
 def test_unqualified_failure_cannot_enter_review_history(tmp_path) -> None:

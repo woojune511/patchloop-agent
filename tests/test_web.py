@@ -247,12 +247,22 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
     manifest = SimpleNamespace(
         run_id="run_viewer_test",
         task_id="viewer-test",
-        tool_schema_version="v1",
+        tool_schema_version="v2",
+        context_policy_version="phase-evidence-v3",
         memory=SimpleNamespace(condition=SimpleNamespace(value="no_memory")),
         model=SimpleNamespace(
             model_id="gpt-test",
             reasoning_effort="medium",
         ),
+    )
+    checkpoint = SimpleNamespace(
+        through_sequence=5,
+        phase=SimpleNamespace(value="VERIFY"),
+        current_plan=[],
+        completed_checks=["visible"],
+        pending_checks=[],
+        modified_files=["example.py"],
+        worktree_diff_hash="sha256:" + ("b" * 64),
     )
 
     class FakeState:
@@ -276,11 +286,11 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
 
         @staticmethod
         def latest_checkpoint(_run_id):
-            return None
+            return checkpoint
 
         @staticmethod
         def list_checkpoints(_run_id):
-            return []
+            return [checkpoint]
 
         @staticmethod
         def has_run(_run_id):
@@ -305,7 +315,9 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
     assert "Critical path" in response.text
     assert "Model turns" in response.text
     assert "All 6 raw events" in response.text
-    assert "legacy lifecycle telemetry unavailable" in response.text
+    assert "submission not attempted" in response.text
+    assert "Current-diff checks" in response.text
+    assert "legacy history, not diff-bound" not in response.text
     assert response.text.index("Critical path") < response.text.index(
         "All 6 raw events"
     )

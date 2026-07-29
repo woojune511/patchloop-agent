@@ -29,7 +29,7 @@
 {% if checkpoint %}
 <section class="qualification-strip">
   <div><span>Current phase</span><strong>{{ checkpoint.phase.value }}</strong></div>
-  {% if manifest.context_policy_version == "phase-evidence-v2" %}
+  {% if manifest.context_policy_version in ["phase-evidence-v2", "phase-evidence-v3"] %}
     <div><span>Current-diff checks</span><strong>{{ checkpoint.completed_checks | length }} passed / {{ checkpoint.pending_checks | length }} pending</strong></div>
     <div><span>Next allowed actions</span><strong>{{ checkpoint_action_label }}</strong></div>
   {% else %}

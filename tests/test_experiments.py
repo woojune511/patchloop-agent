@@ -77,6 +77,22 @@ def _ready_live_environment(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
 
 
+def test_expected_runtime_contract_hash_uses_phase_evidence_v3() -> None:
+    encoded = json.dumps(
+        {
+            "system_prompt": eval_runner.SYSTEM_PROMPT_V2,
+            "tools": eval_runner.TOOL_SCHEMAS_V2,
+            "tool_schema_version": "v2",
+            "context_policy_version": "phase-evidence-v3",
+        },
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+    assert eval_runner._expected_runtime_contract_hash() == sha256_bytes(encoded)
+
+
 def test_live_campaign_approval_is_an_invocation_preflight_gate(
     tmp_path: Path,
     monkeypatch,

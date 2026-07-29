@@ -8,8 +8,17 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.agent.phases import diff_bound_evidence
-from patchloop.contracts import Checkpoint, EventType, Phase, PublicTask, RunEvent
-from patchloop.util import sha256_text
+from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import (
+    Artifact,
+    Checkpoint,
+    EventType,
+    Phase,
+    PublicTask,
+    RunEvent,
+)
+from patchloop.errors import RecoveryError
+from patchloop.util import canonical_json, sha256_text
 
 RECENT_EVENT_LIMIT = 12
 TOOL_RESULT_CHARACTER_LIMIT = 12_000
@@ -20,6 +29,168 @@ class BuiltContext:
     rendered: str
     content_hash: str
     evidence: dict[str, Any]
+
+
+def _rejected_mutation_retry(
+    events: list[RunEvent],
+    *,
+    artifact_store: ArtifactStore | None,
+) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+    """Rehydrate the latest rejected model patch for exactly one next turn."""
+
+    latest_model_sequence = max(
+        (
+            event.sequence
+            for event in events
+            if event.type == EventType.MODEL_CALLED
+        ),
+        default=0,
+    )
+    failures = [
+        event
+        for event in events
+        if event.sequence > latest_model_sequence
+        and event.type == EventType.TOOL_FAILED
+        and event.actor == "tool-gateway"
+        and event.payload.get("tool") == "apply_patch"
+        and event.payload.get("status") == "rejected"
+    ]
+    if not failures:
+        return None, {"included": False, "truncated": False}
+    if artifact_store is None:
+        raise RecoveryError(
+            "phase-evidence-v3 requires the artifact store to rehydrate "
+            "a rejected patch"
+        )
+
+    failure = max(failures, key=lambda event: event.sequence)
+    action_id = failure.correlation_id
+    if not isinstance(action_id, str) or not action_id:
+        raise RecoveryError("rejected patch outcome lacks an action identity")
+    calls = [
+        event
+        for event in events
+        if latest_model_sequence < event.sequence < failure.sequence
+        and event.type == EventType.TOOL_CALLED
+        and event.actor == "agent"
+        and event.correlation_id == action_id
+        and event.payload.get("tool") == "apply_patch"
+    ]
+    if len(calls) != 1:
+        raise RecoveryError(
+            "rejected patch outcome does not have one correlated model call"
+        )
+    call = calls[0]
+
+    try:
+        patch_artifact = Artifact.model_validate(
+            call.payload.get("patch_artifact")
+        )
+    except ValueError as exc:
+        raise RecoveryError(
+            "rejected patch call lacks a valid candidate artifact"
+        ) from exc
+    if (
+        call.payload.get("artifact_id") != patch_artifact.artifact_id
+        or call.payload.get("artifact_path") != patch_artifact.path
+    ):
+        raise RecoveryError(
+            "rejected patch call conflicts with its candidate artifact"
+        )
+    patch_bytes = artifact_store.read_bytes(patch_artifact)
+    try:
+        patch = patch_bytes.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise RecoveryError("rejected patch candidate is not valid UTF-8") from exc
+    input_hash = call.payload.get("input_hash")
+    expected_input_hash = sha256_text(
+        canonical_json({"tool": "apply_patch", "input": {"patch": patch}})
+    )
+    if input_hash != expected_input_hash:
+        raise RecoveryError(
+            "rejected patch candidate does not match its tool input hash"
+        )
+
+    try:
+        result_artifact = Artifact.model_validate(
+            failure.payload.get("result_artifact")
+        )
+    except ValueError as exc:
+        raise RecoveryError(
+            "rejected patch outcome lacks a valid result artifact"
+        ) from exc
+    if (
+        failure.payload.get("artifact_id") != result_artifact.artifact_id
+        or failure.payload.get("artifact_path") != result_artifact.path
+    ):
+        raise RecoveryError(
+            "rejected patch outcome conflicts with its result artifact"
+        )
+    result_bytes = artifact_store.read_bytes(result_artifact)
+    try:
+        result_payload = json.loads(result_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RecoveryError(
+            "rejected patch result artifact is not valid UTF-8 JSON"
+        ) from exc
+    if not isinstance(result_payload, dict):
+        raise RecoveryError("rejected patch result artifact must be an object")
+    rejection = {
+        "status": result_payload.get("status"),
+        "error_code": result_payload.get("error_code"),
+        "error_message": result_payload.get("error_message"),
+        "error_details": result_payload.get("error_details"),
+    }
+    event_message = failure.payload.get("error_message")
+    if (
+        result_payload.get("tool") != "apply_patch"
+        or rejection["status"] != "rejected"
+        or not isinstance(rejection["error_code"], str)
+        or not isinstance(rejection["error_message"], str)
+        or not isinstance(rejection["error_details"], dict)
+        or failure.payload.get("status") != rejection["status"]
+        or failure.payload.get("error_code") != rejection["error_code"]
+        or failure.payload.get("error_details") != rejection["error_details"]
+        or not isinstance(event_message, str)
+        or not rejection["error_message"].startswith(event_message)
+    ):
+        raise RecoveryError(
+            "rejected patch event conflicts with its structured result"
+        )
+
+    rendered = {
+        "schema_version": "rejected-mutation-retry-v1",
+        "tool": "apply_patch",
+        "action_id": action_id,
+        "source_call_sequence": call.sequence,
+        "source_failure_sequence": failure.sequence,
+        "candidate": {
+            "patch": patch,
+            "content_hash": patch_artifact.content_hash,
+            "size_bytes": patch_artifact.size_bytes,
+            "input_hash": input_hash,
+        },
+        "rejection": rejection,
+    }
+    evidence = {
+        "included": True,
+        "truncated": False,
+        "action_id": action_id,
+        "source_call_sequence": call.sequence,
+        "source_failure_sequence": failure.sequence,
+        "candidate": {
+            "artifact_id": patch_artifact.artifact_id,
+            "content_hash": patch_artifact.content_hash,
+            "size_bytes": patch_artifact.size_bytes,
+            "input_hash": input_hash,
+        },
+        "rejection": {
+            "artifact_id": result_artifact.artifact_id,
+            "content_hash": result_artifact.content_hash,
+            "size_bytes": result_artifact.size_bytes,
+        },
+    }
+    return rendered, evidence
 
 
 def _truncate_json_strings(value: Any, limit: int) -> Any:
@@ -148,7 +319,8 @@ def build_context_with_evidence(
     checkpoint: Checkpoint | None,
     memory_text: str = "",
     *,
-    policy_version: str = "phase-evidence-v2",
+    policy_version: str = "phase-evidence-v3",
+    artifact_store: ArtifactStore | None = None,
 ) -> BuiltContext:
     eligible_events = [
         event
@@ -161,7 +333,7 @@ def build_context_with_evidence(
             for event in events[-RECENT_EVENT_LIMIT:]
             if event.type.value not in {"ContextBuilt", "ModelCalled"}
         ]
-    elif policy_version == "phase-evidence-v2":
+    elif policy_version in {"phase-evidence-v2", "phase-evidence-v3"}:
         selected_events = eligible_events[-RECENT_EVENT_LIMIT:]
     else:
         raise ValueError(f"unsupported context policy: {policy_version}")
@@ -178,7 +350,7 @@ def build_context_with_evidence(
 
     phase = checkpoint.phase if checkpoint else Phase.INTAKE
     phase_contract = None
-    if policy_version == "phase-evidence-v2":
+    if policy_version in {"phase-evidence-v2", "phase-evidence-v3"}:
         diff_hash = checkpoint.worktree_diff_hash if checkpoint else sha256_text("")
         readiness = diff_bound_evidence(
             task,
@@ -225,6 +397,16 @@ def build_context_with_evidence(
         if event.type == EventType.LOOP_DETECTED
         and event.sequence > latest_model_sequence
     ]
+    rejected_mutation_retry = None
+    rejected_mutation_retry_evidence = None
+    if policy_version == "phase-evidence-v3":
+        (
+            rejected_mutation_retry,
+            rejected_mutation_retry_evidence,
+        ) = _rejected_mutation_retry(
+            events,
+            artifact_store=artifact_store,
+        )
     payload = {
         "public_task": task.model_dump(mode="json"),
         "phase": phase.value,
@@ -248,6 +430,8 @@ def build_context_with_evidence(
             "selected_memory": payload["selected_memory"],
             "rules": payload["rules"],
         }
+        if policy_version == "phase-evidence-v3":
+            payload["rejected_mutation_retry"] = rejected_mutation_retry
     rendered = json.dumps(payload, indent=2, ensure_ascii=False, default=str)
     component_characters = {
         key: len(json.dumps(value, ensure_ascii=False, default=str))
@@ -257,7 +441,11 @@ def build_context_with_evidence(
         "schema_version": (
             "context-build-evidence-v1"
             if policy_version == "v1"
-            else "context-build-evidence-v2"
+            else (
+                "context-build-evidence-v2"
+                if policy_version == "phase-evidence-v2"
+                else "context-build-evidence-v3"
+            )
         ),
         "policy": {
             "recent_event_limit": RECENT_EVENT_LIMIT,
@@ -280,6 +468,10 @@ def build_context_with_evidence(
     }
     if policy_version != "v1":
         evidence["policy"]["version"] = policy_version
+    if policy_version == "phase-evidence-v3":
+        evidence["rejected_mutation_retry"] = (
+            rejected_mutation_retry_evidence
+        )
     return BuiltContext(
         rendered=rendered,
         content_hash=sha256_text(rendered),
@@ -293,7 +485,8 @@ def build_context(
     checkpoint: Checkpoint | None,
     memory_text: str = "",
     *,
-    policy_version: str = "phase-evidence-v2",
+    policy_version: str = "phase-evidence-v3",
+    artifact_store: ArtifactStore | None = None,
 ) -> tuple[str, str]:
     built = build_context_with_evidence(
         task,
@@ -301,5 +494,6 @@ def build_context(
         checkpoint,
         memory_text,
         policy_version=policy_version,
+        artifact_store=artifact_store,
     )
     return built.rendered, built.content_hash

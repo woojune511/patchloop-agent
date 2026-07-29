@@ -46,6 +46,9 @@
 | D-036 | Evaluator는 unique staging workspace에서 manifest/result/provenance와 verifier evidence CAS를 atomic write한 뒤 hash-bound `evaluation-receipt-v1`을 만든다. Resume은 receipt bundle과 참조된 verifier CAS를 검증하고, v2에서는 accepted submitted-patch CAS까지 검증한 경우에만 evaluator 결과를 재사용한다. Optional `FailureTagged`, terminal event, result와 status는 단일 SQLite transaction으로 확정한다. | Evaluator 성공 뒤 worker가 종료된 경우 expensive/private evaluation을 중복 실행하거나 반쪽 artifact를 신뢰하지 않으면서, terminal state와 verdict의 불일치를 방지한다. Host가 DB와 모든 artifact를 함께 다시 쓰는 공격은 local host trust boundary 밖이며 qualification은 관찰된 source evidence를 tamper-evident하게 묶는다. |
 | D-037 | 새 manifest는 `context_policy_version=phase-evidence-v3`로 retry-continuity contract를 활성화한다. Stateless run에서 model이 생성한 mutating-tool argument가 거부되면 바로 다음 model request는 latest rejected candidate의 exact agent-visible bytes, content hash와 structured rejection reason을 함께 포함해야 한다. Candidate가 request budget에 완전하게 들어가지 않으면 generation을 시작하지 않고 structured budget failure로 끝낸다. Qualification은 version을 확인한 뒤 CAS source와 request body를 다시 대조하며 기존 provider state나 agent에게 없는 CAS-read 기능에 의존하지 않는다. 기존 `phase-evidence-v2` trace는 소급 재평가하지 않는다. | Mini r2 `run_4a9737ec91964dca`는 token count, final review, evaluator와 trace qualification을 통과했지만 첫 rejected patch 뒤 request에 hash/error만 남고 patch body가 사라져 stateless continuity가 보장되지 않았다. 이후 제출된 별도 candidate에는 공개 grouping/separator 요구를 훼손하는 결함이 있었지만, trace는 body 누락이 그 결함이나 hidden failure를 일으켰다거나 첫 candidate가 통과했을 것이라는 반사실을 증명하지 않는다. Provider truncation과 PatchLoop context omission을 분리하고 retry continuity를 기계적으로 보장한다. |
 
+D-037은 D-033의 새 non-replay manifest context version만 supersede한다. Tool schema v2,
+submission lifecycle과 기존 phase-evidence-v2 artifact의 해석은 그대로 유지한다.
+
 ## Provisional defaults
 
 구현을 막지 않기 위해 아래 값을 기본으로 사용한다. 변경은 가능하지만 contract나 실험 비교에 영향을 주면 이 로그에 기록한다.

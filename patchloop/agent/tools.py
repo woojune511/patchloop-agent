@@ -476,6 +476,7 @@ class ToolGateway:
         output: dict[str, Any] = {
             "artifact_id": artifact.artifact_id,
             "artifact_path": artifact.path,
+            "result_artifact": artifact.model_dump(mode="json"),
             "error_details": details,
         }
         if fatal:
@@ -497,6 +498,7 @@ class ToolGateway:
             "status": result.status,
             "artifact_id": result.output.get("artifact_id"),
             "artifact_path": result.output.get("artifact_path"),
+            "result_artifact": result.output.get("result_artifact"),
             "error_code": result.error_code,
             "error_message": (
                 result.error_message[:_EVENT_ERROR_MESSAGE_LIMIT]

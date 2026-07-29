@@ -1165,17 +1165,67 @@ bind the portable bytes and local-only evidence hashes without bundling provider
 private evaluator output. The mini lane's calculated cumulative cost is `$0.155418`; all five paid
 pilot runs total `$0.984282375`. R2 validates telemetry, the normal v2 submission path, evaluator
 receipt and qualification, but it is not an accepted pilot and cannot unlock the Terra or
-development campaign gate. D-037 rejected-patch context rehydration and offline qualification
-tests are the next executable gate.
+development campaign gate.
+
+## 2026-07-29 D-037 rejected-patch retry continuity - offline evidence
+
+New non-replay manifests use `tool_schema_version=v2` and
+`context_policy_version=phase-evidence-v3`. A rejected model-originated `apply_patch` now stores
+full candidate and result descriptors, revalidates both CAS objects and the canonical input hash,
+and places exact candidate bytes/hash plus the structured rejection in the first next request.
+The block expires after that model turn and is selected from the full event history rather than
+the 12-event rendering window. Candidate bytes are never passed through semantic result
+truncation.
+
+The live-token guard counts that full request. If it and the complete response allowance exceed
+the remaining run budget, it persists the request, appends `ModelGenerationBlocked` with
+`generation_started=false`, and terminates with
+`MODEL_GENERATION_BUDGET_EXCEEDED` without a second Responses generation call. Qualification v2
+adds `rejected_patch_retry_context` only for v3 manifests and independently rehashes the candidate,
+result and request. Missing/hash-only/wrong-reason/tampered/stale blocks fail; a v3 trace with no
+rejection passes the conditional contract but does not satisfy the future diagnostic's exercise
+requirement. The qualifier recomputes remaining budget from preceding model usage and binds the
+complete block payload to both terminal `RunFailed` and `RunResult.terminal_error`; fabricated
+remaining budget or terminal error identity fails. Historical phase-evidence-v2 qualification and
+source evidence remain unchanged.
+
+Executed evidence:
+
+```text
+.venv\Scripts\python.exe -m pytest tests/test_trace_qualification.py -q
+57 passed
+
+.venv\Scripts\python.exe -m pytest tests/test_agent_runtime.py -q
+54 passed
+
+.venv\Scripts\python.exe -m pytest tests/test_live_pilot_evidence.py -q
+15 passed
+
+.venv\Scripts\python.exe -m pytest -q
+450 passed, 2 skipped
+
+.venv\Scripts\ruff.exe check patchloop tests
+All checks passed
+
+git diff --check
+passed
+```
+
+The two skips are Docker sandbox tests whose explicit reason was `Docker daemon unavailable` in
+this execution environment. No OpenAI generation, paid API call, hidden evaluator campaign,
+stress row, memory-development run or core run was executed for this gate. A new mini diagnostic
+with a new experiment ID, clean execution hash and separate approval is still required to exercise
+the retry against the real provider.
 
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
 `official_evaluation_ready=true`. The dataset freeze is complete and the accepted pilot is
-historical v1 evidence, but the current v2 development and stress campaigns are not complete:
+historical v1 evidence, but the tool-v2/context-v3 development and stress campaigns are not complete:
 the context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
 subprocess E2E has exercised actual process termination and fresh-interpreter stale-`RUNNING`
 reclaim. The timeout path remains a synthetic timeout on the first registered visible check.
-Rejected mutating-tool input rehydration is also not implemented. No stress schedule row, 12-run
-development campaign or 96-run core campaign has been executed.
+Rejected mutating-tool input rehydration is offline-qualified but has not been exercised by a new
+live provider run. No stress schedule row, 12-run development campaign or 96-run core campaign
+has been executed.

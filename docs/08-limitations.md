@@ -176,7 +176,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `trace-qualification-v2`, but hidden acceptance failed while regression, scope and safety
   passed. It is an immutable qualified task failure, not an accepted pilot. Its stateless retry
   also retained the first rejected patch's hash/error without restoring its body, so D-037
-  context continuity remains an open engineering gate.
+  was not satisfied by that run. The v3 repair is offline-tested, but provider-side retry evidence
+  still requires a new separately approved diagnostic.
 
 ## Implemented gates with remaining external campaign work
 
@@ -244,13 +245,15 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   writes. A hash-bound receipt permits evaluator reuse after a crash before terminal commit, while
   terminal failure/result/status/event are committed together. This is local integrity and recovery
   evidence, not protection against an attacker able to rewrite the database and every artifact.
-- New non-replay runs use a v2 tool/context contract that binds latest visible-check success and
+- New non-replay runs use tool schema v2 with context policy v3. The inherited submission contract binds latest visible-check success and
   final diff review to the exact current worktree hash, exposes a structured `finish_task`, delays
   phase transitions until tool success and makes two premature submissions recoverable. It also
   records review/submission lifecycle, structured patch-error stages, advisory repeat signals and
   current-diff checkpoint state. Mini r2 validated the final check/review/submission/evaluator
   path live, but its rejected-patch retry request omitted the candidate body and its submitted
-  patch failed hidden acceptance. Existing v1 traces and replays are not rewritten.
+  patch failed hidden acceptance. D-037 now restores exact rejected candidate/reason bytes on the
+  first next request and qualifies them against CAS; this repair has only offline evidence.
+  Existing v1/v2 traces and replays are not rewritten.
 - v2 `finish_task` now freezes exact submitted bytes in CAS before acceptance, binds that artifact
   through `SubmissionAccepted`, evaluator input and `RunResult`, and reconciles nine tested crash
   boundaries without duplicate lifecycle or DONE transition. Mini r2 exercised the normal live
@@ -259,8 +262,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   Terra model, budget, harness commit, tool/context versions and exact runtime-contract hash.
   Mini r2 validated much of the corrected v2 lifecycle at lower list-price exposure, but it cannot
   populate `pilot_run_id` and exposed the D-037 retry-context gap. Consequently `pilot_run_id` is
-  currently empty. The next gate is offline context hardening, followed by a new separately
-  approved mini diagnostic; a newly approved v2 Terra pilot remains required before the campaign.
+  currently empty. Offline context hardening is complete; the next gate is a new separately
+  approved mini diagnostic. A newly approved tool-v2/context-v3 Terra pilot remains required before
+  the campaign.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -334,8 +338,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   result exists.
 - Three capped Terra Babel live pilots were executed. r1 and r2 failed acceptance; r3
   `run_3cb86f8d70094a11` passed official SCRR and trace qualification. Their cumulative cost is
-  `$0.828864375`. All three use the legacy v1 runtime; a new v2 Terra pilot is required before the
-  $20/12-run no-memory development campaign, which has not been executed. The
+  `$0.828864375`. All three use the legacy v1 runtime; a new tool-v2/context-v3 Terra pilot is
+  required before the $20/12-run no-memory development campaign, which has not been executed. The
   2026-07-28 configured official rates—$2.50/M
   input, $0.25/M cached input, $3.125/M cache-write input and $15/M output—must be refreshed if
   older than 72 hours at invocation. Only the
@@ -348,10 +352,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   budget and a $2 cap to exercise that branch. Its terminal r1 run failed the submission lifecycle
   before evaluation and does not change the frozen Terra memory-development or core comparison
   contract. Terminal r2 reached evaluation and qualified but failed task acceptance and exposed a
-  rejected-patch continuity gap. Neither exact experiment may be rerun. After D-037 is implemented
-  and offline-tested, a new mini diagnostic requires a new clean execution hash and approval; even
-  a successful mini run does not satisfy the v2 Terra pilot requirement. The two mini runs'
-  calculated list-price total is `$0.155418`; all five paid pilot runs total `$0.984282375`.
+  rejected-patch continuity gap. Neither exact experiment may be rerun. D-037 is now implemented
+  and offline-tested; a new mini diagnostic still requires a new clean execution hash and approval.
+  Even a successful mini run does not satisfy the tool-v2/context-v3 Terra pilot requirement. The
+  two mini runs' calculated list-price total is `$0.155418`; all five paid pilot runs total
+  `$0.984282375`.
   These are usage-based estimates, not verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
   data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not

@@ -778,12 +778,13 @@ def test_rejected_patch_format_is_durable_and_visible_to_next_turn(tmp_path) -> 
         package.public.repository.url,
         package.public.repository.base_commit,
     )
+    artifact_store = ArtifactStore(tmp_path / "artifacts")
     gateway = ToolGateway(
         run_id=manifest.run_id,
         workspace=workspace,
         task=package.public,
         state=state,
-        artifacts=ArtifactStore(tmp_path / "artifacts"),
+        artifacts=artifact_store,
         sandbox=LocalSandbox(),
     )
 
@@ -811,7 +812,13 @@ def test_rejected_patch_format_is_durable_and_visible_to_next_turn(tmp_path) -> 
     events = state.list_events(manifest.run_id)
     failed = events[-1]
     assert failed.payload["error_message"] == result.error_message
-    context, _ = build_context(package.public, events, None)
+    assert failed.payload["result_artifact"] == result.output["result_artifact"]
+    context, _ = build_context(
+        package.public,
+        events,
+        None,
+        artifact_store=artifact_store,
+    )
     assert "raw Git unified diff" in context
     assert "diff --git" in context
 
