@@ -12,14 +12,20 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-037 r4 clean commit and preflight`이다.
+- 현재 milestone은 `D-037 r4 evidence preservation and total-budget follow-up`이다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
-  Terminal r3 evidence와 원인은 보존됐다. 새 r4는 official reasoning guidance에 맞춘
-  25,000 per-call / 120,000 total token pair를 hash-bound profile v2로 분리했고 full
-  offline 검증을 통과했다. Clean execution hash와 별도 비용 승인을 받기 전에는 후속 mini diagnostic,
-  tool-v2/context-v3 Terra pilot 또는 memory-development campaign을 실행하지 않는다.
+  Terminal r3 evidence와 원인은 보존됐다. r4는 official reasoning guidance에 맞춘
+  25,000 per-call / 120,000 total token pair를 hash-bound profile v2로 분리해 full
+  offline 검증 뒤 provider에서 정확히 한 번 실행했다. 모든 13개 generation은 completed였지만
+  `REVIEW` turn 직전 남은 28,563 token으로 exact input 8,583 + response allowance 25,000을
+  보장할 수 없어 local guard가 provider call 전에 종료했다. 제출·evaluator·retry episode는
+  0개이고 D-037은 여전히 검증 또는 반증되지 않았다. 이 r4를 immutable evidence로 보존하고,
+  total-budget/reservation과 generic terminal budget-block qualification의 후속 계약을
+  offline evidence로 닫은 뒤 새 D-037 diagnostic을 먼저 통과해야 한다. 그 전에는
+  tool-v2/context-v3 Terra pilot을, Terra pilot이 통과하기 전에는 memory-development
+  campaign을 실행하지 않는다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을
@@ -38,7 +44,13 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `run_e90f7c52aa134182`는 input pre-count 8/8 일치와 leakage pass를 보존했지만, event 55의
   응답이 `max_output_tokens=4096`에서 incomplete가 되어 evaluator 전에 terminal
   agent/qualification/diagnostic failure로 끝났다. Mutation과 rejected retry episode는
-  0개이므로 이 run은 D-037을 검증하거나 반증하지 않으며 재실행하지 않는다.
+  0개이므로 이 run은 D-037을 검증하거나 반증하지 않으며 재실행하지 않는다. R4
+  `run_826c1c7fb3d242c2`는 patch 1회와 visible check pass, final diff 뒤 `REVIEW`까지
+  진행했고 13/13 exact token telemetry와 completed response를 남겼다. 그러나 14번째
+  generation은 `MODEL_GENERATION_BUDGET_EXCEEDED`로 시작 전에 차단됐고 evaluator와
+  rejected retry에는 도달하지 못했다. Qualification 21/22의 유일한 실패는 token mismatch가
+  아니라 retry candidate가 없는 generic budget-block을 현재 v3 qualifier가 terminal-valid로
+  보지 않는 계약 경계다. 이 run도 재실행하지 않는다.
   실제 subprocess hard-kill 뒤 stale
   `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 Terra pilot, stress schedule,
   12-run development campaign과 96-run core campaign은 완료되지 않았다.

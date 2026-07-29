@@ -881,3 +881,284 @@ def test_mini_d037_r3_checked_evidence_has_no_private_or_provider_payload() -> N
     private_tokens = _private_leak_tokens(package, api_key=None)
     leaked = sorted(token for token in private_tokens if token in checked_text)
     assert leaked == []
+
+
+def test_mini_d037_r4_preserves_budget_failure_without_claiming_retry() -> None:
+    path = Path("reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r4.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == "live-pilot-evidence-v4"
+    assert payload["execution_hash"] == (
+        "sha256:bbb6dbdcab1c7561c868ae4cc40478d6e3401c5900feb59b8ea09ef38d9156a1"
+    )
+    assert payload["harness_commit"] == (
+        "c820a5e6f7b18697fded15bfa8097297253c54b6"
+    )
+
+    campaign = payload["campaign"]
+    assert campaign["expected_runs"] == campaign["completed_runs"] == 1
+    assert campaign["infrastructure_errors"] == 0
+    assert campaign["qualification_errors"] == 1
+    assert campaign["diagnostic_errors"] == 1
+    assert campaign["not_started_runs"] == 0
+    assert campaign["journal"]["hash_chain_valid"] is True
+    assert campaign["journal"]["result_exact_bytes_match"] is True
+
+    pilot = payload["pilot"]
+    assert pilot["run_id"] == "run_826c1c7fb3d242c2"
+    assert pilot["model_id"] == "gpt-5.4-mini-2026-03-17"
+    assert pilot["max_output_tokens"] == 25_000
+    assert pilot["max_total_tokens"] == 120_000
+    assert pilot["outcome_kind"] == "agent_failure"
+    assert pilot["agent_submission_status"] == "failed"
+    assert pilot["evaluation_status"] == "not_run"
+    assert pilot["official"] is False
+    assert pilot["event_count"] == 88
+    assert pilot["checkpoint_count"] == 17
+    assert pilot["model_calls"] == 13
+    assert pilot["input_token_count_calls"] == 14
+    assert pilot["tool_calls"] == 16
+    assert pilot["patch_prepared_events"] == pilot["patch_applied_events"] == 1
+    assert pilot["submission_attempted_events"] == 0
+    assert set(pilot["verdicts"].values()) == {"not_run"}
+
+    usage = pilot["usage"]
+    assert usage["input_tokens"] + usage["output_tokens"] == usage["total_tokens"]
+    assert usage["total_tokens"] == 91_437
+    assert usage["remaining_total_tokens"] == 28_563
+    assert usage["reasoning_output_tokens"] <= usage["output_tokens"]
+    assert usage["model_cost_usd"] == pytest.approx(0.096159)
+
+    telemetry = payload["prompt_token_integrity"]
+    assert telemetry["requested_input_tokens"] == (
+        telemetry["provider_reported_input_tokens"]
+    )
+    assert telemetry["exact_input_count_matches"] == telemetry["model_call_count"] == 13
+    assert telemetry["total_token_count_matches"] == 13
+    assert telemetry["completed_generation_count"] == 13
+    assert telemetry["incomplete_generation_count"] == 0
+    assert telemetry["truncation_mode"] == "disabled"
+    assert telemetry["provider_prompt_cut_observed"] is False
+    assert telemetry["truncated_tool_result_count"] == 0
+
+    guard = payload["terminal_budget_guard"]
+    assert guard["generation_started"] is False
+    assert guard["requested_input_tokens"] == 8_583
+    assert guard["remaining_tokens"] == 28_563
+    assert guard["max_output_tokens"] == 25_000
+    assert guard["required_reservation_tokens"] == 33_583
+    assert guard["reservation_shortfall_tokens"] == 5_020
+    assert guard["retry_context_present"] is False
+    assert guard["candidate_content_hash"] is None
+    assert guard["per_call_output_ceiling_recurred"] is False
+
+    qualification = payload["trace_qualification_artifact"]
+    assert qualification["qualified"] is False
+    assert qualification["trace_integrity_passed"] is False
+    assert qualification["leakage_scan_passed"] is True
+    assert qualification["evaluation_reached"] is False
+    assert qualification["passed_check_count"] == 21
+    assert qualification["check_count"] == 22
+    assert qualification["failed_check_name"] == "prompt_token_integrity"
+    assert qualification["failed_event_sequences"] == []
+    assert qualification["terminal_generation_block_valid"] is False
+
+    feature = payload["d037_retry_feature"]
+    assert feature["conditional_check_passed"] is True
+    assert feature["rejected_candidate_count"] == 0
+    assert feature["retry_episode_count"] == 0
+    assert feature["verified_retry_count"] == 0
+    assert feature["failed_source_failure_sequences"] == []
+    assert feature["live_retry_exercised"] is False
+    assert feature["live_retry_validated"] is False
+
+    diagnostic = payload["diagnostic_gate"]
+    assert diagnostic["profile"] == "d037-rejected-patch-retry-v2"
+    assert diagnostic["status"] == "failed"
+    assert diagnostic["reason_code"] == "qualification_not_passed"
+    assert diagnostic["ready_for_v2_terra_pilot"] is False
+
+    spend = payload["spend_to_date"]
+    assert (
+        spend["mini_r1_usd"]
+        + spend["mini_r2_usd"]
+        + spend["mini_r3_usd"]
+        + spend["mini_r4_usd"]
+    ) == pytest.approx(spend["mini_lane_cumulative_usd"])
+    assert (
+        spend["historical_terra_lane_cumulative_usd"]
+        + spend["mini_lane_cumulative_usd"]
+    ) == pytest.approx(spend["all_paid_pilot_list_price_total_usd"])
+    assert spend["all_paid_pilot_list_price_total_usd"] == pytest.approx(
+        1.148935125
+    )
+    assert spend["invoice_charge_verified"] is False
+
+    claims = payload["claims_boundary"]
+    assert claims["paid_provider_path_exercised"] is True
+    assert claims["executed_request_token_counts_match"] is True
+    assert claims["provider_input_truncation_observed"] is False
+    assert claims["incomplete_model_generation_observed"] is False
+    assert claims["r3_output_ceiling_confounder_removed"] is True
+    assert claims["total_budget_guard_exercised"] is True
+    assert claims["trace_qualification_artifact_qualified"] is False
+    assert claims["evaluation_reached"] is False
+    assert claims["d037_live_retry_exercised"] is False
+    assert claims["d037_live_retry_validated"] is False
+    assert claims["accepted_live_pilot"] is False
+    assert claims["development_campaign_unlocked"] is False
+
+
+def test_mini_d037_r4_artifacts_are_hash_bound_when_available() -> None:
+    path = Path("reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r4.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert len(payload["portable_artifacts"]) == 1
+    portable_candidate = payload["portable_artifacts"][0]
+    assert portable_candidate["role"] == "applied-model-candidate"
+    _assert_artifact_identity(portable_candidate)
+
+    artifacts = payload["raw_local_artifacts"]
+    anchor = Path(artifacts[0]["path"])
+    if not anchor.is_file():
+        pytest.skip("raw local mini-r4 evidence is not bundled")
+
+    missing = [artifact["path"] for artifact in artifacts if not Path(artifact["path"]).is_file()]
+    assert not missing
+    for artifact in artifacts:
+        _assert_artifact_identity(artifact)
+
+    raw_candidate = next(
+        artifact
+        for artifact in artifacts
+        if artifact["sha256"] == portable_candidate["sha256"]
+    )
+    assert Path(raw_candidate["path"]).read_bytes() == Path(
+        portable_candidate["path"]
+    ).read_bytes()
+
+    journal_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["path"].endswith(
+            "/dev-validation-gpt54mini-d037-20260729-r4.jsonl"
+        )
+    )
+    journal_rows = [
+        json.loads(line)
+        for line in Path(journal_artifact["path"]).read_text(encoding="utf-8").splitlines()
+    ]
+    previous_hash = None
+    for expected_sequence, journal_row in enumerate(journal_rows, start=1):
+        recorded_hash = journal_row.pop("event_hash")
+        assert journal_row["sequence"] == expected_sequence
+        assert journal_row["previous_event_hash"] == previous_hash
+        assert sha256_text(canonical_json(journal_row)) == recorded_hash
+        previous_hash = recorded_hash
+    assert previous_hash == payload["campaign"]["journal"]["final_event_hash"]
+    assert journal_rows[-1]["payload"]["result_hash"] == sha256_bytes(
+        Path(artifacts[0]["path"]).read_bytes()
+    )
+
+    plan_artifact = next(
+        artifact for artifact in artifacts if "/experiments/plans/" in artifact["path"]
+    )
+    plan_payload = json.loads(Path(plan_artifact["path"]).read_text(encoding="utf-8"))
+    assert sha256_text(canonical_json(plan_payload)) == (
+        payload["campaign"]["execution_plan"]["canonical_content_hash"]
+    )
+
+    qualification = load_trace_qualification("run_826c1c7fb3d242c2")
+    assert qualification["qualification_hash"] == (
+        payload["trace_qualification_artifact"]["qualification_hash"]
+    )
+    assert len(qualification["checks"]) == (
+        payload["trace_qualification_artifact"]["check_count"]
+    )
+    assert sum(check["passed"] for check in qualification["checks"]) == (
+        payload["trace_qualification_artifact"]["passed_check_count"]
+    )
+    assert calculate_source_evidence_hash("run_826c1c7fb3d242c2") == (
+        payload["trace_qualification_artifact"]["source_evidence_hash"]
+    )
+
+    blocked_request = next(
+        artifact
+        for artifact in artifacts
+        if artifact["sha256"]
+        == "sha256:ac9def9a14427402c7c0be649f7508af87b54eaa9ed730be982b30fef87a5fe1"
+    )
+    request_evidence = json.loads(
+        Path(blocked_request["path"]).read_text(encoding="utf-8")
+    )
+    request_body = request_evidence["request_body"]
+    assert request_body["store"] is False
+    assert "previous_response_id" not in request_body
+    assert request_body["truncation"] == "disabled"
+    assert request_body["max_output_tokens"] == 25_000
+
+
+def test_mini_d037_r4_checked_evidence_has_no_private_or_provider_payload() -> None:
+    path = Path("reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r4.json")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    assert set(payload) == {
+        "schema_version",
+        "recorded_at",
+        "task_id",
+        "harness_commit",
+        "execution_hash",
+        "retry_lineage",
+        "campaign",
+        "pilot",
+        "trace_activity",
+        "prompt_token_integrity",
+        "terminal_budget_guard",
+        "trace_qualification_artifact",
+        "d037_retry_feature",
+        "diagnostic_gate",
+        "failure_record",
+        "spend_to_date",
+        "evidence_policy",
+        "portable_artifacts",
+        "raw_local_artifacts",
+        "claims_boundary",
+    }
+
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {nested for child in value.values() for nested in walk_keys(child)}
+        if isinstance(value, list):
+            return {nested for child in value for nested in walk_keys(child)}
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+
+    checked_text = path.read_text(encoding="utf-8")
+    for artifact in payload["portable_artifacts"]:
+        checked_text += Path(artifact["path"]).read_text(encoding="utf-8")
+    package = load_task_package("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    leaked = sorted(token for token in private_tokens if token in checked_text)
+    assert leaked == []

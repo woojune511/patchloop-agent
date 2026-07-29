@@ -68,6 +68,16 @@ prompt cut은 관찰되지 않았지만 evaluator와 rejected retry episode에�
 따라서 이 terminal run은 D-037을 검증하거나 반증하지 않으며 Terra/development gate를
 열지 않는다.
 
+별도 승인 hash
+`sha256:bbb6dbdcab1c7561c868ae4cc40478d6e3401c5900feb59b8ea09ef38d9156a1`의 r4
+`run_826c1c7fb3d242c2`는 25,000 per-call / 120,000 total 계약을 실제 provider에서
+정확히 한 번 실행했다. 13개 generation은 모두 completed였고 exact input count도 13/13
+일치해 r3의 output-ceiling confounder는 제거됐다. Agent는 patch 1회, visible check pass,
+final diff와 `REVIEW` 진입까지 진행했지만, 14번째 request의 exact input 8,583과 full
+response allowance 25,000이 남은 28,563-token run budget에 들어가지 않아 local guard가
+provider generation 전에 차단했다. 제출·evaluator·rejected retry episode는 모두 0이므로
+r4 역시 D-037을 검증하거나 반증하지 않고 gate를 열지 않는다.
+
 ## 구현된 핵심 경로
 
 ```text
@@ -287,20 +297,27 @@ truncation이 아니다. 이 suite/run은 재실행하지 않으며 aggregate와
 [mini D-037 r3 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r3.json)에
 보존한다.
 
-다음 corrective contract는
+Corrective contract는
 `experiments/dev-validation-gpt54mini-d037-r4.yaml`로 분리했다. 공식
 [reasoning guide](https://developers.openai.com/api/docs/guides/reasoning#allocating-space-for-reasoning)의
 초기 권고에 맞춰 per-call 25,000 token과 total 120,000 token을 profile v2에 함께 고정하고,
 historical mini r1~r3와 Terra/core 계약은 바꾸지 않는다. 자동 incomplete-response retry도
-추가하지 않았다. Full offline 검증은 통과했으며 clean commit 뒤 새 execution hash·별도 승인을 받아야만
-rejected mutation retry를 실제 provider에서 exercise할 수 있다.
+추가하지 않았다. Full offline 검증 뒤 승인된 execution hash로 r4를 정확히 한 번 실행했으며,
+13개 응답은 모두 completed였지만 `REVIEW`의 다음 호출이 total-budget reservation에 의해
+provider 전에 차단됐다. Qualification 21/22의 유일한 실패는 실제 token mismatch가 아니라
+retry candidate가 없는 generic terminal budget block을 현재 v3 qualifier가 valid로 인정하지
+않는 계약 경계다. Aggregate와 artifact identity는
+[mini D-037 r4 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260729-r4.json)에
+보존한다. 이 suite/run은 terminal inspection 전용이며 재실행하지 않는다. 후속 paid
+diagnostic 전에 total-budget/reservation과 generic terminal budget-block qualification을
+별도 offline 계약으로 먼저 해결해야 한다.
 새 Terra development-validation pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
 harness gate와 별도로 보고한다.
 
-기존 mini D-037 r3 suite는 terminal inspection 전용이다. Journal이나 result를 삭제하거나 approval
-flag를 다시 전달하지 않는다.
+기존 mini D-037 r3와 r4 suite는 terminal inspection 전용이다. Journal이나 result를
+삭제하거나 approval flag를 다시 전달하지 않는다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -386,19 +403,23 @@ call을 시작하지 않는다.
 pilot qualification을 포함한 execution hash도 preflight 공식으로 다시 계산한다.
 2026-07-29 configured rates로 계산한
 conservative authorization reserve는 `$0.6525`로 $2 cap 아래지만, checked-in suite는
-승인 권한이 아니고 이 문서 갱신에서는 provider call을 실행하지 않았다. 25,000은
+승인 권한이 아니다. 별도 clean execution hash와 invocation-only 승인으로 r4를 한 번
+실행한 뒤 terminal evidence로 동결했다. 25,000은
 [GPT-5.4 mini model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini)의
 published 128,000 max output 안이다.
-세 Terra pilot과 historical mini r1/r2/r3는 usage/source-evidence 보존 경로를 실제 provider에서
+세 Terra pilot과 historical mini r1/r2/r3/r4는 usage/source-evidence 보존 경로를 실제 provider에서
 확인했다. Terra r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, historical Terra r3가 별도 clean execution
 hash에서 v1 accepted pilot를 만들었다. Mini r2는 v2 evaluator 경로에 도달했지만 hidden
 acceptance는 실패했고 post-run audit에서 D-037 target이 충족되지 않았음이 확인됐다.
+Mini r4는 모든 generated response가 completed였지만 REVIEW 전 total-budget guard로
+끝나 evaluator와 D-037 retry에는 도달하지 못했다.
 Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D-037 target을
-exercise하지 못했다. 세 mini run의 누적 계산 비용은 `$0.22391175`, 여섯 paid pilot의
-계산상 총액은 `$1.052776125`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다.
-별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run development campaign을
-승인하지 않는다.
+exercise하지 못했다. 네 mini run의 누적 계산 비용은 `$0.32007075`, 일곱 paid pilot의
+계산상 총액은 `$1.148935125`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다.
+새 budget/qualification offline contract와 별도 승인 D-037 diagnostic을 먼저 통과하고,
+그 뒤 별도 tool-v2/context-v3 Terra pilot이 통과하기 전에는 12-run development
+campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

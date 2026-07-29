@@ -389,6 +389,14 @@ preflight authorization reserve로 계산한 `$0.6525`는 기존 $2 approval cap
 이것은 predicted/measured spend나 tight billing upper bound가 아니며, historical mini
 r1~r3와 Terra/core 계약을 바꾸지 않고 incomplete response 자동 retry도 추가하지 않는다.
 
+R4 `run_826c1c7fb3d242c2`는 위 contract와 승인 execution hash를 정확히 한 번
+사용했다. 13개 generation은 completed였지만 REVIEW의 다음 exact input 8,583과
+25,000-token allowance가 남은 28,563-token total budget을 초과해 generation 전에
+차단됐다. Retry candidate가 없는 이 generic terminal budget block은 현재 retry-specific
+validator에서 valid terminal block으로 인정되지 않아 qualification은 21/22다. Suite와
+run은 terminal evidence로 보존하며 같은 experiment ID나 승인 hash를 재사용하지 않는다.
+후속 budget/qualification 의미는 새 version과 offline test를 요구한다.
+
 일반 trace qualification은 rejection이 없으면 조건부 retry 계약을 통과할 수 있다. Diagnostic
 consumer는 qualification의 patch/error body를 복사하지 않고 count와 failure sequence만 읽어
 다음 predicate를 별도로 판정한다.

@@ -232,6 +232,21 @@ budget 안에 들어가는지 같은 방식으로 검사한다. Post-run qualifi
 canonical suite hash와 diagnostic/model/output/budget 계약을 manifest에 다시 결속하고,
 schedule 및 Git/Docker/SDK/pilot-qualification 입력으로 execution hash를 재계산한다.
 
+R4는 승인 execution hash
+`sha256:bbb6dbdcab1c7561c868ae4cc40478d6e3401c5900feb59b8ea09ef38d9156a1`로
+정확히 한 번 실행됐다. `run_826c1c7fb3d242c2`의 13개 generation은 모두
+`completed`, `truncation=disabled`였고 exact input count와 provider usage가 전부
+일치했다. 누적 사용은 84,082 input + 7,355 output = 91,437/120,000 token이었다.
+14번째 logical request는 input 8,583을 exact-count했지만 남은 28,563 token보다
+input + full allowance 33,583이 커 generation 전에 차단됐다.
+
+이 trace의 `prompt_token_integrity=false`는 provider count mismatch나 incomplete response를
+뜻하지 않는다. `failed_event_sequences=[]`이며, retry candidate가 없는 generic
+`ModelGenerationBlocked`를 현재 v3 retry-specific terminal validator가 valid로 보지 않아
+`terminal_generation_block_valid=false`가 된 것이다. Patch와 visible check, final diff,
+REVIEW phase까지는 도달했지만 submission·evaluator·rejected retry는 0개다. 따라서
+diagnostic은 `failed/qualification_not_passed`이고 D-037은 검증 또는 반증되지 않았다.
+
 ## 5. Controlled variables
 
 한 experiment block 안에서 다음을 고정한다.
