@@ -14,8 +14,20 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact, Checkpoint, EventType, PublicTask, ToolResult
-from patchloop.errors import ContractError, PolicyViolation, RecoveryError
+from patchloop.contracts import (
+    Artifact,
+    Checkpoint,
+    EventType,
+    FaultSpec,
+    PublicTask,
+    ToolResult,
+)
+from patchloop.errors import (
+    ContractError,
+    ControlledDiagnosticRejection,
+    PolicyViolation,
+    RecoveryError,
+)
 from patchloop.repository import WorkspaceManager
 from patchloop.sandbox.runner import Sandbox
 from patchloop.state import StateStore
@@ -289,6 +301,7 @@ class ToolGateway:
         artifacts: ArtifactStore,
         sandbox: Sandbox,
         tool_schema_version: str = "v2",
+        fault: FaultSpec | None = None,
     ) -> None:
         self.run_id = run_id
         self.workspace = workspace
@@ -297,6 +310,7 @@ class ToolGateway:
         self.artifacts = artifacts
         self.sandbox = sandbox
         self.tool_schema_version = tool_schema_version
+        self.fault = fault or FaultSpec()
 
     def execute(self, name: str, action_id: str, arguments: dict[str, Any]) -> ToolResult:
         input_hash = sha256_text(canonical_json({"tool": name, "input": arguments}))
@@ -415,6 +429,13 @@ class ToolGateway:
                     str(arguments["patch"]),
                     patch_artifact,
                 )
+                if self._controlled_rejection_pending():
+                    raise self._controlled_rejection(
+                        action_id=action_id,
+                        input_hash=input_hash,
+                        patch_artifact=patch_artifact,
+                        intent=intent,
+                    )
                 output = self._apply_patch(
                     str(arguments["patch"]),
                     intent=intent,
@@ -451,6 +472,228 @@ class ToolGateway:
             )
         self._complete_result(name, input_hash, result)
         return result
+
+    def _controlled_rejection_pending(self) -> bool:
+        if (
+            self.fault.type
+            != "controlled-reject-first-prepared-patch"
+        ):
+            return False
+        events = self.state.list_events(self.run_id)
+        controlled_failures = [
+            event
+            for event in events
+            if (
+                event.type == EventType.TOOL_FAILED
+                and event.payload.get("error_code")
+                == "CONTROLLED_DIAGNOSTIC_REJECTION"
+            )
+        ]
+        if not controlled_failures:
+            return True
+        if len(controlled_failures) > 1:
+            raise RecoveryError(
+                "controlled rejection evidence contains duplicate declarations"
+            )
+
+        failure = controlled_failures[0]
+        action_id = failure.correlation_id
+        calls = [
+            event
+            for event in events
+            if (
+                event.type == EventType.TOOL_CALLED
+                and event.actor == "agent"
+                and event.payload.get("tool") == "apply_patch"
+                and event.correlation_id == action_id
+                and event.sequence < failure.sequence
+            )
+        ]
+        prepared = [
+            event
+            for event in events
+            if (
+                event.type == EventType.PATCH_PREPARED
+                and event.actor == "tool-gateway"
+                and event.correlation_id == action_id
+                and event.sequence < failure.sequence
+            )
+        ]
+        all_prepared = [
+            event
+            for event in events
+            if event.type == EventType.PATCH_PREPARED
+        ]
+        applied = [
+            event
+            for event in events
+            if (
+                event.type == EventType.PATCH_APPLIED
+                and event.correlation_id == action_id
+            )
+        ]
+        call = calls[0] if len(calls) == 1 else None
+        intent = prepared[0] if len(prepared) == 1 else None
+        expected_details = None
+        if call is not None and intent is not None:
+            patch_artifact = call.payload.get("patch_artifact")
+            candidate_hash = (
+                patch_artifact.get("content_hash")
+                if isinstance(patch_artifact, dict)
+                else None
+            )
+            expected_details = {
+                "schema_version": "controlled-rejection-v1",
+                "stage": "diagnostic",
+                "reason": "controlled_rejection",
+                "guidance": (
+                    "Review the rehydrated candidate and rejection evidence, "
+                    "then retry with a new action_id."
+                ),
+                "fault_type": "controlled-reject-first-prepared-patch",
+                "trigger": "first-preflight-valid-apply-patch",
+                "trigger_after": 1,
+                "source_call_sequence": call.sequence,
+                "source_prepared_sequence": intent.sequence,
+                "candidate_content_hash": candidate_hash,
+                "input_hash": call.payload.get("input_hash"),
+                "prepared_intent_content_hash": intent.payload.get(
+                    "content_hash"
+                ),
+                "baseline_worktree_diff_hash": intent.payload.get(
+                    "baseline_worktree_diff_hash"
+                ),
+                "expected_worktree_diff_hash": intent.payload.get(
+                    "expected_worktree_diff_hash"
+                ),
+                "observed_worktree_diff_hash": intent.payload.get(
+                    "baseline_worktree_diff_hash"
+                ),
+                "worktree_mutated": False,
+            }
+        details = failure.payload.get("error_details")
+        valid = bool(
+            failure.actor == "tool-gateway"
+            and failure.payload.get("tool") == "apply_patch"
+            and failure.payload.get("status") == "rejected"
+            and isinstance(action_id, str)
+            and action_id
+            and call is not None
+            and intent is not None
+            and call.sequence < intent.sequence < failure.sequence
+            and failure.sequence == intent.sequence + 1
+            and all_prepared
+            and intent.sequence == all_prepared[0].sequence
+            and expected_details is not None
+            and all(
+                isinstance(expected_details.get(field), str)
+                and expected_details[field]
+                for field in (
+                    "candidate_content_hash",
+                    "input_hash",
+                    "prepared_intent_content_hash",
+                    "baseline_worktree_diff_hash",
+                    "expected_worktree_diff_hash",
+                    "observed_worktree_diff_hash",
+                )
+            )
+            and details == expected_details
+            and not applied
+        )
+        if not valid:
+            raise RecoveryError(
+                "controlled rejection evidence is malformed"
+            )
+        return False
+
+    def _controlled_rejection(
+        self,
+        *,
+        action_id: str,
+        input_hash: str,
+        patch_artifact: Artifact,
+        intent: dict[str, Any],
+    ) -> ControlledDiagnosticRejection:
+        if self._classify_patch_state(intent) != "pre":
+            raise RecoveryError(
+                "controlled rejection requires the prepared patch pre-state"
+            )
+        events = self.state.list_events(self.run_id)
+        prepared_events = [
+            event
+            for event in events
+            if (
+                event.type == EventType.PATCH_PREPARED
+                and event.correlation_id == action_id
+            )
+        ]
+        all_prepared = [
+            event
+            for event in events
+            if event.type == EventType.PATCH_PREPARED
+        ]
+        call_events = [
+            event
+            for event in events
+            if (
+                event.type == EventType.TOOL_CALLED
+                and event.correlation_id == action_id
+                and event.payload.get("tool") == "apply_patch"
+            )
+        ]
+        if len(call_events) != 1 or len(prepared_events) != 1:
+            raise RecoveryError(
+                "controlled rejection lacks one correlated call and prepared intent"
+            )
+        call = call_events[0]
+        prepared = prepared_events[0]
+        if not all_prepared or prepared.sequence != all_prepared[0].sequence:
+            raise RecoveryError(
+                "controlled rejection is not bound to the first prepared patch"
+            )
+        if not events or prepared.sequence != events[-1].sequence:
+            raise RecoveryError(
+                "controlled rejection prepared intent is not the current latest event"
+            )
+        baseline_hash = str(intent["baseline_worktree_diff_hash"])
+        expected_hash = str(intent["expected_worktree_diff_hash"])
+        observed = WorkspaceManager.diff_summary(self.workspace)
+        if (
+            observed.patch_hash != baseline_hash
+            or WorkspaceManager.untracked_files(self.workspace)
+        ):
+            raise RecoveryError(
+                "controlled rejection observed a mutated or untracked worktree"
+            )
+        return ControlledDiagnosticRejection(
+            (
+                "diagnostic control rejected the first preflight-valid patch "
+                "before worktree mutation"
+            ),
+            details={
+                "schema_version": "controlled-rejection-v1",
+                "stage": "diagnostic",
+                "reason": "controlled_rejection",
+                "guidance": (
+                    "Review the rehydrated candidate and rejection evidence, "
+                    "then retry with a new action_id."
+                ),
+                "fault_type": self.fault.type,
+                "trigger": "first-preflight-valid-apply-patch",
+                "trigger_after": self.fault.trigger_after,
+                "source_call_sequence": call.sequence,
+                "source_prepared_sequence": prepared.sequence,
+                "candidate_content_hash": patch_artifact.content_hash,
+                "input_hash": input_hash,
+                "prepared_intent_content_hash": prepared.payload.get(
+                    "content_hash"
+                ),
+                "baseline_worktree_diff_hash": baseline_hash,
+                "expected_worktree_diff_hash": expected_hash,
+                "observed_worktree_diff_hash": observed.patch_hash,
+                "worktree_mutated": False,
+            },
+        )
 
     def _error_result(
         self,
@@ -551,6 +794,7 @@ class ToolGateway:
         if self.tool_schema_version != "v2":
             return None
         events = self.state.list_events(self.run_id)
+        controlled_rejection_pending = self._controlled_rejection_pending()
         calls = [
             event
             for event in events
@@ -654,6 +898,24 @@ class ToolGateway:
                 raise RecoveryError(
                     "prepared patch baseline does not match the durable checkpoint"
                 )
+            if controlled_rejection_pending:
+                patch_artifact = Artifact.model_validate(
+                    call.payload.get("patch_artifact")
+                )
+                result = self._error_result(
+                    "apply_patch",
+                    action_id,
+                    started,
+                    self._controlled_rejection(
+                        action_id=action_id,
+                        input_hash=input_hash,
+                        patch_artifact=patch_artifact,
+                        intent=intent,
+                    ),
+                    fatal=False,
+                )
+                self._complete_result("apply_patch", input_hash, result)
+                return result
             state = self._classify_patch_state(intent)
             if state == "mixed":
                 hypothetical = self._hypothetical_preimage_diff_hash(

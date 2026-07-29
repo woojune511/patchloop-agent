@@ -189,6 +189,11 @@ Logical storage layout은 source repository와 분리한다.
   trace evidence지만, rejected-patch retry episode 또는 D-037 gate evidence는 아니다.
   Historical unversioned retry block은 읽기 호환하고, unversioned generic r4 block은 당시
   qualification 21/22로 immutable하게 유지한다.
+- D-043 r6 controlled diagnostic은 profile v4 manifest에서만 첫
+  `PatchPrepared` 뒤 mutation 전 `CONTROLLED_DIAGNOSTIC_REJECTION`을 한 번 만든다. Trigger
+  여부는 process memory가 아니라 durable controlled `ToolFailed`에서 판단한다. Prepared
+  intent 뒤 process가 죽어도 recovery는 verified pre-state를 적용하지 않고 같은 rejection
+  result로 닫는다. 이 branch는 public `inject-fault`와 stress/core 경로에는 노출하지 않는다.
 
 ### Recovery algorithm
 

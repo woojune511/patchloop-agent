@@ -715,8 +715,25 @@ class ModelConfig(StrictModel):
 
 
 class FaultSpec(StrictModel):
-    type: Literal["none", "context-reset", "worker-kill-after-patch", "test-timeout"] = "none"
+    type: Literal[
+        "none",
+        "context-reset",
+        "worker-kill-after-patch",
+        "test-timeout",
+        "controlled-reject-first-prepared-patch",
+    ] = "none"
     trigger_after: int | None = None
+
+    @model_validator(mode="after")
+    def validate_controlled_rejection_trigger(self) -> FaultSpec:
+        if (
+            self.type == "controlled-reject-first-prepared-patch"
+            and self.trigger_after != 1
+        ):
+            raise ValueError(
+                "controlled rejection requires trigger_after=1"
+            )
+        return self
 
 
 class MemoryConfig(StrictModel):

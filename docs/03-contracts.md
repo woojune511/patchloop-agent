@@ -451,6 +451,44 @@ Evaluator에 도달하지 못했거나 episode가 관찰됐지만 완전히 검�
 Run row는 `qualification`/`qualification_error`와 `diagnostic`/`diagnostic_error`를 분리해
 보존한다.
 
+R5가 terminal inconclusive로 끝난 뒤 D-043은 별도 r6/profile v4 controlled diagnostic을
+고정한다.
+
+```yaml
+diagnostic:
+  schema_version: experiment-diagnostic-v1
+  profile: d037-rejected-patch-retry-v4
+  required_trace_features:
+    - rejected_patch_retry_context
+```
+
+V4만 run manifest에 다음 fault를 결속한다.
+
+```yaml
+fault:
+  type: controlled-reject-first-prepared-patch
+  trigger_after: 1
+```
+
+Trigger의 정확한 의미는 “첫 완전한 policy-pass patch”가 아니라
+`first-preflight-valid-apply-patch`다. Raw Git diff 형식, tracked regular target,
+현재 worktree context에서의 적용 가능성과 non-empty expected diff를 검증하고
+`patch-mutation-intent-v1`을 CAS에 준비한 뒤, 실제 postimage write 전에 한 번 거절한다.
+Invalid/비적용 patch는 trigger를 소비하지 않는다. Rejection은
+`CONTROLLED_DIAGNOSTIC_REJECTION`과 `controlled-rejection-v1` details를 가진 durable
+`ToolFailed`/result CAS로 기록하며 별도 `FaultInjected` event를 만들지 않는다. Resume은
+interrupted prepared intent가 정확한 pre-state일 때 동일 rejection으로 닫고 post/mixed/
+unknown state는 fail-closed한다. `PatchPrepared`와 controlled `ToolFailed`는 monotonic
+sequence에서 정확히 인접해야 하며, 사이에 다른 event가 있거나 durable declaration이
+malformed·duplicate이면 fault를 재주입하지 않고 recovery error로 닫는다.
+
+V4 diagnostic은 일반 retry predicate에 더해 controlled rejection 정확히 1회, verified
+controlled rejection 1회, 해당 action의 `PatchApplied` 0회와 controlled failure sequence
+0개를 요구한다. Missing/duplicate/interleaved/mutated controlled evidence는 `failed`이며
+`inconclusive`가 아니다. Direct `inject-fault` allowlist에는 이 fault를 노출하지 않는다.
+R6는 r5의 25,000/200,000 budget pair와 $2 cap을 유지하지만 새 suite/profile/fault가
+execution hash를 바꾸므로 별도 승인 없이는 provider call을 할 수 없다.
+
 `patchloop run --model openai`, OpenAI run의 direct `resume`, direct `inject-fault`는 승인된
 suite 경로를 우회할 수 없도록 거부한다.
 

@@ -17,6 +17,7 @@ from patchloop.contracts import (
     EventType,
     ExperimentPurpose,
     ExperimentRunContext,
+    FaultSpec,
     Phase,
     RunOutcomeKind,
     RunResult,
@@ -93,8 +94,13 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
             120_000: "d037-rejected-patch-retry-v2",
             200_000: "d037-rejected-patch-retry-v3",
         }
-        diagnostic_profile = diagnostic_profile_by_total_budget.get(
-            manifest.budget.max_total_tokens
+        diagnostic_profile = (
+            "d037-rejected-patch-retry-v4"
+            if manifest.fault.type
+            == "controlled-reject-first-prepared-patch"
+            else diagnostic_profile_by_total_budget.get(
+                manifest.budget.max_total_tokens
+            )
         )
         if diagnostic_profile is not None:
             budget = Budget(
@@ -338,6 +344,10 @@ def _terminal_trace(
     rejected_retry_context: str | None = None,
     stale_rejected_retry_context: bool = False,
     force_v3_contract: bool = False,
+    fault: FaultSpec | None = None,
+    controlled_rejection: bool = False,
+    controlled_rejection_interleaved: bool = False,
+    controlled_rejection_details_overrides: dict[str, object] | None = None,
     execution_plan_suite_overrides: dict[str, object] | None = None,
 ) -> tuple[str, RunResult, str]:
     package = load_task_package(task_dir)
@@ -351,6 +361,7 @@ def _terminal_trace(
         model_id=model_id,
         sandbox_backend="docker",
         budget=budget,
+        fault=fault,
         max_output_tokens=max_output_tokens,
         agent_image_digest=(
             package.environment.image_digest if package.environment is not None else None
@@ -362,7 +373,11 @@ def _terminal_trace(
     if legacy_contract:
         manifest.tool_schema_version = "v1"
         manifest.context_policy_version = "v1"
-    elif rejected_retry_context is not None or force_v3_contract:
+    elif (
+        rejected_retry_context is not None
+        or force_v3_contract
+        or controlled_rejection
+    ):
         manifest.context_policy_version = "phase-evidence-v3"
     else:
         # This fixture primarily exercises the immutable v2 qualification
@@ -575,7 +590,7 @@ def _terminal_trace(
                     ],
                 }
             )
-            state.append_event(
+            rejected_call = state.append_event(
                 run_id,
                 EventType.TOOL_CALLED,
                 actor="agent",
@@ -588,7 +603,7 @@ def _terminal_trace(
                     "artifact_path": submitted_patch.path,
                 },
             )
-            state.append_event(
+            rejected_prepared_event = state.append_event(
                 run_id,
                 EventType.PATCH_PREPARED,
                 actor="tool-gateway",
@@ -616,12 +631,78 @@ def _terminal_trace(
                     },
                 )
             else:
+                rejection_error_code = (
+                    "CONTROLLED_DIAGNOSTIC_REJECTION"
+                    if controlled_rejection
+                    else "CONTRACT_ERROR"
+                )
+                rejection_error_message = (
+                    "diagnostic control rejected the first "
+                    "preflight-valid patch before worktree mutation"
+                    if controlled_rejection
+                    else "public rejected patch"
+                )
+                rejection_error_details = (
+                    {
+                        "schema_version": "controlled-rejection-v1",
+                        "stage": "diagnostic",
+                        "reason": "controlled_rejection",
+                        "guidance": (
+                            "Review the rehydrated candidate and rejection "
+                            "evidence, then retry with a new action_id."
+                        ),
+                        "fault_type": (
+                            "controlled-reject-first-prepared-patch"
+                        ),
+                        "trigger": (
+                            "first-preflight-valid-apply-patch"
+                        ),
+                        "trigger_after": 1,
+                        "source_call_sequence": rejected_call.sequence,
+                        "source_prepared_sequence": (
+                            rejected_prepared_event.sequence
+                        ),
+                        "candidate_content_hash": (
+                            submitted_patch.content_hash
+                        ),
+                        "input_hash": patch_input_hash,
+                        "prepared_intent_content_hash": (
+                            rejected_intent.content_hash
+                        ),
+                        "baseline_worktree_diff_hash": sha256_text(
+                            ""
+                        ),
+                        "expected_worktree_diff_hash": DIFF_HASH,
+                        "observed_worktree_diff_hash": sha256_text(
+                            ""
+                        ),
+                        "worktree_mutated": False,
+                    }
+                    if controlled_rejection
+                    else {"reason": "invalid public patch"}
+                )
+                if (
+                    controlled_rejection
+                    and controlled_rejection_details_overrides is not None
+                ):
+                    rejection_error_details.update(
+                        controlled_rejection_details_overrides
+                    )
+                if controlled_rejection_interleaved:
+                    state.append_event(
+                        run_id,
+                        EventType.LOOP_DETECTED,
+                        actor="tamper-test",
+                        payload={
+                            "reason": "interleaved-before-controlled-failure"
+                        },
+                    )
                 rejected_result_payload = {
                     "tool": "apply_patch",
                     "status": "rejected",
-                    "error_code": "CONTRACT_ERROR",
-                    "error_message": "public rejected patch",
-                    "error_details": {"reason": "invalid public patch"},
+                    "error_code": rejection_error_code,
+                    "error_message": rejection_error_message,
+                    "error_details": rejection_error_details,
                 }
                 rejected_result = artifacts.put_json(rejected_result_payload)
                 rejected_failure = state.append_event(
@@ -635,9 +716,9 @@ def _terminal_trace(
                         "artifact_id": rejected_result.artifact_id,
                         "artifact_path": rejected_result.path,
                         "result_artifact": rejected_result.model_dump(mode="json"),
-                        "error_code": "CONTRACT_ERROR",
-                        "error_message": "public rejected patch",
-                        "error_details": {"reason": "invalid public patch"},
+                        "error_code": rejection_error_code,
+                        "error_message": rejection_error_message,
+                        "error_details": rejection_error_details,
                     },
                 )
                 retry_payload = {
@@ -654,9 +735,9 @@ def _terminal_trace(
                     },
                     "rejection": {
                         "status": "rejected",
-                        "error_code": "CONTRACT_ERROR",
-                        "error_message": "public rejected patch",
-                        "error_details": {"reason": "invalid public patch"},
+                        "error_code": rejection_error_code,
+                        "error_message": rejection_error_message,
+                        "error_details": rejection_error_details,
                     },
                 }
                 last_retry_payload = retry_payload
@@ -1404,6 +1485,230 @@ def test_v3_qualification_binds_exact_rejected_patch_retry_context(
     assert len(retry["details"]["verified_candidate_content_hashes"]) == 1
     assert retry["details"]["failed_source_failure_sequences"] == []
     assert qualification["qualified"] is True
+
+
+def test_controlled_diagnostic_binds_one_unmutated_rejection_and_retry(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=(
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        ),
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=200_000),
+        max_output_tokens=25_000,
+        include_rejected_mutation=True,
+        rejected_retry_context="exact",
+        controlled_rejection=True,
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=tmp_path,
+    )
+
+    controlled = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "controlled_diagnostic_boundary"
+    )
+    retry = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+    assert controlled["passed"] is True
+    assert controlled["details"]["controlled_rejection_count"] == 1
+    assert (
+        controlled["details"]["verified_controlled_rejection_count"]
+        == 1
+    )
+    assert controlled["details"]["controlled_patch_applied_sequences"] == []
+    assert retry["passed"] is True
+    assert retry["details"]["retry_episode_count"] == 1
+    assert retry["details"]["verified_retry_count"] == 1
+    assert retry["details"]["controlled_rejection_count"] == 1
+    assert not any(
+        check["check_id"] == "fault_free"
+        for check in qualification["checks"]
+    )
+    assert qualification["qualified"] is True
+
+
+def test_controlled_diagnostic_rejects_interleaved_failure_declaration(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=(
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        ),
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=200_000),
+        max_output_tokens=25_000,
+        include_rejected_mutation=True,
+        rejected_retry_context="exact",
+        controlled_rejection=True,
+        controlled_rejection_interleaved=True,
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=tmp_path,
+    )
+
+    controlled = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "controlled_diagnostic_boundary"
+    )
+    assert controlled["passed"] is False
+    assert controlled["details"][
+        "verified_controlled_rejection_count"
+    ] == 0
+    assert qualification["qualified"] is False
+
+
+@pytest.mark.parametrize("corruption", ["malformed", "duplicate"])
+def test_controlled_diagnostic_fails_closed_on_declared_rejection_corruption(
+    tmp_path,
+    corruption,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=(
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        ),
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=200_000),
+        max_output_tokens=25_000,
+        include_rejected_mutation=True,
+        rejected_retry_context="exact",
+        controlled_rejection=True,
+        controlled_rejection_details_overrides=(
+            {"schema_version": "controlled-rejection-corrupt"}
+            if corruption == "malformed"
+            else None
+        ),
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    state = StateStore(tmp_path / "state.sqlite3")
+    controlled_failures = [
+        event
+        for event in state.list_events(run_id)
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    ]
+    assert len(controlled_failures) == 1
+    expected_failed_sequences = [controlled_failures[0].sequence]
+    if corruption == "duplicate":
+        duplicate = state.append_event(
+            run_id,
+            EventType.TOOL_FAILED,
+            actor=controlled_failures[0].actor,
+            correlation_id=controlled_failures[0].correlation_id,
+            payload=dict(controlled_failures[0].payload),
+        )
+        expected_failed_sequences = [duplicate.sequence]
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=tmp_path,
+    )
+
+    controlled = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "controlled_diagnostic_boundary"
+    )
+    assert controlled["passed"] is False
+    assert controlled["details"]["controlled_rejection_count"] == (
+        2 if corruption == "duplicate" else 1
+    )
+    assert controlled["details"]["verified_controlled_rejection_count"] == (
+        1 if corruption == "duplicate" else 0
+    )
+    assert (
+        controlled["details"]["failed_controlled_source_failure_sequences"]
+        == expected_failed_sequences
+    )
+    assert qualification["qualified"] is False
+
+
+def test_controlled_diagnostic_rejects_profile_manifest_fault_mismatch(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=(
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        ),
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(max_total_tokens=200_000),
+        max_output_tokens=25_000,
+        include_rejected_mutation=True,
+        rejected_retry_context="exact",
+        controlled_rejection=True,
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+        execution_plan_suite_overrides={
+            "diagnostic": {
+                "schema_version": "experiment-diagnostic-v1",
+                "profile": "d037-rejected-patch-retry-v3",
+                "required_trace_features": [
+                    "rejected_patch_retry_context"
+                ],
+            }
+        },
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=tmp_path,
+    )
+
+    plan = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+    assert plan["passed"] is False
+    assert qualification["qualified"] is False
 
 
 def test_v3_retry_context_contract_passes_vacuously_without_rejection(

@@ -387,6 +387,7 @@ class AgentRunner:
             artifacts=self.artifacts,
             sandbox=gateway_sandbox,
             tool_schema_version=manifest.tool_schema_version,
+            fault=manifest.fault,
         )
         existing_events = self.state.list_events(manifest.run_id)
         checkpoint = self.state.latest_checkpoint(manifest.run_id)

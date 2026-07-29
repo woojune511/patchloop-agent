@@ -2770,3 +2770,272 @@ def test_timeout_fault_is_recorded_without_repeating_command(tmp_path, monkeypat
     assert len(timed_out_checks) == 1
     assert sum(event.type == EventType.TOOL_CALLED for event in events) == 3
     assert events[-1].type == EventType.RUN_FAILED
+
+
+def test_controlled_rejection_full_agent_loop_rehydrates_exact_candidate(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    script = MOCK_TASK_SCRIPTS[package.public.task_id]
+    manifest = build_manifest(
+        package,
+        run_id="run_controlled_rejection_agent_e2e",
+        sandbox_backend="local",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+
+    class ControlledRetryAdapter:
+        def __init__(self) -> None:
+            self.turn = 0
+            self.contexts: list[str] = []
+
+        def next_turn(self, context, tools):
+            del tools
+            self.contexts.append(context)
+            calls = [
+                RequestedTool(
+                    "read_file",
+                    "controlled-read",
+                    {
+                        "path": script.target_path,
+                        "start_line": 1,
+                        "end_line": 200,
+                    },
+                ),
+                RequestedTool(
+                    "apply_patch",
+                    "controlled-candidate",
+                    {"patch": script.patch},
+                ),
+                RequestedTool(
+                    "apply_patch",
+                    "controlled-retry",
+                    {"patch": script.patch},
+                ),
+                RequestedTool(
+                    "run_check",
+                    "controlled-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool(
+                    "get_diff",
+                    "controlled-review",
+                    {},
+                ),
+                RequestedTool(
+                    "finish_task",
+                    "controlled-finish",
+                    {},
+                ),
+            ]
+            call = calls[self.turn]
+            self.turn += 1
+            return ModelTurn(tool_calls=[call])
+
+    adapter = ControlledRetryAdapter()
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    result = runner.start(TASK, model="mock", manifest=manifest)
+
+    assert result["outcome_kind"] == RunOutcomeKind.RESOLVED.value
+    retry_context = json.loads(adapter.contexts[2])[
+        "rejected_mutation_retry"
+    ]
+    assert retry_context["candidate"]["patch"] == script.patch
+    assert (
+        retry_context["candidate"]["content_hash"]
+        == sha256_bytes(script.patch.encode("utf-8"))
+    )
+    assert (
+        retry_context["rejection"]["error_code"]
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    )
+    assert (
+        retry_context["rejection"]["error_details"]["worktree_mutated"]
+        is False
+    )
+    assert (
+        json.loads(adapter.contexts[3])["rejected_mutation_retry"]
+        is None
+    )
+    events = runner.state.list_events(manifest.run_id)
+    assert sum(
+        event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        for event in events
+    ) == 1
+    assert sum(
+        event.type == EventType.PATCH_APPLIED for event in events
+    ) == 1
+
+
+def test_resume_reuses_durable_controlled_rejection_before_checkpoint(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    script = MOCK_TASK_SCRIPTS[package.public.task_id]
+    manifest = build_manifest(
+        package,
+        run_id="run_controlled_rejection_checkpoint_recovery",
+        sandbox_backend="local",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    original_phase_after_tool = runner._phase_after_tool
+    crashed = False
+
+    def crash_after_controlled_result(
+        run_id,
+        phase,
+        tool,
+        result,
+        task,
+        workspace,
+    ):
+        nonlocal crashed
+        if (
+            tool == "apply_patch"
+            and result.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+            and not crashed
+        ):
+            crashed = True
+            raise SystemExit(87)
+        return original_phase_after_tool(
+            run_id,
+            phase,
+            tool,
+            result,
+            task,
+            workspace,
+        )
+
+    monkeypatch.setattr(
+        runner,
+        "_phase_after_tool",
+        crash_after_controlled_result,
+    )
+    with pytest.raises(SystemExit, match="87"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    events_before = runner.state.list_events(manifest.run_id)
+    controlled_call = next(
+        event
+        for event in events_before
+        if event.type == EventType.TOOL_CALLED
+        and event.payload.get("tool") == "apply_patch"
+    )
+    controlled_failure = next(
+        event
+        for event in events_before
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    )
+    checkpoint_before = runner.state.latest_checkpoint(manifest.run_id)
+    assert checkpoint_before is not None
+    assert checkpoint_before.through_sequence < controlled_call.sequence
+    assert controlled_call.sequence < controlled_failure.sequence
+    prior_before = runner.state.get_action_result(
+        manifest.run_id,
+        str(controlled_call.correlation_id),
+        str(controlled_call.payload["input_hash"]),
+    )
+    assert prior_before is not None
+    assert prior_before.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+
+    class ResumeAdapter:
+        def __init__(self) -> None:
+            self.turn = 0
+
+        def next_turn(self, context, tools):
+            del context, tools
+            calls = [
+                RequestedTool(
+                    "apply_patch",
+                    "controlled-recovery-retry",
+                    {"patch": script.patch},
+                ),
+                RequestedTool(
+                    "run_check",
+                    "controlled-recovery-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool(
+                    "get_diff",
+                    "controlled-recovery-review",
+                    {},
+                ),
+                RequestedTool(
+                    "finish_task",
+                    "controlled-recovery-finish",
+                    {},
+                ),
+            ]
+            call = calls[self.turn]
+            self.turn += 1
+            return ModelTurn(tool_calls=[call])
+
+    resumed_runner = AgentRunner(runner.root)
+    adapter = ResumeAdapter()
+    monkeypatch.setattr(
+        resumed_runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    def reject_recomputation(*_args, **_kwargs):
+        raise AssertionError("durable controlled rejection must be reused")
+
+    monkeypatch.setattr(
+        ToolGateway,
+        "_controlled_rejection",
+        reject_recomputation,
+    )
+    result = resumed_runner.resume(manifest.run_id)
+
+    assert result["outcome_kind"] == RunOutcomeKind.RESOLVED.value
+    events = runner.state.list_events(manifest.run_id)
+    assert sum(
+        event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        for event in events
+    ) == 1
+    assert not any(
+        event.type == EventType.PATCH_APPLIED
+        and event.correlation_id == controlled_call.correlation_id
+        for event in events
+    )
+    assert sum(
+        event.type == EventType.PATCH_APPLIED
+        and event.correlation_id == "controlled-recovery-retry"
+        for event in events
+    ) == 1
+    prior_after = runner.state.get_action_result(
+        manifest.run_id,
+        str(controlled_call.correlation_id),
+        str(controlled_call.payload["input_hash"]),
+    )
+    assert prior_after == prior_before

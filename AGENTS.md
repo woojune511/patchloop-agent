@@ -12,7 +12,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-037 r5 terminal inconclusive disposition gate`다.
+- 현재 milestone은 `D-037 controlled diagnostic offline gate`다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -35,10 +35,13 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   response, official hidden/regression/scope/safety pass, `trace-qualification-v2` 23/23을
   남겼다. 그러나 rejected candidate와 retry episode가 모두 0이어서 D-037 diagnostic은
   `retry_episode_not_observed`로 terminal inconclusive다. 계약대로 자동 재실행하지 않는다.
-  다음 작업은 paid run이 아니라 이 inconclusive 결과 뒤 D-037 provider gate를 유지할지,
-  별도 version의 controlled diagnostic으로 바꿀지를 offline에서 결정하고 계약화하는 일이다.
-  그 전에는 tool-v2/context-v3 Terra pilot을, Terra pilot이 통과하기 전에는
-  memory-development campaign을 실행하지 않는다.
+  D-043은 별도 r6/profile v4에서 첫 preflight-valid `PatchPrepared` candidate를 실제
+  mutation 전에 정확히 한 번 거절하고 next-request exact rehydration을 검증하는 controlled
+  diagnostic을 구현했다. 이 경로는 offline gateway, crash recovery, agent-loop와 qualification
+  evidence 및 529 passed/2 skipped broad regression을 통과했지만 provider call은 아직 없다.
+  Clean execution hash와 별도 승인 전에는 r6를, r6 gate 통과 전에는
+  tool-v2/context-v3 Terra pilot을, Terra pilot이 통과하기 전에는 memory-development
+  campaign을 실행하지 않는다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을

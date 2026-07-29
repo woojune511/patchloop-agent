@@ -10,7 +10,7 @@ import pytest
 from patchloop.agent.context import build_context
 from patchloop.agent.tools import TOOL_SCHEMAS, ToolGateway
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact, Checkpoint, EventType, Phase
+from patchloop.contracts import Artifact, Checkpoint, EventType, FaultSpec, Phase
 from patchloop.errors import ActionConflict, RecoveryError
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import build_manifest
@@ -20,9 +20,19 @@ from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_text, utc_now
 
 
-def _smoke_gateway(tmp_path, run_id, *, tool_schema_version="v2"):
+def _smoke_gateway(
+    tmp_path,
+    run_id,
+    *,
+    tool_schema_version="v2",
+    fault: FaultSpec | None = None,
+):
     package = load_task_package("tasks/smoke/csv-quoted-newline")
-    manifest = build_manifest(package, run_id=run_id)
+    manifest = build_manifest(
+        package,
+        run_id=run_id,
+        fault=fault,
+    )
     state = StateStore(tmp_path / "state.sqlite3")
     state.create_run(manifest)
     manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
@@ -39,6 +49,7 @@ def _smoke_gateway(tmp_path, run_id, *, tool_schema_version="v2"):
         artifacts=ArtifactStore(tmp_path / "artifacts"),
         sandbox=LocalSandbox(),
         tool_schema_version=tool_schema_version,
+        fault=manifest.fault,
     )
     return manager, workspace, gateway
 
@@ -106,6 +117,7 @@ def _fresh_gateway(gateway: ToolGateway) -> ToolGateway:
         artifacts=gateway.artifacts,
         sandbox=gateway.sandbox,
         tool_schema_version=gateway.tool_schema_version,
+        fault=gateway.fault,
     )
 
 
@@ -171,6 +183,425 @@ def test_apply_patch_recounts_incorrect_hunk_line_totals(tmp_path) -> None:
     }
     assert objects_after == objects_before
     assert not (workspace / ".git" / "patchloop-recovery").exists()
+
+
+def test_controlled_rejection_is_one_shot_and_does_not_mutate_worktree(
+    tmp_path,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_controlled_rejection",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    patch = _r2_style_recount_patch()
+    baseline = manager.diff_summary(workspace)
+
+    rejected = gateway.execute(
+        "apply_patch",
+        "controlled-first-patch",
+        {"patch": patch},
+    )
+
+    assert rejected.status == "rejected"
+    assert rejected.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    assert (
+        rejected.output["error_details"]["schema_version"]
+        == "controlled-rejection-v1"
+    )
+    assert rejected.output["error_details"]["worktree_mutated"] is False
+    assert manager.diff_summary(workspace) == baseline
+    events = gateway.state.list_events(gateway.run_id)
+    assert sum(
+        event.type == EventType.PATCH_PREPARED for event in events
+    ) == 1
+    assert sum(
+        event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        for event in events
+    ) == 1
+    assert not any(
+        event.type == EventType.PATCH_APPLIED for event in events
+    )
+
+    replayed = gateway.execute(
+        "apply_patch",
+        "controlled-first-patch",
+        {"patch": patch},
+    )
+    assert replayed.status == "rejected"
+    assert replayed.output["replayed"] is True
+    assert manager.diff_summary(workspace) == baseline
+
+    recovered_gateway = _fresh_gateway(gateway)
+    applied = recovered_gateway.execute(
+        "apply_patch",
+        "controlled-second-patch",
+        {"patch": patch},
+    )
+    assert applied.status == "succeeded"
+    assert manager.diff_summary(workspace).changed_files == [
+        "mini_data_utils/csvlite.py"
+    ]
+    events = gateway.state.list_events(gateway.run_id)
+    assert sum(
+        event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        for event in events
+    ) == 1
+    assert sum(
+        event.type == EventType.PATCH_APPLIED for event in events
+    ) == 1
+
+
+def test_controlled_rejection_requires_prepared_intent_to_be_latest(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_controlled_rejection_interleaved_prepare",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    baseline = manager.diff_summary(workspace)
+    original_prepare = gateway._prepare_patch_mutation
+
+    def interleaved_prepare(*args, **kwargs):
+        intent = original_prepare(*args, **kwargs)
+        gateway.state.append_event(
+            gateway.run_id,
+            EventType.LOOP_DETECTED,
+            actor="tamper-test",
+            payload={"reason": "interleaved-after-prepare"},
+        )
+        return intent
+
+    monkeypatch.setattr(
+        gateway,
+        "_prepare_patch_mutation",
+        interleaved_prepare,
+    )
+    result = gateway.execute(
+        "apply_patch",
+        "controlled-interleaved-prepare",
+        {"patch": _r2_style_recount_patch()},
+    )
+
+    assert result.status == "failed"
+    assert result.error_code == "RECOVERY_ERROR"
+    assert result.output["fatal"] is True
+    assert "not the current latest event" in (
+        result.error_message or ""
+    )
+    assert manager.diff_summary(workspace) == baseline
+    assert not any(
+        event.type == EventType.PATCH_APPLIED
+        for event in gateway.state.list_events(gateway.run_id)
+    )
+
+
+def test_controlled_rejection_durable_declaration_rejects_interleaving(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_controlled_rejection_interleaved_declaration",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    baseline = manager.diff_summary(workspace)
+    original_rejection = gateway._controlled_rejection
+
+    def interleaved_rejection(**kwargs):
+        rejection = original_rejection(**kwargs)
+        gateway.state.append_event(
+            gateway.run_id,
+            EventType.LOOP_DETECTED,
+            actor="tamper-test",
+            payload={"reason": "interleaved-before-failure"},
+        )
+        return rejection
+
+    monkeypatch.setattr(
+        gateway,
+        "_controlled_rejection",
+        interleaved_rejection,
+    )
+    rejected = gateway.execute(
+        "apply_patch",
+        "controlled-interleaved-declaration",
+        {"patch": _r2_style_recount_patch()},
+    )
+    assert rejected.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+
+    recovered = _fresh_gateway(gateway)
+    result = recovered.execute(
+        "apply_patch",
+        "controlled-after-interleaved-declaration",
+        {"patch": _r2_style_recount_patch()},
+    )
+
+    assert result.status == "failed"
+    assert result.error_code == "RECOVERY_ERROR"
+    assert result.output["fatal"] is True
+    assert "evidence is malformed" in (result.error_message or "")
+    assert manager.diff_summary(workspace) == baseline
+    assert not any(
+        event.type == EventType.PATCH_APPLIED
+        for event in gateway.state.list_events(gateway.run_id)
+    )
+
+
+def test_invalid_patch_does_not_consume_controlled_rejection(
+    tmp_path,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_controlled_after_invalid",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    baseline = manager.diff_summary(workspace)
+
+    invalid = gateway.execute(
+        "apply_patch",
+        "invalid-before-controlled",
+        {"patch": "*** Begin Patch\n*** End Patch"},
+    )
+    controlled = gateway.execute(
+        "apply_patch",
+        "first-prepared-controlled",
+        {"patch": _r2_style_recount_patch()},
+    )
+
+    assert invalid.status == "rejected"
+    assert invalid.error_code == "CONTRACT_ERROR"
+    assert controlled.status == "rejected"
+    assert controlled.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    assert manager.diff_summary(workspace) == baseline
+    controlled_failures = [
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    ]
+    assert len(controlled_failures) == 1
+
+
+@pytest.mark.parametrize(
+    "crash_boundary",
+    ["after-tool-called", "after-patch-prepared"],
+)
+def test_controlled_rejection_recovery_never_applies_interrupted_patch(
+    tmp_path,
+    monkeypatch,
+    crash_boundary,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        f"run_controlled_recovery_{crash_boundary}",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    checkpoint = _durable_checkpoint(gateway)
+    baseline = manager.diff_summary(workspace)
+    if crash_boundary == "after-tool-called":
+        monkeypatch.setattr(
+            gateway,
+            "_prepare_patch_mutation",
+            lambda *_args, **_kwargs: (_ for _ in ()).throw(
+                KeyboardInterrupt("synthetic crash after ToolCalled")
+            ),
+        )
+    else:
+        monkeypatch.setattr(
+            gateway,
+            "_controlled_rejection",
+            lambda **_kwargs: (_ for _ in ()).throw(
+                KeyboardInterrupt("synthetic crash after PatchPrepared")
+            ),
+        )
+
+    with pytest.raises(KeyboardInterrupt):
+        gateway.execute(
+            "apply_patch",
+            f"controlled-recovery-{crash_boundary}",
+            {"patch": _r2_style_recount_patch()},
+        )
+
+    assert manager.diff_summary(workspace) == baseline
+    recovered = _fresh_gateway(gateway)
+    result = recovered.reconcile_interrupted_patch(checkpoint)
+
+    assert result is not None
+    assert result.status == "rejected"
+    assert result.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    assert manager.diff_summary(workspace) == baseline
+    events = gateway.state.list_events(gateway.run_id)
+    assert sum(
+        event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        for event in events
+    ) == 1
+    assert not any(
+        event.type == EventType.PATCH_APPLIED for event in events
+    )
+
+
+def test_controlled_rejection_recovery_fails_closed_on_malformed_declaration(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_controlled_recovery_malformed_declaration",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    baseline = manager.diff_summary(workspace)
+    original_rejection = gateway._controlled_rejection
+
+    def malformed_rejection(**kwargs):
+        rejection = original_rejection(**kwargs)
+        rejection.details["schema_version"] = "controlled-rejection-corrupt"
+        return rejection
+
+    monkeypatch.setattr(
+        gateway,
+        "_controlled_rejection",
+        malformed_rejection,
+    )
+    malformed = gateway.execute(
+        "apply_patch",
+        "controlled-malformed-first",
+        {"patch": _r2_style_recount_patch()},
+    )
+    assert malformed.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+
+    recovered = _fresh_gateway(gateway)
+    result = recovered.execute(
+        "apply_patch",
+        "controlled-malformed-retry",
+        {"patch": _r2_style_recount_patch()},
+    )
+
+    assert result.status == "failed"
+    assert result.error_code == "RECOVERY_ERROR"
+    assert result.output["fatal"] is True
+    assert "evidence is malformed" in (result.error_message or "")
+    assert manager.diff_summary(workspace) == baseline
+    assert not any(
+        event.type == EventType.PATCH_APPLIED
+        for event in gateway.state.list_events(gateway.run_id)
+    )
+
+
+def test_controlled_rejection_fails_closed_when_intent_is_not_first_prepared(
+    tmp_path,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_controlled_rejection_not_first_prepared",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    baseline = manager.diff_summary(workspace)
+    gateway.state.append_event(
+        gateway.run_id,
+        EventType.PATCH_PREPARED,
+        actor="tool-gateway",
+        correlation_id="corrupt-earlier-intent",
+        payload={"schema_version": "patch-mutation-intent-v1"},
+    )
+
+    result = gateway.execute(
+        "apply_patch",
+        "controlled-not-first-prepared",
+        {"patch": _r2_style_recount_patch()},
+    )
+
+    assert result.status == "failed"
+    assert result.error_code == "RECOVERY_ERROR"
+    assert result.output["fatal"] is True
+    assert "not bound to the first prepared patch" in (
+        result.error_message or ""
+    )
+    assert manager.diff_summary(workspace) == baseline
+    assert not any(
+        event.type == EventType.PATCH_APPLIED
+        for event in gateway.state.list_events(gateway.run_id)
+    )
+
+
+def test_controlled_rejection_recovery_fails_closed_on_duplicate_declaration(
+    tmp_path,
+) -> None:
+    manager, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_controlled_recovery_duplicate_declaration",
+        fault=FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        ),
+    )
+    baseline = manager.diff_summary(workspace)
+    rejected = gateway.execute(
+        "apply_patch",
+        "controlled-duplicate-first",
+        {"patch": _r2_style_recount_patch()},
+    )
+    assert rejected.error_code == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    controlled = next(
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("error_code")
+        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+    )
+    gateway.state.append_event(
+        gateway.run_id,
+        EventType.TOOL_FAILED,
+        actor=controlled.actor,
+        correlation_id=controlled.correlation_id,
+        payload=dict(controlled.payload),
+    )
+
+    recovered = _fresh_gateway(gateway)
+    result = recovered.execute(
+        "apply_patch",
+        "controlled-duplicate-retry",
+        {"patch": _r2_style_recount_patch()},
+    )
+
+    assert result.status == "failed"
+    assert result.error_code == "RECOVERY_ERROR"
+    assert result.output["fatal"] is True
+    assert "duplicate declarations" in (result.error_message or "")
+    assert manager.diff_summary(workspace) == baseline
+    assert not any(
+        event.type == EventType.PATCH_APPLIED
+        for event in gateway.state.list_events(gateway.run_id)
+    )
 
 
 def test_interrupted_patch_in_pre_state_is_applied_once_on_recovery(

@@ -104,6 +104,19 @@ evidence이지만 D-037을 검증하거나 반증하지 않고 Terra/development
 [mini D-037 r5 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r5.json)에
 보존했다.
 
+D-043은 rejection이 우연히 발생할 때까지 paid run을 반복하는 대신
+`experiments/dev-validation-gpt54mini-d037-r6.yaml`의 별도
+`d037-rejected-patch-retry-v4` profile을 도입한다. 이 profile만 immutable
+`FaultSpec(type=controlled-reject-first-prepared-patch, trigger_after=1)`을 사용한다.
+첫 `apply_patch`가 raw-diff, tracked-target, current-context applicability와 non-empty
+preflight를 통과해 `PatchPrepared`가 된 직후, 실제 worktree write 전에
+`CONTROLLED_DIAGNOSTIC_REJECTION`으로 정확히 한 번 닫는다. 다음 request는 기존 D-037
+contract로 candidate bytes·hash·structured reason을 exact rehydrate한다. Qualifier는
+controlled rejection 1회, 그 action의 `PatchApplied` 0회, 전체 retry 검증과 evaluator
+도달을 함께 요구한다. Invalid patch는 injection을 소모하지 않고, crash 뒤 resume도
+prepared patch를 적용하지 않는다. 이 경로는 현재 offline evidence만 있으며 r6 provider
+call, measured usage, evaluator verdict 또는 D-037 live pass는 아직 없다.
+
 ## 구현된 핵심 경로
 
 ```text

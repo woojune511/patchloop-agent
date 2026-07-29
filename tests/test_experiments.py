@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from typer.testing import CliRunner
 
 from patchloop.cli import app
-from patchloop.contracts import DatasetRole, ExperimentPurpose
+from patchloop.contracts import DatasetRole, ExperimentPurpose, FaultSpec
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
 from patchloop.evals import qualification as trace_qualification
@@ -304,6 +304,70 @@ def test_d037_r5_binds_tail_reserve_budget_without_changing_output_allowance(
     )
 
 
+def test_d037_r6_binds_one_shot_controlled_rejection(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_path = "experiments/dev-validation-gpt54mini-d037-r6.yaml"
+
+    suite = eval_runner.load_suite(suite_path)
+
+    assert suite.diagnostic is not None
+    assert suite.diagnostic.profile == "d037-rejected-patch-retry-v4"
+    assert suite.max_output_tokens == 25_000
+    assert suite.budget.max_total_tokens == 200_000
+    assert eval_runner._diagnostic_fault(suite) == FaultSpec(
+        type="controlled-reject-first-prepared-patch",
+        trigger_after=1,
+    )
+
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert {row["code"] for row in preflight["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert preflight["suite"]["diagnostic"]["profile"] == (
+        "d037-rejected-patch-retry-v4"
+    )
+    assert preflight["pricing"]["budget_upper_bound_usd"] == pytest.approx(
+        1.0125
+    )
+
+
+def test_d037_r6_profile_change_removes_controlled_fault_and_changes_hash(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    payload = yaml.safe_load(
+        Path(
+            "experiments/dev-validation-gpt54mini-d037-r6.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    controlled_path = tmp_path / "controlled.yaml"
+    controlled_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    controlled = eval_runner.preflight_suite(controlled_path)
+
+    payload["diagnostic"]["profile"] = (
+        "d037-rejected-patch-retry-v3"
+    )
+    natural_path = tmp_path / "natural.yaml"
+    natural_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    natural_suite = eval_runner.load_suite(natural_path)
+    natural = eval_runner.preflight_suite(natural_path)
+
+    assert eval_runner._diagnostic_fault(natural_suite) == FaultSpec()
+    assert natural["execution_hash"] != controlled["execution_hash"]
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -528,6 +592,86 @@ def test_d037_diagnostic_truth_table(
     )
 
     diagnostic = eval_runner._diagnostic_result(suite, qualification)
+
+    assert diagnostic is not None
+    assert diagnostic["status"] == expected_status
+    assert diagnostic["reason_code"] == expected_reason
+
+
+@pytest.mark.parametrize(
+    (
+        "controlled_count",
+        "verified_controlled_count",
+        "controlled_failures",
+        "controlled_applied",
+        "expected_status",
+        "expected_reason",
+    ),
+    [
+        (1, 1, [], [], "passed", None),
+        (
+            0,
+            0,
+            [],
+            [],
+            "failed",
+            "controlled_rejection_not_verified",
+        ),
+        (
+            2,
+            1,
+            [41],
+            [],
+            "failed",
+            "controlled_rejection_not_verified",
+        ),
+        (
+            1,
+            1,
+            [],
+            [42],
+            "failed",
+            "controlled_rejection_not_verified",
+        ),
+    ],
+)
+def test_d037_controlled_diagnostic_truth_table(
+    controlled_count: int,
+    verified_controlled_count: int,
+    controlled_failures: list[int],
+    controlled_applied: list[int],
+    expected_status: str,
+    expected_reason: str | None,
+) -> None:
+    suite = eval_runner.load_suite(
+        "experiments/dev-validation-gpt54mini-d037-r6.yaml"
+    )
+    qualification = _retry_qualification(
+        retry_episode_count=1,
+        verified_retry_count=1,
+        failed_source_failure_sequences=[],
+    )
+    qualification["trace_features"][
+        "rejected_patch_retry_context"
+    ].update(
+        {
+            "controlled_rejection_count": controlled_count,
+            "verified_controlled_rejection_count": (
+                verified_controlled_count
+            ),
+            "failed_controlled_source_failure_sequences": (
+                controlled_failures
+            ),
+            "controlled_patch_applied_sequences": (
+                controlled_applied
+            ),
+        }
+    )
+
+    diagnostic = eval_runner._diagnostic_result(
+        suite,
+        qualification,
+    )
 
     assert diagnostic is not None
     assert diagnostic["status"] == expected_status

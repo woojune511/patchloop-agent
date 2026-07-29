@@ -273,6 +273,34 @@ rejected mutation을 만들지 않고 evaluator까지 도달하면 generic quali
 Evaluator 미도달은 기존대로 diagnostic failure다. R5는 새 experiment ID, clean execution
 hash와 별도 비용 승인으로 최대 한 번 실행한다.
 
+D-043 controlled diagnostic은 r3-r5의 natural-rejection 결과를 재해석하지 않는다. 새
+r6/profile v4에서만 첫 preflight-valid `PatchPrepared` candidate를 mutation 전에 한 번
+거절한다. Primary task grading은 여전히 deterministic evaluator가 수행하며 controlled
+rejection 자체는 model-quality success/failure가 아니다. 이 lane의 목적은 real provider
+request가 PatchLoop의 exact rejected-patch rehydration 경로를 통과해 evaluator까지
+이어지는지를 branch-cover하는 것이다. Verified controlled rejection은 correlated
+`PatchPrepared` 바로 다음 sequence의 `ToolFailed`여야 하며, intervening event가 있는
+trace는 worktree mutation 여부와 관계없이 fail-closed한다.
+
+V4 pass는 다음 논리곱이다.
+
+```text
+qualification == true
+AND evaluation_reached == true
+AND controlled_rejection_count == 1
+AND verified_controlled_rejection_count == 1
+AND controlled_patch_applied_sequences == []
+AND retry_episode_count >= 1
+AND verified_retry_count == retry_episode_count
+AND failed_source_failure_sequences == []
+AND failed_controlled_source_failure_sequences == []
+```
+
+Controlled rejection 뒤 수정 patch가 task를 해결했는지는 별도 official verdict로 보고한다.
+따라서 이 run은 D-037 harness property evidence가 될 수 있지만 자연 발생 오류에서의 model
+recovery rate나 memory 효과를 측정하지 않는다. Core headline, paired comparison과 stress
+schedule에는 포함하지 않는다.
+
 ## 5. Controlled variables
 
 한 experiment block 안에서 다음을 고정한다.
@@ -298,8 +326,8 @@ execution window를 provenance로 사용한다. D-031 provider telemetry를 검�
 development-validation model-candidate pilot의 historical r1~r3는
 `gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run 전체
 input+output 90,000 token을 고정한다. 새 D-037 corrective r4만 hash-bound diagnostic
-profile v2에서 25,000/120,000 pair를 허용하고, 후속 r5 profile v3만
-25,000/200,000 pair와 `model-generation-block-v1`을 허용한다. 모든 suite는 별도
+profile v2에서 25,000/120,000 pair를 허용하고, 후속 r5 profile v3와 controlled r6
+profile v4만 25,000/200,000 pair와 `model-generation-block-v1`을 허용한다. 모든 suite는 별도
 experiment ID로 보존하며, 이 diagnostic lane은 core headline 비교나 Terra 선행 gate에
 포함하지 않는다.
 

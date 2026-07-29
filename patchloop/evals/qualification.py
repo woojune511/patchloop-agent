@@ -332,6 +332,7 @@ def _execution_plan_matches(
         # payload, and recalculate the hash using the same contract as preflight.
         from patchloop.evals.runner import (
             ExperimentSuite,
+            _diagnostic_fault,
             _execution_hash,
             _suite_hash,
             _suite_payload,
@@ -375,6 +376,7 @@ def _execution_plan_matches(
         and parsed_suite.dataset_manifest_hash
         == experiment.dataset_manifest_hash
         and manifest.memory.condition in parsed_suite.conditions
+        and _diagnostic_fault(parsed_suite) == manifest.fault
     )
     if not suite_contract_matches:
         return False
@@ -1528,6 +1530,173 @@ def _rejected_patch_retry_context_evidence(
     }
 
 
+def _controlled_rejection_evidence(
+    *,
+    manifest: RunManifest,
+    events,
+) -> tuple[bool, dict[str, Any]]:
+    """Bind the one diagnostic rejection to a prepared, unmutated patch."""
+
+    failures = [
+        event
+        for event in events
+        if (
+            event.type == EventType.TOOL_FAILED
+            and event.payload.get("error_code")
+            == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        )
+    ]
+    verified_sequences: list[int] = []
+    failed_sequences: list[int] = []
+    patch_applied_sequences: list[int] = []
+    all_prepared = [
+        event
+        for event in events
+        if event.type == EventType.PATCH_PREPARED
+    ]
+
+    for index, failure in enumerate(failures):
+        action_id = failure.correlation_id
+        calls = [
+            event
+            for event in events
+            if (
+                event.type == EventType.TOOL_CALLED
+                and event.actor == "agent"
+                and event.payload.get("tool") == "apply_patch"
+                and event.correlation_id == action_id
+                and event.sequence < failure.sequence
+            )
+        ]
+        prepared = [
+            event
+            for event in all_prepared
+            if (
+                event.correlation_id == action_id
+                and event.sequence < failure.sequence
+            )
+        ]
+        applied = [
+            event
+            for event in events
+            if (
+                event.type == EventType.PATCH_APPLIED
+                and event.correlation_id == action_id
+            )
+        ]
+        patch_applied_sequences.extend(
+            event.sequence for event in applied
+        )
+        call = calls[0] if len(calls) == 1 else None
+        intent = prepared[0] if len(prepared) == 1 else None
+        details = failure.payload.get("error_details")
+        expected_details = None
+        if call is not None and intent is not None:
+            patch_artifact = call.payload.get("patch_artifact")
+            candidate_hash = (
+                patch_artifact.get("content_hash")
+                if isinstance(patch_artifact, dict)
+                else None
+            )
+            expected_details = {
+                "schema_version": "controlled-rejection-v1",
+                "stage": "diagnostic",
+                "reason": "controlled_rejection",
+                "guidance": (
+                    "Review the rehydrated candidate and rejection evidence, "
+                    "then retry with a new action_id."
+                ),
+                "fault_type": (
+                    "controlled-reject-first-prepared-patch"
+                ),
+                "trigger": "first-preflight-valid-apply-patch",
+                "trigger_after": 1,
+                "source_call_sequence": call.sequence,
+                "source_prepared_sequence": intent.sequence,
+                "candidate_content_hash": candidate_hash,
+                "input_hash": call.payload.get("input_hash"),
+                "prepared_intent_content_hash": intent.payload.get(
+                    "content_hash"
+                ),
+                "baseline_worktree_diff_hash": intent.payload.get(
+                    "baseline_worktree_diff_hash"
+                ),
+                "expected_worktree_diff_hash": intent.payload.get(
+                    "expected_worktree_diff_hash"
+                ),
+                "observed_worktree_diff_hash": intent.payload.get(
+                    "baseline_worktree_diff_hash"
+                ),
+                "worktree_mutated": False,
+            }
+        episode_ok = bool(
+            index == 0
+            and failure.actor == "tool-gateway"
+            and failure.payload.get("tool") == "apply_patch"
+            and failure.payload.get("status") == "rejected"
+            and isinstance(action_id, str)
+            and action_id
+            and call is not None
+            and intent is not None
+            and intent.actor == "tool-gateway"
+            and intent.payload.get("schema_version")
+            == "patch-mutation-intent-v1"
+            and call.sequence < intent.sequence < failure.sequence
+            and failure.sequence == intent.sequence + 1
+            and all_prepared
+            and intent.sequence == all_prepared[0].sequence
+            and expected_details is not None
+            and all(
+                isinstance(expected_details.get(field), str)
+                and expected_details[field]
+                for field in (
+                    "candidate_content_hash",
+                    "input_hash",
+                    "prepared_intent_content_hash",
+                    "baseline_worktree_diff_hash",
+                    "expected_worktree_diff_hash",
+                    "observed_worktree_diff_hash",
+                )
+            )
+            and details == expected_details
+            and not applied
+        )
+        if episode_ok:
+            verified_sequences.append(failure.sequence)
+        else:
+            failed_sequences.append(failure.sequence)
+
+    passed = bool(
+        manifest.fault.type
+        == "controlled-reject-first-prepared-patch"
+        and manifest.fault.trigger_after == 1
+        and manifest.experiment is not None
+        and manifest.experiment.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+        and EventType.FAULT_INJECTED
+        not in {event.type for event in events}
+        and len(failures) == 1
+        and len(verified_sequences) == 1
+        and not failed_sequences
+        and not patch_applied_sequences
+    )
+    return passed, {
+        "controlled_rejection_count": len(failures),
+        "verified_controlled_rejection_count": len(
+            verified_sequences
+        ),
+        "controlled_source_failure_sequences": sorted(
+            verified_sequences
+        ),
+        "failed_controlled_source_failure_sequences": sorted(
+            failed_sequences
+        ),
+        "controlled_patch_applied_sequences": sorted(
+            patch_applied_sequences
+        ),
+    }
+
+
 def _complete_get_diff_in_request(
     *,
     context_event,
@@ -2353,8 +2522,16 @@ def qualify_run(
         model_contract_ok,
         **model_contract_details,
     )
-    fault_ok = manifest.fault.type == "none" and EventType.FAULT_INJECTED not in event_types
-    add("fault_free", fault_ok, fault=manifest.fault.type)
+    controlled_rejection_mode = (
+        manifest.fault.type
+        == "controlled-reject-first-prepared-patch"
+    )
+    if not controlled_rejection_mode:
+        fault_ok = (
+            manifest.fault.type == "none"
+            and EventType.FAULT_INJECTED not in event_types
+        )
+        add("fault_free", fault_ok, fault=manifest.fault.type)
 
     try:
         dataset, dataset_hash, _ = require_frozen_dataset(dataset_manifest_path)
@@ -2538,6 +2715,35 @@ def qualify_run(
             "rejected_patch_retry_context",
             rejected_patch_retry_context_ok,
             **rejected_patch_retry_context_details,
+        )
+        if controlled_rejection_mode:
+            (
+                controlled_rejection_ok,
+                controlled_rejection_details,
+            ) = _controlled_rejection_evidence(
+                manifest=manifest,
+                events=events,
+            )
+            rejected_patch_retry_context_details.update(
+                controlled_rejection_details
+            )
+            checks[-1]["details"].update(
+                controlled_rejection_details
+            )
+            add(
+                "controlled_diagnostic_boundary",
+                controlled_rejection_ok,
+                fault=manifest.fault.type,
+                trigger_after=manifest.fault.trigger_after,
+                **controlled_rejection_details,
+            )
+    elif controlled_rejection_mode:
+        add(
+            "controlled_diagnostic_boundary",
+            False,
+            fault=manifest.fault.type,
+            trigger_after=manifest.fault.trigger_after,
+            reason="phase-evidence-v3-required",
         )
     verifier_evidence_declared = bool(
         result is not None
@@ -2962,6 +3168,8 @@ def qualify_run(
         trace_check_ids.add("worker_claim_provenance")
     if manifest.context_policy_version == "phase-evidence-v3":
         trace_check_ids.add("rejected_patch_retry_context")
+    if controlled_rejection_mode:
+        trace_check_ids.add("controlled_diagnostic_boundary")
     trace_integrity = all(
         check["passed"] for check in checks if check["check_id"] in trace_check_ids
     )

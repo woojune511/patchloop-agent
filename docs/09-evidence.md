@@ -1416,6 +1416,42 @@ The compatibility rule ignores only the historical neutral
 `binding_required=false` / `binding_valid=true` detail-shape pair. Recomputed check outcomes and
 all other fields must still match; a non-neutral change remains an immutable-artifact error.
 
+### D-043 controlled diagnostic offline evidence
+
+The terminal r5 result made another opportunistic paid rerun inappropriate: it reached the
+evaluator successfully but naturally produced zero rejected mutations. D-043 therefore introduces
+the new `d037-rejected-patch-retry-v4` profile and
+`controlled-reject-first-prepared-patch@trigger_after=1` manifest fault. It is not part of the
+public `inject-fault` aliases or the frozen stress schedule.
+
+The gateway rejects the first patch only after `patch-mutation-intent-v1` preparation proves a raw
+Git diff against tracked regular targets is applicable to the current state and produces a
+non-empty expected diff. It records one `CONTROLLED_DIAGNOSTIC_REJECTION` result before postimage
+write. Tests prove the worktree remains at the prepared baseline, invalid patches do not consume
+the trigger, the same action replays the durable rejection, a new action can apply the patch, and
+fresh recovery after either `ToolCalled` or `PatchPrepared` closes the action as rejected without
+`PatchApplied`. A separate checkpoint-boundary E2E terminates after the rejection result is durable
+but before the next checkpoint, then proves resume reuses that exact result without recomputation
+or duplicate mutation.
+
+An offline full agent loop independently proves that the first next request contains the exact
+candidate bytes, content hash and structured rejection, while the following request clears the
+one-turn retry block. Qualification reconstructs the candidate/result CAS and request body and
+adds `controlled_diagnostic_boundary`: exactly one controlled rejection, exactly one verified
+controlled failure immediately adjacent to its `PatchPrepared`, zero `PatchApplied` events for
+that action and no failed controlled sequence.
+The approved-plan check additionally requires profile v4 to map exactly to the controlled
+manifest fault. Profile/fault mismatch fails qualification.
+
+The final offline regression collected 531 tests and completed with 529 passed and 2 expected
+skips. Ruff and `git diff --check` also passed. Corruption tests prove a malformed declaration,
+duplicate declaration, preceding `PatchPrepared` or event interleaved before the controlled failure
+fails closed instead of consuming or reinjecting the diagnostic fault.
+
+No provider generation, measured token usage, official evaluator result or live D-037 pass is
+claimed by this section. `experiments/dev-validation-gpt54mini-d037-r6.yaml` remains unapproved and
+must receive a new clean execution hash and explicit $2 approval before its single allowed run.
+
 ## Open gates
 
 `patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;

@@ -304,9 +304,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   D-041 fixed the r5 contract at strict 25,000/200,000 and versioned newly emitted exact-request
   generic terminal blocks as `model-generation-block-v1`; the old r4 result remains 21/22. R5
   then passed official task evaluation and trace qualification but had zero retry episodes, so
-  the D-037 diagnostic is inconclusive. The next gate is an offline disposition of this provider
-  diagnostic, not another opportunistic paid rerun. A newly approved tool-v2/context-v3 Terra
-  pilot remains blocked until that disposition is contracted and tested.
+  the D-037 diagnostic is inconclusive. D-043 now implements a separately versioned controlled
+  r6 diagnostic offline: it rejects the first preflight-valid prepared patch before mutation and
+  requires exact next-request recovery plus evaluator arrival. This proves a harness branch, not
+  natural model-error recovery or memory benefit. No r6 provider call or live D-037 pass exists
+  yet, so a newly approved tool-v2/context-v3 Terra pilot remains blocked.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.

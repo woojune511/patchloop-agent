@@ -93,6 +93,8 @@ is preserved separately under `reports/live-pilot/`:
   consumed 25,000 per-call / 120,000 total token contract, inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-d037-r5.yaml`: D-041 profile-v3 diagnostic contract;
   consumed strict 25,000 per-call / 200,000 total contract; terminal inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-d037-r6.yaml`: D-043 profile-v4 controlled diagnostic;
+  offline-tested but unapproved and not run against the provider
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -296,9 +298,28 @@ generic qualification failed before evaluation; r4 is also failed because its ge
 budget block is unversioned and evaluation was not reached. Neither zero episode is an
 inconclusive result. R5 is exactly that case: generic qualification and task evaluation passed, but
 zero retry episodes make the diagnostic inconclusive. Never reuse any consumed hash. Do not create
-another paid diagnostic merely to wait for an accidental rejection. First decide offline whether
-the provider gate remains opportunistic or moves to a separately versioned controlled diagnostic,
-then implement and test that contract before requesting any new paid approval.
+another paid diagnostic merely to wait for an accidental rejection.
+
+D-043 resolves that disposition with a new controlled r6 suite. Before any paid approval, run its
+offline gateway/recovery/qualification tests and inspect the unapproved preflight:
+
+```powershell
+.venv\Scripts\python.exe -m pytest `
+  tests/test_tool_gateway.py `
+  tests/test_agent_runtime.py `
+  tests/test_experiments.py `
+  tests/test_trace_qualification.py
+
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-d037-r6.yaml `
+  --preflight-only
+```
+
+The preflight must remain blocked on live approval/hash until the repository is clean and the exact
+execution hash is reviewed. Do not pass approval flags without a new explicit approval for that
+hash and the $2 cap. R6 may run at most once. It must show exactly one controlled rejection, zero
+`PatchApplied` for that rejected action, exact next-request rehydration and evaluator arrival.
+Official task success remains a separate result.
 
 After that disposition gate is resolved, create a separately approved Terra
 development-validation pilot. Only after that run

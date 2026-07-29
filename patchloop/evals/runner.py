@@ -23,6 +23,7 @@ from patchloop.contracts import (
     DatasetRole,
     ExperimentPurpose,
     ExperimentRunContext,
+    FaultSpec,
     MemoryCondition,
     RunManifest,
     TaskPackage,
@@ -98,6 +99,7 @@ class ExperimentDiagnostic(BaseModel):
         "d037-rejected-patch-retry-v1",
         "d037-rejected-patch-retry-v2",
         "d037-rejected-patch-retry-v3",
+        "d037-rejected-patch-retry-v4",
     ]
     required_trace_features: list[
         Literal["rejected_patch_retry_context"]
@@ -256,11 +258,15 @@ class ExperimentSuite(BaseModel):
             if diagnostic_profile in {
                 "d037-rejected-patch-retry-v2",
                 "d037-rejected-patch-retry-v3",
+                "d037-rejected-patch-retry-v4",
             }:
                 corrective_budget = (
                     GPT54_MINI_D037_TAIL_RESERVE_BUDGET
                     if diagnostic_profile
-                    == "d037-rejected-patch-retry-v3"
+                    in {
+                        "d037-rejected-patch-retry-v3",
+                        "d037-rejected-patch-retry-v4",
+                    }
                     else GPT54_MINI_D037_CORRECTIVE_BUDGET
                 )
                 self._require_live_defaults(
@@ -596,6 +602,19 @@ def _pilot_qualification(
 
 def _suite_hash(suite: ExperimentSuite) -> str:
     return sha256_text(canonical_json(_suite_payload(suite)))
+
+
+def _diagnostic_fault(suite: ExperimentSuite) -> FaultSpec:
+    if (
+        suite.diagnostic is not None
+        and suite.diagnostic.profile
+        == "d037-rejected-patch-retry-v4"
+    ):
+        return FaultSpec(
+            type="controlled-reject-first-prepared-patch",
+            trigger_after=1,
+        )
+    return FaultSpec()
 
 
 def _suite_payload(suite: ExperimentSuite) -> dict[str, Any]:
@@ -1176,6 +1195,7 @@ def _assert_manifest_matches_preflight(
             "condition": item["condition"],
             "max_context_tokens": suite.memory_token_budget,
         },
+        "fault": _diagnostic_fault(suite).model_dump(mode="json"),
         "experiment": {
             "experiment_id": suite.experiment_id,
             "purpose": suite.purpose.value,
@@ -1215,6 +1235,7 @@ def _assert_manifest_matches_preflight(
             "condition": manifest.memory.condition.value,
             "max_context_tokens": manifest.memory.max_context_tokens,
         },
+        "fault": manifest.fault.model_dump(mode="json"),
         "experiment": (
             manifest.experiment.model_dump(mode="json")
             if manifest.experiment is not None
@@ -1270,6 +1291,19 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
         "verified_retry_count": None,
         "failed_source_failure_sequences": None,
     }
+    controlled_profile = (
+        payload.get("fault_type")
+        == "controlled-reject-first-prepared-patch"
+    )
+    if controlled_profile:
+        retry_feature.update(
+            {
+                "controlled_rejection_count": None,
+                "verified_controlled_rejection_count": None,
+                "failed_controlled_source_failure_sequences": None,
+                "controlled_patch_applied_sequences": None,
+            }
+        )
     if len(retry_checks) == 1:
         check = retry_checks[0]
         details = check.get("details")
@@ -1282,6 +1316,18 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
         rejected_count = details.get("rejected_candidate_count")
         episode_count = details.get("retry_episode_count")
         verified_count = details.get("verified_retry_count")
+        controlled_count = details.get(
+            "controlled_rejection_count"
+        )
+        verified_controlled_count = details.get(
+            "verified_controlled_rejection_count"
+        )
+        failed_controlled_sequences = details.get(
+            "failed_controlled_source_failure_sequences"
+        )
+        controlled_patch_applied_sequences = details.get(
+            "controlled_patch_applied_sequences"
+        )
         safe_failed_sequences = (
             list(failed_sequences)
             if (
@@ -1321,6 +1367,57 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
                 "failed_source_failure_sequences": safe_failed_sequences,
             }
         )
+        if controlled_profile:
+            retry_feature.update(
+                {
+                    "controlled_rejection_count": (
+                        controlled_count
+                        if type(controlled_count) is int
+                        and controlled_count >= 0
+                        else None
+                    ),
+                    "verified_controlled_rejection_count": (
+                        verified_controlled_count
+                        if type(verified_controlled_count) is int
+                        and verified_controlled_count >= 0
+                        else None
+                    ),
+                    "failed_controlled_source_failure_sequences": (
+                        list(failed_controlled_sequences)
+                        if (
+                            isinstance(
+                                failed_controlled_sequences,
+                                list,
+                            )
+                            and all(
+                                type(sequence) is int
+                                and sequence >= 1
+                                for sequence in (
+                                    failed_controlled_sequences
+                                )
+                            )
+                        )
+                        else None
+                    ),
+                    "controlled_patch_applied_sequences": (
+                        list(controlled_patch_applied_sequences)
+                        if (
+                            isinstance(
+                                controlled_patch_applied_sequences,
+                                list,
+                            )
+                            and all(
+                                type(sequence) is int
+                                and sequence >= 1
+                                for sequence in (
+                                    controlled_patch_applied_sequences
+                                )
+                            )
+                        )
+                        else None
+                    ),
+                }
+            )
     summary["trace_features"] = {
         "rejected_patch_retry_context": retry_feature
     }
@@ -1335,6 +1432,10 @@ def _diagnostic_result(
 
     if suite.diagnostic is None:
         return None
+    controlled_profile = (
+        suite.diagnostic.profile
+        == "d037-rejected-patch-retry-v4"
+    )
     feature_name = suite.diagnostic.required_trace_features[0]
     trace_features = (
         qualification.get("trace_features")
@@ -1363,6 +1464,15 @@ def _diagnostic_result(
         "verified_retry_count": None,
         "failed_source_failure_sequences": None,
     }
+    if controlled_profile:
+        sanitized_feature.update(
+            {
+                "controlled_rejection_count": None,
+                "verified_controlled_rejection_count": None,
+                "failed_controlled_source_failure_sequences": None,
+                "controlled_patch_applied_sequences": None,
+            }
+        )
     if isinstance(feature, dict):
         check_count = feature.get("check_count")
         check_passed = feature.get("check_passed")
@@ -1371,6 +1481,40 @@ def _diagnostic_result(
         verified_count = feature.get("verified_retry_count")
         failed_sequences = feature.get(
             "failed_source_failure_sequences"
+        )
+        controlled_count = feature.get(
+            "controlled_rejection_count"
+        )
+        verified_controlled_count = feature.get(
+            "verified_controlled_rejection_count"
+        )
+        failed_controlled_sequences = feature.get(
+            "failed_controlled_source_failure_sequences"
+        )
+        controlled_patch_applied_sequences = feature.get(
+            "controlled_patch_applied_sequences"
+        )
+        controlled_evidence_valid = bool(
+            not controlled_profile
+            or (
+                type(controlled_count) is int
+                and controlled_count >= 0
+                and type(verified_controlled_count) is int
+                and verified_controlled_count >= 0
+                and isinstance(failed_controlled_sequences, list)
+                and all(
+                    type(sequence) is int and sequence >= 1
+                    for sequence in failed_controlled_sequences
+                )
+                and isinstance(
+                    controlled_patch_applied_sequences,
+                    list,
+                )
+                and all(
+                    type(sequence) is int and sequence >= 1
+                    for sequence in controlled_patch_applied_sequences
+                )
+            )
         )
         evidence_types_valid = bool(
             type(check_count) is int
@@ -1386,6 +1530,7 @@ def _diagnostic_result(
                 type(sequence) is int and sequence >= 1
                 for sequence in failed_sequences
             )
+            and controlled_evidence_valid
         )
         if evidence_types_valid:
             sanitized_feature = {
@@ -1398,6 +1543,23 @@ def _diagnostic_result(
                     failed_sequences
                 ),
             }
+            if controlled_profile:
+                sanitized_feature.update(
+                    {
+                        "controlled_rejection_count": (
+                            controlled_count
+                        ),
+                        "verified_controlled_rejection_count": (
+                            verified_controlled_count
+                        ),
+                        "failed_controlled_source_failure_sequences": list(
+                            failed_controlled_sequences
+                        ),
+                        "controlled_patch_applied_sequences": list(
+                            controlled_patch_applied_sequences
+                        ),
+                    }
+                )
         else:
             sanitized_feature["check_count"] = (
                 check_count
@@ -1419,9 +1581,20 @@ def _diagnostic_result(
             reason_code = "qualification_check_failed"
         elif not evidence_types_valid:
             reason_code = "qualification_evidence_malformed"
+        elif controlled_profile and not (
+            controlled_count == 1
+            and verified_controlled_count == 1
+            and rejected_count >= 1
+            and not failed_controlled_sequences
+            and not controlled_patch_applied_sequences
+        ):
+            reason_code = "controlled_rejection_not_verified"
         elif episode_count == 0:
-            status = "inconclusive"
-            reason_code = "retry_episode_not_observed"
+            if controlled_profile:
+                reason_code = "controlled_retry_episode_not_observed"
+            else:
+                status = "inconclusive"
+                reason_code = "retry_episode_not_observed"
         elif (
             verified_count == episode_count
             and not failed_sequences
@@ -1722,6 +1895,7 @@ def evaluate_suite(
             reasoning_mode=suite.reasoning_mode,
             service_tier=suite.service_tier,
             max_output_tokens=suite.max_output_tokens,
+            fault=_diagnostic_fault(suite),
             experiment_context=experiment_context,
         )
         _assert_manifest_matches_preflight(

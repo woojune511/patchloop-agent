@@ -25,6 +25,10 @@ class PolicyViolation(PatchLoopError):
     code = "POLICY_VIOLATION"
 
 
+class ControlledDiagnosticRejection(ContractError):
+    code = "CONTROLLED_DIAGNOSTIC_REJECTION"
+
+
 class ActionConflict(ContractError):
     code = "ACTION_CONFLICT"
 
