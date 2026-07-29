@@ -12,7 +12,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-037 r5 separately approved provider diagnostic gate`다.
+- 현재 milestone은 `D-037 r5 terminal inconclusive disposition gate`다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -31,10 +31,14 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   Synthetic rejection, runtime reservation 의미 변경과 automatic retry는 도입하지 않는다.
   R5가 evaluator에 도달해도 rejection이 없으면 inconclusive로 보존하고 자동 재실행하지 않는다.
   이 계약은 2026-07-30 targeted 191-test, full 504-pass/2-skip와 Ruff evidence로 닫혔다.
-  다음에는 clean commit에서 새 hash를 만들고 별도 승인받은 D-037 diagnostic을 먼저
-  통과해야 한다. 그 전에는
-  tool-v2/context-v3 Terra pilot을, Terra pilot이 통과하기 전에는 memory-development
-  campaign을 실행하지 않는다.
+  별도 승인된 r5 `run_0ad8676d42614fbf`는 18/18 exact input telemetry와 completed
+  response, official hidden/regression/scope/safety pass, `trace-qualification-v2` 23/23을
+  남겼다. 그러나 rejected candidate와 retry episode가 모두 0이어서 D-037 diagnostic은
+  `retry_episode_not_observed`로 terminal inconclusive다. 계약대로 자동 재실행하지 않는다.
+  다음 작업은 paid run이 아니라 이 inconclusive 결과 뒤 D-037 provider gate를 유지할지,
+  별도 version의 controlled diagnostic으로 바꿀지를 offline에서 결정하고 계약화하는 일이다.
+  그 전에는 tool-v2/context-v3 Terra pilot을, Terra pilot이 통과하기 전에는
+  memory-development campaign을 실행하지 않는다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을
@@ -61,7 +65,11 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   아니라 retry candidate가 없는 generic budget-block을 현재 v3 qualifier가 terminal-valid로
   보지 않는 계약 경계다. 이 run도 재실행하지 않는다.
   후속 r5는 25,000 per-call / 200,000 total의 profile v3와
-  `model-generation-block-v1`만 새로 허용하며, provider에서는 아직 실행하지 않았다.
+  `model-generation-block-v1`만 새로 허용했다. 승인 hash
+  `sha256:97249f05deda8e59118fdac0dd6f62f44c18b086ecb16bface2cc4d0f41a3a12`로
+  provider에서 정확히 한 번 실행한 `run_0ad8676d42614fbf`는 official task success와
+  qualified trace를 남겼지만 rejection이 없어 D-037에는 inconclusive다. 사용량은
+  121,366 input + 9,913 output token, 계산상 `$0.135633`이며 재실행하지 않는다.
   실제 subprocess hard-kill 뒤 stale
   `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 Terra pilot, stress schedule,
   12-run development campaign과 96-run core campaign은 완료되지 않았다.

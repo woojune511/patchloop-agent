@@ -92,7 +92,7 @@ is preserved separately under `reports/live-pilot/`:
 - `experiments/dev-validation-gpt54mini-d037-r4.yaml`: terminal corrective D-037 diagnostic;
   consumed 25,000 per-call / 120,000 total token contract, inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-d037-r5.yaml`: D-041 profile-v3 diagnostic contract;
-  strict 25,000 per-call / 200,000 total, no provider run without fresh hash and approval
+  consumed strict 25,000 per-call / 200,000 total contract; terminal inspection only, never rerun
 - `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
   `no_memory` × 2 = 12 runs, $20 cap
 
@@ -208,10 +208,10 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
 trace-exercise error and records remaining rows as not started.
 
-Seven paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
-historical Terra r3 success and four immutable mini model-candidate failures. Their cumulative
-calculated list-price cost is `$1.148935125`; actual invoice or free daily usage treatment was not
-verified. Docker
+Eight paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
+historical Terra r3 success, four terminal mini failures and one official mini task success whose
+D-037 diagnostic is inconclusive. Their cumulative calculated list-price cost is `$1.284568125`;
+actual invoice or free daily usage treatment was not verified. Docker
 availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
 the separate 12-run development campaign.
@@ -240,6 +240,18 @@ no-generation payloads use `model-generation-block-v1`; a correctly bound generi
 trace qualification without being counted as a rejected-patch retry. Historical unversioned r4
 remains 21/22. R5 injects no synthetic rejection and has no automatic retry.
 
+R5 consumed execution hash
+`sha256:97249f05deda8e59118fdac0dd6f62f44c18b086ecb16bface2cc4d0f41a3a12`
+exactly once as `run_0ad8676d42614fbf`. All 18 provider generations completed, and all 18 exact
+input pre-counts matched provider usage with truncation disabled. The run used 121,366 input and
+9,913 output tokens for a calculated list-price cost of `$0.135633`. Its submitted one-file,
+one-line replacement passed official hidden, regression, scope and safety evaluation, and
+`trace-qualification-v2` passed 23/23. No mutation was rejected, so the retry feature has zero
+episodes and the diagnostic is terminal
+`inconclusive/retry_episode_not_observed`. Preserve the run and do not rerun it. The checked-in
+[mini D-037 r5 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r5.json)
+binds the aggregate result and portable public-source patch.
+
 ```powershell
 git status --short
 .venv\Scripts\python.exe -m pytest tests/test_context.py tests/test_agent_runtime.py tests/test_trace_qualification.py
@@ -247,7 +259,7 @@ git status --short
 .venv\Scripts\python.exe -m pytest
 ```
 
-The r3 and r4 diagnostics are now terminal. These commands are inspection-only and must never be
+The r3, r4 and r5 diagnostics are now terminal. These commands are inspection-only and must never be
 given approval flags:
 
 ```powershell
@@ -257,6 +269,10 @@ uv run patchloop evaluate `
 
 uv run patchloop evaluate `
   --suite experiments/dev-validation-gpt54mini-d037-r4.yaml `
+  --preflight-only
+
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-d037-r5.yaml `
   --preflight-only
 ```
 
@@ -278,11 +294,14 @@ A zero-episode run that reached the evaluator is `TraceExerciseInconclusive`, no
 qualification failure. Evaluator non-arrival is `TraceExerciseFailed`. R3 is the latter because
 generic qualification failed before evaluation; r4 is also failed because its generic REVIEW
 budget block is unversioned and evaluation was not reached. Neither zero episode is an
-inconclusive result. R5 passed the D-041 offline contract tests and must next use its new experiment
-ID, a clean execution hash and separate user approval. If it reaches evaluation with zero retry
-episodes, it is inconclusive and is not automatically rerun. Never reuse either consumed hash.
+inconclusive result. R5 is exactly that case: generic qualification and task evaluation passed, but
+zero retry episodes make the diagnostic inconclusive. Never reuse any consumed hash. Do not create
+another paid diagnostic merely to wait for an accidental rejection. First decide offline whether
+the provider gate remains opportunistic or moves to a separately versioned controlled diagnostic,
+then implement and test that contract before requesting any new paid approval.
 
-Afterward create a separately approved Terra development-validation pilot. Only after that run
+After that disposition gate is resolved, create a separately approved Terra
+development-validation pilot. Only after that run
 reaches the evaluator and produces a qualified `trace-qualification-v2` may its run ID be inserted
 into
 `experiments/dev-no-memory.template.yaml`. Development preflight then verifies the same model,

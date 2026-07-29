@@ -1,0 +1,13 @@
+diff --git a/babel/numbers.py b/babel/numbers.py
+index 01f1ca7..d579f98 100644
+--- a/babel/numbers.py
++++ b/babel/numbers.py
+@@ -1099,7 +1099,7 @@ def parse_decimal(
+         raise NumberFormatError(f"{string!r} is not a valid decimal number") from exc
+     if strict and group_symbol in string:
+         proper = format_decimal(parsed, locale=locale, decimal_quantization=False, numbering_system=numbering_system)
+-        if string != proper and string.rstrip('0') != (proper + decimal_symbol):
++        if string != proper and string.rstrip('0').rstrip(decimal_symbol) != proper:
+             try:
+                 parsed_alt = decimal.Decimal(string.replace(decimal_symbol, '')
+                                                    .replace(group_symbol, '.'))

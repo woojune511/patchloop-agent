@@ -1,6 +1,36 @@
-# Implementation evidence — through 2026-07-28
+# Implementation evidence — through 2026-07-30
 
 This is a local implementation checkpoint, not the planned core experiment result.
+
+## Latest paid diagnostic evidence
+
+The separately approved r5 execution hash
+`sha256:97249f05deda8e59118fdac0dd6f62f44c18b086ecb16bface2cc4d0f41a3a12`
+was consumed exactly once by `run_0ad8676d42614fbf` on clean harness commit
+`a323bfe4bde46cb0e797a2c8eefacad3c2e8d7d1`.
+
+| Boundary | Observed |
+| --- | --- |
+| Provider/model | `gpt-5.4-mini-2026-03-17`, medium, default tier |
+| Budget | 25,000 per call, 200,000 total, $2 approved cap |
+| Usage | 121,366 input + 9,913 output = 131,279 tokens; `$0.135633` calculated |
+| Token integrity | 18/18 exact input counts matched; 18/18 completed; truncation disabled |
+| Agent/evaluator | one submitted patch; hidden/regression/scope/safety all pass; `official=true` |
+| Trace | `trace-qualification-v2` 23/23, leakage and source-evidence binding pass |
+| D-037 diagnostic | rejected candidate 0, retry episode 0; terminal `inconclusive` |
+
+The task and generic trace succeeded, but no rejected mutation occurred. Therefore this run neither
+validates nor falsifies D-037 and does not unlock the Terra or development campaign. The frozen
+contract forbids automatic rerun. The machine-readable
+[r5 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r5.json)
+separates the official task outcome from the diagnostic outcome and includes the exact portable
+public-source patch. Five mini runs total `$0.45570375`; all eight paid pilots total
+`$1.284568125` at configured list prices. Invoice and free-usage treatment remain unverified.
+
+Post-capture verification passed 24 live-evidence tests, 53 experiment tests and 71 trace-
+qualification tests. Ruff and `git diff --check` also passed. The earlier D-041 implementation
+baseline remains the 504-pass/2-skip full suite; this evidence-only change does not claim a new
+completed full-suite run.
 
 ## Executed gates
 
@@ -1292,8 +1322,9 @@ The checked-in
 binds the aggregate result, journal, approved plan, qualification, manifest, result, provenance,
 failure record, patch intent/candidate and terminal request evidence by SHA-256. Only the
 agent-generated public-source candidate patch is bundled; it was not submitted or accepted. The
-four mini runs total `$0.32007075`; all seven paid pilots total `$1.148935125` at configured list
-prices. Invoice charges and free daily usage treatment remain unverified.
+four-mini subtotal through r4 was `$0.32007075`. After the terminal r5 recorded above, five mini
+runs total `$0.45570375` and all eight paid pilots total `$1.284568125` at configured list prices.
+Invoice charges and free daily usage treatment remain unverified.
 
 Executed evidence:
 

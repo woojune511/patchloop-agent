@@ -195,20 +195,20 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   the failed `prompt_token_integrity` result is a retry-specific terminal-block contract mismatch,
   not token mismatch. Rejected candidate and retry episode counts were zero, so r4 removes r3's
   per-call output-ceiling confounder but still does not validate or falsify D-037.
-- D-041 fixes, but has not yet provider-executed, a separate r5 profile v3. It retains strict
-  exact-input + full 25,000 response reservation and sets a diagnostic-only 200,000-token total
-  from `91,437 + 3 × (10,031 + 25,000) = 196,530`, rounded up. Its conservative reserve is
-  `$1.0125` under the $2 cap. A new `model-generation-block-v1` generic terminal block may preserve
-  trace integrity without a retry candidate, but cannot count as a D-037 episode or gate pass.
-  The three-tail arithmetic is an evidence-based planning reserve, not a guarantee that a future
-  retry request will be no larger than r4's observed 10,031-token maximum.
-  R5 does not synthesize a rejection or retry automatically, so evaluator arrival with zero
-  episodes remains a possible inconclusive terminal result and will not be rerun automatically.
+- The separately approved r5 `run_0ad8676d42614fbf` executed D-041's strict 25,000/200,000
+  profile once. All 18 generations completed, all exact input counts matched provider usage,
+  and the run used 121,366 input plus 9,913 output tokens for `$0.135633`. Its one-file,
+  one-line replacement passed official hidden, regression, scope and safety evaluation, and
+  `trace-qualification-v2` passed 23/23. No mutation was rejected, so rejected candidate,
+  retry episode and verified retry counts are all zero. The D-037 diagnostic is therefore
+  terminal `inconclusive/retry_episode_not_observed`: this is task-success and trace-integrity
+  evidence, not D-037 validation or falsification. It will not be rerun automatically.
 
 ## Implemented gates with remaining external campaign work
 
 - OpenAI Responses adapter is contract-tested with a fake client and has two Terra failure traces,
-  one accepted historical Terra live pilot and four separate mini model-candidate failure traces.
+  one accepted historical Terra live pilot, four mini model-candidate failure traces and one
+  official mini task success with an inconclusive D-037 diagnostic.
   The accepted
   pilot is one development-validation task, not a development/core campaign result.
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
@@ -225,12 +225,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   Terra medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. All seven paid-pilot host preflights reached
+  only after the approved plan is durably persisted. All eight paid-pilot host preflights reached
   `ready=true`; the development campaign requires its own clean execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. All seven paid pilots produced completed hash-chained
+  that blocks automatic schedule replay. All eight paid pilots produced completed hash-chained
   journals. Automatic resume from an interrupted journal is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
@@ -301,11 +301,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   reservation before submission or evaluation. The r4 trace also shows that the current v3
   qualifier accepts terminal no-generation blocks only when bound to a rejected retry candidate;
   a generic budget block fails qualification even when all completed token telemetry matches.
-  D-041 now fixes the r5 offline contract at strict 25,000/200,000 and versions newly emitted
-  exact-request generic terminal blocks as `model-generation-block-v1`; the old r4 result remains 21/22.
-  Executable offline evidence passed with 504 tests and 2 expected skips. A separately approved
-  D-037 diagnostic pass, and then a newly approved tool-v2/context-v3 Terra pilot remain required
-  in that order before the campaign.
+  D-041 fixed the r5 contract at strict 25,000/200,000 and versioned newly emitted exact-request
+  generic terminal blocks as `model-generation-block-v1`; the old r4 result remains 21/22. R5
+  then passed official task evaluation and trace qualification but had zero retry episodes, so
+  the D-037 diagnostic is inconclusive. The next gate is an offline disposition of this provider
+  diagnostic, not another opportunistic paid rerun. A newly approved tool-v2/context-v3 Terra
+  pilot remains blocked until that disposition is contracted and tested.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -405,11 +406,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   profile v3, strict 25,000/200,000 and `model-generation-block-v1` without changing runtime
   reservation semantics. R4 removes the observed output-ceiling confounder but produced no
   rejected mutation or diagnostic pass. Evaluator arrival with zero retry episodes remains
-  `inconclusive`; r4 did not reach the evaluator and is `failed`. R5 has no synthetic rejection or
-  automatic retry, so an inconclusive result is terminal rather than a reason to spend again.
+  `inconclusive`; r4 did not reach the evaluator and is `failed`. R5 reached the evaluator,
+  passed the task and generic qualification, and produced exactly this zero-episode inconclusive
+  result. It has no synthetic rejection or automatic retry, so the result is terminal rather than
+  a reason to spend again.
   Even a successful mini run does not satisfy the tool-v2/context-v3 Terra pilot requirement. The
-  four mini runs' calculated list-price total is `$0.32007075`; all seven paid pilot runs total
-  `$1.148935125`.
+  five mini runs' calculated list-price total is `$0.45570375`; all eight paid pilot runs total
+  `$1.284568125`.
   These are usage-based estimates, not verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. OpenAI's complimentary
   data-sharing program lists the mini snapshot but excludes tool use, so this pilot is not
