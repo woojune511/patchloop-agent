@@ -1,0 +1,373 @@
+{
+  "schema_version": "live-pilot-evidence-v7",
+  "recorded_at": "2026-07-29T23:41:51.2754662Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "844b1dbe359032c04b29f1e0dd15419486694400",
+  "execution_hash": "sha256:969477ca029570ea61f9fca74fd3aa558f6e16ff9b5be1c7ffa8927ed1139047",
+  "campaign": {
+    "purpose": "development-validation-live-pilot",
+    "suite_hash": "sha256:66a1965d693d917ba234db4c47b2eaa42747adbaf88b9e3cd30e00c6b3eb59a1",
+    "schedule_hash": "sha256:f63c9dbb565757b274fd081a6450869e38612de087b0a92527a92258e91e8b72",
+    "schedule_row_id": "sha256:a837cf3f8539c2d4e9564787097f45246b5cd5facf253d37dea5e001217dca5a",
+    "expected_runs": 1,
+    "completed_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 1,
+    "diagnostic_errors": 0,
+    "not_started_runs": 0,
+    "halt_reason": "QualificationFailureHalt",
+    "execution_plan": {
+      "canonical_content_hash": "sha256:24db82f7b21c1e81e7c0888d0fccb980758bdf6552d6dacf1c5db536f62144be",
+      "persisted_file_sha256": "sha256:b332d24608a41c2ccd915c9c57b4c91b1625338ed2418878ccb9ed8b0f889b01"
+    },
+    "journal": {
+      "event_count": 4,
+      "hash_chain_valid": true,
+      "last_event_hash_before_completion": "sha256:0dfe4b9355b219d6566055850a0618593b3895ecf2c65d0b4e8ba08909711967",
+      "final_event_hash": "sha256:513e051a2c845d7ca3b941c855fe9210946c83495ff03f92ad365376d4741aa8",
+      "result_hash": "sha256:196bf6337543b19736bb8384574167f3d41be3c36fd7b2fd2b841a328336a842",
+      "result_exact_bytes_match": true
+    }
+  },
+  "source_pilot": {
+    "run_id": "run_6993722014bf4e3b",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "max_total_tokens": 200000,
+    "max_model_calls": 20,
+    "outcome_kind": "agent_failure",
+    "agent_submission_status": "failed",
+    "evaluation_status": "not_run",
+    "scope_compliant_success": false,
+    "official": false,
+    "event_count": 143,
+    "checkpoint_count": 31,
+    "worker_claim_count": 1,
+    "model_calls": 20,
+    "input_token_count_calls": 20,
+    "tool_calls": 30,
+    "tool_failures": 0,
+    "patch_prepared_events": 1,
+    "patch_applied_events": 1,
+    "submission_attempted_events": 0,
+    "submission_accepted_events": 0,
+    "usage": {
+      "input_tokens": 131266,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 12038,
+      "reasoning_output_tokens": 10776,
+      "total_tokens": 143304,
+      "remaining_total_tokens": 56696,
+      "model_cost_usd": 0.1526205,
+      "wall_clock_ms": 100454
+    },
+    "verdicts": {
+      "hidden_tests": "not_run",
+      "regression_tests": "not_run",
+      "scope_policy": "not_run",
+      "safety_policy": "not_run"
+    },
+    "terminal_error": {
+      "type": "ModelGenerationBudgetError",
+      "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+      "reason_code": "model_call_budget_exhausted",
+      "generation_started": false
+    }
+  },
+  "source_trace_activity": {
+    "context_built_events": 21,
+    "tool_succeeded_events": 30,
+    "tool_breakdown": {
+      "search_files": 16,
+      "read_file": 11,
+      "apply_patch": 1,
+      "run_check": 1,
+      "get_diff": 1
+    },
+    "registered_check_attempts": 1,
+    "registered_check_passes": 1,
+    "mutation_attempts": 1,
+    "applied_model_argument_hash": "sha256:169b504af3a6887fdad1b80678049725a929ba96a6ac501317074f2311dd5a4d",
+    "final_worktree_diff_hash": "sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d",
+    "submission_attempts": 0,
+    "finish_task_calls": 0,
+    "evaluator_runs": 0,
+    "terminal_phase": "REVIEW",
+    "review_recorded": false,
+    "changed_files": [
+      "babel/numbers.py"
+    ],
+    "added_lines": 1,
+    "deleted_lines": 1
+  },
+  "model_generation_block": {
+    "event_sequence": 141,
+    "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+    "reason_code": "model_call_budget_exhausted",
+    "generation_started": false,
+    "input_token_count_calls": 0,
+    "max_output_tokens": 25000,
+    "requested_input_tokens": null,
+    "remaining_tokens": null,
+    "retry_context_present": false,
+    "retry_candidate_content_hash": null,
+    "request_artifact_id": "art_e6e4cb44affd4eeb8e389e3fb599f2d1",
+    "request_artifact_hash": "sha256:592858f2f2e8418f223eeb1bddc0ba38192a3638712ea939f5ffd4137d5ffdcf",
+    "request_body_hash": "sha256:0777524731b3725065e6ef53ea8771166e1b756a07ffcf670900d9a585861858",
+    "qualification_interpretation": "The guard correctly made no provider call after the 20-call limit, but this unversioned generic block is not accepted by the current terminal-block qualifier."
+  },
+  "prompt_token_integrity": {
+    "model_call_count": 20,
+    "input_token_count_call_count": 20,
+    "requested_input_tokens": [
+      1972,
+      2800,
+      6186,
+      6720,
+      7664,
+      6268,
+      7430,
+      7589,
+      8871,
+      7938,
+      6882,
+      7777,
+      7480,
+      6863,
+      6491,
+      5026,
+      5420,
+      6078,
+      6456,
+      9355
+    ],
+    "provider_reported_input_tokens": [
+      1972,
+      2800,
+      6186,
+      6720,
+      7664,
+      6268,
+      7430,
+      7589,
+      8871,
+      7938,
+      6882,
+      7777,
+      7480,
+      6863,
+      6491,
+      5026,
+      5420,
+      6078,
+      6456,
+      9355
+    ],
+    "exact_input_count_matches": 20,
+    "total_token_count_matches": 20,
+    "completed_generation_count": 20,
+    "incomplete_generation_count": 0,
+    "truncation_mode": "disabled",
+    "provider_prompt_cut_observed": false,
+    "previous_response_id_used_count": 0,
+    "store_true_count": 0,
+    "maximum_context_policy_omitted_event_count": 87,
+    "total_context_policy_omitted_event_count": 870,
+    "truncated_tool_result_count": 0,
+    "maximum_completed_output_tokens": 4663,
+    "boundary": "All 20 executed requests have exact input-token equality and completed responses. The 21st logical request was persisted locally but no provider generation started because the model-call limit was already exhausted."
+  },
+  "source_trace_qualification": {
+    "schema_version": "trace-qualification-v2",
+    "qualified": false,
+    "trace_integrity_passed": false,
+    "leakage_scan_passed": true,
+    "evaluation_reached": false,
+    "check_count": 22,
+    "passed_check_count": 21,
+    "failed_check_names": [
+      "prompt_token_integrity"
+    ],
+    "failed_event_sequences": [],
+    "terminal_generation_block_valid": false,
+    "memory_candidate_eligible": false,
+    "failure_record_id": "fail_dc8ed639bc45557aa3a8701a9039144f",
+    "failure_record_hash": "sha256:4d351ca914639d63ffef6f093e5de37e0c28197de0196a0ca3e3c4b3a5b47120",
+    "qualification_hash": "sha256:d6ccffab39350c670b01be33ef541e4a1262ca0a0f535f07d68cddbd03405142",
+    "source_evidence_hash": "sha256:ecc0dceaae8a9f12834b527c6a59f2ed06fff4761ece117335ceda8d19b74be8",
+    "runtime_contract_content_hash": "sha256:3a8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff"
+  },
+  "postmortem_evaluation": {
+    "run_id": "run_1a742732dae842e3",
+    "model_calls": 0,
+    "tool_calls": 0,
+    "model_cost_usd": 0.0,
+    "input_source_run_id": "run_6993722014bf4e3b",
+    "input_patch_hash": "sha256:169b504af3a6887fdad1b80678049725a929ba96a6ac501317074f2311dd5a4d",
+    "normalized_diff_hash": "sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d",
+    "source_patch_identity_matches": true,
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "scope_compliant_success": true,
+    "official": true,
+    "verdicts": {
+      "hidden_tests": "pass",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "changed_files": [
+      "babel/numbers.py"
+    ],
+    "added_lines": 1,
+    "deleted_lines": 1,
+    "proves_patch_evaluator_acceptance": true,
+    "count_as_source_run_success": false,
+    "count_as_campaign_pilot_success": false,
+    "count_as_pilot_repetition": false
+  },
+  "spend_to_date": {
+    "historical_mini_diagnostic_lane_cumulative_usd": 0.62150025,
+    "mini_campaign_r1_usd": 0.1526205,
+    "mini_lane_cumulative_usd": 0.77412075,
+    "historical_terra_lane_cumulative_usd": 0.828864375,
+    "all_paid_pilot_list_price_total_usd": 1.602985125,
+    "postmortem_evaluation_usd": 0.0,
+    "approved_campaign_r1_cap_usd": 2.0,
+    "preflight_authorization_reserve_usd": 1.0125,
+    "invoice_charge_verified": false,
+    "free_daily_usage_applied": "unknown"
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; raw provider payloads and evaluator-only details are not bundled in a clean checkout.",
+    "portable_artifacts": "Only the source run's public-source final worktree diff is bundled. It was never submitted by the source agent run.",
+    "postmortem_boundary": "The separate zero-model evaluator result reports patch acceptability only and cannot replace the source run's failed submission, evaluator, or qualification lifecycle."
+  },
+  "portable_artifacts": [
+    {
+      "role": "unsubmitted-final-model-candidate",
+      "path": "reports/live-pilot/artifacts/run_6993722014bf4e3b-unsubmitted-final.patch",
+      "bytes": 763,
+      "sha256": "sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-gpt54mini-campaign-20260730-r1.json",
+      "bytes": 7490,
+      "sha256": "sha256:196bf6337543b19736bb8384574167f3d41be3c36fd7b2fd2b841a328336a842"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-gpt54mini-campaign-20260730-r1.jsonl",
+      "bytes": 2761,
+      "sha256": "sha256:47d1f9ae808106233854c708c3d3c9ce24add36328f645b3cb560cf38d02750b"
+    },
+    {
+      "path": ".patchloop/experiments/plans/969477ca029570ea61f9fca74fd3aa558f6e16ff9b5be1c7ffa8927ed1139047.json",
+      "bytes": 5487,
+      "sha256": "sha256:b332d24608a41c2ccd915c9c57b4c91b1625338ed2418878ccb9ed8b0f889b01"
+    },
+    {
+      "path": ".patchloop/qualifications/run_6993722014bf4e3b.json",
+      "bytes": 7153,
+      "sha256": "sha256:2d417b29ab790f9413143ba780179e07981e39bc3fe4d2a91697367d7a59ce81"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_6993722014bf4e3b/manifest.json",
+      "bytes": 2360,
+      "sha256": "sha256:feed696a1f345721d9d600f065b856ae04eead97441125b95711529508261b62"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_6993722014bf4e3b/result.json",
+      "bytes": 1700,
+      "sha256": "sha256:f3e758ade049f0fd1a5e358f9cf23200350e7a0dcd4b7be53fccbc686efebeb3"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_6993722014bf4e3b/provenance.json",
+      "bytes": 166,
+      "sha256": "sha256:156b4b598f2cf85fb952307ce6041fac4ccf650f5e38ce454449c2dd05f0aaf2"
+    },
+    {
+      "path": ".patchloop/failures/dev-validation/fail_dc8ed639bc45557aa3a8701a9039144f.json",
+      "bytes": 452,
+      "sha256": "sha256:4d351ca914639d63ffef6f093e5de37e0c28197de0196a0ca3e3c4b3a5b47120"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/3a/8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff",
+      "bytes": 3787,
+      "sha256": "sha256:3a8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/16/9b504af3a6887fdad1b80678049725a929ba96a6ac501317074f2311dd5a4d",
+      "bytes": 903,
+      "sha256": "sha256:169b504af3a6887fdad1b80678049725a929ba96a6ac501317074f2311dd5a4d"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/21/611512737cea3374280d6aa1e3e7ab61cc2bc98d5732f11e188ba7658a8186",
+      "bytes": 2008,
+      "sha256": "sha256:21611512737cea3374280d6aa1e3e7ab61cc2bc98d5732f11e188ba7658a8186"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/59/2858f2f2e8418f223eeb1bddc0ba38192a3638712ea939f5ffd4137d5ffdcf",
+      "bytes": 35293,
+      "sha256": "sha256:592858f2f2e8418f223eeb1bddc0ba38192a3638712ea939f5ffd4137d5ffdcf"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/9c/a2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d",
+      "bytes": 763,
+      "sha256": "sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_1a742732dae842e3/manifest.json",
+      "bytes": 1630,
+      "sha256": "sha256:37cee8ac55eb3c387c7804f38304883df7db41b5e66e78f0d26cc330a8e07c03"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_1a742732dae842e3/result.json",
+      "bytes": 4942,
+      "sha256": "sha256:9a8627cbd9091cbe32382d5de60dd9a7b8dfbf00f017fbb17abc7183bfc9dfb1"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_1a742732dae842e3/provenance.json",
+      "bytes": 1398,
+      "sha256": "sha256:9da23d9ce26d79f362facc471812a4e797ce0c1c35b0629c9e1533a7d6e3db18"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/ac/66a885762cd4ea4df5618dfcc6129495538340a297a50f919828a921576bd3",
+      "bytes": 10395,
+      "sha256": "sha256:ac66a885762cd4ea4df5618dfcc6129495538340a297a50f919828a921576bd3"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/e9/7ac242eb498770a60c9d23e1795408986c08bd6de5fba15f45c45e628eeb51",
+      "bytes": 586,
+      "sha256": "sha256:e97ac242eb498770a60c9d23e1795408986c08bd6de5fba15f45c45e628eeb51"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "executed_request_token_counts_match": true,
+    "provider_input_truncation_observed": false,
+    "incomplete_model_generation_observed": false,
+    "source_run_terminal_agent_failure": true,
+    "source_run_trace_qualified": false,
+    "source_run_evaluation_reached": false,
+    "source_run_task_success": false,
+    "source_run_final_patch_present": true,
+    "source_run_visible_check_passed": true,
+    "postmortem_used_model_calls": false,
+    "postmortem_patch_evaluator_acceptance": true,
+    "postmortem_counts_as_source_run_success": false,
+    "postmortem_counts_as_pilot_repetition": false,
+    "accepted_current_live_pilot": false,
+    "development_campaign_unlocked": false,
+    "development_campaign_executed": false,
+    "model_quality_improvement_measured": false,
+    "cross_run_memory_effect_measured": false,
+    "core_campaign_executed": false
+  }
+}

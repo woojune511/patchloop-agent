@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **tool-v2/context-v3 gpt-5.4-mini campaign-pilot preflight gate**
+현재 milestone: **primary-pilot model-call tail과 terminal-block qualification hardening**
 
 2026-07-30 구현 스냅샷:
 
@@ -12,7 +12,7 @@
 | Phase 3 state machine | tool v2/context v3 retry hardening offline-complete | Current-diff submission gate와 exact rejected-patch next-request rehydration, structured no-generation budget event 검증 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | historical v1 pilot complete, D-037 r3/r4 failures·r5 inconclusive·r6 controlled pass 보존 | R6 `run_73f5aaf7328a4ea5`: controlled/verified retry 1/1, official task와 qualification 23/23 pass |
+| Phase 6 evaluation | historical v1 pilot complete, D-037 r3/r4 failures·r5 inconclusive·r6 controlled pass·primary r1 call-budget failure 보존 | Primary r1 `run_6993722014bf4e3b`: correct final patch를 만들었지만 submission turn 전 model-call 20회 소진 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -69,10 +69,12 @@ research task를 admission한다.
 단계는 완료된 D-041 r5 25,000/200,000 contract와 `model-generation-block-v1` generic
 terminal qualification evidence → 새 experiment/hash의 별도 승인 → terminal r5
 inconclusive 보존 → D-043 controlled r6 profile의 offline 구현 → 승인된 r6
-`run_73f5aaf7328a4ea5`의 terminal diagnostic pass까지 진행됐다. 다음은 별도 clean
-execution hash와 승인을 받아 D-045의 fault-free tool-v2/context-v3 mini campaign pilot을 수행하고,
-그 pilot이 evaluator와 `trace-qualification-v2`를 통과한 뒤 여섯 memory-development
-task의 12-run no-memory campaign을 시작한다.
+`run_73f5aaf7328a4ea5`의 terminal diagnostic pass와 D-045 primary r1
+`run_6993722014bf4e3b`의 terminal call-budget failure까지 진행됐다. 다음은 provider 재실행이
+아니라 submission tail-call reserve 또는 공정한 model-call 상한과 deterministic
+model/tool/wall-call pre-generation block schema·qualification을 offline에서 고정하는 것이다.
+그 뒤 새 corrective pilot이 evaluator와 `trace-qualification-v2`를 통과해야 여섯
+memory-development task의 12-run no-memory campaign을 시작한다.
 
 동결 evidence:
 
@@ -117,8 +119,10 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 8 | terminal inconclusive | R5 mini model-candidate diagnostic 1회, 새 hash/승인 | `run_0ad8676d42614fbf`: official task와 qualification pass, rejected/retry 0; 자동 재실행 금지 |
 | 8a | completed (offline) | D-037 controlled diagnostic offline contract | V4 profile, first prepared candidate one-shot rejection, crash-safe no-mutation, exact next request, fail-closed qualifier와 529 passed/2 skipped broad regression |
 | 8b | completed; immutable | Controlled r6 provider diagnostic 1회, $2 cap | `run_73f5aaf7328a4ea5`: controlled/verified retry 1/1, rejected action mutation 0, evaluator·official task·qualification pass |
-| 9 | blocked on new hash/approval | Fault-free mini development-validation campaign pilot 1회, $2 cap | `gpt-5.4-mini-2026-03-17`, 25,000/200,000, runtime contract의 `trace-qualification-v2`, `evaluation_reached=true`; success 여부와 분리 |
-| 10 | blocked on order 9 | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
+| 9 | terminal failure; immutable | Fault-free mini development-validation campaign pilot r1 1회, $2 cap | `run_6993722014bf4e3b`: 20/20 telemetry, patch/check/final diff/REVIEW 완료; call budget 때문에 submission·evaluator 없음, qualification 21/22 |
+| 9a | in progress offline | Submission tail-call과 deterministic call/tool/wall budget terminal contract | 전체 조건에 동일한 model-call 정책, versioned no-generation block, valid qualification과 failure-path test |
+| 9b | blocked on order 9a | 새 experiment/hash의 corrective fault-free pilot 1회, $2 cap | evaluator 도달과 qualified trace; r1 hash 재사용 금지 |
+| 10 | blocked on order 9b | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
 | 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
 Order 8의 첫 provider attempt에 사용한 terminal suite는
@@ -212,8 +216,10 @@ controlled rejection 1회, verified retry 1회, rejected action mutation 0회, o
 hidden/regression/scope/safety와 qualification 23/23을 통과했다. 138,262 input + 13,800
 output token, 계산상 `$0.1657965`를 사용했다. 이 controlled result는 자연 error recovery
 rate나 memory 효과를 측정하지 않는다. D-045는 Order 9와 이후 primary campaign을 dated
-mini snapshot으로 전환했다. Order 9는 별도 fault-free mini hash와 승인 전에는 실행하지
-않는다.
+mini snapshot으로 전환했다. 승인된 Order 9 r1은 patch/check/final diff/REVIEW까지 진행했지만
+20번째 model call 뒤 `finish_task` turn이 없어 terminal failure가 됐다. 별도 postmortem
+evaluator의 patch success는 원 run outcome을 바꾸지 않는다. Order 9a가 offline evidence를
+통과하기 전에는 corrective provider run을 만들지 않는다.
 
 Memory-development와 core live suite는 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode
 `standard`, service tier `default`, 25,000 max output token과 200,000 run-total budget을
@@ -316,7 +322,7 @@ runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더�
 margin이다. D-045 primary contract의 run reserve는 25,000/200,000에서 `$1.0125`,
 12-run은 `$12.15`, 96-run은 `$97.20`이다.
 
-### Historical pilots preserved; current mini campaign pilot pending
+### Historical pilots and primary r1 preserved; corrective mini pilot pending
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.

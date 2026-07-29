@@ -129,8 +129,18 @@ memory-development와 core 비교 모델을 `gpt-5.4-mini-2026-03-17`로 통일�
 medium, mode는 standard, service tier는 default이며, r5/r6에서 output/tail-budget
 confounder 없이 완주한 25,000 per-call output과 200,000 run-total budget을 모든 조건에
 같게 적용한다. Historical Terra와 mini r1-r6의 당시 purpose와 판정은 바꾸지 않는다. 다음
-paid gate는 controlled fault가 없는 별도 `development-validation-live-pilot`이며 새 clean
-execution hash와 최대 $2 승인이 필요하다.
+paid gate였던 fault-free primary r1은 승인 hash
+`sha256:969477ca029570ea61f9fca74fd3aa558f6e16ff9b5be1c7ffa8927ed1139047`로 정확히 한 번
+실행됐다. `run_6993722014bf4e3b`는 20/20 input-token pre-count 일치와 completed response,
+patch 적용, visible regression pass, final diff와 `REVIEW` 진입을 남겼지만 model-call
+20회를 모두 사용해 `finish_task` 전 local budget guard에서 끝났다. 사용량은 131,266 input +
+12,038 output token, 계산상 `$0.1526205`다. Evaluator는 실행되지 않았고 qualification은
+call-budget terminal block 계약 때문에 21/22다. Exact final diff는 별도 no-model Docker
+postmortem에서 hidden/regression/scope/safety를 모두 통과했지만 이를 live run의 제출이나
+official success로 소급하지 않는다. 이 suite/hash/run은 재실행하지 않는다.
+Portable claims boundary와 artifact hash는
+[primary mini r1 evidence record](reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r1.json)에
+보존한다.
 
 ## 구현된 핵심 경로
 
@@ -387,10 +397,13 @@ uv run patchloop evaluate `
 
 과거 Terra r3의 `experiments/dev-validation-pilot.template.yaml`은 evidence 해석을 위해
 원래 계약 그대로 남아 있으며 preflight가 `HISTORICAL_SUITE_IMMUTABLE`로 재실행을 차단한다.
-새 primary suite와 execution hash만 승인 후보가 된다.
+Primary r1 suite도 이제 terminal inspection 전용이다. Journal/result blocker를 유지하고
+approval flag나 소비된 hash를 다시 전달하지 않는다.
 
-새 hash와 최대 $2 승인을 받은 fault-free pilot이 evaluator와 qualification을 통과한 뒤
-그 run ID를 development suite의 `pilot_run_id`에 넣고 별도 preflight를 실행한다.
+다음 paid 실행 전에 submission tail-call reserve 또는 공정한 model-call 상한과
+model/tool/wall-call pre-generation terminal schema·qualification을 offline에서 고정한다.
+새 corrective pilot이 별도 hash와 승인을 받아 evaluator와 qualification을 통과한 뒤에만
+그 run ID를 development suite의 `pilot_run_id`에 넣는다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -446,7 +459,8 @@ cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 
 128,000 max output으로 게시한다. Preflight 시점 기준 72시간을 넘으면 가격을 다시 확인하며
 SDK version, Git commit과 execution window를 provenance로 남긴다.
 
-새 tool-v2/context-v3 mini campaign pilot이 model, budget, harness commit, runtime-contract hash와
+새 corrective tool-v2/context-v3 mini campaign pilot이 model, budget, harness commit,
+runtime-contract hash와
 `trace-qualification-v2`를 모두 통과한 뒤에만 그 run ID를 no-memory development
 suite에 넣고 새 execution hash를 preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
 input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
@@ -499,10 +513,10 @@ Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D
 exercise하지 못했다. Mini r5는 official task와 qualification을 통과했지만 rejection이
 없어 D-037 diagnostic은 inconclusive다. Mini r6는 deliberate controlled rejection으로
 harness retry branch와 evaluator 도달을 검증했지만 natural recovery rate는 측정하지 않는다.
-여섯 mini run의 누적 계산 비용은 `$0.62150025`, 아홉 paid pilot의 계산상 총액은
-`$1.450364625`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5와 r6는
-자동 재실행하지 않는다. 별도 tool-v2/context-v3 mini campaign pilot이 통과하기 전에는 12-run
-development campaign을 승인하지 않는다.
+일곱 mini run의 누적 계산 비용은 `$0.77412075`, 열 paid pilot의 계산상 총액은
+`$1.602985125`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5, r6와
+primary r1은 자동 재실행하지 않는다. Offline call-budget corrective contract와 별도
+corrective pilot이 통과하기 전에는 12-run development campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

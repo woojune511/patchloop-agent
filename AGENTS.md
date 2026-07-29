@@ -12,7 +12,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `tool-v2/context-v3 gpt-5.4-mini campaign-pilot preflight gate`다.
+- 현재 milestone은 `primary-pilot model-call tail과 terminal-block qualification hardening`이다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -46,9 +46,16 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   recovery rate나 memory 효과가 아니다. 이 r6와 승인 hash는 immutable하게 보존하고 재실행하지
   않는다. D-045는 앞으로의 pilot, memory-development와 core 비교 모델을
   `gpt-5.4-mini-2026-03-17`, medium/standard/default, 25,000 per-call output과 200,000
-  run-total budget으로 통일했다. 별도 fault-free `development-validation-live-pilot`의 clean
-  hash와 승인 전에는 새 provider call을, 그 pilot이 evaluator와 `trace-qualification-v2`를
-  통과하기 전에는 memory-development campaign을 실행하지 않는다.
+  run-total budget으로 통일했다. 승인된 fault-free primary r1 `run_6993722014bf4e3b`는
+  20/20 exact input telemetry와 completed response, applied patch, visible check pass,
+  final diff와 `REVIEW`를 남겼지만 model-call 20회를 모두 사용해 `finish_task` 전
+  `model_call_budget_exhausted`로 끝났다. Evaluator는 실행되지 않았고 qualification은
+  call-budget terminal block 계약 때문에 21/22다. Exact final patch는 별도 no-model
+  postmortem evaluator에서 official hidden/regression/scope/safety를 모두 통과했지만 원 run의
+  outcome을 바꾸지 않는다. R1 suite/hash/run은 재실행하지 않는다. Submission tail-call 정책과
+  deterministic call/tool/wall-budget block schema·qualification을 offline에서 고정하기 전에는
+  새 provider call을, corrective pilot이 evaluator와 qualification을 통과하기 전에는
+  memory-development campaign을 실행하지 않는다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을
@@ -81,8 +88,9 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   qualified trace를 남겼지만 rejection이 없어 D-037에는 inconclusive다. 사용량은
   121,366 input + 9,913 output token, 계산상 `$0.135633`이며 재실행하지 않는다.
   실제 subprocess hard-kill 뒤 stale
-  `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 mini campaign pilot, stress schedule,
-  12-run development campaign과 96-run core campaign은 완료되지 않았다.
+  `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 primary mini r1은
+  terminal agent/qualification failure다. Stress schedule, 12-run development campaign과
+  96-run core campaign은 완료되지 않았다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

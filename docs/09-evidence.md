@@ -13,10 +13,45 @@ per run, `$12.15` for 12 runs and `$97.20` for 96 runs.
 The terminal Terra r3 suite remains byte-preserved as
 `experiments/dev-validation-pilot.template.yaml`; it is readable for historical interpretation
 but preflight-blocked with `HISTORICAL_SUITE_IMMUTABLE`. The new no-fault primary contract is
-`experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`. No provider call or pilot outcome
-is claimed for that suite. Its clean execution hash and separate $2 approval remain the next gate.
+`experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`. Its approved execution hash was
+consumed exactly once by the terminal r1 described below; the suite must not be rerun.
 Contract/qualification targeted tests passed 137/137, and the full offline suite passed
 534 with 2 skips. Ruff and `git diff --check` also passed.
+
+## D-046 primary mini r1 terminal evidence
+
+Execution hash
+`sha256:969477ca029570ea61f9fca74fd3aa558f6e16ff9b5be1c7ffa8927ed1139047`
+was consumed once by `run_6993722014bf4e3b` on clean harness commit
+`844b1dbe359032c04b29f1e0dd15419486694400`.
+
+| Boundary | Observed |
+| --- | --- |
+| Provider/model | `gpt-5.4-mini-2026-03-17`, medium, default tier |
+| Budget | 20 model calls, 50 tool calls, 25,000 per-call output, 200,000 total, $2 cap |
+| Usage | 131,266 input + 12,038 output = 143,304 tokens; `$0.1526205` calculated |
+| Token integrity | 20/20 exact input counts matched; 20/20 responses completed; truncation disabled |
+| Agent progress | patch applied; registered regression check passed; complete final diff read; `REVIEW` reached |
+| Terminal | next generation blocked locally as `model_call_budget_exhausted`; no `finish_task` or evaluator |
+| Qualification | 21/22; only `prompt_token_integrity` failed because the call-budget block is not a versioned valid ending |
+
+The exact final diff is
+`sha256:9ca2431c14ce0cd5fd49b19710498a7a55a33568c748d3e44fbe794a825e083d`.
+A separate no-model Docker postmortem run `run_1a742732dae842e3` applied those exact bytes to the
+same task base and passed hidden, regression, scope and safety with `official=true`. This is
+candidate-quality evidence only: the paid source run remains `agent_failure`,
+`evaluation_status=not_run`, `qualified=false`, and does not unlock the development campaign.
+The machine-readable
+[primary r1 evidence record](../reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r1.json)
+and its public-source unsubmitted patch preserve that distinction and bind the local raw artifacts
+without bundling provider payloads or private evaluator details.
+
+This was not provider prompt truncation, an incomplete response, total-token exhaustion,
+infrastructure failure or evaluator rejection. It exposed two bounded offline work items:
+submission needs a fair tail-call policy under the frozen comparison budget, and deterministic
+model/tool/wall-call pre-generation blocks need a versioned terminal schema and qualification
+contract. No corrective provider run is allowed until those policies pass offline tests; any later
+attempt requires a new experiment ID, clean execution hash and separate $2 approval.
 
 ## Latest paid diagnostic evidence
 
@@ -35,14 +70,16 @@ was consumed exactly once by `run_73f5aaf7328a4ea5` on clean harness commit
 | Trace | `trace-qualification-v2` 23/23, leakage and source-evidence binding pass |
 | D-037 diagnostic | controlled rejection 1, verified retry 1, rejected-action mutation 0; terminal `passed` |
 
-The run validates the exact D-037 rehydration branch under one deliberate intervention and unlocks
-only the separately approved fault-free primary mini pilot preflight. It does not estimate natural rejection
+The run validates the exact D-037 rehydration branch under one deliberate intervention and unlocked
+only the separately approved fault-free primary mini pilot preflight that later became D-046 r1.
+It does not estimate natural rejection
 frequency, recovery rate or memory benefit. The frozen contract forbids automatic rerun. The
 machine-readable
 [r6 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json)
 separates the controlled intervention, official task outcome and claims boundary, and includes
-distinct rejected and accepted public-source patches. Six mini runs total `$0.62150025`; all nine
-paid pilots total `$1.450364625` at configured list prices. Invoice and free-usage treatment remain
+distinct rejected and accepted public-source patches. Through r6, six mini runs totaled
+`$0.62150025`; including terminal primary r1, seven mini runs total `$0.77412075` and all ten paid
+pilots total `$1.602985125` at configured list prices. Invoice and free-usage treatment remain
 unverified.
 
 Post-capture verification passed all 27 live-evidence tests against the local raw artifacts,
@@ -1341,8 +1378,9 @@ binds the aggregate result, journal, approved plan, qualification, manifest, res
 failure record, patch intent/candidate and terminal request evidence by SHA-256. Only the
 agent-generated public-source candidate patch is bundled; it was not submitted or accepted. The
 four-mini subtotal through r4 was `$0.32007075`. Terminal r5 raised the mini subtotal to
-`$0.45570375`; controlled r6 raises it to `$0.62150025`, and all nine paid pilots total
-`$1.450364625` at configured list prices. Invoice charges and free daily usage treatment remain
+`$0.45570375`; controlled r6 raises it to `$0.62150025`. Terminal primary r1 later raises the mini
+subtotal to `$0.77412075`, and all ten paid pilots total `$1.602985125` at configured list prices.
+Invoice charges and free daily usage treatment remain
 unverified.
 
 Executed evidence:
@@ -1495,7 +1533,7 @@ reclaim. The timeout path remains a synthetic timeout on the first registered vi
 Rejected mutating-tool input rehydration is offline-qualified and was exercised live once by the
 controlled r6 diagnostic. R4 remains a terminal budget failure and zero-rejection r5 remains
 terminal inconclusive; neither is rerun or reinterpreted. R6 validates the harness branch but not a
-natural recovery rate. The next step is a separately approved fault-free tool-v2/context-v3
-`gpt-5.4-mini-2026-03-17` primary pilot with
-its own clean execution hash. No stress schedule row, 12-run development campaign or 96-run core
-campaign has been executed.
+natural recovery rate. Fault-free primary r1 is now terminal call-budget evidence, not an accepted
+pilot. The next step is offline tail-call and deterministic budget-terminal contract hardening,
+followed only then by a separately approved corrective pilot with a new clean hash. No stress
+schedule row, 12-run development campaign or 96-run core campaign has been executed.

@@ -973,6 +973,16 @@ integrity를 보존할 뿐 retry episode를 합성하지 않는다. Version 도�
 historical read compatibility를 유지하고, version이 없는 generic block은 새 의미로
 재qualification하지 않는다.
 
+Primary mini r1 `run_6993722014bf4e3b`는 token-total guard가 아니라 20번째
+`ModelCalled` 뒤의 `model_call_budget_exhausted` guard에서 멈췄다. 현재 runtime은
+model/tool/wall-call pre-generation block에 `model-generation-block-v1`을 붙이지 않고
+requested/remaining token 값을 요구하지 않으므로, qualification은 이를 valid terminal
+telemetry로 인정하지 않는다. 이 historical 21/22 artifact는 소급 변경하지 않는다.
+후속 계약은 exact-token block과 별도 version으로 reason-specific proof를 정의하고,
+`generation_started=false`, request artifact 결속, consumed call/tool/wall counter,
+terminal suffix와 retry-context shape를 검증해야 한다. 이 계약과 submission tail-call
+정책은 아직 구현 완료로 간주하지 않는다.
+
 현재 mini r2 evidence는 이 version 도입 전 `phase-evidence-v2` trace로 그대로 보존한다.
 
 ## 8. Verifier result and final outcome

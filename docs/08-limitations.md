@@ -217,8 +217,16 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
   $20 cap. D-045 fixes future primary runs to `gpt-5.4-mini-2026-03-17`,
   25,000 per-call output and 200,000 run-total tokens. The historical Terra r3 suite remains
-  readable but preflight-blocked; the new primary suite has not called the provider.
-  This is an execution contract, not a completed experiment.
+  readable but preflight-blocked. Primary r1 has now run once and is terminal immutable evidence,
+  not an accepted pilot or completed experiment.
+- Primary r1 `run_6993722014bf4e3b` used 20 model calls and 30 tool calls, with 131,266 input and
+  12,038 output tokens for a calculated `$0.1526205`. All 20 responses completed, input pre-counts
+  matched provider usage and truncation was disabled. It applied a one-line patch, passed the
+  registered check, read the complete final diff and entered `REVIEW`, then hit
+  `model_call_budget_exhausted` before `finish_task`; evaluator status is `not_run`.
+  Qualification is 21/22 solely because that deterministic call-budget terminal block is not a
+  versioned valid ending. A separate no-model Docker postmortem found that the exact final patch
+  passes hidden/regression/scope/safety, but this does not retroactively submit or resolve the run.
 - The terminal `dev-validation-gpt54mini-d037-r3.yaml` suite bound
   `experiment-diagnostic-v1` to its consumed execution hash. Its post-run consumer separates generic
   qualification from a `passed`, `inconclusive` or `failed` retry exercise, requires evaluator
@@ -229,12 +237,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   primary mini snapshot/medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. All nine paid-pilot host preflights reached
+  only after the approved plan is durably persisted. All ten paid-pilot host preflights reached
   `ready=true`; the development campaign requires its own clean execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. All nine paid pilots produced completed hash-chained
+  that blocks automatic schedule replay. All ten paid pilots produced completed hash-chained
   journals. Automatic resume from an interrupted journal is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
@@ -315,8 +323,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   exact next-request recovery plus evaluator arrival. The single approved r6 provider run passed
   that gate, official task evaluation and trace qualification. This proves the harness branch for
   one controlled intervention, not natural model-error recovery frequency, recovery rate, memory
-  benefit or primary campaign quality. A fault-free tool-v2/context-v3 mini pilot still requires a
-  separate clean hash and approval.
+  benefit or primary campaign quality. The fault-free primary r1 then exposed the call-budget
+  lifecycle above. A corrective pilot requires an offline-frozen tail-call/terminal-block contract,
+  a separate clean hash and approval.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
@@ -420,8 +429,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   result. It has no synthetic rejection or automatic retry, so the result is terminal rather than
   a reason to spend again.
   The controlled r6 result validates one deliberate retry branch but does not satisfy the
-  fault-free primary mini pilot purpose. The six mini runs' calculated list-price total is
-  `$0.62150025`; all nine paid pilot runs total `$1.450364625`.
+  fault-free primary mini pilot purpose. Including terminal primary r1, the seven mini runs'
+  calculated list-price total is `$0.77412075`; all ten paid pilot runs total `$1.602985125`.
   These are usage-based estimates, not verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. The account UI reports
   possible complimentary shared-traffic usage, but applicability to this exact function-tool

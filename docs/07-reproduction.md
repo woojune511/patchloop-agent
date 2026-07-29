@@ -83,8 +83,8 @@ is preserved separately under `reports/live-pilot/`:
 
 - `experiments/dev-validation-pilot.template.yaml`: terminal Terra r3 contract; historical
   inspection only, never rerun
-- `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`: current fault-free primary
-  campaign-pilot contract; no provider call has been made
+- `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`: terminal fault-free primary
+  campaign-pilot r1 contract; consumed once, inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot.yaml`: terminal mini r1 contract;
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
@@ -116,9 +116,16 @@ uv run patchloop evaluate `
   --preflight-only
 ```
 
-This is the current primary campaign-pilot preflight and makes no provider call. Review its blockers,
-model/budget/pricing snapshot and exact execution hash. Do not add approval flags until the clean
-hash has been separately approved with the $2 cap.
+This is now inspection-only. It should report existing journal/result blockers for terminal
+experiment `dev-validation-gpt54mini-campaign-20260730-r1`; do not add approval flags, delete
+artifacts or reuse its consumed execution hash. Run `run_6993722014bf4e3b` exhausted the 20-call
+model budget after applying a patch, passing the registered check, reading the final diff and
+entering `REVIEW`, but before `finish_task`. All 20 provider responses completed and all input
+pre-counts matched usage. The evaluator was not run and qualification remained 21/22 because the
+call-budget terminal block is not a versioned valid ending.
+See the
+[primary r1 evidence record](../reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r1.json)
+for the source/postmortem separation and hash-bound public patch.
 
 The original checked-in mini suite refers to terminal experiment
 `dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
@@ -223,10 +230,11 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
 trace-exercise error and records remaining rows as not started.
 
-Nine paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
+Ten paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
 historical Terra r3 success, four terminal mini failures, one official mini task success whose
-D-037 diagnostic is inconclusive, and one official controlled mini diagnostic pass. Their
-cumulative calculated list-price cost is `$1.450364625`; actual invoice or free daily usage
+D-037 diagnostic is inconclusive, one official controlled mini diagnostic pass and one primary
+mini call-budget failure. Their cumulative calculated list-price cost is `$1.602985125`; actual
+invoice or free daily usage
 treatment was not verified. Docker
 availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
@@ -342,10 +350,13 @@ official task evaluation and trace qualification; its aggregate is preserved in
 [the r6 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json).
 Inspect the existing result and never invoke that suite/hash again.
 
-After that diagnostic gate, run the separately approved fault-free
-`gpt-5.4-mini-2026-03-17` primary development-validation pilot. Only after that run
-reaches the evaluator and produces a qualified `trace-qualification-v2` may its run ID be inserted
-into
+After that diagnostic gate, the separately approved fault-free primary r1 ran once and became the
+terminal call-budget failure described above. Its exact final patch passed a separate no-model
+Docker postmortem, but that does not change the missing submission/evaluator evidence. Before a
+new provider run, freeze and test a submission tail-call policy plus versioned deterministic
+model/tool/wall-call terminal-block qualification. Only a new corrective pilot with a distinct
+experiment/hash and $2 approval that reaches the evaluator and produces a qualified
+`trace-qualification-v2` may have its run ID inserted into
 `experiments/dev-no-memory.template.yaml`. Development preflight then verifies the same model,
 budget, harness commit, tool/context versions and exact runtime-contract hash before producing a
 separate 12-row execution hash. That campaign still requires a distinct approval capped at $20.

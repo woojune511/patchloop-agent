@@ -332,6 +332,13 @@ profile v4만 25,000/200,000 pair와 `model-generation-block-v1`을 허용한다
 experiment ID로 보존하며, 이 diagnostic lane은 core headline 비교나 primary 선행 gate에
 포함하지 않는다.
 
+Primary r1은 이 동일 20-call 계약에서 patch, visible check와 final diff 뒤 `REVIEW`에
+도달했지만 `finish_task`용 다음 generation 전에 call budget을 소진했다. Exact patch의
+별도 evaluator pass는 원 run을 success로 바꾸지 않는다. 본 campaign 전 offline gate는
+모든 memory 조건에 같은 submission tail-call/model-call 정책을 적용하고,
+model/tool/wall-call exhaustion을 reason-specific versioned terminal evidence로 검증하는
+것이다. Historical r1 qualification 21/22를 소급 수정하거나 소비된 hash를 재사용하지 않는다.
+
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
 `--approved-execution-hash`를 함께 전달한다. Hash는 suite, frozen dataset/task/schedule,
