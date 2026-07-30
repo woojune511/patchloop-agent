@@ -23,6 +23,9 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_text
 PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml"
 )
+FUTURE_PILOT_SUITE = (
+    "experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -89,7 +92,7 @@ def _write_future_primary_suite(
     experiment_id: str,
 ) -> Path:
     payload = yaml.safe_load(
-        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
     )
     payload["experiment_id"] = experiment_id
     suite_path = tmp_path / f"{experiment_id}.yaml"
@@ -129,13 +132,13 @@ def _retry_qualification(
     }
 
 
-def test_expected_runtime_contract_hash_uses_phase_evidence_v4() -> None:
+def test_expected_runtime_contract_hash_uses_phase_evidence_v5() -> None:
     encoded = json.dumps(
         {
             "system_prompt": eval_runner.SYSTEM_PROMPT_V3,
             "tools": eval_runner.TOOL_SCHEMAS_V2,
             "tool_schema_version": "v2",
-            "context_policy_version": "phase-evidence-v4",
+            "context_policy_version": "phase-evidence-v5",
         },
         indent=2,
         sort_keys=True,
@@ -172,9 +175,9 @@ def test_live_campaign_approval_is_an_invocation_preflight_gate(
     assert approved["suite"]["model_id"] == "gpt-5.4-mini-2026-03-17"
     assert approved["suite"]["max_output_tokens"] == 25_000
     assert approved["suite"]["budget"]["max_model_calls"] == 21
-    assert approved["suite"]["budget"]["max_total_tokens"] == 200_000
+    assert approved["suite"]["budget"]["max_total_tokens"] == 250_000
     assert approved["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
-        1.0125
+        1.2375
     )
 
 
@@ -302,6 +305,31 @@ def test_consumed_no_memory_campaign_is_never_runnable(
 @pytest.mark.parametrize(
     "suite_path",
     [
+        "experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml",
+        "experiments/dev-no-memory-v4.template.yaml",
+    ],
+)
+def test_consumed_v4_200k_suites_are_loadable_but_never_runnable(
+    suite_path: str,
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+
+    suite = eval_runner.load_suite(suite_path)
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert suite.budget.max_model_calls == 21
+    assert suite.budget.max_total_tokens == 200_000
+    assert preflight["ready"] is False
+    assert "HISTORICAL_SUITE_IMMUTABLE" in {
+        row["code"] for row in preflight["blockers"]
+    }
+
+
+@pytest.mark.parametrize(
+    "suite_path",
+    [
         "experiments/dev-validation-gpt54mini-pilot.yaml",
         "experiments/dev-validation-gpt54mini-pilot-r2.yaml",
         "experiments/dev-validation-gpt54mini-d037-r3.yaml",
@@ -332,7 +360,7 @@ def test_consumed_mini_diagnostic_suites_are_immutable_even_with_approval(
 
 def test_future_campaign_contract_rejects_legacy_20_call_limit() -> None:
     payload = yaml.safe_load(
-        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
     )
     payload["experiment_id"] = "new-primary-with-legacy-call-limit"
     payload["budget"]["max_model_calls"] = 20
@@ -341,14 +369,26 @@ def test_future_campaign_contract_rejects_legacy_20_call_limit() -> None:
         ExperimentSuite.model_validate(payload)
 
 
-def test_future_campaign_templates_share_21_call_limit() -> None:
+def test_future_campaign_contract_rejects_historical_200k_budget() -> None:
+    payload = yaml.safe_load(
+        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    payload["experiment_id"] = "new-primary-with-historical-token-limit"
+    payload["budget"]["max_total_tokens"] = 200_000
+
+    with pytest.raises(ValidationError, match="max_total_tokens=250000"):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_future_campaign_templates_share_250k_budget() -> None:
     for path in (
-        PRIMARY_PILOT_SUITE,
-        "experiments/dev-no-memory.template.yaml",
+        FUTURE_PILOT_SUITE,
+        "experiments/dev-no-memory-v5.template.yaml",
         "experiments/core.template.yaml",
     ):
         payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
         assert payload["budget"]["max_model_calls"] == 21
+        assert payload["budget"]["max_total_tokens"] == 250_000
 
 
 def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
@@ -1064,13 +1104,34 @@ def test_v2_development_campaign_has_exact_twelve_run_matrix(
     }
 
 
+def test_v5_development_campaign_reserves_250k_for_all_twelve_runs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_path = "experiments/dev-no-memory-v5.template.yaml"
+
+    suite = eval_runner.load_suite(suite_path)
+    preflight = eval_runner.preflight_suite(suite_path)
+
+    assert suite.budget.max_total_tokens == 250_000
+    assert suite.estimated_cost_usd == pytest.approx(14.85)
+    assert preflight["expected_runs"] == 12
+    assert preflight["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
+        1.2375
+    )
+    assert preflight["pricing"]["budget_upper_bound_usd"] == pytest.approx(
+        14.85
+    )
+
+
 def test_development_campaign_rejects_stale_pilot_source_evidence(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path("experiments/dev-no-memory.template.yaml").read_text(encoding="utf-8")
+        Path("experiments/dev-no-memory-v5.template.yaml").read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "dev-stale-pilot-source"
     suite_payload["pilot_run_id"] = "run_qualified_pilot"
@@ -1118,7 +1179,7 @@ def test_model_candidate_pilot_cannot_unlock_primary_development_campaign(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path("experiments/dev-no-memory.template.yaml").read_text(encoding="utf-8")
+        Path("experiments/dev-no-memory-v5.template.yaml").read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "dev-reject-model-candidate-pilot"
     suite_payload["pilot_run_id"] = "run_model_candidate_pilot"
@@ -1163,7 +1224,7 @@ def test_legacy_runtime_pilot_cannot_unlock_v2_development_campaign(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path("experiments/dev-no-memory.template.yaml").read_text(
+        Path("experiments/dev-no-memory-v5.template.yaml").read_text(
             encoding="utf-8"
         )
     )
@@ -1214,7 +1275,7 @@ def test_legacy_runtime_pilot_cannot_unlock_v2_development_campaign(
 
 def test_v2_development_campaign_rejects_an_incomplete_task_set() -> None:
     payload = yaml.safe_load(
-        Path("experiments/dev-no-memory.template.yaml").read_text(encoding="utf-8")
+        Path("experiments/dev-no-memory-v5.template.yaml").read_text(encoding="utf-8")
     )
     payload["tasks"] = payload["tasks"][:-1]
 
@@ -1440,7 +1501,7 @@ def test_paid_execution_uses_the_suite_snapshot_approved_by_preflight(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "pilot-suite-snapshot"
     suite_path = tmp_path / "pilot-suite-snapshot.yaml"
@@ -1504,7 +1565,7 @@ def test_paid_execution_rejects_task_package_replacement_before_run_start(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "pilot-task-snapshot"
     suite_path = tmp_path / "pilot-task-snapshot.yaml"

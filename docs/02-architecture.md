@@ -190,6 +190,24 @@ Logical storage layout은 source repository와 분리한다.
 - V4 tail admission은 남은 model/tool call이 nominal corrective lifecycle에 도달하면
   read/search만 `ToolAdmissionBlocked`로 gateway dispatch 전에 닫는다. Mutation,
   registered check, final diff와 submission action은 이 정책의 차단 대상이 아니다.
+- `phase-evidence-v5`는 durable `ModelCalled` telemetry로 token-aware nominal corrective
+  tail을 계산한다. 관찰 input은 `requested_input_tokens`를 우선하고 그 값이 `None`일
+  때만 actual `input_tokens`로 fallback하며 invalid 값은 fail closed한다. 다음 input은
+  `max(observed input) + max(positive consecutive growth)`로 예측한다. 현재 generation이
+  기록되기 전에는 5 turn, 기록된 뒤에는 4 turn을 사용하고
+  `reserved_tokens = max_output_tokens + projected_next_input × projected_turns`로
+  예약한다. `remaining_tokens <= reserved_tokens`이면 read/search만
+  `ToolAdmissionBlocked(tool-admission-blocked-v2, reason=token_tail_reserved)`로
+  `ToolCalled`와 filesystem dispatch 전에 닫는다. Apply/check/diff/finish는 계속
+  사용할 수 있다.
+- V5 token cutoff는 completion guarantee가 아닌 nominal policy다. 각 generation 직전의
+  strict exact-request + full 25,000 response allowance admission은 그대로 유지되므로,
+  cutoff 뒤에도 exact request가 남은 total budget에 맞지 않으면 provider call 없이
+  terminal block으로 끝날 수 있다. V5 evidence는 `investigation-policy-v2`,
+  `investigation-ledger-v2`, `investigation-tail-policy-v2`,
+  `context-build-evidence-v5`, `tool-admission-blocked-v2`,
+  `trace-source-evidence-v5`로 versioning하고 qualification envelope은
+  `trace-qualification-v2`를 유지한다.
 - D-041 r5에서도 generation admission은 exact input과 full per-call allowance가 남은 total
   budget에 함께 들어가야 한다는 strict rule을 유지한다. 새 exact-request no-generation
   event payload는 `model-generation-block-v1`로 versioning한다. 이 versioned terminal block은 retry
@@ -274,10 +292,13 @@ Agent image와 evaluator image는 별도 digest로 versioning한다. Hidden task
 - 일반 반복은 `LoopDetected(enforcement=advisory)`로, 최근-event window에서 밀려나도
   현재 model turn의 signal을 별도 `execution_signals`에 넣어 다음 context에 제공한다. 동일한
   timed-out registered check는 다시 실행하지 않고 structured environment failure로 종료한다.
-- V4는 active mutation epoch 전체에서 비연속 exact search와 interval-union으로 완전히
+- Historical V4는 active mutation epoch 전체에서 비연속 exact search와 interval-union으로 완전히
   덮인 read도 감지한다. `investigation-loop-v1`과 exact semantic replay를 남기며 두 번째
   연속 no-progress부터 strategy change를 요구한다. 새로운 query나 uncovered range를
   hard block하지 않는다.
+- Current V5는 위 반복 evidence에 token projection을 더한다. Cutoff 전에는 V4 semantic
+  replay 의미를 유지하고, cutoff 뒤 valid read/search는 `token_tail_reserved` evidence로
+  admission 단계에서 닫아 tool budget과 filesystem dispatch를 소비하지 않는다.
 - 제출 조건 미충족은 `SubmissionRejected`와 model-visible tool result로 돌려주며 두 번까지
   복구할 수 있다. 세 번째 rejection은 deterministic `premature-stop`이다.
 - Registered check가 tracked worktree를 바꾸면 `ToolFailed` artifact와 usage를 먼저

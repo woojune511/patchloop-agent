@@ -2,15 +2,73 @@
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
-## D-045 future primary contract
+## D-052 current future-run contract — offline evidence only
 
-Future development-validation, memory-development and core suites now share the dated
+D-052 supersedes the future budget/runtime portion of D-045, D-048's current-runtime designation
+and D-051's pending token-tail gate without changing historical evidence. Future
+development-validation, memory-development and core suites use
+`gpt-5.4-mini-2026-03-17`, medium/standard/default, `phase-evidence-v5`,
+`21 model call / 50 tool call / 250,000 total token / 900 seconds` and
+`max_output_tokens=25,000` for every memory condition.
+
+The token projection uses durable `ModelCalled` telemetry. It prefers
+`requested_input_tokens`, falls back to actual `input_tokens` only when requested is `None`, and
+fails closed on invalid values. The contract is:
+
+```text
+projected_next_input =
+  max(observed_input_tokens)
+  + max(0, maximum_positive_consecutive_growth)
+
+projected_turns = 5 before generation, 4 after generation
+reserved_tokens = max_output_tokens + projected_next_input × projected_turns
+cutoff = remaining_tokens <= reserved_tokens
+```
+
+At cutoff, only valid read/search actions are closed before `ToolCalled` and filesystem dispatch
+with reason `token_tail_reserved`. Apply/check/diff/finish remain available. This is a nominal
+corrective-tail policy, not a completion guarantee. The strict exact-request + full 25,000
+response admission guard remains and can still terminate without a provider call.
+
+The new evidence versions are `investigation-policy-v2`, `investigation-ledger-v2`,
+`investigation-tail-policy-v2`, `context-build-evidence-v5`,
+`tool-admission-blocked-v2` and `trace-source-evidence-v5`; the qualification envelope remains
+`trace-qualification-v2`. Final offline verification on 2026-07-30 collected 635 non-live tests:
+632 passed and 3 existing environment/evidence-dependent tests skipped. Repository-wide
+`ruff check .` and `git diff --check` also passed. No provider call was made for D-052, so this is
+not accepted-pilot, usable baseline, memory-effect or core evidence.
+
+The future contracts are:
+
+- `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`,
+  experiment `dev-validation-gpt54mini-token-tail-v5-20260730-r1`
+- `experiments/dev-no-memory-v5.template.yaml`,
+  experiment `dev-no-memory-v5-20260730-r1`, with `pilot_run_id: null`
+- `experiments/core.template.yaml`, with the embedding revision still pending freeze
+
+The experiments consumed under the 21-call/200,000-token contract
+`dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
+`dev-validation-gpt54mini-investigation-v4-20260730-r1` and
+`dev-no-memory-v4-20260730-r1` remain immutable and are not requalified under V5.
+
+At frozen repository rates, future authorization reserves are `$1.2375` for one run, `$14.85`
+for 12 runs and `$118.80` for 96 runs. Measured list-price through D-051 remains
+`$4.981546875`; measured actual plus one future pilot, future development and future core reserve
+is the manual planning total `$139.869046875`. Reserves are neither spend nor invoice
+predictions. The project-wide `$150` cap is not machine-enforced; only suite-specific
+`cost_limit_usd` is enforced.
+
+## Historical D-045 200k future-primary contract
+
+At D-045, future development-validation, memory-development and core suites shared the dated
 `gpt-5.4-mini-2026-03-17` snapshot, medium reasoning, standard mode, default service tier,
 25,000 per-call output, 21 total model calls and 200,000 run-total tokens. The 21st call is a
 normal call shared fairly by every memory condition, not a `finish_task`-only reserve. At the
 official standard list rates
 rechecked at `2026-07-29T22:39:42Z`, the conservative authorization reserves are `$1.0125`
 per run, `$12.15` for 12 runs and `$97.20` for 96 runs.
+These values remain part of the consumed 200,000-token evidence and are superseded only for future
+suites by D-052.
 
 The terminal Terra r3 suite remains byte-preserved as
 `experiments/dev-validation-pilot.template.yaml`; it is readable for historical interpretation
@@ -77,8 +135,9 @@ unversioned generic blocks. A complete synthetic v2 terminal trace qualifies as
 
 All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r1/r2, both 12-run
 experiment IDs and v4 pilot `run_d7207fbb06184dd3` are now preflight-immutable even if an approval
-hash is supplied. No paid suite is currently approved. The next runtime gate is offline
-token-aware corrective-tail design and structured memory review.
+hash is supplied. No paid suite is currently approved. D-052 later closed the token-aware
+corrective-tail design offline without a provider call. Structured memory review and the new v5
+single-pilot gate remain pending.
 
 Offline verification collected 571 tests and completed 569 passes with 2 existing skips. The three
 directly affected runtime/qualification/experiment files contributed 238 passes. Repository-wide
@@ -124,9 +183,9 @@ reads were fully covered by prior successful ranges. The portable
 [campaign evidence record](../reports/memory-development/dev-no-memory-20260728.json) preserves the
 12 row outcomes and claims boundary.
 
-## D-048 investigation-continuity offline contract
+## Historical D-048 investigation-continuity offline contract
 
-Fresh non-replay manifests now use `phase-evidence-v4`. Each model turn receives a bounded
+D-048 introduced `phase-evidence-v4` for fresh non-replay manifests at that time. Each model turn receives a bounded
 `investigation-ledger-v1` rebuilt from append-only events, the latest checkpoint and verified
 successful read/search CAS in the active mutation epoch. Exact searches and fully-covered reads
 still consume one model action and one `ToolCalled`, but skip filesystem dispatch and close with
@@ -1406,9 +1465,10 @@ The checked-in
 and [final submitted patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11-submitted.patch)
 separate the provider tool argument from the final evaluator input and bind the ignored raw
 artifacts by SHA-256. This is an accepted single-task live pilot. It unlocked the pilot prerequisite
-under the then-current v1 contract, but it does not unlock the current tool-v2/context-v4 campaign
-gate. The later separately approved v4 primary mini pilot now unlocks that prerequisite. Neither
-single-task pilot is a 12-run result or evidence that memory improves performance.
+under the then-current v1 contract, but it does not unlock the current tool-v2/context-v5 pilot
+gate. The later separately approved v4 primary mini pilot unlocked only the already-consumed v4
+campaign; a new accepted v5 pilot is still required. Neither single-task pilot is a 12-run result or
+evidence that memory improves performance.
 
 ## Mini model-candidate r1/r2 evidence
 
@@ -1752,10 +1812,11 @@ D-048 tool-v2/context-v4 investigation continuity is offline-complete and v4 pro
 `run_d7207fbb06184dd3` passed the official evaluator and qualification 25/25. The D-051 v4 campaign
 also completed 12/12 without infrastructure or qualification error, but nine exact-request budget
 failures and three hidden task failures produced SCRR 0/12. It is immutable diagnostic evidence, not
-a valid baseline. The next step is an offline token-aware corrective-tail contract plus leak-safe
-structured review and deduplication of the three task failures. Any runtime change must receive a
-new single pilot and a new 12-run suite/hash before paid collection; no such run is currently
-approved.
+a valid baseline. D-052 has now completed the token-aware corrective-tail and future 250,000-token
+contract offline under `phase-evidence-v5`; it made no provider call. The next step is leak-safe
+structured review and deduplication of the three task failures, followed by a separately approved
+v5 single pilot. Only an accepted v5 pilot may be bound into the new 12-run suite. No such live run
+is currently approved, and no 96-run core campaign has been executed.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated

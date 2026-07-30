@@ -239,6 +239,26 @@ workspace 대신 그 CAS를 검사한다. Context tail 계산은 imminent genera
 leak scan과 `trace-source-evidence-v4`에 결속하고, v1-v3 source evidence와 qualification
 hash는 그대로 유지한다.
 
+`context_policy_version=phase-evidence-v5` qualification은 V4 checks를 상속하고 durable
+token projection을 독립 재계산한다. Observed input은 각 선행
+`ModelCalled.requested_input_tokens`를 우선하며 값이 `None`일 때만 actual
+`input_tokens`를 사용한다. Invalid 값은 fail closed한다. Qualifier는
+`projected_next_input = max(observed input) + max(0, maximum positive consecutive
+growth)`와 generation 전 5 turn, generation 후 4 turn을 적용해
+`reserved_tokens = max_output_tokens + projected_next_input × projected_turns`를
+재구성한다. `remaining_tokens <= reserved_tokens`이면 equality를 포함해 read/search만
+`ToolAdmissionBlocked(tool-admission-blocked-v2, reason=token_tail_reserved)`로
+`ToolCalled`와 dispatch 전에 닫혀야 한다. Apply/check/diff/finish는 이 정책으로 차단되면
+안 된다.
+
+V5 qualification은 `investigation-policy-v2`, `investigation-ledger-v2`,
+`investigation-tail-policy-v2`, `context-build-evidence-v5`,
+`tool-admission-blocked-v2`, `trace-source-evidence-v5`의 version과 source binding을
+검사한다. 전체 qualification envelope은 계속 `trace-qualification-v2`다. 이 cutoff는
+nominal policy이며 completion guarantee가 아니다. Strict exact-request + full 25,000
+response allowance guard는 별도로 유지되어, 이를 넘으면 provider generation 없이
+terminal evidence가 남아야 한다. V1-V4 qualification hash와 판정을 소급 변경하지 않는다.
+
 D-037 diagnostic suite의 machine consumer는 generic qualification과 별도로 다음 세 상태를
 낸다.
 
@@ -358,7 +378,7 @@ Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는
 현재 development-validation, memory-development와 core primary live block은
 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode `standard`, service tier `default`,
 max output 25,000 token과 run budget
-`21 model call / 50 tool call / 200,000 total token / 900초`를 고정한다. 21번째 call은
+`21 model call / 50 tool call / 250,000 total token / 900초`를 고정한다. 21번째 call은
 submission 전용으로 예약하지 않는 정상 model call이며 네 memory 조건에 동일하게
 적용한다. OpenAI SDK version,
 clean harness Git commit과 execution window도 provenance로 사용한다. D-031 provider
@@ -382,7 +402,13 @@ qualified terminal trace를 만들었지만 evaluator 도달 0/12라 no-memory �
 사용하지 않는다. D-048 v4 investigation gate를 통과한 새 pilot 뒤 D-051 12-run도
 12/12 qualified terminal trace를 만들었지만 evaluator 3/12, SCRR 0/12이며 아홉
 exact-request budget failure가 있다. 이 결과도 baseline이 아니며 token-aware tail
-runtime을 offline에서 다시 고정하기 전에는 새 baseline 후보를 실행하지 않는다.
+runtime을 offline에서 다시 고정하기 전에는 새 baseline 후보를 실행하지 않는다. D-052는
+그 future-only runtime을 `phase-evidence-v5`와 250,000 total-token 계약으로 offline
+검증했다. Provider call은 없었고, leak-safe structured review와 별도 승인된 v5 single
+pilot 전에는 새 baseline 후보를 실행하지 않는다. 21/200,000 계약으로 이미 소비된
+`dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
+`dev-validation-gpt54mini-investigation-v4-20260730-r1`,
+`dev-no-memory-v4-20260730-r1`은 immutable historical evidence다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
@@ -407,9 +433,12 @@ plan에서만 live capability를 발급한다. 동시 invocation의 선점 패�
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing)의 `gpt-5.4-mini`
 standard rate는 input $0.75/M, cached input $0.075/M, output $4.50/M이며 별도
 cache-write rate는 없다. Preflight는 verification age가 72시간을 넘거나 rate가 다르면
-실행하지 않는다. Primary 200,000 total과 25,000 response allowance를 최고 rate로 예약한
-authorization reserve는 run당 `$1.0125`, 12-run `$12.15`, 96-run `$97.20`이다.
-이는 예측 지출이나 invoice·무료 사용 증거가 아니다.
+실행하지 않는다. D-052 future primary의 250,000 total과 25,000 response allowance를
+frozen repository의 최고 rate로 예약한 authorization reserve는 run당 `$1.2375`, 12-run
+`$14.85`, 96-run `$118.80`이다. 지금까지의 measured list-price `$4.981546875`와 future
+pilot·development·core reserve를 더한 수동 계획값은 `$139.869046875`다. Reserve는 예측
+지출이나 invoice·무료 사용 증거가 아니다. Project-wide `$150` 상한은 machine-enforced가
+아니며 runner가 강제하는 것은 각 suite의 `cost_limit_usd`다.
 
 ## 6. Selective retrieval policy
 

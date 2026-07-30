@@ -256,8 +256,8 @@ Command는 task editor가 등록한다. Agent가 executable, argument, environme
 
 ## 3. Experiment suite와 live preflight
 
-`experiment-v2`는 모든 suite에 `purpose`를 명시한다. 기존 offline smoke와 core template의
-`experiment-v1`은 읽기 호환만 유지하며 새 live 실행에는 사용하지 않는다.
+`experiment-v2`는 모든 suite에 `purpose`를 명시한다. 기존 `experiment-v1` suite는
+historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실행에는 사용하지 않는다.
 
 | Purpose | Exact contract |
 | --- | --- |
@@ -279,14 +279,14 @@ max_output_tokens: 25000
 budget:
   max_model_calls: 21
   max_tool_calls: 50
-  max_total_tokens: 200000
+  max_total_tokens: 250000
   wall_clock_timeout_seconds: 900
 seed: 20260723
 ```
 
 이 21은 모든 future memory 조건에 동일한 총 model-call 상한이며 `finish_task` 전용
-reserve가 아니다. 전역 `Budget` 기본값과 historical diagnostic suite는 기존 20-call
-의미를 유지한다.
+reserve가 아니다. D-052 이전에 소비된 primary/development suite의 21/200,000 계약과
+historical diagnostic suite의 20-call 의미는 변경하지 않는다.
 
 Pilot task는
 `tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml`로 exact match한다.
@@ -331,6 +331,13 @@ dated snapshot `gpt-5.4-mini-2026-03-17`이고, model ID와 SDK version, Git com
 실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을 거부하고
 다시 확인한다.
 
+Frozen repository rate를 사용하는 D-052 future authorization reserve는 run당
+`(250,000 + 25,000) × $4.50/M = $1.2375`, 12-run `$14.85`, 96-run `$118.80`이다.
+이는 실제 spend나 invoice prediction이 아니다. 지금까지 측정된 list-price
+`$4.981546875`에 future pilot·12-run·96-run reserve를 모두 합한 수동 계획값은
+`$139.869046875`다. Project-wide `$150` 상한은 machine-enforced field가 아니며, runner는
+각 suite의 `cost_limit_usd`만 강제한다.
+
 과거 Terra r1-r3 experiment ID와 r3 계약
 `experiments/dev-validation-pilot.template.yaml`은 당시 identity를 그대로 보존한다.
 Loader는 historical evidence 해석을 위해 이를 읽을 수 있지만 preflight는 항상
@@ -342,8 +349,21 @@ evidence로만 읽고 preflight에서 차단한다. Corrective primary r2
 inspection 전용이다. V4 pilot
 `experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`과 후속
 `experiments/dev-no-memory-v4.template.yaml`도 각각 한 번 소비돼 inspection 전용이다.
-현재 열린 live gate는 없으며 다음 runtime gate는 offline token-aware tail과 structured
-review다. 이미 소비된
+정확히 21 model call/200,000 total-token 계약으로 소비된
+`dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
+`dev-validation-gpt54mini-investigation-v4-20260730-r1`,
+`dev-no-memory-v4-20260730-r1`은 immutable historical evidence이며 D-052로
+소급 재해석하거나 재실행하지 않는다.
+
+D-052 future template은
+`experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`
+(`dev-validation-gpt54mini-token-tail-v5-20260730-r1`),
+`experiments/dev-no-memory-v5.template.yaml` (`dev-no-memory-v5-20260730-r1`)와
+`experiments/core.template.yaml`이다. Pilot은 아직 provider에서 실행하지 않았다.
+Development template의 `pilot_run_id`는 `null`이라 accepted v5 pilot 전에는 실행할 수
+없고, core template의 embedding revision도 freeze 전 marker를 유지하므로 core 실행을
+허용하지 않는다. 다음 gate는 leak-safe structured review/deduplication과 별도 승인된 v5
+single pilot이다. 이미 소비된
 mini model-candidate r1/r2와 D-037 r3-r6 diagnostic suite도
 `HISTORICAL_SUITE_IMMUTABLE`이며 approval/hash를 다시 제공해도 실행할 수 없다.
 
@@ -357,7 +377,7 @@ D-031 telemetry를 실제 provider에서 검증한 terminal r1은
 `max_total_tokens: 90000`을 허용한다. 공식 standard rate는 input $0.75/M, cached input
 $0.075/M, output $4.50/M이고 cache-write rate는 `null`이다. 90,000은 run 전체
 input+output 누적 상한이다. 이 historical diagnostic purpose와 4,096/90,000 계약은
-같은 model snapshot을 쓰더라도 primary mini purpose의 25,000/200,000 계약을 충족하지 않는다.
+같은 model snapshot을 쓰더라도 current primary mini purpose의 25,000/250,000 계약을 충족하지 않는다.
 Generation 전에 exact input count와 manifest의 full per-call output allowance가 남은
 budget에 함께 들어가는지 검사하므로 마지막 response가 이 상한을 넘도록 시작하지 않는다.
 
@@ -565,9 +585,9 @@ model:
   max_output_tokens: 25000
 
 budget:
-  max_model_calls: 20
+  max_model_calls: 21
   max_tool_calls: 50
-  max_total_tokens: 200000
+  max_total_tokens: 250000
   wall_clock_timeout_seconds: 900
 
 environment:
@@ -688,6 +708,32 @@ projected remaining count로 계산하므로 prompt의 `allowed_next_actions`와
 gateway admission이 일치한다.
 V1-v3 context rendering과 qualification은 이 필드를 갖지 않는다.
 
+`phase-evidence-v5`는 V4의 repository-evidence reconstruction을 상속하고 token-aware
+projection을 `investigation-policy-v2`, `investigation-ledger-v2`,
+`investigation-tail-policy-v2`와 `context-build-evidence-v5`로 versioning한다.
+Projection의 observed input은 durable `ModelCalled.requested_input_tokens`를 우선하고,
+그 값이 `None`일 때만 같은 event의 actual `input_tokens`로 fallback한다. Boolean,
+negative 또는 그 밖의 invalid 값은 projection에서 조용히 제외하지 않고 fail closed한다.
+유효한 관찰값에서 다음 input은 다음과 같이 계산한다.
+
+```text
+projected_next_input =
+  max(observed_input_tokens)
+  + max(0, maximum_positive_consecutive_growth)
+
+projected_turns =
+  5  before the current generation is durably recorded
+  4  after the current generation is durably recorded
+
+reserved_tokens =
+  max_output_tokens + projected_next_input × projected_turns
+```
+
+`remaining_tokens <= reserved_tokens`이면 context의 read/search action은 nominal
+corrective tail로 닫힌다. Equality도 차단 경계에 포함한다. 이 계산은 completion
+guarantee가 아니며, generation admission의 strict exact request + full 25,000 response
+allowance 검사는 독립적으로 그대로 수행한다.
+
 새 live `ModelCalled` event는 `prompt_telemetry_version: prompt-token-integrity-v1`과 함께
 다음을 기록한다.
 
@@ -784,6 +830,13 @@ accept하지 않는다.
   "path_glob": "src/**/*.py"
 }
 ```
+
+`query`는 1~500자다. `path_glob`은 최대 500자·100 path segment의 repository-relative
+pattern이며 `**`는 segment 전체로만 사용할 수 있다. Empty/current-directory, parent,
+absolute와 Windows drive-relative pattern은 거부한다. 이 runtime validation은 invalid
+glob이 corrective-tail admission으로 오분류되거나 `Path.glob` recursion/error를 일으키지
+않게 한다. Historical request hash를 보존하기 위해 tool schema v2 JSON 자체는 바꾸지
+않으며 gateway와 qualifier가 같은 validator를 적용한다.
 
 ### `read_file`
 
@@ -1011,6 +1064,26 @@ Context builder는 imminent generation 1회를 반영한 projected model-call co
 사용하고, gateway는 그 generation이 durable `ModelCalled`가 된 뒤의 실제 counter로
 같은 경계를 집행한다.
 
+V5에서는 read/search admission이 `investigation-tail-policy-v2`의 token projection을
+함께 사용한다. Context builder는 generation 전 5-turn projection을
+`context-build-evidence-v5`에 결속하고, gateway는 generation 뒤 durable telemetry로
+4-turn projection을 다시 계산한다. Gateway cutoff가 닿으면 valid read/search를
+`ToolAdmissionBlocked(schema=tool-admission-blocked-v2,
+reason=token_tail_reserved)`로 `ToolCalled`와 dispatch 전에 닫는다. Apply, registered
+check, diff와 finish는 이 정책의 차단 대상이 아니다. Admission payload는 observed input
+source, maximum observed input, maximum positive consecutive growth,
+`projected_next_input_tokens`, `projected_turns`, `reserved_tokens`,
+`remaining_tokens`와 cutoff reason을 포함하고 `trace-source-evidence-v5`로 source CAS에
+결속한다. Qualifier는 이 값을 preceding durable events에서 독립 재계산하고 equality
+cutoff, blocked correlation의 `ToolCalled` 부재, unchanged mutation/check/diff/finish
+admission과 private-token scan을 검증한다.
+
+이 token cutoff는 nominal tail 전환일 뿐 성공이나 finish 가능 횟수를 예약하지 않는다.
+Tail 전환 뒤에도 next generation의 exact input과 full 25,000 output allowance가 남은
+250,000 total-token budget에 맞지 않으면 기존 `model-generation-block-v1`으로 provider
+call 없이 종료한다. Trace envelope은 계속 `trace-qualification-v2`이며 V4와 earlier
+source-evidence hash를 소급 변경하지 않는다.
+
 Candidate와 rejection result의 nested artifact descriptor는 각각 top-level
 `ToolCalled`/`ToolFailed` artifact identity와 일치해야 하며, builder는 두 CAS object의
 path·size·SHA-256과 UTF-8을 다시 확인한다. Candidate는 일반 tool-result character cap으로
@@ -1078,7 +1151,7 @@ Next-generation admission 전에 model/tool/wall counter가 이미 소진된 경
     "wall_clock_ms": 12345,
     "wall_clock_timeout_ms": 900000,
     "total_tokens_used": 143304,
-    "max_total_tokens": 200000
+    "max_total_tokens": 250000
   }
 }
 ```
@@ -1109,6 +1182,12 @@ generation 허용과 22번째 generation 전 v2 차단을 검증했다. Correcti
 D-048 v4 gate 뒤 새 experiment ID로 다시 측정했다. 그 D-051 campaign도 12/12 terminal과
 qualification을 남겼지만 evaluator 3/12, SCRR 0/12이며 아홉 exact-request budget
 failure가 있어 baseline으로 채택하지 않는다.
+
+D-052는 future non-replay contract만 `phase-evidence-v5`, 21/50/250,000/900,
+25,000 per-call output으로 바꾼다. 위 네 consumed 21/200,000 experiment identity와
+각 manifest, plan, result, qualification은 immutable하다. V5 offline contract는
+검증됐지만 provider execution, accepted v5 pilot, usable no-memory baseline과 core
+measurement는 아직 없다.
 
 별도 model-candidate mini r2 `run_4a9737ec91964dca` evidence는 이 version 도입 전
 `phase-evidence-v2` trace로 그대로 보존한다.

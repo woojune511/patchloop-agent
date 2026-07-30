@@ -359,7 +359,7 @@ def _terminal_trace(
     effective_budget = budget
     if effective_budget is None:
         effective_budget = (
-            Budget(max_model_calls=21, max_total_tokens=200_000)
+            Budget(max_model_calls=21, max_total_tokens=250_000)
             if model_id == "gpt-5.4-mini-2026-03-17"
             else Budget()
         )
@@ -1374,7 +1374,7 @@ def test_live_memory_development_failure_is_qualified_and_eligible(tmp_path) -> 
     assert qualification["max_output_tokens"] == 25_000
     assert qualification["budget"] == Budget(
         max_model_calls=21,
-        max_total_tokens=200_000
+        max_total_tokens=250_000,
     ).model_dump(mode="json")
     assert qualification["harness_git_commit"]
     assert qualification["tool_schema_version"] == "v2"

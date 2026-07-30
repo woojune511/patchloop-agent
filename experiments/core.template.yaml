@@ -25,13 +25,13 @@ max_output_tokens: 25000
 budget:
   max_model_calls: 21
   max_tool_calls: 50
-  max_total_tokens: 200000
+  max_total_tokens: 250000
   wall_clock_timeout_seconds: 900
 seed: 20260723
 # Deprecated config placeholders stay false/null. Paid approval is invocation-only.
 live_cost_approved: false
 approved_execution_hash: null
-estimated_cost_usd: 97.2
+estimated_cost_usd: 118.8
 cost_limit_usd: 150
 pricing_verified_at: 2026-07-29T22:39:42Z
 pricing_source_url: https://developers.openai.com/api/docs/pricing

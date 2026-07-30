@@ -50,12 +50,24 @@ _GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 _GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 _GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
 _GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
-_GPT54_MINI_CAMPAIGN_BUDGET = Budget(
+_GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET = Budget(
     max_model_calls=21,
     max_total_tokens=200_000,
 )
+_GPT54_MINI_CAMPAIGN_BUDGET = Budget(
+    max_model_calls=21,
+    max_total_tokens=250_000,
+)
 _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-campaign-20260730-r1"}
+)
+_HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS = frozenset(
+    {
+        "dev-validation-gpt54mini-campaign-20260730-r2",
+        "dev-no-memory-20260728",
+        "dev-validation-gpt54mini-investigation-v4-20260730-r1",
+        "dev-no-memory-v4-20260730-r1",
+    }
 )
 _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
 _COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
@@ -92,6 +104,7 @@ _SOURCE_EVIDENCE_SCHEMA_VERSION = "trace-source-evidence-v1"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V2 = "trace-source-evidence-v2"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V3 = "trace-source-evidence-v3"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V4 = "trace-source-evidence-v4"
+_SOURCE_EVIDENCE_SCHEMA_VERSION_V5 = "trace-source-evidence-v5"
 _EMPTY_DIFF_HASH = sha256_text("")
 
 
@@ -1204,7 +1217,7 @@ def _v4_investigation_context_evidence(
     checkpoints: list,
     context_events: list,
 ) -> tuple[bool, dict[str, Any]]:
-    """Recompute every v4 investigation ledger from its durable prefix."""
+    """Recompute every versioned investigation ledger from its durable prefix."""
 
     from patchloop.agent.context import build_context_with_evidence
 
@@ -1216,6 +1229,12 @@ def _v4_investigation_context_evidence(
     }
     failed_sequences: list[int] = []
     verified_hashes: list[str] = []
+    policy_version = manifest.context_policy_version
+    evidence_schema = (
+        "context-build-evidence-v5"
+        if policy_version == "phase-evidence-v5"
+        else "context-build-evidence-v4"
+    )
     for context_event in context_events:
         try:
             request_valid, request_evidence = _request_evidence_payload(
@@ -1236,7 +1255,7 @@ def _v4_investigation_context_evidence(
                 not isinstance(rendered, str)
                 or not isinstance(context_build, dict)
                 or context_build.get("schema_version")
-                != "context-build-evidence-v4"
+                != evidence_schema
             ):
                 raise RecoveryError("v4 context build evidence is invalid")
             recorded_ledger = context_build.get("investigation_ledger")
@@ -1292,8 +1311,10 @@ def _v4_investigation_context_evidence(
                 source_events,
                 checkpoint,
                 selected_memory or "",
-                policy_version="phase-evidence-v4",
+                policy_version=policy_version,
                 artifact_store=artifact_store,
+                budget=manifest.budget,
+                max_output_tokens=manifest.model.max_output_tokens,
             )
             ledger_evidence = rebuilt.evidence[
                 "investigation_ledger"
@@ -1321,6 +1342,67 @@ def _v4_investigation_context_evidence(
                 raise RecoveryError(
                     "v4 investigation context failed recomputation"
                 )
+            if policy_version == "phase-evidence-v5":
+                expected_tail = _v5_expected_tail_policy(
+                    task=package.public,
+                    events=source_events,
+                    manifest=manifest,
+                    projection_stage="pre_generation",
+                )
+                rendered_ledger = parsed_context.get(
+                    "investigation_ledger"
+                )
+                if (
+                    not isinstance(rendered_ledger, dict)
+                    or rendered_ledger.get("tail_policy")
+                    != expected_tail
+                ):
+                    raise RecoveryError(
+                        "v5 investigation token tail failed independent "
+                        "recomputation"
+                    )
+                v5_mirrors = {
+                    "investigation_tail_block_reasons": ledger_evidence[
+                        "tail_block_reasons"
+                    ],
+                    "investigation_tail_remaining_tokens": ledger_evidence[
+                        "tail_remaining_tokens"
+                    ],
+                    "investigation_tail_observation_count": ledger_evidence[
+                        "tail_observation_count"
+                    ],
+                    "investigation_tail_max_observed_input_tokens": (
+                        ledger_evidence[
+                            "tail_max_observed_input_tokens"
+                        ]
+                    ),
+                    "investigation_tail_max_positive_growth": (
+                        ledger_evidence["tail_max_positive_growth"]
+                    ),
+                    "investigation_tail_projected_next_input_tokens": (
+                        ledger_evidence[
+                            "tail_projected_next_input_tokens"
+                        ]
+                    ),
+                    "investigation_tail_projected_model_turns": (
+                        ledger_evidence[
+                            "tail_projected_model_turns"
+                        ]
+                    ),
+                    "investigation_tail_reserved_tokens": ledger_evidence[
+                        "tail_reserved_tokens"
+                    ],
+                    "investigation_tail_max_output_tokens": ledger_evidence[
+                        "tail_max_output_tokens"
+                    ],
+                }
+                if any(
+                    context_event.payload.get(field) != expected
+                    for field, expected in v5_mirrors.items()
+                ):
+                    raise RecoveryError(
+                        "v5 investigation tail mirrors failed recomputation"
+                    )
             verified_hashes.append(ledger_evidence["content_hash"])
         except (
             KeyError,
@@ -1384,6 +1466,153 @@ def _v4_no_progress_streak(events: list[Any]) -> int:
     return streak
 
 
+def _v5_expected_tail_policy(
+    *,
+    task,
+    events: list[Any],
+    manifest: RunManifest,
+    projection_stage: str,
+) -> dict[str, Any]:
+    """Independently reconstruct the immutable v5 token-tail contract."""
+
+    if projection_stage not in {"pre_generation", "post_generation"}:
+        raise RecoveryError("invalid v5 token-tail projection stage")
+    reserve = {
+        "tool_calls": 4 + 2 * len(task.visible_checks),
+        "model_calls": 3,
+        "feedback_model_calls": 1,
+    }
+    model_calls_used = 0
+    tool_calls_used = 0
+    observations: list[dict[str, Any]] = []
+    total_tokens_used = 0
+    for event in events:
+        if event.type == EventType.TOOL_CALLED:
+            tool_calls_used += 1
+        if event.type != EventType.MODEL_CALLED:
+            continue
+        model_calls_used += 1
+        requested = event.payload.get("requested_input_tokens")
+        actual_input = event.payload.get("input_tokens")
+        actual_output = event.payload.get("output_tokens")
+        if type(actual_input) is not int or actual_input < 0:
+            raise RecoveryError(
+                "v5 token tail source has invalid input token usage"
+            )
+        if type(actual_output) is not int or actual_output < 0:
+            raise RecoveryError(
+                "v5 token tail source has invalid output token usage"
+            )
+        total_tokens_used += actual_input + actual_output
+        if type(requested) is int and requested >= 0:
+            input_tokens = requested
+            source = "requested_input_tokens"
+        elif requested is None:
+            input_tokens = actual_input
+            source = "input_tokens_fallback"
+        else:
+            raise RecoveryError(
+                "v5 token tail source has invalid requested input tokens"
+            )
+        observations.append(
+            {
+                "event_sequence": event.sequence,
+                "input_tokens": input_tokens,
+                "source": source,
+            }
+        )
+
+    observed_values = [item["input_tokens"] for item in observations]
+    max_observed = max(observed_values, default=None)
+    max_positive_growth = max(
+        [0]
+        + [
+            current - previous
+            for previous, current in zip(
+                observed_values,
+                observed_values[1:],
+                strict=False,
+            )
+            if current > previous
+        ]
+    )
+    projected_next_input = (
+        max_observed + max_positive_growth
+        if max_observed is not None
+        else None
+    )
+    projected_model_turns = (
+        reserve["model_calls"]
+        + reserve["feedback_model_calls"]
+        + (1 if projection_stage == "pre_generation" else 0)
+    )
+    reserved_tokens = (
+        manifest.model.max_output_tokens
+        + projected_next_input * projected_model_turns
+        if projected_next_input is not None
+        else manifest.model.max_output_tokens
+    )
+    remaining_tokens = (
+        manifest.budget.max_total_tokens - total_tokens_used
+    )
+    token_blocked = bool(
+        max_observed is not None
+        and max_observed > 0
+        and remaining_tokens <= reserved_tokens
+    )
+    remaining_model_calls = (
+        manifest.budget.max_model_calls - model_calls_used
+    )
+    remaining_tool_calls = (
+        manifest.budget.max_tool_calls - tool_calls_used
+    )
+    remaining_after_next = (
+        max(0, remaining_model_calls - 1)
+        if projection_stage == "pre_generation"
+        else remaining_model_calls
+    )
+    reasons = []
+    if remaining_tool_calls <= reserve["tool_calls"]:
+        reasons.append("tool_tail_reserved")
+    if remaining_after_next <= (
+        reserve["model_calls"] + reserve["feedback_model_calls"]
+    ):
+        reasons.append("model_tail_reserved")
+    if token_blocked:
+        reasons.append("token_tail_reserved")
+
+    token_projection = {
+        "projection_stage": projection_stage,
+        "observations": observations,
+        "observed_model_call_count": len(observations),
+        "max_observed_input_tokens": max_observed,
+        "max_positive_consecutive_growth": max_positive_growth,
+        "projected_next_input_tokens": projected_next_input,
+        "projected_model_turns": projected_model_turns,
+        "max_output_tokens": manifest.model.max_output_tokens,
+        "reserved_tokens": reserved_tokens,
+        "total_tokens_used": total_tokens_used,
+        "max_total_tokens": manifest.budget.max_total_tokens,
+        "remaining_tokens": remaining_tokens,
+        "admission_threshold_reached": token_blocked,
+    }
+    return {
+        "schema_version": "investigation-tail-policy-v2",
+        "policy_version": "investigation-policy-v2",
+        "projection_stage": projection_stage,
+        "nominal_reserve": reserve,
+        "remaining_budget": {
+            "tool_calls": remaining_tool_calls,
+            "model_calls": remaining_model_calls,
+            "model_calls_after_next_generation": remaining_after_next,
+            "tokens": remaining_tokens,
+        },
+        "token_projection": token_projection,
+        "exploration_admitted": not reasons,
+        "block_reasons": reasons,
+    }
+
+
 def _v4_investigation_lifecycle_evidence(
     *,
     root: Path,
@@ -1414,6 +1643,16 @@ def _v4_investigation_lifecycle_evidence(
     verified_replay_sequences: list[int] = []
     failed_admission_sequences: list[int] = []
     verified_admission_sequences: list[int] = []
+    expected_policy_version = (
+        "investigation-policy-v2"
+        if manifest.context_policy_version == "phase-evidence-v5"
+        else INVESTIGATION_POLICY_VERSION
+    )
+    expected_admission_schema = (
+        "tool-admission-blocked-v2"
+        if manifest.context_policy_version == "phase-evidence-v5"
+        else TOOL_ADMISSION_SCHEMA
+    )
 
     def nested_json(
         event,
@@ -1728,13 +1967,26 @@ def _v4_investigation_lifecycle_evidence(
         remaining_tool_calls = (
             manifest.budget.max_tool_calls - tool_calls_used
         )
-        reason_codes = []
-        if remaining_tool_calls <= reserve["tool_calls"]:
-            reason_codes.append("tool_tail_reserved")
-        if remaining_model_calls <= (
-            reserve["model_calls"] + reserve["feedback_model_calls"]
-        ):
-            reason_codes.append("model_tail_reserved")
+        calculated_tail_policy = None
+        if manifest.context_policy_version == "phase-evidence-v5":
+            calculated_tail_policy = _v5_expected_tail_policy(
+                task=package.public,
+                events=prefix,
+                manifest=manifest,
+                projection_stage="post_generation",
+            )
+            reason_codes = list(
+                calculated_tail_policy["block_reasons"]
+            )
+        else:
+            reason_codes = []
+            if remaining_tool_calls <= reserve["tool_calls"]:
+                reason_codes.append("tool_tail_reserved")
+            if remaining_model_calls <= (
+                reserve["model_calls"]
+                + reserve["feedback_model_calls"]
+            ):
+                reason_codes.append("model_tail_reserved")
         input_valid, input_payload, input_item = nested_json(
             admission,
             role="investigation-admission-input",
@@ -1795,7 +2047,7 @@ def _v4_investigation_lifecycle_evidence(
                 "schema_version": (
                     INSPECTION_ADMISSION_PREFLIGHT_SCHEMA
                 ),
-                "policy_version": INVESTIGATION_POLICY_VERSION,
+                "policy_version": expected_policy_version,
                 "tool": tool,
                 "worktree_diff_hash": worktree_diff_hash,
             }
@@ -1870,8 +2122,8 @@ def _v4_investigation_lifecycle_evidence(
             "phase-advancing action"
         )
         error_details = {
-            "schema_version": TOOL_ADMISSION_SCHEMA,
-            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "schema_version": expected_admission_schema,
+            "policy_version": expected_policy_version,
             "reason_codes": reason_codes,
             "nominal_reserve": reserve,
             "remaining_model_calls": remaining_model_calls,
@@ -1881,6 +2133,8 @@ def _v4_investigation_lifecycle_evidence(
                 "patch, registered validation, diff review, or submission."
             ),
         }
+        if calculated_tail_policy is not None:
+            error_details["tail_policy"] = calculated_tail_policy
         expected_result = {
             "tool": tool,
             "status": "rejected",
@@ -1894,8 +2148,8 @@ def _v4_investigation_lifecycle_evidence(
             ),
         }
         expected_event = {
-            "schema_version": TOOL_ADMISSION_SCHEMA,
-            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "schema_version": expected_admission_schema,
+            "policy_version": expected_policy_version,
             "tool": tool,
             "status": "rejected",
             "input_hash": input_hash,
@@ -1919,6 +2173,27 @@ def _v4_investigation_lifecycle_evidence(
             "error_message": error_message,
             "error_details": error_details,
         }
+        if calculated_tail_policy is not None:
+            token_projection = calculated_tail_policy[
+                "token_projection"
+            ]
+            expected_event.update(
+                {
+                    "tail_policy": calculated_tail_policy,
+                    "tokens_used": token_projection[
+                        "total_tokens_used"
+                    ],
+                    "remaining_tokens": token_projection[
+                        "remaining_tokens"
+                    ],
+                    "max_total_tokens": (
+                        manifest.budget.max_total_tokens
+                    ),
+                    "max_output_tokens": (
+                        manifest.model.max_output_tokens
+                    ),
+                }
+            )
         checkpoint_events = [
             event
             for event in prefix
@@ -2033,7 +2308,8 @@ def _request_runtime_contract_valid(
         tools = TOOL_SCHEMAS_V2
     elif (
         manifest.tool_schema_version == "v2"
-        and manifest.context_policy_version == "phase-evidence-v4"
+        and manifest.context_policy_version
+        in {"phase-evidence-v4", "phase-evidence-v5"}
     ):
         system_prompt = SYSTEM_PROMPT_V3
         tools = TOOL_SCHEMAS_V2
@@ -2101,7 +2377,8 @@ def _generation_block_common_valid(
         artifact_root=(root / "artifacts"),
         expected_provider=(
             manifest.model.provider
-            if manifest.context_policy_version == "phase-evidence-v4"
+            if manifest.context_policy_version
+            in {"phase-evidence-v4", "phase-evidence-v5"}
             else None
         ),
     )
@@ -2591,7 +2868,7 @@ def _rejected_patch_retry_context_evidence(
             expected_provider=(
                 manifest.model.provider
                 if manifest.context_policy_version
-                == "phase-evidence-v4"
+                in {"phase-evidence-v4", "phase-evidence-v5"}
                 else None
             ),
         )
@@ -2678,7 +2955,7 @@ def _rejected_patch_retry_context_evidence(
                     expected_provider=(
                         manifest.model.provider
                         if manifest.context_policy_version
-                        == "phase-evidence-v4"
+                        in {"phase-evidence-v4", "phase-evidence-v5"}
                         else None
                     ),
                 )
@@ -3253,6 +3530,36 @@ def calculate_source_evidence_hash(
         snapshot[
             "investigation_admission_nested_artifacts"
         ] = admission_input_artifacts
+    elif manifest.context_policy_version == "phase-evidence-v5":
+        _, _, _, investigation_artifacts, _ = _artifact_evidence(
+            root=run_root,
+            events=events,
+            private_tokens=set(),
+            event_types={
+                EventType.TOOL_REPLAYED,
+                EventType.TOOL_ADMISSION_BLOCKED,
+            },
+            required_event_types={
+                EventType.TOOL_REPLAYED,
+                EventType.TOOL_ADMISSION_BLOCKED,
+            },
+        )
+        (
+            _,
+            _,
+            _,
+            admission_input_artifacts,
+            _,
+        ) = _v4_admission_nested_artifact_evidence(
+            root=run_root,
+            events=events,
+            private_tokens=set(),
+        )
+        snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V5
+        snapshot["investigation_artifacts"] = investigation_artifacts
+        snapshot[
+            "investigation_admission_nested_artifacts"
+        ] = admission_input_artifacts
     return sha256_text(canonical_json(snapshot))
 
 
@@ -3618,7 +3925,7 @@ def qualify_run(
                     expected_provider=(
                         manifest.model.provider
                         if manifest.context_policy_version
-                        == "phase-evidence-v4"
+                        in {"phase-evidence-v4", "phase-evidence-v5"}
                         else None
                     ),
                 )
@@ -3758,7 +4065,16 @@ def qualify_run(
             )
             or (
                 manifest.experiment.experiment_id
-                not in _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+                in _HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS
+                and manifest.budget
+                == _GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET
+            )
+            or (
+                manifest.experiment.experiment_id
+                not in (
+                    _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+                    | _HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS
+                )
                 and manifest.budget == _GPT54_MINI_CAMPAIGN_BUDGET
             )
         )
@@ -3936,7 +4252,10 @@ def qualify_run(
         private_tokens=private_tokens,
     )
     investigation_artifact_count = 0
-    if manifest.context_policy_version == "phase-evidence-v4":
+    if manifest.context_policy_version in {
+        "phase-evidence-v4",
+        "phase-evidence-v5",
+    }:
         (
             investigation_artifact_integrity,
             investigation_artifact_count,
@@ -4026,7 +4345,10 @@ def qualify_run(
             event.type in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED} for event in events
         ):
             artifact_details["patch_intent_artifact_count"] = patch_intent_artifact_count
-    if manifest.context_policy_version == "phase-evidence-v4":
+    if manifest.context_policy_version in {
+        "phase-evidence-v4",
+        "phase-evidence-v5",
+    }:
         artifact_details[
             "investigation_artifact_count"
         ] = investigation_artifact_count
@@ -4038,6 +4360,7 @@ def qualify_run(
     if manifest.context_policy_version in {
         "phase-evidence-v3",
         "phase-evidence-v4",
+        "phase-evidence-v5",
     }:
         (
             rejected_patch_retry_context_ok,
@@ -4122,7 +4445,10 @@ def qualify_run(
     model_events = [event for event in events if event.type == EventType.MODEL_CALLED]
     tool_events = [event for event in events if event.type == EventType.TOOL_CALLED]
     context_events = [event for event in events if event.type == EventType.CONTEXT_BUILT]
-    if manifest.context_policy_version == "phase-evidence-v4":
+    if manifest.context_policy_version in {
+        "phase-evidence-v4",
+        "phase-evidence-v5",
+    }:
         (
             investigation_evidence_ok,
             investigation_evidence_details,
@@ -4168,7 +4494,11 @@ def qualify_run(
     terminal_generation_block_kind: str | None = None
     if (
         manifest.context_policy_version
-        in {"phase-evidence-v3", "phase-evidence-v4"}
+        in {
+            "phase-evidence-v3",
+            "phase-evidence-v4",
+            "phase-evidence-v5",
+        }
         and len(generation_blocked_events) == 1
         and context_events
     ):
@@ -4319,6 +4649,7 @@ def qualify_run(
     if manifest.context_policy_version in {
         "phase-evidence-v3",
         "phase-evidence-v4",
+        "phase-evidence-v5",
     }:
         prompt_telemetry_details.update(
             {
@@ -4574,9 +4905,13 @@ def qualify_run(
     if manifest.context_policy_version in {
         "phase-evidence-v3",
         "phase-evidence-v4",
+        "phase-evidence-v5",
     }:
         trace_check_ids.add("rejected_patch_retry_context")
-    if manifest.context_policy_version == "phase-evidence-v4":
+    if manifest.context_policy_version in {
+        "phase-evidence-v4",
+        "phase-evidence-v5",
+    }:
         trace_check_ids.add("investigation_evidence")
         trace_check_ids.add("investigation_lifecycle")
     if controlled_rejection_mode:

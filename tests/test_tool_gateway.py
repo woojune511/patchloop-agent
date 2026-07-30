@@ -10,7 +10,7 @@ import pytest
 from patchloop.agent.context import build_context, build_context_with_evidence
 from patchloop.agent.tools import TOOL_SCHEMAS, ToolGateway
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact, Checkpoint, EventType, FaultSpec, Phase
+from patchloop.contracts import Artifact, Budget, Checkpoint, EventType, FaultSpec, Phase
 from patchloop.errors import ActionConflict, ContractError, RecoveryError
 from patchloop.evals.qualification import (
     _request_evidence_payload,
@@ -32,13 +32,18 @@ def _smoke_gateway(
     *,
     tool_schema_version="v2",
     fault: FaultSpec | None = None,
+    budget: Budget | None = None,
+    max_output_tokens: int = 4096,
+    manifest_context_policy_version: str = "phase-evidence-v4",
 ):
     package = load_task_package("tasks/smoke/csv-quoted-newline")
     manifest = build_manifest(
         package,
         run_id=run_id,
         fault=fault,
-    )
+        budget=budget,
+        max_output_tokens=max_output_tokens,
+    ).model_copy(update={"context_policy_version": manifest_context_policy_version})
     state = StateStore(tmp_path / "state.sqlite3")
     state.create_run(manifest)
     manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
@@ -1768,6 +1773,84 @@ def test_v4_invalid_inspection_types_close_as_structured_tool_failure(
     assert any(event.type == EventType.TOOL_FAILED for event in events)
 
 
+@pytest.mark.parametrize(
+    "context_policy_version",
+    ["phase-evidence-v4", "phase-evidence-v5"],
+)
+@pytest.mark.parametrize(
+    "invalid_glob",
+    [
+        "a/**b",
+        ".",
+        "C:foo",
+        "a" * 501,
+        "/".join(["a"] * 101),
+    ],
+)
+def test_tail_policy_does_not_hide_invalid_search_glob(
+    tmp_path,
+    context_policy_version: str,
+    invalid_glob: str,
+) -> None:
+    budget = Budget(
+        max_model_calls=21,
+        max_tool_calls=50,
+        max_total_tokens=180_000,
+    )
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        f"run_gateway_invalid_glob_{context_policy_version}",
+        manifest_context_policy_version=context_policy_version,
+        budget=budget,
+        max_output_tokens=25_000,
+    )
+    gateway.context_policy_version = context_policy_version
+    if context_policy_version == "phase-evidence-v4":
+        for index in range(16):
+            gateway.state.append_event(
+                gateway.run_id,
+                EventType.MODEL_CALLED,
+                actor="test-model",
+                payload={"index": index},
+            )
+    else:
+        gateway.state.append_event(
+            gateway.run_id,
+            EventType.MODEL_CALLED,
+            actor="test-model",
+            payload={
+                "requested_input_tokens": 30_000,
+                "input_tokens": 30_000,
+                "output_tokens": 5_000,
+            },
+        )
+
+    result = gateway.execute(
+        "search_files",
+        f"invalid-glob-{context_policy_version}",
+        {"query": "parse_rows", "path_glob": invalid_glob},
+    )
+
+    assert result.status == "rejected"
+    assert result.error_code == "CONTRACT_ERROR"
+    events = gateway.state.list_events(gateway.run_id)
+    assert any(
+        event.type == EventType.TOOL_CALLED
+        and event.correlation_id == f"invalid-glob-{context_policy_version}"
+        for event in events
+    )
+    assert any(
+        event.type == EventType.TOOL_FAILED
+        and event.correlation_id == f"invalid-glob-{context_policy_version}"
+        for event in events
+    )
+    assert not any(
+        event.type == EventType.TOOL_ADMISSION_BLOCKED
+        and event.correlation_id == f"invalid-glob-{context_policy_version}"
+        for event in events
+    )
+
+
 def test_v4_tail_policy_does_not_hide_symlink_escape(
     tmp_path,
 ) -> None:
@@ -1905,6 +1988,283 @@ def test_v4_context_removes_inspection_from_tail_actions(
     ]
     assert "apply_patch" in payload["phase_contract"][
         "allowed_next_actions"
+    ]
+
+
+def test_v5_context_projects_exact_input_growth_across_five_tail_turns(
+    tmp_path,
+) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v5_token_projection",
+        manifest_context_policy_version="phase-evidence-v5",
+        budget=Budget(
+            max_model_calls=21,
+            max_tool_calls=50,
+            max_total_tokens=211_000,
+        ),
+        max_output_tokens=25_000,
+    )
+    gateway.context_policy_version = "phase-evidence-v5"
+    for requested, output in ((20_000, 1_000), (24_000, 1_000)):
+        gateway.state.append_event(
+            gateway.run_id,
+            EventType.MODEL_CALLED,
+            actor="test-model",
+            payload={
+                "requested_input_tokens": requested,
+                "input_tokens": requested,
+                "output_tokens": output,
+            },
+        )
+    events = gateway.state.list_events(gateway.run_id)
+    built = build_context_with_evidence(
+        gateway.task,
+        events,
+        None,
+        policy_version="phase-evidence-v5",
+        artifact_store=gateway.artifacts,
+        budget=Budget(
+            max_model_calls=21,
+            max_tool_calls=50,
+            max_total_tokens=211_000,
+        ),
+        max_output_tokens=25_000,
+    )
+    payload = json.loads(built.rendered)
+    tail = payload["investigation_ledger"]["tail_policy"]
+    projection = tail["token_projection"]
+
+    assert projection["max_observed_input_tokens"] == 24_000
+    assert projection["max_positive_consecutive_growth"] == 4_000
+    assert projection["projected_next_input_tokens"] == 28_000
+    assert projection["projected_model_turns"] == 5
+    assert projection["reserved_tokens"] == 165_000
+    assert tail["remaining_budget"]["tokens"] == 165_000
+    assert tail["block_reasons"] == ["token_tail_reserved"]
+    assert tail["exploration_admitted"] is False
+    assert built.evidence["investigation_ledger"]["tail_reserved_tokens"] == 165_000
+
+    open_built = build_context_with_evidence(
+        gateway.task,
+        events,
+        None,
+        policy_version="phase-evidence-v5",
+        artifact_store=gateway.artifacts,
+        budget=Budget(
+            max_model_calls=21,
+            max_tool_calls=50,
+            max_total_tokens=211_001,
+        ),
+        max_output_tokens=25_000,
+    )
+    open_tail = json.loads(open_built.rendered)[
+        "investigation_ledger"
+    ]["tail_policy"]
+    assert open_tail["remaining_budget"]["tokens"] == 165_001
+    assert open_tail["block_reasons"] == []
+    assert open_tail["exploration_admitted"] is True
+
+
+def test_v5_context_uses_input_fallback_only_when_requested_is_none(
+    tmp_path,
+) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v5_token_fallback",
+        manifest_context_policy_version="phase-evidence-v5",
+    )
+    no_observation = build_context_with_evidence(
+        gateway.task,
+        [],
+        None,
+        policy_version="phase-evidence-v5",
+        artifact_store=gateway.artifacts,
+        budget=Budget(max_total_tokens=1),
+        max_output_tokens=25_000,
+    )
+    no_observation_tail = json.loads(no_observation.rendered)[
+        "investigation_ledger"
+    ]["tail_policy"]
+    assert no_observation_tail["block_reasons"] == []
+    assert no_observation_tail["exploration_admitted"] is True
+
+    gateway.state.append_event(
+        gateway.run_id,
+        EventType.MODEL_CALLED,
+        actor="test-model",
+        payload={
+            "requested_input_tokens": None,
+            "input_tokens": 10_000,
+            "output_tokens": 1_000,
+        },
+    )
+    events = gateway.state.list_events(gateway.run_id)
+    built = build_context_with_evidence(
+        gateway.task,
+        events,
+        None,
+        policy_version="phase-evidence-v5",
+        artifact_store=gateway.artifacts,
+        budget=Budget(max_total_tokens=250_000),
+        max_output_tokens=25_000,
+    )
+    projection = json.loads(built.rendered)["investigation_ledger"]["tail_policy"][
+        "token_projection"
+    ]
+
+    assert projection["observations"] == [
+        {
+            "event_sequence": events[-1].sequence,
+            "input_tokens": 10_000,
+            "source": "input_tokens_fallback",
+        }
+    ]
+
+    events[-1].payload["requested_input_tokens"] = "invalid"
+    with pytest.raises(
+        RecoveryError,
+        match="invalid requested input tokens",
+    ):
+        build_context_with_evidence(
+            gateway.task,
+            events,
+            None,
+            policy_version="phase-evidence-v5",
+            artifact_store=gateway.artifacts,
+            budget=Budget(max_total_tokens=250_000),
+            max_output_tokens=25_000,
+        )
+
+
+def test_v5_gateway_blocks_token_tail_at_post_generation_boundary(
+    tmp_path,
+) -> None:
+    budget = Budget(
+        max_model_calls=21,
+        max_tool_calls=50,
+        max_total_tokens=180_000,
+    )
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v5_token_tail_admission",
+        manifest_context_policy_version="phase-evidence-v5",
+        budget=budget,
+        max_output_tokens=25_000,
+    )
+    gateway.context_policy_version = "phase-evidence-v5"
+    _durable_checkpoint(gateway)
+    arguments = {"query": "parse_rows", "path_glob": "**/*.py"}
+    gateway.execute(
+        "search_files",
+        "v5-token-tail-source",
+        arguments,
+    )
+    replay = gateway.execute(
+        "search_files",
+        "v5-token-tail-replay",
+        arguments,
+    )
+    assert replay.output["semantic_replay"] is True
+    gateway.state.append_event(
+        gateway.run_id,
+        EventType.MODEL_CALLED,
+        actor="test-model",
+        payload={
+            "requested_input_tokens": 30_000,
+            "input_tokens": 30_000,
+            "output_tokens": 5_000,
+        },
+    )
+
+    result = gateway.execute(
+        "search_files",
+        "v5-token-tail-block",
+        arguments,
+    )
+
+    assert result.status == "rejected"
+    assert result.error_code == "TOOL_ADMISSION_BLOCKED"
+    events = gateway.state.list_events(gateway.run_id)
+    blocked = next(event for event in events if event.type == EventType.TOOL_ADMISSION_BLOCKED)
+    tail = blocked.payload["tail_policy"]
+    assert blocked.payload["schema_version"] == ("tool-admission-blocked-v2")
+    assert blocked.payload["reason_codes"] == ["token_tail_reserved"]
+    assert tail["projection_stage"] == "post_generation"
+    assert tail["token_projection"]["projected_model_turns"] == 4
+    assert tail["token_projection"]["reserved_tokens"] == 145_000
+    assert blocked.payload["remaining_tokens"] == 145_000
+    assert not any(
+        event.type == EventType.TOOL_CALLED and event.correlation_id == "v5-token-tail-block"
+        for event in events
+    )
+    assert not any(
+        event.type == EventType.TOOL_REPLAYED
+        and event.correlation_id == "v5-token-tail-block"
+        for event in events
+    )
+
+    manifest = gateway.state.get_manifest(gateway.run_id)
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    passed, details = _v4_investigation_lifecycle_evidence(
+        root=tmp_path,
+        manifest=manifest,
+        package=package,
+        events=events,
+    )
+    assert passed is True
+    assert details["verified_semantic_replay_count"] == 1
+    assert details["verified_admission_block_count"] == 1
+
+    blocked.payload["tail_policy"]["token_projection"]["reserved_tokens"] += 1
+    passed, details = _v4_investigation_lifecycle_evidence(
+        root=tmp_path,
+        manifest=manifest,
+        package=package,
+        events=events,
+    )
+    assert passed is False
+    assert details["failed_admission_block_sequences"] == [blocked.sequence]
+
+
+def test_v5_tail_reason_order_is_stable_when_all_reserves_close(
+    tmp_path,
+) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v5_combined_tail",
+        manifest_context_policy_version="phase-evidence-v5",
+    )
+    gateway.state.append_event(
+        gateway.run_id,
+        EventType.MODEL_CALLED,
+        actor="test-model",
+        payload={
+            "requested_input_tokens": 30_000,
+            "input_tokens": 30_000,
+            "output_tokens": 5_000,
+        },
+    )
+    built = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v5",
+        artifact_store=gateway.artifacts,
+        budget=Budget(
+            max_model_calls=6,
+            max_tool_calls=1,
+            max_total_tokens=180_000,
+        ),
+        max_output_tokens=25_000,
+    )
+
+    assert json.loads(built.rendered)["investigation_ledger"][
+        "tail_policy"
+    ]["block_reasons"] == [
+        "tool_tail_reserved",
+        "model_tail_reserved",
+        "token_tail_reserved",
     ]
 
 

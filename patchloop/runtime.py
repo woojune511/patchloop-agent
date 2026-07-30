@@ -93,7 +93,7 @@ def build_manifest(
         harness_git_commit=git_commit(),
         tool_schema_version="v1" if provider == "replay" else "v2",
         context_policy_version=(
-            "v1" if provider == "replay" else "phase-evidence-v4"
+            "v1" if provider == "replay" else "phase-evidence-v5"
         ),
         model=ModelConfig(
             provider=provider,

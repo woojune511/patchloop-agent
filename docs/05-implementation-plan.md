@@ -1,7 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-051 v4 campaign terminal; token-aware tail and structured review**
+현재 milestone: **D-052 phase-evidence-v5/250k offline complete; structured review and
+v5 live pilot pending**
 
 2026-07-30 구현 스냅샷:
 
@@ -9,10 +10,10 @@
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | tool v2/context v4/D-048 investigation hardening offline-complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, tail admission과 request-by-request qualification 재계산 |
+| Phase 3 state machine | tool v2/context v5/D-052 token-tail hardening offline-complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, token-aware read/search admission과 request-by-request qualification 재계산 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
-| Phase 5 memory | qualification/review path implemented, reviewed index pending | V4 campaign의 task failure 3개를 두 semantic group으로 provisional 분류; budget-confounded 9개와 index freeze는 보류 |
-| Phase 6 evaluation | 두 12-run diagnostic complete; valid baseline pending | V4 campaign 12/12 terminal·qualified, evaluator 3/12, SCRR 0/12; token-tail confound 때문에 baseline 부적격 |
+| Phase 5 memory | qualification/review path implemented, reviewed index pending | V4 campaign의 task failure 3개를 두 semantic group으로 provisional 분류; leak-safe review/deduplication과 index freeze는 보류 |
+| Phase 6 evaluation | 두 12-run diagnostic complete; valid baseline pending | V5 250k contract는 offline-only; 새 pilot/provider run과 usable no-memory baseline은 아직 없음 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -77,8 +78,9 @@ corrective primary r2 `run_afd5080a77a34995`의 official evaluator와 qualificat
 통과했다. 이 pilot에 결속된 `dev-no-memory-v4-20260730-r1`도 exact pilot commit의
 detached worktree에서 별도 승인 hash로 정확히 한 번 실행됐다. 12/12 terminal·qualified,
 evaluator 3/12지만 SCRR은 0/12다. 아홉 run의 strict exact-request budget exhaustion 때문에
-usable no-memory baseline은 아직 없다. 다음은 paid 재실행이 아니라 token-aware corrective
-tail의 offline 계약과 세 task failure의 structured review/deduplication이다.
+usable no-memory baseline은 아직 없다. D-052에서 token-aware corrective tail과 future
+250,000-token contract를 offline 검증했다. 다음은 세 task failure의 structured
+review/deduplication이며, 그 뒤 별도 승인된 v5 single pilot을 실행한다.
 
 동결 evidence:
 
@@ -104,7 +106,7 @@ tail의 offline 계약과 세 task failure의 structured review/deduplication이
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — mini primary campaign contract frozen
+## Current live trace gate — v5 offline contract frozen; review and pilot pending
 
 목표: 각 paid invocation 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -130,7 +132,9 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 10a | completed (offline) | D-048 durable investigation ledger, semantic replay와 corrective-tail admission | v1-v3 compatibility, CAS tamper fail-closed, recovery·qualifier 재계산과 full regression 607 passed/3 skipped |
 | 10b | completed; immutable | 새 v4 development-validation pilot 1회, $2 cap | `run_d7207fbb06184dd3`: official evaluator, qualification 25/25, investigation evidence/lifecycle pass |
 | 10c | completed; diagnostic only | 새 ID의 memory-development 6 task × 2회, `no_memory`, $20 cap | 12/12 terminal·qualified, evaluator 3/12, SCRR 0/12; 9 budget-confounded agent failure + 3 hidden task failure |
-| 11 | pending runtime decision and structured review | Token-aware tail offline gate, append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 hidden leakage 없이 두 semantic group으로 review/deduplicate |
+| 11a | completed (offline), no provider call | D-052 `phase-evidence-v5` token projection과 future 250,000-token contract | Pre/post-generation 5/4-turn projection, equality cutoff, read/search-only admission block, strict exact-request guard와 historical non-reinterpretation 검증 |
+| 11b | pending | Append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 hidden leakage 없이 두 semantic group으로 review/deduplicate |
+| 11c | not executed | 별도 승인된 v5 single pilot과 후속 새 12-run suite/hash | Pilot acceptance 뒤에만 `pilot_run_id`를 bind; no-memory baseline 적격성을 다시 판정 |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.
@@ -235,9 +239,9 @@ evaluator의 patch success는 원 run outcome을 바꾸지 않는다. Order 9a�
 보존한다. Order 10b의 새 v4 pilot도 accepted됐으며 Order 10c의 별도 12-run v4 campaign은
 terminal diagnostic으로 완료됐다. Runtime policy를 바꾸기 전에는 새 paid gate를 열지 않는다.
 
-Memory-development와 core live suite는 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode
-`standard`, service tier `default`, 25,000 max output token, 21 model call과 200,000
-run-total budget을 고정한다.
+Memory-development와 core future live suite는 `gpt-5.4-mini-2026-03-17`, reasoning
+`medium`, mode `standard`, service tier `default`, 25,000 max output token,
+`21 model call / 50 tool call / 250,000 total token / 900초`를 고정한다.
 D-031 telemetry의 historical development-validation provider pilot r1~r3는
 `gpt-5.4-mini-2026-03-17`, medium, default tier, per-call output 4,096과 run total
 90,000 token을 허용한다. Corrective r4만 diagnostic profile v2와 함께 25,000/120,000
@@ -333,10 +337,15 @@ cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 
 pilot은 exact input과 full 4,096-token response allowance가 남은 budget 안에 없으면
 generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 90,000-token
 runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더한 운영상 안전
-margin이다. D-045 primary contract의 run reserve는 25,000/200,000에서 `$1.0125`,
-12-run은 `$12.15`, 96-run은 `$97.20`이다.
+margin이다. Historical D-045 primary contract의 run reserve는 25,000/200,000에서
+`$1.0125`, 12-run은 `$12.15`, 96-run은 `$97.20`이었다. D-052 future contract의 frozen
+repository-rate authorization reserve는 25,000/250,000에서 run당 `$1.2375`, 12-run
+`$14.85`, 96-run `$118.80`이다. 현재까지 measured list-price `$4.981546875`와 세 future
+reserve를 더한 수동 계획값은 `$139.869046875`다. Reserve는 spend나 invoice prediction이
+아니며 project-wide `$150` cap은 machine-enforced가 아니다. Runner는 suite별
+`cost_limit_usd`만 강제한다.
 
-### Historical evidence preserved; D-051 v4 campaign terminal; review gate pending
+### Historical evidence preserved; D-052 offline complete; v5 validation pending
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
@@ -360,10 +369,26 @@ margin이다. D-045 primary contract의 run reserve는 25,000/200,000에서 `$1.
 - SCRR 0/12, evaluator 3/12다. 아홉 exact-request budget failure는 memory rule과 baseline에서
   제외하고, hidden acceptance에 실패한 세 task failure만 두 semantic group으로 provisional
   review한다. Human review와 deduplication 전에는 index를 build/freeze하지 않는다.
-- 다음 runtime work item은 25,000 per-call ceiling과 exact accounting을 유지하면서 context
-  growth 전에 patch/check/review path를 확보하는 token-aware corrective-tail 정책을 offline에서
-  설계·검증하는 것이다. Runtime 변경 뒤 live validation은 새 pilot, suite, hash와 승인을
-  요구한다.
+- D-052는 `phase-evidence-v5`, 25,000 per-call output과 250,000 total-token budget을
+  future suite에 고정했다. `requested_input_tokens` 우선/`None` fallback, 관찰 input
+  최댓값 + 최대 positive consecutive growth, generation 전/후 5/4 turn,
+  `remaining_tokens <= reserved_tokens` 경계와 read/search-only
+  `token_tail_reserved` admission을 offline에서 검증했다. 이 cutoff는 nominal policy이며
+  strict exact-request + full output guard와 completion non-guarantee는 유지한다.
+- V5 schema는 `investigation-policy-v2`, `investigation-ledger-v2`,
+  `investigation-tail-policy-v2`, `context-build-evidence-v5`,
+  `tool-admission-blocked-v2`, `trace-source-evidence-v5`이고 qualification envelope은
+  계속 `trace-qualification-v2`다. 이 change에서 provider call은 없었다.
+- 21/200,000 계약으로 소비된
+  `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
+  `dev-validation-gpt54mini-investigation-v4-20260730-r1`,
+  `dev-no-memory-v4-20260730-r1`은 immutable historical evidence다.
+- Future template은 `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`,
+  `experiments/dev-no-memory-v5.template.yaml`, `experiments/core.template.yaml`이다.
+  Development template의 `pilot_run_id`는 아직 `null`이고 core embedding revision은
+  freeze 전 marker이므로 둘 다 실행 gate를 열지 않는다.
+- 다음 work item은 세 task failure의 leak-safe structured review/deduplication이다.
+  이후 live validation은 새 v5 pilot, suite, hash와 별도 승인을 요구한다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
 
 2026-07-28 첫 paid pilot `run_c6f13dd9a1a1472d`는 ready preflight 뒤 `$0.34025875`를
@@ -412,9 +437,10 @@ qualification hash는
 `sha256:5bc11b4087061921a415d94caeb0ac8370e39013f1d94a531130256fd3101811`,
 현재 source evidence hash는
 `sha256:f4726a1d6c2abfdf859c92135ae345dffb2075aaa9d5a7f0fc4fb7b1b0259322`다.
-이 evidence는 당시 v1 pilot gate만 통과했으며, 현재 v4 development campaign gate에는
-재사용하지 않는다. 이후 실행된 첫 12-run campaign도 v4 이전 diagnostic으로만 보존하며,
-새 v4 baseline campaign은 아직 실행하지 않았다.
+이 evidence는 당시 v1 pilot gate만 통과했으며, 현재 v5 pilot gate에는 재사용하지 않는다.
+이후 실행된 첫 12-run campaign은 v4 이전 diagnostic으로 보존한다. 별도 v4 pilot과
+12-run campaign도 D-049/D-051에서 한 번씩 소비됐지만 usable baseline을 만들지 못한
+immutable diagnostic evidence다. 새 v5 pilot은 아직 실행하지 않았다.
 
 ## Phase 1. Evaluation Foundation
 

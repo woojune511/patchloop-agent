@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-051 v4 no-memory campaign terminal audit; token-aware tail and
-  structured memory review`다.
+- 현재 milestone은 `D-052 phase-evidence-v5/250k offline contract complete;
+  structured memory review and v5 live pilot pending`이다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -45,9 +45,10 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `trace-qualification-v2` 23/23을 기록했다. 사용량은 138,262 input + 13,800 output token,
   계산상 `$0.1657965`다. 이는 D-037 harness branch의 live validation이며 자연 model-error
   recovery rate나 memory 효과가 아니다. 이 r6와 승인 hash는 immutable하게 보존하고 재실행하지
-  않는다. D-045는 앞으로의 pilot, memory-development와 core 비교 모델을
+  않는다. D-045는 당시 이후의 pilot, memory-development와 core 비교 모델을
   `gpt-5.4-mini-2026-03-17`, medium/standard/default, 25,000 per-call output과 200,000
-  run-total budget으로 통일했다. 승인된 fault-free primary r1 `run_6993722014bf4e3b`는
+  run-total budget으로 통일했다. 이 historical budget은 아래 D-052가 future suite에
+  대해서만 supersede한다. 승인된 fault-free primary r1 `run_6993722014bf4e3b`는
   20/20 exact input telemetry와 completed response, applied patch, visible check pass,
   final diff와 `REVIEW`를 남겼지만 model-call 20회를 모두 사용해 `finish_task` 전
   `model_call_budget_exhausted`로 끝났다. Evaluator는 실행되지 않았고 qualification은
@@ -117,9 +118,32 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   144/144 executed request의 exact input count가 provider usage와 일치했고 semantic replay는
   26회였지만 tail admission block은 0회였다. 계산상 campaign 비용은 `$1.84756425`,
   전체 누적은 `$4.981546875`다. 이 campaign은 immutable diagnostic evidence이며 usable
-  no-memory performance baseline이 아니고 재실행하지 않는다. 다음 gate는 paid run이 아니라
-  token-aware corrective-tail 정책의 offline 검증과 세 task failure의 leak-safe structured
-  review/deduplication이다. 96-run core campaign은 아직 실행하지 않는다.
+  no-memory performance baseline이 아니고 재실행하지 않는다.
+  D-052는 future non-replay runtime을 `phase-evidence-v5`로 올리고 모든 memory 조건의
+  budget을 `21 model call / 50 tool call / 250,000 total token / 900초`, per-call output
+  25,000으로 고정한다. Durable `ModelCalled` telemetry에서
+  `requested_input_tokens`를 우선하고 그 값이 `None`일 때만 actual `input_tokens`로
+  fallback한다. 관찰값이 invalid하면 fail closed한다. 다음 input은 관찰된 input의 최댓값에
+  양의 consecutive growth 최댓값을 더해 예측하며, generation 전에는 5 turn, generation
+  후에는 4 turn을 곱한다.
+  `reserved_tokens = max_output_tokens + projected_next_input × projected_turns`이고
+  `remaining_tokens <= reserved_tokens`이면 read/search만
+  `token_tail_reserved`로 `ToolCalled`와 dispatch 전에 차단한다. Apply/check/diff/finish는
+  계속 사용할 수 있다. 이 nominal cutoff는 완료 보장이 아니며 strict exact-request +
+  full 25,000 response guard는 그대로다. 새 evidence schema는
+  `investigation-policy-v2`, `investigation-ledger-v2`,
+  `investigation-tail-policy-v2`, `context-build-evidence-v5`,
+  `tool-admission-blocked-v2`, `trace-source-evidence-v5`이고 trace qualification은
+  계속 `trace-qualification-v2`다. Historical 21/200,000 suite
+  `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
+  `dev-validation-gpt54mini-investigation-v4-20260730-r1`,
+  `dev-no-memory-v4-20260730-r1`은 immutable하며 재해석하거나 재실행하지 않는다.
+  Frozen repository rate의 future authorization reserve는 run당 `$1.2375`, 12-run
+  `$14.85`, 96-run `$118.80`이고 measured `$4.981546875`와 모두 더한 수동 계획값은
+  `$139.869046875`다. Reserve는 spend/invoice prediction이 아니며 project-wide `$150`
+  cap은 machine-enforced가 아니다. V5 offline contract는 검증됐지만 provider call은
+  없었다. 다음 gate는 세 task failure의 leak-safe structured review/deduplication과 별도
+  승인된 v5 single pilot이다. 96-run core campaign은 아직 실행하지 않는다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

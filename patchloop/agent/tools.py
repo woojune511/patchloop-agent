@@ -17,8 +17,8 @@ from patchloop.agent.investigation import (
     INSPECTION_ADMISSION_PREFLIGHT_SCHEMA,
     INVESTIGATION_LOOP_SCHEMA,
     INVESTIGATION_POLICY_VERSION,
-    TOOL_ADMISSION_SCHEMA,
     TOOL_REPLAY_SCHEMA,
+    investigation_policy_version,
     load_inspection_records,
     mutation_epoch,
     nominal_tail_reserve,
@@ -26,6 +26,8 @@ from patchloop.agent.investigation import (
     read_coverage,
     reconstruct_covered_read,
     search_match_key,
+    tail_policy,
+    tool_admission_schema,
     validate_inspection_arguments,
 )
 from patchloop.artifacts import ArtifactStore
@@ -168,6 +170,10 @@ TOOL_SCHEMAS_V2.append(
 TOOL_SCHEMAS = TOOL_SCHEMAS_V2
 
 _EVENT_ERROR_MESSAGE_LIMIT = 2_000
+_INVESTIGATION_CONTEXT_POLICIES = {
+    "phase-evidence-v4",
+    "phase-evidence-v5",
+}
 _UNSUPPORTED_PATCH_METADATA = (
     "new file mode ",
     "old mode ",
@@ -377,7 +383,7 @@ class ToolGateway:
             worktree_diff_hash=worktree_diff_hash,
         )
         if (
-            self.context_policy_version == "phase-evidence-v4"
+            self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES
             and name in {"read_file", "search_files"}
             and self._inspection_short_circuit_eligible(
                 name,
@@ -452,7 +458,7 @@ class ToolGateway:
             "input_hash": input_hash,
             "normalized_call_hash": normalized_call_hash,
         }
-        if self.context_policy_version == "phase-evidence-v4":
+        if self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES:
             call_payload["worktree_diff_hash"] = worktree_diff_hash
             call_payload["execution"] = "dispatched"
         if input_artifact is not None:
@@ -499,7 +505,7 @@ class ToolGateway:
             else:
                 output = self._dispatch(name, arguments)
             if (
-                self.context_policy_version == "phase-evidence-v4"
+                self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES
                 and name in {"read_file", "search_files"}
             ):
                 output = self._annotate_inspection_result(
@@ -510,7 +516,8 @@ class ToolGateway:
             artifact = self.artifacts.put_json(output)
             result_artifact = (
                 artifact.model_dump(mode="json")
-                if self.context_policy_version == "phase-evidence-v4"
+                if self.context_policy_version
+                in _INVESTIGATION_CONTEXT_POLICIES
                 and name in {"read_file", "search_files"}
                 else None
             )
@@ -583,6 +590,12 @@ class ToolGateway:
         events = self.state.list_events(self.run_id)
         manifest = self.state.get_manifest(self.run_id)
         reserve = nominal_tail_reserve(self.task)
+        policy_version = investigation_policy_version(
+            self.context_policy_version
+        )
+        admission_schema = tool_admission_schema(
+            self.context_policy_version
+        )
         model_calls_used = sum(
             event.type == EventType.MODEL_CALLED for event in events
         )
@@ -595,13 +608,28 @@ class ToolGateway:
         remaining_tool_calls = (
             manifest.budget.max_tool_calls - tool_calls_used
         )
-        block_reasons = []
-        if remaining_tool_calls <= reserve["tool_calls"]:
-            block_reasons.append("tool_tail_reserved")
-        if remaining_model_calls <= (
-            reserve["model_calls"] + reserve["feedback_model_calls"]
-        ):
-            block_reasons.append("model_tail_reserved")
+        calculated_tail_policy = None
+        if self.context_policy_version == "phase-evidence-v5":
+            calculated_tail_policy = tail_policy(
+                self.task,
+                None,
+                context_policy_version=self.context_policy_version,
+                events=events,
+                budget=manifest.budget,
+                max_output_tokens=manifest.model.max_output_tokens,
+                projection_stage="post_generation",
+            )
+            block_reasons = list(
+                calculated_tail_policy["block_reasons"]
+            )
+        else:
+            block_reasons = []
+            if remaining_tool_calls <= reserve["tool_calls"]:
+                block_reasons.append("tool_tail_reserved")
+            if remaining_model_calls <= (
+                reserve["model_calls"] + reserve["feedback_model_calls"]
+            ):
+                block_reasons.append("model_tail_reserved")
         if not block_reasons:
             return None
 
@@ -626,8 +654,8 @@ class ToolGateway:
             "phase-advancing action"
         )
         error_details = {
-            "schema_version": TOOL_ADMISSION_SCHEMA,
-            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "schema_version": admission_schema,
+            "policy_version": policy_version,
             "reason_codes": block_reasons,
             "nominal_reserve": reserve,
             "remaining_model_calls": remaining_model_calls,
@@ -637,6 +665,8 @@ class ToolGateway:
                 "patch, registered validation, diff review, or submission."
             ),
         }
+        if calculated_tail_policy is not None:
+            error_details["tail_policy"] = calculated_tail_policy
         result_payload = {
             "tool": name,
             "status": "rejected",
@@ -663,8 +693,8 @@ class ToolGateway:
             error_message=error_message,
         )
         event_payload = {
-            "schema_version": TOOL_ADMISSION_SCHEMA,
-            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "schema_version": admission_schema,
+            "policy_version": policy_version,
             "tool": name,
             "status": "rejected",
             "input_hash": input_hash,
@@ -686,6 +716,25 @@ class ToolGateway:
             "error_message": error_message,
             "error_details": error_details,
         }
+        if calculated_tail_policy is not None:
+            token_projection = calculated_tail_policy[
+                "token_projection"
+            ]
+            event_payload.update(
+                {
+                    "tail_policy": calculated_tail_policy,
+                    "tokens_used": token_projection[
+                        "total_tokens_used"
+                    ],
+                    "remaining_tokens": token_projection[
+                        "remaining_tokens"
+                    ],
+                    "max_total_tokens": manifest.budget.max_total_tokens,
+                    "max_output_tokens": (
+                        manifest.model.max_output_tokens
+                    ),
+                }
+            )
         self.state.complete_nonexecuted_action(
             self.run_id,
             action_id,
@@ -712,7 +761,9 @@ class ToolGateway:
 
         payload: dict[str, Any] = {
             "schema_version": INSPECTION_ADMISSION_PREFLIGHT_SCHEMA,
-            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "policy_version": investigation_policy_version(
+                self.context_policy_version
+            ),
             "tool": name,
             "worktree_diff_hash": worktree_diff_hash,
         }
@@ -1543,7 +1594,7 @@ class ToolGateway:
             input_hash,
         )
         if (
-            self.context_policy_version == "phase-evidence-v4"
+            self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES
             and name in {"read_file", "search_files"}
             and call.payload.get("execution")
             == "semantic-cache-replay"
@@ -1638,7 +1689,7 @@ class ToolGateway:
         try:
             output = self._dispatch(name, arguments)
             if (
-                self.context_policy_version == "phase-evidence-v4"
+                self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES
                 and name in {"read_file", "search_files"}
             ):
                 worktree_diff_hash = call.payload.get(
@@ -1656,7 +1707,8 @@ class ToolGateway:
             artifact = self.artifacts.put_json(output)
             result_artifact = (
                 artifact.model_dump(mode="json")
-                if self.context_policy_version == "phase-evidence-v4"
+                if self.context_policy_version
+                in _INVESTIGATION_CONTEXT_POLICIES
                 and name in {"read_file", "search_files"}
                 else None
             )
@@ -2085,7 +2137,7 @@ class ToolGateway:
             "end_line": end_line,
             "content": "\n".join(selected),
         }
-        if self.context_policy_version != "phase-evidence-v4":
+        if self.context_policy_version not in _INVESTIGATION_CONTEXT_POLICIES:
             return result
         return {
             **result,
@@ -2126,7 +2178,10 @@ class ToolGateway:
                             "matches": matches,
                             "truncated": True,
                         }
-                        if self.context_policy_version == "phase-evidence-v4":
+                        if (
+                            self.context_policy_version
+                            in _INVESTIGATION_CONTEXT_POLICIES
+                        ):
                             result.update(
                                 {
                                     "path_glob": path_glob,
@@ -2139,7 +2194,7 @@ class ToolGateway:
             "matches": matches,
             "truncated": False,
         }
-        if self.context_policy_version == "phase-evidence-v4":
+        if self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES:
             result.update(
                 {
                     "path_glob": path_glob,

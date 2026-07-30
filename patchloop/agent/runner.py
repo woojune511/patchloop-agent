@@ -550,6 +550,7 @@ class AgentRunner:
                 if manifest.context_policy_version not in {
                     "phase-evidence-v3",
                     "phase-evidence-v4",
+                    "phase-evidence-v5",
                 }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -580,6 +581,11 @@ class AgentRunner:
                             "artifact_path": retrieval_artifact.path,
                         },
                     )
+                if manifest.context_policy_version == "phase-evidence-v5":
+                    # V5 binds the ledger to the exact durable prefix. A
+                    # MemoryRetrieved event appended above must therefore be
+                    # included before ContextBuilt is emitted.
+                    events = self.state.list_events(manifest.run_id)
                 built_context = build_context_with_evidence(
                     package.public,
                     events,
@@ -587,6 +593,8 @@ class AgentRunner:
                     memory_text,
                     policy_version=manifest.context_policy_version,
                     artifact_store=self.artifacts,
+                    budget=manifest.budget,
+                    max_output_tokens=manifest.model.max_output_tokens,
                 )
                 context = built_context.rendered
                 if isinstance(adapter, OpenAIResponsesAdapter):
@@ -665,9 +673,70 @@ class AgentRunner:
                                         "investigation_ledger"
                                     ]["exploration_admitted"]
                                 ),
+                                **(
+                                    {
+                                        "investigation_tail_block_reasons": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ]["tail_block_reasons"]
+                                        ),
+                                        "investigation_tail_remaining_tokens": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ]["tail_remaining_tokens"]
+                                        ),
+                                        "investigation_tail_observation_count": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ]["tail_observation_count"]
+                                        ),
+                                        "investigation_tail_max_observed_input_tokens": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ][
+                                                "tail_max_observed_input_tokens"
+                                            ]
+                                        ),
+                                        "investigation_tail_max_positive_growth": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ]["tail_max_positive_growth"]
+                                        ),
+                                        "investigation_tail_projected_next_input_tokens": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ][
+                                                "tail_projected_next_input_tokens"
+                                            ]
+                                        ),
+                                        "investigation_tail_projected_model_turns": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ][
+                                                "tail_projected_model_turns"
+                                            ]
+                                        ),
+                                        "investigation_tail_reserved_tokens": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ]["tail_reserved_tokens"]
+                                        ),
+                                        "investigation_tail_max_output_tokens": (
+                                            built_context.evidence[
+                                                "investigation_ledger"
+                                            ]["tail_max_output_tokens"]
+                                        ),
+                                    }
+                                    if manifest.context_policy_version
+                                    == "phase-evidence-v5"
+                                    else {}
+                                ),
                             }
                             if manifest.context_policy_version
-                            == "phase-evidence-v4"
+                            in {
+                                "phase-evidence-v4",
+                                "phase-evidence-v5",
+                            }
                             else {}
                         ),
                     },
@@ -675,6 +744,7 @@ class AgentRunner:
                 if manifest.context_policy_version in {
                     "phase-evidence-v3",
                     "phase-evidence-v4",
+                    "phase-evidence-v5",
                 }:
                     pre_generation_reason = self._pre_generation_budget_reason(
                         manifest,
@@ -704,6 +774,7 @@ class AgentRunner:
                         if manifest.context_policy_version in {
                             "phase-evidence-v3",
                             "phase-evidence-v4",
+                            "phase-evidence-v5",
                         }:
                             usage.input_token_count_calls += 1
                             self._block_model_generation(
@@ -728,7 +799,11 @@ class AgentRunner:
                 else:
                     if (
                         manifest.context_policy_version
-                        in {"phase-evidence-v3", "phase-evidence-v4"}
+                        in {
+                            "phase-evidence-v3",
+                            "phase-evidence-v4",
+                            "phase-evidence-v5",
+                        }
                         and usage.input_tokens + usage.output_tokens
                         >= manifest.budget.max_total_tokens
                     ):
@@ -1650,6 +1725,7 @@ class AgentRunner:
             "phase-evidence-v2",
             "phase-evidence-v3",
             "phase-evidence-v4",
+            "phase-evidence-v5",
         }:
             evidence = diff_bound_evidence(
                 task or load_task_package(self._find_task(manifest)).public,
@@ -1773,7 +1849,8 @@ class AgentRunner:
             return SYSTEM_PROMPT_V2, TOOL_SCHEMAS_V2
         if (
             manifest.tool_schema_version == "v2"
-            and manifest.context_policy_version == "phase-evidence-v4"
+            and manifest.context_policy_version
+            in {"phase-evidence-v4", "phase-evidence-v5"}
         ):
             return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V2
         raise ContractError(

@@ -66,6 +66,9 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     historical_v3 = current.model_copy(
         update={"context_policy_version": "phase-evidence-v3"}
     )
+    historical_v4 = current.model_copy(
+        update={"context_policy_version": "phase-evidence-v4"}
+    )
     replay = build_manifest(
         package,
         run_id="run_replay_context_contract",
@@ -75,13 +78,16 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     )
 
     assert current.tool_schema_version == "v2"
-    assert current.context_policy_version == "phase-evidence-v4"
+    assert current.context_policy_version == "phase-evidence-v5"
     assert AgentRunner._runtime_contract(current) != AgentRunner._runtime_contract(
         legacy_v2
     )
     assert AgentRunner._runtime_contract(
         historical_v3
     ) == AgentRunner._runtime_contract(legacy_v2)
+    assert AgentRunner._runtime_contract(
+        current
+    ) == AgentRunner._runtime_contract(historical_v4)
     assert replay.tool_schema_version == "v1"
     assert replay.context_policy_version == "v1"
 
@@ -332,7 +338,7 @@ def test_offline_mock_agent_creates_complete_trace(
     assert result["official"] is False
     manifest = runner.state.get_manifest(result["run_id"])
     assert manifest.task_id == task_id
-    assert manifest.context_policy_version == "phase-evidence-v4"
+    assert manifest.context_policy_version == "phase-evidence-v5"
     assert [event.sequence for event in events] == list(range(1, len(events) + 1))
     assert sum(event.type == EventType.MODEL_CALLED for event in events) == 5
     assert sum(event.type == EventType.TOOL_CALLED for event in events) == 5
@@ -383,7 +389,7 @@ def test_v4_repeated_investigation_e2e_replays_blocks_and_qualifies(
             max_tool_calls=20,
             max_total_tokens=80_000,
         ),
-    )
+    ).model_copy(update={"context_policy_version": "phase-evidence-v4"})
 
     class RepeatedInvestigationAdapter:
         def __init__(self) -> None:
@@ -502,6 +508,20 @@ def test_v4_repeated_investigation_e2e_replays_blocks_and_qualifies(
         qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V4
         == "trace-source-evidence-v4"
     )
+    with monkeypatch.context() as v5_schema_patch:
+        v5_schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V5",
+            "trace-source-evidence-v5-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                manifest.run_id,
+                root=runner.root,
+                require_valid_plan=False,
+            )
+            == qualification["source_evidence_hash"]
+        )
     with monkeypatch.context() as schema_patch:
         schema_patch.setattr(
             qualification_module,
@@ -564,6 +584,163 @@ def test_v4_repeated_investigation_e2e_replays_blocks_and_qualifies(
             manifest.run_id,
             task_dir=Path(TASK).parent,
             root=runner.root,
+        )
+
+
+def test_v5_token_tail_blocks_inspection_then_completes_corrective_path(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package(Path(TASK).parent)
+    script = MOCK_TASK_SCRIPTS[package.public.task_id]
+    manifest = build_manifest(
+        package,
+        run_id="run_v5_token_tail_corrective_e2e",
+        sandbox_backend="local",
+        budget=Budget(
+            max_model_calls=21,
+            max_tool_calls=50,
+            max_total_tokens=180_000,
+        ),
+        max_output_tokens=25_000,
+    )
+
+    class TokenTailAdapter:
+        def __init__(self) -> None:
+            self.turn = 0
+            self.contexts: list[str] = []
+
+        def next_turn(self, context, tools):
+            del tools
+            self.contexts.append(context)
+            calls = [
+                RequestedTool(
+                    "search_files",
+                    "v5-token-tail-search",
+                    {
+                        "query": "parse_rows",
+                        "path_glob": "**/*.py",
+                    },
+                ),
+                RequestedTool(
+                    "apply_patch",
+                    "v5-token-tail-patch",
+                    {"patch": script.patch},
+                ),
+                RequestedTool(
+                    "run_check",
+                    "v5-token-tail-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool(
+                    "get_diff",
+                    "v5-token-tail-review",
+                    {},
+                ),
+                RequestedTool(
+                    "finish_task",
+                    "v5-token-tail-finish",
+                    {},
+                ),
+            ]
+            call = calls[self.turn]
+            input_tokens = 30_000 if self.turn == 0 else 100
+            output_tokens = 5_000 if self.turn == 0 else 100
+            self.turn += 1
+            return ModelTurn(
+                tool_calls=[call],
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                total_tokens=input_tokens + output_tokens,
+            )
+
+    adapter = TokenTailAdapter()
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    result = runner.start(TASK, model="mock", manifest=manifest)
+
+    assert result["outcome_kind"] == RunOutcomeKind.RESOLVED.value
+    assert result["usage"]["model_calls"] == 5
+    assert result["usage"]["tool_calls"] == 4
+    events = runner.state.list_events(manifest.run_id)
+    blocked = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_ADMISSION_BLOCKED
+    ]
+    assert len(blocked) == 1
+    assert blocked[0].payload["reason_codes"] == [
+        "token_tail_reserved"
+    ]
+    assert not any(
+        event.type == EventType.TOOL_CALLED
+        and event.correlation_id == "v5-token-tail-search"
+        for event in events
+    )
+    second_context = json.loads(adapter.contexts[1])
+    tail = second_context["investigation_ledger"]["tail_policy"]
+    assert tail["schema_version"] == "investigation-tail-policy-v2"
+    assert tail["projection_stage"] == "pre_generation"
+    assert tail["token_projection"]["projected_model_turns"] == 5
+    assert tail["exploration_admitted"] is False
+    assert "search_files" not in second_context["phase_contract"][
+        "allowed_next_actions"
+    ]
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=runner.root,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    assert checks["investigation_evidence"]["passed"] is True
+    assert checks["investigation_lifecycle"]["passed"] is True
+    assert qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V5 == (
+        "trace-source-evidence-v5"
+    )
+    baseline_hash = calculate_source_evidence_hash(
+        manifest.run_id,
+        root=runner.root,
+        require_valid_plan=False,
+    )
+    with monkeypatch.context() as schema_patch:
+        schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V4",
+            "trace-source-evidence-v4-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                manifest.run_id,
+                root=runner.root,
+                require_valid_plan=False,
+            )
+            == baseline_hash
+        )
+        schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V5",
+            "trace-source-evidence-v5-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                manifest.run_id,
+                root=runner.root,
+                require_valid_plan=False,
+            )
+            != baseline_hash
         )
 
 

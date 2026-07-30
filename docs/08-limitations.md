@@ -215,8 +215,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - `experiment-v2` now distinguishes offline smoke, Babel development-validation live pilot,
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
-  $20 cap. D-045 fixes future primary runs to `gpt-5.4-mini-2026-03-17`,
-  25,000 per-call output, 21 model calls and 200,000 run-total tokens. All historical Terra
+  $20 cap. Historical D-045 fixed then-future primary runs to `gpt-5.4-mini-2026-03-17`,
+  25,000 per-call output, 21 model calls and 200,000 run-total tokens. D-052 supersedes only
+  future suite budgets with the same model/mode and `21/50/250,000/900`; it does not reinterpret
+  consumed 200,000-token evidence. All historical Terra
   pilot IDs, the consumed mini diagnostic suites and primary r1 remain readable but
   preflight-blocked. Primary r1 has now run once and is terminal immutable evidence, not an
   accepted pilot or completed experiment.
@@ -301,7 +303,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   writes. A hash-bound receipt permits evaluator reuse after a crash before terminal commit, while
   terminal failure/result/status/event are committed together. This is local integrity and recovery
   evidence, not protection against an attacker able to rewrite the database and every artifact.
-- New non-replay runs use tool schema v2 with context policy v4. The inherited submission contract binds latest visible-check success and
+- New non-replay runs use tool schema v2 with context policy `phase-evidence-v5`. The inherited submission contract binds latest visible-check success and
   final diff review to the exact current worktree hash, exposes a structured `finish_task`, delays
   phase transitions until tool success and makes two premature submissions recoverable. It also
   records review/submission lifecycle, structured patch-error stages, advisory repeat signals and
@@ -318,14 +320,28 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   semantic replay and tail admission block were each observed zero times. Those two branches
   therefore remain offline-only evidence, and one successful pilot is not a no-memory baseline,
   memory-benefit result or core reliability estimate.
-  Existing v1/v2 traces and replays are not rewritten.
+  D-052 V5 retains those V4 semantics and adds a durable token projection:
+  `requested_input_tokens` first, actual input only when requested is `None`, maximum observed
+  input plus maximum positive consecutive growth, and pre/post-generation 5/4 projected turns.
+  `remaining_tokens <= reserved_tokens` closes only read/search before `ToolCalled` with
+  `token_tail_reserved`; apply/check/diff/finish remain available. This is a nominal cutoff, not a
+  completion guarantee, and the strict exact-request + full 25,000 response guard remains.
+  V5 uses `investigation-policy-v2`, `investigation-ledger-v2`,
+  `investigation-tail-policy-v2`, `context-build-evidence-v5`,
+  `tool-admission-blocked-v2` and `trace-source-evidence-v5` while retaining
+  `trace-qualification-v2`. It is offline evidence only; no provider call has exercised it.
+  Existing v1-v4 traces and replays are not rewritten.
 - v2 `finish_task` now freezes exact submitted bytes in CAS before acceptance, binds that artifact
   through `SubmissionAccepted`, evaluator input and `RunResult`, and reconciles nine tested crash
   boundaries without duplicate lifecycle or DONE transition. Mini r2 exercised the normal live
   path; crash-boundary recovery remains offline evidence.
 - The no-memory development preflight rejects a pilot unless qualification v2 records the same
-  primary mini model, 25,000/200,000 budget, harness commit, tool/context versions and exact
+  primary mini model, future 25,000/250,000 budget, harness commit, tool/context versions and exact
   runtime-contract hash.
+  The experiments consumed under the 21/200,000 contract
+  `dev-validation-gpt54mini-campaign-20260730-r2`,
+  `dev-no-memory-20260728`, `dev-validation-gpt54mini-investigation-v4-20260730-r1` and
+  `dev-no-memory-v4-20260730-r1` are immutable; the v5 preflight cannot upgrade or rebind them.
   Historical model-candidate mini r2 validated much of the corrected v2 lifecycle at lower
   list-price exposure, but it could not populate the primary `pilot_run_id` and exposed the D-037
   retry-context gap. Corrective primary r2 later populated the consumed campaign, which finished
@@ -349,8 +365,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   lifecycle above. D-047 and D-048 offline contracts are now frozen. Corrective primary r2 and the
   fresh context-v4 pilot both ran and passed. The separate 12-run v4 no-memory campaign then ran
   once with its own clean hash and approval. It produced nine exact-request budget failures and
-  three hidden task failures, so the next gate is offline token-aware-tail and structured-review
-  work, not another live campaign.
+  three hidden task failures. D-052 subsequently completed the token-aware-tail contract offline,
+  but made no provider call. The next gate is leak-safe structured review/deduplication followed
+  by a separately approved v5 single pilot, not another 12-run campaign.
 - `model-generation-block-v2` covers admission to the next provider generation. A model response
   whose measured duration itself crosses the wall limit and a later call inside the same
   multi-tool response that encounters the tool cap still terminate through the older
@@ -369,7 +386,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   never exercised and nine rows hit strict exact-request budget exhaustion. Its 0/12 SCRR is
   therefore not a usable no-memory performance baseline. The three hidden task failures are only
   provisional review candidates; the nine budget-confounded failures are excluded. Calibration
-  traces are not eligible.
+  traces are not eligible. The V5 budget and token-aware admission contract do not prove that a
+  future run will finish or that the next 12-run collection will be a usable baseline.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
@@ -410,8 +428,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   The new live-suite preflight rejects a dirty worktree before execution; older admission gates used
   manually verified clean staging commits and are not retroactively covered by that enforcement.
 
-## Dataset freeze and two diagnostic campaigns completed; valid baseline/core still pending
+## D-052 offline future contract completed; valid baseline/core still pending
 
+- The v5 pilot, development and core templates exist, but no D-052 provider call has been made.
+  `experiments/dev-no-memory-v5.template.yaml` still has `pilot_run_id: null`, and
+  `experiments/core.template.yaml` still requires the embedding revision to be frozen. Neither a
+  usable no-memory baseline nor a core result follows from the offline contract.
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
 - The dataset manifest contains 25 packages: five calibration fixtures and 20 admitted research tasks.
@@ -477,6 +499,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   campaign gives 24 paid run attempts and `$3.133982625`. The v4 12-run campaign adds
   `$1.84756425`, for 36 paid run attempts and `$4.981546875`. These are usage-based estimates, not
   verified invoice charges.
+- At frozen repository rates, D-052 reserves `$1.2375` for one future pilot, `$14.85` for a
+  future 12-run development campaign and `$118.80` for a future 96-run core campaign. Adding all
+  reserves to measured `$4.981546875` gives the manual planning total `$139.869046875`. This is
+  neither measured spend nor an invoice forecast. The project-wide `$150` cap is not
+  machine-enforced; the runner enforces suite-specific `cost_limit_usd`, so an operator must check
+  the global total separately before every approval.
 - PatchLoop preflights this function-tool run at official list prices. The account UI reports
   possible complimentary shared-traffic usage, but applicability to this exact function-tool
   invocation and invoice treatment has not been verified. `model_cost_usd` is therefore a

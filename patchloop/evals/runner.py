@@ -65,6 +65,8 @@ CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS = frozenset(
     {
         "dev-validation-gpt54mini-campaign-20260730-r2",
         "dev-no-memory-20260728",
+        "dev-validation-gpt54mini-investigation-v4-20260730-r1",
+        "dev-no-memory-v4-20260730-r1",
     }
 )
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
@@ -96,9 +98,13 @@ OFFICIAL_PRICES_BY_MODEL = {
 GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
 GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
-GPT54_MINI_CAMPAIGN_BUDGET = Budget(
+GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET = Budget(
     max_model_calls=21,
     max_total_tokens=200_000,
+)
+GPT54_MINI_CAMPAIGN_BUDGET = Budget(
+    max_model_calls=21,
+    max_total_tokens=250_000,
 )
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
@@ -293,6 +299,15 @@ class ExperimentSuite(BaseModel):
                         GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
                     ),
                 )
+            elif self.experiment_id in CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS:
+                self._require_live_defaults(
+                    cost_limit=2,
+                    model_id=GPT54_MINI_PILOT_MODEL_ID,
+                    budget=GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET,
+                    max_output_tokens=(
+                        GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
+                    ),
+                )
             else:
                 self._require_live_defaults(cost_limit=2)
         elif (
@@ -353,7 +368,14 @@ class ExperimentSuite(BaseModel):
                     "memory-development no-memory campaign requires the six frozen "
                     "development tasks, no_memory, and two repetitions"
                 )
-            self._require_live_defaults(cost_limit=20)
+            self._require_live_defaults(
+                cost_limit=20,
+                budget=(
+                    GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET
+                    if self.experiment_id in CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
+                    else GPT54_MINI_CAMPAIGN_BUDGET
+                ),
+            )
         elif self.purpose == ExperimentPurpose.CORE:
             if len(set(self.tasks)) != 12:
                 raise ValueError("core experiment requires exactly 12 unique held-out tasks")
@@ -535,7 +557,7 @@ def _expected_runtime_contract_hash() -> str:
             "system_prompt": SYSTEM_PROMPT_V3,
             "tools": TOOL_SCHEMAS_V2,
             "tool_schema_version": "v2",
-            "context_policy_version": "phase-evidence-v4",
+            "context_policy_version": "phase-evidence-v5",
         },
         indent=2,
         sort_keys=True,
@@ -610,7 +632,7 @@ def _pilot_qualification(
             (
                 "context_policy_version",
                 payload.get("context_policy_version"),
-                "phase-evidence-v4",
+                "phase-evidence-v5",
             ),
             (
                 "runtime_contract_content_hash",

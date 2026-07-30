@@ -8,13 +8,14 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.agent.investigation import (
-    INVESTIGATION_LEDGER_SCHEMA,
     build_investigation_ledger,
+    investigation_ledger_schema,
 )
 from patchloop.agent.phases import diff_bound_evidence
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
+    Budget,
     Checkpoint,
     EventType,
     Phase,
@@ -26,6 +27,14 @@ from patchloop.util import canonical_json, sha256_text
 
 RECENT_EVENT_LIMIT = 12
 TOOL_RESULT_CHARACTER_LIMIT = 12_000
+INVESTIGATION_CONTEXT_POLICIES = {
+    "phase-evidence-v4",
+    "phase-evidence-v5",
+}
+RETRY_CONTEXT_POLICIES = {
+    "phase-evidence-v3",
+    *INVESTIGATION_CONTEXT_POLICIES,
+}
 
 
 @dataclass(frozen=True)
@@ -257,7 +266,7 @@ def _context_event(
     artifact_path = payload.get("artifact_path")
     tool_result_evidence: dict[str, Any] | None = None
     result_event_types = {"ToolSucceeded", "ToolFailed"}
-    if policy_version == "phase-evidence-v4":
+    if policy_version in INVESTIGATION_CONTEXT_POLICIES:
         result_event_types.add("ToolReplayed")
     if event.type.value in result_event_types and artifact_path:
         parsed_available = False
@@ -275,13 +284,12 @@ def _context_event(
                 event.type == EventType.TOOL_REPLAYED
                 and event.payload.get("semantic_replay") is True
             )
-            if (
-                policy_version == "phase-evidence-v4"
-                and (v4_inspection_outcome or v4_semantic_replay)
+            if policy_version in INVESTIGATION_CONTEXT_POLICIES and (
+                v4_inspection_outcome or v4_semantic_replay
             ):
                 if artifact_store is None:
                     raise RecoveryError(
-                        "phase-evidence-v4 requires the artifact store"
+                        f"{policy_version} requires the artifact store"
                     )
                 try:
                     result_artifact = Artifact.model_validate(
@@ -289,7 +297,7 @@ def _context_event(
                     )
                 except ValueError as exc:
                     raise RecoveryError(
-                        "v4 inspection outcome lacks a result artifact"
+                        "investigation outcome lacks a result artifact"
                     ) from exc
                 if (
                     event.payload.get("artifact_id")
@@ -377,6 +385,8 @@ def build_context_with_evidence(
     *,
     policy_version: str = "phase-evidence-v3",
     artifact_store: ArtifactStore | None = None,
+    budget: Budget | None = None,
+    max_output_tokens: int | None = None,
 ) -> BuiltContext:
     eligible_events = [
         event
@@ -393,6 +403,7 @@ def build_context_with_evidence(
         "phase-evidence-v2",
         "phase-evidence-v3",
         "phase-evidence-v4",
+        "phase-evidence-v5",
     }:
         selected_events = eligible_events[-RECENT_EVENT_LIMIT:]
     else:
@@ -415,6 +426,7 @@ def build_context_with_evidence(
         "phase-evidence-v2",
         "phase-evidence-v3",
         "phase-evidence-v4",
+        "phase-evidence-v5",
     }:
         diff_hash = checkpoint.worktree_diff_hash if checkpoint else sha256_text("")
         readiness = diff_bound_evidence(
@@ -464,7 +476,7 @@ def build_context_with_evidence(
             "occurrences": event.payload.get("occurrences"),
             "enforcement": event.payload.get("enforcement"),
         }
-        if policy_version == "phase-evidence-v4":
+        if policy_version in INVESTIGATION_CONTEXT_POLICIES:
             item.update(
                 {
                     "schema_version": event.payload.get("schema_version"),
@@ -495,7 +507,7 @@ def build_context_with_evidence(
     ]
     rejected_mutation_retry = None
     rejected_mutation_retry_evidence = None
-    if policy_version in {"phase-evidence-v3", "phase-evidence-v4"}:
+    if policy_version in RETRY_CONTEXT_POLICIES:
         (
             rejected_mutation_retry,
             rejected_mutation_retry_evidence,
@@ -507,7 +519,7 @@ def build_context_with_evidence(
         checkpoint.model_dump(mode="json") if checkpoint else None
     )
     if (
-        policy_version == "phase-evidence-v4"
+        policy_version in INVESTIGATION_CONTEXT_POLICIES
         and checkpoint_payload is not None
     ):
         # The in-memory checkpoint and its SQLite round-trip must render
@@ -538,21 +550,24 @@ def build_context_with_evidence(
             "selected_memory": payload["selected_memory"],
             "rules": payload["rules"],
         }
-        if policy_version in {"phase-evidence-v3", "phase-evidence-v4"}:
+        if policy_version in RETRY_CONTEXT_POLICIES:
             payload["rejected_mutation_retry"] = rejected_mutation_retry
-        if policy_version == "phase-evidence-v4":
+        if policy_version in INVESTIGATION_CONTEXT_POLICIES:
             payload["execution_signals"][
                 "tool_admission_blocks"
             ] = admission_blocks
             if artifact_store is None:
                 raise RecoveryError(
-                    "phase-evidence-v4 requires the artifact store"
+                    f"{policy_version} requires the artifact store"
                 )
             investigation_ledger = build_investigation_ledger(
                 task,
                 events,
                 checkpoint,
                 artifact_store,
+                context_policy_version=policy_version,
+                budget=budget,
+                max_output_tokens=max_output_tokens,
             )
             payload["investigation_ledger"] = investigation_ledger
             if (
@@ -581,7 +596,11 @@ def build_context_with_evidence(
                 else (
                     "context-build-evidence-v3"
                     if policy_version == "phase-evidence-v3"
-                    else "context-build-evidence-v4"
+                    else (
+                        "context-build-evidence-v4"
+                        if policy_version == "phase-evidence-v4"
+                        else "context-build-evidence-v5"
+                    )
                 )
             )
         ),
@@ -606,14 +625,14 @@ def build_context_with_evidence(
     }
     if policy_version != "v1":
         evidence["policy"]["version"] = policy_version
-    if policy_version in {"phase-evidence-v3", "phase-evidence-v4"}:
+    if policy_version in RETRY_CONTEXT_POLICIES:
         evidence["rejected_mutation_retry"] = (
             rejected_mutation_retry_evidence
         )
-    if policy_version == "phase-evidence-v4":
+    if policy_version in INVESTIGATION_CONTEXT_POLICIES:
         ledger = payload["investigation_ledger"]
         evidence["investigation_ledger"] = {
-            "schema_version": INVESTIGATION_LEDGER_SCHEMA,
+            "schema_version": investigation_ledger_schema(policy_version),
             "content_hash": ledger["content_hash"],
             "source_through_sequence": ledger[
                 "source_through_sequence"
@@ -636,6 +655,33 @@ def build_context_with_evidence(
                 "exploration_admitted"
             ],
         }
+        if policy_version == "phase-evidence-v5":
+            tail = ledger["tail_policy"]
+            projection = tail["token_projection"]
+            evidence["investigation_ledger"].update(
+                {
+                    "tail_block_reasons": tail["block_reasons"],
+                    "tail_projection_stage": tail["projection_stage"],
+                    "tail_remaining_tokens": tail["remaining_budget"]["tokens"],
+                    "tail_observation_count": projection[
+                        "observed_model_call_count"
+                    ],
+                    "tail_max_observed_input_tokens": projection[
+                        "max_observed_input_tokens"
+                    ],
+                    "tail_max_positive_growth": projection[
+                        "max_positive_consecutive_growth"
+                    ],
+                    "tail_projected_next_input_tokens": projection[
+                        "projected_next_input_tokens"
+                    ],
+                    "tail_projected_model_turns": projection[
+                        "projected_model_turns"
+                    ],
+                    "tail_reserved_tokens": projection["reserved_tokens"],
+                    "tail_max_output_tokens": projection["max_output_tokens"],
+                }
+            )
     return BuiltContext(
         rendered=rendered,
         content_hash=sha256_text(rendered),
@@ -651,6 +697,8 @@ def build_context(
     *,
     policy_version: str = "phase-evidence-v3",
     artifact_store: ArtifactStore | None = None,
+    budget: Budget | None = None,
+    max_output_tokens: int | None = None,
 ) -> tuple[str, str]:
     built = build_context_with_evidence(
         task,
@@ -659,5 +707,7 @@ def build_context(
         memory_text,
         policy_version=policy_version,
         artifact_store=artifact_store,
+        budget=budget,
+        max_output_tokens=max_output_tokens,
     )
     return built.rendered, built.content_hash

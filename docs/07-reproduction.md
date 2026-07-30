@@ -106,11 +106,46 @@ is preserved separately under `reports/live-pilot/`:
 - `experiments/dev-no-memory-v4.template.yaml`: consumed second six-task `no_memory` × 2
   campaign; terminal inspection only, never rerun
 
+Future D-052 contracts are checked in but have not made a provider call:
+
+- `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`:
+  `dev-validation-gpt54mini-token-tail-v5-20260730-r1`, single v5 pilot
+- `experiments/dev-no-memory-v5.template.yaml`: `dev-no-memory-v5-20260730-r1`;
+  `pilot_run_id: null` blocks it until an accepted v5 pilot is explicitly bound
+- `experiments/core.template.yaml`: future 96-run v5 matrix; the embedding revision remains a
+  freeze marker, so this is not executable core authorization
+
+The four experiment identities consumed under the 21-call/200,000-token contract
+`dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
+`dev-validation-gpt54mini-investigation-v4-20260730-r1` and
+`dev-no-memory-v4-20260730-r1` are immutable historical evidence. Do not edit, rebind or rerun
+them under the D-052 budget.
+
 As of 2026-07-29 the official
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the primary mini contract is $0.75/M
 uncached input, $0.075/M cached input and $4.50/M output, with no separate published cache-write
 rate. The suite pins `gpt-5.4-mini-2026-03-17`. Recheck the price within 72 hours of every live
 invocation and record the installed SDK version, clean Git commit and execution timestamp.
+
+At the frozen repository rates, D-052's conservative future authorization reserve is `$1.2375`
+for one run, `$14.85` for 12 runs and `$118.80` for 96 runs. These are reserves, not measured
+spend or invoice predictions. The measured list-price total remains `$4.981546875`; adding one
+future pilot and both future campaign reserves produces the manual planning total
+`$139.869046875`. The project-wide `$150` cap is not machine-enforced; only each suite's
+`cost_limit_usd` is enforced.
+
+Inspect the v5 pilot contract without approval flags and without a provider call:
+
+```powershell
+git status --short
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml `
+  --preflight-only
+```
+
+Do not add `--approve-live-cost` or `--approved-execution-hash` for this inspection. Do not
+attempt the v5 development suite while `pilot_run_id` is `null`, and do not run core while the
+embedding revision is not frozen.
 
 Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENAI_BASE_URL` and
 `OPENAI_API_BASE` unset. The historical r1 inspection-only preflight is:
@@ -287,15 +322,22 @@ Twelve paid one-run pilots exist when this guide was updated. The v4 pilot
 list-price cost is `$1.740790125`. The first 12-run development campaign raises the total to
 `$3.133982625`; the v4 12-run campaign adds `$1.84756425`, making 36 paid run attempts and
 `$4.981546875` in calculated list-price cost. Actual invoice or free daily usage treatment was not
-verified. No consumed suite/hash may be rerun.
+verified. The D-052 future reserves are `$1.2375` + `$14.85` + `$118.80`; together with measured
+actuals they form the manual `$139.869046875` planning total, not spend. The `$150` project cap is
+not a global runtime guard. No consumed suite/hash may be rerun.
 
 The D-037 offline gate and its single controlled live exercise are complete. The next request after a
 rejected mutating-tool call receives the exact budget-bounded candidate bytes, content hash and
 structured rejection reason. Historical v3 manifests activated this as
 `context_policy_version=phase-evidence-v3`; current non-replay manifests use
-`phase-evidence-v4`, which inherits that contract and adds a durable read/search investigation
-ledger, semantic replay and corrective-tail admission. Qualification rehashes the candidate/result
-CAS, actual request and v4 ledger evidence; the token guard records a no-generation event when the
+`phase-evidence-v5`. Historical V4 inherited that contract and added a durable read/search
+investigation ledger, semantic replay and call-count corrective-tail admission. V5 adds a durable
+token projection with `requested_input_tokens` priority, actual-token fallback only for `None`,
+maximum observed input plus maximum positive consecutive growth, and pre/post-generation 5/4-turn
+reservation. `remaining_tokens <= reserved_tokens` blocks only read/search before `ToolCalled`
+with `token_tail_reserved`; apply/check/diff/finish remain available. The cutoff is nominal, not a
+completion guarantee. Qualification rehashes the candidate/result CAS, actual request and v5
+ledger/tail evidence; the strict token guard records a no-generation event when the
 full request plus response allowance cannot fit. Mini r2, r3 and r4 remain immutable traces. The corrective r4
 contract fixed `max_output_tokens=25,000` and `max_total_tokens=120,000` together under diagnostic
 profile `d037-rejected-patch-retry-v2`; changing only one member is rejected. R4 consumed execution
@@ -420,6 +462,14 @@ consumed the 12-row execution hash once: 12/12 rows terminated and qualified wit
 or diagnostic errors, but SCRR was 0/12. Nine rows stopped before evaluation on strict
 exact-request budget reservation and three submitted patches failed hidden acceptance. Preserve the
 campaign as diagnostic evidence; do not treat it as a valid performance baseline.
+
+D-052 closes the token-aware corrective-tail implementation gate offline with
+`phase-evidence-v5`, future `21/50/250,000/900` budgets and 25,000 per-call output. It versions
+`investigation-policy-v2`, `investigation-ledger-v2`, `investigation-tail-policy-v2`,
+`context-build-evidence-v5`, `tool-admission-blocked-v2` and `trace-source-evidence-v5` while
+retaining `trace-qualification-v2`. No provider call was made for D-052. The next gates are the
+leak-safe structured review/deduplication of the three task failures and, only after that, a new
+single v5 pilot with a separate execution hash and explicit approval.
 
 If a campaign halts or a row fails qualification/required trace exercise, `patchloop report` may
 still export row-level CSV and available-case diagnostics for investigation. Qualification failure,

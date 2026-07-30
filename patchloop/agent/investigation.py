@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact, Checkpoint, EventType, PublicTask, RunEvent
+from patchloop.contracts import Artifact, Budget, Checkpoint, EventType, PublicTask, RunEvent
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import (
     canonical_json,
@@ -22,11 +22,17 @@ INVESTIGATION_LEDGER_SCHEMA = "investigation-ledger-v1"
 INVESTIGATION_LOOP_SCHEMA = "investigation-loop-v1"
 TOOL_REPLAY_SCHEMA = "tool-replayed-v2"
 TOOL_ADMISSION_SCHEMA = "tool-admission-blocked-v1"
+INVESTIGATION_POLICY_VERSION_V2 = "investigation-policy-v2"
+INVESTIGATION_LEDGER_SCHEMA_V2 = "investigation-ledger-v2"
+TOOL_ADMISSION_SCHEMA_V2 = "tool-admission-blocked-v2"
 INSPECTION_ADMISSION_PREFLIGHT_SCHEMA = (
     "inspection-admission-preflight-v1"
 )
 
 NO_PROGRESS_STRATEGY_THRESHOLD = 2
+SEARCH_QUERY_CHARACTER_LIMIT = 500
+SEARCH_GLOB_CHARACTER_LIMIT = 500
+SEARCH_GLOB_SEGMENT_LIMIT = 100
 LEDGER_MAX_READ_FILES = 64
 LEDGER_MAX_SEARCHES = 64
 LEDGER_MAX_DETAILS = 24
@@ -99,11 +105,40 @@ def validate_inspection_arguments(
         if (
             not isinstance(query, str)
             or not query
-            or len(query) > 500
-            or not isinstance(path_glob, str)
+            or len(query) > SEARCH_QUERY_CHARACTER_LIMIT
         ):
             raise ContractError("search query must contain between 1 and 500 characters")
-        safe_relative_path(path_glob, field_name="path_glob")
+        if (
+            not isinstance(path_glob, str)
+            or len(path_glob) > SEARCH_GLOB_CHARACTER_LIMIT
+        ):
+            raise ContractError(
+                "path_glob must contain at most 500 characters"
+            )
+        normalized_glob = safe_relative_path(
+            path_glob,
+            field_name="path_glob",
+        )
+        glob_segments = normalized_glob.split("/")
+        if len(glob_segments) > SEARCH_GLOB_SEGMENT_LIMIT:
+            raise ContractError(
+                "path_glob must contain at most 100 path segments"
+            )
+        if normalized_glob == "." or (
+            len(normalized_glob) >= 2
+            and normalized_glob[0].isalpha()
+            and normalized_glob[1] == ":"
+        ):
+            raise ContractError(
+                "path_glob must be a non-drive relative glob pattern"
+            )
+        if any(
+            "**" in segment and segment != "**"
+            for segment in glob_segments
+        ):
+            raise ContractError(
+                "path_glob recursive wildcard must occupy an entire path segment"
+            )
         return
     raise ContractError(f"unsupported inspection tool: {tool}")
 
@@ -529,11 +564,190 @@ def nominal_tail_reserve(task: PublicTask) -> dict[str, int]:
     }
 
 
+def investigation_policy_version(context_policy_version: str) -> str:
+    if context_policy_version == "phase-evidence-v5":
+        return INVESTIGATION_POLICY_VERSION_V2
+    return INVESTIGATION_POLICY_VERSION
+
+
+def investigation_ledger_schema(context_policy_version: str) -> str:
+    if context_policy_version == "phase-evidence-v5":
+        return INVESTIGATION_LEDGER_SCHEMA_V2
+    return INVESTIGATION_LEDGER_SCHEMA
+
+
+def tool_admission_schema(context_policy_version: str) -> str:
+    if context_policy_version == "phase-evidence-v5":
+        return TOOL_ADMISSION_SCHEMA_V2
+    return TOOL_ADMISSION_SCHEMA
+
+
+def _token_tail_projection(
+    events: list[RunEvent],
+    *,
+    budget: Budget,
+    max_output_tokens: int,
+    projection_stage: str,
+    reserve: dict[str, int],
+) -> dict[str, Any]:
+    if projection_stage not in {"pre_generation", "post_generation"}:
+        raise ValueError(
+            "token tail projection stage must be pre_generation or post_generation"
+        )
+
+    observations: list[dict[str, Any]] = []
+    total_tokens_used = 0
+    for event in events:
+        if event.type != EventType.MODEL_CALLED:
+            continue
+        requested = event.payload.get("requested_input_tokens")
+        actual_input = event.payload.get("input_tokens")
+        actual_output = event.payload.get("output_tokens")
+        if type(actual_input) is not int or actual_input < 0:
+            raise RecoveryError(
+                "v5 token tail source has invalid input token usage"
+            )
+        if type(actual_output) is not int or actual_output < 0:
+            raise RecoveryError(
+                "v5 token tail source has invalid output token usage"
+            )
+        total_tokens_used += actual_input + actual_output
+        if type(requested) is int and requested >= 0:
+            input_tokens = requested
+            source = "requested_input_tokens"
+        elif requested is None:
+            input_tokens = actual_input
+            source = "input_tokens_fallback"
+        else:
+            raise RecoveryError(
+                "v5 token tail source has invalid requested input tokens"
+            )
+        observations.append(
+            {
+                "event_sequence": event.sequence,
+                "input_tokens": input_tokens,
+                "source": source,
+            }
+        )
+
+    observed_values = [item["input_tokens"] for item in observations]
+    max_observed = max(observed_values, default=None)
+    max_positive_growth = max(
+        [0]
+        + [
+            current - previous
+            for previous, current in zip(
+                observed_values,
+                observed_values[1:],
+                strict=False,
+            )
+            if current > previous
+        ]
+    )
+    projected_next_input = (
+        max_observed + max_positive_growth
+        if max_observed is not None
+        else None
+    )
+    projected_model_turns = (
+        reserve["model_calls"]
+        + reserve["feedback_model_calls"]
+        + (1 if projection_stage == "pre_generation" else 0)
+    )
+    reserved_tokens = (
+        max_output_tokens + projected_next_input * projected_model_turns
+        if projected_next_input is not None
+        else max_output_tokens
+    )
+    remaining_tokens = budget.max_total_tokens - total_tokens_used
+    return {
+        "projection_stage": projection_stage,
+        "observations": observations,
+        "observed_model_call_count": len(observations),
+        "max_observed_input_tokens": max_observed,
+        "max_positive_consecutive_growth": max_positive_growth,
+        "projected_next_input_tokens": projected_next_input,
+        "projected_model_turns": projected_model_turns,
+        "max_output_tokens": max_output_tokens,
+        "reserved_tokens": reserved_tokens,
+        "total_tokens_used": total_tokens_used,
+        "max_total_tokens": budget.max_total_tokens,
+        "remaining_tokens": remaining_tokens,
+        "admission_threshold_reached": bool(
+            max_observed is not None
+            and max_observed > 0
+            and remaining_tokens <= reserved_tokens
+        ),
+    }
+
+
 def tail_policy(
     task: PublicTask,
     checkpoint: Checkpoint | None,
+    *,
+    context_policy_version: str = "phase-evidence-v4",
+    events: list[RunEvent] | None = None,
+    budget: Budget | None = None,
+    max_output_tokens: int | None = None,
+    projection_stage: str = "pre_generation",
 ) -> dict[str, Any]:
     reserve = nominal_tail_reserve(task)
+    if context_policy_version == "phase-evidence-v5":
+        if budget is None or max_output_tokens is None:
+            raise ValueError(
+                "phase-evidence-v5 tail policy requires budget and "
+                "max_output_tokens"
+            )
+        source_events = events or []
+        model_calls_used = sum(
+            event.type == EventType.MODEL_CALLED for event in source_events
+        )
+        tool_calls_used = sum(
+            event.type == EventType.TOOL_CALLED for event in source_events
+        )
+        model_remaining = budget.max_model_calls - model_calls_used
+        tool_remaining = budget.max_tool_calls - tool_calls_used
+        model_remaining_after_next_generation = (
+            max(0, model_remaining - 1)
+            if projection_stage == "pre_generation"
+            else model_remaining
+        )
+        tool_blocked = tool_remaining <= reserve["tool_calls"]
+        model_blocked = model_remaining_after_next_generation <= (
+            reserve["model_calls"] + reserve["feedback_model_calls"]
+        )
+        token_projection = _token_tail_projection(
+            source_events,
+            budget=budget,
+            max_output_tokens=max_output_tokens,
+            projection_stage=projection_stage,
+            reserve=reserve,
+        )
+        reasons = []
+        if tool_blocked:
+            reasons.append("tool_tail_reserved")
+        if model_blocked:
+            reasons.append("model_tail_reserved")
+        if token_projection["admission_threshold_reached"]:
+            reasons.append("token_tail_reserved")
+        return {
+            "schema_version": "investigation-tail-policy-v2",
+            "policy_version": INVESTIGATION_POLICY_VERSION_V2,
+            "projection_stage": projection_stage,
+            "nominal_reserve": reserve,
+            "remaining_budget": {
+                "tool_calls": tool_remaining,
+                "model_calls": model_remaining,
+                "model_calls_after_next_generation": (
+                    model_remaining_after_next_generation
+                ),
+                "tokens": token_projection["remaining_tokens"],
+            },
+            "token_projection": token_projection,
+            "exploration_admitted": not reasons,
+            "block_reasons": reasons,
+        }
+
     remaining = checkpoint.remaining_budget if checkpoint else {}
     tool_remaining = remaining.get("tool_calls")
     model_remaining = remaining.get("model_calls")
@@ -665,6 +879,10 @@ def build_investigation_ledger(
     events: list[RunEvent],
     checkpoint: Checkpoint | None,
     artifact_store: ArtifactStore,
+    *,
+    context_policy_version: str = "phase-evidence-v4",
+    budget: Budget | None = None,
+    max_output_tokens: int | None = None,
 ) -> dict[str, Any]:
     diff_hash = checkpoint.worktree_diff_hash if checkpoint else sha256_text("")
     epoch = mutation_epoch(events)
@@ -742,8 +960,8 @@ def build_investigation_ledger(
     details.reverse()
 
     ledger = {
-        "schema_version": INVESTIGATION_LEDGER_SCHEMA,
-        "policy_version": INVESTIGATION_POLICY_VERSION,
+        "schema_version": investigation_ledger_schema(context_policy_version),
+        "policy_version": investigation_policy_version(context_policy_version),
         "source_through_sequence": max(
             (event.sequence for event in events),
             default=0,
@@ -759,7 +977,15 @@ def build_investigation_ledger(
             "details": omitted_details,
         },
         "no_progress": _no_progress_state(events, epoch=epoch),
-        "tail_policy": tail_policy(task, checkpoint),
+        "tail_policy": tail_policy(
+            task,
+            checkpoint,
+            context_policy_version=context_policy_version,
+            events=events,
+            budget=budget,
+            max_output_tokens=max_output_tokens,
+            projection_stage="pre_generation",
+        ),
     }
     ledger["content_hash"] = sha256_text(canonical_json(ledger))
     return ledger

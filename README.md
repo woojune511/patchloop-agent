@@ -125,11 +125,13 @@ rejection 1회, verified retry 1회, rejected action `PatchApplied` 0회와 eval
 [mini D-037 r6 evidence record](reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json)에
 보존하며 같은 hash/run을 재실행하지 않는다.
 
-D-045는 사용자의 비용·snapshot 고정 선택을 반영해 앞으로의 primary pilot,
+D-045는 사용자의 당시 비용·snapshot 고정 선택을 반영해 이후 primary pilot,
 memory-development와 core 비교 모델을 `gpt-5.4-mini-2026-03-17`로 통일했다. Reasoning은
 medium, mode는 standard, service tier는 default이며, r5/r6에서 output/tail-budget
 confounder 없이 완주한 25,000 per-call output과 200,000 run-total budget을 모든 조건에
-같게 적용한다. Historical Terra와 mini r1-r6의 당시 purpose와 판정은 바꾸지 않는다. 다음
+같게 적용했다. 이 200,000-token 계약은 consumed suite의 historical evidence로 유지되고,
+future suite에 대해서만 D-052가 supersede한다. Historical Terra와 mini r1-r6의 당시
+purpose와 판정은 바꾸지 않는다. 다음
 paid gate였던 fault-free primary r1은 승인 hash
 `sha256:969477ca029570ea61f9fca74fd3aa558f6e16ff9b5be1c7ffa8927ed1139047`로 정확히 한 번
 실행됐다. `run_6993722014bf4e3b`는 20/20 input-token pre-count 일치와 completed response,
@@ -148,9 +150,10 @@ D-047은 이 failure에서 드러난 경계를 offline에서 닫는다. Exact-to
 `model-generation-block-v2`로 분리한다. 새 qualifier는 durable event에서 counter를 다시
 계산하고 `model → tool → wall` reason 우선순위, strict payload/type, exact request CAS와
 terminal error 결속을 검증한다. Valid v2 block은 재현 가능한 `agent_failure`이지 task
-success나 evaluator 도달이 아니다. 앞으로의 primary, memory-development와 core suite는
-모든 memory 조건에 같은 총 `21 model call / 50 tool call / 200,000 token / 900초` 상한을
-사용한다. 21번째 call은 `finish_task` 전용 reserve가 아니며 정상 model call이다. Historical
+success나 evaluator 도달이 아니다. D-047 이후 D-052 전까지의 primary,
+memory-development와 core suite는 모든 memory 조건에 같은 총
+`21 model call / 50 tool call / 200,000 token / 900초` 상한을 사용했다. 21번째 call은
+`finish_task` 전용 reserve가 아니며 정상 model call이다. Historical
 primary r1과 diagnostic suite의 20-call 의미와 qualification은 바꾸지 않는다. Corrective
 primary r2 `run_afd5080a77a34995`는 official evaluator와 qualification 23/23을 통과했다.
 이어 실행한 `dev-no-memory-20260728` 12-run은 12/12 qualified agent failure,
@@ -164,6 +167,19 @@ result semantic replay로 제공한다. 두 번째 연속 no-progress부터 stra
 요구하며, nominal corrective tail에서는 read/search만 admission 전에 차단한다. 이
 within-run repository evidence는 네 cross-run memory 조건 모두에 동일하고, hypothesis나
 solution memory를 추가하지 않는다. V1-v3 trace는 소급 재해석하지 않는다.
+
+D-052는 future non-replay runtime을 `phase-evidence-v5`로 올리고 budget을 모든 memory
+조건에서 `21 model call / 50 tool call / 250,000 total token / 900초`, per-call output
+25,000으로 고정한다. Durable `ModelCalled` telemetry의 `requested_input_tokens`를 우선하고
+그 값이 `None`일 때만 actual `input_tokens`로 fallback하며, invalid 값은 fail closed한다.
+관찰된 input 최댓값에 positive consecutive growth 최댓값을 더해 next input을 예측하고,
+generation 전에는 5 turn, generation 후에는 4 turn을 예약한다.
+`reserved_tokens = max_output_tokens + projected_next_input × projected_turns`이며
+`remaining_tokens <= reserved_tokens`일 때 read/search만 `token_tail_reserved`로
+`ToolCalled`와 dispatch 전에 차단한다. Apply/check/diff/finish는 계속 허용한다. 이 cutoff는
+nominal corrective-tail 전환점이지 완료 보장이 아니며, strict exact-request + full 25,000
+response admission guard는 그대로다. V5 offline contract는 검증됐지만 provider call은
+없었다.
 
 ## 구현된 핵심 경로
 
@@ -185,6 +201,11 @@ public.yaml → stateless context builder → model adapter
 - `phase-evidence-v4`는 successful read/search CAS에서 durable investigation ledger를
   재구성하고, exact search와 fully-covered read를 semantic replay하며 corrective tail에
   들어가면 semantic replay 대상까지 포함한 모든 valid read/search를 admission 전에 차단
+- `phase-evidence-v5`는 durable token projection으로 nominal corrective tail을 더 일찍
+  감지하고 read/search만 `tool-admission-blocked-v2` evidence와 함께 차단한다.
+  `investigation-policy-v2`, `investigation-ledger-v2`, `investigation-tail-policy-v2`,
+  `context-build-evidence-v5`, `trace-source-evidence-v5`를 사용하며 qualification contract는
+  계속 `trace-qualification-v2`다.
 - Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff`와
   orchestrator control `finish_task`만 허용
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
@@ -470,6 +491,13 @@ cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 
 128,000 max output으로 게시한다. Preflight 시점 기준 72시간을 넘으면 가격을 다시 확인하며
 SDK version, Git commit과 execution window를 provenance로 남긴다.
 
+D-052의 frozen repository rate로 계산한 보수적 future authorization reserve는 250,000
+run-total token과 25,000 output allowance를 모두 최고 output rate로 잡아 run당 `$1.2375`,
+12-run `$14.85`, 96-run `$118.80`이다. 이는 실제 지출이나 invoice 예측이 아니다. 현재까지
+측정된 list-price 비용 `$4.981546875`에 future single pilot, 12-run development campaign,
+96-run core reserve를 모두 더한 수동 계획값은 `$139.869046875`다. Project-wide `$150`
+상한은 machine-enforced guard가 아니며, 실행기는 각 suite의 `cost_limit_usd`만 강제한다.
+
 Consumed tool-v2/context-v3 corrective primary r2
 `run_afd5080a77a34995`는 model, budget, harness commit, runtime-contract hash,
 official evaluator와 `trace-qualification-v2` 23/23을 통과했다. 이어진 historical
@@ -538,8 +566,15 @@ Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. Prima
 `$3.133982625`였다. V4 12-run campaign은 `$1.84756425`를 추가해 현재 전체
 list-price 합계가 `$4.981546875`다. 실제 invoice/free daily usage 적용 여부는 확인하지
 않았다. R5, r6, primary r1/r2, v4 pilot, 두 12-run campaign과 모든 소비된 hash는 자동
-재실행하지 않는다. 다음 작업은 paid campaign이 아니라 token-aware corrective-tail의 offline
-계약과 세 task failure를 두 semantic rule group으로 검토·deduplicate하는 절차다.
+재실행하지 않는다. 특히 21-call/200,000-token 계약으로 소비된
+`dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
+`dev-validation-gpt54mini-investigation-v4-20260730-r1`,
+`dev-no-memory-v4-20260730-r1`은 immutable historical evidence다. Future v5 template은
+`experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`,
+`experiments/dev-no-memory-v5.template.yaml`, `experiments/core.template.yaml`이며 아직
+provider에서 실행하지 않았다. 다음 작업은 세 task failure를 두 semantic rule group으로
+leak-safe review·deduplicate한 뒤, 별도 승인과 새 execution hash로 v5 single pilot을
+실행하는 것이다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

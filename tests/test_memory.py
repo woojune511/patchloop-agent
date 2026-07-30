@@ -158,7 +158,7 @@ def _write_qualification(
     manifest.model.max_output_tokens = 25_000
     manifest.model.provider_sdk_version = "test"
     manifest.budget.max_model_calls = 21
-    manifest.budget.max_total_tokens = 200_000
+    manifest.budget.max_total_tokens = 250_000
     suite = ExperimentSuite.model_validate(
         {
             "schema_version": "experiment-v2",
@@ -173,7 +173,7 @@ def _write_qualification(
             "budget": {
                 "max_model_calls": 21,
                 "max_tool_calls": 50,
-                "max_total_tokens": 200_000,
+                "max_total_tokens": 250_000,
                 "wall_clock_timeout_seconds": 900,
             },
             "cost_limit_usd": 20,
