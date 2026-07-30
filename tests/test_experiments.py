@@ -26,6 +26,9 @@ PRIMARY_PILOT_SUITE = (
 FUTURE_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml"
 )
+COMPLETION_PILOT_SUITE = (
+    "experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -82,7 +85,7 @@ def _ready_live_environment(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
-        lambda: datetime(2026, 7, 30, 0, tzinfo=UTC),
+        lambda: datetime(2026, 7, 30, 23, tzinfo=UTC),
     )
     monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
 
@@ -92,7 +95,7 @@ def _write_future_primary_suite(
     experiment_id: str,
 ) -> Path:
     payload = yaml.safe_load(
-        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(COMPLETION_PILOT_SUITE).read_text(encoding="utf-8")
     )
     payload["experiment_id"] = experiment_id
     suite_path = tmp_path / f"{experiment_id}.yaml"
@@ -174,10 +177,22 @@ def test_live_campaign_approval_is_an_invocation_preflight_gate(
     assert approved["execution_hash"] == unapproved["execution_hash"]
     assert approved["suite"]["model_id"] == "gpt-5.4-mini-2026-03-17"
     assert approved["suite"]["max_output_tokens"] == 25_000
-    assert approved["suite"]["budget"]["max_model_calls"] == 21
-    assert approved["suite"]["budget"]["max_total_tokens"] == 250_000
+    assert approved["expected_runs"] == 2
+    assert {
+        row["task_id"] for row in approved["tasks"]
+    } == {
+        "babel-strict-grouped-decimal-trailing-zeroes",
+        "moto-query-scanned-count",
+    }
+    assert approved["suite"]["budget"]["max_model_calls"] == 40
+    assert approved["suite"]["budget"]["max_tool_calls"] == 100
+    assert approved["suite"]["budget"]["max_total_tokens"] == 600_000
+    assert approved["suite"]["budget"]["wall_clock_timeout_seconds"] == 1_800
     assert approved["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
-        1.2375
+        2.8125
+    )
+    assert approved["pricing"]["budget_upper_bound_usd"] == pytest.approx(
+        5.625
     )
 
 
@@ -282,6 +297,27 @@ def test_consumed_primary_r2_keeps_current_budget_and_is_never_runnable(
     }
 
 
+def test_unexecuted_250k_v5_pilot_is_superseded_and_never_runnable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+
+    suite = eval_runner.load_suite(FUTURE_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(FUTURE_PILOT_SUITE)
+    approved = eval_runner.preflight_suite(
+        FUTURE_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert suite.budget.max_total_tokens == 250_000
+    assert approved["ready"] is False
+    assert "SUPERSEDED_SUITE" in {
+        row["code"] for row in approved["blockers"]
+    }
+
+
 def test_consumed_no_memory_campaign_is_never_runnable(
     tmp_path: Path,
     monkeypatch,
@@ -358,31 +394,160 @@ def test_consumed_mini_diagnostic_suites_are_immutable_even_with_approval(
     }
 
 
-def test_future_campaign_contract_rejects_legacy_20_call_limit() -> None:
+def test_completion_panel_contract_rejects_legacy_20_call_limit() -> None:
     payload = yaml.safe_load(
-        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(COMPLETION_PILOT_SUITE).read_text(encoding="utf-8")
     )
-    payload["experiment_id"] = "new-primary-with-legacy-call-limit"
     payload["budget"]["max_model_calls"] = 20
 
-    with pytest.raises(ValidationError, match="max_model_calls=21"):
+    with pytest.raises(ValidationError, match="max_model_calls=40"):
         ExperimentSuite.model_validate(payload)
 
 
-def test_future_campaign_contract_rejects_historical_200k_budget() -> None:
+def test_completion_panel_contract_rejects_250k_budget() -> None:
     payload = yaml.safe_load(
-        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(COMPLETION_PILOT_SUITE).read_text(encoding="utf-8")
     )
-    payload["experiment_id"] = "new-primary-with-historical-token-limit"
-    payload["budget"]["max_total_tokens"] = 200_000
+    payload["budget"]["max_total_tokens"] = 250_000
 
-    with pytest.raises(ValidationError, match="max_total_tokens=250000"):
+    with pytest.raises(ValidationError, match="max_total_tokens=600000"):
         ExperimentSuite.model_validate(payload)
 
 
-def test_future_campaign_templates_share_250k_budget() -> None:
+def test_completion_panel_contract_rejects_one_task_subset() -> None:
+    payload = yaml.safe_load(
+        Path(COMPLETION_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    payload["tasks"] = payload["tasks"][:1]
+
+    with pytest.raises(ValidationError, match="exact frozen task set"):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_model_candidate_history_id_cannot_bypass_completion_defaults() -> None:
+    payload = yaml.safe_load(
+        Path(COMPLETION_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    payload["experiment_id"] = "dev-validation-gpt54mini-d037-20260730-r5"
+    payload["tasks"] = payload["tasks"][:1]
+    payload["budget"]["max_total_tokens"] = 200_000
+    payload["cost_limit_usd"] = 2
+
+    with pytest.raises(ValidationError, match="exact frozen task set"):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_completion_gate_rejects_budget_terminal_even_when_trace_qualified() -> None:
+    suite = eval_runner.load_suite(COMPLETION_PILOT_SUITE)
+    rows = []
+    for index in range(2):
+        rows.append(
+            {
+                "attempt_status": "terminal",
+                "run_id": f"run_completion_{index}",
+                "usage": {
+                    "input_tokens": 100,
+                    "output_tokens": 20,
+                    "model_calls": 2,
+                    "tool_calls": 1,
+                    "wall_clock_ms": 1_000,
+                },
+                "result": {
+                    "official": True,
+                    "evaluation_status": "completed",
+                    "scope_compliant_success": index == 0,
+                    "terminal_error": (
+                        {
+                            "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+                            "details": {
+                                "reason_code": "exact_request_budget_exceeded"
+                            },
+                        }
+                        if index == 1
+                        else None
+                    ),
+                },
+                "qualification": {
+                    "qualified": True,
+                    "evaluation_reached": True,
+                },
+                "infrastructure_error": None,
+                "qualification_error": None,
+            }
+        )
+
+    gate = eval_runner._completion_gate(suite, rows)
+
+    assert gate is not None
+    assert gate["passed"] is False
+    assert gate["budget_terminal_runs"] == 1
+    assert gate["budget_terminal_run_ids"] == ["run_completion_1"]
+    assert gate["task_successes"] == 1
+
+
+@pytest.mark.parametrize(
+    "usage_overrides",
+    [
+        {"input_tokens": 480_001, "output_tokens": 0},
+        {"model_calls": 33},
+        {"tool_calls": 81},
+        {"wall_clock_ms": 1_440_001},
+    ],
+    ids=[
+        "total-tokens-480001",
+        "model-calls-33",
+        "tool-calls-81",
+        "wall-clock-ms-1440001",
+    ],
+)
+def test_completion_gate_can_pass_while_panel_headroom_fails(
+    usage_overrides: dict[str, int],
+) -> None:
+    suite = eval_runner.load_suite(COMPLETION_PILOT_SUITE)
+    rows = []
+    for index in range(2):
+        usage = {
+            "input_tokens": 100,
+            "output_tokens": 20,
+            "model_calls": 2,
+            "tool_calls": 1,
+            "wall_clock_ms": 1_000,
+        }
+        if index == 1:
+            usage.update(usage_overrides)
+        rows.append(
+            {
+                "attempt_status": "terminal",
+                "run_id": f"run_completion_{index}",
+                "usage": usage,
+                "result": {
+                    "official": True,
+                    "evaluation_status": "completed",
+                    "scope_compliant_success": False,
+                    "terminal_error": None,
+                },
+                "qualification": {
+                    "qualified": True,
+                    "evaluation_reached": True,
+                },
+                "infrastructure_error": None,
+                "qualification_error": None,
+                "diagnostic_error": None,
+            }
+        )
+
+    gate = eval_runner._completion_gate(suite, rows)
+
+    assert gate is not None
+    assert gate["passed"] is True
+    assert gate["panel_headroom"]["passed"] is False
+    assert gate["panel_headroom"]["failed_run_ids"] == [
+        "run_completion_1"
+    ]
+
+
+def test_future_comparison_templates_remain_at_250k_pending_calibration() -> None:
     for path in (
-        FUTURE_PILOT_SUITE,
         "experiments/dev-no-memory-v5.template.yaml",
         "experiments/core.template.yaml",
     ):
@@ -1352,12 +1517,16 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
             return {
                 "run_id": manifest.run_id,
                 "outcome_kind": "task_failure",
+                "official": True,
+                "evaluation_status": "completed",
+                "scope_compliant_success": False,
                 "usage": {
                     "model_cost_usd": 0.5,
                     "model_calls": 2,
                     "tool_calls": 1,
                     "input_tokens": 100,
                     "output_tokens": 20,
+                    "wall_clock_ms": 1_000,
                 },
             }
 
@@ -1381,12 +1550,45 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         approved_execution_hash=preflight["execution_hash"],
     )
 
-    assert len(captured) == 1
-    assert captured[0].experiment.purpose == (
-        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+    assert len(captured) == 2
+    assert all(
+        manifest.experiment.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        for manifest in captured
     )
-    assert captured[0].experiment.execution_hash == result["execution_hash"]
-    assert result["runs"][0]["qualification"]["qualification_hash"] == qualification_hash
+    assert all(
+        manifest.experiment.execution_hash == result["execution_hash"]
+        for manifest in captured
+    )
+    assert all(
+        row["qualification"]["qualification_hash"] == qualification_hash
+        for row in result["runs"]
+    )
+    assert result["completion_gate"] == {
+        "schema_version": "no-memory-completion-gate-v1",
+        "passed": True,
+        "expected_runs": 2,
+        "terminal_runs": 2,
+        "qualified_runs": 2,
+        "evaluator_reached_runs": 2,
+        "official_evaluator_runs": 2,
+        "infrastructure_errors": 0,
+        "qualification_errors": 0,
+        "diagnostic_errors": 0,
+        "budget_terminal_runs": 0,
+        "budget_terminal_run_ids": [],
+        "task_successes": 0,
+        "task_success_required": False,
+        "panel_headroom": {
+            "max_total_tokens": 480_000,
+            "max_model_calls": 32,
+            "max_tool_calls": 80,
+            "max_wall_clock_ms": 1_440_000,
+            "passed": True,
+            "failed_run_ids": [],
+            "sufficient_to_freeze_comparison_budget": False,
+        },
+    }
     plan_path = Path(result["execution_plan"]["path"])
     assert plan_path.is_file()
     assert json.loads(plan_path.read_text(encoding="utf-8"))["schema_version"] == (
@@ -1400,6 +1602,8 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
     ]
     assert [row["event_type"] for row in journal_rows] == [
         "CampaignStarted",
+        "RunStarted",
+        "RunTerminal",
         "RunStarted",
         "RunTerminal",
         "CampaignCompleted",
@@ -1501,7 +1705,7 @@ def test_paid_execution_uses_the_suite_snapshot_approved_by_preflight(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(COMPLETION_PILOT_SUITE).read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "pilot-suite-snapshot"
     suite_path = tmp_path / "pilot-suite-snapshot.yaml"
@@ -1554,9 +1758,15 @@ def test_paid_execution_uses_the_suite_snapshot_approved_by_preflight(
     )
 
     assert result["experiment_id"] == "pilot-suite-snapshot"
-    assert len(captured) == 1
-    assert captured[0].experiment.experiment_id == "pilot-suite-snapshot"
-    assert captured[0].model.model_id == "gpt-5.4-mini-2026-03-17"
+    assert len(captured) == 2
+    assert all(
+        manifest.experiment.experiment_id == "pilot-suite-snapshot"
+        for manifest in captured
+    )
+    assert all(
+        manifest.model.model_id == "gpt-5.4-mini-2026-03-17"
+        for manifest in captured
+    )
 
 
 def test_paid_execution_rejects_task_package_replacement_before_run_start(
@@ -1565,7 +1775,7 @@ def test_paid_execution_rejects_task_package_replacement_before_run_start(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path(FUTURE_PILOT_SUITE).read_text(encoding="utf-8")
+        Path(COMPLETION_PILOT_SUITE).read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "pilot-task-snapshot"
     suite_path = tmp_path / "pilot-task-snapshot.yaml"

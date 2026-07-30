@@ -69,11 +69,20 @@ CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS = frozenset(
         "dev-no-memory-v4-20260730-r1",
     }
 )
+SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS = frozenset(
+    {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
+)
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
     | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
     | HISTORICAL_MINI_DIAGNOSTIC_EXPERIMENT_IDS
     | CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
+)
+SINGLE_TASK_LIVE_EXPERIMENT_IDS = (
+    HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
+    | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+    | CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
+    | SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS
 )
 PRICE_FIELDS = (
     "input_price_per_million_usd",
@@ -106,6 +115,12 @@ GPT54_MINI_CAMPAIGN_BUDGET = Budget(
     max_model_calls=21,
     max_total_tokens=250_000,
 )
+GPT54_MINI_COMPLETION_BUDGET = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=600_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -114,6 +129,13 @@ PILOT_TASK = (
     "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml"
 )
 PILOT_TASK_ID = "babel-strict-grouped-decimal-trailing-zeroes"
+COMPLETION_PANEL_TASKS = {
+    PILOT_TASK,
+    "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+}
+COMPLETION_PANEL_TASK_IDS = {
+    Path(path).parent.name for path in COMPLETION_PANEL_TASKS
+}
 MEMORY_DEVELOPMENT_TASKS = {
     "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
     "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
@@ -271,14 +293,24 @@ class ExperimentSuite(BaseModel):
             raise ValueError("research campaigns require seed 20260723")
 
         if self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
+            normalized_tasks = {
+                _normalized_task_path(task) for task in self.tasks
+            }
+            completion_panel = (
+                self.experiment_id
+                not in SINGLE_TASK_LIVE_EXPERIMENT_IDS
+            )
+            expected_tasks = (
+                COMPLETION_PANEL_TASKS if completion_panel else {PILOT_TASK}
+            )
             if (
-                [_normalized_task_path(task) for task in self.tasks] != [PILOT_TASK]
+                normalized_tasks != expected_tasks
                 or self.conditions != [MemoryCondition.NO_MEMORY]
                 or self.repetitions != 1
             ):
                 raise ValueError(
-                    "development-validation live pilot requires exactly the frozen "
-                    "Babel task, no_memory, and one repetition"
+                    "development-validation live pilot requires its exact frozen "
+                    "task set, no_memory, and one repetition"
                 )
             if self.experiment_id in HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS:
                 self._require_live_defaults(
@@ -308,8 +340,27 @@ class ExperimentSuite(BaseModel):
                         GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
                     ),
                 )
-            else:
-                self._require_live_defaults(cost_limit=2)
+            elif (
+                self.experiment_id
+                in SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS
+            ):
+                self._require_live_defaults(
+                    cost_limit=2,
+                    model_id=GPT54_MINI_PILOT_MODEL_ID,
+                    budget=GPT54_MINI_CAMPAIGN_BUDGET,
+                    max_output_tokens=(
+                        GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
+                    ),
+                )
+            elif completion_panel:
+                self._require_live_defaults(
+                    cost_limit=6,
+                    model_id=GPT54_MINI_PILOT_MODEL_ID,
+                    budget=GPT54_MINI_COMPLETION_BUDGET,
+                    max_output_tokens=(
+                        GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
+                    ),
+                )
         elif (
             self.purpose
             == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
@@ -906,18 +957,30 @@ def preflight_suite(
             "DUPLICATE_TASK_IDENTITY",
             "experiment task paths must resolve to unique task identities",
         )
+    expected_live_pilot_ids = (
+        COMPLETION_PANEL_TASK_IDS
+        if (
+            suite.purpose
+            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            and {
+                _normalized_task_path(task) for task in suite.tasks
+            }
+            == COMPLETION_PANEL_TASKS
+        )
+        else {PILOT_TASK_ID}
+    )
     if (
         suite.purpose
         in {
             ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
             ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
         }
-        and loaded_ids != {PILOT_TASK_ID}
+        and loaded_ids != expected_live_pilot_ids
     ):
         _block(
             blockers,
             "PILOT_TASK_MISMATCH",
-            "live pilot must use the frozen Babel development-validation task",
+            "live pilot must use its exact frozen development-validation task set",
         )
     if (
         suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
@@ -1001,6 +1064,16 @@ def preflight_suite(
     pricing["budget_upper_bound_usd"] = theoretical_cost_upper_bound
 
     if suite.model == "openai":
+        if (
+            suite.experiment_id
+            in SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS
+        ):
+            _block(
+                blockers,
+                "SUPERSEDED_SUITE",
+                "this unexecuted 250k pilot was superseded by the high-budget "
+                "completion calibration and must not be run",
+            )
         if (
             suite.experiment_id
             in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
@@ -1734,6 +1807,125 @@ def _diagnostic_error(
     }
 
 
+def _completion_gate(
+    suite: ExperimentSuite,
+    rows: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Separate runtime completion from task success for the high-budget panel."""
+
+    if (
+        suite.purpose
+        != ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        or suite.budget != GPT54_MINI_COMPLETION_BUDGET
+        or {
+            _normalized_task_path(task) for task in suite.tasks
+        }
+        != COMPLETION_PANEL_TASKS
+    ):
+        return None
+
+    budget_terminal_run_ids: list[str] = []
+    for row in rows:
+        result = row.get("result") or {}
+        terminal_error = result.get("terminal_error") or {}
+        details = terminal_error.get("details") or {}
+        reason_code = details.get("reason_code")
+        error_code = terminal_error.get("code")
+        run_id = row.get("run_id")
+        if (
+            (
+                isinstance(reason_code, str)
+                and "budget" in reason_code
+                or isinstance(error_code, str)
+                and "BUDGET" in error_code
+            )
+            and isinstance(run_id, str)
+        ):
+            budget_terminal_run_ids.append(run_id)
+
+    expected_runs = len(rows)
+    terminal_runs = sum(row.get("attempt_status") == "terminal" for row in rows)
+    qualified_runs = sum(
+        (row.get("qualification") or {}).get("qualified") is True
+        for row in rows
+    )
+    evaluator_reached_runs = sum(
+        (row.get("qualification") or {}).get("evaluation_reached") is True
+        for row in rows
+    )
+    official_evaluator_runs = sum(
+        bool(
+            (row.get("result") or {}).get("official") is True
+            and (row.get("result") or {}).get("evaluation_status")
+            == "completed"
+        )
+        for row in rows
+    )
+    infrastructure_errors = sum(
+        row.get("infrastructure_error") is not None for row in rows
+    )
+    qualification_errors = sum(
+        row.get("qualification_error") is not None for row in rows
+    )
+    diagnostic_errors = sum(
+        row.get("diagnostic_error") is not None for row in rows
+    )
+    task_successes = sum(
+        (row.get("result") or {}).get("scope_compliant_success") is True
+        for row in rows
+    )
+    headroom_failures: list[str] = []
+    for row in rows:
+        usage = row.get("usage") or {}
+        within_headroom = bool(
+            int(usage.get("input_tokens", 0))
+            + int(usage.get("output_tokens", 0))
+            <= 480_000
+            and int(usage.get("model_calls", 0)) <= 32
+            and int(usage.get("tool_calls", 0)) <= 80
+            and int(usage.get("wall_clock_ms", 0)) <= 1_440_000
+        )
+        if not within_headroom and isinstance(row.get("run_id"), str):
+            headroom_failures.append(row["run_id"])
+
+    completion_passed = bool(
+        expected_runs == 2
+        and terminal_runs == expected_runs
+        and qualified_runs == expected_runs
+        and evaluator_reached_runs == expected_runs
+        and official_evaluator_runs == expected_runs
+        and infrastructure_errors == 0
+        and qualification_errors == 0
+        and diagnostic_errors == 0
+        and not budget_terminal_run_ids
+    )
+    return {
+        "schema_version": "no-memory-completion-gate-v1",
+        "passed": completion_passed,
+        "expected_runs": expected_runs,
+        "terminal_runs": terminal_runs,
+        "qualified_runs": qualified_runs,
+        "evaluator_reached_runs": evaluator_reached_runs,
+        "official_evaluator_runs": official_evaluator_runs,
+        "infrastructure_errors": infrastructure_errors,
+        "qualification_errors": qualification_errors,
+        "diagnostic_errors": diagnostic_errors,
+        "budget_terminal_runs": len(budget_terminal_run_ids),
+        "budget_terminal_run_ids": budget_terminal_run_ids,
+        "task_successes": task_successes,
+        "task_success_required": False,
+        "panel_headroom": {
+            "max_total_tokens": 480_000,
+            "max_model_calls": 32,
+            "max_tool_calls": 80,
+            "max_wall_clock_ms": 1_440_000,
+            "passed": completion_passed and not headroom_failures,
+            "failed_run_ids": headroom_failures,
+            "sufficient_to_freeze_comparison_budget": False,
+        },
+    }
+
+
 def _persist_preflight_plan(preflight: dict[str, Any]) -> dict[str, str]:
     execution_hash = preflight["execution_hash"]
     digest = execution_hash.removeprefix("sha256:")
@@ -2200,6 +2392,7 @@ def evaluate_suite(
             if suite.diagnostic is not None
             else None
         ),
+        "completion_gate": _completion_gate(suite, results),
         "not_started_runs": sum(
             row["attempt_status"] == "not_started" for row in results
         ),

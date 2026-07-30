@@ -1,10 +1,10 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-052 phase-evidence-v5/250k offline complete; structured review and
-v5 live pilot pending**
+현재 milestone: **D-054 high-budget no-memory completion panel offline-complete;
+clean no-call preflight and separate live approval pending**
 
-2026-07-30 구현 스냅샷:
+2026-07-31 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
@@ -12,8 +12,8 @@ v5 live pilot pending**
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
 | Phase 3 state machine | tool v2/context v5/D-052 token-tail hardening offline-complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, token-aware read/search admission과 request-by-request qualification 재계산 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
-| Phase 5 memory | qualification/review path implemented, reviewed index pending | V4 campaign의 task failure 3개를 두 semantic group으로 provisional 분류; leak-safe review/deduplication과 index freeze는 보류 |
-| Phase 6 evaluation | 두 12-run diagnostic complete; valid baseline pending | V5 250k contract는 offline-only; 새 pilot/provider run과 usable no-memory baseline은 아직 없음 |
+| Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
+| Phase 6 evaluation | high-budget two-task completion contract implemented; valid baseline pending | Babel+Moto, `no_memory`, 40/100/600k/1,800초, $6 cap과 completion/headroom gate를 offline 검증; provider run과 usable no-memory baseline은 아직 없음 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -79,8 +79,11 @@ corrective primary r2 `run_afd5080a77a34995`의 official evaluator와 qualificat
 detached worktree에서 별도 승인 hash로 정확히 한 번 실행됐다. 12/12 terminal·qualified,
 evaluator 3/12지만 SCRR은 0/12다. 아홉 run의 strict exact-request budget exhaustion 때문에
 usable no-memory baseline은 아직 없다. D-052에서 token-aware corrective tail과 future
-250,000-token contract를 offline 검증했다. 다음은 세 task failure의 structured
-review/deduplication이며, 그 뒤 별도 승인된 v5 single pilot을 실행한다.
+250,000-token contract를 offline 검증했다. 세 task failure의 structured review proposal은
+두 semantic group으로 검증됐지만, budget-confounded baseline에서 memory를 먼저 승인하지
+않기로 했다. D-054는 실행되지 않은 250k single pilot을 supersede하고 Babel control과 Moto
+harder completion probe의 600,000-token no-memory completion panel을 별도 계약으로 고정했다. 다음은
+clean no-call preflight와 별도 승인된 두-run panel이다.
 
 동결 evidence:
 
@@ -133,8 +136,10 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 10b | completed; immutable | 새 v4 development-validation pilot 1회, $2 cap | `run_d7207fbb06184dd3`: official evaluator, qualification 25/25, investigation evidence/lifecycle pass |
 | 10c | completed; diagnostic only | 새 ID의 memory-development 6 task × 2회, `no_memory`, $20 cap | 12/12 terminal·qualified, evaluator 3/12, SCRR 0/12; 9 budget-confounded agent failure + 3 hidden task failure |
 | 11a | completed (offline), no provider call | D-052 `phase-evidence-v5` token projection과 future 250,000-token contract | Pre/post-generation 5/4-turn projection, equality cutoff, read/search-only admission block, strict exact-request guard와 historical non-reinterpretation 검증 |
-| 11b | pending | Append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 hidden leakage 없이 두 semantic group으로 review/deduplicate |
-| 11c | not executed | 별도 승인된 v5 single pilot과 후속 새 12-run suite/hash | Pilot acceptance 뒤에만 `pilot_run_id`를 bind; no-memory baseline 적격성을 다시 판정 |
+| 11b | proposal validated; admission deferred | Append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 public evidence만으로 두 group에 결속. Tox 2회는 candidate rule 1개, Loguru는 causal uncertainty로 hold; no-memory completion 전에는 human approval/index build를 진행하지 않음 |
+| 11c | offline-complete; provider not called | D-054 high-budget no-memory completion panel | Babel+Moto 각 1회, 40 model/100 tool/600k token/1,800초, $6 cap; 2/2 evaluator arrival와 budget terminal 0을 SCRR과 분리한 machine gate |
+| 11d | pending | Clean no-call preflight와 별도 live approval | Exact committed source/Docker/SDK/pricing/execution hash를 제시한 뒤에만 provider call; 결과로 fair comparison budget을 결정 |
+| 11e | not started | 새 no-memory baseline | Completion panel과 budget freeze 뒤 새 suite/hash로 실행; 그 결과 전에는 memory approval/index/core 금지 |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.
@@ -332,20 +337,22 @@ commit/execution hash와 별도 사용자 승인 아래 정확히 한 번 실행
 `run_0ad8676d42614fbf`는 evaluator에 도달했지만 natural rejection이 발생하지 않아
 inconclusive로 보존됐고 automatic retry하지 않는다.
 
-2026-07-29T22:39:42Z에 다시 확인한 `gpt-5.4-mini` standard rate는 1M token당 input $0.75,
+2026-07-30T22:25:47Z에 다시 확인한 `gpt-5.4-mini` standard rate는 1M token당 input $0.75,
 cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 않았다. 90,000-token
 pilot은 exact input과 full 4,096-token response allowance가 남은 budget 안에 없으면
 generation을 시작하지 않는다. Preflight의 $0.423432 reserve는 strict 90,000-token
 runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더한 운영상 안전
 margin이다. Historical D-045 primary contract의 run reserve는 25,000/200,000에서
-`$1.0125`, 12-run은 `$12.15`, 96-run은 `$97.20`이었다. D-052 future contract의 frozen
-repository-rate authorization reserve는 25,000/250,000에서 run당 `$1.2375`, 12-run
-`$14.85`, 96-run `$118.80`이다. 현재까지 measured list-price `$4.981546875`와 세 future
-reserve를 더한 수동 계획값은 `$139.869046875`다. Reserve는 spend나 invoice prediction이
-아니며 project-wide `$150` cap은 machine-enforced가 아니다. Runner는 suite별
-`cost_limit_usd`만 강제한다.
+`$1.0125`, 12-run은 `$12.15`, 96-run은 `$97.20`이었다. D-052 comparison draft의 frozen
+repository-rate reserve는 25,000/250,000에서 run당 `$1.2375`, 12-run `$14.85`, 96-run
+`$118.80`이었다. D-054 completion calibration은 25,000/600,000에서 run당 `$2.8125`,
+두 run `$5.625`, suite cap `$6`를 사용한다. 현재까지 measured list-price
+`$4.981546875`와 panel reserve의 수동 합은 `$10.606546875`다. 아직 freeze되지 않은
+12-run/core reserve는 이 현재 승인 합계에 넣지 않는다. Reserve는 spend나 invoice
+prediction이 아니며 project-wide `$150` cap은 machine-enforced가 아니다. Runner는
+suite별 `cost_limit_usd`만 강제한다.
 
-### Historical evidence preserved; D-052 offline complete; v5 validation pending
+### Historical evidence preserved; D-054 completion preflight pending
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
@@ -387,8 +394,27 @@ reserve를 더한 수동 계획값은 `$139.869046875`다. Reserve는 spend나 i
   `experiments/dev-no-memory-v5.template.yaml`, `experiments/core.template.yaml`이다.
   Development template의 `pilot_run_id`는 아직 `null`이고 core embedding revision은
   freeze 전 marker이므로 둘 다 실행 gate를 열지 않는다.
-- 다음 work item은 세 task failure의 leak-safe structured review/deduplication이다.
-  이후 live validation은 새 v5 pilot, suite, hash와 별도 승인을 요구한다.
+- 세 task failure의 `memory-review-proposal-v1`은 campaign/source/patch hash와 함께
+  leak-safe validation을 통과했다. Tox 두 repetition은 exception-origin state conflation
+  candidate 하나로 deduplicate했고, Loguru source는 공개 증거만으로 acceptance 원인을
+  특정할 수 없어 hold했다. Producer는 `maintainer-assisted`이며 PatchLoop agent의 automatic
+  post-run self-review evidence가 아니다. 이 proposal은 human review history나 memory
+  index도 아니다.
+- D-054에서 memory admission을 의도적으로 뒤로 미뤘다. 실행되지 않은
+  `dev-validation-gpt54mini-token-tail-v5-20260730-r1`은
+  `superseded-unexecuted`이며 preflight가 실행을 거부한다.
+- 현재 paid candidate는
+  `experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml` 한 개다.
+  Babel control과 Moto harder completion probe를 각 1회 실행하며 `40/100/600,000/1,800초`,
+  per-call output 25,000, conservative reserve `$5.625`, suite cap `$6`를 사용한다.
+- `no-memory-completion-gate-v1`은 두 run 모두 terminal·qualified이고 official evaluator에
+  도달하며 infrastructure/qualification/budget terminal이 0일 때만 통과한다. Hidden/SCRR
+  성공은 별도 결과이고 gate 필수조건이 아니다. 두 run 모두 480k token, 32 model call,
+  80 tool call, 1,440초 안이면 후속 fair-budget 검토 입력이 된다. 이는 freeze의
+  필요조건일 뿐 충분조건이 아니다.
+- 다음 work item은 이 panel의 clean no-call preflight와 exact execution hash 생성이다.
+  Provider call은 사용자의 별도 `$6` 승인 뒤에만 가능하다. Memory human admission,
+  group-aware builder와 새 no-memory baseline은 panel 결과 뒤에 재개한다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
 
 2026-07-28 첫 paid pilot `run_c6f13dd9a1a1472d`는 ready preflight 뒤 `$0.34025875`를

@@ -77,5 +77,6 @@ Admission evidence from clean harness commit
 
 The content-addressed case ledger is
 `reports/docker-gate/research-moto-query-scanned-count.json`. The task may be
-used only for rendering, no-match, and leak validation. Its runs are prohibited
-from memory-entry generation and the held-out core denominator.
+used for development-validation runtime/completion pilots and for rendering,
+no-match, and leak validation. Its runs are prohibited from memory-entry
+generation and the held-out core denominator.

@@ -24,7 +24,7 @@ memory와 experiment 사용 가능 여부를 결정한다.
 | --- | --- | ---: | --- |
 | Calibration | Pipeline, schema, evaluator boundary 확인 | 5 | Harness 확인만; 성능·memory 보고 금지 |
 | Memory development | Prompt, taxonomy, retrieval, threshold 개발 | 6 | 예 |
-| Development validation | Rendering, no-match, leak validation | 2 | 제한적; memory entry 생성 금지 |
+| Development validation | Rendering/no-match/leak와 live runtime/completion validation | 2 | 제한적; memory entry와 core headline 생성 금지 |
 | Core same-repo | Repository-specific memory 효과 | 6 | 아니요 |
 | Core cross-repo | Remediation rule의 repository 간 일반화 | 6 | 아니요 |
 | External acceptance | 원본 benchmark/외부 workflow 호환성 | 별도 | 아니요; core 집계 금지 |
@@ -108,24 +108,27 @@ evaluator 계약으로 변환한 뒤 재감사한다. 원본 Harbor run과 adapt
 
 ### No-memory development trace acquisition
 
-Memory entry를 만들기 전에 live harness 자체를 development-validation task 하나로 검증한다.
-Frozen sequence는 다음과 같다.
+Historical D-045/D-047 절차는 Babel #1042 development-validation task 한 개를
+`no_memory`로 실행한 뒤, trace qualification과 `evaluation_reached=true`를 통과한 pilot에
+결속해 memory-development 여섯 task를 task당 2회 실행하는 순서였다. 당시 pilot의
+cost limit은 $2, 12-run campaign은 $20이었다. 그 두 historical 12-run campaign은 각각
+evaluator 도달 0/12와 3/12로 budget-confounded였으므로 usable no-memory baseline이 아니다.
 
-1. Babel #1042 development-validation task를 `no_memory`로 1회 실행한다.
-2. 그 run의 `trace-qualification-v2`가 trace integrity, leakage, function-tool-loop와
-   v2 submission lifecycle을 통과했는지 확인하고, 별도 pilot acceptance에서
-   `evaluation_reached=true`인지 검사한다.
-   성공 patch일 필요는 없지만 infrastructure error나 evaluator 미도달은 accepted pilot가
-   아니다.
-3. Trace-qualified이면서 acceptance를 통과하고 development suite와 동일한 model,
-   budget, harness commit, tool/context runtime-contract hash를 가진 pilot run ID와
-   qualification hash를 다음 suite에 고정한다. Historical v1 pilot은 이 gate를 열지 않는다.
-4. Frozen memory-development 여섯 task를 `no_memory`로 task당 2회, 총 12회 실행한다.
-5. Qualification된 failure만 human review queue에 넣는다. Resolved run도 trace evidence로
-   남지만 memory candidate는 아니다.
+현재 D-054 순서는 다음과 같다.
 
-Pilot의 cost limit은 $2, 12-run development campaign은 $20다. 이 두 실행은 core SCRR
-분모에 포함하지 않는다. Development-validation trace도 memory source가 아니다.
+1. Babel #1042와 Moto #7208 development-validation task를 `no_memory`로 각각 1회 실행한다.
+2. 두 run 모두 `trace-qualification-v2`, exact prompt telemetry, leakage 검사,
+   terminal persistence와 `evaluation_reached=true`를 만족하는지 검사한다.
+3. Infrastructure/qualification/diagnostic error와 token/model/tool/wall budget terminal이
+   하나라도 있으면 completion gate를 닫는다. Hidden/SCRR 결과는 별도로 보고하되 runtime
+   completion gate의 필수조건으로 사용하지 않는다.
+4. 20% headroom gate를 함께 계산해 후속 fair budget을 정할 수 있는지 판정한다.
+5. 이 gate를 통과하고 별도의 no-memory baseline budget을 동결하기 전에는
+   memory-development live campaign과 memory index build를 진행하지 않는다.
+
+D-054 panel의 cost limit은 총 $6이다. Development-validation trace는 memory source나
+core SCRR 분모가 아니다. 이후 no-memory baseline이 확보되면 qualification된 unresolved
+failure만 append-only human review 대상으로 삼으며, resolved run은 trace evidence로만 남긴다.
 
 각 started attempt는 resolved/task failure뿐 아니라 agent/infrastructure failure도 stable run
 ID, event, checkpoint, usage와 terminal outcome을 남긴다. Usage는 uncached input, cached
@@ -375,12 +378,15 @@ schedule에는 포함하지 않는다.
 
 Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는다. Provider가 immutable model snapshot을 제공하지 않으면 실행 시점과 provider revision을 기록하고 limitation으로 보고한다.
 
-현재 development-validation, memory-development와 core primary live block은
+현재 D-054 development-validation completion block은
 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode `standard`, service tier `default`,
 max output 25,000 token과 run budget
-`21 model call / 50 tool call / 250,000 total token / 900초`를 고정한다. 21번째 call은
-submission 전용으로 예약하지 않는 정상 model call이며 네 memory 조건에 동일하게
-적용한다. OpenAI SDK version,
+`40 model call / 100 tool call / 600,000 total token / 1,800초`를 고정한다.
+이는 두 task의 runtime completion을 진단하기 위한 높은 ceiling이며 memory-development나
+core의 비교 budget을 자동으로 정하지 않는다. D-052의
+`21 model call / 50 tool call / 250,000 total token / 900초` memory-development/core
+template은 실행되지 않은 pending draft다. 후속 공정 비교 budget은 D-054의 실제 사용량과
+20% headroom gate를 본 뒤 모든 memory 조건에 동일하게 별도 동결한다. OpenAI SDK version,
 clean harness Git commit과 execution window도 provenance로 사용한다. D-031 provider
 telemetry를 검증했던 별도
 development-validation model-candidate pilot의 historical r1~r3는
@@ -404,11 +410,30 @@ qualified terminal trace를 만들었지만 evaluator 도달 0/12라 no-memory �
 exact-request budget failure가 있다. 이 결과도 baseline이 아니며 token-aware tail
 runtime을 offline에서 다시 고정하기 전에는 새 baseline 후보를 실행하지 않는다. D-052는
 그 future-only runtime을 `phase-evidence-v5`와 250,000 total-token 계약으로 offline
-검증했다. Provider call은 없었고, leak-safe structured review와 별도 승인된 v5 single
-pilot 전에는 새 baseline 후보를 실행하지 않는다. 21/200,000 계약으로 이미 소비된
+검증했다. Provider call은 없었다. D-054는 cross-run memory admission을 보류하고,
+실행되지 않은 250k single pilot을 supersede한 뒤 Babel과 Moto 두 development-validation
+task에 600,000-token no-memory completion ceiling을 적용한다. 이 panel 전에는 새 baseline
+후보나 memory condition을 실행하지 않는다. 21/200,000 계약으로 이미 소비된
 `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
 `dev-validation-gpt54mini-investigation-v4-20260730-r1`,
 `dev-no-memory-v4-20260730-r1`은 immutable historical evidence다.
+
+D-054 completion panel은 correctness gate가 아니라 runtime gate다.
+
+- Babel은 과거 evaluator/SCRR 완료 이력이 있는 control이고 Moto는 더 넓은 query-state
+  추론을 요구하는 harder completion probe다.
+- 두 run 모두 terminal, `trace-qualification-v2`, leakage, exact prompt telemetry와
+  official evaluator arrival를 통과해야 한다.
+- Infrastructure/qualification/diagnostic error와 token/model/tool/wall budget terminal은
+  0이어야 한다.
+- Hidden/SCRR success는 별도 보고하지만 `no-memory-completion-gate-v1`의 필수조건이
+  아니다. Hidden failure라도 evaluator까지 도달했다면 runtime completion evidence다.
+- 20% headroom인 480k token, 32 model call, 80 tool call, 1,440초를 둘 다 만족해야만
+  관찰 결과를 후속 fair-budget 검토의 입력으로 사용한다. 이 pass는 budget freeze의
+  필요조건일 뿐 충분조건이 아니며, memory-development 표본의 별도 no-memory pilot과
+  비용 검토 없이 비교 budget을 동결하지 않는다.
+- Panel 실패는 자동 재실행이나 즉시 추가 증액으로 이어지지 않는다. Terminal evidence를
+  먼저 분석하고 새 suite/hash/승인을 별도로 만든다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
@@ -429,14 +454,15 @@ plan에서만 live capability를 발급한다. 동시 invocation의 선점 패�
 각 task package와 생성 manifest도 plan의 task/model/budget/environment identity와 다시
 대조하고, 불일치하면 `RunStarted`와 model call 전에 중단한다.
 
-2026-07-29T22:39:42Z에 다시 확인한
+2026-07-30T22:25:47Z에 다시 확인한
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing)의 `gpt-5.4-mini`
 standard rate는 input $0.75/M, cached input $0.075/M, output $4.50/M이며 별도
 cache-write rate는 없다. Preflight는 verification age가 72시간을 넘거나 rate가 다르면
-실행하지 않는다. D-052 future primary의 250,000 total과 25,000 response allowance를
-frozen repository의 최고 rate로 예약한 authorization reserve는 run당 `$1.2375`, 12-run
-`$14.85`, 96-run `$118.80`이다. 지금까지의 measured list-price `$4.981546875`와 future
-pilot·development·core reserve를 더한 수동 계획값은 `$139.869046875`다. Reserve는 예측
+실행하지 않는다. D-054 completion panel의 600,000 total과 25,000 response allowance를
+frozen repository의 최고 rate로 예약한 authorization reserve는 run당 `$2.8125`, 두 run
+`$5.625`이고 suite cap은 `$6`다. 지금까지의 measured list-price `$4.981546875`와 합친
+현재 수동 계획값은 `$10.606546875`다. D-052의 12-run `$14.85`와 core `$118.80` reserve는
+calibration 뒤 변경될 수 있는 draft라 현재 승인 합계에 넣지 않는다. Reserve는 예측
 지출이나 invoice·무료 사용 증거가 아니다. Project-wide `$150` 상한은 machine-enforced가
 아니며 runner가 강제하는 것은 각 suite의 `cost_limit_usd`다.
 
@@ -499,13 +525,14 @@ Memory utilization과 negative-transfer 원인은 자동 metric만으로 단정�
 5. `--preflight-only`로 canonical task/private evaluator, live environment, price, budget
    reserve와 execution hash를 검토한다.
 6. Explicit invocation approval을 durable execution plan으로 저장하고 campaign/run start를
-   journal에 fsync한 뒤 Babel development-validation pilot을 실행하고 trace를 qualification한다.
-7. Trace qualification과 `evaluation_reached=true` acceptance를 함께 통과한 pilot hash에
-   결속된 여섯 task × 2 no-memory development campaign을 실행한다.
-8. Eligible failure의 append-only human review를 거쳐 memory index와 retrieval config를
+   journal에 fsync한 뒤 Babel+Moto D-054 completion panel을 실행하고 trace를 qualification한다.
+7. `no-memory-completion-gate-v1`과 20% headroom 결과를 보고 동일 모델·runtime에서 사용할
+   후속 fair budget을 별도 동결한다.
+8. 새 승인 아래 여섯 memory-development task의 no-memory baseline을 실행한다.
+9. Eligible failure의 append-only human review를 거쳐 memory index와 retrieval config를
    freeze한다.
-9. Condition/task/repetition 실행 순서를 seed 기반으로 섞는다.
-10. 각 run의 manifest, raw event, checkpoint, result, artifact와 verifier result를
+10. Condition/task/repetition 실행 순서를 seed 기반으로 섞는다.
+11. 각 run의 manifest, raw event, checkpoint, result, artifact와 verifier result를
     immutable하게 저장하고 `source_evidence_hash`로 결속한다.
 11. 사전 정의된 aggregation script로 paired result를 계산한다.
 12. Task-level matrix, aggregate, confidence interval, failure trace를 함께 공개한다.
@@ -642,6 +669,22 @@ success/failure flip은 생성하지 않는다. 누락 row를 제외한 교집�
   아니다. Exact-request budget exhaustion처럼 runtime confound가 있는 trace는 별도
   procedural analysis로 격리하고, hidden acceptance에 실패한 task trace만 public evidence로
   self-review한 뒤 사람이 leak scan과 semantic deduplication을 승인한다.
+- Structured review는 먼저 `memory-review-proposal-v1`으로 고정한다. Validator는
+  campaign의 task-failure candidate와 budget-confounded exclusion exact coverage,
+  current failure/qualification/source-evidence/public-spec/submitted-patch hash, event
+  sequence와 semantic group membership을 read-only로 재검증한다.
+- Proposal producer가 `maintainer-assisted`이면 자동 agent self-review evidence로
+  해석하지 않는다. `model-self-review`는 exact model ID와 sanitized response artifact
+  hash를 요구하고 별도의 usage/cost gate를 따른다.
+- Proposal group은 `candidate`와 `hold`를 구분한다. Public evidence로 stage-specific
+  causal claim을 뒷받침할 수 있는 group만 candidate가 될 수 있다. 원인을 특정할 수 없는
+  반복은 일반적인 조언을 억지로 admission하지 않고 hold로 남긴다.
+- Proposal validation은 human approval이 아니다. Append-only review가 proposal/rule/group
+  provenance를 결속하고 builder가 group-level dedup entry를 소비하는 후속 계약이
+  완료되기 전에는 실제 index를 build/freeze하지 않는다.
+- D-054 순서에서는 위 human approval과 index build 자체도 high-budget completion panel과
+  새 no-memory baseline 뒤까지 보류한다. V4 proposal은 historical candidate/hold
+  evidence로 남기며 새 baseline의 failure와 합치거나 성능 개선 근거로 사용하지 않는다.
 - Raw trace condition도 held-out solution trace를 검색 대상으로 사용하지 않는다.
 - Report/viewer가 hidden assertion body를 model-visible trace에 역으로 노출하지 않게 한다.
 - Split, config, index, task package의 hash를 run manifest에 기록한다.

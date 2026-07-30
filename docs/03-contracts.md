@@ -120,7 +120,7 @@ eligibility를 결정한다.
 | --- | ---: | --- |
 | `calibration` | 5 | Harness와 evaluator 확인 전용; memory/core/headline에서 제외 |
 | `memory-development` | 6 | Reviewed failure만 memory source로 사용 가능 |
-| `development-validation` | 2 | Rendering, no-match, leak 검증 전용; memory source에서 제외 |
+| `development-validation` | 2 | Rendering/no-match/leak와 live runtime/completion 검증 전용; memory source와 core headline에서 제외 |
 | `core-same-repo` | 6 | Frozen core experiment 전용 |
 | `core-cross-repo` | 6 | Frozen core experiment 전용 |
 | `external-acceptance` | 별도 | 호환성 evidence 전용; core aggregate에서 제외 |
@@ -262,7 +262,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | Purpose | Exact contract |
 | --- | --- |
 | `offline-smoke` | `model=mock`; API 호출 없음 |
-| `development-validation-live-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, $2 상한 |
+| `development-validation-live-pilot` | Current D-054: Babel #1042 + Moto #7208, `no_memory`, task별 repetition 1, 총 2 run, $6 상한. Historical single-task IDs는 당시 계약으로만 읽음 |
 | `development-validation-model-candidate-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, dated candidate model, $2 상한; primary campaign gate와 분리된 historical diagnostic lane |
 | `memory-development-no-memory` | frozen memory-development 여섯 task, `no_memory`, repetition 2, 총 12 run, $20 상한 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
@@ -284,17 +284,57 @@ budget:
 seed: 20260723
 ```
 
+위 21/50/250k 값은 아직 실행하지 않은 memory-development/core comparison draft다.
+D-054 completion calibration은 이를 공정 비교 budget으로 자동 채택하지 않고 다음 별도
+진단 계약을 사용한다.
+
+```yaml
+purpose: development-validation-live-pilot
+tasks:
+  - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+  - tasks/dev-validation/moto-query-scanned-count/public.yaml
+conditions: [no_memory]
+repetitions: 1
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+max_output_tokens: 25000
+budget:
+  max_model_calls: 40
+  max_tool_calls: 100
+  max_total_tokens: 600000
+  wall_clock_timeout_seconds: 1800
+cost_limit_usd: 6
+```
+
 이 21은 모든 future memory 조건에 동일한 총 model-call 상한이며 `finish_task` 전용
 reserve가 아니다. D-052 이전에 소비된 primary/development suite의 21/200,000 계약과
 historical diagnostic suite의 20-call 의미는 변경하지 않는다.
 
-Pilot task는
-`tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml`로 exact match한다.
+Current completion panel task set은 Babel과 Moto의 위 두 canonical path로 exact match한다.
+과거 single-task pilot ID와 실행되지 않았지만 superseded된 D-052 v5 ID는 Babel path와
+당시 budget을 그대로 읽어 evidence identity를 보존한다.
+Current 600k completion qualification은 approved execution plan의 task row가 suite task와
+정확히 1:1인지 검사하고, `_make_schedule`과 같은 deterministic rule로 전체 schedule을
+재계산해 row, hash와 expected run count를 exact match한다. 현재 run 하나와 일치하는
+부분 plan만으로 qualification을 통과할 수 없다.
 Development campaign은 frozen registry의 memory-development 여섯 task가 정확히 한 번씩
 suite에 선언돼야 한다. 다른 role, 일부 집합, 중복 task 또는 다른 repetition은 schema 또는
 preflight에서 거부한다. Development campaign은 먼저 성공 여부와 무관하게 trace
 qualification과 `evaluation_reached=true`를 함께 만족한 accepted pilot의 run ID와
 qualification hash를 요구한다.
+
+Completion panel result는 `no-memory-completion-gate-v1`을 포함한다. `passed=true`는
+두 row가 모두 terminal·trace-qualified이고 official evaluator에 도달했으며
+infrastructure error, qualification error, diagnostic error와 budget terminal이 0이라는 뜻이다.
+`task_successes`는 별도 관찰값이며 hidden/SCRR success는 completion 필수조건이 아니다.
+`panel_headroom`은 각 run이 480,000 total token, 32 model call, 80 tool call,
+1,440,000ms 안에 끝났는지를 기록한다. Completion은 통과했지만 headroom이 실패하면 해당
+trace는 끝까지 실행된 evidence로 보존하되 후속 fair comparison budget은 동결하지 않는다.
+Headroom pass도 후속 budget freeze의 필요조건일 뿐 충분조건이 아니다. 두
+development-validation task의 관찰값을 memory-development 표본에 그대로 일반화하지 않고,
+별도의 동일조건 no-memory baseline pilot과 비용 검토를 거쳐 비교 budget을 동결한다.
 
 Paid approval은 checked-in YAML 상태가 아니다. `live_cost_approved`와
 `approved_execution_hash`는 이전 schema를 읽기 위한 deprecated field이며 값을 바꿔도 실행
@@ -324,19 +364,20 @@ environment가 없으면 paid execution 전에 거부한다. Preflight는 매 in
 - 한 run의 frozen token/output budget을 모두 예약해도 campaign cost limit을 넘지 않음
 - 동일 experiment result가 아직 존재하지 않음
 
-2026-07-29T22:39:42Z에 재확인한 공식
+2026-07-30T22:25:47Z에 재확인한 공식
 [API pricing](https://developers.openai.com/api/docs/pricing)은 1M token당 input $0.75,
 cached input $0.075, output $4.50이며 별도 cache-write rate는 없다. Primary model은
 dated snapshot `gpt-5.4-mini-2026-03-17`이고, model ID와 SDK version, Git commit,
 실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을 거부하고
 다시 확인한다.
 
-Frozen repository rate를 사용하는 D-052 future authorization reserve는 run당
-`(250,000 + 25,000) × $4.50/M = $1.2375`, 12-run `$14.85`, 96-run `$118.80`이다.
-이는 실제 spend나 invoice prediction이 아니다. 지금까지 측정된 list-price
-`$4.981546875`에 future pilot·12-run·96-run reserve를 모두 합한 수동 계획값은
-`$139.869046875`다. Project-wide `$150` 상한은 machine-enforced field가 아니며, runner는
-각 suite의 `cost_limit_usd`만 강제한다.
+D-054 completion ceiling의 authorization reserve는 run당
+`(600,000 + 25,000) × $4.50/M = $2.8125`, 두 run `$5.625`이며 suite cap은 `$6`다.
+이는 실제 spend나 invoice prediction이 아니다. D-052 comparison draft의 12-run
+`$14.85`와 96-run `$118.80`은 calibration 뒤 변경될 수 있으므로 현재 paid authorization
+합계로 보지 않는다. 지금까지 측정된 list-price `$4.981546875`와 completion panel reserve를
+합하면 `$10.606546875`다. Project-wide `$150` 상한은 machine-enforced field가 아니며,
+runner는 각 suite의 `cost_limit_usd`만 강제한다.
 
 과거 Terra r1-r3 experiment ID와 r3 계약
 `experiments/dev-validation-pilot.template.yaml`은 당시 identity를 그대로 보존한다.
@@ -355,15 +396,18 @@ inspection 전용이다. V4 pilot
 `dev-no-memory-v4-20260730-r1`은 immutable historical evidence이며 D-052로
 소급 재해석하거나 재실행하지 않는다.
 
-D-052 future template은
+D-052의 실행되지 않은 single-pilot template
 `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`
-(`dev-validation-gpt54mini-token-tail-v5-20260730-r1`),
+(`dev-validation-gpt54mini-token-tail-v5-20260730-r1`)은 D-054가
+`superseded-unexecuted`로 보존하며 preflight에서 `SUPERSEDED_SUITE`로 차단한다.
+Current paid candidate는
+`experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`이다.
 `experiments/dev-no-memory-v5.template.yaml` (`dev-no-memory-v5-20260730-r1`)와
-`experiments/core.template.yaml`이다. Pilot은 아직 provider에서 실행하지 않았다.
+`experiments/core.template.yaml`의 250k 값은 calibration 결과 전 pending draft다.
 Development template의 `pilot_run_id`는 `null`이라 accepted v5 pilot 전에는 실행할 수
 없고, core template의 embedding revision도 freeze 전 marker를 유지하므로 core 실행을
-허용하지 않는다. 다음 gate는 leak-safe structured review/deduplication과 별도 승인된 v5
-single pilot이다. 이미 소비된
+허용하지 않는다. 다음 gate는 completion panel의 clean no-call preflight와 별도 승인이다.
+Memory human admission과 index build도 panel과 새 baseline 뒤까지 보류한다. 이미 소비된
 mini model-candidate r1/r2와 D-037 r3-r6 diagnostic suite도
 `HISTORICAL_SUITE_IMMUTABLE`이며 approval/hash를 다시 제공해도 실행할 수 없다.
 
@@ -1400,6 +1444,56 @@ Human review는 원래 `FailureRecord`를 수정하지 않는다.
 admission이 아니다. Budget/runtime confound가 있는 candidate는 qualification을 통과해도
 review disposition에서 제외할 수 있고, 같은 semantic failure의 repetition은 hidden detail을
 복사하지 않은 하나의 reviewed rule로 deduplicate한다.
+
+사람의 승인 전에는 `memory-review-proposal-v1`이 structured self-review와 deduplication
+제안을 별도 artifact로 보존한다. Proposal은 campaign report/execution/suite/dataset hash,
+각 source의 failure/qualification/source-evidence/public-spec/submitted-patch hash,
+agent-visible event sequence, semantic group membership과 candidate/hold disposition을
+결속한다. Campaign의 task-failure candidate와 budget-confounded exclusion을 정확히 모두
+포함해야 하며, 한 source를 둘 이상의 group에 넣을 수 없다. Rule text에는 raw diff, 코드
+본문, private/hidden/reference marker를 넣지 않는다.
+
+```yaml
+schema_version: memory-review-proposal-v1
+proposal_id: proposal_dev_no_memory_v4_20260730_r1
+producer:
+  kind: maintainer-assisted
+  method: codex-public-trace-review-v1
+campaign:
+  report_path: reports/memory-development/dev-no-memory-v4-20260730-r1.json
+  report_sha256: sha256:...
+  experiment_id: dev-no-memory-v4-20260730-r1
+  execution_hash: sha256:...
+  suite_hash: sha256:...
+  dataset_manifest_hash: sha256:...
+sources:
+  - failure_id: fail_...
+    run_id: run_...
+    semantic_group_id: exception-origin-state-conflation
+    disposition: candidate
+groups:
+  - semantic_group_id: exception-origin-state-conflation
+    relation: semantic-duplicate
+    disposition: candidate
+    rule: ...
+excluded_runs:
+  - run_id: run_...
+    reason: exact_request_budget_exceeded
+human_review_status: pending
+content_hash: sha256:...
+```
+
+`patchloop memory validate-review <proposal.json>`는 위 binding과 current source hash를
+재계산하고 leak/code-shaped marker를 fail-closed로 검사한다. 발견 문자열은 오류에
+재출력하지 않는다. 이 명령은 read-only이며 `failure-review-v1` history를 쓰거나 index를
+build하지 않는다. Proposal의 `candidate`는 검토할 가치가 있다는 뜻이고 `hold`는 공개
+증거만으로 causal rule을 승인하기 어렵다는 뜻이다. 둘 다 human `reviewed` decision이나
+index admission이 아니다.
+
+Producer는 `maintainer-assisted`와 `model-self-review`를 구분한다. 후자는 exact model ID와
+sanitized response artifact hash가 모두 있어야 하며, 전자는 model response provenance를
+주장할 수 없다. 따라서 maintainer가 공개 trace를 검토해 만든 proposal은 PatchLoop agent가
+post-run self-review를 실행했다는 evidence가 아니다.
 
 ## 10. Failure memory entry
 

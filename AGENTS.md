@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-052 phase-evidence-v5/250k offline contract complete;
-  structured memory review and v5 live pilot pending`이다.
+- 현재 milestone은 `D-054 high-budget no-memory completion panel offline complete;
+  clean no-call preflight and separate live approval pending`이다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -138,12 +138,16 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
   `dev-validation-gpt54mini-investigation-v4-20260730-r1`,
   `dev-no-memory-v4-20260730-r1`은 immutable하며 재해석하거나 재실행하지 않는다.
-  Frozen repository rate의 future authorization reserve는 run당 `$1.2375`, 12-run
-  `$14.85`, 96-run `$118.80`이고 measured `$4.981546875`와 모두 더한 수동 계획값은
-  `$139.869046875`다. Reserve는 spend/invoice prediction이 아니며 project-wide `$150`
-  cap은 machine-enforced가 아니다. V5 offline contract는 검증됐지만 provider call은
-  없었다. 다음 gate는 세 task failure의 leak-safe structured review/deduplication과 별도
-  승인된 v5 single pilot이다. 96-run core campaign은 아직 실행하지 않는다.
+  D-053 maintainer-assisted structured review proposal은 검증됐지만 human admission과
+  index build는 의도적으로 보류한다. D-054는 실행되지 않은 250k single pilot을
+  `superseded-unexecuted`로 보존하고, Babel+Moto 각 1회 `no_memory` completion panel을
+  `40 model / 100 tool / 600,000 token / 1,800초`, per-call output 25,000, suite cap
+  `$6`로 고정한다. Conservative reserve는 run당 `$2.8125`, 두 run `$5.625`이며 measured
+  `$4.981546875`와 합친 현재 수동 계획값은 `$10.606546875`다. Completion gate는 2/2
+  qualified evaluator arrival와 budget terminal 0을 요구하지만 SCRR success는 별도다.
+  이 contract는 offline 검증만 완료했고 provider call은 없다. 다음 gate는 clean no-call
+  preflight와 exact execution hash를 검토한 별도 live 승인이다. 그 전에는 memory admission,
+  새 no-memory baseline이나 96-run core campaign을 실행하지 않는다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

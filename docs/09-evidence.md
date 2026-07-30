@@ -1,12 +1,87 @@
-# Implementation evidence — through 2026-07-30
+# Implementation evidence — through 2026-07-31
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
-## D-052 current future-run contract — offline evidence only
+## D-054 high-budget no-memory completion panel — offline contract only
+
+Cross-run memory admission is deferred because the V4 0/12 result contains nine pre-evaluator
+exact-request budget failures and is not a usable no-memory baseline. The read-only structured
+review proposal below remains historical candidate/hold evidence; no human review history or
+memory index was created.
+
+The new paid candidate is
+[`dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`](../experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml).
+It freezes the two admitted development-validation tasks—Babel as the previously completed control
+and Moto as the harder state-accounting probe—at one `no_memory` repetition each. The model remains
+`gpt-5.4-mini-2026-03-17`, medium/standard/default with 25,000 per-call output. The diagnostic
+ceiling is 40 model calls, 100 tool calls, 600,000 total run tokens and 1,800 seconds.
+
+Official OpenAI documentation was rechecked at 2026-07-30T22:25:47Z. The model page publishes a
+400,000-token context window, 272,000 max input and 128,000 max output; the configured 25,000
+per-call output is within that limit. Standard list prices remain input `$0.75/M`, cached input
+`$0.075/M`, output `$4.50/M`. PatchLoop's conservative formula therefore reserves `$2.8125` per
+run and `$5.625` for the panel under a `$6` suite cap. These are authorization reserves, not spend
+or invoice predictions.
+
+`no-memory-completion-gate-v1` separates runtime completion from task correctness. It requires
+2/2 terminal rows, qualified traces and official evaluator arrival with zero infrastructure,
+qualification, diagnostic or budget-terminal failures. Hidden/SCRR success is reported but is not required:
+a hidden task failure after the evaluator ran is still completion evidence. A separate 20%
+headroom check uses 480,000 token, 32 model calls, 80 tool calls and 1,440 seconds per run before
+the result can inform a future fair-budget review. Passing it is necessary but not sufficient to
+freeze a comparison budget; a separate memory-development no-memory pilot and cost review remain.
+
+The unexecuted 250k single pilot
+`dev-validation-gpt54mini-token-tail-v5-20260730-r1` is preserved as
+`superseded-unexecuted`; preflight rejects it with `SUPERSEDED_SUITE`. The memory-development and
+core 250k templates remain pending drafts and are not authorized. No provider call, experiment
+result or completion measurement was made in this checkpoint.
+
+Current-tree verification partitioned every test file into four isolated groups and collected
+658 tests: 655 passed and 3 existing environment/evidence-dependent tests skipped. Repository-wide
+Ruff and `git diff --check` passed.
+
+## Structured memory review proposal — human admission still pending
+
+The V4 no-memory campaign's three task-failure sources were reviewed using public task contracts,
+agent-visible event/source artifacts, submitted diffs, registered-check summaries and only the
+generic task-failure outcome. The resulting maintainer-assisted proposal is
+[`dev-no-memory-v4-structured-review-proposal.json`](../reports/memory-development/dev-no-memory-v4-structured-review-proposal.json),
+content hash
+`sha256:6ed23cc6056b910c1a781d77bf0d8fa297ec3f948cc54cfaf176539e83f8d7e7`.
+It does not claim that the PatchLoop agent performed automatic post-run self-review.
+
+`patchloop memory validate-review` recomputed the frozen dataset identity, campaign
+report/execution/suite hashes, all three current failure/qualification/source-evidence/public-spec
+bindings, the three portable submitted-patch hashes and referenced event sequences. It also
+verified exact coverage of the three task-failure candidates and nine budget-confounded exclusions,
+semantic-group membership, the canonical proposal hash and the leak/code-marker policy.
+
+The outcome is deliberately asymmetric:
+
+- The two tox repetitions are one `exception-origin-state-conflation` candidate rule. Their public
+  evidence supports the same operation-boundary mistake and corrective action.
+- The Loguru source is a separate `diagnostic-contract-unresolved` hold group. Public evidence did
+  not isolate a defensible causal explanation, so the proposal does not turn it into a generic
+  memory rule merely to reach a target count.
+- The nine exact-request budget failures remain excluded from semantic memory review.
+
+Validation reported three sources, two groups, one candidate, one hold, nine exclusions and a
+passing leak scan. It also reported `human_review_status=pending`,
+`review_history_written=false` and `memory_index_built=false`. No provider call was made.
+
+Current-tree regression now contains 658 collected tests: 655 passed and 3 existing
+environment/evidence-dependent tests skipped across the four isolated groups. Repository-wide
+Ruff and `git diff --check` passed.
+The remaining memory gate was append-only human approval bound to proposal/rule/group provenance,
+a group-aware builder and an exact embedding revision. D-054 now defers that work until the
+completion panel and a new no-memory baseline establish an unconfounded source set.
+
+## D-052 comparison draft — offline evidence only, pilot superseded by D-054
 
 D-052 supersedes the future budget/runtime portion of D-045, D-048's current-runtime designation
-and D-051's pending token-tail gate without changing historical evidence. Future
-development-validation, memory-development and core suites use
+and D-051's pending token-tail gate without changing historical evidence. Before D-054,
+development-validation, memory-development and core draft suites used
 `gpt-5.4-mini-2026-03-17`, medium/standard/default, `phase-evidence-v5`,
 `21 model call / 50 tool call / 250,000 total token / 900 seconds` and
 `max_output_tokens=25,000` for every memory condition.
@@ -38,10 +113,11 @@ The new evidence versions are `investigation-policy-v2`, `investigation-ledger-v
 `ruff check .` and `git diff --check` also passed. No provider call was made for D-052, so this is
 not accepted-pilot, usable baseline, memory-effect or core evidence.
 
-The future contracts are:
+The D-052 comparison drafts were:
 
 - `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`,
-  experiment `dev-validation-gpt54mini-token-tail-v5-20260730-r1`
+  experiment `dev-validation-gpt54mini-token-tail-v5-20260730-r1`; now
+  `superseded-unexecuted`
 - `experiments/dev-no-memory-v5.template.yaml`,
   experiment `dev-no-memory-v5-20260730-r1`, with `pilot_run_id: null`
 - `experiments/core.template.yaml`, with the embedding revision still pending freeze
@@ -51,12 +127,12 @@ The experiments consumed under the 21-call/200,000-token contract
 `dev-validation-gpt54mini-investigation-v4-20260730-r1` and
 `dev-no-memory-v4-20260730-r1` remain immutable and are not requalified under V5.
 
-At frozen repository rates, future authorization reserves are `$1.2375` for one run, `$14.85`
-for 12 runs and `$118.80` for 96 runs. Measured list-price through D-051 remains
-`$4.981546875`; measured actual plus one future pilot, future development and future core reserve
-is the manual planning total `$139.869046875`. Reserves are neither spend nor invoice
-predictions. The project-wide `$150` cap is not machine-enforced; only suite-specific
-`cost_limit_usd` is enforced.
+The D-052 draft reserves were `$1.2375` for one run, `$14.85` for 12 runs and `$118.80`
+for 96 runs. They are not current authorizations. D-054 replaces only the pilot calibration with
+two `$2.8125` reserves, or `$5.625`; measured list-price through D-051 plus this panel is the
+current manual planning total `$10.606546875`. Reserves are neither spend nor invoice predictions.
+The project-wide `$150` cap is not machine-enforced; only suite-specific `cost_limit_usd` is
+enforced.
 
 ## Historical D-045 200k future-primary contract
 
@@ -136,8 +212,9 @@ unversioned generic blocks. A complete synthetic v2 terminal trace qualifies as
 All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r1/r2, both 12-run
 experiment IDs and v4 pilot `run_d7207fbb06184dd3` are now preflight-immutable even if an approval
 hash is supplied. No paid suite is currently approved. D-052 later closed the token-aware
-corrective-tail design offline without a provider call. Structured memory review and the new v5
-single-pilot gate remain pending.
+corrective-tail design offline without a provider call. The maintainer-assisted structured proposal
+is now validated, but D-054 defers human admission/group-aware index construction. The current paid
+gate is the separately approved two-task completion panel; it has not run.
 
 Offline verification collected 571 tests and completed 569 passes with 2 existing skips. The three
 directly affected runtime/qualification/experiment files contributed 238 passes. Repository-wide
@@ -1813,10 +1890,11 @@ D-048 tool-v2/context-v4 investigation continuity is offline-complete and v4 pro
 also completed 12/12 without infrastructure or qualification error, but nine exact-request budget
 failures and three hidden task failures produced SCRR 0/12. It is immutable diagnostic evidence, not
 a valid baseline. D-052 has now completed the token-aware corrective-tail and future 250,000-token
-contract offline under `phase-evidence-v5`; it made no provider call. The next step is leak-safe
-structured review and deduplication of the three task failures, followed by a separately approved
-v5 single pilot. Only an accepted v5 pilot may be bound into the new 12-run suite. No such live run
-is currently approved, and no 96-run core campaign has been executed.
+contract offline under `phase-evidence-v5`; it made no provider call. A leak-safe
+maintainer-assisted proposal now deduplicates the two tox repetitions and holds the unresolved
+Loguru source. Memory admission is deferred. The next paid step is a separately approved
+Babel+Moto high-budget completion panel, followed by a new no-memory budget decision and baseline.
+No such live run is currently approved, and no 96-run core campaign has been executed.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated

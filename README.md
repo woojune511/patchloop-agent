@@ -311,6 +311,7 @@ patchloop dataset audit
 patchloop eval-task <task-dir> --patch <patch> [--backend local|docker]
 patchloop run --task <public.yaml> --model <mock|openai|replay:path> --memory <condition>
 patchloop resume --run-id <run-id>
+patchloop memory validate-review <proposal.json>
 patchloop memory build --split dev-train
 patchloop memory freeze --index <index-id>
 patchloop evaluate --suite <experiment.yaml> [--preflight-only]
@@ -331,7 +332,7 @@ Responses API adapter는 host process에서만 API key를 읽고 container, chec
 
 | Purpose | Task/condition/repetition | 상한 |
 | --- | --- | ---: |
-| `development-validation-live-pilot` | Babel #1042, mini dated snapshot, `no_memory`, 1회 | $2 |
+| `development-validation-live-pilot` | Current: Babel #1042 + Moto #7208, mini dated snapshot, `no_memory`, 각 1회 | $6 |
 | `development-validation-model-candidate-pilot` | Historical mini diagnostics only; 재실행 금지 | $2 |
 | `memory-development-no-memory` | frozen memory-development 6개, `no_memory`, 각 2회(12 run) | $20 |
 
@@ -484,19 +485,20 @@ resume은 아직 구현되지 않았다.**
 각 task package와 생성 manifest의 task/model/budget/environment identity도 plan과 대조한
 뒤에만 `RunStarted`와 model call로 넘어간다.
 
-2026-07-29T22:39:42Z에 다시 확인한 공식 mini standard rate는 1M token당 input $0.75,
+2026-07-30T22:25:47Z에 다시 확인한 공식 mini standard rate는 1M token당 input $0.75,
 cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 않았다. 가격 source는
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing)이고 model page는
 `gpt-5.4-mini-2026-03-17`을 current snapshot, 400,000 context, 272,000 max input,
 128,000 max output으로 게시한다. Preflight 시점 기준 72시간을 넘으면 가격을 다시 확인하며
 SDK version, Git commit과 execution window를 provenance로 남긴다.
 
-D-052의 frozen repository rate로 계산한 보수적 future authorization reserve는 250,000
-run-total token과 25,000 output allowance를 모두 최고 output rate로 잡아 run당 `$1.2375`,
-12-run `$14.85`, 96-run `$118.80`이다. 이는 실제 지출이나 invoice 예측이 아니다. 현재까지
-측정된 list-price 비용 `$4.981546875`에 future single pilot, 12-run development campaign,
-96-run core reserve를 모두 더한 수동 계획값은 `$139.869046875`다. Project-wide `$150`
-상한은 machine-enforced guard가 아니며, 실행기는 각 suite의 `cost_limit_usd`만 강제한다.
+D-054 completion panel은 600,000 run-total token과 25,000 output allowance를 모두 최고
+output rate로 잡아 run당 `$2.8125`, 두 run `$5.625`, suite cap `$6`를 사용한다. 이는 실제
+지출이나 invoice 예측이 아니다. 현재까지 측정된 list-price 비용 `$4.981546875`와 panel
+reserve의 수동 합은 `$10.606546875`다. D-052의 12-run `$14.85`와 96-run `$118.80`은
+calibration 뒤 바뀔 수 있는 comparison draft라 현재 승인 합계에 넣지 않는다. Project-wide
+`$150` 상한은 machine-enforced guard가 아니며, 실행기는 각 suite의 `cost_limit_usd`만
+강제한다.
 
 Consumed tool-v2/context-v3 corrective primary r2
 `run_afd5080a77a34995`는 model, budget, harness commit, runtime-contract hash,
@@ -516,6 +518,9 @@ persisted result와 agent-visible content-addressed artifact inventory를 결속
 `RunStarted`/`ContextBuilt`/`ModelCalled` artifact reference, cache usage 불변식과 malformed
 function-call response의 이미 과금된 usage도 검사·보존하며, development campaign
 preflight와 memory review/index admission은 현재 source evidence hash를 다시 계산한다.
+`memory validate-review`는 campaign report, failure/qualification/source evidence, 제출 patch와
+semantic-group membership을 다시 검증하는 read-only 단계다. 이 명령이 통과해도 사람의
+append-only review가 기록되거나 memory index가 생성되지는 않는다.
 새 D-031 live trace는 여기에 exact request artifact, context builder가 최근-event/tool-result
 cap으로 생략한 양, input-token count endpoint의 예상치와 생성 응답의 실제
 `usage.input_tokens`, reasoning-output breakdown, response status·truncation·incomplete reason을
@@ -569,12 +574,15 @@ list-price 합계가 `$4.981546875`다. 실제 invoice/free daily usage 적용 �
 재실행하지 않는다. 특히 21-call/200,000-token 계약으로 소비된
 `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
 `dev-validation-gpt54mini-investigation-v4-20260730-r1`,
-`dev-no-memory-v4-20260730-r1`은 immutable historical evidence다. Future v5 template은
-`experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`,
-`experiments/dev-no-memory-v5.template.yaml`, `experiments/core.template.yaml`이며 아직
-provider에서 실행하지 않았다. 다음 작업은 세 task failure를 두 semantic rule group으로
-leak-safe review·deduplicate한 뒤, 별도 승인과 새 execution hash로 v5 single pilot을
-실행하는 것이다.
+`dev-no-memory-v4-20260730-r1`은 immutable historical evidence다. 실행되지 않은 250k
+single-pilot config
+`experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`은
+`superseded-unexecuted`로 보존되어 preflight에서 차단된다. Current paid candidate는
+`experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`이다. Babel control과
+Moto harder completion probe를 `no_memory`, 각 1회, 40 model/100 tool/600k token/1,800초로 실행한다.
+두 run 모두 evaluator에 도달해야 completion gate가 통과하며 hidden/SCRR success는 별도
+결과다. Memory human admission과 index build는 이 panel과 새 no-memory baseline 뒤까지
+보류한다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

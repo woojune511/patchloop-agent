@@ -937,6 +937,163 @@ class MemoryEntry(StrictModel):
     confidence: float = Field(ge=0, le=1)
 
 
+class MemoryReviewCampaign(StrictModel):
+    report_path: str
+    report_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    experiment_id: str = Field(min_length=1)
+    execution_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    suite_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    dataset_manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @field_validator("report_path")
+    @classmethod
+    def validate_report_path(cls, value: str) -> str:
+        return safe_relative_path(value, field_name="campaign.report_path")
+
+
+class MemoryReviewEvidenceBoundary(StrictModel):
+    policy: Literal["agent-visible-public-evidence-v1"]
+    allowed_sources: list[str] = Field(min_length=1)
+    prohibited_sources_not_read: list[str] = Field(min_length=1)
+    generic_outcome_only: bool
+
+    @field_validator("allowed_sources", "prohibited_sources_not_read")
+    @classmethod
+    def validate_sources(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)) or any(not item.strip() for item in value):
+            raise ValueError("evidence source lists must contain unique non-blank values")
+        return value
+
+
+class MemoryReviewSource(StrictModel):
+    failure_id: str = Field(min_length=1)
+    run_id: str = Field(min_length=1)
+    task_id: str = Field(min_length=1)
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    qualification_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    source_evidence_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    submitted_patch_path: str
+    submitted_patch_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    semantic_group_id: str = Field(min_length=1)
+    evidence_event_sequences: list[int] = Field(min_length=1)
+    assessment: str = Field(min_length=1)
+    causal_confidence: float = Field(ge=0, le=1)
+    disposition: Literal["candidate", "hold"]
+
+    @field_validator("submitted_patch_path")
+    @classmethod
+    def validate_submitted_patch_path(cls, value: str) -> str:
+        return safe_relative_path(value, field_name="source.submitted_patch_path")
+
+    @field_validator("evidence_event_sequences")
+    @classmethod
+    def validate_evidence_sequences(cls, value: list[int]) -> list[int]:
+        if any(sequence < 1 for sequence in value):
+            raise ValueError("evidence event sequences must be positive")
+        if value != sorted(set(value)):
+            raise ValueError("evidence event sequences must be sorted and unique")
+        return value
+
+
+class MemoryReviewRule(StrictModel):
+    failure_pattern: FailurePattern
+    preconditions: list[str] = Field(min_length=1)
+    diagnostic_evidence: list[str] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(min_length=1)
+    do_not_apply_when: list[str] = Field(min_length=1)
+    applicable_languages: list[Literal["python"]] = Field(default_factory=lambda: ["python"])
+    confidence: float = Field(ge=0, le=1)
+
+
+class MemoryReviewGroup(StrictModel):
+    semantic_group_id: str = Field(min_length=1)
+    representative_run_id: str = Field(min_length=1)
+    member_failure_ids: list[str] = Field(min_length=1)
+    member_run_ids: list[str] = Field(min_length=1)
+    relation: Literal["single", "semantic-duplicate"]
+    merge_rationale: str = Field(min_length=1)
+    dedup_confidence: float = Field(ge=0, le=1)
+    disposition: Literal["candidate", "hold"]
+    rule: MemoryReviewRule
+
+    @model_validator(mode="after")
+    def validate_members(self) -> MemoryReviewGroup:
+        if len(self.member_failure_ids) != len(set(self.member_failure_ids)):
+            raise ValueError("group member_failure_ids must be unique")
+        if len(self.member_run_ids) != len(set(self.member_run_ids)):
+            raise ValueError("group member_run_ids must be unique")
+        if len(self.member_failure_ids) != len(self.member_run_ids):
+            raise ValueError("group failure and run member counts must match")
+        expected_relation = (
+            "single" if len(self.member_run_ids) == 1 else "semantic-duplicate"
+        )
+        if self.relation != expected_relation:
+            raise ValueError("group relation does not match its member count")
+        if self.representative_run_id not in self.member_run_ids:
+            raise ValueError("group representative_run_id must be a member")
+        return self
+
+
+class MemoryReviewExcludedRun(StrictModel):
+    run_id: str = Field(min_length=1)
+    reason: str = Field(min_length=1)
+
+
+class MemoryReviewProducer(StrictModel):
+    kind: Literal["maintainer-assisted", "model-self-review"]
+    method: str = Field(min_length=1)
+    model_id: str | None = Field(default=None, min_length=1)
+    response_artifact_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+
+    @model_validator(mode="after")
+    def validate_model_provenance(self) -> MemoryReviewProducer:
+        model_fields_present = self.model_id is not None and self.response_artifact_hash is not None
+        if self.kind == "model-self-review" and not model_fields_present:
+            raise ValueError(
+                "model self-review requires model_id and response_artifact_hash"
+            )
+        if self.kind == "maintainer-assisted" and (
+            self.model_id is not None or self.response_artifact_hash is not None
+        ):
+            raise ValueError(
+                "maintainer-assisted review must not claim model response provenance"
+            )
+        return self
+
+
+class MemoryReviewProposal(StrictModel):
+    schema_version: Literal["memory-review-proposal-v1"] = "memory-review-proposal-v1"
+    proposal_id: str = Field(min_length=1)
+    producer: MemoryReviewProducer
+    campaign: MemoryReviewCampaign
+    evidence_boundary: MemoryReviewEvidenceBoundary
+    sources: list[MemoryReviewSource] = Field(min_length=1)
+    groups: list[MemoryReviewGroup] = Field(min_length=1)
+    excluded_runs: list[MemoryReviewExcludedRun] = Field(default_factory=list)
+    human_review_status: Literal["pending"]
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_unique_identities(self) -> MemoryReviewProposal:
+        identity_lists = {
+            "source failure IDs": [source.failure_id for source in self.sources],
+            "source run IDs": [source.run_id for source in self.sources],
+            "semantic group IDs": [group.semantic_group_id for group in self.groups],
+            "excluded run IDs": [item.run_id for item in self.excluded_runs],
+        }
+        for label, values in identity_lists.items():
+            if len(values) != len(set(values)):
+                raise ValueError(f"{label} must be unique")
+        source_runs = {source.run_id for source in self.sources}
+        excluded_runs = {item.run_id for item in self.excluded_runs}
+        if source_runs & excluded_runs:
+            raise ValueError("source and excluded run IDs must be disjoint")
+        return self
+
+
 class RetrievalCandidate(StrictModel):
     memory_id: str
     score: float

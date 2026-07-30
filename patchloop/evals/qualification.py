@@ -58,6 +58,15 @@ _GPT54_MINI_CAMPAIGN_BUDGET = Budget(
     max_model_calls=21,
     max_total_tokens=250_000,
 )
+_GPT54_MINI_COMPLETION_BUDGET = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=600_000,
+    wall_clock_timeout_seconds=1_800,
+)
+_SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
+    {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
+)
 _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-campaign-20260730-r1"}
 )
@@ -370,12 +379,35 @@ def _execution_plan_matches(
             ExperimentSuite,
             _diagnostic_fault,
             _execution_hash,
+            _make_schedule,
             _suite_hash,
             _suite_payload,
         )
 
         parsed_suite = ExperimentSuite.model_validate(suite)
         normalized_suite = _suite_payload(parsed_suite)
+        completion_plan_matches = True
+        if (
+            parsed_suite.purpose
+            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            and parsed_suite.budget == _GPT54_MINI_COMPLETION_BUDGET
+        ):
+            if (
+                len(tasks) != len(parsed_suite.tasks)
+                or any(not isinstance(task, dict) for task in tasks)
+                or [task.get("task") for task in tasks] != parsed_suite.tasks
+                or len({task.get("task_id") for task in tasks}) != len(tasks)
+            ):
+                return False
+            expected_schedule, expected_schedule_hash = _make_schedule(
+                parsed_suite,
+                tasks,
+            )
+            completion_plan_matches = bool(
+                canonical_json(schedule) == canonical_json(expected_schedule)
+                and schedule_hash == expected_schedule_hash
+                and plan.get("expected_runs") == len(expected_schedule)
+            )
         expected_execution_hash = _execution_hash(
             parsed_suite,
             dataset=dataset,
@@ -386,7 +418,7 @@ def _execution_plan_matches(
             openai_sdk=environment["openai_sdk"],
             pilot_qualification=pilot_qualification,
         )
-    except (ImportError, TypeError, ValueError):
+    except (ImportError, KeyError, TypeError, ValueError):
         return False
     suite_contract_matches = bool(
         canonical_json(suite) == canonical_json(normalized_suite)
@@ -413,6 +445,7 @@ def _execution_plan_matches(
         == experiment.dataset_manifest_hash
         and manifest.memory.condition in parsed_suite.conditions
         and _diagnostic_fault(parsed_suite) == manifest.fault
+        and completion_plan_matches
     )
     if not suite_contract_matches:
         return False
@@ -4070,10 +4103,25 @@ def qualify_run(
                 == _GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET
             )
             or (
-                manifest.experiment.experiment_id
+                manifest.experiment.purpose
+                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                and manifest.experiment.experiment_id
                 not in (
                     _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
                     | _HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS
+                    | _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS
+                )
+                and manifest.budget == _GPT54_MINI_COMPLETION_BUDGET
+            )
+            or (
+                (
+                    manifest.experiment.purpose
+                    in {
+                        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                        ExperimentPurpose.CORE,
+                    }
+                    or manifest.experiment.experiment_id
+                    in _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS
                 )
                 and manifest.budget == _GPT54_MINI_CAMPAIGN_BUDGET
             )

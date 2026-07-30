@@ -76,6 +76,6 @@ baseline are counted above.
 
 The content-addressed case ledger is
 `reports/docker-gate/research-babel-strict-grouped-decimal-trailing-zeroes.json`.
-The task may be used only for rendering, no-match, and leak validation. Its
-runs are prohibited from memory-entry generation and the held-out core
-denominator.
+The task may be used for development-validation runtime/completion pilots and
+for rendering, no-match, and leak validation. Its runs are prohibited from
+memory-entry generation and the held-out core denominator.

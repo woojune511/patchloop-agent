@@ -1,0 +1,247 @@
+{
+  "schema_version": "memory-review-proposal-v1",
+  "proposal_id": "proposal_dev_no_memory_v4_20260730_r1",
+  "producer": {
+    "kind": "maintainer-assisted",
+    "method": "codex-public-trace-review-v1",
+    "model_id": null,
+    "response_artifact_hash": null
+  },
+  "campaign": {
+    "report_path": "reports/memory-development/dev-no-memory-v4-20260730-r1.json",
+    "report_sha256": "sha256:916c294faf1fa20ce6c1b8e04f0190e629c3601a29800951980f94aca154183f",
+    "experiment_id": "dev-no-memory-v4-20260730-r1",
+    "execution_hash": "sha256:9befd0bf8b2eb7dbc25999786713581b4b6c95f2ad45df56e2f098a9252e5bac",
+    "suite_hash": "sha256:569666de18ec5a30021ad77896ff238f1e5e7fe81f4475a469cd2e6ba243acfc",
+    "dataset_manifest_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786"
+  },
+  "evidence_boundary": {
+    "policy": "agent-visible-public-evidence-v1",
+    "allowed_sources": [
+      "public task specification",
+      "agent-visible ordered run events",
+      "agent-visible source artifacts",
+      "submitted task-failure diffs",
+      "registered visible-check summaries",
+      "generic official task-failure outcome"
+    ],
+    "prohibited_sources_not_read": [
+      "private task specification",
+      "non-public test source and assertions",
+      "solution patch",
+      "evaluator-only evidence payload",
+      "raw provider request or response payload"
+    ],
+    "generic_outcome_only": true
+  },
+  "sources": [
+    {
+      "failure_id": "fail_54ddbf6d95fd5cde960833ae415c71b4",
+      "run_id": "run_0794d94df2f24d87",
+      "task_id": "loguru-invalid-format-feedback",
+      "public_spec_hash": "sha256:4839d8e5e1e57efa2a33a458ab0fe839d5ef4200bbe53b0f56683d8b8b98e7ea",
+      "qualification_hash": "sha256:550a90e2d018732b31dc9ed93a51e16a4e94ec95ae94809f04f79fbe5ecf9a7f",
+      "source_evidence_hash": "sha256:e1402b46bfc17b95be10192c01993f22e6549d10e2e5c517197e5f73525e0739",
+      "submitted_patch_path": "reports/memory-development/artifacts/run_0794d94df2f24d87-submitted.patch",
+      "submitted_patch_sha256": "sha256:cf04fef2b3e34227b57ee0e68c35cf2310aa46aa3067cf8d1ea359a56551e9d9",
+      "semantic_group_id": "diagnostic-contract-unresolved",
+      "evidence_event_sequences": [
+        6,
+        11,
+        16,
+        19,
+        26,
+        30,
+        33,
+        38,
+        44,
+        47,
+        51
+      ],
+      "assessment": "The submitted change addressed the public diagnostic contract and all registered checks passed, but agent-visible evidence does not isolate the acceptance failure cause. A specific causal rule would overstate the available evidence, so this source remains on hold.",
+      "causal_confidence": 0.25,
+      "disposition": "hold"
+    },
+    {
+      "failure_id": "fail_39db9777cd135d85bbc7c92dcf1f0aa2",
+      "run_id": "run_dbb2a02f3d2748a6",
+      "task_id": "tox-cross-section-empty-substitution",
+      "public_spec_hash": "sha256:e371eddfbc9e8c73f7b47def95480496d7f88ddccb0348c00a12a9b78c496521",
+      "qualification_hash": "sha256:8d985d8f723e281282abe0c41ca9c282395a6c6c1eb49dce0490565ef099f1b0",
+      "source_evidence_hash": "sha256:9cd7fb9f0151c6777f8e0b6280166e31fec503a97d0e95dedf2548de12c30aa4",
+      "submitted_patch_path": "reports/memory-development/artifacts/run_dbb2a02f3d2748a6-submitted.patch",
+      "submitted_patch_sha256": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+      "semantic_group_id": "exception-origin-state-conflation",
+      "evidence_event_sequences": [
+        94,
+        96,
+        100,
+        103,
+        110,
+        116,
+        122,
+        125,
+        129
+      ],
+      "assessment": "The final patch handled source lookup and downstream value transformation inside one exception boundary. The public base flow assigns different fallback meaning to a lookup miss, so returning an empty result from the combined boundary collapses states that the public contract keeps distinct.",
+      "causal_confidence": 0.82,
+      "disposition": "candidate"
+    },
+    {
+      "failure_id": "fail_8f658b670e375ea9a707c3fd6469b004",
+      "run_id": "run_1773c7d0906f4eb1",
+      "task_id": "tox-cross-section-empty-substitution",
+      "public_spec_hash": "sha256:e371eddfbc9e8c73f7b47def95480496d7f88ddccb0348c00a12a9b78c496521",
+      "qualification_hash": "sha256:8fa192ac63906484edb6e85b06dc7a0bed4d997965624d138a7d77c2e649bb57",
+      "source_evidence_hash": "sha256:665b770c78d9596d3f87f54899a262a847e5dfd34ad859ae6a8afed3f07fda6c",
+      "submitted_patch_path": "reports/memory-development/artifacts/run_1773c7d0906f4eb1-submitted.patch",
+      "submitted_patch_sha256": "sha256:7f7b08fa35584b84d27c349d82c2c9726db15ab7392b47da4b57691ac3343935",
+      "semantic_group_id": "exception-origin-state-conflation",
+      "evidence_event_sequences": [
+        69,
+        72,
+        110,
+        113,
+        118,
+        124,
+        130,
+        133,
+        137
+      ],
+      "assessment": "This repetition preserved the same combined exception boundary while adding result normalization. The extra normalization did not restore the public distinction between a missing source and an existing value whose transformation produces no selected result.",
+      "causal_confidence": 0.82,
+      "disposition": "candidate"
+    }
+  ],
+  "groups": [
+    {
+      "semantic_group_id": "diagnostic-contract-unresolved",
+      "representative_run_id": "run_0794d94df2f24d87",
+      "member_failure_ids": [
+        "fail_54ddbf6d95fd5cde960833ae415c71b4"
+      ],
+      "member_run_ids": [
+        "run_0794d94df2f24d87"
+      ],
+      "relation": "single",
+      "merge_rationale": "This source has no public-evidence duplicate and its specific acceptance-failure cause remains unresolved.",
+      "dedup_confidence": 1.0,
+      "disposition": "hold",
+      "rule": {
+        "failure_pattern": {
+          "failure_class": "VERIFICATION_GAP",
+          "phase": "REVIEW",
+          "description": "A diagnostic behavior change passes broad registered checks while parts of the public exception-mode and message contract remain unverified."
+        },
+        "preconditions": [
+          "The task changes error diagnostics or exception propagation behavior.",
+          "Registered checks cover regressions but do not isolate every row of the public diagnostic contract."
+        ],
+        "diagnostic_evidence": [
+          "The submitted change implemented the requested diagnostic concepts and all registered checks passed.",
+          "Agent-visible evidence does not identify which unisolated contract row caused the acceptance failure."
+        ],
+        "recommended_actions": [
+          "Translate the public diagnostic contract into a matrix of exception mode, message content, custom-value source, and valid-format behavior before submission.",
+          "Use registered checks to exercise each matrix row when possible and explicitly record any row that remains unverified.",
+          "Do not infer a specific failure cause from a generic acceptance outcome."
+        ],
+        "do_not_apply_when": [
+          "Registered checks explicitly exercise every diagnostic-contract row.",
+          "The change does not alter error diagnostics or exception behavior."
+        ],
+        "applicable_languages": [
+          "python"
+        ],
+        "confidence": 0.25
+      }
+    },
+    {
+      "semantic_group_id": "exception-origin-state-conflation",
+      "representative_run_id": "run_dbb2a02f3d2748a6",
+      "member_failure_ids": [
+        "fail_39db9777cd135d85bbc7c92dcf1f0aa2",
+        "fail_8f658b670e375ea9a707c3fd6469b004"
+      ],
+      "member_run_ids": [
+        "run_dbb2a02f3d2748a6",
+        "run_1773c7d0906f4eb1"
+      ],
+      "relation": "semantic-duplicate",
+      "merge_rationale": "Both repetitions use one exception boundary for source lookup and value transformation, then map either failure origin to the same empty result. Their extra normalization differs, but the state conflation and required corrective action are the same.",
+      "dedup_confidence": 0.99,
+      "disposition": "candidate",
+      "rule": {
+        "failure_pattern": {
+          "failure_class": "SEMANTIC_STATE_CONFLATION",
+          "phase": "IMPLEMENT",
+          "description": "A broad exception boundary merges a missing lookup with an empty transformation result and bypasses existing fallback or default behavior."
+        },
+        "preconditions": [
+          "Lookup and downstream transformation can raise the same exception type.",
+          "Outer control flow uses a lookup miss to continue to a fallback source or explicit default.",
+          "The public contract distinguishes missing input from existing input that transforms to an empty result."
+        ],
+        "diagnostic_evidence": [
+          "Both submitted patches placed source lookup and downstream transformation under one handler for the same exception type.",
+          "The public base flow assigns fallback or default behavior to the lookup-missing path.",
+          "Both repetitions passed the registered visible check while preserving the same state collapse."
+        ],
+        "recommended_actions": [
+          "Separate lookup and transformation into distinct operation boundaries before handling stage-specific failures.",
+          "Review a behavior matrix covering missing input, existing empty input, matching input, explicit default, caller context, and fallback source.",
+          "Audit early returns inside nested resolution logic against the surrounding fallback and default control flow."
+        ],
+        "do_not_apply_when": [
+          "The exception can only originate from the intended transformation stage.",
+          "The public contract explicitly gives missing input and empty transformed input identical meaning.",
+          "No fallback or default source exists outside the local operation."
+        ],
+        "applicable_languages": [
+          "python"
+        ],
+        "confidence": 0.82
+      }
+    }
+  ],
+  "excluded_runs": [
+    {
+      "run_id": "run_6fdfe4dba06b4164",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_5827e166cc2c43cb",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_f0b2815a56814d0f",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_4f929463759649bc",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_fa82e12ae8de4a26",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_680a5fd9b2d642c7",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_816042ace4354e12",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_a888d519d0184650",
+      "reason": "exact_request_budget_exceeded"
+    },
+    {
+      "run_id": "run_867a4dac39724135",
+      "reason": "exact_request_budget_exceeded"
+    }
+  ],
+  "human_review_status": "pending",
+  "content_hash": "sha256:6ed23cc6056b910c1a781d77bf0d8fa297ec3f948cc54cfaf176539e83f8d7e7"
+}

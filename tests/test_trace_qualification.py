@@ -41,6 +41,7 @@ from patchloop.evals.runner import (
     MEMORY_DEVELOPMENT_TASKS,
     ExperimentSuite,
     _execution_hash,
+    _make_schedule,
     _suite_payload,
 )
 from patchloop.evals.runner import (
@@ -54,6 +55,7 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_text, utc_now
 
 MEMORY_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 PILOT_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
+MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
 V2_TASK = Path("tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities")
 HASH = "sha256:" + ("a" * 64)
 PATCH_TEXT = (
@@ -128,10 +130,23 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
             max_output_tokens = 4096
             diagnostic = None
     elif purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
-        tasks = [PILOT_TASK_PATH]
+        completion_budget = Budget(
+            max_model_calls=40,
+            max_tool_calls=100,
+            max_total_tokens=600_000,
+            wall_clock_timeout_seconds=1_800,
+        )
+        tasks = (
+            [
+                PILOT_TASK_PATH,
+                "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+            ]
+            if manifest.budget == completion_budget
+            else [PILOT_TASK_PATH]
+        )
         conditions = ["no_memory"]
         repetitions = 1
-        cost_limit = 2
+        cost_limit = 6 if manifest.budget == completion_budget else 2
         embedding_revision = "PIN_AT_FREEZE"
         model_id = manifest.model.model_id
         budget = manifest.budget
@@ -204,6 +219,8 @@ def _write_execution_plan(
     manifest,
     dataset_hash: str,
     suite_overrides: dict[str, object] | None = None,
+    omit_non_current_task: bool = False,
+    omit_non_current_schedule: bool = False,
 ) -> Path:
     assert manifest.experiment is not None
     experiment = manifest.experiment
@@ -213,31 +230,92 @@ def _write_execution_plan(
         suite_payload.update(suite_overrides)
     experiment.suite_hash = sha256_text(canonical_json(suite_payload))
     dataset = {"manifest_hash": dataset_hash}
-    tasks = [
-        {
-            "task_id": manifest.task_id,
-            "task_version": manifest.task_version,
-            "public_spec_hash": manifest.public_spec_hash,
-            "private_spec_hash": manifest.private_spec_hash,
-            "base_commit": manifest.base_commit,
-            "evaluator_image_digest": manifest.evaluator_image_digest,
-        }
-    ]
-    schedule = [
-        {
-            "order": experiment.schedule_order,
-            "schedule_row_id": experiment.schedule_row_id,
-            "task_id": manifest.task_id,
-            "dataset_role": (
-                experiment.dataset_role.value
-                if experiment.dataset_role is not None
-                else None
-            ),
-            "condition": manifest.memory.condition.value,
-            "repetition": experiment.repetition,
-        }
-    ]
-    schedule_hash = sha256_text(canonical_json(schedule))
+    completion_budget = Budget(
+        max_model_calls=40,
+        max_tool_calls=100,
+        max_total_tokens=600_000,
+        wall_clock_timeout_seconds=1_800,
+    )
+    if (
+        suite.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and suite.budget == completion_budget
+    ):
+        tasks = []
+        for task_value in suite.tasks:
+            task_path = Path(task_value)
+            package = load_task_package(
+                task_path.parent if task_path.is_file() else task_path
+            )
+            tasks.append(
+                {
+                    "task": task_value,
+                    "task_id": package.public.task_id,
+                    "task_version": package.public.task_version,
+                    "split": package.public.split,
+                    "dataset_role": DatasetRole.DEVELOPMENT_VALIDATION.value,
+                    "canonical_task_path": task_path.parent.as_posix(),
+                    "public_spec_hash": package.public_spec_hash,
+                    "private_spec_hash": package.private_spec_hash,
+                    "base_commit": package.public.repository.base_commit,
+                    "evaluator_image": (
+                        package.environment.evaluator_image
+                        if package.environment is not None
+                        else None
+                    ),
+                    "evaluator_image_digest": (
+                        package.environment.image_digest
+                        if package.environment is not None
+                        else None
+                    ),
+                }
+            )
+        schedule, schedule_hash = _make_schedule(suite, tasks)
+        if omit_non_current_task:
+            tasks = [
+                task for task in tasks if task["task_id"] == manifest.task_id
+            ]
+            schedule, schedule_hash = _make_schedule(suite, tasks)
+        elif omit_non_current_schedule:
+            schedule = [
+                row for row in schedule if row["task_id"] == manifest.task_id
+            ]
+            schedule_hash = sha256_text(canonical_json(schedule))
+        manifest_rows = [
+            row
+            for row in schedule
+            if row["task_id"] == manifest.task_id
+            and row["condition"] == manifest.memory.condition.value
+            and row["repetition"] == experiment.repetition
+        ]
+        assert len(manifest_rows) == 1
+        experiment.schedule_order = manifest_rows[0]["order"]
+        experiment.schedule_row_id = manifest_rows[0]["schedule_row_id"]
+    else:
+        tasks = [
+            {
+                "task_id": manifest.task_id,
+                "task_version": manifest.task_version,
+                "public_spec_hash": manifest.public_spec_hash,
+                "private_spec_hash": manifest.private_spec_hash,
+                "base_commit": manifest.base_commit,
+                "evaluator_image_digest": manifest.evaluator_image_digest,
+            }
+        ]
+        schedule = [
+            {
+                "order": experiment.schedule_order,
+                "schedule_row_id": experiment.schedule_row_id,
+                "task_id": manifest.task_id,
+                "dataset_role": (
+                    experiment.dataset_role.value
+                    if experiment.dataset_role is not None
+                    else None
+                ),
+                "condition": manifest.memory.condition.value,
+                "repetition": experiment.repetition,
+            }
+        ]
+        schedule_hash = sha256_text(canonical_json(schedule))
     environment = {
         "git": {"commit": manifest.harness_git_commit},
         "docker": {"images": []},
@@ -350,7 +428,10 @@ def _terminal_trace(
     controlled_rejection_interleaved: bool = False,
     controlled_rejection_details_overrides: dict[str, object] | None = None,
     execution_plan_suite_overrides: dict[str, object] | None = None,
+    execution_plan_omit_non_current_task: bool = False,
+    execution_plan_omit_non_current_schedule: bool = False,
     counter_generation_block_reason: str | None = None,
+    experiment_id: str | None = None,
 ) -> tuple[str, RunResult, str]:
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
@@ -408,7 +489,15 @@ def _terminal_trace(
         # contract. v3 is opted into explicitly by the retry-context cases.
         manifest.context_policy_version = "phase-evidence-v2"
     manifest.experiment = ExperimentRunContext(
-        experiment_id="qualification-test",
+        experiment_id=(
+            experiment_id
+            or (
+                "dev-validation-gpt54mini-token-tail-v5-20260730-r1"
+                if purpose
+                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                else "qualification-test"
+            )
+        ),
         purpose=purpose,
         suite_hash=HASH,
         execution_hash=HASH,
@@ -425,6 +514,8 @@ def _terminal_trace(
             manifest=manifest,
             dataset_hash=dataset_hash,
             suite_overrides=execution_plan_suite_overrides,
+            omit_non_current_task=execution_plan_omit_non_current_task,
+            omit_non_current_schedule=execution_plan_omit_non_current_schedule,
         )
     state = StateStore(tmp_path / "state.sqlite3")
     state.create_run(manifest)
@@ -2728,6 +2819,89 @@ def test_resolved_live_pilot_is_qualified_but_not_memory_eligible(tmp_path) -> N
     assert qualification["dataset_role"] == "development-validation"
     assert qualification["outcome_kind"] == "resolved"
     assert qualification["memory_candidate_eligible"] is False
+
+
+@pytest.mark.parametrize(
+    "task_dir",
+    [PILOT_TASK, MOTO_TASK],
+    ids=["babel", "moto"],
+)
+def test_high_budget_completion_pilot_model_contract_qualifies(
+    tmp_path,
+    task_dir: Path,
+) -> None:
+    completion_budget = Budget(
+        max_model_calls=40,
+        max_tool_calls=100,
+        max_total_tokens=600_000,
+        wall_clock_timeout_seconds=1_800,
+    )
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=task_dir,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        budget=completion_budget,
+        experiment_id=(
+            "dev-validation-gpt54mini-completion-v6-20260731-r1"
+        ),
+    )
+
+    qualification = qualify_run(run_id, task_dir=task_dir, root=tmp_path)
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+
+    assert qualification["qualified"] is True, [
+        check for check in qualification["checks"] if not check["passed"]
+    ]
+    assert checks["frozen_model_contract"]["passed"] is True
+    assert checks["frozen_model_contract"]["details"][
+        "max_total_tokens"
+    ] == 600_000
+    assert qualification["memory_candidate_eligible"] is False
+
+
+@pytest.mark.parametrize(
+    ("omit_non_current_task", "omit_non_current_schedule"),
+    [(True, False), (False, True)],
+    ids=["missing-moto-task-and-schedule", "missing-moto-schedule"],
+)
+def test_high_budget_completion_plan_requires_full_two_task_coverage(
+    tmp_path: Path,
+    omit_non_current_task: bool,
+    omit_non_current_schedule: bool,
+) -> None:
+    completion_budget = Budget(
+        max_model_calls=40,
+        max_tool_calls=100,
+        max_total_tokens=600_000,
+        wall_clock_timeout_seconds=1_800,
+    )
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=True,
+        prompt_telemetry=True,
+        budget=completion_budget,
+        experiment_id="dev-validation-gpt54mini-completion-v6-20260731-r1",
+        execution_plan_omit_non_current_task=omit_non_current_task,
+        execution_plan_omit_non_current_schedule=omit_non_current_schedule,
+    )
+
+    qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
+    plan_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+
+    assert plan_check["passed"] is False
+    assert qualification["qualified"] is False
 
 
 def test_primary_mini_live_pilot_requires_prompt_token_telemetry(tmp_path) -> None:

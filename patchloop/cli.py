@@ -341,6 +341,19 @@ def memory_review(
     _guarded(lambda: review_failure(failure_id, split=split, approve=approve, reviewer=reviewer))
 
 
+@memory_app.command("validate-review")
+def memory_validate_review(
+    proposal_path: Annotated[
+        Path,
+        typer.Argument(exists=True, file_okay=True, dir_okay=False, readable=True),
+    ],
+) -> None:
+    """Validate a structured review proposal without approving or indexing it."""
+    from patchloop.memory.review import validate_review_proposal
+
+    _guarded(lambda: validate_review_proposal(proposal_path))
+
+
 @memory_app.command("freeze")
 def memory_freeze(
     index_id: Annotated[str, typer.Option("--index")],
