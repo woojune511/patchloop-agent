@@ -11,3 +11,6 @@
 *.css text eol=lf
 *.txt text eol=lf
 Makefile text eol=lf
+
+# Preserve the exact evaluator-submitted bytes, including agent-authored blank-line spaces.
+reports/memory-development/artifacts/run_0794d94df2f24d87-submitted.patch -whitespace

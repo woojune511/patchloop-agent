@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-048 v4 pilot complete; fresh 12-run no-memory campaign preflight**
+현재 milestone: **D-051 v4 campaign terminal; token-aware tail and structured review**
 
 2026-07-30 구현 스냅샷:
 
@@ -11,8 +11,8 @@
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
 | Phase 3 state machine | tool v2/context v4/D-048 investigation hardening offline-complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, tail admission과 request-by-request qualification 재계산 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
-| Phase 5 memory | qualification/review path implemented, reviewed index pending | Memory-development 6/6, development-validation 2/2; 첫 12-run failure trace는 v4 이전 diagnostic으로만 보존 |
-| Phase 6 evaluation | primary r2와 v4 pilot accepted; first 12-run diagnostic complete | V4 pilot official/qualification 25/25 pass; 새 v4 baseline campaign은 preflight 전 |
+| Phase 5 memory | qualification/review path implemented, reviewed index pending | V4 campaign의 task failure 3개를 두 semantic group으로 provisional 분류; budget-confounded 9개와 index freeze는 보류 |
+| Phase 6 evaluation | 두 12-run diagnostic complete; valid baseline pending | V4 campaign 12/12 terminal·qualified, evaluator 3/12, SCRR 0/12; token-tail confound 때문에 baseline 부적격 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -28,9 +28,9 @@ contract 구조만으로 stress sentinel에 선정됐고 30-run schedule과 함�
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
 smoke, 스무 research admission과 dataset freeze는 2026-07-28까지 통과했다. 동결된
-stress schedule은 아직 실행되지 않았다. 첫 Live OpenAI 12-run development campaign은
-diagnostic으로 완료됐지만 usable no-memory baseline인 새 v4 campaign과 96-run core
-campaign은 완료되지 않았으며 `docs/08-limitations.md`에서 별도로 추적한다.
+stress schedule은 아직 실행되지 않았다. 두 Live OpenAI 12-run development campaign은
+diagnostic으로 완료됐지만 usable no-memory baseline과 96-run core campaign은 완료되지
+않았으며 `docs/08-limitations.md`에서 별도로 추적한다.
 
 ## 1. Sequencing rule
 
@@ -74,8 +74,11 @@ corrective primary r2 `run_afd5080a77a34995`의 official evaluator와 qualificat
 확인된 repeated search/read와 investigation-state loss를 condition-neutral하게 닫는다.
 새 development-validation v4 pilot `run_d7207fbb06184dd3`은 official evaluator와
 `investigation_evidence`·`investigation_lifecycle`을 포함한 qualification 25/25를
-통과했다. 다음은 이 pilot에 결속된 새 ID의 12-run v4 campaign을 clean commit에서
-no-call preflight하고, 별도 execution hash와 최대 $20 승인을 받는 것이다.
+통과했다. 이 pilot에 결속된 `dev-no-memory-v4-20260730-r1`도 exact pilot commit의
+detached worktree에서 별도 승인 hash로 정확히 한 번 실행됐다. 12/12 terminal·qualified,
+evaluator 3/12지만 SCRR은 0/12다. 아홉 run의 strict exact-request budget exhaustion 때문에
+usable no-memory baseline은 아직 없다. 다음은 paid 재실행이 아니라 token-aware corrective
+tail의 offline 계약과 세 task failure의 structured review/deduplication이다.
 
 동결 evidence:
 
@@ -126,8 +129,8 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 10 | completed; diagnostic only | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12/12 qualified agent failure, evaluator 0/12; baseline·memory index source로 자동 채택하지 않음 |
 | 10a | completed (offline) | D-048 durable investigation ledger, semantic replay와 corrective-tail admission | v1-v3 compatibility, CAS tamper fail-closed, recovery·qualifier 재계산과 full regression 607 passed/3 skipped |
 | 10b | completed; immutable | 새 v4 development-validation pilot 1회, $2 cap | `run_d7207fbb06184dd3`: official evaluator, qualification 25/25, investigation evidence/lifecycle pass |
-| 10c | pending clean hash and explicit approval | 새 ID의 memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows, evaluator-reach floor와 usable baseline 판정 |
-| 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
+| 10c | completed; diagnostic only | 새 ID의 memory-development 6 task × 2회, `no_memory`, $20 cap | 12/12 terminal·qualified, evaluator 3/12, SCRR 0/12; 9 budget-confounded agent failure + 3 hidden task failure |
+| 11 | pending runtime decision and structured review | Token-aware tail offline gate, append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 hidden leakage 없이 두 semantic group으로 review/deduplicate |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.
@@ -229,8 +232,8 @@ evaluator의 patch success는 원 run outcome을 바꾸지 않는다. Order 9a�
 통과해 future primary/development/core의 총 model-call 상한은 21회로 동결됐다. 이는
 `finish_task` 전용 reserve가 아니며 모든 memory 조건에 동일하다. Order 9b r2는 한 번
 실행돼 accepted pilot이 됐고, Order 10의 첫 12-run은 investigation-loop diagnostic으로
-보존한다. Order 10b의 새 v4 pilot도 accepted됐으며 다음 live gate는 Order 10c의 별도
-12-run v4 no-memory campaign이다.
+보존한다. Order 10b의 새 v4 pilot도 accepted됐으며 Order 10c의 별도 12-run v4 campaign은
+terminal diagnostic으로 완료됐다. Runtime policy를 바꾸기 전에는 새 paid gate를 열지 않는다.
 
 Memory-development와 core live suite는 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode
 `standard`, service tier `default`, 25,000 max output token, 21 model call과 200,000
@@ -294,7 +297,7 @@ stateless retry continuity는 보장되지 않았다. 이후 제출된 별도 ca
 계약만으로 확인 가능한 grouping/separator 제거 결함이 있었다. Trace는 body 누락이 hidden
 failure를 일으켰다거나 첫 candidate가 통과했을 것이라는 반사실을 증명하지 않는다.
 Provider prompt cut은 관찰되지 않았고, 별도로 PatchLoop context-selection gap은 남는다.
-Terminal r1/r2 suite와 run은 재사용하지 않는다. 다음 paid 실행 전에 rejected mutation
+Terminal r1/r2 suite와 run은 재사용하지 않는다. 당시 다음 paid 실행 전에 rejected mutation
 candidate의 bounded/hash-bound body와 rejection reason을 다음 turn에 함께 제공하고 이를
 offline qualification과 suite-specific machine gate로 고정한다. 이후 새 experiment ID,
 clean hash와 별도 사용자 승인을 받아 mini diagnostic을 다시 실행한다. Mini 결과는
@@ -333,7 +336,7 @@ runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더�
 margin이다. D-045 primary contract의 run reserve는 25,000/200,000에서 `$1.0125`,
 12-run은 `$12.15`, 96-run은 `$97.20`이다.
 
-### Historical evidence preserved; D-048 v4 pilot complete; campaign preflight pending
+### Historical evidence preserved; D-051 v4 campaign terminal; review gate pending
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
@@ -347,8 +350,20 @@ margin이다. D-045 primary contract의 run reserve는 25,000/200,000에서 `$1.
   retry 1/1도 관찰됐지만 semantic replay와 tail admission block은 각각 0회였다.
   이 run ID만 새 campaign의 `pilot_run_id`로 사용한다. Pilot task success는 12-run
   baseline이나 memory 효과와 별도 outcome으로 보고한다.
-- 새 12-run v4 campaign은 새 clean commit의 no-call preflight, exact execution hash 검토와
-  별도 $20 승인 전에는 시작하지 않는다.
+- 새 12-run v4 campaign은 exact pilot commit의 clean detached worktree와 별도 $20 승인으로
+  정확히 한 번 실행됐다. Execution hash
+  `sha256:9befd0bf8b2eb7dbc25999786713581b4b6c95f2ad45df56e2f098a9252e5bac`는
+  소비됐고 재사용하지 않는다.
+- Campaign은 infrastructure/qualification/diagnostic error 없이 12/12 terminal이었다.
+  144/144 executed request의 input count가 provider usage와 일치했고 semantic replay 26회를
+  관찰했지만 tail admission block은 0회였다.
+- SCRR 0/12, evaluator 3/12다. 아홉 exact-request budget failure는 memory rule과 baseline에서
+  제외하고, hidden acceptance에 실패한 세 task failure만 두 semantic group으로 provisional
+  review한다. Human review와 deduplication 전에는 index를 build/freeze하지 않는다.
+- 다음 runtime work item은 25,000 per-call ceiling과 exact accounting을 유지하면서 context
+  growth 전에 patch/check/review path를 확보하는 token-aware corrective-tail 정책을 offline에서
+  설계·검증하는 것이다. Runtime 변경 뒤 live validation은 새 pilot, suite, hash와 승인을
+  요구한다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
 
 2026-07-28 첫 paid pilot `run_c6f13dd9a1a1472d`는 ready preflight 뒤 `$0.34025875`를

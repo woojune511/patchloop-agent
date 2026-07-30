@@ -12,7 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `phase-evidence-v4 memory-development no-memory campaign preflight`다.
+- 현재 milestone은 `D-051 v4 no-memory campaign terminal audit; token-aware tail and
+  structured memory review`다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -105,9 +106,20 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   25/25를 통과했다. 10/10 exact input telemetry, 자연 rejected-patch retry 1/1,
   81,719 input + 5,952 output token과 계산상 `$0.08807325`를 기록했다. 이 run은 v4
   ledger/context 재구성을 live로 검증했지만 semantic replay와 tail admission block은
-  각각 0회라 해당 branch의 근거는 offline test다. 다음 paid gate는 이 pilot에 결속된
-  새 12-run v4 no-memory campaign이며, clean no-call preflight의 새 execution hash와
-  별도 최대 $20 승인이 필요하다. 96-run core campaign은 아직 실행하지 않는다.
+  각각 0회라 해당 branch의 근거는 offline test다. 이 pilot에 결속된
+  `dev-no-memory-v4-20260730-r1`은 exact pilot commit의 clean detached worktree에서
+  execution hash
+  `sha256:9befd0bf8b2eb7dbc25999786713581b4b6c95f2ad45df56e2f098a9252e5bac`로
+  정확히 한 번 실행됐다. 12/12 terminal, infrastructure/qualification/diagnostic error
+  0이지만 SCRR은 0/12다. 아홉 run은 exact next input과 full 25,000-token response
+  allowance를 남은 total budget에 함께 예약하지 못해 evaluator 전에 agent failure가 됐고,
+  세 run은 제출 뒤 regression/scope/safety를 통과했지만 hidden acceptance에 실패했다.
+  144/144 executed request의 exact input count가 provider usage와 일치했고 semantic replay는
+  26회였지만 tail admission block은 0회였다. 계산상 campaign 비용은 `$1.84756425`,
+  전체 누적은 `$4.981546875`다. 이 campaign은 immutable diagnostic evidence이며 usable
+  no-memory performance baseline이 아니고 재실행하지 않는다. 다음 gate는 paid run이 아니라
+  token-aware corrective-tail 정책의 offline 검증과 세 task failure의 leak-safe structured
+  review/deduplication이다. 96-run core campaign은 아직 실행하지 않는다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

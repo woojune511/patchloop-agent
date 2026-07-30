@@ -417,8 +417,9 @@ outcome은 후속 12-run baseline이나 memory 효과와 별도로 보고한다.
 기존 mini D-037 r3, r4, r5와 r6 suite는 terminal inspection 전용이다. Journal이나 result를
 삭제하거나 approval flag를 다시 전달하지 않는다.
 
-Pilot suite와 승인 hash는 소비됐으며 재실행하지 않는다. 다음 명령은 아래의
-`dev-no-memory-v4.template.yaml` no-call preflight다.
+Pilot suite와 승인 hash는 소비됐으며 재실행하지 않는다. 그 pilot에 결속된
+`dev-no-memory-v4-20260730-r1` campaign도 별도 승인 hash로 정확히 한 번 실행되어 이제
+terminal inspection 전용이다.
 
 과거 Terra r3의 `experiments/dev-validation-pilot.template.yaml`은 evidence 해석을 위해
 원래 계약 그대로 남아 있으며 preflight가 `HISTORICAL_SUITE_IMMUTABLE`로 재실행을 차단한다.
@@ -429,41 +430,21 @@ D-048 offline gate는 durable investigation ledger, semantic replay, tail admiss
 request-by-request qualification 재계산을 추가한다. 별도 승인된 v4 pilot
 `run_d7207fbb06184dd3`은 official evaluator와 qualification 25/25를 통과했고 자연
 rejected-patch retry 1/1을 남겼다. 이 run에서 semantic replay와 tail admission block은
-각각 0회였으므로 해당 branch는 offline evidence로만 주장한다. 새 development suite는 이
-run ID를 `pilot_run_id`에 결속하지만, 다음 preflight 자체는 API generation을 호출하지 않는다.
+각각 0회였으므로 해당 branch는 offline evidence로만 주장한다. Campaign preflight의 exact
+pilot/current commit equality는 완화하지 않았다. 대신 clean detached worktree를 pilot commit
+`5045e398646ec73d615785aeb95f02e877c34c90`에 두고, host의 external `.patchloop`
+runtime root를 junction으로 공유하는 exact-commit bridge로 실행했다. 이 root에는 mutable
+SQLite와 workspaces도 포함되며 event/artifact evidence의 append-only 계약은 그대로
+유지했다. 실행 suite는 template에서
+`pilot_run_id: run_d7207fbb06184dd3`만 달랐고 실제 run manifest도 그 exact commit을
+기록한다.
 공개 가능한 경계는
-[v4 pilot evidence record](reports/live-pilot/dev-validation-gpt54mini-investigation-v4-20260730-r1.json)에
-고정했다.
-
-```powershell
-uv run patchloop evaluate `
-  --suite experiments/dev-no-memory-v4.template.yaml `
-  --preflight-only
-```
-
-출력의 `execution_hash`와 blocker를 검토한다. Preflight는 frozen dataset/role/hash,
-manifest가 지정한 canonical task package path와 public/private spec hash, base commit,
-digest-pinned evaluator environment와 observed Docker image identity, clean Git commit,
-OpenAI SDK, `OPENAI_API_KEY`의 존재 여부만, custom base URL 부재,
-`gpt-5.4-mini-2026-03-17` + medium reasoning + standard mode + default service tier,
-25,000/200,000 budget, 72시간 이내 공식 가격과 12개 run의 전체 budget reserve를 확인한다.
-Credential 값은 출력하거나 hash에 넣지
-않는다. 환경 blocker와 비용을 확인한 뒤 사용자가 별도로 최대 $20를 승인한 경우에만 같은
-hash를 invocation-only 승인으로 전달한다.
-
-```powershell
-uv run patchloop evaluate `
-  --suite experiments/dev-no-memory-v4.template.yaml `
-  --preflight-only `
-  --approve-live-cost `
-  --approved-execution-hash <sha256:...>
-
-# 위 preflight가 ready=true일 때만 별도로 실행한다.
-uv run patchloop evaluate `
-  --suite experiments/dev-no-memory-v4.template.yaml `
-  --approve-live-cost `
-  --approved-execution-hash <same-sha256:...>
-```
+[v4 pilot evidence record](reports/live-pilot/dev-validation-gpt54mini-investigation-v4-20260730-r1.json)과
+[v4 12-run campaign evidence record](reports/memory-development/dev-no-memory-v4-20260730-r1.json)에
+고정했다. Campaign execution hash
+`sha256:9befd0bf8b2eb7dbc25999786713581b4b6c95f2ad45df56e2f098a9252e5bac`는
+이미 소비됐으므로 template, ignored bound suite, journal 또는 result를 삭제해 재실행하지
+않는다.
 
 Checked-in `live_cost_approved`와 `approved_execution_hash` 값은 승인 권한이 아니며 compatibility
 필드일 뿐이다. 승인 두 flag는 해당 invocation과 exact execution hash에만 유효하다. Direct
@@ -495,10 +476,12 @@ official evaluator와 `trace-qualification-v2` 23/23을 통과했다. 이어진 
 `dev-no-memory-20260728` campaign도 12/12 terminal trace를 보존했지만 evaluator 도달
 0/12라 성능 baseline으로 사용하지 않는다. 새 tool-v2/context-v4 pilot
 `run_d7207fbb06184dd3`은 `investigation_evidence`와 `investigation_lifecycle`을 포함한
-qualification 25/25와 evaluator 도달을 통과했다. 그 run ID를 `dev-no-memory-v4` suite에
-결속한 뒤 별도 execution hash만 no-call preflight한다. 실패한 live
-attempt도 삭제하지 않고 run ID, input/cached/cache-write/output usage, 계산 비용, terminal
-outcome과 qualification을 보존한다.
+qualification 25/25와 evaluator 도달을 통과했다. 이어진 v4 campaign은 12/12 terminal,
+qualification 12/12와 evaluator 도달 3/12를 남겼지만 SCRR은 0/12다. 아홉 run은 strict
+exact-request budget reservation 때문에 evaluator 전에 종료됐고, 세 submitted patch는
+regression/scope/safety를 통과했지만 hidden acceptance에 실패했다. 따라서 이 결과도 usable
+no-memory performance baseline으로 쓰지 않는다. 실패한 live attempt는 삭제하지 않고 run ID,
+input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
 Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
 persisted result와 agent-visible content-addressed artifact inventory를 결속한다. v2는
 `SubmissionAccepted` 안의 nested submitted-patch CAS bytes도 직접 다시 hash한다. 필수
@@ -549,12 +532,14 @@ Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D
 exercise하지 못했다. Mini r5는 official task와 qualification을 통과했지만 rejection이
 없어 D-037 diagnostic은 inconclusive다. Mini r6는 deliberate controlled rejection으로
 harness retry branch와 evaluator 도달을 검증했지만 natural recovery rate는 측정하지 않는다.
-Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. Primary r2와 새 v4 pilot
+Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. Primary r2와 v4 pilot
 `run_d7207fbb06184dd3`까지 포함한 열두 paid pilot의 계산상 총액은 `$1.740790125`이고,
 첫 12-run development campaign의 계산 비용 `$1.3931925`를 더한 전체 list-price 합계는
-`$3.133982625`다. 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5, r6,
-primary r1/r2, v4 pilot과 `dev-no-memory-20260728`은 자동 재실행하지 않는다. 다음 paid
-gate는 별도 v4 12-run campaign이며 새 clean execution hash와 최대 $20 승인을 요구한다.
+`$3.133982625`였다. V4 12-run campaign은 `$1.84756425`를 추가해 현재 전체
+list-price 합계가 `$4.981546875`다. 실제 invoice/free daily usage 적용 여부는 확인하지
+않았다. R5, r6, primary r1/r2, v4 pilot, 두 12-run campaign과 모든 소비된 hash는 자동
+재실행하지 않는다. 다음 작업은 paid campaign이 아니라 token-aware corrective-tail의 offline
+계약과 세 task failure를 두 semantic rule group으로 검토·deduplicate하는 절차다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

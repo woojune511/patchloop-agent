@@ -2854,3 +2854,314 @@ def test_no_memory_campaign_evidence_has_no_private_or_provider_payload() -> Non
             token for token in private_tokens if token in checked_text
         )
         assert leaked == []
+
+
+def test_v4_no_memory_campaign_preserves_mixed_failure_boundary() -> None:
+    path = Path(
+        "reports/memory-development/dev-no-memory-v4-20260730-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "memory-development-campaign-evidence-v2"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:9befd0bf8b2eb7dbc25999786713581b4b6c95f2ad45df56e2f098a9252e5bac"
+    )
+    assert payload["harness_commit"] == (
+        "5045e398646ec73d615785aeb95f02e877c34c90"
+    )
+    assert payload["pilot_gate"]["run_id"] == "run_d7207fbb06184dd3"
+    assert payload["pilot_gate"]["qualified"] is True
+    assert payload["harness_execution"] == {
+        "strategy": "exact-pilot-commit-detached-worktree-v1",
+        "detached_worktree_clean": True,
+        "imported_source_from_detached_worktree": True,
+        "shared_host_runtime_root": True,
+        "append_only_evidence_preserved": True,
+        "suite_file_sha256": (
+            "sha256:301f4248c764bb556308732eb2274087462915b201d72601035fe5fddded2a83"
+        ),
+        "template_semantic_difference": "pilot_run_id binding only",
+    }
+
+    campaign = payload["campaign"]
+    assert campaign["expected_runs"] == campaign["completed_runs"] == 12
+    assert campaign["infrastructure_errors"] == 0
+    assert campaign["qualification_errors"] == 0
+    assert campaign["diagnostic_errors"] == 0
+    assert campaign["not_started_runs"] == 0
+    assert campaign["halt_reason"] is None
+    assert campaign["journal"]["event_count"] == 26
+    assert campaign["journal"]["hash_chain_valid"] is True
+    assert campaign["journal"]["result_exact_bytes_match"] is True
+
+    outcome = payload["aggregate_outcome"]
+    assert outcome["terminal_attempts"] == 12
+    assert outcome["resolved_runs"] == 0
+    assert outcome["agent_failure_runs"] == 9
+    assert outcome["task_failure_runs"] == 3
+    assert outcome["evaluation_reached_runs"] == 3
+    assert outcome["official_scope_compliant_successes"] == 0
+    assert outcome["hidden_failure_runs"] == 3
+    assert outcome["evaluated_regression_pass_runs"] == 3
+    assert outcome["evaluated_scope_pass_runs"] == 3
+    assert outcome["evaluated_safety_pass_runs"] == 3
+    assert outcome["trace_qualified_runs"] == 12
+    assert outcome["leakage_scan_passed_runs"] == 12
+    assert outcome["memory_candidate_eligible_runs"] == 12
+    assert outcome["exact_request_budget_exhaustions"] == 9
+
+    usage = payload["aggregate_usage"]
+    assert usage["input_tokens"] == 1_753_493
+    assert usage["output_tokens"] == 118_321
+    assert usage["total_tokens"] == (
+        usage["input_tokens"] + usage["output_tokens"]
+    )
+    assert usage["reasoning_output_tokens"] == 102_617
+    assert usage["model_calls"] == 144
+    assert usage["input_token_count_calls"] == 153
+    assert usage["tool_calls"] == 262
+    assert usage["model_cost_usd"] == pytest.approx(1.84756425)
+
+    trace = payload["aggregate_trace_activity"]
+    assert sum(trace["tool_breakdown"].values()) == usage["tool_calls"]
+    assert trace["event_count"] == 1_215
+    assert trace["checkpoint_count"] == 274
+    assert trace["patch_prepared_events"] == 6
+    assert trace["patch_applied_events"] == 5
+    assert trace["submission_accepted_events"] == 3
+    assert trace["evaluator_runs"] == 3
+
+    continuity = payload["investigation_continuity"]
+    assert continuity["qualified_runs"] == 12
+    assert continuity["semantic_replay_events"] == 26
+    assert continuity["runs_with_semantic_replay"] == 10
+    assert continuity["tail_admission_block_events"] == 0
+    assert continuity["tail_exploration_closed_contexts"] == 1
+    assert continuity["budget_blocks_before_tail_close"] == 8
+    assert continuity["budget_blocks_after_tail_close"] == 1
+    assert continuity["rejected_candidate_count"] == 11
+    assert continuity["verified_retry_count"] == 11
+    assert continuity["failed_retry_source_sequences"] == 0
+
+    telemetry = payload["prompt_token_integrity"]
+    assert telemetry["model_call_count"] == 144
+    assert telemetry["input_token_count_call_count"] == 153
+    assert telemetry["exact_input_count_matches"] == 144
+    assert telemetry["total_token_count_matches"] == 144
+    assert telemetry["completed_generation_count"] == 144
+    assert telemetry["incomplete_generation_count"] == 0
+    assert telemetry["model_generation_blocked_count"] == 9
+    assert telemetry["truncation_disabled_count"] == 144
+    assert telemetry["provider_prompt_cut_observed"] is False
+    assert telemetry["previous_response_id_used_count"] == 0
+    assert telemetry["store_true_count"] == 0
+
+    runs = payload["runs"]
+    assert len(runs) == 12
+    assert [run["order"] for run in runs] == list(range(1, 13))
+    assert len({run["run_id"] for run in runs}) == 12
+    assert len(
+        {
+            (run["task_id"], run["repetition"])
+            for run in runs
+        }
+    ) == 12
+    assert sum(
+        run["outcome_kind"] == "agent_failure"
+        for run in runs
+    ) == 9
+    assert sum(
+        run["outcome_kind"] == "task_failure"
+        for run in runs
+    ) == 3
+    assert sum(run["evaluation_reached"] for run in runs) == 3
+    assert all(run["qualified"] for run in runs)
+    assert all(run["memory_candidate_eligible"] for run in runs)
+    assert {run["review_status"] for run in runs} == {"unreviewed"}
+    assert sum(run["input_tokens"] for run in runs) == usage["input_tokens"]
+    assert sum(run["output_tokens"] for run in runs) == usage["output_tokens"]
+    assert sum(run["model_calls"] for run in runs) == usage["model_calls"]
+    assert sum(run["tool_calls"] for run in runs) == usage["tool_calls"]
+    assert sum(run["model_cost_usd"] for run in runs) == pytest.approx(
+        usage["model_cost_usd"]
+    )
+
+    claims = payload["claims_boundary"]
+    assert claims["campaign_execution_completed"] is True
+    assert claims["task_success_observed"] is False
+    assert claims["valid_no_memory_performance_baseline"] is False
+    assert claims["task_failure_candidates_provisionally_admissible"] is True
+    assert claims["budget_confounded_runs_admitted"] is False
+    assert claims["failure_rules_reviewed"] is False
+    assert claims["memory_index_built_from_this_campaign"] is False
+    assert claims["cross_run_memory_effect_measured"] is False
+
+
+def test_v4_no_memory_campaign_artifacts_are_hash_bound_when_available() -> None:
+    path = Path(
+        "reports/memory-development/dev-no-memory-v4-20260730-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert len(payload["portable_artifacts"]) == 3
+    for artifact in payload["portable_artifacts"]:
+        assert artifact["role"] == "submitted-task-failure-diff"
+        _assert_artifact_identity(artifact)
+
+    artifacts = payload["raw_local_artifacts"]
+    anchor = Path(artifacts[0]["path"])
+    if not anchor.is_file():
+        pytest.skip("raw local v4 campaign evidence is not bundled")
+
+    missing = [
+        artifact["path"]
+        for artifact in artifacts
+        if not Path(artifact["path"]).is_file()
+    ]
+    assert not missing
+    for artifact in artifacts:
+        _assert_artifact_identity(artifact)
+
+    journal_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["path"].endswith(
+            "/dev-no-memory-v4-20260730-r1.jsonl"
+        )
+    )
+    journal_rows = [
+        json.loads(line)
+        for line in Path(journal_artifact["path"])
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    previous_hash = None
+    for expected_sequence, journal_row in enumerate(
+        journal_rows,
+        start=1,
+    ):
+        recorded_hash = journal_row.pop("event_hash")
+        assert journal_row["sequence"] == expected_sequence
+        assert journal_row["previous_event_hash"] == previous_hash
+        assert sha256_text(canonical_json(journal_row)) == recorded_hash
+        previous_hash = recorded_hash
+    assert previous_hash == payload["campaign"]["journal"]["final_event_hash"]
+    assert journal_rows[-1]["payload"]["result_hash"] == sha256_bytes(
+        Path(artifacts[0]["path"]).read_bytes()
+    )
+
+    plan_artifact = next(
+        artifact
+        for artifact in artifacts
+        if "/experiments/plans/" in artifact["path"]
+    )
+    plan_payload = json.loads(
+        Path(plan_artifact["path"]).read_text(encoding="utf-8")
+    )
+    assert sha256_text(canonical_json(plan_payload)) == (
+        payload["campaign"]["execution_plan"]["canonical_content_hash"]
+    )
+    assert plan_payload["approval"]["invocation_approve_live_cost"] is True
+    assert plan_payload["approval"]["matches_execution_hash"] is True
+    assert plan_payload["ready"] is True
+
+    qualification_artifacts = {
+        Path(artifact["path"]).stem: artifact
+        for artifact in artifacts
+        if "/qualifications/" in artifact["path"]
+    }
+    assert len(qualification_artifacts) == 12
+    for run in payload["runs"]:
+        qualification = json.loads(
+            Path(
+                qualification_artifacts[run["run_id"]]["path"]
+            ).read_text(encoding="utf-8")
+        )
+        assert qualification["run_id"] == run["run_id"]
+        assert qualification["qualification_hash"] == (
+            run["qualification_hash"]
+        )
+        assert qualification["source_evidence_hash"] == (
+            run["source_evidence_hash"]
+        )
+        assert qualification["qualified"] is True
+        assert qualification["evaluation_reached"] == (
+            run["evaluation_reached"]
+        )
+        assert qualification["memory_candidate_eligible"] is True
+
+    for portable in payload["portable_artifacts"]:
+        raw = next(
+            artifact
+            for artifact in artifacts
+            if artifact["path"].endswith(
+                f"/{portable['run_id']}/submitted.patch"
+            )
+        )
+        assert Path(portable["path"]).read_bytes() == Path(
+            raw["path"]
+        ).read_bytes()
+
+
+def test_v4_no_memory_campaign_has_no_private_or_provider_payload() -> None:
+    path = Path(
+        "reports/memory-development/dev-no-memory-v4-20260730-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    for artifact in payload["portable_artifacts"]:
+        checked_text += Path(artifact["path"]).read_text(
+            encoding="utf-8"
+        )
+    assert "OPENAI_API_KEY" not in checked_text
+    assert "Bearer " not in checked_text
+    for task_id in {
+        run["task_id"]
+        for run in payload["runs"]
+    }:
+        package = load_task_package(f"tasks/dev-train/{task_id}")
+        private_tokens = _private_leak_tokens(package, api_key=None)
+        leaked = sorted(
+            token for token in private_tokens if token in checked_text
+        )
+        assert leaked == []

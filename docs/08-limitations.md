@@ -248,13 +248,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   primary mini snapshot/medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
   only after the approved plan is durably persisted. All twelve paid-pilot host preflights reached
-  `ready=true`; the v4 pilot consumed its own hash once and the later v4 development campaign
-  requires a different clean execution hash and approval.
+  `ready=true`; the v4 pilot and later v4 development campaign each consumed their own distinct
+  clean execution hash and approval once. Both are now immutable.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. All twelve paid pilots and the completed first 12-run
-  campaign produced completed hash-chained journals. Automatic resume from an interrupted journal
+  that blocks automatic schedule replay. All twelve paid pilots and both completed 12-run
+  campaigns produced completed hash-chained journals. Automatic resume from an interrupted journal
   is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
@@ -329,8 +329,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   Historical model-candidate mini r2 validated much of the corrected v2 lifecycle at lower
   list-price exposure, but it could not populate the primary `pilot_run_id` and exposed the D-037
   retry-context gap. Corrective primary r2 later populated the consumed campaign, which finished
-  12/12 without evaluator arrival. The new v4 campaign's `pilot_run_id` is now bound to qualified
-  pilot `run_d7207fbb06184dd3`.
+  12/12 without evaluator arrival. The v4 campaign was bound to qualified pilot
+  `run_d7207fbb06184dd3` and later completed 12/12 with evaluator arrival 3/12 but SCRR 0/12.
   Offline context and investigation hardening plus the suite-specific machine gate are complete;
   terminal mini r3 failed on its per-call output ceiling before exercising the retry. Corrective r4
   bound `max_output_tokens=25,000` and `max_total_tokens=120,000` under a new diagnostic profile
@@ -347,8 +347,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   one controlled intervention, not natural model-error recovery frequency, recovery rate, memory
   benefit or primary campaign quality. The fault-free primary r1 then exposed the call-budget
   lifecycle above. D-047 and D-048 offline contracts are now frozen. Corrective primary r2 and the
-  fresh context-v4 pilot both ran and passed. The next live gate is the separate 12-run v4
-  no-memory campaign with its own clean hash and approval.
+  fresh context-v4 pilot both ran and passed. The separate 12-run v4 no-memory campaign then ran
+  once with its own clean hash and approval. It produced nine exact-request budget failures and
+  three hidden task failures, so the next gate is offline token-aware-tail and structured-review
+  work, not another live campaign.
 - `model-generation-block-v2` covers admission to the next provider generation. A model response
   whose measured duration itself crosses the wall limit and a later call inside the same
   multi-tool response that encounters the tool cap still terminate through the older
@@ -359,12 +361,15 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `issue_live_execution_authorization()` helper does not independently reconstruct the entire
   suite/task/environment/schedule plan. Direct Python callers are therefore outside the paid CLI
   enforcement claim until that internal API is hardened.
-- Memory build/retrieval/freeze contracts exist; a real reviewed index still requires fresh
-  post-v4 memory-development traces, append-only review and an exact embedding revision. The first
-  12-run traces remain diagnostic: evaluator arrival was 0/12 while repeated and already-covered
-  inspections were also observed. That co-occurrence motivated D-048 but does not prove causality.
-  The fresh v4 pilot reached the evaluator on one task; only the new 12-run campaign can measure
-  whether evaluator arrival improves across the development set. Calibration traces are not eligible.
+- Memory build/retrieval/freeze contracts exist; a real reviewed index still requires append-only
+  review, deduplication and an exact embedding revision. The first 12-run traces remain diagnostic:
+  evaluator arrival was 0/12 while repeated and already-covered inspections were also observed.
+  That co-occurrence motivated D-048 but does not prove causality. The v4 campaign exercised
+  semantic replay 26 times and reached the evaluator on 3/12 rows, but the tail admission block was
+  never exercised and nine rows hit strict exact-request budget exhaustion. Its 0/12 SCRR is
+  therefore not a usable no-memory performance baseline. The three hidden task failures are only
+  provisional review candidates; the nine budget-confounded failures are excluded. Calibration
+  traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
@@ -405,7 +410,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   The new live-suite preflight rejects a dirty worktree before execution; older admission gates used
   manually verified clean staging commits and are not retroactively covered by that enforcement.
 
-## Dataset freeze and first diagnostic campaign completed; valid baseline/core still pending
+## Dataset freeze and two diagnostic campaigns completed; valid baseline/core still pending
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
@@ -469,8 +474,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   fault-free primary mini pilot purpose. Including terminal primary r1, the historical seven mini
   runs' calculated list-price total was `$0.77412075`. Corrective primary r2 and v4 pilot
   `run_d7207fbb06184dd3` bring twelve paid pilots to `$1.740790125`; adding the first 12-run
-  campaign gives 24 paid provider attempts and `$3.133982625`. These are usage-based estimates,
-  not verified invoice charges.
+  campaign gives 24 paid run attempts and `$3.133982625`. The v4 12-run campaign adds
+  `$1.84756425`, for 36 paid run attempts and `$4.981546875`. These are usage-based estimates, not
+  verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. The account UI reports
   possible complimentary shared-traffic usage, but applicability to this exact function-tool
   invocation and invoice treatment has not been verified. `model_cost_usd` is therefore a

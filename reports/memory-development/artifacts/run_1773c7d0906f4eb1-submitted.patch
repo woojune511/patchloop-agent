@@ -1,0 +1,19 @@
+diff --git a/src/tox/config/loader/ini/replace.py b/src/tox/config/loader/ini/replace.py
+index 3c6efc0..73c0c4b 100644
+--- a/src/tox/config/loader/ini/replace.py
++++ b/src/tox/config/loader/ini/replace.py
+@@ -41,7 +41,13 @@ class ReplaceReferenceIni(ReplaceReference):
+                 for src in self._config_value_sources(settings["env"], settings["section"], conf_args.env_name):
+                     try:
+                         if isinstance(src, SectionProxy):
+-                            return self.loader.process_raw(self.conf, conf_args.env_name, src[key])
++                            try:
++                                processed = self.loader.process_raw(self.conf, conf_args.env_name, src[key])
++                            except KeyError:
++                                return ""
++                            if processed is not None:
++                                return processed
++                            return ""
+                         value = src.load(key, conf_args.chain)
+                     except KeyError as exc:  # if fails, keep trying maybe another source can satisfy # noqa: PERF203
+                         exception = exc

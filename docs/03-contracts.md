@@ -339,9 +339,11 @@ Loader는 historical evidence 해석을 위해 이를 읽을 수 있지만 prefl
 evidence로만 읽고 preflight에서 차단한다. Corrective primary r2
 `experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`와 첫
 `experiments/dev-no-memory.template.yaml` campaign도 한 번 소비된 뒤 immutable
-inspection 전용이다. 새 live gate는
-`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`과, 그 pilot이
-통과한 뒤의 `experiments/dev-no-memory-v4.template.yaml`을 사용한다. 이미 소비된
+inspection 전용이다. V4 pilot
+`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`과 후속
+`experiments/dev-no-memory-v4.template.yaml`도 각각 한 번 소비돼 inspection 전용이다.
+현재 열린 live gate는 없으며 다음 runtime gate는 offline token-aware tail과 structured
+review다. 이미 소비된
 mini model-candidate r1/r2와 D-037 r3-r6 diagnostic suite도
 `HISTORICAL_SUITE_IMMUTABLE`이며 approval/hash를 다시 제공해도 실행할 수 없다.
 
@@ -1104,7 +1106,9 @@ primary, memory-development와 core의 총 상한을 21회로 고정하고, offl
 generation 허용과 22번째 generation 전 v2 차단을 검증했다. Corrective primary r2
 `run_afd5080a77a34995`는 한 번 실행돼 official evaluator와 qualification 23/23을
 통과했다. 뒤의 첫 12-run campaign은 evaluator 도달 0/12라 baseline으로 채택하지 않고,
-D-048 v4 gate 뒤 새 experiment ID로 다시 측정한다.
+D-048 v4 gate 뒤 새 experiment ID로 다시 측정했다. 그 D-051 campaign도 12/12 terminal과
+qualification을 남겼지만 evaluator 3/12, SCRR 0/12이며 아홉 exact-request budget
+failure가 있어 baseline으로 채택하지 않는다.
 
 별도 model-candidate mini r2 `run_4a9737ec91964dca` evidence는 이 version 도입 전
 `phase-evidence-v2` trace로 그대로 보존한다.
@@ -1300,12 +1304,23 @@ hash 경로를 유지한다. Qualification file을 다시 읽는 것만으로 so
 
 Development campaign preflight도 pilot qualification을 소비할 때 현재
 `source_evidence_hash`를 다시 계산해 불일치나 원본 부재를 차단한다.
+Pilot과 campaign의 `harness_git_commit` equality는 exact match다. Branch가 pilot commit
+뒤로 진행됐다고 descendant compatibility로 완화하지 않는다. D-050 campaign처럼 exact
+pilot commit의 clean detached worktree에서 source를 import하고 host의 external
+`.patchloop` runtime root를 공유할 수 있다. 이 root에는 mutable SQLite와 workspaces가
+포함되므로 append-only라는 표현은 event/artifact evidence history에만 적용한다. Bridge
+자체도 execution plan에 기록되고 새 execution hash와 승인을 받아야 한다. Dirty tree,
+source overlay 또는 manifest commit 재기록은 허용하지 않는다.
 
 Human review는 원래 `FailureRecord`를 수정하지 않는다.
 `failure-review-v1` JSONL에 decision, failure/qualification/dataset hash와 이전 review hash를
 연결해 append-only chain으로 쌓는다. Review 시작과 memory index build는 각각 현재
 `source_evidence_hash`를 다시 계산한다. Memory builder는 가장 최근 decision이 `reviewed`이고
 현재 source hash가 qualification과 review provenance에 모두 일치할 때만 entry를 만든다.
+`memory_candidate_eligible=true`는 이 review를 시작할 수 있다는 machine label이지 index
+admission이 아니다. Budget/runtime confound가 있는 candidate는 qualification을 통과해도
+review disposition에서 제외할 수 있고, 같은 semantic failure의 repetition은 hidden detail을
+복사하지 않은 하나의 reviewed rule로 deduplicate한다.
 
 ## 10. Failure memory entry
 

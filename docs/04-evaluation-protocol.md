@@ -379,8 +379,10 @@ campaign의 공정한 21-call 상한과 reason-specific v2 next-generation termi
 않는다. Corrective primary r2 `run_afd5080a77a34995`는 official evaluator와
 qualification 23/23을 통과했다. 이어진 첫 `dev-no-memory-20260728` campaign은 12/12
 qualified terminal trace를 만들었지만 evaluator 도달 0/12라 no-memory 성능 baseline으로
-사용하지 않는다. D-048 v4 investigation gate를 통과한 새 pilot과 새 experiment ID의
-12-run만 다음 baseline 후보가 된다.
+사용하지 않는다. D-048 v4 investigation gate를 통과한 새 pilot 뒤 D-051 12-run도
+12/12 qualified terminal trace를 만들었지만 evaluator 3/12, SCRR 0/12이며 아홉
+exact-request budget failure가 있다. 이 결과도 baseline이 아니며 token-aware tail
+runtime을 offline에서 다시 고정하기 전에는 새 baseline 후보를 실행하지 않는다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와
@@ -607,6 +609,10 @@ success/failure flip은 생성하지 않는다. 누락 row를 제외한 교집�
   event와 complete patch payload가 실제 포함됐는지도 확인한다.
 - Review는 원본 failure record를 수정하지 않고 이전 review hash를 잇는 append-only
   `failure-review-v1` history로 기록한다.
+- Machine `memory_candidate_eligible`은 review queue eligibility일 뿐 자동 index admission이
+  아니다. Exact-request budget exhaustion처럼 runtime confound가 있는 trace는 별도
+  procedural analysis로 격리하고, hidden acceptance에 실패한 task trace만 public evidence로
+  self-review한 뒤 사람이 leak scan과 semantic deduplication을 승인한다.
 - Raw trace condition도 held-out solution trace를 검색 대상으로 사용하지 않는다.
 - Report/viewer가 hidden assertion body를 model-visible trace에 역으로 노출하지 않게 한다.
 - Split, config, index, task package의 hash를 run manifest에 기록한다.

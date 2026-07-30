@@ -75,11 +75,10 @@ unversioned generic blocks. A complete synthetic v2 terminal trace qualifies as
 `agent_failure`; it does not reach the evaluator or count as task success. Runtime evidence allows
 21 generations and blocks the 22nd before input counting or provider generation.
 
-All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r1/r2, the first
-12-run experiment ID and v4 pilot `run_d7207fbb06184dd3` are now preflight-immutable even if an
-approval hash is supplied. The next runnable contract is the no-call preflight of
-`experiments/dev-no-memory-v4.template.yaml`; a paid campaign requires its new execution hash and
-separate approval.
+All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r1/r2, both 12-run
+experiment IDs and v4 pilot `run_d7207fbb06184dd3` are now preflight-immutable even if an approval
+hash is supplied. No paid suite is currently approved. The next runtime gate is offline
+token-aware corrective-tail design and structured memory review.
 
 Offline verification collected 571 tests and completed 569 passes with 2 existing skips. The three
 directly affected runtime/qualification/experiment files contributed 238 passes. Repository-wide
@@ -201,10 +200,71 @@ bytes or private evaluator details.
 This validates the live provider/evaluator path, v4 ledger reconstruction and one naturally
 rejected patch retry. It does not provide live semantic-replay or tail-admission evidence, a
 12-run no-memory baseline, cross-run memory benefit or core reliability result. The pilot is
-immutable and must not be rerun. The next paid gate is a separate 12-run campaign after a clean
-no-call preflight and explicit maximum `$20` approval.
+immutable and must not be rerun. Its separately approved 12-run campaign is recorded below.
 
-## Latest paid diagnostic evidence
+## D-050 exact-commit bridge and D-051 v4 12-run campaign
+
+The campaign kept the pilot/current harness commit equality gate exact. It ran from a clean detached
+worktree at pilot commit `5045e398646ec73d615785aeb95f02e877c34c90`, importing PatchLoop
+source from that worktree while sharing the host's external `.patchloop` runtime root through a
+junction. The root includes mutable SQLite and workspaces; append-only applies to event/artifact
+evidence histories. The ignored bound suite differed from the pilot-commit template only by
+`pilot_run_id: run_d7207fbb06184dd3`. This bridge did not authorize a descendant commit or a dirty
+worktree.
+
+Execution hash
+`sha256:9befd0bf8b2eb7dbc25999786713581b4b6c95f2ad45df56e2f098a9252e5bac`
+was consumed exactly once by experiment `dev-no-memory-v4-20260730-r1`.
+
+| Boundary | Observed |
+| --- | --- |
+| Provider/model | `gpt-5.4-mini-2026-03-17`, medium, standard, default tier |
+| Matrix integrity | 12/12 terminal, no duplicate or omitted row; zero infrastructure, qualification or diagnostic errors |
+| Outcomes | SCRR 0/12; 9 `agent_failure`, 3 `task_failure`; evaluator reached 3/12 |
+| Evaluated patches | hidden fail 3/3; regression/scope/safety pass 3/3 |
+| Usage | 144 model calls, 153 input-count calls, 262 tool calls; 1,753,493 input + 118,321 output token |
+| Prompt delivery | 144/144 executed input counts matched provider usage; 144/144 completed; truncation disabled |
+| V4 investigation | semantic replay 26 across 10 runs; rejected retry 11/11; tail admission block 0 |
+| Cost | `$1.84756425` calculated list price; `$4.981546875` cumulative |
+
+All nine agent failures are `MODEL_GENERATION_BUDGET_EXCEEDED` with
+`exact_request_budget_exceeded`: the exact next input plus the full 25,000-token response allowance
+did not fit the remaining 200,000-token total budget, so no provider generation began. Eight blocks
+occurred before the nominal investigation tail closed. One PDM repetition closed exploration after
+two rejected candidates and one applied patch, but its next generation was still budget-blocked
+before a tool-admission decision. No run exhausted the 21 model-call, 50 tool-call or 900-second
+counter.
+
+The result is a completed, qualified failure-trace collection campaign, not a usable no-memory
+performance baseline. Machine eligibility alone does not admit memory. The nine budget-confounded
+agent failures remain excluded. Three hidden task failures are provisionally reviewable as two
+semantic groups—one Loguru and one consolidated tox group—but no rule has been human-reviewed,
+admitted or frozen. Hidden assertion values and evaluator-only payloads are not included.
+
+The portable
+[campaign evidence record](../reports/memory-development/dev-no-memory-v4-20260730-r1.json),
+[Loguru submitted diff](../reports/memory-development/artifacts/run_0794d94df2f24d87-submitted.patch),
+[tox repetition 1 submitted diff](../reports/memory-development/artifacts/run_dbb2a02f3d2748a6-submitted.patch)
+and
+[tox repetition 2 submitted diff](../reports/memory-development/artifacts/run_1773c7d0906f4eb1-submitted.patch)
+preserve the public claims boundary. Raw provider/request bodies and private evaluator evidence
+remain in the ignored local store and are hash-bound rather than bundled.
+
+The exact persisted result SHA-256 is
+`sha256:e18b30c1552a3bcbf2f7538d8559a2fbb0ec76fa4968583338ee2414bc2cb734`.
+The 26-event journal chain is valid, ends at
+`sha256:efbdec4c1f2fb016acef6830a77959e28f03ee20f55e4a74fb151becf88de17c`,
+and binds that result. The suite and schedule hashes are
+`sha256:569666de18ec5a30021ad77896ff238f1e5e7fe81f4475a469cd2e6ba243acfc`
+and `sha256:d0c510b697a3c3f373da2bc497120ced3c461bbfdc48b1f617c25d1b9ee80567`.
+The execution hash, suite, journal and result must not be reused or rerun.
+
+Post-capture validation passed all 42 `tests/test_live_pilot_evidence.py` tests and all 74
+`tests/test_experiments.py` tests. Ruff and `git diff --check` also passed. These checks rehash the
+raw local result, journal, plan and 12 qualifications when available, and always rehash the three
+portable submitted diffs.
+
+## Historical D-043 paid diagnostic evidence
 
 The separately approved r6 execution hash
 `sha256:d6a756dc69a7cf6e024d541b64a458a940ec41bdfeb3c403a3f01c539660e67b`
@@ -233,9 +293,11 @@ distinct rejected and accepted public-source patches. Through r6, six mini runs 
 paid pilots then totaled `$1.602985125`. Corrective primary r2 later brought eleven paid pilots to
 `$1.652716875`; v4 pilot `run_d7207fbb06184dd3` brings twelve paid pilots to `$1.740790125`.
 The first 12-run campaign brings all 24 paid attempts to `$3.133982625` at configured list prices.
-Invoice and free-usage treatment remain unverified.
+The v4 12-run campaign brings 36 paid run attempts to `$4.981546875`. Invoice and free-usage
+treatment remain unverified.
 
-Post-capture verification passed all 27 live-evidence tests against the local raw artifacts,
+Post-capture verification for the historical evidence at this point passed all 27 live-evidence
+tests against the local raw artifacts,
 including journal/result/CAS hash binding and private/provider-payload exclusion. Ruff and
 `git diff --check` also passed. The D-043 implementation baseline remains the separately executed
 529-pass/2-skip full suite; this evidence-only follow-up does not claim a new full-suite run.
@@ -1536,8 +1598,9 @@ four-mini subtotal through r4 was `$0.32007075`. Terminal r5 raised the mini sub
 subtotal to `$0.77412075`; the ten paid pilots then totaled `$1.602985125` at configured list
 prices. Corrective primary r2 later brought eleven paid pilots to
 `$1.652716875`; v4 pilot `run_d7207fbb06184dd3` brings twelve paid pilots to `$1.740790125`.
-The first 12-run campaign brings all 24 paid attempts to `$3.133982625`. Invoice charges and free
-daily usage treatment remain unverified.
+The first 12-run campaign brings all 24 paid attempts to `$3.133982625`; the v4 12-run campaign
+brings 36 paid run attempts to `$4.981546875`. Invoice charges and free daily usage treatment
+remain unverified.
 
 Executed evidence:
 
@@ -1686,9 +1749,13 @@ qualification errors, but evaluator arrival was 0/12. That campaign is preserved
 loop evidence rather than a no-memory performance baseline or memory-index source.
 
 D-048 tool-v2/context-v4 investigation continuity is offline-complete and v4 provider pilot
-`run_d7207fbb06184dd3` passed the official evaluator and qualification 25/25. The next step is a
-clean no-call preflight of `experiments/dev-no-memory-v4.template.yaml`, exact execution-hash
-review and separate maximum $20 approval. No v4 12-run campaign has run.
+`run_d7207fbb06184dd3` passed the official evaluator and qualification 25/25. The D-051 v4 campaign
+also completed 12/12 without infrastructure or qualification error, but nine exact-request budget
+failures and three hidden task failures produced SCRR 0/12. It is immutable diagnostic evidence, not
+a valid baseline. The next step is an offline token-aware corrective-tail contract plus leak-safe
+structured review and deduplication of the three task failures. Any runtime change must receive a
+new single pilot and a new 12-run suite/hash before paid collection; no such run is currently
+approved.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated

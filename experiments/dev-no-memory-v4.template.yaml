@@ -26,8 +26,8 @@ seed: 20260723
 # Qualified phase-evidence-v4 gate from
 # dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml.
 pilot_run_id: run_d7207fbb06184dd3
-# Paid approval is invocation-only and must use this suite's fresh preflight
-# execution hash. The consumed dev-no-memory-20260728 experiment is immutable.
+# Terminal D-051 campaign input. Its exact execution hash was consumed once;
+# keep the journal/result and never add approval flags or rerun this experiment.
 live_cost_approved: false
 approved_execution_hash: null
 estimated_cost_usd: 12.15
