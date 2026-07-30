@@ -101,10 +101,10 @@ is preserved separately under `reports/live-pilot/`:
   consumed exact hash once; terminal inspection only, never rerun
 - `experiments/dev-no-memory.template.yaml`: consumed first six-task
   `no_memory` × 2 campaign; 12/12 terminal but evaluator 0/12, inspection only, never rerun
-- `experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`: next
-  `phase-evidence-v4` development-validation pilot, $2 cap
+- `experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`: consumed
+  `phase-evidence-v4` development-validation pilot; inspect only, never rerun
 - `experiments/dev-no-memory-v4.template.yaml`: next six-task `no_memory` × 2 campaign,
-  blocked until the v4 pilot passes, $20 cap
+  qualified pilot bound, separate clean preflight and $20 approval required
 
 As of 2026-07-29 the official
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the primary mini contract is $0.75/M
@@ -149,17 +149,24 @@ Get-Content reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r2.jso
 The first `dev-no-memory-20260728` campaign then completed all 12 rows, but all 12 were qualified
 agent failures and none reached the evaluator. It is immutable loop diagnostic evidence, not a
 no-memory performance baseline or automatic memory-index source. D-048 adds condition-neutral
-investigation continuity. Its fresh no-call pilot preflight is:
+investigation continuity. Its approved pilot execution hash
+`sha256:cc2117dc698cdc991ccbcad45bbcfa4302f1ac265bdfdcc0753b60b2fda6eba2`
+was consumed exactly once by `run_d7207fbb06184dd3`. The run passed official task evaluation and
+trace qualification 25/25 with 10/10 exact input counts, one natural rejected-patch retry,
+81,719 input + 5,952 output tokens and `$0.08807325`. Semantic replay and tail admission block
+were not exercised in that trace. Never invoke the pilot suite/hash again.
+
+Its run ID is now bound to the next v4 campaign. Generate only that campaign's no-call preflight:
 
 ```powershell
 git status --short
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml `
+  --suite experiments/dev-no-memory-v4.template.yaml `
   --preflight-only
 ```
 
-This command does not call the provider. Review the clean execution hash and blockers first; a
-paid invocation still requires a separate approval capped at $2.
+This command does not call the provider. Review the clean execution hash and blockers first; the
+12-run paid invocation still requires a separate approval capped at $20.
 
 The original checked-in mini suite refers to terminal experiment
 `dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
@@ -264,14 +271,14 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
 trace-exercise error and records remaining rows as not started.
 
-Eleven paid pilot runs exist when this guide was updated. The additional corrective primary r2 is
-an accepted official run; the eleven-pilot cumulative calculated list-price cost is
-`$1.652716875`. The separate first 12-run development campaign makes 23 paid provider attempts and
-raises the calculated total to `$3.045909375`. Actual invoice or free daily usage treatment was
+Twelve paid pilot runs exist when this guide was updated. The v4 pilot
+`run_d7207fbb06184dd3` is an accepted official run; the twelve-pilot cumulative calculated
+list-price cost is `$1.740790125`. The separate first 12-run development campaign makes 24 paid
+provider attempts and raises the calculated total to `$3.133982625`. Actual invoice or free daily usage treatment was
 not verified. Docker
 availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
-the fresh v4 pilot and later v4 development campaign.
+the later v4 development campaign.
 
 The D-037 offline gate and its single controlled live exercise are complete. The next request after a
 rejected mutating-tool call receives the exact budget-bounded candidate bytes, content hash and
@@ -395,12 +402,10 @@ also showed repeated/covered inspections and no durable within-run investigation
 continuity. This co-occurrence diagnoses the v4 harness gap; it does not establish that the gap
 caused every failure. Those consumed suites remain immutable.
 
-D-048 closes that harness boundary offline. Only a fresh
-`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml` run with a distinct clean
-execution hash and $2 approval that reaches the evaluator and passes
-`trace-qualification-v2` including `investigation_evidence` and
-`investigation_lifecycle` may have its run ID inserted into
-`experiments/dev-no-memory-v4.template.yaml`. Development preflight then verifies the same model,
+D-048 closes that harness boundary offline. The separately approved
+`run_d7207fbb06184dd3` reached the evaluator and passed `trace-qualification-v2`, including
+`investigation_evidence` and `investigation_lifecycle`; its run ID is now inserted into
+`experiments/dev-no-memory-v4.template.yaml`. Development preflight verifies the same model,
 budget, harness commit, tool/context versions and exact runtime-contract hash before producing a
 separate 12-row execution hash. That new campaign still requires a distinct approval capped at $20.
 

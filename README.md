@@ -407,21 +407,18 @@ task와 trace qualification은 통과했지만 rejected candidate가 없어 diag
 inconclusive다. R4와 r5의 승인이나 hash는 재사용하지 않는다. D-043의 별도 r6/profile v4는
 controlled rejection을 도입한 뒤 새 hash로 한 번 실행됐고, exact retry와 evaluator gate를
 통과했다. R6도 immutable하며 재실행하지 않는다. Historical primary r1, consumed
-primary r2와 첫 12-run campaign은 terminal inspection 전용이다. 다음은 새 v4
-fault-free development-validation pilot이 evaluator에 도달하고
-`trace-qualification-v2`의 `investigation_evidence`와 `investigation_lifecycle`까지
-통과한 뒤에만 새 ID의
-12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이 harness
-gate와 별도로 보고한다.
+primary r2와 첫 12-run campaign은 terminal inspection 전용이다. 별도 승인된 v4
+fault-free development-validation pilot `run_d7207fbb06184dd3`은 evaluator와
+`trace-qualification-v2`의 `investigation_evidence`·`investigation_lifecycle`을 포함한
+25/25 checks를 통과했다. 10/10 exact input telemetry, 자연 rejected-patch retry 1/1,
+81,719 input + 5,952 output token과 계산상 `$0.08807325`를 기록했다. 이 pilot의 task
+outcome은 후속 12-run baseline이나 memory 효과와 별도로 보고한다.
 
 기존 mini D-037 r3, r4, r5와 r6 suite는 terminal inspection 전용이다. Journal이나 result를
 삭제하거나 approval flag를 다시 전달하지 않는다.
 
-```powershell
-uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml `
-  --preflight-only
-```
+Pilot suite와 승인 hash는 소비됐으며 재실행하지 않는다. 다음 명령은 아래의
+`dev-no-memory-v4.template.yaml` no-call preflight다.
 
 과거 Terra r3의 `experiments/dev-validation-pilot.template.yaml`은 evidence 해석을 위해
 원래 계약 그대로 남아 있으며 preflight가 `HISTORICAL_SUITE_IMMUTABLE`로 재실행을 차단한다.
@@ -429,10 +426,14 @@ Primary r1 suite도 이제 terminal inspection 전용이다. Journal/result bloc
 approval flag나 소비된 hash를 다시 전달하지 않는다.
 
 D-048 offline gate는 durable investigation ledger, semantic replay, tail admission과
-request-by-request qualification 재계산을 추가한다. 위 v4 preflight는 API generation을 호출하지 않는다.
-Clean commit에서 새 execution hash를 검토하고 사용자가 별도 $2 승인을 제공하기 전에는
-paid invocation을 실행하지 않는다. 그 v4 pilot이 evaluator와 qualification을
-통과한 뒤에만 run ID를 새 development suite의 `pilot_run_id`에 넣는다.
+request-by-request qualification 재계산을 추가한다. 별도 승인된 v4 pilot
+`run_d7207fbb06184dd3`은 official evaluator와 qualification 25/25를 통과했고 자연
+rejected-patch retry 1/1을 남겼다. 이 run에서 semantic replay와 tail admission block은
+각각 0회였으므로 해당 branch는 offline evidence로만 주장한다. 새 development suite는 이
+run ID를 `pilot_run_id`에 결속하지만, 다음 preflight 자체는 API generation을 호출하지 않는다.
+공개 가능한 경계는
+[v4 pilot evidence record](reports/live-pilot/dev-validation-gpt54mini-investigation-v4-20260730-r1.json)에
+고정했다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -492,10 +493,10 @@ Consumed tool-v2/context-v3 corrective primary r2
 `run_afd5080a77a34995`는 model, budget, harness commit, runtime-contract hash,
 official evaluator와 `trace-qualification-v2` 23/23을 통과했다. 이어진 historical
 `dev-no-memory-20260728` campaign도 12/12 terminal trace를 보존했지만 evaluator 도달
-0/12라 성능 baseline으로 사용하지 않는다. 다음에는 tool-v2/context-v4 pilot이
-`investigation_evidence`와 `investigation_lifecycle`을 포함한 qualification과 evaluator
-도달을 통과한 경우에만 그 새
-run ID를 `dev-no-memory-v4` suite에 넣고 별도 execution hash를 preflight한다. 실패한 live
+0/12라 성능 baseline으로 사용하지 않는다. 새 tool-v2/context-v4 pilot
+`run_d7207fbb06184dd3`은 `investigation_evidence`와 `investigation_lifecycle`을 포함한
+qualification 25/25와 evaluator 도달을 통과했다. 그 run ID를 `dev-no-memory-v4` suite에
+결속한 뒤 별도 execution hash만 no-call preflight한다. 실패한 live
 attempt도 삭제하지 않고 run ID, input/cached/cache-write/output usage, 계산 비용, terminal
 outcome과 qualification을 보존한다.
 Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
@@ -548,13 +549,12 @@ Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D
 exercise하지 못했다. Mini r5는 official task와 qualification을 통과했지만 rejection이
 없어 D-037 diagnostic은 inconclusive다. Mini r6는 deliberate controlled rejection으로
 harness retry branch와 evaluator 도달을 검증했지만 natural recovery rate는 측정하지 않는다.
-Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. 이후 primary r2까지
-포함한 열한 paid pilot의 계산상 총액은 `$1.652716875`이고, 첫 12-run development
-campaign의 계산 비용 `$1.3931925`를 더한 전체 list-price 합계는 `$3.045909375`다.
-실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5, r6, primary r1/r2와
-`dev-no-memory-20260728`은 자동 재실행하지 않는다. 다음 paid gate는 새
-`phase-evidence-v4` pilot이며, 그 pilot과 후속 v4 campaign은 각각 새 clean execution
-hash와 별도 승인을 요구한다.
+Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. Primary r2와 새 v4 pilot
+`run_d7207fbb06184dd3`까지 포함한 열두 paid pilot의 계산상 총액은 `$1.740790125`이고,
+첫 12-run development campaign의 계산 비용 `$1.3931925`를 더한 전체 list-price 합계는
+`$3.133982625`다. 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5, r6,
+primary r1/r2, v4 pilot과 `dev-no-memory-20260728`은 자동 재실행하지 않는다. 다음 paid
+gate는 별도 v4 12-run campaign이며 새 clean execution hash와 최대 $20 승인을 요구한다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

@@ -12,7 +12,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `phase-evidence-v4 investigation continuity offline gate`다.
+- 현재 milestone은 `phase-evidence-v4 memory-development no-memory campaign preflight`다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -100,8 +100,14 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `investigation-ledger-v1`로 재구성하고 nominal corrective tail 전에는 exact search와
   fully-covered read를 semantic replay한다. Tail에서는 semantic-replay 대상까지 모든
   valid read/search admission을 차단한다.
-  기존 v1-v3 trace는 소급 재해석하지 않는다. 다음 paid gate는 새 v4 pilot 한 번이며,
-  그 전에는 새 12-run campaign이나 96-run core campaign을 실행하지 않는다.
+  기존 v1-v3 trace는 소급 재해석하지 않는다. 승인된 v4 pilot
+  `run_d7207fbb06184dd3`은 official hidden/regression/scope/safety와 trace qualification
+  25/25를 통과했다. 10/10 exact input telemetry, 자연 rejected-patch retry 1/1,
+  81,719 input + 5,952 output token과 계산상 `$0.08807325`를 기록했다. 이 run은 v4
+  ledger/context 재구성을 live로 검증했지만 semantic replay와 tail admission block은
+  각각 0회라 해당 branch의 근거는 offline test다. 다음 paid gate는 이 pilot에 결속된
+  새 12-run v4 no-memory campaign이며, clean no-call preflight의 새 execution hash와
+  별도 최대 $20 승인이 필요하다. 96-run core campaign은 아직 실행하지 않는다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

@@ -1,0 +1,340 @@
+{
+  "schema_version": "live-pilot-evidence-v9",
+  "recorded_at": "2026-07-30T05:23:02.333347Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "5045e398646ec73d615785aeb95f02e877c34c90",
+  "execution_hash": "sha256:cc2117dc698cdc991ccbcad45bbcfa4302f1ac265bdfdcc0753b60b2fda6eba2",
+  "campaign": {
+    "purpose": "development-validation-live-pilot",
+    "suite_hash": "sha256:9324a8fe9dd10e59efa37726596977d560cf0cc8730f6f8b78f4165af7da67a5",
+    "schedule_hash": "sha256:edd175241be60db2846bd48bc9b6dd7f8ca964d25476a2a97ed9657fed6c0360",
+    "schedule_row_id": "sha256:257646cb4b1259878ddf92f13c9357cef35a4cbe109f17b4f5bb404dc0db2cd2",
+    "expected_runs": 1,
+    "completed_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "not_started_runs": 0,
+    "halt_reason": null,
+    "execution_plan": {
+      "canonical_content_hash": "sha256:8c742d36425a514559ec4949292a6779fc4454398dab21f5d6609ee1163e798b",
+      "persisted_file_sha256": "sha256:41b439f2367b25406c22fa65c60d207bf3ec4c2d48a35131fef1f1f24a21ea9a",
+      "invocation_live_cost_approved": true,
+      "approved_execution_hash_matches": true,
+      "ready": true
+    },
+    "journal": {
+      "event_count": 4,
+      "hash_chain_valid": true,
+      "last_event_hash_before_completion": "sha256:28f576a20431bae363562fbd8be6bfa2d53fd68b2e9bc7fac30d0e3f42cea181",
+      "final_event_hash": "sha256:30bf0920b1918290d322e28b5ed841dcf446670a228959391616a34d2cffda33",
+      "result_hash": "sha256:d3660772410bd521546a30114df0028db52b58a7f48b81c3c2c5c0f1afa3f16b",
+      "result_exact_bytes_match": true
+    }
+  },
+  "pilot": {
+    "run_id": "run_d7207fbb06184dd3",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "tool_schema_version": "v2",
+    "context_policy_version": "phase-evidence-v4",
+    "memory_condition": "no_memory",
+    "max_output_tokens": 25000,
+    "max_total_tokens": 200000,
+    "max_model_calls": 21,
+    "max_tool_calls": 50,
+    "outcome_kind": "resolved",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "scope_compliant_success": true,
+    "official": true,
+    "event_count": 64,
+    "checkpoint_count": 11,
+    "worker_claim_count": 1,
+    "model_calls": 10,
+    "input_token_count_calls": 10,
+    "tool_calls": 10,
+    "tool_failures": 1,
+    "patch_prepared_events": 1,
+    "patch_applied_events": 1,
+    "review_recorded_events": 1,
+    "submission_attempted_events": 1,
+    "submission_accepted_events": 1,
+    "usage": {
+      "input_tokens": 81719,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 5952,
+      "reasoning_output_tokens": 5039,
+      "total_tokens": 87671,
+      "remaining_total_tokens": 112329,
+      "model_cost_usd": 0.08807325,
+      "wall_clock_ms": 72466
+    },
+    "verdicts": {
+      "hidden_tests": "pass",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass",
+      "dependency_policy": "pass",
+      "test_tampering_policy": "pass",
+      "public_api_policy": "pass"
+    }
+  },
+  "trace_activity": {
+    "tool_breakdown": {
+      "search_files": 1,
+      "read_file": 4,
+      "apply_patch": 2,
+      "run_check": 1,
+      "get_diff": 1,
+      "finish_task": 1
+    },
+    "registered_check_attempts": 1,
+    "registered_check_passes": 1,
+    "mutation_attempts": 2,
+    "rejected_mutation_attempts": 1,
+    "successful_mutation_attempts": 1,
+    "submission_attempts": 1,
+    "finish_task_calls": 1,
+    "evaluator_runs": 1,
+    "terminal_phase": "DONE",
+    "changed_files": [
+      "babel/numbers.py"
+    ],
+    "added_lines": 7,
+    "deleted_lines": 1,
+    "rejected_raw_model_patch_sha256": "sha256:dd660518bf767fd532dd6e63da4075f6985ac1ff05765037963cec242a1a3bf4",
+    "successful_raw_model_patch_sha256": "sha256:727135bb3714e9b4ee51ccebe50c7adbaadf1807df5bf03181711e9d03e871f6",
+    "final_worktree_diff_sha256": "sha256:03a01b5965541d76aaf664301b4aa6515abbf384199881d3185e24ecc519315e"
+  },
+  "natural_rejected_patch_retry": {
+    "observed": true,
+    "controlled_fault": false,
+    "failure_reason_code": "git_apply_failed",
+    "failure_stage": "context",
+    "rejected_candidate_count": 1,
+    "retry_episode_count": 1,
+    "verified_retry_count": 1,
+    "verified_retry_ratio": "1/1",
+    "verified_source_failure_sequences": [
+      22
+    ],
+    "failed_source_failure_sequences": [],
+    "verified_rejected_candidate_content_hashes": [
+      "sha256:dd660518bf767fd532dd6e63da4075f6985ac1ff05765037963cec242a1a3bf4"
+    ],
+    "rejected_action_patch_applied_count": 0
+  },
+  "investigation_continuity": {
+    "context_policy_version": "phase-evidence-v4",
+    "investigation_evidence_check_passed": true,
+    "context_count": 10,
+    "verified_context_count": 10,
+    "failed_context_sequences": [],
+    "ledger_hash_count": 10,
+    "investigation_lifecycle_check_passed": true,
+    "semantic_replay_count": 0,
+    "verified_semantic_replay_count": 0,
+    "failed_semantic_replay_sequences": [],
+    "admission_block_count": 0,
+    "verified_admission_block_count": 0,
+    "failed_admission_block_sequences": [],
+    "semantic_replay_branch_observed": false,
+    "tail_admission_branch_observed": false
+  },
+  "prompt_token_integrity": {
+    "model_call_count": 10,
+    "input_token_count_call_count": 10,
+    "requested_input_tokens": [
+      2445,
+      4055,
+      7603,
+      9872,
+      11397,
+      6430,
+      8252,
+      9255,
+      11720,
+      10690
+    ],
+    "provider_reported_input_tokens": [
+      2445,
+      4055,
+      7603,
+      9872,
+      11397,
+      6430,
+      8252,
+      9255,
+      11720,
+      10690
+    ],
+    "exact_input_count_matches": 10,
+    "total_token_count_matches": 10,
+    "completed_generation_count": 10,
+    "incomplete_generation_count": 0,
+    "model_generation_blocked_count": 0,
+    "truncation_mode": "disabled",
+    "provider_prompt_cut_observed": false,
+    "previous_response_id_used_count": 0,
+    "store_true_count": 0,
+    "context_policy_omitted_event_counts": [
+      0,
+      0,
+      0,
+      0,
+      3,
+      10,
+      13,
+      16,
+      20,
+      24
+    ],
+    "maximum_context_policy_omitted_event_count": 24,
+    "total_context_policy_omitted_event_count": 86,
+    "truncated_tool_result_count": 0
+  },
+  "submitted_patch": {
+    "patch_sha256": "sha256:03a01b5965541d76aaf664301b4aa6515abbf384199881d3185e24ecc519315e",
+    "diff_sha256": "sha256:03a01b5965541d76aaf664301b4aa6515abbf384199881d3185e24ecc519315e",
+    "rejected_raw_model_patch_sha256": "sha256:dd660518bf767fd532dd6e63da4075f6985ac1ff05765037963cec242a1a3bf4",
+    "successful_raw_model_patch_sha256": "sha256:727135bb3714e9b4ee51ccebe50c7adbaadf1807df5bf03181711e9d03e871f6",
+    "official_evaluator_input": true,
+    "patch_applied_exactly_once": true,
+    "successful_raw_model_patch_is_final_submitted_diff": false
+  },
+  "trace_qualification": {
+    "schema_version": "trace-qualification-v2",
+    "context_policy_version": "phase-evidence-v4",
+    "qualified": true,
+    "trace_integrity_passed": true,
+    "leakage_scan_passed": true,
+    "evaluation_reached": true,
+    "check_count": 25,
+    "passed_check_count": 25,
+    "failed_check_names": [],
+    "memory_candidate_eligible": false,
+    "qualification_hash": "sha256:ca0262532809eb38faadc5f85aa231289f391628a9e68178093a8f22c474c813",
+    "source_evidence_hash": "sha256:2177f638c28d19cba6c1d2c4fed0dbff7aaeab502f2b2baa809d44064991eddc",
+    "runtime_contract_content_hash": "sha256:e771a9456d1dd9d405b746096f09d71db2b2a7f6f678b8119c2368665280e242"
+  },
+  "spend_to_date": {
+    "historical_paid_pilots_before_v4_usd": 1.652716875,
+    "historical_first_12_run_campaign_usd": 1.3931925,
+    "investigation_v4_pilot_usd": 0.08807325,
+    "all_paid_attempts_list_price_total_usd": 3.133982625,
+    "approved_v4_pilot_cap_usd": 2.0,
+    "invoice_charge_verified": false,
+    "free_daily_usage_applied": "unknown"
+  },
+  "gate_boundary": {
+    "phase_evidence_v4_pilot_gate_passed": true,
+    "next_allowed_step": "Create a separate v4 no-memory 12-run suite and run no-call preflight.",
+    "next_suite_template": "experiments/dev-no-memory-v4.template.yaml",
+    "pilot_run_id_to_bind": "run_d7207fbb06184dd3",
+    "next_paid_execution_authorized": false,
+    "fresh_execution_hash_required": true,
+    "separate_cost_approval_required": true,
+    "next_campaign_cost_cap_usd": 20.0,
+    "v4_no_memory_12_run_campaign_executed": false,
+    "core_campaign_executed": false
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; raw provider payloads and evaluator-only details are not bundled in a clean checkout.",
+    "portable_artifacts": "Only the public-source final submitted diff is bundled.",
+    "provider_private_exclusion": "Provider request and response bodies, secrets, private task specifications, hidden assertions and evaluator-only payloads are excluded.",
+    "campaign_boundary": "This record proves one accepted phase-evidence-v4 development-validation pilot and opens only the separately approved 12-run preflight. It does not measure cross-run memory benefit or core performance."
+  },
+  "portable_artifacts": [
+    {
+      "role": "final-submitted-git-diff",
+      "path": "reports/live-pilot/artifacts/run_d7207fbb06184dd3-submitted.patch",
+      "bytes": 1107,
+      "sha256": "sha256:03a01b5965541d76aaf664301b4aa6515abbf384199881d3185e24ecc519315e"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-gpt54mini-investigation-v4-20260730-r1.json",
+      "bytes": 11070,
+      "sha256": "sha256:d3660772410bd521546a30114df0028db52b58a7f48b81c3c2c5c0f1afa3f16b"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-gpt54mini-investigation-v4-20260730-r1.jsonl",
+      "bytes": 2751,
+      "sha256": "sha256:f446a045fd0b1a880ffaaceaf30cafe812bed2c474a355e335aabef8d4de31e4"
+    },
+    {
+      "path": ".patchloop/experiments/plans/cc2117dc698cdc991ccbcad45bbcfa4302f1ac265bdfdcc0753b60b2fda6eba2.json",
+      "bytes": 5511,
+      "sha256": "sha256:41b439f2367b25406c22fa65c60d207bf3ec4c2d48a35131fef1f1f24a21ea9a"
+    },
+    {
+      "path": ".patchloop/qualifications/run_d7207fbb06184dd3.json",
+      "bytes": 9714,
+      "sha256": "sha256:cf65335fda6ca8f1f043af8e90140581008eab91864356809d78ae089c0b94d3"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_d7207fbb06184dd3/manifest.json",
+      "bytes": 2368,
+      "sha256": "sha256:31ce792f8d3b5d963e5085d544435957adca1f92db97a2f0c8e9322462d8e2e2"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_d7207fbb06184dd3/result.json",
+      "bytes": 4963,
+      "sha256": "sha256:71347b85a1d735231fc674287cedfc91cb5c92d09d21cff1b11e1476739c1270"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_d7207fbb06184dd3/provenance.json",
+      "bytes": 1398,
+      "sha256": "sha256:37f4b6d2d6f85a5578bf8ec90af94385e74f6f9216aa3efc6287021d0be5cac9"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_d7207fbb06184dd3/evaluation-receipt.json",
+      "bytes": 599,
+      "sha256": "sha256:4e87d0e399724b97283b9a2a8433ee65a7fd1b8f670d71736be5b307e7d2a4f1"
+    },
+    {
+      "path": ".patchloop/runs/run_d7207fbb06184dd3/submitted.patch",
+      "bytes": 1107,
+      "sha256": "sha256:03a01b5965541d76aaf664301b4aa6515abbf384199881d3185e24ecc519315e"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/dd/660518bf767fd532dd6e63da4075f6985ac1ff05765037963cec242a1a3bf4",
+      "bytes": 1438,
+      "sha256": "sha256:dd660518bf767fd532dd6e63da4075f6985ac1ff05765037963cec242a1a3bf4"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/72/7135bb3714e9b4ee51ccebe50c7adbaadf1807df5bf03181711e9d03e871f6",
+      "bytes": 1385,
+      "sha256": "sha256:727135bb3714e9b4ee51ccebe50c7adbaadf1807df5bf03181711e9d03e871f6"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/03/a01b5965541d76aaf664301b4aa6515abbf384199881d3185e24ecc519315e",
+      "bytes": 1107,
+      "sha256": "sha256:03a01b5965541d76aaf664301b4aa6515abbf384199881d3185e24ecc519315e"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "executed_request_token_counts_match": true,
+    "provider_input_truncation_observed": false,
+    "incomplete_model_generation_observed": false,
+    "trace_qualification_artifact_qualified": true,
+    "evaluation_reached": true,
+    "official_scope_compliant_success": true,
+    "accepted_current_v4_live_pilot": true,
+    "phase_evidence_v4_pilot_gate_passed": true,
+    "natural_rejected_patch_recovery_observed": true,
+    "semantic_investigation_replay_observed": false,
+    "tail_admission_block_observed": false,
+    "v4_no_memory_12_run_campaign_executed": false,
+    "cross_run_memory_effect_measured": false,
+    "core_campaign_executed": false,
+    "next_paid_campaign_authorized": false
+  }
+}

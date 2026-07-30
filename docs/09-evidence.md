@@ -75,11 +75,11 @@ unversioned generic blocks. A complete synthetic v2 terminal trace qualifies as
 `agent_failure`; it does not reach the evaluator or count as task success. Runtime evidence allows
 21 generations and blocks the 22nd before input counting or provider generation.
 
-All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r1/r2 and the first
-12-run experiment ID are now preflight-immutable even if an approval hash is supplied. The next
-runnable primary contract is
-`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`; no provider call has been
-made for that v4 suite.
+All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r1/r2, the first
+12-run experiment ID and v4 pilot `run_d7207fbb06184dd3` are now preflight-immutable even if an
+approval hash is supplied. The next runnable contract is the no-call preflight of
+`experiments/dev-no-memory-v4.template.yaml`; a paid campaign requires its new execution hash and
+separate approval.
 
 Offline verification collected 571 tests and completed 569 passes with 2 existing skips. The three
 directly affected runtime/qualification/experiment files contributed 238 passes. Repository-wide
@@ -160,11 +160,49 @@ qualification subset and the 85-test agent-runtime suite also passed independent
 `git diff --check` were clean. These are harness-integrity results, not provider or task-success
 measurements.
 
-No provider call was made for this offline change. The next paid gate is a clean-hash preflight of
-`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`. Only a separately approved
-pilot that reaches the evaluator and passes both `investigation_evidence` and
-`investigation_lifecycle` may populate
+No provider call was made while implementing this offline change. A later separately approved
+pilot reached the evaluator and passed both `investigation_evidence` and
+`investigation_lifecycle`; its run ID now populates
 `experiments/dev-no-memory-v4.template.yaml`.
+
+## D-049 phase-evidence-v4 paid pilot
+
+Execution hash
+`sha256:cc2117dc698cdc991ccbcad45bbcfa4302f1ac265bdfdcc0753b60b2fda6eba2`
+was consumed exactly once by `run_d7207fbb06184dd3` on clean harness commit
+`5045e398646ec73d615785aeb95f02e877c34c90`.
+
+| Boundary | Observed |
+| --- | --- |
+| Provider/model | `gpt-5.4-mini-2026-03-17`, medium, standard, default tier |
+| Campaign | 1/1 terminal, zero infrastructure/qualification/diagnostic errors |
+| Usage | 10 model calls, 10 tool calls, 81,719 input + 5,952 output token; `$0.08807325` |
+| Prompt delivery | 10/10 requested input counts equal provider usage; completed responses; truncation disabled |
+| Evaluator | official hidden/regression/scope/safety pass; `scope_compliant_success=true` |
+| Qualification | `trace-qualification-v2` 25/25; integrity, leakage and evaluator arrival pass |
+| Rejected retry | one natural rejected candidate, one verified next-request retry, no failed source sequence |
+| V4 investigation | 10/10 ledger contexts verified; mutation epoch reset observed |
+| Unexercised live branches | semantic replay 0; tail admission block 0 |
+
+The qualification hash is
+`sha256:ca0262532809eb38faadc5f85aa231289f391628a9e68178093a8f22c474c813`
+and its source-evidence hash is
+`sha256:2177f638c28d19cba6c1d2c4fed0dbff7aaeab502f2b2baa809d44064991eddc`.
+The campaign journal has four hash-chained events and its final result hash
+`sha256:d3660772410bd521546a30114df0028db52b58a7f48b81c3c2c5c0f1afa3f16b`
+matches the exact persisted result bytes.
+
+The portable
+[v4 pilot evidence record](../reports/live-pilot/dev-validation-gpt54mini-investigation-v4-20260730-r1.json)
+and [submitted patch](../reports/live-pilot/artifacts/run_d7207fbb06184dd3-submitted.patch)
+preserve the public claims boundary without bundling raw provider payloads, rejected candidate
+bytes or private evaluator details.
+
+This validates the live provider/evaluator path, v4 ledger reconstruction and one naturally
+rejected patch retry. It does not provide live semantic-replay or tail-admission evidence, a
+12-run no-memory baseline, cross-run memory benefit or core reliability result. The pilot is
+immutable and must not be rerun. The next paid gate is a separate 12-run campaign after a clean
+no-call preflight and explicit maximum `$20` approval.
 
 ## Latest paid diagnostic evidence
 
@@ -193,8 +231,9 @@ separates the controlled intervention, official task outcome and claims boundary
 distinct rejected and accepted public-source patches. Through r6, six mini runs totaled
 `$0.62150025`; including terminal primary r1, seven mini runs totaled `$0.77412075` and the ten
 paid pilots then totaled `$1.602985125`. Corrective primary r2 later brought eleven paid pilots to
-`$1.652716875`; the first 12-run campaign brings all 23 paid attempts to `$3.045909375` at
-configured list prices. Invoice and free-usage treatment remain unverified.
+`$1.652716875`; v4 pilot `run_d7207fbb06184dd3` brings twelve paid pilots to `$1.740790125`.
+The first 12-run campaign brings all 24 paid attempts to `$3.133982625` at configured list prices.
+Invoice and free-usage treatment remain unverified.
 
 Post-capture verification passed all 27 live-evidence tests against the local raw artifacts,
 including journal/result/CAS hash binding and private/provider-payload exclusion. Ruff and
@@ -1306,8 +1345,8 @@ and [final submitted patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11
 separate the provider tool argument from the final evaluator input and bind the ignored raw
 artifacts by SHA-256. This is an accepted single-task live pilot. It unlocked the pilot prerequisite
 under the then-current v1 contract, but it does not unlock the current tool-v2/context-v4 campaign
-gate. A new separately approved v4 primary mini pilot is required. It is not a 12-run result or
-evidence that memory improves performance.
+gate. The later separately approved v4 primary mini pilot now unlocks that prerequisite. Neither
+single-task pilot is a 12-run result or evidence that memory improves performance.
 
 ## Mini model-candidate r1/r2 evidence
 
@@ -1496,8 +1535,9 @@ four-mini subtotal through r4 was `$0.32007075`. Terminal r5 raised the mini sub
 `$0.45570375`; controlled r6 raises it to `$0.62150025`. Terminal primary r1 later raises the mini
 subtotal to `$0.77412075`; the ten paid pilots then totaled `$1.602985125` at configured list
 prices. Corrective primary r2 later brought eleven paid pilots to
-`$1.652716875`; the first 12-run campaign brings all 23 paid attempts to `$3.045909375`.
-Invoice charges and free daily usage treatment remain unverified.
+`$1.652716875`; v4 pilot `run_d7207fbb06184dd3` brings twelve paid pilots to `$1.740790125`.
+The first 12-run campaign brings all 24 paid attempts to `$3.133982625`. Invoice charges and free
+daily usage treatment remain unverified.
 
 Executed evidence:
 
@@ -1645,12 +1685,10 @@ accepted immutable evidence, and the first 12-run campaign completed without inf
 qualification errors, but evaluator arrival was 0/12. That campaign is preserved as investigation
 loop evidence rather than a no-memory performance baseline or memory-index source.
 
-D-048 tool-v2/context-v4 investigation continuity is offline-complete. The next step is a clean
-no-call preflight of
-`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`, exact execution-hash review
-and separate $2 approval. Only that fresh pilot may unlock
-`experiments/dev-no-memory-v4.template.yaml`, which then needs its own hash review and $20 approval.
-No v4 provider pilot or v4 12-run campaign has run.
+D-048 tool-v2/context-v4 investigation continuity is offline-complete and v4 provider pilot
+`run_d7207fbb06184dd3` passed the official evaluator and qualification 25/25. The next step is a
+clean no-call preflight of `experiments/dev-no-memory-v4.template.yaml`, exact execution-hash
+review and separate maximum $20 approval. No v4 12-run campaign has run.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
