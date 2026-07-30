@@ -16,6 +16,7 @@ from patchloop.agent.context import BuiltContext, build_context_with_evidence
 from patchloop.agent.model import (
     SYSTEM_PROMPT_V1,
     SYSTEM_PROMPT_V2,
+    SYSTEM_PROMPT_V3,
     MockModelAdapter,
     ModelAdapter,
     OpenAIResponsesAdapter,
@@ -396,6 +397,7 @@ class AgentRunner:
             artifacts=self.artifacts,
             sandbox=gateway_sandbox,
             tool_schema_version=manifest.tool_schema_version,
+            context_policy_version=manifest.context_policy_version,
             fault=manifest.fault,
         )
         existing_events = self.state.list_events(manifest.run_id)
@@ -545,7 +547,10 @@ class AgentRunner:
                 self._completed_tools(manifest.run_id),
             )
             while True:
-                if manifest.context_policy_version != "phase-evidence-v3":
+                if manifest.context_policy_version not in {
+                    "phase-evidence-v3",
+                    "phase-evidence-v4",
+                }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
                 memory_text, retrieval = retrieve_memory(
@@ -638,9 +643,39 @@ class AgentRunner:
                         "artifact_path": request_artifact.path,
                         "artifact_role": "model-request-evidence",
                         "provider_state_used": False,
+                        **(
+                            {
+                                "investigation_ledger_hash": (
+                                    built_context.evidence[
+                                        "investigation_ledger"
+                                    ]["content_hash"]
+                                ),
+                                "investigation_source_through_sequence": (
+                                    built_context.evidence[
+                                        "investigation_ledger"
+                                    ]["source_through_sequence"]
+                                ),
+                                "investigation_no_progress_streak": (
+                                    built_context.evidence[
+                                        "investigation_ledger"
+                                    ]["no_progress_streak"]
+                                ),
+                                "investigation_exploration_admitted": (
+                                    built_context.evidence[
+                                        "investigation_ledger"
+                                    ]["exploration_admitted"]
+                                ),
+                            }
+                            if manifest.context_policy_version
+                            == "phase-evidence-v4"
+                            else {}
+                        ),
                     },
                 )
-                if manifest.context_policy_version == "phase-evidence-v3":
+                if manifest.context_policy_version in {
+                    "phase-evidence-v3",
+                    "phase-evidence-v4",
+                }:
                     pre_generation_reason = self._pre_generation_budget_reason(
                         manifest,
                         usage,
@@ -666,7 +701,10 @@ class AgentRunner:
                         requested_input_tokens + manifest.model.max_output_tokens
                         > remaining_tokens
                     ):
-                        if manifest.context_policy_version == "phase-evidence-v3":
+                        if manifest.context_policy_version in {
+                            "phase-evidence-v3",
+                            "phase-evidence-v4",
+                        }:
                             usage.input_token_count_calls += 1
                             self._block_model_generation(
                                 manifest=manifest,
@@ -689,7 +727,8 @@ class AgentRunner:
                     )
                 else:
                     if (
-                        manifest.context_policy_version == "phase-evidence-v3"
+                        manifest.context_policy_version
+                        in {"phase-evidence-v3", "phase-evidence-v4"}
                         and usage.input_tokens + usage.output_tokens
                         >= manifest.budget.max_total_tokens
                     ):
@@ -858,7 +897,10 @@ class AgentRunner:
                             "finish_task_must_be_only_action"
                         ],
                     )
-                    if not result.output.get("replayed"):
+                    if (
+                        not result.output.get("replayed")
+                        and not result.output.get("admission_blocked")
+                    ):
                         usage.tool_calls += 1
                         usage.wall_clock_ms += int(
                             (
@@ -944,11 +986,19 @@ class AgentRunner:
                             )
                         continue
                     result = gateway.execute(call.name, call.action_id, call.arguments)
-                    if not result.output.get("replayed"):
+                    if (
+                        not result.output.get("replayed")
+                        and not result.output.get("admission_blocked")
+                    ):
                         usage.tool_calls += 1
-                        usage.wall_clock_ms += int(
-                            (result.finished_at - result.started_at).total_seconds() * 1000
-                        )
+                        if not result.output.get("semantic_replay"):
+                            usage.wall_clock_ms += int(
+                                (
+                                    result.finished_at
+                                    - result.started_at
+                                ).total_seconds()
+                                * 1000
+                            )
                     if isinstance(adapter, MockModelAdapter) and result.status == "succeeded":
                         adapter.record_completed(call.name)
                     if (
@@ -1599,6 +1649,7 @@ class AgentRunner:
         if manifest.context_policy_version in {
             "phase-evidence-v2",
             "phase-evidence-v3",
+            "phase-evidence-v4",
         }:
             evidence = diff_bound_evidence(
                 task or load_task_package(self._find_task(manifest)).public,
@@ -1720,6 +1771,11 @@ class AgentRunner:
             in {"phase-evidence-v2", "phase-evidence-v3"}
         ):
             return SYSTEM_PROMPT_V2, TOOL_SCHEMAS_V2
+        if (
+            manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v4"
+        ):
+            return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V2
         raise ContractError(
             "unsupported tool schema and context policy version combination"
         )

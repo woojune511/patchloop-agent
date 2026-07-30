@@ -84,6 +84,22 @@ def _ready_live_environment(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
 
 
+def _write_future_primary_suite(
+    tmp_path: Path,
+    experiment_id: str,
+) -> Path:
+    payload = yaml.safe_load(
+        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    payload["experiment_id"] = experiment_id
+    suite_path = tmp_path / f"{experiment_id}.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+    return suite_path
+
+
 def _retry_qualification(
     *,
     retry_episode_count: int,
@@ -113,13 +129,13 @@ def _retry_qualification(
     }
 
 
-def test_expected_runtime_contract_hash_uses_phase_evidence_v3() -> None:
+def test_expected_runtime_contract_hash_uses_phase_evidence_v4() -> None:
     encoded = json.dumps(
         {
-            "system_prompt": eval_runner.SYSTEM_PROMPT_V2,
+            "system_prompt": eval_runner.SYSTEM_PROMPT_V3,
             "tools": eval_runner.TOOL_SCHEMAS_V2,
             "tool_schema_version": "v2",
-            "context_policy_version": "phase-evidence-v3",
+            "context_policy_version": "phase-evidence-v4",
         },
         indent=2,
         sort_keys=True,
@@ -134,16 +150,20 @@ def test_live_campaign_approval_is_an_invocation_preflight_gate(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    suite = eval_runner.load_suite(PRIMARY_PILOT_SUITE)
+    suite_path = _write_future_primary_suite(
+        tmp_path,
+        "future-primary-approval-gate",
+    )
+    suite = eval_runner.load_suite(suite_path)
     assert suite.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
 
-    unapproved = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(suite_path)
     blocker_codes = {row["code"] for row in unapproved["blockers"]}
     assert blocker_codes == {"LIVE_COST_NOT_APPROVED", "APPROVAL_HASH_MISMATCH"}
     assert "test-secret-never-rendered" not in json.dumps(unapproved)
 
     approved = eval_runner.preflight_suite(
-        PRIMARY_PILOT_SUITE,
+        suite_path,
         approve_live_cost=True,
         approved_execution_hash=unapproved["execution_hash"],
     )
@@ -231,6 +251,51 @@ def test_historical_primary_r1_is_loadable_but_never_runnable(
     assert suite.budget.max_model_calls == 20
     assert "HISTORICAL_SUITE_IMMUTABLE" in {
         row["code"] for row in preflight["blockers"]
+    }
+
+
+def test_consumed_primary_r2_keeps_current_budget_and_is_never_runnable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+
+    suite = eval_runner.load_suite(PRIMARY_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    approved = eval_runner.preflight_suite(
+        PRIMARY_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert suite.experiment_id == (
+        "dev-validation-gpt54mini-campaign-20260730-r2"
+    )
+    assert suite.budget.max_model_calls == 21
+    assert suite.budget.max_total_tokens == 200_000
+    assert approved["ready"] is False
+    assert "HISTORICAL_SUITE_IMMUTABLE" in {
+        row["code"] for row in approved["blockers"]
+    }
+
+
+def test_consumed_no_memory_campaign_is_never_runnable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    suite_path = "experiments/dev-no-memory.template.yaml"
+
+    unapproved = eval_runner.preflight_suite(suite_path)
+    approved = eval_runner.preflight_suite(
+        suite_path,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert approved["ready"] is False
+    assert "HISTORICAL_SUITE_IMMUTABLE" in {
+        row["code"] for row in approved["blockers"]
     }
 
 
@@ -992,6 +1057,7 @@ def test_v2_development_campaign_has_exact_twelve_run_matrix(
     assert {
         row["code"] for row in preflight["blockers"]
     } == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
         "QUALIFIED_PILOT_REQUIRED",
@@ -1204,6 +1270,10 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
+    suite_path = _write_future_primary_suite(
+        tmp_path,
+        "future-primary-persistence",
+    )
     byte_writes: dict[Path, bytes] = {}
     original_write_bytes = Path.write_bytes
 
@@ -1212,7 +1282,7 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         return original_write_bytes(path, content)
 
     monkeypatch.setattr(Path, "write_bytes", record_write_bytes)
-    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    preflight = eval_runner.preflight_suite(suite_path)
     captured = []
 
     class FakeRunner:
@@ -1245,7 +1315,7 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
     )
 
     result = eval_runner.evaluate_suite(
-        PRIMARY_PILOT_SUITE,
+        suite_path,
         approve_live_cost=True,
         approved_execution_hash=preflight["execution_hash"],
     )
@@ -1286,7 +1356,7 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         assert row["previous_event_hash"] == previous_hash
         assert sha256_text(canonical_json(row)) == recorded_hash
         previous_hash = recorded_hash
-    retry = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    retry = eval_runner.preflight_suite(suite_path)
     assert {
         "EXPERIMENT_RESULT_EXISTS",
         "EXPERIMENT_JOURNAL_EXISTS",
@@ -1489,7 +1559,11 @@ def test_hard_crash_journal_blocks_duplicate_paid_schedule(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    suite_path = _write_future_primary_suite(
+        tmp_path,
+        "future-primary-hard-crash",
+    )
+    preflight = eval_runner.preflight_suite(suite_path)
 
     class CrashingRunner:
         def start(self, *_args, **_kwargs):
@@ -1498,12 +1572,12 @@ def test_hard_crash_journal_blocks_duplicate_paid_schedule(
     monkeypatch.setattr(eval_runner, "AgentRunner", CrashingRunner)
     with pytest.raises(SystemExit, match="synthetic hard crash"):
         eval_runner.evaluate_suite(
-            PRIMARY_PILOT_SUITE,
+            suite_path,
             approve_live_cost=True,
             approved_execution_hash=preflight["execution_hash"],
         )
 
-    retry = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    retry = eval_runner.preflight_suite(suite_path)
     assert "EXPERIMENT_JOURNAL_EXISTS" in {
         row["code"] for row in retry["blockers"]
     }
@@ -1522,7 +1596,11 @@ def test_atomic_journal_claim_blocks_a_racing_paid_invocation(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    suite_path = _write_future_primary_suite(
+        tmp_path,
+        "future-primary-racing-claim",
+    )
+    preflight = eval_runner.preflight_suite(suite_path)
     journal_path = Path(preflight["journal_path"])
 
     def claim_journal_after_preflight(_preflight):
@@ -1549,7 +1627,7 @@ def test_atomic_journal_claim_blocks_a_racing_paid_invocation(
 
     with pytest.raises(ContractError, match="duplicate schedule ownership"):
         eval_runner.evaluate_suite(
-            PRIMARY_PILOT_SUITE,
+            suite_path,
             approve_live_cost=True,
             approved_execution_hash=preflight["execution_hash"],
         )
@@ -1564,13 +1642,17 @@ def test_environment_drift_after_preflight_stops_before_agent(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
+    suite_path = _write_future_primary_suite(
+        tmp_path,
+        "future-primary-environment-drift",
+    )
     commits = iter(["a" * 40, "a" * 40, "b" * 40])
     monkeypatch.setattr(
         eval_runner,
         "_git_state",
         lambda: {"available": True, "commit": next(commits), "clean": True},
     )
-    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
+    preflight = eval_runner.preflight_suite(suite_path)
 
     class ForbiddenRunner:
         def __init__(self):
@@ -1579,7 +1661,7 @@ def test_environment_drift_after_preflight_stops_before_agent(
     monkeypatch.setattr(eval_runner, "AgentRunner", ForbiddenRunner)
     with pytest.raises(ContractError, match="changed after the approved preflight"):
         eval_runner.evaluate_suite(
-            PRIMARY_PILOT_SUITE,
+            suite_path,
             approve_live_cost=True,
             approved_execution_hash=preflight["execution_hash"],
         )

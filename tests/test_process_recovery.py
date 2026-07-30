@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -12,6 +13,7 @@ from patchloop.state import StateStore
 
 TASK = Path("tasks/smoke/csv-quoted-newline/public.yaml").resolve()
 WORKER = Path("tests/_process_recovery_worker.py").resolve()
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _wait_for_json(path: Path, process: subprocess.Popen, timeout: float) -> dict:
@@ -57,6 +59,19 @@ def _worker_command(
     return command
 
 
+def _worker_environment() -> dict[str, str]:
+    """Make repository sources importable in a fresh, non-installed worker."""
+
+    environment = os.environ.copy()
+    existing = environment.get("PYTHONPATH")
+    environment["PYTHONPATH"] = (
+        f"{REPOSITORY_ROOT}{os.pathsep}{existing}"
+        if existing
+        else str(REPOSITORY_ROOT)
+    )
+    return environment
+
+
 def test_hard_kill_reclaims_running_patch_without_duplicate_mutation(
     tmp_path,
 ) -> None:
@@ -72,6 +87,7 @@ def test_hard_kill_reclaims_running_patch_without_duplicate_mutation(
             task=TASK,
         ),
         cwd=Path.cwd(),
+        env=_worker_environment(),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -106,6 +122,7 @@ def test_hard_kill_reclaims_running_patch_without_duplicate_mutation(
                 contender_path,
             ),
             cwd=Path.cwd(),
+            env=_worker_environment(),
             capture_output=True,
             text=True,
             timeout=30,
@@ -136,6 +153,7 @@ def test_hard_kill_reclaims_running_patch_without_duplicate_mutation(
                 resumed_path,
             ),
             cwd=Path.cwd(),
+            env=_worker_environment(),
             capture_output=True,
             text=True,
             timeout=120,

@@ -30,6 +30,16 @@ SYSTEM_PROMPT_V2 = (
     "The apply_patch tool accepts only a raw Git unified diff beginning with "
     "'diff --git'; never use '*** Begin Patch' or '*** End Patch' markers."
 )
+SYSTEM_PROMPT_V3 = (
+    SYSTEM_PROMPT_V2
+    + " The investigation_ledger is durable within-run repository evidence. "
+    "Consult it before searching or reading: do not repeat a recorded search "
+    "or a fully covered file range. A semantic-cache replay means no new "
+    "evidence was produced; change strategy when requested. Always obey "
+    "phase_contract.allowed_next_actions. When exploration is not admitted, "
+    "use the recorded evidence to advance to a patch or another allowed "
+    "phase-advancing action."
+)
 SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 
 

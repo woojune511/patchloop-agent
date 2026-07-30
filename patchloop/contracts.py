@@ -85,6 +85,7 @@ class EventType(StrEnum):
     SUBMISSION_REJECTED = "SubmissionRejected"
     SUBMISSION_ACCEPTED = "SubmissionAccepted"
     LOOP_DETECTED = "LoopDetected"
+    TOOL_ADMISSION_BLOCKED = "ToolAdmissionBlocked"
     CHECKPOINT_SAVED = "CheckpointSaved"
     FAILURE_TAGGED = "FailureTagged"
     FAULT_INJECTED = "FaultInjected"

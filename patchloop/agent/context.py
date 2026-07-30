@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from patchloop.agent.investigation import (
+    INVESTIGATION_LEDGER_SCHEMA,
+    build_investigation_ledger,
+)
 from patchloop.agent.phases import diff_bound_evidence
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
@@ -247,14 +251,66 @@ def _context_event(
     event: RunEvent,
     *,
     policy_version: str,
+    artifact_store: ArtifactStore | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None]:
     payload = dict(event.payload)
     artifact_path = payload.get("artifact_path")
     tool_result_evidence: dict[str, Any] | None = None
-    if event.type.value in {"ToolSucceeded", "ToolFailed"} and artifact_path:
+    result_event_types = {"ToolSucceeded", "ToolFailed"}
+    if policy_version == "phase-evidence-v4":
+        result_event_types.add("ToolReplayed")
+    if event.type.value in result_event_types and artifact_path:
         parsed_available = False
         try:
-            raw = Path(artifact_path).read_text(encoding="utf-8")
+            v4_inspection_outcome = (
+                event.payload.get("tool") in {"read_file", "search_files"}
+                and event.type
+                in {
+                    EventType.TOOL_SUCCEEDED,
+                    EventType.TOOL_FAILED,
+                    EventType.TOOL_REPLAYED,
+                }
+            )
+            v4_semantic_replay = (
+                event.type == EventType.TOOL_REPLAYED
+                and event.payload.get("semantic_replay") is True
+            )
+            if (
+                policy_version == "phase-evidence-v4"
+                and (v4_inspection_outcome or v4_semantic_replay)
+            ):
+                if artifact_store is None:
+                    raise RecoveryError(
+                        "phase-evidence-v4 requires the artifact store"
+                    )
+                try:
+                    result_artifact = Artifact.model_validate(
+                        event.payload.get("result_artifact")
+                    )
+                except ValueError as exc:
+                    raise RecoveryError(
+                        "v4 inspection outcome lacks a result artifact"
+                    ) from exc
+                if (
+                    event.payload.get("artifact_id")
+                    != result_artifact.artifact_id
+                    or event.payload.get("artifact_path")
+                    != result_artifact.path
+                ):
+                    raise RecoveryError(
+                        "v4 inspection outcome conflicts with its artifact"
+                    )
+                try:
+                    raw = artifact_store.read_bytes(result_artifact).decode(
+                        "utf-8",
+                        errors="strict",
+                    )
+                except UnicodeDecodeError as exc:
+                    raise RecoveryError(
+                        "v4 inspection outcome is not valid UTF-8"
+                    ) from exc
+            else:
+                raw = Path(artifact_path).read_text(encoding="utf-8")
             original_characters = len(raw)
             try:
                 if policy_version == "v1":
@@ -333,7 +389,11 @@ def build_context_with_evidence(
             for event in events[-RECENT_EVENT_LIMIT:]
             if event.type.value not in {"ContextBuilt", "ModelCalled"}
         ]
-    elif policy_version in {"phase-evidence-v2", "phase-evidence-v3"}:
+    elif policy_version in {
+        "phase-evidence-v2",
+        "phase-evidence-v3",
+        "phase-evidence-v4",
+    }:
         selected_events = eligible_events[-RECENT_EVENT_LIMIT:]
     else:
         raise ValueError(f"unsupported context policy: {policy_version}")
@@ -343,6 +403,7 @@ def build_context_with_evidence(
         rendered_event, tool_result_evidence = _context_event(
             event,
             policy_version=policy_version,
+            artifact_store=artifact_store,
         )
         recent.append(rendered_event)
         if tool_result_evidence is not None:
@@ -350,7 +411,11 @@ def build_context_with_evidence(
 
     phase = checkpoint.phase if checkpoint else Phase.INTAKE
     phase_contract = None
-    if policy_version in {"phase-evidence-v2", "phase-evidence-v3"}:
+    if policy_version in {
+        "phase-evidence-v2",
+        "phase-evidence-v3",
+        "phase-evidence-v4",
+    }:
         diff_hash = checkpoint.worktree_diff_hash if checkpoint else sha256_text("")
         readiness = diff_bound_evidence(
             task,
@@ -386,20 +451,51 @@ def build_context_with_evidence(
         ),
         default=0,
     )
-    repeat_events = [
-        {
+    repeat_events = []
+    for event in eligible_events:
+        if not (
+            event.type == EventType.LOOP_DETECTED
+            and event.sequence > latest_model_sequence
+        ):
+            continue
+        item = {
             "sequence": event.sequence,
             "tool": event.payload.get("tool"),
             "occurrences": event.payload.get("occurrences"),
             "enforcement": event.payload.get("enforcement"),
         }
+        if policy_version == "phase-evidence-v4":
+            item.update(
+                {
+                    "schema_version": event.payload.get("schema_version"),
+                    "reason_code": event.payload.get("reason_code"),
+                    "no_progress_streak": event.payload.get(
+                        "no_progress_streak"
+                    ),
+                    "strategy_change_required": event.payload.get(
+                        "strategy_change_required"
+                    ),
+                    "source_call_sequences": event.payload.get(
+                        "source_call_sequences"
+                    ),
+                }
+            )
+        repeat_events.append(item)
+    admission_blocks = [
+        {
+            "sequence": event.sequence,
+            "tool": event.payload.get("tool"),
+            "reason_codes": event.payload.get("reason_codes"),
+            "error_code": event.payload.get("error_code"),
+            "error_message": event.payload.get("error_message"),
+        }
         for event in eligible_events
-        if event.type == EventType.LOOP_DETECTED
+        if event.type == EventType.TOOL_ADMISSION_BLOCKED
         and event.sequence > latest_model_sequence
     ]
     rejected_mutation_retry = None
     rejected_mutation_retry_evidence = None
-    if policy_version == "phase-evidence-v3":
+    if policy_version in {"phase-evidence-v3", "phase-evidence-v4"}:
         (
             rejected_mutation_retry,
             rejected_mutation_retry_evidence,
@@ -407,10 +503,22 @@ def build_context_with_evidence(
             events,
             artifact_store=artifact_store,
         )
+    checkpoint_payload = (
+        checkpoint.model_dump(mode="json") if checkpoint else None
+    )
+    if (
+        policy_version == "phase-evidence-v4"
+        and checkpoint_payload is not None
+    ):
+        # The in-memory checkpoint and its SQLite round-trip must render
+        # byte-identically for request-by-request qualification.
+        checkpoint_payload = json.loads(
+            canonical_json(checkpoint_payload)
+        )
     payload = {
         "public_task": task.model_dump(mode="json"),
         "phase": phase.value,
-        "checkpoint": checkpoint.model_dump(mode="json") if checkpoint else None,
+        "checkpoint": checkpoint_payload,
         "recent_events": recent,
         "selected_memory": memory_text or None,
         "rules": {
@@ -430,8 +538,34 @@ def build_context_with_evidence(
             "selected_memory": payload["selected_memory"],
             "rules": payload["rules"],
         }
-        if policy_version == "phase-evidence-v3":
+        if policy_version in {"phase-evidence-v3", "phase-evidence-v4"}:
             payload["rejected_mutation_retry"] = rejected_mutation_retry
+        if policy_version == "phase-evidence-v4":
+            payload["execution_signals"][
+                "tool_admission_blocks"
+            ] = admission_blocks
+            if artifact_store is None:
+                raise RecoveryError(
+                    "phase-evidence-v4 requires the artifact store"
+                )
+            investigation_ledger = build_investigation_ledger(
+                task,
+                events,
+                checkpoint,
+                artifact_store,
+            )
+            payload["investigation_ledger"] = investigation_ledger
+            if (
+                phase_contract is not None
+                and not investigation_ledger["tail_policy"][
+                    "exploration_admitted"
+                ]
+            ):
+                phase_contract["allowed_next_actions"] = [
+                    action
+                    for action in phase_contract["allowed_next_actions"]
+                    if action not in {"read_file", "search_files"}
+                ]
     rendered = json.dumps(payload, indent=2, ensure_ascii=False, default=str)
     component_characters = {
         key: len(json.dumps(value, ensure_ascii=False, default=str))
@@ -444,7 +578,11 @@ def build_context_with_evidence(
             else (
                 "context-build-evidence-v2"
                 if policy_version == "phase-evidence-v2"
-                else "context-build-evidence-v3"
+                else (
+                    "context-build-evidence-v3"
+                    if policy_version == "phase-evidence-v3"
+                    else "context-build-evidence-v4"
+                )
             )
         ),
         "policy": {
@@ -468,10 +606,36 @@ def build_context_with_evidence(
     }
     if policy_version != "v1":
         evidence["policy"]["version"] = policy_version
-    if policy_version == "phase-evidence-v3":
+    if policy_version in {"phase-evidence-v3", "phase-evidence-v4"}:
         evidence["rejected_mutation_retry"] = (
             rejected_mutation_retry_evidence
         )
+    if policy_version == "phase-evidence-v4":
+        ledger = payload["investigation_ledger"]
+        evidence["investigation_ledger"] = {
+            "schema_version": INVESTIGATION_LEDGER_SCHEMA,
+            "content_hash": ledger["content_hash"],
+            "source_through_sequence": ledger[
+                "source_through_sequence"
+            ],
+            "mutation_epoch_sequence": ledger[
+                "mutation_epoch_sequence"
+            ],
+            "worktree_diff_hash": ledger["worktree_diff_hash"],
+            "search_count": len(ledger["searches"]),
+            "read_file_count": len(ledger["reads"]),
+            "detail_count": len(ledger["recent_details"]),
+            "semantic_replay_count": ledger["no_progress"][
+                "total_semantic_replays"
+            ],
+            "no_progress_streak": ledger["no_progress"]["streak"],
+            "strategy_change_required": ledger["no_progress"][
+                "strategy_change_required"
+            ],
+            "exploration_admitted": ledger["tail_policy"][
+                "exploration_admitted"
+            ],
+        }
     return BuiltContext(
         rendered=rendered,
         content_hash=sha256_text(rendered),

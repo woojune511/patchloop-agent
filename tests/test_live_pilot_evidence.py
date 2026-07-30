@@ -2152,3 +2152,434 @@ def test_primary_mini_campaign_evidence_has_no_private_or_provider_payload() -> 
     private_tokens = _private_leak_tokens(package, api_key=None)
     leaked = sorted(token for token in private_tokens if token in checked_text)
     assert leaked == []
+
+
+def test_corrective_primary_r2_is_current_trace_qualified_success() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-validation-gpt54mini-campaign-20260730-r2.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == "live-pilot-evidence-v8"
+    assert payload["execution_hash"] == (
+        "sha256:eb13280308f3f2642504da8493982543bb466d9bafaa5031b727dd4503003411"
+    )
+    assert payload["harness_commit"] == (
+        "624b1d0861f9907af0ca47d8fc25795d4923ca6d"
+    )
+
+    campaign = payload["campaign"]
+    assert campaign["expected_runs"] == campaign["completed_runs"] == 1
+    assert campaign["infrastructure_errors"] == 0
+    assert campaign["qualification_errors"] == 0
+    assert campaign["not_started_runs"] == 0
+    assert campaign["journal"]["hash_chain_valid"] is True
+    assert campaign["journal"]["result_exact_bytes_match"] is True
+
+    pilot = payload["pilot"]
+    assert pilot["run_id"] == "run_afd5080a77a34995"
+    assert pilot["max_model_calls"] == 21
+    assert pilot["outcome_kind"] == "resolved"
+    assert pilot["agent_submission_status"] == "completed"
+    assert pilot["evaluation_status"] == "completed"
+    assert pilot["scope_compliant_success"] is True
+    assert pilot["official"] is True
+    assert set(pilot["verdicts"].values()) == {"pass"}
+    assert pilot["usage"]["total_tokens"] == (
+        pilot["usage"]["input_tokens"] + pilot["usage"]["output_tokens"]
+    )
+    assert pilot["usage"]["model_cost_usd"] == pytest.approx(0.04973175)
+
+    trace = payload["trace_activity"]
+    assert sum(trace["tool_breakdown"].values()) == pilot["tool_calls"] == 8
+    assert trace["tool_breakdown"]["finish_task"] == 1
+    assert trace["raw_model_patch_sha256"] != (
+        trace["final_worktree_diff_sha256"]
+    )
+
+    telemetry = payload["prompt_token_integrity"]
+    assert telemetry["requested_input_tokens"] == (
+        telemetry["provider_reported_input_tokens"]
+    )
+    assert telemetry["exact_input_count_matches"] == (
+        telemetry["model_call_count"]
+    ) == 7
+    assert telemetry["completed_generation_count"] == 7
+    assert telemetry["incomplete_generation_count"] == 0
+    assert telemetry["truncation_mode"] == "disabled"
+    assert telemetry["provider_prompt_cut_observed"] is False
+
+    qualification = payload["trace_qualification"]
+    assert qualification["qualified"] is True
+    assert qualification["trace_integrity_passed"] is True
+    assert qualification["leakage_scan_passed"] is True
+    assert qualification["evaluation_reached"] is True
+    assert qualification["passed_check_count"] == qualification["check_count"] == 23
+
+    claims = payload["claims_boundary"]
+    assert claims["accepted_current_live_pilot"] is True
+    assert claims["development_campaign_pilot_gate_passed"] is True
+    assert claims["rejected_patch_recovery_observed"] is False
+    assert claims["cross_run_memory_effect_measured"] is False
+    assert payload["spend_to_date"]["all_paid_pilot_list_price_total_usd"] == (
+        pytest.approx(1.652716875)
+    )
+
+
+def test_corrective_primary_r2_artifacts_and_journal_are_hash_bound() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-validation-gpt54mini-campaign-20260730-r2.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    submitted = _artifact_for_role(payload, "final-submitted-git-diff")
+    _assert_artifact_identity(submitted)
+    assert submitted["sha256"] == payload["submitted_patch"]["patch_sha256"]
+
+    artifacts = payload["raw_local_artifacts"]
+    anchor = Path(artifacts[0]["path"])
+    if not anchor.is_file():
+        pytest.skip("raw local corrective-primary-r2 evidence is not bundled")
+
+    missing = [
+        artifact["path"]
+        for artifact in artifacts
+        if not Path(artifact["path"]).is_file()
+    ]
+    assert not missing
+    for artifact in artifacts:
+        _assert_artifact_identity(artifact)
+
+    raw_submitted = next(
+        artifact
+        for artifact in artifacts
+        if artifact["path"].endswith("/submitted.patch")
+    )
+    assert Path(submitted["path"]).read_bytes() == Path(
+        raw_submitted["path"]
+    ).read_bytes()
+
+    journal_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["path"].endswith(
+            "/dev-validation-gpt54mini-campaign-20260730-r2.jsonl"
+        )
+    )
+    journal_rows = [
+        json.loads(line)
+        for line in Path(journal_artifact["path"])
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    previous_hash = None
+    for expected_sequence, journal_row in enumerate(journal_rows, start=1):
+        recorded_hash = journal_row.pop("event_hash")
+        assert journal_row["sequence"] == expected_sequence
+        assert journal_row["previous_event_hash"] == previous_hash
+        assert sha256_text(canonical_json(journal_row)) == recorded_hash
+        previous_hash = recorded_hash
+    assert previous_hash == payload["campaign"]["journal"]["final_event_hash"]
+    assert journal_rows[-1]["payload"]["result_hash"] == sha256_bytes(
+        Path(artifacts[0]["path"]).read_bytes()
+    )
+
+    plan_artifact = next(
+        artifact
+        for artifact in artifacts
+        if "/experiments/plans/" in artifact["path"]
+    )
+    plan_payload = json.loads(
+        Path(plan_artifact["path"]).read_text(encoding="utf-8")
+    )
+    assert sha256_text(canonical_json(plan_payload)) == (
+        payload["campaign"]["execution_plan"]["canonical_content_hash"]
+    )
+
+    qualification = load_trace_qualification("run_afd5080a77a34995")
+    assert qualification["qualification_hash"] == (
+        payload["trace_qualification"]["qualification_hash"]
+    )
+    assert calculate_source_evidence_hash("run_afd5080a77a34995") == (
+        payload["trace_qualification"]["source_evidence_hash"]
+    )
+
+
+def test_corrective_primary_r2_evidence_has_no_private_or_provider_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-validation-gpt54mini-campaign-20260730-r2.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    checked_text += Path(payload["portable_artifacts"][0]["path"]).read_text(
+        encoding="utf-8"
+    )
+    package = load_task_package(
+        "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes"
+    )
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    assert sorted(token for token in private_tokens if token in checked_text) == []
+
+
+def test_no_memory_campaign_preserves_execution_failure_boundary() -> None:
+    path = Path(
+        "reports/memory-development/dev-no-memory-20260728.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "memory-development-campaign-evidence-v1"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:48c12899dcb4bacc13b582720df33ff402be38e5b601e130baab397b9dbe7809"
+    )
+    assert payload["pilot_gate"]["run_id"] == "run_afd5080a77a34995"
+    assert payload["pilot_gate"]["qualified"] is True
+
+    campaign = payload["campaign"]
+    assert campaign["expected_runs"] == campaign["completed_runs"] == 12
+    assert campaign["infrastructure_errors"] == 0
+    assert campaign["qualification_errors"] == 0
+    assert campaign["not_started_runs"] == 0
+    assert campaign["journal"]["hash_chain_valid"] is True
+    assert campaign["journal"]["result_exact_bytes_match"] is True
+
+    outcome = payload["aggregate_outcome"]
+    assert outcome["terminal_attempts"] == 12
+    assert outcome["resolved_runs"] == 0
+    assert outcome["agent_failure_runs"] == 12
+    assert outcome["evaluation_reached_runs"] == 0
+    assert outcome["trace_qualified_runs"] == 12
+    assert outcome["memory_candidate_eligible_runs"] == 12
+    assert outcome["human_reviewed_runs"] == 0
+    assert outcome["model_call_budget_exhaustions"] == 6
+    assert outcome["tool_call_budget_exhaustions"] == 6
+    assert outcome["terminal_phase_reproduce_runs"] == 12
+
+    usage = payload["aggregate_usage"]
+    assert usage["input_tokens"] == 1_544_366
+    assert usage["output_tokens"] == 52_204
+    assert usage["total_tokens"] == (
+        usage["input_tokens"] + usage["output_tokens"]
+    )
+    assert usage["model_calls"] == 231
+    assert usage["tool_calls"] == 563
+    assert usage["model_cost_usd"] == pytest.approx(1.3931925)
+
+    telemetry = payload["prompt_token_integrity"]
+    assert telemetry["exact_input_count_matches"] == (
+        telemetry["model_call_count"]
+    ) == 231
+    assert telemetry["completed_generation_count"] == 231
+    assert telemetry["incomplete_generation_count"] == 0
+    assert telemetry["truncation_disabled_count"] == 231
+    assert telemetry["provider_prompt_cut_observed"] is False
+
+    runs = payload["runs"]
+    assert len(runs) == 12
+    assert [run["order"] for run in runs] == list(range(1, 13))
+    assert len({run["run_id"] for run in runs}) == 12
+    assert len(
+        {
+            (run["task_id"], run["repetition"])
+            for run in runs
+        }
+    ) == 12
+    assert {run["outcome_kind"] for run in runs} == {"agent_failure"}
+    assert {run["evaluation_reached"] for run in runs} == {False}
+    assert {run["qualified"] for run in runs} == {True}
+    assert {run["memory_candidate_eligible"] for run in runs} == {True}
+    assert {run["review_status"] for run in runs} == {"unreviewed"}
+    assert sum(run["input_tokens"] for run in runs) == usage["input_tokens"]
+    assert sum(run["output_tokens"] for run in runs) == usage["output_tokens"]
+    assert sum(run["model_calls"] for run in runs) == usage["model_calls"]
+    assert sum(run["tool_calls"] for run in runs) == usage["tool_calls"]
+    assert sum(run["model_cost_usd"] for run in runs) == pytest.approx(
+        usage["model_cost_usd"]
+    )
+
+    review = payload["review_admission"]
+    assert review["machine_candidate_eligible_runs"] == 12
+    assert review["reviewed_runs"] == 0
+    assert review["automatically_admitted_to_memory_index"] == 0
+    claims = payload["claims_boundary"]
+    assert claims["campaign_execution_completed"] is True
+    assert claims["task_success_observed"] is False
+    assert claims["valid_no_memory_performance_baseline"] is False
+    assert claims["cross_run_memory_effect_measured"] is False
+
+
+def test_no_memory_campaign_raw_evidence_is_hash_bound_when_available() -> None:
+    path = Path(
+        "reports/memory-development/dev-no-memory-20260728.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    artifacts = payload["raw_local_artifacts"]
+    anchor = Path(artifacts[0]["path"])
+    if not anchor.is_file():
+        pytest.skip("raw local no-memory campaign evidence is not bundled")
+
+    missing = [
+        artifact["path"]
+        for artifact in artifacts
+        if not Path(artifact["path"]).is_file()
+    ]
+    assert not missing
+    for artifact in artifacts:
+        _assert_artifact_identity(artifact)
+
+    journal_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["path"].endswith("/dev-no-memory-20260728.jsonl")
+    )
+    journal_rows = [
+        json.loads(line)
+        for line in Path(journal_artifact["path"])
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    previous_hash = None
+    for expected_sequence, journal_row in enumerate(journal_rows, start=1):
+        recorded_hash = journal_row.pop("event_hash")
+        assert journal_row["sequence"] == expected_sequence
+        assert journal_row["previous_event_hash"] == previous_hash
+        assert sha256_text(canonical_json(journal_row)) == recorded_hash
+        previous_hash = recorded_hash
+    assert previous_hash == payload["campaign"]["journal"]["final_event_hash"]
+    assert journal_rows[-1]["payload"]["result_hash"] == sha256_bytes(
+        Path(artifacts[0]["path"]).read_bytes()
+    )
+
+    plan_artifact = next(
+        artifact
+        for artifact in artifacts
+        if "/experiments/plans/" in artifact["path"]
+    )
+    plan_payload = json.loads(
+        Path(plan_artifact["path"]).read_text(encoding="utf-8")
+    )
+    assert sha256_text(canonical_json(plan_payload)) == (
+        payload["campaign"]["execution_plan"]["canonical_content_hash"]
+    )
+    assert plan_payload["pilot_qualification"]["run_id"] == (
+        payload["pilot_gate"]["run_id"]
+    )
+    assert plan_payload["pilot_qualification"]["qualification_hash"] == (
+        payload["pilot_gate"]["qualification_hash"]
+    )
+
+    qualification_artifacts = {
+        Path(artifact["path"]).stem: artifact
+        for artifact in artifacts
+        if "/qualifications/" in artifact["path"]
+    }
+    assert len(qualification_artifacts) == 12
+    for run in payload["runs"]:
+        qualification = json.loads(
+            Path(qualification_artifacts[run["run_id"]]["path"]).read_text(
+                encoding="utf-8"
+            )
+        )
+        assert qualification["run_id"] == run["run_id"]
+        assert qualification["qualification_hash"] == run["qualification_hash"]
+        assert qualification["qualified"] is True
+        assert qualification["evaluation_reached"] is False
+        assert qualification["memory_candidate_eligible"] is True
+
+
+def test_no_memory_campaign_evidence_has_no_private_or_provider_payload() -> None:
+    path = Path(
+        "reports/memory-development/dev-no-memory-20260728.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    for task_id in {
+        run["task_id"]
+        for run in payload["runs"]
+    }:
+        package = load_task_package(f"tasks/dev-train/{task_id}")
+        private_tokens = _private_leak_tokens(package, api_key=None)
+        leaked = sorted(
+            token for token in private_tokens if token in checked_text
+        )
+        assert leaked == []

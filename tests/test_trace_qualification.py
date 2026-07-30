@@ -29,6 +29,7 @@ from patchloop.contracts import (
 )
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
+from patchloop.evals import qualification as qualification_module
 from patchloop.evals.failures import classify_failure
 from patchloop.evals.qualification import (
     _private_leak_tokens,
@@ -1425,6 +1426,38 @@ def test_v2_source_hash_binds_accepted_patch_cas_bytes(tmp_path) -> None:
     )
     with pytest.raises(ContractError, match="qualification is immutable"):
         qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
+
+
+def test_v4_source_schema_does_not_rewrite_historical_v3_hash(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        force_v3_contract=True,
+    )
+    original_hash = calculate_source_evidence_hash(
+        run_id,
+        root=tmp_path,
+    )
+
+    assert (
+        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V4
+        == "trace-source-evidence-v4"
+    )
+    with monkeypatch.context() as schema_patch:
+        schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V4",
+            "trace-source-evidence-v4-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                run_id,
+                root=tmp_path,
+            )
+            == original_hash
+        )
 
 
 def test_v2_source_hash_binds_patch_intent_preimage_bytes(

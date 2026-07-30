@@ -12,7 +12,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-047 offline-complete; corrective primary r2 paid gate pending`이다.
+- 현재 milestone은 `phase-evidence-v4 investigation continuity offline gate`다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -58,11 +58,12 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   counter 재계산, `model → tool → wall` 우선순위, request CAS, actor와 terminal 결속,
   tamper와 unversioned generic 거부를 검증한다. 앞으로의 primary, memory-development와
   core는 모든 조건에 같은 총 21 model-call 상한을 사용하며 21번째 call은 `finish_task`
-  전용 reserve가 아니다. Historical r1은 20-call로 그대로 남는다. Corrective r2는 새
-  experiment ID와 clean execution hash, 명시적 $2 승인 전에는 실행하지 않고, evaluator와
-  qualification을 통과하기 전에는 memory-development campaign을 실행하지 않는다. 이
-  offline gate는 571 collected, 569 passed/2 skipped와 repository-wide Ruff,
-  `git diff --check` evidence로 닫혔고 provider call은 발생하지 않았다.
+  전용 reserve가 아니다. Historical r1은 20-call로 그대로 남는다. Corrective r2
+  `run_afd5080a77a34995`는 별도 승인 아래 실행되어 official evaluator와
+  `trace-qualification-v2` 23/23을 통과했다. 이어 실행한 immutable 12-run
+  `dev-no-memory-20260728`은 12/12 trace qualification을 통과했지만 모두 `REPRODUCE`에서
+  call budget을 소진해 evaluator 도달 0/12였다. 이 결과는 memory baseline이 아니라
+  stateless investigation-continuity failure evidence다.
 - Docker 공식 evaluator smoke와 calibration 5/5, SWE-style research admission 20/20을 완료했다.
   Memory-development lane은 6/6, development-validation lane은 2/2, core-same-repo lane은
   6/6, core-cross-repo lane은 6/6이다. 세 stress sentinel과 30-run fault schedule을
@@ -94,11 +95,13 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   provider에서 정확히 한 번 실행한 `run_0ad8676d42614fbf`는 official task success와
   qualified trace를 남겼지만 rejection이 없어 D-037에는 inconclusive다. 사용량은
   121,366 input + 9,913 output token, 계산상 `$0.135633`이며 재실행하지 않는다.
-  실제 subprocess hard-kill 뒤 stale
-  `RUNNING` reclaim은 offline test만 통과했으며, tool-v2/context-v3 primary mini r1은
-  terminal agent/qualification failure다. D-047 offline gate는 완료됐지만 corrective
-  primary r2 provider run은 아직 실행하지 않았다. Stress schedule, 12-run development
-  campaign과 96-run core campaign도 완료되지 않았다.
+  실제 subprocess hard-kill 뒤 stale `RUNNING` reclaim은 offline test만 통과했다.
+  새 `phase-evidence-v4`는 active mutation epoch의 search/read CAS를 매 turn
+  `investigation-ledger-v1`로 재구성하고 nominal corrective tail 전에는 exact search와
+  fully-covered read를 semantic replay한다. Tail에서는 semantic-replay 대상까지 모든
+  valid read/search admission을 차단한다.
+  기존 v1-v3 trace는 소급 재해석하지 않는다. 다음 paid gate는 새 v4 pilot 한 번이며,
+  그 전에는 새 12-run campaign이나 96-run core campaign을 실행하지 않는다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

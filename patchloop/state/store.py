@@ -660,6 +660,129 @@ class StateStore:
                 )
             connection.commit()
 
+    def complete_nonexecuted_action(
+        self,
+        run_id: str,
+        action_id: str,
+        input_hash: str,
+        result: ToolResult,
+        *,
+        event_specs: list[tuple[EventType, str, dict]],
+    ) -> None:
+        """Atomically close a replayed or admission-blocked tool request."""
+
+        allowed_shapes = {
+            (
+                EventType.TOOL_CALLED,
+                EventType.LOOP_DETECTED,
+                EventType.TOOL_REPLAYED,
+            ),
+            (EventType.TOOL_ADMISSION_BLOCKED,),
+        }
+        event_types = tuple(item[0] for item in event_specs)
+        if event_types not in allowed_shapes:
+            raise ValueError("invalid nonexecuted action event lifecycle")
+        if result.action_id != action_id:
+            raise ValueError("tool result belongs to a different action")
+        if (
+            event_types[-1] == EventType.TOOL_REPLAYED
+            and result.status != "succeeded"
+        ):
+            raise ValueError("semantic replay requires a successful result")
+        if (
+            event_types[-1] == EventType.TOOL_ADMISSION_BLOCKED
+            and result.status != "rejected"
+        ):
+            raise ValueError("tool admission block requires a rejected result")
+
+        result_json = canonical_json(result.model_dump(mode="json"))
+        relevant_types = {
+            EventType.TOOL_CALLED,
+            EventType.LOOP_DETECTED,
+            EventType.TOOL_REPLAYED,
+            EventType.TOOL_ADMISSION_BLOCKED,
+        }
+        with self._lock, self._connect() as connection:
+            connection.execute("BEGIN IMMEDIATE")
+            existing_result = connection.execute(
+                "SELECT input_hash, result_json FROM action_results "
+                "WHERE run_id = ? AND action_id = ?",
+                (run_id, action_id),
+            ).fetchone()
+            if existing_result is None:
+                connection.execute(
+                    "INSERT INTO action_results("
+                    "run_id, action_id, input_hash, result_json) VALUES (?, ?, ?, ?)",
+                    (run_id, action_id, input_hash, result_json),
+                )
+            elif existing_result["input_hash"] != input_hash:
+                raise ActionConflict(
+                    f"action {action_id} was reused with different input"
+                )
+            elif existing_result["result_json"] != result_json:
+                raise ActionConflict(
+                    f"action {action_id} was completed with a different result"
+                )
+
+            rows = connection.execute(
+                "SELECT event_json FROM events WHERE run_id = ? ORDER BY sequence",
+                (run_id,),
+            ).fetchall()
+            relevant = [
+                event
+                for event in (
+                    RunEvent.model_validate_json(row["event_json"])
+                    for row in rows
+                )
+                if event.correlation_id == action_id
+                and event.type in relevant_types
+            ]
+            if [event.type for event in relevant] != list(
+                event_types[: len(relevant)]
+            ):
+                raise RecoveryError(
+                    f"action {action_id} has an invalid nonexecuted event prefix"
+                )
+            for event, (_, actor, payload) in zip(
+                relevant,
+                event_specs[: len(relevant)],
+                strict=True,
+            ):
+                if event.actor != actor or event.payload != payload:
+                    raise RecoveryError(
+                        f"action {action_id} nonexecuted evidence conflicts"
+                    )
+
+            row = connection.execute(
+                "SELECT COALESCE(MAX(sequence), 0) AS value "
+                "FROM events WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+            sequence = int(row["value"])
+            for event_type, actor, payload in event_specs[len(relevant) :]:
+                sequence += 1
+                event = RunEvent(
+                    event_id=f"evt_{uuid.uuid4().hex}",
+                    run_id=run_id,
+                    sequence=sequence,
+                    type=event_type,
+                    timestamp=utc_now(),
+                    actor=actor,
+                    correlation_id=action_id,
+                    payload=payload,
+                )
+                connection.execute(
+                    "INSERT INTO events(run_id, sequence, event_id, event_json) "
+                    "VALUES (?, ?, ?, ?)",
+                    (
+                        run_id,
+                        sequence,
+                        event.event_id,
+                        canonical_json(event.model_dump(mode="json")),
+                    ),
+                )
+            connection.commit()
+
     def get_action_result(self, run_id: str, action_id: str, input_hash: str) -> ToolResult | None:
         with self._connect() as connection:
             row = connection.execute(

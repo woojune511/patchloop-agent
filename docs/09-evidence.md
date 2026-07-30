@@ -17,8 +17,10 @@ The terminal Terra r3 suite remains byte-preserved as
 but preflight-blocked with `HISTORICAL_SUITE_IMMUTABLE`. The historical no-fault primary r1 contract is
 `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`. Its approved execution hash was
 consumed exactly once by the terminal r1 described below; the suite must not be rerun.
-The corrective contract is
-`experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`; it has not been run.
+The corrective contract
+`experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml` was later consumed exactly once by
+the accepted primary r2 described below. The first `experiments/dev-no-memory.template.yaml`
+campaign was also consumed and is immutable.
 Contract/qualification targeted tests passed 137/137, and the full offline suite passed
 534 with 2 skips. Ruff and `git diff --check` also passed.
 
@@ -73,14 +75,96 @@ unversioned generic blocks. A complete synthetic v2 terminal trace qualifies as
 `agent_failure`; it does not reach the evaluator or count as task success. Runtime evidence allows
 21 generations and blocks the 22nd before input counting or provider generation.
 
-All consumed Terra pilot IDs, mini r1/r2 and D-037 r3-r6 experiment IDs are now
-preflight-immutable even if an approval hash is supplied. The new corrective primary r2 suite is
-the only runnable primary pilot contract in this lane. It has not been invoked, so there is no
-provider run ID, usage, cost, task verdict or evaluator evidence.
+All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r1/r2 and the first
+12-run experiment ID are now preflight-immutable even if an approval hash is supplied. The next
+runnable primary contract is
+`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`; no provider call has been
+made for that v4 suite.
 
 Offline verification collected 571 tests and completed 569 passes with 2 existing skips. The three
 directly affected runtime/qualification/experiment files contributed 238 passes. Repository-wide
 Ruff checks and `git diff --check` passed. No provider call was made while producing this evidence.
+
+## D-048 primary r2 and first campaign evidence
+
+Corrective primary r2 execution hash
+`sha256:eb13280308f3f2642504da8493982543bb466d9bafaa5031b727dd4503003411`
+was consumed exactly once by `run_afd5080a77a34995` on harness commit
+`624b1d0861f9907af0ca47d8fc25795d4923ca6d`.
+
+| Boundary | Observed |
+| --- | --- |
+| Provider/model | `gpt-5.4-mini-2026-03-17`, medium, default tier |
+| Usage | 7 model calls, 8 tool calls, 39,171 input + 4,523 output token; `$0.04973175` |
+| Submission | one prepared/applied/submitted patch, exact submitted diff preserved |
+| Evaluator | official hidden/regression/scope/safety and all policy verdicts pass |
+| Qualification | `trace-qualification-v2` 23/23, evaluator reached, source evidence bound |
+
+The portable
+[primary r2 evidence record](../reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r2.json)
+and [submitted patch](../reports/live-pilot/artifacts/run_afd5080a77a34995-submitted.patch)
+preserve this accepted-pilot boundary without bundling raw provider payloads or private evaluator
+details.
+
+The separately approved `dev-no-memory-20260728` execution hash
+`sha256:48c12899dcb4bacc13b582720df33ff402be38e5b601e130baab397b9dbe7809`
+then completed all 12 scheduled rows on the same model/budget contract.
+
+| Boundary | Observed |
+| --- | --- |
+| Matrix | 6 memory-development tasks × 2 repetitions, `no_memory`, 12/12 terminal |
+| Qualification | 12/12 structurally qualified `agent_failure`; zero infrastructure or qualification errors |
+| Evaluator | 0/12 reached; zero submitted patches |
+| Usage | 231 model calls, 563 tool calls, 1,544,366 input + 52,204 output token; `$1.3931925` |
+| Activity | 405 searches, 157 reads, one unsuccessful apply attempt; no `PatchPrepared` or `PatchApplied` |
+| Terminal | six model-call-cap and six tool-call-cap failures |
+
+This is not a no-memory performance baseline and is not automatically admitted to the memory
+index. Across 562 read/search inspections, 216 were exact nonconsecutive duplicates and another 60
+reads were fully covered by prior successful ranges. The portable
+[campaign evidence record](../reports/memory-development/dev-no-memory-20260728.json) preserves the
+12 row outcomes and claims boundary.
+
+## D-048 investigation-continuity offline contract
+
+Fresh non-replay manifests now use `phase-evidence-v4`. Each model turn receives a bounded
+`investigation-ledger-v1` rebuilt from append-only events, the latest checkpoint and verified
+successful read/search CAS in the active mutation epoch. Exact searches and fully-covered reads
+still consume one model action and one `ToolCalled`, but skip filesystem dispatch and close with
+`LoopDetected(investigation-loop-v1)` plus `ToolReplayed(tool-replayed-v2)`. Two consecutive
+no-progress observations set `strategy_change_required=true`.
+
+The nominal corrective tail is `4 + 2 × visible-check count` tool calls and three model calls plus
+one feedback call. Once that threshold is reached, all otherwise valid read/search requests,
+including requests eligible for semantic replay, are rejected by
+`ToolAdmissionBlocked(tool-admission-blocked-v1)` before `ToolCalled`; apply, registered checks,
+diff review and submission remain available. The context policy projects the imminent model
+generation before advertising read/search, matching the gateway counter after that generation is
+recorded. Qualification reconstructs every v4 request ledger and rendered context from preceding
+event/checkpoint/CAS evidence. A separate `investigation_lifecycle` check independently verifies
+semantic-replay ordering, source identities, no-progress streaks, admission counters and the
+absence of a correlated `ToolCalled` after an admission block. Replay/admission CAS is bound by
+`trace-source-evidence-v4`, including the otherwise nested admission input bytes, and the same
+bytes participate in the private-token scan. Shared admission/dispatch validation rejects bad
+types, missing read targets and symlink escapes before a tail block can mask them. Event-time
+resolved path and target bytes are frozen in `inspection-admission-preflight-v1`; qualification
+uses that CAS instead of the mutable terminal workspace. Orphaned replay lifecycles, removed
+semantic markers and replay of a truncated search fail closed. V1-v3 rendering, source
+evidence and historical qualification hashes are unchanged. This policy is within-run repository
+evidence applied identically to all four cross-run memory conditions; it does not add hypotheses,
+solutions or reference/private data.
+
+The final offline regression on 2026-07-30 collected 610 tests and completed with 607 passed,
+0 failed and 3 environment-dependent skips in 352.2 seconds. The v4 context/gateway/state/
+qualification subset and the 85-test agent-runtime suite also passed independently; Ruff and
+`git diff --check` were clean. These are harness-integrity results, not provider or task-success
+measurements.
+
+No provider call was made for this offline change. The next paid gate is a clean-hash preflight of
+`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`. Only a separately approved
+pilot that reaches the evaluator and passes both `investigation_evidence` and
+`investigation_lifecycle` may populate
+`experiments/dev-no-memory-v4.template.yaml`.
 
 ## Latest paid diagnostic evidence
 
@@ -107,9 +191,10 @@ machine-readable
 [r6 evidence record](../reports/live-pilot/dev-validation-gpt54mini-d037-20260730-r6.json)
 separates the controlled intervention, official task outcome and claims boundary, and includes
 distinct rejected and accepted public-source patches. Through r6, six mini runs totaled
-`$0.62150025`; including terminal primary r1, seven mini runs total `$0.77412075` and all ten paid
-pilots total `$1.602985125` at configured list prices. Invoice and free-usage treatment remain
-unverified.
+`$0.62150025`; including terminal primary r1, seven mini runs totaled `$0.77412075` and the ten
+paid pilots then totaled `$1.602985125`. Corrective primary r2 later brought eleven paid pilots to
+`$1.652716875`; the first 12-run campaign brings all 23 paid attempts to `$3.045909375` at
+configured list prices. Invoice and free-usage treatment remain unverified.
 
 Post-capture verification passed all 27 live-evidence tests against the local raw artifacts,
 including journal/result/CAS hash binding and private/provider-payload exclusion. Ruff and
@@ -1138,8 +1223,9 @@ trace integrity and leakage passed, private match count was zero, usage reconcil
 source-evidence hash is
 `sha256:84079a25b6b3cdc84df440e8e5a943aaa462eafb161b1fc487f221cc97f0b451`.
 This does **not** mean the pilot passed its acceptance gate. No submitted patch or evaluator verdict
-exists and `evaluation_reached=false`; the development-campaign consumer therefore rejects this
-run and the 12-run campaign remains locked.
+exists and `evaluation_reached=false`; at that checkpoint the development-campaign consumer
+rejected this run and the first 12-run campaign remained locked. Later primary r2 evidence and the
+subsequent campaign are documented in D-048 above.
 
 The model emitted nine `apply_patch` candidates, seven of them byte-distinct. Eight reached the
 gateway and all eight failed with `corrupt patch`; the ninth was produced in the response that
@@ -1218,10 +1304,10 @@ The checked-in
 [raw applied model patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11-applied-model-candidate.patch)
 and [final submitted patch](../reports/live-pilot/artifacts/run_3cb86f8d70094a11-submitted.patch)
 separate the provider tool argument from the final evaluator input and bind the ignored raw
-artifacts by SHA-256. This is an accepted single-task live pilot. It unlocks the pilot prerequisite
-under the then-current v1 contract, but it does not unlock the current tool-v2/context-v3 campaign
-gate. A new separately approved primary mini pilot is required. It is not a 12-run result or evidence that
-memory improves performance.
+artifacts by SHA-256. This is an accepted single-task live pilot. It unlocked the pilot prerequisite
+under the then-current v1 contract, but it does not unlock the current tool-v2/context-v4 campaign
+gate. A new separately approved v4 primary mini pilot is required. It is not a 12-run result or
+evidence that memory improves performance.
 
 ## Mini model-candidate r1/r2 evidence
 
@@ -1408,9 +1494,10 @@ failure record, patch intent/candidate and terminal request evidence by SHA-256.
 agent-generated public-source candidate patch is bundled; it was not submitted or accepted. The
 four-mini subtotal through r4 was `$0.32007075`. Terminal r5 raised the mini subtotal to
 `$0.45570375`; controlled r6 raises it to `$0.62150025`. Terminal primary r1 later raises the mini
-subtotal to `$0.77412075`, and all ten paid pilots total `$1.602985125` at configured list prices.
-Invoice charges and free daily usage treatment remain
-unverified.
+subtotal to `$0.77412075`; the ten paid pilots then totaled `$1.602985125` at configured list
+prices. Corrective primary r2 later brought eleven paid pilots to
+`$1.652716875`; the first 12-run campaign brings all 23 paid attempts to `$3.045909375`.
+Invoice charges and free daily usage treatment remain unverified.
 
 Executed evidence:
 
@@ -1552,18 +1639,22 @@ campaign quality. The consumed suite/hash/run are immutable and must not be reru
 
 ## Open gates
 
-`patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator image;
-`official_evaluation_ready=true`. The dataset freeze is complete and the accepted pilot is
-historical v1 evidence, but the tool-v2/context-v3 development and stress campaigns are not complete:
-the context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
+`patchloop doctor` now passes with authenticated `gh`, WSL2, Docker Desktop and the pinned evaluator
+image; `official_evaluation_ready=true`. The dataset freeze is complete. Corrective primary r2 is
+accepted immutable evidence, and the first 12-run campaign completed without infrastructure or
+qualification errors, but evaluator arrival was 0/12. That campaign is preserved as investigation
+loop evidence rather than a no-memory performance baseline or memory-index source.
+
+D-048 tool-v2/context-v4 investigation continuity is offline-complete. The next step is a clean
+no-call preflight of
+`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`, exact execution-hash review
+and separate $2 approval. Only that fresh pilot may unlock
+`experiments/dev-no-memory-v4.template.yaml`, which then needs its own hash review and $20 approval.
+No v4 provider pilot or v4 12-run campaign has run.
+
+The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
 subprocess E2E has exercised actual process termination and fresh-interpreter stale-`RUNNING`
-reclaim. The timeout path remains a synthetic timeout on the first registered visible check.
-Rejected mutating-tool input rehydration is offline-qualified and was exercised live once by the
-controlled r6 diagnostic. R4 remains a terminal budget failure and zero-rejection r5 remains
-terminal inconclusive; neither is rerun or reinterpreted. R6 validates the harness branch but not a
-natural recovery rate. Fault-free primary r1 is now terminal call-budget evidence, not an accepted
-pilot. D-047 offline tail-call and deterministic next-generation budget-terminal hardening is
-complete. The next step is a clean r2 no-call preflight, exact execution-hash review and separate
-$2 approval, followed by exactly one corrective provider run. R2 has not run. No stress schedule
-row, 12-run development campaign or 96-run core campaign has been executed.
+reclaim. The timeout path remains synthetic on the first registered visible check. No stress
+schedule row or 96-run core campaign has been executed. Rejected mutating-tool input rehydration
+has offline qualification and one controlled live exercise, but no natural recovery-rate evidence.

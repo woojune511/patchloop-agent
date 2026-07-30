@@ -182,6 +182,14 @@ Logical storage layout은 source repository와 분리한다.
   structured reason을 첫 후속 request에만 넣는다. 이 bytes는 checkpoint나 대상 repository에
   복사하지 않는다. Full request와 output allowance가 token budget을 넘으면 request CAS와
   `ModelGenerationBlocked`를 남기고 provider generation 전에 fail-closed한다.
+- `phase-evidence-v4`는 v3를 상속하면서 active mutation epoch의 successful read/search
+  input·result CAS를 `investigation-ledger-v1`로 매 turn 재계산한다. Checkpoint에 별도
+  mutable ledger를 저장하지 않으므로 context reset과 worker restart가 같은 append-only
+  evidence를 다시 소비한다. Exact search와 fully-covered read는 source CAS body를
+  `ToolReplayed`로 다시 제시하며 underlying filesystem dispatch를 생략한다.
+- V4 tail admission은 남은 model/tool call이 nominal corrective lifecycle에 도달하면
+  read/search만 `ToolAdmissionBlocked`로 gateway dispatch 전에 닫는다. Mutation,
+  registered check, final diff와 submission action은 이 정책의 차단 대상이 아니다.
 - D-041 r5에서도 generation admission은 exact input과 full per-call allowance가 남은 total
   budget에 함께 들어가야 한다는 strict rule을 유지한다. 새 exact-request no-generation
   event payload는 `model-generation-block-v1`로 versioning한다. 이 versioned terminal block은 retry
@@ -262,10 +270,14 @@ Agent image와 evaluator image는 별도 digest로 versioning한다. Hidden task
 
 - Tool error, timeout, policy rejection을 model-visible structured result와 durable event 양쪽에 남긴다.
 - Raw stdout/stderr가 잘리면 `truncated: true`, original byte count, artifact locator를 남긴다.
-- 같은 normalized tool call이 연속 반복되면 loop signal을 발생시킨다.
+- V1-v3에서 같은 normalized tool call이 연속 반복되면 advisory loop signal을 발생시킨다.
 - 일반 반복은 `LoopDetected(enforcement=advisory)`로, 최근-event window에서 밀려나도
   현재 model turn의 signal을 별도 `execution_signals`에 넣어 다음 context에 제공한다. 동일한
   timed-out registered check는 다시 실행하지 않고 structured environment failure로 종료한다.
+- V4는 active mutation epoch 전체에서 비연속 exact search와 interval-union으로 완전히
+  덮인 read도 감지한다. `investigation-loop-v1`과 exact semantic replay를 남기며 두 번째
+  연속 no-progress부터 strategy change를 요구한다. 새로운 query나 uncovered range를
+  hard block하지 않는다.
 - 제출 조건 미충족은 `SubmissionRejected`와 model-visible tool result로 돌려주며 두 번까지
   복구할 수 있다. 세 번째 rejection은 deterministic `premature-stop`이다.
 - Registered check가 tracked worktree를 바꾸면 `ToolFailed` artifact와 usage를 먼저

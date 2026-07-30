@@ -1,0 +1,254 @@
+{
+  "schema_version": "live-pilot-evidence-v8",
+  "recorded_at": "2026-07-30T01:23:33.214405Z",
+  "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+  "harness_commit": "624b1d0861f9907af0ca47d8fc25795d4923ca6d",
+  "execution_hash": "sha256:eb13280308f3f2642504da8493982543bb466d9bafaa5031b727dd4503003411",
+  "campaign": {
+    "purpose": "development-validation-live-pilot",
+    "suite_hash": "sha256:d437089b494c4cc38185e81246ba5935376f46632b109290d180a70329b790b1",
+    "schedule_hash": "sha256:1cb76a3c6bf53b2a57ea9d1df1b1483c43b4ab33d4f778d8e3fd451e3f814f0e",
+    "schedule_row_id": "sha256:bdc5914dbd1f6dd5513f2c46d5e083a6cf9f4b253a54aff31d259dcb4da7467b",
+    "expected_runs": 1,
+    "completed_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "not_started_runs": 0,
+    "halt_reason": null,
+    "execution_plan": {
+      "canonical_content_hash": "sha256:3041aca16206e967a0ba3971bf2a9335f7a703e7445606cba7148051192d9bc6",
+      "persisted_file_sha256": "sha256:fa90b57345bd6a40aef220f52b653d03cbb9aa878a5455e4ff6d526a40c2745d"
+    },
+    "journal": {
+      "event_count": 4,
+      "hash_chain_valid": true,
+      "last_event_hash_before_completion": "sha256:b52776b65c1b5f2d052c5fc237418891f8651e76c090ea9d01e5e4236ea4224f",
+      "final_event_hash": "sha256:cdc28ab9b4c97f35368283dc2efcbe9ae15c9a411b0d01bda278cb13f376591b",
+      "result_hash": "sha256:c54b5daab8077a12379db6fe4be09a3913ae3e627a21c2302d4b24b7d4433be9",
+      "result_exact_bytes_match": true
+    }
+  },
+  "pilot": {
+    "run_id": "run_afd5080a77a34995",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "max_total_tokens": 200000,
+    "max_model_calls": 21,
+    "max_tool_calls": 50,
+    "outcome_kind": "resolved",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "scope_compliant_success": true,
+    "official": true,
+    "event_count": 52,
+    "checkpoint_count": 9,
+    "worker_claim_count": 1,
+    "model_calls": 7,
+    "input_token_count_calls": 7,
+    "tool_calls": 8,
+    "tool_failures": 0,
+    "patch_prepared_events": 1,
+    "patch_applied_events": 1,
+    "review_recorded_events": 1,
+    "submission_attempted_events": 1,
+    "submission_accepted_events": 1,
+    "usage": {
+      "input_tokens": 39171,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 4523,
+      "reasoning_output_tokens": 4002,
+      "total_tokens": 43694,
+      "remaining_total_tokens": 156306,
+      "model_cost_usd": 0.04973175,
+      "wall_clock_ms": 49417
+    },
+    "verdicts": {
+      "hidden_tests": "pass",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass",
+      "dependency_policy": "pass",
+      "test_tampering_policy": "pass",
+      "public_api_policy": "pass"
+    }
+  },
+  "trace_activity": {
+    "tool_breakdown": {
+      "search_files": 2,
+      "read_file": 2,
+      "apply_patch": 1,
+      "run_check": 1,
+      "get_diff": 1,
+      "finish_task": 1
+    },
+    "registered_check_attempts": 1,
+    "registered_check_passes": 1,
+    "mutation_attempts": 1,
+    "submission_attempts": 1,
+    "finish_task_calls": 1,
+    "evaluator_runs": 1,
+    "terminal_phase": "DONE",
+    "changed_files": [
+      "babel/numbers.py"
+    ],
+    "added_lines": 8,
+    "deleted_lines": 1,
+    "raw_model_patch_sha256": "sha256:7f355ccfe6b81ddbc9164f4ea42f8f2e5a70104a651f3b2fa8c30602e57eea1f",
+    "final_worktree_diff_sha256": "sha256:52aa986336a13cddc12141b55e96b56f81e1ab43b5493dd633ea262055e96993"
+  },
+  "prompt_token_integrity": {
+    "model_call_count": 7,
+    "input_token_count_call_count": 7,
+    "requested_input_tokens": [
+      1968,
+      3974,
+      5854,
+      6946,
+      6330,
+      7151,
+      6948
+    ],
+    "provider_reported_input_tokens": [
+      1968,
+      3974,
+      5854,
+      6946,
+      6330,
+      7151,
+      6948
+    ],
+    "exact_input_count_matches": 7,
+    "total_token_count_matches": 7,
+    "completed_generation_count": 7,
+    "incomplete_generation_count": 0,
+    "truncation_mode": "disabled",
+    "provider_prompt_cut_observed": false,
+    "previous_response_id_used_count": 0,
+    "store_true_count": 0,
+    "maximum_context_policy_omitted_event_count": 18,
+    "total_context_policy_omitted_event_count": 45,
+    "truncated_tool_result_count": 0
+  },
+  "submitted_patch": {
+    "patch_sha256": "sha256:52aa986336a13cddc12141b55e96b56f81e1ab43b5493dd633ea262055e96993",
+    "diff_sha256": "sha256:52aa986336a13cddc12141b55e96b56f81e1ab43b5493dd633ea262055e96993",
+    "raw_model_patch_sha256": "sha256:7f355ccfe6b81ddbc9164f4ea42f8f2e5a70104a651f3b2fa8c30602e57eea1f",
+    "official_evaluator_input": true,
+    "patch_applied_exactly_once": true,
+    "raw_model_patch_is_final_submitted_diff": false
+  },
+  "trace_qualification": {
+    "schema_version": "trace-qualification-v2",
+    "qualified": true,
+    "trace_integrity_passed": true,
+    "leakage_scan_passed": true,
+    "evaluation_reached": true,
+    "check_count": 23,
+    "passed_check_count": 23,
+    "failed_check_names": [],
+    "memory_candidate_eligible": false,
+    "qualification_hash": "sha256:63a2cd73e999c69f79e23378071811259e3573d2d5672e2caa0cd66a22de5bc5",
+    "source_evidence_hash": "sha256:e0a03ed48391a1b41e88fb35c13bf373147ce171e5c9ae3623008e37e0e61ab3",
+    "runtime_contract_content_hash": "sha256:3a8134761cd77ba02b543fb5a212e578499b530e1f0997398c186d87ec54e8ff"
+  },
+  "spend_to_date": {
+    "historical_mini_lane_before_r2_usd": 0.77412075,
+    "corrective_primary_r2_usd": 0.04973175,
+    "mini_lane_cumulative_usd": 0.8238525,
+    "historical_terra_lane_cumulative_usd": 0.828864375,
+    "all_paid_pilot_list_price_total_usd": 1.652716875,
+    "approved_primary_r2_cap_usd": 2.0,
+    "invoice_charge_verified": false,
+    "free_daily_usage_applied": "unknown"
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; raw provider payloads and evaluator-only details are not bundled in a clean checkout.",
+    "portable_artifacts": "Only the public-source final submitted diff is bundled.",
+    "campaign_boundary": "This record proves the one-run primary pilot lifecycle and gate. The later 12-run memory-development campaign is preserved in a separate evidence record."
+  },
+  "portable_artifacts": [
+    {
+      "role": "final-submitted-git-diff",
+      "path": "reports/live-pilot/artifacts/run_afd5080a77a34995-submitted.patch",
+      "bytes": 1118,
+      "sha256": "sha256:52aa986336a13cddc12141b55e96b56f81e1ab43b5493dd633ea262055e96993"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-gpt54mini-campaign-20260730-r2.json",
+      "bytes": 11040,
+      "sha256": "sha256:c54b5daab8077a12379db6fe4be09a3913ae3e627a21c2302d4b24b7d4433be9"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-gpt54mini-campaign-20260730-r2.jsonl",
+      "bytes": 2735,
+      "sha256": "sha256:226861a425c73b94f4019b93c64ea8d9ded546dfb030931df9b704abfbbc5ffa"
+    },
+    {
+      "path": ".patchloop/experiments/plans/eb13280308f3f2642504da8493982543bb466d9bafaa5031b727dd4503003411.json",
+      "bytes": 5487,
+      "sha256": "sha256:fa90b57345bd6a40aef220f52b653d03cbb9aa878a5455e4ff6d526a40c2745d"
+    },
+    {
+      "path": ".patchloop/qualifications/run_afd5080a77a34995.json",
+      "bytes": 8049,
+      "sha256": "sha256:d139bce5340ac190f50e6f49829b17bcdb9b7cd9d4a1c6ee6f8589c187250fcd"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_afd5080a77a34995/manifest.json",
+      "bytes": 2360,
+      "sha256": "sha256:e4636516f3115480a4b8684f7276d0aee6ce6c22c554f4d169ede6836c42b5b7"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_afd5080a77a34995/result.json",
+      "bytes": 4960,
+      "sha256": "sha256:324b0bb2e90e332943f96bd6b3dc192d399d9adf857f4a003b3ea4c256dd4115"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_afd5080a77a34995/provenance.json",
+      "bytes": 1398,
+      "sha256": "sha256:6e2d7ee553a36bea8aae376df6191f9d759b849ec0f376ba688a3f41645678ed"
+    },
+    {
+      "path": ".patchloop/artifacts/runs/run_afd5080a77a34995/evaluation-receipt.json",
+      "bytes": 599,
+      "sha256": "sha256:0091094c0a901a41cf50c3089244aaa58fc8337f2f70aa3b11b71e46241a7f0e"
+    },
+    {
+      "path": ".patchloop/runs/run_afd5080a77a34995/submitted.patch",
+      "bytes": 1118,
+      "sha256": "sha256:52aa986336a13cddc12141b55e96b56f81e1ab43b5493dd633ea262055e96993"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/7f/355ccfe6b81ddbc9164f4ea42f8f2e5a70104a651f3b2fa8c30602e57eea1f",
+      "bytes": 1258,
+      "sha256": "sha256:7f355ccfe6b81ddbc9164f4ea42f8f2e5a70104a651f3b2fa8c30602e57eea1f"
+    },
+    {
+      "path": ".patchloop/artifacts/objects/sha256/52/aa986336a13cddc12141b55e96b56f81e1ab43b5493dd633ea262055e96993",
+      "bytes": 1118,
+      "sha256": "sha256:52aa986336a13cddc12141b55e96b56f81e1ab43b5493dd633ea262055e96993"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "executed_request_token_counts_match": true,
+    "provider_input_truncation_observed": false,
+    "incomplete_model_generation_observed": false,
+    "trace_qualification_artifact_qualified": true,
+    "evaluation_reached": true,
+    "official_scope_compliant_success": true,
+    "accepted_current_live_pilot": true,
+    "development_campaign_pilot_gate_passed": true,
+    "rejected_patch_recovery_observed": false,
+    "cross_run_memory_effect_measured": false,
+    "core_campaign_executed": false
+  }
+}

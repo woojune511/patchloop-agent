@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Any
 
+from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
     Budget,
@@ -90,6 +91,7 @@ _REQUIRED_ARTIFACT_EVENTS = {
 _SOURCE_EVIDENCE_SCHEMA_VERSION = "trace-source-evidence-v1"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V2 = "trace-source-evidence-v2"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V3 = "trace-source-evidence-v3"
+_SOURCE_EVIDENCE_SCHEMA_VERSION_V4 = "trace-source-evidence-v4"
 _EMPTY_DIFF_HASH = sha256_text("")
 
 
@@ -440,6 +442,8 @@ def _artifact_evidence(
     root: Path,
     events,
     private_tokens: set[str],
+    event_types: set[EventType] | None = None,
+    required_event_types: set[EventType] | None = None,
 ) -> tuple[bool, int, int, list[dict[str, Any]], list[str]]:
     """Return integrity, scan counts, canonical evidence, and missing identities.
 
@@ -452,14 +456,24 @@ def _artifact_evidence(
     integrity = True
     evidence: list[dict[str, Any]] = []
     missing_identities: list[str] = []
+    selected_event_types = (
+        _AGENT_VISIBLE_ARTIFACT_EVENTS
+        if event_types is None
+        else event_types
+    )
+    required_types = (
+        _REQUIRED_ARTIFACT_EVENTS
+        if required_event_types is None
+        else required_event_types
+    )
     for event in events:
-        if event.type not in _AGENT_VISIBLE_ARTIFACT_EVENTS:
+        if event.type not in selected_event_types:
             continue
         raw_path = event.payload.get("artifact_path")
         raw_id = event.payload.get("artifact_id")
         path_present = isinstance(raw_path, str) and bool(raw_path.strip())
         id_present = isinstance(raw_id, str) and bool(raw_id.strip())
-        if event.type in _REQUIRED_ARTIFACT_EVENTS and not (path_present and id_present):
+        if event.type in required_types and not (path_present and id_present):
             integrity = False
             missing_identities.append(event.type.value)
         if not path_present:
@@ -624,6 +638,100 @@ def _nested_cas_artifact_evidence(
         return valid, item, content
     except (OSError, TypeError, ValueError):
         return False, item, None
+
+
+def _v4_admission_nested_artifact_evidence(
+    *,
+    root: Path,
+    events,
+    private_tokens: set[str],
+) -> tuple[bool, int, int, list[dict[str, Any]], list[str]]:
+    """Bind admission input, preflight, and target CAS bytes."""
+
+    artifact_root = (root / "artifacts").resolve()
+    integrity = True
+    scanned = 0
+    matches = 0
+    evidence: list[dict[str, Any]] = []
+    missing: list[str] = []
+    lower_markers = {
+        token.lower()
+        for token in private_tokens
+        if token
+    }
+
+    def add_artifact(
+        *,
+        event,
+        role: str,
+        descriptor: Any,
+        require_utf8: bool = True,
+    ) -> bytes | None:
+        nonlocal integrity, scanned, matches
+        valid, item, content = _nested_cas_artifact_evidence(
+            artifact_root=artifact_root,
+            event_id=event.event_id,
+            role=role,
+            raw_artifact=descriptor,
+        )
+        item["valid"] = valid
+        evidence.append(item)
+        if not valid or content is None:
+            integrity = False
+            missing.append(
+                f"{EventType.TOOL_ADMISSION_BLOCKED.value}:{role}"
+            )
+            return None
+        scanned += 1
+        try:
+            text = content.decode("utf-8")
+        except UnicodeDecodeError:
+            if require_utf8:
+                integrity = False
+                return content
+            text = content.decode("utf-8", errors="ignore")
+        matches += sum(
+            1
+            for marker in lower_markers
+            if marker and marker in text.lower()
+        )
+        return content
+
+    for event in events:
+        if event.type != EventType.TOOL_ADMISSION_BLOCKED:
+            continue
+        add_artifact(
+            event=event,
+            role="investigation-admission-input",
+            descriptor=event.payload.get("input_artifact"),
+        )
+        preflight_content = add_artifact(
+            event=event,
+            role="investigation-admission-preflight",
+            descriptor=event.payload.get("preflight_artifact"),
+        )
+        if preflight_content is None:
+            continue
+        try:
+            preflight = json.loads(preflight_content.decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            integrity = False
+            missing.append(
+                f"{EventType.TOOL_ADMISSION_BLOCKED.value}:"
+                "investigation-admission-preflight-json"
+            )
+            continue
+        if not isinstance(preflight, dict):
+            integrity = False
+            continue
+        if "target_artifact" in preflight:
+            add_artifact(
+                event=event,
+                role="investigation-admission-target",
+                descriptor=preflight.get("target_artifact"),
+                require_utf8=False,
+            )
+    return integrity, scanned, matches, evidence, sorted(missing)
 
 
 def _qualification_patch_paths(patch: str) -> list[str]:
@@ -1002,11 +1110,18 @@ def _patch_intent_artifact_evidence(
     return integrity, scanned, matches, evidence
 
 
-def _request_context(request_body: Any) -> str | None:
+def _request_context(
+    request_body: Any,
+    *,
+    allow_direct_context: bool = False,
+) -> str | None:
     """Extract the exact user context from PatchLoop's Responses request."""
 
     if not isinstance(request_body, dict):
         return None
+    direct_context = request_body.get("context")
+    if allow_direct_context and isinstance(direct_context, str):
+        return direct_context
     inputs = request_body.get("input")
     if not isinstance(inputs, list):
         return None
@@ -1023,6 +1138,7 @@ def _request_evidence_payload(
     context_event,
     *,
     artifact_root: Path | None = None,
+    expected_provider: str | None = None,
 ) -> tuple[bool, dict[str, Any] | None]:
     """Load and validate one content-addressed model request artifact."""
 
@@ -1044,11 +1160,23 @@ def _request_evidence_payload(
         if not isinstance(request_evidence, dict):
             return False, None
         request_body = request_evidence["request_body"]
+        provider = request_evidence.get("provider")
         recorded_request_hash = request_evidence["request_body_hash"]
         calculated_request_hash = sha256_text(canonical_json(request_body))
-        rendered_context = _request_context(request_body)
+        provider_valid = bool(
+            expected_provider is None
+            or (
+                isinstance(provider, str)
+                and provider == expected_provider
+            )
+        )
+        rendered_context = _request_context(
+            request_body,
+            allow_direct_context=provider in {"mock", "replay"},
+        )
         valid = bool(
             request_evidence.get("schema_version") == "model-request-evidence-v1"
+            and provider_valid
             and isinstance(recorded_request_hash, str)
             and recorded_request_hash == calculated_request_hash
             and context_event.payload.get("request_body_hash") == calculated_request_hash
@@ -1067,13 +1195,827 @@ def _request_evidence_payload(
         return False, None
 
 
+def _v4_investigation_context_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    package: TaskPackage,
+    events: list,
+    checkpoints: list,
+    context_events: list,
+) -> tuple[bool, dict[str, Any]]:
+    """Recompute every v4 investigation ledger from its durable prefix."""
+
+    from patchloop.agent.context import build_context_with_evidence
+
+    artifact_root = root / "artifacts"
+    artifact_store = ArtifactStore(artifact_root)
+    checkpoints_by_id = {
+        checkpoint.checkpoint_id: checkpoint
+        for checkpoint in checkpoints
+    }
+    failed_sequences: list[int] = []
+    verified_hashes: list[str] = []
+    for context_event in context_events:
+        try:
+            request_valid, request_evidence = _request_evidence_payload(
+                context_event,
+                artifact_root=artifact_root,
+                expected_provider=manifest.model.provider,
+            )
+            if not request_valid or request_evidence is None:
+                raise RecoveryError("model request evidence is invalid")
+            rendered = _request_context(
+                request_evidence["request_body"],
+                allow_direct_context=(
+                    manifest.model.provider in {"mock", "replay"}
+                ),
+            )
+            context_build = request_evidence.get("context_build")
+            if (
+                not isinstance(rendered, str)
+                or not isinstance(context_build, dict)
+                or context_build.get("schema_version")
+                != "context-build-evidence-v4"
+            ):
+                raise RecoveryError("v4 context build evidence is invalid")
+            recorded_ledger = context_build.get("investigation_ledger")
+            if not isinstance(recorded_ledger, dict):
+                raise RecoveryError("v4 context lacks investigation evidence")
+            source_through = recorded_ledger.get(
+                "source_through_sequence"
+            )
+            if type(source_through) is not int or source_through < 0:
+                raise RecoveryError(
+                    "v4 investigation source sequence is invalid"
+                )
+            if source_through != context_event.sequence - 1:
+                raise RecoveryError(
+                    "v4 investigation source sequence is not the exact "
+                    "ContextBuilt prefix"
+                )
+            source_events = [
+                event
+                for event in events
+                if event.sequence <= source_through
+            ]
+            checkpoint_events = [
+                event
+                for event in source_events
+                if event.type == EventType.CHECKPOINT_SAVED
+                and isinstance(
+                    event.payload.get("checkpoint_id"),
+                    str,
+                )
+            ]
+            checkpoint = None
+            if checkpoint_events:
+                checkpoint_id = checkpoint_events[-1].payload[
+                    "checkpoint_id"
+                ]
+                checkpoint = checkpoints_by_id.get(checkpoint_id)
+                if checkpoint is None:
+                    raise RecoveryError(
+                        "v4 context checkpoint is unavailable"
+                    )
+            parsed_context = json.loads(rendered)
+            if not isinstance(parsed_context, dict):
+                raise RecoveryError("v4 rendered context is not an object")
+            selected_memory = parsed_context.get("selected_memory")
+            if selected_memory is not None and not isinstance(
+                selected_memory,
+                str,
+            ):
+                raise RecoveryError("v4 selected memory is invalid")
+            rebuilt = build_context_with_evidence(
+                package.public,
+                source_events,
+                checkpoint,
+                selected_memory or "",
+                policy_version="phase-evidence-v4",
+                artifact_store=artifact_store,
+            )
+            ledger_evidence = rebuilt.evidence[
+                "investigation_ledger"
+            ]
+            if (
+                rebuilt.rendered != rendered
+                or rebuilt.evidence != context_build
+                or context_event.payload.get(
+                    "investigation_ledger_hash"
+                )
+                != ledger_evidence["content_hash"]
+                or context_event.payload.get(
+                    "investigation_source_through_sequence"
+                )
+                != ledger_evidence["source_through_sequence"]
+                or context_event.payload.get(
+                    "investigation_no_progress_streak"
+                )
+                != ledger_evidence["no_progress_streak"]
+                or context_event.payload.get(
+                    "investigation_exploration_admitted"
+                )
+                != ledger_evidence["exploration_admitted"]
+            ):
+                raise RecoveryError(
+                    "v4 investigation context failed recomputation"
+                )
+            verified_hashes.append(ledger_evidence["content_hash"])
+        except (
+            KeyError,
+            OSError,
+            RecoveryError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ):
+            failed_sequences.append(context_event.sequence)
+    return (
+        not failed_sequences,
+        {
+            "context_count": len(context_events),
+            "verified_context_count": (
+                len(context_events) - len(failed_sequences)
+            ),
+            "failed_context_sequences": failed_sequences,
+            "ledger_hashes": verified_hashes,
+        },
+    )
+
+
+def _v4_no_progress_streak(events: list[Any]) -> int:
+    from patchloop.agent.investigation import (
+        INVESTIGATION_LOOP_SCHEMA,
+        mutation_epoch,
+    )
+
+    epoch = mutation_epoch(events)
+    streak = 0
+    for event in events:
+        if epoch is not None and event.sequence <= epoch:
+            continue
+        if (
+            event.type == EventType.LOOP_DETECTED
+            and event.payload.get("schema_version")
+            == INVESTIGATION_LOOP_SCHEMA
+        ):
+            streak += 1
+        elif (
+            event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool")
+            in {"read_file", "search_files"}
+        ):
+            novelty = event.payload.get("novelty")
+            if (
+                isinstance(novelty, dict)
+                and novelty.get("classification") == "seen_only"
+            ):
+                streak += 1
+            else:
+                streak = 0
+        elif (
+            event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool")
+            not in {"read_file", "search_files"}
+        ):
+            streak = 0
+    return streak
+
+
+def _v4_investigation_lifecycle_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    package: TaskPackage,
+    events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Independently verify semantic replay and tail-admission lifecycles."""
+
+    from patchloop.agent.investigation import (
+        INSPECTION_ADMISSION_PREFLIGHT_SCHEMA,
+        INVESTIGATION_LOOP_SCHEMA,
+        INVESTIGATION_POLICY_VERSION,
+        NO_PROGRESS_STRATEGY_THRESHOLD,
+        TOOL_ADMISSION_SCHEMA,
+        TOOL_REPLAY_SCHEMA,
+        load_inspection_records,
+        mutation_epoch,
+        nominal_tail_reserve,
+        reconstruct_covered_read,
+        validate_inspection_arguments,
+    )
+
+    artifact_root = (root / "artifacts").resolve()
+    artifact_store = ArtifactStore(artifact_root)
+    by_sequence = {event.sequence: event for event in events}
+    failed_replay_sequences: list[int] = []
+    verified_replay_sequences: list[int] = []
+    failed_admission_sequences: list[int] = []
+    verified_admission_sequences: list[int] = []
+
+    def nested_json(
+        event,
+        *,
+        role: str,
+        descriptor: Any,
+    ) -> tuple[bool, dict[str, Any] | None, dict[str, Any]]:
+        valid, item, content = _nested_cas_artifact_evidence(
+            artifact_root=artifact_root,
+            event_id=event.event_id,
+            role=role,
+            raw_artifact=descriptor,
+        )
+        value = None
+        if content is not None:
+            try:
+                parsed = json.loads(content.decode("utf-8"))
+                if isinstance(parsed, dict):
+                    value = parsed
+                else:
+                    valid = False
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                valid = False
+        return valid, value, item
+
+    semantic_loops = [
+        event
+        for event in events
+        if event.type == EventType.LOOP_DETECTED
+        and (
+            event.payload.get("schema_version")
+            == INVESTIGATION_LOOP_SCHEMA
+            or event.payload.get("enforcement")
+            == "semantic-cache-replay"
+            or event.payload.get("reason_code")
+            in {"duplicate_search", "fully_covered_read"}
+            or (
+                by_sequence.get(event.sequence + 1) is not None
+                and by_sequence[event.sequence + 1].type
+                == EventType.TOOL_REPLAYED
+                and by_sequence[event.sequence + 1].correlation_id
+                == event.correlation_id
+            )
+        )
+    ]
+    semantic_replays = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_REPLAYED
+        and (
+            event.payload.get("schema_version") == TOOL_REPLAY_SCHEMA
+            or event.payload.get("semantic_replay") is True
+            or event.payload.get("replay_kind")
+            == "semantic-investigation"
+            or event.actor == "semantic-cache"
+            or (
+                by_sequence.get(event.sequence - 1) is not None
+                and by_sequence[event.sequence - 1].type
+                == EventType.LOOP_DETECTED
+                and by_sequence[event.sequence - 1].correlation_id
+                == event.correlation_id
+            )
+        )
+    ]
+    for replay in semantic_replays:
+        replay_ok = True
+        call = by_sequence.get(replay.sequence - 2)
+        loop = by_sequence.get(replay.sequence - 1)
+        action_id = replay.correlation_id
+        if not (
+            isinstance(action_id, str)
+            and action_id
+            and call is not None
+            and call.type == EventType.TOOL_CALLED
+            and call.actor == "agent"
+            and call.correlation_id == action_id
+            and loop is not None
+            and loop.type == EventType.LOOP_DETECTED
+            and loop.actor == "tool-gateway"
+            and loop.correlation_id == action_id
+            and replay.actor == "semantic-cache"
+        ):
+            replay_ok = False
+        if not replay_ok:
+            failed_replay_sequences.append(replay.sequence)
+            continue
+
+        tool = call.payload.get("tool")
+        input_descriptor = call.payload.get("input_artifact")
+        input_valid, input_payload, input_item = nested_json(
+            call,
+            role="investigation-replay-input",
+            descriptor=input_descriptor,
+        )
+        arguments = (
+            input_payload.get("input")
+            if isinstance(input_payload, dict)
+            else None
+        )
+        worktree_diff_hash = call.payload.get("worktree_diff_hash")
+        input_hash = call.payload.get("input_hash")
+        normalized_call_hash = call.payload.get("normalized_call_hash")
+        replay_ok = bool(
+            replay_ok
+            and tool in {"read_file", "search_files"}
+            and call.payload.get("execution") == "semantic-cache-replay"
+            and input_valid
+            and isinstance(input_payload, dict)
+            and input_payload.get("tool") == tool
+            and isinstance(arguments, dict)
+            and call.payload.get("artifact_id")
+            == input_item.get("artifact_id")
+            and call.payload.get("artifact_path")
+            == input_item.get("declared_path")
+            and isinstance(worktree_diff_hash, str)
+            and isinstance(input_hash, str)
+            and isinstance(normalized_call_hash, str)
+        )
+        if not replay_ok:
+            failed_replay_sequences.append(replay.sequence)
+            continue
+        expected_input_hash = sha256_text(
+            canonical_json({"tool": tool, "input": arguments})
+        )
+        expected_normalized_hash = sha256_text(
+            canonical_json(
+                {
+                    "tool": tool,
+                    "input": arguments,
+                    "worktree_diff_hash": worktree_diff_hash,
+                    "state_marker": None,
+                }
+            )
+        )
+        prefix = [
+            event for event in events if event.sequence < call.sequence
+        ]
+        checkpoint_events = [
+            event
+            for event in prefix
+            if event.type == EventType.CHECKPOINT_SAVED
+        ]
+        replay_ok = bool(
+            input_hash == expected_input_hash
+            and normalized_call_hash == expected_normalized_hash
+            and checkpoint_events
+            and checkpoint_events[-1].payload.get(
+                "worktree_diff_hash"
+            )
+            == worktree_diff_hash
+        )
+        try:
+            records = load_inspection_records(
+                prefix,
+                artifact_store,
+                worktree_diff_hash=worktree_diff_hash,
+            )
+        except RecoveryError:
+            records = []
+            replay_ok = False
+
+        sources = []
+        replay_output: dict[str, Any] | None = None
+        reason_code: str | None = None
+        if replay_ok and tool == "search_files":
+            exact = [
+                record
+                for record in records
+                if record.tool == tool
+                and record.normalized_call_hash
+                == normalized_call_hash
+                and record.result["truncated"] is False
+            ]
+            if exact:
+                sources = [exact[-1]]
+                replay_output = dict(exact[-1].result)
+                reason_code = "duplicate_search"
+        elif (
+            replay_ok
+            and tool == "read_file"
+            and isinstance(arguments.get("path"), str)
+            and type(arguments.get("start_line")) is int
+            and type(arguments.get("end_line")) is int
+        ):
+            try:
+                reconstructed = reconstruct_covered_read(
+                    records,
+                    path=arguments["path"],
+                    start_line=arguments["start_line"],
+                    end_line=arguments["end_line"],
+                    worktree_diff_hash=worktree_diff_hash,
+                )
+            except RecoveryError:
+                reconstructed = None
+                replay_ok = False
+            if reconstructed is not None:
+                replay_output, sources = reconstructed
+                reason_code = "fully_covered_read"
+        if replay_output is None or reason_code is None:
+            replay_ok = False
+
+        source_call_sequences = [
+            source.call_sequence for source in sources
+        ]
+        source_outcome_sequences = [
+            source.outcome_sequence for source in sources
+        ]
+        expected_result = {
+            **(replay_output or {}),
+            "novelty": {
+                "classification": "seen_only",
+                "new_evidence_count": 0,
+                "reason": reason_code,
+            },
+            "semantic_replay": True,
+            "replay_kind": "semantic-investigation",
+            "replay_reason": reason_code,
+            "source_call_sequences": source_call_sequences,
+            "source_outcome_sequences": source_outcome_sequences,
+        }
+        result_valid, result_payload, result_item = nested_json(
+            replay,
+            role="investigation-replay-result",
+            descriptor=replay.payload.get("result_artifact"),
+        )
+        replay_ok = bool(
+            replay_ok
+            and result_valid
+            and result_payload == expected_result
+            and replay.payload.get("artifact_id")
+            == result_item.get("artifact_id")
+            and replay.payload.get("artifact_path")
+            == result_item.get("declared_path")
+        )
+
+        new_streak = _v4_no_progress_streak(prefix) + 1
+        expected_loop = {
+            "schema_version": INVESTIGATION_LOOP_SCHEMA,
+            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "tool": tool,
+            "reason_code": reason_code,
+            "normalized_call_hash": normalized_call_hash,
+            "source_call_sequences": source_call_sequences,
+            "source_outcome_sequences": source_outcome_sequences,
+            "mutation_epoch_sequence": mutation_epoch(prefix),
+            "worktree_diff_hash": worktree_diff_hash,
+            "no_progress_streak": new_streak,
+            "strategy_change_required": (
+                new_streak >= NO_PROGRESS_STRATEGY_THRESHOLD
+            ),
+            "occurrences": new_streak + 1,
+            "enforcement": "semantic-cache-replay",
+        }
+        replay_without_duration = dict(replay.payload)
+        duration_ms = replay_without_duration.pop("duration_ms", None)
+        expected_replay = {
+            "schema_version": TOOL_REPLAY_SCHEMA,
+            "tool": tool,
+            "status": "succeeded",
+            "semantic_replay": True,
+            "replay_kind": "semantic-investigation",
+            "reason_code": reason_code,
+            "input_hash": input_hash,
+            "normalized_call_hash": normalized_call_hash,
+            "source_action_ids": [
+                source.action_id for source in sources
+            ],
+            "source_call_sequences": source_call_sequences,
+            "source_outcome_sequences": source_outcome_sequences,
+            "mutation_epoch_sequence": mutation_epoch(prefix),
+            "worktree_diff_hash": worktree_diff_hash,
+            "artifact_id": result_item.get("artifact_id"),
+            "artifact_path": result_item.get("declared_path"),
+            "result_artifact": replay.payload.get("result_artifact"),
+        }
+        replay_ok = bool(
+            replay_ok
+            and loop.payload == expected_loop
+            and type(duration_ms) is int
+            and duration_ms >= 0
+            and replay_without_duration == expected_replay
+        )
+        if replay_ok:
+            verified_replay_sequences.append(replay.sequence)
+        else:
+            failed_replay_sequences.append(replay.sequence)
+
+    admission_events = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_ADMISSION_BLOCKED
+    ]
+    reserve = nominal_tail_reserve(package.public)
+    for admission in admission_events:
+        prefix = [
+            event
+            for event in events
+            if event.sequence < admission.sequence
+        ]
+        action_id = admission.correlation_id
+        payload = admission.payload
+        tool = payload.get("tool")
+        model_calls_used = sum(
+            event.type == EventType.MODEL_CALLED for event in prefix
+        )
+        tool_calls_used = sum(
+            event.type == EventType.TOOL_CALLED for event in prefix
+        )
+        remaining_model_calls = (
+            manifest.budget.max_model_calls - model_calls_used
+        )
+        remaining_tool_calls = (
+            manifest.budget.max_tool_calls - tool_calls_used
+        )
+        reason_codes = []
+        if remaining_tool_calls <= reserve["tool_calls"]:
+            reason_codes.append("tool_tail_reserved")
+        if remaining_model_calls <= (
+            reserve["model_calls"] + reserve["feedback_model_calls"]
+        ):
+            reason_codes.append("model_tail_reserved")
+        input_valid, input_payload, input_item = nested_json(
+            admission,
+            role="investigation-admission-input",
+            descriptor=payload.get("input_artifact"),
+        )
+        result_valid, result_payload, result_item = nested_json(
+            admission,
+            role="investigation-admission-result",
+            descriptor=payload.get("result_artifact"),
+        )
+        preflight_valid, preflight_payload, preflight_item = nested_json(
+            admission,
+            role="investigation-admission-preflight",
+            descriptor=payload.get("preflight_artifact"),
+        )
+        arguments = (
+            input_payload.get("input")
+            if isinstance(input_payload, dict)
+            else None
+        )
+        input_hash = payload.get("input_hash")
+        normalized_call_hash = payload.get("normalized_call_hash")
+        worktree_diff_hash = payload.get("worktree_diff_hash")
+        expected_input_hash = (
+            sha256_text(
+                canonical_json({"tool": tool, "input": arguments})
+            )
+            if tool in {"read_file", "search_files"}
+            and isinstance(arguments, dict)
+            else None
+        )
+        expected_normalized_hash = (
+            sha256_text(
+                canonical_json(
+                    {
+                        "tool": tool,
+                        "input": arguments,
+                        "worktree_diff_hash": worktree_diff_hash,
+                        "state_marker": None,
+                    }
+                )
+            )
+            if expected_input_hash is not None
+            and isinstance(worktree_diff_hash, str)
+            else None
+        )
+        admission_request_valid = False
+        preflight_evidence_valid = False
+        try:
+            validate_inspection_arguments(
+                None,
+                str(tool),
+                arguments if isinstance(arguments, dict) else {},
+                require_current_target=False,
+            )
+            admission_request_valid = True
+            expected_preflight: dict[str, Any] = {
+                "schema_version": (
+                    INSPECTION_ADMISSION_PREFLIGHT_SCHEMA
+                ),
+                "policy_version": INVESTIGATION_POLICY_VERSION,
+                "tool": tool,
+                "worktree_diff_hash": worktree_diff_hash,
+            }
+            if tool == "read_file":
+                resolved_path = (
+                    preflight_payload.get("resolved_relative_path")
+                    if isinstance(preflight_payload, dict)
+                    else None
+                )
+                if not isinstance(resolved_path, str):
+                    raise ContractError(
+                        "read admission preflight lacks a resolved path"
+                    )
+                safe_relative_path(
+                    resolved_path,
+                    field_name="resolved_relative_path",
+                )
+                target_descriptor = (
+                    preflight_payload.get("target_artifact")
+                    if isinstance(preflight_payload, dict)
+                    else None
+                )
+                (
+                    target_valid,
+                    target_item,
+                    target_content,
+                ) = _nested_cas_artifact_evidence(
+                    artifact_root=artifact_root,
+                    event_id=admission.event_id,
+                    role="investigation-admission-target",
+                    raw_artifact=target_descriptor,
+                )
+                expected_preflight.update(
+                    {
+                        "requested_path": arguments["path"],
+                        "resolved_relative_path": resolved_path,
+                        "target_artifact": target_descriptor,
+                    }
+                )
+                preflight_evidence_valid = bool(
+                    target_valid
+                    and target_content is not None
+                    and target_item.get("artifact_id")
+                    == target_descriptor.get("artifact_id")
+                )
+            else:
+                expected_preflight.update(
+                    {
+                        "query": arguments["query"],
+                        "path_glob": arguments.get(
+                            "path_glob",
+                            "**/*",
+                        ),
+                    }
+                )
+                preflight_evidence_valid = True
+            preflight_evidence_valid = bool(
+                preflight_evidence_valid
+                and preflight_valid
+                and preflight_payload == expected_preflight
+                and payload.get("preflight_artifact", {}).get(
+                    "artifact_id"
+                )
+                == preflight_item.get("artifact_id")
+            )
+        except (AttributeError, ContractError, TypeError):
+            admission_request_valid = False
+            preflight_evidence_valid = False
+        error_message = (
+            "inspection was not admitted because the nominal corrective "
+            "lifecycle tail is reserved; use apply_patch or another "
+            "phase-advancing action"
+        )
+        error_details = {
+            "schema_version": TOOL_ADMISSION_SCHEMA,
+            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "reason_codes": reason_codes,
+            "nominal_reserve": reserve,
+            "remaining_model_calls": remaining_model_calls,
+            "remaining_tool_calls": remaining_tool_calls,
+            "guidance": (
+                "Use the durable investigation ledger and move to a scoped "
+                "patch, registered validation, diff review, or submission."
+            ),
+        }
+        expected_result = {
+            "tool": tool,
+            "status": "rejected",
+            "error_code": "TOOL_ADMISSION_BLOCKED",
+            "error_message": error_message,
+            "error_details": error_details,
+            "admission_blocked": True,
+            "worktree_diff_hash": worktree_diff_hash,
+            "preflight_artifact": payload.get(
+                "preflight_artifact"
+            ),
+        }
+        expected_event = {
+            "schema_version": TOOL_ADMISSION_SCHEMA,
+            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "tool": tool,
+            "status": "rejected",
+            "input_hash": input_hash,
+            "normalized_call_hash": normalized_call_hash,
+            "worktree_diff_hash": worktree_diff_hash,
+            "mutation_epoch_sequence": mutation_epoch(prefix),
+            "reason_codes": reason_codes,
+            "nominal_reserve": reserve,
+            "model_calls_used": model_calls_used,
+            "max_model_calls": manifest.budget.max_model_calls,
+            "tool_calls_used": tool_calls_used,
+            "max_tool_calls": manifest.budget.max_tool_calls,
+            "input_artifact": payload.get("input_artifact"),
+            "preflight_artifact": payload.get(
+                "preflight_artifact"
+            ),
+            "result_artifact": payload.get("result_artifact"),
+            "artifact_id": result_item.get("artifact_id"),
+            "artifact_path": result_item.get("declared_path"),
+            "error_code": "TOOL_ADMISSION_BLOCKED",
+            "error_message": error_message,
+            "error_details": error_details,
+        }
+        checkpoint_events = [
+            event
+            for event in prefix
+            if event.type == EventType.CHECKPOINT_SAVED
+        ]
+        correlated_calls = [
+            event
+            for event in events
+            if event.type == EventType.TOOL_CALLED
+            and event.correlation_id == action_id
+        ]
+        admission_ok = bool(
+            isinstance(action_id, str)
+            and action_id
+            and admission.actor == "tool-admission-policy"
+            and reason_codes
+            and admission_request_valid
+            and preflight_evidence_valid
+            and input_valid
+            and result_valid
+            and isinstance(input_payload, dict)
+            and input_payload.get("tool") == tool
+            and isinstance(arguments, dict)
+            and input_hash == expected_input_hash
+            and normalized_call_hash == expected_normalized_hash
+            and checkpoint_events
+            and checkpoint_events[-1].payload.get(
+                "worktree_diff_hash"
+            )
+            == worktree_diff_hash
+            and result_payload == expected_result
+            and payload.get("artifact_id")
+            == result_item.get("artifact_id")
+            and payload.get("artifact_path")
+            == result_item.get("declared_path")
+            and payload == expected_event
+            and not correlated_calls
+            and input_item.get("artifact_id")
+            == payload.get("input_artifact", {}).get("artifact_id")
+        )
+        if admission_ok:
+            verified_admission_sequences.append(admission.sequence)
+        else:
+            failed_admission_sequences.append(admission.sequence)
+
+    orphan_loop_sequences = [
+        loop.sequence
+        for loop in semantic_loops
+        if not any(
+            replay.sequence == loop.sequence + 1
+            and replay.correlation_id == loop.correlation_id
+            for replay in semantic_replays
+        )
+    ]
+    malformed_semantic_replays = [
+        event.sequence
+        for event in semantic_replays
+        if (
+            event.payload.get("schema_version") != TOOL_REPLAY_SCHEMA
+            or event.payload.get("semantic_replay") is not True
+            or event.payload.get("replay_kind")
+            != "semantic-investigation"
+            or event.actor != "semantic-cache"
+        )
+    ]
+    failed_replay_sequences.extend(malformed_semantic_replays)
+    failed_replay_sequences.extend(orphan_loop_sequences)
+    passed = not failed_replay_sequences and not failed_admission_sequences
+    return passed, {
+        "semantic_replay_count": len(semantic_replays),
+        "verified_semantic_replay_count": len(
+            verified_replay_sequences
+        ),
+        "failed_semantic_replay_sequences": sorted(
+            set(failed_replay_sequences)
+        ),
+        "admission_block_count": len(admission_events),
+        "verified_admission_block_count": len(
+            verified_admission_sequences
+        ),
+        "failed_admission_block_sequences": sorted(
+            set(failed_admission_sequences)
+        ),
+    }
+
+
 def _request_runtime_contract_valid(
     request_body: Any,
     manifest: RunManifest,
 ) -> bool:
     """Bind a no-generation request to the frozen adapter/runtime contract."""
 
-    from patchloop.agent.model import SYSTEM_PROMPT_V1, SYSTEM_PROMPT_V2
+    from patchloop.agent.model import (
+        SYSTEM_PROMPT_V1,
+        SYSTEM_PROMPT_V2,
+        SYSTEM_PROMPT_V3,
+    )
     from patchloop.agent.tools import TOOL_SCHEMAS_V1, TOOL_SCHEMAS_V2
 
     if (
@@ -1088,6 +2030,12 @@ def _request_runtime_contract_valid(
         in {"phase-evidence-v2", "phase-evidence-v3"}
     ):
         system_prompt = SYSTEM_PROMPT_V2
+        tools = TOOL_SCHEMAS_V2
+    elif (
+        manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v4"
+    ):
+        system_prompt = SYSTEM_PROMPT_V3
         tools = TOOL_SCHEMAS_V2
     else:
         return False
@@ -1151,13 +2099,24 @@ def _generation_block_common_valid(
     request_valid, request_evidence = _request_evidence_payload(
         context_event,
         artifact_root=(root / "artifacts"),
+        expected_provider=(
+            manifest.model.provider
+            if manifest.context_policy_version == "phase-evidence-v4"
+            else None
+        ),
     )
     rendered_payload = None
     retry_build_evidence = None
     if request_valid and request_evidence is not None:
         try:
             request_body = request_evidence["request_body"]
-            rendered_context = _request_context(request_body)
+            rendered_context = _request_context(
+                request_body,
+                allow_direct_context=(
+                    request_evidence.get("provider")
+                    in {"mock", "replay"}
+                ),
+            )
             rendered_payload = json.loads(str(rendered_context))
         except (KeyError, TypeError, ValueError, json.JSONDecodeError):
             request_body = None
@@ -1626,10 +2585,25 @@ def _rejected_patch_retry_context_evidence(
             else:
                 episode_ok = False
 
-        request_valid, request_evidence = _request_evidence_payload(context_event)
+        request_valid, request_evidence = _request_evidence_payload(
+            context_event,
+            artifact_root=artifact_root,
+            expected_provider=(
+                manifest.model.provider
+                if manifest.context_policy_version
+                == "phase-evidence-v4"
+                else None
+            ),
+        )
         rendered_payload = None
         if request_valid and request_evidence is not None:
-            rendered_context = _request_context(request_evidence["request_body"])
+            rendered_context = _request_context(
+                request_evidence["request_body"],
+                allow_direct_context=(
+                    request_evidence.get("provider")
+                    in {"mock", "replay"}
+                ),
+            )
             try:
                 rendered_payload = json.loads(str(rendered_context))
             except (TypeError, ValueError, json.JSONDecodeError):
@@ -1698,10 +2672,25 @@ def _rejected_patch_retry_context_evidence(
                 and (next_failure_sequence is None or candidate.sequence < next_failure_sequence)
             ]
             for later_context in later_contexts:
-                later_valid, later_request = _request_evidence_payload(later_context)
+                later_valid, later_request = _request_evidence_payload(
+                    later_context,
+                    artifact_root=artifact_root,
+                    expected_provider=(
+                        manifest.model.provider
+                        if manifest.context_policy_version
+                        == "phase-evidence-v4"
+                        else None
+                    ),
+                )
                 later_payload = None
                 if later_valid and later_request is not None:
-                    later_rendered = _request_context(later_request["request_body"])
+                    later_rendered = _request_context(
+                        later_request["request_body"],
+                        allow_direct_context=(
+                            later_request.get("provider")
+                            in {"mock", "replay"}
+                        ),
+                    )
                     try:
                         later_payload = json.loads(str(later_rendered))
                     except (
@@ -1926,17 +2915,27 @@ def _complete_get_diff_in_request(
     context_event,
     source_event,
     accepted_diff: str,
+    expected_provider: str | None,
 ) -> tuple[bool, bool]:
     """Validate the request body and prove it contains the full get_diff result."""
 
     request_valid = False
     complete_source = False
     try:
-        request_valid, request_evidence = _request_evidence_payload(context_event)
+        request_valid, request_evidence = _request_evidence_payload(
+            context_event,
+            expected_provider=expected_provider,
+        )
         if not request_valid or request_evidence is None:
             return False, False
         request_body = request_evidence["request_body"]
-        rendered_context = _request_context(request_body)
+        rendered_context = _request_context(
+            request_body,
+            allow_direct_context=(
+                request_evidence.get("provider")
+                in {"mock", "replay"}
+            ),
+        )
         if not request_valid or rendered_context is None:
             return request_valid, False
 
@@ -2224,6 +3223,36 @@ def calculate_source_evidence_hash(
         )
         snapshot["verifier_evidence_artifacts"] = verifier_evidence
         snapshot["evaluation_receipt"] = receipt_evidence
+    if manifest.context_policy_version == "phase-evidence-v4":
+        _, _, _, investigation_artifacts, _ = _artifact_evidence(
+            root=run_root,
+            events=events,
+            private_tokens=set(),
+            event_types={
+                EventType.TOOL_REPLAYED,
+                EventType.TOOL_ADMISSION_BLOCKED,
+            },
+            required_event_types={
+                EventType.TOOL_REPLAYED,
+                EventType.TOOL_ADMISSION_BLOCKED,
+            },
+        )
+        (
+            _,
+            _,
+            _,
+            admission_input_artifacts,
+            _,
+        ) = _v4_admission_nested_artifact_evidence(
+            root=run_root,
+            events=events,
+            private_tokens=set(),
+        )
+        snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V4
+        snapshot["investigation_artifacts"] = investigation_artifacts
+        snapshot[
+            "investigation_admission_nested_artifacts"
+        ] = admission_input_artifacts
     return sha256_text(canonical_json(snapshot))
 
 
@@ -2586,6 +3615,12 @@ def qualify_run(
                     context_event=context_event,
                     source_event=source_event,
                     accepted_diff=accepted_diff,
+                    expected_provider=(
+                        manifest.model.provider
+                        if manifest.context_policy_version
+                        == "phase-evidence-v4"
+                        else None
+                    ),
                 )
             ordered_submission_ok = False
             ordered_submission_details: dict[str, Any] = {}
@@ -2900,6 +3935,53 @@ def qualify_run(
         events=events,
         private_tokens=private_tokens,
     )
+    investigation_artifact_count = 0
+    if manifest.context_policy_version == "phase-evidence-v4":
+        (
+            investigation_artifact_integrity,
+            investigation_artifact_count,
+            investigation_leak_matches,
+            _,
+            investigation_missing_identities,
+        ) = _artifact_evidence(
+            root=run_root,
+            events=events,
+            private_tokens=private_tokens,
+            event_types={
+                EventType.TOOL_REPLAYED,
+                EventType.TOOL_ADMISSION_BLOCKED,
+            },
+            required_event_types={
+                EventType.TOOL_REPLAYED,
+                EventType.TOOL_ADMISSION_BLOCKED,
+            },
+        )
+        artifact_integrity = bool(
+            artifact_integrity and investigation_artifact_integrity
+        )
+        artifact_count += investigation_artifact_count
+        leak_matches += investigation_leak_matches
+        missing_artifact_identities.extend(
+            investigation_missing_identities
+        )
+        (
+            admission_input_integrity,
+            admission_input_count,
+            admission_input_leak_matches,
+            _,
+            admission_input_missing,
+        ) = _v4_admission_nested_artifact_evidence(
+            root=run_root,
+            events=events,
+            private_tokens=private_tokens,
+        )
+        artifact_integrity = bool(
+            artifact_integrity and admission_input_integrity
+        )
+        investigation_artifact_count += admission_input_count
+        artifact_count += admission_input_count
+        leak_matches += admission_input_leak_matches
+        missing_artifact_identities.extend(admission_input_missing)
     accepted_patch_artifact_count = 0
     patch_intent_artifact_count = 0
     if manifest.tool_schema_version == "v2":
@@ -2944,12 +4026,19 @@ def qualify_run(
             event.type in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED} for event in events
         ):
             artifact_details["patch_intent_artifact_count"] = patch_intent_artifact_count
+    if manifest.context_policy_version == "phase-evidence-v4":
+        artifact_details[
+            "investigation_artifact_count"
+        ] = investigation_artifact_count
     add(
         "agent_visible_artifacts",
         artifact_integrity,
         **artifact_details,
     )
-    if manifest.context_policy_version == "phase-evidence-v3":
+    if manifest.context_policy_version in {
+        "phase-evidence-v3",
+        "phase-evidence-v4",
+    }:
         (
             rejected_patch_retry_context_ok,
             rejected_patch_retry_context_details,
@@ -3033,6 +4122,37 @@ def qualify_run(
     model_events = [event for event in events if event.type == EventType.MODEL_CALLED]
     tool_events = [event for event in events if event.type == EventType.TOOL_CALLED]
     context_events = [event for event in events if event.type == EventType.CONTEXT_BUILT]
+    if manifest.context_policy_version == "phase-evidence-v4":
+        (
+            investigation_evidence_ok,
+            investigation_evidence_details,
+        ) = _v4_investigation_context_evidence(
+            root=run_root,
+            manifest=manifest,
+            package=package,
+            events=events,
+            checkpoints=checkpoints,
+            context_events=context_events,
+        )
+        add(
+            "investigation_evidence",
+            investigation_evidence_ok,
+            **investigation_evidence_details,
+        )
+        (
+            investigation_lifecycle_ok,
+            investigation_lifecycle_details,
+        ) = _v4_investigation_lifecycle_evidence(
+            root=run_root,
+            manifest=manifest,
+            package=package,
+            events=events,
+        )
+        add(
+            "investigation_lifecycle",
+            investigation_lifecycle_ok,
+            **investigation_lifecycle_details,
+        )
     generation_blocked_events = [
         event for event in events if event.type == EventType.MODEL_GENERATION_BLOCKED
     ]
@@ -3047,7 +4167,8 @@ def qualify_run(
     terminal_generation_block_ok = False
     terminal_generation_block_kind: str | None = None
     if (
-        manifest.context_policy_version == "phase-evidence-v3"
+        manifest.context_policy_version
+        in {"phase-evidence-v3", "phase-evidence-v4"}
         and len(generation_blocked_events) == 1
         and context_events
     ):
@@ -3195,7 +4316,10 @@ def qualify_run(
         "model_event_count": len(model_events),
         "failed_event_sequences": prompt_telemetry_failures,
     }
-    if manifest.context_policy_version == "phase-evidence-v3":
+    if manifest.context_policy_version in {
+        "phase-evidence-v3",
+        "phase-evidence-v4",
+    }:
         prompt_telemetry_details.update(
             {
                 "model_generation_blocked_count": len(generation_blocked_events),
@@ -3447,8 +4571,14 @@ def qualify_run(
     if structured_lifecycle_contract:
         trace_check_ids.add("submission_lifecycle")
         trace_check_ids.add("worker_claim_provenance")
-    if manifest.context_policy_version == "phase-evidence-v3":
+    if manifest.context_policy_version in {
+        "phase-evidence-v3",
+        "phase-evidence-v4",
+    }:
         trace_check_ids.add("rejected_patch_retry_context")
+    if manifest.context_policy_version == "phase-evidence-v4":
+        trace_check_ids.add("investigation_evidence")
+        trace_check_ids.add("investigation_lifecycle")
     if controlled_rejection_mode:
         trace_check_ids.add("controlled_diagnostic_boundary")
     trace_integrity = all(

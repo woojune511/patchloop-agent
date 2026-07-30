@@ -1,0 +1,20 @@
+diff --git a/babel/numbers.py b/babel/numbers.py
+index 01f1ca7..9a1b057 100644
+--- a/babel/numbers.py
++++ b/babel/numbers.py
+@@ -1099,7 +1099,14 @@ def parse_decimal(
+         raise NumberFormatError(f"{string!r} is not a valid decimal number") from exc
+     if strict and group_symbol in string:
+         proper = format_decimal(parsed, locale=locale, decimal_quantization=False, numbering_system=numbering_system)
+-        if string != proper and string.rstrip('0') != (proper + decimal_symbol):
++        def normalize_trailing_zeroes(value: str) -> tuple[str, str]:
++            if decimal_symbol in value:
++                integer_part, fractional_part = value.rsplit(decimal_symbol, 1)
++            else:
++                integer_part, fractional_part = value, ''
++            return integer_part, fractional_part.rstrip('0')
++
++        if string != proper and normalize_trailing_zeroes(string) != normalize_trailing_zeroes(proper):
+             try:
+                 parsed_alt = decimal.Decimal(string.replace(decimal_symbol, '')
+                                                    .replace(group_symbol, '.'))

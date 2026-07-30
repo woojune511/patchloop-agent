@@ -28,8 +28,9 @@ paid development-validation pilot 세 회를 2026-07-28 실행했다. r1과 r2�
 grammar와 hunk line-count 상호운용성 문제로 evaluator 전에 실패했고, r3
 `run_3cb86f8d70094a11`은 제출 patch와 official hidden/regression/scope/safety verdict,
 당시 v1 trace qualification을 모두 통과했다. 이후 tool/context/lifecycle 계약이 v2로
-바뀌었으므로 이 historical pilot은 새 campaign을 열지 않는다. 여섯 memory-development
-task의 12-run no-memory campaign도 아직 실행하지 않았다.
+바뀌었으므로 이 historical pilot은 새 campaign을 열지 않는다. 이후 current mini
+primary r2와 12-run no-memory campaign의 실행·판정은 아래 D-048 상태와 portable
+evidence record에서 별도로 추적한다.
 
 2026-07-29의 별도 model-candidate pilot `run_d4fea5e7198b4abc`는
 `gpt-5.4-mini-2026-03-17`로 exact prompt-token telemetry를 확인했지만, agent가
@@ -151,7 +152,18 @@ success나 evaluator 도달이 아니다. 앞으로의 primary, memory-developme
 모든 memory 조건에 같은 총 `21 model call / 50 tool call / 200,000 token / 900초` 상한을
 사용한다. 21번째 call은 `finish_task` 전용 reserve가 아니며 정상 model call이다. Historical
 primary r1과 diagnostic suite의 20-call 의미와 qualification은 바꾸지 않는다. Corrective
-primary r2 suite는 정의됐지만 아직 provider에서 실행하지 않았다.
+primary r2 `run_afd5080a77a34995`는 official evaluator와 qualification 23/23을 통과했다.
+이어 실행한 `dev-no-memory-20260728` 12-run은 12/12 qualified agent failure,
+evaluator 도달 0/12였다. Search 405, read 157, apply 1에 머문 이 결과는 no-memory
+성능 baseline이 아니라 within-run investigation continuity failure evidence다.
+
+D-048은 새 non-replay runtime을 `phase-evidence-v4`로 올린다. V4는 마지막
+`PatchApplied` 뒤의 successful read/search CAS를 bounded `investigation-ledger-v1`로
+매 turn 다시 만들고, exact search와 fully-covered read를 filesystem 재실행 없이 exact
+result semantic replay로 제공한다. 두 번째 연속 no-progress부터 strategy change를
+요구하며, nominal corrective tail에서는 read/search만 admission 전에 차단한다. 이
+within-run repository evidence는 네 cross-run memory 조건 모두에 동일하고, hypothesis나
+solution memory를 추가하지 않는다. V1-v3 trace는 소급 재해석하지 않는다.
 
 ## 구현된 핵심 경로
 
@@ -170,6 +182,9 @@ public.yaml → stateless context builder → model adapter
   Responses input-token pre-count와 실제 usage를 대조하며 `truncation=disabled`를 강제
 - `phase-evidence-v3`는 rejected patch 원문과 structured error를 CAS에서 다음 request로
   exact rehydrate하고, 요청+응답 allowance가 budget을 넘으면 provider generation 전에 차단
+- `phase-evidence-v4`는 successful read/search CAS에서 durable investigation ledger를
+  재구성하고, exact search와 fully-covered read를 semantic replay하며 corrective tail에
+  들어가면 semantic replay 대상까지 포함한 모든 valid read/search를 admission 전에 차단
 - Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff`와
   orchestrator control `finish_task`만 허용
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
@@ -391,19 +406,20 @@ block을 고정한 뒤 별도 hash로 정확히 한 번 실행됐다. `run_0ad86
 task와 trace qualification은 통과했지만 rejected candidate가 없어 diagnostic은
 inconclusive다. R4와 r5의 승인이나 hash는 재사용하지 않는다. D-043의 별도 r6/profile v4는
 controlled rejection을 도입한 뒤 새 hash로 한 번 실행됐고, exact retry와 evaluator gate를
-통과했다. R6도 immutable하며 재실행하지 않는다. Historical primary r1도 terminal
-inspection 전용이다. 다음은 새 corrective fault-free mini r2
-development-validation campaign pilot이
-evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
-아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
-harness gate와 별도로 보고한다.
+통과했다. R6도 immutable하며 재실행하지 않는다. Historical primary r1, consumed
+primary r2와 첫 12-run campaign은 terminal inspection 전용이다. 다음은 새 v4
+fault-free development-validation pilot이 evaluator에 도달하고
+`trace-qualification-v2`의 `investigation_evidence`와 `investigation_lifecycle`까지
+통과한 뒤에만 새 ID의
+12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이 harness
+gate와 별도로 보고한다.
 
 기존 mini D-037 r3, r4, r5와 r6 suite는 terminal inspection 전용이다. Journal이나 result를
 삭제하거나 approval flag를 다시 전달하지 않는다.
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml `
+  --suite experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml `
   --preflight-only
 ```
 
@@ -412,15 +428,15 @@ uv run patchloop evaluate `
 Primary r1 suite도 이제 terminal inspection 전용이다. Journal/result blocker를 유지하고
 approval flag나 소비된 hash를 다시 전달하지 않는다.
 
-D-047 offline gate는 공정한 21-call 상한과 model/tool/wall pre-generation terminal
-schema·qualification으로 완료됐다. 위 r2 preflight는 API generation을 호출하지 않는다.
+D-048 offline gate는 durable investigation ledger, semantic replay, tail admission과
+request-by-request qualification 재계산을 추가한다. 위 v4 preflight는 API generation을 호출하지 않는다.
 Clean commit에서 새 execution hash를 검토하고 사용자가 별도 $2 승인을 제공하기 전에는
-paid invocation을 실행하지 않는다. 그 corrective pilot이 evaluator와 qualification을
-통과한 뒤에만 run ID를 development suite의 `pilot_run_id`에 넣는다.
+paid invocation을 실행하지 않는다. 그 v4 pilot이 evaluator와 qualification을
+통과한 뒤에만 run ID를 새 development suite의 `pilot_run_id`에 넣는다.
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-no-memory.template.yaml `
+  --suite experiments/dev-no-memory-v4.template.yaml `
   --preflight-only
 ```
 
@@ -436,14 +452,14 @@ hash를 invocation-only 승인으로 전달한다.
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-no-memory.template.yaml `
+  --suite experiments/dev-no-memory-v4.template.yaml `
   --preflight-only `
   --approve-live-cost `
   --approved-execution-hash <sha256:...>
 
 # 위 preflight가 ready=true일 때만 별도로 실행한다.
 uv run patchloop evaluate `
-  --suite experiments/dev-no-memory.template.yaml `
+  --suite experiments/dev-no-memory-v4.template.yaml `
   --approve-live-cost `
   --approved-execution-hash <same-sha256:...>
 ```
@@ -472,11 +488,16 @@ cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 
 128,000 max output으로 게시한다. Preflight 시점 기준 72시간을 넘으면 가격을 다시 확인하며
 SDK version, Git commit과 execution window를 provenance로 남긴다.
 
-새 corrective tool-v2/context-v3 mini campaign pilot이 model, budget, harness commit,
-runtime-contract hash와
-`trace-qualification-v2`를 모두 통과한 뒤에만 그 run ID를 no-memory development
-suite에 넣고 새 execution hash를 preflight한다. 실패한 live attempt도 삭제하지 않고 run ID,
-input/cached/cache-write/output usage, 계산 비용, terminal outcome과 qualification을 보존한다.
+Consumed tool-v2/context-v3 corrective primary r2
+`run_afd5080a77a34995`는 model, budget, harness commit, runtime-contract hash,
+official evaluator와 `trace-qualification-v2` 23/23을 통과했다. 이어진 historical
+`dev-no-memory-20260728` campaign도 12/12 terminal trace를 보존했지만 evaluator 도달
+0/12라 성능 baseline으로 사용하지 않는다. 다음에는 tool-v2/context-v4 pilot이
+`investigation_evidence`와 `investigation_lifecycle`을 포함한 qualification과 evaluator
+도달을 통과한 경우에만 그 새
+run ID를 `dev-no-memory-v4` suite에 넣고 별도 execution hash를 preflight한다. 실패한 live
+attempt도 삭제하지 않고 run ID, input/cached/cache-write/output usage, 계산 비용, terminal
+outcome과 qualification을 보존한다.
 Qualification의 `source_evidence_hash`는 approved plan, manifest, events, checkpoints,
 persisted result와 agent-visible content-addressed artifact inventory를 결속한다. v2는
 `SubmissionAccepted` 안의 nested submitted-patch CAS bytes도 직접 다시 hash한다. 필수
@@ -527,11 +548,13 @@ Mini r3는 evaluator와 rejected mutation 전에 incomplete response로 끝나 D
 exercise하지 못했다. Mini r5는 official task와 qualification을 통과했지만 rejection이
 없어 D-037 diagnostic은 inconclusive다. Mini r6는 deliberate controlled rejection으로
 harness retry branch와 evaluator 도달을 검증했지만 natural recovery rate는 측정하지 않는다.
-일곱 mini run의 누적 계산 비용은 `$0.77412075`, 열 paid pilot의 계산상 총액은
-`$1.602985125`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5, r6와
-primary r1은 자동 재실행하지 않는다. Offline call-budget corrective contract는 완료됐지만,
-별도 corrective r2 provider pilot은 아직 실행하지 않았다. 이 pilot이 evaluator와
-qualification을 통과하기 전에는 12-run development campaign을 승인하지 않는다.
+Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. 이후 primary r2까지
+포함한 열한 paid pilot의 계산상 총액은 `$1.652716875`이고, 첫 12-run development
+campaign의 계산 비용 `$1.3931925`를 더한 전체 list-price 합계는 `$3.045909375`다.
+실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5, r6, primary r1/r2와
+`dev-no-memory-20260728`은 자동 재실행하지 않는다. 다음 paid gate는 새
+`phase-evidence-v4` pilot이며, 그 pilot과 후속 v4 campaign은 각각 새 clean execution
+hash와 별도 승인을 요구한다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

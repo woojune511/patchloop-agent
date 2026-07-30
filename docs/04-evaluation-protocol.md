@@ -209,6 +209,36 @@ Mini r2 `run_4a9737ec91964dca`는
 `context_policy_version=phase-evidence-v2`인 immutable diagnostic이며 새 gate의 통과
 evidence로 소급 해석하지 않는다.
 
+새 `context_policy_version=phase-evidence-v4` trace는 v3 rejected-patch 계약을
+상속하면서, 각 `ContextBuilt` request의 `investigation_ledger`를 그 request보다 앞선
+event/checkpoint와 verified read/search input·result CAS에서 다시 계산한다. Qualifier는
+ledger content hash, source-through sequence, no-progress streak, tail admission과 실제
+rendered request가 재계산 결과와 정확히 같은지 검사한다. 동일 mutation epoch의 exact
+search와 fully-covered read는 model action과 `ToolCalled` 1회를 그대로 세되 filesystem
+dispatch 없이 `LoopDetected(investigation-loop-v1)`와
+`ToolReplayed(tool-replayed-v2)`로 닫힌다. Corrective-tail threshold에서 read/search가
+거부되면 `ToolAdmissionBlocked(tool-admission-blocked-v1)`만 기록하고 `ToolCalled`
+budget은 소모하지 않는다. Apply/check/diff/finish는 이 admission 정책으로 차단하지 않는다.
+CAS 누락·변조, 다른 worktree diff나 mutation epoch의 observation 재사용, request/ledger
+불일치는 `investigation_evidence` qualification failure다. 이 within-run policy는 네
+cross-run memory 조건에 동일하게 적용한다.
+
+별도 `investigation_lifecycle` check는 기록된 context를 신뢰하지 않고 semantic replay의
+`ToolCalled → LoopDetected → ToolReplayed` correlation/order/actor, source sequence와
+result CAS, normalized/worktree/mutation identity, no-progress streak를 독립 재계산한다.
+Investigation loop와 semantic replay는 일대일이어야 하므로 schema와 semantic marker를
+동시에 제거한 orphan lifecycle도 실패한다. Truncated search result는 replay source가
+아니며 같은 exact query도 다시 dispatch한다. Admission block은 당시 durable counter와
+nominal reserve에서 reason을 다시 만들고 같은 correlation의 `ToolCalled`가 없음을
+요구한다. Gateway는 dispatch와 admission에 같은 strict type, safe-path, symlink
+containment와 existing-file validation을 적용한다. Admission 당시 resolved path와 target
+bytes는 `inspection-admission-preflight-v1` CAS에 동결하며 qualifier는 terminal
+workspace 대신 그 CAS를 검사한다. Context tail 계산은 imminent generation 1회를 먼저
+차감한 projected model-call count를 사용해야 하며 gateway의 실제 counter와 동일한 허용
+경계를 가져야 한다. V4의 replay/admission input·preflight·target·result artifact bytes는
+leak scan과 `trace-source-evidence-v4`에 결속하고, v1-v3 source evidence와 qualification
+hash는 그대로 유지한다.
+
 D-037 diagnostic suite의 machine consumer는 generic qualification과 별도로 다음 세 상태를
 낸다.
 
@@ -346,7 +376,11 @@ Primary r1은 historical 20-call 계약에서 patch, visible check와 final diff
 별도 evaluator pass는 원 run을 success로 바꾸지 않는다. D-047 offline gate는 future
 campaign의 공정한 21-call 상한과 reason-specific v2 next-generation terminal evidence를
 검증했다. Historical r1 qualification 21/22를 소급 수정하거나 소비된 hash를 재사용하지
-않는다. Corrective primary r2의 provider/evaluator evidence는 아직 없다.
+않는다. Corrective primary r2 `run_afd5080a77a34995`는 official evaluator와
+qualification 23/23을 통과했다. 이어진 첫 `dev-no-memory-20260728` campaign은 12/12
+qualified terminal trace를 만들었지만 evaluator 도달 0/12라 no-memory 성능 baseline으로
+사용하지 않는다. D-048 v4 investigation gate를 통과한 새 pilot과 새 experiment ID의
+12-run만 다음 baseline 후보가 된다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와

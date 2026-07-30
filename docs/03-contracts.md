@@ -336,9 +336,13 @@ dated snapshot `gpt-5.4-mini-2026-03-17`이고, model ID와 SDK version, Git com
 Loader는 historical evidence 해석을 위해 이를 읽을 수 있지만 preflight는 항상
 `HISTORICAL_SUITE_IMMUTABLE`로 차단한다. Terminal primary r1
 `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`도 20-call historical
-evidence로만 읽고 preflight에서 차단한다. Corrective primary r2는 별도
-`experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`, experiment ID와 새
-execution hash를 사용한다. 이미 소비된 mini r1/r2와 D-037 r3-r6 diagnostic suite도
+evidence로만 읽고 preflight에서 차단한다. Corrective primary r2
+`experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`와 첫
+`experiments/dev-no-memory.template.yaml` campaign도 한 번 소비된 뒤 immutable
+inspection 전용이다. 새 live gate는
+`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`과, 그 pilot이
+통과한 뒤의 `experiments/dev-no-memory-v4.template.yaml`을 사용한다. 이미 소비된
+mini model-candidate r1/r2와 D-037 r3-r6 diagnostic suite도
 `HISTORICAL_SUITE_IMMUTABLE`이며 approval/hash를 다시 제공해도 실행할 수 없다.
 
 D-031 telemetry를 실제 provider에서 검증한 terminal r1은
@@ -636,6 +640,7 @@ MemoryRetrieved   ModelCalled        ToolCalled
 PatchPrepared     ToolSucceeded      ToolFailed
 ToolReplayed      PatchApplied
 CheckStarted      CheckFinished      LoopDetected
+ToolAdmissionBlocked
 ReviewRecorded    SubmissionAttempted
 SubmissionRejected SubmissionAccepted CheckpointSaved
 FailureTagged     RunCompleted       RunFailed
@@ -666,6 +671,20 @@ checks, missing evidence, allowed next actions와
 `execution_signals.repeated_calls`는 `LoopDetected`를 요약한다. 기존 manifest의
 `context_policy_version=v1`은 과거 replay와 immutable trace 해석을 위해 기존 rendering을
 유지한다.
+
+`phase-evidence-v4`는 v3의 phase/retry 계약을 상속하고 top-level
+`investigation_ledger`를 추가한다. Ledger는 checkpoint에 복사하지 않고, 마지막
+`PatchApplied` 뒤 active mutation epoch의 correlated `ToolCalled`와 successful
+read/search result CAS에서 매 turn 재계산한다. 최소 identity는 source sequence,
+normalized call hash, worktree diff hash, query/glob, file content hash, 실제 반환 line
+range, coverage union과 result content hash다. Context-build evidence와
+`ContextBuilt`는 ledger hash, source-through sequence, no-progress streak와 exploration
+admission을 기록하며 qualifier가 request마다 preceding durable prefix에서 다시 계산한다.
+`source_through_sequence`는 해당 `ContextBuilt` 바로 전 sequence여야 한다. Tail의
+model-call admission은 현재 context를 소비할 imminent generation 1회를 먼저 차감한
+projected remaining count로 계산하므로 prompt의 `allowed_next_actions`와 같은 turn의
+gateway admission이 일치한다.
+V1-v3 context rendering과 qualification은 이 필드를 갖지 않는다.
 
 새 live `ModelCalled` event는 `prompt_telemetry_version: prompt-token-integrity-v1`과 함께
 다음을 기록한다.
@@ -943,6 +962,53 @@ content만 허용하며 private evaluator artifact는 참조하지 않는다.
 }
 ```
 
+`phase-evidence-v4`의 read/search call과 successful result는 current
+`worktree_diff_hash`와 full input/result CAS descriptor를 함께 기록한다. 같은 mutation
+epoch에서 exact search가 다시 요청되거나 requested read range가 verified coverage union에
+완전히 포함되면 underlying filesystem dispatch를 반복하지 않는다. 대신 새 action을
+정상 `ToolCalled`로 세고 tool budget 1회를 소비한 뒤 다음 lifecycle을 한 transaction으로
+닫는다.
+
+```text
+ToolCalled
+  → LoopDetected(schema=investigation-loop-v1,
+                 reason=duplicate_search|fully_covered_read,
+                 enforcement=semantic-cache-replay)
+  → ToolReplayed(schema=tool-replayed-v2)
+```
+
+`ToolReplayed` result는 source CAS에서 exact body를 다시 제공하며
+`semantic_replay=true`를 사용한다. 동일 `action_id` idempotency만 기존
+`replayed=true`와 zero-new-`ToolCalled` 의미를 유지한다. 새로운 query, uncovered/partially
+overlapping range, truncated search나 첫 zero-match query는 dispatch를 허용한다.
+No-progress streak 2부터 `strategy_change_required=true`지만 hard terminal threshold는
+두지 않는다.
+
+Qualifier는 context 재렌더링만 비교하지 않는다. 각 semantic replay의 correlated
+`ToolCalled → LoopDetected → ToolReplayed` 순서·actor·source sequence·normalized hash·
+worktree/mutation epoch·result CAS와 no-progress streak를 durable prefix에서 독립
+재계산한다. Investigation loop와 semantic-cache replay는 정확히 일대일이어야 하며,
+schema/semantic marker를 함께 제거해도 구조적 correlation에서 빠질 수 없다. Admission
+block도 당시 model/tool counter, reserve, reason priority와 같은 correlation의
+`ToolCalled` 부재를 다시 검사한다. Read admission 전에는 normal dispatch와 같은
+safe-path, symlink containment, existing-file 검사를 한다. No-dispatch admission은 그
+시점의 resolved in-root path와 target bytes를 `inspection-admission-preflight-v1` CAS로
+동결한다. Qualifier는 이후 patch로 바뀔 수 있는 terminal workspace를 보지 않고 이
+preflight CAS와 event-time worktree identity를 검사한다. Admission의 nested input,
+preflight, target CAS와 replay/admission result CAS는 leak scan과
+`trace-source-evidence-v4`에 실제 bytes로 결속하며, v1-v3 source-evidence schema와
+hash는 바꾸지 않는다.
+
+Nominal corrective tail은 `4 + 2 × registered_check_count` tool call과 3 model call,
+한 feedback model call이다. Threshold 이후 read/search request는
+`ToolAdmissionBlocked(tool-admission-blocked-v1)`로 gateway dispatch와 `ToolCalled`
+전에 닫고, result/action identity는 durable하게 보존한다. 이 admission은
+apply/check/diff/finish를 차단하거나 성공을 보장하지 않는다. Model이 계속 blocked
+exploration을 선택하면 model-call budget으로 deterministic agent failure가 될 수 있다.
+Context builder는 imminent generation 1회를 반영한 projected model-call count를
+사용하고, gateway는 그 generation이 durable `ModelCalled`가 된 뒤의 실제 counter로
+같은 경계를 집행한다.
+
 Candidate와 rejection result의 nested artifact descriptor는 각각 top-level
 `ToolCalled`/`ToolFailed` artifact identity와 일치해야 하며, builder는 두 CAS object의
 path·size·SHA-256과 UTF-8을 다시 확인한다. Candidate는 일반 tool-result character cap으로
@@ -1035,10 +1101,13 @@ Primary mini r1 `run_6993722014bf4e3b`는 token-total guard가 아니라 20번�
 `ModelCalled` 뒤의 unversioned `model_call_budget_exhausted` guard에서 멈췄다. 이
 historical qualification 21/22 artifact는 v2로 소급 변경하지 않는다. D-047은 future
 primary, memory-development와 core의 총 상한을 21회로 고정하고, offline에서 21번째
-generation 허용과 22번째 generation 전 v2 차단을 검증했다. Corrective primary r2는
-아직 provider에서 실행하지 않았다.
+generation 허용과 22번째 generation 전 v2 차단을 검증했다. Corrective primary r2
+`run_afd5080a77a34995`는 한 번 실행돼 official evaluator와 qualification 23/23을
+통과했다. 뒤의 첫 12-run campaign은 evaluator 도달 0/12라 baseline으로 채택하지 않고,
+D-048 v4 gate 뒤 새 experiment ID로 다시 측정한다.
 
-현재 mini r2 evidence는 이 version 도입 전 `phase-evidence-v2` trace로 그대로 보존한다.
+별도 model-candidate mini r2 `run_4a9737ec91964dca` evidence는 이 version 도입 전
+`phase-evidence-v2` trace로 그대로 보존한다.
 
 ## 8. Verifier result and final outcome
 

@@ -13,6 +13,21 @@ import uuid
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from patchloop.agent.investigation import (
+    INSPECTION_ADMISSION_PREFLIGHT_SCHEMA,
+    INVESTIGATION_LOOP_SCHEMA,
+    INVESTIGATION_POLICY_VERSION,
+    TOOL_ADMISSION_SCHEMA,
+    TOOL_REPLAY_SCHEMA,
+    load_inspection_records,
+    mutation_epoch,
+    nominal_tail_reserve,
+    prior_search_match_keys,
+    read_coverage,
+    reconstruct_covered_read,
+    search_match_key,
+    validate_inspection_arguments,
+)
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
@@ -301,6 +316,7 @@ class ToolGateway:
         artifacts: ArtifactStore,
         sandbox: Sandbox,
         tool_schema_version: str = "v2",
+        context_policy_version: str = "phase-evidence-v3",
         fault: FaultSpec | None = None,
     ) -> None:
         self.run_id = run_id
@@ -310,6 +326,7 @@ class ToolGateway:
         self.artifacts = artifacts
         self.sandbox = sandbox
         self.tool_schema_version = tool_schema_version
+        self.context_policy_version = context_policy_version
         self.fault = fault or FaultSpec()
 
     def execute(self, name: str, action_id: str, arguments: dict[str, Any]) -> ToolResult:
@@ -334,6 +351,7 @@ class ToolGateway:
                     "status": prior.status,
                     "artifact_id": prior.output.get("artifact_id"),
                     "artifact_path": prior.output.get("artifact_path"),
+                    "result_artifact": prior.output.get("result_artifact"),
                     "replayed": True,
                     "error_code": prior.error_code,
                     "error_message": (
@@ -350,7 +368,42 @@ class ToolGateway:
             )
             prior.output = {**prior.output, "replayed": True}
             return prior
-        normalized_call_hash = self._normalized_call_hash(name, arguments)
+        worktree_diff_hash = WorkspaceManager.diff_summary(
+            self.workspace
+        ).patch_hash
+        normalized_call_hash = self._normalized_call_hash(
+            name,
+            arguments,
+            worktree_diff_hash=worktree_diff_hash,
+        )
+        if (
+            self.context_policy_version == "phase-evidence-v4"
+            and name in {"read_file", "search_files"}
+            and self._inspection_short_circuit_eligible(
+                name,
+                arguments,
+            )
+        ):
+            blocked = self._inspection_admission_block(
+                name=name,
+                action_id=action_id,
+                arguments=arguments,
+                input_hash=input_hash,
+                normalized_call_hash=normalized_call_hash,
+                worktree_diff_hash=worktree_diff_hash,
+            )
+            if blocked is not None:
+                return blocked
+            semantic_replay = self._semantic_inspection_replay(
+                name=name,
+                action_id=action_id,
+                arguments=arguments,
+                input_hash=input_hash,
+                normalized_call_hash=normalized_call_hash,
+                worktree_diff_hash=worktree_diff_hash,
+            )
+            if semantic_replay is not None:
+                return semantic_replay
         prior_calls = [
             event
             for event in self.state.list_events(self.run_id)
@@ -399,6 +452,9 @@ class ToolGateway:
             "input_hash": input_hash,
             "normalized_call_hash": normalized_call_hash,
         }
+        if self.context_policy_version == "phase-evidence-v4":
+            call_payload["worktree_diff_hash"] = worktree_diff_hash
+            call_payload["execution"] = "dispatched"
         if input_artifact is not None:
             call_payload["input_artifact"] = input_artifact.model_dump(
                 mode="json"
@@ -442,7 +498,22 @@ class ToolGateway:
                 )
             else:
                 output = self._dispatch(name, arguments)
+            if (
+                self.context_policy_version == "phase-evidence-v4"
+                and name in {"read_file", "search_files"}
+            ):
+                output = self._annotate_inspection_result(
+                    name=name,
+                    output=output,
+                    worktree_diff_hash=worktree_diff_hash,
+                )
             artifact = self.artifacts.put_json(output)
+            result_artifact = (
+                artifact.model_dump(mode="json")
+                if self.context_policy_version == "phase-evidence-v4"
+                and name in {"read_file", "search_files"}
+                else None
+            )
             result = ToolResult(
                 action_id=action_id,
                 status="succeeded",
@@ -451,6 +522,11 @@ class ToolGateway:
                 output={
                     "artifact_id": artifact.artifact_id,
                     "artifact_path": artifact.path,
+                    **(
+                        {"result_artifact": result_artifact}
+                        if result_artifact is not None
+                        else {}
+                    ),
                     **output,
                 },
             )
@@ -472,6 +548,459 @@ class ToolGateway:
             )
         self._complete_result(name, input_hash, result)
         return result
+
+    def _inspection_short_circuit_eligible(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+    ) -> bool:
+        """Validate inspection shape and paths before a no-dispatch outcome.
+
+        Invalid requests continue through the ordinary ToolCalled/ToolFailed
+        path so tail admission cannot hide a contract or path-policy attempt.
+        """
+
+        try:
+            validate_inspection_arguments(
+                self.workspace,
+                name,
+                arguments,
+            )
+            return True
+        except ContractError:
+            return False
+
+    def _inspection_admission_block(
+        self,
+        *,
+        name: str,
+        action_id: str,
+        arguments: dict[str, Any],
+        input_hash: str,
+        normalized_call_hash: str,
+        worktree_diff_hash: str,
+    ) -> ToolResult | None:
+        events = self.state.list_events(self.run_id)
+        manifest = self.state.get_manifest(self.run_id)
+        reserve = nominal_tail_reserve(self.task)
+        model_calls_used = sum(
+            event.type == EventType.MODEL_CALLED for event in events
+        )
+        tool_calls_used = sum(
+            event.type == EventType.TOOL_CALLED for event in events
+        )
+        remaining_model_calls = (
+            manifest.budget.max_model_calls - model_calls_used
+        )
+        remaining_tool_calls = (
+            manifest.budget.max_tool_calls - tool_calls_used
+        )
+        block_reasons = []
+        if remaining_tool_calls <= reserve["tool_calls"]:
+            block_reasons.append("tool_tail_reserved")
+        if remaining_model_calls <= (
+            reserve["model_calls"] + reserve["feedback_model_calls"]
+        ):
+            block_reasons.append("model_tail_reserved")
+        if not block_reasons:
+            return None
+
+        started = utc_now()
+        input_artifact = self.artifacts.put_json(
+            {"tool": name, "input": arguments}
+        )
+        try:
+            preflight_artifact = self._inspection_admission_preflight(
+                name=name,
+                arguments=arguments,
+                worktree_diff_hash=worktree_diff_hash,
+            )
+        except (ContractError, OSError):
+            # The target can disappear between eligibility and snapshot.
+            # Ordinary dispatch will then record the structured failure.
+            return None
+        preflight_descriptor = preflight_artifact.model_dump(mode="json")
+        error_message = (
+            "inspection was not admitted because the nominal corrective "
+            "lifecycle tail is reserved; use apply_patch or another "
+            "phase-advancing action"
+        )
+        error_details = {
+            "schema_version": TOOL_ADMISSION_SCHEMA,
+            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "reason_codes": block_reasons,
+            "nominal_reserve": reserve,
+            "remaining_model_calls": remaining_model_calls,
+            "remaining_tool_calls": remaining_tool_calls,
+            "guidance": (
+                "Use the durable investigation ledger and move to a scoped "
+                "patch, registered validation, diff review, or submission."
+            ),
+        }
+        result_payload = {
+            "tool": name,
+            "status": "rejected",
+            "error_code": "TOOL_ADMISSION_BLOCKED",
+            "error_message": error_message,
+            "error_details": error_details,
+            "admission_blocked": True,
+            "worktree_diff_hash": worktree_diff_hash,
+            "preflight_artifact": preflight_descriptor,
+        }
+        result_artifact = self.artifacts.put_json(result_payload)
+        result = ToolResult(
+            action_id=action_id,
+            status="rejected",
+            started_at=started,
+            finished_at=utc_now(),
+            output={
+                "artifact_id": result_artifact.artifact_id,
+                "artifact_path": result_artifact.path,
+                "result_artifact": result_artifact.model_dump(mode="json"),
+                **result_payload,
+            },
+            error_code="TOOL_ADMISSION_BLOCKED",
+            error_message=error_message,
+        )
+        event_payload = {
+            "schema_version": TOOL_ADMISSION_SCHEMA,
+            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "tool": name,
+            "status": "rejected",
+            "input_hash": input_hash,
+            "normalized_call_hash": normalized_call_hash,
+            "worktree_diff_hash": worktree_diff_hash,
+            "mutation_epoch_sequence": mutation_epoch(events),
+            "reason_codes": block_reasons,
+            "nominal_reserve": reserve,
+            "model_calls_used": model_calls_used,
+            "max_model_calls": manifest.budget.max_model_calls,
+            "tool_calls_used": tool_calls_used,
+            "max_tool_calls": manifest.budget.max_tool_calls,
+            "input_artifact": input_artifact.model_dump(mode="json"),
+            "preflight_artifact": preflight_descriptor,
+            "result_artifact": result_artifact.model_dump(mode="json"),
+            "artifact_id": result_artifact.artifact_id,
+            "artifact_path": result_artifact.path,
+            "error_code": result.error_code,
+            "error_message": error_message,
+            "error_details": error_details,
+        }
+        self.state.complete_nonexecuted_action(
+            self.run_id,
+            action_id,
+            input_hash,
+            result,
+            event_specs=[
+                (
+                    EventType.TOOL_ADMISSION_BLOCKED,
+                    "tool-admission-policy",
+                    event_payload,
+                )
+            ],
+        )
+        return result
+
+    def _inspection_admission_preflight(
+        self,
+        *,
+        name: str,
+        arguments: dict[str, Any],
+        worktree_diff_hash: str,
+    ) -> Artifact:
+        """Freeze stateful validation evidence before a no-dispatch result."""
+
+        payload: dict[str, Any] = {
+            "schema_version": INSPECTION_ADMISSION_PREFLIGHT_SCHEMA,
+            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "tool": name,
+            "worktree_diff_hash": worktree_diff_hash,
+        }
+        if name == "read_file":
+            path = str(arguments["path"])
+            workspace = self.workspace.resolve()
+            target = ensure_within(workspace, path)
+            content = target.read_bytes()
+            target_artifact = self.artifacts.put_bytes(content)
+            payload.update(
+                {
+                    "requested_path": path,
+                    "resolved_relative_path": target.relative_to(
+                        workspace
+                    ).as_posix(),
+                    "target_artifact": target_artifact.model_dump(
+                        mode="json"
+                    ),
+                }
+            )
+        else:
+            payload.update(
+                {
+                    "query": arguments["query"],
+                    "path_glob": arguments.get("path_glob", "**/*"),
+                }
+            )
+        return self.artifacts.put_json(payload)
+
+    def _investigation_no_progress_streak(
+        self,
+        events: list,
+    ) -> int:
+        epoch = mutation_epoch(events)
+        streak = 0
+        for event in events:
+            if epoch is not None and event.sequence <= epoch:
+                continue
+            if (
+                event.type == EventType.LOOP_DETECTED
+                and event.payload.get("schema_version")
+                == INVESTIGATION_LOOP_SCHEMA
+            ):
+                streak += 1
+            elif (
+                event.type == EventType.TOOL_SUCCEEDED
+                and event.payload.get("tool")
+                in {"read_file", "search_files"}
+            ):
+                novelty = event.payload.get("novelty")
+                if (
+                    isinstance(novelty, dict)
+                    and novelty.get("classification") == "seen_only"
+                ):
+                    streak += 1
+                else:
+                    streak = 0
+            elif (
+                event.type == EventType.TOOL_SUCCEEDED
+                and event.payload.get("tool")
+                not in {"read_file", "search_files"}
+            ):
+                streak = 0
+        return streak
+
+    def _semantic_inspection_replay(
+        self,
+        *,
+        name: str,
+        action_id: str,
+        arguments: dict[str, Any],
+        input_hash: str,
+        normalized_call_hash: str,
+        worktree_diff_hash: str,
+        existing_call_payload: dict[str, Any] | None = None,
+    ) -> ToolResult | None:
+        events = self.state.list_events(self.run_id)
+        records = load_inspection_records(
+            events,
+            self.artifacts,
+            worktree_diff_hash=worktree_diff_hash,
+        )
+        sources = []
+        replay_output: dict[str, Any] | None = None
+        reason_code: str | None = None
+        if name == "search_files":
+            exact = [
+                record
+                for record in records
+                if record.tool == name
+                and record.normalized_call_hash == normalized_call_hash
+                and record.result["truncated"] is False
+            ]
+            if exact:
+                sources = [exact[-1]]
+                replay_output = dict(exact[-1].result)
+                reason_code = "duplicate_search"
+        elif (
+            name == "read_file"
+            and isinstance(arguments.get("path"), str)
+            and type(arguments.get("start_line")) is int
+            and type(arguments.get("end_line")) is int
+        ):
+            reconstructed = reconstruct_covered_read(
+                records,
+                path=str(arguments["path"]),
+                start_line=int(arguments["start_line"]),
+                end_line=int(arguments["end_line"]),
+                worktree_diff_hash=worktree_diff_hash,
+            )
+            if reconstructed is not None:
+                replay_output, sources = reconstructed
+                reason_code = "fully_covered_read"
+        if replay_output is None or reason_code is None:
+            return None
+
+        started = utc_now()
+        input_artifact = (
+            Artifact.model_validate(existing_call_payload["input_artifact"])
+            if existing_call_payload is not None
+            else self.artifacts.put_json({"tool": name, "input": arguments})
+        )
+        source_call_sequences = [
+            source.call_sequence for source in sources
+        ]
+        source_outcome_sequences = [
+            source.outcome_sequence for source in sources
+        ]
+        replay_payload = {
+            **replay_output,
+            "novelty": {
+                "classification": "seen_only",
+                "new_evidence_count": 0,
+                "reason": reason_code,
+            },
+            "semantic_replay": True,
+            "replay_kind": "semantic-investigation",
+            "replay_reason": reason_code,
+            "source_call_sequences": source_call_sequences,
+            "source_outcome_sequences": source_outcome_sequences,
+        }
+        result_artifact = self.artifacts.put_json(replay_payload)
+        result = ToolResult(
+            action_id=action_id,
+            status="succeeded",
+            started_at=started,
+            finished_at=utc_now(),
+            output={
+                "artifact_id": result_artifact.artifact_id,
+                "artifact_path": result_artifact.path,
+                "result_artifact": result_artifact.model_dump(mode="json"),
+                **replay_payload,
+            },
+        )
+        new_streak = self._investigation_no_progress_streak(events) + 1
+        epoch = mutation_epoch(events)
+        call_payload = (
+            dict(existing_call_payload)
+            if existing_call_payload is not None
+            else {
+                "tool": name,
+                "input_hash": input_hash,
+                "normalized_call_hash": normalized_call_hash,
+                "worktree_diff_hash": worktree_diff_hash,
+                "execution": "semantic-cache-replay",
+                "input_artifact": input_artifact.model_dump(mode="json"),
+                "artifact_id": input_artifact.artifact_id,
+                "artifact_path": input_artifact.path,
+            }
+        )
+        loop_payload = {
+            "schema_version": INVESTIGATION_LOOP_SCHEMA,
+            "policy_version": INVESTIGATION_POLICY_VERSION,
+            "tool": name,
+            "reason_code": reason_code,
+            "normalized_call_hash": normalized_call_hash,
+            "source_call_sequences": source_call_sequences,
+            "source_outcome_sequences": source_outcome_sequences,
+            "mutation_epoch_sequence": epoch,
+            "worktree_diff_hash": worktree_diff_hash,
+            "no_progress_streak": new_streak,
+            "strategy_change_required": new_streak >= 2,
+            "occurrences": new_streak + 1,
+            "enforcement": "semantic-cache-replay",
+        }
+        outcome_payload = {
+            "schema_version": TOOL_REPLAY_SCHEMA,
+            "tool": name,
+            "status": "succeeded",
+            "semantic_replay": True,
+            "replay_kind": "semantic-investigation",
+            "reason_code": reason_code,
+            "input_hash": input_hash,
+            "normalized_call_hash": normalized_call_hash,
+            "source_action_ids": [
+                source.action_id for source in sources
+            ],
+            "source_call_sequences": source_call_sequences,
+            "source_outcome_sequences": source_outcome_sequences,
+            "mutation_epoch_sequence": epoch,
+            "worktree_diff_hash": worktree_diff_hash,
+            "artifact_id": result_artifact.artifact_id,
+            "artifact_path": result_artifact.path,
+            "result_artifact": result_artifact.model_dump(mode="json"),
+            "duration_ms": int(
+                (result.finished_at - result.started_at).total_seconds()
+                * 1000
+            ),
+        }
+        self.state.complete_nonexecuted_action(
+            self.run_id,
+            action_id,
+            input_hash,
+            result,
+            event_specs=[
+                (EventType.TOOL_CALLED, "agent", call_payload),
+                (EventType.LOOP_DETECTED, "tool-gateway", loop_payload),
+                (EventType.TOOL_REPLAYED, "semantic-cache", outcome_payload),
+            ],
+        )
+        return result
+
+    def _annotate_inspection_result(
+        self,
+        *,
+        name: str,
+        output: dict[str, Any],
+        worktree_diff_hash: str,
+    ) -> dict[str, Any]:
+        events = self.state.list_events(self.run_id)
+        records = load_inspection_records(
+            events,
+            self.artifacts,
+            worktree_diff_hash=worktree_diff_hash,
+        )
+        annotated = {**output, "worktree_diff_hash": worktree_diff_hash}
+        if name == "read_file":
+            prior_lines = {
+                line
+                for start, end in read_coverage(
+                    records,
+                    str(output["path"]),
+                )
+                for line in range(start, end + 1)
+            }
+            actual_start = output["actual_start_line"]
+            actual_end = output["actual_end_line"]
+            returned_lines = (
+                set(range(actual_start, actual_end + 1))
+                if actual_start is not None and actual_end is not None
+                else set()
+            )
+            new_lines = returned_lines - prior_lines
+            classification = (
+                "novel"
+                if new_lines
+                else "novel_negative"
+            )
+            annotated["novelty"] = {
+                "schema_version": "inspection-novelty-v1",
+                "classification": classification,
+                "new_evidence_count": len(new_lines),
+                "reused_evidence_count": len(returned_lines & prior_lines),
+            }
+        else:
+            prior_matches = prior_search_match_keys(records)
+            current_matches = {
+                search_match_key(match)
+                for match in output["matches"]
+            }
+            new_matches = current_matches - prior_matches
+            if output["truncated"]:
+                classification = "novel_truncated"
+            elif not current_matches:
+                classification = "novel_negative"
+            elif new_matches:
+                classification = "novel"
+            else:
+                classification = "seen_only"
+            annotated["novelty"] = {
+                "schema_version": "inspection-novelty-v1",
+                "classification": classification,
+                "new_evidence_count": len(new_matches),
+                "reused_evidence_count": len(
+                    current_matches & prior_matches
+                ),
+            }
+        return annotated
 
     def _controlled_rejection_pending(self) -> bool:
         if (
@@ -754,6 +1283,7 @@ class ToolGateway:
             "worktree_diff_hash": result.output.get("worktree_diff_hash"),
             "patch_hash": result.output.get("patch_hash"),
             "error_details": result.output.get("error_details"),
+            "novelty": result.output.get("novelty"),
             "duration_ms": int(
                 (result.finished_at - result.started_at).total_seconds() * 1000
             ),
@@ -1007,6 +1537,83 @@ class ToolGateway:
                 "interrupted tool call lacks an action identity"
             )
         name, arguments, input_hash = self._load_call_input(call)
+        prior = self.state.get_action_result(
+            self.run_id,
+            call.correlation_id,
+            input_hash,
+        )
+        if (
+            self.context_policy_version == "phase-evidence-v4"
+            and name in {"read_file", "search_files"}
+            and call.payload.get("execution")
+            == "semantic-cache-replay"
+        ):
+            normalized_call_hash = call.payload.get(
+                "normalized_call_hash"
+            )
+            worktree_diff_hash = call.payload.get("worktree_diff_hash")
+            if (
+                not isinstance(normalized_call_hash, str)
+                or not isinstance(worktree_diff_hash, str)
+            ):
+                raise RecoveryError(
+                    "semantic replay call lacks a valid inspection identity"
+                )
+            current_diff_hash = WorkspaceManager.diff_summary(
+                self.workspace
+            ).patch_hash
+            expected_normalized_hash = self._normalized_call_hash(
+                name,
+                arguments,
+                worktree_diff_hash=worktree_diff_hash,
+            )
+            if (
+                worktree_diff_hash != current_diff_hash
+                or normalized_call_hash != expected_normalized_hash
+            ):
+                raise RecoveryError(
+                    "semantic replay call no longer matches the worktree "
+                    "or canonical input"
+                )
+            if prior is not None:
+                semantic_suffix = [
+                    event
+                    for event in events
+                    if event.sequence > call.sequence
+                    and event.correlation_id == call.correlation_id
+                    and event.type
+                    in {EventType.LOOP_DETECTED, EventType.TOOL_REPLAYED}
+                ]
+                if [event.type for event in semantic_suffix] != [
+                    EventType.LOOP_DETECTED,
+                    EventType.TOOL_REPLAYED,
+                ] or any(
+                    event.actor != expected_actor
+                    or event.payload.get("tool") != name
+                    for event, expected_actor in zip(
+                        semantic_suffix,
+                        ("tool-gateway", "semantic-cache"),
+                        strict=True,
+                    )
+                ):
+                    raise RecoveryError(
+                        "semantic replay action has an invalid durable suffix"
+                    )
+                return name, prior
+            replay = self._semantic_inspection_replay(
+                name=name,
+                action_id=call.correlation_id,
+                arguments=arguments,
+                input_hash=input_hash,
+                normalized_call_hash=normalized_call_hash,
+                worktree_diff_hash=worktree_diff_hash,
+                existing_call_payload=call.payload,
+            )
+            if replay is None:
+                raise RecoveryError(
+                    "interrupted semantic replay can no longer be derived"
+                )
+            return name, replay
         outcomes = [
             event
             for event in events
@@ -1019,11 +1626,6 @@ class ToolGateway:
             raise RecoveryError(
                 "interrupted tool call has duplicate durable outcomes"
             )
-        prior = self.state.get_action_result(
-            self.run_id,
-            call.correlation_id,
-            input_hash,
-        )
         if outcomes and prior is None:
             raise RecoveryError(
                 "tool outcome exists without its atomic action result"
@@ -1035,7 +1637,29 @@ class ToolGateway:
         started = call.timestamp
         try:
             output = self._dispatch(name, arguments)
+            if (
+                self.context_policy_version == "phase-evidence-v4"
+                and name in {"read_file", "search_files"}
+            ):
+                worktree_diff_hash = call.payload.get(
+                    "worktree_diff_hash"
+                )
+                if not isinstance(worktree_diff_hash, str):
+                    raise RecoveryError(
+                        "v4 inspection call lacks a worktree diff identity"
+                    )
+                output = self._annotate_inspection_result(
+                    name=name,
+                    output=output,
+                    worktree_diff_hash=worktree_diff_hash,
+                )
             artifact = self.artifacts.put_json(output)
+            result_artifact = (
+                artifact.model_dump(mode="json")
+                if self.context_policy_version == "phase-evidence-v4"
+                and name in {"read_file", "search_files"}
+                else None
+            )
             result = ToolResult(
                 action_id=call.correlation_id,
                 status="succeeded",
@@ -1044,6 +1668,11 @@ class ToolGateway:
                 output={
                     "artifact_id": artifact.artifact_id,
                     "artifact_path": artifact.path,
+                    **(
+                        {"result_artifact": result_artifact}
+                        if result_artifact is not None
+                        else {}
+                    ),
                     **output,
                 },
             )
@@ -1384,8 +2013,19 @@ class ToolGateway:
         self,
         name: str,
         arguments: dict[str, Any],
+        *,
+        worktree_diff_hash: str | None = None,
     ) -> str:
-        summary = WorkspaceManager.diff_summary(self.workspace)
+        summary = (
+            None
+            if worktree_diff_hash is not None
+            else WorkspaceManager.diff_summary(self.workspace)
+        )
+        current_diff_hash = (
+            worktree_diff_hash
+            if worktree_diff_hash is not None
+            else summary.patch_hash
+        )
         state_marker: int | None = None
         if name == "get_diff":
             current_checks = [
@@ -1393,7 +2033,7 @@ class ToolGateway:
                 for event in self.state.list_events(self.run_id)
                 if event.type == EventType.TOOL_SUCCEEDED
                 and event.payload.get("tool") == "run_check"
-                and event.payload.get("worktree_diff_hash") == summary.patch_hash
+                and event.payload.get("worktree_diff_hash") == current_diff_hash
             ]
             state_marker = max(current_checks, default=None)
         return sha256_text(
@@ -1401,7 +2041,7 @@ class ToolGateway:
                 {
                     "tool": name,
                     "input": arguments,
-                    "worktree_diff_hash": summary.patch_hash,
+                    "worktree_diff_hash": current_diff_hash,
                     "state_marker": state_marker,
                 }
             )
@@ -1421,19 +2061,48 @@ class ToolGateway:
         raise ContractError(f"unknown tool: {name}")
 
     def _read_file(self, path: str, start_line: int, end_line: int) -> dict[str, Any]:
-        if end_line < start_line or end_line - start_line > 500:
-            raise ContractError("read_file range must contain at most 501 ordered lines")
+        validate_inspection_arguments(
+            self.workspace,
+            "read_file",
+            {
+                "path": path,
+                "start_line": start_line,
+                "end_line": end_line,
+            },
+        )
         target = ensure_within(self.workspace, path)
-        if not target.is_file():
-            raise ContractError(f"file does not exist: {path}")
-        lines = target.read_text(encoding="utf-8", errors="replace").splitlines()
-        content = "\n".join(lines[start_line - 1 : end_line])
-        return {"path": path, "start_line": start_line, "end_line": end_line, "content": content}
+        raw = target.read_text(encoding="utf-8", errors="replace")
+        lines = raw.splitlines()
+        selected = lines[start_line - 1 : end_line]
+        line_count = len(selected)
+        actual_start_line = start_line if selected else None
+        actual_end_line = (
+            start_line + line_count - 1 if selected else None
+        )
+        result = {
+            "path": path,
+            "start_line": start_line,
+            "end_line": end_line,
+            "content": "\n".join(selected),
+        }
+        if self.context_policy_version != "phase-evidence-v4":
+            return result
+        return {
+            **result,
+            "actual_start_line": actual_start_line,
+            "actual_end_line": actual_end_line,
+            "line_count": line_count,
+            "total_lines": len(lines),
+            "eof_reached": end_line >= len(lines),
+            "file_content_hash": sha256_text(raw),
+        }
 
     def _search_files(self, query: str, path_glob: str = "**/*") -> dict[str, Any]:
-        if not query or len(query) > 500:
-            raise ContractError("search query must contain 1-500 characters")
-        safe_relative_path(path_glob, field_name="path_glob")
+        validate_inspection_arguments(
+            self.workspace,
+            "search_files",
+            {"query": query, "path_glob": path_glob},
+        )
         matches: list[dict[str, Any]] = []
         for path in self.workspace.glob(path_glob):
             if not path.is_file() or ".git" in path.parts:
@@ -1452,8 +2121,32 @@ class ToolGateway:
                         }
                     )
                     if len(matches) >= 100:
-                        return {"query": query, "matches": matches, "truncated": True}
-        return {"query": query, "matches": matches, "truncated": False}
+                        result = {
+                            "query": query,
+                            "matches": matches,
+                            "truncated": True,
+                        }
+                        if self.context_policy_version == "phase-evidence-v4":
+                            result.update(
+                                {
+                                    "path_glob": path_glob,
+                                    "match_count": len(matches),
+                                }
+                            )
+                        return result
+        result = {
+            "query": query,
+            "matches": matches,
+            "truncated": False,
+        }
+        if self.context_policy_version == "phase-evidence-v4":
+            result.update(
+                {
+                    "path_glob": path_glob,
+                    "match_count": len(matches),
+                }
+            )
+        return result
 
     def _prepare_patch_mutation(
         self,

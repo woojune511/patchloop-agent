@@ -37,9 +37,11 @@ from patchloop.contracts import (
     VerdictState,
 )
 from patchloop.errors import ContractError, RecoveryError
+from patchloop.evals import qualification as qualification_module
 from patchloop.evals.faults import clone_with_fault
 from patchloop.evals.qualification import (
     _request_runtime_contract_valid,
+    calculate_source_evidence_hash,
     qualify_run,
 )
 from patchloop.runtime import build_manifest
@@ -61,6 +63,9 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     package = load_task_package(Path(TASK).parent)
     current = build_manifest(package, run_id="run_current_context_contract")
     legacy_v2 = current.model_copy(update={"context_policy_version": "phase-evidence-v2"})
+    historical_v3 = current.model_copy(
+        update={"context_policy_version": "phase-evidence-v3"}
+    )
     replay = build_manifest(
         package,
         run_id="run_replay_context_contract",
@@ -70,8 +75,13 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     )
 
     assert current.tool_schema_version == "v2"
-    assert current.context_policy_version == "phase-evidence-v3"
-    assert AgentRunner._runtime_contract(current) == AgentRunner._runtime_contract(legacy_v2)
+    assert current.context_policy_version == "phase-evidence-v4"
+    assert AgentRunner._runtime_contract(current) != AgentRunner._runtime_contract(
+        legacy_v2
+    )
+    assert AgentRunner._runtime_contract(
+        historical_v3
+    ) == AgentRunner._runtime_contract(legacy_v2)
     assert replay.tool_schema_version == "v1"
     assert replay.context_policy_version == "v1"
 
@@ -320,7 +330,9 @@ def test_offline_mock_agent_creates_complete_trace(
     events = runner.state.list_events(result["run_id"])
     assert result["scope_compliant_success"] is True
     assert result["official"] is False
-    assert runner.state.get_manifest(result["run_id"]).task_id == task_id
+    manifest = runner.state.get_manifest(result["run_id"])
+    assert manifest.task_id == task_id
+    assert manifest.context_policy_version == "phase-evidence-v4"
     assert [event.sequence for event in events] == list(range(1, len(events) + 1))
     assert sum(event.type == EventType.MODEL_CALLED for event in events) == 5
     assert sum(event.type == EventType.TOOL_CALLED for event in events) == 5
@@ -329,6 +341,14 @@ def test_offline_mock_agent_creates_complete_trace(
     assert any(event.type == EventType.SUBMISSION_ATTEMPTED for event in events)
     assert any(event.type == EventType.SUBMISSION_ACCEPTED for event in events)
     assert any(event.type == EventType.RUN_COMPLETED for event in events)
+    assert all(
+        isinstance(
+            event.payload.get("investigation_ledger_hash"),
+            str,
+        )
+        for event in events
+        if event.type == EventType.CONTEXT_BUILT
+    )
     accepted = next(event for event in events if event.type == EventType.SUBMISSION_ACCEPTED)
     submitted_artifact = Artifact.model_validate(accepted.payload["submitted_patch_artifact"])
     assert result["submitted_patch_artifact_id"] == (submitted_artifact.artifact_id)
@@ -342,6 +362,209 @@ def test_offline_mock_agent_creates_complete_trace(
     persisted = json.loads(result_path.read_text(encoding="utf-8"))
     assert persisted["usage"] == result["usage"]
     _assert_public_trace_boundary(runner, result["run_id"], task_path)
+
+
+def test_v4_repeated_investigation_e2e_replays_blocks_and_qualifies(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package(Path(TASK).parent)
+    script = MOCK_TASK_SCRIPTS[package.public.task_id]
+    manifest = build_manifest(
+        package,
+        run_id="run_v4_repeated_investigation_e2e",
+        sandbox_backend="local",
+        budget=Budget(
+            max_model_calls=8,
+            max_tool_calls=20,
+            max_total_tokens=80_000,
+        ),
+    )
+
+    class RepeatedInvestigationAdapter:
+        def __init__(self) -> None:
+            self.turn = 0
+            self.contexts: list[str] = []
+
+        def next_turn(self, context, tools):
+            del tools
+            self.contexts.append(context)
+            search = {
+                "query": "parse_rows",
+                "path_glob": "**/*.py",
+            }
+            calls = [
+                RequestedTool(
+                    "search_files",
+                    "v4-search-source",
+                    search,
+                ),
+                RequestedTool(
+                    "search_files",
+                    "v4-search-replay-one",
+                    search,
+                ),
+                RequestedTool(
+                    "search_files",
+                    "v4-search-replay-two",
+                    search,
+                ),
+                RequestedTool(
+                    "search_files",
+                    "v4-search-tail-block",
+                    {
+                        "query": "another-query",
+                        "path_glob": "**/*.py",
+                    },
+                ),
+                RequestedTool(
+                    "apply_patch",
+                    "v4-corrective-patch",
+                    {"patch": script.patch},
+                ),
+                RequestedTool(
+                    "run_check",
+                    "v4-corrective-check",
+                    {"check_id": "existing-unit-tests"},
+                ),
+                RequestedTool(
+                    "get_diff",
+                    "v4-corrective-review",
+                    {},
+                ),
+                RequestedTool(
+                    "finish_task",
+                    "v4-corrective-finish",
+                    {},
+                ),
+            ]
+            call = calls[self.turn]
+            self.turn += 1
+            return ModelTurn(tool_calls=[call])
+
+    adapter = RepeatedInvestigationAdapter()
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    result = runner.start(TASK, model="mock", manifest=manifest)
+
+    assert result["outcome_kind"] == RunOutcomeKind.RESOLVED.value
+    assert result["usage"]["model_calls"] == 8
+    assert result["usage"]["tool_calls"] == 7
+    events = runner.state.list_events(manifest.run_id)
+    assert sum(
+        event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "search_files"
+        for event in events
+    ) == 1
+    assert sum(
+        event.type == EventType.TOOL_REPLAYED
+        and event.payload.get("semantic_replay") is True
+        for event in events
+    ) == 2
+    assert sum(
+        event.type == EventType.TOOL_ADMISSION_BLOCKED
+        for event in events
+    ) == 1
+
+    tail_context = json.loads(adapter.contexts[3])
+    assert tail_context["investigation_ledger"]["no_progress"][
+        "strategy_change_required"
+    ] is True
+    assert tail_context["investigation_ledger"]["tail_policy"][
+        "exploration_admitted"
+    ] is False
+    assert "search_files" not in tail_context["phase_contract"][
+        "allowed_next_actions"
+    ]
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=runner.root,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    assert checks["investigation_evidence"]["passed"] is True
+    assert checks["investigation_lifecycle"]["passed"] is True
+    assert checks["agent_visible_artifacts"]["passed"] is True
+    assert (
+        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V4
+        == "trace-source-evidence-v4"
+    )
+    with monkeypatch.context() as schema_patch:
+        schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V4",
+            "trace-source-evidence-v4-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                manifest.run_id,
+                root=runner.root,
+                require_valid_plan=False,
+            )
+            != qualification["source_evidence_hash"]
+        )
+
+    admission_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_ADMISSION_BLOCKED
+    )
+    admission_input = Artifact.model_validate(
+        admission_event.payload["input_artifact"]
+    )
+    admission_input_path = Path(admission_input.path)
+    original_admission_input = admission_input_path.read_bytes()
+    admission_input_path.write_bytes(b'{"tampered": true}')
+    assert (
+        calculate_source_evidence_hash(
+            manifest.run_id,
+            root=runner.root,
+            require_valid_plan=False,
+        )
+        != qualification["source_evidence_hash"]
+    )
+    admission_input_path.write_bytes(original_admission_input)
+    assert (
+        calculate_source_evidence_hash(
+            manifest.run_id,
+            root=runner.root,
+            require_valid_plan=False,
+        )
+        == qualification["source_evidence_hash"]
+    )
+
+    semantic_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_REPLAYED
+        and event.payload.get("semantic_replay") is True
+    )
+    Path(semantic_event.payload["artifact_path"]).write_text(
+        '{"tampered": true}',
+        encoding="utf-8",
+    )
+    with pytest.raises(
+        ContractError,
+        match="trace qualification is immutable",
+    ):
+        qualify_run(
+            manifest.run_id,
+            task_dir=Path(TASK).parent,
+            root=runner.root,
+        )
 
 
 @pytest.mark.parametrize(
@@ -600,6 +823,9 @@ def test_live_v3_retry_request_contains_exact_rejected_patch_context(
             repetition=1,
         ),
     )
+    manifest = manifest.model_copy(
+        update={"context_policy_version": "phase-evidence-v3"}
+    )
     responses = _RejectedPatchResponses(
         patch=patch,
         model_id=manifest.model.model_id,
@@ -700,6 +926,9 @@ def _run_live_v3_retry_budget_block(
             repetition=1,
         ),
     )
+    manifest = manifest.model_copy(
+        update={"context_policy_version": "phase-evidence-v3"}
+    )
     responses = _RejectedPatchResponses(
         patch=patch,
         model_id=manifest.model.model_id,
@@ -751,6 +980,9 @@ def _run_live_v3_generic_budget_block(
             schedule_row_id="sha256:" + ("b" * 64),
             repetition=1,
         ),
+    )
+    manifest = manifest.model_copy(
+        update={"context_policy_version": "phase-evidence-v3"}
     )
     responses = _GenericBudgetBlockResponses(
         model_id=manifest.model.model_id,
@@ -828,6 +1060,9 @@ def _run_live_v3_counter_budget_block(
             schedule_row_id="sha256:" + ("b" * 64),
             repetition=1,
         ),
+    )
+    manifest = manifest.model_copy(
+        update={"context_policy_version": "phase-evidence-v3"}
     )
     responses = _GenericBudgetBlockResponses(
         model_id=manifest.model.model_id,
@@ -925,6 +1160,9 @@ def test_campaign_model_budget_allows_21_generations_then_blocks_22nd(
             schedule_row_id="sha256:" + ("b" * 64),
             repetition=1,
         ),
+    )
+    manifest = manifest.model_copy(
+        update={"context_policy_version": "phase-evidence-v3"}
     )
     responses = _RepeatedSearchResponses(
         model_id=manifest.model.model_id,

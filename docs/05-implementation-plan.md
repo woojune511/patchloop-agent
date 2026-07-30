@@ -1,7 +1,7 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-047 offline-complete; corrective primary r2 paid gate pending**
+현재 milestone: **D-048 phase-evidence-v4 offline gate; fresh v4 pilot pending**
 
 2026-07-30 구현 스냅샷:
 
@@ -9,10 +9,10 @@
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | tool v2/context v3/D-047 budget hardening offline-complete | Current-diff submission gate, exact rejected-patch next-request rehydration, v1 exact-token과 v2 counter no-generation block 검증 |
+| Phase 3 state machine | tool v2/context v4/D-048 investigation hardening offline-complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, tail admission과 request-by-request qualification 재계산 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
-| Phase 5 memory | qualification/review path implemented, live trace/index pending | Memory-development 6/6, development-validation 2/2 |
-| Phase 6 evaluation | D-047 offline-complete; corrective r2 live pending | Primary r1 call-budget failure는 immutable; future primary/dev/core는 공정한 21-call contract, r2 provider run 없음 |
+| Phase 5 memory | qualification/review path implemented, reviewed index pending | Memory-development 6/6, development-validation 2/2; 첫 12-run failure trace는 v4 이전 diagnostic으로만 보존 |
+| Phase 6 evaluation | primary r2 accepted; first 12-run diagnostic complete; v4 pilot pending | R2 official/qualification pass, 첫 campaign evaluator 0/12; 새 v4 pilot과 baseline campaign은 미실행 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -28,8 +28,9 @@ contract 구조만으로 stress sentinel에 선정됐고 30-run schedule과 함�
 
 `done`은 해당 코드 경로와 executable evidence를 뜻한다. Docker evaluator와 offline agent
 smoke, 스무 research admission과 dataset freeze는 2026-07-28까지 통과했다. 동결된
-stress schedule은 아직 실행되지 않았고, Live OpenAI development campaign과 96-run core
-campaign도 완료가 아니며 `docs/08-limitations.md`에서 별도로 추적한다.
+stress schedule은 아직 실행되지 않았다. 첫 Live OpenAI 12-run development campaign은
+diagnostic으로 완료됐지만 usable no-memory baseline인 새 v4 campaign과 96-run core
+campaign은 완료되지 않았으며 `docs/08-limitations.md`에서 별도로 추적한다.
 
 ## 1. Sequencing rule
 
@@ -65,17 +66,16 @@ research task를 admission한다.
 7. 원본 benchmark 호환성 run은 external acceptance lane에 남기고 core aggregate와 분리한다.
 
 2026-07-28 현재 1~6번은 executable admission과 machine-audit evidence로 완료됐다.
-7번 external acceptance lane은 frozen core dataset과 분리된 후속 작업이다. 현재 다음
-단계는 완료된 D-041 r5 25,000/200,000 contract와 `model-generation-block-v1` generic
-terminal qualification evidence → 새 experiment/hash의 별도 승인 → terminal r5
-inconclusive 보존 → D-043 controlled r6 profile의 offline 구현 → 승인된 r6
-`run_73f5aaf7328a4ea5`의 terminal diagnostic pass와 D-045 primary r1
-`run_6993722014bf4e3b`의 terminal call-budget failure까지 진행됐다. 다음은 provider 재실행이
-아니라 D-047에서 완료한 공정한 21-call 상한과 deterministic model/tool/wall
-next-generation block의 offline evidence를 clean commit으로 동결하는 것이다. 그 commit의
-새 r2 no-call preflight hash를 검토하고 별도 $2 승인을 받은 corrective pilot이 evaluator와
-`trace-qualification-v2`를 통과해야 여섯 memory-development task의 12-run no-memory
-campaign을 시작한다.
+7번 external acceptance lane은 frozen core dataset과 분리된 후속 작업이다. Live 경로는
+D-041 r5, D-043 controlled r6, D-045 primary r1과 D-047 call-budget hardening을 거쳐
+corrective primary r2 `run_afd5080a77a34995`의 official evaluator와 qualification
+23/23 통과까지 진행됐다. 이어 실행한 `dev-no-memory-20260728`은 12/12 terminal trace를
+만들었지만 evaluator 도달 0/12라 성능 baseline으로 사용할 수 없다. D-048은 그 trace에서
+확인된 repeated search/read와 investigation-state loss를 condition-neutral하게 닫는다.
+다음은 이 offline v4 변경을 clean commit으로 동결하고 새 development-validation v4
+pilot의 no-call preflight hash를 검토하는 것이다. 별도 $2 승인 뒤 그 pilot이 evaluator와
+`investigation_evidence`와 `investigation_lifecycle` qualification을 통과해야 새 ID의
+12-run v4 campaign을 시작한다.
 
 동결 evidence:
 
@@ -122,8 +122,11 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 8b | completed; immutable | Controlled r6 provider diagnostic 1회, $2 cap | `run_73f5aaf7328a4ea5`: controlled/verified retry 1/1, rejected action mutation 0, evaluator·official task·qualification pass |
 | 9 | terminal failure; immutable | Fault-free mini development-validation campaign pilot r1 1회, $2 cap | `run_6993722014bf4e3b`: 20/20 telemetry, patch/check/final diff/REVIEW 완료; call budget 때문에 submission·evaluator 없음, qualification 21/22 |
 | 9a | completed (offline) | Submission tail-call과 deterministic call/tool/wall next-generation terminal contract | 전체 조건 21-call, v2 세 reason·strict counter/duration/actor/terminal binding, tamper·historical non-reinterpretation, 21번째 허용/22번째 차단과 fully qualified agent-failure trace |
-| 9b | pending clean hash and explicit approval; provider not run | 새 r2 experiment/hash의 corrective fault-free pilot 1회, $2 cap | evaluator 도달과 qualified trace; r1 hash 재사용 금지 |
-| 10 | blocked on order 9b | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows 또는 structured halt/not-started ledger |
+| 9b | completed; immutable | 새 r2 experiment/hash의 corrective fault-free pilot 1회, $2 cap | `run_afd5080a77a34995`: official evaluator와 qualification 23/23 통과 |
+| 10 | completed; diagnostic only | Memory-development 6 task × 2회, `no_memory`, $20 cap | 12/12 qualified agent failure, evaluator 0/12; baseline·memory index source로 자동 채택하지 않음 |
+| 10a | completed (offline) | D-048 durable investigation ledger, semantic replay와 corrective-tail admission | v1-v3 compatibility, CAS tamper fail-closed, recovery·qualifier 재계산과 full regression 607 passed/3 skipped |
+| 10b | pending clean hash and explicit approval | 새 v4 development-validation pilot 1회, $2 cap | evaluator 도달, qualified trace와 `investigation_evidence`·`investigation_lifecycle` pass |
+| 10c | blocked on order 10b | 새 ID의 memory-development 6 task × 2회, `no_memory`, $20 cap | 12 terminal rows, evaluator-reach floor와 usable baseline 판정 |
 | 11 | pending eligible failures | Append-only failure review와 memory build | Reviewed qualified failure만 index source로 수용 |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
@@ -224,8 +227,9 @@ mini snapshot으로 전환했다. 승인된 Order 9 r1은 patch/check/final diff
 20번째 model call 뒤 `finish_task` turn이 없어 terminal failure가 됐다. 별도 postmortem
 evaluator의 patch success는 원 run outcome을 바꾸지 않는다. Order 9a가 offline evidence를
 통과해 future primary/development/core의 총 model-call 상한은 21회로 동결됐다. 이는
-`finish_task` 전용 reserve가 아니며 모든 memory 조건에 동일하다. Order 9b는 아직 provider에서
-실행하지 않았다.
+`finish_task` 전용 reserve가 아니며 모든 memory 조건에 동일하다. Order 9b r2는 한 번
+실행돼 accepted pilot이 됐고, Order 10의 첫 12-run은 investigation-loop diagnostic으로
+보존한다. 다음 live gate는 Order 10b의 새 v4 pilot이다.
 
 Memory-development와 core live suite는 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode
 `standard`, service tier `default`, 25,000 max output token, 21 model call과 200,000
@@ -328,20 +332,22 @@ runtime bound에 한 번의 4,096-token output allowance를 최고 rate로 더�
 margin이다. D-045 primary contract의 run reserve는 25,000/200,000에서 `$1.0125`,
 12-run은 `$12.15`, 96-run은 `$97.20`이다.
 
-### Historical pilots preserved; D-047 offline-complete; corrective r2 pending
+### Historical evidence preserved; D-048 offline-complete; fresh v4 pilot pending
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
 - 실제 환경에서 approval을 포함한 preflight가 `ready=true`다.
 - 사용자가 $2 pilot을 별도로 승인한 뒤 historical r3가 `trace-qualification-v1`과
   `evaluation_reached=true` 당시 acceptance를 함께 통과했다.
-- 새 v2 development suite는 historical r3/r5/r6를 고정하지 않는다. 같은 primary mini
-  model/budget, harness
-  commit, tool/context runtime-contract hash의 `trace-qualification-v2` pilot이 새로
-  evaluator에 도달하기 전에는 `pilot_run_id`를 비워 두고 preflight를 차단한다. Pilot
-  task success는 이 harness acceptance와 별도 outcome으로 보고한다.
-- 12-run campaign은 새 clean commit의 no-call preflight, exact execution hash 검토와 별도
-  $20 승인 전에는 시작하지 않는다.
+- Consumed primary r2와 첫 12-run campaign은 immutable inspection 전용이다. 새
+  tool-v2/context-v4 development suite는 historical r3/r5/r6/r2를 재사용하지 않는다.
+  같은 primary mini model/budget과 새 runtime-contract hash의
+  `trace-qualification-v2` pilot이 evaluator와 `investigation_evidence`·
+  `investigation_lifecycle`을 통과하기 전에는
+  새 campaign의 `pilot_run_id`를 비워 두고 preflight를 차단한다. Pilot task success는
+  harness acceptance와 별도 outcome으로 보고한다.
+- 새 12-run v4 campaign은 새 clean commit의 no-call preflight, exact execution hash 검토와
+  별도 $20 승인 전에는 시작하지 않는다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
 
 2026-07-28 첫 paid pilot `run_c6f13dd9a1a1472d`는 ready preflight 뒤 `$0.34025875`를
@@ -357,7 +363,8 @@ candidate를 내용 변경 없이 raw Git diff로 변환한 사후 진단 patch
 `sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606`는
 official evaluator run `run_4299e6b326de4c1c`에서 모든 verdict를 통과했다. 이 run은
 format-only counterfactual evidence이며 agent success나 pilot repetition으로 집계하지
-않는다. 12-run development result는 아직 없다.
+않는다. 이 문단은 첫 Terra r1 당시의 경계를 설명한다. 이후 첫 12-run campaign은
+실행됐지만 evaluator 도달 0/12의 D-048 diagnostic evidence로만 보존한다.
 
 두 번째 paid pilot `run_de8f2a2846044c01`은 별도 승인 hash
 `sha256:c7fe89287ed3310885f548954917c810b699a54ea420b3a7551d9863ebd839a3`로
@@ -389,8 +396,9 @@ qualification hash는
 `sha256:5bc11b4087061921a415d94caeb0ac8370e39013f1d94a531130256fd3101811`,
 현재 source evidence hash는
 `sha256:f4726a1d6c2abfdf859c92135ae345dffb2075aaa9d5a7f0fc4fb7b1b0259322`다.
-이 evidence는 당시 v1 pilot gate만 통과했으며, 현재 v2 development campaign gate에는
-재사용하지 않는다. 12-run development campaign은 아직 실행하지 않았다.
+이 evidence는 당시 v1 pilot gate만 통과했으며, 현재 v4 development campaign gate에는
+재사용하지 않는다. 이후 실행된 첫 12-run campaign도 v4 이전 diagnostic으로만 보존하며,
+새 v4 baseline campaign은 아직 실행하지 않았다.
 
 ## Phase 1. Evaluation Foundation
 

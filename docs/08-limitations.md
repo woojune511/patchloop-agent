@@ -233,8 +233,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `model-generation-block-v2` with durable counter/duration recomputation, reason priority,
   budget-guard actor, request/terminal/result binding and tamper rejection. Future
   primary/development/core conditions share the same total 21-call cap; it is not a privileged
-  `finish_task` reserve. The corrective r2 suite exists but has not been invoked against the
-  provider and has no run ID, usage, cost or evaluator result.
+  `finish_task` reserve. Corrective primary r2 `run_afd5080a77a34995` ran once and passed the
+  official evaluator and qualification 23/23. The following first 12-run campaign completed but
+  reached the evaluator 0/12, so both consumed suites are immutable and the campaign is diagnostic
+  rather than a no-memory performance baseline.
 - The terminal `dev-validation-gpt54mini-d037-r3.yaml` suite bound
   `experiment-diagnostic-v1` to its consumed execution hash. Its post-run consumer separates generic
   qualification from a `passed`, `inconclusive` or `failed` retry exercise, requires evaluator
@@ -245,13 +247,15 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
   primary mini snapshot/medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
   authorization is invocation-only and bound to its execution hash. A live capability is issued
-  only after the approved plan is durably persisted. All ten paid-pilot host preflights reached
-  `ready=true`; the development campaign requires its own clean execution hash and approval.
+  only after the approved plan is durably persisted. All eleven paid-pilot host preflights reached
+  `ready=true`; the fresh v4 pilot and later v4 development campaign each require their own clean
+  execution hash and approval.
 - The campaign journal is append-only and hash-chained. The first `CampaignStarted`
   exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
   model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
-  that blocks automatic schedule replay. All ten paid pilots produced completed hash-chained
-  journals. Automatic resume from an interrupted journal is not implemented.
+  that blocks automatic schedule replay. All eleven paid pilots and the completed first 12-run
+  campaign produced completed hash-chained journals. Automatic resume from an interrupted journal
+  is not implemented.
 - Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
   source path. Task package and run-manifest task/model/budget/environment identities are checked
   against the plan before `RunStarted`; replacement tests stop before the model runner.
@@ -297,11 +301,15 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   writes. A hash-bound receipt permits evaluator reuse after a crash before terminal commit, while
   terminal failure/result/status/event are committed together. This is local integrity and recovery
   evidence, not protection against an attacker able to rewrite the database and every artifact.
-- New non-replay runs use tool schema v2 with context policy v3. The inherited submission contract binds latest visible-check success and
+- New non-replay runs use tool schema v2 with context policy v4. The inherited submission contract binds latest visible-check success and
   final diff review to the exact current worktree hash, exposes a structured `finish_task`, delays
   phase transitions until tool success and makes two premature submissions recoverable. It also
   records review/submission lifecycle, structured patch-error stages, advisory repeat signals and
-  current-diff checkpoint state. Mini r2 validated the final check/review/submission/evaluator
+  current-diff checkpoint state. V4 additionally reconstructs a bounded investigation ledger from
+  verified read/search CAS, semantic-replays exact or fully covered inspections without filesystem
+  dispatch before the corrective tail, and closes all otherwise valid read/search admission at
+  that tail, including requests that would have been semantic replays. Mini model-candidate
+  r2 validated the final check/review/submission/evaluator
   path live, but its rejected-patch retry request omitted the candidate body and its submitted
   patch failed hidden acceptance. D-037 now restores exact rejected candidate/reason bytes on the
   first next request and qualifies them against CAS; this repair has offline evidence and one
@@ -314,9 +322,11 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - The no-memory development preflight rejects a pilot unless qualification v2 records the same
   primary mini model, 25,000/200,000 budget, harness commit, tool/context versions and exact
   runtime-contract hash.
-  Mini r2 validated much of the corrected v2 lifecycle at lower list-price exposure, but it cannot
-  populate `pilot_run_id` and exposed the D-037 retry-context gap. Consequently `pilot_run_id` is
-  currently empty. Offline context hardening and the suite-specific machine gate are complete;
+  Historical model-candidate mini r2 validated much of the corrected v2 lifecycle at lower
+  list-price exposure, but it could not populate the primary `pilot_run_id` and exposed the D-037
+  retry-context gap. Corrective primary r2 later populated the consumed campaign, which finished
+  12/12 without evaluator arrival. The new v4 campaign's `pilot_run_id` is currently empty.
+  Offline context and investigation hardening plus the suite-specific machine gate are complete;
   terminal mini r3 failed on its per-call output ceiling before exercising the retry. Corrective r4
   bound `max_output_tokens=25,000` and `max_total_tokens=120,000` under a new diagnostic profile
   and then ran once. All responses completed, but the REVIEW request was blocked by total-budget
@@ -331,8 +341,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   that gate, official task evaluation and trace qualification. This proves the harness branch for
   one controlled intervention, not natural model-error recovery frequency, recovery rate, memory
   benefit or primary campaign quality. The fault-free primary r1 then exposed the call-budget
-  lifecycle above. The D-047 offline contract is now frozen; a corrective pilot still requires a
-  separate clean hash and approval and has not run.
+  lifecycle above. D-047 and D-048 offline contracts are now frozen. Corrective primary r2 already
+  ran and passed; the next live gate is a fresh context-v4 pilot with a separate clean hash and
+  approval.
 - `model-generation-block-v2` covers admission to the next provider generation. A model response
   whose measured duration itself crosses the wall limit and a later call inside the same
   multi-tool response that encounters the tool cap still terminate through the older
@@ -343,8 +354,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `issue_live_execution_authorization()` helper does not independently reconstruct the entire
   suite/task/environment/schedule plan. Direct Python callers are therefore outside the paid CLI
   enforcement claim until that internal API is hardened.
-- Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
-  memory-development traces and an exact embedding revision. Calibration traces are not eligible.
+- Memory build/retrieval/freeze contracts exist; a real reviewed index still requires fresh
+  post-v4 memory-development traces, append-only review and an exact embedding revision. The first
+  12-run traces remain diagnostic: evaluator arrival was 0/12 while repeated and already-covered
+  inspections were also observed. That co-occurrence motivated D-048 but does not prove causality;
+  the fresh v4 pilot and campaign must measure whether evaluator arrival improves. Calibration
+  traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
 - HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
 - Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
@@ -385,7 +400,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   The new live-suite preflight rejects a dirty worktree before execution; older admission gates used
   manually verified clean staging commits and are not retroactively covered by that enforcement.
 
-## Dataset freeze completed; campaign not yet completed
+## Dataset freeze and first diagnostic campaign completed; valid baseline/core still pending
 
 - The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
   portfolio performance headlines.
@@ -420,7 +435,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `$0.828864375`. All three use the legacy v1 runtime. Their 2026-07-28 configured rates were
   $2.50/M input, $0.25/M cached input, $3.125/M cache-write input and $15/M output, and only the
   `gpt-5.6-terra` alias was recorded. D-045 preserves these facts but supersedes Terra for future
-  runs; the required tool-v2/context-v3 pilot now uses the dated mini primary contract.
+  runs; the required tool-v2/context-v4 pilot now uses the dated mini primary contract.
 - The exact request artifact, input-token-count reconciliation and explicit
   `truncation=disabled` telemetry in D-031 were implemented after r1-r3. Those immutable Terra
   traces do not contain the new fields. Mini run `run_d4fea5e7198b4abc` exercised and passed the
@@ -446,9 +461,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   result. It has no synthetic rejection or automatic retry, so the result is terminal rather than
   a reason to spend again.
   The controlled r6 result validates one deliberate retry branch but does not satisfy the
-  fault-free primary mini pilot purpose. Including terminal primary r1, the seven mini runs'
-  calculated list-price total is `$0.77412075`; all ten paid pilot runs total `$1.602985125`.
-  These are usage-based estimates, not verified invoice charges.
+  fault-free primary mini pilot purpose. Including terminal primary r1, the historical seven mini
+  runs' calculated list-price total was `$0.77412075`. Corrective primary r2 brings eleven paid
+  pilots to `$1.652716875`; adding the first 12-run campaign gives 23 paid provider attempts and
+  `$3.045909375`. These are usage-based estimates, not verified invoice charges.
 - PatchLoop preflights this function-tool run at official list prices. The account UI reports
   possible complimentary shared-traffic usage, but applicability to this exact function-tool
   invocation and invoice treatment has not been verified. `model_cost_usd` is therefore a

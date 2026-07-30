@@ -86,7 +86,7 @@ is preserved separately under `reports/live-pilot/`:
 - `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`: terminal fault-free primary
   campaign-pilot r1 contract; consumed once, inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`: D-047 corrective primary
-  contract; 21 model calls, not yet executed and no run ID/evidence record
+  contract; consumed once by accepted `run_afd5080a77a34995`, inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot.yaml`: terminal mini r1 contract;
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
@@ -99,8 +99,12 @@ is preserved separately under `reports/live-pilot/`:
   consumed strict 25,000 per-call / 200,000 total contract; terminal inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-d037-r6.yaml`: D-043 profile-v4 controlled diagnostic;
   consumed exact hash once; terminal inspection only, never rerun
-- `experiments/dev-no-memory.template.yaml`: six memory-development tasks,
-  `no_memory` × 2 = 12 runs, $20 cap
+- `experiments/dev-no-memory.template.yaml`: consumed first six-task
+  `no_memory` × 2 campaign; 12/12 terminal but evaluator 0/12, inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml`: next
+  `phase-evidence-v4` development-validation pilot, $2 cap
+- `experiments/dev-no-memory-v4.template.yaml`: next six-task `no_memory` × 2 campaign,
+  blocked until the v4 pilot passes, $20 cap
 
 As of 2026-07-29 the official
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the primary mini contract is $0.75/M
@@ -131,19 +135,31 @@ for the source/postmortem separation and hash-bound public patch.
 
 The D-047 offline contract uses 21 total model calls for every future primary/development/core
 condition and `model-generation-block-v2` for deterministic next-generation model/tool/wall
-counter exhaustion. It does not reserve a privileged `finish_task` call. The corrective r2 no-call
-preflight is:
+counter exhaustion. It does not reserve a privileged `finish_task` call. Its corrective r2
+execution hash
+`sha256:eb13280308f3f2642504da8493982543bb466d9bafaa5031b727dd4503003411`
+was consumed exactly once by `run_afd5080a77a34995`. The run used 7 model and 8 tool calls,
+39,171 input + 4,523 output tokens and `$0.04973175`; official hidden/regression/scope/safety and
+qualification 23/23 passed. Inspect its portable record and never invoke the suite/hash again:
+
+```powershell
+Get-Content reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r2.json
+```
+
+The first `dev-no-memory-20260728` campaign then completed all 12 rows, but all 12 were qualified
+agent failures and none reached the evaluator. It is immutable loop diagnostic evidence, not a
+no-memory performance baseline or automatic memory-index source. D-048 adds condition-neutral
+investigation continuity. Its fresh no-call pilot preflight is:
 
 ```powershell
 git status --short
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml `
+  --suite experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml `
   --preflight-only
 ```
 
-Do not add approval flags until the clean commit and exact execution hash have been reviewed and the
-user gives a separate $2 approval. R2 has not been invoked against the provider, so no run ID,
-usage, cost or evaluator result exists.
+This command does not call the provider. Review the clean execution hash and blockers first; a
+paid invocation still requires a separate approval capped at $2.
 
 The original checked-in mini suite refers to terminal experiment
 `dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
@@ -248,22 +264,23 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
 trace-exercise error and records remaining rows as not started.
 
-Ten paid pilot runs exist when this guide was updated: two immutable Terra failures, one accepted
-historical Terra r3 success, four terminal mini failures, one official mini task success whose
-D-037 diagnostic is inconclusive, one official controlled mini diagnostic pass and one primary
-mini call-budget failure. Their cumulative calculated list-price cost is `$1.602985125`; actual
-invoice or free daily usage
-treatment was not verified. Docker
+Eleven paid pilot runs exist when this guide was updated. The additional corrective primary r2 is
+an accepted official run; the eleven-pilot cumulative calculated list-price cost is
+`$1.652716875`. The separate first 12-run development campaign makes 23 paid provider attempts and
+raises the calculated total to `$3.045909375`. Actual invoice or free daily usage treatment was
+not verified. Docker
 availability, exact images,
 credential presence, clean-worktree state and price age may still appear as preflight blockers for
-the separate 12-run development campaign.
+the fresh v4 pilot and later v4 development campaign.
 
 The D-037 offline gate and its single controlled live exercise are complete. The next request after a
 rejected mutating-tool call receives the exact budget-bounded candidate bytes, content hash and
-structured rejection reason. New manifests activate it as
-`context_policy_version=phase-evidence-v3`; qualification rehashes the candidate/result CAS and
-actual request, and the token guard records a no-generation event when the full request plus
-response allowance cannot fit. Mini r2, r3 and r4 remain immutable traces. The corrective r4
+structured rejection reason. Historical v3 manifests activated this as
+`context_policy_version=phase-evidence-v3`; current non-replay manifests use
+`phase-evidence-v4`, which inherits that contract and adds a durable read/search investigation
+ledger, semantic replay and corrective-tail admission. Qualification rehashes the candidate/result
+CAS, actual request and v4 ledger evidence; the token guard records a no-generation event when the
+full request plus response allowance cannot fit. Mini r2, r3 and r4 remain immutable traces. The corrective r4
 contract fixed `max_output_tokens=25,000` and `max_total_tokens=120,000` together under diagnostic
 profile `d037-rejected-patch-retry-v2`; changing only one member is rejected. R4 consumed execution
 hash `sha256:bbb6dbdcab1c7561c868ae4cc40478d6e3401c5900feb59b8ea09ef38d9156a1`
@@ -372,12 +389,20 @@ After that diagnostic gate, the separately approved fault-free primary r1 ran on
 terminal call-budget failure described above. Its exact final patch passed a separate no-model
 Docker postmortem, but that does not change the missing submission/evaluator evidence. D-047
 completed the offline 21-call policy and versioned deterministic model/tool/wall next-generation
-terminal-block qualification. Only the new r2 corrective pilot with a distinct experiment/hash
-and $2 approval that reaches the evaluator and produces a qualified
-`trace-qualification-v2` may have its run ID inserted into
-`experiments/dev-no-memory.template.yaml`. Development preflight then verifies the same model,
+terminal-block qualification. Corrective primary r2 then passed the official evaluator and trace
+qualification, and the first 12-run campaign completed with evaluator arrival at 0/12. The campaign
+also showed repeated/covered inspections and no durable within-run investigation
+continuity. This co-occurrence diagnoses the v4 harness gap; it does not establish that the gap
+caused every failure. Those consumed suites remain immutable.
+
+D-048 closes that harness boundary offline. Only a fresh
+`experiments/dev-validation-gpt54mini-investigation-v4-pilot-r1.yaml` run with a distinct clean
+execution hash and $2 approval that reaches the evaluator and passes
+`trace-qualification-v2` including `investigation_evidence` and
+`investigation_lifecycle` may have its run ID inserted into
+`experiments/dev-no-memory-v4.template.yaml`. Development preflight then verifies the same model,
 budget, harness commit, tool/context versions and exact runtime-contract hash before producing a
-separate 12-row execution hash. That campaign still requires a distinct approval capped at $20.
+separate 12-row execution hash. That new campaign still requires a distinct approval capped at $20.
 
 If a campaign halts or a row fails qualification/required trace exercise, `patchloop report` may
 still export row-level CSV and available-case diagnostics for investigation. Qualification failure,

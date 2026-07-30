@@ -15,7 +15,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from patchloop.agent.model import SYSTEM_PROMPT_V2
+from patchloop.agent.model import SYSTEM_PROMPT_V3
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
 from patchloop.agent.tools import TOOL_SCHEMAS_V2
 from patchloop.contracts import (
@@ -61,10 +61,17 @@ HISTORICAL_MINI_DIAGNOSTIC_EXPERIMENT_IDS = frozenset(
         "dev-validation-gpt54mini-d037-20260730-r6",
     }
 )
+CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS = frozenset(
+    {
+        "dev-validation-gpt54mini-campaign-20260730-r2",
+        "dev-no-memory-20260728",
+    }
+)
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
     | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
     | HISTORICAL_MINI_DIAGNOSTIC_EXPERIMENT_IDS
+    | CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
 )
 PRICE_FIELDS = (
     "input_price_per_million_usd",
@@ -525,10 +532,10 @@ def _openai_sdk_state() -> dict[str, Any]:
 def _expected_runtime_contract_hash() -> str:
     content = json.dumps(
         {
-            "system_prompt": SYSTEM_PROMPT_V2,
+            "system_prompt": SYSTEM_PROMPT_V3,
             "tools": TOOL_SCHEMAS_V2,
             "tool_schema_version": "v2",
-            "context_policy_version": "phase-evidence-v3",
+            "context_policy_version": "phase-evidence-v4",
         },
         indent=2,
         sort_keys=True,
@@ -603,7 +610,7 @@ def _pilot_qualification(
             (
                 "context_policy_version",
                 payload.get("context_policy_version"),
-                "phase-evidence-v3",
+                "phase-evidence-v4",
             ),
             (
                 "runtime_contract_content_hash",

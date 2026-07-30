@@ -375,6 +375,66 @@ def test_patch_action_result_and_outcome_events_roll_back_together(
     assert [event.type for event in events] == [EventType.TOOL_CALLED]
 
 
+def test_semantic_replay_action_and_events_commit_atomically(
+    tmp_path,
+) -> None:
+    store = StateStore(tmp_path / "state.sqlite3")
+    manifest = _manifest()
+    store.create_run(manifest)
+    action_id = "semantic-replay-atomic"
+    input_hash = "sha256:" + ("4" * 64)
+    result = ToolResult(
+        action_id=action_id,
+        status="succeeded",
+        started_at=utc_now(),
+        finished_at=utc_now(),
+        output={"semantic_replay": True},
+    )
+    specs = [
+        (
+            EventType.TOOL_CALLED,
+            "agent",
+            {"tool": "search_files", "input_hash": input_hash},
+        ),
+        (
+            EventType.LOOP_DETECTED,
+            "tool-gateway",
+            {"schema_version": "investigation-loop-v1"},
+        ),
+        (
+            EventType.TOOL_REPLAYED,
+            "semantic-cache",
+            {"schema_version": "tool-replayed-v2"},
+        ),
+    ]
+    with store._connect() as connection:
+        connection.execute(
+            "CREATE TRIGGER reject_semantic_replay "
+            "BEFORE INSERT ON events "
+            "WHEN instr(NEW.event_json, 'ToolReplayed') > 0 "
+            "BEGIN SELECT RAISE(ABORT, 'synthetic replay failure'); END"
+        )
+
+    with pytest.raises(
+        sqlite3.IntegrityError,
+        match="synthetic replay failure",
+    ):
+        store.complete_nonexecuted_action(
+            manifest.run_id,
+            action_id,
+            input_hash,
+            result,
+            event_specs=specs,
+        )
+
+    assert store.get_action_result(
+        manifest.run_id,
+        action_id,
+        input_hash,
+    ) is None
+    assert store.list_events(manifest.run_id) == []
+
+
 def test_worker_identity_failure_releases_process_guard(
     tmp_path,
     monkeypatch,
