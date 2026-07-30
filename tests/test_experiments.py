@@ -20,6 +20,13 @@ from patchloop.evals.runner import ExperimentSuite
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
+PRIMARY_PILOT_SUITE = (
+    "experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml"
+)
+HISTORICAL_PRIMARY_PILOT_SUITE = (
+    "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
+)
+
 
 def _core_suite_payload(dataset_manifest_hash: str) -> dict:
     return {
@@ -127,20 +134,16 @@ def test_live_campaign_approval_is_an_invocation_preflight_gate(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    suite = eval_runner.load_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    suite = eval_runner.load_suite(PRIMARY_PILOT_SUITE)
     assert suite.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
 
-    unapproved = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    unapproved = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
     blocker_codes = {row["code"] for row in unapproved["blockers"]}
     assert blocker_codes == {"LIVE_COST_NOT_APPROVED", "APPROVAL_HASH_MISMATCH"}
     assert "test-secret-never-rendered" not in json.dumps(unapproved)
 
     approved = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml",
+        PRIMARY_PILOT_SUITE,
         approve_live_cost=True,
         approved_execution_hash=unapproved["execution_hash"],
     )
@@ -148,6 +151,7 @@ def test_live_campaign_approval_is_an_invocation_preflight_gate(
     assert approved["execution_hash"] == unapproved["execution_hash"]
     assert approved["suite"]["model_id"] == "gpt-5.4-mini-2026-03-17"
     assert approved["suite"]["max_output_tokens"] == 25_000
+    assert approved["suite"]["budget"]["max_model_calls"] == 21
     assert approved["suite"]["budget"]["max_total_tokens"] == 200_000
     assert approved["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
         1.0125
@@ -173,6 +177,115 @@ def test_historical_terra_pilot_suite_is_loadable_but_never_runnable(
     }
 
 
+@pytest.mark.parametrize(
+    "experiment_id",
+    [
+        "dev-validation-live-pilot-20260728",
+        "dev-validation-live-pilot-20260728-r2",
+        "dev-validation-live-pilot-20260728-r3",
+    ],
+)
+def test_all_consumed_terra_pilot_ids_are_immutable(
+    experiment_id: str,
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    payload = yaml.safe_load(
+        Path(
+            "experiments/dev-validation-pilot.template.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    payload["experiment_id"] = experiment_id
+    suite_path = tmp_path / f"{experiment_id}.yaml"
+    suite_path.write_text(
+        yaml.safe_dump(payload, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    unapproved = eval_runner.preflight_suite(suite_path)
+    approved = eval_runner.preflight_suite(
+        suite_path,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert approved["ready"] is False
+    assert "HISTORICAL_SUITE_IMMUTABLE" in {
+        row["code"] for row in approved["blockers"]
+    }
+
+
+def test_historical_primary_r1_is_loadable_but_never_runnable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+
+    suite = eval_runner.load_suite(HISTORICAL_PRIMARY_PILOT_SUITE)
+    preflight = eval_runner.preflight_suite(HISTORICAL_PRIMARY_PILOT_SUITE)
+
+    assert suite.experiment_id == (
+        "dev-validation-gpt54mini-campaign-20260730-r1"
+    )
+    assert suite.budget.max_model_calls == 20
+    assert "HISTORICAL_SUITE_IMMUTABLE" in {
+        row["code"] for row in preflight["blockers"]
+    }
+
+
+@pytest.mark.parametrize(
+    "suite_path",
+    [
+        "experiments/dev-validation-gpt54mini-pilot.yaml",
+        "experiments/dev-validation-gpt54mini-pilot-r2.yaml",
+        "experiments/dev-validation-gpt54mini-d037-r3.yaml",
+        "experiments/dev-validation-gpt54mini-d037-r4.yaml",
+        "experiments/dev-validation-gpt54mini-d037-r5.yaml",
+        "experiments/dev-validation-gpt54mini-d037-r6.yaml",
+    ],
+)
+def test_consumed_mini_diagnostic_suites_are_immutable_even_with_approval(
+    suite_path: str,
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+
+    unapproved = eval_runner.preflight_suite(suite_path)
+    approved = eval_runner.preflight_suite(
+        suite_path,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert approved["ready"] is False
+    assert "HISTORICAL_SUITE_IMMUTABLE" in {
+        row["code"] for row in approved["blockers"]
+    }
+
+
+def test_future_campaign_contract_rejects_legacy_20_call_limit() -> None:
+    payload = yaml.safe_load(
+        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    payload["experiment_id"] = "new-primary-with-legacy-call-limit"
+    payload["budget"]["max_model_calls"] = 20
+
+    with pytest.raises(ValidationError, match="max_model_calls=21"):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_future_campaign_templates_share_21_call_limit() -> None:
+    for path in (
+        PRIMARY_PILOT_SUITE,
+        "experiments/dev-no-memory.template.yaml",
+        "experiments/core.template.yaml",
+    ):
+        payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+        assert payload["budget"]["max_model_calls"] == 21
+
+
 def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
     tmp_path: Path,
     monkeypatch,
@@ -183,6 +296,7 @@ def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
     unapproved = eval_runner.preflight_suite(suite_path)
 
     assert {row["code"] for row in unapproved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -205,7 +319,10 @@ def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
         approve_live_cost=True,
         approved_execution_hash=unapproved["execution_hash"],
     )
-    assert approved["ready"] is True
+    assert approved["ready"] is False
+    assert {row["code"] for row in approved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE"
+    }
 
 
 def test_d037_r3_pilot_binds_exact_diagnostic_contract(
@@ -249,6 +366,7 @@ def test_d037_r3_pilot_binds_exact_diagnostic_contract(
     preflight = eval_runner.preflight_suite(suite_path)
 
     assert {row["code"] for row in preflight["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -279,6 +397,7 @@ def test_d037_r4_binds_corrective_output_allowance_and_budget(
     preflight = eval_runner.preflight_suite(suite_path)
 
     assert {row["code"] for row in preflight["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -315,6 +434,7 @@ def test_d037_r5_binds_tail_reserve_budget_without_changing_output_allowance(
     preflight = eval_runner.preflight_suite(suite_path)
 
     assert {row["code"] for row in preflight["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -352,6 +472,7 @@ def test_d037_r6_binds_one_shot_controlled_rejection(
     preflight = eval_runner.preflight_suite(suite_path)
 
     assert {row["code"] for row in preflight["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -867,6 +988,7 @@ def test_v2_development_campaign_has_exact_twelve_run_matrix(
     }
     assert {row["condition"] for row in preflight["schedule"]} == {"no_memory"}
     assert {row["repetition"] for row in preflight["schedule"]} == {1, 2}
+    assert preflight["suite"]["budget"]["max_model_calls"] == 21
     assert {
         row["code"] for row in preflight["blockers"]
     } == {
@@ -1053,9 +1175,7 @@ def test_live_preflight_binds_canonical_private_evaluator_package(
         forged = package.model_copy(update={"environment": None})
     monkeypatch.setattr(eval_runner, "load_task_package", lambda _path: forged)
 
-    preflight = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
 
     blockers = {row["code"] for row in preflight["blockers"]}
     assert "TASK_NOT_ELIGIBLE" in blockers
@@ -1075,7 +1195,7 @@ def test_blocked_preflight_happens_before_agent_construction(
     monkeypatch.setattr(eval_runner, "AgentRunner", ForbiddenRunner)
     with pytest.raises(ContractError, match="explicit --approve-live-cost"):
         eval_runner.evaluate_suite(
-            "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
+            PRIMARY_PILOT_SUITE
         )
 
 
@@ -1092,9 +1212,7 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         return original_write_bytes(path, content)
 
     monkeypatch.setattr(Path, "write_bytes", record_write_bytes)
-    preflight = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
     captured = []
 
     class FakeRunner:
@@ -1127,7 +1245,7 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
     )
 
     result = eval_runner.evaluate_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml",
+        PRIMARY_PILOT_SUITE,
         approve_live_cost=True,
         approved_execution_hash=preflight["execution_hash"],
     )
@@ -1168,9 +1286,7 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         assert row["previous_event_hash"] == previous_hash
         assert sha256_text(canonical_json(row)) == recorded_hash
         previous_hash = recorded_hash
-    retry = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    retry = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
     assert {
         "EXPERIMENT_RESULT_EXISTS",
         "EXPERIMENT_JOURNAL_EXISTS",
@@ -1254,9 +1370,7 @@ def test_paid_execution_uses_the_suite_snapshot_approved_by_preflight(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path("experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml").read_text(
-            encoding="utf-8"
-        )
+        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "pilot-suite-snapshot"
     suite_path = tmp_path / "pilot-suite-snapshot.yaml"
@@ -1320,9 +1434,7 @@ def test_paid_execution_rejects_task_package_replacement_before_run_start(
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
     suite_payload = yaml.safe_load(
-        Path("experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml").read_text(
-            encoding="utf-8"
-        )
+        Path(PRIMARY_PILOT_SUITE).read_text(encoding="utf-8")
     )
     suite_payload["experiment_id"] = "pilot-task-snapshot"
     suite_path = tmp_path / "pilot-task-snapshot.yaml"
@@ -1377,9 +1489,7 @@ def test_hard_crash_journal_blocks_duplicate_paid_schedule(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    preflight = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
 
     class CrashingRunner:
         def start(self, *_args, **_kwargs):
@@ -1388,14 +1498,12 @@ def test_hard_crash_journal_blocks_duplicate_paid_schedule(
     monkeypatch.setattr(eval_runner, "AgentRunner", CrashingRunner)
     with pytest.raises(SystemExit, match="synthetic hard crash"):
         eval_runner.evaluate_suite(
-            "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml",
+            PRIMARY_PILOT_SUITE,
             approve_live_cost=True,
             approved_execution_hash=preflight["execution_hash"],
         )
 
-    retry = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    retry = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
     assert "EXPERIMENT_JOURNAL_EXISTS" in {
         row["code"] for row in retry["blockers"]
     }
@@ -1414,9 +1522,7 @@ def test_atomic_journal_claim_blocks_a_racing_paid_invocation(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    preflight = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
     journal_path = Path(preflight["journal_path"])
 
     def claim_journal_after_preflight(_preflight):
@@ -1443,7 +1549,7 @@ def test_atomic_journal_claim_blocks_a_racing_paid_invocation(
 
     with pytest.raises(ContractError, match="duplicate schedule ownership"):
         eval_runner.evaluate_suite(
-            "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml",
+            PRIMARY_PILOT_SUITE,
             approve_live_cost=True,
             approved_execution_hash=preflight["execution_hash"],
         )
@@ -1464,9 +1570,7 @@ def test_environment_drift_after_preflight_stops_before_agent(
         "_git_state",
         lambda: {"available": True, "commit": next(commits), "clean": True},
     )
-    preflight = eval_runner.preflight_suite(
-        "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
-    )
+    preflight = eval_runner.preflight_suite(PRIMARY_PILOT_SUITE)
 
     class ForbiddenRunner:
         def __init__(self):
@@ -1475,7 +1579,7 @@ def test_environment_drift_after_preflight_stops_before_agent(
     monkeypatch.setattr(eval_runner, "AgentRunner", ForbiddenRunner)
     with pytest.raises(ContractError, match="changed after the approved preflight"):
         eval_runner.evaluate_suite(
-            "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml",
+            PRIMARY_PILOT_SUITE,
             approve_live_cost=True,
             approved_execution_hash=preflight["execution_hash"],
         )

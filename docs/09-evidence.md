@@ -6,15 +6,19 @@ This is a local implementation checkpoint, not the planned core experiment resul
 
 Future development-validation, memory-development and core suites now share the dated
 `gpt-5.4-mini-2026-03-17` snapshot, medium reasoning, standard mode, default service tier,
-25,000 per-call output and 200,000 run-total tokens. At the official standard list rates
+25,000 per-call output, 21 total model calls and 200,000 run-total tokens. The 21st call is a
+normal call shared fairly by every memory condition, not a `finish_task`-only reserve. At the
+official standard list rates
 rechecked at `2026-07-29T22:39:42Z`, the conservative authorization reserves are `$1.0125`
 per run, `$12.15` for 12 runs and `$97.20` for 96 runs.
 
 The terminal Terra r3 suite remains byte-preserved as
 `experiments/dev-validation-pilot.template.yaml`; it is readable for historical interpretation
-but preflight-blocked with `HISTORICAL_SUITE_IMMUTABLE`. The new no-fault primary contract is
+but preflight-blocked with `HISTORICAL_SUITE_IMMUTABLE`. The historical no-fault primary r1 contract is
 `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`. Its approved execution hash was
 consumed exactly once by the terminal r1 described below; the suite must not be rerun.
+The corrective contract is
+`experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`; it has not been run.
 Contract/qualification targeted tests passed 137/137, and the full offline suite passed
 534 with 2 skips. Ruff and `git diff --check` also passed.
 
@@ -50,8 +54,33 @@ This was not provider prompt truncation, an incomplete response, total-token exh
 infrastructure failure or evaluator rejection. It exposed two bounded offline work items:
 submission needs a fair tail-call policy under the frozen comparison budget, and deterministic
 model/tool/wall-call pre-generation blocks need a versioned terminal schema and qualification
-contract. No corrective provider run is allowed until those policies pass offline tests; any later
-attempt requires a new experiment ID, clean execution hash and separate $2 approval.
+contract. D-047 below closes both offline work items. Any later provider attempt still requires a
+new experiment ID, clean execution hash and separate $2 approval.
+
+## D-047 call-budget offline contract
+
+Future primary, memory-development and core suites use `max_model_calls=21`; historical primary r1
+remains 20-call and qualification 21/22. Exact-token reservation continues to use
+`model-generation-block-v1`. Model/tool/wall counter exhaustion at next-generation admission uses
+`model-generation-block-v2` with three exact reason codes and `model → tool → wall` priority.
+
+The qualifier independently verifies the exact payload field set, strict integer types, durable
+call/token/duration counters, model/tool upper bounds, budget-guard actor, request CAS/body hash,
+retry shape, terminal suffix and identical `RunFailed`/`RunResult` details. It also reconciles the
+event-derived wall duration with `RunResult.usage`. Tests reject count, reason, type, extra-field,
+duration, actor, result-wall-clock and over-limit-tool tampering, and do not reinterpret historical
+unversioned generic blocks. A complete synthetic v2 terminal trace qualifies as
+`agent_failure`; it does not reach the evaluator or count as task success. Runtime evidence allows
+21 generations and blocks the 22nd before input counting or provider generation.
+
+All consumed Terra pilot IDs, mini r1/r2 and D-037 r3-r6 experiment IDs are now
+preflight-immutable even if an approval hash is supplied. The new corrective primary r2 suite is
+the only runnable primary pilot contract in this lane. It has not been invoked, so there is no
+provider run ID, usage, cost, task verdict or evaluator evidence.
+
+Offline verification collected 571 tests and completed 569 passes with 2 existing skips. The three
+directly affected runtime/qualification/experiment files contributed 238 passes. Repository-wide
+Ruff checks and `git diff --check` passed. No provider call was made while producing this evidence.
 
 ## Latest paid diagnostic evidence
 
@@ -1534,6 +1563,7 @@ Rejected mutating-tool input rehydration is offline-qualified and was exercised 
 controlled r6 diagnostic. R4 remains a terminal budget failure and zero-rejection r5 remains
 terminal inconclusive; neither is rerun or reinterpreted. R6 validates the harness branch but not a
 natural recovery rate. Fault-free primary r1 is now terminal call-budget evidence, not an accepted
-pilot. The next step is offline tail-call and deterministic budget-terminal contract hardening,
-followed only then by a separately approved corrective pilot with a new clean hash. No stress
-schedule row, 12-run development campaign or 96-run core campaign has been executed.
+pilot. D-047 offline tail-call and deterministic next-generation budget-terminal hardening is
+complete. The next step is a clean r2 no-call preflight, exact execution-hash review and separate
+$2 approval, followed by exactly one corrective provider run. R2 has not run. No stress schedule
+row, 12-run development campaign or 96-run core campaign has been executed.

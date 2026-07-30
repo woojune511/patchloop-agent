@@ -349,6 +349,7 @@ def _terminal_trace(
     controlled_rejection_interleaved: bool = False,
     controlled_rejection_details_overrides: dict[str, object] | None = None,
     execution_plan_suite_overrides: dict[str, object] | None = None,
+    counter_generation_block_reason: str | None = None,
 ) -> tuple[str, RunResult, str]:
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
@@ -357,7 +358,7 @@ def _terminal_trace(
     effective_budget = budget
     if effective_budget is None:
         effective_budget = (
-            Budget(max_total_tokens=200_000)
+            Budget(max_model_calls=21, max_total_tokens=200_000)
             if model_id == "gpt-5.4-mini-2026-03-17"
             else Budget()
         )
@@ -398,6 +399,7 @@ def _terminal_trace(
         rejected_retry_context is not None
         or force_v3_contract
         or controlled_rejection
+        or counter_generation_block_reason is not None
     ):
         manifest.context_policy_version = "phase-evidence-v3"
     else:
@@ -453,21 +455,46 @@ def _terminal_trace(
         rendered_context: str,
         *,
         tool_results: list[dict] | None = None,
+        runtime_contract: bool = False,
     ):
-        request_body = {
-            "model": model_id,
-            "input": [
-                {"role": "system", "content": "public system prompt"},
-                {"role": "user", "content": rendered_context},
-            ],
-        }
+        if runtime_contract:
+            system_prompt, tools = AgentRunner._runtime_contract(manifest)
+            request_body = {
+                "model": model_id,
+                "input": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": rendered_context},
+                ],
+                "tools": tools,
+                "store": False,
+                "reasoning": {
+                    "effort": manifest.model.reasoning_effort,
+                },
+                "service_tier": manifest.model.service_tier,
+                "max_output_tokens": manifest.model.max_output_tokens,
+                "truncation": "disabled",
+            }
+        else:
+            request_body = {
+                "model": model_id,
+                "input": [
+                    {"role": "system", "content": "public system prompt"},
+                    {"role": "user", "content": rendered_context},
+                ],
+            }
+        context_build = {"tool_results": tool_results or []}
+        if runtime_contract:
+            context_build["rejected_mutation_retry"] = {
+                "included": False,
+                "truncated": False,
+            }
         request_hash = sha256_text(canonical_json(request_body))
         artifact = artifacts.put_json(
             {
                 "schema_version": "model-request-evidence-v1",
                 "request_body": request_body,
                 "request_body_hash": request_hash,
-                "context_build": {"tool_results": tool_results or []},
+                "context_build": context_build,
             }
         )
         return artifact, request_hash
@@ -517,6 +544,7 @@ def _terminal_trace(
             "cached_input_tokens": 0,
             "cache_write_input_tokens": 0,
             "output_tokens": 0,
+            "duration_ms": 0,
             "request_artifact_id": request_artifact.artifact_id,
             "request_artifact_path": request_artifact.path,
             "request_body_hash": request_hash,
@@ -574,6 +602,7 @@ def _terminal_trace(
                     "check_id": check.id,
                     "passed": True,
                     "worktree_diff_hash": DIFF_HASH,
+                    "duration_ms": 0,
                 },
             )
 
@@ -649,6 +678,7 @@ def _terminal_trace(
                     payload={
                         "tool": "apply_patch",
                         "status": "rejected",
+                        "duration_ms": 0,
                     },
                 )
             else:
@@ -740,6 +770,7 @@ def _terminal_trace(
                         "error_code": rejection_error_code,
                         "error_message": rejection_error_message,
                         "error_details": rejection_error_details,
+                        "duration_ms": 0,
                     },
                 )
                 retry_payload = {
@@ -858,6 +889,7 @@ def _terminal_trace(
                 "status": "succeeded",
                 "patch_hash": DIFF_HASH,
                 "worktree_diff_hash": DIFF_HASH,
+                "duration_ms": 0,
             },
         )
         state.append_event(
@@ -904,10 +936,62 @@ def _terminal_trace(
             "artifact_id": get_diff_result.artifact_id,
             "artifact_path": get_diff_result.path,
             "worktree_diff_hash": DIFF_HASH,
+            "duration_ms": 0,
         },
     )
     if visible_checks_after_get_diff:
         append_visible_checks()
+
+    if counter_generation_block_reason is not None:
+        if counter_generation_block_reason != "model_call_budget_exhausted":
+            raise AssertionError(
+                "the complete synthetic qualification trace only supports "
+                "model-call exhaustion"
+            )
+        existing_model_calls = sum(
+            event.type == EventType.MODEL_CALLED
+            for event in state.list_events(run_id)
+        )
+        for index in range(
+            manifest.budget.max_model_calls - existing_model_calls
+        ):
+            filler_rendered_context = json.dumps(
+                {
+                    "public_task": package.public.model_dump(mode="json"),
+                    "task_context": context_text,
+                    "recent_events": [],
+                    "rejected_mutation_retry": None,
+                },
+                ensure_ascii=False,
+                default=str,
+            )
+            filler_context, filler_request_hash = request_artifact(
+                filler_rendered_context
+            )
+            state.append_event(
+                run_id,
+                EventType.CONTEXT_BUILT,
+                actor="context-builder",
+                payload={
+                    "artifact_id": filler_context.artifact_id,
+                    "artifact_path": filler_context.path,
+                    "request_body_hash": filler_request_hash,
+                    "context_hash": sha256_text(filler_rendered_context),
+                },
+            )
+            filler_model = artifacts.put_text(
+                f"public model response: continue {index}"
+            )
+            state.append_event(
+                run_id,
+                EventType.MODEL_CALLED,
+                actor="model-adapter",
+                payload=model_payload(
+                    filler_model,
+                    filler_context,
+                    request_hash=filler_request_hash,
+                ),
+            )
 
     rendered_get_diff_event = {
         "sequence": get_diff_event.sequence,
@@ -951,7 +1035,29 @@ def _terminal_trace(
     review_context, review_request_hash = request_artifact(
         review_rendered_context,
         tool_results=review_tool_results,
+        runtime_contract=counter_generation_block_reason is not None,
     )
+    if counter_generation_block_reason is not None:
+        checkpoint = Checkpoint(
+            checkpoint_id="ckpt_qualification",
+            run_id=run_id,
+            through_sequence=state.last_sequence(run_id),
+            phase=Phase.REVIEW,
+            repository_head=package.public.repository.base_commit,
+            worktree_diff_hash=checkpoint_diff_hash,
+            created_at=utc_now(),
+        )
+        state.save_checkpoint(checkpoint)
+        state.append_event(
+            run_id,
+            EventType.CHECKPOINT_SAVED,
+            actor="state-store",
+            payload={
+                "checkpoint_id": checkpoint.checkpoint_id,
+                "through_sequence": checkpoint.through_sequence,
+                "worktree_diff_hash": checkpoint.worktree_diff_hash,
+            },
+        )
     state.append_event(
         run_id,
         EventType.CONTEXT_BUILT,
@@ -963,18 +1069,93 @@ def _terminal_trace(
             "context_hash": sha256_text(review_rendered_context),
         },
     )
-    state.append_event(
-        run_id,
-        EventType.MODEL_CALLED,
-        actor="model-adapter",
-        payload=model_payload(
-            review_model,
-            review_context,
-            request_hash=review_request_hash,
-        ),
-    )
+    generation_block_payload: dict[str, object] | None = None
+    if counter_generation_block_reason is None:
+        state.append_event(
+            run_id,
+            EventType.MODEL_CALLED,
+            actor="model-adapter",
+            payload=model_payload(
+                review_model,
+                review_context,
+                request_hash=review_request_hash,
+            ),
+        )
+    else:
+        preceding_events = state.list_events(run_id)
+        model_calls_used = sum(
+            event.type == EventType.MODEL_CALLED
+            for event in preceding_events
+        )
+        tool_calls_used = sum(
+            event.type == EventType.TOOL_CALLED
+            for event in preceding_events
+        )
+        wall_clock_ms = sum(
+            int(event.payload.get("duration_ms", 0))
+            for event in preceding_events
+            if event.type
+            in {
+                EventType.MODEL_CALLED,
+                EventType.TOOL_SUCCEEDED,
+                EventType.TOOL_FAILED,
+            }
+        )
+        total_tokens_used = sum(
+            int(event.payload.get("input_tokens", 0))
+            + int(event.payload.get("output_tokens", 0))
+            for event in preceding_events
+            if event.type == EventType.MODEL_CALLED
+        )
+        generation_block_payload = {
+            "schema_version": "model-generation-block-v2",
+            "reason_code": counter_generation_block_reason,
+            "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+            "generation_started": False,
+            "request_artifact_id": review_context.artifact_id,
+            "request_artifact_path": review_context.path,
+            "request_body_hash": review_request_hash,
+            "requested_input_tokens": None,
+            "remaining_tokens": None,
+            "max_output_tokens": manifest.model.max_output_tokens,
+            "input_token_count_calls": 0,
+            "retry_context_present": False,
+            "retry_candidate_content_hash": None,
+            "model_calls_used": model_calls_used,
+            "max_model_calls": manifest.budget.max_model_calls,
+            "tool_calls_used": tool_calls_used,
+            "max_tool_calls": manifest.budget.max_tool_calls,
+            "wall_clock_ms": wall_clock_ms,
+            "wall_clock_timeout_ms": (
+                manifest.budget.wall_clock_timeout_seconds * 1000
+            ),
+            "total_tokens_used": total_tokens_used,
+            "max_total_tokens": manifest.budget.max_total_tokens,
+        }
+        state.append_event(
+            run_id,
+            EventType.MODEL_GENERATION_BLOCKED,
+            actor="budget-guard",
+            payload=generation_block_payload,
+        )
     hidden_id = package.private.hidden_checks[0].id
     if agent_failure:
+        terminal_error = (
+            {
+                "type": "ModelGenerationBudgetError",
+                "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+                "message": (
+                    "model generation blocked: "
+                    f"{counter_generation_block_reason}"
+                ),
+                "details": generation_block_payload,
+            }
+            if generation_block_payload is not None
+            else {
+                "type": "ContractError",
+                "message": "public failure",
+            }
+        )
         result = RunResult(
             run_id=run_id,
             agent_submission_status="failed",
@@ -988,7 +1169,7 @@ def _terminal_trace(
                 tool_calls=1,
             ),
             outcome_kind=RunOutcomeKind.AGENT_FAILURE,
-            terminal_error={"type": "ContractError", "message": "public failure"},
+            terminal_error=terminal_error,
         )
     else:
         result = _result(run_id, resolved=resolved, hidden_check_id=hidden_id)
@@ -1073,6 +1254,7 @@ def _terminal_trace(
                 "artifact_path": finish_result.path,
                 "worktree_diff_hash": DIFF_HASH,
                 "submitted_patch_artifact": submitted_patch.model_dump(mode="json"),
+                "duration_ms": 0,
             },
         )
         state.append_event(
@@ -1096,36 +1278,37 @@ def _terminal_trace(
             actor="phase-machine",
             payload={"from": "REVIEW", "to": "DONE"},
         )
-    checkpoint = Checkpoint(
-        checkpoint_id="ckpt_qualification",
-        run_id=run_id,
-        through_sequence=state.last_sequence(run_id),
-        phase=Phase.REVIEW if agent_failure else Phase.DONE,
-        repository_head=package.public.repository.base_commit,
-        worktree_diff_hash=checkpoint_diff_hash,
-        created_at=utc_now(),
-    )
-    state.save_checkpoint(checkpoint)
-    checkpoint_event_payload: dict[str, object] = {
-        "checkpoint_id": checkpoint.checkpoint_id,
-        "through_sequence": checkpoint.through_sequence,
-        "worktree_diff_hash": checkpoint.worktree_diff_hash,
-    }
-    if checkpoint_event_overrides is not None:
-        checkpoint_event_payload.update(checkpoint_event_overrides)
-    state.append_event(
-        run_id,
-        EventType.CHECKPOINT_SAVED,
-        actor="state-store",
-        payload=checkpoint_event_payload,
-    )
-    if duplicate_checkpoint_event:
+    if counter_generation_block_reason is None:
+        checkpoint = Checkpoint(
+            checkpoint_id="ckpt_qualification",
+            run_id=run_id,
+            through_sequence=state.last_sequence(run_id),
+            phase=Phase.REVIEW if agent_failure else Phase.DONE,
+            repository_head=package.public.repository.base_commit,
+            worktree_diff_hash=checkpoint_diff_hash,
+            created_at=utc_now(),
+        )
+        state.save_checkpoint(checkpoint)
+        checkpoint_event_payload: dict[str, object] = {
+            "checkpoint_id": checkpoint.checkpoint_id,
+            "through_sequence": checkpoint.through_sequence,
+            "worktree_diff_hash": checkpoint.worktree_diff_hash,
+        }
+        if checkpoint_event_overrides is not None:
+            checkpoint_event_payload.update(checkpoint_event_overrides)
         state.append_event(
             run_id,
             EventType.CHECKPOINT_SAVED,
             actor="state-store",
             payload=checkpoint_event_payload,
         )
+        if duplicate_checkpoint_event:
+            state.append_event(
+                run_id,
+                EventType.CHECKPOINT_SAVED,
+                actor="state-store",
+                payload=checkpoint_event_payload,
+            )
     result.usage.tool_calls = sum(
         event.type == EventType.TOOL_CALLED for event in state.list_events(run_id)
     )
@@ -1157,6 +1340,19 @@ def _terminal_trace(
         result=result,
         event_type=(EventType.RUN_FAILED if agent_failure else EventType.RUN_COMPLETED),
         actor="runner" if agent_failure else "evaluator",
+        payload=(
+            {
+                "error_type": "ModelGenerationBudgetError",
+                "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+                "error_details": generation_block_payload,
+                "message": (
+                    "model generation blocked: "
+                    f"{counter_generation_block_reason}"
+                ),
+            }
+            if generation_block_payload is not None
+            else None
+        ),
     )
     result_path = tmp_path / "artifacts" / "runs" / run_id / "result.json"
     result_path.parent.mkdir(parents=True)
@@ -1176,6 +1372,7 @@ def test_live_memory_development_failure_is_qualified_and_eligible(tmp_path) -> 
     assert qualification["service_tier"] == "default"
     assert qualification["max_output_tokens"] == 25_000
     assert qualification["budget"] == Budget(
+        max_model_calls=21,
         max_total_tokens=200_000
     ).model_dump(mode="json")
     assert qualification["harness_git_commit"]
@@ -1191,7 +1388,11 @@ def test_live_memory_development_failure_is_qualified_and_eligible(tmp_path) -> 
     assert lifecycle["details"]["request_body_valid"] is True
     assert lifecycle["details"]["complete_source_in_context"] is True
     assert lifecycle["details"]["ordered_submission_valid"] is True
-    assert qualification["qualified"] is True
+    assert qualification["qualified"] is True, [
+        check
+        for check in qualification["checks"]
+        if not check["passed"]
+    ]
     assert qualification["trace_integrity_passed"] is True
     assert qualification["leakage_scan_passed"] is True
     assert qualification["outcome_kind"] == "task_failure"
@@ -2549,6 +2750,201 @@ def test_terminal_agent_failure_is_qualified_and_memory_eligible(tmp_path) -> No
     assert qualification["outcome_kind"] == "agent_failure"
     assert qualification["failure_record_id"] == failure_id
     assert qualification["memory_candidate_eligible"] is True
+
+
+def test_v2_model_call_budget_block_can_be_fully_qualified(
+    tmp_path,
+) -> None:
+    run_id, _, failure_id = _terminal_trace(
+        tmp_path,
+        agent_failure=True,
+        counter_generation_block_reason="model_call_budget_exhausted",
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+
+    assert qualification["qualified"] is True, [
+        check
+        for check in qualification["checks"]
+        if not check["passed"]
+    ]
+    assert qualification["evaluation_reached"] is False
+    assert qualification["outcome_kind"] == "agent_failure"
+    assert qualification["failure_record_id"] == failure_id
+    assert checks["prompt_token_integrity"]["passed"] is True
+    assert checks["prompt_token_integrity"]["details"][
+        "terminal_generation_block_schema_version"
+    ] == "model-generation-block-v2"
+    assert checks["prompt_token_integrity"]["details"][
+        "terminal_generation_block_reason"
+    ] == "model_call_budget_exhausted"
+    assert checks["terminal_result_integrity"]["passed"] is True
+
+
+def test_v2_counter_block_requires_durable_event_durations(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        agent_failure=True,
+        counter_generation_block_reason="model_call_budget_exhausted",
+    )
+    database = tmp_path / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (run_id,),
+        ).fetchall()
+        sequence, raw_event = next(
+            (sequence, raw_event)
+            for sequence, raw_event in rows
+            if json.loads(raw_event)["type"]
+            == EventType.MODEL_CALLED.value
+        )
+        event = json.loads(raw_event)
+        event["payload"].pop("duration_ms")
+        connection.execute(
+            "UPDATE events SET event_json = ? "
+            "WHERE run_id = ? AND sequence = ?",
+            (canonical_json(event), run_id, sequence),
+        )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+
+    assert qualification["qualified"] is False
+    assert checks["prompt_token_integrity"]["passed"] is False
+
+
+def test_v2_counter_block_rejects_result_wall_clock_tampering(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        agent_failure=True,
+        counter_generation_block_reason="model_call_budget_exhausted",
+    )
+    database = tmp_path / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        raw_result = connection.execute(
+            "SELECT result_json FROM runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()[0]
+        result_payload = json.loads(raw_result)
+        result_payload["usage"]["wall_clock_ms"] = 123_456
+        connection.execute(
+            "UPDATE runs SET result_json = ? WHERE run_id = ?",
+            (canonical_json(result_payload), run_id),
+        )
+    result_path = (
+        tmp_path / "artifacts" / "runs" / run_id / "result.json"
+    )
+    result_path.write_text(
+        json.dumps(result_payload, indent=2),
+        encoding="utf-8",
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+
+    assert qualification["qualified"] is False
+    assert checks["usage_reconciliation"]["passed"] is False
+    assert checks["persisted_result"]["passed"] is True
+
+
+def test_v2_model_call_block_rejects_over_limit_tool_usage(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        agent_failure=True,
+        write_execution_plan=False,
+        budget=Budget(
+            max_model_calls=21,
+            max_tool_calls=1,
+            max_total_tokens=200_000,
+        ),
+        counter_generation_block_reason="model_call_budget_exhausted",
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+
+    assert qualification["qualified"] is False
+    assert checks["prompt_token_integrity"]["passed"] is False
+
+
+def test_v2_counter_block_requires_budget_guard_actor(
+    tmp_path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        agent_failure=True,
+        counter_generation_block_reason="model_call_budget_exhausted",
+    )
+    database = tmp_path / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (run_id,),
+        ).fetchall()
+        sequence, raw_event = next(
+            (sequence, raw_event)
+            for sequence, raw_event in rows
+            if json.loads(raw_event)["type"]
+            == EventType.MODEL_GENERATION_BLOCKED.value
+        )
+        event = json.loads(raw_event)
+        event["actor"] = "tampered-budget-guard"
+        connection.execute(
+            "UPDATE events SET event_json = ? "
+            "WHERE run_id = ? AND sequence = ?",
+            (canonical_json(event), run_id, sequence),
+        )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=MEMORY_TASK,
+        root=tmp_path,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+
+    assert qualification["qualified"] is False
+    assert checks["prompt_token_integrity"]["passed"] is False
 
 
 def test_private_token_leak_fails_without_copying_token_to_artifact(

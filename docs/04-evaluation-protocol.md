@@ -150,6 +150,13 @@ Count 뒤에는 현재 누적 input+output, 새 exact input과 manifest의 full
 `max_output_tokens`를 합쳐 run budget과 비교한다. 합계가 상한을 넘으면 generation을
 호출하지 않고 structured agent failure로 종료한다.
 
+Exact input + full output reservation 차단은 `model-generation-block-v1`이다. Input count
+전에 이미 model/tool/wall counter가 다음 generation을 허용하지 않으면
+`model-generation-block-v2`로 종료한다. V2 qualifier는 strict duration/counter 재계산,
+`model → tool → wall` reason 우선순위, budget-guard actor, request CAS와 terminal/result
+결속을 검사한다. Valid block은 trace-qualified `agent_failure`이며 evaluator나 task
+success로 집계하지 않는다.
+
 이 비교는 PatchLoop 자체 context policy를 대체하지 않는다. Context artifact는 최근 event
 limit로 생략된 event 수와 12,000-character tool-result cap 적용을 별도 필드로 기록한다.
 따라서 `request count == response usage`여도 context builder가 의도적으로 제외한 evidence가
@@ -321,7 +328,9 @@ Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는
 현재 development-validation, memory-development와 core primary live block은
 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode `standard`, service tier `default`,
 max output 25,000 token과 run budget
-`20 model call / 50 tool call / 200,000 total token / 900초`를 고정한다. OpenAI SDK version,
+`21 model call / 50 tool call / 200,000 total token / 900초`를 고정한다. 21번째 call은
+submission 전용으로 예약하지 않는 정상 model call이며 네 memory 조건에 동일하게
+적용한다. OpenAI SDK version,
 clean harness Git commit과 execution window도 provenance로 사용한다. D-031 provider
 telemetry를 검증했던 별도
 development-validation model-candidate pilot의 historical r1~r3는
@@ -332,12 +341,12 @@ profile v4만 25,000/200,000 pair와 `model-generation-block-v1`을 허용한다
 experiment ID로 보존하며, 이 diagnostic lane은 core headline 비교나 primary 선행 gate에
 포함하지 않는다.
 
-Primary r1은 이 동일 20-call 계약에서 patch, visible check와 final diff 뒤 `REVIEW`에
+Primary r1은 historical 20-call 계약에서 patch, visible check와 final diff 뒤 `REVIEW`에
 도달했지만 `finish_task`용 다음 generation 전에 call budget을 소진했다. Exact patch의
-별도 evaluator pass는 원 run을 success로 바꾸지 않는다. 본 campaign 전 offline gate는
-모든 memory 조건에 같은 submission tail-call/model-call 정책을 적용하고,
-model/tool/wall-call exhaustion을 reason-specific versioned terminal evidence로 검증하는
-것이다. Historical r1 qualification 21/22를 소급 수정하거나 소비된 hash를 재사용하지 않는다.
+별도 evaluator pass는 원 run을 success로 바꾸지 않는다. D-047 offline gate는 future
+campaign의 공정한 21-call 상한과 reason-specific v2 next-generation terminal evidence를
+검증했다. Historical r1 qualification 21/22를 소급 수정하거나 소비된 hash를 재사용하지
+않는다. Corrective primary r2의 provider/evaluator evidence는 아직 없다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와

@@ -49,6 +49,22 @@ _GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 _GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 _GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
 _GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
+_GPT54_MINI_CAMPAIGN_BUDGET = Budget(
+    max_model_calls=21,
+    max_total_tokens=200_000,
+)
+_HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS = frozenset(
+    {"dev-validation-gpt54mini-campaign-20260730-r1"}
+)
+_EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
+_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
+_COUNTER_GENERATION_BLOCK_REASONS = frozenset(
+    {
+        "model_call_budget_exhausted",
+        "tool_call_budget_exhausted",
+        "wall_clock_budget_exhausted",
+    }
+)
 _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
@@ -1120,7 +1136,7 @@ def _request_runtime_contract_valid(
     )
 
 
-def _exact_request_generation_block_valid(
+def _generation_block_common_valid(
     *,
     root: Path,
     manifest: RunManifest,
@@ -1129,19 +1145,9 @@ def _exact_request_generation_block_valid(
     blocked_event,
     expected_retry_candidate_hash: str | None,
 ) -> bool:
-    """Validate one exact-request no-generation block in generic or retry mode."""
+    """Validate request, retry, and terminal bindings shared by block versions."""
 
     payload = blocked_event.payload
-    schema_version = payload.get("schema_version")
-    legacy_retry_block = bool(
-        schema_version is None and isinstance(expected_retry_candidate_hash, str)
-    )
-    if (
-        schema_version != "model-generation-block-v1"
-        and not legacy_retry_block
-    ):
-        return False
-
     request_valid, request_evidence = _request_evidence_payload(
         context_event,
         artifact_root=(root / "artifacts"),
@@ -1166,8 +1172,7 @@ def _exact_request_generation_block_valid(
 
     if expected_retry_candidate_hash is None:
         retry_mode_valid = bool(
-            schema_version == "model-generation-block-v1"
-            and payload.get("retry_context_present") is False
+            payload.get("retry_context_present") is False
             and payload.get("retry_candidate_content_hash") is None
             and isinstance(rendered_payload, dict)
             and "rejected_mutation_retry" in rendered_payload
@@ -1207,9 +1212,62 @@ def _exact_request_generation_block_valid(
             == expected_retry_candidate_hash
         )
 
-    requested = blocked_event.payload.get("requested_input_tokens")
-    remaining = blocked_event.payload.get("remaining_tokens")
     max_output = blocked_event.payload.get("max_output_tokens")
+    trailing_events = [
+        event for event in events if event.sequence > blocked_event.sequence
+    ]
+    return bool(
+        request_valid
+        and _request_runtime_contract_valid(request_body, manifest)
+        and retry_mode_valid
+        and blocked_event.type == EventType.MODEL_GENERATION_BLOCKED
+        and blocked_event.sequence == context_event.sequence + 1
+        and blocked_event.payload.get("error_code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
+        and blocked_event.payload.get("generation_started") is False
+        and blocked_event.payload.get("request_artifact_id")
+        == context_event.payload.get("artifact_id")
+        and blocked_event.payload.get("request_artifact_path")
+        == context_event.payload.get("artifact_path")
+        and blocked_event.payload.get("request_body_hash")
+        == context_event.payload.get("request_body_hash")
+        and type(max_output) is int
+        and max_output == manifest.model.max_output_tokens
+        and isinstance(request_body, dict)
+        and request_body.get("max_output_tokens") == max_output
+        and sum(event.type == EventType.RUN_FAILED for event in trailing_events) == 1
+        and bool(trailing_events)
+        and trailing_events[-1].type == EventType.RUN_FAILED
+        and all(
+            event.type in {EventType.FAILURE_TAGGED, EventType.RUN_FAILED}
+            for event in trailing_events
+        )
+    )
+
+
+def _exact_request_generation_block_valid(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events,
+    context_event,
+    blocked_event,
+    expected_retry_candidate_hash: str | None,
+) -> bool:
+    """Validate one exact-token no-generation block in generic or retry mode."""
+
+    payload = blocked_event.payload
+    schema_version = payload.get("schema_version")
+    legacy_retry_block = bool(
+        schema_version is None and isinstance(expected_retry_candidate_hash, str)
+    )
+    if (
+        schema_version != _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA
+        and not legacy_retry_block
+    ):
+        return False
+
+    requested = payload.get("requested_input_tokens")
+    remaining = payload.get("remaining_tokens")
     preceding_token_usage = 0
     for event in events:
         if (
@@ -1230,41 +1288,202 @@ def _exact_request_generation_block_valid(
     expected_remaining = (
         manifest.budget.max_total_tokens - preceding_token_usage
     )
-    trailing_events = [
-        event for event in events if event.sequence > blocked_event.sequence
-    ]
     return bool(
-        request_valid
-        and _request_runtime_contract_valid(request_body, manifest)
-        and retry_mode_valid
-        and blocked_event.type == EventType.MODEL_GENERATION_BLOCKED
-        and blocked_event.sequence == context_event.sequence + 1
-        and blocked_event.payload.get("reason_code") == "exact_request_budget_exceeded"
-        and blocked_event.payload.get("error_code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
-        and blocked_event.payload.get("generation_started") is False
-        and blocked_event.payload.get("request_artifact_id")
-        == context_event.payload.get("artifact_id")
-        and blocked_event.payload.get("request_artifact_path")
-        == context_event.payload.get("artifact_path")
-        and blocked_event.payload.get("request_body_hash")
-        == context_event.payload.get("request_body_hash")
+        _generation_block_common_valid(
+            root=root,
+            manifest=manifest,
+            events=events,
+            context_event=context_event,
+            blocked_event=blocked_event,
+            expected_retry_candidate_hash=expected_retry_candidate_hash,
+        )
+        and payload.get("reason_code") == "exact_request_budget_exceeded"
         and type(requested) is int
         and requested >= 0
         and type(remaining) is int
         and remaining >= 0
         and remaining == expected_remaining
-        and type(max_output) is int
-        and max_output == manifest.model.max_output_tokens
-        and isinstance(request_body, dict)
-        and request_body.get("max_output_tokens") == max_output
-        and requested + max_output > remaining
-        and blocked_event.payload.get("input_token_count_calls") == 1
-        and sum(event.type == EventType.RUN_FAILED for event in trailing_events) == 1
-        and trailing_events[-1].type == EventType.RUN_FAILED
-        and all(
-            event.type in {EventType.FAILURE_TAGGED, EventType.RUN_FAILED}
-            for event in trailing_events
+        and requested + manifest.model.max_output_tokens > remaining
+        and payload.get("input_token_count_calls") == 1
+    )
+
+
+def _budget_usage_before(events, sequence: int) -> dict[str, int] | None:
+    """Recompute the runner's durable budget counters before one event."""
+
+    usage = {
+        "model_calls": 0,
+        "tool_calls": 0,
+        "wall_clock_ms": 0,
+        "total_tokens": 0,
+    }
+    for event in events:
+        if event.sequence >= sequence:
+            continue
+        if event.type == EventType.MODEL_CALLED:
+            input_tokens = event.payload.get("input_tokens")
+            output_tokens = event.payload.get("output_tokens")
+            duration_ms = event.payload.get("duration_ms")
+            if (
+                type(input_tokens) is not int
+                or input_tokens < 0
+                or type(output_tokens) is not int
+                or output_tokens < 0
+                or type(duration_ms) is not int
+                or duration_ms < 0
+            ):
+                return None
+            usage["model_calls"] += 1
+            usage["total_tokens"] += input_tokens + output_tokens
+            usage["wall_clock_ms"] += duration_ms
+        elif event.type == EventType.TOOL_CALLED:
+            usage["tool_calls"] += 1
+        elif event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}:
+            duration_ms = event.payload.get("duration_ms")
+            if type(duration_ms) is not int or duration_ms < 0:
+                return None
+            usage["wall_clock_ms"] += duration_ms
+    return usage
+
+
+def _counter_generation_block_valid(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events,
+    context_event,
+    blocked_event,
+    expected_retry_candidate_hash: str | None,
+) -> bool:
+    """Validate a v2 call/tool/wall pre-generation budget block."""
+
+    payload = blocked_event.payload
+    reason_code = payload.get("reason_code")
+    usage = _budget_usage_before(events, blocked_event.sequence)
+    if (
+        payload.get("schema_version") != _COUNTER_GENERATION_BLOCK_SCHEMA
+        or reason_code not in _COUNTER_GENERATION_BLOCK_REASONS
+        or blocked_event.actor != "budget-guard"
+        or usage is None
+    ):
+        return False
+    expected_fields = {
+        "schema_version",
+        "reason_code",
+        "error_code",
+        "generation_started",
+        "request_artifact_id",
+        "request_artifact_path",
+        "request_body_hash",
+        "requested_input_tokens",
+        "remaining_tokens",
+        "max_output_tokens",
+        "input_token_count_calls",
+        "retry_context_present",
+        "retry_candidate_content_hash",
+        "model_calls_used",
+        "max_model_calls",
+        "tool_calls_used",
+        "max_tool_calls",
+        "wall_clock_ms",
+        "wall_clock_timeout_ms",
+        "total_tokens_used",
+        "max_total_tokens",
+    }
+    if set(payload) != expected_fields:
+        return False
+    integer_fields = {
+        "input_token_count_calls",
+        "model_calls_used",
+        "max_model_calls",
+        "tool_calls_used",
+        "max_tool_calls",
+        "wall_clock_ms",
+        "wall_clock_timeout_ms",
+        "total_tokens_used",
+        "max_total_tokens",
+    }
+    if any(
+        type(payload.get(field)) is not int or payload[field] < 0
+        for field in integer_fields
+    ):
+        return False
+
+    model_calls = usage["model_calls"]
+    tool_calls = usage["tool_calls"]
+    wall_clock_ms = usage["wall_clock_ms"]
+    model_limit = manifest.budget.max_model_calls
+    tool_limit = manifest.budget.max_tool_calls
+    wall_limit_ms = manifest.budget.wall_clock_timeout_seconds * 1000
+    if reason_code == "model_call_budget_exhausted":
+        reason_valid = model_calls == model_limit
+    elif reason_code == "tool_call_budget_exhausted":
+        reason_valid = model_calls < model_limit and tool_calls == tool_limit
+    else:
+        reason_valid = bool(
+            model_calls < model_limit
+            and tool_calls < tool_limit
+            and wall_clock_ms >= wall_limit_ms
         )
+
+    return bool(
+        _generation_block_common_valid(
+            root=root,
+            manifest=manifest,
+            events=events,
+            context_event=context_event,
+            blocked_event=blocked_event,
+            expected_retry_candidate_hash=expected_retry_candidate_hash,
+        )
+        and reason_valid
+        and model_calls <= model_limit
+        and tool_calls <= tool_limit
+        and payload.get("requested_input_tokens") is None
+        and payload.get("remaining_tokens") is None
+        and payload.get("input_token_count_calls") == 0
+        and payload.get("model_calls_used") == model_calls
+        and payload.get("max_model_calls") == model_limit
+        and payload.get("tool_calls_used") == tool_calls
+        and payload.get("max_tool_calls") == tool_limit
+        and payload.get("wall_clock_ms") == wall_clock_ms
+        and payload.get("wall_clock_timeout_ms") == wall_limit_ms
+        and payload.get("total_tokens_used") == usage["total_tokens"]
+        and payload.get("max_total_tokens")
+        == manifest.budget.max_total_tokens
+        and usage["total_tokens"] <= manifest.budget.max_total_tokens
+    )
+
+
+def _model_generation_block_valid(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events,
+    context_event,
+    blocked_event,
+    expected_retry_candidate_hash: str | None,
+) -> bool:
+    """Dispatch validation without reinterpreting historical unversioned blocks."""
+
+    if (
+        blocked_event.payload.get("schema_version")
+        == _COUNTER_GENERATION_BLOCK_SCHEMA
+    ):
+        return _counter_generation_block_valid(
+            root=root,
+            manifest=manifest,
+            events=events,
+            context_event=context_event,
+            blocked_event=blocked_event,
+            expected_retry_candidate_hash=expected_retry_candidate_hash,
+        )
+    return _exact_request_generation_block_valid(
+        root=root,
+        manifest=manifest,
+        events=events,
+        context_event=context_event,
+        blocked_event=blocked_event,
+        expected_retry_candidate_hash=expected_retry_candidate_hash,
     )
 
 
@@ -1500,7 +1719,7 @@ def _rejected_patch_retry_context_evidence(
         else:
             blocked_ok = bool(
                 isinstance(patch_hash, str)
-                and _exact_request_generation_block_valid(
+                and _model_generation_block_valid(
                     root=root,
                     manifest=manifest,
                     events=events,
@@ -2495,7 +2714,19 @@ def qualify_run(
         manifest.experiment is not None
         and manifest.experiment.purpose in _CAMPAIGN_PURPOSES
         and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
-        and manifest.budget == _GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+        and (
+            (
+                manifest.experiment.experiment_id
+                in _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+                and manifest.budget
+                == _GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+            )
+            or (
+                manifest.experiment.experiment_id
+                not in _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+                and manifest.budget == _GPT54_MINI_CAMPAIGN_BUDGET
+            )
+        )
         and manifest.model.max_output_tokens == 25_000
     )
     mini_budget_and_output_contract = (
@@ -2807,7 +3038,10 @@ def qualify_run(
     ]
     versioned_generation_block_declared = any(
         event.payload.get("schema_version")
-        == "model-generation-block-v1"
+        in {
+            _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA,
+            _COUNTER_GENERATION_BLOCK_SCHEMA,
+        }
         for event in generation_blocked_events
     )
     terminal_generation_block_ok = False
@@ -2863,7 +3097,7 @@ def qualify_run(
         terminal_generation_block_ok = bool(
             retry_mode_shape_valid
             and retry_source_binding_valid
-            and _exact_request_generation_block_valid(
+            and _model_generation_block_valid(
                 root=run_root,
                 manifest=manifest,
                 events=events,
@@ -2972,6 +3206,14 @@ def qualify_run(
             prompt_telemetry_details[
                 "terminal_generation_block_kind"
             ] = terminal_generation_block_kind
+            prompt_telemetry_details[
+                "terminal_generation_block_schema_version"
+            ] = generation_blocked_events[0].payload.get(
+                "schema_version"
+            )
+            prompt_telemetry_details[
+                "terminal_generation_block_reason"
+            ] = generation_blocked_events[0].payload.get("reason_code")
     add(
         "prompt_token_integrity",
         prompt_telemetry_ok,
@@ -3000,8 +3242,24 @@ def qualify_run(
         ),
         "tool_calls": len(tool_events),
     }
+    counter_usage_required = bool(
+        len(generation_blocked_events) == 1
+        and generation_blocked_events[0].payload.get("schema_version")
+        == _COUNTER_GENERATION_BLOCK_SCHEMA
+    )
+    counter_usage = (
+        _budget_usage_before(
+            events,
+            generation_blocked_events[0].sequence,
+        )
+        if counter_usage_required
+        else None
+    )
+    if counter_usage is not None:
+        expected_usage["wall_clock_ms"] = counter_usage["wall_clock_ms"]
     usage_matches = bool(
         result is not None
+        and (not counter_usage_required or counter_usage is not None)
         and all(getattr(result.usage, field) == value for field, value in expected_usage.items())
         and abs(result.usage.model_cost_usd - calculate_model_cost(result.usage, manifest.model))
         <= 1e-9

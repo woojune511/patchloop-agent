@@ -42,7 +42,29 @@ LEGACY_TERRA_MODEL_ID = "gpt-5.6-terra"
 GPT54_MINI_PILOT_MODEL_ID = "gpt-5.4-mini-2026-03-17"
 CAMPAIGN_MODEL_ID = GPT54_MINI_PILOT_MODEL_ID
 HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS = frozenset(
-    {"dev-validation-live-pilot-20260728-r3"}
+    {
+        "dev-validation-live-pilot-20260728",
+        "dev-validation-live-pilot-20260728-r2",
+        "dev-validation-live-pilot-20260728-r3",
+    }
+)
+HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS = frozenset(
+    {"dev-validation-gpt54mini-campaign-20260730-r1"}
+)
+HISTORICAL_MINI_DIAGNOSTIC_EXPERIMENT_IDS = frozenset(
+    {
+        "dev-validation-gpt54mini-pilot-20260729-r1",
+        "dev-validation-gpt54mini-pilot-20260729-r2",
+        "dev-validation-gpt54mini-d037-20260729-r3",
+        "dev-validation-gpt54mini-d037-20260729-r4",
+        "dev-validation-gpt54mini-d037-20260730-r5",
+        "dev-validation-gpt54mini-d037-20260730-r6",
+    }
+)
+HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
+    HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
+    | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+    | HISTORICAL_MINI_DIAGNOSTIC_EXPERIMENT_IDS
 )
 PRICE_FIELDS = (
     "input_price_per_million_usd",
@@ -67,8 +89,12 @@ OFFICIAL_PRICES_BY_MODEL = {
 GPT54_MINI_PILOT_BUDGET = Budget(max_total_tokens=90_000)
 GPT54_MINI_D037_CORRECTIVE_BUDGET = Budget(max_total_tokens=120_000)
 GPT54_MINI_D037_TAIL_RESERVE_BUDGET = Budget(max_total_tokens=200_000)
+GPT54_MINI_CAMPAIGN_BUDGET = Budget(
+    max_model_calls=21,
+    max_total_tokens=200_000,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
-CAMPAIGN_BUDGET = GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
 
 PILOT_TASK = (
@@ -248,6 +274,18 @@ class ExperimentSuite(BaseModel):
                     budget=Budget(),
                     max_output_tokens=4096,
                 )
+            elif (
+                self.experiment_id
+                in HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+            ):
+                self._require_live_defaults(
+                    cost_limit=2,
+                    model_id=GPT54_MINI_PILOT_MODEL_ID,
+                    budget=GPT54_MINI_D037_TAIL_RESERVE_BUDGET,
+                    max_output_tokens=(
+                        GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
+                    ),
+                )
             else:
                 self._require_live_defaults(cost_limit=2)
         elif (
@@ -351,7 +389,8 @@ class ExperimentSuite(BaseModel):
             raise ValueError(
                 "live research purpose requires the frozen "
                 f"{model_id} model/run-budget contract "
-                f"(max_total_tokens={expected_budget.max_total_tokens})"
+                f"(max_model_calls={expected_budget.max_model_calls}, "
+                f"max_total_tokens={expected_budget.max_total_tokens})"
             )
         if self.cost_limit_usd != cost_limit:
             raise ValueError(
@@ -933,7 +972,10 @@ def preflight_suite(
     pricing["budget_upper_bound_usd"] = theoretical_cost_upper_bound
 
     if suite.model == "openai":
-        if suite.experiment_id in HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS:
+        if (
+            suite.experiment_id
+            in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        ):
             _block(
                 blockers,
                 "HISTORICAL_SUITE_IMMUTABLE",

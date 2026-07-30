@@ -85,6 +85,8 @@ is preserved separately under `reports/live-pilot/`:
   inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`: terminal fault-free primary
   campaign-pilot r1 contract; consumed once, inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`: D-047 corrective primary
+  contract; 21 model calls, not yet executed and no run ID/evidence record
 - `experiments/dev-validation-gpt54mini-pilot.yaml`: terminal mini r1 contract;
   historical inspection only, never rerun
 - `experiments/dev-validation-gpt54mini-pilot-r2.yaml`: v2 corrective mini diagnostic;
@@ -107,7 +109,7 @@ rate. The suite pins `gpt-5.4-mini-2026-03-17`. Recheck the price within 72 hour
 invocation and record the installed SDK version, clean Git commit and execution timestamp.
 
 Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENAI_BASE_URL` and
-`OPENAI_API_BASE` unset. Then run the no-call preflight first:
+`OPENAI_API_BASE` unset. The historical r1 inspection-only preflight is:
 
 ```powershell
 git status --short
@@ -126,6 +128,22 @@ call-budget terminal block is not a versioned valid ending.
 See the
 [primary r1 evidence record](../reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r1.json)
 for the source/postmortem separation and hash-bound public patch.
+
+The D-047 offline contract uses 21 total model calls for every future primary/development/core
+condition and `model-generation-block-v2` for deterministic next-generation model/tool/wall
+counter exhaustion. It does not reserve a privileged `finish_task` call. The corrective r2 no-call
+preflight is:
+
+```powershell
+git status --short
+uv run patchloop evaluate `
+  --suite experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml `
+  --preflight-only
+```
+
+Do not add approval flags until the clean commit and exact execution hash have been reviewed and the
+user gives a separate $2 approval. R2 has not been invoked against the provider, so no run ID,
+usage, cost or evaluator result exists.
 
 The original checked-in mini suite refers to terminal experiment
 `dev-validation-gpt54mini-pilot-20260729-r1`. Its immutable run
@@ -352,10 +370,10 @@ Inspect the existing result and never invoke that suite/hash again.
 
 After that diagnostic gate, the separately approved fault-free primary r1 ran once and became the
 terminal call-budget failure described above. Its exact final patch passed a separate no-model
-Docker postmortem, but that does not change the missing submission/evaluator evidence. Before a
-new provider run, freeze and test a submission tail-call policy plus versioned deterministic
-model/tool/wall-call terminal-block qualification. Only a new corrective pilot with a distinct
-experiment/hash and $2 approval that reaches the evaluator and produces a qualified
+Docker postmortem, but that does not change the missing submission/evaluator evidence. D-047
+completed the offline 21-call policy and versioned deterministic model/tool/wall next-generation
+terminal-block qualification. Only the new r2 corrective pilot with a distinct experiment/hash
+and $2 approval that reaches the evaluator and produces a qualified
 `trace-qualification-v2` may have its run ID inserted into
 `experiments/dev-no-memory.template.yaml`. Development preflight then verifies the same model,
 budget, harness commit, tool/context versions and exact runtime-contract hash before producing a

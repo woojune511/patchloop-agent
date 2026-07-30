@@ -23,7 +23,7 @@ reasoning_mode: standard
 service_tier: default
 max_output_tokens: 25000
 budget:
-  max_model_calls: 20
+  max_model_calls: 21
   max_tool_calls: 50
   max_total_tokens: 200000
   wall_clock_timeout_seconds: 900

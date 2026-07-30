@@ -142,6 +142,17 @@ Portable claims boundary와 artifact hash는
 [primary mini r1 evidence record](reports/live-pilot/dev-validation-gpt54mini-campaign-20260730-r1.json)에
 보존한다.
 
+D-047은 이 failure에서 드러난 경계를 offline에서 닫는다. Exact-token reservation 차단은
+기존 `model-generation-block-v1`을 유지하고, model/tool/wall counter exhaustion은
+`model-generation-block-v2`로 분리한다. 새 qualifier는 durable event에서 counter를 다시
+계산하고 `model → tool → wall` reason 우선순위, strict payload/type, exact request CAS와
+terminal error 결속을 검증한다. Valid v2 block은 재현 가능한 `agent_failure`이지 task
+success나 evaluator 도달이 아니다. 앞으로의 primary, memory-development와 core suite는
+모든 memory 조건에 같은 총 `21 model call / 50 tool call / 200,000 token / 900초` 상한을
+사용한다. 21번째 call은 `finish_task` 전용 reserve가 아니며 정상 model call이다. Historical
+primary r1과 diagnostic suite의 20-call 의미와 qualification은 바꾸지 않는다. Corrective
+primary r2 suite는 정의됐지만 아직 provider에서 실행하지 않았다.
+
 ## 구현된 핵심 경로
 
 ```text
@@ -380,7 +391,8 @@ block을 고정한 뒤 별도 hash로 정확히 한 번 실행됐다. `run_0ad86
 task와 trace qualification은 통과했지만 rejected candidate가 없어 diagnostic은
 inconclusive다. R4와 r5의 승인이나 hash는 재사용하지 않는다. D-043의 별도 r6/profile v4는
 controlled rejection을 도입한 뒤 새 hash로 한 번 실행됐고, exact retry와 evaluator gate를
-통과했다. R6도 immutable하며 재실행하지 않는다. 다음은 별도로 승인된 fault-free mini
+통과했다. R6도 immutable하며 재실행하지 않는다. Historical primary r1도 terminal
+inspection 전용이다. 다음은 새 corrective fault-free mini r2
 development-validation campaign pilot이
 evaluator에 도달하고 `trace-qualification-v2`를 통과해 `pilot_run_id`에 고정된 뒤에만
 아래 12-run development campaign preflight를 실행한다. Pilot의 task outcome은 이
@@ -391,7 +403,7 @@ harness gate와 별도로 보고한다.
 
 ```powershell
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml `
+  --suite experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml `
   --preflight-only
 ```
 
@@ -400,10 +412,11 @@ uv run patchloop evaluate `
 Primary r1 suite도 이제 terminal inspection 전용이다. Journal/result blocker를 유지하고
 approval flag나 소비된 hash를 다시 전달하지 않는다.
 
-다음 paid 실행 전에 submission tail-call reserve 또는 공정한 model-call 상한과
-model/tool/wall-call pre-generation terminal schema·qualification을 offline에서 고정한다.
-새 corrective pilot이 별도 hash와 승인을 받아 evaluator와 qualification을 통과한 뒤에만
-그 run ID를 development suite의 `pilot_run_id`에 넣는다.
+D-047 offline gate는 공정한 21-call 상한과 model/tool/wall pre-generation terminal
+schema·qualification으로 완료됐다. 위 r2 preflight는 API generation을 호출하지 않는다.
+Clean commit에서 새 execution hash를 검토하고 사용자가 별도 $2 승인을 제공하기 전에는
+paid invocation을 실행하지 않는다. 그 corrective pilot이 evaluator와 qualification을
+통과한 뒤에만 run ID를 development suite의 `pilot_run_id`에 넣는다.
 
 ```powershell
 uv run patchloop evaluate `
@@ -500,8 +513,9 @@ published 128,000 max output 안이다.
 200,000이며, 같은 보수적 preflight 공식의 reserve는
 `(200,000 + 25,000) × $4.50/M = $1.0125`로 $2 cap 아래다. Runtime은 계속 exact input과
 full 25,000 allowance가 남은 total budget에 함께 들어갈 때만 generation을 시작한다.
-Generic terminal block은 새 `model-generation-block-v1`일 때만 retry와 독립된 valid trace
-evidence가 되며, retry episode나 diagnostic pass를 만들지 않는다.
+Exact-token terminal block은 `model-generation-block-v1`, model/tool/wall counter
+terminal block은 `model-generation-block-v2`일 때만 retry와 독립된 valid trace evidence가
+되며, retry episode나 diagnostic pass를 만들지 않는다.
 세 Terra pilot과 historical mini r1/r2/r3/r4/r5/r6는 usage/source-evidence 보존 경로를 실제 provider에서
 확인했다. Terra r2 trace artifact는 qualified지만
 evaluator 미도달 때문에 pilot acceptance를 통과하지 못했고, historical Terra r3가 별도 clean execution
@@ -515,8 +529,9 @@ exercise하지 못했다. Mini r5는 official task와 qualification을 통과했
 harness retry branch와 evaluator 도달을 검증했지만 natural recovery rate는 측정하지 않는다.
 일곱 mini run의 누적 계산 비용은 `$0.77412075`, 열 paid pilot의 계산상 총액은
 `$1.602985125`이며 실제 invoice/free daily usage 적용 여부는 확인하지 않았다. R5, r6와
-primary r1은 자동 재실행하지 않는다. Offline call-budget corrective contract와 별도
-corrective pilot이 통과하기 전에는 12-run development campaign을 승인하지 않는다.
+primary r1은 자동 재실행하지 않는다. Offline call-budget corrective contract는 완료됐지만,
+별도 corrective r2 provider pilot은 아직 실행하지 않았다. 이 pilot이 evaluator와
+qualification을 통과하기 전에는 12-run development campaign을 승인하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

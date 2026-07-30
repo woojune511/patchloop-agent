@@ -79,6 +79,15 @@ from patchloop.verifier import EvaluationEngine
 _LIVE_AUTHORIZATION_GUARD = object()
 _MAX_RECOVERABLE_SUBMISSION_REJECTIONS = 2
 _EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
+_EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
+_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
+_COUNTER_GENERATION_BLOCK_REASONS = frozenset(
+    {
+        "model_call_budget_exhausted",
+        "tool_call_budget_exhausted",
+        "wall_clock_budget_exhausted",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -643,6 +652,7 @@ class AgentRunner:
                             request_artifact=request_artifact,
                             request_body_hash=request_body_hash,
                             reason_code=pre_generation_reason,
+                            usage=usage,
                         )
                 model_started = time.monotonic()
                 if isinstance(adapter, OpenAIResponsesAdapter):
@@ -664,6 +674,7 @@ class AgentRunner:
                                 request_artifact=request_artifact,
                                 request_body_hash=request_body_hash,
                                 reason_code="exact_request_budget_exceeded",
+                                usage=usage,
                                 requested_input_tokens=requested_input_tokens,
                                 remaining_tokens=remaining_tokens,
                                 input_token_count_calls=1,
@@ -688,6 +699,7 @@ class AgentRunner:
                             request_artifact=request_artifact,
                             request_body_hash=request_body_hash,
                             reason_code="token_budget_exhausted",
+                            usage=usage,
                         )
                     turn = adapter.next_turn(context, tool_schemas)
                 model_duration_ms = int((time.monotonic() - model_started) * 1000)
@@ -2783,6 +2795,7 @@ class AgentRunner:
         request_artifact: Artifact,
         request_body_hash: str,
         reason_code: str,
+        usage: Usage,
         requested_input_tokens: int | None = None,
         remaining_tokens: int | None = None,
         input_token_count_calls: int = 0,
@@ -2818,7 +2831,25 @@ class AgentRunner:
             ),
         }
         if reason_code == "exact_request_budget_exceeded":
-            payload["schema_version"] = "model-generation-block-v1"
+            payload["schema_version"] = _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA
+        elif reason_code in _COUNTER_GENERATION_BLOCK_REASONS:
+            payload.update(
+                {
+                    "schema_version": _COUNTER_GENERATION_BLOCK_SCHEMA,
+                    "model_calls_used": usage.model_calls,
+                    "max_model_calls": manifest.budget.max_model_calls,
+                    "tool_calls_used": usage.tool_calls,
+                    "max_tool_calls": manifest.budget.max_tool_calls,
+                    "wall_clock_ms": usage.wall_clock_ms,
+                    "wall_clock_timeout_ms": (
+                        manifest.budget.wall_clock_timeout_seconds * 1000
+                    ),
+                    "total_tokens_used": (
+                        usage.input_tokens + usage.output_tokens
+                    ),
+                    "max_total_tokens": manifest.budget.max_total_tokens,
+                }
+            )
         self.state.append_event(
             manifest.run_id,
             EventType.MODEL_GENERATION_BLOCKED,

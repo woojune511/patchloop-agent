@@ -6,6 +6,7 @@ import shutil
 import sqlite3
 import subprocess
 import uuid
+from datetime import timedelta
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -32,6 +33,7 @@ from patchloop.contracts import (
     RunOutcomeKind,
     RunResult,
     RunStatus,
+    Usage,
     VerdictState,
 )
 from patchloop.errors import ContractError, RecoveryError
@@ -256,6 +258,40 @@ class _GenericBudgetBlockResponses:
                 {"query": "parse", "path_glob": "**/*.py"},
             ),
             response_id="resp_before_generic_budget_block",
+        )
+
+
+class _RepeatedSearchResponses:
+    def __init__(self, *, model_id: str, allowed_generations: int) -> None:
+        self.model_id = model_id
+        self.allowed_generations = allowed_generations
+        self.count_requests: list[dict[str, Any]] = []
+        self.create_requests: list[dict[str, Any]] = []
+        self.input_tokens = SimpleNamespace(count=self.count)
+
+    def count(self, **request):
+        if len(self.count_requests) >= self.allowed_generations:
+            raise AssertionError("token counting must stop at the model-call limit")
+        self.count_requests.append(request)
+        return SimpleNamespace(input_tokens=100)
+
+    def create(self, **request):
+        index = len(self.create_requests)
+        if index >= self.allowed_generations:
+            raise AssertionError("generation must stop at the model-call limit")
+        self.create_requests.append(request)
+        return _fake_openai_response(
+            input_tokens=100,
+            model_id=self.model_id,
+            tool_call=RequestedTool(
+                "search_files",
+                f"campaign-tail-search-{index}",
+                {
+                    "query": f"missing-campaign-tail-{index}",
+                    "path_glob": "**/*.py",
+                },
+            ),
+            response_id=f"resp_campaign_tail_{index}",
         )
 
 
@@ -740,6 +776,334 @@ def _run_live_v3_generic_budget_block(
     return runner, result, manifest, responses
 
 
+def _run_live_v3_counter_budget_block(
+    tmp_path,
+    monkeypatch,
+    *,
+    run_id: str,
+    reason_code: str,
+):
+    monkeypatch.setattr("patchloop.agent.runner.DockerSandbox.available", lambda: False)
+    package = load_task_package(Path(TASK).parent)
+    execution_hash = "sha256:" + ("6" * 64)
+    budgets = {
+        "model_call_budget_exhausted": Budget(
+            max_model_calls=1,
+            max_tool_calls=2,
+            max_total_tokens=5_000,
+        ),
+        "tool_call_budget_exhausted": Budget(
+            max_model_calls=2,
+            max_tool_calls=1,
+            max_total_tokens=5_000,
+        ),
+        "wall_clock_budget_exhausted": Budget(
+            max_model_calls=2,
+            max_tool_calls=2,
+            max_total_tokens=5_000,
+            wall_clock_timeout_seconds=1,
+        ),
+    }
+    budget = budgets[reason_code]
+    if reason_code == "wall_clock_budget_exhausted":
+        started = utc_now()
+        tool_times = iter([started, started + timedelta(seconds=2)])
+        monkeypatch.setattr(
+            "patchloop.agent.tools.utc_now",
+            lambda: next(tool_times),
+        )
+    manifest = build_manifest(
+        package,
+        run_id=run_id,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=budget,
+        experiment_context=ExperimentRunContext(
+            experiment_id="live-v3-counter-budget-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("b" * 64),
+            repetition=1,
+        ),
+    )
+    responses = _GenericBudgetBlockResponses(
+        model_id=manifest.model.model_id,
+        input_token_counts=[100],
+    )
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(responses=responses),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_: adapter)
+    _write_approved_execution_plan(tmp_path / "runtime", execution_hash)
+
+    result = runner.start(
+        TASK,
+        model="openai",
+        manifest=manifest,
+        live_authorization=issue_live_execution_authorization(
+            execution_hash,
+            root=tmp_path / "runtime",
+        ),
+    )
+    return runner, result, manifest, responses
+
+
+@pytest.mark.parametrize(
+    ("usage", "expected"),
+    [
+        (
+            Usage(model_calls=1, tool_calls=1, wall_clock_ms=1_000),
+            "model_call_budget_exhausted",
+        ),
+        (
+            Usage(model_calls=0, tool_calls=1, wall_clock_ms=1_000),
+            "tool_call_budget_exhausted",
+        ),
+        (
+            Usage(model_calls=0, tool_calls=0, wall_clock_ms=1_000),
+            "wall_clock_budget_exhausted",
+        ),
+        (Usage(model_calls=0, tool_calls=0, wall_clock_ms=999), None),
+    ],
+)
+def test_pre_generation_budget_reason_has_deterministic_priority(
+    usage: Usage,
+    expected: str | None,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id=f"run_budget_priority_{expected or 'none'}",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(
+            max_model_calls=1,
+            max_tool_calls=1,
+            max_total_tokens=5_000,
+            wall_clock_timeout_seconds=1,
+        ),
+    )
+
+    assert AgentRunner._pre_generation_budget_reason(
+        manifest,
+        usage,
+    ) == expected
+
+
+def test_campaign_model_budget_allows_21_generations_then_blocks_22nd(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    package = load_task_package(Path(TASK).parent)
+    execution_hash = "sha256:" + ("5" * 64)
+    manifest = build_manifest(
+        package,
+        run_id="run_live_v3_campaign_tail_21",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        budget=Budget(
+            max_model_calls=21,
+            max_tool_calls=50,
+            max_total_tokens=200_000,
+        ),
+        experiment_context=ExperimentRunContext(
+            experiment_id="campaign-tail-21-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("b" * 64),
+            repetition=1,
+        ),
+    )
+    responses = _RepeatedSearchResponses(
+        model_id=manifest.model.model_id,
+        allowed_generations=21,
+    )
+    adapter = OpenAIResponsesAdapter(
+        manifest.model,
+        client=SimpleNamespace(responses=responses),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(runner, "_model_adapter", lambda *_: adapter)
+    _write_approved_execution_plan(tmp_path / "runtime", execution_hash)
+
+    result = runner.start(
+        TASK,
+        model="openai",
+        manifest=manifest,
+        live_authorization=issue_live_execution_authorization(
+            execution_hash,
+            root=tmp_path / "runtime",
+        ),
+    )
+
+    events = runner.state.list_events(manifest.run_id)
+    blocked = next(
+        event
+        for event in events
+        if event.type == EventType.MODEL_GENERATION_BLOCKED
+    )
+    assert len(responses.count_requests) == 21
+    assert len(responses.create_requests) == 21
+    assert sum(
+        event.type == EventType.MODEL_CALLED for event in events
+    ) == 21
+    assert blocked.payload["schema_version"] == "model-generation-block-v2"
+    assert blocked.payload["reason_code"] == "model_call_budget_exhausted"
+    assert blocked.payload["model_calls_used"] == 21
+    assert blocked.payload["max_model_calls"] == 21
+    assert result["usage"]["model_calls"] == 21
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+
+
+@pytest.mark.parametrize(
+    "reason_code",
+    [
+        "model_call_budget_exhausted",
+        "tool_call_budget_exhausted",
+        "wall_clock_budget_exhausted",
+    ],
+)
+def test_live_v3_counter_budget_block_validates_prompt_and_terminal(
+    tmp_path,
+    monkeypatch,
+    reason_code: str,
+) -> None:
+    runner, result, manifest, responses = _run_live_v3_counter_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id=f"run_live_v3_{reason_code}",
+        reason_code=reason_code,
+    )
+
+    events = runner.state.list_events(manifest.run_id)
+    blocked = next(
+        event
+        for event in events
+        if event.type == EventType.MODEL_GENERATION_BLOCKED
+    )
+    payload = blocked.payload
+    assert payload["schema_version"] == "model-generation-block-v2"
+    assert payload["reason_code"] == reason_code
+    assert payload["generation_started"] is False
+    assert payload["requested_input_tokens"] is None
+    assert payload["remaining_tokens"] is None
+    assert payload["input_token_count_calls"] == 0
+    assert payload["model_calls_used"] == 1
+    assert payload["max_model_calls"] == manifest.budget.max_model_calls
+    assert payload["tool_calls_used"] == 1
+    assert payload["max_tool_calls"] == manifest.budget.max_tool_calls
+    assert payload["wall_clock_timeout_ms"] == (
+        manifest.budget.wall_clock_timeout_seconds * 1000
+    )
+    assert payload["total_tokens_used"] == (
+        result["usage"]["input_tokens"] + result["usage"]["output_tokens"]
+    )
+    assert payload["max_total_tokens"] == manifest.budget.max_total_tokens
+    if reason_code == "model_call_budget_exhausted":
+        assert payload["model_calls_used"] == payload["max_model_calls"]
+    elif reason_code == "tool_call_budget_exhausted":
+        assert payload["tool_calls_used"] == payload["max_tool_calls"]
+    else:
+        assert payload["wall_clock_ms"] >= payload["wall_clock_timeout_ms"]
+
+    assert len(responses.count_requests) == 1
+    assert len(responses.create_requests) == 1
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert result["terminal_error"]["details"] == payload
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    prompt = checks["prompt_token_integrity"]
+    assert prompt["passed"] is True
+    assert prompt["details"]["terminal_generation_block_valid"] is True
+    assert (
+        prompt["details"]["terminal_generation_block_schema_version"]
+        == "model-generation-block-v2"
+    )
+    assert prompt["details"]["terminal_generation_block_reason"] == reason_code
+    assert checks["terminal_result_integrity"]["passed"] is True
+
+
+@pytest.mark.parametrize(
+    ("reason_code", "field", "replacement"),
+    [
+        ("model_call_budget_exhausted", "model_calls_used", 0),
+        ("model_call_budget_exhausted", "model_calls_used", True),
+        (
+            "model_call_budget_exhausted",
+            "reason_code",
+            "tool_call_budget_exhausted",
+        ),
+        ("model_call_budget_exhausted", "unexpected_counter", True),
+        ("tool_call_budget_exhausted", "max_tool_calls", 2),
+        ("wall_clock_budget_exhausted", "wall_clock_ms", 0),
+    ],
+)
+def test_v3_counter_budget_block_qualification_rejects_tampering(
+    tmp_path,
+    monkeypatch,
+    reason_code: str,
+    field: str,
+    replacement: object,
+) -> None:
+    runner, _, manifest, _ = _run_live_v3_counter_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id=f"run_live_v3_{reason_code}_tamper",
+        reason_code=reason_code,
+    )
+    database = tmp_path / "runtime" / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (manifest.run_id,),
+        ).fetchall()
+        sequence, event_json = next(
+            (sequence, event_json)
+            for sequence, event_json in rows
+            if json.loads(event_json)["type"]
+            == EventType.MODEL_GENERATION_BLOCKED.value
+        )
+        event = json.loads(event_json)
+        event["payload"][field] = replacement
+        connection.execute(
+            "UPDATE events SET event_json = ? "
+            "WHERE run_id = ? AND sequence = ?",
+            (json.dumps(event), manifest.run_id, sequence),
+        )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    assert checks["prompt_token_integrity"]["passed"] is False
+    assert checks["terminal_result_integrity"]["passed"] is False
+
+
 def test_live_v3_retry_request_budget_block_precedes_second_generation(
     tmp_path,
     monkeypatch,
@@ -896,6 +1260,79 @@ def test_unversioned_retry_budget_block_remains_read_compatible(
     assert checks["rejected_patch_retry_context"]["passed"] is True
     assert checks["prompt_token_integrity"]["passed"] is True
     assert checks["terminal_result_integrity"]["passed"] is True
+
+
+def test_unversioned_counter_budget_block_is_not_reinterpreted(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    runner, _, manifest, _ = _run_live_v3_counter_budget_block(
+        tmp_path,
+        monkeypatch,
+        run_id="run_live_v3_unversioned_counter_budget",
+        reason_code="model_call_budget_exhausted",
+    )
+    database = tmp_path / "runtime" / "state.sqlite3"
+    with sqlite3.connect(database) as connection:
+        rows = connection.execute(
+            "SELECT sequence, event_json FROM events "
+            "WHERE run_id = ? ORDER BY sequence",
+            (manifest.run_id,),
+        ).fetchall()
+        for sequence, event_json in rows:
+            event = json.loads(event_json)
+            if event["type"] == EventType.MODEL_GENERATION_BLOCKED.value:
+                event["payload"].pop("schema_version")
+            elif event["type"] == EventType.RUN_FAILED.value:
+                event["payload"]["error_details"].pop("schema_version")
+            else:
+                continue
+            connection.execute(
+                "UPDATE events SET event_json = ? "
+                "WHERE run_id = ? AND sequence = ?",
+                (json.dumps(event), manifest.run_id, sequence),
+            )
+
+        result_json = connection.execute(
+            "SELECT result_json FROM runs WHERE run_id = ?",
+            (manifest.run_id,),
+        ).fetchone()[0]
+        persisted_result = json.loads(result_json)
+        persisted_result["terminal_error"]["details"].pop(
+            "schema_version"
+        )
+        connection.execute(
+            "UPDATE runs SET result_json = ? WHERE run_id = ?",
+            (json.dumps(persisted_result), manifest.run_id),
+        )
+
+    result_path = (
+        tmp_path
+        / "runtime"
+        / "artifacts"
+        / "runs"
+        / manifest.run_id
+        / "result.json"
+    )
+    result_path.write_text(
+        json.dumps(persisted_result, indent=2),
+        encoding="utf-8",
+    )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=tmp_path / "runtime",
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    assert checks["prompt_token_integrity"]["passed"] is False
+    assert checks["prompt_token_integrity"]["details"][
+        "terminal_generation_block_valid"
+    ] is False
+    assert qualification["qualified"] is False
 
 
 def test_retry_budget_block_requires_a_verified_rejected_patch_source(

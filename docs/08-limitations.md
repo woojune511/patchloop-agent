@@ -216,9 +216,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   memory-development no-memory campaign and core purpose. The live templates fix the pilot to
   `no_memory` × 1 with a $2 cap and the six development tasks to `no_memory` × 2 = 12 runs with a
   $20 cap. D-045 fixes future primary runs to `gpt-5.4-mini-2026-03-17`,
-  25,000 per-call output and 200,000 run-total tokens. The historical Terra r3 suite remains
-  readable but preflight-blocked. Primary r1 has now run once and is terminal immutable evidence,
-  not an accepted pilot or completed experiment.
+  25,000 per-call output, 21 model calls and 200,000 run-total tokens. All historical Terra
+  pilot IDs, the consumed mini diagnostic suites and primary r1 remain readable but
+  preflight-blocked. Primary r1 has now run once and is terminal immutable evidence, not an
+  accepted pilot or completed experiment.
 - Primary r1 `run_6993722014bf4e3b` used 20 model calls and 30 tool calls, with 131,266 input and
   12,038 output tokens for a calculated `$0.1526205`. All 20 responses completed, input pre-counts
   matched provider usage and truncation was disabled. It applied a one-line patch, passed the
@@ -227,6 +228,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   Qualification is 21/22 solely because that deterministic call-budget terminal block is not a
   versioned valid ending. A separate no-model Docker postmortem found that the exact final patch
   passes hidden/regression/scope/safety, but this does not retroactively submit or resolve the run.
+- D-047 completed the offline successor contract. Exact-token reservation keeps
+  `model-generation-block-v1`; next-generation model/tool/wall counter exhaustion uses strict
+  `model-generation-block-v2` with durable counter/duration recomputation, reason priority,
+  budget-guard actor, request/terminal/result binding and tamper rejection. Future
+  primary/development/core conditions share the same total 21-call cap; it is not a privileged
+  `finish_task` reserve. The corrective r2 suite exists but has not been invoked against the
+  provider and has no run ID, usage, cost or evaluator result.
 - The terminal `dev-validation-gpt54mini-d037-r3.yaml` suite bound
   `experiment-diagnostic-v1` to its consumed execution hash. Its post-run consumer separates generic
   qualification from a `passed`, `inconclusive` or `failed` retry exercise, requires evaluator
@@ -312,9 +320,8 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   terminal mini r3 failed on its per-call output ceiling before exercising the retry. Corrective r4
   bound `max_output_tokens=25,000` and `max_total_tokens=120,000` under a new diagnostic profile
   and then ran once. All responses completed, but the REVIEW request was blocked by total-budget
-  reservation before submission or evaluation. The r4 trace also shows that the current v3
-  qualifier accepts terminal no-generation blocks only when bound to a rejected retry candidate;
-  a generic budget block fails qualification even when all completed token telemetry matches.
+  reservation before submission or evaluation. The historical r4 trace has an unversioned generic
+  block and therefore remains 21/22 even when all completed token telemetry matches.
   D-041 fixed the r5 contract at strict 25,000/200,000 and versioned newly emitted exact-request
   generic terminal blocks as `model-generation-block-v1`; the old r4 result remains 21/22. R5
   then passed official task evaluation and trace qualification but had zero retry episodes, so
@@ -324,8 +331,18 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   that gate, official task evaluation and trace qualification. This proves the harness branch for
   one controlled intervention, not natural model-error recovery frequency, recovery rate, memory
   benefit or primary campaign quality. The fault-free primary r1 then exposed the call-budget
-  lifecycle above. A corrective pilot requires an offline-frozen tail-call/terminal-block contract,
-  a separate clean hash and approval.
+  lifecycle above. The D-047 offline contract is now frozen; a corrective pilot still requires a
+  separate clean hash and approval and has not run.
+- `model-generation-block-v2` covers admission to the next provider generation. A model response
+  whose measured duration itself crosses the wall limit and a later call inside the same
+  multi-tool response that encounters the tool cap still terminate through the older
+  post-consumption/mid-batch `ContractError` path. Those paths need a separately versioned
+  post-consumption contract before they can be claimed as v2 terminal evidence.
+- The official `patchloop evaluate` CLI recomputes the full preflight and execution hash before
+  issuing live capability. The lower-level host-trusted
+  `issue_live_execution_authorization()` helper does not independently reconstruct the entire
+  suite/task/environment/schedule plan. Direct Python callers are therefore outside the paid CLI
+  enforcement claim until that internal API is hardened.
 - Memory build/retrieval/freeze contracts exist; a real reviewed index still requires admitted
   memory-development traces and an exact embedding revision. Calibration traces are not eligible.
 - GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.

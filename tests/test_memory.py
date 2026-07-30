@@ -157,6 +157,7 @@ def _write_qualification(
     manifest.model.model_id = "gpt-5.4-mini-2026-03-17"
     manifest.model.max_output_tokens = 25_000
     manifest.model.provider_sdk_version = "test"
+    manifest.budget.max_model_calls = 21
     manifest.budget.max_total_tokens = 200_000
     suite = ExperimentSuite.model_validate(
         {
@@ -170,7 +171,7 @@ def _write_qualification(
             "model_id": "gpt-5.4-mini-2026-03-17",
             "max_output_tokens": 25_000,
             "budget": {
-                "max_model_calls": 20,
+                "max_model_calls": 21,
                 "max_tool_calls": 50,
                 "max_total_tokens": 200_000,
                 "wall_clock_timeout_seconds": 900,

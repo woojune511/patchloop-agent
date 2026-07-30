@@ -1,16 +1,11 @@
 schema_version: experiment-v2
-experiment_id: dev-no-memory-20260728
-purpose: memory-development-no-memory
+experiment_id: dev-validation-gpt54mini-campaign-20260730-r2
+purpose: development-validation-live-pilot
 tasks:
-  - tasks/dev-train/loguru-invalid-format-feedback/public.yaml
-  - tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml
-  - tasks/dev-train/tox-cross-section-empty-substitution/public.yaml
-  - tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml
-  - tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml
-  - tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml
+  - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
 conditions:
   - no_memory
-repetitions: 2
+repetitions: 1
 model: openai
 model_id: gpt-5.4-mini-2026-03-17
 reasoning_effort: medium
@@ -23,15 +18,13 @@ budget:
   max_total_tokens: 200000
   wall_clock_timeout_seconds: 900
 seed: 20260723
-# Insert the newly approved tool-v2/context-v3 mini campaign pilot here.
-# Historical Terra and mini diagnostic runs intentionally cannot unlock it.
-pilot_run_id: null
 # Deprecated config placeholders stay false/null. Paid approval is invocation-only:
 # run --preflight-only, then pass its hash with both live approval flags.
 live_cost_approved: false
 approved_execution_hash: null
-estimated_cost_usd: 12.15
-cost_limit_usd: 20
+pilot_run_id: null
+estimated_cost_usd: 1.02
+cost_limit_usd: 2
 pricing_verified_at: 2026-07-29T22:39:42Z
 pricing_source_url: https://developers.openai.com/api/docs/pricing
 input_price_per_million_usd: 0.75

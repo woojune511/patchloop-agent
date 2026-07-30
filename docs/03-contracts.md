@@ -277,12 +277,16 @@ reasoning_mode: standard
 service_tier: default
 max_output_tokens: 25000
 budget:
-  max_model_calls: 20
+  max_model_calls: 21
   max_tool_calls: 50
   max_total_tokens: 200000
   wall_clock_timeout_seconds: 900
 seed: 20260723
 ```
+
+이 21은 모든 future memory 조건에 동일한 총 model-call 상한이며 `finish_task` 전용
+reserve가 아니다. 전역 `Budget` 기본값과 historical diagnostic suite는 기존 20-call
+의미를 유지한다.
 
 Pilot task는
 `tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml`로 exact match한다.
@@ -327,10 +331,15 @@ dated snapshot `gpt-5.4-mini-2026-03-17`이고, model ID와 SDK version, Git com
 실행 시점을 함께 남긴다. Price verification이 72시간을 넘으면 live 실행을 거부하고
 다시 확인한다.
 
-과거 Terra r3 계약 `experiments/dev-validation-pilot.template.yaml`은 당시 suite identity를
-그대로 보존한다. Loader는 historical evidence 해석을 위해 이를 읽을 수 있지만 preflight는
-항상 `HISTORICAL_SUITE_IMMUTABLE`로 차단한다. 새 primary pilot은 별도
-`experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`과 새 execution hash를 사용한다.
+과거 Terra r1-r3 experiment ID와 r3 계약
+`experiments/dev-validation-pilot.template.yaml`은 당시 identity를 그대로 보존한다.
+Loader는 historical evidence 해석을 위해 이를 읽을 수 있지만 preflight는 항상
+`HISTORICAL_SUITE_IMMUTABLE`로 차단한다. Terminal primary r1
+`experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml`도 20-call historical
+evidence로만 읽고 preflight에서 차단한다. Corrective primary r2는 별도
+`experiments/dev-validation-gpt54mini-campaign-pilot-r2.yaml`, experiment ID와 새
+execution hash를 사용한다. 이미 소비된 mini r1/r2와 D-037 r3-r6 diagnostic suite도
+`HISTORICAL_SUITE_IMMUTABLE`이며 approval/hash를 다시 제공해도 실행할 수 없다.
 
 D-031 telemetry를 실제 provider에서 검증한 terminal r1은
 `experiments/dev-validation-gpt54mini-pilot.yaml`에 보존한다. v2 corrective retry는
@@ -973,15 +982,61 @@ integrity를 보존할 뿐 retry episode를 합성하지 않는다. Version 도�
 historical read compatibility를 유지하고, version이 없는 generic block은 새 의미로
 재qualification하지 않는다.
 
+Next-generation admission 전에 model/tool/wall counter가 이미 소진된 경우는 별도
+`model-generation-block-v2`를 사용한다.
+
+```json
+{
+  "type": "ModelGenerationBlocked",
+  "actor": "budget-guard",
+  "payload": {
+    "schema_version": "model-generation-block-v2",
+    "reason_code": "model_call_budget_exhausted",
+    "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+    "generation_started": false,
+    "request_artifact_id": "art_...",
+    "request_artifact_path": "...",
+    "request_body_hash": "sha256:...",
+    "requested_input_tokens": null,
+    "remaining_tokens": null,
+    "max_output_tokens": 25000,
+    "input_token_count_calls": 0,
+    "retry_context_present": false,
+    "retry_candidate_content_hash": null,
+    "model_calls_used": 21,
+    "max_model_calls": 21,
+    "tool_calls_used": 30,
+    "max_tool_calls": 50,
+    "wall_clock_ms": 12345,
+    "wall_clock_timeout_ms": 900000,
+    "total_tokens_used": 143304,
+    "max_total_tokens": 200000
+  }
+}
+```
+
+허용 reason은 `model_call_budget_exhausted`, `tool_call_budget_exhausted`,
+`wall_clock_budget_exhausted` 세 개다. Payload는 위 exact field set을 사용하고 모든
+counter/limit은 bool을 허용하지 않는 nonnegative integer다. Qualifier는 block 이전의
+`ModelCalled`, `ToolCalled`, `ToolSucceeded`와 `ToolFailed`에서 call, token과
+`duration_ms`를 다시 계산한다. Model/tool counter는 각각 manifest 상한을 넘을 수 없고,
+reason은 `model → tool → wall` 순서로 결정한다. 따라서 여러 상한이 동시에 닿아도 더 낮은
+우선순위 reason으로 바꿀 수 없다. 같은 wall-clock 재계산값은 `RunResult.usage`에도
+결속한다.
+
+V2는 `actor=budget-guard`, exact `ContextBuilt` request CAS/body hash,
+`generation_started=false`, input-token count 미실행, retry-context shape와 block 뒤
+`FailureTagged`/`RunFailed` terminal suffix를 검사한다. Payload 전체는
+`RunFailed.error_details`와 `RunResult.terminal_error.details`에 동일해야 한다. Valid
+v2 block은 self-consistent qualified `agent_failure`이며 evaluator 도달, task success 또는
+pilot acceptance가 아니다.
+
 Primary mini r1 `run_6993722014bf4e3b`는 token-total guard가 아니라 20번째
-`ModelCalled` 뒤의 `model_call_budget_exhausted` guard에서 멈췄다. 현재 runtime은
-model/tool/wall-call pre-generation block에 `model-generation-block-v1`을 붙이지 않고
-requested/remaining token 값을 요구하지 않으므로, qualification은 이를 valid terminal
-telemetry로 인정하지 않는다. 이 historical 21/22 artifact는 소급 변경하지 않는다.
-후속 계약은 exact-token block과 별도 version으로 reason-specific proof를 정의하고,
-`generation_started=false`, request artifact 결속, consumed call/tool/wall counter,
-terminal suffix와 retry-context shape를 검증해야 한다. 이 계약과 submission tail-call
-정책은 아직 구현 완료로 간주하지 않는다.
+`ModelCalled` 뒤의 unversioned `model_call_budget_exhausted` guard에서 멈췄다. 이
+historical qualification 21/22 artifact는 v2로 소급 변경하지 않는다. D-047은 future
+primary, memory-development와 core의 총 상한을 21회로 고정하고, offline에서 21번째
+generation 허용과 22번째 generation 전 v2 차단을 검증했다. Corrective primary r2는
+아직 provider에서 실행하지 않았다.
 
 현재 mini r2 evidence는 이 version 도입 전 `phase-evidence-v2` trace로 그대로 보존한다.
 
@@ -1136,6 +1191,8 @@ Qualification은 최소한 다음 경계를 검사한다.
   `ContextBuilt`와 결속되고, input-token pre-count와 response usage가 일치하며,
   `truncation=disabled`, `status=completed`, incomplete reason 없음과 total/reasoning token
   불변식을 만족함
+- `model-generation-block-v2`를 선언한 trace는 strict counter/duration 재계산,
+  reason 우선순위와 budget-guard actor, request/retry/terminal/result usage 결속을 만족함
 - Pilot은 적어도 한 tool call을 포함해 실제 function-tool loop를 통과함
 
 `qualified=true`는 trace artifact가 자기 outcome과 provenance를 일관되게 보존했다는 뜻이다.
