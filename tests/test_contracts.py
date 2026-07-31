@@ -1,27 +1,92 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
 from patchloop.agent.phases import validate_transition
 from patchloop.contracts import (
     HiddenArtifact,
+    IssueSpec,
     ModelConfig,
     Phase,
     PrivateTask,
+    PublicTask,
     ReferencePatch,
     RegisteredCheck,
+    RegisteredProbeProfile,
+    RepositorySpec,
     TaskConstraints,
     TaskEnvironment,
     Usage,
 )
 from patchloop.errors import ContractError
 from patchloop.runtime import calculate_model_cost
+from patchloop.task_loader import load_task_package
 
 
 def test_unknown_fields_are_rejected() -> None:
     with pytest.raises(ValidationError):
         RegisteredCheck(id="tests", command=["python"], surprise=True)
+
+
+def _public_task(**overrides) -> PublicTask:
+    values = {
+        "task_id": "probe-contract",
+        "split": "smoke",
+        "repository": RepositorySpec(
+            url="snapshot://probe-contract",
+            base_commit="sha256:" + ("a" * 64),
+        ),
+        "issue": IssueSpec(title="Probe contract", description="Exercise the contract."),
+    }
+    values.update(overrides)
+    return PublicTask(**values)
+
+
+def test_probe_profiles_are_explicit_v2_only_without_changing_v1_dump() -> None:
+    v1 = _public_task()
+    assert "probe_profiles" not in v1.model_dump(mode="json")
+
+    profile = RegisteredProbeProfile(id="python-edge-cases")
+    with pytest.raises(ValidationError, match="requires task-public-v2"):
+        _public_task(probe_profiles=[])
+    with pytest.raises(ValidationError, match="requires task-public-v2"):
+        _public_task(probe_profiles=[profile])
+    with pytest.raises(ValidationError, match="requires at least one"):
+        _public_task(schema_version="task-public-v2")
+
+    v2 = _public_task(
+        schema_version="task-public-v2",
+        probe_profiles=[profile],
+    )
+    assert v2.model_dump(mode="json")["probe_profiles"] == [
+        {
+            "id": "python-edge-cases",
+            "runtime": "ephemeral-python-v1",
+            "timeout_seconds": 30,
+            "output_limit_bytes": 64_000,
+            "source_limit_bytes": 12_000,
+        }
+    ]
+
+
+def test_self_validation_infrastructure_fixture_is_v2_and_dataset_external() -> None:
+    task_dir = (
+        "fixtures/task-packages/self-validation-csv-quoted-newline"
+    )
+    package = load_task_package(task_dir)
+
+    assert package.public.schema_version == "task-public-v2"
+    assert package.public.task_id == "csv-quoted-newline"
+    assert package.public.task_version == 2
+    assert [profile.id for profile in package.public.probe_profiles] == [
+        "quoted-newline-case"
+    ]
+    assert package.public.split == "smoke"
+    assert "infrastructure-only" in package.public.tags
+    assert not package.root.startswith(str(Path("tasks").resolve()))
 
 
 @pytest.mark.parametrize("path", ["../secret", "/absolute", "a/../../secret"])

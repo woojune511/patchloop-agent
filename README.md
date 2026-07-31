@@ -181,6 +181,45 @@ nominal corrective-tail 전환점이지 완료 보장이 아니며, strict exact
 response admission guard는 그대로다. V5 offline contract는 검증됐지만 provider call은
 없었다.
 
+D-056은 visible check 통과 직후 곧바로 제출하는 경로를 보완하기 위해 별도의 opt-in
+self-validation 계약을 도입했다. 이 경로는 `tool_schema_version=v3`와
+`context_policy_version=phase-evidence-v6`을 함께 사용한다. Docker-only
+`run_probe`는 `task-public-v2`가 등록한 bounded probe profile이 있을 때만 agent가 만든
+일회성 Python 진단을 repository 밖 입력으로 실행한다. Target checkout은 read-only로
+mount하고 `.git` metadata를 가리며 network, proxy credential, host secret을 제공하지
+않는다. Probe는 선택 사항이며 registered check나 official evaluator를 대체하지 않는다.
+`review_task`는 현재 diff의 public requirement, 실제 visible check/probe evidence와
+남은 risk를 구조화해 기록하는 inspectable self-attestation이다. 이것도 deterministic
+grader가 아니며 hidden evaluator 결과를 보거나 예측해 제출을 승인하지 않는다.
+V3/V6은 기존 V1-V5 trace를 소급 변경하지 않는다. D-056 당시의 pre-D-061 image로
+실행한 실제 격리 container E2E 3/3, 704 collected/702 passed/2 Windows
+symlink-capability skipped 회귀와 비용 없는 mock self-validation smoke
+`run_36f90bda91b94d42`는 당시의 Docker 격리와 same-diff review lifecycle evidence다.
+그 historical evidence는 뒤에 추가된 seccomp 경계를 검증한 것으로 재해석하지 않는다.
+
+D-059는 이 pre-D-061 경로를 실제 profile-bearing agent run까지 확장했다. 동결 dataset 밖의
+infrastructure fixture
+`fixtures/task-packages/self-validation-csv-quoted-newline`은
+`task-public-v2`와 registered `quoted-newline-case` profile을 사용한다. 비용 없는 mock run
+`run_7e3c5af2ce8d498a`는 clean image에서 probe를 실행해 event 33에 `probe-ok`를 남기고,
+같은 diff review에서 그 event를 인용한 뒤 official hidden/regression/scope/safety를 모두
+통과했다. 전용 `self_validation_lifecycle`도 통과했지만 mock/non-campaign run이므로 전체
+live qualification은 의도적으로 false이며, 이 fixture는 동결 25-task dataset이나
+memory/core 결과에 포함되지 않는다. D-059 당시 전체 회귀는 708 collected, 706 passed/2 Windows
+symlink-capability skipped다.
+
+D-061은 이후 발견한 authorization gap을 현재 경로에서 닫는다. Task evaluator/SWE-bench
+image를 재사용하지 않고 repository-free `patchloop-sandbox:py312`의 exact image ID를
+manifest에 결속하며, mutable tag가 아니라 그 ID로 container를 create하고 실제 `.Image`
+일치를 확인한 뒤에만 시작한다. AST/audit hook은 common dangerous call의 조기 거부층이고,
+hard boundary는 trusted PID 1이 untrusted child에 설치하는 seccomp filter와 PID limit 2다.
+Python-level hook이 없는 subinterpreter에서도 process spawn과 trusted-parent signal이
+kernel에서 `EPERM`으로 거부된다. 2026-07-31 현재 image
+`sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`로
+host Docker E2E 5/5를 통과했고, 전체 suite는 731 collected, 724 passed/7 environment
+skipped다. 이 evidence도 offline/Docker boundary만 닫으며 live pilot·memory campaign·core
+campaign을 승인하지 않는다. OpenAI start/resume은 별도 승인 전 fail closed한다.
+
 ## 구현된 핵심 경로
 
 ```text
@@ -206,8 +245,12 @@ public.yaml → stateless context builder → model adapter
   `investigation-policy-v2`, `investigation-ledger-v2`, `investigation-tail-policy-v2`,
   `context-build-evidence-v5`, `trace-source-evidence-v5`를 사용하며 qualification contract는
   계속 `trace-qualification-v2`다.
-- Registered `search_files`, `read_file`, `apply_patch`, `run_check`, `get_diff`와
-  orchestrator control `finish_task`만 허용
+- 현재 campaign 경로는 registered `search_files`, `read_file`, `apply_patch`, `run_check`,
+  `get_diff`와 orchestrator control `finish_task`만 허용한다. D-056 opt-in v3의
+  `run_probe`와 `review_task`는 offline 구현, 실제 Docker isolation E2E와 mock
+  evaluator smoke를 통과했다. D-059 infrastructure fixture에서는 registered probe 선택,
+  실제 execution과 review 인용까지 검증했지만 별도 live 승인을 받지 않은 surface다. 기존
+  `task-public-v1`에는 probe profile이 없으므로 review-only로 동작한다.
 - SQLite WAL event/checkpoint/action store와 SHA-256 content-addressed artifact store
 - `action_id + input_hash` idempotency, OS-held per-run ownership과 stale `RUNNING` reclaim,
   context reset 및 offline local mock의 fresh-process hard-kill recovery
@@ -282,6 +325,8 @@ uv run patchloop eval-task tasks/smoke/csv-quoted-newline `
 uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml `
   --model mock --memory no_memory
 uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml `
+  --model mock --memory no_memory --self-validation
+uv run patchloop run --task tasks/smoke/csv-quoted-newline/public.yaml `
   --model replay:replays/smoke/csv-quoted-newline.jsonl --memory no_memory
 uv run pytest -q
 ```
@@ -309,7 +354,8 @@ patchloop doctor
 patchloop task validate <task-dir>
 patchloop dataset audit
 patchloop eval-task <task-dir> --patch <patch> [--backend local|docker]
-patchloop run --task <public.yaml> --model <mock|openai|replay:path> --memory <condition>
+patchloop run --task <public.yaml> --model <mock|replay:path> --memory <condition>
+  [--self-validation] # offline only; v1 tasks use structured review without probe
 patchloop resume --run-id <run-id>
 patchloop memory validate-review <proposal.json>
 patchloop memory build --split dev-train
@@ -335,6 +381,7 @@ Responses API adapter는 host process에서만 API key를 읽고 container, chec
 | `development-validation-live-pilot` | Current: Babel #1042 + Moto #7208, mini dated snapshot, `no_memory`, 각 1회 | $6 |
 | `development-validation-model-candidate-pilot` | Historical mini diagnostics only; 재실행 금지 | $2 |
 | `memory-development-no-memory` | frozen memory-development 6개, `no_memory`, 각 2회(12 run) | $20 |
+| `memory-development-no-memory-budget-pilot` | HF Hub/PDM/pyfakefs resource calibration, `no_memory`, 각 1회; memory/comparison source 아님 | $7 |
 
 첫 pilot evidence는 `run_c6f13dd9a1a1472d`다. 실제 비용은 `$0.34025875`, model/tool call은
 20/22, input/cache-write/output token은 73,730/73,670/7,326이었다. Agent는 Git unified
@@ -587,6 +634,15 @@ error는 0이었다. 총 사용량은 172,249 input + 6,142 output token, 계산
 `$0.15682575`다. 이는 두 development-validation task의 runtime completion evidence이며
 memory 효과나 usable 12-task no-memory baseline은 아니다. Memory human admission과 index
 build는 작은 memory-development no-memory budget pilot 뒤까지 보류한다.
+
+D-060은 그 다음 pilot을 기존 6-task campaign과 분리된
+`memory-development-no-memory-budget-pilot`으로 구현했다. Checked-in suite는 V4의
+budget-terminal resource maxima로 고른 HF Hub·PDM·pyfakefs를 `no_memory`로 한 번씩,
+40 model call / 100 tool call / 480,000 total token / 1,800초와 $7 cap에 고정한다.
+세 run 모두 evaluator까지 끝나는지는 별도 completion gate로 판단하고 SCRR는 분리한다.
+이 config는 live 실행 승인이 아니며, source checkpoint 뒤 실제 Docker
+identity·SDK·fresh price를 포함한 clean no-call execution hash를 검토하기 전에는
+provider를 호출하지 않는다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

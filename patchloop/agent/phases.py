@@ -38,6 +38,8 @@ class EvidenceState:
     latest_check_sequence: int | None
     review_event_sequence: int | None
     review_presented_to_model: bool
+    task_review_event_sequence: int | None
+    task_review_presented_to_model: bool
     submission_ready: bool
     missing_evidence: tuple[str, ...]
     allowed_next_actions: tuple[str, ...]
@@ -50,6 +52,8 @@ def diff_bound_evidence(
     *,
     presented_tool_results: Iterable[dict[str, Any]] = (),
     phase: Phase | None = None,
+    structured_review_required: bool = False,
+    probe_available: bool = False,
 ) -> EvidenceState:
     """Derive latest-check and final-review readiness without private data."""
 
@@ -72,6 +76,7 @@ def diff_bound_evidence(
     )
     latest_checks: dict[str, RunEvent] = {}
     review_candidates: list[RunEvent] = []
+    task_review_candidates: list[RunEvent] = []
     for event in event_list:
         if (
             event.sequence > mutation_epoch
@@ -85,6 +90,8 @@ def diff_bound_evidence(
                 latest_checks[str(event.payload["check_id"])] = event
             elif event.payload.get("tool") == "get_diff":
                 review_candidates.append(event)
+            elif event.payload.get("tool") == "review_task":
+                task_review_candidates.append(event)
 
     completed = tuple(
         check_id
@@ -124,6 +131,32 @@ def diff_bound_evidence(
     review_presented = bool(
         review_event is not None and review_event.sequence in presented_sequences
     )
+    task_review_event = next(
+        (
+            event
+            for event in reversed(task_review_candidates)
+            if (
+                review_event is not None
+                and event.sequence > review_event.sequence
+                and event.payload.get("source_get_diff_sequence")
+                == review_event.sequence
+                and not any(
+                    later.sequence > event.sequence
+                    and later.type == EventType.TOOL_SUCCEEDED
+                    and later.payload.get("tool")
+                    in {"run_probe", "run_check", "get_diff"}
+                    and later.payload.get("worktree_diff_hash")
+                    == worktree_diff_hash
+                    for later in event_list
+                )
+            )
+        ),
+        None,
+    )
+    task_review_presented = bool(
+        task_review_event is not None
+        and task_review_event.sequence in presented_sequences
+    )
     missing: list[str] = []
     if not mutation_present:
         missing.append("successful_mutation_current_diff")
@@ -133,15 +166,47 @@ def diff_bound_evidence(
         missing.append("final_diff_review_current_diff")
     elif not review_presented:
         missing.append("final_diff_review_not_presented")
+    if structured_review_required:
+        if task_review_event is None:
+            missing.append("structured_task_review_current_diff")
+        elif not task_review_presented:
+            missing.append("structured_task_review_not_presented")
     if phase is not None and phase != Phase.REVIEW:
         missing.append("review_phase")
 
+    optional_probe = (
+        ("run_probe",)
+        if structured_review_required and probe_available
+        else ()
+    )
     if not mutation_present:
-        allowed = ("apply_patch", "run_check", "read_file", "search_files")
+        allowed = (
+            "apply_patch",
+            "run_check",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
     elif pending:
-        allowed = ("run_check", "apply_patch", "read_file", "search_files")
+        allowed = (
+            "run_check",
+            "apply_patch",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
     elif review_event is None or not review_presented:
-        allowed = ("get_diff", "apply_patch", "read_file", "search_files")
+        allowed = (
+            "get_diff",
+            "apply_patch",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
+    elif structured_review_required and task_review_event is None:
+        allowed = ("review_task", "apply_patch", *optional_probe)
+    elif structured_review_required and not task_review_presented:
+        allowed = ("apply_patch",)
     else:
         allowed = ("finish_task", "apply_patch")
     return EvidenceState(
@@ -155,6 +220,10 @@ def diff_bound_evidence(
         latest_check_sequence=latest_check_sequence,
         review_event_sequence=review_event.sequence if review_event else None,
         review_presented_to_model=review_presented,
+        task_review_event_sequence=(
+            task_review_event.sequence if task_review_event else None
+        ),
+        task_review_presented_to_model=task_review_presented,
         submission_ready=not missing,
         missing_evidence=tuple(missing),
         allowed_next_actions=allowed,

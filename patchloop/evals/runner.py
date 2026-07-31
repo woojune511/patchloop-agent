@@ -125,6 +125,12 @@ GPT54_MINI_COMPLETION_BUDGET = Budget(
     max_total_tokens=600_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=480_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -150,6 +156,15 @@ MEMORY_DEVELOPMENT_TASKS = {
 }
 MEMORY_DEVELOPMENT_TASK_IDS = {
     Path(path).parent.name for path in MEMORY_DEVELOPMENT_TASKS
+}
+MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS = {
+    "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+    "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml",
+    "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+}
+MEMORY_DEVELOPMENT_BUDGET_PILOT_TASK_IDS = {
+    Path(path).parent.name
+    for path in MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
 }
 
 
@@ -430,6 +445,24 @@ class ExperimentSuite(BaseModel):
                     if self.experiment_id in CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
                     else GPT54_MINI_CAMPAIGN_BUDGET
                 ),
+            )
+        elif (
+            self.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        ):
+            if (
+                {_normalized_task_path(task) for task in self.tasks}
+                != MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+            ):
+                raise ValueError(
+                    "memory-development no-memory budget pilot requires the exact "
+                    "three frozen resource-max tasks, no_memory, and one repetition"
+                )
+            self._require_live_defaults(
+                cost_limit=7,
+                budget=GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT,
             )
         elif self.purpose == ExperimentPurpose.CORE:
             if len(set(self.tasks)) != 12:
@@ -837,7 +870,10 @@ def _expected_role_and_split(
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
     }:
         return {DatasetRole.DEVELOPMENT_VALIDATION}, DatasetRole.DEVELOPMENT_VALIDATION
-    if purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
+    if purpose in {
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
+    }:
         return {DatasetRole.MEMORY_DEVELOPMENT}, DatasetRole.MEMORY_DEVELOPMENT
     if purpose == ExperimentPurpose.CORE:
         expected = {
@@ -994,6 +1030,16 @@ def preflight_suite(
             blockers,
             "DEVELOPMENT_TASK_SET_MISMATCH",
             "development campaign must use all six frozen memory-development tasks",
+        )
+    if (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        and loaded_ids != MEMORY_DEVELOPMENT_BUDGET_PILOT_TASK_IDS
+    ):
+        _block(
+            blockers,
+            "BUDGET_PILOT_TASK_SET_MISMATCH",
+            "budget pilot must use its exact three frozen resource-max tasks",
         )
 
     schedule, schedule_hash = _make_schedule(suite, task_rows)
@@ -1817,15 +1863,26 @@ def _completion_gate(
 ) -> dict[str, Any] | None:
     """Separate runtime completion from task success for the high-budget panel."""
 
-    if (
+    completion_panel = bool(
         suite.purpose
-        != ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-        or suite.budget != GPT54_MINI_COMPLETION_BUDGET
-        or {
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and suite.budget == GPT54_MINI_COMPLETION_BUDGET
+        and {
             _normalized_task_path(task) for task in suite.tasks
         }
-        != COMPLETION_PANEL_TASKS
-    ):
+        == COMPLETION_PANEL_TASKS
+    )
+    budget_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        and suite.budget
+        == GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
+        and {
+            _normalized_task_path(task) for task in suite.tasks
+        }
+        == MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
+    )
+    if not completion_panel and not budget_pilot:
         return None
 
     budget_terminal_run_ids: list[str] = []
@@ -1878,6 +1935,37 @@ def _completion_gate(
         (row.get("result") or {}).get("scope_compliant_success") is True
         for row in rows
     )
+    completion_passed = bool(
+        expected_runs == (3 if budget_pilot else 2)
+        and terminal_runs == expected_runs
+        and qualified_runs == expected_runs
+        and evaluator_reached_runs == expected_runs
+        and official_evaluator_runs == expected_runs
+        and infrastructure_errors == 0
+        and qualification_errors == 0
+        and diagnostic_errors == 0
+        and not budget_terminal_run_ids
+    )
+    if budget_pilot:
+        return {
+            "schema_version": "no-memory-budget-pilot-gate-v1",
+            "passed": completion_passed,
+            "expected_runs": expected_runs,
+            "terminal_runs": terminal_runs,
+            "qualified_runs": qualified_runs,
+            "evaluator_reached_runs": evaluator_reached_runs,
+            "official_evaluator_runs": official_evaluator_runs,
+            "infrastructure_errors": infrastructure_errors,
+            "qualification_errors": qualification_errors,
+            "diagnostic_errors": diagnostic_errors,
+            "budget_terminal_runs": len(budget_terminal_run_ids),
+            "budget_terminal_run_ids": budget_terminal_run_ids,
+            "task_successes": task_successes,
+            "task_success_required": False,
+            "comparison_denominator_eligible": False,
+            "memory_admission_unlocked": False,
+        }
+
     headroom_failures: list[str] = []
     for row in rows:
         usage = row.get("usage") or {}
@@ -1892,17 +1980,6 @@ def _completion_gate(
         if not within_headroom and isinstance(row.get("run_id"), str):
             headroom_failures.append(row["run_id"])
 
-    completion_passed = bool(
-        expected_runs == 2
-        and terminal_runs == expected_runs
-        and qualified_runs == expected_runs
-        and evaluator_reached_runs == expected_runs
-        and official_evaluator_runs == expected_runs
-        and infrastructure_errors == 0
-        and qualification_errors == 0
-        and diagnostic_errors == 0
-        and not budget_terminal_run_ids
-    )
     return {
         "schema_version": "no-memory-completion-gate-v1",
         "passed": completion_passed,
@@ -2050,6 +2127,7 @@ def evaluate_suite(
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
     }
     halt_reason: dict[str, str] | None = None
 

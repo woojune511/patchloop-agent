@@ -8,9 +8,17 @@ from pathlib import Path
 import pytest
 
 from patchloop.agent.context import build_context, build_context_with_evidence
-from patchloop.agent.tools import TOOL_SCHEMAS, ToolGateway
+from patchloop.agent.tools import TOOL_SCHEMAS, TOOL_SCHEMAS_V3, ToolGateway
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact, Budget, Checkpoint, EventType, FaultSpec, Phase
+from patchloop.contracts import (
+    Artifact,
+    Budget,
+    Checkpoint,
+    EventType,
+    FaultSpec,
+    Phase,
+    RegisteredProbeProfile,
+)
 from patchloop.errors import ActionConflict, ContractError, RecoveryError
 from patchloop.evals.qualification import (
     _request_evidence_payload,
@@ -21,9 +29,53 @@ from patchloop.evals.qualification import (
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import build_manifest
 from patchloop.sandbox import LocalSandbox
+from patchloop.sandbox.runner import SandboxResult, probe_execution_policy
 from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_text, utc_now
+
+PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
+PROBE_ID = "python-diagnostic"
+
+
+class _OfficialProbeSandbox:
+    official = True
+
+    def __init__(self) -> None:
+        self.probe_calls: list[tuple[str, int, int]] = []
+
+    def run_check(self, workspace, check):
+        return LocalSandbox().run_check(workspace, check)
+
+    def run_probe(
+        self,
+        workspace,
+        source,
+        *,
+        timeout_seconds,
+        output_limit_bytes,
+        image_identity=None,
+    ):
+        del workspace
+        assert image_identity == PROBE_IMAGE_DIGEST
+        self.probe_calls.append(
+            (source, timeout_seconds, output_limit_bytes)
+        )
+        return SandboxResult(
+            command=["python", "-I", "<ephemeral-probe>"],
+            exit_code=0,
+            stdout="probe-ok\n",
+            stderr="",
+            duration_ms=3,
+            timed_out=False,
+            truncated=False,
+            original_output_bytes=9,
+            execution_policy=probe_execution_policy(
+                image_identity=PROBE_IMAGE_DIGEST,
+                timeout_seconds=timeout_seconds,
+                output_limit_bytes=output_limit_bytes,
+            ),
+        )
 
 
 def _smoke_gateway(
@@ -131,6 +183,45 @@ def _fresh_gateway(gateway: ToolGateway) -> ToolGateway:
         context_policy_version=gateway.context_policy_version,
         fault=gateway.fault,
     )
+
+
+def _v3_gateway(tmp_path, run_id: str, *, sandbox=None):
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = build_manifest(
+        package,
+        run_id=run_id,
+        self_validation=True,
+        probe_image_digest=PROBE_IMAGE_DIGEST,
+    )
+    state = StateStore(tmp_path / f"{run_id}.sqlite3")
+    state.create_run(manifest)
+    manager = WorkspaceManager(
+        "fixtures/repositories",
+        tmp_path / f"{run_id}-workspaces",
+    )
+    workspace = manager.create(
+        manifest.run_id,
+        package.public.repository.url,
+        package.public.repository.base_commit,
+    )
+    gateway = ToolGateway(
+        run_id=manifest.run_id,
+        workspace=workspace,
+        task=package.public.model_copy(
+            update={
+                "schema_version": "task-public-v2",
+                "probe_profiles": [
+                    RegisteredProbeProfile(id=PROBE_ID)
+                ],
+            }
+        ),
+        state=state,
+        artifacts=ArtifactStore(tmp_path / f"{run_id}-artifacts"),
+        sandbox=sandbox or LocalSandbox(),
+        tool_schema_version="v3",
+        context_policy_version="phase-evidence-v6",
+    )
+    return manager, workspace, gateway
 
 
 def test_mutating_tool_rolls_back_forbidden_path(tmp_path) -> None:
@@ -3113,3 +3204,455 @@ def test_apply_patch_fails_closed_when_policy_rollback_fails(
     assert "intentionally outside the task scope" in (
         workspace / "README.md"
     ).read_text(encoding="utf-8")
+
+
+def test_v3_schema_adds_optional_probe_and_mandatory_review_task() -> None:
+    schemas = {item["name"]: item for item in TOOL_SCHEMAS_V3}
+
+    assert {"run_probe", "review_task"}.issubset(schemas)
+    assert schemas["run_probe"]["parameters"]["additionalProperties"] is False
+    assert schemas["review_task"]["parameters"]["required"] == [
+        "requirements",
+        "targeted_validation",
+        "residual_risks",
+    ]
+    assert schemas["finish_task"]["parameters"]["properties"] == {}
+
+
+def test_v3_probe_is_docker_only_and_diff_bound(tmp_path) -> None:
+    manager, workspace, local_gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_local_probe",
+    )
+    baseline = manager.diff_summary(workspace)
+
+    rejected = local_gateway.execute(
+        "run_probe",
+        "probe-local",
+        {"probe_id": PROBE_ID, "source": "assert True"},
+    )
+
+    assert rejected.status == "rejected"
+    assert rejected.output["error_details"]["reason"] == (
+        "probe_requires_docker"
+    )
+    assert manager.diff_summary(workspace).patch_hash == baseline.patch_hash
+
+    sandbox = _OfficialProbeSandbox()
+    manager, workspace, gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_official_probe",
+        sandbox=sandbox,
+    )
+    succeeded = gateway.execute(
+        "run_probe",
+        "probe-official",
+        {
+            "probe_id": PROBE_ID,
+            "source": "assert 2 + 2 == 4",
+        },
+    )
+
+    assert succeeded.status == "succeeded"
+    assert succeeded.output["passed"] is True
+    assert succeeded.output["authoritative"] is False
+    assert succeeded.output["worktree_diff_hash"] == (
+        manager.diff_summary(workspace).patch_hash
+    )
+    assert len(sandbox.probe_calls) == 1
+    source_descriptor = Artifact.model_validate(
+        succeeded.output["source_artifact"]
+    )
+    assert gateway.artifacts.read_bytes(source_descriptor) == (
+        b"assert 2 + 2 == 4"
+    )
+    outcome = next(
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "run_probe"
+    )
+    assert outcome.payload["source_hash"] == source_descriptor.content_hash
+    call = next(
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.TOOL_CALLED
+        and event.payload.get("tool") == "run_probe"
+    )
+    assert (
+        call.payload["source_artifact"]
+        == succeeded.output["source_artifact"]
+        == outcome.payload["source_artifact"]
+    )
+    assert outcome.payload["execution_policy"] == (
+        succeeded.output["execution_policy"]
+    )
+    assert outcome.payload["result_artifact"]["content_hash"]
+
+    replayed = gateway.execute(
+        "run_probe",
+        "probe-official",
+        {
+            "probe_id": PROBE_ID,
+            "source": "assert 2 + 2 == 4",
+        },
+    )
+    assert replayed.output["replayed"] is True
+    assert len(sandbox.probe_calls) == 1
+
+
+def test_v6_token_tail_blocks_probe_before_dispatch(tmp_path) -> None:
+    sandbox = _OfficialProbeSandbox()
+    _, _, gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_probe_tail_block",
+        sandbox=sandbox,
+    )
+    for index in range(16):
+        gateway.state.append_event(
+            gateway.run_id,
+            EventType.MODEL_CALLED,
+            actor="model-adapter",
+            payload={
+                "requested_input_tokens": 100 + index,
+                "input_tokens": 100 + index,
+                "output_tokens": 10,
+            },
+        )
+
+    blocked = gateway.execute(
+        "run_probe",
+        "probe-tail-blocked",
+        {"probe_id": PROBE_ID, "source": "assert True"},
+    )
+
+    assert blocked.status == "rejected"
+    assert blocked.output["admission_blocked"] is True
+    assert "model_tail_reserved" in blocked.output["error_details"][
+        "reason_codes"
+    ]
+    assert sandbox.probe_calls == []
+    assert not any(
+        event.type == EventType.TOOL_CALLED
+        and event.payload.get("tool") == "run_probe"
+        for event in gateway.state.list_events(gateway.run_id)
+    )
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        {"probe_id": PROBE_ID, "source": ""},
+        {"probe_id": PROBE_ID, "source": "assert True\x00"},
+        {"probe_id": PROBE_ID, "source": "if:"},
+        {"probe_id": "not-registered", "source": "assert True"},
+        {
+            "probe_id": PROBE_ID,
+            "source": "assert True",
+            "command": "powershell",
+        },
+    ],
+)
+def test_v3_probe_rejects_invalid_or_expanded_inputs(
+    tmp_path,
+    arguments,
+) -> None:
+    sandbox = _OfficialProbeSandbox()
+    _, _, gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_invalid",
+        sandbox=sandbox,
+    )
+
+    result = gateway.execute(
+        "run_probe",
+        "invalid-probe",
+        arguments,
+    )
+
+    assert result.status == "rejected"
+    assert sandbox.probe_calls == []
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "import subprocess as process\nprocess.run(['true'])",
+        "from subprocess import run as execute\nexecute(['true'])",
+        "import os as operating_system",
+        "eval('1 + 1')",
+        "import builtins\nbuiltins.__import__('subprocess')",
+        "import builtins\ngetattr(builtins, 'exec')('marker = 7')",
+        "().__class__.__mro__[-1].__subclasses__()",
+    ],
+)
+def test_v3_probe_rejects_process_and_dynamic_code_capabilities(
+    tmp_path,
+    source,
+) -> None:
+    sandbox = _OfficialProbeSandbox()
+    _, _, gateway = _v3_gateway(
+        tmp_path,
+        "run_sp",
+        sandbox=sandbox,
+    )
+
+    result = gateway.execute(
+        "run_probe",
+        "forbidden-probe-source",
+        {"probe_id": PROBE_ID, "source": source},
+    )
+
+    assert result.status == "rejected"
+    assert result.output["error_details"]["reason"] == (
+        "probe_source_policy_violation"
+    )
+    assert result.output["error_details"]["stage"] == "probe"
+    assert sandbox.probe_calls == []
+
+
+def test_v3_probe_rejects_multibyte_source_over_byte_limit(
+    tmp_path,
+) -> None:
+    sandbox = _OfficialProbeSandbox()
+    _, _, gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_multibyte_limit",
+        sandbox=sandbox,
+    )
+
+    result = gateway.execute(
+        "run_probe",
+        "multibyte-probe",
+        {"probe_id": PROBE_ID, "source": "é" * 7000},
+    )
+
+    assert result.status == "rejected"
+    assert sandbox.probe_calls == []
+    events = gateway.state.list_events(gateway.run_id)
+    assert [
+        event.type
+        for event in events
+        if event.correlation_id == "multibyte-probe"
+    ] == [EventType.TOOL_CALLED, EventType.TOOL_FAILED]
+
+
+def test_v3_interrupted_probe_fails_closed_without_redispatch(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    sandbox = _OfficialProbeSandbox()
+    _, _, gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_interrupted_probe",
+        sandbox=sandbox,
+    )
+    checkpoint = _durable_checkpoint(gateway)
+    original = sandbox.run_probe
+
+    def interrupted(*args, **kwargs):
+        original(*args, **kwargs)
+        raise SystemExit("synthetic process boundary")
+
+    monkeypatch.setattr(sandbox, "run_probe", interrupted)
+    with pytest.raises(SystemExit, match="process boundary"):
+        gateway.execute(
+            "run_probe",
+            "interrupted-probe",
+            {"probe_id": PROBE_ID, "source": "assert True"},
+        )
+
+    recovered = _fresh_gateway(gateway).reconcile_interrupted_action(
+        checkpoint
+    )
+
+    assert recovered is not None
+    assert recovered[0] == "run_probe"
+    assert recovered[1].status == "failed"
+    assert recovered[1].output["fatal"] is True
+    assert len(sandbox.probe_calls) == 1
+
+
+def test_v3_review_binds_presented_check_and_diff_evidence(tmp_path) -> None:
+    _, _, gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_review",
+    )
+    reference = Path(
+        "tasks/smoke/csv-quoted-newline/reference.patch"
+    ).read_text(encoding="utf-8")
+    patched = gateway.execute(
+        "apply_patch",
+        "v3-patch",
+        {"patch": reference},
+    )
+    assert patched.status == "succeeded"
+    check_id = gateway.task.visible_checks[0].id
+    checked = gateway.execute(
+        "run_check",
+        "v3-check",
+        {"check_id": check_id},
+    )
+    assert checked.output["passed"] is True
+    diffed = gateway.execute("get_diff", "v3-diff", {})
+    assert diffed.status == "succeeded"
+    events = gateway.state.list_events(gateway.run_id)
+    check_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "run_check"
+    )
+    diff_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "get_diff"
+    )
+    review_arguments = {
+        "requirements": [
+            {
+                "requirement": "Parse quoted multiline CSV fields.",
+                "status": "verified",
+                "evidence_event_sequences": [
+                    check_event.sequence,
+                    diff_event.sequence,
+                ],
+                "notes": "The registered check passes on the reviewed diff.",
+            }
+        ],
+        "targeted_validation": [
+            {
+                "kind": "registered_check",
+                "event_sequence": check_event.sequence,
+                "outcome": "passed",
+                "notes": "Current-diff public regression check passed.",
+            }
+        ],
+        "residual_risks": [
+            "Private evaluator cases are unavailable before submission."
+        ],
+    }
+    execution_context = {
+        "request_artifact_id": "artifact-request-review",
+        "phase": "REVIEW",
+        "presented_tool_results": [
+            {
+                "event_sequence": check_event.sequence,
+                "available": True,
+                "truncated": False,
+            },
+            {
+                "event_sequence": diff_event.sequence,
+                "available": True,
+                "truncated": False,
+            },
+        ],
+    }
+
+    reviewed = gateway.execute(
+        "review_task",
+        "v3-review",
+        review_arguments,
+        execution_context=execution_context,
+    )
+
+    assert reviewed.status == "succeeded"
+    assert reviewed.output["source_get_diff_sequence"] == (
+        diff_event.sequence
+    )
+    assert reviewed.output["request_artifact_id"] == (
+        "artifact-request-review"
+    )
+    assert reviewed.output["self_attestation"] is True
+    assert reviewed.output["deterministic_correctness_claimed"] is False
+    descriptor = Artifact.model_validate(
+        reviewed.output["review_artifact"]
+    )
+    document = json.loads(
+        gateway.artifacts.read_bytes(descriptor).decode("utf-8")
+    )
+    assert reviewed.output["review"] == document
+    assert document["worktree_diff_hash"] == diffed.output[
+        "worktree_diff_hash"
+    ]
+    assert document["targeted_validation"] == (
+        review_arguments["targeted_validation"]
+    )
+
+
+def test_v3_review_rejects_unpresented_evidence(tmp_path) -> None:
+    _, _, gateway = _v3_gateway(
+        tmp_path,
+        "run_v3_unpresented_review",
+    )
+    reference = Path(
+        "tasks/smoke/csv-quoted-newline/reference.patch"
+    ).read_text(encoding="utf-8")
+    assert gateway.execute(
+        "apply_patch",
+        "v3-unpresented-patch",
+        {"patch": reference},
+    ).status == "succeeded"
+    check_id = gateway.task.visible_checks[0].id
+    assert gateway.execute(
+        "run_check",
+        "v3-unpresented-check",
+        {"check_id": check_id},
+    ).output["passed"] is True
+    assert gateway.execute(
+        "get_diff",
+        "v3-unpresented-diff",
+        {},
+    ).status == "succeeded"
+    events = gateway.state.list_events(gateway.run_id)
+    check_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "run_check"
+    )
+    diff_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "get_diff"
+    )
+
+    rejected = gateway.execute(
+        "review_task",
+        "v3-unpresented-review",
+        {
+            "requirements": [
+                {
+                    "requirement": "Public behavior",
+                    "status": "verified",
+                    "evidence_event_sequences": [check_event.sequence],
+                    "notes": "Claims the check was reviewed.",
+                }
+            ],
+            "targeted_validation": [
+                {
+                    "kind": "registered_check",
+                    "event_sequence": check_event.sequence,
+                    "outcome": "passed",
+                    "notes": "Claimed result.",
+                }
+            ],
+            "residual_risks": [],
+        },
+        execution_context={
+            "request_artifact_id": "artifact-request-missing-check",
+            "phase": "REVIEW",
+            "presented_tool_results": [
+                {
+                    "event_sequence": diff_event.sequence,
+                    "available": True,
+                    "truncated": False,
+                }
+            ],
+        },
+    )
+
+    assert rejected.status == "rejected"
+    assert "complete current-diff" in (rejected.error_message or "")

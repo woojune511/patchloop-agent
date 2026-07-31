@@ -12,8 +12,10 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-055 high-budget no-memory completion panel live complete;
-  fair no-memory baseline budget decision pending`이다.
+- 현재 milestone은 `D-059 profile-bearing offline self-validation agent probe complete;
+  D-060 three-task no-memory budget-pilot offline contract complete;
+  D-061 probe authorization hardening complete;
+  clean preflight and separate live approval pending`이다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -156,10 +158,41 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `sha256:a540ff52f271cd22c58ca561e559d9608ac50b99889a523f8a9a3d80cf8822ba`다.
   이 experiment ID와 approval hash는 immutable하며 재실행하지 않는다. 이 두 task의
   성공은 runtime completion ceiling 검증이지 memory 효과나 12-task baseline이 아니다.
+  D-056/D-057 opt-in `tool_schema_version=v3` / `phase-evidence-v6` self-validation은
+  D-058에서 실제 Docker isolation E2E 3/3과 전체 704-test regression
+  702 passed/2 Windows symlink-capability skipped를 통과했다. 현재 source로 다시 빌드한
+  clean probe image ID는
+  `sha256:268495717da1396e3413ce6695063c9516202b4e38cb8042f2f181420b64e9c1`이다.
+  비용 없는 mock smoke `run_36f90bda91b94d42`는 official hidden/regression/scope/safety와
+  same-diff review lifecycle을 통과했다. Historical v1 task라 probe call은 0이고 실제
+  probe isolation은 Docker E2E evidence다. 이 gate closure는 live OpenAI 실행이나
+  memory/core 성능 evidence가 아니며 v3/v6 OpenAI start/resume은 계속 fail closed한다.
+  D-059는 동결 dataset 밖의 infrastructure-only `task-public-v2`
+  `fixtures/task-packages/self-validation-csv-quoted-newline`을 추가하고, 비용 없는 mock
+  `run_7e3c5af2ce8d498a`에서 registered `quoted-newline-case` probe를 실제 clean image로
+  실행했다. Probe event 33은 `probe-ok`를 기록했고 같은 diff의 review가 그 event를
+  인용한 뒤 제출·official hidden/regression/scope/safety까지 통과했다.
+  `self_validation_lifecycle`은 통과했지만 mock/non-campaign run의 전체 qualification은
+  의도대로 false다. 전체 회귀는 708 collected, 706 passed/2 Windows
+  symlink-capability skipped이고 동결 dataset은 25 task/candidate 0으로 변하지 않았다.
+  따라서 profile 선택부터 review/evaluator까지의 offline lifecycle만 닫혔으며 live
+  provider, leak-safe campaign qualification 또는 성능 개선 evidence로 사용하지 않는다.
   다음 gate는 immutable V4 resource maxima로 고정한 pyfakefs/PDM/HF Hub를 각각 한 번
   실행하는 provisional `480k token / 40 model / 100 tool / 1,800초` no-memory pilot이다.
-  아직 suite는 만들지 않았으며 새 config/hash, 비용 검토와 별도 승인이 필요하다. 그 전에는
-  memory admission이나 96-run core campaign을 실행하지 않는다.
+  D-060은 별도 `memory-development-no-memory-budget-pilot` purpose, exact three-task suite,
+  $7 cap과 `no-memory-budget-pilot-gate-v1`을 offline으로 구현했다. 이 lane은 prior pilot을
+  요구하지 않지만 memory candidate와 comparison denominator를 만들지 않는다. Checked-in
+  suite 자체는 승인 가능한 execution hash가 아니며 source checkpoint 뒤 실제 Docker image
+  identity, SDK, fresh price를 결속한 no-call preflight와 별도 승인이 필요하다. 그 전에는
+  provider call, memory admission이나 96-run core campaign을 실행하지 않는다. D-060/D-061
+  closure는 731 collected, 724 passed/7 environment skip, Ruff와 `git diff --check`를
+  통과했다. Skip은 현재 execution context의 Docker daemon unavailable 5개와 Windows
+  symlink capability 2개다. Host Docker Desktop 4.83.0 / Engine 29.6.2에서 현재
+  `patchloop-sandbox:py312`
+  `sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`로
+  그 다섯 Docker E2E를 별도 실행해 5/5 통과했고 immutable-image pre-start 검증,
+  audit-hook 없는 subinterpreter의 process spawn과 trusted-parent signal 차단, 잔존
+  managed probe container 0개를 확인했다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

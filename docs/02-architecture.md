@@ -126,6 +126,33 @@ MVP agent-visible tool을 작게 유지한다.
 Checkpoint 저장은 runner 내부 동작이며 agent tool이 아니다. `finish_task`도
 shell/repository tool이 아니라 orchestrator control action이다.
 
+D-056의 opt-in v3 surface는 위 v2 surface를 그대로 두고 다음 두 도구만 추가한다.
+
+| Tool | Purpose | Important constraint |
+| --- | --- | --- |
+| `run_probe` | 공개 issue에서 도출한 일회성 Python probe 실행 | `task-public-v2` registered profile + dedicated clean Docker image only, repository read-only, network/secrets 없음, source는 repository 밖 CAS에 보존; optional이고 authoritative check가 아님 |
+| `review_task` | 현재 diff에 대한 requirement·targeted validation·residual risk 자기점검 기록 | current-diff check/diff 및 같은 request의 공개 evidence만 인용; inspectable self-attestation이지 grader가 아님 |
+
+`run_probe`는 새 test file을 checkout에 만들지 않고 stdin으로 실행한다. Task evaluator
+image를 재사용하지 않는 repository-free `patchloop-sandbox:py312`의 exact image ID를
+manifest에 결속한다. Mutable tag는 precheck에만 쓰고 container는 그 immutable ID로
+`create`한 뒤 실제 `.Image` equality를 확인해야만 start한다. Nested tmpfs로
+`/workspace/.git`을 가려 future commit이나 Git object를 solution shortcut으로 읽지
+못하게 한다. Gateway AST policy와 bootstrap audit hook은 흔한 process/native/dynamic
+호출을 조기에 거부하는 defense-in-depth이며 Python reflection 자체의 security boundary로
+간주하지 않는다. Trusted PID 1은 source를 compile한 뒤 untrusted child를 한 번 fork하고,
+그 child에 `no_new_privs`와 seccomp BPF를 설치해 fork/clone/exec, parent signal과 process
+trace syscall을 kernel에서 `EPERM`으로 막는다. PID cgroup도 parent+child 두 개로 제한한다.
+Proxy 환경을 비우고 trusted parent watchdog·stale-container cleanup을 사용한다. 따라서
+target repository의 scope를 늘리거나 patch에 diagnostic file을 남기지 않는다. Local
+backend, 미등록 profile, 비정상 `.git` metadata와 image identity 불일치는 start 전에
+fail closed한다.
+Probe pass는 registered check pass를 대신하지 않고, probe 사용 자체도 제출의 필수조건이
+아니다. `review_task`는 `phase-evidence-v6`에서 final `get_diff` 뒤, 같은 diff에 대한
+공개 validation evidence를 인용해야 한다. Canonical review 본문과 receipt가 다음
+`finish_task` request에 완전하게 제시돼야 제출 가능하지만, review 내용이 옳다는 자기
+선언만으로 evaluator verdict를 만들지는 않는다.
+
 Agent-visible `apply_patch`는 model이 만든 hunk header의 old/new line total만 body에서
 재계산한다. Patch body 문법, context와 path matching은 Git이 그대로 검사하며
 deterministic verifier도 완화하지 않는다. v2는 intent의 검증된 preimage로 policy reject를
@@ -208,6 +235,12 @@ Logical storage layout은 source repository와 분리한다.
   `context-build-evidence-v5`, `tool-admission-blocked-v2`,
   `trace-source-evidence-v5`로 versioning하고 qualification envelope은
   `trace-qualification-v2`를 유지한다.
+- Opt-in `phase-evidence-v6`는 V5를 상속하고 tool schema v3의 probe/review evidence를
+  external run state에 보존한다. Probe source·stdout·stderr와 review input/result는
+  content hash로 결속하고 private evaluator artifact를 참조할 수 없다. Final submission은
+  same-diff final `get_diff`와 그 결과를 실제로 본 `review_task`, 그리고 review result를
+  실제로 본 `finish_task` 순서를 요구한다. 이 경로는 D-056 offline gate가 완료되기 전에는
+  provider나 campaign에서 선택할 수 없다.
 - D-041 r5에서도 generation admission은 exact input과 full per-call allowance가 남은 total
   budget에 함께 들어가야 한다는 strict rule을 유지한다. 새 exact-request no-generation
   event payload는 `model-generation-block-v1`로 versioning한다. 이 versioned terminal block은 retry

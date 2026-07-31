@@ -40,6 +40,18 @@ SYSTEM_PROMPT_V3 = (
     "use the recorded evidence to advance to a patch or another allowed "
     "phase-advancing action."
 )
+SYSTEM_PROMPT_V4 = (
+    SYSTEM_PROMPT_V3
+    + " When the public issue benefits from executable confirmation and the "
+    "phase contract advertises a registered probe profile, use run_probe with "
+    "that profile to execute a temporary Python reproducer in the isolated, "
+    "read-only sandbox; the probe is evidence, never part of the submitted "
+    "patch. Never call an unregistered probe profile. After validation and "
+    "get_diff, call review_task with public "
+    "requirement assessments, exact evidence event sequences, targeted "
+    "validation outcomes, and residual risks. Only then call finish_task. "
+    "Do not claim a requirement is verified without cited trace evidence."
+)
 SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 
 
@@ -94,6 +106,14 @@ class MockTaskScript:
     target_path: str
     patch: str
     rationale: str
+
+
+@dataclass(frozen=True)
+class MockProbeScript:
+    """Public issue-derived probe for one explicit infrastructure fixture."""
+
+    profile_id: str
+    source: str
 
 
 MOCK_TASK_SCRIPTS: dict[str, MockTaskScript] = {
@@ -166,6 +186,21 @@ MOCK_TASK_SCRIPTS: dict[str, MockTaskScript] = {
     ),
 }
 
+MOCK_PROBE_SCRIPTS: dict[str, MockProbeScript] = {
+    "csv-quoted-newline": MockProbeScript(
+        profile_id="quoted-newline-case",
+        source=(
+            "import sys\n"
+            "sys.path.insert(0, '/workspace')\n"
+            "from mini_data_utils import parse_rows\n"
+            "sample = 'key,note\\n1,\"left\\nright\"\\n'\n"
+            "expected = [['key', 'note'], ['1', 'left\\nright']]\n"
+            "assert parse_rows(sample) == expected\n"
+            "print('probe-ok')\n"
+        ),
+    )
+}
+
 
 class MockModelAdapter:
     """Deterministic offline adapter backed only by public smoke scripts."""
@@ -176,17 +211,25 @@ class MockModelAdapter:
         completed_tools: list[str] | None = None,
         *,
         structured_finish: bool = True,
+        structured_review: bool = False,
+        structured_probe: bool = False,
     ) -> None:
         self.task_id = task_id
         self.completed_tools = list(completed_tools or [])
         self.structured_finish = structured_finish
+        self.structured_review = structured_review
+        self.structured_probe = structured_probe
         try:
             self.script = MOCK_TASK_SCRIPTS[task_id]
         except KeyError as exc:
             raise ContractError(f"no offline mock transcript for task: {task_id}") from exc
+        self.probe_script = MOCK_PROBE_SCRIPTS.get(task_id)
+        if self.structured_probe and self.probe_script is None:
+            raise ContractError(
+                f"no offline mock probe transcript for task: {task_id}"
+            )
 
     def next_turn(self, context: str, tools: list[dict[str, Any]]) -> ModelTurn:
-        del context, tools
         counts = {name: self.completed_tools.count(name) for name in set(self.completed_tools)}
         if counts.get("read_file", 0) == 0:
             return ModelTurn(
@@ -226,6 +269,162 @@ class MockModelAdapter:
                 text="Review the final scoped diff.",
                 tool_calls=[
                     RequestedTool("get_diff", f"mock-{self.task_id}-review", {})
+                ],
+            )
+        if self.structured_probe and counts.get("run_probe", 0) == 0:
+            try:
+                payload = json.loads(context)
+                phase_contract = payload["phase_contract"]
+                registered_profiles = phase_contract[
+                    "registered_probe_profile_ids"
+                ]
+                optional_actions = phase_contract["optional_actions"]
+                allowed_actions = phase_contract[
+                    "allowed_next_actions"
+                ]
+                available_tools = {
+                    item["name"]
+                    for item in tools
+                    if isinstance(item, dict)
+                    and isinstance(item.get("name"), str)
+                }
+            except (
+                KeyError,
+                TypeError,
+                ValueError,
+                json.JSONDecodeError,
+            ) as exc:
+                raise ContractError(
+                    "mock probe requires the v6 registered-profile context"
+                ) from exc
+            assert self.probe_script is not None
+            if (
+                self.probe_script.profile_id not in registered_profiles
+                or "run_probe" not in optional_actions
+                or "run_probe" not in available_tools
+            ):
+                raise ContractError(
+                    "mock probe profile is not registered and advertised"
+                )
+            if "run_probe" in allowed_actions:
+                return ModelTurn(
+                    text=(
+                        "Run the registered issue-derived multiline CSV probe "
+                        "against the read-only current workspace."
+                    ),
+                    tool_calls=[
+                        RequestedTool(
+                            "run_probe",
+                            f"mock-{self.task_id}-probe",
+                            {
+                                "probe_id": self.probe_script.profile_id,
+                                "source": self.probe_script.source,
+                            },
+                        )
+                    ],
+                )
+        if self.structured_review and counts.get("review_task", 0) == 0:
+            try:
+                payload = json.loads(context)
+                recent_events = payload["recent_events"]
+                check_event = next(
+                    item
+                    for item in reversed(recent_events)
+                    if item.get("type") == "ToolSucceeded"
+                    and item["payload"].get("tool") == "run_check"
+                )
+                diff_event = next(
+                    item
+                    for item in reversed(recent_events)
+                    if item.get("type") == "ToolSucceeded"
+                    and item["payload"].get("tool") == "get_diff"
+                )
+                probe_event = (
+                    next(
+                        item
+                        for item in reversed(recent_events)
+                        if item.get("type") == "ToolSucceeded"
+                        and item["payload"].get("tool") == "run_probe"
+                    )
+                    if counts.get("run_probe", 0) > 0
+                    else None
+                )
+            except (KeyError, StopIteration, TypeError, ValueError, json.JSONDecodeError) as exc:
+                raise ContractError(
+                    "mock self-review requires current check and diff evidence"
+                ) from exc
+            evidence_event_sequences = [
+                check_event["sequence"],
+                diff_event["sequence"],
+            ]
+            targeted_validation = [
+                {
+                    "kind": "registered_check",
+                    "event_sequence": check_event["sequence"],
+                    "outcome": "passed",
+                    "notes": (
+                        "Registered public check passed on the current diff."
+                    ),
+                }
+            ]
+            requirement_status = "verified"
+            requirement_notes = (
+                "The current patch passed the registered regression check "
+                "and matches the reviewed diff."
+            )
+            residual_risks = [
+                "Private evaluator cases remain unavailable until submission."
+            ]
+            if probe_event is not None:
+                probe_passed = probe_event["payload"].get("passed") is True
+                evidence_event_sequences.append(probe_event["sequence"])
+                targeted_validation.append(
+                    {
+                        "kind": "probe",
+                        "event_sequence": probe_event["sequence"],
+                        "outcome": (
+                            "passed" if probe_passed else "failed"
+                        ),
+                        "notes": (
+                            "The registered non-authoritative probe "
+                            + (
+                                "passed on the current diff."
+                                if probe_passed
+                                else "did not pass on the current diff."
+                            )
+                        ),
+                    }
+                )
+                if probe_passed:
+                    requirement_notes += (
+                        " The registered issue-derived probe also passed."
+                    )
+                else:
+                    requirement_status = "partially_verified"
+                    residual_risks.append(
+                        "The registered issue-derived probe did not pass."
+                    )
+            return ModelTurn(
+                text="Record requirement-to-evidence review before submission.",
+                tool_calls=[
+                    RequestedTool(
+                        "review_task",
+                        f"mock-{self.task_id}-task-review",
+                        {
+                            "requirements": [
+                                {
+                                    "requirement": self.script.rationale,
+                                    "status": requirement_status,
+                                    "evidence_event_sequences": (
+                                        evidence_event_sequences
+                                    ),
+                                    "notes": requirement_notes,
+                                }
+                            ],
+                            "targeted_validation": targeted_validation,
+                            "residual_risks": residual_risks,
+                        },
+                    )
                 ],
             )
         if self.structured_finish:

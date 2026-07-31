@@ -17,6 +17,10 @@ from patchloop.runtime import runtime_root
 from patchloop.state import StateStore
 from patchloop.util import sha256_bytes
 
+_CALIBRATION_ONLY_PURPOSES = {
+    "memory-development-no-memory-budget-pilot",
+}
+
 
 def _percentile(values: list[float], p: float) -> float:
     if not values:
@@ -106,6 +110,11 @@ def _analysis_readiness(raw: dict) -> dict:
     runs = raw.get("runs", [])
     suite = raw.get("suite")
     expected_runs = raw.get("expected_runs")
+    if raw.get("purpose") in _CALIBRATION_ONLY_PURPOSES:
+        reasons.append(
+            "experiment purpose is calibration-only and excluded from "
+            "the comparison denominator"
+        )
     if not isinstance(expected_runs, int) or len(runs) != expected_runs:
         reasons.append("scheduled row count does not match expected_runs")
     if any(_exclusion_reason(run) is not None for run in runs):

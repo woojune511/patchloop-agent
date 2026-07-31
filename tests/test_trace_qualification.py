@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from patchloop.agent.context import build_context_with_evidence
 from patchloop.agent.runner import AgentRunner
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
@@ -19,6 +20,7 @@ from patchloop.contracts import (
     ExperimentRunContext,
     FaultSpec,
     Phase,
+    RegisteredProbeProfile,
     RunOutcomeKind,
     RunResult,
     RunStatus,
@@ -38,6 +40,7 @@ from patchloop.evals.qualification import (
     qualify_run,
 )
 from patchloop.evals.runner import (
+    MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS,
     MEMORY_DEVELOPMENT_TASKS,
     ExperimentSuite,
     _execution_hash,
@@ -49,6 +52,7 @@ from patchloop.evals.runner import (
 )
 from patchloop.memory.store import review_failure
 from patchloop.runtime import build_manifest
+from patchloop.sandbox.runner import probe_execution_policy
 from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text, utc_now
@@ -56,6 +60,16 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_text, utc_now
 MEMORY_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 PILOT_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
 MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
+BUDGET_PILOT_TASKS = tuple(
+    Path(path).parent
+    for path in sorted(MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS)
+)
+BUDGET_PILOT_BUDGET = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=480_000,
+    wall_clock_timeout_seconds=1_800,
+)
 V2_TASK = Path("tasks/same-repo-heldout/pyfakefs-file-wrapper-io-capabilities")
 HASH = "sha256:" + ("a" * 64)
 PATCH_TEXT = (
@@ -67,6 +81,23 @@ PATCH_TEXT = (
     "+after\n"
 )
 DIFF_HASH = sha256_bytes(PATCH_TEXT.encode("utf-8"))
+PROBE_ID = "python-diagnostic"
+PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
+
+
+def _with_probe_profile(package):
+    return package.model_copy(
+        update={
+            "public": package.public.model_copy(
+                update={
+                    "schema_version": "task-public-v2",
+                    "probe_profiles": [
+                        RegisteredProbeProfile(id=PROBE_ID)
+                    ],
+                }
+            )
+        }
+    )
 
 
 def _execution_plan_path_for_test(root: Path, execution_hash: str) -> Path:
@@ -76,7 +107,20 @@ def _execution_plan_path_for_test(root: Path, execution_hash: str) -> Path:
 def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
     assert manifest.experiment is not None
     purpose = manifest.experiment.purpose
-    if purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
+    if (
+        purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+    ):
+        tasks = sorted(MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS)
+        conditions = ["no_memory"]
+        repetitions = 1
+        cost_limit = 7
+        embedding_revision = "PIN_AT_FREEZE"
+        model_id = manifest.model.model_id
+        budget = manifest.budget
+        max_output_tokens = manifest.model.max_output_tokens
+        diagnostic = None
+    elif purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
         tasks = sorted(MEMORY_DEVELOPMENT_TASKS)
         conditions = ["no_memory"]
         repetitions = 2
@@ -236,10 +280,23 @@ def _write_execution_plan(
         max_total_tokens=600_000,
         wall_clock_timeout_seconds=1_800,
     )
+    budget_pilot = (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+    )
     if (
-        suite.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-        and suite.budget == completion_budget
+        (
+            suite.purpose
+            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            and suite.budget == completion_budget
+        )
+        or budget_pilot
     ):
+        dataset_role = (
+            DatasetRole.MEMORY_DEVELOPMENT
+            if budget_pilot
+            else DatasetRole.DEVELOPMENT_VALIDATION
+        )
         tasks = []
         for task_value in suite.tasks:
             task_path = Path(task_value)
@@ -252,7 +309,7 @@ def _write_execution_plan(
                     "task_id": package.public.task_id,
                     "task_version": package.public.task_version,
                     "split": package.public.split,
-                    "dataset_role": DatasetRole.DEVELOPMENT_VALIDATION.value,
+                    "dataset_role": dataset_role.value,
                     "canonical_task_path": task_path.parent.as_posix(),
                     "public_spec_hash": package.public_spec_hash,
                     "private_spec_hash": package.private_spec_hash,
@@ -432,7 +489,25 @@ def _terminal_trace(
     execution_plan_omit_non_current_schedule: bool = False,
     counter_generation_block_reason: str | None = None,
     experiment_id: str | None = None,
+    self_validation_contract: bool = False,
+    include_self_validation_review: bool = False,
+    include_self_validation_probe: bool = False,
+    self_validation_probe_timed_out: bool = False,
 ) -> tuple[str, RunResult, str]:
+    if (
+        include_self_validation_review
+        or include_self_validation_probe
+    ) and not self_validation_contract:
+        raise AssertionError(
+            "self-validation evidence requires the v3/v6 contract"
+        )
+    if (
+        self_validation_probe_timed_out
+        and not include_self_validation_probe
+    ):
+        raise AssertionError(
+            "probe timeout fixture requires probe evidence"
+        )
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
     outcome_label = "agent" if agent_failure else ("resolved" if resolved else "failure")
@@ -473,10 +548,23 @@ def _terminal_trace(
         evaluator_image_digest=(
             package.environment.image_digest if package.environment is not None else None
         ),
+        probe_image_digest=(
+            PROBE_IMAGE_DIGEST
+            if self_validation_contract
+            else None
+        ),
     )
-    if legacy_contract:
+    if self_validation_contract:
+        manifest.tool_schema_version = "v3"
+        manifest.context_policy_version = "phase-evidence-v6"
+    elif legacy_contract:
         manifest.tool_schema_version = "v1"
         manifest.context_policy_version = "v1"
+    elif (
+        purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+    ):
+        manifest.context_policy_version = "phase-evidence-v5"
     elif (
         rejected_retry_context is not None
         or force_v3_contract
@@ -542,6 +630,7 @@ def _terminal_trace(
     get_diff_result = artifacts.put_json(get_diff_payload)
     review_model = artifacts.put_text("public model response: finish_task")
     last_retry_payload: dict[str, object] | None = None
+    built_contexts: dict[str, tuple[str, dict[str, object]]] = {}
 
     def request_artifact(
         rendered_context: str,
@@ -549,6 +638,26 @@ def _terminal_trace(
         tool_results: list[dict] | None = None,
         runtime_contract: bool = False,
     ):
+        if manifest.context_policy_version == "phase-evidence-v5":
+            built_context = build_context_with_evidence(
+                package.public,
+                state.list_events(run_id),
+                None,
+                "",
+                policy_version=manifest.context_policy_version,
+                artifact_store=artifacts,
+                budget=manifest.budget,
+                max_output_tokens=manifest.model.max_output_tokens,
+            )
+            rendered_context = built_context.rendered
+            context_build = built_context.evidence
+        else:
+            context_build = {"tool_results": tool_results or []}
+            if runtime_contract:
+                context_build["rejected_mutation_retry"] = {
+                    "included": False,
+                    "truncated": False,
+                }
         if runtime_contract:
             system_prompt, tools = AgentRunner._runtime_contract(manifest)
             request_body = {
@@ -574,22 +683,121 @@ def _terminal_trace(
                     {"role": "user", "content": rendered_context},
                 ],
             }
-        context_build = {"tool_results": tool_results or []}
-        if runtime_contract:
-            context_build["rejected_mutation_retry"] = {
-                "included": False,
-                "truncated": False,
-            }
         request_hash = sha256_text(canonical_json(request_body))
         artifact = artifacts.put_json(
             {
                 "schema_version": "model-request-evidence-v1",
+                **(
+                    {"provider": "openai"}
+                    if (
+                        runtime_contract
+                        or manifest.context_policy_version
+                        == "phase-evidence-v5"
+                    )
+                    else {}
+                ),
                 "request_body": request_body,
                 "request_body_hash": request_hash,
                 "context_build": context_build,
             }
         )
+        if manifest.context_policy_version == "phase-evidence-v5":
+            built_contexts[artifact.artifact_id] = (
+                rendered_context,
+                context_build,
+            )
         return artifact, request_hash
+
+    def context_event_payload(
+        artifact: Artifact,
+        request_hash: str,
+        rendered_context: str,
+    ) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "artifact_id": artifact.artifact_id,
+            "artifact_path": artifact.path,
+            "request_body_hash": request_hash,
+            "context_hash": sha256_text(rendered_context),
+        }
+        built = built_contexts.get(artifact.artifact_id)
+        if built is None:
+            return payload
+        actual_rendered, evidence = built
+        ledger = evidence["investigation_ledger"]
+        assert isinstance(ledger, dict)
+        payload.update(
+            {
+                "context_hash": sha256_text(actual_rendered),
+                "context_characters": evidence["rendered_characters"],
+                "context_bytes": evidence["rendered_bytes"],
+                "eligible_event_count": evidence["events"][
+                    "eligible_count"
+                ],
+                "included_event_count": evidence["events"][
+                    "included_count"
+                ],
+                "omitted_event_count": evidence["events"][
+                    "omitted_count"
+                ],
+                "truncated_tool_result_count": sum(
+                    bool(item["truncated"])
+                    for item in evidence["tool_results"]
+                ),
+                "artifact_role": "model-request-evidence",
+                "provider_state_used": False,
+                "investigation_ledger_hash": ledger[
+                    "content_hash"
+                ],
+                "investigation_source_through_sequence": ledger[
+                    "source_through_sequence"
+                ],
+                "investigation_no_progress_streak": ledger[
+                    "no_progress_streak"
+                ],
+                "investigation_exploration_admitted": ledger[
+                    "exploration_admitted"
+                ],
+                "investigation_tail_block_reasons": ledger[
+                    "tail_block_reasons"
+                ],
+                "investigation_tail_remaining_tokens": ledger[
+                    "tail_remaining_tokens"
+                ],
+                "investigation_tail_observation_count": ledger[
+                    "tail_observation_count"
+                ],
+                "investigation_tail_max_observed_input_tokens": ledger[
+                    "tail_max_observed_input_tokens"
+                ],
+                "investigation_tail_max_positive_growth": ledger[
+                    "tail_max_positive_growth"
+                ],
+                "investigation_tail_projected_next_input_tokens": ledger[
+                    "tail_projected_next_input_tokens"
+                ],
+                "investigation_tail_projected_model_turns": ledger[
+                    "tail_projected_model_turns"
+                ],
+                "investigation_tail_reserved_tokens": ledger[
+                    "tail_reserved_tokens"
+                ],
+                "investigation_tail_max_output_tokens": ledger[
+                    "tail_max_output_tokens"
+                ],
+            }
+        )
+        return payload
+
+    def append_run_started() -> None:
+        state.append_event(
+            run_id,
+            EventType.RUN_STARTED,
+            actor="runner",
+            payload={
+                "artifact_id": runtime_contract.artifact_id,
+                "artifact_path": runtime_contract.path,
+            },
+        )
 
     initial_rendered_context = json.dumps(
         {
@@ -600,26 +808,20 @@ def _terminal_trace(
         ensure_ascii=False,
         default=str,
     )
+    if manifest.context_policy_version == "phase-evidence-v5":
+        append_run_started()
     initial_context, initial_request_hash = request_artifact(initial_rendered_context)
-    state.append_event(
-        run_id,
-        EventType.RUN_STARTED,
-        actor="runner",
-        payload={
-            "artifact_id": runtime_contract.artifact_id,
-            "artifact_path": runtime_contract.path,
-        },
-    )
+    if manifest.context_policy_version != "phase-evidence-v5":
+        append_run_started()
     state.append_event(
         run_id,
         EventType.CONTEXT_BUILT,
         actor="context-builder",
-        payload={
-            "artifact_id": initial_context.artifact_id,
-            "artifact_path": initial_context.path,
-            "request_body_hash": initial_request_hash,
-            "context_hash": sha256_text(initial_rendered_context),
-        },
+        payload=context_event_payload(
+            initial_context,
+            initial_request_hash,
+            initial_rendered_context,
+        ),
     )
 
     def model_payload(
@@ -904,12 +1106,11 @@ def _terminal_trace(
                     run_id,
                     EventType.CONTEXT_BUILT,
                     actor="context-builder",
-                    payload={
-                        "artifact_id": retry_context.artifact_id,
-                        "artifact_path": retry_context.path,
-                        "request_body_hash": retry_request_hash,
-                        "context_hash": sha256_text(retry_rendered_context),
-                    },
+                    payload=context_event_payload(
+                        retry_context,
+                        retry_request_hash,
+                        retry_rendered_context,
+                    ),
                 )
                 retry_model = artifacts.put_text("public model response: corrected patch")
                 state.append_event(
@@ -1010,6 +1211,127 @@ def _terminal_trace(
 
     if not visible_checks_after_get_diff:
         append_visible_checks()
+    if include_self_validation_probe:
+        probe_arguments = {
+            "probe_id": PROBE_ID,
+            "source": "print('probe passed')\n",
+        }
+        probe_source = artifacts.put_text(
+            probe_arguments["source"],
+            media_type="text/x-python",
+        )
+        probe_input = artifacts.put_json(
+            {
+                "tool": "run_probe",
+                "input": probe_arguments,
+            }
+        )
+        probe_input_hash = sha256_text(
+            canonical_json(
+                {
+                    "tool": "run_probe",
+                    "input": probe_arguments,
+                }
+            )
+        )
+        probe_normalized_hash = sha256_text(
+            canonical_json(
+                {
+                    "tool": "run_probe",
+                    "input": probe_arguments,
+                    "worktree_diff_hash": DIFF_HASH,
+                    "state_marker": None,
+                }
+            )
+        )
+        state.append_event(
+            run_id,
+            EventType.TOOL_CALLED,
+            actor="agent",
+            correlation_id="qualification-probe",
+            payload={
+                "tool": "run_probe",
+                "input_hash": probe_input_hash,
+                "normalized_call_hash": probe_normalized_hash,
+                "worktree_diff_hash": DIFF_HASH,
+                "execution": "dispatched",
+                "input_artifact": probe_input.model_dump(mode="json"),
+                "artifact_id": probe_input.artifact_id,
+                "artifact_path": probe_input.path,
+                "source_artifact": probe_source.model_dump(
+                    mode="json"
+                ),
+                "source_hash": probe_source.content_hash,
+                "probe_policy_version": (
+                    "ephemeral-python-probe-v2"
+                ),
+                "probe_id": PROBE_ID,
+            },
+        )
+        execution_policy = probe_execution_policy(
+            image_identity=PROBE_IMAGE_DIGEST,
+            timeout_seconds=30,
+            output_limit_bytes=64_000,
+        )
+        probe_result_payload = {
+            "schema_version": "ephemeral-python-probe-result-v2",
+            "probe_policy_version": "ephemeral-python-probe-v2",
+            "authoritative": False,
+            "probe_id": PROBE_ID,
+            "probe_runtime": "ephemeral-python-v1",
+            "timeout_seconds": 30,
+            "output_limit_bytes": 64_000,
+            "source_limit_bytes": 12_000,
+            "source_artifact": probe_source.model_dump(mode="json"),
+            "source_hash": probe_source.content_hash,
+            "execution_policy": execution_policy,
+            "command": ["python", "-I", "<ephemeral-probe>"],
+            "exit_code": (
+                None if self_validation_probe_timed_out else 0
+            ),
+            "passed": not self_validation_probe_timed_out,
+            "timed_out": self_validation_probe_timed_out,
+            "truncated": False,
+            "original_output_bytes": 13,
+            "stdout": "probe passed\n",
+            "stderr": "",
+            "duration_ms": 1,
+            "worktree_diff_hash": DIFF_HASH,
+        }
+        probe_result = artifacts.put_json(
+            probe_result_payload
+        )
+        state.append_event(
+            run_id,
+            EventType.TOOL_SUCCEEDED,
+            actor="tool-gateway",
+            correlation_id="qualification-probe",
+            payload={
+                "tool": "run_probe",
+                "status": "succeeded",
+                "artifact_id": probe_result.artifact_id,
+                "artifact_path": probe_result.path,
+                "result_artifact": probe_result.model_dump(mode="json"),
+                "passed": not self_validation_probe_timed_out,
+                "timed_out": self_validation_probe_timed_out,
+                "truncated": False,
+                "exit_code": (
+                    None if self_validation_probe_timed_out else 0
+                ),
+                "original_output_bytes": 13,
+                "worktree_diff_hash": DIFF_HASH,
+                "source_hash": probe_source.content_hash,
+                "source_artifact": probe_source.model_dump(mode="json"),
+                "probe_policy_version": "ephemeral-python-probe-v2",
+                "probe_id": PROBE_ID,
+                "probe_runtime": "ephemeral-python-v1",
+                "timeout_seconds": 30,
+                "output_limit_bytes": 64_000,
+                "source_limit_bytes": 12_000,
+                "execution_policy": execution_policy,
+                "duration_ms": 1,
+            },
+        )
     state.append_event(
         run_id,
         EventType.TOOL_CALLED,
@@ -1064,12 +1386,11 @@ def _terminal_trace(
                 run_id,
                 EventType.CONTEXT_BUILT,
                 actor="context-builder",
-                payload={
-                    "artifact_id": filler_context.artifact_id,
-                    "artifact_path": filler_context.path,
-                    "request_body_hash": filler_request_hash,
-                    "context_hash": sha256_text(filler_rendered_context),
-                },
+                payload=context_event_payload(
+                    filler_context,
+                    filler_request_hash,
+                    filler_rendered_context,
+                ),
             )
             filler_model = artifacts.put_text(
                 f"public model response: continue {index}"
@@ -1110,8 +1431,28 @@ def _terminal_trace(
         ensure_ascii=False,
         default=str,
     )
-    review_tool_results = (
-        [
+    review_tool_results = []
+    if complete_review_context:
+        if include_self_validation_review:
+            review_tool_results.extend(
+                {
+                    "event_sequence": event.sequence,
+                    "tool": "run_check",
+                    "worktree_diff_hash": DIFF_HASH,
+                    "artifact_id": event.payload.get(
+                        "artifact_id"
+                    ),
+                    "available": True,
+                    "truncated": False,
+                }
+                for event in state.list_events(run_id)
+                if event.type == EventType.TOOL_SUCCEEDED
+                and event.payload.get("tool") == "run_check"
+                and event.payload.get("passed") is True
+                and event.payload.get("worktree_diff_hash")
+                == DIFF_HASH
+            )
+        review_tool_results.append(
             {
                 "event_sequence": get_diff_event.sequence,
                 "tool": "get_diff",
@@ -1120,14 +1461,14 @@ def _terminal_trace(
                 "available": True,
                 "truncated": False,
             }
-        ]
-        if complete_review_context
-        else []
-    )
+        )
     review_context, review_request_hash = request_artifact(
         review_rendered_context,
         tool_results=review_tool_results,
-        runtime_contract=counter_generation_block_reason is not None,
+        runtime_contract=(
+            counter_generation_block_reason is not None
+            or include_self_validation_review
+        ),
     )
     if counter_generation_block_reason is not None:
         checkpoint = Checkpoint(
@@ -1154,12 +1495,11 @@ def _terminal_trace(
         run_id,
         EventType.CONTEXT_BUILT,
         actor="context-builder",
-        payload={
-            "artifact_id": review_context.artifact_id,
-            "artifact_path": review_context.path,
-            "request_body_hash": review_request_hash,
-            "context_hash": sha256_text(review_rendered_context),
-        },
+        payload=context_event_payload(
+            review_context,
+            review_request_hash,
+            review_rendered_context,
+        ),
     )
     generation_block_payload: dict[str, object] | None = None
     if counter_generation_block_reason is None:
@@ -1229,6 +1569,227 @@ def _terminal_trace(
             EventType.MODEL_GENERATION_BLOCKED,
             actor="budget-guard",
             payload=generation_block_payload,
+        )
+    task_review_event = None
+    task_review_artifact = None
+    task_review_content_hash = None
+    finish_request_context = review_context
+    if include_self_validation_review:
+        mutation_event = next(
+            event
+            for event in reversed(state.list_events(run_id))
+            if event.type == EventType.PATCH_APPLIED
+        )
+        check_event = next(
+            event
+            for event in reversed(state.list_events(run_id))
+            if event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool") == "run_check"
+            and event.payload.get("passed") is True
+        )
+        review_arguments = {
+            "requirements": [
+                {
+                    "requirement": "Resolve the public issue",
+                    "status": "verified",
+                    "evidence_event_sequences": [
+                        check_event.sequence,
+                        get_diff_event.sequence,
+                    ],
+                    "notes": "Visible validation and final diff were reviewed.",
+                }
+            ],
+            "targeted_validation": [
+                {
+                    "kind": "registered_check",
+                    "event_sequence": check_event.sequence,
+                    "outcome": "passed",
+                    "notes": "The registered visible check passed.",
+                }
+            ],
+            "residual_risks": [],
+        }
+        execution_context = {
+            "request_artifact_id": review_context.artifact_id,
+            "phase": "REVIEW",
+            "presented_tool_results": review_tool_results,
+        }
+        review_input = artifacts.put_json(
+            {
+                "tool": "review_task",
+                "input": review_arguments,
+                "execution_context": execution_context,
+            }
+        )
+        review_input_hash = sha256_text(
+            canonical_json(
+                {
+                    "tool": "review_task",
+                    "input": review_arguments,
+                }
+            )
+        )
+        review_normalized_hash = sha256_text(
+            canonical_json(
+                {
+                    "tool": "review_task",
+                    "input": review_arguments,
+                    "worktree_diff_hash": DIFF_HASH,
+                    "state_marker": None,
+                }
+            )
+        )
+        state.append_event(
+            run_id,
+            EventType.TOOL_CALLED,
+            actor="agent",
+            correlation_id="qualification-task-review",
+            payload={
+                "tool": "review_task",
+                "input_hash": review_input_hash,
+                "normalized_call_hash": review_normalized_hash,
+                "worktree_diff_hash": DIFF_HASH,
+                "execution": "dispatched",
+                "request_artifact_id": review_context.artifact_id,
+                "request_phase": "REVIEW",
+                "input_artifact": review_input.model_dump(mode="json"),
+                "artifact_id": review_input.artifact_id,
+                "artifact_path": review_input.path,
+            },
+        )
+        task_review_document = {
+            "schema_version": "task-review-v1",
+            "run_id": run_id,
+            "request_artifact_id": review_context.artifact_id,
+            "worktree_diff_hash": DIFF_HASH,
+            "mutation_event_sequence": mutation_event.sequence,
+            "source_get_diff_sequence": get_diff_event.sequence,
+            "requirements": review_arguments["requirements"],
+            "targeted_validation": review_arguments[
+                "targeted_validation"
+            ],
+            "residual_risks": [],
+            "deterministic_correctness_claimed": False,
+        }
+        task_review_artifact = artifacts.put_json(
+            task_review_document
+        )
+        task_review_content_hash = (
+            task_review_artifact.content_hash
+        )
+        review_result_payload = {
+            "schema_version": "task-review-result-v1",
+            "review_schema_version": "task-review-v1",
+            "review_artifact": task_review_artifact.model_dump(
+                mode="json"
+            ),
+            "review_content_hash": task_review_content_hash,
+            "review": task_review_document,
+            "request_artifact_id": review_context.artifact_id,
+            "worktree_diff_hash": DIFF_HASH,
+            "mutation_event_sequence": mutation_event.sequence,
+            "source_get_diff_sequence": get_diff_event.sequence,
+            "requirement_count": 1,
+            "targeted_validation_count": 1,
+            "residual_risk_count": 0,
+            "self_attestation": True,
+            "deterministic_correctness_claimed": False,
+        }
+        review_result_artifact = artifacts.put_json(
+            review_result_payload
+        )
+        task_review_event = state.append_event(
+            run_id,
+            EventType.TOOL_SUCCEEDED,
+            actor="tool-gateway",
+            correlation_id="qualification-task-review",
+            payload={
+                "tool": "review_task",
+                "status": "succeeded",
+                "artifact_id": review_result_artifact.artifact_id,
+                "artifact_path": review_result_artifact.path,
+                "result_artifact": review_result_artifact.model_dump(
+                    mode="json"
+                ),
+                "review_schema_version": "task-review-v1",
+                "review_artifact": task_review_artifact.model_dump(
+                    mode="json"
+                ),
+                "review_content_hash": task_review_content_hash,
+                "requirement_count": 1,
+                "targeted_validation_count": 1,
+                "residual_risk_count": 0,
+                "request_artifact_id": review_context.artifact_id,
+                "worktree_diff_hash": DIFF_HASH,
+                "mutation_event_sequence": mutation_event.sequence,
+                "source_get_diff_sequence": get_diff_event.sequence,
+                "self_attestation": True,
+                "deterministic_correctness_claimed": False,
+                "duration_ms": 0,
+            },
+        )
+        finish_tool_results = [
+            *review_tool_results,
+            {
+                "event_sequence": task_review_event.sequence,
+                "tool": "review_task",
+                "worktree_diff_hash": DIFF_HASH,
+                "artifact_id": review_result_artifact.artifact_id,
+                "available": True,
+                "truncated": False,
+            },
+        ]
+        finish_rendered_context = json.dumps(
+            {
+                "public_task": package.public.model_dump(
+                    mode="json"
+                ),
+                "task_context": context_text,
+                "recent_events": [
+                    {
+                        "sequence": task_review_event.sequence,
+                        "type": "ToolSucceeded",
+                        "actor": "tool-gateway",
+                        "payload": {
+                            "tool": "review_task",
+                            "tool_result": review_result_payload,
+                        },
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            default=str,
+        )
+        (
+            finish_request_context,
+            finish_request_hash,
+        ) = request_artifact(
+            finish_rendered_context,
+            tool_results=finish_tool_results,
+            runtime_contract=True,
+        )
+        state.append_event(
+            run_id,
+            EventType.CONTEXT_BUILT,
+            actor="context-builder",
+            payload=context_event_payload(
+                finish_request_context,
+                finish_request_hash,
+                finish_rendered_context,
+            ),
+        )
+        finish_model = artifacts.put_text(
+            "public model response: finish_task after review"
+        )
+        state.append_event(
+            run_id,
+            EventType.MODEL_CALLED,
+            actor="model-adapter",
+            payload=model_payload(
+                finish_model,
+                finish_request_context,
+                request_hash=finish_request_hash,
+            ),
         )
     hidden_id = package.private.hidden_checks[0].id
     if agent_failure:
@@ -1310,8 +1871,28 @@ def _terminal_trace(
             payload={
                 "worktree_diff_hash": DIFF_HASH,
                 "source_get_diff_sequence": get_diff_event.sequence,
-                "request_artifact_id": review_context.artifact_id,
+                "request_artifact_id": (
+                    finish_request_context.artifact_id
+                ),
                 "complete_tool_result": True,
+                **(
+                    {
+                        "source_task_review_sequence": (
+                            task_review_event.sequence
+                        ),
+                        "task_review_artifact": (
+                            task_review_artifact.model_dump(
+                                mode="json"
+                            )
+                        ),
+                        "task_review_content_hash": (
+                            task_review_content_hash
+                        ),
+                    }
+                    if task_review_event is not None
+                    and task_review_artifact is not None
+                    else {}
+                ),
             },
         )
         state.append_event(
@@ -1362,6 +1943,20 @@ def _terminal_trace(
                 "accepted_for": "deterministic_evaluation",
                 "evaluation_success_claimed": False,
                 "submitted_patch_artifact": submitted_patch.model_dump(mode="json"),
+                **(
+                    {
+                        "task_review_artifact": (
+                            task_review_artifact.model_dump(
+                                mode="json"
+                            )
+                        ),
+                        "task_review_content_hash": (
+                            task_review_content_hash
+                        ),
+                    }
+                    if task_review_artifact is not None
+                    else {}
+                ),
             },
         )
         state.append_event(
@@ -1549,6 +2144,237 @@ def test_v4_source_schema_does_not_rewrite_historical_v3_hash(
             )
             == original_hash
         )
+
+
+def test_v6_source_schema_is_separate_from_historical_v5(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        self_validation_contract=True,
+    )
+    original_hash = calculate_source_evidence_hash(
+        run_id,
+        root=tmp_path,
+    )
+
+    assert (
+        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V6
+        == "trace-source-evidence-v6"
+    )
+    with monkeypatch.context() as historical_schema_patch:
+        historical_schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V5",
+            "trace-source-evidence-v5-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                run_id,
+                root=tmp_path,
+            )
+            == original_hash
+        )
+    with monkeypatch.context() as current_schema_patch:
+        current_schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V6",
+            "trace-source-evidence-v6-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                run_id,
+                root=tmp_path,
+            )
+            != original_hash
+        )
+
+
+def test_v6_runtime_contract_binds_prompt_and_tool_schema() -> None:
+    from patchloop.agent.model import SYSTEM_PROMPT_V4
+    from patchloop.agent.tools import TOOL_SCHEMAS_V3
+
+    package = _with_probe_profile(
+        load_task_package(MEMORY_TASK)
+    )
+    manifest = build_manifest(
+        package,
+        run_id="run_v6_runtime_contract",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        sandbox_backend="docker",
+        max_output_tokens=25_000,
+    )
+    manifest.tool_schema_version = "v3"
+    manifest.context_policy_version = "phase-evidence-v6"
+    request_body = {
+        "model": manifest.model.model_id,
+        "input": [
+            {"role": "system", "content": SYSTEM_PROMPT_V4},
+            {"role": "user", "content": "public context"},
+        ],
+        "tools": TOOL_SCHEMAS_V3,
+        "store": False,
+        "reasoning": {"effort": manifest.model.reasoning_effort},
+        "service_tier": manifest.model.service_tier,
+        "max_output_tokens": manifest.model.max_output_tokens,
+        "truncation": "disabled",
+    }
+
+    assert qualification_module._request_runtime_contract_valid(
+        request_body,
+        manifest,
+    )
+    tampered = json.loads(json.dumps(request_body))
+    tampered["tools"] = tampered["tools"][:-1]
+    assert not qualification_module._request_runtime_contract_valid(
+        tampered,
+        manifest,
+    )
+    manifest.tool_schema_version = "v2"
+    assert not qualification_module._request_runtime_contract_valid(
+        request_body,
+        manifest,
+    )
+    manifest.tool_schema_version = "v3"
+    manifest.model.provider = "mock"
+    manifest.model.model_id = "mock-v1"
+    mock_request = {
+        "model": "mock-v1",
+        "system_prompt": SYSTEM_PROMPT_V4,
+        "context": "public context",
+        "tools": TOOL_SCHEMAS_V3,
+    }
+    assert qualification_module._request_runtime_contract_valid(
+        mock_request,
+        manifest,
+    )
+    mock_request["system_prompt"] = "tampered prompt"
+    assert not qualification_module._request_runtime_contract_valid(
+        mock_request,
+        manifest,
+    )
+
+
+def test_v6_self_validation_lifecycle_binds_review_cas_and_request(
+    tmp_path,
+) -> None:
+    valid_root = tmp_path / "valid"
+    valid_root.mkdir()
+    run_id, result, _ = _terminal_trace(
+        valid_root,
+        self_validation_contract=True,
+        include_self_validation_review=True,
+        include_self_validation_probe=True,
+    )
+    state = StateStore(valid_root / "state.sqlite3")
+    manifest = state.get_manifest(run_id)
+    package = _with_probe_profile(
+        load_task_package(MEMORY_TASK)
+    )
+
+    passed, details = (
+        qualification_module._self_validation_lifecycle_evidence(
+            root=valid_root,
+            manifest=manifest,
+            package=package,
+            events=state.list_events(run_id),
+            result=result,
+        )
+    )
+
+    assert passed is True, details
+    assert details["verified_probe_count"] == 1
+    assert details["verified_review_count"] == 1
+    assert details["final_submission_binding_valid"] is True
+    assert details["review_body_presented"] is True
+
+    review_event = next(
+        event
+        for event in state.list_events(run_id)
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "review_task"
+    )
+    source_hash_before_tamper = calculate_source_evidence_hash(
+        run_id,
+        root=valid_root,
+    )
+    Path(review_event.payload["review_artifact"]["path"]).write_text(
+        '{"tampered":true}',
+        encoding="utf-8",
+    )
+    assert calculate_source_evidence_hash(
+        run_id,
+        root=valid_root,
+    ) != source_hash_before_tamper
+
+    tampered, tampered_details = (
+        qualification_module._self_validation_lifecycle_evidence(
+            root=valid_root,
+            manifest=manifest,
+            package=package,
+            events=state.list_events(run_id),
+            result=result,
+        )
+    )
+    assert tampered is False
+    assert tampered_details["failed_call_sequences"]
+
+
+def test_v6_completed_evaluation_without_semantic_review_fails_closed(
+    tmp_path,
+) -> None:
+    run_id, result, _ = _terminal_trace(
+        tmp_path,
+        self_validation_contract=True,
+    )
+    state = StateStore(tmp_path / "state.sqlite3")
+
+    passed, details = (
+        qualification_module._self_validation_lifecycle_evidence(
+            root=tmp_path,
+            manifest=state.get_manifest(run_id),
+            package=_with_probe_profile(
+                load_task_package(MEMORY_TASK)
+            ),
+            events=state.list_events(run_id),
+            result=result,
+        )
+    )
+
+    assert passed is False
+    assert details["review_call_count"] == 0
+    assert details["final_submission_binding_valid"] is False
+
+
+def test_v6_timed_out_probe_is_valid_nonpassing_evidence(
+    tmp_path,
+) -> None:
+    run_id, result, _ = _terminal_trace(
+        tmp_path,
+        self_validation_contract=True,
+        include_self_validation_review=True,
+        include_self_validation_probe=True,
+        self_validation_probe_timed_out=True,
+    )
+    state = StateStore(tmp_path / "state.sqlite3")
+
+    passed, details = (
+        qualification_module._self_validation_lifecycle_evidence(
+            root=tmp_path,
+            manifest=state.get_manifest(run_id),
+            package=_with_probe_profile(
+                load_task_package(MEMORY_TASK)
+            ),
+            events=state.list_events(run_id),
+            result=result,
+        )
+    )
+
+    assert passed is True, details
+    assert details["probe_call_count"] == 1
+    assert details["verified_probe_count"] == 1
 
 
 def test_v2_source_hash_binds_patch_intent_preimage_bytes(
@@ -2862,6 +3688,129 @@ def test_high_budget_completion_pilot_model_contract_qualifies(
         "max_total_tokens"
     ] == 600_000
     assert qualification["memory_candidate_eligible"] is False
+
+
+@pytest.mark.parametrize(
+    "task_dir",
+    BUDGET_PILOT_TASKS,
+    ids=lambda task_dir: task_dir.name,
+)
+def test_memory_development_budget_pilot_contract_qualifies(
+    tmp_path: Path,
+    task_dir: Path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=task_dir,
+        purpose=(
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        ),
+        role=DatasetRole.MEMORY_DEVELOPMENT,
+        resolved=True,
+        prompt_telemetry=True,
+        budget=BUDGET_PILOT_BUDGET,
+        experiment_id="dev-no-memory-budget-pilot-20260731-r1",
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=task_dir,
+        root=tmp_path,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+
+    assert qualification["qualified"] is True, [
+        check for check in qualification["checks"] if not check["passed"]
+    ]
+    assert checks["frozen_model_contract"]["passed"] is True
+    assert checks["frozen_model_contract"]["details"][
+        "max_total_tokens"
+    ] == 480_000
+    assert checks["frozen_campaign_provenance"]["passed"] is True
+    assert checks["approved_execution_plan"]["passed"] is True
+    assert qualification["purpose"] == (
+        "memory-development-no-memory-budget-pilot"
+    )
+    assert qualification["dataset_role"] == "memory-development"
+    assert qualification["tool_schema_version"] == "v2"
+    assert qualification["context_policy_version"] == "phase-evidence-v5"
+    assert qualification["memory_candidate_eligible"] is False
+
+
+@pytest.mark.parametrize(
+    ("agent_failure", "expected_outcome"),
+    [
+        (False, RunOutcomeKind.TASK_FAILURE.value),
+        (True, RunOutcomeKind.AGENT_FAILURE.value),
+    ],
+    ids=["task-failure", "agent-failure"],
+)
+def test_memory_development_budget_pilot_failures_are_not_memory_candidates(
+    tmp_path: Path,
+    agent_failure: bool,
+    expected_outcome: str,
+) -> None:
+    task_dir = BUDGET_PILOT_TASKS[0]
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=task_dir,
+        purpose=(
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        ),
+        role=DatasetRole.MEMORY_DEVELOPMENT,
+        resolved=False,
+        agent_failure=agent_failure,
+        prompt_telemetry=True,
+        budget=BUDGET_PILOT_BUDGET,
+        experiment_id="dev-no-memory-budget-pilot-20260731-r1",
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=task_dir,
+        root=tmp_path,
+    )
+
+    assert qualification["qualified"] is True, [
+        check for check in qualification["checks"] if not check["passed"]
+    ]
+    assert qualification["outcome_kind"] == expected_outcome
+    assert qualification["memory_candidate_eligible"] is False
+
+
+def test_memory_development_budget_pilot_plan_requires_all_three_tasks(
+    tmp_path: Path,
+) -> None:
+    task_dir = BUDGET_PILOT_TASKS[0]
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=task_dir,
+        purpose=(
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        ),
+        role=DatasetRole.MEMORY_DEVELOPMENT,
+        resolved=True,
+        prompt_telemetry=True,
+        budget=BUDGET_PILOT_BUDGET,
+        experiment_id="dev-no-memory-budget-pilot-20260731-r1",
+        execution_plan_omit_non_current_task=True,
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=task_dir,
+        root=tmp_path,
+    )
+    plan_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "approved_execution_plan"
+    )
+
+    assert plan_check["passed"] is False
+    assert qualification["qualified"] is False
 
 
 @pytest.mark.parametrize(

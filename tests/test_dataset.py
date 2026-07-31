@@ -96,6 +96,27 @@ def test_calibration_fixtures_are_excluded_from_research_dataset() -> None:
     assert result["errors"] == []
 
 
+def test_self_validation_fixture_remains_outside_frozen_dataset() -> None:
+    package = load_task_package(
+        "fixtures/task-packages/self-validation-csv-quoted-newline"
+    )
+    result = audit_dataset("tasks")
+
+    assert result["task_count"] == 25
+    assert result["candidate_package_count"] == 0
+    assert result["unregistered_task_paths"] == []
+    with pytest.raises(
+        ContractError,
+        match="not uniquely registered in the dataset manifest",
+    ):
+        require_dataset_role(
+            task_id=package.public.task_id,
+            task_version=package.public.task_version,
+            public_spec_hash=package.public_spec_hash,
+            allowed_roles={DatasetRole.CALIBRATION},
+        )
+
+
 def test_research_tasks_have_real_benchmark_admission_evidence() -> None:
     result = audit_dataset("tasks")
     assert result["research_task_count"] == 20

@@ -40,6 +40,9 @@ class ExperimentPurpose(StrEnum):
         "development-validation-model-candidate-pilot"
     )
     MEMORY_DEVELOPMENT_NO_MEMORY = "memory-development-no-memory"
+    MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT = (
+        "memory-development-no-memory-budget-pilot"
+    )
     CORE = "core"
 
 
@@ -133,6 +136,16 @@ class RegisteredCheck(StrictModel):
         return safe_relative_path(value, field_name="working_directory")
 
 
+class RegisteredProbeProfile(StrictModel):
+    """Public opt-in for one bounded, non-authoritative diagnostic runtime."""
+
+    id: str = Field(pattern=r"^[a-z][a-z0-9_-]+$")
+    runtime: Literal["ephemeral-python-v1"] = "ephemeral-python-v1"
+    timeout_seconds: int = Field(default=30, ge=1, le=60)
+    output_limit_bytes: int = Field(default=64_000, ge=1, le=64_000)
+    source_limit_bytes: int = Field(default=12_000, ge=1, le=12_000)
+
+
 class TaskConstraints(StrictModel):
     allowed_paths: list[str] = Field(default_factory=lambda: ["**"])
     forbidden_paths: list[str] = Field(default_factory=list)
@@ -150,7 +163,7 @@ class TaskConstraints(StrictModel):
 
 
 class PublicTask(StrictModel):
-    schema_version: Literal["task-public-v1"] = "task-public-v1"
+    schema_version: Literal["task-public-v1", "task-public-v2"] = "task-public-v1"
     task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
     task_version: int = Field(default=1, ge=1)
     split: Literal[
@@ -160,7 +173,25 @@ class PublicTask(StrictModel):
     issue: IssueSpec
     constraints: TaskConstraints = Field(default_factory=TaskConstraints)
     visible_checks: list[RegisteredCheck] = Field(default_factory=list)
+    probe_profiles: list[RegisteredProbeProfile] = Field(
+        default_factory=list,
+        exclude_if=lambda value: not value,
+    )
     tags: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def bind_probe_profiles_to_v2(self) -> PublicTask:
+        if (
+            self.schema_version == "task-public-v1"
+            and "probe_profiles" in self.model_fields_set
+        ):
+            raise ValueError("probe_profiles requires task-public-v2")
+        if self.schema_version == "task-public-v2" and not self.probe_profiles:
+            raise ValueError("task-public-v2 requires at least one probe profile")
+        ids = [profile.id for profile in self.probe_profiles]
+        if len(ids) != len(set(ids)):
+            raise ValueError("probe profile IDs must be unique")
+        return self
 
 
 class ReferencePatch(StrictModel):
@@ -761,6 +792,11 @@ class RunManifest(StrictModel):
     sandbox_backend: Literal["local", "docker"] = "local"
     agent_image_digest: str | None = None
     evaluator_image_digest: str | None = None
+    probe_image_digest: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
     fault: FaultSpec = Field(default_factory=FaultSpec)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     experiment: ExperimentRunContext | None = None
@@ -813,7 +849,7 @@ class Checkpoint(StrictModel):
 
 class ToolCall(StrictModel):
     tool: str
-    tool_schema_version: Literal["v1", "v2"] = "v1"
+    tool_schema_version: Literal["v1", "v2", "v3"] = "v1"
     action_id: str
     run_id: str
     input: dict[str, Any] = Field(default_factory=dict)

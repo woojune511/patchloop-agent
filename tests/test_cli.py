@@ -74,3 +74,10 @@ def test_doctor_turns_probe_errors_into_failed_checks(monkeypatch) -> None:
     assert payload["github_cli"]["authenticated"] is False
     assert payload["wsl"]["distributions"] == []
     assert payload["official_evaluation_ready"]["ok"] is False
+
+
+def test_run_help_exposes_explicit_self_validation_opt_in() -> None:
+    result = CliRunner().invoke(app, ["run", "--help"])
+
+    assert result.exit_code == 0
+    assert "--self-validation" in result.stdout

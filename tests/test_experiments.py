@@ -29,6 +29,9 @@ FUTURE_PILOT_SUITE = (
 COMPLETION_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml"
 )
+BUDGET_PILOT_SUITE = (
+    "experiments/dev-no-memory-budget-pilot-20260731-r1.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -572,6 +575,186 @@ def test_completion_gate_can_pass_while_panel_headroom_fails(
     assert gate["panel_headroom"]["failed_run_ids"] == [
         "run_completion_1"
     ]
+
+
+def test_memory_development_budget_pilot_has_exact_preflight_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 1, 12, tzinfo=UTC),
+    )
+
+    suite = eval_runner.load_suite(BUDGET_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(BUDGET_PILOT_SUITE)
+
+    assert suite.purpose == (
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+    )
+    assert set(suite.tasks) == {
+        "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+        "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml",
+        "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+    }
+    assert suite.conditions == [eval_runner.MemoryCondition.NO_MEMORY]
+    assert suite.repetitions == 1
+    assert suite.budget == (
+        eval_runner.GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
+    )
+    assert {row["code"] for row in unapproved["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert unapproved["expected_runs"] == 3
+    assert {row["dataset_role"] for row in unapproved["tasks"]} == {
+        DatasetRole.MEMORY_DEVELOPMENT.value
+    }
+    assert {row["condition"] for row in unapproved["schedule"]} == {
+        "no_memory"
+    }
+    assert {row["repetition"] for row in unapproved["schedule"]} == {1}
+    assert unapproved["pilot_qualification"] == {
+        "run_id": None,
+        "qualified": None,
+    }
+    assert unapproved["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
+        2.2725
+    )
+    assert unapproved["pricing"]["budget_upper_bound_usd"] == pytest.approx(
+        6.8175
+    )
+    assert "test-secret-never-rendered" not in json.dumps(unapproved)
+
+    approved = eval_runner.preflight_suite(
+        BUDGET_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert approved["ready"] is True
+    assert approved["execution_hash"] == unapproved["execution_hash"]
+    assert approved["suite"]["cost_limit_usd"] == 7
+    assert approved["suite"]["budget"] == {
+        "max_model_calls": 40,
+        "max_tool_calls": 100,
+        "max_total_tokens": 480_000,
+        "wall_clock_timeout_seconds": 1_800,
+    }
+
+
+@pytest.mark.parametrize(
+    ("mutation", "match"),
+    [
+        ("task", "exact three frozen resource-max tasks"),
+        ("repetition", "exact three frozen resource-max tasks"),
+        ("budget", "max_total_tokens=480000"),
+    ],
+)
+def test_memory_development_budget_pilot_rejects_contract_drift(
+    mutation: str,
+    match: str,
+) -> None:
+    payload = yaml.safe_load(
+        Path(BUDGET_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    if mutation == "task":
+        payload["tasks"] = payload["tasks"][:-1]
+    elif mutation == "repetition":
+        payload["repetitions"] = 2
+    else:
+        payload["budget"]["max_total_tokens"] = 600_000
+
+    with pytest.raises(ValidationError, match=match):
+        ExperimentSuite.model_validate(payload)
+
+
+def _budget_pilot_completion_rows() -> list[dict]:
+    return [
+        {
+            "attempt_status": "terminal",
+            "run_id": f"run_budget_pilot_{index}",
+            "usage": {
+                "input_tokens": 100,
+                "output_tokens": 20,
+                "model_calls": 2,
+                "tool_calls": 1,
+                "wall_clock_ms": 1_000,
+            },
+            "result": {
+                "official": True,
+                "evaluation_status": "completed",
+                "scope_compliant_success": False,
+                "terminal_error": None,
+            },
+            "qualification": {
+                "qualified": True,
+                "evaluation_reached": True,
+            },
+            "infrastructure_error": None,
+            "qualification_error": None,
+            "diagnostic_error": None,
+        }
+        for index in range(3)
+    ]
+
+
+def test_memory_development_budget_pilot_completion_gate_passes_without_task_success(
+) -> None:
+    suite = eval_runner.load_suite(BUDGET_PILOT_SUITE)
+
+    gate = eval_runner._completion_gate(
+        suite,
+        _budget_pilot_completion_rows(),
+    )
+
+    assert gate == {
+        "schema_version": "no-memory-budget-pilot-gate-v1",
+        "passed": True,
+        "expected_runs": 3,
+        "terminal_runs": 3,
+        "qualified_runs": 3,
+        "evaluator_reached_runs": 3,
+        "official_evaluator_runs": 3,
+        "infrastructure_errors": 0,
+        "qualification_errors": 0,
+        "diagnostic_errors": 0,
+        "budget_terminal_runs": 0,
+        "budget_terminal_run_ids": [],
+        "task_successes": 0,
+        "task_success_required": False,
+        "comparison_denominator_eligible": False,
+        "memory_admission_unlocked": False,
+    }
+
+
+def test_memory_development_budget_pilot_completion_gate_rejects_run_errors(
+) -> None:
+    suite = eval_runner.load_suite(BUDGET_PILOT_SUITE)
+    rows = _budget_pilot_completion_rows()
+    rows[0]["result"]["terminal_error"] = {
+        "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "details": {"reason_code": "exact_request_budget_exceeded"},
+    }
+    rows[0]["infrastructure_error"] = {"type": "InfrastructureError"}
+    rows[1]["qualification_error"] = {"type": "QualificationError"}
+    rows[2]["diagnostic_error"] = {"type": "DiagnosticError"}
+
+    gate = eval_runner._completion_gate(suite, rows)
+
+    assert gate is not None
+    assert gate["passed"] is False
+    assert gate["budget_terminal_runs"] == 1
+    assert gate["budget_terminal_run_ids"] == ["run_budget_pilot_0"]
+    assert gate["infrastructure_errors"] == 1
+    assert gate["qualification_errors"] == 1
+    assert gate["diagnostic_errors"] == 1
+    assert gate["terminal_runs"] == 3
+    assert gate["qualified_runs"] == 3
+    assert gate["evaluator_reached_runs"] == 3
+    assert gate["official_evaluator_runs"] == 3
 
 
 def test_future_comparison_templates_remain_at_250k_pending_calibration() -> None:

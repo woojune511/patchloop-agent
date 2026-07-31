@@ -148,6 +148,66 @@ def test_trace_view_surfaces_review_and_submission_lifecycle() -> None:
     ]
 
 
+def test_v3_trace_labels_probe_and_semantic_self_review() -> None:
+    events = [
+        _event(1, EventType.RUN_STARTED, {"task_id": "viewer-test"}),
+        _event(
+            2,
+            EventType.TOOL_SUCCEEDED,
+            {
+                "tool": "run_probe",
+                "probe_id": "python-edge-cases",
+                "passed": True,
+                "timed_out": False,
+                "worktree_diff_hash": "sha256:diff",
+            },
+        ),
+        _event(
+            3,
+            EventType.TOOL_SUCCEEDED,
+            {
+                "tool": "review_task",
+                "self_attestation": True,
+                "requirement_count": 2,
+                "targeted_validation_count": 1,
+                "residual_risk_count": 1,
+                "worktree_diff_hash": "sha256:diff",
+            },
+        ),
+        _event(
+            4,
+            EventType.REVIEW_RECORDED,
+            {
+                "self_attestation": True,
+                "source_task_review_sequence": 3,
+                "source_get_diff_sequence": 1,
+                "worktree_diff_hash": "sha256:diff",
+            },
+        ),
+        _event(
+            5,
+            EventType.SUBMISSION_ACCEPTED,
+            {"accepted_for": "deterministic_evaluation"},
+        ),
+    ]
+
+    trace = _build_trace_view(events, tool_schema_version="v3")
+
+    assert trace["lifecycle"]["probe_count"] == 1
+    assert trace["lifecycle"]["review"]["label"] == (
+        "structured self-review bound to final diff"
+    )
+    summaries = [item["summary"] for item in trace["critical"]]
+    assert (
+        "temporary probe passed · python-edge-cases · "
+        "dedicated clean image · non-authoritative"
+    ) in summaries
+    assert (
+        "structured public-evidence review recorded · "
+        "2 requirements / 1 validations / 1 residual risks"
+    ) in summaries
+
+
 def test_v2_trace_distinguishes_no_submission_from_incomplete_attempt() -> None:
     no_submission = _build_trace_view(
         [_event(1, EventType.RUN_STARTED)],

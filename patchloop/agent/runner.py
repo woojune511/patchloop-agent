@@ -17,6 +17,7 @@ from patchloop.agent.model import (
     SYSTEM_PROMPT_V1,
     SYSTEM_PROMPT_V2,
     SYSTEM_PROMPT_V3,
+    SYSTEM_PROMPT_V4,
     MockModelAdapter,
     ModelAdapter,
     OpenAIResponsesAdapter,
@@ -26,6 +27,7 @@ from patchloop.agent.phases import diff_bound_evidence, validate_transition
 from patchloop.agent.tools import (
     TOOL_SCHEMAS_V1,
     TOOL_SCHEMAS_V2,
+    TOOL_SCHEMAS_V3,
     ToolGateway,
 )
 from patchloop.artifacts import ArtifactStore
@@ -171,6 +173,7 @@ class AgentRunner:
         max_output_tokens: int = 4096,
         budget: Budget | None = None,
         experiment_context: ExperimentRunContext | None = None,
+        self_validation: bool = False,
         live_authorization: LiveExecutionAuthorization | None = None,
         _allowed_worker_statuses: set[RunStatus] | None = None,
     ) -> dict[str, Any]:
@@ -209,6 +212,21 @@ class AgentRunner:
             raise ContractError(
                 "model selector does not match the immutable run manifest provider"
             )
+        if selected_provider == "openai" and (
+            self_validation
+            or (
+                manifest is not None
+                and (
+                    manifest.tool_schema_version == "v3"
+                    or manifest.context_policy_version
+                    == "phase-evidence-v6"
+                )
+            )
+        ):
+            raise ContractError(
+                "self-validation v3/v6 is offline-only and unavailable "
+                "for the OpenAI provider"
+            )
         if selected_provider == "openai":
             self._require_live_authorization(manifest, live_authorization)
 
@@ -237,6 +255,15 @@ class AgentRunner:
             image_identity = (
                 docker_sandbox.image_identity() if backend == "docker" else None
             )
+            probe_image_identity = (
+                docker_sandbox.probe_image_identity()
+                if (
+                    self_validation
+                    and package.public.probe_profiles
+                    and backend == "docker"
+                )
+                else None
+            )
             manifest = build_manifest(
                 package,
                 provider=selected_provider,
@@ -245,6 +272,7 @@ class AgentRunner:
                 sandbox_backend=backend,
                 agent_image_digest=image_identity,
                 evaluator_image_digest=image_identity,
+                probe_image_digest=probe_image_identity,
                 input_price_per_million_usd=input_price_per_million_usd,
                 cached_input_price_per_million_usd=cached_input_price_per_million_usd,
                 cache_write_input_price_per_million_usd=(
@@ -258,6 +286,16 @@ class AgentRunner:
                 budget=budget,
                 replay_hash=replay_hash,
                 experiment_context=experiment_context,
+                self_validation=self_validation,
+            )
+        if (
+            manifest.tool_schema_version == "v3"
+            and package.public.probe_profiles
+            and manifest.probe_image_digest is None
+        ):
+            raise ContractError(
+                "registered probe profiles require the dedicated Docker "
+                "probe image and a manifest-bound image identity"
             )
         allowed_statuses = _allowed_worker_statuses or {RunStatus.CREATED}
         with self.ownership.acquire(manifest.run_id) as worker:
@@ -386,6 +424,19 @@ class AgentRunner:
             and manifest.evaluator_image_digest != package.environment.image_digest
         ):
             raise ContractError("run manifest evaluator image does not match the task environment")
+        if (
+            manifest.tool_schema_version == "v3"
+            and manifest.probe_image_digest is not None
+            and (
+                not isinstance(sandbox, DockerSandbox)
+                or sandbox.probe_image_identity()
+                != manifest.probe_image_digest
+            )
+        ):
+            raise ContractError(
+                "run manifest probe image does not match the dedicated "
+                "self-validation sandbox image"
+            )
         gateway_sandbox = (
             TimeoutOnceSandbox(sandbox) if manifest.fault.type == "test-timeout" else sandbox
         )
@@ -545,12 +596,14 @@ class AgentRunner:
                 model,
                 manifest,
                 self._completed_tools(manifest.run_id),
+                bool(package.public.probe_profiles),
             )
             while True:
                 if manifest.context_policy_version not in {
                     "phase-evidence-v3",
                     "phase-evidence-v4",
                     "phase-evidence-v5",
+                    "phase-evidence-v6",
                 }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -581,7 +634,10 @@ class AgentRunner:
                             "artifact_path": retrieval_artifact.path,
                         },
                     )
-                if manifest.context_policy_version == "phase-evidence-v5":
+                if manifest.context_policy_version in {
+                    "phase-evidence-v5",
+                    "phase-evidence-v6",
+                }:
                     # V5 binds the ledger to the exact durable prefix. A
                     # MemoryRetrieved event appended above must therefore be
                     # included before ContextBuilt is emitted.
@@ -728,7 +784,34 @@ class AgentRunner:
                                         ),
                                     }
                                     if manifest.context_policy_version
-                                    == "phase-evidence-v5"
+                                    in {
+                                        "phase-evidence-v5",
+                                        "phase-evidence-v6",
+                                    }
+                                    else {}
+                                ),
+                                **(
+                                    {
+                                        "probe_ledger_hash": (
+                                            built_context.evidence[
+                                                "probe_ledger"
+                                            ]["content_hash"]
+                                        ),
+                                        "probe_ledger_source_through_sequence": (
+                                            built_context.evidence[
+                                                "probe_ledger"
+                                            ][
+                                                "source_through_sequence"
+                                            ]
+                                        ),
+                                        "probe_ledger_entry_count": (
+                                            built_context.evidence[
+                                                "probe_ledger"
+                                            ]["entry_count"]
+                                        ),
+                                    }
+                                    if manifest.context_policy_version
+                                    == "phase-evidence-v6"
                                     else {}
                                 ),
                             }
@@ -736,6 +819,7 @@ class AgentRunner:
                             in {
                                 "phase-evidence-v4",
                                 "phase-evidence-v5",
+                                "phase-evidence-v6",
                             }
                             else {}
                         ),
@@ -745,6 +829,7 @@ class AgentRunner:
                     "phase-evidence-v3",
                     "phase-evidence-v4",
                     "phase-evidence-v5",
+                    "phase-evidence-v6",
                 }:
                     pre_generation_reason = self._pre_generation_budget_reason(
                         manifest,
@@ -775,6 +860,7 @@ class AgentRunner:
                             "phase-evidence-v3",
                             "phase-evidence-v4",
                             "phase-evidence-v5",
+                            "phase-evidence-v6",
                         }:
                             usage.input_token_count_calls += 1
                             self._block_model_generation(
@@ -803,6 +889,7 @@ class AgentRunner:
                             "phase-evidence-v3",
                             "phase-evidence-v4",
                             "phase-evidence-v5",
+                            "phase-evidence-v6",
                         }
                         and usage.input_tokens + usage.output_tokens
                         >= manifest.budget.max_total_tokens
@@ -968,6 +1055,7 @@ class AgentRunner:
                         arguments=finish_call.arguments,
                         context_evidence=built_context.evidence,
                         request_artifact_id=request_artifact.artifact_id,
+                        tool_schema_version=manifest.tool_schema_version,
                         additional_missing_evidence=[
                             "finish_task_must_be_only_action"
                         ],
@@ -1000,7 +1088,10 @@ class AgentRunner:
                     if usage.tool_calls >= manifest.budget.max_tool_calls:
                         raise ContractError("tool call budget exhausted")
                     if call.name == "finish_task":
-                        if manifest.tool_schema_version != "v2":
+                        if manifest.tool_schema_version not in {
+                            "v2",
+                            "v3",
+                        }:
                             raise ContractError(
                                 "finish_task is unavailable in tool schema v1"
                             )
@@ -1013,6 +1104,9 @@ class AgentRunner:
                             arguments=call.arguments,
                             context_evidence=built_context.evidence,
                             request_artifact_id=request_artifact.artifact_id,
+                            tool_schema_version=(
+                                manifest.tool_schema_version
+                            ),
                             additional_missing_evidence=[],
                         )
                         if not result.output.get("replayed"):
@@ -1060,7 +1154,28 @@ class AgentRunner:
                                 usage,
                             )
                         continue
-                    result = gateway.execute(call.name, call.action_id, call.arguments)
+                    execution_context = (
+                        {
+                            "request_artifact_id": (
+                                request_artifact.artifact_id
+                            ),
+                            "phase": phase.value,
+                            "presented_tool_results": (
+                                built_context.evidence.get(
+                                    "tool_results",
+                                    [],
+                                )
+                            ),
+                        }
+                        if call.name == "review_task"
+                        else None
+                    )
+                    result = gateway.execute(
+                        call.name,
+                        call.action_id,
+                        call.arguments,
+                        execution_context=execution_context,
+                    )
                     if (
                         not result.output.get("replayed")
                         and not result.output.get("admission_blocked")
@@ -1163,7 +1278,7 @@ class AgentRunner:
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         summary = WorkspaceManager.diff_summary(workspace)
         submitted_patch_artifact: Artifact | None = None
-        if manifest.tool_schema_version == "v2":
+        if manifest.tool_schema_version in {"v2", "v3"}:
             accepted_events = [
                 event
                 for event in self.state.list_events(manifest.run_id)
@@ -1726,11 +1841,23 @@ class AgentRunner:
             "phase-evidence-v3",
             "phase-evidence-v4",
             "phase-evidence-v5",
+            "phase-evidence-v6",
         }:
+            evidence_task = (
+                task
+                or load_task_package(
+                    self._find_task(manifest)
+                ).public
+            )
             evidence = diff_bound_evidence(
-                task or load_task_package(self._find_task(manifest)).public,
+                evidence_task,
                 events,
                 summary.patch_hash,
+                structured_review_required=(
+                    manifest.context_policy_version
+                    == "phase-evidence-v6"
+                ),
+                probe_available=bool(evidence_task.probe_profiles),
             )
             completed_checks = list(evidence.completed_checks)
             pending_checks = list(evidence.pending_checks)
@@ -1853,6 +1980,11 @@ class AgentRunner:
             in {"phase-evidence-v4", "phase-evidence-v5"}
         ):
             return SYSTEM_PROMPT_V3, TOOL_SCHEMAS_V2
+        if (
+            manifest.tool_schema_version == "v3"
+            and manifest.context_policy_version == "phase-evidence-v6"
+        ):
+            return SYSTEM_PROMPT_V4, TOOL_SCHEMAS_V3
         raise ContractError(
             "unsupported tool schema and context policy version combination"
         )
@@ -1929,6 +2061,7 @@ class AgentRunner:
         arguments: dict[str, Any],
         context_evidence: dict[str, Any],
         request_artifact_id: str,
+        tool_schema_version: str,
         additional_missing_evidence: list[str],
     ) -> tuple[ToolResult, bool, bool]:
         input_hash = sha256_text(
@@ -1955,6 +2088,9 @@ class AgentRunner:
             summary.patch_hash,
             presented_tool_results=context_evidence.get("tool_results", []),
             phase=phase,
+            structured_review_required=(
+                tool_schema_version == "v3"
+            ),
         )
         missing_evidence = list(readiness.missing_evidence)
         missing_evidence.extend(additional_missing_evidence)
@@ -1966,6 +2102,61 @@ class AgentRunner:
         )
         accepted = not missing_evidence
         if accepted:
+            task_review_event = None
+            task_review_artifact = None
+            if tool_schema_version == "v3":
+                task_review_event = next(
+                    (
+                        event
+                        for event in self.state.list_events(run_id)
+                        if event.sequence
+                        == readiness.task_review_event_sequence
+                    ),
+                    None,
+                )
+                try:
+                    task_review_artifact = Artifact.model_validate(
+                        task_review_event.payload.get(
+                            "review_artifact"
+                        )
+                        if task_review_event is not None
+                        else None
+                    )
+                    review_document = json.loads(
+                        self.artifacts.read_bytes(
+                            task_review_artifact
+                        ).decode("utf-8", errors="strict")
+                    )
+                except (
+                    OSError,
+                    TypeError,
+                    ValueError,
+                    UnicodeDecodeError,
+                    json.JSONDecodeError,
+                ) as exc:
+                    raise RecoveryError(
+                        "accepted v3 review artifact is unavailable"
+                    ) from exc
+                if (
+                    review_document.get("schema_version")
+                    != "task-review-v1"
+                    or review_document.get("run_id") != run_id
+                    or review_document.get("worktree_diff_hash")
+                    != summary.patch_hash
+                    or review_document.get("source_get_diff_sequence")
+                    != readiness.review_event_sequence
+                    or review_document.get("request_artifact_id")
+                    != task_review_event.payload.get(
+                        "request_artifact_id"
+                    )
+                    or task_review_artifact.content_hash
+                    != task_review_event.payload.get(
+                        "review_content_hash"
+                    )
+                ):
+                    raise RecoveryError(
+                        "v3 review artifact conflicts with current trace evidence"
+                    )
             submitted_patch_artifact = self.artifacts.put_text(
                 summary.patch,
                 "text/x-diff",
@@ -1977,6 +2168,21 @@ class AgentRunner:
                 "worktree_diff_hash": summary.patch_hash,
                 "accepted_for_evaluation": True,
                 "submitted_patch_artifact": submitted_patch,
+                **(
+                    {
+                        "source_task_review_sequence": (
+                            readiness.task_review_event_sequence
+                        ),
+                        "task_review_artifact": (
+                            task_review_artifact.model_dump(mode="json")
+                        ),
+                        "task_review_content_hash": (
+                            task_review_artifact.content_hash
+                        ),
+                    }
+                    if task_review_artifact is not None
+                    else {}
+                ),
             }
             artifact = self.artifacts.put_json(artifact_payload)
             result = ToolResult(
@@ -1995,6 +2201,23 @@ class AgentRunner:
                     "request_artifact_id": request_artifact_id,
                     "complete_tool_result": True,
                     "submitted_patch_artifact": submitted_patch,
+                    **(
+                        {
+                            "source_task_review_sequence": (
+                                readiness.task_review_event_sequence
+                            ),
+                            "task_review_artifact": (
+                                task_review_artifact.model_dump(
+                                    mode="json"
+                                )
+                            ),
+                            "task_review_content_hash": (
+                                task_review_artifact.content_hash
+                            ),
+                        }
+                        if task_review_artifact is not None
+                        else {}
+                    ),
                 },
             )
         else:
@@ -2077,6 +2300,9 @@ class AgentRunner:
             result.status == "succeeded"
             and result.output.get("accepted_for_evaluation") is True
         )
+        source_task_review_sequence = None
+        task_review_artifact = None
+        task_review_content_hash = None
         expected: list[tuple[EventType, str, dict[str, Any]]] = [
             (
                 EventType.TOOL_CALLED,
@@ -2097,16 +2323,110 @@ class AgentRunner:
                 raise RecoveryError(
                     "accepted finish_task result lacks final-review provenance"
                 )
+            review_payload = {
+                "worktree_diff_hash": diff_hash,
+                "source_get_diff_sequence": source_sequence,
+                "request_artifact_id": request_artifact_id,
+                "complete_tool_result": True,
+            }
+            source_task_review_sequence = result.output.get(
+                "source_task_review_sequence"
+            )
+            task_review_artifact = result.output.get(
+                "task_review_artifact"
+            )
+            task_review_content_hash = result.output.get(
+                "task_review_content_hash"
+            )
+            if any(
+                value is not None
+                for value in (
+                    source_task_review_sequence,
+                    task_review_artifact,
+                    task_review_content_hash,
+                )
+            ):
+                if (
+                    not isinstance(source_task_review_sequence, int)
+                    or not isinstance(task_review_artifact, dict)
+                    or not isinstance(task_review_content_hash, str)
+                ):
+                    raise RecoveryError(
+                        "accepted v3 finish result has incomplete review provenance"
+                    )
+                try:
+                    review_descriptor = Artifact.model_validate(
+                        task_review_artifact
+                    )
+                    review_document = json.loads(
+                        self.artifacts.read_bytes(
+                            review_descriptor
+                        ).decode("utf-8", errors="strict")
+                    )
+                except (
+                    OSError,
+                    TypeError,
+                    ValueError,
+                    UnicodeDecodeError,
+                    json.JSONDecodeError,
+                ) as exc:
+                    raise RecoveryError(
+                        "accepted v3 finish result has an invalid review artifact"
+                    ) from exc
+                source_review = next(
+                    (
+                        event
+                        for event in self.state.list_events(run_id)
+                        if event.sequence
+                        == source_task_review_sequence
+                    ),
+                    None,
+                )
+                if (
+                    review_descriptor.content_hash
+                    != task_review_content_hash
+                    or review_document.get("schema_version")
+                    != "task-review-v1"
+                    or review_document.get("run_id") != run_id
+                    or review_document.get("worktree_diff_hash")
+                    != diff_hash
+                    or source_review is None
+                    or source_review.type
+                    != EventType.TOOL_SUCCEEDED
+                    or source_review.payload.get("tool")
+                    != "review_task"
+                    or source_review.payload.get("review_artifact")
+                    != task_review_artifact
+                    or source_review.payload.get(
+                        "review_content_hash"
+                    )
+                    != task_review_content_hash
+                    or source_review.payload.get(
+                        "source_get_diff_sequence"
+                    )
+                    != source_sequence
+                ):
+                    raise RecoveryError(
+                        "accepted v3 finish review provenance is inconsistent"
+                    )
+                review_payload.update(
+                    {
+                        "source_task_review_sequence": (
+                            source_task_review_sequence
+                        ),
+                        "task_review_artifact": task_review_artifact,
+                        "task_review_content_hash": (
+                            task_review_content_hash
+                        ),
+                        "self_attestation": True,
+                        "deterministic_correctness_claimed": False,
+                    }
+                )
             expected.append(
                 (
                     EventType.REVIEW_RECORDED,
                     "submission-gate",
-                    {
-                        "worktree_diff_hash": diff_hash,
-                        "source_get_diff_sequence": source_sequence,
-                        "request_artifact_id": request_artifact_id,
-                        "complete_tool_result": True,
-                    },
+                    review_payload,
                 )
             )
         expected.append(
@@ -2145,6 +2465,19 @@ class AgentRunner:
                     "submitted_patch_artifact": result.output.get(
                         "submitted_patch_artifact"
                     ),
+                    **(
+                        {
+                            "source_task_review_sequence": (
+                                source_task_review_sequence
+                            ),
+                            "task_review_artifact": task_review_artifact,
+                            "task_review_content_hash": (
+                                task_review_content_hash
+                            ),
+                        }
+                        if source_task_review_sequence is not None
+                        else {}
+                    ),
                 },
             )
         )
@@ -2160,6 +2493,21 @@ class AgentRunner:
                         "evaluation_success_claimed": False,
                         "submitted_patch_artifact": result.output.get(
                             "submitted_patch_artifact"
+                        ),
+                        **(
+                            {
+                                "source_task_review_sequence": (
+                                    source_task_review_sequence
+                                ),
+                                "task_review_artifact": (
+                                    task_review_artifact
+                                ),
+                                "task_review_content_hash": (
+                                    task_review_content_hash
+                                ),
+                            }
+                            if source_task_review_sequence is not None
+                            else {}
                         ),
                     },
                 )
@@ -2250,10 +2598,10 @@ class AgentRunner:
         phase: Phase,
         usage: Usage,
     ) -> tuple[Phase, Checkpoint | None, ToolResult | None]:
-        """Repair an interrupted v2 submission before another model call."""
+        """Repair an interrupted structured submission before another call."""
 
         checkpoint = self.state.latest_checkpoint(manifest.run_id)
-        if manifest.tool_schema_version != "v2":
+        if manifest.tool_schema_version not in {"v2", "v3"}:
             return phase, checkpoint, None
         self._reconcile_unstructured_submission_lifecycle(manifest.run_id)
         calls: dict[str, Any] = {}
@@ -2654,24 +3002,42 @@ class AgentRunner:
         return path.parent if path.is_file() else path
 
     def _find_task(self, manifest: RunManifest) -> Path:
-        for public_path in (repository_root() / "tasks").rglob("public.yaml"):
-            package = load_task_package(public_path.parent)
-            if (
-                package.public.task_id == manifest.task_id
-                and package.public.task_version == manifest.task_version
-                and package.public_spec_hash == manifest.public_spec_hash
-            ):
-                return public_path.parent
+        roots = (
+            repository_root() / "tasks",
+            repository_root() / "fixtures" / "task-packages",
+        )
+        for root in roots:
+            if not root.is_dir():
+                continue
+            for public_path in root.rglob("public.yaml"):
+                package = load_task_package(public_path.parent)
+                if (
+                    package.public.task_id == manifest.task_id
+                    and package.public.task_version == manifest.task_version
+                    and package.public_spec_hash == manifest.public_spec_hash
+                ):
+                    return public_path.parent
         raise RecoveryError(f"task package for run {manifest.run_id} is unavailable")
 
     def _model_adapter(
-        self, model: str, manifest: RunManifest, completed_tools: list[str]
+        self,
+        model: str,
+        manifest: RunManifest,
+        completed_tools: list[str],
+        probe_available: bool = False,
     ) -> ModelAdapter:
         if model == "mock":
             return MockModelAdapter(
                 manifest.task_id,
                 completed_tools,
-                structured_finish=manifest.tool_schema_version == "v2",
+                structured_finish=manifest.tool_schema_version
+                in {"v2", "v3"},
+                structured_review=manifest.tool_schema_version == "v3",
+                structured_probe=(
+                    manifest.tool_schema_version == "v3"
+                    and manifest.probe_image_digest is not None
+                    and probe_available
+                ),
             )
         if model.startswith("replay:"):
             normalized_model, replay_path, replay_hash = self._replay_identity(model)
@@ -3023,12 +3389,18 @@ def run_from_cli(
     *,
     model: str,
     memory_condition: MemoryCondition,
+    self_validation: bool = False,
 ) -> dict[str, Any]:
     if model == "openai":
         raise ContractError(
             "direct live runs are disabled; use an approved experiment-v2 suite"
         )
-    return AgentRunner().start(task, model=model, memory_condition=memory_condition)
+    return AgentRunner().start(
+        task,
+        model=model,
+        memory_condition=memory_condition,
+        self_validation=self_validation,
+    )
 
 
 def resume_from_cli(run_id: str) -> dict[str, Any]:

@@ -30,6 +30,7 @@ TOOL_RESULT_CHARACTER_LIMIT = 12_000
 INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v4",
     "phase-evidence-v5",
+    "phase-evidence-v6",
 }
 RETRY_CONTEXT_POLICIES = {
     "phase-evidence-v3",
@@ -42,6 +43,110 @@ class BuiltContext:
     rendered: str
     content_hash: str
     evidence: dict[str, Any]
+
+
+def _build_probe_ledger(
+    events: list[RunEvent],
+    artifact_store: ArtifactStore | None,
+) -> dict[str, Any]:
+    """Rehydrate bounded agent-authored probe source without repository files."""
+
+    if artifact_store is None:
+        raise RecoveryError("phase-evidence-v6 requires the artifact store")
+    outcomes = {
+        event.correlation_id: event
+        for event in events
+        if event.correlation_id is not None
+        and event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+        and event.payload.get("tool") == "run_probe"
+    }
+    items: list[dict[str, Any]] = []
+    total_source_bytes = 0
+    for call in reversed(events):
+        if (
+            call.type != EventType.TOOL_CALLED
+            or call.payload.get("tool") != "run_probe"
+            or call.correlation_id is None
+        ):
+            continue
+        try:
+            descriptor = Artifact.model_validate(
+                call.payload["input_artifact"]
+            )
+            raw = artifact_store.read_bytes(descriptor)
+            document = json.loads(raw.decode("utf-8", errors="strict"))
+            arguments = document["input"]
+            source = arguments["source"]
+            probe_id = arguments["probe_id"]
+        except (
+            KeyError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise RecoveryError(
+                "v6 probe call lacks valid public input evidence"
+            ) from exc
+        if (
+            document.get("tool") != "run_probe"
+            or not isinstance(arguments, dict)
+            or not isinstance(source, str)
+            or not isinstance(probe_id, str)
+            or call.payload.get("artifact_id") != descriptor.artifact_id
+            or call.payload.get("artifact_path") != descriptor.path
+        ):
+            raise RecoveryError(
+                "v6 probe call conflicts with its input artifact"
+            )
+        source_bytes = len(source.encode("utf-8"))
+        if items and total_source_bytes + source_bytes > 12_000:
+            continue
+        if source_bytes > 12_000:
+            raise RecoveryError("v6 probe source exceeds its trace limit")
+        outcome = outcomes.get(call.correlation_id)
+        items.append(
+            {
+                "action_id": call.correlation_id,
+                "call_sequence": call.sequence,
+                "outcome_sequence": (
+                    outcome.sequence if outcome is not None else None
+                ),
+                "source": source,
+                "source_hash": sha256_text(source),
+                "probe_id": probe_id,
+                "worktree_diff_hash": (
+                    outcome.payload.get("worktree_diff_hash")
+                    if outcome is not None
+                    else call.payload.get("worktree_diff_hash")
+                ),
+                "passed": (
+                    outcome.payload.get("passed")
+                    if outcome is not None
+                    else None
+                ),
+                "timed_out": (
+                    outcome.payload.get("timed_out")
+                    if outcome is not None
+                    else None
+                ),
+            }
+        )
+        total_source_bytes += source_bytes
+        if len(items) >= 3:
+            break
+    items.reverse()
+    body = {
+        "schema_version": "probe-ledger-v1",
+        "source_through_sequence": events[-1].sequence if events else 0,
+        "entries": items,
+        "source_bytes": total_source_bytes,
+        "authoritative": False,
+    }
+    return {
+        **body,
+        "content_hash": sha256_text(canonical_json(body)),
+    }
 
 
 def _rejected_mutation_retry(
@@ -404,6 +509,7 @@ def build_context_with_evidence(
         "phase-evidence-v3",
         "phase-evidence-v4",
         "phase-evidence-v5",
+        "phase-evidence-v6",
     }:
         selected_events = eligible_events[-RECENT_EVENT_LIMIT:]
     else:
@@ -421,12 +527,14 @@ def build_context_with_evidence(
             tool_results.append(tool_result_evidence)
 
     phase = checkpoint.phase if checkpoint else Phase.INTAKE
+    probe_available = bool(task.probe_profiles)
     phase_contract = None
     if policy_version in {
         "phase-evidence-v2",
         "phase-evidence-v3",
         "phase-evidence-v4",
         "phase-evidence-v5",
+        "phase-evidence-v6",
     }:
         diff_hash = checkpoint.worktree_diff_hash if checkpoint else sha256_text("")
         readiness = diff_bound_evidence(
@@ -435,19 +543,37 @@ def build_context_with_evidence(
             diff_hash,
             presented_tool_results=tool_results,
             phase=phase,
+            structured_review_required=(
+                policy_version == "phase-evidence-v6"
+            ),
+            probe_available=probe_available,
         )
         phase_contract = {
-            "schema_version": "phase-contract-v1",
+            "schema_version": (
+                "phase-contract-v2"
+                if policy_version == "phase-evidence-v6"
+                else "phase-contract-v1"
+            ),
             "current_phase": phase.value,
             "submission_ready": readiness.submission_ready,
             "missing_evidence": list(readiness.missing_evidence),
             "allowed_next_actions": list(readiness.allowed_next_actions),
-            "required_sequence": [
-                "apply_patch",
-                "run_check",
-                "get_diff",
-                "finish_task",
-            ],
+            "required_sequence": (
+                [
+                    "apply_patch",
+                    "run_check",
+                    "get_diff",
+                    "review_task",
+                    "finish_task",
+                ]
+                if policy_version == "phase-evidence-v6"
+                else [
+                    "apply_patch",
+                    "run_check",
+                    "get_diff",
+                    "finish_task",
+                ]
+            ),
             "completed_checks": list(readiness.completed_checks),
             "pending_checks": list(readiness.pending_checks),
             "current_diff_hash": readiness.worktree_diff_hash,
@@ -455,6 +581,20 @@ def build_context_with_evidence(
             "mutation_present": readiness.mutation_present,
             "review_event_sequence": readiness.review_event_sequence,
         }
+        if policy_version == "phase-evidence-v6":
+            phase_contract.update(
+                {
+                    "optional_actions": (
+                        ["run_probe"] if probe_available else []
+                    ),
+                    "registered_probe_profile_ids": [
+                        profile.id for profile in task.probe_profiles
+                    ],
+                    "task_review_event_sequence": (
+                        readiness.task_review_event_sequence
+                    ),
+                }
+            )
     latest_model_sequence = max(
         (
             event.sequence
@@ -537,6 +677,16 @@ def build_context_with_evidence(
             "private_evaluator_data_unavailable": True,
             "done_is_submission_not_success": True,
             "registered_checks_only": True,
+            **(
+                {
+                    "registered_checks_are_only_authoritative_checks": True,
+                    "registered_probe_profiles_only": True,
+                    "agent_probe_is_non_authoritative": True,
+                    "structured_review_is_self_attestation": True,
+                }
+                if policy_version == "phase-evidence-v6"
+                else {}
+            ),
         },
     }
     if policy_version != "v1":
@@ -570,6 +720,11 @@ def build_context_with_evidence(
                 max_output_tokens=max_output_tokens,
             )
             payload["investigation_ledger"] = investigation_ledger
+            if policy_version == "phase-evidence-v6":
+                payload["probe_ledger"] = _build_probe_ledger(
+                    events,
+                    artifact_store,
+                )
             if (
                 phase_contract is not None
                 and not investigation_ledger["tail_policy"][
@@ -579,7 +734,8 @@ def build_context_with_evidence(
                 phase_contract["allowed_next_actions"] = [
                     action
                     for action in phase_contract["allowed_next_actions"]
-                    if action not in {"read_file", "search_files"}
+                    if action
+                    not in {"read_file", "search_files", "run_probe"}
                 ]
     rendered = json.dumps(payload, indent=2, ensure_ascii=False, default=str)
     component_characters = {
@@ -599,7 +755,11 @@ def build_context_with_evidence(
                     else (
                         "context-build-evidence-v4"
                         if policy_version == "phase-evidence-v4"
-                        else "context-build-evidence-v5"
+                        else (
+                            "context-build-evidence-v5"
+                            if policy_version == "phase-evidence-v5"
+                            else "context-build-evidence-v6"
+                        )
                     )
                 )
             )
@@ -655,7 +815,10 @@ def build_context_with_evidence(
                 "exploration_admitted"
             ],
         }
-        if policy_version == "phase-evidence-v5":
+        if policy_version in {
+            "phase-evidence-v5",
+            "phase-evidence-v6",
+        }:
             tail = ledger["tail_policy"]
             projection = tail["token_projection"]
             evidence["investigation_ledger"].update(
@@ -682,6 +845,18 @@ def build_context_with_evidence(
                     "tail_max_output_tokens": projection["max_output_tokens"],
                 }
             )
+        if policy_version == "phase-evidence-v6":
+            probe_ledger = payload["probe_ledger"]
+            evidence["probe_ledger"] = {
+                "schema_version": probe_ledger["schema_version"],
+                "content_hash": probe_ledger["content_hash"],
+                "source_through_sequence": probe_ledger[
+                    "source_through_sequence"
+                ],
+                "entry_count": len(probe_ledger["entries"]),
+                "source_bytes": probe_ledger["source_bytes"],
+                "authoritative": False,
+            }
     return BuiltContext(
         rendered=rendered,
         content_hash=sha256_text(rendered),

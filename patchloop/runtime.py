@@ -18,6 +18,7 @@ from patchloop.contracts import (
     TaskPackage,
     Usage,
 )
+from patchloop.errors import ContractError
 from patchloop.util import utc_now
 
 
@@ -59,6 +60,7 @@ def build_manifest(
     budget: Budget | None = None,
     agent_image_digest: str | None = None,
     evaluator_image_digest: str | None = None,
+    probe_image_digest: str | None = None,
     input_price_per_million_usd: float | None = None,
     cached_input_price_per_million_usd: float | None = None,
     cache_write_input_price_per_million_usd: float | None = None,
@@ -69,7 +71,17 @@ def build_manifest(
     max_output_tokens: int = 4096,
     replay_hash: str | None = None,
     experiment_context: ExperimentRunContext | None = None,
+    self_validation: bool = False,
 ) -> RunManifest:
+    if self_validation and provider == "openai":
+        raise ContractError(
+            "self-validation v3/v6 is offline-only and unavailable "
+            "for the OpenAI provider"
+        )
+    if self_validation and provider == "replay":
+        raise ContractError(
+            "self-validation v3/v6 is unavailable for historical replay runs"
+        )
     sdk_version = None
     if provider == "openai":
         try:
@@ -91,9 +103,19 @@ def build_manifest(
         public_spec_hash=package.public_spec_hash,
         private_spec_hash=package.private_spec_hash,
         harness_git_commit=git_commit(),
-        tool_schema_version="v1" if provider == "replay" else "v2",
+        tool_schema_version=(
+            "v1"
+            if provider == "replay"
+            else "v3"
+            if self_validation
+            else "v2"
+        ),
         context_policy_version=(
-            "v1" if provider == "replay" else "phase-evidence-v5"
+            "v1"
+            if provider == "replay"
+            else "phase-evidence-v6"
+            if self_validation
+            else "phase-evidence-v5"
         ),
         model=ModelConfig(
             provider=provider,
@@ -115,6 +137,7 @@ def build_manifest(
         sandbox_backend=sandbox_backend,
         agent_image_digest=agent_image_digest,
         evaluator_image_digest=evaluator_image_digest,
+        probe_image_digest=probe_image_digest,
         fault=fault or FaultSpec(),
         memory=memory_config,
         experiment=experiment_context,

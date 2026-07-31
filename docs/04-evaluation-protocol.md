@@ -193,6 +193,13 @@ successful non-empty mutation
 `SubmissionAccepted`는 evaluator 진입 승인이고 SCRR 성공은 evaluator의 별도 verdict다.
 Legacy v1 trace에는 새 lifecycle event를 합성하지 않는다.
 
+D-056 opt-in V3/V6에서는 `get_diff`와 `finish_task` 사이에 `review_task`를 추가한다.
+Agent는 공개 issue requirement, current-diff registered check 및 선택적 probe, residual
+risk를 구조화해 남긴다. 매 run에 probe나 새 test file을 강제하지 않는다. 이 review는
+hidden test를 대신하는 judge가 아니라 같은 diff에서 무엇을 확인했는지 감사 가능한
+self-attestation이며, evaluator의 hidden outcome은 review나 같은-run agent context로
+돌아오지 않는다.
+
 `context_policy_version=phase-evidence-v3`로 D-037 target을 선언한 trace는 latest
 rejected mutating-tool input의 exact CAS
 bytes, content hash와 rejection reason이 바로 다음 model request에 함께 있었는지
@@ -264,6 +271,47 @@ V5 qualification은 `investigation-policy-v2`, `investigation-ledger-v2`,
 nominal policy이며 completion guarantee가 아니다. Strict exact-request + full 25,000
 response allowance guard는 별도로 유지되어, 이를 넘으면 provider generation 없이
 terminal evidence가 남아야 한다. V1-V4 qualification hash와 판정을 소급 변경하지 않는다.
+
+### D-056 opt-in self-validation qualification
+
+`tool_schema_version=v3`와 `context_policy_version=phase-evidence-v6`은 pair로만
+qualification한다. 이 경로는 V5 checks를 상속하며 다음을 추가로 검사한다.
+
+- `run_probe`가 관찰되면 `task-public-v2` registered profile인지, manifest의 dedicated
+  clean-image digest와 exact execution policy가 일치하는지, read-only checkout,
+  networkless/no-secret/no-proxy invocation인지, source/result CAS와 active diff hash가
+  일치하는지 검사한다. Task evaluator image에서 실행된 probe는 허용하지 않는다.
+- Probe는 optional이다. 호출 수 0은 failure가 아니고, probe pass를 registered check나
+  official verifier pass로 환산하지 않는다.
+- `review_task`는 latest mutation의 required visible checks와 final `get_diff` 뒤에 있고,
+  그 exact request가 인용한 public check/probe/diff result를 완전하게 포함해야 한다.
+- `finish_task` request에는 같은 diff의 complete `task-review-v1` canonical 본문과 receipt가
+  들어 있어야 하며 submission lifecycle이 source review artifact를 참조해야 한다. Review
+  뒤 같은 diff에서 새 probe/check/diff 결과가 생기면 이전 review는 무효다.
+- Probe/review source evidence, request binding과 output을 leak scan한다. Private spec,
+  hidden assertion, reference patch와 evaluator artifact가 agent-visible evidence에
+  나타나면 fail closed한다.
+
+이 check는 tool/lifecycle provenance를 검증할 뿐 review 서술의 의미를 primary grade로
+사용하지 않는다. 공식 결과는 변함없이 separate hidden evaluator의 deterministic
+hidden/regression/scope/safety conjunction이다. 같은 run에는 hidden 결과를 feedback으로
+돌려 재수정하는 loop가 없으며 evaluator 도달 뒤 patch는 immutable하다.
+
+D-059 offline E2E는 dataset 밖 `csv-quoted-newline@2` fixture에서 이 sequence를 실제로
+실행한다. Agent가 registered `quoted-newline-case`를 선택하고 clean Docker image에서
+성공한 probe event를 만든 뒤, exact request에 제시된 그 event sequence를
+`review_task.targeted_validation`과 requirement evidence에 인용해야 한다. Probe stdout,
+profile ID, source/result CAS, image identity와 non-authoritative flag를 함께 검사한다.
+성공한 probe가 없으면 review가 probe evidence를 꾸며 내도록 요구하지 않으며, nominal
+token tail이 `run_probe`를 admission에서 제거한 경우 mandatory review/finish 경로로
+진행한다. 이 fixture 검사는 offline lifecycle evidence이지 provider 또는 task 성능
+평가가 아니다.
+
+V3/V6은 targeted unit/integration, Docker isolation, recovery, source-evidence/policy tamper,
+qualification과 historical byte-stability gate가 모두 통과하기 전에는 live pilot,
+memory-development, core experiment에 허용하지 않는다. Gate가 닫혀도 별도 suite/config,
+execution hash, 비용 검토와 승인이 필요하다. 기존 V1-V5 run과 qualification artifact에는
+새 check를 적용하거나 event를 합성하지 않는다.
 
 D-037 diagnostic suite의 machine consumer는 generic qualification과 별도로 다음 세 상태를
 낸다.
@@ -440,6 +488,22 @@ D-054 completion panel은 correctness gate가 아니라 runtime gate다.
   비용 검토 없이 비교 budget을 동결하지 않는다.
 - Panel 실패는 자동 재실행이나 즉시 추가 증액으로 이어지지 않는다. Terminal evidence를
   먼저 분석하고 새 suite/hash/승인을 별도로 만든다.
+
+D-060은 다음 calibration을 기존 campaign과 분리된
+`memory-development-no-memory-budget-pilot` purpose로 고정한다.
+
+- Task는 immutable V4 budget-terminal run에서 resource maximum을 기록한 HF Hub
+  `hf-hub-xet-endpoint-propagation`, PDM `pdm-ignore-active-venv-resolution`, pyfakefs
+  `pyfakefs-makedirs-parent-traversal` 세 개다. pyfakefs가 total-token과 wall-clock 두 축을
+  차지하므로 task ID로 deduplicate한다.
+- 조건은 `no_memory`, task별 1회, tool v2/context v5이며 budget은
+  `40 model / 100 tool / 480,000 total token / 1,800초`, output 25,000이다.
+- `no-memory-budget-pilot-gate-v1`은 3/3 terminal·qualified·official evaluator arrival와
+  budget/infrastructure/qualification/diagnostic error 0을 요구한다. SCRR는 별도 보고한다.
+- 이 purpose는 prior pilot gate를 요구하지 않고 memory candidate를 만들지 않으며, 성공해도
+  final comparison denominator, fair budget 또는 memory admission을 자동으로 열지 않는다.
+- Frozen rate의 보수적 authorization reserve는
+  `(480,000 + 25,000) × $4.50/M = $2.2725`/run, 총 `$6.8175`, suite cap `$7`다.
 
 Paid execution은 config의 boolean으로 승인하지 않는다. Secret-free preflight가 출력한 exact
 execution hash를 사람이 검토한 뒤, 해당 invocation에만 `--approve-live-cost`와

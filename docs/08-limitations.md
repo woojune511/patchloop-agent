@@ -333,6 +333,46 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `tool-admission-blocked-v2` and `trace-source-evidence-v5` while retaining
   `trace-qualification-v2`. It is offline evidence only; no provider call has exercised it.
   Existing v1-v4 traces and replays are not rewritten.
+- D-056 implements an opt-in
+  `tool_schema_version=v3` / `phase-evidence-v6` self-validation path. D-057 narrows its
+  `run_probe`: only a `task-public-v2` registered bounded profile may accept ephemeral Python
+  source outside the target repository. Execution uses a dedicated repository-free image rather
+  than the task evaluator/SWE-bench image, binds its exact image ID and sanitized policy, and
+  applies a read-only checkout/root, masked Git metadata, no network/proxy/host secret/private
+  mount, non-root execution and a container-side timeout. It is optional, non-authoritative and
+  cannot replace a registered check or require a new test file. Its `review_task` is a hash-bound,
+  same-diff self-attestation
+  over public requirements and request-visible check/probe/diff evidence; it is not an LLM grader,
+  hidden-test predictor or success verdict. The separate deterministic evaluator remains the only
+  source of hidden/regression/scope/safety outcome, and same-run hidden feedback remains prohibited.
+  The canonical review body, not only its receipt, must be present in the finish request; later
+  same-diff validation invalidates it. Non-Docker unit/integration, lifecycle/recovery,
+  source-evidence/policy/leak qualification and v1-v5 historical compatibility tests pass.
+  On 2026-07-31 the clean image was rebuilt from current source and all three real-container
+  isolation E2E tests passed; the full suite completed with 702 passed and two Windows
+  symlink-capability skips. Offline mock run `run_36f90bda91b94d42` reached the official evaluator,
+  passed hidden/regression/scope/safety and verified one same-diff review with zero probe calls
+  because its historical v1 task has no registered profile. D-059 then added an infrastructure-only
+  `task-public-v2` fixture outside the frozen dataset. Final mock run `run_7e3c5af2ce8d498a`
+  selected its registered profile, executed a real clean-image probe, recorded `probe-ok`, cited
+  that event in the same-diff review and passed the separate official evaluator plus the dedicated
+  lifecycle check. The D-059 checkpoint suite was 706 passed with two Windows
+  symlink-capability skips.
+  The run's overall campaign qualification is intentionally false (19/26): it is mock/non-campaign
+  evidence and does not establish live-provider provenance or a leak-safe campaign trace. No live
+  provider call or campaign has used v3/v6, and OpenAI start/resume currently fail closed. The clean
+  image intentionally lacks task-specific dependencies, so some probes may fail to import a project
+  until a separately audited dependency image contract exists. Historical runs are not requalified
+  under D-056~D-059. D-061 closes a later pre-commit security audit finding: current code
+  prechecks the mutable tag but creates from the manifest-bound immutable image ID and verifies the
+  container's actual image before start. AST/audit checks are explicitly defense-in-depth because
+  Python reflection can bypass them; the hard child-process boundary is a trusted-parent-installed
+  seccomp filter plus PID limit 2. Current image
+  `sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`
+  passed host Docker E2E 5/5, including audit-hook-free subinterpreter process-spawn and
+  trusted-parent signal denial. This is offline/Docker boundary evidence, not evidence that
+  self-validation improves task success. The resulting full suite is 724 passed
+  with five Docker-environment and two Windows symlink-capability skips.
 - v2 `finish_task` now freezes exact submitted bytes in CAS before acceptance, binds that artifact
   through `SubmissionAccepted`, evaluator input and `RunResult`, and reconciles nine tested crash
   boundaries without duplicate lifecycle or DONE transition. Mini r2 exercised the normal live
@@ -377,6 +417,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   two-task, 600k no-memory completion panel. The separately approved provider campaign passed
   official evaluation, qualification and completion/headroom 2/2 for `$0.15682575`. It is
   immutable two-task calibration evidence, not a no-memory baseline or memory-effect result.
+- D-060 checks in the separate three-task budget-pilot purpose, exact suite and offline result
+  gate, but no provider run exists yet. The current worktree is dirty, so any hash computed before
+  a clean commit would bind the old commit identity without binding the uncommitted source bytes
+  and must not be approved. A clean no-call preflight must still verify the three actual Docker
+  image identities, OpenAI SDK, credential presence and pricing age. Passing the future 3/3 runtime
+  gate would not itself establish SCRR, a final comparison budget, memory benefit or permission to
+  build the memory index.
 - `model-generation-block-v2` covers admission to the next provider generation. A model response
   whose measured duration itself crosses the wall limit and a later call inside the same
   multi-tool response that encounters the tool cap still terminate through the older

@@ -36,6 +36,14 @@ smoke replays are deterministic test fixtures, not captured live-model responses
 uv run patchloop doctor
 docker pull python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
 docker build --network=none --provenance=false -f docker/Dockerfile.sandbox -t patchloop-sandbox:py312 docker
+docker image inspect patchloop-sandbox:py312 --format "{{.Id}}"
+uv run pytest -q -p no:cacheprovider `
+  tests/test_sandbox.py::test_docker_sandbox_has_no_network `
+  tests/test_sandbox.py::test_docker_sandbox_is_non_root_read_only_and_does_not_forward_host_secret `
+  tests/test_sandbox.py::test_docker_probe_is_non_root_networkless_and_workspace_read_only `
+  tests/test_sandbox.py::test_docker_probe_runtime_and_kernel_process_boundaries `
+  tests/test_agent_runtime.py::test_offline_v3_profile_agent_executes_real_probe_and_review
+docker ps -aq --filter label=io.patchloop.managed=probe
 uv run patchloop eval-task tasks/smoke/csv-quoted-newline `
   --patch tasks/smoke/csv-quoted-newline/reference.patch --backend docker
 ```
@@ -43,7 +51,10 @@ uv run patchloop eval-task tasks/smoke/csv-quoted-newline `
 The Dockerfile pins the base digest used by the 2026-07-23 evaluator gate. Before a frozen experiment,
 re-audit the base digest deliberately and record the built image digest in the experiment manifest; do not
 silently float the tag. A Docker result is official only when the daemon is available and the evaluator
-actually runs with the Docker backend.
+actually runs with the Docker backend. The five-test command must pass after the image build, and the final
+managed-probe query must print no container IDs. It covers the profile-bearing probe/review lifecycle and
+the D-061 immutable-image, read-only/networkless and kernel process-boundary contracts that the earlier
+general pytest command may skip when Docker is unavailable.
 
 If Docker Desktop is installed per-user outside `PATH`, `patchloop doctor` checks its standard Windows
 location. Set `PATCHLOOP_DOCKER_CLI` to an existing CLI path for a non-standard install.
@@ -108,6 +119,9 @@ is preserved separately under `reports/live-pilot/`:
 - `experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`: consumed D-054/D-055
   Babel+Moto completion panel; 2/2 scope-compliant success and qualification, inspection only,
   never rerun
+- `experiments/dev-no-memory-budget-pilot-20260731-r1.yaml`: current unexecuted D-060
+  HF Hub/PDM/pyfakefs no-memory calibration; the checked-in config is inspectable but is not paid
+  execution authorization
 
 Superseded and pending D-052 contracts remain checked in for provenance:
 
@@ -153,9 +167,23 @@ It must report `HISTORICAL_SUITE_IMMUTABLE`. Do not add `--approve-live-cost` or
 `--approved-execution-hash`, delete its journal/result or reuse the consumed hash. The portable
 aggregate is
 [`dev-validation-gpt54mini-completion-v6-20260731-r1.json`](../reports/live-pilot/dev-validation-gpt54mini-completion-v6-20260731-r1.json).
-No next paid suite is checked in yet. The provisional three-task memory-development calibration
-requires a new config, execution hash, cost review and explicit approval; do not attempt the
-pending v5 development template or core template.
+
+Inspect the current D-060 calibration and obtain its no-call preflight evidence with:
+
+```powershell
+git status --short
+uv run patchloop evaluate `
+  --suite experiments/dev-no-memory-budget-pilot-20260731-r1.yaml `
+  --preflight-only
+```
+
+`--preflight-only` never constructs the agent or calls the provider. On an otherwise ready host,
+the unapproved inspection must remain blocked by `LIVE_COST_NOT_APPROVED` and
+`APPROVAL_HASH_MISMATCH` while reporting the candidate execution hash. A hash is approval-ready
+only after the worktree is clean and the preflight binds the real Docker image identities,
+installed OpenAI SDK and pricing verified within 72 hours. Do not add the approval flags or start
+the suite until the user separately approves that exact hash. Do not run the pending v5
+development template or core template.
 
 Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENAI_BASE_URL` and
 `OPENAI_API_BASE` unset. The historical r1 inspection-only preflight is:

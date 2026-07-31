@@ -65,12 +65,55 @@ def _event_summary(event: RunEvent) -> str:
             if payload.get("timed_out") is True:
                 check_state = "timed out"
             return f"run_check {check_state}{suffix}"
+        if tool == "run_probe":
+            probe_state = (
+                "timed out"
+                if payload.get("timed_out") is True
+                else "passed"
+                if payload.get("passed") is True
+                else "failed"
+            )
+            profile = payload.get("probe_id")
+            profile_label = f" · {profile}" if profile else ""
+            return (
+                f"temporary probe {probe_state}{profile_label} · "
+                "dedicated clean image · non-authoritative"
+            )
+        if tool == "review_task":
+            if event.type == EventType.TOOL_SUCCEEDED:
+                requirements = payload.get("requirement_count")
+                validations = payload.get("targeted_validation_count")
+                risks = payload.get("residual_risk_count")
+                counts = (
+                    f" · {requirements} requirements / "
+                    f"{validations} validations / {risks} residual risks"
+                    if all(
+                        isinstance(value, int)
+                        for value in (
+                            requirements,
+                            validations,
+                            risks,
+                        )
+                    )
+                    else ""
+                )
+                return (
+                    "structured public-evidence review recorded"
+                    f"{counts}"
+                )
+            return "structured review rejected"
         if payload.get("passed") is not None:
             suffix += f" · passed={str(payload['passed']).lower()}"
         return f"{tool} {event.type.value.removeprefix('Tool').lower()}{suffix}"
     if event.type == EventType.PATCH_APPLIED:
         return f"Patch applied · {payload.get('patch_hash', 'hash unavailable')}"
     if event.type == EventType.REVIEW_RECORDED:
+        if payload.get("self_attestation") is True:
+            return (
+                "Structured self-review and final diff were bound to "
+                f"submission · review event "
+                f"{payload.get('source_task_review_sequence', '?')}"
+            )
         return (
             "Complete final diff was presented and review was recorded · "
             f"source event {payload.get('source_get_diff_sequence', '?')}"
@@ -259,7 +302,8 @@ def _build_trace_view(
         if event.type in critical_types
         or (
             event.type == EventType.TOOL_SUCCEEDED
-            and event.payload.get("tool") in {"run_check", "get_diff"}
+            and event.payload.get("tool")
+            in {"run_check", "get_diff", "run_probe", "review_task"}
         )
     ]
     review_events = [
@@ -292,7 +336,7 @@ def _build_trace_view(
                 "recorded outcome"
             ),
         }
-    elif tool_schema_version == "v2":
+    elif tool_schema_version in {"v2", "v3"}:
         submission = {
             "tone": "neutral",
             "label": "submission not attempted",
@@ -309,12 +353,20 @@ def _build_trace_view(
     review = {
         "tone": "completed" if review_events else "neutral",
         "label": (
-            "final diff review recorded"
+            "structured self-review bound to final diff"
+            if (
+                review_events
+                and review_events[-1].payload.get(
+                    "self_attestation"
+                )
+                is True
+            )
+            else "final diff review recorded"
             if review_events
             else "final diff review not recorded"
             if lifecycle_available
             else "final diff review not reached"
-            if tool_schema_version == "v2"
+            if tool_schema_version in {"v2", "v3"}
             else "legacy review telemetry unavailable"
         ),
     }
@@ -329,6 +381,11 @@ def _build_trace_view(
             "review": review,
             "submission": submission,
             "rejected_count": len(rejected_events),
+            "probe_count": sum(
+                event.type == EventType.TOOL_SUCCEEDED
+                and event.payload.get("tool") == "run_probe"
+                for event in events
+            ),
         },
         "telemetry": {
             "available": bool(telemetry_events),

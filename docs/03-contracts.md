@@ -59,6 +59,35 @@ visible_checks:
   - id: typecheck
 ```
 
+`task-public-v1`은 historical/frozen task 계약이며 `probe_profiles` field를 빈 배열로도
+허용하지 않는다. Agent-authored diagnostic을 명시적으로 허용하는 새 task만
+`task-public-v2`를 사용한다.
+
+```yaml
+schema_version: task-public-v2
+# v1의 repository/issue/constraints/visible_checks는 동일하게 유지
+probe_profiles:
+  - id: python-edge-cases
+    runtime: ephemeral-python-v1
+    timeout_seconds: 30       # 1..60
+    output_limit_bytes: 64000 # 최대 64 KB
+    source_limit_bytes: 12000 # UTF-8 bytes 기준 최대 12 KB
+```
+
+Profile은 실행 command나 image를 task가 선택하게 하지 않는다. Harness가 고정한
+repository-free image와 trusted wrapper만 사용하며, profile은 public opt-in ID와 더 낮출
+수만 있는 timeout/output/source bound를 등록한다. V2는 profile을 최소 하나 요구하고 ID
+중복을 거부한다. Probe profile은 visible check가 아니며 authoritative acceptance를 만들지
+않는다.
+
+D-059의 checked-in contract fixture는
+`fixtures/task-packages/self-validation-csv-quoted-newline`의
+`csv-quoted-newline@2`다. 이 package는 같은 작은 calibration issue를 이용해 profile
+lifecycle을 결정적으로 검사할 뿐 새로운 research task가 아니다. 따라서 `tasks/` 밖에
+두고 `data/dataset-manifest.yaml`에 등록하지 않으며 calibration, memory-development,
+held-out, core 또는 headline task로 셀 수 없다. Loader와 agent resume은 exact
+`task_id + task_version + public_spec_hash`로 이 fixture를 식별한다.
+
 ### Private evaluator spec
 
 ```yaml
@@ -265,6 +294,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `development-validation-live-pilot` | Consumed D-054: Babel #1042 + Moto #7208, `no_memory`, task별 repetition 1, 총 2 run, $6 상한. Historical IDs는 당시 task/budget 계약으로만 읽고 재실행 금지 |
 | `development-validation-model-candidate-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, dated candidate model, $2 상한; primary campaign gate와 분리된 historical diagnostic lane |
 | `memory-development-no-memory` | frozen memory-development 여섯 task, `no_memory`, repetition 2, 총 12 run, $20 상한 |
+| `memory-development-no-memory-budget-pilot` | V4 budget-terminal resource maxima로 고정한 HF Hub/PDM/pyfakefs, `no_memory`, repetition 1, 총 3 run, $7 상한; memory source와 comparison denominator에서 제외 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -335,6 +365,20 @@ trace는 끝까지 실행된 evidence로 보존하되 후속 fair comparison bud
 Headroom pass도 후속 budget freeze의 필요조건일 뿐 충분조건이 아니다. 두
 development-validation task의 관찰값을 memory-development 표본에 그대로 일반화하지 않고,
 별도의 동일조건 no-memory baseline pilot과 비용 검토를 거쳐 비교 budget을 동결한다.
+
+새 resource-stratified budget pilot은
+[`dev-no-memory-budget-pilot-20260731-r1.yaml`](../experiments/dev-no-memory-budget-pilot-20260731-r1.yaml)에
+세 canonical task와 `40 model / 100 tool / 480,000 total token / 1,800초`,
+per-call output 25,000을 고정한다. 이 별도 purpose는 선행 qualified pilot을 요구하지 않아
+자기 자신을 승인해야 하는 순환 gate를 만들지 않으며, 실패해도
+`memory_candidate_eligible`이 되지 않는다. Approved plan qualification은 세 task row와
+seeded schedule 전체를 다시 계산한다.
+
+Result의 `no-memory-budget-pilot-gate-v1`은 expected run 3, terminal·qualified·official
+evaluator arrival 3/3과 infrastructure/qualification/diagnostic/budget-terminal error 0을
+요구한다. `task_successes`는 별도 관찰값이며 gate 필수조건이 아니다.
+`comparison_denominator_eligible=false`와 `memory_admission_unlocked=false`는 이 진단
+결과가 final baseline이나 memory admission을 자동으로 열지 않음을 명시한다.
 
 Paid approval은 checked-in YAML 상태가 아니다. `live_cost_approved`와
 `approved_execution_hash`는 이전 schema를 읽기 위한 deprecated field이며 값을 바꿔도 실행
@@ -640,6 +684,7 @@ budget:
 environment:
   agent_image_digest: "sha256:..."
   evaluator_image_digest: "sha256:..."
+  probe_image_digest: "sha256:..." # v3/v6 + registered probe profile일 때만
   network_enabled: false
   cpu_limit: 2
   memory_limit: 2g
@@ -661,6 +706,22 @@ Manifest는 run 시작 전에 finalize하며 이후 수정하지 않는다. 계�
 `provider: replay`인 경우 `model_id`는 `replay:<repository-relative-jsonl-path>` 형식이고
 `replay_hash`는 해당 JSONL bytes의 SHA-256이다. Resume은 둘을 다시 검증해 source가 이동하거나
 변조된 경우 실행을 거부한다. 다른 provider에서는 `replay_hash`를 허용하지 않는다.
+
+D-056 self-validation은 explicit opt-in pair인 `tool_schema_version=v3`와
+`context_policy_version=phase-evidence-v6`을 함께 요구한다. 한쪽만 선택한 manifest는
+reject한다. Current frozen experiment와 historical V1-V5 manifest는 기존 version/hash로
+그대로 해석하며 v3/v6 field나 event를 합성하지 않는다. Probe를 실제 실행하는 manifest는
+dedicated clean image의 strict SHA-256 image ID를 `probe_image_digest`에 고정한다. Offline
+gate가 닫히기 전에는 OpenAI provider, paid preflight와 experiment campaign이 이 pair를
+허용하지 않으며 start와 resume 모두 코드에서 거부한다.
+
+D-059 offline fixture run은 public spec
+`sha256:e72110791ac062f719a26c5b3d68d32152a5d82ede75a9971f667138f9bde926`,
+private spec
+`sha256:c1727483c0a496cde1765a55204b922ca7874973b937a2d9658121b5c938099c`와
+clean image
+`sha256:268495717da1396e3413ce6695063c9516202b4e38cb8042f2f181420b64e9c1`을
+결속했다. 이 offline evidence는 위 live-provider 금지를 해제하지 않는다.
 
 Approved suite가 만든 run은 optional `experiment` context를 반드시 채운다.
 
@@ -780,6 +841,29 @@ reserved_tokens =
 corrective tail로 닫힌다. Equality도 차단 경계에 포함한다. 이 계산은 completion
 guarantee가 아니며, generation admission의 strict exact request + full 25,000 response
 allowance 검사는 독립적으로 그대로 수행한다.
+
+`phase-evidence-v6`는 V5의 investigation/token-tail 의미를 바꾸지 않고 v3
+self-validation lifecycle만 추가한다. V6은 mandatory `review_task` generation/tool을 위해
+V5보다 nominal corrective tail에 model turn 1개와 tool call 1개를 추가로 예약한다. V5
+projection과 historical evidence는 바꾸지 않는다. Machine-readable required sequence는
+다음과 같다.
+
+```text
+PatchApplied
+→ every registered visible check passes on the current diff
+→ get_diff succeeds on that diff and is presented untruncated
+→ review_task records same-request public evidence on that diff
+→ the review_task result is presented untruncated
+→ finish_task
+```
+
+`run_probe`는 위 sequence의 필수 단계가 아니다. 실행된 probe는 active mutation epoch와
+`worktree_diff_hash`에 결속되며 `review_task.targeted_validation`이 인용할 수 있지만,
+registered check를 대신하거나 hidden acceptance를 추정하는 authoritative verdict가 아니다.
+V6 context/build/source evidence는 probe source/result와 review input/result의 CAS identity,
+source event sequence, request artifact와 diff hash를 기록한다. Private spec, hidden
+assertion, reference patch나 evaluator result를 context 또는 review에 넣으면 qualification을
+fail closed한다.
 
 새 live `ModelCalled` event는 `prompt_telemetry_version: prompt-token-integrity-v1`과 함께
 다음을 기록한다.
@@ -995,6 +1079,89 @@ Result 공통 필드:
 `worktree_diff_hash`가 반드시 들어간다. Registered check가 tracked worktree를 바꾸면
 그 결과를 acceptance evidence로 사용하지 않고 recovery error로 fail-closed한다.
 
+### `run_probe` (tool schema v3, optional)
+
+```json
+{
+  "probe_id": "python-edge-cases",
+  "source": "from package import api\nassert api.public_behavior() == expected"
+}
+```
+
+Probe source는 repository file이 아니라 normalized tool input/CAS artifact다. `probe_id`는
+같은 public task의 registered `probe_profiles`에 있어야 하며 model이 timeout, command나
+image를 선택하지 않는다. Gateway는 Local backend에서 이를 실행하지 않고 dedicated
+repository-free `patchloop-sandbox:py312`에서만 허용한다. Task evaluator/SWE-bench image는
+사용하지 않는다. Gateway는 source AST에서 `subprocess`/`os`/`pty`/`ctypes` 계열의 직접
+import, process-spawn attribute와 `eval`/`exec`/`compile`/dynamic import의 직접 call을
+거부한다. Bootstrap audit hook도 흔한 alias와 indirect import를 조기에 거부하지만,
+reflection·subinterpreter가 가능한 Python-level hook을 hard security boundary로 간주하지
+않는다. Trusted runner가 source를 compile한 뒤 untrusted child를 한 번 fork하고, 그
+child에 `no_new_privs`와 `seccomp-bpf-v1`을 설치해 fork/clone/exec, parent signal과
+process trace syscall을 kernel에서 `EPERM`으로 막는 것이 executable process boundary다.
+
+Container는 target checkout을 read-only로 mount하고 network, proxy credential, host
+credential과 evaluator/private mount를 받지 않으며 read-only root와 bounded `/tmp`를
+사용한다. Non-root/cap-drop/no-new-privileges, PID limit 2와 trusted-parent timeout을
+적용하고 stale container를 회수한다. Mutable tag identity가 manifest-bound ID와 같은지
+precheck하고, 그 exact `sha256:...` ID로 container를 create한 뒤 실제 `.Image`가
+일치해야만 start한다.
+`ephemeral-python-probe-v2` 호출의 `ephemeral-python-probe-result-v2` result는 exit status,
+timeout, truncation, bounded stdout/stderr, exact `probe-execution-policy-v2` artifact,
+`source_hash`와 invocation 시점 `worktree_diff_hash`를 가진다. Probe가 target source를
+수정하거나 새 tracked/untracked file을 제출 patch에 남길 수 없어야 한다.
+
+Probe 성공은 public hypothesis에 대한 보조 evidence일 뿐 `RegisteredCheck`,
+`VerifierResult`, hidden acceptance나 SCRR bit가 아니다. `run_probe`를 호출하지 않은
+run도 valid할 수 있으며 매 run에 새 test file을 작성할 의무도 없다.
+Probe container는 real non-symlink `.git` checkout만 받고 `/workspace/.git`을 empty
+tmpfs로 가려 repository history를 validation evidence나 solution source로 사용할 수 없다.
+Clean image에 task-specific dependency가 없으므로 일부 import probe는 의도적으로 실패할
+수 있다. Dependency를 추가하려면 evaluator image 재사용이 아니라 새 audited image 계약이
+필요하다.
+
+### `review_task` (tool schema v3)
+
+```json
+{
+  "requirements": [
+    {
+      "requirement": "Public behavior named in the issue remains supported",
+      "status": "verified",
+      "evidence_event_sequences": [42, 47],
+      "notes": "The public check and final diff cover the required behavior."
+    }
+  ],
+  "targeted_validation": [
+    {
+      "kind": "registered_check",
+      "event_sequence": 42,
+      "outcome": "passed",
+      "notes": "The current-diff visible check passed."
+    }
+  ],
+  "residual_risks": [
+    "Unobserved inputs remain for the separate evaluator"
+  ]
+}
+```
+
+`review_task`는 REVIEW phase에서만 성공한다. Latest mutation 뒤 current-diff registered
+check가 모두 pass하고, 그 뒤의 complete `get_diff` result가 이 exact model request에
+포함돼야 한다. Requirement와 validation reference는 같은 request가 실제로 볼 수 있었던
+public event/result sequence만 가리키며, 최소 하나의 targeted validation은 current-diff
+registered check 또는 optional probe를 인용한다. Hidden/private/evaluator artifact identity는
+입력·출력에 허용하지 않는다.
+
+성공 result는 canonical `task-review-v1` 본문, current `worktree_diff_hash`, latest mutation
+sequence, source `get_diff` sequence, request artifact identity와 review content hash를
+보존한다. Review input은 8,000 UTF-8 bytes, context에 제시될 전체 result는 12,000 bytes를
+넘지 못한다. 따라서 다음 stateless `finish_task` request는 단순 receipt가 아니라 실제
+requirement·validation·residual-risk 본문을 완전하게 다시 본다. 이것은 model 자기점검을
+inspectable하게 만드는 self-attestation이며 truth verdict나 deterministic grade가 아니다.
+Qualifier는 citation, 본문 재제시와 lifecycle binding을 검증하지만 review 문장의 의미적
+정답 여부를 LLM으로 채점하지 않는다.
+
 ### `finish_task`
 
 ```json
@@ -1011,6 +1178,17 @@ AND get_diff succeeded after those latest check events on the same diff
 AND that get_diff tool result was available and untruncated in this model request
 AND current phase is REVIEW
 ```
+
+Tool schema v3/context v6에서는 위 조건에 다음을 더한다.
+
+```text
+AND review_task succeeded after the final get_diff on the same mutation epoch/diff
+AND that review_task result was available and untruncated in this finish_task request
+```
+
+V3/V6의 `ReviewRecorded`는 source `review_task` sequence/artifact와 canonical review
+content hash를 참조한다. 기존 v1/v2 lifecycle의 procedural `ReviewRecorded` 의미와
+artifact hash는 바꾸지 않는다.
 
 성공 시 exact patch bytes를 CAS에 먼저 동결하고 `ReviewRecorded → SubmissionAttempted
 → ToolSucceeded → SubmissionAccepted → REVIEW→DONE → CheckpointSaved` lifecycle을

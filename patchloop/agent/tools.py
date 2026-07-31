@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ast
 import copy
 import json
 import os
@@ -30,13 +31,16 @@ from patchloop.agent.investigation import (
     tool_admission_schema,
     validate_inspection_arguments,
 )
+from patchloop.agent.phases import diff_bound_evidence
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
     Checkpoint,
     EventType,
     FaultSpec,
+    Phase,
     PublicTask,
+    RegisteredProbeProfile,
     ToolResult,
 )
 from patchloop.errors import (
@@ -46,7 +50,7 @@ from patchloop.errors import (
     RecoveryError,
 )
 from patchloop.repository import WorkspaceManager
-from patchloop.sandbox.runner import Sandbox
+from patchloop.sandbox.runner import Sandbox, probe_execution_policy
 from patchloop.state import StateStore
 from patchloop.util import (
     canonical_json,
@@ -167,13 +171,206 @@ TOOL_SCHEMAS_V2.append(
         "strict": True,
     }
 )
+TOOL_SCHEMAS_V3: list[dict[str, Any]] = copy.deepcopy(TOOL_SCHEMAS_V2)
+finish_index = next(
+    index
+    for index, item in enumerate(TOOL_SCHEMAS_V3)
+    if item["name"] == "finish_task"
+)
+TOOL_SCHEMAS_V3[finish_index:finish_index] = [
+    {
+        "type": "function",
+        "name": "run_probe",
+        "description": (
+            "Run an ephemeral Python reproducer in the isolated, network-disabled, "
+            "read-only sandbox using one task-registered public probe profile. "
+            "The source is stored as trace evidence outside the repository and "
+            "is never included in the submitted patch."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "probe_id": {"type": "string", "minLength": 1},
+                "source": {"type": "string", "minLength": 1, "maxLength": 12000},
+            },
+            "required": ["probe_id", "source"],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+    {
+        "type": "function",
+        "name": "review_task",
+        "description": (
+            "Record a structured public-requirement review bound to the current "
+            "diff and the complete get_diff result shown in this request. Cite "
+            "exact event sequences and disclose residual risks."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "requirements": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "requirement": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 1000,
+                            },
+                            "status": {
+                                "type": "string",
+                                "enum": [
+                                    "verified",
+                                    "partially_verified",
+                                    "unverified",
+                                ],
+                            },
+                            "evidence_event_sequences": {
+                                "type": "array",
+                                "maxItems": 20,
+                                "items": {"type": "integer", "minimum": 1},
+                            },
+                            "notes": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 2000,
+                            },
+                        },
+                        "required": [
+                            "requirement",
+                            "status",
+                            "evidence_event_sequences",
+                            "notes",
+                        ],
+                        "additionalProperties": False,
+                    },
+                },
+                "targeted_validation": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "probe",
+                                    "registered_check",
+                                    "repository_evidence",
+                                ],
+                            },
+                            "event_sequence": {
+                                "type": "integer",
+                                "minimum": 1,
+                            },
+                            "outcome": {
+                                "type": "string",
+                                "enum": ["passed", "failed", "inconclusive"],
+                            },
+                            "notes": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 2000,
+                            },
+                        },
+                        "required": [
+                            "kind",
+                            "event_sequence",
+                            "outcome",
+                            "notes",
+                        ],
+                        "additionalProperties": False,
+                    },
+                },
+                "residual_risks": {
+                    "type": "array",
+                    "maxItems": 20,
+                    "items": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 1000,
+                    },
+                },
+            },
+            "required": [
+                "requirements",
+                "targeted_validation",
+                "residual_risks",
+            ],
+            "additionalProperties": False,
+        },
+        "strict": True,
+    },
+]
+next(
+    item for item in TOOL_SCHEMAS_V3 if item["name"] == "finish_task"
+)["description"] = (
+    "Submit the current patch for deterministic evaluation. Call only after "
+    "registered checks, complete get_diff review, and a same-diff review_task "
+    "artifact have all been presented on the required turns."
+)
 TOOL_SCHEMAS = TOOL_SCHEMAS_V2
 
 _EVENT_ERROR_MESSAGE_LIMIT = 2_000
 _INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v4",
     "phase-evidence-v5",
+    "phase-evidence-v6",
 }
+_TOKEN_TAIL_CONTEXT_POLICIES = {
+    "phase-evidence-v5",
+    "phase-evidence-v6",
+}
+_STRUCTURED_TOOL_SCHEMAS = {"v2", "v3"}
+_SELF_VALIDATION_TOOL_SCHEMA = "v3"
+_PROBE_SOURCE_LIMIT_BYTES = 12_000
+_PROBE_OUTPUT_LIMIT_BYTES = 64_000
+_REVIEW_INPUT_LIMIT_BYTES = 8_000
+_PROBE_DENIED_IMPORT_ROOTS = {
+    "_posixsubprocess",
+    "commands",
+    "ctypes",
+    "importlib",
+    "multiprocessing",
+    "os",
+    "pty",
+    "runpy",
+    "subprocess",
+}
+_PROBE_DENIED_CALL_NAMES = {
+    "__import__",
+    "breakpoint",
+    "compile",
+    "eval",
+    "exec",
+}
+_PROBE_DENIED_ATTRIBUTE_NAMES = {
+    "CDLL",
+    "Popen",
+    "PyDLL",
+    "__builtins__",
+    "__code__",
+    "__globals__",
+    "__import__",
+    "__subclasses__",
+    "fork",
+    "forkpty",
+    "kill",
+    "killpg",
+    "popen",
+    "pythonapi",
+    "system",
+}
+_PROBE_DENIED_ATTRIBUTE_PREFIXES = (
+    "exec",
+    "posix_spawn",
+    "spawn",
+)
 _UNSUPPORTED_PATCH_METADATA = (
     "new file mode ",
     "old mode ",
@@ -183,6 +380,95 @@ _UNSUPPORTED_PATCH_METADATA = (
     "copy from ",
     "copy to ",
 )
+
+
+def _validate_probe_source_policy(source: str) -> None:
+    """Reject source-level access to process and dynamic-code capabilities."""
+
+    try:
+        tree = ast.parse(source, filename="<patchloop-probe>", mode="exec")
+    except SyntaxError as exc:
+        raise ContractError(
+            f"run_probe source is not valid Python: {exc.msg}"
+        ) from exc
+
+    def reject(node: ast.AST, capability: str) -> None:
+        raise PolicyViolation(
+            "run_probe source requests a forbidden execution capability",
+            details={
+                "stage": "probe",
+                "reason": "probe_source_policy_violation",
+                "capability": capability,
+                "line": getattr(node, "lineno", None),
+                "column": getattr(node, "col_offset", None),
+                "guidance": (
+                    "Use pure Python assertions and repository imports only. "
+                    "Direct process, OS-command, native-loading, and "
+                    "dynamic-code constructs are rejected before dispatch; "
+                    "the Docker kernel boundary is authoritative."
+                ),
+            },
+        )
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                root = alias.name.split(".", 1)[0]
+                if root in _PROBE_DENIED_IMPORT_ROOTS:
+                    reject(node, f"import:{root}")
+        elif isinstance(node, ast.ImportFrom):
+            root = (node.module or "").split(".", 1)[0]
+            if root in _PROBE_DENIED_IMPORT_ROOTS:
+                reject(node, f"import:{root}")
+        elif isinstance(node, ast.Call):
+            function = node.func
+            if (
+                isinstance(function, ast.Name)
+                and function.id in _PROBE_DENIED_CALL_NAMES
+            ):
+                reject(node, f"call:{function.id}")
+            if (
+                isinstance(function, ast.Name)
+                and function.id == "getattr"
+                and len(node.args) >= 2
+                and isinstance(node.args[1], ast.Constant)
+                and node.args[1].value
+                in {
+                    "__import__",
+                    "compile",
+                    "eval",
+                    "exec",
+                }
+            ):
+                reject(
+                    node,
+                    f"dynamic-lookup:{node.args[1].value}",
+                )
+            if isinstance(function, ast.Attribute):
+                attribute = function.attr
+                if (
+                    attribute in _PROBE_DENIED_ATTRIBUTE_NAMES
+                    or attribute.startswith(
+                        _PROBE_DENIED_ATTRIBUTE_PREFIXES
+                    )
+                ):
+                    reject(node, f"call-attribute:{attribute}")
+        elif (
+            isinstance(node, ast.Attribute)
+            and node.attr
+            in {
+                "__builtins__",
+                "__code__",
+                "__globals__",
+                "__subclasses__",
+            }
+        ):
+            reject(node, f"attribute:{node.attr}")
+        elif (
+            isinstance(node, ast.Name)
+            and node.id == "__builtins__"
+        ):
+            reject(node, "name:__builtins__")
 
 
 def _header_path(header: str) -> str:
@@ -335,7 +621,18 @@ class ToolGateway:
         self.context_policy_version = context_policy_version
         self.fault = fault or FaultSpec()
 
-    def execute(self, name: str, action_id: str, arguments: dict[str, Any]) -> ToolResult:
+    def execute(
+        self,
+        name: str,
+        action_id: str,
+        arguments: dict[str, Any],
+        *,
+        execution_context: dict[str, Any] | None = None,
+    ) -> ToolResult:
+        if name != "review_task" and execution_context is not None:
+            raise ContractError(
+                "execution context is reserved for review_task"
+            )
         input_hash = sha256_text(canonical_json({"tool": name, "input": arguments}))
         prior = self.state.get_action_result(self.run_id, action_id, input_hash)
         if prior is not None:
@@ -343,7 +640,8 @@ class ToolGateway:
                 self.run_id,
                 (
                     EventType.TOOL_REPLAYED
-                    if self.tool_schema_version == "v2"
+                    if self.tool_schema_version
+                    in _STRUCTURED_TOOL_SCHEMAS
                     else (
                         EventType.TOOL_SUCCEEDED
                         if prior.status == "succeeded"
@@ -384,7 +682,7 @@ class ToolGateway:
         )
         if (
             self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES
-            and name in {"read_file", "search_files"}
+            and name in {"read_file", "search_files", "run_probe"}
             and self._inspection_short_circuit_eligible(
                 name,
                 arguments,
@@ -400,16 +698,17 @@ class ToolGateway:
             )
             if blocked is not None:
                 return blocked
-            semantic_replay = self._semantic_inspection_replay(
-                name=name,
-                action_id=action_id,
-                arguments=arguments,
-                input_hash=input_hash,
-                normalized_call_hash=normalized_call_hash,
-                worktree_diff_hash=worktree_diff_hash,
-            )
-            if semantic_replay is not None:
-                return semantic_replay
+            if name in {"read_file", "search_files"}:
+                semantic_replay = self._semantic_inspection_replay(
+                    name=name,
+                    action_id=action_id,
+                    arguments=arguments,
+                    input_hash=input_hash,
+                    normalized_call_hash=normalized_call_hash,
+                    worktree_diff_hash=worktree_diff_hash,
+                )
+                if semantic_replay is not None:
+                    return semantic_replay
         prior_calls = [
             event
             for event in self.state.list_events(self.run_id)
@@ -440,18 +739,37 @@ class ToolGateway:
         started = utc_now()
         patch_artifact: Artifact | None = None
         input_artifact: Artifact | None = None
-        if self.tool_schema_version == "v2" and name != "apply_patch":
+        probe_source_artifact: Artifact | None = None
+        if (
+            self.tool_schema_version in _STRUCTURED_TOOL_SCHEMAS
+            and name != "apply_patch"
+        ):
+            input_document: dict[str, Any] = {
+                "tool": name,
+                "input": arguments,
+            }
+            if execution_context is not None:
+                input_document["execution_context"] = execution_context
             input_artifact = self.artifacts.put_json(
-                {"tool": name, "input": arguments}
+                input_document
             )
         if (
-            self.tool_schema_version == "v2"
+            self.tool_schema_version in _STRUCTURED_TOOL_SCHEMAS
             and name == "apply_patch"
             and isinstance(arguments.get("patch"), str)
         ):
             patch_artifact = self.artifacts.put_text(
                 str(arguments["patch"]),
                 media_type="text/x-diff",
+            )
+        if (
+            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            and name == "run_probe"
+            and isinstance(arguments.get("source"), str)
+        ):
+            probe_source_artifact = self.artifacts.put_text(
+                str(arguments["source"]),
+                media_type="text/x-python",
             )
         call_payload: dict[str, Any] = {
             "tool": name,
@@ -461,6 +779,15 @@ class ToolGateway:
         if self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES:
             call_payload["worktree_diff_hash"] = worktree_diff_hash
             call_payload["execution"] = "dispatched"
+        if execution_context is not None:
+            call_payload.update(
+                {
+                    "request_artifact_id": execution_context.get(
+                        "request_artifact_id"
+                    ),
+                    "request_phase": execution_context.get("phase"),
+                }
+            )
         if input_artifact is not None:
             call_payload["input_artifact"] = input_artifact.model_dump(
                 mode="json"
@@ -472,6 +799,17 @@ class ToolGateway:
         elif input_artifact is not None:
             call_payload["artifact_id"] = input_artifact.artifact_id
             call_payload["artifact_path"] = input_artifact.path
+        if probe_source_artifact is not None:
+            call_payload["source_artifact"] = (
+                probe_source_artifact.model_dump(mode="json")
+            )
+            call_payload["source_hash"] = (
+                probe_source_artifact.content_hash
+            )
+            call_payload["probe_policy_version"] = (
+                "ephemeral-python-probe-v2"
+            )
+            call_payload["probe_id"] = arguments.get("probe_id")
         self.state.append_event(
             self.run_id,
             EventType.TOOL_CALLED,
@@ -481,7 +819,8 @@ class ToolGateway:
         )
         try:
             if (
-                self.tool_schema_version == "v2"
+                self.tool_schema_version
+                in _STRUCTURED_TOOL_SCHEMAS
                 and name == "apply_patch"
                 and patch_artifact is not None
             ):
@@ -503,7 +842,20 @@ class ToolGateway:
                     intent=intent,
                 )
             else:
-                output = self._dispatch(name, arguments)
+                if name == "review_task":
+                    output = self._dispatch(
+                        name,
+                        arguments,
+                        execution_context=execution_context,
+                    )
+                elif name == "run_probe":
+                    output = self._dispatch(
+                        name,
+                        arguments,
+                        probe_source_artifact=probe_source_artifact,
+                    )
+                else:
+                    output = self._dispatch(name, arguments)
             if (
                 self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES
                 and name in {"read_file", "search_files"}
@@ -516,9 +868,16 @@ class ToolGateway:
             artifact = self.artifacts.put_json(output)
             result_artifact = (
                 artifact.model_dump(mode="json")
-                if self.context_policy_version
-                in _INVESTIGATION_CONTEXT_POLICIES
-                and name in {"read_file", "search_files"}
+                if (
+                    self.context_policy_version
+                    in _INVESTIGATION_CONTEXT_POLICIES
+                    and name in {"read_file", "search_files"}
+                )
+                or (
+                    self.tool_schema_version
+                    == _SELF_VALIDATION_TOOL_SCHEMA
+                    and name in {"run_probe", "review_task"}
+                )
                 else None
             )
             result = ToolResult(
@@ -568,13 +927,16 @@ class ToolGateway:
         """
 
         try:
+            if name == "run_probe":
+                self._validate_probe_arguments(arguments)
+                return True
             validate_inspection_arguments(
                 self.workspace,
                 name,
                 arguments,
             )
             return True
-        except ContractError:
+        except (ContractError, PolicyViolation):
             return False
 
     def _inspection_admission_block(
@@ -589,7 +951,10 @@ class ToolGateway:
     ) -> ToolResult | None:
         events = self.state.list_events(self.run_id)
         manifest = self.state.get_manifest(self.run_id)
-        reserve = nominal_tail_reserve(self.task)
+        reserve = nominal_tail_reserve(
+            self.task,
+            context_policy_version=self.context_policy_version,
+        )
         policy_version = investigation_policy_version(
             self.context_policy_version
         )
@@ -609,7 +974,7 @@ class ToolGateway:
             manifest.budget.max_tool_calls - tool_calls_used
         )
         calculated_tail_policy = None
-        if self.context_policy_version == "phase-evidence-v5":
+        if self.context_policy_version in _TOKEN_TAIL_CONTEXT_POLICIES:
             calculated_tail_policy = tail_policy(
                 self.task,
                 None,
@@ -767,6 +1132,23 @@ class ToolGateway:
             "tool": name,
             "worktree_diff_hash": worktree_diff_hash,
         }
+        if name == "run_probe":
+            profile = self._validate_probe_arguments(arguments)
+            source_artifact = self.artifacts.put_text(
+                str(arguments["source"]),
+                media_type="text/x-python",
+            )
+            payload.update(
+                {
+                    "probe_id": profile.id,
+                    "probe_runtime": profile.runtime,
+                    "source_artifact": source_artifact.model_dump(
+                        mode="json"
+                    ),
+                    "source_hash": source_artifact.content_hash,
+                }
+            )
+            return self.artifacts.put_json(payload)
         if name == "read_file":
             path = str(arguments["path"])
             workspace = self.workspace.resolve()
@@ -1314,9 +1696,12 @@ class ToolGateway:
             error_message=str(error),
         )
 
-    @staticmethod
-    def _result_event_payload(name: str, result: ToolResult) -> dict[str, Any]:
-        return {
+    def _result_event_payload(
+        self,
+        name: str,
+        result: ToolResult,
+    ) -> dict[str, Any]:
+        payload = {
             "tool": name,
             "status": result.status,
             "artifact_id": result.output.get("artifact_id"),
@@ -1339,6 +1724,78 @@ class ToolGateway:
                 (result.finished_at - result.started_at).total_seconds() * 1000
             ),
         }
+        if (
+            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            and name in {"run_probe", "review_task"}
+        ):
+            payload.update(
+                {
+                    "truncated": result.output.get("truncated"),
+                    "exit_code": result.output.get("exit_code"),
+                    "original_output_bytes": result.output.get(
+                        "original_output_bytes"
+                    ),
+                    "source_hash": result.output.get("source_hash"),
+                    "source_artifact": result.output.get(
+                        "source_artifact"
+                    ),
+                    "probe_policy_version": result.output.get(
+                        "probe_policy_version"
+                    ),
+                    "probe_id": result.output.get("probe_id"),
+                    "probe_runtime": result.output.get(
+                        "probe_runtime"
+                    ),
+                    "timeout_seconds": result.output.get(
+                        "timeout_seconds"
+                    ),
+                    "output_limit_bytes": result.output.get(
+                        "output_limit_bytes"
+                    ),
+                    "source_limit_bytes": result.output.get(
+                        "source_limit_bytes"
+                    ),
+                    "execution_policy": result.output.get(
+                        "execution_policy"
+                    ),
+                    "review_schema_version": result.output.get(
+                        "review_schema_version"
+                    ),
+                    "review_artifact": result.output.get(
+                        "review_artifact"
+                    ),
+                    "review_content_hash": result.output.get(
+                        "review_content_hash"
+                    ),
+                    "requirement_count": result.output.get(
+                        "requirement_count"
+                    ),
+                    "targeted_validation_count": result.output.get(
+                        "targeted_validation_count"
+                    ),
+                    "residual_risk_count": result.output.get(
+                        "residual_risk_count"
+                    ),
+                    "request_artifact_id": result.output.get(
+                        "request_artifact_id"
+                    ),
+                    "mutation_event_sequence": result.output.get(
+                        "mutation_event_sequence"
+                    ),
+                    "source_get_diff_sequence": result.output.get(
+                        "source_get_diff_sequence"
+                    ),
+                    "self_attestation": result.output.get(
+                        "self_attestation"
+                    ),
+                    "deterministic_correctness_claimed": (
+                        result.output.get(
+                            "deterministic_correctness_claimed"
+                        )
+                    ),
+                }
+            )
+        return payload
 
     def _complete_result(
         self,
@@ -1372,7 +1829,7 @@ class ToolGateway:
     ) -> ToolResult | None:
         """Complete one v2 patch action that crossed a hard process boundary."""
 
-        if self.tool_schema_version != "v2":
+        if self.tool_schema_version not in _STRUCTURED_TOOL_SCHEMAS:
             return None
         events = self.state.list_events(self.run_id)
         controlled_rejection_pending = self._controlled_rejection_pending()
@@ -1564,7 +2021,7 @@ class ToolGateway:
     ) -> tuple[str, ToolResult] | None:
         """Complete one non-mutating v2 action without another ToolCalled."""
 
-        if self.tool_schema_version != "v2":
+        if self.tool_schema_version not in _STRUCTURED_TOOL_SCHEMAS:
             return None
         events = self.state.list_events(self.run_id)
         calls = [
@@ -1587,7 +2044,12 @@ class ToolGateway:
             raise RecoveryError(
                 "interrupted tool call lacks an action identity"
             )
-        name, arguments, input_hash = self._load_call_input(call)
+        (
+            name,
+            arguments,
+            input_hash,
+            execution_context,
+        ) = self._load_call_input(call)
         prior = self.state.get_action_result(
             self.run_id,
             call.correlation_id,
@@ -1686,8 +2148,29 @@ class ToolGateway:
             return name, prior
 
         started = call.timestamp
+        if name == "run_probe":
+            result = self._error_result(
+                name,
+                call.correlation_id,
+                started,
+                RecoveryError(
+                    "interrupted ephemeral probe cannot be safely "
+                    "redispatched after a process boundary"
+                ),
+                fatal=True,
+            )
+            self._complete_result(name, input_hash, result)
+            return name, result
         try:
-            output = self._dispatch(name, arguments)
+            output = (
+                self._dispatch(
+                    name,
+                    arguments,
+                    execution_context=execution_context,
+                )
+                if name == "review_task"
+                else self._dispatch(name, arguments)
+            )
             if (
                 self.context_policy_version in _INVESTIGATION_CONTEXT_POLICIES
                 and name in {"read_file", "search_files"}
@@ -1707,9 +2190,16 @@ class ToolGateway:
             artifact = self.artifacts.put_json(output)
             result_artifact = (
                 artifact.model_dump(mode="json")
-                if self.context_policy_version
-                in _INVESTIGATION_CONTEXT_POLICIES
-                and name in {"read_file", "search_files"}
+                if (
+                    self.context_policy_version
+                    in _INVESTIGATION_CONTEXT_POLICIES
+                    and name in {"read_file", "search_files"}
+                )
+                or (
+                    self.tool_schema_version
+                    == _SELF_VALIDATION_TOOL_SCHEMA
+                    and name in {"run_probe", "review_task"}
+                )
                 else None
             )
             result = ToolResult(
@@ -1747,7 +2237,15 @@ class ToolGateway:
         self._complete_result(name, input_hash, result)
         return name, result
 
-    def _load_call_input(self, call) -> tuple[str, dict[str, Any], str]:
+    def _load_call_input(
+        self,
+        call,
+    ) -> tuple[
+        str,
+        dict[str, Any],
+        str,
+        dict[str, Any] | None,
+    ]:
         try:
             artifact = Artifact.model_validate(
                 call.payload["input_artifact"]
@@ -1756,6 +2254,7 @@ class ToolGateway:
             value = json.loads(raw.decode("utf-8", errors="strict"))
             name = value["tool"]
             arguments = value["input"]
+            execution_context = value.get("execution_context")
         except (
             KeyError,
             TypeError,
@@ -1771,6 +2270,20 @@ class ToolGateway:
             or name != call.payload.get("tool")
             or name in {"apply_patch", "finish_task"}
             or not isinstance(arguments, dict)
+            or (
+                execution_context is not None
+                and not isinstance(execution_context, dict)
+            )
+            or (
+                name != "review_task"
+                and execution_context is not None
+            )
+            or (
+                name == "review_task"
+                and self.tool_schema_version
+                == _SELF_VALIDATION_TOOL_SCHEMA
+                and execution_context is None
+            )
             or call.payload.get("artifact_id") != artifact.artifact_id
             or call.payload.get("artifact_path") != artifact.path
         ):
@@ -1784,7 +2297,7 @@ class ToolGateway:
             raise RecoveryError(
                 "interrupted tool input does not match its call hash"
             )
-        return name, arguments, input_hash
+        return name, arguments, input_hash, execution_context
 
     def _load_call_patch(self, call) -> str:
         try:
@@ -2099,7 +2612,14 @@ class ToolGateway:
             )
         )
 
-    def _dispatch(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    def _dispatch(
+        self,
+        name: str,
+        arguments: dict[str, Any],
+        *,
+        execution_context: dict[str, Any] | None = None,
+        probe_source_artifact: Artifact | None = None,
+    ) -> dict[str, Any]:
         if name == "read_file":
             return self._read_file(**arguments)
         if name == "search_files":
@@ -2110,7 +2630,68 @@ class ToolGateway:
             return self._run_check(**arguments)
         if name == "get_diff":
             return self._get_diff()
+        if (
+            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            and name == "run_probe"
+        ):
+            return self._run_probe(
+                **arguments,
+                source_artifact=probe_source_artifact,
+            )
+        if (
+            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            and name == "review_task"
+        ):
+            return self._review_task(
+                **arguments,
+                execution_context=execution_context,
+            )
         raise ContractError(f"unknown tool: {name}")
+
+    def _validate_probe_arguments(
+        self,
+        arguments: dict[str, Any],
+    ) -> RegisteredProbeProfile:
+        if set(arguments) != {"probe_id", "source"}:
+            raise ContractError(
+                "run_probe requires only probe_id and source"
+            )
+        probe_id = arguments.get("probe_id")
+        source = arguments.get("source")
+        if not isinstance(probe_id, str) or not probe_id:
+            raise ContractError("run_probe probe_id must be a non-empty string")
+        profiles = {
+            profile.id: profile for profile in self.task.probe_profiles
+        }
+        profile = profiles.get(probe_id)
+        if profile is None:
+            raise PolicyViolation(
+                f"unregistered probe profile: {probe_id}",
+                details={
+                    "stage": "probe",
+                    "reason": "unregistered_probe_profile",
+                },
+            )
+        if not isinstance(source, str) or not source.strip():
+            raise ContractError("run_probe source must be a non-empty string")
+        if "\x00" in source:
+            raise ContractError("run_probe source cannot contain NUL bytes")
+        source_bytes = len(source.encode("utf-8"))
+        if (
+            source_bytes > _PROBE_SOURCE_LIMIT_BYTES
+            or source_bytes > profile.source_limit_bytes
+        ):
+            raise PolicyViolation(
+                "run_probe source exceeds its registered profile limit",
+                details={
+                    "stage": "probe",
+                    "reason": "probe_source_too_large",
+                    "source_bytes": source_bytes,
+                    "source_limit_bytes": profile.source_limit_bytes,
+                },
+            )
+        _validate_probe_source_policy(source)
+        return profile
 
     def _read_file(self, path: str, start_line: int, end_line: int) -> dict[str, Any]:
         validate_inspection_arguments(
@@ -2820,6 +3401,431 @@ class ToolGateway:
             "stderr": outcome.stderr,
             "worktree_diff_hash": before.patch_hash,
         }
+
+    def _run_probe(
+        self,
+        probe_id: str,
+        source: str,
+        *,
+        source_artifact: Artifact | None,
+    ) -> dict[str, Any]:
+        arguments = {
+            "probe_id": probe_id,
+            "source": source,
+        }
+        profile = self._validate_probe_arguments(arguments)
+        if source_artifact is None:
+            raise RecoveryError(
+                "run_probe lacks its pre-dispatch source artifact"
+            )
+        if self.artifacts.read_bytes(source_artifact) != source.encode(
+            "utf-8"
+        ):
+            raise RecoveryError(
+                "run_probe source artifact conflicts with its tool input"
+            )
+        if getattr(self.sandbox, "official", False) is not True:
+            raise PolicyViolation(
+                "run_probe requires the isolated Docker sandbox",
+                details={
+                    "stage": "sandbox",
+                    "reason": "probe_requires_docker",
+                    "guidance": (
+                        "Use registered checks locally; agent-authored code "
+                        "is never executed on the host."
+                    ),
+                },
+            )
+        manifest = self.state.get_manifest(self.run_id)
+        if manifest.probe_image_digest is None:
+            raise RecoveryError(
+                "run_probe requires a manifest-bound probe image identity"
+            )
+        before = WorkspaceManager.diff_summary(self.workspace)
+        before_untracked = WorkspaceManager.untracked_files(self.workspace)
+        if before_untracked:
+            raise RecoveryError(
+                "agent workspace contains untracked files before probe"
+            )
+        outcome = self.sandbox.run_probe(
+            self.workspace,
+            source,
+            timeout_seconds=min(profile.timeout_seconds, 60),
+            output_limit_bytes=min(
+                profile.output_limit_bytes,
+                _PROBE_OUTPUT_LIMIT_BYTES,
+            ),
+            image_identity=manifest.probe_image_digest,
+        )
+        expected_execution_policy = probe_execution_policy(
+            image_identity=manifest.probe_image_digest,
+            timeout_seconds=profile.timeout_seconds,
+            output_limit_bytes=profile.output_limit_bytes,
+        )
+        if outcome.execution_policy != expected_execution_policy:
+            raise RecoveryError(
+                "run_probe sandbox execution policy does not match "
+                "the manifest-bound hardened profile"
+            )
+        after = WorkspaceManager.diff_summary(self.workspace)
+        after_untracked = WorkspaceManager.untracked_files(self.workspace)
+        if (
+            before.patch_hash != after.patch_hash
+            or before_untracked != after_untracked
+        ):
+            raise RecoveryError(
+                "ephemeral probe modified the persistent agent workspace"
+            )
+        return {
+            "schema_version": "ephemeral-python-probe-result-v2",
+            "probe_policy_version": "ephemeral-python-probe-v2",
+            "authoritative": False,
+            "probe_id": profile.id,
+            "probe_runtime": profile.runtime,
+            "timeout_seconds": profile.timeout_seconds,
+            "output_limit_bytes": profile.output_limit_bytes,
+            "source_limit_bytes": profile.source_limit_bytes,
+            "execution_policy": expected_execution_policy,
+            "source_artifact": source_artifact.model_dump(mode="json"),
+            "source_hash": source_artifact.content_hash,
+            "command": outcome.command,
+            "exit_code": outcome.exit_code,
+            "passed": (
+                not outcome.timed_out and outcome.exit_code == 0
+            ),
+            "timed_out": outcome.timed_out,
+            "truncated": outcome.truncated,
+            "original_output_bytes": outcome.original_output_bytes,
+            "stdout": outcome.stdout,
+            "stderr": outcome.stderr,
+            "duration_ms": outcome.duration_ms,
+            "worktree_diff_hash": before.patch_hash,
+        }
+
+    def _review_task(
+        self,
+        requirements: list[dict[str, Any]],
+        targeted_validation: list[dict[str, Any]],
+        residual_risks: list[str],
+        *,
+        execution_context: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        review_input = {
+            "requirements": requirements,
+            "targeted_validation": targeted_validation,
+            "residual_risks": residual_risks,
+        }
+        if (
+            len(canonical_json(review_input).encode("utf-8"))
+            > _REVIEW_INPUT_LIMIT_BYTES
+        ):
+            raise PolicyViolation(
+                "review_task input exceeds 8000 bytes",
+                details={
+                    "stage": "review",
+                    "reason": "review_input_too_large",
+                },
+            )
+        if not isinstance(execution_context, dict):
+            raise ContractError(
+                "review_task requires exact model-request evidence"
+            )
+        request_artifact_id = execution_context.get(
+            "request_artifact_id"
+        )
+        request_phase = execution_context.get("phase")
+        presented = execution_context.get("presented_tool_results")
+        if (
+            not isinstance(request_artifact_id, str)
+            or request_phase != "REVIEW"
+            or not isinstance(presented, list)
+        ):
+            raise ContractError(
+                "review_task must run in REVIEW with bound request evidence"
+            )
+        summary = WorkspaceManager.diff_summary(self.workspace)
+        events = self.state.list_events(self.run_id)
+        readiness = diff_bound_evidence(
+            self.task,
+            events,
+            summary.patch_hash,
+            presented_tool_results=presented,
+            phase=Phase.REVIEW,
+        )
+        missing = [
+            item
+            for item in readiness.missing_evidence
+            if item != "structured_task_review_current_diff"
+        ]
+        if missing:
+            raise PolicyViolation(
+                "review_task is not ready: " + ", ".join(missing),
+                details={
+                    "stage": "review",
+                    "reason": "review_preconditions_missing",
+                    "missing_evidence": missing,
+                },
+            )
+        source_get_diff_sequence = readiness.review_event_sequence
+        mutation_sequence = readiness.mutation_event_sequence
+        if (
+            source_get_diff_sequence is None
+            or mutation_sequence is None
+        ):
+            raise RecoveryError(
+                "review_task readiness lacks mutation or diff provenance"
+            )
+        presented_sequences = {
+            int(item["event_sequence"])
+            for item in presented
+            if (
+                isinstance(item, dict)
+                and type(item.get("event_sequence")) is int
+                and item.get("available") is True
+                and item.get("truncated") is False
+            )
+        }
+        events_by_sequence = {event.sequence: event for event in events}
+
+        if (
+            not isinstance(requirements, list)
+            or not 1 <= len(requirements) <= 20
+        ):
+            raise ContractError(
+                "review_task requirements must contain 1 to 20 entries"
+            )
+        normalized_requirements: list[dict[str, Any]] = []
+        for item in requirements:
+            if not isinstance(item, dict) or set(item) != {
+                "requirement",
+                "status",
+                "evidence_event_sequences",
+                "notes",
+            }:
+                raise ContractError(
+                    "review_task requirement has an invalid shape"
+                )
+            requirement = item["requirement"]
+            status = item["status"]
+            sequences = item["evidence_event_sequences"]
+            notes = item["notes"]
+            if (
+                not isinstance(requirement, str)
+                or not requirement.strip()
+                or len(requirement) > 1000
+                or status
+                not in {
+                    "verified",
+                    "partially_verified",
+                    "unverified",
+                }
+                or not isinstance(sequences, list)
+                or len(sequences) > 20
+                or len(set(sequences)) != len(sequences)
+                or not isinstance(notes, str)
+                or not notes.strip()
+                or len(notes) > 2000
+            ):
+                raise ContractError(
+                    "review_task requirement fields are invalid"
+                )
+            if status != "unverified" and not sequences:
+                raise ContractError(
+                    "verified review requirements need cited evidence"
+                )
+            for sequence in sequences:
+                self._validate_review_evidence_sequence(
+                    sequence,
+                    events_by_sequence=events_by_sequence,
+                    presented_sequences=presented_sequences,
+                    mutation_sequence=mutation_sequence,
+                    worktree_diff_hash=summary.patch_hash,
+                )
+            normalized_requirements.append(
+                {
+                    "requirement": requirement.strip(),
+                    "status": status,
+                    "evidence_event_sequences": list(sequences),
+                    "notes": notes.strip(),
+                }
+            )
+
+        if (
+            not isinstance(targeted_validation, list)
+            or not 1 <= len(targeted_validation) <= 20
+        ):
+            raise ContractError(
+                "review_task targeted_validation must contain 1 to 20 entries"
+            )
+        normalized_validation: list[dict[str, Any]] = []
+        current_validation_passed = False
+        seen_validation_sequences: set[int] = set()
+        for item in targeted_validation:
+            if not isinstance(item, dict) or set(item) != {
+                "kind",
+                "event_sequence",
+                "outcome",
+                "notes",
+            }:
+                raise ContractError(
+                    "review_task targeted validation has an invalid shape"
+                )
+            kind = item["kind"]
+            sequence = item["event_sequence"]
+            declared_outcome = item["outcome"]
+            notes = item["notes"]
+            if (
+                kind
+                not in {
+                    "probe",
+                    "registered_check",
+                    "repository_evidence",
+                }
+                or type(sequence) is not int
+                or sequence in seen_validation_sequences
+                or declared_outcome
+                not in {"passed", "failed", "inconclusive"}
+                or not isinstance(notes, str)
+                or not notes.strip()
+                or len(notes) > 2000
+            ):
+                raise ContractError(
+                    "review_task targeted validation fields are invalid"
+                )
+            event = self._validate_review_evidence_sequence(
+                sequence,
+                events_by_sequence=events_by_sequence,
+                presented_sequences=presented_sequences,
+                mutation_sequence=mutation_sequence,
+                worktree_diff_hash=summary.patch_hash,
+            )
+            expected_tools = {
+                "probe": {"run_probe"},
+                "registered_check": {"run_check"},
+                "repository_evidence": {
+                    "read_file",
+                    "search_files",
+                    "get_diff",
+                },
+            }[kind]
+            if event.payload.get("tool") not in expected_tools:
+                raise ContractError(
+                    "review_task validation kind conflicts with cited tool"
+                )
+            if event.payload.get("timed_out") is True:
+                actual_outcome = "inconclusive"
+            elif kind in {"probe", "registered_check"}:
+                actual_outcome = (
+                    "passed"
+                    if event.payload.get("passed") is True
+                    else "failed"
+                )
+            else:
+                actual_outcome = "passed"
+            if declared_outcome != actual_outcome:
+                raise ContractError(
+                    "review_task outcome conflicts with cited trace evidence"
+                )
+            if (
+                kind in {"probe", "registered_check"}
+                and actual_outcome == "passed"
+            ):
+                current_validation_passed = True
+            seen_validation_sequences.add(sequence)
+            normalized_validation.append(
+                {
+                    "kind": kind,
+                    "event_sequence": sequence,
+                    "outcome": declared_outcome,
+                    "notes": notes.strip(),
+                }
+            )
+        if not current_validation_passed:
+            raise PolicyViolation(
+                "review_task needs a passing current-diff probe or registered check",
+                details={
+                    "stage": "review",
+                    "reason": "targeted_validation_missing",
+                },
+            )
+        if (
+            not isinstance(residual_risks, list)
+            or len(residual_risks) > 20
+            or any(
+                not isinstance(item, str)
+                or not item.strip()
+                or len(item) > 1000
+                for item in residual_risks
+            )
+        ):
+            raise ContractError(
+                "review_task residual_risks must contain bounded strings"
+            )
+        review = {
+            "schema_version": "task-review-v1",
+            "run_id": self.run_id,
+            "request_artifact_id": request_artifact_id,
+            "worktree_diff_hash": summary.patch_hash,
+            "mutation_event_sequence": mutation_sequence,
+            "source_get_diff_sequence": source_get_diff_sequence,
+            "requirements": normalized_requirements,
+            "targeted_validation": normalized_validation,
+            "residual_risks": [item.strip() for item in residual_risks],
+            "deterministic_correctness_claimed": False,
+        }
+        review_artifact = self.artifacts.put_json(review)
+        result = {
+            "schema_version": "task-review-result-v1",
+            "review_schema_version": "task-review-v1",
+            "review_artifact": review_artifact.model_dump(mode="json"),
+            "review_content_hash": review_artifact.content_hash,
+            "review": review,
+            "request_artifact_id": request_artifact_id,
+            "worktree_diff_hash": summary.patch_hash,
+            "mutation_event_sequence": mutation_sequence,
+            "source_get_diff_sequence": source_get_diff_sequence,
+            "requirement_count": len(normalized_requirements),
+            "targeted_validation_count": len(normalized_validation),
+            "residual_risk_count": len(residual_risks),
+            "self_attestation": True,
+            "deterministic_correctness_claimed": False,
+        }
+        if len(canonical_json(result).encode("utf-8")) > 12_000:
+            raise PolicyViolation(
+                "review_task result cannot be presented completely",
+                details={
+                    "stage": "review",
+                    "reason": "review_result_too_large",
+                },
+            )
+        return result
+
+    @staticmethod
+    def _validate_review_evidence_sequence(
+        sequence: Any,
+        *,
+        events_by_sequence: dict[int, Any],
+        presented_sequences: set[int],
+        mutation_sequence: int,
+        worktree_diff_hash: str,
+    ):
+        if type(sequence) is not int or sequence <= mutation_sequence:
+            raise ContractError(
+                "review_task evidence must follow the current mutation"
+            )
+        event = events_by_sequence.get(sequence)
+        if (
+            event is None
+            or event.type != EventType.TOOL_SUCCEEDED
+            or event.payload.get("worktree_diff_hash")
+            != worktree_diff_hash
+            or sequence not in presented_sequences
+        ):
+            raise ContractError(
+                "review_task evidence must be a complete current-diff "
+                "ToolSucceeded result in this request"
+            )
+        return event
 
     def _get_diff(self) -> dict[str, Any]:
         summary = WorkspaceManager.diff_summary(self.workspace)

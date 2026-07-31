@@ -12,7 +12,13 @@ from patchloop.agent.context import (
     build_context_with_evidence,
 )
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import Artifact, EventType, RunEvent
+from patchloop.contracts import (
+    Artifact,
+    Budget,
+    EventType,
+    RegisteredProbeProfile,
+    RunEvent,
+)
 from patchloop.errors import RecoveryError
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_text, utc_now
@@ -521,3 +527,125 @@ def test_v3_rejected_patch_retry_fails_closed_on_tampered_candidate_cas(
             policy_version="phase-evidence-v3",
             artifact_store=artifact_store,
         )
+
+
+def test_v6_context_rehydrates_bounded_probe_ledger(tmp_path) -> None:
+    artifact_store = ArtifactStore(tmp_path / "artifacts")
+    source = "from mini_data_utils.csvlite import parse_rows\nassert parse_rows('a')"
+    input_artifact = artifact_store.put_json(
+        {
+            "tool": "run_probe",
+            "input": {
+                "probe_id": "python-diagnostic",
+                "source": source,
+            },
+        }
+    )
+    result_artifact = artifact_store.put_json(
+        {
+            "schema_version": "ephemeral-python-probe-result-v2",
+            "passed": True,
+            "worktree_diff_hash": "sha256:probe-diff",
+        }
+    )
+    events = [
+        RunEvent(
+            event_id="probe-call",
+            run_id="run_test",
+            sequence=1,
+            type=EventType.TOOL_CALLED,
+            timestamp=utc_now(),
+            actor="agent",
+            correlation_id="probe-action",
+            payload={
+                "tool": "run_probe",
+                "input_artifact": input_artifact.model_dump(mode="json"),
+                "artifact_id": input_artifact.artifact_id,
+                "artifact_path": input_artifact.path,
+                "worktree_diff_hash": "sha256:probe-diff",
+            },
+        ),
+        RunEvent(
+            event_id="probe-result",
+            run_id="run_test",
+            sequence=2,
+            type=EventType.TOOL_SUCCEEDED,
+            timestamp=utc_now(),
+            actor="tool-gateway",
+            correlation_id="probe-action",
+            payload={
+                "tool": "run_probe",
+                "passed": True,
+                "timed_out": False,
+                "worktree_diff_hash": "sha256:probe-diff",
+                "artifact_id": result_artifact.artifact_id,
+                "artifact_path": result_artifact.path,
+                "result_artifact": result_artifact.model_dump(
+                    mode="json"
+                ),
+            },
+        ),
+    ]
+    task = load_task_package(
+        "tasks/smoke/csv-quoted-newline"
+    ).public.model_copy(
+        update={
+            "schema_version": "task-public-v2",
+            "probe_profiles": [
+                RegisteredProbeProfile(id="python-diagnostic")
+            ],
+        }
+    )
+
+    built = build_context_with_evidence(
+        task,
+        events,
+        None,
+        policy_version="phase-evidence-v6",
+        artifact_store=artifact_store,
+        budget=Budget(),
+        max_output_tokens=4096,
+    )
+    rendered = json.loads(built.rendered)
+
+    assert built.evidence["schema_version"] == "context-build-evidence-v6"
+    assert built.evidence["probe_ledger"]["entry_count"] == 1
+    assert rendered["probe_ledger"]["entries"][0]["source"] == source
+    assert rendered["probe_ledger"]["entries"][0]["probe_id"] == (
+        "python-diagnostic"
+    )
+    assert rendered["probe_ledger"]["authoritative"] is False
+    assert rendered["phase_contract"]["optional_actions"] == ["run_probe"]
+    assert rendered["phase_contract"]["required_sequence"][-2:] == [
+        "review_task",
+        "finish_task",
+    ]
+
+
+def test_v6_context_omits_probe_when_task_has_no_profile(
+    tmp_path,
+) -> None:
+    task = load_task_package(
+        "tasks/smoke/csv-quoted-newline"
+    ).public
+
+    built = build_context_with_evidence(
+        task,
+        [],
+        None,
+        policy_version="phase-evidence-v6",
+        artifact_store=ArtifactStore(tmp_path / "artifacts"),
+        budget=Budget(),
+        max_output_tokens=4096,
+    )
+    rendered = json.loads(built.rendered)
+
+    assert rendered["phase_contract"]["optional_actions"] == []
+    assert "run_probe" not in (
+        rendered["phase_contract"]["allowed_next_actions"]
+    )
+    assert rendered["rules"]["registered_checks_only"] is True
+    assert (
+        rendered["rules"]["registered_probe_profiles_only"]
+        is True
+    )

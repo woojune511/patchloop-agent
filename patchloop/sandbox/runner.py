@@ -3,16 +3,136 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
+import uuid
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol
+from typing import BinaryIO, Protocol
 
 from patchloop.contracts import RegisteredCheck
-from patchloop.util import ensure_within
+from patchloop.util import ensure_within, sha256_text
+
+PROBE_IMAGE = "patchloop-sandbox:py312"
+_PROBE_MANAGED_LABEL = "io.patchloop.managed=probe"
+_PROBE_ROLE_LABEL = "io.patchloop.role=agent-probe"
+_PROBE_WORKSPACE_LABEL_KEY = "io.patchloop.workspace"
+_PROBE_RUNNER_PATH = "/opt/patchloop/probe_runner.py"
+_PROBE_TIMEOUT_EXIT_CODE = 124
+_PROBE_LAUNCHER_GRACE_SECONDS = 10
+_PROXY_ENVIRONMENT_KEYS = (
+    "ALL_PROXY",
+    "FTP_PROXY",
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "NO_PROXY",
+    "all_proxy",
+    "ftp_proxy",
+    "http_proxy",
+    "https_proxy",
+    "no_proxy",
+)
+_DOCKER_IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
+_DOCKER_CONTAINER_ID = re.compile(r"[0-9a-f]{12,64}")
+_PROBE_RUNTIME_GUARD = """\
+import sys as _patchloop_sys
+
+def _patchloop_install_audit_guard():
+    denied_import_roots = frozenset({
+        "_posixsubprocess",
+        "commands",
+        "ctypes",
+        "importlib",
+        "multiprocessing",
+        "pty",
+        "runpy",
+        "subprocess",
+    })
+    denied_events = frozenset({
+        "os.system",
+        "pty.spawn",
+        "subprocess.Popen",
+    })
+    denied_prefixes = (
+        "ctypes.",
+        "os.exec",
+        "os.fork",
+        "os.kill",
+        "os.posix_spawn",
+        "os.spawn",
+        "pty.",
+        "subprocess.",
+    )
+    def guard(event, args, _roots=denied_import_roots,
+              _events=denied_events, _prefixes=denied_prefixes):
+        if event == "import" and args:
+            root = str(args[0]).split(".", 1)[0]
+            if root in _roots:
+                raise PermissionError(
+                    "PatchLoop probe policy denied import: " + root
+                )
+        if event in _events or event.startswith(_prefixes):
+            raise PermissionError(
+                "PatchLoop probe policy denied audit event: " + event
+            )
+
+    _patchloop_sys.addaudithook(guard)
+
+_patchloop_install_audit_guard()
+del _patchloop_install_audit_guard
+_patchloop_sys.dont_write_bytecode = True
+_patchloop_sys.path.insert(0, "/workspace")
+"""
+
+
+def probe_execution_policy(
+    *,
+    image_identity: str,
+    timeout_seconds: int,
+    output_limit_bytes: int,
+) -> dict[str, object]:
+    """Return the sanitized policy that must match one probe invocation."""
+
+    if _DOCKER_IMAGE_ID.fullmatch(image_identity) is None:
+        raise ValueError("probe image identity must be a sha256 Docker image ID")
+    return {
+        "schema_version": "probe-execution-policy-v2",
+        "image": PROBE_IMAGE,
+        "image_identity": image_identity,
+        "network": "none",
+        "root_filesystem": "read_only",
+        "workspace_mount": "read_only",
+        "git_metadata": "masked",
+        "cap_drop": ["ALL"],
+        "no_new_privileges": True,
+        "user": "10001:10001",
+        "proxy_environment": "cleared",
+        "process_boundary": {
+            "mechanism": "seccomp-bpf-v1",
+            "trusted_parent": True,
+            "untrusted_child": True,
+            "fork_clone_exec": "errno",
+            "parent_signal_and_trace": "errno",
+        },
+        "limits": {
+            "cpus": 1,
+            "memory": "512m",
+            "pids": 2,
+            "tmpfs": "/tmp:64m",
+            "requested_timeout_seconds": timeout_seconds,
+            "container_runner": _PROBE_RUNNER_PATH,
+            "container_timeout_exit_code": _PROBE_TIMEOUT_EXIT_CODE,
+            "launcher_timeout_seconds": (
+                timeout_seconds + _PROBE_LAUNCHER_GRACE_SECONDS
+            ),
+            "output_limit_bytes": output_limit_bytes,
+        },
+    }
 
 
 @dataclass(frozen=True)
@@ -25,6 +145,7 @@ class SandboxResult:
     timed_out: bool
     truncated: bool
     original_output_bytes: int
+    execution_policy: dict[str, object] | None = None
 
     @property
     def passed(self) -> bool:
@@ -35,6 +156,16 @@ class Sandbox(Protocol):
     official: bool
 
     def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult: ...
+
+    def run_probe(
+        self,
+        workspace: Path,
+        source: str,
+        *,
+        timeout_seconds: int,
+        output_limit_bytes: int,
+        image_identity: str | None = None,
+    ) -> SandboxResult: ...
 
 
 def _bounded_text(stdout: bytes, stderr: bytes, limit: int) -> tuple[str, str, bool, int]:
@@ -50,6 +181,233 @@ def _bounded_text(stdout: bytes, stderr: bytes, limit: int) -> tuple[str, str, b
         truncated,
         original,
     )
+
+
+class _BoundedPipeCapture:
+    """Drain a subprocess pipe while retaining only a bounded prefix in memory."""
+
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        self.prefix = bytearray()
+        self.original_bytes = 0
+
+    def drain(self, stream: BinaryIO) -> None:
+        try:
+            while chunk := stream.read(64 * 1024):
+                self.original_bytes += len(chunk)
+                remaining = self.limit - len(self.prefix)
+                if remaining > 0:
+                    self.prefix.extend(chunk[:remaining])
+        except OSError:
+            pass
+        finally:
+            stream.close()
+
+
+def _run_with_bounded_pipes(
+    command: list[str],
+    *,
+    input_bytes: bytes,
+    timeout_seconds: int,
+    output_limit_bytes: int,
+) -> tuple[int | None, bool, bytes, bytes, int]:
+    """Run a process without accumulating unbounded stdout/stderr on the host."""
+
+    process = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if process.stdin is None or process.stdout is None or process.stderr is None:
+        process.kill()
+        process.wait()
+        raise RuntimeError("failed to create bounded probe subprocess pipes")
+
+    stdout_capture = _BoundedPipeCapture(output_limit_bytes)
+    stderr_capture = _BoundedPipeCapture(output_limit_bytes)
+    readers = [
+        threading.Thread(
+            target=stdout_capture.drain,
+            args=(process.stdout,),
+            daemon=True,
+        ),
+        threading.Thread(
+            target=stderr_capture.drain,
+            args=(process.stderr,),
+            daemon=True,
+        ),
+    ]
+    for reader in readers:
+        reader.start()
+
+    try:
+        try:
+            process.stdin.write(input_bytes)
+            process.stdin.flush()
+        except OSError:
+            pass
+        finally:
+            process.stdin.close()
+        try:
+            exit_code = process.wait(timeout=timeout_seconds)
+            timed_out = False
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            exit_code = None
+            process.kill()
+            process.wait()
+    finally:
+        for reader in readers:
+            reader.join(timeout=5)
+        for stream in (process.stdout, process.stderr):
+            if not stream.closed:
+                stream.close()
+
+    original_bytes = (
+        stdout_capture.original_bytes + stderr_capture.original_bytes
+    )
+    return (
+        exit_code,
+        timed_out,
+        bytes(stdout_capture.prefix),
+        bytes(stderr_capture.prefix),
+        original_bytes,
+    )
+
+
+def _docker_image_identity(docker: str, image: str) -> str | None:
+    try:
+        result = subprocess.run(
+            [docker, "image", "inspect", image, "--format", "{{.Id}}"],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    identity = result.stdout.decode("utf-8", errors="replace").strip()
+    return identity if _DOCKER_IMAGE_ID.fullmatch(identity) else None
+
+
+def _probe_workspace_identity(workspace: Path) -> tuple[Path, str]:
+    """Require managed-checkout Git metadata before exposing a workspace."""
+
+    try:
+        resolved = workspace.resolve(strict=True)
+    except OSError as exc:
+        raise RuntimeError("probe workspace is unavailable") from exc
+    if not resolved.is_dir():
+        raise RuntimeError("probe workspace must be a directory")
+    git_metadata = resolved / ".git"
+    try:
+        junction_check = getattr(git_metadata, "is_junction", None)
+        is_junction = bool(
+            junction_check is not None and junction_check()
+        )
+        invalid = (
+            git_metadata.is_symlink()
+            or is_junction
+            or not git_metadata.is_dir()
+        )
+    except OSError as exc:
+        raise RuntimeError(
+            "probe workspace Git metadata cannot be inspected"
+        ) from exc
+    if invalid:
+        raise RuntimeError(
+            "probe workspace requires a real non-symlink .git directory"
+        )
+    digest = sha256_text(str(resolved)).removeprefix("sha256:")
+    return resolved, f"{_PROBE_WORKSPACE_LABEL_KEY}={digest}"
+
+
+def _confirm_probe_container_removed(
+    docker: str,
+    reference: str,
+    *,
+    filter_kind: str,
+) -> bool:
+    """Force-remove one container and independently confirm its absence."""
+
+    with suppress(OSError, subprocess.TimeoutExpired):
+        subprocess.run(
+            [docker, "rm", "--force", reference],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    try:
+        remaining = subprocess.run(
+            [
+                docker,
+                "ps",
+                "--all",
+                "--quiet",
+                "--filter",
+                f"{filter_kind}={reference}",
+            ],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return remaining.returncode == 0 and not remaining.stdout.strip()
+
+
+def _reap_stale_probe_containers(
+    docker: str,
+    workspace_label: str,
+) -> None:
+    """Remove a prior worker's probe for the same managed workspace."""
+
+    try:
+        listing = subprocess.run(
+            [
+                docker,
+                "ps",
+                "--all",
+                "--quiet",
+                "--filter",
+                f"label={_PROBE_MANAGED_LABEL}",
+                "--filter",
+                f"label={workspace_label}",
+            ],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise RuntimeError(
+            "stale probe container inspection could not be confirmed"
+        ) from exc
+    if listing.returncode != 0:
+        raise RuntimeError(
+            "stale probe container inspection could not be confirmed"
+        )
+    container_ids = listing.stdout.decode(
+        "ascii",
+        errors="strict",
+    ).split()
+    if any(
+        _DOCKER_CONTAINER_ID.fullmatch(container_id) is None
+        for container_id in container_ids
+    ):
+        raise RuntimeError(
+            "stale probe container inspection returned an invalid identity"
+        )
+    for container_id in container_ids:
+        if not _confirm_probe_container_removed(
+            docker,
+            container_id,
+            filter_kind="id",
+        ):
+            raise RuntimeError(
+                "stale probe container cleanup could not be confirmed"
+            )
 
 
 class LocalSandbox:
@@ -105,6 +463,26 @@ class LocalSandbox:
             timed_out=timed_out,
             truncated=truncated,
             original_output_bytes=original,
+        )
+
+    def run_probe(
+        self,
+        workspace: Path,
+        source: str,
+        *,
+        timeout_seconds: int,
+        output_limit_bytes: int,
+        image_identity: str | None = None,
+    ) -> SandboxResult:
+        del (
+            workspace,
+            source,
+            timeout_seconds,
+            output_limit_bytes,
+            image_identity,
+        )
+        raise RuntimeError(
+            "agent-authored probes require an isolated Docker sandbox"
         )
 
 
@@ -190,18 +568,15 @@ class DockerSandbox:
         docker = self.cli_path()
         if not docker:
             return None
-        try:
-            result = subprocess.run(
-                [docker, "image", "inspect", self.image, "--format", "{{.Id}}"],
-                capture_output=True,
-                timeout=10,
-                check=False,
-            )
-        except (OSError, subprocess.TimeoutExpired):
+        return _docker_image_identity(docker, self.image)
+
+    def probe_image_identity(self) -> str | None:
+        """Return the strict local content identity of the dedicated probe image."""
+
+        docker = self.cli_path()
+        if not docker:
             return None
-        if result.returncode != 0:
-            return None
-        return result.stdout.decode("utf-8", errors="replace").strip()
+        return _docker_image_identity(docker, PROBE_IMAGE)
 
     def run_check(self, workspace: Path, check: RegisteredCheck) -> SandboxResult:
         docker = self.cli_path()
@@ -270,6 +645,220 @@ class DockerSandbox:
             original_output_bytes=original,
         )
 
+    def run_probe(
+        self,
+        workspace: Path,
+        source: str,
+        *,
+        timeout_seconds: int,
+        output_limit_bytes: int,
+        image_identity: str | None = None,
+    ) -> SandboxResult:
+        """Execute an ephemeral Python probe without writing it into the repository."""
+
+        docker = self.cli_path()
+        if not docker:
+            raise RuntimeError("Docker CLI is not available")
+        resolved_workspace, workspace_label = _probe_workspace_identity(
+            workspace
+        )
+        _reap_stale_probe_containers(docker, workspace_label)
+        tag_image_identity = self.probe_image_identity()
+        if tag_image_identity is None:
+            raise RuntimeError(
+                "dedicated PatchLoop probe image is unavailable or invalid"
+            )
+        if (
+            image_identity is not None
+            and _DOCKER_IMAGE_ID.fullmatch(image_identity) is None
+        ):
+            raise RuntimeError(
+                "manifest-bound probe image identity is invalid"
+            )
+        probe_image_identity = image_identity or tag_image_identity
+        if tag_image_identity != probe_image_identity:
+            raise RuntimeError(
+                "dedicated probe image tag does not match the "
+                "manifest-bound identity"
+            )
+        bootstrap = (_PROBE_RUNTIME_GUARD + source).encode("utf-8")
+        container_name = f"patchloop-probe-{uuid.uuid4().hex}"
+        create_command = [
+            docker,
+            "create",
+            "--name",
+            container_name,
+            "--label",
+            _PROBE_MANAGED_LABEL,
+            "--label",
+            _PROBE_ROLE_LABEL,
+            "--label",
+            workspace_label,
+            "-i",
+            "--network",
+            "none",
+            "--cpus",
+            "1",
+            "--memory",
+            "512m",
+            "--pids-limit",
+            "2",
+            "--read-only",
+            "--cap-drop",
+            "ALL",
+            "--security-opt",
+            "no-new-privileges",
+            "--tmpfs",
+            "/tmp:rw,noexec,nosuid,size=64m",
+            # The gateway requires a real Git checkout above, so this nested
+            # mount always hides the underlying history and remote metadata.
+            "--tmpfs",
+            "/workspace/.git:ro,noexec,nosuid,nodev,size=64k",
+        ]
+        create_command.extend(
+            [
+                "--user",
+                "10001:10001",
+                "--env",
+                "HOME=/tmp",
+                "--env",
+                "PYTHONDONTWRITEBYTECODE=1",
+            ]
+        )
+        for key in _PROXY_ENVIRONMENT_KEYS:
+            create_command.extend(["--env", f"{key}="])
+        create_command.extend(
+            [
+                "--mount",
+                (
+                    "type=bind,"
+                    f"source={resolved_workspace},"
+                    "target=/workspace,readonly"
+                ),
+                "--workdir",
+                "/workspace",
+                probe_image_identity,
+                "python",
+                "-I",
+                _PROBE_RUNNER_PATH,
+                str(timeout_seconds),
+            ]
+        )
+        start_command = [
+            docker,
+            "start",
+            "--attach",
+            "--interactive",
+            container_name,
+        ]
+        execution_policy = probe_execution_policy(
+            image_identity=probe_image_identity,
+            timeout_seconds=timeout_seconds,
+            output_limit_bytes=output_limit_bytes,
+        )
+        started = time.monotonic()
+        try:
+            try:
+                created = subprocess.run(
+                    create_command,
+                    capture_output=True,
+                    timeout=15,
+                    check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise RuntimeError(
+                    "probe container creation could not be confirmed"
+                ) from exc
+            container_id = created.stdout.decode(
+                "ascii",
+                errors="strict",
+            ).strip()
+            if (
+                created.returncode != 0
+                or _DOCKER_CONTAINER_ID.fullmatch(container_id) is None
+            ):
+                raise RuntimeError(
+                    "probe container creation could not be confirmed"
+                )
+            try:
+                inspected = subprocess.run(
+                    [
+                        docker,
+                        "container",
+                        "inspect",
+                        container_name,
+                        "--format",
+                        "{{.Image}}",
+                    ],
+                    capture_output=True,
+                    timeout=10,
+                    check=False,
+                )
+            except (OSError, subprocess.TimeoutExpired) as exc:
+                raise RuntimeError(
+                    "probe container image identity could not be confirmed"
+                ) from exc
+            actual_image_identity = inspected.stdout.decode(
+                "ascii",
+                errors="strict",
+            ).strip()
+            if (
+                inspected.returncode != 0
+                or actual_image_identity != probe_image_identity
+            ):
+                raise RuntimeError(
+                    "probe container image does not match the "
+                    "manifest-bound identity"
+                )
+            (
+                exit_code,
+                timed_out,
+                stdout,
+                stderr,
+                original,
+            ) = _run_with_bounded_pipes(
+                start_command,
+                input_bytes=bootstrap,
+                timeout_seconds=(
+                    timeout_seconds
+                    + _PROBE_LAUNCHER_GRACE_SECONDS
+                ),
+                output_limit_bytes=output_limit_bytes,
+            )
+        finally:
+            if not _confirm_probe_container_removed(
+                docker,
+                container_name,
+                filter_kind="name",
+            ):
+                raise RuntimeError(
+                    "probe container cleanup could not be confirmed"
+                )
+        if (
+            not timed_out
+            and exit_code == _PROBE_TIMEOUT_EXIT_CODE
+        ):
+            timed_out = True
+            exit_code = None
+        duration = int((time.monotonic() - started) * 1000)
+        stdout_text, stderr_text, truncated, bounded_original = _bounded_text(
+            stdout,
+            stderr,
+            output_limit_bytes,
+        )
+        truncated = truncated or original > output_limit_bytes
+        return SandboxResult(
+            command=["python", "-I", "<ephemeral-probe>"],
+            exit_code=exit_code,
+            stdout=stdout_text,
+            stderr=stderr_text,
+            duration_ms=duration,
+            timed_out=timed_out,
+            truncated=truncated,
+            original_output_bytes=max(original, bounded_original),
+            execution_policy=execution_policy,
+        )
+
 
 class TimeoutOnceSandbox:
     """Deterministic reliability-test wrapper; never used in core normal runs."""
@@ -293,3 +882,20 @@ class TimeoutOnceSandbox:
                 original_output_bytes=30,
             )
         return self.delegate.run_check(workspace, check)
+
+    def run_probe(
+        self,
+        workspace: Path,
+        source: str,
+        *,
+        timeout_seconds: int,
+        output_limit_bytes: int,
+        image_identity: str | None = None,
+    ) -> SandboxResult:
+        return self.delegate.run_probe(
+            workspace,
+            source,
+            timeout_seconds=timeout_seconds,
+            output_limit_bytes=output_limit_bytes,
+            image_identity=image_identity,
+        )

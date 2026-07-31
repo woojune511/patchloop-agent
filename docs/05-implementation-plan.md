@@ -2,7 +2,10 @@
 
 상태: **Implementation baseline active**  
 현재 milestone: **D-055 high-budget no-memory completion panel live-complete;
-fair no-memory baseline budget decision pending**
+D-056~D-059 opt-in self-validation offline profile-probe gate complete;
+D-060 three-task no-memory budget-pilot offline contract complete;
+D-061 probe authorization hardening complete;
+clean preflight and separate live approval pending**
 
 2026-07-31 구현 스냅샷:
 
@@ -10,7 +13,7 @@ fair no-memory baseline budget decision pending**
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | tool v2/context v5/D-052 token-tail hardening offline-complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, token-aware read/search admission과 request-by-request qualification 재계산 |
+| Phase 3 state machine | tool v2/context v5/D-052 token-tail hardening offline-complete; opt-in v3/v6 self-validation offline profile-probe gate complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, token-aware read/search admission과 request-by-request qualification 재계산; D-056~D-059 실제 격리 E2E 3/3, profile-bearing mock agent probe와 official evaluator 통과 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
 | Phase 6 evaluation | high-budget two-task completion live gate passed; valid baseline pending | Babel+Moto scope-compliant success 2/2, qualification·completion/headroom pass, budget error 0, `$0.15682575`; usable no-memory baseline은 아직 없음 |
@@ -140,10 +143,68 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 11b | proposal validated; admission deferred | Append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 public evidence만으로 두 group에 결속. Tox 2회는 candidate rule 1개, Loguru는 causal uncertainty로 hold; no-memory completion 전에는 human approval/index build를 진행하지 않음 |
 | 11c | completed; immutable live evidence | D-054/D-055 high-budget no-memory completion panel | Babel+Moto scope-compliant success 2/2, qualification 25/25·completion/headroom pass, budget error 0, `$0.15682575`; exact hash와 experiment ID 재실행 금지 |
 | 11d | completed | Clean preflight와 separate live approval | Commit `59621ec`, Docker digest, SDK 2.47.0과 exact execution hash를 결속해 두 run을 한 번 실행 |
-| 11e | pending | 작은 memory-development no-memory budget pilot | V4 resource maxima로 고정한 pyfakefs/PDM/HF Hub를 480k token, 40 model, 100 tool, 1,800초 후보에서 각 1회 별도 suite/hash/승인으로 검증; 그 결과 전에는 memory approval/index/core 금지 |
+| 11e | offline contract complete; clean approval pending | 작은 memory-development no-memory budget pilot | 별도 purpose와 exact HF Hub/PDM/pyfakefs 3-task suite, 480k/40/100/1,800초, $7 cap, 3-run completion gate; D-061 hardening 포함 731 collected, 724 passed/7 sandbox-environment skip, host Docker E2E 5/5와 Ruff 통과. Source checkpoint·Docker identity·fresh no-call hash와 별도 승인 전 provider call 및 memory/index/core 금지 |
+| 11f | completed (offline + Docker), live use not approved | D-056/D-057 opt-in tool v3/context v6 self-validation | Public-v2 profile + dedicated clean-image optional `run_probe`, current-diff `review_task`, v3 submission/source qualification, recovery와 v1-v5 byte-stability; 실제 Docker isolation E2E 3/3과 mock official-evaluator smoke 통과, 별도 승인 전 live/campaign 금지 |
+| 11g | completed (offline), live use not approved | D-059 profile-bearing full agent probe lifecycle | Dataset 밖 `csv-quoted-newline@2` fixture에서 mock agent가 registered probe를 clean Docker image로 실행하고 그 event를 same-diff review에 인용한 뒤 official evaluator까지 완료; 전체 live qualification은 의도적으로 false |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.
+
+Order 11f의 D-056 당시 evidence는 Docker Desktop 4.83.0 / Engine 29.6.2에서 당시 source로
+다시 빌드한 `patchloop-sandbox:py312`
+`sha256:268495717da1396e3413ce6695063c9516202b4e38cb8042f2f181420b64e9c1`,
+실제 격리 container E2E 3/3과 704 collected, 702 passed/2 skipped의 repository-wide
+regression이다. 두 skip은 현재 Windows 환경에서 symlink/junction 생성 권한을 사용할 수
+없어 건너뛴 fail-closed path test이고 Docker skip은 0이다. 비용 없는 mock smoke
+`run_36f90bda91b94d42`는 official hidden/regression/scope/safety와
+`self_validation_lifecycle`을 통과했다. 이 v1 task에는 probe profile이 없어
+`probe_call_count=0`이고, 실제 probe 실행 경계는 위 Docker E2E가 검증했다. Ruff와
+`git diff --check`도 통과했으며 provider call은 실행하지 않았다.
+
+위 Order 11f 수치와 image는 D-061 전 historical evidence다. D-061은 exact-ID create와
+pre-start `.Image` equality, trusted-parent/untrusted-child seccomp 경계를 추가했다.
+현재 `patchloop-sandbox:py312`
+`sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`로
+host Docker E2E 5/5를 통과했다. 그중 kernel test는 Python audit hook이 없는
+subinterpreter에서 process spawn과 trusted-parent signal이 모두 `EPERM`인지 확인한다.
+전체 회귀는 731 collected, 724 passed/7 environment skipped이고, 다섯 Docker skip은
+sandboxed test context에서 daemon을 사용할 수 없어서 host에서 별도로 실행한 항목이다.
+
+Order 11f acceptance는 다음 논리곱이다.
+
+```text
+tool_schema_version=v3 AND context_policy_version=phase-evidence-v6 are explicit opt-in
+AND LocalSandbox cannot execute agent-authored probe code
+AND only task-public-v2 registered profiles can invoke a probe
+AND task evaluator images are never used for agent-authored probes
+AND AST/audit early rejection is not treated as the hard security boundary
+AND trusted-parent seccomp denies child fork/clone/exec and parent signal/trace
+AND mutable tag precheck, immutable-ID create and pre-start container image verification pass
+AND dedicated-image digest and exact Docker policy are manifest/trace bound
+AND Docker probe is readonly/networkless/proxyless/secretless and leaves no repository file
+AND probe is optional and never substitutes for registered checks
+AND review_task cites current-diff public evidence visible in its exact request
+AND finish_task sees the same-diff untruncated canonical review body
+AND later same-diff validation invalidates the prior review
+AND private/hidden/reference/evaluator evidence never enters probe or review context
+AND crash/recovery creates no duplicate probe, review or submission lifecycle
+AND qualification/source-evidence tamper tests and v1-v5 historical stability pass
+```
+
+Order 11g의 추가 evidence는 비용 없는 final CLI run `run_7e3c5af2ce8d498a`다. Agent는
+7 model/7 tool call로 registered `quoted-newline-case`를 선택했고, probe event 33의
+`probe-ok` stdout과 exact clean-image binding을 review의 targeted validation과 requirement
+evidence에 인용했다. 제출 뒤 official hidden/regression/scope/safety와 전용
+`self_validation_lifecycle`이 통과했다. 전체 suite는 708 collected, 706 passed/2 Windows
+symlink-capability skipped이고 Docker skip은 0이다. 동결 dataset audit은 기존 manifest
+hash와 25 task/candidate 0을 그대로 유지한다. Mock/non-campaign run의 전체 qualification은
+19/26으로 false이므로 live provider qualification이나 public/private campaign leak gate가
+통과했다고 표현하지 않는다.
+
+이 gate는 구현·offline evidence만 닫으며 paid/live 실행을 승인하지 않는다. 통과 뒤에도
+future v3/v6 pilot은 frozen comparison budget과 섞지 않은 별도 suite, clean hash, 비용
+검토와 명시적 승인이 필요하다. 기존 D-055 다음 provisional 3-task no-memory panel은
+v2/v5 계약을 유지하며 D-056 때문에 암묵적으로 재작성하지 않는다.
 
 Order 8의 첫 provider attempt에 사용한 terminal suite는
 `experiments/dev-validation-gpt54mini-d037-r3.yaml`이다. Corrective attempt는

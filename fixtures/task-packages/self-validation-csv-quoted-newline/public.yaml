@@ -1,0 +1,35 @@
+schema_version: task-public-v2
+task_id: csv-quoted-newline
+task_version: 2
+split: smoke
+repository:
+  url: snapshot://mini-data-utils
+  base_commit: sha256:ea86e87d65632d2cadc0a65066bdd1fcdfb66ef3799ff4fed85ea1c2626a3d67
+  language: python
+issue:
+  title: CSV parser splits quoted multiline fields
+  description: |
+    A quoted CSV field containing a newline is emitted as two records.
+    Preserve the public parse_rows(text) interface and existing behavior.
+constraints:
+  allowed_paths:
+    - mini_data_utils/**
+  forbidden_paths:
+    - tests/**
+    - .patchloop-hidden/**
+    - requirements.txt
+  max_changed_files: 1
+  max_diff_lines: 20
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+  - id: existing-unit-tests
+    command: [python, -m, unittest, discover, -s, tests, -v]
+    timeout_seconds: 30
+probe_profiles:
+  - id: quoted-newline-case
+    runtime: ephemeral-python-v1
+    timeout_seconds: 10
+    output_limit_bytes: 4096
+    source_limit_bytes: 4096
+tags: [csv, parser-state, infrastructure-only, self-validation]

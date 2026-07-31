@@ -553,31 +553,52 @@ def prior_search_match_keys(
     }
 
 
-def nominal_tail_reserve(task: PublicTask) -> dict[str, int]:
+def nominal_tail_reserve(
+    task: PublicTask,
+    *,
+    context_policy_version: str = "phase-evidence-v4",
+) -> dict[str, int]:
     """Reserve room for one corrective lifecycle and one feedback turn."""
 
-    lifecycle_tools = 4 + 2 * len(task.visible_checks)
+    lifecycle_tools = (
+        4
+        + 2 * len(task.visible_checks)
+        + (1 if context_policy_version == "phase-evidence-v6" else 0)
+    )
     return {
         "tool_calls": lifecycle_tools,
-        "model_calls": 3,
+        "model_calls": (
+            4
+            if context_policy_version == "phase-evidence-v6"
+            else 3
+        ),
         "feedback_model_calls": 1,
     }
 
 
 def investigation_policy_version(context_policy_version: str) -> str:
-    if context_policy_version == "phase-evidence-v5":
+    if context_policy_version in {
+        "phase-evidence-v5",
+        "phase-evidence-v6",
+    }:
         return INVESTIGATION_POLICY_VERSION_V2
     return INVESTIGATION_POLICY_VERSION
 
 
 def investigation_ledger_schema(context_policy_version: str) -> str:
-    if context_policy_version == "phase-evidence-v5":
+    if context_policy_version in {
+        "phase-evidence-v5",
+        "phase-evidence-v6",
+    }:
         return INVESTIGATION_LEDGER_SCHEMA_V2
     return INVESTIGATION_LEDGER_SCHEMA
 
 
 def tool_admission_schema(context_policy_version: str) -> str:
-    if context_policy_version == "phase-evidence-v5":
+    if context_policy_version in {
+        "phase-evidence-v5",
+        "phase-evidence-v6",
+    }:
         return TOOL_ADMISSION_SCHEMA_V2
     return TOOL_ADMISSION_SCHEMA
 
@@ -691,11 +712,17 @@ def tail_policy(
     max_output_tokens: int | None = None,
     projection_stage: str = "pre_generation",
 ) -> dict[str, Any]:
-    reserve = nominal_tail_reserve(task)
-    if context_policy_version == "phase-evidence-v5":
+    reserve = nominal_tail_reserve(
+        task,
+        context_policy_version=context_policy_version,
+    )
+    if context_policy_version in {
+        "phase-evidence-v5",
+        "phase-evidence-v6",
+    }:
         if budget is None or max_output_tokens is None:
             raise ValueError(
-                "phase-evidence-v5 tail policy requires budget and "
+                f"{context_policy_version} tail policy requires budget and "
                 "max_output_tokens"
             )
         source_events = events or []

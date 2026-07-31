@@ -1,0 +1,253 @@
+"""Trusted PID-1 wrapper for bounded agent-authored Python probes."""
+
+from __future__ import annotations
+
+import ctypes
+import errno
+import os
+import platform
+import signal
+import sys
+import time
+import traceback
+from contextlib import suppress
+
+TIMEOUT_EXIT_CODE = 124
+CHILD_RESERVED_EXIT_CODE = 125
+INPUT_TIMEOUT_SECONDS = 5
+_PR_SET_NO_NEW_PRIVS = 38
+_PR_SET_SECCOMP = 22
+_SECCOMP_MODE_FILTER = 2
+_SECCOMP_RET_ERRNO = 0x00050000
+_SECCOMP_RET_ALLOW = 0x7FFF0000
+_BPF_LD_W_ABS = 0x20
+_BPF_JMP_JEQ_K = 0x15
+_BPF_RET_K = 0x06
+
+
+class _InputTimeout(Exception):
+    pass
+
+
+class _SockFilter(ctypes.Structure):
+    _fields_ = [
+        ("code", ctypes.c_ushort),
+        ("jt", ctypes.c_ubyte),
+        ("jf", ctypes.c_ubyte),
+        ("k", ctypes.c_uint32),
+    ]
+
+
+class _SockFprog(ctypes.Structure):
+    _fields_ = [
+        ("length", ctypes.c_ushort),
+        ("filter", ctypes.POINTER(_SockFilter)),
+    ]
+
+
+def _input_timeout(_signum: int, _frame: object) -> None:
+    raise _InputTimeout
+
+
+def _read_source() -> bytes:
+    signal.signal(signal.SIGALRM, _input_timeout)
+    signal.setitimer(signal.ITIMER_REAL, INPUT_TIMEOUT_SECONDS)
+    try:
+        return sys.stdin.buffer.read()
+    except _InputTimeout:
+        os.write(
+            sys.stderr.fileno(),
+            b"[patchloop] probe input did not close within 5 seconds\n",
+        )
+        raise
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+
+
+def _denied_syscalls() -> tuple[int, ...]:
+    machine = platform.machine().lower()
+    if machine in {"x86_64", "amd64"}:
+        return (
+            56,   # clone
+            57,   # fork
+            58,   # vfork
+            59,   # execve
+            62,   # kill
+            101,  # ptrace
+            129,  # rt_sigqueueinfo
+            200,  # tkill
+            234,  # tgkill
+            297,  # rt_tgsigqueueinfo
+            310,  # process_vm_readv
+            311,  # process_vm_writev
+            322,  # execveat
+            424,  # pidfd_send_signal
+            435,  # clone3
+        )
+    if machine in {"aarch64", "arm64"}:
+        return (
+            117,  # ptrace
+            129,  # kill
+            130,  # tkill
+            131,  # tgkill
+            138,  # rt_sigqueueinfo
+            220,  # clone
+            221,  # execve
+            240,  # rt_tgsigqueueinfo
+            270,  # process_vm_readv
+            271,  # process_vm_writev
+            281,  # execveat
+            424,  # pidfd_send_signal
+            435,  # clone3
+        )
+    raise RuntimeError(f"unsupported probe architecture: {machine}")
+
+
+def _install_process_boundary() -> None:
+    instructions = [_SockFilter(_BPF_LD_W_ABS, 0, 0, 0)]
+    for syscall_number in _denied_syscalls():
+        instructions.extend(
+            [
+                _SockFilter(
+                    _BPF_JMP_JEQ_K,
+                    0,
+                    1,
+                    syscall_number,
+                ),
+                _SockFilter(
+                    _BPF_RET_K,
+                    0,
+                    0,
+                    _SECCOMP_RET_ERRNO | errno.EPERM,
+                ),
+            ]
+        )
+    instructions.append(
+        _SockFilter(_BPF_RET_K, 0, 0, _SECCOMP_RET_ALLOW)
+    )
+    filters = (_SockFilter * len(instructions))(*instructions)
+    program = _SockFprog(len(instructions), filters)
+    libc = ctypes.CDLL(None, use_errno=True)
+    prctl = libc.prctl
+    prctl.restype = ctypes.c_int
+    if prctl(_PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0:
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error))
+    if (
+        prctl(
+            _PR_SET_SECCOMP,
+            _SECCOMP_MODE_FILTER,
+            ctypes.byref(program),
+        )
+        != 0
+    ):
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error))
+
+
+def _child_exit_code(code: object) -> int:
+    if code is None:
+        return 0
+    if isinstance(code, int):
+        return code % 256
+    print(code, file=sys.stderr)
+    return 1
+
+
+def _flush_child_output(
+    stdout: object,
+    stderr: object,
+) -> None:
+    for stream in (stdout, stderr):
+        flush = getattr(stream, "flush", None)
+        if flush is not None:
+            with suppress(BaseException):
+                flush()
+
+
+def _execute_child(code: object) -> None:
+    stdout = sys.stdout
+    stderr = sys.stderr
+    try:
+        os.setsid()
+        _install_process_boundary()
+        namespace = {
+            "__name__": "__main__",
+            "__file__": "<patchloop-probe>",
+        }
+        exec(code, namespace, namespace)
+    except SystemExit as exc:
+        exit_code = _child_exit_code(exc.code)
+        _flush_child_output(stdout, stderr)
+        os._exit(exit_code)
+    except BaseException:
+        traceback.print_exc(file=stderr)
+        _flush_child_output(stdout, stderr)
+        os._exit(1)
+    _flush_child_output(stdout, stderr)
+    os._exit(0)
+
+
+def _wait_for_child(child_pid: int, timeout_seconds: int) -> int:
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        waited_pid, status = os.waitpid(child_pid, os.WNOHANG)
+        if waited_pid == child_pid:
+            if os.WIFEXITED(status):
+                exit_code = os.WEXITSTATUS(status)
+                return (
+                    CHILD_RESERVED_EXIT_CODE
+                    if exit_code == TIMEOUT_EXIT_CODE
+                    else exit_code
+                )
+            if os.WIFSIGNALED(status):
+                return min(255, 128 + os.WTERMSIG(status))
+            return CHILD_RESERVED_EXIT_CODE
+        if time.monotonic() >= deadline:
+            with suppress(ProcessLookupError):
+                os.killpg(child_pid, signal.SIGKILL)
+            with suppress(ProcessLookupError):
+                os.kill(child_pid, signal.SIGKILL)
+            os.waitpid(child_pid, 0)
+            os.write(
+                sys.stderr.fileno(),
+                (
+                    "[patchloop] probe exceeded its "
+                    f"{timeout_seconds}-second execution timeout\n"
+                ).encode("ascii"),
+            )
+            return TIMEOUT_EXIT_CODE
+        time.sleep(0.01)
+
+
+def main() -> int:
+    if len(sys.argv) != 2:
+        return 2
+    try:
+        timeout_seconds = int(sys.argv[1])
+    except ValueError:
+        return 2
+    if not 1 <= timeout_seconds <= 60:
+        return 2
+    try:
+        source = _read_source().decode("utf-8")
+    except (_InputTimeout, UnicodeDecodeError):
+        return TIMEOUT_EXIT_CODE
+    try:
+        code = compile(source, "<patchloop-probe>", "exec")
+    except (SyntaxError, ValueError):
+        traceback.print_exc()
+        return 1
+
+    try:
+        child_pid = os.fork()
+    except OSError:
+        traceback.print_exc()
+        return CHILD_RESERVED_EXIT_CODE
+    if child_pid == 0:
+        _execute_child(code)
+    return _wait_for_child(child_pid, timeout_seconds)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

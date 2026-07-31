@@ -1,4 +1,5 @@
 * text=auto
+.gitattributes text eol=lf
 *.py text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
@@ -11,8 +12,10 @@
 *.css text eol=lf
 *.txt text eol=lf
 Makefile text eol=lf
+docker/Dockerfile.sandbox text eol=lf
 
 # Preserve the exact evaluator-submitted bytes, including agent-authored blank-line spaces.
 reports/memory-development/artifacts/run_0794d94df2f24d87-submitted.patch -whitespace
 reports/live-pilot/artifacts/run_685c492e34f84fef-submitted.patch -whitespace
 reports/live-pilot/artifacts/run_0814be408332479e-submitted.patch -whitespace
+fixtures/task-packages/self-validation-csv-quoted-newline/reference.patch -whitespace

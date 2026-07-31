@@ -221,6 +221,16 @@ def run(
     task: Annotated[Path, typer.Option("--task", exists=True, dir_okay=False)],
     model: Annotated[str, typer.Option("--model")] = "mock",
     memory: Annotated[MemoryCondition, typer.Option("--memory")] = MemoryCondition.NO_MEMORY,
+    self_validation: Annotated[
+        bool,
+        typer.Option(
+            "--self-validation",
+            help=(
+                "Opt in to tool v3/context v6 temporary probes and "
+                "structured final review."
+            ),
+        ),
+    ] = False,
 ) -> None:
     """Run the durable constrained coding agent and hidden evaluator."""
     from patchloop.agent.runner import run_from_cli
@@ -231,7 +241,12 @@ def run(
                 "direct live runs are disabled; use `patchloop evaluate --suite ...` "
                 "with an approved experiment-v2 execution hash"
             )
-        return run_from_cli(task, model=model, memory_condition=memory)
+        return run_from_cli(
+            task,
+            model=model,
+            memory_condition=memory,
+            self_validation=self_validation,
+        )
 
     _guarded(operation)
 

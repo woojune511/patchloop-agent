@@ -15,13 +15,14 @@ import pytest
 
 from patchloop.agent.model import (
     MOCK_TASK_SCRIPTS,
+    MockModelAdapter,
     ModelTurn,
     ModelTurnError,
     OpenAIResponsesAdapter,
     RequestedTool,
 )
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
-from patchloop.agent.tools import ToolGateway
+from patchloop.agent.tools import TOOL_SCHEMAS_V3, ToolGateway
 from patchloop.contracts import (
     Artifact,
     Budget,
@@ -45,12 +46,16 @@ from patchloop.evals.qualification import (
     qualify_run,
 )
 from patchloop.runtime import build_manifest
-from patchloop.sandbox import LocalSandbox
+from patchloop.sandbox import DockerSandbox, LocalSandbox
+from patchloop.sandbox.runner import PROBE_IMAGE
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes, sha256_text, utc_now
 from patchloop.verifier import EvaluationEngine
 
 TASK = "tasks/smoke/csv-quoted-newline/public.yaml"
+PROBE_TASK = (
+    "fixtures/task-packages/self-validation-csv-quoted-newline/public.yaml"
+)
 SMOKE_TASKS = {
     "csv-quoted-newline": TASK,
     "config-falsy-override": "tasks/smoke/config-falsy-override/public.yaml",
@@ -68,6 +73,11 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     )
     historical_v4 = current.model_copy(
         update={"context_policy_version": "phase-evidence-v4"}
+    )
+    self_validation = build_manifest(
+        package,
+        run_id="run_self_validation_context_contract",
+        self_validation=True,
     )
     replay = build_manifest(
         package,
@@ -88,8 +98,64 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     assert AgentRunner._runtime_contract(
         current
     ) == AgentRunner._runtime_contract(historical_v4)
+    assert self_validation.tool_schema_version == "v3"
+    assert self_validation.context_policy_version == "phase-evidence-v6"
+    assert AgentRunner._runtime_contract(
+        self_validation
+    ) != AgentRunner._runtime_contract(current)
     assert replay.tool_schema_version == "v1"
     assert replay.context_policy_version == "v1"
+    with pytest.raises(
+        ContractError,
+        match="unavailable for historical replay",
+    ):
+        build_manifest(
+            package,
+            provider="replay",
+            model_id="replay:fixture",
+            replay_hash="sha256:" + ("b" * 64),
+            self_validation=True,
+        )
+
+
+def test_self_validation_rejects_openai_before_sdk_lookup(
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+
+    def unexpected_sdk_lookup(_package_name: str) -> str:
+        raise AssertionError(
+            "OpenAI SDK metadata must not be read for a rejected contract"
+        )
+
+    monkeypatch.setattr("patchloop.runtime.version", unexpected_sdk_lookup)
+
+    with pytest.raises(
+        ContractError,
+        match="offline-only.*OpenAI provider",
+    ):
+        build_manifest(
+            package,
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            self_validation=True,
+        )
+
+
+def test_self_validation_allows_non_provider_offline_manifest() -> None:
+    package = load_task_package(Path(TASK).parent)
+
+    manifest = build_manifest(
+        package,
+        run_id="run_custom_offline_self_validation",
+        provider="offline-fixture",
+        model_id="offline-fixture-v1",
+        self_validation=True,
+    )
+
+    assert manifest.model.provider == "offline-fixture"
+    assert manifest.tool_schema_version == "v3"
+    assert manifest.context_policy_version == "phase-evidence-v6"
 
 
 @pytest.mark.parametrize(
@@ -368,6 +434,221 @@ def test_offline_mock_agent_creates_complete_trace(
     persisted = json.loads(result_path.read_text(encoding="utf-8"))
     assert persisted["usage"] == result["usage"]
     _assert_public_trace_boundary(runner, result["run_id"], task_path)
+
+
+def test_offline_v3_self_validation_records_same_diff_review(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+
+    result = runner.start(
+        TASK,
+        model="mock",
+        self_validation=True,
+    )
+
+    assert result["scope_compliant_success"] is True
+    manifest = runner.state.get_manifest(result["run_id"])
+    assert manifest.tool_schema_version == "v3"
+    assert manifest.context_policy_version == "phase-evidence-v6"
+    events = runner.state.list_events(result["run_id"])
+    review_result = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "review_task"
+    )
+    recorded = next(
+        event
+        for event in events
+        if event.type == EventType.REVIEW_RECORDED
+    )
+    accepted = next(
+        event
+        for event in events
+        if event.type == EventType.SUBMISSION_ACCEPTED
+    )
+    assert review_result.payload["worktree_diff_hash"] == (
+        accepted.payload["worktree_diff_hash"]
+    )
+    assert recorded.payload["source_task_review_sequence"] == (
+        review_result.sequence
+    )
+    assert recorded.payload["task_review_content_hash"] == (
+        review_result.payload["review_content_hash"]
+    )
+    assert recorded.payload["deterministic_correctness_claimed"] is False
+    assert accepted.payload["task_review_artifact"] == (
+        recorded.payload["task_review_artifact"]
+    )
+    assert sum(
+        event.type == EventType.MODEL_CALLED for event in events
+    ) == 6
+    assert sum(
+        event.type == EventType.TOOL_CALLED for event in events
+    ) == 6
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=runner.root,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    assert qualification["qualified"] is False
+    assert checks["self_validation_lifecycle"]["passed"] is True
+
+
+def test_mock_profile_skips_optional_probe_when_tail_does_not_allow_it() -> None:
+    adapter = MockModelAdapter(
+        "csv-quoted-newline",
+        ["read_file", "apply_patch", "run_check", "get_diff"],
+        structured_finish=True,
+        structured_review=True,
+        structured_probe=True,
+    )
+    context = json.dumps(
+        {
+            "phase_contract": {
+                "registered_probe_profile_ids": ["quoted-newline-case"],
+                "optional_actions": ["run_probe"],
+                "allowed_next_actions": ["review_task", "apply_patch"],
+            },
+            "recent_events": [
+                {
+                    "sequence": 10,
+                    "type": "ToolSucceeded",
+                    "payload": {"tool": "run_check"},
+                },
+                {
+                    "sequence": 11,
+                    "type": "ToolSucceeded",
+                    "payload": {"tool": "get_diff"},
+                },
+            ],
+        }
+    )
+
+    turn = adapter.next_turn(context, TOOL_SCHEMAS_V3)
+
+    assert [call.name for call in turn.tool_calls] == ["review_task"]
+    review = turn.tool_calls[0].arguments
+    assert all(
+        item["kind"] != "probe"
+        for item in review["targeted_validation"]
+    )
+
+
+@pytest.mark.docker
+@pytest.mark.skipif(
+    not DockerSandbox.available(),
+    reason="Docker daemon unavailable",
+)
+def test_offline_v3_profile_agent_executes_real_probe_and_review(
+    tmp_path,
+) -> None:
+    sandbox = DockerSandbox()
+    probe_image_identity = sandbox.probe_image_identity()
+    if probe_image_identity is None:
+        pytest.skip(f"{PROBE_IMAGE} is not built")
+    runner = AgentRunner(tmp_path / "runtime")
+
+    result = runner.start(
+        PROBE_TASK,
+        model="mock",
+        self_validation=True,
+    )
+
+    assert result["scope_compliant_success"] is True
+    assert result["official"] is True
+    assert set(result["verdicts"].values()) == {"pass"}
+    assert result["usage"]["model_cost_usd"] == 0.0
+    assert result["usage"]["model_calls"] == 7
+    assert result["usage"]["tool_calls"] == 7
+
+    manifest = runner.state.get_manifest(result["run_id"])
+    assert manifest.tool_schema_version == "v3"
+    assert manifest.context_policy_version == "phase-evidence-v6"
+    assert manifest.probe_image_digest == probe_image_identity
+    assert runner._find_task(manifest) == Path(PROBE_TASK).parent.resolve()
+
+    events = runner.state.list_events(result["run_id"])
+    probe_result = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "run_probe"
+    )
+    assert probe_result.payload["probe_id"] == "quoted-newline-case"
+    assert probe_result.payload["passed"] is True
+    probe_artifact = Artifact.model_validate(
+        probe_result.payload["result_artifact"]
+    )
+    probe = json.loads(
+        runner.artifacts.read_bytes(probe_artifact).decode("utf-8")
+    )
+    assert probe["authoritative"] is False
+    assert probe["stdout"] == "probe-ok\n"
+    assert probe["execution_policy"]["image"] == PROBE_IMAGE
+    assert probe["execution_policy"]["image_identity"] == (
+        probe_image_identity
+    )
+
+    review_recorded = next(
+        event
+        for event in events
+        if event.type == EventType.REVIEW_RECORDED
+    )
+    review_artifact = Artifact.model_validate(
+        review_recorded.payload["task_review_artifact"]
+    )
+    review = json.loads(
+        runner.artifacts.read_bytes(review_artifact).decode("utf-8")
+    )
+    probe_validation = next(
+        item
+        for item in review["targeted_validation"]
+        if item["kind"] == "probe"
+    )
+    assert probe_validation["event_sequence"] == probe_result.sequence
+    assert probe_validation["outcome"] == "passed"
+    assert probe_result.sequence in (
+        review["requirements"][0]["evidence_event_sequences"]
+    )
+    assert review["deterministic_correctness_claimed"] is False
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(PROBE_TASK).parent,
+        root=runner.root,
+    )
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
+    lifecycle = checks["self_validation_lifecycle"]
+    assert qualification["qualified"] is False
+    assert lifecycle["passed"] is True
+    assert lifecycle["details"]["probe_call_count"] == 1
+    assert lifecycle["details"]["verified_probe_count"] == 1
+    assert lifecycle["details"]["review_call_count"] == 1
+    assert lifecycle["details"]["verified_review_count"] == 1
+    assert lifecycle["details"]["failed_call_sequences"] == []
+    assert lifecycle["details"]["probe_manifest_binding_valid"] is True
+    assert lifecycle["details"]["review_body_presented"] is True
+    assert lifecycle["details"]["final_submission_binding_valid"] is True
+    assert lifecycle["details"]["post_review_validation_sequences"] == []
+    _assert_public_trace_boundary(
+        runner,
+        result["run_id"],
+        PROBE_TASK,
+    )
 
 
 def test_v4_repeated_investigation_e2e_replays_blocks_and_qualifies(
@@ -2037,6 +2318,65 @@ def test_agent_runner_rejects_live_model_without_campaign_capability(
 
     with pytest.raises(ContractError, match="approved experiment execution capability"):
         runner.start(TASK, model="openai", manifest=manifest)
+
+    assert runner.state.has_run(manifest.run_id) is False
+
+
+def test_agent_runner_rejects_v3_live_manifest_with_campaign_capability(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    root = tmp_path / "runtime"
+    execution_hash = "sha256:" + ("6" * 64)
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_rejected_live_self_validation",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        experiment_context=ExperimentRunContext(
+            experiment_id="rejected-live-self-validation-test",
+            purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+            suite_hash="sha256:" + ("7" * 64),
+            execution_hash=execution_hash,
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("8" * 64),
+            repetition=1,
+        ),
+    ).model_copy(
+        update={
+            "tool_schema_version": "v3",
+            "context_policy_version": "phase-evidence-v6",
+        }
+    )
+    _write_approved_execution_plan(root, execution_hash)
+    runner = AgentRunner(root)
+
+    def unexpected_adapter(*_args):
+        raise AssertionError(
+            "rejected self-validation must not initialize a provider adapter"
+        )
+
+    monkeypatch.setattr(runner, "_model_adapter", unexpected_adapter)
+
+    with pytest.raises(
+        ContractError,
+        match="self-validation v3/v6 is offline-only",
+    ):
+        runner.start(
+            TASK,
+            model="openai",
+            manifest=manifest,
+            live_authorization=issue_live_execution_authorization(
+                execution_hash,
+                root=root,
+            ),
+        )
 
     assert runner.state.has_run(manifest.run_id) is False
 

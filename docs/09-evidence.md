@@ -2,6 +2,45 @@
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
+## D-060 three-task no-memory budget pilot — offline contract only
+
+The checked-in
+[`dev-no-memory-budget-pilot-20260731-r1.yaml`](../experiments/dev-no-memory-budget-pilot-20260731-r1.yaml)
+uses a distinct `memory-development-no-memory-budget-pilot` purpose. It selects Hugging Face Hub,
+PDM and pyfakefs from the immutable V4 budget-terminal population: pyfakefs recorded the maximum
+total-token and wall-clock usage, PDM the maximum model calls, and Hugging Face Hub the maximum
+tool calls. Each frozen memory-development task is scheduled once under `no_memory`; the dataset
+manifest remains unchanged.
+
+The suite freezes `gpt-5.4-mini-2026-03-17`, medium/standard/default, tool v2/context v5, 25,000
+per-call output, and `40 model / 100 tool / 480,000 total token / 1,800 seconds`. At the official
+standard rates rechecked on 2026-07-31, the conservative authorization reserve is `$2.2725` per
+run and `$6.8175` for three runs under a `$7` cap. This is a reservation bound, not predicted
+spend or evidence about free-tier billing.
+
+The new `no-memory-budget-pilot-gate-v1` requires all three rows to be terminal, trace-qualified
+and evaluated by the official evaluator with zero infrastructure, qualification, diagnostic or
+budget-terminal error. Task success is reported separately. The purpose cannot create a memory
+candidate, enter the comparison denominator or automatically unlock memory admission.
+
+No OpenAI call was made for D-060. The checked-in suite is not paid authorization. A clean
+no-call preflight after the source checkpoint must bind the real Docker identities, OpenAI SDK
+and fresh pricing before the user separately approves that exact hash.
+
+Offline verification collected 731 tests and completed 724 passes with seven environment skips.
+Five skips are the current execution context's unavailable Docker daemon and two are unavailable
+Windows symlink creation. The new experiment tests pass the exact suite, cost reserve, approval
+gate and result-gate cases; the qualification tests pass all three tasks, task/agent-failure memory
+exclusion and missing-task plan tamper rejection. Repository-wide Ruff and `git diff --check`
+passed, and dataset audit remains frozen at 25 packages with zero candidates. The five Docker
+tests were then rerun against host Docker Desktop 4.83.0 / Engine 29.6.2 and passed 5/5, covering
+the profile-bearing agent probe/review lifecycle, network denial, non-root/read-only execution,
+host-secret/proxy isolation and runtime process-spawn/trusted-parent-signal denial. Current image
+`sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`
+was created by exact ID and its actual `.Image` was verified before start. The kernel test entered
+an audit-hook-free subinterpreter and observed `EPERM` for both process spawn and a harmless signal
+0 check against the trusted parent. No managed probe container remained afterward.
+
 ## D-055 high-budget no-memory completion panel — live-complete
 
 Cross-run memory admission is deferred because the V4 0/12 result contains nine pre-evaluator
@@ -1909,6 +1948,89 @@ persisted result hash were independently rechecked. The portable aggregate is
 This validates the D-037 harness branch under one deliberate intervention. It does not estimate
 natural rejection frequency or recovery rate, and it is not evidence of memory benefit or primary
 campaign quality. The consumed suite/hash/run are immutable and must not be rerun.
+
+### D-058 self-validation Docker isolation and offline smoke evidence
+
+On 2026-07-31 the repository-free `patchloop-sandbox:py312` image was rebuilt from the current
+Dockerfile and PID-1 probe runner against the pinned Python 3.12 base digest. Docker Desktop 4.83.0
+with Engine 29.6.2 reported the resulting image identity as:
+
+```text
+sha256:268495717da1396e3413ce6695063c9516202b4e38cb8042f2f181420b64e9c1
+```
+
+The three real-container E2E tests passed. They exercised network denial, non-root/read-only
+execution without a forwarded host secret, and the probe-specific conjunction of cleared proxy
+variables, masked Git metadata, absent evaluator paths, read-only workspace and no network.
+An independent labeled-container query after the run returned no residual probe container.
+
+The full repository regression then completed in the same Docker-active host environment:
+
+```text
+704 collected
+702 passed
+2 skipped
+```
+
+Both skips are Windows symlink-capability paths; no Docker test was skipped. Repository-wide Ruff,
+probe-runner compilation and `git diff --check` also pass.
+
+The cost-free mock run `run_36f90bda91b94d42` separately exercised the v3/v6 agent lifecycle
+through the official Docker evaluator. It completed six model turns and six tool calls, recorded
+one current-diff structured review, and passed hidden, regression, scope and safety verification.
+Recomputed `self_validation_lifecycle` evidence passed with an untruncated review body, valid final
+submission binding, no post-review validation and no failed source sequence. The historical
+`task-public-v1` smoke task has no registered probe profile, so this run correctly recorded zero
+probe calls; actual probe execution isolation is evidenced by the real-container E2E above rather
+than attributed to this run.
+
+The run used no provider tokens and cost `$0`. Its overall live-campaign qualification is
+intentionally false because it is a mock run without a live OpenAI provider, frozen model/campaign
+provenance or an approved execution plan. D-058 therefore closes only the Docker isolation and
+offline lifecycle gate. OpenAI v3/v6 start/resume remains fail-closed until a separate suite,
+execution hash, cost review and explicit approval are introduced.
+
+### D-059 profile-bearing offline agent probe evidence
+
+D-059 adds one infrastructure-only `task-public-v2` package at
+`fixtures/task-packages/self-validation-csv-quoted-newline`. Its identity is
+`csv-quoted-newline@2`, with registered profile `quoted-newline-case`. It deliberately reuses the
+small calibration issue to make harness behavior deterministic, but lives outside `tasks/` and is
+absent from `data/dataset-manifest.yaml`. It is not a sixth calibration task or a
+memory-development, held-out, core or headline task. The checked package hashes are:
+
+```text
+public  sha256:e72110791ac062f719a26c5b3d68d32152a5d82ede75a9971f667138f9bde926
+private sha256:c1727483c0a496cde1765a55204b922ca7874973b937a2d9658121b5c938099c
+```
+
+The final cost-free CLI smoke `run_7e3c5af2ce8d498a` exercised the whole agent lifecycle against
+the real clean probe image
+`sha256:268495717da1396e3413ce6695063c9516202b4e38cb8042f2f181420b64e9c1`.
+It used seven model calls and seven tool calls. Registered probe event 33 passed, returned exact
+stdout `probe-ok\n`, recorded `authoritative=false`, and bound the expected image identity.
+The subsequent same-diff review cited event 33 in both targeted validation and requirement
+evidence, retained `deterministic_correctness_claimed=false`, and was presented untruncated to
+`finish_task`.
+
+Submission and evaluation completed. Official hidden, regression, scope and safety verdicts all
+passed. Recomputed `self_validation_lifecycle` recorded one probe call/one verified probe, one
+review/one verified review, no failed source sequences, a valid probe-manifest binding, valid final
+submission binding and no post-review validation. Model cost was `$0`; no OpenAI request occurred.
+
+The final repository-wide regression on this source collected 708 tests: 706 passed and the same two
+Windows symlink-capability paths skipped. No Docker test skipped. Ruff, probe-runner compilation and
+`git diff --check` passed. The frozen dataset audit retained
+`sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`,
+25 tasks and zero candidates.
+
+This closes profile selection, real probe execution, review citation and evaluator arrival only for
+the offline fixture. Overall qualification remains intentionally false at 19/26 because the run is
+mock/non-campaign and lacks live provider, frozen campaign and approved execution provenance; the
+campaign-oriented private-boundary heuristic also detects deterministic fixture/reference overlap.
+The dedicated public-boundary E2E assertion and lifecycle check pass, but D-059 must not be described
+as full live trace qualification, memory benefit or task-performance evidence. OpenAI v3/v6
+start/resume remains fail-closed.
 
 ## Open gates
 
