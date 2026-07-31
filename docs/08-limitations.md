@@ -612,5 +612,21 @@ silently lowering the design or fabricating missing results.
 - This tuning purpose remains excluded from comparison, memory admission and core. One incomplete row
   and two not-started rows are not a no-memory performance denominator and cannot justify a final
   all-condition budget.
-- D-062 must not be rerun or continued. The next proposed gate is an offline versioned
-  `phase-evidence-v8` saturation-context fix, followed by a new separately approved single live pilot.
+- D-062 must not be rerun or continued. D-063 completed the offline versioned
+  `phase-evidence-v8` saturation-context fix; the next proposed gate is a new separately contracted and
+  approved single live pilot.
+
+## Phase-evidence-v8 does not establish model improvement
+
+- V8 changes only the model-visible admission contract for a gateway policy that already existed. It
+  does not improve patch parsing, increase the budget or add cross-run memory.
+- The offline selector is deliberately limited to mock runs without experiment context. Its passing
+  tests establish contract consistency, crash/resume reconstruction and tamper detection, not provider
+  behavior, SCRR or task success.
+- The V8 qualifier independently recomputes saturation, mutation epoch, tail reasons and resulting
+  action filtering. Generic tool-result presentation still relies on the existing exact context rebuild
+  plus CAS validation; V8 is not a fully independent second implementation of every phase-readiness rule.
+- A future single live pilot needs a new purpose, clean execution hash, explicit cost cap and separate
+  approval. It must not reuse D-062 authorization or resume its two not-started rows.
+- Even if a future pilot reaches the evaluator, one tuning task is not a no-memory baseline and cannot
+  support a memory-effect or core-performance claim.

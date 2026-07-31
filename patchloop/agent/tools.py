@@ -398,11 +398,13 @@ _INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v5",
     "phase-evidence-v6",
     "phase-evidence-v7",
+    "phase-evidence-v8",
 }
 _TOKEN_TAIL_CONTEXT_POLICIES = {
     "phase-evidence-v5",
     "phase-evidence-v6",
     "phase-evidence-v7",
+    "phase-evidence-v8",
 }
 _STRUCTURED_TOOL_SCHEMAS = {"v2", "v3", "v4"}
 _SELF_VALIDATION_TOOL_SCHEMAS = {"v3", "v4"}
@@ -733,7 +735,7 @@ def _investigation_compat_version(policy_version: str) -> str:
 
     return (
         "phase-evidence-v6"
-        if policy_version == "phase-evidence-v7"
+        if policy_version in {"phase-evidence-v7", "phase-evidence-v8"}
         else policy_version
     )
 
@@ -1393,7 +1395,8 @@ class ToolGateway:
             for event in events
         )
         evidence_saturated = (
-            self.context_policy_version == "phase-evidence-v7"
+            self.context_policy_version
+            in {"phase-evidence-v7", "phase-evidence-v8"}
             and name in {"read_file", "search_files"}
             and semantic_replay_count >= _EVIDENCE_SATURATION_THRESHOLD
         )

@@ -2055,9 +2055,9 @@ pilot has now completed once and is immutable diagnostic evidence. D-062 was the
 once under its approved 900k corrective execution hash, but only the HF row ran before an original
 qualification failure halted the campaign; the two remaining rows were not started. The Babel+Moto
 high-budget panel has already completed 2/2 and is immutable. D-062 cannot be rerun or continued.
-The next proposed paid step comes only after a new versioned saturation-context offline gate and must
-be a separately approved single pilot. No later live run is currently approved, and no 96-run core
-campaign has been executed.
+D-063 has now completed the versioned saturation-context offline gate without a provider call. The
+next proposed paid step must be a separately contracted and approved single pilot. No later live run
+is currently approved, and no 96-run core campaign has been executed.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
@@ -2107,7 +2107,42 @@ execution hash must not be rerun.
 
 After the correction implementation, the full repository collection was 798 tests: 791 passed and
 seven environment-dependent cases skipped; Ruff and `git diff --check` passed.
-The next gate is not a D-062 continuation. It is an offline `phase-evidence-v8` contract that makes
+The next gate was not a D-062 continuation. It was an offline `phase-evidence-v8` contract that makes
 six-replay saturation visible in the authoritative context/phase contract while preserving historical
-v7 rendering and qualification. Only after that executable evidence passes may a new single-task
-suite obtain a fresh clean execution hash, explicit cost cap and separate live approval.
+v7 rendering and qualification. D-063 below records that gate's completion; a new single-task suite
+still requires its own clean execution hash, explicit cost cap and separate live approval.
+
+## D-063 phase-evidence-v8 offline evidence
+
+D-063 keeps `SYSTEM_PROMPT_V5` and `TOOL_SCHEMAS_V4` fixed and introduces an offline-only
+`tool v4 / phase-evidence-v8` pair. `phase-contract-v3.read_search_policy` records the active mutation
+epoch, semantic replay count, threshold 6, ordered tail/saturation reasons and read/search admission.
+`context-build-evidence-v8` and five `ContextBuilt` mirrors bind the same state. Saturation-only removes
+read/search while retaining a registered probe; a strict token/model/tool tail removes the probe too.
+Only successful `PatchApplied` advances the epoch and resets the replay count.
+
+`corrective-runtime-contract-v2` binds the unchanged prompt/tools to the V8 context version, and
+`trace-source-evidence-v8` separates new source semantics from V7. The V8-only
+`saturation_context_contract` independently recomputes epoch, replay count, tail reasons and resulting
+action filtering from the durable prefix. Existing `investigation_evidence` remains responsible for the
+full context rebuild and tool-result presentation CAS binding.
+
+The first runner integration test exposed and then fixed a qualifier gap: a real semantic replay is a
+`ToolReplayed` presentation event, but the initial independent checker accepted only
+`ToolSucceeded`/`ToolFailed`. The final E2E forces six replays, raises a real `SystemExit`, resumes with a
+new runner, verifies that the first resumed context removes read/search, applies a patch, verifies that
+the next context reopens them at replay count zero, completes the mock evaluator path and
+passes `saturation_context_contract`.
+
+Historical compatibility evidence includes a clean-checkout golden hash for a representative minimal
+V7 rendered context (`sha256:93a131b...9ec8e`) and context evidence
+(`sha256:c5a00dec...c8c79`). The local immutable D-062 source evidence also still recalculates to
+`sha256:53148b2b42e82ddcb6083b1b317df3c7f8598972ed61fac0f69c65c5acff4351`.
+No OpenAI request, live suite, execution approval or model cost was created by D-063. A future pilot
+requires a new purpose and a separately approved hash/cost cap; D-062 remains non-resumable.
+
+Final executable evidence: the six directly related test modules completed with 377 passed and two
+environment-dependent skips. The repository-wide run collected 822 tests and completed with 815 passed
+and seven environment-dependent skips in 403.33 seconds. Repository-wide Ruff and `git diff --check`
+passed. The D-062 source evidence hash was recalculated after the final qualifier change and remained
+exactly `sha256:53148b2b42e82ddcb6083b1b317df3c7f8598972ed61fac0f69c65c5acff4351`.

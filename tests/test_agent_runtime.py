@@ -15,6 +15,7 @@ import pytest
 
 from patchloop.agent.model import (
     MOCK_TASK_SCRIPTS,
+    SYSTEM_PROMPT_V5,
     MockModelAdapter,
     ModelTurn,
     ModelTurnError,
@@ -142,6 +143,19 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     assert retry_prompt != AgentRunner._runtime_contract(self_validation)[0]
     assert retry_tools == TOOL_SCHEMAS_V4
     assert retry_tools != TOOL_SCHEMAS_V3
+    saturation_contract = build_manifest(
+        package,
+        run_id="run_saturation_context_contract",
+        saturation_context_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+    saturation_prompt, saturation_tools = AgentRunner._runtime_contract(
+        saturation_contract
+    )
+    assert saturation_contract.tool_schema_version == "v4"
+    assert saturation_contract.context_policy_version == "phase-evidence-v8"
+    assert saturation_prompt == retry_prompt == SYSTEM_PROMPT_V5
+    assert saturation_tools == retry_tools == TOOL_SCHEMAS_V4
     assert replay.tool_schema_version == "v1"
     assert replay.context_policy_version == "v1"
     with pytest.raises(
@@ -195,6 +209,61 @@ def test_self_validation_allows_non_provider_offline_manifest() -> None:
     assert manifest.model.provider == "offline-fixture"
     assert manifest.tool_schema_version == "v3"
     assert manifest.context_policy_version == "phase-evidence-v6"
+
+
+@pytest.mark.parametrize(
+    "provider",
+    ["openai", "replay", "offline-fixture"],
+)
+def test_saturation_context_validation_requires_mock_provider(
+    provider: str,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+
+    with pytest.raises(
+        ContractError,
+        match="offline-only.*mock provider",
+    ):
+        build_manifest(
+            package,
+            provider=provider,
+            saturation_context_validation=True,
+            public_review_contract=_smoke_review_contract(package),
+        )
+
+
+def test_saturation_context_validation_rejects_experiment_and_other_modes() -> None:
+    package = load_task_package(Path(TASK).parent)
+    review_contract = _smoke_review_contract(package)
+    experiment = ExperimentRunContext(
+        experiment_id="saturation-context-offline-test",
+        purpose=ExperimentPurpose.OFFLINE_SMOKE,
+        suite_hash="sha256:" + ("a" * 64),
+        execution_hash="sha256:" + ("b" * 64),
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + ("c" * 64),
+        repetition=1,
+    )
+
+    with pytest.raises(ContractError, match="cannot declare an experiment"):
+        build_manifest(
+            package,
+            saturation_context_validation=True,
+            public_review_contract=review_contract,
+            experiment_context=experiment,
+        )
+    for incompatible in (
+        {"self_validation": True},
+        {"corrective_validation": True},
+    ):
+        with pytest.raises(ContractError, match="mutually exclusive"):
+            build_manifest(
+                package,
+                saturation_context_validation=True,
+                public_review_contract=review_contract,
+                **incompatible,
+            )
 
 
 @pytest.mark.parametrize(
@@ -3024,6 +3093,219 @@ def test_v4_corrective_mock_run_completes_structured_review(
     } <= check_ids
     assert checks["investigation_evidence"]["passed"] is True
     assert checks["investigation_lifecycle"]["passed"] is True
+
+
+def test_v8_saturation_mock_run_binds_runtime_and_context_policy(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_v8_saturation_context",
+        sandbox_backend="local",
+        saturation_context_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+
+    runner = AgentRunner(tmp_path / "runtime")
+    result = runner.start(TASK, model="mock", manifest=manifest)
+    events = runner.state.list_events(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    started = next(
+        event for event in events if event.type == EventType.RUN_STARTED
+    )
+    runtime_artifact = Artifact.model_validate(
+        started.payload["runtime_contract_artifact"]
+    )
+    runtime_document = json.loads(
+        runner.artifacts.read_bytes(runtime_artifact).decode("utf-8")
+    )
+    assert runtime_document == {
+        "schema_version": "corrective-runtime-contract-v2",
+        "system_prompt": SYSTEM_PROMPT_V5,
+        "tools": TOOL_SCHEMAS_V4,
+        "tool_schema_version": "v4",
+        "context_policy_version": "phase-evidence-v8",
+    }
+
+    context_event = next(
+        event for event in events if event.type == EventType.CONTEXT_BUILT
+    )
+    request_document = json.loads(
+        Path(context_event.payload["artifact_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    policy = request_document["context_build"]["read_search_policy"]
+    rendered_context = json.loads(
+        request_document["request_body"]["context"]
+    )
+    assert rendered_context["phase_contract"]["read_search_policy"] == policy
+    assert context_event.payload["investigation_read_search_admitted"] == (
+        policy["admitted"]
+    )
+    assert context_event.payload[
+        "investigation_read_search_reason_codes"
+    ] == policy["reason_codes"]
+    assert context_event.payload[
+        "investigation_semantic_replay_count"
+    ] == policy["semantic_replay_count"]
+    assert context_event.payload[
+        "investigation_semantic_replay_threshold"
+    ] == policy["semantic_replay_threshold"]
+    assert context_event.payload[
+        "investigation_saturation_mutation_epoch_sequence"
+    ] == policy["mutation_epoch_sequence"]
+
+
+def test_v8_saturation_survives_crash_then_resets_and_qualifies(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_v8_saturation_resume",
+        sandbox_backend="local",
+        saturation_context_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+
+    class SaturatingAdapter:
+        def __init__(self) -> None:
+            self.turn = 0
+
+        def next_turn(self, context, tools):
+            del context, tools
+            action_id = f"v8-saturation-search-{self.turn}"
+            self.turn += 1
+            return ModelTurn(
+                tool_calls=[
+                    RequestedTool(
+                        "search_files",
+                        action_id,
+                        {
+                            "query": "parse_rows",
+                            "path_glob": "**/*.py",
+                        },
+                    )
+                ]
+            )
+
+        def record_completed(self, tool_name: str) -> None:
+            del tool_name
+
+    runner = AgentRunner(tmp_path / "runtime")
+    saturating_adapter = SaturatingAdapter()
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: saturating_adapter,
+    )
+    original_phase_after_tool = runner._phase_after_tool
+    replay_count = 0
+
+    def crash_after_sixth_replay(
+        run_id,
+        phase,
+        tool,
+        result,
+        task,
+        workspace,
+    ):
+        nonlocal replay_count
+        if (
+            tool == "search_files"
+            and result.output.get("semantic_replay") is True
+        ):
+            replay_count += 1
+            if replay_count == 6:
+                raise SystemExit(86)
+        return original_phase_after_tool(
+            run_id,
+            phase,
+            tool,
+            result,
+            task,
+            workspace,
+        )
+
+    monkeypatch.setattr(
+        runner,
+        "_phase_after_tool",
+        crash_after_sixth_replay,
+    )
+    with pytest.raises(SystemExit, match="86"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    events_before_resume = runner.state.list_events(manifest.run_id)
+    assert sum(
+        event.type == EventType.TOOL_REPLAYED
+        and event.payload.get("semantic_replay") is True
+        for event in events_before_resume
+    ) == 6
+
+    resumed_runner = AgentRunner(runner.root)
+    resumed_adapter = MockModelAdapter(
+        package.public.task_id,
+        completed_tools=["read_file"],
+        structured_review=True,
+    )
+    resumed_contexts: list[str] = []
+    original_next_turn = resumed_adapter.next_turn
+
+    def capture_next_turn(context, tools):
+        resumed_contexts.append(context)
+        return original_next_turn(context, tools)
+
+    monkeypatch.setattr(resumed_adapter, "next_turn", capture_next_turn)
+    monkeypatch.setattr(
+        resumed_runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: resumed_adapter,
+    )
+
+    result = resumed_runner.resume(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    saturated_contract = json.loads(resumed_contexts[0])["phase_contract"]
+    assert saturated_contract["read_search_policy"][
+        "reason_codes"
+    ] == ["evidence_saturated"]
+    assert not {"read_file", "search_files"}.intersection(
+        saturated_contract["allowed_next_actions"]
+    )
+    after_patch_contract = json.loads(resumed_contexts[1])[
+        "phase_contract"
+    ]
+    assert after_patch_contract["read_search_policy"][
+        "semantic_replay_count"
+    ] == 0
+    assert {"read_file", "search_files"}.issubset(
+        after_patch_contract["allowed_next_actions"]
+    )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=resumed_runner.root,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+    saturation_check = checks["saturation_context_contract"]
+    assert saturation_check["passed"] is True, saturation_check
+    assert saturation_check["details"]["saturated_context_count"] >= 1
 
 
 def test_v7_rejected_patch_retry_clears_after_success_and_qualifies(

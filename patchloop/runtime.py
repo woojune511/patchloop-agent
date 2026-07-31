@@ -74,12 +74,20 @@ def build_manifest(
     experiment_context: ExperimentRunContext | None = None,
     self_validation: bool = False,
     corrective_validation: bool = False,
+    saturation_context_validation: bool = False,
     public_review_contract: PublicReviewContract | None = None,
 ) -> RunManifest:
-    if self_validation and corrective_validation:
+    validation_mode_count = sum(
+        (
+            self_validation,
+            corrective_validation,
+            saturation_context_validation,
+        )
+    )
+    if validation_mode_count > 1:
         raise ContractError(
-            "self-validation v3/v6 and corrective validation v4/v7 "
-            "are mutually exclusive"
+            "self-validation v3/v6, corrective validation v4/v7, and "
+            "saturation-context validation v4/v8 are mutually exclusive"
         )
     if self_validation and provider == "openai":
         raise ContractError(
@@ -94,14 +102,24 @@ def build_manifest(
         raise ContractError(
             "corrective validation v4/v7 is unavailable for historical replay runs"
         )
-    if corrective_validation:
+    if saturation_context_validation and provider != "mock":
+        raise ContractError(
+            "saturation-context validation v4/v8 is offline-only and requires "
+            "the mock provider"
+        )
+    if saturation_context_validation and experiment_context is not None:
+        raise ContractError(
+            "saturation-context validation v4/v8 cannot declare an experiment context"
+        )
+    if corrective_validation or saturation_context_validation:
         from patchloop.agent.review import (
             validate_public_review_contract,
         )
 
         if public_review_contract is None:
             raise ContractError(
-                "corrective validation v4/v7 requires a public review contract"
+                "corrective validation v4/v7 and saturation-context validation "
+                "v4/v8 require a public review contract"
             )
         validate_public_review_contract(
             public_review_contract,
@@ -110,7 +128,8 @@ def build_manifest(
         )
     elif public_review_contract is not None:
         raise ContractError(
-            "public review contract requires corrective validation v4/v7"
+            "public review contract requires corrective validation v4/v7 or "
+            "saturation-context validation v4/v8"
         )
     sdk_version = None
     if provider == "openai":
@@ -137,7 +156,7 @@ def build_manifest(
             "v1"
             if provider == "replay"
             else "v4"
-            if corrective_validation
+            if corrective_validation or saturation_context_validation
             else "v3"
             if self_validation
             else "v2"
@@ -145,6 +164,8 @@ def build_manifest(
         context_policy_version=(
             "v1"
             if provider == "replay"
+            else "phase-evidence-v8"
+            if saturation_context_validation
             else "phase-evidence-v7"
             if corrective_validation
             else "phase-evidence-v6"

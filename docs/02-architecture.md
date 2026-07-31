@@ -387,3 +387,48 @@ campaign result는 수정하지 않았으므로 original gate와 task outcome은
 D-062는 계속하거나 재실행하지 않는다. 다음 architecture gate는 새 `phase-evidence-v8`
 saturation-context 계약을 offline에서 검증한 뒤 별도 승인된 single live pilot으로 확인하는
 것이다.
+
+## 12. D-063 saturation-context boundary
+
+`phase-evidence-v8`은 D-062에서 관찰된 gateway/context 불일치만 분리해 수정한다. Tool
+surface와 prompt는 각각 `tool_schema_version=v4`, `SYSTEM_PROMPT_V5`를 그대로 사용하고,
+model-visible phase contract만 `phase-contract-v3`로 올린다. Historical v7 request와
+qualification은 다시 렌더링하지 않는다.
+
+V8 context builder는 durable event prefix에서 마지막 successful `PatchApplied`를 active
+mutation epoch로 잡고, 그 뒤의 `ToolReplayed(semantic_replay=true)`를 센다. 이 값과 기존
+token/model/tool tail 정책을 다음 `read_search_policy`로 합성한다.
+
+```json
+{
+  "schema_version": "read-search-policy-v1",
+  "policy_version": "evidence-saturation-v1",
+  "admitted": false,
+  "reason_codes": ["evidence_saturated"],
+  "semantic_replay_count": 6,
+  "semantic_replay_threshold": 6,
+  "mutation_epoch_sequence": null
+}
+```
+
+Tail reason을 먼저 기록하고 replay count가 6 이상이면 `evidence_saturated`를 뒤에 붙인다.
+Saturation만 활성화되면 `read_file`과 `search_files`만 authoritative
+`allowed_next_actions`에서 제거하고 registered `run_probe`는 유지한다. Tail이 닫히면 기존
+정책대로 read/search/probe를 모두 제거한다. Patch apply가 성공해 epoch가 바뀌면 count를 0으로
+재계산하고 read/search를 다시 열며, rejected/failed patch와 probe는 reset으로 세지 않는다.
+
+Gateway hard block은 계속 최종 authorization boundary다. V8의 목적은 고정 provider tool
+schema를 동적으로 바꾸는 것이 아니라, 다음 request에 보이는 phase contract를 같은 durable
+prefix에서 계산한 gateway 판단과 일치시키는 것이다. Runtime descriptor는
+`corrective-runtime-contract-v2`, context evidence는 `context-build-evidence-v8`, source
+evidence는 `trace-source-evidence-v8`을 사용한다.
+
+이 version은 우선 mock/offline opt-in으로만 생성할 수 있다. OpenAI/replay provider와
+experiment context는 fail closed하며, live pilot purpose·suite·execution hash·비용 승인은 이
+offline gate와 별도의 후속 변경이다.
+
+D-063 offline E2E는 여섯 semantic replay 직후 process가 중단된 상태에서 새 runner가 같은
+durable prefix를 resume하도록 강제했다. Resume의 첫 context는 read/search를 제거했고,
+successful patch 뒤 다음 context는 replay count 0과 새 epoch로 탐색을 다시 열었다. 같은 run의
+`saturation_context_contract`도 통과해 runner, state store, context artifact와 qualifier를 한
+경로로 연결했다. 이 결과는 live model 행동이나 task 난이도에 대한 evidence가 아니다.

@@ -72,6 +72,21 @@ def _manifest(*, experiment: bool = False):
     )
 
 
+def _saturation_manifest():
+    package = load_task_package(TASK)
+    contract = load_public_review_contract(
+        REVIEW,
+        task=package.public,
+        public_spec_hash=package.public_spec_hash,
+    )
+    return build_manifest(
+        package,
+        run_id="run_saturation_provenance",
+        saturation_context_validation=True,
+        public_review_contract=contract,
+    )
+
+
 def _runtime_event(tmp_path: Path, manifest, *, content=None) -> RunEvent:
     artifacts = ArtifactStore(tmp_path / "artifacts")
     artifact = artifacts.put_json(
@@ -115,6 +130,67 @@ def test_corrective_runtime_semantics_accept_exact_cas_descriptor(
     assert passed is True
     assert details["cas_integrity_valid"] is True
     assert details["semantic_contract_valid"] is True
+
+
+def test_saturation_runtime_semantics_accept_exact_v2_cas_descriptor(
+    tmp_path: Path,
+) -> None:
+    manifest = _saturation_manifest()
+    event = _runtime_event(
+        tmp_path,
+        manifest,
+        content={
+            "schema_version": "corrective-runtime-contract-v2",
+            "system_prompt": SYSTEM_PROMPT_V5,
+            "tools": TOOL_SCHEMAS_V4,
+            "tool_schema_version": "v4",
+            "context_policy_version": "phase-evidence-v8",
+        },
+    )
+
+    passed, details = _corrective_runtime_contract_evidence(
+        root=tmp_path,
+        manifest=manifest,
+        events=[event],
+    )
+
+    assert passed is True
+    assert details["cas_integrity_valid"] is True
+    assert details["semantic_contract_valid"] is True
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("schema_version", "corrective-runtime-contract-v1"),
+        ("context_policy_version", "phase-evidence-v7"),
+    ],
+)
+def test_saturation_runtime_semantics_reject_v2_identity_drift(
+    tmp_path: Path,
+    field: str,
+    value: str,
+) -> None:
+    manifest = _saturation_manifest()
+    content = {
+        "schema_version": "corrective-runtime-contract-v2",
+        "system_prompt": SYSTEM_PROMPT_V5,
+        "tools": TOOL_SCHEMAS_V4,
+        "tool_schema_version": "v4",
+        "context_policy_version": "phase-evidence-v8",
+    }
+    content[field] = value
+    event = _runtime_event(tmp_path, manifest, content=content)
+
+    passed, details = _corrective_runtime_contract_evidence(
+        root=tmp_path,
+        manifest=manifest,
+        events=[event],
+    )
+
+    assert details["cas_integrity_valid"] is True
+    assert details["semantic_contract_valid"] is False
+    assert passed is False
 
 
 @pytest.mark.parametrize(

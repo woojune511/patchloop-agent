@@ -344,6 +344,35 @@ def test_manifest_embeds_review_contract_without_changing_legacy_dump() -> None:
     ]["content_hash"] == contract.content_hash
 
 
+def test_saturation_manifest_requires_and_embeds_public_review_contract() -> None:
+    task_id = "pdm-ignore-active-venv-resolution"
+    package = load_task_package(_task_dir(task_id))
+    contract = load_public_review_contract(
+        _review_path(task_id),
+        task=package.public,
+        public_spec_hash=package.public_spec_hash,
+    )
+
+    manifest = build_manifest(
+        package,
+        run_id="run_saturation_review_contract",
+        saturation_context_validation=True,
+        public_review_contract=contract,
+    )
+
+    assert manifest.tool_schema_version == "v4"
+    assert manifest.context_policy_version == "phase-evidence-v8"
+    assert manifest.public_review_contract == contract
+    assert manifest.model_dump(mode="json")[
+        "public_review_contract"
+    ]["content_hash"] == contract.content_hash
+    with pytest.raises(ContractError, match="require a public review contract"):
+        build_manifest(
+            package,
+            saturation_context_validation=True,
+        )
+
+
 def test_tool_call_accepts_v4_without_changing_default() -> None:
     default = ToolCall(
         tool="review_task",

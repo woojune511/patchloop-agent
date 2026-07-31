@@ -14,7 +14,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   implementation baseline이 존재한다.
 - 현재 milestone은 `D-060 three-task no-memory budget pilot live-complete and diagnosed;
   D-062 900k corrective campaign consumed once and halted after first-row original qualification;
-  phase-evidence-v8 saturation-context offline fix and a separately approved single pilot pending`이다.
+  phase-evidence-v8 saturation-context offline gate complete and a separate single pilot contract
+  pending`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -214,9 +215,18 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   failure가 campaign을 fail-closed했고 나머지 두 row는 not-started다. 900,000-token ceiling은
   completion guarantee가 아니었고 run은 875,908 token에서 exact-request budget에 막혔다.
   Original campaign artifacts와 false gate는 immutable하며 D-062를 계속하거나 재실행하지
-  않는다. 다음 gate는 `evidence_saturated`를 model-visible phase contract에 반영하는 새
-  `phase-evidence-v8` offline contract와, 그 계약에 대한 별도 hash·비용 승인의 single live
-  pilot이다. Memory admission과 96-run core campaign은 계속 보류한다.
+  않는다. D-063 `phase-evidence-v8` offline gate는 같은 durable prefix의 saturation과 tail을
+  `phase-contract-v3.read_search_policy`에 합성하고, mock-only manifest,
+  `corrective-runtime-contract-v2`, `context-build-evidence-v8`, `trace-source-evidence-v8`과
+  independent `saturation_context_contract`를 구현했다. Six-replay 직후 `SystemExit`을 일으킨
+  crash/resume E2E에서 첫 resumed context의 read/search 제거, successful patch 뒤 count 0
+  reset과 qualifier pass를 확인했다. Representative v7 rendered/evidence golden과 D-062 source
+  hash `sha256:53148b2b42e82ddcb6083b1b317df3c7f8598972ed61fac0f69c65c5acff4351`은
+  유지됐다. 관련 regression은 377 passed/2 skipped, 전체는 822 collected,
+  815 passed/7 environment-dependent skipped였고 Ruff와 `git diff --check`도 통과했다.
+  D-063은 provider call, live suite, approval hash 또는 비용 evidence가 아니다.
+  다음 gate는 기존 D-062 purpose를 완화하지 않는 별도 single-task live pilot contract와 새
+  hash·비용 승인이다. Memory admission과 96-run core campaign은 계속 보류한다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

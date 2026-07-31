@@ -3,15 +3,15 @@
 상태: **Implementation baseline active**  
 현재 milestone: **D-060 three-task no-memory budget pilot live-complete and diagnosed;
 D-062 900k corrective campaign consumed once and halted after first-row original qualification;
-phase-evidence-v8 saturation-context offline fix and separate single live pilot pending**
+phase-evidence-v8 saturation-context offline gate complete; separate single live pilot contract pending**
 
-2026-07-31 구현 스냅샷:
+2026-08-01 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | historical v2/v5와 opt-in v3/v6 보존; corrective v4/v7 offline-complete | Public checklist review, rejected-patch source snapshot/persistence, apply same-turn barrier와 crash reconciliation, six-replay evidence saturation, hash-bound runtime CAS와 request-by-request qualification 재계산 |
+| Phase 3 state machine | historical v2/v5와 opt-in v3/v6/v7 보존; saturation-context v4/v8 offline-complete | Public checklist review, rejected-patch source snapshot/persistence, apply same-turn barrier와 crash reconciliation, model-visible six-replay saturation, hash-bound runtime CAS와 independent saturation qualification |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
 | Phase 6 evaluation | D-060 diagnostic complete; D-062 consumed and halted after row 1 | D-062 HF는 33 completed calls/875,908 tokens 뒤 exact-budget block, patch/evaluator 0; PDM/pyfakefs not-started, original gate false, usable baseline은 아직 없음 |
@@ -91,9 +91,10 @@ v4/v7 900k corrective pilot은 승인 hash
 `sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`로 정확히 한 번
 소비됐지만 HF Hub `run_0ccfc8fd359a4785` 뒤 original qualification failure로 중단됐다.
 나머지 두 row는 시작되지 않았고 original gate는 false다. 이 trace는 saturation이 context에
-반영되지 않은 gap과 일곱 patch preview failure를 보여주므로 baseline으로 쓰지 않는다. 다음은
-새 `phase-evidence-v8` saturation-context offline gate이며, 통과 뒤에도 별도 승인된 single
-pilot만 실행한다.
+반영되지 않은 gap과 일곱 patch preview failure를 보여주므로 baseline으로 쓰지 않는다.
+D-063 `phase-evidence-v8`은 이 gap만 mock/offline에서 닫았고 historical v7 rendering과 D-062
+source hash를 보존했다. 다음은 기존 purpose를 완화하지 않는 새 single-task live pilot 계약이며,
+새 hash와 비용 승인이 있기 전에는 provider를 호출하지 않는다.
 
 D-062 original result, journal과 qualification artifact는 immutable하다. 후속 독립 분석은
 qualification failure에서 v5-vs-v6/v7 nominal-reserve drift를 분리했다. Append-only
@@ -124,7 +125,7 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — D-062 consumed; v8 corrective single pilot pending
+## Current live trace gate — V8 offline-complete; separate single pilot contract pending
 
 목표: 각 paid invocation 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -158,7 +159,15 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 11f | completed (offline + Docker), live use not approved | D-056/D-057 opt-in tool v3/context v6 self-validation | Public-v2 profile + dedicated clean-image optional `run_probe`, current-diff `review_task`, v3 submission/source qualification, recovery와 v1-v5 byte-stability; 실제 Docker isolation E2E 3/3과 mock official-evaluator smoke 통과, 별도 승인 전 live/campaign 금지 |
 | 11g | completed (offline), live use not approved | D-059 profile-bearing full agent probe lifecycle | Dataset 밖 `csv-quoted-newline@2` fixture에서 mock agent가 registered probe를 clean Docker image로 실행하고 그 event를 same-diff review에 인용한 뒤 official evaluator까지 완료; 전체 live qualification은 의도적으로 false |
 | 11h | consumed once; original gate false; immutable | D-062 corrective no-memory pilot | 승인 hash `sha256:464a6...4031`; HF `run_0ccfc8fd359a4785`만 terminal 후 `QualificationFailureHalt`, PDM/pyfakefs not-started. 33 completed calls, 875,908 tokens, `$0.8408853`, exact-budget block, patch/evaluator 0; baseline·memory/core 제외, 재실행 금지 |
-| 11i | proposed; offline evidence pending | Phase-evidence-v8 saturation-context correction | Six-replay saturation을 다음 context의 authoritative allowed actions에 반영하고 historical v7 rendering을 보존한다. Offline qualification과 regression 뒤 새 suite/hash/비용 승인의 single live pilot만 허용 |
+| 11i | completed (offline), no provider call | D-063 phase-evidence-v8 saturation-context correction | Six-replay saturation을 다음 context의 authoritative allowed actions에 반영하고 historical v7 rendering을 보존. Mock-only manifest, crash/resume reset E2E, independent saturation qualification과 representative v7 golden 통과 |
+| 11j | proposed; not approved | Separate V8 single live pilot contract | 기존 D-062 purpose/hash를 재사용하지 않고 exact one-task suite, runtime v2, clean execution hash와 별도 비용 승인을 만든 뒤 한 번만 실행 |
+
+D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
+815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner
+`ToolReplayed` presentation을 qualifier가 처음 누락한 integration failure를 수정한 뒤 같은
+crash/resume E2E와 전체 회귀를 다시 통과했다. D-062 source hash는
+`sha256:53148b2b42e82ddcb6083b1b317df3c7f8598972ed61fac0f69c65c5acff4351`로
+불변이며 provider call은 없었다.
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.

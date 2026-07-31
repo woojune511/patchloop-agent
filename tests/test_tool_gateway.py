@@ -8,6 +8,13 @@ from pathlib import Path
 import pytest
 
 from patchloop.agent.context import build_context, build_context_with_evidence
+from patchloop.agent.investigation import (
+    investigation_ledger_schema,
+    investigation_policy_version,
+    nominal_tail_reserve,
+    tail_policy,
+    tool_admission_schema,
+)
 from patchloop.agent.review import (
     normalize_public_issue_text,
     public_review_contract_content_hash,
@@ -127,9 +134,12 @@ def _smoke_gateway(
     corrective_validation = (
         manifest_context_policy_version == "phase-evidence-v7"
     )
+    saturation_context_validation = (
+        manifest_context_policy_version == "phase-evidence-v8"
+    )
     public_review_contract = (
         _smoke_review_contract(package)
-        if corrective_validation
+        if corrective_validation or saturation_context_validation
         else None
     )
     manifest = build_manifest(
@@ -139,6 +149,7 @@ def _smoke_gateway(
         budget=budget,
         max_output_tokens=max_output_tokens,
         corrective_validation=corrective_validation,
+        saturation_context_validation=saturation_context_validation,
         public_review_contract=public_review_contract,
     ).model_copy(
         update={
@@ -274,6 +285,42 @@ def _v3_gateway(tmp_path, run_id: str, *, sandbox=None):
         context_policy_version="phase-evidence-v6",
     )
     return manager, workspace, gateway
+
+
+def _v8_probe_gateway(tmp_path, run_id: str):
+    package = load_task_package(
+        "fixtures/task-packages/self-validation-csv-quoted-newline"
+    )
+    manifest = build_manifest(
+        package,
+        run_id=run_id,
+        saturation_context_validation=True,
+        probe_image_digest=PROBE_IMAGE_DIGEST,
+        public_review_contract=_smoke_review_contract(package),
+    )
+    state = StateStore(tmp_path / f"{run_id}.sqlite3")
+    state.create_run(manifest)
+    manager = WorkspaceManager(
+        "fixtures/repositories",
+        tmp_path / f"{run_id}-workspaces",
+    )
+    workspace = manager.create(
+        manifest.run_id,
+        package.public.repository.url,
+        package.public.repository.base_commit,
+    )
+    sandbox = _OfficialProbeSandbox()
+    gateway = ToolGateway(
+        run_id=manifest.run_id,
+        workspace=workspace,
+        task=package.public,
+        state=state,
+        artifacts=ArtifactStore(tmp_path / f"{run_id}-artifacts"),
+        sandbox=sandbox,
+        tool_schema_version="v4",
+        context_policy_version="phase-evidence-v8",
+    )
+    return manager, workspace, gateway, sandbox
 
 
 def test_mutating_tool_rolls_back_forbidden_path(tmp_path) -> None:
@@ -594,6 +641,379 @@ def test_v7_blocks_search_after_six_semantic_replays_and_resets_on_patch(
     )
     assert after_patch.status == "succeeded"
     assert after_patch.output.get("admission_blocked") is not True
+
+
+def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
+    tmp_path,
+) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v8_evidence_saturation",
+        tool_schema_version="v4",
+        manifest_context_policy_version="phase-evidence-v8",
+        gateway_context_policy_version="phase-evidence-v8",
+    )
+    manifest = gateway.state.get_manifest(gateway.run_id)
+    search = {"query": "parse_rows", "path_glob": "**/*.py"}
+    first = gateway.execute("search_files", "v8-search-first", search)
+    assert first.status == "succeeded"
+    for index in range(5):
+        replay = gateway.execute(
+            "search_files",
+            f"v8-search-replay-{index}",
+            search,
+        )
+        assert replay.output["semantic_replay"] is True
+
+    before_saturation = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v8",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    before_payload = json.loads(before_saturation.rendered)
+    before_policy = before_payload["phase_contract"][
+        "read_search_policy"
+    ]
+    assert before_policy == {
+        "schema_version": "read-search-policy-v1",
+        "policy_version": "evidence-saturation-v1",
+        "admitted": True,
+        "reason_codes": [],
+        "semantic_replay_count": 5,
+        "semantic_replay_threshold": 6,
+        "mutation_epoch_sequence": None,
+    }
+    assert {"read_file", "search_files"}.issubset(
+        before_payload["phase_contract"]["allowed_next_actions"]
+    )
+    assert before_saturation.evidence["read_search_policy"] == before_policy
+
+    sixth = gateway.execute(
+        "search_files",
+        "v8-search-replay-5",
+        search,
+    )
+    assert sixth.output["semantic_replay"] is True
+    saturated = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v8",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    saturated_payload = json.loads(saturated.rendered)
+    saturated_contract = saturated_payload["phase_contract"]
+    saturated_policy = saturated_contract["read_search_policy"]
+    assert saturated_contract["schema_version"] == "phase-contract-v3"
+    assert saturated_policy == {
+        "schema_version": "read-search-policy-v1",
+        "policy_version": "evidence-saturation-v1",
+        "admitted": False,
+        "reason_codes": ["evidence_saturated"],
+        "semantic_replay_count": 6,
+        "semantic_replay_threshold": 6,
+        "mutation_epoch_sequence": None,
+    }
+    assert "read_file" not in saturated_contract["allowed_next_actions"]
+    assert "search_files" not in saturated_contract["allowed_next_actions"]
+    assert "apply_patch" in saturated_contract["allowed_next_actions"]
+    assert saturated.evidence["schema_version"] == (
+        "context-build-evidence-v8"
+    )
+    assert saturated.evidence["read_search_policy"] == saturated_policy
+
+    historical_v7 = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v7",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    historical_payload = json.loads(historical_v7.rendered)
+    assert historical_payload["phase_contract"]["schema_version"] == (
+        "phase-contract-v2"
+    )
+    assert "read_search_policy" not in historical_payload["phase_contract"]
+    assert {"read_file", "search_files"}.issubset(
+        historical_payload["phase_contract"]["allowed_next_actions"]
+    )
+    assert historical_v7.evidence["schema_version"] == (
+        "context-build-evidence-v7"
+    )
+    assert "read_search_policy" not in historical_v7.evidence
+
+    blocked = gateway.execute(
+        "search_files",
+        "v8-search-after-saturation",
+        {"query": "csv", "path_glob": "**/*.py"},
+    )
+    assert blocked.error_code == "TOOL_ADMISSION_BLOCKED"
+    assert blocked.output["error_details"]["reason_codes"] == [
+        "evidence_saturated"
+    ]
+    assert not any(
+        event.type == EventType.TOOL_CALLED
+        and event.correlation_id == "v8-search-after-saturation"
+        for event in gateway.state.list_events(gateway.run_id)
+    )
+
+    rejected_patch = (
+        "diff --git a/mini_data_utils/csvlite.py "
+        "b/mini_data_utils/csvlite.py\n"
+        "--- a/mini_data_utils/csvlite.py\n"
+        "+++ b/mini_data_utils/csvlite.py\n"
+        "@@ -1 +1 @@\n"
+        "-missing context\n"
+        "+replacement\n"
+    )
+    rejected = gateway.execute(
+        "apply_patch",
+        "v8-rejected-patch",
+        {"patch": rejected_patch},
+    )
+    assert rejected.status == "rejected"
+    after_rejection = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v8",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    after_rejection_policy = json.loads(after_rejection.rendered)[
+        "phase_contract"
+    ]["read_search_policy"]
+    assert after_rejection_policy["semantic_replay_count"] == 6
+    assert after_rejection_policy["mutation_epoch_sequence"] is None
+    assert after_rejection_policy["admitted"] is False
+
+    applied = gateway.execute(
+        "apply_patch",
+        "v8-saturation-reset-patch",
+        {"patch": _r2_style_recount_patch()},
+    )
+    assert applied.status == "succeeded"
+    patch_event = next(
+        event
+        for event in reversed(gateway.state.list_events(gateway.run_id))
+        if event.type == EventType.PATCH_APPLIED
+    )
+    after_mutation = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v8",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    after_mutation_payload = json.loads(after_mutation.rendered)
+    after_mutation_policy = after_mutation_payload["phase_contract"][
+        "read_search_policy"
+    ]
+    assert after_mutation_policy == {
+        "schema_version": "read-search-policy-v1",
+        "policy_version": "evidence-saturation-v1",
+        "admitted": True,
+        "reason_codes": [],
+        "semantic_replay_count": 0,
+        "semantic_replay_threshold": 6,
+        "mutation_epoch_sequence": patch_event.sequence,
+    }
+    assert {"read_file", "search_files"}.issubset(
+        after_mutation_payload["phase_contract"]["allowed_next_actions"]
+    )
+
+
+def test_v7_minimal_context_rendering_remains_byte_stable(tmp_path) -> None:
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    contract = _smoke_review_contract(package)
+    manifest = build_manifest(
+        package,
+        run_id="run_v7_context_golden",
+        corrective_validation=True,
+        public_review_contract=contract,
+    )
+
+    built = build_context_with_evidence(
+        package.public,
+        [],
+        None,
+        policy_version="phase-evidence-v7",
+        artifact_store=ArtifactStore(tmp_path / "artifacts"),
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=contract,
+    )
+
+    assert built.content_hash == (
+        "sha256:93a131bfb2bb25a48f0bad023b6c1b88"
+        "e4343d9a0fab8b95a763b1407329ec8e"
+    )
+    assert sha256_text(canonical_json(built.evidence)) == (
+        "sha256:c5a00dec69617ae999148b8184aac3dd"
+        "62ff59dcd836613e97ebf0bb0fec8c79"
+    )
+    payload = json.loads(built.rendered)
+    assert payload["phase_contract"]["schema_version"] == (
+        "phase-contract-v2"
+    )
+    assert "read_search_policy" not in payload["phase_contract"]
+    assert built.evidence["schema_version"] == (
+        "context-build-evidence-v7"
+    )
+
+
+def test_v8_public_investigation_helpers_use_corrective_v2_contract() -> None:
+    task = load_task_package(
+        "tasks/smoke/csv-quoted-newline"
+    ).public
+
+    assert nominal_tail_reserve(
+        task,
+        context_policy_version="phase-evidence-v8",
+    ) == nominal_tail_reserve(
+        task,
+        context_policy_version="phase-evidence-v7",
+    )
+    assert investigation_policy_version("phase-evidence-v8") == (
+        "investigation-policy-v2"
+    )
+    assert investigation_ledger_schema("phase-evidence-v8") == (
+        "investigation-ledger-v2"
+    )
+    assert tool_admission_schema("phase-evidence-v8") == (
+        "tool-admission-blocked-v2"
+    )
+    v8_tail = tail_policy(
+        task,
+        None,
+        context_policy_version="phase-evidence-v8",
+        events=[],
+        budget=Budget(),
+        max_output_tokens=4096,
+    )
+    assert v8_tail["schema_version"] == "investigation-tail-policy-v2"
+    assert v8_tail["policy_version"] == "investigation-policy-v2"
+    assert v8_tail["token_projection"]["projection_stage"] == (
+        "pre_generation"
+    )
+
+
+def test_v8_saturation_keeps_probe_until_tail_policy_blocks_it(
+    tmp_path,
+) -> None:
+    _, _, gateway, sandbox = _v8_probe_gateway(
+        tmp_path,
+        "run_gateway_v8_probe_saturation",
+    )
+    manifest = gateway.state.get_manifest(gateway.run_id)
+    search = {"query": "parse_rows", "path_glob": "**/*.py"}
+    assert gateway.execute(
+        "search_files",
+        "v8-probe-search-first",
+        search,
+    ).status == "succeeded"
+    for index in range(6):
+        replay = gateway.execute(
+            "search_files",
+            f"v8-probe-search-replay-{index}",
+            search,
+        )
+        assert replay.output["semantic_replay"] is True
+
+    saturated = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v8",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    saturated_contract = json.loads(saturated.rendered)["phase_contract"]
+    assert saturated_contract["read_search_policy"]["reason_codes"] == [
+        "evidence_saturated"
+    ]
+    assert "read_file" not in saturated_contract["allowed_next_actions"]
+    assert "search_files" not in saturated_contract[
+        "allowed_next_actions"
+    ]
+    assert "run_probe" in saturated_contract["allowed_next_actions"]
+
+    probe = gateway.execute(
+        "run_probe",
+        "v8-probe-after-saturation",
+        {
+            "probe_id": "quoted-newline-case",
+            "source": "assert 2 + 2 == 4",
+        },
+    )
+    assert probe.status == "succeeded"
+    assert len(sandbox.probe_calls) == 1
+
+    after_probe = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v8",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    after_probe_contract = json.loads(after_probe.rendered)["phase_contract"]
+    assert after_probe_contract["read_search_policy"][
+        "semantic_replay_count"
+    ] == 6
+    assert "run_probe" in after_probe_contract["allowed_next_actions"]
+
+    for _ in range(14):
+        gateway.state.append_event(
+            gateway.run_id,
+            EventType.MODEL_CALLED,
+            actor="model-adapter",
+            payload={
+                "requested_input_tokens": 1,
+                "input_tokens": 1,
+                "output_tokens": 0,
+            },
+        )
+    tail_blocked = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v8",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    tail_contract = json.loads(tail_blocked.rendered)["phase_contract"]
+    assert tail_contract["read_search_policy"]["reason_codes"] == [
+        "model_tail_reserved",
+        "evidence_saturated",
+    ]
+    assert not {
+        "read_file",
+        "search_files",
+        "run_probe",
+    }.intersection(tail_contract["allowed_next_actions"])
 
 
 def test_v6_does_not_apply_v7_evidence_saturation_limit(tmp_path) -> None:

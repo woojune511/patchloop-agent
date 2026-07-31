@@ -16,9 +16,17 @@ budget block으로 끝났으며 `PatchPrepared`/`PatchApplied`와 evaluator 도�
 immutable하다. Qualifier reserve-version drift는 별도 append-only correction
 `qcor_8b6ff812...4870b6`로 재계산돼 corrected trace qualification은 통과했지만, original
 campaign gate와 task outcome은 false 그대로다. 이 tuning evidence는 SCRR,
-no-memory baseline, memory admission 또는 core 결과가 아니다. D-062는 재실행하지 않으며,
-다음 gate는 saturation을 context contract에 반영하는 새 version의 offline 검증과 별도
-승인된 single live pilot이다.
+no-memory baseline, memory admission 또는 core 결과가 아니다. D-062는 재실행하지 않는다.
+
+2026-08-01 현재 후속 D-063 `phase-evidence-v8` offline gate가 구현됐다. V8은 같은 durable
+prefix의 six-replay saturation과 token/model/tool tail을 `phase-contract-v3`의
+`read_search_policy`로 합성해 다음 request에서 read/search를 제거한다. Saturation-only에서는
+registered probe를 유지하고 tail에서는 probe까지 제거하며, successful patch 뒤 새 mutation
+epoch에서 탐색을 다시 연다. Mock-only manifest, crash/resume agent E2E, runtime/context/source
+CAS와 독립 `saturation_context_contract` qualification을 검증했고 historical v7 rendering과
+D-062 source hash는 유지됐다. 이 작업에는 OpenAI 호출이나 비용 지출이 없었다. 다음 live
+단계는 아직 승인되지 않았으며 새 purpose·single-task suite·execution hash·비용 상한을 별도로
+만들어야 한다.
 
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을

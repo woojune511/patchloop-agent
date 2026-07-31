@@ -25,6 +25,9 @@ TOOL_ADMISSION_SCHEMA = "tool-admission-blocked-v1"
 INVESTIGATION_POLICY_VERSION_V2 = "investigation-policy-v2"
 INVESTIGATION_LEDGER_SCHEMA_V2 = "investigation-ledger-v2"
 TOOL_ADMISSION_SCHEMA_V2 = "tool-admission-blocked-v2"
+EVIDENCE_SATURATION_POLICY_VERSION = "evidence-saturation-v1"
+EVIDENCE_SATURATION_THRESHOLD = 6
+READ_SEARCH_POLICY_SCHEMA = "read-search-policy-v1"
 INSPECTION_ADMISSION_PREFLIGHT_SCHEMA = (
     "inspection-admission-preflight-v1"
 )
@@ -54,6 +57,14 @@ class InspectionRecord:
     action_id: str
     result: dict[str, Any]
     result_artifact: Artifact
+
+
+@dataclass(frozen=True)
+class EvidenceSaturationState:
+    mutation_epoch_sequence: int | None
+    semantic_replay_count: int
+    semantic_replay_threshold: int
+    saturated: bool
 
 
 def validate_inspection_arguments(
@@ -163,6 +174,26 @@ def active_epoch_events(events: list[RunEvent]) -> tuple[int | None, list[RunEve
         for event in events
         if epoch is None or event.sequence > epoch
     ]
+
+
+def evidence_saturation_state(
+    events: list[RunEvent],
+) -> EvidenceSaturationState:
+    """Derive the v8 read/search saturation state from the durable prefix."""
+
+    epoch = mutation_epoch(events)
+    replay_count = sum(
+        event.type == EventType.TOOL_REPLAYED
+        and event.payload.get("semantic_replay") is True
+        and (epoch is None or event.sequence > epoch)
+        for event in events
+    )
+    return EvidenceSaturationState(
+        mutation_epoch_sequence=epoch,
+        semantic_replay_count=replay_count,
+        semantic_replay_threshold=EVIDENCE_SATURATION_THRESHOLD,
+        saturated=replay_count >= EVIDENCE_SATURATION_THRESHOLD,
+    )
 
 
 def _artifact_from_payload(
@@ -566,7 +597,11 @@ def nominal_tail_reserve(
         + (
             1
             if context_policy_version
-            in {"phase-evidence-v6", "phase-evidence-v7"}
+            in {
+                "phase-evidence-v6",
+                "phase-evidence-v7",
+                "phase-evidence-v8",
+            }
             else 0
         )
     )
@@ -575,7 +610,11 @@ def nominal_tail_reserve(
         "model_calls": (
             4
             if context_policy_version
-            in {"phase-evidence-v6", "phase-evidence-v7"}
+            in {
+                "phase-evidence-v6",
+                "phase-evidence-v7",
+                "phase-evidence-v8",
+            }
             else 3
         ),
         "feedback_model_calls": 1,
@@ -587,6 +626,7 @@ def investigation_policy_version(context_policy_version: str) -> str:
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         return INVESTIGATION_POLICY_VERSION_V2
     return INVESTIGATION_POLICY_VERSION
@@ -597,6 +637,7 @@ def investigation_ledger_schema(context_policy_version: str) -> str:
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         return INVESTIGATION_LEDGER_SCHEMA_V2
     return INVESTIGATION_LEDGER_SCHEMA
@@ -607,6 +648,7 @@ def tool_admission_schema(context_policy_version: str) -> str:
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         return TOOL_ADMISSION_SCHEMA_V2
     return TOOL_ADMISSION_SCHEMA
@@ -729,6 +771,7 @@ def tail_policy(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         if budget is None or max_output_tokens is None:
             raise ValueError(

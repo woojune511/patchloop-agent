@@ -598,6 +598,16 @@ class AgentRunner:
         else:
             runtime_contract = self.artifacts.put_json(
                 {
+                    **(
+                        {
+                            "schema_version": (
+                                "corrective-runtime-contract-v2"
+                            )
+                        }
+                        if manifest.context_policy_version
+                        == "phase-evidence-v8"
+                        else {}
+                    ),
                     "system_prompt": system_prompt,
                     "tools": tool_schemas,
                     "tool_schema_version": manifest.tool_schema_version,
@@ -680,6 +690,7 @@ class AgentRunner:
                     "phase-evidence-v5",
                     "phase-evidence-v6",
                     "phase-evidence-v7",
+                    "phase-evidence-v8",
                 }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -714,6 +725,7 @@ class AgentRunner:
                     "phase-evidence-v5",
                     "phase-evidence-v6",
                     "phase-evidence-v7",
+                    "phase-evidence-v8",
                 }:
                     # V5 binds the ledger to the exact durable prefix. A
                     # MemoryRetrieved event appended above must therefore be
@@ -868,6 +880,7 @@ class AgentRunner:
                                         "phase-evidence-v5",
                                         "phase-evidence-v6",
                                         "phase-evidence-v7",
+                                        "phase-evidence-v8",
                                     }
                                     else {}
                                 ),
@@ -895,6 +908,7 @@ class AgentRunner:
                                     in {
                                         "phase-evidence-v6",
                                         "phase-evidence-v7",
+                                        "phase-evidence-v8",
                                     }
                                     else {}
                                 ),
@@ -905,7 +919,40 @@ class AgentRunner:
                                 "phase-evidence-v5",
                                 "phase-evidence-v6",
                                 "phase-evidence-v7",
+                                "phase-evidence-v8",
                             }
+                            else {}
+                        ),
+                        **(
+                            {
+                                "investigation_read_search_admitted": (
+                                    built_context.evidence[
+                                        "read_search_policy"
+                                    ]["admitted"]
+                                ),
+                                "investigation_read_search_reason_codes": (
+                                    built_context.evidence[
+                                        "read_search_policy"
+                                    ]["reason_codes"]
+                                ),
+                                "investigation_semantic_replay_count": (
+                                    built_context.evidence[
+                                        "read_search_policy"
+                                    ]["semantic_replay_count"]
+                                ),
+                                "investigation_semantic_replay_threshold": (
+                                    built_context.evidence[
+                                        "read_search_policy"
+                                    ]["semantic_replay_threshold"]
+                                ),
+                                "investigation_saturation_mutation_epoch_sequence": (
+                                    built_context.evidence[
+                                        "read_search_policy"
+                                    ]["mutation_epoch_sequence"]
+                                ),
+                            }
+                            if manifest.context_policy_version
+                            == "phase-evidence-v8"
                             else {}
                         ),
                     },
@@ -916,6 +963,7 @@ class AgentRunner:
                     "phase-evidence-v5",
                     "phase-evidence-v6",
                     "phase-evidence-v7",
+                    "phase-evidence-v8",
                 }:
                     pre_generation_reason = self._pre_generation_budget_reason(
                         manifest,
@@ -948,6 +996,7 @@ class AgentRunner:
                             "phase-evidence-v5",
                             "phase-evidence-v6",
                             "phase-evidence-v7",
+                            "phase-evidence-v8",
                         }:
                             usage.input_token_count_calls += 1
                             self._block_model_generation(
@@ -978,6 +1027,7 @@ class AgentRunner:
                             "phase-evidence-v5",
                             "phase-evidence-v6",
                             "phase-evidence-v7",
+                            "phase-evidence-v8",
                         }
                         and usage.input_tokens + usage.output_tokens
                         >= manifest.budget.max_total_tokens
@@ -1969,6 +2019,7 @@ class AgentRunner:
             "phase-evidence-v5",
             "phase-evidence-v6",
             "phase-evidence-v7",
+            "phase-evidence-v8",
         }:
             evidence_task = (
                 task
@@ -1982,7 +2033,11 @@ class AgentRunner:
                 summary.patch_hash,
                 structured_review_required=(
                     manifest.context_policy_version
-                    in {"phase-evidence-v6", "phase-evidence-v7"}
+                    in {
+                        "phase-evidence-v6",
+                        "phase-evidence-v7",
+                        "phase-evidence-v8",
+                    }
                 ),
                 probe_available=bool(evidence_task.probe_profiles),
             )
@@ -2114,7 +2169,8 @@ class AgentRunner:
             return SYSTEM_PROMPT_V4, TOOL_SCHEMAS_V3
         if (
             manifest.tool_schema_version == "v4"
-            and manifest.context_policy_version == "phase-evidence-v7"
+            and manifest.context_policy_version
+            in {"phase-evidence-v7", "phase-evidence-v8"}
         ):
             return SYSTEM_PROMPT_V5, TOOL_SCHEMAS_V4
         raise ContractError(

@@ -21,6 +21,7 @@ from patchloop.contracts import (
     FaultSpec,
     Phase,
     RegisteredProbeProfile,
+    RunEvent,
     RunOutcomeKind,
     RunResult,
     RunStatus,
@@ -83,6 +84,9 @@ PATCH_TEXT = (
 DIFF_HASH = sha256_bytes(PATCH_TEXT.encode("utf-8"))
 PROBE_ID = "python-diagnostic"
 PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
+SELF_VALIDATION_TASK = Path(
+    "fixtures/task-packages/self-validation-csv-quoted-newline"
+)
 
 
 @pytest.mark.parametrize(
@@ -96,6 +100,7 @@ PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
         ("phase-evidence-v5", 0, 3, 5),
         ("phase-evidence-v6", 1, 4, 6),
         ("phase-evidence-v7", 1, 4, 6),
+        ("phase-evidence-v8", 1, 4, 6),
     ],
 )
 def test_expected_token_tail_policy_uses_versioned_corrective_reserve(
@@ -132,6 +137,287 @@ def test_expected_token_tail_policy_uses_versioned_corrective_reserve(
     assert policy["token_projection"]["projected_model_turns"] == (
         projected_model_turns
     )
+
+
+def _v8_event(
+    sequence: int,
+    event_type: EventType,
+    *,
+    payload: dict | None = None,
+) -> RunEvent:
+    return RunEvent(
+        event_id=f"evt_v8_{sequence}",
+        run_id="run_v8_qualification",
+        sequence=sequence,
+        type=event_type,
+        timestamp=utc_now(),
+        actor="qualification-test",
+        payload=payload or {},
+    )
+
+
+def _v8_saturation_case(
+    tmp_path: Path,
+    *,
+    tail_blocked: bool = False,
+    allowed_next_actions: list[str] | None = None,
+    phase_overrides: dict | None = None,
+) -> tuple[bool, dict, dict]:
+    package = load_task_package(SELF_VALIDATION_TASK)
+    base_manifest = build_manifest(
+        package,
+        run_id="run_v8_qualification",
+        sandbox_backend="local",
+    )
+    manifest = base_manifest.model_copy(
+        update={
+            "tool_schema_version": "v4",
+            "context_policy_version": "phase-evidence-v8",
+            **(
+                {"budget": Budget(max_tool_calls=1)}
+                if tail_blocked
+                else {}
+            ),
+        }
+    )
+    prefix = [
+        _v8_event(
+            sequence,
+            EventType.TOOL_REPLAYED,
+            payload={"semantic_replay": True},
+        )
+        for sequence in range(1, 7)
+    ]
+    tail_policy = qualification_module._v5_expected_tail_policy(
+        task=package.public,
+        events=prefix,
+        manifest=manifest,
+        projection_stage="pre_generation",
+    )
+    read_search_policy = (
+        qualification_module._v8_expected_read_search_policy(
+            events=prefix,
+            tail_policy=tail_policy,
+        )
+    )
+    expected_actions = (
+        ["apply_patch", "run_check"]
+        if tail_blocked
+        else ["apply_patch", "run_check", "run_probe"]
+    )
+    phase_contract = {
+        "schema_version": "phase-contract-v3",
+        "current_phase": "INTAKE",
+        "allowed_next_actions": (
+            expected_actions
+            if allowed_next_actions is None
+            else allowed_next_actions
+        ),
+        "completed_checks": [],
+        "pending_checks": [
+            check.id for check in package.public.visible_checks
+        ],
+        "mutation_event_sequence": None,
+        "mutation_present": False,
+        "review_event_sequence": None,
+        "task_review_event_sequence": None,
+        "read_search_policy": read_search_policy,
+        **(phase_overrides or {}),
+    }
+    rendered_context = json.dumps(
+        {
+            "phase": "INTAKE",
+            "phase_contract": phase_contract,
+        },
+        ensure_ascii=False,
+    )
+    request_body = {"context": rendered_context}
+    request_body_hash = sha256_text(canonical_json(request_body))
+    context_build = {
+        "schema_version": "context-build-evidence-v8",
+        "tool_results": [],
+        "read_search_policy": read_search_policy,
+    }
+    artifact = ArtifactStore(tmp_path / "artifacts").put_json(
+        {
+            "schema_version": "model-request-evidence-v1",
+            "provider": "mock",
+            "request_body": request_body,
+            "request_body_hash": request_body_hash,
+            "context_build": context_build,
+        }
+    )
+    context_event = _v8_event(
+        7,
+        EventType.CONTEXT_BUILT,
+        payload={
+            "artifact_id": artifact.artifact_id,
+            "artifact_path": artifact.path,
+            "request_body_hash": request_body_hash,
+            "context_hash": sha256_text(rendered_context),
+            "investigation_read_search_admitted": (
+                read_search_policy["admitted"]
+            ),
+            "investigation_read_search_reason_codes": (
+                read_search_policy["reason_codes"]
+            ),
+            "investigation_semantic_replay_count": (
+                read_search_policy["semantic_replay_count"]
+            ),
+            "investigation_semantic_replay_threshold": (
+                read_search_policy["semantic_replay_threshold"]
+            ),
+            "investigation_saturation_mutation_epoch_sequence": (
+                read_search_policy["mutation_epoch_sequence"]
+            ),
+        },
+    )
+    valid, details = qualification_module._v8_saturation_context_evidence(
+        root=tmp_path,
+        manifest=manifest,
+        package=package,
+        events=[*prefix, context_event],
+        checkpoints=[],
+        context_events=[context_event],
+    )
+    return valid, details, phase_contract
+
+
+def test_v8_read_search_policy_resets_semantic_replays_after_mutation() -> None:
+    events = [
+        *[
+            _v8_event(
+                sequence,
+                EventType.TOOL_REPLAYED,
+                payload={"semantic_replay": True},
+            )
+            for sequence in range(1, 7)
+        ],
+        _v8_event(
+            7,
+            EventType.PATCH_APPLIED,
+            payload={"worktree_diff_hash": HASH},
+        ),
+        *[
+            _v8_event(
+                sequence,
+                EventType.TOOL_REPLAYED,
+                payload={"semantic_replay": True},
+            )
+            for sequence in range(8, 11)
+        ],
+    ]
+
+    policy = qualification_module._v8_expected_read_search_policy(
+        events=events,
+        tail_policy={"block_reasons": []},
+    )
+
+    assert policy == {
+        "schema_version": "read-search-policy-v1",
+        "policy_version": "evidence-saturation-v1",
+        "admitted": True,
+        "reason_codes": [],
+        "semantic_replay_count": 3,
+        "semantic_replay_threshold": 6,
+        "mutation_epoch_sequence": 7,
+    }
+
+
+def test_v8_saturation_context_keeps_probe_when_only_reads_are_saturated(
+    tmp_path: Path,
+) -> None:
+    valid, details, phase_contract = _v8_saturation_case(tmp_path)
+
+    assert valid is True
+    assert details["verified_context_sequences"] == [7]
+    assert details["saturated_context_sequences"] == [7]
+    assert phase_contract["allowed_next_actions"] == [
+        "apply_patch",
+        "run_check",
+        "run_probe",
+    ]
+
+
+def test_v8_saturation_context_removes_probe_for_strict_tail_reserve(
+    tmp_path: Path,
+) -> None:
+    valid, _, phase_contract = _v8_saturation_case(
+        tmp_path,
+        tail_blocked=True,
+    )
+
+    assert valid is True
+    assert phase_contract["allowed_next_actions"] == [
+        "apply_patch",
+        "run_check",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("tail_blocked", "forged_actions"),
+    [
+        (False, ["apply_patch", "run_check"]),
+        (False, ["apply_patch", "run_check", "finish_task"]),
+        (True, ["apply_patch", "run_check", "run_probe"]),
+    ],
+)
+def test_v8_saturation_context_rejects_forged_allowed_action_sets(
+    tmp_path: Path,
+    tail_blocked: bool,
+    forged_actions: list[str],
+) -> None:
+    valid, details, _ = _v8_saturation_case(
+        tmp_path,
+        tail_blocked=tail_blocked,
+        allowed_next_actions=forged_actions,
+    )
+
+    assert valid is False
+    assert details["failed_context_sequences"] == [7]
+
+
+def test_v8_saturation_context_rejects_forged_phase_readiness(
+    tmp_path: Path,
+) -> None:
+    valid, details, _ = _v8_saturation_case(
+        tmp_path,
+        phase_overrides={
+            "mutation_present": True,
+            "pending_checks": [],
+        },
+    )
+
+    assert valid is False
+    assert details["failed_context_sequences"] == [7]
+
+
+def test_v8_saturation_context_requires_at_least_one_context(
+    tmp_path: Path,
+) -> None:
+    package = load_task_package(SELF_VALIDATION_TASK)
+    manifest = build_manifest(
+        package,
+        run_id="run_v8_qualification_empty",
+        sandbox_backend="local",
+    ).model_copy(
+        update={
+            "tool_schema_version": "v4",
+            "context_policy_version": "phase-evidence-v8",
+        }
+    )
+
+    valid, details = qualification_module._v8_saturation_context_evidence(
+        root=tmp_path,
+        manifest=manifest,
+        package=package,
+        events=[],
+        checkpoints=[],
+        context_events=[],
+    )
+
+    assert valid is False
+    assert details["context_count"] == 0
 
 
 def _with_probe_profile(package):
@@ -2237,6 +2523,99 @@ def test_v6_source_schema_is_separate_from_historical_v5(
                 root=tmp_path,
             )
             != original_hash
+        )
+
+
+def test_v8_source_schema_does_not_rewrite_v7_or_local_d062_hash(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    from patchloop.agent.review import load_public_review_contract
+
+    package = load_task_package(
+        Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
+    )
+    review_contract = load_public_review_contract(
+        Path(
+            "experiments/review-contracts/"
+            "hf-hub-xet-endpoint-propagation.yaml"
+        ),
+        task=package.public,
+        public_spec_hash=package.public_spec_hash,
+    )
+    manifest = build_manifest(
+        package,
+        run_id="run_v7_source_schema",
+        provider="mock",
+        sandbox_backend="local",
+        corrective_validation=True,
+        public_review_contract=review_contract,
+    )
+    StateStore(tmp_path / "state.sqlite3").create_run(manifest)
+    original_hash = calculate_source_evidence_hash(
+        manifest.run_id,
+        root=tmp_path,
+        require_valid_plan=False,
+    )
+
+    assert (
+        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V7
+        == "trace-source-evidence-v7"
+    )
+    assert (
+        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V8
+        == "trace-source-evidence-v8"
+    )
+    with monkeypatch.context() as v8_schema_patch:
+        v8_schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V8",
+            "trace-source-evidence-v8-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                manifest.run_id,
+                root=tmp_path,
+                require_valid_plan=False,
+            )
+            == original_hash
+        )
+    with monkeypatch.context() as v7_schema_patch:
+        v7_schema_patch.setattr(
+            qualification_module,
+            "_SOURCE_EVIDENCE_SCHEMA_VERSION_V7",
+            "trace-source-evidence-v7-test-mutation",
+        )
+        assert (
+            calculate_source_evidence_hash(
+                manifest.run_id,
+                root=tmp_path,
+                require_valid_plan=False,
+            )
+            != original_hash
+        )
+
+    d062_run_id = "run_0ccfc8fd359a4785"
+    d062_hash = (
+        "sha256:53148b2b42e82ddcb6083b1b317df3c7"
+        "f8598972ed61fac0f69c65c5acff4351"
+    )
+    repository_runtime = Path(__file__).resolve().parents[1] / ".patchloop"
+    d062_qualification = (
+        repository_runtime / "qualifications" / f"{d062_run_id}.json"
+    )
+    if d062_qualification.is_file():
+        recorded = json.loads(
+            d062_qualification.read_text(encoding="utf-8")
+        )
+        assert recorded["source_evidence_hash"] == d062_hash
+        assert (
+            calculate_source_evidence_hash(
+                d062_run_id,
+                root=repository_runtime,
+                require_valid_plan=False,
+            )
+            == d062_hash
         )
 
 

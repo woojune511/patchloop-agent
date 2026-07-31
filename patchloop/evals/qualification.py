@@ -11,11 +11,13 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
     Budget,
+    Checkpoint,
     DatasetRole,
     EventType,
     ExperimentPurpose,
     FailureRecord,
     MemoryCondition,
+    Phase,
     RunManifest,
     RunOutcomeKind,
     RunResult,
@@ -131,6 +133,8 @@ _SOURCE_EVIDENCE_SCHEMA_VERSION_V4 = "trace-source-evidence-v4"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V5 = "trace-source-evidence-v5"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V6 = "trace-source-evidence-v6"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V7 = "trace-source-evidence-v7"
+_SOURCE_EVIDENCE_SCHEMA_VERSION_V8 = "trace-source-evidence-v8"
+_V8_EVIDENCE_SATURATION_THRESHOLD = 6
 _EMPTY_DIFF_HASH = sha256_text("")
 
 
@@ -468,14 +472,33 @@ def _execution_plan_matches(
         harness_git_commit=environment["git"].get("commit"),
     )
     corrective_runtime = bool(expected_runtime_contract is not None)
+    runtime_pair_matches = bool(
+        (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v7"
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
+            == "corrective-runtime-contract-v1"
+            and expected_runtime_contract.get("context_policy_version")
+            == "phase-evidence-v7"
+        )
+        or (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v8"
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
+            == "corrective-runtime-contract-v2"
+            and expected_runtime_contract.get("context_policy_version")
+            == "phase-evidence-v8"
+        )
+    )
     runtime_contract_matches = bool(
         (
             corrective_runtime
             and isinstance(runtime_contract, dict)
             and canonical_json(runtime_contract)
             == canonical_json(expected_runtime_contract)
-            and manifest.tool_schema_version == "v4"
-            and manifest.context_policy_version == "phase-evidence-v7"
+            and runtime_pair_matches
             and manifest.harness_git_commit
             == expected_runtime_contract["harness_git_commit"]
         )
@@ -776,7 +799,7 @@ def _corrective_runtime_contract_evidence(
     manifest: RunManifest,
     events: list[Any],
 ) -> tuple[bool, dict[str, Any]]:
-    """Validate the v7 runtime contract through its full CAS descriptor."""
+    """Validate one corrective runtime contract through its full CAS descriptor."""
 
     from patchloop.agent.model import SYSTEM_PROMPT_V5
     from patchloop.agent.tools import TOOL_SCHEMAS_V4
@@ -823,21 +846,34 @@ def _corrective_runtime_contract_evidence(
     )
     details["event_identity_valid"] = event_identity_valid
     details["descriptor_binding_valid"] = descriptor_binding_valid
-    expected = {
-        "system_prompt": SYSTEM_PROMPT_V5,
-        "tools": TOOL_SCHEMAS_V4,
-        "tool_schema_version": "v4",
-        "context_policy_version": "phase-evidence-v7",
-    }
+    if manifest.context_policy_version == "phase-evidence-v7":
+        expected = {
+            "system_prompt": SYSTEM_PROMPT_V5,
+            "tools": TOOL_SCHEMAS_V4,
+            "tool_schema_version": "v4",
+            "context_policy_version": "phase-evidence-v7",
+        }
+    elif manifest.context_policy_version == "phase-evidence-v8":
+        expected = {
+            "schema_version": "corrective-runtime-contract-v2",
+            "system_prompt": SYSTEM_PROMPT_V5,
+            "tools": TOOL_SCHEMAS_V4,
+            "tool_schema_version": "v4",
+            "context_policy_version": "phase-evidence-v8",
+        }
+    else:
+        expected = None
     try:
         observed = json.loads(content) if content is not None else None
     except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
         observed = None
     semantic_valid = bool(
-        isinstance(observed, dict)
+        expected is not None
+        and isinstance(observed, dict)
         and canonical_json(observed) == canonical_json(expected)
         and manifest.tool_schema_version == "v4"
-        and manifest.context_policy_version == "phase-evidence-v7"
+        and manifest.context_policy_version
+        in {"phase-evidence-v7", "phase-evidence-v8"}
     )
     details["semantic_contract_valid"] = semantic_valid
     return bool(
@@ -1580,15 +1616,19 @@ def _v4_investigation_context_evidence(
     verified_hashes: list[str] = []
     policy_version = manifest.context_policy_version
     evidence_schema = (
-        "context-build-evidence-v7"
-        if policy_version == "phase-evidence-v7"
+        "context-build-evidence-v8"
+        if policy_version == "phase-evidence-v8"
         else (
-            "context-build-evidence-v6"
-            if policy_version == "phase-evidence-v6"
+            "context-build-evidence-v7"
+            if policy_version == "phase-evidence-v7"
             else (
-                "context-build-evidence-v5"
-                if policy_version == "phase-evidence-v5"
-                else "context-build-evidence-v4"
+                "context-build-evidence-v6"
+                if policy_version == "phase-evidence-v6"
+                else (
+                    "context-build-evidence-v5"
+                    if policy_version == "phase-evidence-v5"
+                    else "context-build-evidence-v4"
+                )
             )
         )
     )
@@ -1704,6 +1744,7 @@ def _v4_investigation_context_evidence(
                 "phase-evidence-v5",
                 "phase-evidence-v6",
                 "phase-evidence-v7",
+                "phase-evidence-v8",
             }:
                 expected_tail = _v5_expected_tail_policy(
                     task=package.public,
@@ -1846,6 +1887,7 @@ def _v5_expected_tail_policy(
     elif context_policy_version in {
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         corrective_tool_calls = 1
         corrective_model_calls = 4
@@ -1993,6 +2035,458 @@ def _v5_expected_tail_policy(
     }
 
 
+def _v8_expected_read_search_policy(
+    *,
+    events: list[Any],
+    tail_policy: dict[str, Any],
+) -> dict[str, Any]:
+    """Independently derive the v8 model-visible inspection policy.
+
+    This deliberately does not import the runtime saturation helper or its
+    threshold. The semantic replay lifecycle is qualified separately; this
+    projection mirrors the gateway's durable-event counting rule so a context
+    cannot advertise an action that the same prefix would reject.
+    """
+
+    mutation_epoch_sequence = max(
+        (
+            event.sequence
+            for event in events
+            if event.type == EventType.PATCH_APPLIED
+        ),
+        default=None,
+    )
+    semantic_replay_count = sum(
+        event.type == EventType.TOOL_REPLAYED
+        and event.payload.get("semantic_replay") is True
+        and (
+            mutation_epoch_sequence is None
+            or event.sequence > mutation_epoch_sequence
+        )
+        for event in events
+    )
+    raw_tail_reasons = tail_policy.get("block_reasons")
+    if not isinstance(raw_tail_reasons, list) or not all(
+        isinstance(reason, str) for reason in raw_tail_reasons
+    ):
+        raise RecoveryError("v8 token-tail reasons are invalid")
+    reason_codes = list(raw_tail_reasons)
+    if semantic_replay_count >= _V8_EVIDENCE_SATURATION_THRESHOLD:
+        reason_codes.append("evidence_saturated")
+    return {
+        "schema_version": "read-search-policy-v1",
+        "policy_version": "evidence-saturation-v1",
+        "admitted": not reason_codes,
+        "reason_codes": reason_codes,
+        "semantic_replay_count": semantic_replay_count,
+        "semantic_replay_threshold": (
+            _V8_EVIDENCE_SATURATION_THRESHOLD
+        ),
+        "mutation_epoch_sequence": mutation_epoch_sequence,
+    }
+
+
+def _v8_expected_phase_contract(
+    *,
+    task,
+    events: list[Any],
+    checkpoint: Checkpoint | None,
+    presented_tool_results: Any,
+    read_search_policy: dict[str, Any],
+) -> dict[str, Any]:
+    """Independently derive the v8 readiness fields and allowed actions."""
+
+    if not isinstance(presented_tool_results, list) or not all(
+        isinstance(item, dict) for item in presented_tool_results
+    ):
+        raise RecoveryError("v8 presented tool-result evidence is invalid")
+    presented_sequences = {
+        item["event_sequence"]
+        for item in presented_tool_results
+        if (
+            type(item.get("event_sequence")) is int
+            and item.get("available") is True
+            and item.get("truncated") is False
+        )
+    }
+    source_by_sequence = {event.sequence: event for event in events}
+    for item in presented_tool_results:
+        sequence = item.get("event_sequence")
+        if type(sequence) is not int:
+            raise RecoveryError("v8 presented event sequence is invalid")
+        source = source_by_sequence.get(sequence)
+        if (
+            source is None
+            or source.type
+            not in {
+                EventType.TOOL_SUCCEEDED,
+                EventType.TOOL_FAILED,
+                EventType.TOOL_REPLAYED,
+            }
+            or item.get("tool") != source.payload.get("tool")
+            or item.get("worktree_diff_hash")
+            != source.payload.get("worktree_diff_hash")
+            or item.get("artifact_id") != source.payload.get("artifact_id")
+        ):
+            raise RecoveryError(
+                "v8 presented tool result is not durable-prefix bound"
+            )
+
+    phase = checkpoint.phase if checkpoint is not None else Phase.INTAKE
+    worktree_diff_hash = (
+        checkpoint.worktree_diff_hash
+        if checkpoint is not None
+        else _EMPTY_DIFF_HASH
+    )
+    latest_mutation = next(
+        (
+            event
+            for event in reversed(events)
+            if event.type == EventType.PATCH_APPLIED
+        ),
+        None,
+    )
+    mutation_epoch = latest_mutation.sequence if latest_mutation else 0
+    mutation_present = bool(
+        latest_mutation is not None
+        and worktree_diff_hash != _EMPTY_DIFF_HASH
+        and latest_mutation.payload.get("worktree_diff_hash")
+        == worktree_diff_hash
+    )
+    required_checks = tuple(check.id for check in task.visible_checks)
+    latest_checks: dict[str, Any] = {}
+    review_candidates: list[Any] = []
+    task_review_candidates: list[Any] = []
+    for event in events:
+        if (
+            event.sequence <= mutation_epoch
+            or event.type != EventType.TOOL_SUCCEEDED
+            or event.payload.get("worktree_diff_hash")
+            != worktree_diff_hash
+        ):
+            continue
+        tool = event.payload.get("tool")
+        if (
+            tool == "run_check"
+            and event.payload.get("check_id") in required_checks
+        ):
+            latest_checks[str(event.payload["check_id"])] = event
+        elif tool == "get_diff":
+            review_candidates.append(event)
+        elif tool == "review_task":
+            task_review_candidates.append(event)
+
+    completed_checks = tuple(
+        check_id
+        for check_id in required_checks
+        if (
+            check_id in latest_checks
+            and latest_checks[check_id].payload.get("passed") is True
+        )
+    )
+    pending_checks = tuple(
+        check_id
+        for check_id in required_checks
+        if check_id not in completed_checks
+    )
+    latest_check_sequence = (
+        max(event.sequence for event in latest_checks.values())
+        if latest_checks
+        else None
+    )
+    review_event = next(
+        (
+            event
+            for event in reversed(review_candidates)
+            if not pending_checks
+            and (
+                latest_check_sequence is None
+                or event.sequence > latest_check_sequence
+            )
+        ),
+        None,
+    )
+    review_presented = bool(
+        review_event is not None
+        and review_event.sequence in presented_sequences
+    )
+    task_review_event = next(
+        (
+            event
+            for event in reversed(task_review_candidates)
+            if (
+                review_event is not None
+                and event.sequence > review_event.sequence
+                and event.payload.get("source_get_diff_sequence")
+                == review_event.sequence
+                and not any(
+                    later.sequence > event.sequence
+                    and later.type == EventType.TOOL_SUCCEEDED
+                    and later.payload.get("tool")
+                    in {"run_probe", "run_check", "get_diff"}
+                    and later.payload.get("worktree_diff_hash")
+                    == worktree_diff_hash
+                    for later in events
+                )
+            )
+        ),
+        None,
+    )
+    task_review_presented = bool(
+        task_review_event is not None
+        and task_review_event.sequence in presented_sequences
+    )
+    optional_probe = ("run_probe",) if task.probe_profiles else ()
+    if not mutation_present:
+        allowed = (
+            "apply_patch",
+            "run_check",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
+    elif pending_checks:
+        allowed = (
+            "run_check",
+            "apply_patch",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
+    elif review_event is None or not review_presented:
+        allowed = (
+            "get_diff",
+            "apply_patch",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
+    elif task_review_event is None:
+        allowed = ("review_task", "apply_patch", *optional_probe)
+    elif not task_review_presented:
+        allowed = ("apply_patch",)
+    else:
+        allowed = ("finish_task", "apply_patch")
+
+    tail_reasons = [
+        reason
+        for reason in read_search_policy["reason_codes"]
+        if reason != "evidence_saturated"
+    ]
+    if tail_reasons:
+        blocked_actions = {"read_file", "search_files", "run_probe"}
+    elif "evidence_saturated" in read_search_policy["reason_codes"]:
+        blocked_actions = {"read_file", "search_files"}
+    else:
+        blocked_actions = set()
+    filtered_allowed = [
+        action for action in allowed if action not in blocked_actions
+    ]
+    return {
+        "current_phase": phase.value,
+        "allowed_next_actions": filtered_allowed,
+        "completed_checks": list(completed_checks),
+        "pending_checks": list(pending_checks),
+        "mutation_event_sequence": (
+            latest_mutation.sequence if latest_mutation is not None else None
+        ),
+        "mutation_present": mutation_present,
+        "review_event_sequence": (
+            review_event.sequence if review_event is not None else None
+        ),
+        "task_review_event_sequence": (
+            task_review_event.sequence
+            if task_review_event is not None
+            else None
+        ),
+    }
+
+
+def _v8_saturation_context_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    package: TaskPackage,
+    events: list[Any],
+    checkpoints: list[Checkpoint],
+    context_events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Verify v8 saturation visibility without replaying the context builder."""
+
+    artifact_root = root / "artifacts"
+    failed_sequences: list[int] = []
+    failed_reasons: dict[int, str] = {}
+    verified_sequences: list[int] = []
+    saturated_sequences: list[int] = []
+    policy_hashes: list[str] = []
+    checkpoints_by_id = {
+        checkpoint.checkpoint_id: checkpoint for checkpoint in checkpoints
+    }
+    for context_event in context_events:
+        try:
+            request_valid, request_evidence = _request_evidence_payload(
+                context_event,
+                artifact_root=artifact_root,
+                expected_provider=manifest.model.provider,
+            )
+            if not request_valid or request_evidence is None:
+                raise RecoveryError("v8 model request evidence is invalid")
+            rendered = _request_context(
+                request_evidence["request_body"],
+                allow_direct_context=(
+                    manifest.model.provider in {"mock", "replay"}
+                ),
+            )
+            context_build = request_evidence.get("context_build")
+            if (
+                not isinstance(rendered, str)
+                or not isinstance(context_build, dict)
+                or context_build.get("schema_version")
+                != "context-build-evidence-v8"
+            ):
+                raise RecoveryError("v8 context build evidence is invalid")
+            parsed_context = json.loads(rendered)
+            if not isinstance(parsed_context, dict):
+                raise RecoveryError("v8 rendered context is not an object")
+            phase_contract = parsed_context.get("phase_contract")
+            if (
+                not isinstance(phase_contract, dict)
+                or phase_contract.get("schema_version")
+                != "phase-contract-v3"
+            ):
+                raise RecoveryError("v8 phase contract is invalid")
+
+            source_events = [
+                event
+                for event in events
+                if event.sequence < context_event.sequence
+            ]
+            expected_tail = _v5_expected_tail_policy(
+                task=package.public,
+                events=source_events,
+                manifest=manifest,
+                projection_stage="pre_generation",
+            )
+            expected_policy = _v8_expected_read_search_policy(
+                events=source_events,
+                tail_policy=expected_tail,
+            )
+            checkpoint_events = [
+                event
+                for event in source_events
+                if event.type == EventType.CHECKPOINT_SAVED
+                and isinstance(event.payload.get("checkpoint_id"), str)
+            ]
+            checkpoint = None
+            if checkpoint_events:
+                checkpoint = checkpoints_by_id.get(
+                    checkpoint_events[-1].payload["checkpoint_id"]
+                )
+                if checkpoint is None:
+                    raise RecoveryError(
+                        "v8 context checkpoint is unavailable"
+                    )
+            expected_phase = _v8_expected_phase_contract(
+                task=package.public,
+                events=source_events,
+                checkpoint=checkpoint,
+                presented_tool_results=context_build.get("tool_results"),
+                read_search_policy=expected_policy,
+            )
+            allowed_next_actions = phase_contract.get(
+                "allowed_next_actions"
+            )
+            if not isinstance(allowed_next_actions, list) or not all(
+                isinstance(action, str) for action in allowed_next_actions
+            ):
+                raise RecoveryError("v8 allowed actions are invalid")
+            if allowed_next_actions != expected_phase["allowed_next_actions"]:
+                raise RecoveryError(
+                    "v8 allowed actions failed independent recomputation"
+                )
+            phase_mirrors = {
+                key: expected_phase[key]
+                for key in (
+                    "current_phase",
+                    "completed_checks",
+                    "pending_checks",
+                    "mutation_event_sequence",
+                    "mutation_present",
+                    "review_event_sequence",
+                    "task_review_event_sequence",
+                )
+            }
+            if any(
+                phase_contract.get(field) != expected
+                for field, expected in phase_mirrors.items()
+            ):
+                raise RecoveryError(
+                    "v8 phase readiness failed independent recomputation"
+                )
+            if phase_contract.get("read_search_policy") != expected_policy:
+                raise RecoveryError(
+                    "v8 rendered read/search policy failed recomputation"
+                )
+            if context_build.get("read_search_policy") != expected_policy:
+                raise RecoveryError(
+                    "v8 read/search evidence mirror failed recomputation"
+                )
+
+            event_mirrors = {
+                "investigation_read_search_admitted": expected_policy[
+                    "admitted"
+                ],
+                "investigation_read_search_reason_codes": expected_policy[
+                    "reason_codes"
+                ],
+                "investigation_semantic_replay_count": expected_policy[
+                    "semantic_replay_count"
+                ],
+                "investigation_semantic_replay_threshold": (
+                    expected_policy["semantic_replay_threshold"]
+                ),
+                "investigation_saturation_mutation_epoch_sequence": (
+                    expected_policy["mutation_epoch_sequence"]
+                ),
+            }
+            if any(
+                field not in context_event.payload
+                or context_event.payload.get(field) != expected
+                for field, expected in event_mirrors.items()
+            ):
+                raise RecoveryError(
+                    "v8 ContextBuilt read/search mirrors failed recomputation"
+                )
+
+            verified_sequences.append(context_event.sequence)
+            if "evidence_saturated" in expected_policy["reason_codes"]:
+                saturated_sequences.append(context_event.sequence)
+            policy_hashes.append(
+                sha256_text(canonical_json(expected_policy))
+            )
+        except (
+            KeyError,
+            OSError,
+            RecoveryError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            failed_sequences.append(context_event.sequence)
+            failed_reasons[context_event.sequence] = str(exc)
+    return bool(context_events) and not failed_sequences, {
+        "context_count": len(context_events),
+        "verified_context_count": len(verified_sequences),
+        "verified_context_sequences": verified_sequences,
+        "failed_context_sequences": failed_sequences,
+        "failed_context_reasons": failed_reasons,
+        "saturated_context_count": len(saturated_sequences),
+        "saturated_context_sequences": saturated_sequences,
+        "read_search_policy_hashes": policy_hashes,
+    }
+
+
 def _v4_investigation_lifecycle_evidence(
     *,
     root: Path,
@@ -2030,6 +2524,7 @@ def _v4_investigation_lifecycle_evidence(
             "phase-evidence-v5",
             "phase-evidence-v6",
             "phase-evidence-v7",
+            "phase-evidence-v8",
         }
         else INVESTIGATION_POLICY_VERSION
     )
@@ -2040,6 +2535,7 @@ def _v4_investigation_lifecycle_evidence(
             "phase-evidence-v5",
             "phase-evidence-v6",
             "phase-evidence-v7",
+            "phase-evidence-v8",
         }
         else TOOL_ADMISSION_SCHEMA
     )
@@ -2337,9 +2833,18 @@ def _v4_investigation_lifecycle_evidence(
         and event.payload.get("policy_version")
         != "turn-mutation-barrier-v1"
     ]
-    reserve = nominal_tail_reserve(
-        package.public,
-        context_policy_version=manifest.context_policy_version,
+    reserve = (
+        _v5_expected_tail_policy(
+            task=package.public,
+            events=[],
+            manifest=manifest,
+            projection_stage="post_generation",
+        )["nominal_reserve"]
+        if manifest.context_policy_version == "phase-evidence-v8"
+        else nominal_tail_reserve(
+            package.public,
+            context_policy_version=manifest.context_policy_version,
+        )
     )
     for admission in admission_events:
         prefix = [
@@ -2367,6 +2872,7 @@ def _v4_investigation_lifecycle_evidence(
             "phase-evidence-v5",
             "phase-evidence-v6",
             "phase-evidence-v7",
+            "phase-evidence-v8",
         }:
             calculated_tail_policy = _v5_expected_tail_policy(
                 task=package.public,
@@ -2393,10 +2899,16 @@ def _v4_investigation_lifecycle_evidence(
             and (epoch is None or event.sequence > epoch)
             for event in prefix
         )
+        saturation_threshold = (
+            _V8_EVIDENCE_SATURATION_THRESHOLD
+            if manifest.context_policy_version == "phase-evidence-v8"
+            else 6
+        )
         evidence_saturated = bool(
-            manifest.context_policy_version == "phase-evidence-v7"
+            manifest.context_policy_version
+            in {"phase-evidence-v7", "phase-evidence-v8"}
             and tool in {"read_file", "search_files"}
-            and semantic_replay_count >= 6
+            and semantic_replay_count >= saturation_threshold
         )
         if evidence_saturated:
             reason_codes.append("evidence_saturated")
@@ -2561,7 +3073,7 @@ def _v4_investigation_lifecycle_evidence(
                         "evidence-saturation-v1"
                     ),
                     "semantic_replay_count": semantic_replay_count,
-                    "semantic_replay_threshold": 6,
+                    "semantic_replay_threshold": saturation_threshold,
                     "mutation_epoch_sequence": epoch,
                 }
             )
@@ -2631,7 +3143,7 @@ def _v4_investigation_lifecycle_evidence(
                         "evidence-saturation-v1"
                     ),
                     "semantic_replay_count": semantic_replay_count,
-                    "semantic_replay_threshold": 6,
+                    "semantic_replay_threshold": saturation_threshold,
                 }
             )
         checkpoint_events = [
@@ -3029,7 +3541,8 @@ def _request_runtime_contract_valid(
         tools = TOOL_SCHEMAS_V3
     elif (
         manifest.tool_schema_version == "v4"
-        and manifest.context_policy_version == "phase-evidence-v7"
+        and manifest.context_policy_version
+        in {"phase-evidence-v7", "phase-evidence-v8"}
     ):
         system_prompt = SYSTEM_PROMPT_V5
         tools = TOOL_SCHEMAS_V4
@@ -3115,6 +3628,7 @@ def _generation_block_common_valid(
                 "phase-evidence-v5",
                 "phase-evidence-v6",
                 "phase-evidence-v7",
+                "phase-evidence-v8",
             }
             else None
         ),
@@ -3474,6 +3988,12 @@ def _rejected_patch_retry_context_evidence(
             manifest=manifest,
             events=events,
         )
+    if manifest.context_policy_version == "phase-evidence-v8":
+        return _v7_rejected_patch_retry_context_evidence(
+            root=root,
+            manifest=manifest,
+            events=events,
+        )
 
     failures = [
         event
@@ -3617,6 +4137,7 @@ def _rejected_patch_retry_context_evidence(
                     "phase-evidence-v5",
                     "phase-evidence-v6",
                     "phase-evidence-v7",
+                    "phase-evidence-v8",
                 }
                 else None
             ),
@@ -3709,6 +4230,7 @@ def _rejected_patch_retry_context_evidence(
                             "phase-evidence-v5",
                             "phase-evidence-v6",
                             "phase-evidence-v7",
+                            "phase-evidence-v8",
                         }
                         else None
                     ),
@@ -5436,6 +5958,11 @@ def _self_validation_lifecycle_evidence(
             and manifest.context_policy_version == "phase-evidence-v7"
             and manifest.public_review_contract is not None
         )
+        or (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v8"
+            and manifest.public_review_contract is not None
+        )
     )
     passed = bool(
         version_pair_valid
@@ -5618,6 +6145,7 @@ def calculate_source_evidence_hash(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         _, _, _, investigation_artifacts, _ = _artifact_evidence(
             root=run_root,
@@ -5647,6 +6175,7 @@ def calculate_source_evidence_hash(
             "phase-evidence-v5": _SOURCE_EVIDENCE_SCHEMA_VERSION_V5,
             "phase-evidence-v6": _SOURCE_EVIDENCE_SCHEMA_VERSION_V6,
             "phase-evidence-v7": _SOURCE_EVIDENCE_SCHEMA_VERSION_V7,
+            "phase-evidence-v8": _SOURCE_EVIDENCE_SCHEMA_VERSION_V8,
         }[manifest.context_policy_version]
         snapshot["investigation_artifacts"] = investigation_artifacts
         snapshot[
@@ -6103,6 +6632,7 @@ def qualify_run(
                             "phase-evidence-v5",
                             "phase-evidence-v6",
                             "phase-evidence-v7",
+                            "phase-evidence-v8",
                         }
                         else None
                     ),
@@ -6538,6 +7068,7 @@ def qualify_run(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         (
             investigation_artifact_integrity,
@@ -6682,6 +7213,7 @@ def qualify_run(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         artifact_details[
             "investigation_artifact_count"
@@ -6697,6 +7229,7 @@ def qualify_run(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         (
             rejected_patch_retry_context_ok,
@@ -6786,6 +7319,7 @@ def qualify_run(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         (
             investigation_evidence_ok,
@@ -6817,6 +7351,23 @@ def qualify_run(
             investigation_lifecycle_ok,
             **investigation_lifecycle_details,
         )
+        if manifest.context_policy_version == "phase-evidence-v8":
+            (
+                saturation_context_ok,
+                saturation_context_details,
+            ) = _v8_saturation_context_evidence(
+                root=run_root,
+                manifest=manifest,
+                package=package,
+                events=events,
+                checkpoints=checkpoints,
+                context_events=context_events,
+            )
+            add(
+                "saturation_context_contract",
+                saturation_context_ok,
+                **saturation_context_details,
+            )
     if manifest.tool_schema_version == "v4":
         (
             mutation_barrier_ok,
@@ -6851,6 +7402,7 @@ def qualify_run(
             "phase-evidence-v5",
             "phase-evidence-v6",
             "phase-evidence-v7",
+            "phase-evidence-v8",
         }
         and len(generation_blocked_events) == 1
         and context_events
@@ -7007,6 +7559,7 @@ def qualify_run(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         prompt_telemetry_details.update(
             {
@@ -7272,6 +7825,7 @@ def qualify_run(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         trace_check_ids.add("rejected_patch_retry_context")
     if manifest.context_policy_version in {
@@ -7279,9 +7833,12 @@ def qualify_run(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         trace_check_ids.add("investigation_evidence")
         trace_check_ids.add("investigation_lifecycle")
+    if manifest.context_policy_version == "phase-evidence-v8":
+        trace_check_ids.add("saturation_context_contract")
     if controlled_rejection_mode:
         trace_check_ids.add("controlled_diagnostic_boundary")
     trace_integrity = all(

@@ -1795,3 +1795,50 @@ D-062 correction `qcor_8b6ff812...4870b6`는 original failed checks
 `investigation_evidence`와 `investigation_lifecycle`를 corrected failed check 0개로
 재계산했고 corrected trace qualification은 통과했다. 그러나 original campaign gate와 HF
 task outcome은 그대로이므로 이 run을 SCRR 또는 no-memory baseline으로 세지 않는다.
+
+## 13. Phase-evidence-v8 saturation context
+
+V8 manifest는 exact `tool_schema_version=v4` / `context_policy_version=phase-evidence-v8`
+pair와 `PublicReviewContract`를 요구한다. 이 pair는 offline saturation-context validation을
+위한 별도 opt-in이며, historical corrective purpose의 v4/v7 pair를 대체하거나 완화하지
+않는다. 현재 V8 manifest는 mock provider와 experiment context 부재만 허용한다.
+
+V8 request의 `phase_contract`는 `phase-contract-v3`이고 다음 exact object를 포함한다.
+
+```json
+{
+  "read_search_policy": {
+    "schema_version": "read-search-policy-v1",
+    "policy_version": "evidence-saturation-v1",
+    "admitted": false,
+    "reason_codes": ["evidence_saturated"],
+    "semantic_replay_count": 6,
+    "semantic_replay_threshold": 6,
+    "mutation_epoch_sequence": null
+  }
+}
+```
+
+`reason_codes`는 `investigation-tail-policy-v2.block_reasons`의 기존 순서를 보존하고, active
+epoch의 semantic replay가 6개 이상이면 마지막에 `evidence_saturated`를 한 번 추가한다.
+`admitted`는 reason이 없을 때만 true다. Saturation-only request는 read/search action만
+제거하고 `run_probe`를 유지한다. Tail reason이 하나라도 있으면 read/search/probe를 모두
+제거한다.
+
+`context-build-evidence-v8`은 `read_search_policy`를 byte-for-byte mirror하고,
+`ContextBuilt`는 다음 scalar/list mirror를 기록한다.
+
+- `investigation_read_search_admitted`
+- `investigation_read_search_reason_codes`
+- `investigation_semantic_replay_count`
+- `investigation_semantic_replay_threshold`
+- `investigation_saturation_mutation_epoch_sequence`
+
+Qualifier의 V8-only `saturation_context_contract`는 runtime context builder를 호출하지 않고
+event prefix에서 mutation epoch, semantic replay count, threshold, tail reason과 그 결과의 action
+filtering을 독립 재계산한다. 일반적인 tool-result presentation availability는 기존
+`investigation_evidence`의 exact context rebuild와 CAS 검사에 결속하며 별도의 두 번째 renderer로
+주장하지 않는다. Rendered request, context evidence와 `ContextBuilt` mirror가 모두 일치해야
+통과한다. `corrective-runtime-contract-v2`의 prompt/tool/context bytes와 CAS,
+`trace-source-evidence-v8`도 별도로 결속한다. V7은 계속 `phase-contract-v2`,
+`context-build-evidence-v7`, `corrective-runtime-contract-v1`과 기존 source hash를 사용한다.

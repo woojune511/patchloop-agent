@@ -858,30 +858,47 @@ class RunManifest(StrictModel):
 
     @model_validator(mode="after")
     def validate_corrective_runtime_contract(self) -> RunManifest:
-        corrective_pair = (
+        corrective_pair_v7 = (
             self.tool_schema_version == "v4"
             and self.context_policy_version == "phase-evidence-v7"
         )
+        saturation_pair_v8 = (
+            self.tool_schema_version == "v4"
+            and self.context_policy_version == "phase-evidence-v8"
+        )
+        corrective_pair = corrective_pair_v7 or saturation_pair_v8
         corrective_declared = bool(
             self.tool_schema_version == "v4"
-            or self.context_policy_version == "phase-evidence-v7"
+            or self.context_policy_version
+            in {"phase-evidence-v7", "phase-evidence-v8"}
             or self.public_review_contract is not None
         )
         if corrective_declared and (
             not corrective_pair or self.public_review_contract is None
         ):
             raise ValueError(
-                "corrective runtime requires tool v4, phase-evidence-v7, "
+                "corrective runtime requires tool v4, phase-evidence-v7 or "
+                "phase-evidence-v8, "
                 "and a public review contract"
             )
         if (
             self.experiment is not None
             and self.experiment.purpose
             == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-            and not corrective_pair
+            and not corrective_pair_v7
         ):
             raise ValueError(
                 "corrective pilot purpose requires the v4/v7 runtime contract"
+            )
+        if saturation_pair_v8 and self.experiment is not None:
+            raise ValueError(
+                "phase-evidence-v8 saturation context is offline-only and "
+                "cannot declare an experiment context"
+            )
+        if saturation_pair_v8 and self.model.provider != "mock":
+            raise ValueError(
+                "phase-evidence-v8 saturation context is offline-only and "
+                "requires the mock provider"
             )
         return self
 

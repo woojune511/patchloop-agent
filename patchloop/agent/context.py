@@ -8,7 +8,10 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.agent.investigation import (
+    EVIDENCE_SATURATION_POLICY_VERSION,
+    READ_SEARCH_POLICY_SCHEMA,
     build_investigation_ledger,
+    evidence_saturation_state,
     investigation_ledger_schema,
 )
 from patchloop.agent.phases import diff_bound_evidence
@@ -39,12 +42,16 @@ INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v5",
     "phase-evidence-v6",
     "phase-evidence-v7",
+    "phase-evidence-v8",
 }
 RETRY_CONTEXT_POLICIES = {
     "phase-evidence-v3",
     *INVESTIGATION_CONTEXT_POLICIES,
 }
-PERSISTENT_RETRY_CONTEXT_POLICY = "phase-evidence-v7"
+PERSISTENT_RETRY_CONTEXT_POLICIES = {
+    "phase-evidence-v7",
+    "phase-evidence-v8",
+}
 
 
 @dataclass(frozen=True)
@@ -254,7 +261,7 @@ def _rejected_mutation_retry(
 ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     """Rehydrate one rejected model patch under the selected versioned policy."""
 
-    persistent = policy_version == PERSISTENT_RETRY_CONTEXT_POLICY
+    persistent = policy_version in PERSISTENT_RETRY_CONTEXT_POLICIES
     latest_model_sequence = max(
         (
             event.sequence
@@ -640,16 +647,17 @@ def build_context_with_evidence(
     self_validation_policy = policy_version in {
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }
     investigation_compat_policy = (
         "phase-evidence-v6"
-        if policy_version == "phase-evidence-v7"
+        if policy_version in {"phase-evidence-v7", "phase-evidence-v8"}
         else policy_version
     )
-    if policy_version == "phase-evidence-v7":
+    if policy_version in {"phase-evidence-v7", "phase-evidence-v8"}:
         if public_review_contract is None:
             raise RecoveryError(
-                "phase-evidence-v7 requires a public review contract"
+                "phase-evidence-v7/v8 requires a public review contract"
             )
         try:
             validate_public_review_contract(
@@ -659,11 +667,11 @@ def build_context_with_evidence(
             )
         except ContractError as exc:
             raise RecoveryError(
-                "phase-evidence-v7 public review contract is not public-bound"
+                "phase-evidence-v7/v8 public review contract is not public-bound"
             ) from exc
     elif public_review_contract is not None:
         raise RecoveryError(
-            "public review contract is valid only for phase-evidence-v7"
+            "public review contract is valid only for phase-evidence-v7/v8"
         )
     eligible_events = [
         event
@@ -683,6 +691,7 @@ def build_context_with_evidence(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         selected_events = eligible_events[-RECENT_EVENT_LIMIT:]
     else:
@@ -709,6 +718,7 @@ def build_context_with_evidence(
         "phase-evidence-v5",
         "phase-evidence-v6",
         "phase-evidence-v7",
+        "phase-evidence-v8",
     }:
         diff_hash = checkpoint.worktree_diff_hash if checkpoint else sha256_text("")
         readiness = diff_bound_evidence(
@@ -722,9 +732,13 @@ def build_context_with_evidence(
         )
         phase_contract = {
             "schema_version": (
-                "phase-contract-v2"
-                if self_validation_policy
-                else "phase-contract-v1"
+                "phase-contract-v3"
+                if policy_version == "phase-evidence-v8"
+                else (
+                    "phase-contract-v2"
+                    if self_validation_policy
+                    else "phase-contract-v1"
+                )
             ),
             "current_phase": phase.value,
             "submission_ready": readiness.submission_ready,
@@ -911,18 +925,42 @@ def build_context_with_evidence(
                     events,
                     artifact_store,
                 )
-            if (
-                phase_contract is not None
-                and not investigation_ledger["tail_policy"][
-                    "exploration_admitted"
-                ]
-            ):
-                phase_contract["allowed_next_actions"] = [
-                    action
-                    for action in phase_contract["allowed_next_actions"]
-                    if action
-                    not in {"read_file", "search_files", "run_probe"}
-                ]
+            if phase_contract is not None:
+                tail = investigation_ledger["tail_policy"]
+                if not tail["exploration_admitted"]:
+                    phase_contract["allowed_next_actions"] = [
+                        action
+                        for action in phase_contract["allowed_next_actions"]
+                        if action
+                        not in {"read_file", "search_files", "run_probe"}
+                    ]
+                if policy_version == "phase-evidence-v8":
+                    saturation = evidence_saturation_state(events)
+                    reason_codes = list(tail["block_reasons"])
+                    if saturation.saturated:
+                        reason_codes.append("evidence_saturated")
+                        phase_contract["allowed_next_actions"] = [
+                            action
+                            for action in phase_contract["allowed_next_actions"]
+                            if action not in {"read_file", "search_files"}
+                        ]
+                    phase_contract["read_search_policy"] = {
+                        "schema_version": READ_SEARCH_POLICY_SCHEMA,
+                        "policy_version": (
+                            EVIDENCE_SATURATION_POLICY_VERSION
+                        ),
+                        "admitted": not reason_codes,
+                        "reason_codes": reason_codes,
+                        "semantic_replay_count": (
+                            saturation.semantic_replay_count
+                        ),
+                        "semantic_replay_threshold": (
+                            saturation.semantic_replay_threshold
+                        ),
+                        "mutation_epoch_sequence": (
+                            saturation.mutation_epoch_sequence
+                        ),
+                    }
     rendered = json.dumps(payload, indent=2, ensure_ascii=False, default=str)
     component_characters = {
         key: len(json.dumps(value, ensure_ascii=False, default=str))
@@ -945,9 +983,13 @@ def build_context_with_evidence(
                             "context-build-evidence-v5"
                             if policy_version == "phase-evidence-v5"
                             else (
-                                "context-build-evidence-v7"
-                                if policy_version == "phase-evidence-v7"
-                                else "context-build-evidence-v6"
+                                "context-build-evidence-v8"
+                                if policy_version == "phase-evidence-v8"
+                                else (
+                                    "context-build-evidence-v7"
+                                    if policy_version == "phase-evidence-v7"
+                                    else "context-build-evidence-v6"
+                                )
                             )
                         )
                     )
@@ -1015,6 +1057,7 @@ def build_context_with_evidence(
             "phase-evidence-v5",
             "phase-evidence-v6",
             "phase-evidence-v7",
+            "phase-evidence-v8",
         }:
             tail = ledger["tail_policy"]
             projection = tail["token_projection"]
@@ -1054,6 +1097,10 @@ def build_context_with_evidence(
                 "source_bytes": probe_ledger["source_bytes"],
                 "authoritative": False,
             }
+        if policy_version == "phase-evidence-v8":
+            evidence["read_search_policy"] = phase_contract[
+                "read_search_policy"
+            ]
     return BuiltContext(
         rendered=rendered,
         content_hash=sha256_text(rendered),
