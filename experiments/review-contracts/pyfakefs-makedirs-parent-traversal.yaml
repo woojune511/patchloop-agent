@@ -1,0 +1,30 @@
+schema_version: public-review-contract-v1
+task_id: pyfakefs-makedirs-parent-traversal
+task_version: 1
+public_spec_hash: sha256:4d5de049d133ee29adf726733b7ace99b9d55518cc0433c72d2aa7b1576664d8
+requirements:
+  - requirement_id: req-e063b377169a
+    source: issue.description
+    source_excerpt: Directories created while walking those components
+  - requirement_id: req-edac186cf761
+    source: issue.description
+    source_excerpt: Match real os.makedirs traversal semantics for these paths
+  - requirement_id: req-44473e3293f0
+    source: issue.description
+    source_excerpt: supported POSIX and Windows filesystem modes
+  - requirement_id: req-2a50714f8f9f
+    source: issue.description
+    source_excerpt: existing destinations
+  - requirement_id: req-d7f31517dd2a
+    source: issue.description
+    source_excerpt: bytes paths
+  - requirement_id: req-a809ddf0789b
+    source: issue.description
+    source_excerpt: creation modes
+  - requirement_id: req-9277686c5e02
+    source: issue.description
+    source_excerpt: invalid parents
+  - requirement_id: req-a04465ec32b3
+    source: issue.description
+    source_excerpt: paths without parent-directory components.
+content_hash: sha256:0d4b1d8584d2ae94ba38dc17f91077126648b97366244802d85c646f582f5e8d

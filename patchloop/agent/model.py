@@ -52,6 +52,18 @@ SYSTEM_PROMPT_V4 = (
     "validation outcomes, and residual risks. Only then call finish_task. "
     "Do not claim a requirement is verified without cited trace evidence."
 )
+SYSTEM_PROMPT_V5 = (
+    SYSTEM_PROMPT_V4
+    + " The public_review_contract is the authoritative public checklist: "
+    "review_task must assess every listed requirement_id exactly once and "
+    "map every partial or unverified item to an explicit residual risk. "
+    "Treat apply_patch as the final action in a model turn; after any patch "
+    "attempt, wait for its tool result before requesting another action. "
+    "Every unified-diff hunk header must include numeric old and new ranges, "
+    "for example '@@ -12,3 +12,4 @@'. A rejected patch remains pending until "
+    "a later patch attempt succeeds or supersedes it, so use the rehydrated "
+    "candidate, validator feedback, and exact source context when repairing it."
+)
 SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 
 
@@ -404,6 +416,59 @@ class MockModelAdapter:
                     residual_risks.append(
                         "The registered issue-derived probe did not pass."
                     )
+            review_contract = payload.get("public_review_contract")
+            contract_requirements = (
+                review_contract.get("requirements")
+                if isinstance(review_contract, dict)
+                else None
+            )
+            if isinstance(contract_requirements, list):
+                requirement_rows = [
+                    {
+                        "requirement_id": item["requirement_id"],
+                        "status": requirement_status,
+                        "evidence_event_sequences": (
+                            evidence_event_sequences
+                        ),
+                        "notes": requirement_notes,
+                    }
+                    for item in contract_requirements
+                    if isinstance(item, dict)
+                    and isinstance(item.get("requirement_id"), str)
+                ]
+                residual_rows = (
+                    [
+                        {
+                            "requirement_ids": [
+                                item["requirement_id"]
+                                for item in contract_requirements
+                                if isinstance(item, dict)
+                                and isinstance(
+                                    item.get("requirement_id"), str
+                                )
+                            ],
+                            "risk": risk,
+                            "mitigation": (
+                                "Submit to the separate deterministic evaluator."
+                            ),
+                        }
+                        for risk in residual_risks
+                    ]
+                    if requirement_status != "verified"
+                    else []
+                )
+            else:
+                requirement_rows = [
+                    {
+                        "requirement": self.script.rationale,
+                        "status": requirement_status,
+                        "evidence_event_sequences": (
+                            evidence_event_sequences
+                        ),
+                        "notes": requirement_notes,
+                    }
+                ]
+                residual_rows = residual_risks
             return ModelTurn(
                 text="Record requirement-to-evidence review before submission.",
                 tool_calls=[
@@ -411,18 +476,9 @@ class MockModelAdapter:
                         "review_task",
                         f"mock-{self.task_id}-task-review",
                         {
-                            "requirements": [
-                                {
-                                    "requirement": self.script.rationale,
-                                    "status": requirement_status,
-                                    "evidence_event_sequences": (
-                                        evidence_event_sequences
-                                    ),
-                                    "notes": requirement_notes,
-                                }
-                            ],
+                            "requirements": requirement_rows,
                             "targeted_validation": targeted_validation,
-                            "residual_risks": residual_risks,
+                            "residual_risks": residual_rows,
                         },
                     )
                 ],

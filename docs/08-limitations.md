@@ -589,3 +589,19 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 
 These are deliberate hard gates. The repository rejects an incomplete core experiment manifest instead of
 silently lowering the design or fabricating missing results.
+
+## D-062 corrective pilot remains unexecuted
+
+- D-060 is diagnostic evidence, not a no-memory performance baseline. Only HF Hub was budget-bound;
+  PDM and pyfakefs failed hidden acceptance with substantial budget headroom.
+- The new v4/v7 public-review, persistent retry, barrier recovery and evidence-saturation paths have
+  offline tests only. They have not shown a live-model improvement.
+- Runtime CAS, corrective execution-hash binding and RunStarted-bound pricing freshness have adversarial
+  offline tests only; no provider run has yet exercised those new qualification checks.
+- The 900k total-token ceiling was chosen from a same-prefix counterfactual. New prompt/tool schema,
+  model behavior and output use can still consume it before 40 calls; it is not a completion guarantee.
+- The `$12.4875` figure is a conservative list-price authorization reserve, not measured spend or an
+  invoice prediction. A future approval must also reconsider the project-wide `$150` manual cap.
+- The three-task corrective purpose is excluded from comparison, memory admission and core. Its result
+  cannot justify changing the final all-condition budget without another frozen fairness decision.
+- No provider call, fresh clean execution hash or paid approval exists for this suite yet.

@@ -12,10 +12,21 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-059 profile-bearing offline self-validation agent probe complete;
-  D-060 three-task no-memory budget-pilot offline contract complete;
-  D-061 probe authorization hardening complete;
-  clean preflight and separate live approval pending`이다.
+- 현재 milestone은 `D-060 three-task no-memory budget pilot live-complete and diagnosed;
+  D-062 v4/v7 corrective runtime and budget diagnostics offline-complete;
+  900k three-task corrective preflight, clean commit and separate live approval pending`이다.
+  D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
+  pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
+  `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
+  source snapshot, apply same-turn barrier/recovery와 six-replay evidence saturation을 사용한다.
+  `corrective-runtime-contract-v1`은 prompt/tool schema hash, v4/v7 pair와 harness commit을
+  execution hash·preflight·manifest·runner start/resume·qualification에 결속한다. Qualification은
+  unique runner `RunStarted`의 full CAS descriptor와 bytes를 검증하고, 그 immutable 시각을
+  기준으로 공식 가격 확인이 72시간 이내인지 재계산한다.
+  Checked-in `dev-no-memory-corrective-pilot-20260731-r1`은 3 task 각 1회 no-memory,
+  40 model/100 tool/900,000 token/1,800초, output 25,000, reserve `$12.4875`, cap `$13`인
+  tuning-only suite다. 아직 provider call이나 paid 승인은 없고 baseline, memory admission과
+  core를 열지 않는다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -177,22 +188,19 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   symlink-capability skipped이고 동결 dataset은 25 task/candidate 0으로 변하지 않았다.
   따라서 profile 선택부터 review/evaluator까지의 offline lifecycle만 닫혔으며 live
   provider, leak-safe campaign qualification 또는 성능 개선 evidence로 사용하지 않는다.
-  다음 gate는 immutable V4 resource maxima로 고정한 pyfakefs/PDM/HF Hub를 각각 한 번
-  실행하는 provisional `480k token / 40 model / 100 tool / 1,800초` no-memory pilot이다.
-  D-060은 별도 `memory-development-no-memory-budget-pilot` purpose, exact three-task suite,
-  $7 cap과 `no-memory-budget-pilot-gate-v1`을 offline으로 구현했다. 이 lane은 prior pilot을
-  요구하지 않지만 memory candidate와 comparison denominator를 만들지 않는다. Checked-in
-  suite 자체는 승인 가능한 execution hash가 아니며 source checkpoint 뒤 실제 Docker image
-  identity, SDK, fresh price를 결속한 no-call preflight와 별도 승인이 필요하다. 그 전에는
-  provider call, memory admission이나 96-run core campaign을 실행하지 않는다. D-060/D-061
-  closure는 731 collected, 724 passed/7 environment skip, Ruff와 `git diff --check`를
-  통과했다. Skip은 현재 execution context의 Docker daemon unavailable 5개와 Windows
-  symlink capability 2개다. Host Docker Desktop 4.83.0 / Engine 29.6.2에서 현재
-  `patchloop-sandbox:py312`
-  `sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`로
-  그 다섯 Docker E2E를 별도 실행해 5/5 통과했고 immutable-image pre-start 검증,
-  audit-hook 없는 subinterpreter의 process spawn과 trusted-parent signal 차단, 잔존
-  managed probe container 0개를 확인했다.
+  D-060은 승인 hash
+  `sha256:61a7208bd6ee1a45b08511407d0c8c0658976685245a11d422077efdf9bdef4f`로
+  정확히 한 번 실행됐다. 3/3 terminal·qualified이고 infrastructure/qualification error는
+  없었지만 SCRR은 0/3이다. HF Hub `run_d20c9757bdef4942`만 438,483/480,000 token 뒤
+  exact-request budget에 막혔다. PDM `run_4352391174814d1d`와 pyfakefs
+  `run_6b4f13316e714785`는 각각 153,702와 252,066 token에서 official evaluator에 도달한
+  non-budget task failure다. `patchloop budget` derivation은 HF exact deficit 5,171과 v5
+  same-prefix minimum 658,739를 재계산하며 원 artifact를 변경하지 않는다.
+  D-062 corrective suite는 v4/v7 runtime과 900,000-token ceiling을 offline으로만 검증했다.
+  V7 projection의 historical HF same-prefix minimum은 697,790이고 새 ceiling은 약 202k
+  여유를 둔다. 이 값은 completion guarantee나 core budget이 아니다. 새 suite는 clean
+  execution hash와 최대 `$13` 별도 승인이 있기 전에는 실행하지 않으며 memory admission과
+  96-run core campaign도 계속 보류한다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

@@ -21,8 +21,13 @@ from patchloop.agent.model import (
     OpenAIResponsesAdapter,
     RequestedTool,
 )
+from patchloop.agent.review import (
+    normalize_public_issue_text,
+    public_review_contract_content_hash,
+    public_review_requirement_id,
+)
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
-from patchloop.agent.tools import TOOL_SCHEMAS_V3, ToolGateway
+from patchloop.agent.tools import TOOL_SCHEMAS_V3, TOOL_SCHEMAS_V4, ToolGateway
 from patchloop.contracts import (
     Artifact,
     Budget,
@@ -31,6 +36,7 @@ from patchloop.contracts import (
     ExperimentRunContext,
     FaultSpec,
     Phase,
+    PublicReviewContract,
     RunOutcomeKind,
     RunResult,
     RunStatus,
@@ -62,6 +68,29 @@ SMOKE_TASKS = {
     "path-prefix-boundary": "tasks/smoke/path-prefix-boundary/public.yaml",
 }
 SMOKE_REPLAYS = {task_id: f"replays/smoke/{task_id}.jsonl" for task_id in SMOKE_TASKS}
+
+
+def _smoke_review_contract(package) -> PublicReviewContract:
+    excerpt = normalize_public_issue_text(
+        package.public.issue.description
+    )
+    payload = {
+        "schema_version": "public-review-contract-v1",
+        "task_id": package.public.task_id,
+        "task_version": package.public.task_version,
+        "public_spec_hash": package.public_spec_hash,
+        "requirements": [
+            {
+                "requirement_id": public_review_requirement_id(excerpt),
+                "source": "issue.description",
+                "source_excerpt": excerpt,
+            }
+        ],
+    }
+    payload["content_hash"] = public_review_contract_content_hash(
+        payload
+    )
+    return PublicReviewContract.model_validate(payload)
 
 
 def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> None:
@@ -103,6 +132,16 @@ def test_manifest_and_runtime_contract_versions_preserve_v2_compatibility() -> N
     assert AgentRunner._runtime_contract(
         self_validation
     ) != AgentRunner._runtime_contract(current)
+    retry_contract = build_manifest(
+        package,
+        run_id="run_retry_context_contract",
+        corrective_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+    retry_prompt, retry_tools = AgentRunner._runtime_contract(retry_contract)
+    assert retry_prompt != AgentRunner._runtime_contract(self_validation)[0]
+    assert retry_tools == TOOL_SCHEMAS_V4
+    assert retry_tools != TOOL_SCHEMAS_V3
     assert replay.tool_schema_version == "v1"
     assert replay.context_policy_version == "v1"
     with pytest.raises(
@@ -2810,6 +2849,346 @@ def test_rejected_patch_does_not_advance_phase_and_exposes_stage(
     assert not any(
         event.type == EventType.PHASE_CHANGED and event.payload.get("to") in {"PLAN", "IMPLEMENT"}
         for event in events
+    )
+
+
+def test_v4_apply_patch_is_same_turn_barrier_with_durable_blocked_calls(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_v4_same_turn_patch_barrier",
+        sandbox_backend="local",
+        corrective_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+    bare_hunk_patch = (
+        "diff --git a/mini_data_utils/csvlite.py "
+        "b/mini_data_utils/csvlite.py\n"
+        "--- a/mini_data_utils/csvlite.py\n"
+        "+++ b/mini_data_utils/csvlite.py\n"
+        "@@\n"
+        "-old\n"
+        "+new\n"
+    )
+
+    class SameTurnPatchAdapter:
+        def __init__(self) -> None:
+            self.contexts: list[str] = []
+
+        def next_turn(self, context, _tools):
+            self.contexts.append(context)
+            if len(self.contexts) == 1:
+                return ModelTurn(
+                    tool_calls=[
+                        RequestedTool(
+                            "apply_patch",
+                            "barrier-invalid-patch",
+                            {"patch": bare_hunk_patch},
+                        ),
+                        RequestedTool(
+                            "apply_patch",
+                            "barrier-later-patch",
+                            {
+                                "patch": MOCK_TASK_SCRIPTS[
+                                    package.public.task_id
+                                ].patch
+                            },
+                        ),
+                        RequestedTool(
+                            "run_check",
+                            "barrier-later-check",
+                            {"check_id": "existing-unit-tests"},
+                        ),
+                    ]
+                )
+            return ModelTurn(text="cannot continue")
+
+    adapter = SameTurnPatchAdapter()
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    result = runner.start(TASK, model="mock", manifest=manifest)
+    events = runner.state.list_events(manifest.run_id)
+    tool_calls = [
+        event for event in events if event.type == EventType.TOOL_CALLED
+    ]
+    barriers = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_ADMISSION_BLOCKED
+        and event.payload.get("policy_version")
+        == "turn-mutation-barrier-v1"
+    ]
+
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert result["usage"]["tool_calls"] == 1
+    assert [event.correlation_id for event in tool_calls] == [
+        "barrier-invalid-patch"
+    ]
+    assert [event.correlation_id for event in barriers] == [
+        "barrier-later-patch",
+        "barrier-later-check",
+    ]
+    assert all(
+        event.payload["reason_codes"] == [
+            "prior_apply_patch_same_turn"
+        ]
+        for event in barriers
+    )
+    assert all(
+        event.payload["source_action_id"] == "barrier-invalid-patch"
+        for event in barriers
+    )
+    assert not any(
+        event.type == EventType.PATCH_APPLIED for event in events
+    )
+    second_context = json.loads(adapter.contexts[1])
+    assert second_context["rejected_mutation_retry"]["schema_version"] == (
+        "rejected-mutation-retry-v2"
+    )
+    assert len(
+        second_context["execution_signals"]["tool_admission_blocks"]
+    ) == 2
+
+
+def test_v4_corrective_mock_run_completes_structured_review(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    contract = _smoke_review_contract(package)
+    manifest = build_manifest(
+        package,
+        run_id="run_v4_complete_review",
+        sandbox_backend="local",
+        corrective_validation=True,
+        public_review_contract=contract,
+    )
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+
+    runner = AgentRunner(tmp_path / "runtime")
+    result = runner.start(TASK, model="mock", manifest=manifest)
+    events = runner.state.list_events(manifest.run_id)
+    review = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "review_task"
+    )
+
+    assert result["scope_compliant_success"] is True
+    assert review.payload["review_schema_version"] == "task-review-v2"
+    review_artifact = Artifact.model_validate(
+        review.payload["review_artifact"]
+    )
+    review_document = json.loads(
+        runner.artifacts.read_bytes(review_artifact).decode("utf-8")
+    )
+    assert (
+        review_document["public_review_contract_hash"]
+        == contract.content_hash
+    )
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=runner.root,
+    )
+    check_ids = {
+        check["check_id"] for check in qualification["checks"]
+    }
+    assert {
+        "public_review_contract",
+        "investigation_evidence",
+        "investigation_lifecycle",
+        "turn_mutation_barrier",
+        "rejected_patch_retry_context",
+        "self_validation_lifecycle",
+    } <= check_ids
+
+
+def test_v7_rejected_patch_retry_clears_after_success_and_qualifies(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_v7_retry_clear",
+        sandbox_backend="local",
+        corrective_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+    invalid_patch = (
+        "diff --git a/mini_data_utils/csvlite.py "
+        "b/mini_data_utils/csvlite.py\n"
+        "--- a/mini_data_utils/csvlite.py\n"
+        "+++ b/mini_data_utils/csvlite.py\n"
+        "@@\n"
+        "-old\n"
+        "+new\n"
+    )
+
+    class RetryThenCompleteAdapter(MockModelAdapter):
+        def __init__(self) -> None:
+            super().__init__(
+                package.public.task_id,
+                structured_review=True,
+            )
+            self.rejection_requested = False
+            self.contexts: list[dict[str, Any]] = []
+
+        def next_turn(self, context, tools):
+            self.contexts.append(json.loads(context))
+            if (
+                self.completed_tools.count("read_file") > 0
+                and self.completed_tools.count("apply_patch") == 0
+                and not self.rejection_requested
+            ):
+                self.rejection_requested = True
+                return ModelTurn(
+                    tool_calls=[
+                        RequestedTool(
+                            "apply_patch",
+                            "v7-rejected-candidate",
+                            {"patch": invalid_patch},
+                        )
+                    ]
+                )
+            return super().next_turn(context, tools)
+
+    adapter = RetryThenCompleteAdapter()
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    result = runner.start(TASK, model="mock", manifest=manifest)
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=runner.root,
+    )
+    retry_check = next(
+        check
+        for check in qualification["checks"]
+        if check["check_id"] == "rejected_patch_retry_context"
+    )
+
+    assert result["scope_compliant_success"] is True
+    assert adapter.contexts[2]["rejected_mutation_retry"] is not None
+    assert adapter.contexts[3]["rejected_mutation_retry"] is None
+    assert retry_check["passed"] is True
+    assert retry_check["details"]["verified_retry_count"] == 1
+
+
+def test_v4_resume_reconciles_same_turn_barrier_after_apply_outcome(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_v4_barrier_recovery",
+        sandbox_backend="local",
+        corrective_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+
+    class ApplyWithSuffixAdapter:
+        def next_turn(self, _context, _tools):
+            return ModelTurn(
+                tool_calls=[
+                    RequestedTool(
+                        "apply_patch",
+                        "barrier-recovery-patch",
+                        {
+                            "patch": MOCK_TASK_SCRIPTS[
+                                package.public.task_id
+                            ].patch
+                        },
+                    ),
+                    RequestedTool(
+                        "run_check",
+                        "barrier-recovery-blocked-check",
+                        {"check_id": "existing-unit-tests"},
+                    ),
+                ]
+            )
+
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: ApplyWithSuffixAdapter(),
+    )
+    original_block = ToolGateway.block_same_turn_action
+
+    def crash_before_barrier(*_args, **_kwargs):
+        raise SystemExit("synthetic death before barrier persistence")
+
+    monkeypatch.setattr(
+        ToolGateway,
+        "block_same_turn_action",
+        crash_before_barrier,
+    )
+    with pytest.raises(SystemExit, match="before barrier persistence"):
+        runner.start(TASK, model="mock", manifest=manifest)
+
+    before = runner.state.list_events(manifest.run_id)
+    assert sum(event.type == EventType.PATCH_APPLIED for event in before) == 1
+    assert not any(
+        event.type == EventType.TOOL_ADMISSION_BLOCKED
+        for event in before
+    )
+
+    monkeypatch.setattr(
+        ToolGateway,
+        "block_same_turn_action",
+        original_block,
+    )
+    resumed = AgentRunner(runner.root).resume(manifest.run_id)
+    after = runner.state.list_events(manifest.run_id)
+    barriers = [
+        event
+        for event in after
+        if event.type == EventType.TOOL_ADMISSION_BLOCKED
+        and event.payload.get("policy_version")
+        == "turn-mutation-barrier-v1"
+    ]
+
+    assert resumed["scope_compliant_success"] is True
+    assert sum(event.type == EventType.PATCH_APPLIED for event in after) == 1
+    assert [event.correlation_id for event in barriers] == [
+        "barrier-recovery-blocked-check"
+    ]
+    assert not any(
+        event.type == EventType.TOOL_CALLED
+        and event.correlation_id == "barrier-recovery-blocked-check"
+        for event in after
     )
 
 

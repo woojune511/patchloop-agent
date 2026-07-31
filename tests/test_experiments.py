@@ -32,6 +32,9 @@ COMPLETION_PILOT_SUITE = (
 BUDGET_PILOT_SUITE = (
     "experiments/dev-no-memory-budget-pilot-20260731-r1.yaml"
 )
+CORRECTIVE_PILOT_SUITE = (
+    "experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -643,6 +646,59 @@ def test_memory_development_budget_pilot_has_exact_preflight_contract(
         "max_total_tokens": 480_000,
         "wall_clock_timeout_seconds": 1_800,
     }
+
+
+def test_corrective_pilot_binds_review_contracts_and_larger_budget(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 1, 12, tzinfo=UTC),
+    )
+
+    suite = eval_runner.load_suite(CORRECTIVE_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(CORRECTIVE_PILOT_SUITE)
+
+    assert suite.purpose == (
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+    )
+    assert suite.budget == (
+        eval_runner.GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
+    )
+    assert suite.budget.max_total_tokens == 900_000
+    assert unapproved["expected_runs"] == 3
+    assert {row["code"] for row in unapproved["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert all(
+        row["public_review_contract"]["content_hash"].startswith(
+            "sha256:"
+        )
+        and row["public_review_contract_path"].startswith(
+            "experiments/review-contracts/"
+        )
+        for row in unapproved["tasks"]
+    )
+    assert unapproved["pricing"][
+        "per_run_cost_reserve_usd"
+    ] == pytest.approx(4.1625)
+    assert unapproved["pricing"][
+        "budget_upper_bound_usd"
+    ] == pytest.approx(12.4875)
+
+    approved = eval_runner.preflight_suite(
+        CORRECTIVE_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert approved["ready"] is True
+    assert approved["suite"]["cost_limit_usd"] == 13
+    assert approved["execution_hash"] == unapproved["execution_hash"]
 
 
 @pytest.mark.parametrize(

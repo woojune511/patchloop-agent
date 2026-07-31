@@ -336,7 +336,7 @@ def _build_trace_view(
                 "recorded outcome"
             ),
         }
-    elif tool_schema_version in {"v2", "v3"}:
+    elif tool_schema_version in {"v2", "v3", "v4"}:
         submission = {
             "tone": "neutral",
             "label": "submission not attempted",
@@ -366,7 +366,7 @@ def _build_trace_view(
             else "final diff review not recorded"
             if lifecycle_available
             else "final diff review not reached"
-            if tool_schema_version in {"v2", "v3"}
+            if tool_schema_version in {"v2", "v3", "v4"}
             else "legacy review telemetry unavailable"
         ),
     }

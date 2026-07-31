@@ -2,7 +2,7 @@
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
-## D-060 three-task no-memory budget pilot — offline contract only
+## D-060 three-task no-memory budget pilot — live diagnostic complete
 
 The checked-in
 [`dev-no-memory-budget-pilot-20260731-r1.yaml`](../experiments/dev-no-memory-budget-pilot-20260731-r1.yaml)
@@ -23,11 +23,14 @@ and evaluated by the official evaluator with zero infrastructure, qualification,
 budget-terminal error. Task success is reported separately. The purpose cannot create a memory
 candidate, enter the comparison denominator or automatically unlock memory admission.
 
-No OpenAI call was made for D-060. The checked-in suite is not paid authorization. A clean
-no-call preflight after the source checkpoint must bind the real Docker identities, OpenAI SDK
-and fresh pricing before the user separately approves that exact hash.
+D-060 was later executed exactly once under approved execution hash
+`sha256:61a7208bd6ee1a45b08511407d0c8c0658976685245a11d422077efdf9bdef4f`.
+All three rows terminated and passed trace qualification without infrastructure or qualification
+errors, but SCRR was 0/3. HF Hub stopped before evaluation on total-token admission; PDM and
+pyfakefs reached the official evaluator and failed hidden acceptance. The suite, hash and run IDs
+are immutable and must not be rerun.
 
-Offline verification collected 731 tests and completed 724 passes with seven environment skips.
+The pre-live offline verification collected 731 tests and completed 724 passes with seven environment skips.
 Five skips are the current execution context's unavailable Docker daemon and two are unavailable
 Windows symlink creation. The new experiment tests pass the exact suite, cost reserve, approval
 gate and result-gate cases; the qualification tests pass all three tasks, task/agent-failure memory
@@ -2047,10 +2050,11 @@ failures and three hidden task failures produced SCRR 0/12. It is immutable diag
 a valid baseline. D-052 has now completed the token-aware corrective-tail and future 250,000-token
 contract offline under `phase-evidence-v5`; it made no provider call. A leak-safe
 maintainer-assisted proposal now deduplicates the two tox repetitions and holds the unresolved
-Loguru source. Memory admission is deferred. The next paid step is a separately approved
-small memory-development no-memory budget pilot; the Babel+Moto high-budget panel has already
-completed 2/2 and is immutable. No later live run is currently approved, and no 96-run core
-campaign has been executed.
+Loguru source. Memory admission is deferred. D-060's small memory-development no-memory budget
+pilot has now completed once and is immutable diagnostic evidence. The next possible paid step is
+the separately approved D-062 900k corrective panel; it currently has only offline evidence and no
+clean execution hash or approval. The Babel+Moto high-budget panel has already completed 2/2 and is
+immutable. No later live run is currently approved, and no 96-run core campaign has been executed.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
@@ -2058,3 +2062,33 @@ subprocess E2E has exercised actual process termination and fresh-interpreter st
 reclaim. The timeout path remains synthetic on the first registered visible check. No stress
 schedule row or 96-run core campaign has been executed. Rejected mutating-tool input rehydration
 has offline qualification and one controlled live exercise, but no natural recovery-rate evidence.
+
+## D-060 diagnosis and D-062 offline evidence
+
+The consumed D-060 experiment remains bound to execution hash
+`sha256:61a7208bd6ee1a45b08511407d0c8c0658976685245a11d422077efdf9bdef4f`.
+The read-only budget derivation reproduced all three terminal rows without changing the source JSON:
+
+- HF Hub `run_d20c9757bdef4942`: 438,483 tokens, 21/40 model calls, 43/100 tool
+  calls, total-token binding, exact-request deficit 5,171 and maximum v5 same-prefix minimum 658,739.
+- PDM `run_4352391174814d1d`: 153,702 tokens and no binding budget dimension.
+- pyfakefs `run_6b4f13316e714785`: 252,066 tokens and no binding budget dimension.
+
+D-062 adds a read-only `budget-pressure-v1` derivation and a separate unconsumed corrective suite.
+Offline evidence covers exact-public checklist validation, private-marker and malformed YAML rejection,
+`task-review-v2` completion, invalid numeric hunk feedback, rejected candidate source-snapshot CAS,
+retry persistence and clearing, apply-response barrier persistence plus crash resume reconciliation,
+six-replay evidence saturation/reset, v7 qualification check inclusion, full corrective runtime CAS
+descriptor/semantic tamper rejection, RunStarted-bound pricing recomputation and historical experiment
+compatibility. Corrective provenance has 15 adversarial tests; public review/experiment tests pass
+121/121, budget diagnostics 7/7 and historical v4/D-055 evidence checks 3/3. The checked-in 900k suite
+has no live run ID, usage or SCRR result. Until a clean
+preflight hash is separately approved, all claims stop at offline contract readiness.
+
+After the provenance hardening, the full repository collection was 790 tests: 783 passed and seven
+environment-dependent cases skipped; Ruff and `git diff --check` passed. The final deterministic
+currency-rendering change then re-ran its 49 directly related provenance/public-review/budget tests.
+A no-call preflight emitted the exact v4/v7 runtime contract and `$4.1625`/`$12.4875` reserves, but
+remained `ready=false` because the worktree is intentionally dirty, Docker/images are unavailable in
+the current sandbox, and no live-cost/hash approval was supplied. Its dirty-worktree hash is not an
+approval-ready execution identity.

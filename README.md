@@ -2,6 +2,17 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-07-31 현재 D-060 3-run 진단은 HF Hub만 total-token budget에 막혔고,
+PDM과 pyfakefs는 budget과 무관한 task failure였다. 후속 D-062는 과거 run을 변경하지 않고
+`tool_schema_version=v4`/`phase-evidence-v7` corrective runtime, 공개 issue 기반 review
+checklist, rejected-patch 지속 복구와 read/search saturation을 offline으로 구현했다. 새
+3-task no-memory corrective pilot은 `40 model / 100 tool / 900,000 token / 1,800초`,
+per-call output 25,000, 보수적 비용 reserve `$12.4875`와 suite cap `$13`으로만 준비돼
+있으며 provider call은 아직 없다. 이 tuning panel은 baseline, memory admission과 core
+결과에서 제외된다. Corrective runtime의 prompt/tool schema/version/commit과 가격 파생값은
+execution plan과 hash에 결속되고, qualification은 실제 `RunStarted` 시각의 72시간 가격
+freshness와 runtime CAS를 독립적으로 재검산한다.
+
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.

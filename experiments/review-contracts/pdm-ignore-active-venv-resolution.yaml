@@ -1,0 +1,24 @@
+schema_version: public-review-contract-v1
+task_id: pdm-ignore-active-venv-resolution
+task_version: 1
+public_spec_hash: sha256:6bbb24f06a3dd43956abaee9ca72ecf69f2cfc4e68b2cdc10d877209afe39d27
+requirements:
+  - requirement_id: req-8d2586f2ed40
+    source: issue.description
+    source_excerpt: Treat the setting as an exclusion of the currently active environment, not as a switch that disables virtualenv resolution.
+  - requirement_id: req-3c54fa01eb4f
+    source: issue.description
+    source_excerpt: another associated environment is eligible
+  - requirement_id: req-3a703dda4880
+    source: issue.description
+    source_excerpt: the normal environment-creation fallback is available.
+  - requirement_id: req-b9243c27df0e
+    source: issue.description
+    source_excerpt: Preserve normal active-environment reuse for unset and false-like values.
+  - requirement_id: req-4517fcb35322
+    source: issue.description
+    source_excerpt: both VIRTUAL_ENV and CONDA_PREFIX
+  - requirement_id: req-a7a9d3364654
+    source: issue.description
+    source_excerpt: without confusing sibling paths with descendants of the active environment.
+content_hash: sha256:d89ad04911504f3b972e822dca47605f422bf3cd762640888b1769adea7fada1

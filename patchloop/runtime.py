@@ -14,6 +14,7 @@ from patchloop.contracts import (
     MemoryCondition,
     MemoryConfig,
     ModelConfig,
+    PublicReviewContract,
     RunManifest,
     TaskPackage,
     Usage,
@@ -72,7 +73,14 @@ def build_manifest(
     replay_hash: str | None = None,
     experiment_context: ExperimentRunContext | None = None,
     self_validation: bool = False,
+    corrective_validation: bool = False,
+    public_review_contract: PublicReviewContract | None = None,
 ) -> RunManifest:
+    if self_validation and corrective_validation:
+        raise ContractError(
+            "self-validation v3/v6 and corrective validation v4/v7 "
+            "are mutually exclusive"
+        )
     if self_validation and provider == "openai":
         raise ContractError(
             "self-validation v3/v6 is offline-only and unavailable "
@@ -81,6 +89,28 @@ def build_manifest(
     if self_validation and provider == "replay":
         raise ContractError(
             "self-validation v3/v6 is unavailable for historical replay runs"
+        )
+    if corrective_validation and provider == "replay":
+        raise ContractError(
+            "corrective validation v4/v7 is unavailable for historical replay runs"
+        )
+    if corrective_validation:
+        from patchloop.agent.review import (
+            validate_public_review_contract,
+        )
+
+        if public_review_contract is None:
+            raise ContractError(
+                "corrective validation v4/v7 requires a public review contract"
+            )
+        validate_public_review_contract(
+            public_review_contract,
+            task=package.public,
+            public_spec_hash=package.public_spec_hash,
+        )
+    elif public_review_contract is not None:
+        raise ContractError(
+            "public review contract requires corrective validation v4/v7"
         )
     sdk_version = None
     if provider == "openai":
@@ -106,6 +136,8 @@ def build_manifest(
         tool_schema_version=(
             "v1"
             if provider == "replay"
+            else "v4"
+            if corrective_validation
             else "v3"
             if self_validation
             else "v2"
@@ -113,6 +145,8 @@ def build_manifest(
         context_policy_version=(
             "v1"
             if provider == "replay"
+            else "phase-evidence-v7"
+            if corrective_validation
             else "phase-evidence-v6"
             if self_validation
             else "phase-evidence-v5"
@@ -138,6 +172,7 @@ def build_manifest(
         agent_image_digest=agent_image_digest,
         evaluator_image_digest=evaluator_image_digest,
         probe_image_digest=probe_image_digest,
+        public_review_contract=public_review_contract,
         fault=fault or FaultSpec(),
         memory=memory_config,
         experiment=experiment_context,

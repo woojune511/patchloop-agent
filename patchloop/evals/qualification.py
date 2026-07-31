@@ -71,6 +71,12 @@ _GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT = Budget(
     max_total_tokens=480_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=900_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
 )
@@ -98,6 +104,7 @@ _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
     ExperimentPurpose.CORE,
 }
 
@@ -123,6 +130,7 @@ _SOURCE_EVIDENCE_SCHEMA_VERSION_V3 = "trace-source-evidence-v3"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V4 = "trace-source-evidence-v4"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V5 = "trace-source-evidence-v5"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V6 = "trace-source-evidence-v6"
+_SOURCE_EVIDENCE_SCHEMA_VERSION_V7 = "trace-source-evidence-v7"
 _EMPTY_DIFF_HASH = sha256_text("")
 
 
@@ -350,6 +358,8 @@ def _execution_plan_matches(
     schedule = plan.get("schedule")
     suite = plan.get("suite")
     tasks = plan.get("tasks")
+    pricing = plan.get("pricing")
+    runtime_contract = plan.get("runtime_contract")
     schedule_hash = plan.get("schedule_hash")
     if (
         plan.get("schema_version") != "experiment-execution-plan-v1"
@@ -386,9 +396,11 @@ def _execution_plan_matches(
         # payload, and recalculate the hash using the same contract as preflight.
         from patchloop.evals.runner import (
             ExperimentSuite,
+            _corrective_runtime_contract,
             _diagnostic_fault,
             _execution_hash,
             _make_schedule,
+            _pricing_contract_matches,
             _suite_hash,
             _suite_payload,
         )
@@ -407,6 +419,12 @@ def _execution_plan_matches(
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
                 and parsed_suite.budget
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
+            )
+            or (
+                parsed_suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+                and parsed_suite.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
             )
         ):
             if (
@@ -434,9 +452,43 @@ def _execution_plan_matches(
             docker_state=environment["docker"],
             openai_sdk=environment["openai_sdk"],
             pilot_qualification=pilot_qualification,
+            runtime_contract=(
+                _corrective_runtime_contract(
+                    parsed_suite,
+                    harness_git_commit=environment["git"].get(
+                        "commit"
+                    ),
+                )
+            ),
         )
     except (ImportError, KeyError, TypeError, ValueError):
         return False
+    expected_runtime_contract = _corrective_runtime_contract(
+        parsed_suite,
+        harness_git_commit=environment["git"].get("commit"),
+    )
+    corrective_runtime = bool(expected_runtime_contract is not None)
+    runtime_contract_matches = bool(
+        (
+            corrective_runtime
+            and isinstance(runtime_contract, dict)
+            and canonical_json(runtime_contract)
+            == canonical_json(expected_runtime_contract)
+            and manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v7"
+            and manifest.harness_git_commit
+            == expected_runtime_contract["harness_git_commit"]
+        )
+        or (not corrective_runtime and runtime_contract is None)
+    )
+    pricing_contract_matches = bool(
+        not corrective_runtime
+        or _pricing_contract_matches(
+            parsed_suite,
+            pricing,
+            schedule_size=len(schedule),
+        )
+    )
     suite_contract_matches = bool(
         canonical_json(suite) == canonical_json(normalized_suite)
         and _suite_hash(parsed_suite) == experiment.suite_hash
@@ -463,6 +515,8 @@ def _execution_plan_matches(
         and manifest.memory.condition in parsed_suite.conditions
         and _diagnostic_fault(parsed_suite) == manifest.fault
         and completion_plan_matches
+        and runtime_contract_matches
+        and pricing_contract_matches
     )
     if not suite_contract_matches:
         return False
@@ -480,6 +534,19 @@ def _execution_plan_matches(
         and task.get("evaluator_image_digest") == manifest.evaluator_image_digest
         and task.get("evaluator_image_digest") == manifest.agent_image_digest
     )
+    if (
+        experiment.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+    ):
+        task_matches = bool(
+            task_matches
+            and isinstance(task.get("public_review_contract_path"), str)
+            and manifest.public_review_contract is not None
+            and task.get("public_review_contract")
+            == manifest.public_review_contract.model_dump(mode="json")
+        )
+    elif manifest.public_review_contract is not None:
+        task_matches = False
     if not task_matches:
         return False
     matching_rows = [
@@ -703,6 +770,84 @@ def _nested_cas_artifact_evidence(
         return False, item, None
 
 
+def _corrective_runtime_contract_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Validate the v7 runtime contract through its full CAS descriptor."""
+
+    from patchloop.agent.model import SYSTEM_PROMPT_V5
+    from patchloop.agent.tools import TOOL_SCHEMAS_V4
+
+    candidates = [
+        event for event in events if event.type == EventType.RUN_STARTED
+    ]
+    details: dict[str, Any] = {
+        "run_started_count": len(candidates),
+        "event_sequence": (
+            candidates[0].sequence if len(candidates) == 1 else None
+        ),
+        "event_identity_valid": False,
+        "descriptor_binding_valid": False,
+        "cas_integrity_valid": False,
+        "semantic_contract_valid": False,
+        "content_hash": None,
+    }
+    if len(candidates) != 1:
+        return False, details
+    event = candidates[0]
+    raw_artifact = event.payload.get("runtime_contract_artifact")
+    cas_valid, cas_item, content = _nested_cas_artifact_evidence(
+        artifact_root=(root / "artifacts").resolve(),
+        event_id=event.event_id,
+        role="runtime-contract",
+        raw_artifact=raw_artifact,
+    )
+    details["cas_integrity_valid"] = cas_valid
+    details["content_hash"] = cas_item.get("actual_content_hash")
+    event_identity_valid = bool(
+        event.actor == "runner"
+        and event.run_id == manifest.run_id
+        and event.payload.get("task_id") == manifest.task_id
+        and event.payload.get("artifact_role") == "runtime-contract"
+    )
+    descriptor_binding_valid = bool(
+        isinstance(raw_artifact, dict)
+        and event.payload.get("artifact_id")
+        == raw_artifact.get("artifact_id")
+        and event.payload.get("artifact_path") == raw_artifact.get("path")
+        and raw_artifact.get("media_type")
+        == "application/json; charset=utf-8"
+    )
+    details["event_identity_valid"] = event_identity_valid
+    details["descriptor_binding_valid"] = descriptor_binding_valid
+    expected = {
+        "system_prompt": SYSTEM_PROMPT_V5,
+        "tools": TOOL_SCHEMAS_V4,
+        "tool_schema_version": "v4",
+        "context_policy_version": "phase-evidence-v7",
+    }
+    try:
+        observed = json.loads(content) if content is not None else None
+    except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
+        observed = None
+    semantic_valid = bool(
+        isinstance(observed, dict)
+        and canonical_json(observed) == canonical_json(expected)
+        and manifest.tool_schema_version == "v4"
+        and manifest.context_policy_version == "phase-evidence-v7"
+    )
+    details["semantic_contract_valid"] = semantic_valid
+    return bool(
+        event_identity_valid
+        and descriptor_binding_valid
+        and cas_valid
+        and semantic_valid
+    ), details
+
+
 def _self_validation_nested_artifact_evidence(
     *,
     root: Path,
@@ -750,6 +895,89 @@ def _self_validation_nested_artifact_evidence(
     lower_markers = {
         token.lower() for token in private_tokens if token
     }
+    matches = sum(
+        1
+        for text in texts
+        for marker in lower_markers
+        if marker and marker in text.lower()
+    )
+    return integrity, scanned, matches, evidence, sorted(missing)
+
+
+def _patch_source_snapshot_artifact_evidence(
+    *,
+    root: Path,
+    events,
+    private_tokens: set[str],
+) -> tuple[bool, int, int, list[dict[str, Any]], list[str]]:
+    """Bind v4 rejected-patch source slices to the exact dispatched call."""
+
+    artifact_root = (root / "artifacts").resolve()
+    integrity = True
+    scanned = 0
+    texts: list[str] = []
+    evidence: list[dict[str, Any]] = []
+    missing: list[str] = []
+    for event in events:
+        if (
+            event.type != EventType.TOOL_CALLED
+            or event.payload.get("tool") != "apply_patch"
+        ):
+            continue
+        valid, item, content = _nested_cas_artifact_evidence(
+            artifact_root=artifact_root,
+            event_id=event.event_id,
+            role="patch-source-snapshot",
+            raw_artifact=event.payload.get("source_snapshot_artifact"),
+        )
+        payload: dict[str, Any] | None = None
+        if content is not None:
+            try:
+                parsed = json.loads(content.decode("utf-8"))
+                payload = parsed if isinstance(parsed, dict) else None
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                payload = None
+        patch_artifact = event.payload.get("patch_artifact")
+        expected_candidate_hash = (
+            patch_artifact.get("content_hash")
+            if isinstance(patch_artifact, dict)
+            else None
+        )
+        payload_hash = (
+            sha256_text(
+                canonical_json(
+                    {
+                        key: value
+                        for key, value in payload.items()
+                        if key != "content_hash"
+                    }
+                )
+            )
+            if isinstance(payload, dict)
+            else None
+        )
+        shape_valid = bool(
+            valid
+            and isinstance(payload, dict)
+            and payload.get("schema_version") == "patch-source-snapshot-v1"
+            and payload.get("candidate_content_hash")
+            == expected_candidate_hash
+            and payload.get("input_hash") == event.payload.get("input_hash")
+            and payload.get("worktree_diff_hash")
+            == event.payload.get("worktree_diff_hash")
+            and payload.get("content_hash") == payload_hash
+            and isinstance(payload.get("entries"), list)
+            and isinstance(payload.get("unavailable"), list)
+        )
+        item["snapshot_shape_valid"] = shape_valid
+        evidence.append(item)
+        integrity = bool(integrity and shape_valid)
+        if not shape_valid or content is None:
+            missing.append(f"{event.event_id}:source_snapshot_artifact")
+            continue
+        scanned += 1
+        texts.append(content.decode("utf-8"))
+    lower_markers = {token.lower() for token in private_tokens if token}
     matches = sum(
         1
         for text in texts
@@ -821,9 +1049,24 @@ def _v4_admission_nested_artifact_evidence(
             continue
         add_artifact(
             event=event,
-            role="investigation-admission-input",
+            role=(
+                "turn-barrier-input"
+                if event.payload.get("policy_version")
+                == "turn-mutation-barrier-v1"
+                else "investigation-admission-input"
+            ),
             descriptor=event.payload.get("input_artifact"),
         )
+        if (
+            event.payload.get("policy_version")
+            == "turn-mutation-barrier-v1"
+        ):
+            add_artifact(
+                event=event,
+                role="turn-barrier-result",
+                descriptor=event.payload.get("result_artifact"),
+            )
+            continue
         preflight_content = add_artifact(
             event=event,
             role="investigation-admission-preflight",
@@ -1337,12 +1580,16 @@ def _v4_investigation_context_evidence(
     verified_hashes: list[str] = []
     policy_version = manifest.context_policy_version
     evidence_schema = (
-        "context-build-evidence-v6"
-        if policy_version == "phase-evidence-v6"
+        "context-build-evidence-v7"
+        if policy_version == "phase-evidence-v7"
         else (
-            "context-build-evidence-v5"
-            if policy_version == "phase-evidence-v5"
-            else "context-build-evidence-v4"
+            "context-build-evidence-v6"
+            if policy_version == "phase-evidence-v6"
+            else (
+                "context-build-evidence-v5"
+                if policy_version == "phase-evidence-v5"
+                else "context-build-evidence-v4"
+            )
         )
     )
     for context_event in context_events:
@@ -1425,6 +1672,7 @@ def _v4_investigation_context_evidence(
                 artifact_store=artifact_store,
                 budget=manifest.budget,
                 max_output_tokens=manifest.model.max_output_tokens,
+                public_review_contract=manifest.public_review_contract,
             )
             ledger_evidence = rebuilt.evidence[
                 "investigation_ledger"
@@ -1455,6 +1703,7 @@ def _v4_investigation_context_evidence(
             if policy_version in {
                 "phase-evidence-v5",
                 "phase-evidence-v6",
+                "phase-evidence-v7",
             }:
                 expected_tail = _v5_expected_tail_policy(
                     task=package.public,
@@ -1759,13 +2008,21 @@ def _v4_investigation_lifecycle_evidence(
     expected_policy_version = (
         "investigation-policy-v2"
         if manifest.context_policy_version
-        in {"phase-evidence-v5", "phase-evidence-v6"}
+        in {
+            "phase-evidence-v5",
+            "phase-evidence-v6",
+            "phase-evidence-v7",
+        }
         else INVESTIGATION_POLICY_VERSION
     )
     expected_admission_schema = (
         "tool-admission-blocked-v2"
         if manifest.context_policy_version
-        in {"phase-evidence-v5", "phase-evidence-v6"}
+        in {
+            "phase-evidence-v5",
+            "phase-evidence-v6",
+            "phase-evidence-v7",
+        }
         else TOOL_ADMISSION_SCHEMA
     )
 
@@ -2059,6 +2316,8 @@ def _v4_investigation_lifecycle_evidence(
         event
         for event in events
         if event.type == EventType.TOOL_ADMISSION_BLOCKED
+        and event.payload.get("policy_version")
+        != "turn-mutation-barrier-v1"
     ]
     reserve = nominal_tail_reserve(
         package.public,
@@ -2089,6 +2348,7 @@ def _v4_investigation_lifecycle_evidence(
         if manifest.context_policy_version in {
             "phase-evidence-v5",
             "phase-evidence-v6",
+            "phase-evidence-v7",
         }:
             calculated_tail_policy = _v5_expected_tail_policy(
                 task=package.public,
@@ -2108,6 +2368,20 @@ def _v4_investigation_lifecycle_evidence(
                 + reserve["feedback_model_calls"]
             ):
                 reason_codes.append("model_tail_reserved")
+        epoch = mutation_epoch(prefix)
+        semantic_replay_count = sum(
+            event.type == EventType.TOOL_REPLAYED
+            and event.payload.get("semantic_replay") is True
+            and (epoch is None or event.sequence > epoch)
+            for event in prefix
+        )
+        evidence_saturated = bool(
+            manifest.context_policy_version == "phase-evidence-v7"
+            and tool in {"read_file", "search_files"}
+            and semantic_replay_count >= 6
+        )
+        if evidence_saturated:
+            reason_codes.append("evidence_saturated")
         input_valid, input_payload, input_item = nested_json(
             admission,
             role="investigation-admission-input",
@@ -2238,9 +2512,15 @@ def _v4_investigation_lifecycle_evidence(
             admission_request_valid = False
             preflight_evidence_valid = False
         error_message = (
-            "inspection was not admitted because the nominal corrective "
-            "lifecycle tail is reserved; use apply_patch or another "
-            "phase-advancing action"
+            "inspection was not admitted because the active mutation epoch "
+            "has exhausted its semantic replay allowance; use the durable "
+            "evidence or make a scoped mutation"
+            if evidence_saturated
+            else (
+                "inspection was not admitted because the nominal corrective "
+                "lifecycle tail is reserved; use apply_patch or another "
+                "phase-advancing action"
+            )
         )
         error_details = {
             "schema_version": expected_admission_schema,
@@ -2256,6 +2536,17 @@ def _v4_investigation_lifecycle_evidence(
         }
         if calculated_tail_policy is not None:
             error_details["tail_policy"] = calculated_tail_policy
+        if evidence_saturated:
+            error_details.update(
+                {
+                    "evidence_saturation_policy_version": (
+                        "evidence-saturation-v1"
+                    ),
+                    "semantic_replay_count": semantic_replay_count,
+                    "semantic_replay_threshold": 6,
+                    "mutation_epoch_sequence": epoch,
+                }
+            )
         expected_result = {
             "tool": tool,
             "status": "rejected",
@@ -2276,7 +2567,7 @@ def _v4_investigation_lifecycle_evidence(
             "input_hash": input_hash,
             "normalized_call_hash": normalized_call_hash,
             "worktree_diff_hash": worktree_diff_hash,
-            "mutation_epoch_sequence": mutation_epoch(prefix),
+            "mutation_epoch_sequence": epoch,
             "reason_codes": reason_codes,
             "nominal_reserve": reserve,
             "model_calls_used": model_calls_used,
@@ -2313,6 +2604,16 @@ def _v4_investigation_lifecycle_evidence(
                     "max_output_tokens": (
                         manifest.model.max_output_tokens
                     ),
+                }
+            )
+        if evidence_saturated:
+            expected_event.update(
+                {
+                    "evidence_saturation_policy_version": (
+                        "evidence-saturation-v1"
+                    ),
+                    "semantic_replay_count": semantic_replay_count,
+                    "semantic_replay_threshold": 6,
                 }
             )
         checkpoint_events = [
@@ -2401,6 +2702,267 @@ def _v4_investigation_lifecycle_evidence(
     }
 
 
+def _v7_turn_mutation_barrier_evidence(
+    *,
+    root: Path,
+    events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Verify every post-apply same-turn call is durably nonexecuted."""
+
+    artifact_root = (root / "artifacts").resolve()
+    by_id = {event.event_id: event for event in events}
+    blocked = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_ADMISSION_BLOCKED
+        and event.payload.get("policy_version")
+        == "turn-mutation-barrier-v1"
+    ]
+    failed_sequences: list[int] = []
+    verified_sequences: list[int] = []
+    for event in blocked:
+        payload = event.payload
+        source_model = by_id.get(payload.get("source_model_event_id"))
+        source_action_id = payload.get("source_action_id")
+        source_calls = [
+            candidate
+            for candidate in events
+            if candidate.type == EventType.TOOL_CALLED
+            and candidate.correlation_id == source_action_id
+            and candidate.payload.get("tool") == "apply_patch"
+            and candidate.sequence < event.sequence
+        ]
+        source_outcomes = [
+            candidate
+            for candidate in events
+            if candidate.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+            and candidate.correlation_id == source_action_id
+            and candidate.payload.get("tool") == "apply_patch"
+            and candidate.sequence < event.sequence
+        ]
+        input_valid, input_item, input_content = _nested_cas_artifact_evidence(
+            artifact_root=artifact_root,
+            event_id=event.event_id,
+            role="turn-barrier-input",
+            raw_artifact=payload.get("input_artifact"),
+        )
+        result_valid, result_item, result_content = _nested_cas_artifact_evidence(
+            artifact_root=artifact_root,
+            event_id=event.event_id,
+            role="turn-barrier-result",
+            raw_artifact=payload.get("result_artifact"),
+        )
+        try:
+            input_payload = json.loads(input_content or b"")
+            result_payload = json.loads(result_content or b"")
+            model_path = Path(str(source_model.payload["artifact_path"])).resolve()
+            relative = model_path.relative_to(artifact_root)
+            parts = relative.parts
+            model_content = model_path.read_bytes()
+            model_payload = json.loads(model_content.decode("utf-8"))
+            model_artifact_valid = bool(
+                len(parts) == 4
+                and parts[0:2] == ("objects", "sha256")
+                and sha256_bytes(model_content)
+                == f"sha256:{parts[2]}{parts[3]}"
+            )
+        except (
+            KeyError,
+            OSError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ):
+            input_payload = None
+            result_payload = None
+            model_payload = None
+            model_artifact_valid = False
+        source_index = payload.get("source_call_index")
+        blocked_index = payload.get("blocked_call_index")
+        tool_calls = (
+            model_payload.get("tool_calls")
+            if isinstance(model_payload, dict)
+            else None
+        )
+        source_declared = (
+            tool_calls[source_index - 1]
+            if isinstance(tool_calls, list)
+            and type(source_index) is int
+            and 1 <= source_index <= len(tool_calls)
+            else None
+        )
+        blocked_declared = (
+            tool_calls[blocked_index - 1]
+            if isinstance(tool_calls, list)
+            and type(blocked_index) is int
+            and 1 <= blocked_index <= len(tool_calls)
+            else None
+        )
+        expected_input_hash = (
+            sha256_text(
+                canonical_json(
+                    {
+                        "tool": blocked_declared.get("name"),
+                        "input": blocked_declared.get("arguments"),
+                    }
+                )
+            )
+            if isinstance(blocked_declared, dict)
+            else None
+        )
+        expected_details = {
+            "schema_version": "tool-admission-blocked-v3",
+            "policy_version": "turn-mutation-barrier-v1",
+            "reason_codes": ["prior_apply_patch_same_turn"],
+            "source_action_id": source_action_id,
+            "source_result_status": payload.get("source_result_status"),
+            "source_model_event_id": payload.get("source_model_event_id"),
+            "source_call_index": source_index,
+            "blocked_call_index": blocked_index,
+            "guidance": (
+                "Inspect the apply_patch result in the next request before "
+                "choosing any follow-up tool."
+            ),
+        }
+        expected_result = {
+            "tool": payload.get("tool"),
+            "status": "rejected",
+            "error_code": "TOOL_ADMISSION_BLOCKED",
+            "error_message": payload.get("error_message"),
+            "error_details": expected_details,
+            "admission_blocked": True,
+            "worktree_diff_hash": payload.get("worktree_diff_hash"),
+        }
+        correlated_dispatches = [
+            candidate
+            for candidate in events
+            if candidate.type == EventType.TOOL_CALLED
+            and candidate.correlation_id == event.correlation_id
+        ]
+        valid = bool(
+            event.actor == "tool-admission-policy"
+            and model_artifact_valid
+            and isinstance(source_model, object)
+            and source_model is not None
+            and source_model.type == EventType.MODEL_CALLED
+            and len(source_calls) == 1
+            and len(source_outcomes) == 1
+            and isinstance(source_declared, dict)
+            and source_declared.get("name") == "apply_patch"
+            and source_declared.get("action_id") == source_action_id
+            and isinstance(blocked_declared, dict)
+            and blocked_declared.get("name") == payload.get("tool")
+            and blocked_declared.get("action_id") == event.correlation_id
+            and blocked_index > source_index
+            and payload.get("source_result_status")
+            == source_outcomes[0].payload.get("status")
+            and input_valid
+            and input_payload
+            == {
+                "tool": blocked_declared.get("name"),
+                "input": blocked_declared.get("arguments"),
+            }
+            and payload.get("input_hash") == expected_input_hash
+            and result_valid
+            and result_payload == expected_result
+            and payload.get("artifact_id")
+            == result_item.get("artifact_id")
+            and payload.get("artifact_path")
+            == result_item.get("declared_path")
+            and input_item.get("artifact_id")
+            == payload.get("input_artifact", {}).get("artifact_id")
+            and not correlated_dispatches
+        )
+        if valid:
+            verified_sequences.append(event.sequence)
+        else:
+            failed_sequences.append(event.sequence)
+    expected_barriers: set[tuple[str, int, str]] = set()
+    for model_event in events:
+        if model_event.type != EventType.MODEL_CALLED:
+            continue
+        try:
+            model_path = Path(
+                str(model_event.payload["artifact_path"])
+            ).resolve()
+            relative = model_path.relative_to(artifact_root)
+            parts = relative.parts
+            content = model_path.read_bytes()
+            payload = json.loads(content.decode("utf-8"))
+            calls = payload.get("tool_calls")
+            if (
+                len(parts) != 4
+                or parts[0:2] != ("objects", "sha256")
+                or sha256_bytes(content)
+                != f"sha256:{parts[2]}{parts[3]}"
+                or not isinstance(calls, list)
+            ):
+                continue
+            first_apply = next(
+                (
+                    index
+                    for index, call in enumerate(calls, 1)
+                    if isinstance(call, dict)
+                    and call.get("name") == "apply_patch"
+                ),
+                None,
+            )
+            if first_apply is None:
+                continue
+            source_call = calls[first_apply - 1]
+            source_action_id = (
+                source_call.get("action_id")
+                if isinstance(source_call, dict)
+                else None
+            )
+            source_completed = any(
+                event.type
+                in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+                and event.correlation_id == source_action_id
+                and event.payload.get("tool") == "apply_patch"
+                for event in events
+            )
+            if not source_completed:
+                continue
+            expected_barriers.update(
+                (
+                    model_event.event_id,
+                    index,
+                    str(call.get("action_id")),
+                )
+                for index, call in enumerate(calls, 1)
+                if index > first_apply and isinstance(call, dict)
+            )
+        except (
+            KeyError,
+            OSError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ):
+            continue
+    actual_barriers = {
+        (
+            str(event.payload.get("source_model_event_id")),
+            int(event.payload.get("blocked_call_index")),
+            str(event.correlation_id),
+        )
+        for event in blocked
+        if type(event.payload.get("blocked_call_index")) is int
+    }
+    coverage_valid = expected_barriers == actual_barriers
+    return not failed_sequences and coverage_valid, {
+        "barrier_block_count": len(blocked),
+        "verified_barrier_block_count": len(verified_sequences),
+        "verified_barrier_sequences": verified_sequences,
+        "failed_barrier_sequences": failed_sequences,
+        "expected_barrier_count": len(expected_barriers),
+        "barrier_coverage_valid": coverage_valid,
+    }
+
+
 def _request_runtime_contract_valid(
     request_body: Any,
     manifest: RunManifest,
@@ -2412,11 +2974,13 @@ def _request_runtime_contract_valid(
         SYSTEM_PROMPT_V2,
         SYSTEM_PROMPT_V3,
         SYSTEM_PROMPT_V4,
+        SYSTEM_PROMPT_V5,
     )
     from patchloop.agent.tools import (
         TOOL_SCHEMAS_V1,
         TOOL_SCHEMAS_V2,
         TOOL_SCHEMAS_V3,
+        TOOL_SCHEMAS_V4,
     )
 
     if (
@@ -2445,6 +3009,12 @@ def _request_runtime_contract_valid(
     ):
         system_prompt = SYSTEM_PROMPT_V4
         tools = TOOL_SCHEMAS_V3
+    elif (
+        manifest.tool_schema_version == "v4"
+        and manifest.context_policy_version == "phase-evidence-v7"
+    ):
+        system_prompt = SYSTEM_PROMPT_V5
+        tools = TOOL_SCHEMAS_V4
     else:
         return False
 
@@ -2526,6 +3096,7 @@ def _generation_block_common_valid(
                 "phase-evidence-v4",
                 "phase-evidence-v5",
                 "phase-evidence-v6",
+                "phase-evidence-v7",
             }
             else None
         ),
@@ -2879,6 +3450,13 @@ def _rejected_patch_retry_context_evidence(
 ) -> tuple[bool, dict[str, Any]]:
     """Prove every v3 rejected patch episode is rehydrated in its next request."""
 
+    if manifest.context_policy_version == "phase-evidence-v7":
+        return _v7_rejected_patch_retry_context_evidence(
+            root=root,
+            manifest=manifest,
+            events=events,
+        )
+
     failures = [
         event
         for event in events
@@ -3020,6 +3598,7 @@ def _rejected_patch_retry_context_evidence(
                     "phase-evidence-v4",
                     "phase-evidence-v5",
                     "phase-evidence-v6",
+                    "phase-evidence-v7",
                 }
                 else None
             ),
@@ -3111,6 +3690,7 @@ def _rejected_patch_retry_context_evidence(
                             "phase-evidence-v4",
                             "phase-evidence-v5",
                             "phase-evidence-v6",
+                            "phase-evidence-v7",
                         }
                         else None
                     ),
@@ -3173,6 +3753,205 @@ def _rejected_patch_retry_context_evidence(
         "verified_source_failure_sequences": sorted(verified_sequences),
         "failed_source_failure_sequences": sorted(set(failed_sequences)),
         "verified_candidate_content_hashes": sorted(verified_candidate_hashes),
+    }
+
+
+def _v7_rejected_patch_retry_context_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events,
+) -> tuple[bool, dict[str, Any]]:
+    """Prove v7 retry context persists until the next apply outcome."""
+
+    failures = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_FAILED
+        and event.actor == "tool-gateway"
+        and event.payload.get("tool") == "apply_patch"
+        and event.payload.get("status") == "rejected"
+    ]
+    apply_outcomes = [
+        event
+        for event in events
+        if event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+        and event.payload.get("tool") == "apply_patch"
+    ]
+    contexts = [
+        event for event in events if event.type == EventType.CONTEXT_BUILT
+    ]
+    artifact_root = (root / "artifacts").resolve()
+    failed_sequences: list[int] = []
+    verified_sequences: list[int] = []
+    verified_hashes: list[str] = []
+    persisted_context_counts: dict[str, int] = {}
+
+    def rendered_retry(context_event) -> tuple[bool, dict[str, Any] | None]:
+        request_valid, request_evidence = _request_evidence_payload(
+            context_event,
+            artifact_root=artifact_root,
+            expected_provider=manifest.model.provider,
+        )
+        if not request_valid or request_evidence is None:
+            return False, None
+        request_body = request_evidence.get("request_body")
+        rendered = _request_context(
+            request_body,
+            allow_direct_context=(manifest.model.provider in {"mock", "replay"}),
+        )
+        try:
+            payload = json.loads(str(rendered))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return False, None
+        context_build = request_evidence.get("context_build")
+        return bool(
+            isinstance(payload, dict)
+            and isinstance(context_build, dict)
+            and _request_runtime_contract_valid(request_body, manifest)
+            and context_build.get("rejected_mutation_retry") is not None
+        ), payload.get("rejected_mutation_retry")
+
+    for failure in failures:
+        action_id = failure.correlation_id
+        calls = [
+            event
+            for event in events
+            if event.type == EventType.TOOL_CALLED
+            and event.payload.get("tool") == "apply_patch"
+            and event.correlation_id == action_id
+            and event.sequence < failure.sequence
+        ]
+        call = calls[0] if len(calls) == 1 else None
+        patch_artifact = (
+            call.payload.get("patch_artifact")
+            if call is not None
+            else None
+        )
+        candidate_hash = (
+            patch_artifact.get("content_hash")
+            if isinstance(patch_artifact, dict)
+            else None
+        )
+        resolution = next(
+            (
+                event
+                for event in apply_outcomes
+                if event.sequence > failure.sequence
+            ),
+            None,
+        )
+        interval_contexts = [
+            context
+            for context in contexts
+            if context.sequence > failure.sequence
+            and (
+                resolution is None
+                or context.sequence < resolution.sequence
+            )
+        ]
+        episode_ok = bool(
+            isinstance(action_id, str)
+            and action_id
+            and call is not None
+            and isinstance(candidate_hash, str)
+            and interval_contexts
+        )
+        for context in interval_contexts:
+            valid, retry = rendered_retry(context)
+            source_snapshot = (
+                retry.get("source_snapshot")
+                if isinstance(retry, dict)
+                else None
+            )
+            episode_ok = bool(
+                episode_ok
+                and valid
+                and isinstance(retry, dict)
+                and retry.get("schema_version")
+                == "rejected-mutation-retry-v2"
+                and retry.get("action_id") == action_id
+                and retry.get("source_call_sequence") == call.sequence
+                and retry.get("source_failure_sequence")
+                == failure.sequence
+                and retry.get("candidate", {}).get("content_hash")
+                == candidate_hash
+                and retry.get("persistence")
+                == {
+                    "state": "pending",
+                    "resolution": "next_apply_patch_outcome",
+                }
+                and isinstance(source_snapshot, dict)
+                and source_snapshot.get("schema_version")
+                == "patch-source-snapshot-v1"
+                and source_snapshot.get("candidate_content_hash")
+                == candidate_hash
+            )
+        if resolution is not None and resolution.type == EventType.TOOL_SUCCEEDED:
+            next_failure = next(
+                (
+                    event
+                    for event in failures
+                    if event.sequence > resolution.sequence
+                ),
+                None,
+            )
+            cleared_contexts = [
+                context
+                for context in contexts
+                if context.sequence > resolution.sequence
+                and (
+                    next_failure is None
+                    or context.sequence < next_failure.sequence
+                )
+            ]
+            for context in cleared_contexts:
+                request_valid, request_evidence = _request_evidence_payload(
+                    context,
+                    artifact_root=artifact_root,
+                    expected_provider=manifest.model.provider,
+                )
+                rendered = (
+                    _request_context(
+                        request_evidence.get("request_body"),
+                        allow_direct_context=(
+                            manifest.model.provider in {"mock", "replay"}
+                        ),
+                    )
+                    if request_valid and request_evidence is not None
+                    else None
+                )
+                try:
+                    payload = json.loads(str(rendered))
+                except (TypeError, ValueError, json.JSONDecodeError):
+                    payload = None
+                episode_ok = bool(
+                    episode_ok
+                    and isinstance(payload, dict)
+                    and payload.get("rejected_mutation_retry") is None
+                )
+        if episode_ok:
+            verified_sequences.append(failure.sequence)
+            verified_hashes.append(candidate_hash)
+            persisted_context_counts[str(failure.sequence)] = len(
+                interval_contexts
+            )
+        else:
+            failed_sequences.append(failure.sequence)
+
+    return not failed_sequences, {
+        "retry_schema_version": "rejected-mutation-retry-v2",
+        "rejected_candidate_count": len(failures),
+        "retry_episode_count": len(failures),
+        "verified_retry_count": len(verified_sequences),
+        "model_generation_blocked_count": sum(
+            event.type == EventType.MODEL_GENERATION_BLOCKED
+            for event in events
+        ),
+        "verified_source_failure_sequences": sorted(verified_sequences),
+        "failed_source_failure_sequences": sorted(failed_sequences),
+        "verified_candidate_content_hashes": sorted(verified_hashes),
+        "persisted_context_counts": persisted_context_counts,
     }
 
 
@@ -3551,9 +4330,19 @@ def _self_validation_lifecycle_evidence(
     events: list[Any],
     result: RunResult | None,
 ) -> tuple[bool, dict[str, Any]]:
-    """Independently bind v3 probes and semantic review to durable evidence."""
+    """Independently bind versioned probes and semantic review evidence."""
 
     artifact_root = (root / "artifacts").resolve()
+    review_v2 = manifest.tool_schema_version == "v4"
+    review_contract = manifest.public_review_contract
+    authoritative_requirements = {
+        item.requirement_id: item.source_excerpt
+        for item in (
+            review_contract.requirements
+            if review_contract is not None
+            else []
+        )
+    }
     events_by_sequence = {event.sequence: event for event in events}
     special_tools = {"run_probe", "review_task"}
     calls = [
@@ -3586,7 +4375,7 @@ def _self_validation_lifecycle_evidence(
     probe_manifest_binding_valid = bool(
         not probe_observed
         or (
-            manifest.tool_schema_version == "v3"
+            manifest.tool_schema_version in {"v3", "v4"}
             and isinstance(manifest.probe_image_digest, str)
             and manifest.probe_image_digest
         )
@@ -4054,21 +4843,36 @@ def _self_validation_lifecycle_evidence(
             <= 12_000
         )
         normalized_requirements: list[dict[str, Any]] = []
+        observed_requirement_ids: list[str] = []
         if isinstance(requirements, list):
             for item in requirements:
-                if (
-                    not isinstance(item, dict)
-                    or set(item)
-                    != {
+                expected_requirement_keys = (
+                    {
+                        "requirement_id",
+                        "status",
+                        "evidence_event_sequences",
+                        "notes",
+                    }
+                    if review_v2
+                    else {
                         "requirement",
                         "status",
                         "evidence_event_sequences",
                         "notes",
                     }
+                )
+                if (
+                    not isinstance(item, dict)
+                    or set(item) != expected_requirement_keys
                 ):
                     review_shape_ok = False
                     continue
-                requirement = item.get("requirement")
+                requirement_id = item.get("requirement_id")
+                requirement = (
+                    authoritative_requirements.get(requirement_id)
+                    if review_v2
+                    else item.get("requirement")
+                )
                 status = item.get("status")
                 sequences = item.get(
                     "evidence_event_sequences"
@@ -4095,6 +4899,13 @@ def _self_validation_lifecycle_evidence(
                     and notes.strip()
                     and len(notes) <= 2000
                 )
+                if review_v2:
+                    item_ok = bool(
+                        item_ok
+                        and isinstance(requirement_id, str)
+                        and requirement_id in authoritative_requirements
+                        and requirement_id not in observed_requirement_ids
+                    )
                 for sequence in (
                     sequences
                     if isinstance(sequences, list)
@@ -4123,16 +4934,30 @@ def _self_validation_lifecycle_evidence(
                     review_shape_ok and item_ok
                 )
                 if item_ok:
-                    normalized_requirements.append(
-                        {
-                            "requirement": requirement.strip(),
+                    normalized_requirement = {
                             "status": status,
                             "evidence_event_sequences": list(
                                 sequences
                             ),
                             "notes": notes.strip(),
                         }
-                    )
+                    if review_v2:
+                        observed_requirement_ids.append(requirement_id)
+                        normalized_requirement.update(
+                            {
+                                "requirement_id": requirement_id,
+                                "source_excerpt": requirement.strip(),
+                            }
+                        )
+                    else:
+                        normalized_requirement["requirement"] = (
+                            requirement.strip()
+                        )
+                    normalized_requirements.append(normalized_requirement)
+        if review_v2 and set(observed_requirement_ids) != set(
+            authoritative_requirements
+        ):
+            review_shape_ok = False
 
         normalized_validation: list[dict[str, Any]] = []
         passing_targeted_validation = False
@@ -4219,17 +5044,70 @@ def _self_validation_lifecycle_evidence(
                             "notes": notes.strip(),
                         }
                     )
-        residual_risks_ok = bool(
-            isinstance(residual_risks, list)
-            and all(
-                isinstance(item, str)
-                and item.strip()
-                and len(item) <= 1000
-                for item in residual_risks
+        normalized_residual_risks: list[Any] = []
+        residual_risks_ok = isinstance(residual_risks, list)
+        risk_requirement_ids: set[str] = set()
+        if isinstance(residual_risks, list):
+            for item in residual_risks:
+                if review_v2:
+                    item_ok = bool(
+                        isinstance(item, dict)
+                        and set(item)
+                        == {"requirement_ids", "risk", "mitigation"}
+                        and isinstance(item.get("requirement_ids"), list)
+                        and bool(item["requirement_ids"])
+                        and len(item["requirement_ids"]) <= 20
+                        and len(set(item["requirement_ids"]))
+                        == len(item["requirement_ids"])
+                        and all(
+                            isinstance(requirement_id, str)
+                            and requirement_id in authoritative_requirements
+                            for requirement_id in item["requirement_ids"]
+                        )
+                        and isinstance(item.get("risk"), str)
+                        and bool(item["risk"].strip())
+                        and len(item["risk"]) <= 1000
+                        and isinstance(item.get("mitigation"), str)
+                        and bool(item["mitigation"].strip())
+                        and len(item["mitigation"]) <= 1000
+                    )
+                    if item_ok:
+                        risk_requirement_ids.update(item["requirement_ids"])
+                        normalized_residual_risks.append(
+                            {
+                                "requirement_ids": list(
+                                    item["requirement_ids"]
+                                ),
+                                "risk": item["risk"].strip(),
+                                "mitigation": item["mitigation"].strip(),
+                            }
+                        )
+                else:
+                    item_ok = bool(
+                        isinstance(item, str)
+                        and item.strip()
+                        and len(item) <= 1000
+                    )
+                    if item_ok:
+                        normalized_residual_risks.append(item.strip())
+                residual_risks_ok = bool(
+                    residual_risks_ok and item_ok
+                )
+        if review_v2:
+            nonverified_ids = {
+                item["requirement_id"]
+                for item in normalized_requirements
+                if item["status"] != "verified"
+            }
+            residual_risks_ok = bool(
+                residual_risks_ok
+                and review_contract is not None
+                and nonverified_ids.issubset(risk_requirement_ids)
             )
-        )
         expected_review = {
-            "schema_version": "task-review-v1",
+            "schema_version": (
+                "task-review-v2" if review_v2 else "task-review-v1"
+            ),
             "run_id": manifest.run_id,
             "request_artifact_id": request_artifact_id,
             "worktree_diff_hash": worktree_diff_hash,
@@ -4240,12 +5118,22 @@ def _self_validation_lifecycle_evidence(
             "requirements": normalized_requirements,
             "targeted_validation": normalized_validation,
             "residual_risks": (
-                [item.strip() for item in residual_risks]
-                if residual_risks_ok
-                else []
+                normalized_residual_risks if residual_risks_ok else []
             ),
             "deterministic_correctness_claimed": False,
         }
+        if review_v2 and review_contract is not None:
+            expected_review.update(
+                {
+                    "public_review_contract_hash": review_contract.content_hash,
+                    "public_review_contract_schema_version": (
+                        review_contract.schema_version
+                    ),
+                    "authoritative_requirement_ids": list(
+                        authoritative_requirements
+                    ),
+                }
+            )
         review_result_ok = bool(
             request_context_ok
             and binding_ok
@@ -4255,9 +5143,13 @@ def _self_validation_lifecycle_evidence(
             and passing_targeted_validation
             and review_payload == expected_review
             and result_payload.get("schema_version")
-            == "task-review-result-v1"
+            == (
+                "task-review-result-v2"
+                if review_v2
+                else "task-review-result-v1"
+            )
             and result_payload.get("review_schema_version")
-            == "task-review-v1"
+            == expected_review["schema_version"]
             and result_payload.get("review_artifact")
             == outcome.payload.get("review_artifact")
             and result_payload.get("review_content_hash")
@@ -4282,6 +5174,11 @@ def _self_validation_lifecycle_evidence(
                 "deterministic_correctness_claimed"
             )
             is False
+            and (
+                not review_v2
+                or result_payload.get("public_review_contract_hash")
+                == review_contract.content_hash
+            )
             and outcome.payload.get("review_content_hash")
             == review_item.get("actual_content_hash")
             and outcome.payload.get("requirement_count")
@@ -4511,10 +5408,19 @@ def _self_validation_lifecycle_evidence(
     else:
         post_review_validation_sequences = []
 
+    version_pair_valid = bool(
+        (
+            manifest.tool_schema_version == "v3"
+            and manifest.context_policy_version == "phase-evidence-v6"
+        )
+        or (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v7"
+            and manifest.public_review_contract is not None
+        )
+    )
     passed = bool(
-        manifest.tool_schema_version == "v3"
-        and manifest.context_policy_version
-        == "phase-evidence-v6"
+        version_pair_valid
         and probe_manifest_binding_valid
         and not failed_call_sequences
         and final_binding_ok
@@ -4619,7 +5525,7 @@ def calculate_source_evidence_hash(
         "agent_visible_artifacts": artifacts,
         "execution_plan_hash": (sha256_bytes(plan_bytes) if plan_bytes is not None else None),
     }
-    if manifest.tool_schema_version in {"v2", "v3"}:
+    if manifest.tool_schema_version in {"v2", "v3", "v4"}:
         _, accepted_patch_artifacts = _accepted_patch_artifact_evidence(
             root=run_root,
             events=events,
@@ -4693,6 +5599,7 @@ def calculate_source_evidence_hash(
     elif manifest.context_policy_version in {
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         _, _, _, investigation_artifacts, _ = _artifact_evidence(
             root=run_root,
@@ -4718,16 +5625,16 @@ def calculate_source_evidence_hash(
             events=events,
             private_tokens=set(),
         )
-        snapshot["schema_version"] = (
-            _SOURCE_EVIDENCE_SCHEMA_VERSION_V6
-            if manifest.context_policy_version == "phase-evidence-v6"
-            else _SOURCE_EVIDENCE_SCHEMA_VERSION_V5
-        )
+        snapshot["schema_version"] = {
+            "phase-evidence-v5": _SOURCE_EVIDENCE_SCHEMA_VERSION_V5,
+            "phase-evidence-v6": _SOURCE_EVIDENCE_SCHEMA_VERSION_V6,
+            "phase-evidence-v7": _SOURCE_EVIDENCE_SCHEMA_VERSION_V7,
+        }[manifest.context_policy_version]
         snapshot["investigation_artifacts"] = investigation_artifacts
         snapshot[
             "investigation_admission_nested_artifacts"
         ] = admission_input_artifacts
-        if manifest.tool_schema_version == "v3":
+        if manifest.tool_schema_version in {"v3", "v4"}:
             (
                 _,
                 _,
@@ -4742,6 +5649,21 @@ def calculate_source_evidence_hash(
             snapshot[
                 "self_validation_nested_artifacts"
             ] = self_validation_artifacts
+        if manifest.tool_schema_version == "v4":
+            (
+                _,
+                _,
+                _,
+                patch_source_artifacts,
+                _,
+            ) = _patch_source_snapshot_artifact_evidence(
+                root=run_root,
+                events=events,
+                private_tokens=set(),
+            )
+            snapshot[
+                "patch_source_snapshot_artifacts"
+            ] = patch_source_artifacts
     return sha256_text(canonical_json(snapshot))
 
 
@@ -4824,10 +5746,54 @@ def qualify_run(
         and manifest.private_spec_hash == package.private_spec_hash
     )
     add("task_identity", task_identity)
+    corrective_runtime_content_hash: str | None = None
+    if manifest.tool_schema_version == "v4":
+        from patchloop.agent.review import (
+            validate_public_review_contract,
+        )
+
+        review_contract = manifest.public_review_contract
+        review_contract_valid = False
+        if review_contract is not None:
+            try:
+                validate_public_review_contract(
+                    review_contract,
+                    task=package.public,
+                    public_spec_hash=package.public_spec_hash,
+                )
+                review_contract_valid = True
+            except ContractError:
+                review_contract_valid = False
+        add(
+            "public_review_contract",
+            review_contract_valid,
+            declared=review_contract is not None,
+            content_hash=(
+                review_contract.content_hash
+                if review_contract is not None
+                else None
+            ),
+        )
+        (
+            corrective_runtime_ok,
+            corrective_runtime_details,
+        ) = _corrective_runtime_contract_evidence(
+            root=run_root,
+            manifest=manifest,
+            events=events,
+        )
+        corrective_runtime_content_hash = (
+            corrective_runtime_details.get("content_hash")
+        )
+        add(
+            "corrective_runtime_contract",
+            corrective_runtime_ok,
+            **corrective_runtime_details,
+        )
 
     contiguous = [event.sequence for event in events] == list(range(1, len(events) + 1))
     add("contiguous_events", contiguous, event_count=len(events))
-    if manifest.tool_schema_version in {"v2", "v3"}:
+    if manifest.tool_schema_version in {"v2", "v3", "v4"}:
         claim_ids = [claim.get("claim_id") for claim in worker_claims]
         owner_ids = [claim.get("owner_id") for claim in worker_claims]
         claimed_at = [claim.get("claimed_at") for claim in worker_claims]
@@ -5111,6 +6077,7 @@ def qualify_run(
                             "phase-evidence-v4",
                             "phase-evidence-v5",
                             "phase-evidence-v6",
+                            "phase-evidence-v7",
                         }
                         else None
                     ),
@@ -5213,7 +6180,7 @@ def qualify_run(
             ),
             **lifecycle_evidence,
         )
-    if manifest.tool_schema_version == "v3":
+    if manifest.tool_schema_version in {"v3", "v4"}:
         (
             self_validation_lifecycle_ok,
             self_validation_lifecycle_details,
@@ -5287,6 +6254,12 @@ def qualify_run(
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
                 and manifest.budget
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
+            )
+            or (
+                manifest.experiment.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+                and manifest.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
             )
             or (
                 (
@@ -5379,6 +6352,9 @@ def qualify_run(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT: {
             DatasetRole.MEMORY_DEVELOPMENT
         },
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT: {
+            DatasetRole.MEMORY_DEVELOPMENT
+        },
         ExperimentPurpose.CORE: {
             DatasetRole.CORE_SAME_REPO,
             DatasetRole.CORE_CROSS_REPO,
@@ -5443,6 +6419,60 @@ def qualify_run(
             and execution_plan["approval"].get("matches_execution_hash") is True
         ),
     )
+    if (
+        experiment is not None
+        and experiment.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+    ):
+        from patchloop.evals.runner import (
+            ExperimentSuite,
+            _pricing_freshness_evidence,
+            _pricing_freshness_passed,
+        )
+
+        pricing_freshness: dict[str, Any] = {
+            "schema_version": "pricing-start-verification-v1",
+            "checked_at": None,
+            "age_seconds": None,
+            "timezone_valid": False,
+            "date_not_future": False,
+            "within_maximum_age": False,
+            "official_source_matches": False,
+            "official_rates_match": False,
+        }
+        pricing_suite_valid = False
+        run_started = [
+            event
+            for event in events
+            if event.type == EventType.RUN_STARTED
+        ]
+        if (
+            execution_plan_ok
+            and execution_plan is not None
+            and isinstance(execution_plan.get("suite"), dict)
+            and len(run_started) == 1
+            and run_started[0].actor == "runner"
+        ):
+            try:
+                pricing_suite = ExperimentSuite.model_validate(
+                    execution_plan["suite"]
+                )
+                pricing_freshness = _pricing_freshness_evidence(
+                    pricing_suite,
+                    boundary_at=run_started[0].timestamp,
+                )
+                pricing_suite_valid = True
+            except (TypeError, ValueError):
+                pricing_suite_valid = False
+        add(
+            "pricing_start_freshness",
+            bool(
+                pricing_suite_valid
+                and _pricing_freshness_passed(pricing_freshness)
+            ),
+            run_started_count=len(run_started),
+            **pricing_freshness,
+        )
 
     expected_image_digest = (
         package.environment.image_digest if package.environment is not None else None
@@ -5482,6 +6512,7 @@ def qualify_run(
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         (
             investigation_artifact_integrity,
@@ -5531,7 +6562,8 @@ def qualify_run(
     accepted_patch_artifact_count = 0
     patch_intent_artifact_count = 0
     self_validation_artifact_count = 0
-    if manifest.tool_schema_version in {"v2", "v3"}:
+    patch_source_snapshot_artifact_count = 0
+    if manifest.tool_schema_version in {"v2", "v3", "v4"}:
         (
             accepted_patch_artifact_integrity,
             accepted_patch_artifact_evidence,
@@ -5563,7 +6595,7 @@ def qualify_run(
             artifact_count += patch_intent_scanned
             leak_matches += patch_intent_matches
             patch_intent_artifact_count = len(patch_intent_evidence)
-    if manifest.tool_schema_version == "v3":
+    if manifest.tool_schema_version in {"v3", "v4"}:
         (
             self_validation_artifact_integrity,
             self_validation_artifact_count,
@@ -5584,24 +6616,47 @@ def qualify_run(
         missing_artifact_identities.extend(
             self_validation_missing
         )
+    if manifest.tool_schema_version == "v4":
+        (
+            patch_source_integrity,
+            patch_source_snapshot_artifact_count,
+            patch_source_leak_matches,
+            _,
+            patch_source_missing,
+        ) = _patch_source_snapshot_artifact_evidence(
+            root=run_root,
+            events=events,
+            private_tokens=private_tokens,
+        )
+        artifact_integrity = bool(
+            artifact_integrity and patch_source_integrity
+        )
+        artifact_count += patch_source_snapshot_artifact_count
+        leak_matches += patch_source_leak_matches
+        missing_artifact_identities.extend(patch_source_missing)
     artifact_details = {
         "scanned_artifact_count": artifact_count,
         "missing_required_artifact_events": missing_artifact_identities,
     }
-    if manifest.tool_schema_version in {"v2", "v3"}:
+    if manifest.tool_schema_version in {"v2", "v3", "v4"}:
         artifact_details["accepted_patch_artifact_count"] = accepted_patch_artifact_count
         if any(
             event.type in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED} for event in events
         ):
             artifact_details["patch_intent_artifact_count"] = patch_intent_artifact_count
-    if manifest.tool_schema_version == "v3":
+    if manifest.tool_schema_version in {"v3", "v4"}:
         artifact_details[
             "self_validation_nested_artifact_count"
         ] = self_validation_artifact_count
+    if manifest.tool_schema_version == "v4":
+        artifact_details[
+            "patch_source_snapshot_artifact_count"
+        ] = patch_source_snapshot_artifact_count
     if manifest.context_policy_version in {
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         artifact_details[
             "investigation_artifact_count"
@@ -5616,6 +6671,7 @@ def qualify_run(
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         (
             rejected_patch_retry_context_ok,
@@ -5704,6 +6760,7 @@ def qualify_run(
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         (
             investigation_evidence_ok,
@@ -5735,6 +6792,19 @@ def qualify_run(
             investigation_lifecycle_ok,
             **investigation_lifecycle_details,
         )
+    if manifest.tool_schema_version == "v4":
+        (
+            mutation_barrier_ok,
+            mutation_barrier_details,
+        ) = _v7_turn_mutation_barrier_evidence(
+            root=run_root,
+            events=events,
+        )
+        add(
+            "turn_mutation_barrier",
+            mutation_barrier_ok,
+            **mutation_barrier_details,
+        )
     generation_blocked_events = [
         event for event in events if event.type == EventType.MODEL_GENERATION_BLOCKED
     ]
@@ -5755,6 +6825,7 @@ def qualify_run(
             "phase-evidence-v4",
             "phase-evidence-v5",
             "phase-evidence-v6",
+            "phase-evidence-v7",
         }
         and len(generation_blocked_events) == 1
         and context_events
@@ -5839,6 +6910,7 @@ def qualify_run(
                 ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
                 ExperimentPurpose.CORE,
             }
             or (
@@ -5909,6 +6981,7 @@ def qualify_run(
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         prompt_telemetry_details.update(
             {
@@ -6161,19 +7234,26 @@ def qualify_run(
     if structured_lifecycle_contract:
         trace_check_ids.add("submission_lifecycle")
         trace_check_ids.add("worker_claim_provenance")
-    if manifest.tool_schema_version == "v3":
+    if manifest.tool_schema_version in {"v3", "v4"}:
         trace_check_ids.add("self_validation_lifecycle")
+    if manifest.tool_schema_version == "v4":
+        trace_check_ids.add("public_review_contract")
+        trace_check_ids.add("corrective_runtime_contract")
+        trace_check_ids.add("pricing_start_freshness")
+        trace_check_ids.add("turn_mutation_barrier")
     if manifest.context_policy_version in {
         "phase-evidence-v3",
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         trace_check_ids.add("rejected_patch_retry_context")
     if manifest.context_policy_version in {
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         trace_check_ids.add("investigation_evidence")
         trace_check_ids.add("investigation_lifecycle")
@@ -6237,7 +7317,11 @@ def qualify_run(
                 "harness_git_commit": manifest.harness_git_commit,
                 "tool_schema_version": manifest.tool_schema_version,
                 "context_policy_version": manifest.context_policy_version,
-                "runtime_contract_content_hash": (_runtime_contract_content_hash(events)),
+                "runtime_contract_content_hash": (
+                    corrective_runtime_content_hash
+                    if manifest.tool_schema_version == "v4"
+                    else _runtime_contract_content_hash(events)
+                ),
             }
         )
     payload["qualification_hash"] = sha256_text(canonical_json(payload))

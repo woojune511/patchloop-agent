@@ -332,6 +332,44 @@ def report(
     _guarded(lambda: build_report(experiment, output))
 
 
+@app.command("budget")
+def budget_diagnose(
+    experiment: Annotated[
+        str,
+        typer.Option(
+            "--experiment",
+            help="Experiment ID or immutable experiment-result JSON path.",
+        ),
+    ],
+) -> None:
+    """Derive read-only per-run budget pressure from durable evidence."""
+    from patchloop.evals.budget import derive_experiment_budget_pressure
+    from patchloop.state import StateStore
+
+    def operation() -> object:
+        requested = Path(experiment)
+        source = (
+            requested
+            if requested.is_file()
+            else runtime_root() / "experiments" / f"{experiment}.json"
+        )
+        if not source.is_file():
+            raise ContractError(
+                f"experiment result is unavailable: {experiment}"
+            )
+        try:
+            return derive_experiment_budget_pressure(
+                source,
+                StateStore(runtime_root() / "state.sqlite3"),
+            )
+        except (OSError, ValueError) as exc:
+            raise ContractError(
+                f"budget pressure evidence is invalid: {exc}"
+            ) from exc
+
+    _guarded(operation)
+
+
 @memory_app.command("build")
 def memory_build(
     split: Annotated[str, typer.Option("--split")] = "dev-train",

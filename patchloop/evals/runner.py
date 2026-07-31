@@ -15,9 +15,10 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from patchloop.agent.model import SYSTEM_PROMPT_V3
+from patchloop.agent.model import SYSTEM_PROMPT_V3, SYSTEM_PROMPT_V5
+from patchloop.agent.review import load_public_review_contract
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
-from patchloop.agent.tools import TOOL_SCHEMAS_V2
+from patchloop.agent.tools import TOOL_SCHEMAS_V2, TOOL_SCHEMAS_V4
 from patchloop.contracts import (
     Budget,
     DatasetRole,
@@ -25,11 +26,13 @@ from patchloop.contracts import (
     ExperimentRunContext,
     FaultSpec,
     MemoryCondition,
+    PublicReviewContract,
     RunManifest,
     TaskPackage,
 )
 from patchloop.dataset import require_dataset_role, require_frozen_dataset
 from patchloop.errors import ContractError
+from patchloop.evals.budget import calculate_budget_pressure
 from patchloop.memory.store import latest_frozen_index
 from patchloop.runtime import build_manifest, repository_root, runtime_root
 from patchloop.sandbox import DockerSandbox
@@ -131,6 +134,12 @@ GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT = Budget(
     max_total_tokens=480_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=900_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -166,10 +175,196 @@ MEMORY_DEVELOPMENT_BUDGET_PILOT_TASK_IDS = {
     Path(path).parent.name
     for path in MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
 }
+PUBLIC_REVIEW_CONTRACT_ROOT = Path("experiments/review-contracts")
+CORRECTIVE_TOOL_SCHEMA_VERSION = "v4"
+CORRECTIVE_CONTEXT_POLICY_VERSION = "phase-evidence-v7"
+CORRECTIVE_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v1"
+PRICING_START_VERIFICATION_SCHEMA = "pricing-start-verification-v1"
 
 
 def _normalized_task_path(value: str) -> str:
     return value.replace("\\", "/").removeprefix("./")
+
+
+def _corrective_runtime_contract(
+    suite: ExperimentSuite,
+    *,
+    harness_git_commit: Any,
+) -> dict[str, Any] | None:
+    """Return the corrective-only runtime identity approved by the execution hash."""
+
+    if (
+        suite.purpose
+        != ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+    ):
+        return None
+    return {
+        "schema_version": CORRECTIVE_RUNTIME_CONTRACT_SCHEMA,
+        "tool_schema_version": CORRECTIVE_TOOL_SCHEMA_VERSION,
+        "context_policy_version": CORRECTIVE_CONTEXT_POLICY_VERSION,
+        "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
+        "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V4)),
+        "harness_git_commit": harness_git_commit,
+    }
+
+
+def _pricing_contract(
+    suite: ExperimentSuite,
+    *,
+    schedule_size: int,
+    checked_at: datetime | None = None,
+) -> dict[str, Any]:
+    """Derive the persisted price inputs, reserves, and optional start-time proof."""
+
+    expected_prices = OFFICIAL_PRICES_BY_MODEL.get(suite.model_id)
+    configured_prices = [
+        getattr(suite, field)
+        for field in PRICE_FIELDS
+        if getattr(suite, field) is not None
+    ]
+    per_run_cost_reserve = (
+        (suite.budget.max_total_tokens + suite.max_output_tokens)
+        * max(configured_prices)
+        / 1_000_000
+        if configured_prices
+        else 0.0
+    )
+    budget_upper_bound = schedule_size * per_run_cost_reserve
+    if (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+    ):
+        # Keep the approval-facing currency values stable instead of exposing
+        # binary floating-point tails such as 12.487499999999999.
+        per_run_cost_reserve = round(per_run_cost_reserve, 12)
+        budget_upper_bound = round(
+            schedule_size * per_run_cost_reserve,
+            12,
+        )
+    payload: dict[str, Any] = {
+        "model_id": suite.model_id,
+        "verified_at": (
+            suite.pricing_verified_at.isoformat()
+            if suite.pricing_verified_at
+            else None
+        ),
+        "source_url": suite.pricing_source_url,
+        **{field: getattr(suite, field) for field in PRICE_FIELDS},
+        "maximum_age_hours": int(
+            PRICING_MAX_AGE.total_seconds() / 3600
+        ),
+        "per_run_cost_reserve_usd": per_run_cost_reserve,
+        "budget_upper_bound_usd": budget_upper_bound,
+    }
+    if (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+    ):
+        payload["start_time_verification"] = _pricing_freshness_evidence(
+            suite,
+            boundary_at=checked_at,
+            expected_prices=expected_prices,
+        )
+    return payload
+
+
+def _pricing_freshness_evidence(
+    suite: ExperimentSuite,
+    *,
+    boundary_at: datetime | None,
+    expected_prices: dict[str, float | None] | None = None,
+) -> dict[str, Any]:
+    """Evaluate freshness at an immutable authorization or run boundary."""
+
+    official_prices = (
+        OFFICIAL_PRICES_BY_MODEL.get(suite.model_id)
+        if expected_prices is None
+        else expected_prices
+    )
+    age_seconds: float | None = None
+    timezone_valid = bool(
+        suite.pricing_verified_at is not None
+        and suite.pricing_verified_at.tzinfo is not None
+        and boundary_at is not None
+        and boundary_at.tzinfo is not None
+    )
+    if timezone_valid:
+        assert suite.pricing_verified_at is not None
+        assert boundary_at is not None
+        age_seconds = (
+            boundary_at.astimezone(UTC)
+            - suite.pricing_verified_at.astimezone(UTC)
+        ).total_seconds()
+    return {
+        "schema_version": PRICING_START_VERIFICATION_SCHEMA,
+        "checked_at": boundary_at.isoformat() if boundary_at else None,
+        "age_seconds": age_seconds,
+        "timezone_valid": timezone_valid,
+        "date_not_future": bool(
+            age_seconds is not None and age_seconds >= 0
+        ),
+        "within_maximum_age": bool(
+            age_seconds is not None
+            and 0 <= age_seconds <= PRICING_MAX_AGE.total_seconds()
+        ),
+        "official_source_matches": (
+            suite.pricing_source_url == OFFICIAL_PRICING_URL
+        ),
+        "official_rates_match": bool(
+            official_prices is not None
+            and all(
+                getattr(suite, field) == official_prices.get(field)
+                for field in PRICE_FIELDS
+            )
+        ),
+    }
+
+
+def _pricing_freshness_passed(evidence: Any) -> bool:
+    return bool(
+        isinstance(evidence, dict)
+        and evidence.get("schema_version")
+        == PRICING_START_VERIFICATION_SCHEMA
+        and evidence.get("timezone_valid") is True
+        and evidence.get("date_not_future") is True
+        and evidence.get("within_maximum_age") is True
+        and evidence.get("official_source_matches") is True
+        and evidence.get("official_rates_match") is True
+    )
+
+
+def _pricing_contract_matches(
+    suite: ExperimentSuite,
+    pricing: Any,
+    *,
+    schedule_size: int,
+) -> bool:
+    """Recompute a corrective plan's price evidence without using current time."""
+
+    if not isinstance(pricing, dict):
+        return False
+    verification = pricing.get("start_time_verification")
+    if not isinstance(verification, dict):
+        return False
+    raw_checked_at = verification.get("checked_at")
+    if not isinstance(raw_checked_at, str):
+        return False
+    try:
+        checked_at = datetime.fromisoformat(raw_checked_at)
+    except ValueError:
+        return False
+    expected = _pricing_contract(
+        suite,
+        schedule_size=schedule_size,
+        checked_at=checked_at,
+    )
+    return bool(
+        canonical_json(pricing) == canonical_json(expected)
+        and _pricing_freshness_passed(verification)
+        and suite.estimated_cost_usd > 0
+        and suite.estimated_cost_usd <= suite.cost_limit_usd
+        and expected["budget_upper_bound_usd"] <= suite.cost_limit_usd
+    )
 
 
 class ExperimentDiagnostic(BaseModel):
@@ -463,6 +658,25 @@ class ExperimentSuite(BaseModel):
             self._require_live_defaults(
                 cost_limit=7,
                 budget=GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT,
+            )
+        elif (
+            self.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+        ):
+            if (
+                {_normalized_task_path(task) for task in self.tasks}
+                != MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+            ):
+                raise ValueError(
+                    "memory-development no-memory corrective pilot requires the "
+                    "exact three frozen resource-max tasks, no_memory, and one "
+                    "repetition"
+                )
+            self._require_live_defaults(
+                cost_limit=13,
+                budget=GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT,
             )
         elif self.purpose == ExperimentPurpose.CORE:
             if len(set(self.tasks)) != 12:
@@ -806,24 +1020,28 @@ def _execution_hash(
     docker_state: dict[str, Any],
     openai_sdk: dict[str, Any],
     pilot_qualification: dict[str, Any],
+    runtime_contract: dict[str, Any] | None = None,
 ) -> str:
     payload = _suite_payload(suite)
     payload.pop("live_cost_approved", None)
     payload.pop("approved_execution_hash", None)
+    execution_payload: dict[str, Any] = {
+        "schema_version": "experiment-execution-v1",
+        "suite": payload,
+        "dataset": dataset,
+        "tasks": task_rows,
+        "schedule_hash": schedule_hash,
+        "git_commit": git_state.get("commit"),
+        "docker_images": docker_state.get("images", []),
+        "openai_sdk": openai_sdk,
+        "pilot_qualification_hash": pilot_qualification.get(
+            "qualification_hash"
+        ),
+    }
+    if runtime_contract is not None:
+        execution_payload["runtime_contract"] = runtime_contract
     return sha256_text(
-        canonical_json(
-            {
-                "schema_version": "experiment-execution-v1",
-                "suite": payload,
-                "dataset": dataset,
-                "tasks": task_rows,
-                "schedule_hash": schedule_hash,
-                "git_commit": git_state.get("commit"),
-                "docker_images": docker_state.get("images", []),
-                "openai_sdk": openai_sdk,
-                "pilot_qualification_hash": pilot_qualification.get("qualification_hash"),
-            }
-        )
+        canonical_json(execution_payload)
     )
 
 
@@ -873,6 +1091,7 @@ def _expected_role_and_split(
     if purpose in {
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
     }:
         return {DatasetRole.MEMORY_DEVELOPMENT}, DatasetRole.MEMORY_DEVELOPMENT
     if purpose == ExperimentPurpose.CORE:
@@ -893,6 +1112,7 @@ def preflight_suite(
     """Inspect an experiment without constructing an agent or making API calls."""
 
     suite = load_suite(path)
+    preflight_checked_at = utc_now()
     suite_hash = _suite_hash(suite)
     blockers: list[dict[str, str]] = []
     dataset_identity: dict[str, Any] | None = None
@@ -964,8 +1184,28 @@ def preflight_suite(
                             f"task role/split mismatch for {package.public.task_id}: "
                             f"{role.value} != {expected_role.value}"
                         )
-                task_rows.append(
-                    {
+                review_contract: PublicReviewContract | None = None
+                review_contract_path: str | None = None
+                if (
+                    suite.purpose
+                    == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+                ):
+                    candidate = ensure_within(
+                        repository_root(),
+                        (
+                            PUBLIC_REVIEW_CONTRACT_ROOT
+                            / f"{package.public.task_id}.yaml"
+                        ).as_posix(),
+                    )
+                    review_contract = load_public_review_contract(
+                        candidate,
+                        task=package.public,
+                        public_spec_hash=package.public_spec_hash,
+                    )
+                    review_contract_path = candidate.relative_to(
+                        repository_root()
+                    ).as_posix()
+                task_row = {
                         "task": task,
                         "task_id": package.public.task_id,
                         "task_version": package.public.task_version,
@@ -986,7 +1226,16 @@ def preflight_suite(
                             else None
                         ),
                     }
-                )
+                if review_contract is not None:
+                    task_row.update(
+                        {
+                            "public_review_contract_path": review_contract_path,
+                            "public_review_contract": review_contract.model_dump(
+                                mode="json"
+                            ),
+                        }
+                    )
+                task_rows.append(task_row)
             except (ContractError, OSError) as exc:
                 _block(blockers, "TASK_NOT_ELIGIBLE", str(exc))
 
@@ -1041,6 +1290,16 @@ def preflight_suite(
             "BUDGET_PILOT_TASK_SET_MISMATCH",
             "budget pilot must use its exact three frozen resource-max tasks",
         )
+    if (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+        and loaded_ids != MEMORY_DEVELOPMENT_BUDGET_PILOT_TASK_IDS
+    ):
+        _block(
+            blockers,
+            "CORRECTIVE_PILOT_TASK_SET_MISMATCH",
+            "corrective pilot must use its exact three frozen resource-max tasks",
+        )
 
     schedule, schedule_hash = _make_schedule(suite, task_rows)
     git_state = _git_state()
@@ -1073,6 +1332,10 @@ def preflight_suite(
         if suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
         else {"run_id": None, "qualified": None}
     )
+    runtime_contract = _corrective_runtime_contract(
+        suite,
+        harness_git_commit=git_state.get("commit"),
+    )
     execution_hash = _execution_hash(
         suite,
         dataset=dataset_identity,
@@ -1082,36 +1345,16 @@ def preflight_suite(
         docker_state=docker_state,
         openai_sdk=openai_sdk,
         pilot_qualification=pilot_qualification,
+        runtime_contract=runtime_contract,
     )
 
     expected_prices = OFFICIAL_PRICES_BY_MODEL.get(suite.model_id)
-    pricing = {
-        "model_id": suite.model_id,
-        "verified_at": (
-            suite.pricing_verified_at.isoformat() if suite.pricing_verified_at else None
-        ),
-        "source_url": suite.pricing_source_url,
-        **{
-            field: getattr(suite, field)
-            for field in PRICE_FIELDS
-        },
-        "maximum_age_hours": int(PRICING_MAX_AGE.total_seconds() / 3600),
-    }
-    configured_prices = [
-        getattr(suite, field)
-        for field in PRICE_FIELDS
-        if getattr(suite, field) is not None
-    ]
-    per_run_cost_reserve = (
-        (suite.budget.max_total_tokens + suite.max_output_tokens)
-        * max(configured_prices)
-        / 1_000_000
-        if configured_prices
-        else 0.0
+    pricing = _pricing_contract(
+        suite,
+        schedule_size=len(schedule),
+        checked_at=preflight_checked_at,
     )
-    theoretical_cost_upper_bound = len(schedule) * per_run_cost_reserve
-    pricing["per_run_cost_reserve_usd"] = per_run_cost_reserve
-    pricing["budget_upper_bound_usd"] = theoretical_cost_upper_bound
+    theoretical_cost_upper_bound = pricing["budget_upper_bound_usd"]
 
     if suite.model == "openai":
         if (
@@ -1190,7 +1433,9 @@ def preflight_suite(
                     "pricing verification date must include an explicit timezone",
                 )
             else:
-                age = utc_now() - verified_at.astimezone(UTC)
+                age = preflight_checked_at.astimezone(
+                    UTC
+                ) - verified_at.astimezone(UTC)
                 if age < timedelta(0):
                     _block(
                         blockers,
@@ -1290,7 +1535,7 @@ def preflight_suite(
             "instead of starting the schedule again",
         )
 
-    return {
+    output_payload = {
         "schema_version": "experiment-preflight-v1",
         "experiment_id": suite.experiment_id,
         "purpose": suite.purpose.value,
@@ -1321,6 +1566,9 @@ def preflight_suite(
         "blockers": blockers,
         "ready": not blockers,
     }
+    if runtime_contract is not None:
+        output_payload["runtime_contract"] = runtime_contract
+    return output_payload
 
 
 def _persisted_attempt_result(runner: AgentRunner, run_id: str) -> dict | None:
@@ -1361,6 +1609,23 @@ def _assert_task_package_matches_preflight(
             "task package changed since the approved preflight: "
             f"{task_row['task_id']}"
         )
+    review_path = task_row.get("public_review_contract_path")
+    expected_review = task_row.get("public_review_contract")
+    if review_path is not None or expected_review is not None:
+        if not isinstance(review_path, str) or not isinstance(
+            expected_review, dict
+        ):
+            raise ContractError("invalid approved public review contract binding")
+        observed_review = load_public_review_contract(
+            ensure_within(repository_root(), review_path),
+            task=package.public,
+            public_spec_hash=package.public_spec_hash,
+        )
+        if observed_review.model_dump(mode="json") != expected_review:
+            raise ContractError(
+                "public review contract changed since the approved preflight: "
+                f"{task_row['task_id']}"
+            )
 
 
 def _assert_manifest_matches_preflight(
@@ -1370,6 +1635,25 @@ def _assert_manifest_matches_preflight(
     preflight: dict[str, Any],
     item: dict[str, Any],
 ) -> None:
+    expected_runtime_contract = preflight.get("runtime_contract")
+    actual_runtime_contract: dict[str, Any] | None = None
+    if (
+        expected_runtime_contract is not None
+        or manifest.tool_schema_version == CORRECTIVE_TOOL_SCHEMA_VERSION
+        or manifest.context_policy_version
+        == CORRECTIVE_CONTEXT_POLICY_VERSION
+        or manifest.public_review_contract is not None
+    ):
+        actual_runtime_contract = {
+            "schema_version": CORRECTIVE_RUNTIME_CONTRACT_SCHEMA,
+            "tool_schema_version": manifest.tool_schema_version,
+            "context_policy_version": manifest.context_policy_version,
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
+            "tool_schema_hash": sha256_text(
+                canonical_json(TOOL_SCHEMAS_V4)
+            ),
+            "harness_git_commit": manifest.harness_git_commit,
+        }
     expected = {
         "task": {
             "task_id": item["task_id"],
@@ -1410,6 +1694,8 @@ def _assert_manifest_matches_preflight(
             "max_context_tokens": suite.memory_token_budget,
         },
         "fault": _diagnostic_fault(suite).model_dump(mode="json"),
+        "public_review_contract": item.get("public_review_contract"),
+        "runtime_contract": expected_runtime_contract,
         "experiment": {
             "experiment_id": suite.experiment_id,
             "purpose": suite.purpose.value,
@@ -1450,6 +1736,12 @@ def _assert_manifest_matches_preflight(
             "max_context_tokens": manifest.memory.max_context_tokens,
         },
         "fault": manifest.fault.model_dump(mode="json"),
+        "public_review_contract": (
+            manifest.public_review_contract.model_dump(mode="json")
+            if manifest.public_review_contract is not None
+            else None
+        ),
+        "runtime_contract": actual_runtime_contract,
         "experiment": (
             manifest.experiment.model_dump(mode="json")
             if manifest.experiment is not None
@@ -1882,7 +2174,17 @@ def _completion_gate(
         }
         == MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
     )
-    if not completion_panel and not budget_pilot:
+    corrective_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+        and suite.budget
+        == GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
+        and {
+            _normalized_task_path(task) for task in suite.tasks
+        }
+        == MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
+    )
+    if not completion_panel and not budget_pilot and not corrective_pilot:
         return None
 
     budget_terminal_run_ids: list[str] = []
@@ -1936,7 +2238,7 @@ def _completion_gate(
         for row in rows
     )
     completion_passed = bool(
-        expected_runs == (3 if budget_pilot else 2)
+        expected_runs == (3 if budget_pilot or corrective_pilot else 2)
         and terminal_runs == expected_runs
         and qualified_runs == expected_runs
         and evaluator_reached_runs == expected_runs
@@ -1946,9 +2248,13 @@ def _completion_gate(
         and diagnostic_errors == 0
         and not budget_terminal_run_ids
     )
-    if budget_pilot:
+    if budget_pilot or corrective_pilot:
         return {
-            "schema_version": "no-memory-budget-pilot-gate-v1",
+            "schema_version": (
+                "no-memory-corrective-pilot-gate-v1"
+                if corrective_pilot
+                else "no-memory-budget-pilot-gate-v1"
+            ),
             "passed": completion_passed,
             "expected_runs": expected_runs,
             "terminal_runs": terminal_runs,
@@ -2128,6 +2434,7 @@ def evaluate_suite(
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
     }
     halt_reason: dict[str, str] | None = None
 
@@ -2262,6 +2569,17 @@ def evaluate_suite(
             max_output_tokens=suite.max_output_tokens,
             fault=_diagnostic_fault(suite),
             experiment_context=experiment_context,
+            corrective_validation=(
+                suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+            ),
+            public_review_contract=(
+                PublicReviewContract.model_validate(
+                    task_row["public_review_contract"]
+                )
+                if "public_review_contract" in task_row
+                else None
+            ),
         )
         _assert_manifest_matches_preflight(
             manifest,
@@ -2333,22 +2651,38 @@ def evaluate_suite(
                     "type": type(exc).__name__,
                     "message": _safe_error_message(exc),
                 }
+        budget_pressure = None
+        runner_state = getattr(runner, "state", None)
+        if runner_state is not None:
+            try:
+                budget_pressure = calculate_budget_pressure(
+                    manifest,
+                    runner_state.list_events(manifest.run_id),
+                    result,
+                )
+            except (TypeError, ValueError) as exc:
+                budget_pressure = {
+                    "schema_version": "budget-pressure-error-v1",
+                    "run_id": manifest.run_id,
+                    "error": _safe_error_message(exc),
+                }
 
-        results.append(
-            {
-                **row_identity,
-                "attempt_status": "terminal",
-                "run_id": manifest.run_id,
-                "usage": usage,
-                "result": result,
-                "infrastructure_error": infrastructure_error,
-                "qualification": qualification,
-                "qualification_error": qualification_error,
-                "diagnostic": diagnostic,
-                "diagnostic_error": diagnostic_error,
-                "not_started_reason": None,
-            }
-        )
+        result_row = {
+            **row_identity,
+            "attempt_status": "terminal",
+            "run_id": manifest.run_id,
+            "usage": usage,
+            "result": result,
+            "infrastructure_error": infrastructure_error,
+            "qualification": qualification,
+            "qualification_error": qualification_error,
+            "diagnostic": diagnostic,
+            "diagnostic_error": diagnostic_error,
+            "not_started_reason": None,
+        }
+        if budget_pressure is not None:
+            result_row["budget_pressure"] = budget_pressure
+        results.append(result_row)
         journal_sequence += 1
         journal_hash = _append_campaign_event(
             journal_path,

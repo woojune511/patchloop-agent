@@ -338,3 +338,31 @@ Agent image와 evaluator image는 별도 digest로 versioning한다. Hidden task
   닫은 뒤 infrastructure recovery error로 종료한다.
 - 분류할 수 없는 실패를 성공으로 바꾸지 않는다. `UNKNOWN` 또는 review-needed 상태와 evidence를 보존한다.
 - Storage failure로 trace integrity를 보장할 수 없으면 run을 성공 처리하지 않는다.
+
+## 11. D-062 corrective runtime boundary
+
+`tool_schema_version=v4`와 `context_policy_version=phase-evidence-v7`은 새 corrective
+pilot에서만 pair로 사용한다. Historical v1-v6 run은 소급 재해석하지 않는다.
+
+`corrective-runtime-contract-v1`은 v4/v7 pair, exact system-prompt hash, tool-schema hash와
+harness commit을 corrective purpose의 execution hash와 plan에만 조건부로 포함한다. Manifest
+validation과 AgentRunner start/resume가 이 contract를 강제하고, qualifier는 unique runner
+`RunStarted`가 가리키는 full artifact descriptor, task/role/path와 CAS bytes를 다시 검증한다.
+따라서 plan이나 manifest version을 낮춰 새 review/barrier check를 우회하거나 다른 prompt/tool
+artifact를 같은 approval로 소비할 수 없다. Historical execution-hash payload에는 이 필드를
+추가하지 않는다.
+
+- Context builder는 task ID/version/hash만 보지 않고 각 checklist excerpt가 normalized
+  public issue description의 실제 substring인지 다시 검증한 뒤에만 model request에 넣는다.
+- Rejected `apply_patch`는 patch CAS와 bounded source snapshot을 다음 apply outcome까지
+  유지한다. Successful/rejected next apply가 episode를 닫기 전에는 다른 turn에서도
+  candidate/reason이 사라지지 않는다.
+- 한 model response의 첫 `apply_patch`는 turn barrier다. 뒤의 모든 call은 dispatch하지
+  않고 `ToolAdmissionBlocked(turn-mutation-barrier-v1)`로 닫는다. Apply outcome 뒤 process가
+  죽으면 resume이 model response CAS를 검증하고 누락 barrier suffix를 idempotently 보충한다.
+- Active mutation epoch에서 exact search/fully-covered read semantic replay가 6회 누적되면
+  추가 read/search를 `evidence_saturated`로 닫는다. 새 successful patch가 epoch와 counter를
+  reset한다. Apply/check/diff/review/finish는 이 제한의 대상이 아니다.
+
+이 정책은 탐색 비용을 줄이는 condition-neutral runtime 보정이다. Cross-run memory가 아니며
+task 성공 또는 completion을 보장하지 않는다.

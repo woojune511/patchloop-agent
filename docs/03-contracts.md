@@ -1737,3 +1737,31 @@ Memory에는 raw solution, reference patch, hidden test text를 넣지 않는다
 ```
 
 No candidate가 threshold를 넘지 않으면 `selected_memory_ids`는 빈 배열이고 `no_match`는 true다. 빈 결과는 failure가 아니다.
+
+## 12. D-062 public review and corrective evidence
+
+Corrective manifest는 `PublicReviewContract`를 반드시 포함한다. 각 requirement는
+`req-<12 hex>` stable ID, `source=issue.description`, 최대 1,000자의 normalized exact public
+excerpt를 가진다. Loader, manifest builder, context builder와 qualifier가 모두 public source
+provenance와 private-marker leak scan을 재검증한다. Private spec, hidden check, reference patch나
+credential marker는 올바른 self-hash를 가져도 거부된다.
+
+Corrective execution plan의 `runtime_contract`는 schema `corrective-runtime-contract-v1`, exact
+`tool_schema_version=v4`, `context_policy_version=phase-evidence-v7`, system-prompt/tool-schema
+content hash와 `harness_git_commit`을 가진다. 이 block은 corrective execution hash에 포함된다.
+`RunManifest`는 corrective purpose와 v4/v7/public-review 세 요소를 함께 강제한다. AgentRunner는
+start와 resume 모두 plan block을 exact 비교하고, qualifier는 runner가 남긴 단 하나의
+`RunStarted`에서 task ID, artifact role, top-level descriptor binding, JSON media type, CAS path,
+content hash와 bytes를 검증한 뒤 exact runtime document를 재구성한다.
+
+`review_task` v4 input은 contract requirement ID를 정확히 한 번씩 평가해야 한다. Unknown,
+duplicate, missing ID는 거부하고 `partially_verified`/`unverified` 항목은 같은 requirement ID를
+가리키는 residual risk를 요구한다. 결과는 `task-review-v2`와 contract content hash를 CAS에
+저장하며 deterministic correctness claim은 항상 false다.
+
+V7 rejected-patch evidence는 `rejected-mutation-retry-v2`와
+`patch-source-snapshot-v1`을 사용한다. 다음 apply outcome 전까지 pending이고, 성공/거부 뒤
+다음 request에서 null이어야 한다. 첫 apply 뒤 같은 response의 call은
+`tool-admission-blocked-v3`/`turn-mutation-barrier-v1`로 기록하며 `ToolCalled`가 없어야 한다.
+V7 source evidence version은 `trace-source-evidence-v7`이고 qualification envelope은 계속
+`trace-qualification-v2`다.

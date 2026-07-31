@@ -563,13 +563,19 @@ def nominal_tail_reserve(
     lifecycle_tools = (
         4
         + 2 * len(task.visible_checks)
-        + (1 if context_policy_version == "phase-evidence-v6" else 0)
+        + (
+            1
+            if context_policy_version
+            in {"phase-evidence-v6", "phase-evidence-v7"}
+            else 0
+        )
     )
     return {
         "tool_calls": lifecycle_tools,
         "model_calls": (
             4
-            if context_policy_version == "phase-evidence-v6"
+            if context_policy_version
+            in {"phase-evidence-v6", "phase-evidence-v7"}
             else 3
         ),
         "feedback_model_calls": 1,
@@ -580,6 +586,7 @@ def investigation_policy_version(context_policy_version: str) -> str:
     if context_policy_version in {
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         return INVESTIGATION_POLICY_VERSION_V2
     return INVESTIGATION_POLICY_VERSION
@@ -589,6 +596,7 @@ def investigation_ledger_schema(context_policy_version: str) -> str:
     if context_policy_version in {
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         return INVESTIGATION_LEDGER_SCHEMA_V2
     return INVESTIGATION_LEDGER_SCHEMA
@@ -598,6 +606,7 @@ def tool_admission_schema(context_policy_version: str) -> str:
     if context_policy_version in {
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         return TOOL_ADMISSION_SCHEMA_V2
     return TOOL_ADMISSION_SCHEMA
@@ -719,6 +728,7 @@ def tail_policy(
     if context_policy_version in {
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         if budget is None or max_output_tokens is None:
             raise ValueError(

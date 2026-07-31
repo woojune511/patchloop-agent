@@ -18,6 +18,7 @@ from patchloop.agent.model import (
     SYSTEM_PROMPT_V2,
     SYSTEM_PROMPT_V3,
     SYSTEM_PROMPT_V4,
+    SYSTEM_PROMPT_V5,
     MockModelAdapter,
     ModelAdapter,
     OpenAIResponsesAdapter,
@@ -28,6 +29,7 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS_V1,
     TOOL_SCHEMAS_V2,
     TOOL_SCHEMAS_V3,
+    TOOL_SCHEMAS_V4,
     ToolGateway,
 )
 from patchloop.artifacts import ArtifactStore
@@ -36,6 +38,7 @@ from patchloop.contracts import (
     Budget,
     Checkpoint,
     EventType,
+    ExperimentPurpose,
     ExperimentRunContext,
     MemoryCondition,
     Phase,
@@ -289,7 +292,7 @@ class AgentRunner:
                 self_validation=self_validation,
             )
         if (
-            manifest.tool_schema_version == "v3"
+            manifest.tool_schema_version in {"v3", "v4"}
             and package.public.probe_profiles
             and manifest.probe_image_digest is None
         ):
@@ -391,6 +394,10 @@ class AgentRunner:
             or authorization._guard is not _LIVE_AUTHORIZATION_GUARD
             or authorization.execution_hash != manifest.experiment.execution_hash
             or not AgentRunner._live_plan_unchanged(authorization)
+            or not AgentRunner._live_plan_matches_manifest(
+                manifest,
+                authorization,
+            )
         ):
             raise ContractError(
                 "live model execution requires an approved experiment execution capability"
@@ -404,6 +411,47 @@ class AgentRunner:
             )
         except OSError:
             return False
+
+    @staticmethod
+    def _live_plan_matches_manifest(
+        manifest: RunManifest,
+        authorization: LiveExecutionAuthorization,
+    ) -> bool:
+        """Bind the corrective runtime version and prompt/tool hashes at start/resume."""
+
+        try:
+            plan = json.loads(
+                Path(authorization.plan_path).read_text(encoding="utf-8")
+            )
+        except (OSError, json.JSONDecodeError):
+            return False
+        if not isinstance(plan, dict):
+            return False
+        runtime_contract = plan.get("runtime_contract")
+        corrective = bool(
+            manifest.experiment is not None
+            and manifest.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+        )
+        if not corrective:
+            return runtime_contract is None
+        expected = {
+            "schema_version": "corrective-runtime-contract-v1",
+            "tool_schema_version": manifest.tool_schema_version,
+            "context_policy_version": manifest.context_policy_version,
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
+            "tool_schema_hash": sha256_text(
+                canonical_json(TOOL_SCHEMAS_V4)
+            ),
+            "harness_git_commit": manifest.harness_git_commit,
+        }
+        return bool(
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v7"
+            and manifest.public_review_contract is not None
+            and isinstance(runtime_contract, dict)
+            and canonical_json(runtime_contract) == canonical_json(expected)
+        )
 
     def _execute(
         self,
@@ -425,7 +473,7 @@ class AgentRunner:
         ):
             raise ContractError("run manifest evaluator image does not match the task environment")
         if (
-            manifest.tool_schema_version == "v3"
+            manifest.tool_schema_version in {"v3", "v4"}
             and manifest.probe_image_digest is not None
             and (
                 not isinstance(sandbox, DockerSandbox)
@@ -528,6 +576,24 @@ class AgentRunner:
                         )
                     else:
                         self._ensure_checkpoint_event(checkpoint)
+                recovered_barriers = (
+                    gateway.reconcile_same_turn_barriers()
+                )
+                if recovered_barriers:
+                    checkpoint = self.state.latest_checkpoint(
+                        manifest.run_id
+                    )
+                    if checkpoint is None:
+                        raise RecoveryError(
+                            "same-turn barrier recovery lacks a durable checkpoint"
+                        )
+                    checkpoint = self._checkpoint(
+                        manifest,
+                        workspace,
+                        self._phase_after_checkpoint(checkpoint),
+                        self._usage(manifest.run_id),
+                        task=package.public,
+                    )
                 self._reconcile_workspace(manifest, workspace)
         else:
             runtime_contract = self.artifacts.put_json(
@@ -547,6 +613,15 @@ class AgentRunner:
                     "artifact_id": runtime_contract.artifact_id,
                     "artifact_path": runtime_contract.path,
                     "artifact_role": "runtime-contract",
+                    **(
+                        {
+                            "runtime_contract_artifact": (
+                                runtime_contract.model_dump(mode="json")
+                            )
+                        }
+                        if manifest.tool_schema_version == "v4"
+                        else {}
+                    ),
                 },
             )
             if manifest.fault.type in {"context-reset", "test-timeout"}:
@@ -604,6 +679,7 @@ class AgentRunner:
                     "phase-evidence-v4",
                     "phase-evidence-v5",
                     "phase-evidence-v6",
+                    "phase-evidence-v7",
                 }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -637,6 +713,7 @@ class AgentRunner:
                 if manifest.context_policy_version in {
                     "phase-evidence-v5",
                     "phase-evidence-v6",
+                    "phase-evidence-v7",
                 }:
                     # V5 binds the ledger to the exact durable prefix. A
                     # MemoryRetrieved event appended above must therefore be
@@ -651,6 +728,9 @@ class AgentRunner:
                     artifact_store=self.artifacts,
                     budget=manifest.budget,
                     max_output_tokens=manifest.model.max_output_tokens,
+                    public_review_contract=(
+                        manifest.public_review_contract
+                    ),
                 )
                 context = built_context.rendered
                 if isinstance(adapter, OpenAIResponsesAdapter):
@@ -787,6 +867,7 @@ class AgentRunner:
                                     in {
                                         "phase-evidence-v5",
                                         "phase-evidence-v6",
+                                        "phase-evidence-v7",
                                     }
                                     else {}
                                 ),
@@ -811,7 +892,10 @@ class AgentRunner:
                                         ),
                                     }
                                     if manifest.context_policy_version
-                                    == "phase-evidence-v6"
+                                    in {
+                                        "phase-evidence-v6",
+                                        "phase-evidence-v7",
+                                    }
                                     else {}
                                 ),
                             }
@@ -820,6 +904,7 @@ class AgentRunner:
                                 "phase-evidence-v4",
                                 "phase-evidence-v5",
                                 "phase-evidence-v6",
+                                "phase-evidence-v7",
                             }
                             else {}
                         ),
@@ -830,6 +915,7 @@ class AgentRunner:
                     "phase-evidence-v4",
                     "phase-evidence-v5",
                     "phase-evidence-v6",
+                    "phase-evidence-v7",
                 }:
                     pre_generation_reason = self._pre_generation_budget_reason(
                         manifest,
@@ -861,6 +947,7 @@ class AgentRunner:
                             "phase-evidence-v4",
                             "phase-evidence-v5",
                             "phase-evidence-v6",
+                            "phase-evidence-v7",
                         }:
                             usage.input_token_count_calls += 1
                             self._block_model_generation(
@@ -890,6 +977,7 @@ class AgentRunner:
                             "phase-evidence-v4",
                             "phase-evidence-v5",
                             "phase-evidence-v6",
+                            "phase-evidence-v7",
                         }
                         and usage.input_tokens + usage.output_tokens
                         >= manifest.budget.max_total_tokens
@@ -1042,7 +1130,21 @@ class AgentRunner:
                     for call in turn.tool_calls
                     if call.name == "finish_task"
                 ]
-                if finish_calls and len(turn.tool_calls) != 1:
+                v4_apply_precedes_finish = (
+                    manifest.tool_schema_version == "v4"
+                    and bool(finish_calls)
+                    and any(
+                        call.name == "apply_patch"
+                        for call in turn.tool_calls[
+                            : turn.tool_calls.index(finish_calls[0])
+                        ]
+                    )
+                )
+                if (
+                    finish_calls
+                    and len(turn.tool_calls) != 1
+                    and not v4_apply_precedes_finish
+                ):
                     if usage.tool_calls >= manifest.budget.max_tool_calls:
                         raise ContractError("tool call budget exhausted")
                     finish_call = finish_calls[0]
@@ -1084,13 +1186,14 @@ class AgentRunner:
                             "submission preconditions were rejected three times"
                         )
                     continue
-                for call in turn.tool_calls:
+                for call_index, call in enumerate(turn.tool_calls, 1):
                     if usage.tool_calls >= manifest.budget.max_tool_calls:
                         raise ContractError("tool call budget exhausted")
                     if call.name == "finish_task":
                         if manifest.tool_schema_version not in {
                             "v2",
                             "v3",
+                            "v4",
                         }:
                             raise ContractError(
                                 "finish_task is unavailable in tool schema v1"
@@ -1177,6 +1280,24 @@ class AgentRunner:
                         execution_context=execution_context,
                     )
                     if (
+                        manifest.tool_schema_version == "v4"
+                        and call.name == "apply_patch"
+                    ):
+                        for blocked_index, blocked_call in enumerate(
+                            turn.tool_calls[call_index:],
+                            call_index + 1,
+                        ):
+                            gateway.block_same_turn_action(
+                                blocked_call.name,
+                                blocked_call.action_id,
+                                blocked_call.arguments,
+                                source_action_id=call.action_id,
+                                source_result_status=result.status,
+                                source_model_event_id=model_event.event_id,
+                                source_call_index=call_index,
+                                blocked_call_index=blocked_index,
+                            )
+                    if (
                         not result.output.get("replayed")
                         and not result.output.get("admission_blocked")
                     ):
@@ -1241,6 +1362,11 @@ class AgentRunner:
                         raise InjectedFault(
                             "worker terminated immediately after durable patch checkpoint"
                         )
+                    if (
+                        manifest.tool_schema_version == "v4"
+                        and call.name == "apply_patch"
+                    ):
+                        break
         except InjectedFault as exc:
             self.state.set_run_status(manifest.run_id, RunStatus.SUSPENDED)
             return {
@@ -1278,7 +1404,7 @@ class AgentRunner:
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         summary = WorkspaceManager.diff_summary(workspace)
         submitted_patch_artifact: Artifact | None = None
-        if manifest.tool_schema_version in {"v2", "v3"}:
+        if manifest.tool_schema_version in {"v2", "v3", "v4"}:
             accepted_events = [
                 event
                 for event in self.state.list_events(manifest.run_id)
@@ -1842,6 +1968,7 @@ class AgentRunner:
             "phase-evidence-v4",
             "phase-evidence-v5",
             "phase-evidence-v6",
+            "phase-evidence-v7",
         }:
             evidence_task = (
                 task
@@ -1855,7 +1982,7 @@ class AgentRunner:
                 summary.patch_hash,
                 structured_review_required=(
                     manifest.context_policy_version
-                    == "phase-evidence-v6"
+                    in {"phase-evidence-v6", "phase-evidence-v7"}
                 ),
                 probe_available=bool(evidence_task.probe_profiles),
             )
@@ -1985,6 +2112,11 @@ class AgentRunner:
             and manifest.context_policy_version == "phase-evidence-v6"
         ):
             return SYSTEM_PROMPT_V4, TOOL_SCHEMAS_V3
+        if (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v7"
+        ):
+            return SYSTEM_PROMPT_V5, TOOL_SCHEMAS_V4
         raise ContractError(
             "unsupported tool schema and context policy version combination"
         )
@@ -2089,7 +2221,7 @@ class AgentRunner:
             presented_tool_results=context_evidence.get("tool_results", []),
             phase=phase,
             structured_review_required=(
-                tool_schema_version == "v3"
+                tool_schema_version in {"v3", "v4"}
             ),
         )
         missing_evidence = list(readiness.missing_evidence)
@@ -2104,7 +2236,7 @@ class AgentRunner:
         if accepted:
             task_review_event = None
             task_review_artifact = None
-            if tool_schema_version == "v3":
+            if tool_schema_version in {"v3", "v4"}:
                 task_review_event = next(
                     (
                         event
@@ -2135,11 +2267,15 @@ class AgentRunner:
                     json.JSONDecodeError,
                 ) as exc:
                     raise RecoveryError(
-                        "accepted v3 review artifact is unavailable"
+                        "accepted structured review artifact is unavailable"
                     ) from exc
                 if (
                     review_document.get("schema_version")
-                    != "task-review-v1"
+                    != (
+                        "task-review-v2"
+                        if tool_schema_version == "v4"
+                        else "task-review-v1"
+                    )
                     or review_document.get("run_id") != run_id
                     or review_document.get("worktree_diff_hash")
                     != summary.patch_hash
@@ -2155,8 +2291,36 @@ class AgentRunner:
                     )
                 ):
                     raise RecoveryError(
-                        "v3 review artifact conflicts with current trace evidence"
+                        "structured review artifact conflicts with current "
+                        "trace evidence"
                     )
+                if tool_schema_version == "v4":
+                    review_contract = self.state.get_manifest(
+                        run_id
+                    ).public_review_contract
+                    requirement_rows = review_document.get("requirements")
+                    if (
+                        review_contract is None
+                        or review_document.get(
+                            "public_review_contract_hash"
+                        )
+                        != review_contract.content_hash
+                        or not isinstance(requirement_rows, list)
+                        or {
+                            item.get("requirement_id")
+                            for item in requirement_rows
+                            if isinstance(item, dict)
+                        }
+                        != {
+                            item.requirement_id
+                            for item in review_contract.requirements
+                        }
+                        or len(requirement_rows)
+                        != len(review_contract.requirements)
+                    ):
+                        raise RecoveryError(
+                            "task-review-v2 does not cover its public contract"
+                        )
             submitted_patch_artifact = self.artifacts.put_text(
                 summary.patch,
                 "text/x-diff",
@@ -2382,11 +2546,19 @@ class AgentRunner:
                     ),
                     None,
                 )
+                expected_review_schema = (
+                    "task-review-v2"
+                    if self.state.get_manifest(
+                        run_id
+                    ).tool_schema_version
+                    == "v4"
+                    else "task-review-v1"
+                )
                 if (
                     review_descriptor.content_hash
                     != task_review_content_hash
                     or review_document.get("schema_version")
-                    != "task-review-v1"
+                    != expected_review_schema
                     or review_document.get("run_id") != run_id
                     or review_document.get("worktree_diff_hash")
                     != diff_hash
@@ -2407,7 +2579,7 @@ class AgentRunner:
                     != source_sequence
                 ):
                     raise RecoveryError(
-                        "accepted v3 finish review provenance is inconsistent"
+                        "accepted structured finish review provenance is inconsistent"
                     )
                 review_payload.update(
                     {
@@ -2601,7 +2773,7 @@ class AgentRunner:
         """Repair an interrupted structured submission before another call."""
 
         checkpoint = self.state.latest_checkpoint(manifest.run_id)
-        if manifest.tool_schema_version not in {"v2", "v3"}:
+        if manifest.tool_schema_version not in {"v2", "v3", "v4"}:
             return phase, checkpoint, None
         self._reconcile_unstructured_submission_lifecycle(manifest.run_id)
         calls: dict[str, Any] = {}
@@ -3031,10 +3203,11 @@ class AgentRunner:
                 manifest.task_id,
                 completed_tools,
                 structured_finish=manifest.tool_schema_version
-                in {"v2", "v3"},
-                structured_review=manifest.tool_schema_version == "v3",
+                in {"v2", "v3", "v4"},
+                structured_review=manifest.tool_schema_version
+                in {"v3", "v4"},
                 structured_probe=(
-                    manifest.tool_schema_version == "v3"
+                    manifest.tool_schema_version in {"v3", "v4"}
                     and manifest.probe_image_digest is not None
                     and probe_available
                 ),

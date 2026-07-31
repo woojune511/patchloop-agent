@@ -1,0 +1,21 @@
+schema_version: public-review-contract-v1
+task_id: hf-hub-xet-endpoint-propagation
+task_version: 1
+public_spec_hash: sha256:8f7b0ea5f92ec9d843b8053f0739b42570b7407d76fe6f7a7ea6fd08c481a075
+requirements:
+  - requirement_id: req-64fd5304816b
+    source: issue.description
+    source_excerpt: Ensure request-specific endpoint context is preserved through every file metadata access path.
+  - requirement_id: req-8f29e1ce32d9
+    source: issue.description
+    source_excerpt: Rebase refresh routes owned by the default Hub origin onto the configured endpoint
+  - requirement_id: req-b7643041c7c0
+    source: issue.description
+    source_excerpt: preserving relative routes
+  - requirement_id: req-db00ba080be5
+    source: issue.description
+    source_excerpt: routes already owned by another origin
+  - requirement_id: req-c94188b110c2
+    source: issue.description
+    source_excerpt: callers that do not provide an explicit endpoint.
+content_hash: sha256:2d3f31bd6a6f429cfc305229e029a99bd7459a0f97291c3e804c58eb7b013a2e

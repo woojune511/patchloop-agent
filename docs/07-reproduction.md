@@ -528,3 +528,31 @@ uv run patchloop memory freeze --index <index-id> --embedding-revision <same-com
 A non-empty index is freezeable only when its vectors were created by
 `sentence-transformers/all-MiniLM-L6-v2` at the recorded commit. Empty or lexical placeholder indexes
 are rejected before any memory-condition campaign.
+
+## D-060 budget pressure and D-062 no-call preflight
+
+Historical D-060 evidence can be diagnosed without changing it:
+
+```powershell
+uv run patchloop budget `
+  --experiment dev-no-memory-budget-pilot-20260731-r1
+```
+
+Before any provider call, validate the new corrective suite:
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml `
+  --preflight-only
+```
+
+The suite must report three memory-development tasks, no-memory repetition 1, embedded public review
+contract hashes, `40/100/900000/1800`, output 25,000, run reserve `$4.1625`, total reserve
+`$12.4875` and cap `$13`. It must also emit a corrective-only runtime contract that binds v4/v7,
+the exact prompt/tool-schema hashes and harness commit. The persisted pricing block is re-derived by
+qualification and its freshness is checked against the immutable runner `RunStarted` timestamp. An
+unapproved invocation must remain blocked on live approval/hash. A
+dirty worktree, missing host credential, unavailable exact Docker images or stale pricing must also
+block it. The checked-in YAML is not paid authorization. Do not add approval flags until the source
+is clean, a fresh execution hash has been reviewed, and the user explicitly approves that exact hash
+and cap.

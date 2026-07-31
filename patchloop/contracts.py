@@ -9,7 +9,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from patchloop.util import safe_relative_path
+from patchloop.util import safe_relative_path, sha256_json
 
 
 class StrictModel(BaseModel):
@@ -42,6 +42,9 @@ class ExperimentPurpose(StrEnum):
     MEMORY_DEVELOPMENT_NO_MEMORY = "memory-development-no-memory"
     MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT = (
         "memory-development-no-memory-budget-pilot"
+    )
+    MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT = (
+        "memory-development-no-memory-corrective-pilot"
     )
     CORE = "core"
 
@@ -191,6 +194,53 @@ class PublicTask(StrictModel):
         ids = [profile.id for profile in self.probe_profiles]
         if len(ids) != len(set(ids)):
             raise ValueError("probe profile IDs must be unique")
+        return self
+
+
+class PublicReviewRequirement(StrictModel):
+    """One stable, public issue clause required by structured review."""
+
+    requirement_id: str = Field(pattern=r"^req-[0-9a-f]{12}$")
+    source: Literal["issue.description"] = "issue.description"
+    source_excerpt: str = Field(min_length=1, max_length=1_000)
+
+
+class PublicReviewContract(StrictModel):
+    """Hash-bound public checklist without evaluator or reference data."""
+
+    schema_version: Literal["public-review-contract-v1"] = (
+        "public-review-contract-v1"
+    )
+    task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    task_version: int = Field(ge=1)
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    requirements: list[PublicReviewRequirement] = Field(
+        min_length=1,
+        max_length=20,
+    )
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_identity_and_hash(self) -> PublicReviewContract:
+        requirement_ids = [
+            requirement.requirement_id
+            for requirement in self.requirements
+        ]
+        if len(requirement_ids) != len(set(requirement_ids)):
+            raise ValueError("public review requirement IDs must be unique")
+        source_excerpts = [
+            requirement.source_excerpt
+            for requirement in self.requirements
+        ]
+        if len(source_excerpts) != len(set(source_excerpts)):
+            raise ValueError(
+                "public review source excerpts must be unique"
+            )
+        expected_hash = sha256_json(
+            self.model_dump(mode="json", exclude={"content_hash"})
+        )
+        if self.content_hash != expected_hash:
+            raise ValueError("public review contract content hash mismatch")
         return self
 
 
@@ -797,10 +847,43 @@ class RunManifest(StrictModel):
         pattern=r"^sha256:[0-9a-f]{64}$",
         exclude_if=lambda value: value is None,
     )
+    public_review_contract: PublicReviewContract | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     fault: FaultSpec = Field(default_factory=FaultSpec)
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     experiment: ExperimentRunContext | None = None
     created_at: datetime
+
+    @model_validator(mode="after")
+    def validate_corrective_runtime_contract(self) -> RunManifest:
+        corrective_pair = (
+            self.tool_schema_version == "v4"
+            and self.context_policy_version == "phase-evidence-v7"
+        )
+        corrective_declared = bool(
+            self.tool_schema_version == "v4"
+            or self.context_policy_version == "phase-evidence-v7"
+            or self.public_review_contract is not None
+        )
+        if corrective_declared and (
+            not corrective_pair or self.public_review_contract is None
+        ):
+            raise ValueError(
+                "corrective runtime requires tool v4, phase-evidence-v7, "
+                "and a public review contract"
+            )
+        if (
+            self.experiment is not None
+            and self.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+            and not corrective_pair
+        ):
+            raise ValueError(
+                "corrective pilot purpose requires the v4/v7 runtime contract"
+            )
+        return self
 
 
 class RunEvent(StrictModel):
@@ -849,7 +932,7 @@ class Checkpoint(StrictModel):
 
 class ToolCall(StrictModel):
     tool: str
-    tool_schema_version: Literal["v1", "v2", "v3"] = "v1"
+    tool_schema_version: Literal["v1", "v2", "v3", "v4"] = "v1"
     action_id: str
     run_id: str
     input: dict[str, Any] = Field(default_factory=dict)

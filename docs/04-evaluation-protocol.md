@@ -784,3 +784,36 @@ success/failure flip은 생성하지 않는다. 누락 row를 제외한 교집�
 | Test-tampering patch | tampering/scope fail |
 
 각 결과는 structured verifier output과 evidence artifact를 남겨야 한다.
+
+## 15. D-060 budget diagnosis and D-062 corrective pilot
+
+`patchloop budget --experiment <id-or-path>`는 persisted result와 append-only state를 읽어
+run별 model/tool/token/wall headroom, exact-request deficit, token-tail 차단과 동일-prefix
+counterfactual minimum을 계산한다. 원본 event, checkpoint, result JSON은 변경하지 않는다.
+
+D-060 재집계 결과는 다음처럼 분리한다.
+
+| Task | Used tokens | Binding dimension | Interpretation |
+| --- | ---: | --- | --- |
+| HF Hub | 438,483 / 480,000 | total tokens | exact next request deficit 5,171; v5 same-prefix exploration minimum 658,739 |
+| PDM | 153,702 / 480,000 | none | hidden task failure; budget 증거가 아님 |
+| pyfakefs | 252,066 / 480,000 | none | hidden task failure; budget 증거가 아님 |
+
+후속 `memory-development-no-memory-corrective-pilot`은 위 세 task를 no-memory 1회씩만
+실행한다. Budget은 `40 model / 100 tool / 900,000 token / 1,800초`, output 25,000이다.
+V7 projection으로 계산한 historical HF 동일-prefix minimum 697,790에 약 202k 여유를 주며,
+historical 평균 token/call에서는 40-call counter가 먼저 오도록 설계했다. 이는 새 prompt와
+정책이 있는 미래 run의 completion guarantee가 아니다.
+
+Corrective preflight는 configured rate, 공식 source, run당 reserve와 schedule upper bound를
+하나의 pricing block으로 결정적으로 파생한다. Qualification은 plan의 선언을 신뢰하지 않고
+suite/model/budget/schedule로 이 block 전체를 다시 계산한다. 가격 확인 freshness는 qualification
+실행 시각이 아니라 append-only trace의 unique runner `RunStarted` 시각을 경계로 삼는다.
+Verification time이 미래이거나 72시간을 초과하면 실패하며 정확히 72시간은 허용한다.
+
+Gate `no-memory-corrective-pilot-gate-v1`은 세 row가 terminal, qualified, official evaluator
+arrival이고 infrastructure/qualification/diagnostic/budget terminal error가 0인지 본다.
+SCRR는 별도 task outcome으로 보고 gate 조건에 넣지 않는다. 이 purpose는 report baseline,
+memory candidate/admission, core aggregate와 모든 memory-effect headline에서 제외한다. Frozen
+rate reserve는 run당 `$4.1625`, 3-run `$12.4875`, suite cap `$13`이며 execution에는 clean
+hash와 별도 비용 승인이 필요하다.

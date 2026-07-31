@@ -12,6 +12,7 @@ from patchloop.agent.investigation import (
     investigation_ledger_schema,
 )
 from patchloop.agent.phases import diff_bound_evidence
+from patchloop.agent.review import validate_public_review_contract
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
@@ -19,11 +20,17 @@ from patchloop.contracts import (
     Checkpoint,
     EventType,
     Phase,
+    PublicReviewContract,
     PublicTask,
     RunEvent,
 )
-from patchloop.errors import RecoveryError
-from patchloop.util import canonical_json, sha256_text
+from patchloop.errors import ContractError, RecoveryError
+from patchloop.util import (
+    canonical_json,
+    safe_relative_path,
+    sha256_json,
+    sha256_text,
+)
 
 RECENT_EVENT_LIMIT = 12
 TOOL_RESULT_CHARACTER_LIMIT = 12_000
@@ -31,11 +38,13 @@ INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v4",
     "phase-evidence-v5",
     "phase-evidence-v6",
+    "phase-evidence-v7",
 }
 RETRY_CONTEXT_POLICIES = {
     "phase-evidence-v3",
     *INVESTIGATION_CONTEXT_POLICIES,
 }
+PERSISTENT_RETRY_CONTEXT_POLICY = "phase-evidence-v7"
 
 
 @dataclass(frozen=True)
@@ -149,13 +158,103 @@ def _build_probe_ledger(
     }
 
 
+def _patch_source_snapshot(
+    call: RunEvent,
+    *,
+    patch_artifact: Artifact,
+    input_hash: str,
+    artifact_store: ArtifactStore,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    try:
+        descriptor = Artifact.model_validate(
+            call.payload.get("source_snapshot_artifact")
+        )
+    except ValueError as exc:
+        raise RecoveryError(
+            "v7 rejected patch call lacks a valid source snapshot artifact"
+        ) from exc
+    try:
+        raw = artifact_store.read_bytes(descriptor)
+        snapshot = json.loads(raw.decode("utf-8", errors="strict"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RecoveryError(
+            "v7 patch source snapshot is not valid UTF-8 JSON"
+        ) from exc
+    if not isinstance(snapshot, dict):
+        raise RecoveryError("v7 patch source snapshot must be an object")
+    declared_content_hash = snapshot.get("content_hash")
+    content_body = {
+        key: value
+        for key, value in snapshot.items()
+        if key != "content_hash"
+    }
+    entries = snapshot.get("entries")
+    unavailable = snapshot.get("unavailable")
+    if (
+        snapshot.get("schema_version") != "patch-source-snapshot-v1"
+        or call.payload.get("source_snapshot_schema_version")
+        != "patch-source-snapshot-v1"
+        or snapshot.get("candidate_content_hash")
+        != patch_artifact.content_hash
+        or snapshot.get("input_hash") != input_hash
+        or snapshot.get("worktree_diff_hash")
+        != call.payload.get("worktree_diff_hash")
+        or declared_content_hash != sha256_text(canonical_json(content_body))
+        or not isinstance(entries, list)
+        or len(entries) > 8
+        or not isinstance(unavailable, list)
+    ):
+        raise RecoveryError("v7 patch source snapshot binding is invalid")
+    for entry in entries:
+        if (
+            not isinstance(entry, dict)
+            or not isinstance(entry.get("path"), str)
+            or not isinstance(entry.get("content"), str)
+            or entry.get("content_hash")
+            != sha256_text(entry["content"])
+        ):
+            raise RecoveryError("v7 patch source snapshot entry is invalid")
+        try:
+            safe_relative_path(
+                entry["path"],
+                field_name="patch source snapshot path",
+            )
+        except ContractError as exc:
+            raise RecoveryError(
+                "v7 patch source snapshot path is invalid"
+            ) from exc
+        for field in (
+            "section",
+            "hunk",
+            "requested_start_line",
+            "requested_end_line",
+            "total_lines",
+        ):
+            if type(entry.get(field)) is not int:
+                raise RecoveryError(
+                    "v7 patch source snapshot line metadata is invalid"
+                )
+        for field in ("actual_start_line", "actual_end_line"):
+            if entry.get(field) is not None and type(entry.get(field)) is not int:
+                raise RecoveryError(
+                    "v7 patch source snapshot returned range is invalid"
+                )
+    return snapshot, {
+        "artifact_id": descriptor.artifact_id,
+        "content_hash": descriptor.content_hash,
+        "size_bytes": descriptor.size_bytes,
+    }
+
+
 def _rejected_mutation_retry(
     events: list[RunEvent],
     *,
     artifact_store: ArtifactStore | None,
+    policy_version: str,
 ) -> tuple[dict[str, Any] | None, dict[str, Any]]:
-    """Rehydrate the latest rejected model patch for exactly one next turn."""
+    """Rehydrate one rejected model patch under the selected versioned policy."""
 
+    persistent = policy_version == PERSISTENT_RETRY_CONTEXT_POLICY
     latest_model_sequence = max(
         (
             event.sequence
@@ -164,15 +263,35 @@ def _rejected_mutation_retry(
         ),
         default=0,
     )
-    failures = [
+    apply_outcomes = [
         event
         for event in events
-        if event.sequence > latest_model_sequence
-        and event.type == EventType.TOOL_FAILED
-        and event.actor == "tool-gateway"
+        if event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
         and event.payload.get("tool") == "apply_patch"
-        and event.payload.get("status") == "rejected"
     ]
+    if persistent:
+        latest_outcome = (
+            max(apply_outcomes, key=lambda event: event.sequence)
+            if apply_outcomes
+            else None
+        )
+        failures = [
+            latest_outcome
+        ] if (
+            latest_outcome is not None
+            and latest_outcome.type == EventType.TOOL_FAILED
+            and latest_outcome.actor == "tool-gateway"
+            and latest_outcome.payload.get("status") == "rejected"
+        ) else []
+    else:
+        failures = [
+            event
+            for event in apply_outcomes
+            if event.sequence > latest_model_sequence
+            and event.type == EventType.TOOL_FAILED
+            and event.actor == "tool-gateway"
+            and event.payload.get("status") == "rejected"
+        ]
     if not failures:
         return None, {"included": False, "truncated": False}
     if artifact_store is None:
@@ -188,7 +307,10 @@ def _rejected_mutation_retry(
     calls = [
         event
         for event in events
-        if latest_model_sequence < event.sequence < failure.sequence
+        if (
+            (persistent or event.sequence > latest_model_sequence)
+            and event.sequence < failure.sequence
+        )
         and event.type == EventType.TOOL_CALLED
         and event.actor == "agent"
         and event.correlation_id == action_id
@@ -277,7 +399,11 @@ def _rejected_mutation_retry(
         )
 
     rendered = {
-        "schema_version": "rejected-mutation-retry-v1",
+        "schema_version": (
+            "rejected-mutation-retry-v2"
+            if persistent
+            else "rejected-mutation-retry-v1"
+        ),
         "tool": "apply_patch",
         "action_id": action_id,
         "source_call_sequence": call.sequence,
@@ -308,6 +434,23 @@ def _rejected_mutation_retry(
             "size_bytes": result_artifact.size_bytes,
         },
     }
+    if persistent:
+        snapshot, snapshot_evidence = _patch_source_snapshot(
+            call,
+            patch_artifact=patch_artifact,
+            input_hash=input_hash,
+            artifact_store=artifact_store,
+        )
+        rendered["persistence"] = {
+            "state": "pending",
+            "resolution": "next_apply_patch_outcome",
+        }
+        rendered["source_snapshot"] = snapshot
+        evidence["persistence"] = {
+            "state": "pending",
+            "resolution": "next_apply_patch_outcome",
+        }
+        evidence["source_snapshot"] = snapshot_evidence
     return rendered, evidence
 
 
@@ -492,7 +635,36 @@ def build_context_with_evidence(
     artifact_store: ArtifactStore | None = None,
     budget: Budget | None = None,
     max_output_tokens: int | None = None,
+    public_review_contract: PublicReviewContract | None = None,
 ) -> BuiltContext:
+    self_validation_policy = policy_version in {
+        "phase-evidence-v6",
+        "phase-evidence-v7",
+    }
+    investigation_compat_policy = (
+        "phase-evidence-v6"
+        if policy_version == "phase-evidence-v7"
+        else policy_version
+    )
+    if policy_version == "phase-evidence-v7":
+        if public_review_contract is None:
+            raise RecoveryError(
+                "phase-evidence-v7 requires a public review contract"
+            )
+        try:
+            validate_public_review_contract(
+                public_review_contract,
+                task=task,
+                public_spec_hash=sha256_json(task.model_dump(mode="json")),
+            )
+        except ContractError as exc:
+            raise RecoveryError(
+                "phase-evidence-v7 public review contract is not public-bound"
+            ) from exc
+    elif public_review_contract is not None:
+        raise RecoveryError(
+            "public review contract is valid only for phase-evidence-v7"
+        )
     eligible_events = [
         event
         for event in events
@@ -510,6 +682,7 @@ def build_context_with_evidence(
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         selected_events = eligible_events[-RECENT_EVENT_LIMIT:]
     else:
@@ -535,6 +708,7 @@ def build_context_with_evidence(
         "phase-evidence-v4",
         "phase-evidence-v5",
         "phase-evidence-v6",
+        "phase-evidence-v7",
     }:
         diff_hash = checkpoint.worktree_diff_hash if checkpoint else sha256_text("")
         readiness = diff_bound_evidence(
@@ -543,15 +717,13 @@ def build_context_with_evidence(
             diff_hash,
             presented_tool_results=tool_results,
             phase=phase,
-            structured_review_required=(
-                policy_version == "phase-evidence-v6"
-            ),
+            structured_review_required=self_validation_policy,
             probe_available=probe_available,
         )
         phase_contract = {
             "schema_version": (
                 "phase-contract-v2"
-                if policy_version == "phase-evidence-v6"
+                if self_validation_policy
                 else "phase-contract-v1"
             ),
             "current_phase": phase.value,
@@ -566,7 +738,7 @@ def build_context_with_evidence(
                     "review_task",
                     "finish_task",
                 ]
-                if policy_version == "phase-evidence-v6"
+                if self_validation_policy
                 else [
                     "apply_patch",
                     "run_check",
@@ -581,7 +753,7 @@ def build_context_with_evidence(
             "mutation_present": readiness.mutation_present,
             "review_event_sequence": readiness.review_event_sequence,
         }
-        if policy_version == "phase-evidence-v6":
+        if self_validation_policy:
             phase_contract.update(
                 {
                     "optional_actions": (
@@ -654,6 +826,7 @@ def build_context_with_evidence(
         ) = _rejected_mutation_retry(
             events,
             artifact_store=artifact_store,
+            policy_version=policy_version,
         )
     checkpoint_payload = (
         checkpoint.model_dump(mode="json") if checkpoint else None
@@ -684,14 +857,27 @@ def build_context_with_evidence(
                     "agent_probe_is_non_authoritative": True,
                     "structured_review_is_self_attestation": True,
                 }
-                if policy_version == "phase-evidence-v6"
+                if self_validation_policy
                 else {}
             ),
         },
     }
+    if public_review_contract is not None:
+        payload["public_review_contract"] = (
+            public_review_contract.model_dump(mode="json")
+        )
     if policy_version != "v1":
         payload = {
             "public_task": payload["public_task"],
+            **(
+                {
+                    "public_review_contract": payload[
+                        "public_review_contract"
+                    ]
+                }
+                if "public_review_contract" in payload
+                else {}
+            ),
             "phase": payload["phase"],
             "checkpoint": payload["checkpoint"],
             "phase_contract": phase_contract,
@@ -715,12 +901,12 @@ def build_context_with_evidence(
                 events,
                 checkpoint,
                 artifact_store,
-                context_policy_version=policy_version,
+                context_policy_version=investigation_compat_policy,
                 budget=budget,
                 max_output_tokens=max_output_tokens,
             )
             payload["investigation_ledger"] = investigation_ledger
-            if policy_version == "phase-evidence-v6":
+            if self_validation_policy:
                 payload["probe_ledger"] = _build_probe_ledger(
                     events,
                     artifact_store,
@@ -758,7 +944,11 @@ def build_context_with_evidence(
                         else (
                             "context-build-evidence-v5"
                             if policy_version == "phase-evidence-v5"
-                            else "context-build-evidence-v6"
+                            else (
+                                "context-build-evidence-v7"
+                                if policy_version == "phase-evidence-v7"
+                                else "context-build-evidence-v6"
+                            )
                         )
                     )
                 )
@@ -785,6 +975,10 @@ def build_context_with_evidence(
     }
     if policy_version != "v1":
         evidence["policy"]["version"] = policy_version
+    if public_review_contract is not None:
+        evidence["public_review_contract_content_hash"] = (
+            public_review_contract.content_hash
+        )
     if policy_version in RETRY_CONTEXT_POLICIES:
         evidence["rejected_mutation_retry"] = (
             rejected_mutation_retry_evidence
@@ -792,7 +986,9 @@ def build_context_with_evidence(
     if policy_version in INVESTIGATION_CONTEXT_POLICIES:
         ledger = payload["investigation_ledger"]
         evidence["investigation_ledger"] = {
-            "schema_version": investigation_ledger_schema(policy_version),
+            "schema_version": investigation_ledger_schema(
+                investigation_compat_policy
+            ),
             "content_hash": ledger["content_hash"],
             "source_through_sequence": ledger[
                 "source_through_sequence"
@@ -818,6 +1014,7 @@ def build_context_with_evidence(
         if policy_version in {
             "phase-evidence-v5",
             "phase-evidence-v6",
+            "phase-evidence-v7",
         }:
             tail = ledger["tail_policy"]
             projection = tail["token_projection"]
@@ -845,7 +1042,7 @@ def build_context_with_evidence(
                     "tail_max_output_tokens": projection["max_output_tokens"],
                 }
             )
-        if policy_version == "phase-evidence-v6":
+        if self_validation_policy:
             probe_ledger = payload["probe_ledger"]
             evidence["probe_ledger"] = {
                 "schema_version": probe_ledger["schema_version"],
@@ -874,6 +1071,7 @@ def build_context(
     artifact_store: ArtifactStore | None = None,
     budget: Budget | None = None,
     max_output_tokens: int | None = None,
+    public_review_contract: PublicReviewContract | None = None,
 ) -> tuple[str, str]:
     built = build_context_with_evidence(
         task,
@@ -884,5 +1082,6 @@ def build_context(
         artifact_store=artifact_store,
         budget=budget,
         max_output_tokens=max_output_tokens,
+        public_review_contract=public_review_contract,
     )
     return built.rendered, built.content_hash

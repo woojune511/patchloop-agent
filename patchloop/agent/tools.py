@@ -56,6 +56,7 @@ from patchloop.util import (
     canonical_json,
     ensure_within,
     safe_relative_path,
+    sha256_bytes,
     sha256_text,
     utc_now,
 )
@@ -314,6 +315,81 @@ next(
     "registered checks, complete get_diff review, and a same-diff review_task "
     "artifact have all been presented on the required turns."
 )
+TOOL_SCHEMAS_V4: list[dict[str, Any]] = copy.deepcopy(TOOL_SCHEMAS_V3)
+next(
+    item for item in TOOL_SCHEMAS_V4 if item["name"] == "apply_patch"
+)["description"] = (
+    "Apply one raw Git unified diff to existing tracked text files within the "
+    "task's allowed paths. This call is a turn barrier: any later tool calls "
+    "from the same model response are recorded as not executed. Every hunk "
+    "header must use numeric unified-diff ranges such as "
+    "'@@ -12,3 +12,4 @@'. New files, renames, copies, binary patches, and "
+    "'*** Begin Patch' markers are not supported."
+)
+review_v4 = next(
+    item for item in TOOL_SCHEMAS_V4 if item["name"] == "review_task"
+)
+review_v4["description"] = (
+    "Assess every requirement_id in the hash-bound public_review_contract "
+    "exactly once against current-diff evidence. Cite exact event sequences "
+    "and map every partially_verified or unverified item to a residual risk."
+)
+review_v4["parameters"]["properties"]["requirements"]["items"] = {
+    "type": "object",
+    "properties": {
+        "requirement_id": {
+            "type": "string",
+            "pattern": "^req-[0-9a-f]{12}$",
+        },
+        "status": {
+            "type": "string",
+            "enum": ["verified", "partially_verified", "unverified"],
+        },
+        "evidence_event_sequences": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {"type": "integer", "minimum": 1},
+        },
+        "notes": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+        },
+    },
+    "required": [
+        "requirement_id",
+        "status",
+        "evidence_event_sequences",
+        "notes",
+    ],
+    "additionalProperties": False,
+}
+review_v4["parameters"]["properties"]["residual_risks"] = {
+    "type": "array",
+    "maxItems": 20,
+    "items": {
+        "type": "object",
+        "properties": {
+            "requirement_ids": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 20,
+                "items": {
+                    "type": "string",
+                    "pattern": "^req-[0-9a-f]{12}$",
+                },
+            },
+            "risk": {"type": "string", "minLength": 1, "maxLength": 1000},
+            "mitigation": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000,
+            },
+        },
+        "required": ["requirement_ids", "risk", "mitigation"],
+        "additionalProperties": False,
+    },
+}
 TOOL_SCHEMAS = TOOL_SCHEMAS_V2
 
 _EVENT_ERROR_MESSAGE_LIMIT = 2_000
@@ -321,16 +397,26 @@ _INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v4",
     "phase-evidence-v5",
     "phase-evidence-v6",
+    "phase-evidence-v7",
 }
 _TOKEN_TAIL_CONTEXT_POLICIES = {
     "phase-evidence-v5",
     "phase-evidence-v6",
+    "phase-evidence-v7",
 }
-_STRUCTURED_TOOL_SCHEMAS = {"v2", "v3"}
-_SELF_VALIDATION_TOOL_SCHEMA = "v3"
+_STRUCTURED_TOOL_SCHEMAS = {"v2", "v3", "v4"}
+_SELF_VALIDATION_TOOL_SCHEMAS = {"v3", "v4"}
+_PATCH_RETRY_TOOL_SCHEMA = "v4"
 _PROBE_SOURCE_LIMIT_BYTES = 12_000
 _PROBE_OUTPUT_LIMIT_BYTES = 64_000
 _REVIEW_INPUT_LIMIT_BYTES = 8_000
+_PATCH_SOURCE_MAX_ENTRIES = 8
+_PATCH_SOURCE_MAX_LINES_PER_ENTRY = 120
+_PATCH_SOURCE_MAX_CHARACTERS = 24_000
+_EVIDENCE_SATURATION_THRESHOLD = 6
+_HUNK_HEADER = re.compile(
+    r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(?: .*)?$"
+)
 _PROBE_DENIED_IMPORT_ROOTS = {
     "_posixsubprocess",
     "commands",
@@ -486,21 +572,30 @@ def _patch_contract_error(
     reason: str,
     stage: str = "format",
     line: int | None = None,
+    guidance: str | None = None,
+    extra_details: dict[str, Any] | None = None,
 ) -> ContractError:
     details: dict[str, Any] = {
         "stage": stage,
         "reason": reason,
-        "guidance": (
+        "guidance": guidance
+        or (
             "Regenerate a raw Git unified diff against the current file content, "
             "then retry with a new action_id."
         ),
     }
     if line is not None:
         details["line"] = line
+    if extra_details:
+        details.update(extra_details)
     return ContractError(message, details=details)
 
 
-def _validate_raw_git_patch(patch: str) -> None:
+def _validate_raw_git_patch(
+    patch: str,
+    *,
+    diagnose_hunk_headers: bool = False,
+) -> None:
     if "\x00" in patch or "GIT binary patch" in patch or "Binary files " in patch:
         raise _patch_contract_error(
             "apply_patch accepts text patches only; binary patches are forbidden",
@@ -544,9 +639,45 @@ def _validate_raw_git_patch(patch: str) -> None:
             (index for index, line in enumerate(section) if line.startswith("+++ ")),
             None,
         )
-        hunk_header = next(
-            (index for index, line in enumerate(section) if line.startswith("@@ ")),
-            None,
+        hunk_candidates = [
+            (index, line)
+            for index, line in enumerate(section)
+            if line.startswith("@@")
+        ]
+        if diagnose_hunk_headers:
+            malformed = next(
+                (
+                    (index, line)
+                    for index, line in hunk_candidates
+                    if _HUNK_HEADER.fullmatch(line) is None
+                ),
+                None,
+            )
+            if malformed is not None:
+                index, header = malformed
+                raise _patch_contract_error(
+                    "apply_patch hunk headers require numeric old and new ranges; "
+                    "use a header such as '@@ -12,3 +12,4 @@'",
+                    reason="invalid_hunk_header",
+                    line=index + 1,
+                    guidance=(
+                        "Regenerate the hunk against the current source and use "
+                        "the exact form '@@ -<old_start>,<old_count> "
+                        "+<new_start>,<new_count> @@'."
+                    ),
+                    extra_details={"header": header[:200]},
+                )
+        hunk_header = (
+            hunk_candidates[0][0]
+            if diagnose_hunk_headers and hunk_candidates
+            else next(
+                (
+                    index
+                    for index, line in enumerate(section)
+                    if line.startswith("@@ ")
+                ),
+                None,
+            )
         )
         if (
             old_header is None
@@ -595,6 +726,16 @@ def _patch_paths(patch: str) -> list[str]:
             )
         paths.append(path)
     return paths
+
+
+def _investigation_compat_version(policy_version: str) -> str:
+    """Reuse the frozen v6 investigation policy inside the v7 envelope."""
+
+    return (
+        "phase-evidence-v6"
+        if policy_version == "phase-evidence-v7"
+        else policy_version
+    )
 
 
 class ToolGateway:
@@ -738,6 +879,7 @@ class ToolGateway:
             )
         started = utc_now()
         patch_artifact: Artifact | None = None
+        patch_source_artifact: Artifact | None = None
         input_artifact: Artifact | None = None
         probe_source_artifact: Artifact | None = None
         if (
@@ -762,8 +904,17 @@ class ToolGateway:
                 str(arguments["patch"]),
                 media_type="text/x-diff",
             )
+            if self.tool_schema_version == _PATCH_RETRY_TOOL_SCHEMA:
+                patch_source_artifact = self.artifacts.put_json(
+                    self._bounded_patch_source_snapshot(
+                        str(arguments["patch"]),
+                        candidate_content_hash=patch_artifact.content_hash,
+                        input_hash=input_hash,
+                        worktree_diff_hash=worktree_diff_hash,
+                    )
+                )
         if (
-            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            self.tool_schema_version in _SELF_VALIDATION_TOOL_SCHEMAS
             and name == "run_probe"
             and isinstance(arguments.get("source"), str)
         ):
@@ -810,6 +961,13 @@ class ToolGateway:
                 "ephemeral-python-probe-v2"
             )
             call_payload["probe_id"] = arguments.get("probe_id")
+        if patch_source_artifact is not None:
+            call_payload["source_snapshot_artifact"] = (
+                patch_source_artifact.model_dump(mode="json")
+            )
+            call_payload["source_snapshot_schema_version"] = (
+                "patch-source-snapshot-v1"
+            )
         self.state.append_event(
             self.run_id,
             EventType.TOOL_CALLED,
@@ -875,7 +1033,7 @@ class ToolGateway:
                 )
                 or (
                     self.tool_schema_version
-                    == _SELF_VALIDATION_TOOL_SCHEMA
+                    in _SELF_VALIDATION_TOOL_SCHEMAS
                     and name in {"run_probe", "review_task"}
                 )
                 else None
@@ -915,6 +1073,234 @@ class ToolGateway:
         self._complete_result(name, input_hash, result)
         return result
 
+    def block_same_turn_action(
+        self,
+        name: str,
+        action_id: str,
+        arguments: dict[str, Any],
+        *,
+        source_action_id: str,
+        source_result_status: str,
+        source_model_event_id: str,
+        source_call_index: int,
+        blocked_call_index: int,
+    ) -> ToolResult:
+        """Durably close a call emitted after the v4 apply-patch barrier."""
+
+        if self.tool_schema_version != _PATCH_RETRY_TOOL_SCHEMA:
+            raise ContractError(
+                "same-turn mutation barriers require tool schema v4"
+            )
+        input_hash = sha256_text(
+            canonical_json({"tool": name, "input": arguments})
+        )
+        prior = self.state.get_action_result(
+            self.run_id,
+            action_id,
+            input_hash,
+        )
+        if prior is not None:
+            prior.output = {**prior.output, "replayed": True}
+            return prior
+
+        started = utc_now()
+        worktree_diff_hash = WorkspaceManager.diff_summary(
+            self.workspace
+        ).patch_hash
+        input_artifact = self.artifacts.put_json(
+            {"tool": name, "input": arguments}
+        )
+        error_message = (
+            "tool call was not executed because an earlier apply_patch call "
+            "from the same model response is a turn barrier"
+        )
+        error_details = {
+            "schema_version": "tool-admission-blocked-v3",
+            "policy_version": "turn-mutation-barrier-v1",
+            "reason_codes": ["prior_apply_patch_same_turn"],
+            "source_action_id": source_action_id,
+            "source_result_status": source_result_status,
+            "source_model_event_id": source_model_event_id,
+            "source_call_index": source_call_index,
+            "blocked_call_index": blocked_call_index,
+            "guidance": (
+                "Inspect the apply_patch result in the next request before "
+                "choosing any follow-up tool."
+            ),
+        }
+        result_payload = {
+            "tool": name,
+            "status": "rejected",
+            "error_code": "TOOL_ADMISSION_BLOCKED",
+            "error_message": error_message,
+            "error_details": error_details,
+            "admission_blocked": True,
+            "worktree_diff_hash": worktree_diff_hash,
+        }
+        result_artifact = self.artifacts.put_json(result_payload)
+        result = ToolResult(
+            action_id=action_id,
+            status="rejected",
+            started_at=started,
+            finished_at=utc_now(),
+            output={
+                "artifact_id": result_artifact.artifact_id,
+                "artifact_path": result_artifact.path,
+                "result_artifact": result_artifact.model_dump(mode="json"),
+                **result_payload,
+            },
+            error_code="TOOL_ADMISSION_BLOCKED",
+            error_message=error_message,
+        )
+        event_payload = {
+            **result_payload,
+            "schema_version": "tool-admission-blocked-v3",
+            "policy_version": "turn-mutation-barrier-v1",
+            "reason_codes": ["prior_apply_patch_same_turn"],
+            "input_hash": input_hash,
+            "normalized_call_hash": self._normalized_call_hash(
+                name,
+                arguments,
+                worktree_diff_hash=worktree_diff_hash,
+            ),
+            "source_action_id": source_action_id,
+            "source_result_status": source_result_status,
+            "source_model_event_id": source_model_event_id,
+            "source_call_index": source_call_index,
+            "blocked_call_index": blocked_call_index,
+            "mutation_epoch_sequence": mutation_epoch(
+                self.state.list_events(self.run_id)
+            ),
+            "input_artifact": input_artifact.model_dump(mode="json"),
+            "result_artifact": result_artifact.model_dump(mode="json"),
+            "artifact_id": result_artifact.artifact_id,
+            "artifact_path": result_artifact.path,
+        }
+        self.state.complete_nonexecuted_action(
+            self.run_id,
+            action_id,
+            input_hash,
+            result,
+            event_specs=[
+                (
+                    EventType.TOOL_ADMISSION_BLOCKED,
+                    "tool-admission-policy",
+                    event_payload,
+                )
+            ],
+        )
+        return result
+
+    def reconcile_same_turn_barriers(self) -> int:
+        """Close a v4 model response suffix after a recovered apply result."""
+
+        if self.tool_schema_version != _PATCH_RETRY_TOOL_SCHEMA:
+            return 0
+        created = 0
+        object_root = self.artifacts.objects.resolve()
+        for model_event in self.state.list_events(self.run_id):
+            if model_event.type != EventType.MODEL_CALLED:
+                continue
+            try:
+                artifact_path = Path(
+                    str(model_event.payload["artifact_path"])
+                ).resolve()
+                relative = artifact_path.relative_to(object_root)
+                parts = relative.parts
+                content = artifact_path.read_bytes()
+                if (
+                    len(parts) != 2
+                    or len(parts[0]) != 2
+                    or len(parts[1]) != 62
+                    or sha256_bytes(content)
+                    != f"sha256:{parts[0]}{parts[1]}"
+                ):
+                    raise RecoveryError(
+                        "model response artifact failed content-address validation"
+                    )
+                document = json.loads(content.decode("utf-8", errors="strict"))
+                calls = document.get("tool_calls")
+            except (
+                KeyError,
+                OSError,
+                TypeError,
+                ValueError,
+                UnicodeDecodeError,
+                json.JSONDecodeError,
+            ) as exc:
+                raise RecoveryError(
+                    "model response artifact is unavailable during barrier recovery"
+                ) from exc
+            if not isinstance(calls, list):
+                raise RecoveryError(
+                    "model response artifact has invalid tool calls"
+                )
+            first_apply_index = next(
+                (
+                    index
+                    for index, call in enumerate(calls, 1)
+                    if isinstance(call, dict)
+                    and call.get("name") == "apply_patch"
+                ),
+                None,
+            )
+            if first_apply_index is None or first_apply_index == len(calls):
+                continue
+            source_call = calls[first_apply_index - 1]
+            source_action_id = source_call.get("action_id")
+            source_arguments = source_call.get("arguments")
+            if not isinstance(source_action_id, str) or not isinstance(
+                source_arguments,
+                dict,
+            ):
+                raise RecoveryError(
+                    "model response apply_patch call is malformed"
+                )
+            source_input_hash = sha256_text(
+                canonical_json(
+                    {"tool": "apply_patch", "input": source_arguments}
+                )
+            )
+            source_result = self.state.get_action_result(
+                self.run_id,
+                source_action_id,
+                source_input_hash,
+            )
+            if source_result is None:
+                continue
+            for blocked_index, blocked_call in enumerate(
+                calls[first_apply_index:],
+                first_apply_index + 1,
+            ):
+                if not isinstance(blocked_call, dict):
+                    raise RecoveryError(
+                        "model response barrier call is malformed"
+                    )
+                name = blocked_call.get("name")
+                action_id = blocked_call.get("action_id")
+                arguments = blocked_call.get("arguments")
+                if (
+                    not isinstance(name, str)
+                    or not isinstance(action_id, str)
+                    or not isinstance(arguments, dict)
+                ):
+                    raise RecoveryError(
+                        "model response barrier call is malformed"
+                    )
+                result = self.block_same_turn_action(
+                    name,
+                    action_id,
+                    arguments,
+                    source_action_id=source_action_id,
+                    source_result_status=source_result.status,
+                    source_model_event_id=model_event.event_id,
+                    source_call_index=first_apply_index,
+                    blocked_call_index=blocked_index,
+                )
+                if not result.output.get("replayed"):
+                    created += 1
+        return created
+
     def _inspection_short_circuit_eligible(
         self,
         name: str,
@@ -953,13 +1339,15 @@ class ToolGateway:
         manifest = self.state.get_manifest(self.run_id)
         reserve = nominal_tail_reserve(
             self.task,
-            context_policy_version=self.context_policy_version,
+            context_policy_version=_investigation_compat_version(
+                self.context_policy_version
+            ),
         )
         policy_version = investigation_policy_version(
-            self.context_policy_version
+            _investigation_compat_version(self.context_policy_version)
         )
         admission_schema = tool_admission_schema(
-            self.context_policy_version
+            _investigation_compat_version(self.context_policy_version)
         )
         model_calls_used = sum(
             event.type == EventType.MODEL_CALLED for event in events
@@ -978,7 +1366,9 @@ class ToolGateway:
             calculated_tail_policy = tail_policy(
                 self.task,
                 None,
-                context_policy_version=self.context_policy_version,
+                context_policy_version=_investigation_compat_version(
+                    self.context_policy_version
+                ),
                 events=events,
                 budget=manifest.budget,
                 max_output_tokens=manifest.model.max_output_tokens,
@@ -995,6 +1385,20 @@ class ToolGateway:
                 reserve["model_calls"] + reserve["feedback_model_calls"]
             ):
                 block_reasons.append("model_tail_reserved")
+        epoch = mutation_epoch(events)
+        semantic_replay_count = sum(
+            event.type == EventType.TOOL_REPLAYED
+            and event.payload.get("semantic_replay") is True
+            and (epoch is None or event.sequence > epoch)
+            for event in events
+        )
+        evidence_saturated = (
+            self.context_policy_version == "phase-evidence-v7"
+            and name in {"read_file", "search_files"}
+            and semantic_replay_count >= _EVIDENCE_SATURATION_THRESHOLD
+        )
+        if evidence_saturated:
+            block_reasons.append("evidence_saturated")
         if not block_reasons:
             return None
 
@@ -1014,9 +1418,15 @@ class ToolGateway:
             return None
         preflight_descriptor = preflight_artifact.model_dump(mode="json")
         error_message = (
-            "inspection was not admitted because the nominal corrective "
-            "lifecycle tail is reserved; use apply_patch or another "
-            "phase-advancing action"
+            "inspection was not admitted because the active mutation epoch "
+            "has exhausted its semantic replay allowance; use the durable "
+            "evidence or make a scoped mutation"
+            if evidence_saturated
+            else (
+                "inspection was not admitted because the nominal corrective "
+                "lifecycle tail is reserved; use apply_patch or another "
+                "phase-advancing action"
+            )
         )
         error_details = {
             "schema_version": admission_schema,
@@ -1030,6 +1440,19 @@ class ToolGateway:
                 "patch, registered validation, diff review, or submission."
             ),
         }
+        if evidence_saturated:
+            error_details.update(
+                {
+                    "evidence_saturation_policy_version": (
+                        "evidence-saturation-v1"
+                    ),
+                    "semantic_replay_count": semantic_replay_count,
+                    "semantic_replay_threshold": (
+                        _EVIDENCE_SATURATION_THRESHOLD
+                    ),
+                    "mutation_epoch_sequence": epoch,
+                }
+            )
         if calculated_tail_policy is not None:
             error_details["tail_policy"] = calculated_tail_policy
         result_payload = {
@@ -1065,7 +1488,7 @@ class ToolGateway:
             "input_hash": input_hash,
             "normalized_call_hash": normalized_call_hash,
             "worktree_diff_hash": worktree_diff_hash,
-            "mutation_epoch_sequence": mutation_epoch(events),
+            "mutation_epoch_sequence": epoch,
             "reason_codes": block_reasons,
             "nominal_reserve": reserve,
             "model_calls_used": model_calls_used,
@@ -1081,6 +1504,18 @@ class ToolGateway:
             "error_message": error_message,
             "error_details": error_details,
         }
+        if evidence_saturated:
+            event_payload.update(
+                {
+                    "evidence_saturation_policy_version": (
+                        "evidence-saturation-v1"
+                    ),
+                    "semantic_replay_count": semantic_replay_count,
+                    "semantic_replay_threshold": (
+                        _EVIDENCE_SATURATION_THRESHOLD
+                    ),
+                }
+            )
         if calculated_tail_policy is not None:
             token_projection = calculated_tail_policy[
                 "token_projection"
@@ -1127,7 +1562,7 @@ class ToolGateway:
         payload: dict[str, Any] = {
             "schema_version": INSPECTION_ADMISSION_PREFLIGHT_SCHEMA,
             "policy_version": investigation_policy_version(
-                self.context_policy_version
+                _investigation_compat_version(self.context_policy_version)
             ),
             "tool": name,
             "worktree_diff_hash": worktree_diff_hash,
@@ -1725,7 +2160,7 @@ class ToolGateway:
             ),
         }
         if (
-            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            self.tool_schema_version in _SELF_VALIDATION_TOOL_SCHEMAS
             and name in {"run_probe", "review_task"}
         ):
             payload.update(
@@ -2197,7 +2632,7 @@ class ToolGateway:
                 )
                 or (
                     self.tool_schema_version
-                    == _SELF_VALIDATION_TOOL_SCHEMA
+                    in _SELF_VALIDATION_TOOL_SCHEMAS
                     and name in {"run_probe", "review_task"}
                 )
                 else None
@@ -2281,7 +2716,7 @@ class ToolGateway:
             or (
                 name == "review_task"
                 and self.tool_schema_version
-                == _SELF_VALIDATION_TOOL_SCHEMA
+                in _SELF_VALIDATION_TOOL_SCHEMAS
                 and execution_context is None
             )
             or call.payload.get("artifact_id") != artifact.artifact_id
@@ -2631,7 +3066,7 @@ class ToolGateway:
         if name == "get_diff":
             return self._get_diff()
         if (
-            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            self.tool_schema_version in _SELF_VALIDATION_TOOL_SCHEMAS
             and name == "run_probe"
         ):
             return self._run_probe(
@@ -2639,7 +3074,7 @@ class ToolGateway:
                 source_artifact=probe_source_artifact,
             )
         if (
-            self.tool_schema_version == _SELF_VALIDATION_TOOL_SCHEMA
+            self.tool_schema_version in _SELF_VALIDATION_TOOL_SCHEMAS
             and name == "review_task"
         ):
             return self._review_task(
@@ -2784,6 +3219,215 @@ class ToolGateway:
             )
         return result
 
+    def _bounded_patch_source_snapshot(
+        self,
+        patch: str,
+        *,
+        candidate_content_hash: str,
+        input_hash: str,
+        worktree_diff_hash: str,
+    ) -> dict[str, Any]:
+        """Capture small current-source slices without relaxing patch validation."""
+
+        entries: list[dict[str, Any]] = []
+        unavailable: list[dict[str, Any]] = []
+        remaining_characters = _PATCH_SOURCE_MAX_CHARACTERS
+        sections: list[list[str]] = []
+        for line in patch.splitlines():
+            if line.startswith("diff --git "):
+                sections.append([line])
+            elif sections:
+                sections[-1].append(line)
+
+        for section_index, section in enumerate(sections, 1):
+            old_header = next(
+                (line for line in section if line.startswith("--- ")),
+                None,
+            )
+            if old_header is None:
+                unavailable.append(
+                    {
+                        "section": section_index,
+                        "reason": "missing_old_header",
+                    }
+                )
+                continue
+            raw_path = _header_path(old_header)
+            try:
+                path = safe_relative_path(
+                    raw_path,
+                    field_name="patch source snapshot path",
+                )
+                target = self._prepared_workspace_target(
+                    path,
+                    recovery=False,
+                )
+            except (ContractError, PolicyViolation):
+                unavailable.append(
+                    {
+                        "section": section_index,
+                        "path": raw_path[:500],
+                        "reason": "unsafe_target",
+                    }
+                )
+                continue
+            tracked = subprocess.run(
+                ["git", "ls-files", "--error-unmatch", "--", path],
+                cwd=self.workspace,
+                capture_output=True,
+                check=False,
+            )
+            if tracked.returncode != 0 or not target.is_file():
+                unavailable.append(
+                    {
+                        "section": section_index,
+                        "path": path,
+                        "reason": "untracked_or_missing_target",
+                    }
+                )
+                continue
+            try:
+                raw = target.read_bytes()
+                text = raw.decode("utf-8", errors="strict")
+            except (OSError, UnicodeDecodeError):
+                unavailable.append(
+                    {
+                        "section": section_index,
+                        "path": path,
+                        "reason": "source_not_utf8_text",
+                    }
+                )
+                continue
+            lines = text.splitlines()
+            hunk_headers = [
+                (line_index, line, _HUNK_HEADER.fullmatch(line))
+                for line_index, line in enumerate(section)
+                if line.startswith("@@")
+            ]
+            valid_hunks = [
+                (line_index, line, match)
+                for line_index, line, match in hunk_headers
+                if match is not None
+            ]
+            if not valid_hunks:
+                unavailable.append(
+                    {
+                        "section": section_index,
+                        "path": path,
+                        "reason": (
+                            "invalid_hunk_header"
+                            if hunk_headers
+                            else "missing_hunk_header"
+                        ),
+                    }
+                )
+                continue
+
+            for hunk_index, (line_index, header, match) in enumerate(
+                valid_hunks,
+                1,
+            ):
+                if len(entries) >= _PATCH_SOURCE_MAX_ENTRIES:
+                    unavailable.append(
+                        {
+                            "section": section_index,
+                            "path": path,
+                            "hunk": hunk_index,
+                            "reason": "entry_limit",
+                        }
+                    )
+                    continue
+                assert match is not None
+                old_start = int(match.group(1))
+                declared_old_count = (
+                    int(match.group(2))
+                    if match.group(2) is not None
+                    else 1
+                )
+                next_hunk = next(
+                    (
+                        candidate_index
+                        for candidate_index, _, _ in valid_hunks
+                        if candidate_index > line_index
+                    ),
+                    len(section),
+                )
+                body = section[line_index + 1 : next_hunk]
+                recounted_old_count = sum(
+                    1
+                    for body_line in body
+                    if body_line.startswith((" ", "-"))
+                    and not body_line.startswith("--- ")
+                )
+                effective_old_count = max(
+                    declared_old_count,
+                    recounted_old_count,
+                    1,
+                )
+                requested_start = max(1, old_start - 3)
+                requested_end = old_start + effective_old_count + 2
+                requested_end = min(
+                    requested_end,
+                    requested_start + _PATCH_SOURCE_MAX_LINES_PER_ENTRY - 1,
+                )
+                actual_start = (
+                    requested_start if requested_start <= len(lines) else None
+                )
+                actual_end = (
+                    min(requested_end, len(lines))
+                    if actual_start is not None
+                    else None
+                )
+                content = (
+                    "\n".join(lines[actual_start - 1 : actual_end])
+                    if actual_start is not None and actual_end is not None
+                    else ""
+                )
+                characters = len(content)
+                if characters > remaining_characters:
+                    unavailable.append(
+                        {
+                            "section": section_index,
+                            "path": path,
+                            "hunk": hunk_index,
+                            "reason": "character_limit",
+                        }
+                    )
+                    continue
+                remaining_characters -= characters
+                entries.append(
+                    {
+                        "section": section_index,
+                        "hunk": hunk_index,
+                        "path": path,
+                        "header": header,
+                        "requested_start_line": requested_start,
+                        "requested_end_line": requested_end,
+                        "actual_start_line": actual_start,
+                        "actual_end_line": actual_end,
+                        "total_lines": len(lines),
+                        "file_content_hash": sha256_bytes(raw),
+                        "content": content,
+                        "content_hash": sha256_text(content),
+                    }
+                )
+
+        snapshot = {
+            "schema_version": "patch-source-snapshot-v1",
+            "candidate_content_hash": candidate_content_hash,
+            "input_hash": input_hash,
+            "worktree_diff_hash": worktree_diff_hash,
+            "limits": {
+                "max_entries": _PATCH_SOURCE_MAX_ENTRIES,
+                "max_lines_per_entry": _PATCH_SOURCE_MAX_LINES_PER_ENTRY,
+                "max_characters": _PATCH_SOURCE_MAX_CHARACTERS,
+            },
+            "entries": entries,
+            "unavailable": unavailable,
+        }
+        snapshot["content_hash"] = sha256_text(canonical_json(snapshot))
+        return snapshot
+
     def _prepare_patch_mutation(
         self,
         action_id: str,
@@ -2800,7 +3444,13 @@ class ToolGateway:
                     "guidance": "Reduce the patch to the smallest scoped change.",
                 },
             )
-        _validate_raw_git_patch(patch)
+        if self.tool_schema_version == _PATCH_RETRY_TOOL_SCHEMA:
+            _validate_raw_git_patch(
+                patch,
+                diagnose_hunk_headers=True,
+            )
+        else:
+            _validate_raw_git_patch(patch)
         baseline = WorkspaceManager.diff_summary(self.workspace)
         baseline_untracked = WorkspaceManager.untracked_files(self.workspace)
         if baseline_untracked:
@@ -3148,7 +3798,13 @@ class ToolGateway:
                     "guidance": "Reduce the patch to the smallest scoped change.",
                 },
             )
-        _validate_raw_git_patch(patch)
+        if self.tool_schema_version == _PATCH_RETRY_TOOL_SCHEMA:
+            _validate_raw_git_patch(
+                patch,
+                diagnose_hunk_headers=True,
+            )
+        else:
+            _validate_raw_git_patch(patch)
         baseline = WorkspaceManager.diff_summary(self.workspace)
         baseline_untracked = WorkspaceManager.untracked_files(self.workspace)
         if baseline_untracked:
@@ -3506,7 +4162,7 @@ class ToolGateway:
         self,
         requirements: list[dict[str, Any]],
         targeted_validation: list[dict[str, Any]],
-        residual_risks: list[str],
+        residual_risks: list[Any],
         *,
         execution_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
@@ -3594,18 +4250,50 @@ class ToolGateway:
             raise ContractError(
                 "review_task requirements must contain 1 to 20 entries"
             )
+        review_contract = self.state.get_manifest(
+            self.run_id
+        ).public_review_contract
+        review_v2 = self.tool_schema_version == "v4"
+        if review_v2 and review_contract is None:
+            raise RecoveryError(
+                "tool schema v4 review lacks its public review contract"
+            )
+        authoritative_requirements = {
+            item.requirement_id: item.source_excerpt
+            for item in (
+                review_contract.requirements
+                if review_contract is not None
+                else []
+            )
+        }
         normalized_requirements: list[dict[str, Any]] = []
+        observed_requirement_ids: list[str] = []
         for item in requirements:
-            if not isinstance(item, dict) or set(item) != {
-                "requirement",
-                "status",
-                "evidence_event_sequences",
-                "notes",
-            }:
+            expected_requirement_keys = (
+                {
+                    "requirement_id",
+                    "status",
+                    "evidence_event_sequences",
+                    "notes",
+                }
+                if review_v2
+                else {
+                    "requirement",
+                    "status",
+                    "evidence_event_sequences",
+                    "notes",
+                }
+            )
+            if not isinstance(item, dict) or set(item) != expected_requirement_keys:
                 raise ContractError(
                     "review_task requirement has an invalid shape"
                 )
-            requirement = item["requirement"]
+            requirement_id = item.get("requirement_id")
+            requirement = (
+                authoritative_requirements.get(requirement_id)
+                if review_v2
+                else item["requirement"]
+            )
             status = item["status"]
             sequences = item["evidence_event_sequences"]
             notes = item["notes"]
@@ -3629,6 +4317,16 @@ class ToolGateway:
                 raise ContractError(
                     "review_task requirement fields are invalid"
                 )
+            if review_v2:
+                if (
+                    not isinstance(requirement_id, str)
+                    or requirement_id not in authoritative_requirements
+                    or requirement_id in observed_requirement_ids
+                ):
+                    raise ContractError(
+                        "review_task requirement ID is unknown or duplicated"
+                    )
+                observed_requirement_ids.append(requirement_id)
             if status != "unverified" and not sequences:
                 raise ContractError(
                     "verified review requirements need cited evidence"
@@ -3641,13 +4339,27 @@ class ToolGateway:
                     mutation_sequence=mutation_sequence,
                     worktree_diff_hash=summary.patch_hash,
                 )
-            normalized_requirements.append(
-                {
-                    "requirement": requirement.strip(),
+            normalized_requirement = {
                     "status": status,
                     "evidence_event_sequences": list(sequences),
                     "notes": notes.strip(),
                 }
+            if review_v2:
+                normalized_requirement.update(
+                    {
+                        "requirement_id": requirement_id,
+                        "source_excerpt": requirement.strip(),
+                    }
+                )
+            else:
+                normalized_requirement["requirement"] = requirement.strip()
+            normalized_requirements.append(normalized_requirement)
+
+        if review_v2 and set(observed_requirement_ids) != set(
+            authoritative_requirements
+        ):
+            raise ContractError(
+                "review_task must assess every public review requirement exactly once"
             )
 
         if (
@@ -3748,21 +4460,83 @@ class ToolGateway:
                     "reason": "targeted_validation_missing",
                 },
             )
-        if (
-            not isinstance(residual_risks, list)
-            or len(residual_risks) > 20
-            or any(
-                not isinstance(item, str)
-                or not item.strip()
-                or len(item) > 1000
-                for item in residual_risks
-            )
-        ):
-            raise ContractError(
-                "review_task residual_risks must contain bounded strings"
-            )
+        normalized_residual_risks: list[Any] = []
+        if review_v2:
+            if not isinstance(residual_risks, list) or len(residual_risks) > 20:
+                raise ContractError(
+                    "review_task residual risks have an invalid shape"
+                )
+            risk_requirement_ids: set[str] = set()
+            for item in residual_risks:
+                if not isinstance(item, dict) or set(item) != {
+                    "requirement_ids",
+                    "risk",
+                    "mitigation",
+                }:
+                    raise ContractError(
+                        "review_task residual risk has an invalid shape"
+                    )
+                requirement_ids = item["requirement_ids"]
+                risk = item["risk"]
+                mitigation = item["mitigation"]
+                if (
+                    not isinstance(requirement_ids, list)
+                    or not requirement_ids
+                    or len(requirement_ids) > 20
+                    or len(set(requirement_ids)) != len(requirement_ids)
+                    or any(
+                        not isinstance(requirement_id, str)
+                        or requirement_id not in authoritative_requirements
+                        for requirement_id in requirement_ids
+                    )
+                    or not isinstance(risk, str)
+                    or not risk.strip()
+                    or len(risk) > 1000
+                    or not isinstance(mitigation, str)
+                    or not mitigation.strip()
+                    or len(mitigation) > 1000
+                ):
+                    raise ContractError(
+                        "review_task residual risk fields are invalid"
+                    )
+                risk_requirement_ids.update(requirement_ids)
+                normalized_residual_risks.append(
+                    {
+                        "requirement_ids": list(requirement_ids),
+                        "risk": risk.strip(),
+                        "mitigation": mitigation.strip(),
+                    }
+                )
+            nonverified_ids = {
+                item["requirement_id"]
+                for item in normalized_requirements
+                if item["status"] != "verified"
+            }
+            if not nonverified_ids.issubset(risk_requirement_ids):
+                raise ContractError(
+                    "every partial or unverified requirement needs a residual risk"
+                )
+        else:
+            if (
+                not isinstance(residual_risks, list)
+                or len(residual_risks) > 20
+                or any(
+                    not isinstance(item, str)
+                    or not item.strip()
+                    or len(item) > 1000
+                    for item in residual_risks
+                )
+            ):
+                raise ContractError(
+                    "review_task residual_risks must contain bounded strings"
+                )
+            normalized_residual_risks = [
+                item.strip() for item in residual_risks
+            ]
         review = {
-            "schema_version": "task-review-v1",
+            "schema_version": (
+                "task-review-v2" if review_v2 else "task-review-v1"
+            ),
             "run_id": self.run_id,
             "request_artifact_id": request_artifact_id,
             "worktree_diff_hash": summary.patch_hash,
@@ -3770,13 +4544,30 @@ class ToolGateway:
             "source_get_diff_sequence": source_get_diff_sequence,
             "requirements": normalized_requirements,
             "targeted_validation": normalized_validation,
-            "residual_risks": [item.strip() for item in residual_risks],
+            "residual_risks": normalized_residual_risks,
             "deterministic_correctness_claimed": False,
         }
+        if review_v2:
+            assert review_contract is not None
+            review.update(
+                {
+                    "public_review_contract_hash": review_contract.content_hash,
+                    "public_review_contract_schema_version": (
+                        review_contract.schema_version
+                    ),
+                    "authoritative_requirement_ids": list(
+                        authoritative_requirements
+                    ),
+                }
+            )
         review_artifact = self.artifacts.put_json(review)
         result = {
-            "schema_version": "task-review-result-v1",
-            "review_schema_version": "task-review-v1",
+            "schema_version": (
+                "task-review-result-v2"
+                if review_v2
+                else "task-review-result-v1"
+            ),
+            "review_schema_version": review["schema_version"],
             "review_artifact": review_artifact.model_dump(mode="json"),
             "review_content_hash": review_artifact.content_hash,
             "review": review,
@@ -3790,6 +4581,11 @@ class ToolGateway:
             "self_attestation": True,
             "deterministic_correctness_claimed": False,
         }
+        if review_v2:
+            assert review_contract is not None
+            result["public_review_contract_hash"] = (
+                review_contract.content_hash
+            )
         if len(canonical_json(result).encode("utf-8")) > 12_000:
             raise PolicyViolation(
                 "review_task result cannot be presented completely",

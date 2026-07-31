@@ -1,11 +1,9 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-055 high-budget no-memory completion panel live-complete;
-D-056~D-059 opt-in self-validation offline profile-probe gate complete;
-D-060 three-task no-memory budget-pilot offline contract complete;
-D-061 probe authorization hardening complete;
-clean preflight and separate live approval pending**
+현재 milestone: **D-060 three-task no-memory budget pilot live-complete and diagnosed;
+D-062 v4/v7 corrective runtime, public-review and budget diagnostics offline-complete;
+900k three-task corrective preflight, clean commit and separate live approval pending**
 
 2026-07-31 구현 스냅샷:
 
@@ -13,10 +11,10 @@ clean preflight and separate live approval pending**
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | tool v2/context v5/D-052 token-tail hardening offline-complete; opt-in v3/v6 self-validation offline profile-probe gate complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, token-aware read/search admission과 request-by-request qualification 재계산; D-056~D-059 실제 격리 E2E 3/3, profile-bearing mock agent probe와 official evaluator 통과 |
+| Phase 3 state machine | historical v2/v5와 opt-in v3/v6 보존; corrective v4/v7 offline-complete | Public checklist review, rejected-patch source snapshot/persistence, apply same-turn barrier와 crash reconciliation, six-replay evidence saturation, hash-bound runtime CAS와 request-by-request qualification 재계산 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | high-budget two-task completion live gate passed; valid baseline pending | Babel+Moto scope-compliant success 2/2, qualification·completion/headroom pass, budget error 0, `$0.15682575`; usable no-memory baseline은 아직 없음 |
+| Phase 6 evaluation | D-060 3-run diagnostic complete; corrective pilot pending | HF Hub만 total-token binding, PDM/pyfakefs는 non-budget task failure; `patchloop budget` read-only derivation과 900k corrective suite 구현, usable baseline은 아직 없음 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -87,7 +85,9 @@ usable no-memory baseline은 아직 없다. D-052에서 token-aware corrective t
 않기로 했다. D-054는 실행되지 않은 250k single pilot을 supersede하고 Babel control과 Moto
 harder completion probe의 600,000-token no-memory completion panel을 별도 계약으로 고정했다.
 그 panel은 exact hash 승인 아래 한 번 실행돼 scope-compliant success 2/2와 qualification을 통과했다.
-다음은 memory-development의 작은 no-memory budget pilot 계약이다.
+D-060의 memory-development 3-task budget pilot도 exact hash로 한 번 실행됐다. HF Hub만
+total-token budget에 막혔고 PDM/pyfakefs는 evaluator에 도달한 task failure였다. 다음은
+이 원인을 분리해 검증하는 v4/v7 900k corrective pilot의 clean preflight와 별도 승인이다.
 
 동결 evidence:
 
@@ -143,9 +143,10 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 11b | proposal validated; admission deferred | Append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 public evidence만으로 두 group에 결속. Tox 2회는 candidate rule 1개, Loguru는 causal uncertainty로 hold; no-memory completion 전에는 human approval/index build를 진행하지 않음 |
 | 11c | completed; immutable live evidence | D-054/D-055 high-budget no-memory completion panel | Babel+Moto scope-compliant success 2/2, qualification 25/25·completion/headroom pass, budget error 0, `$0.15682575`; exact hash와 experiment ID 재실행 금지 |
 | 11d | completed | Clean preflight와 separate live approval | Commit `59621ec`, Docker digest, SDK 2.47.0과 exact execution hash를 결속해 두 run을 한 번 실행 |
-| 11e | offline contract complete; clean approval pending | 작은 memory-development no-memory budget pilot | 별도 purpose와 exact HF Hub/PDM/pyfakefs 3-task suite, 480k/40/100/1,800초, $7 cap, 3-run completion gate; D-061 hardening 포함 731 collected, 724 passed/7 sandbox-environment skip, host Docker E2E 5/5와 Ruff 통과. Source checkpoint·Docker identity·fresh no-call hash와 별도 승인 전 provider call 및 memory/index/core 금지 |
+| 11e | completed; immutable diagnostic | 작은 memory-development no-memory budget pilot | 승인 hash `sha256:61a720...bdef4f`로 3/3 terminal·qualified. HF Hub만 token-bound, PDM/pyfakefs는 official hidden task failure, SCRR 0/3; baseline·memory index source로 사용하지 않고 재실행 금지 |
 | 11f | completed (offline + Docker), live use not approved | D-056/D-057 opt-in tool v3/context v6 self-validation | Public-v2 profile + dedicated clean-image optional `run_probe`, current-diff `review_task`, v3 submission/source qualification, recovery와 v1-v5 byte-stability; 실제 Docker isolation E2E 3/3과 mock official-evaluator smoke 통과, 별도 승인 전 live/campaign 금지 |
 | 11g | completed (offline), live use not approved | D-059 profile-bearing full agent probe lifecycle | Dataset 밖 `csv-quoted-newline@2` fixture에서 mock agent가 registered probe를 clean Docker image로 실행하고 그 event를 same-diff review에 인용한 뒤 official evaluator까지 완료; 전체 live qualification은 의도적으로 false |
+| 11h | offline complete; clean approval pending | D-062 corrective no-memory pilot | `patchloop budget` read-only diagnosis, public checklist `task-review-v2`, persistent retry/source snapshot, apply barrier crash recovery, six-replay saturation, corrective runtime CAS와 RunStarted-bound pricing qualification. Same 3 tasks, 900k/40/100/1,800초, reserve `$12.4875`, cap `$13`; comparison/memory/core 제외, provider call 0 |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.

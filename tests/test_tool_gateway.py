@@ -8,7 +8,17 @@ from pathlib import Path
 import pytest
 
 from patchloop.agent.context import build_context, build_context_with_evidence
-from patchloop.agent.tools import TOOL_SCHEMAS, TOOL_SCHEMAS_V3, ToolGateway
+from patchloop.agent.review import (
+    normalize_public_issue_text,
+    public_review_contract_content_hash,
+    public_review_requirement_id,
+)
+from patchloop.agent.tools import (
+    TOOL_SCHEMAS,
+    TOOL_SCHEMAS_V3,
+    TOOL_SCHEMAS_V4,
+    ToolGateway,
+)
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
@@ -17,6 +27,7 @@ from patchloop.contracts import (
     EventType,
     FaultSpec,
     Phase,
+    PublicReviewContract,
     RegisteredProbeProfile,
 )
 from patchloop.errors import ActionConflict, ContractError, RecoveryError
@@ -36,6 +47,29 @@ from patchloop.util import canonical_json, sha256_text, utc_now
 
 PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
 PROBE_ID = "python-diagnostic"
+
+
+def _smoke_review_contract(package) -> PublicReviewContract:
+    excerpt = normalize_public_issue_text(
+        package.public.issue.description
+    )
+    payload = {
+        "schema_version": "public-review-contract-v1",
+        "task_id": package.public.task_id,
+        "task_version": package.public.task_version,
+        "public_spec_hash": package.public_spec_hash,
+        "requirements": [
+            {
+                "requirement_id": public_review_requirement_id(excerpt),
+                "source": "issue.description",
+                "source_excerpt": excerpt,
+            }
+        ],
+    }
+    payload["content_hash"] = public_review_contract_content_hash(
+        payload
+    )
+    return PublicReviewContract.model_validate(payload)
 
 
 class _OfficialProbeSandbox:
@@ -87,15 +121,30 @@ def _smoke_gateway(
     budget: Budget | None = None,
     max_output_tokens: int = 4096,
     manifest_context_policy_version: str = "phase-evidence-v4",
+    gateway_context_policy_version: str | None = None,
 ):
     package = load_task_package("tasks/smoke/csv-quoted-newline")
+    corrective_validation = (
+        manifest_context_policy_version == "phase-evidence-v7"
+    )
+    public_review_contract = (
+        _smoke_review_contract(package)
+        if corrective_validation
+        else None
+    )
     manifest = build_manifest(
         package,
         run_id=run_id,
         fault=fault,
         budget=budget,
         max_output_tokens=max_output_tokens,
-    ).model_copy(update={"context_policy_version": manifest_context_policy_version})
+        corrective_validation=corrective_validation,
+        public_review_contract=public_review_contract,
+    ).model_copy(
+        update={
+            "context_policy_version": manifest_context_policy_version
+        }
+    )
     state = StateStore(tmp_path / "state.sqlite3")
     state.create_run(manifest)
     manager = WorkspaceManager("fixtures/repositories", tmp_path / "workspaces")
@@ -112,6 +161,9 @@ def _smoke_gateway(
         artifacts=ArtifactStore(tmp_path / "artifacts"),
         sandbox=LocalSandbox(),
         tool_schema_version=tool_schema_version,
+        context_policy_version=(
+            gateway_context_policy_version or "phase-evidence-v3"
+        ),
         fault=manifest.fault,
     )
     return manager, workspace, gateway
@@ -286,6 +338,294 @@ def test_apply_patch_recounts_incorrect_hunk_line_totals(tmp_path) -> None:
     }
     assert objects_after == objects_before
     assert not (workspace / ".git" / "patchloop-recovery").exists()
+
+
+def test_v4_reports_invalid_hunk_header_without_changing_v2_diagnosis(
+    tmp_path,
+) -> None:
+    bare_hunk_patch = (
+        "diff --git a/mini_data_utils/csvlite.py "
+        "b/mini_data_utils/csvlite.py\n"
+        "--- a/mini_data_utils/csvlite.py\n"
+        "+++ b/mini_data_utils/csvlite.py\n"
+        "@@\n"
+        "-old\n"
+        "+new\n"
+    )
+    _, _, v4_gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v4_invalid_hunk",
+        tool_schema_version="v4",
+        manifest_context_policy_version="phase-evidence-v7",
+        gateway_context_policy_version="phase-evidence-v7",
+    )
+    _, _, v2_gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v2_invalid_hunk",
+        tool_schema_version="v2",
+        manifest_context_policy_version="phase-evidence-v4",
+    )
+
+    v4_result = v4_gateway.execute(
+        "apply_patch",
+        "v4-invalid-hunk",
+        {"patch": bare_hunk_patch},
+    )
+    v2_result = v2_gateway.execute(
+        "apply_patch",
+        "v2-invalid-hunk",
+        {"patch": bare_hunk_patch},
+    )
+
+    assert v4_result.status == "rejected"
+    assert v4_result.output["error_details"]["reason"] == (
+        "invalid_hunk_header"
+    )
+    assert "@@ -<old_start>" in v4_result.output["error_details"][
+        "guidance"
+    ]
+    assert v2_result.output["error_details"]["reason"] == (
+        "missing_ordered_headers"
+    )
+    assert not any(
+        event.type in {EventType.PATCH_PREPARED, EventType.PATCH_APPLIED}
+        for event in v4_gateway.state.list_events(v4_gateway.run_id)
+    )
+    assert "numeric unified-diff ranges" in next(
+        item["description"]
+        for item in TOOL_SCHEMAS_V4
+        if item["name"] == "apply_patch"
+    )
+
+
+def test_v7_retry_persists_with_source_snapshot_until_next_apply_outcome(
+    tmp_path,
+) -> None:
+    _, workspace, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v7_persistent_retry",
+        tool_schema_version="v4",
+        manifest_context_policy_version="phase-evidence-v7",
+        gateway_context_policy_version="phase-evidence-v7",
+    )
+    rejected_patch = (
+        "diff --git a/mini_data_utils/csvlite.py "
+        "b/mini_data_utils/csvlite.py\n"
+        "--- a/mini_data_utils/csvlite.py\n"
+        "+++ b/mini_data_utils/csvlite.py\n"
+        "@@ -1,1 +1,1 @@\n"
+        "-this context does not exist\n"
+        "+replacement\n"
+    )
+
+    rejected = gateway.execute(
+        "apply_patch",
+        "v7-rejected-patch",
+        {"patch": rejected_patch},
+    )
+    assert rejected.status == "rejected"
+    gateway.state.append_event(
+        gateway.run_id,
+        EventType.MODEL_CALLED,
+        actor="model-adapter",
+        payload={
+            "requested_input_tokens": 10,
+            "input_tokens": 10,
+            "output_tokens": 1,
+        },
+    )
+    gateway.state.append_event(
+        gateway.run_id,
+        EventType.MODEL_CALLED,
+        actor="model-adapter",
+        payload={
+            "requested_input_tokens": 12,
+            "input_tokens": 12,
+            "output_tokens": 1,
+        },
+    )
+    manifest = gateway.state.get_manifest(gateway.run_id)
+
+    built = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v7",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    retry = json.loads(built.rendered)["rejected_mutation_retry"]
+
+    assert retry["schema_version"] == "rejected-mutation-retry-v2"
+    assert retry["candidate"]["patch"] == rejected_patch
+    assert retry["persistence"] == {
+        "state": "pending",
+        "resolution": "next_apply_patch_outcome",
+    }
+    assert retry["source_snapshot"]["entries"][0]["path"] == (
+        "mini_data_utils/csvlite.py"
+    )
+    assert "A deliberately small CSV reader" in retry[
+        "source_snapshot"
+    ]["entries"][0]["content"]
+    assert built.evidence["schema_version"] == "context-build-evidence-v7"
+
+    applied = gateway.execute(
+        "apply_patch",
+        "v7-corrected-patch",
+        {"patch": _r2_style_recount_patch()},
+    )
+    assert applied.status == "succeeded"
+    cleared = build_context_with_evidence(
+        gateway.task,
+        gateway.state.list_events(gateway.run_id),
+        None,
+        policy_version="phase-evidence-v7",
+        artifact_store=gateway.artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=manifest.public_review_contract,
+    )
+    assert json.loads(cleared.rendered)["rejected_mutation_retry"] is None
+    assert WorkspaceManager.diff_summary(workspace).changed_files == [
+        "mini_data_utils/csvlite.py"
+    ]
+
+
+def test_v7_retry_source_snapshot_cas_tampering_fails_closed(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v7_snapshot_tamper",
+        tool_schema_version="v4",
+        manifest_context_policy_version="phase-evidence-v7",
+        gateway_context_policy_version="phase-evidence-v7",
+    )
+    rejected_patch = (
+        "diff --git a/mini_data_utils/csvlite.py "
+        "b/mini_data_utils/csvlite.py\n"
+        "--- a/mini_data_utils/csvlite.py\n"
+        "+++ b/mini_data_utils/csvlite.py\n"
+        "@@ -1 +1 @@\n"
+        "-missing context\n"
+        "+replacement\n"
+    )
+    result = gateway.execute(
+        "apply_patch",
+        "v7-tampered-snapshot",
+        {"patch": rejected_patch},
+    )
+    assert result.status == "rejected"
+    call = next(
+        event
+        for event in gateway.state.list_events(gateway.run_id)
+        if event.type == EventType.TOOL_CALLED
+        and event.payload.get("tool") == "apply_patch"
+    )
+    descriptor = Artifact.model_validate(
+        call.payload["source_snapshot_artifact"]
+    )
+    Path(descriptor.path).write_text("{}", encoding="utf-8")
+    manifest = gateway.state.get_manifest(gateway.run_id)
+
+    with pytest.raises(RecoveryError, match="artifact"):
+        build_context_with_evidence(
+            gateway.task,
+            gateway.state.list_events(gateway.run_id),
+            None,
+            policy_version="phase-evidence-v7",
+            artifact_store=gateway.artifacts,
+            budget=manifest.budget,
+            max_output_tokens=manifest.model.max_output_tokens,
+            public_review_contract=manifest.public_review_contract,
+        )
+
+
+def test_v7_blocks_search_after_six_semantic_replays_and_resets_on_patch(
+    tmp_path,
+) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v7_evidence_saturation",
+        tool_schema_version="v4",
+        manifest_context_policy_version="phase-evidence-v7",
+        gateway_context_policy_version="phase-evidence-v7",
+    )
+    search = {"query": "parse_rows", "path_glob": "**/*.py"}
+    first = gateway.execute("search_files", "v7-search-first", search)
+    assert first.status == "succeeded"
+    for index in range(6):
+        replay = gateway.execute(
+            "search_files",
+            f"v7-search-replay-{index}",
+            search,
+        )
+        assert replay.output["semantic_replay"] is True
+
+    blocked = gateway.execute(
+        "search_files",
+        "v7-search-after-saturation",
+        {"query": "csv", "path_glob": "**/*.py"},
+    )
+
+    assert blocked.error_code == "TOOL_ADMISSION_BLOCKED"
+    assert blocked.output["error_details"]["reason_codes"] == [
+        "evidence_saturated"
+    ]
+    assert blocked.output["error_details"]["semantic_replay_count"] == 6
+    assert blocked.output["error_details"]["semantic_replay_threshold"] == 6
+    assert not any(
+        event.type == EventType.TOOL_CALLED
+        and event.correlation_id == "v7-search-after-saturation"
+        for event in gateway.state.list_events(gateway.run_id)
+    )
+
+    applied = gateway.execute(
+        "apply_patch",
+        "v7-saturation-reset-patch",
+        {"patch": _r2_style_recount_patch()},
+    )
+    assert applied.status == "succeeded"
+    after_patch = gateway.execute(
+        "search_files",
+        "v7-search-after-patch",
+        {"query": "csv", "path_glob": "**/*.py"},
+    )
+    assert after_patch.status == "succeeded"
+    assert after_patch.output.get("admission_blocked") is not True
+
+
+def test_v6_does_not_apply_v7_evidence_saturation_limit(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v6_no_evidence_saturation",
+        tool_schema_version="v3",
+        manifest_context_policy_version="phase-evidence-v6",
+        gateway_context_policy_version="phase-evidence-v6",
+    )
+    search = {"query": "parse_rows", "path_glob": "**/*.py"}
+    assert gateway.execute(
+        "search_files",
+        "v6-search-first",
+        search,
+    ).status == "succeeded"
+    for index in range(6):
+        replay = gateway.execute(
+            "search_files",
+            f"v6-search-replay-{index}",
+            search,
+        )
+        assert replay.output["semantic_replay"] is True
+
+    after_six = gateway.execute(
+        "search_files",
+        "v6-search-after-six",
+        {"query": "csv", "path_glob": "**/*.py"},
+    )
+
+    assert after_six.status == "succeeded"
+    assert after_six.output.get("admission_blocked") is not True
 
 
 def test_controlled_rejection_is_one_shot_and_does_not_mutate_worktree(
