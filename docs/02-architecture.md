@@ -366,3 +366,22 @@ artifact를 같은 approval로 소비할 수 없다. Historical execution-hash p
 
 이 정책은 탐색 비용을 줄이는 condition-neutral runtime 보정이다. Cross-run memory가 아니며
 task 성공 또는 completion을 보장하지 않는다.
+
+D-062 live campaign은 승인 execution hash
+`sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`로 정확히 한 번
+실행됐다. 첫 HF Hub run `run_0ccfc8fd359a4785`은 33개 completed model call과 875,908
+token을 사용한 뒤 exact-request budget admission에서 종료됐다. Active epoch saturation은
+gateway에서 read/search 30회를 차단했지만 v7 context의 `phase_contract.allowed_next_actions`와
+`investigation_exploration_admitted`는 token-tail이 닫히기 전까지 read/search를 계속
+광고했다. 그 뒤 일곱 raw diff가 모두 preview에서 거부돼 `PatchPrepared`와 `PatchApplied`는
+발생하지 않았고 evaluator도 실행되지 않았다. 이 관찰은 saturation enforcement와
+model-visible phase contract를 같은 prefix에서 합성해야 한다는 새 version 필요성을
+보여주며, v7 rendering을 소급 변경하는 근거가 아니다.
+
+Original campaign result, hash-chained journal과 qualification artifact는 immutable하다.
+Original qualification failure로 campaign이 fail-closed했기 때문에 나머지 PDM/pyfakefs
+row는 시작되지 않았고 original gate는 false다. 독립 분석에서 qualifier의 v5-vs-v6/v7
+reserve-version drift가 분리됐지만 append-only correction artifact는 아직 pending이다.
+D-062는 계속하거나 재실행하지 않는다. 다음 architecture gate는 새 `phase-evidence-v8`
+saturation-context 계약을 offline에서 검증한 뒤 별도 승인된 single live pilot으로 확인하는
+것이다.

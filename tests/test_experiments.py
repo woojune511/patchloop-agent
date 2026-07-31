@@ -671,6 +671,7 @@ def test_corrective_pilot_binds_review_contracts_and_larger_budget(
     assert suite.budget.max_total_tokens == 900_000
     assert unapproved["expected_runs"] == 3
     assert {row["code"] for row in unapproved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -696,9 +697,12 @@ def test_corrective_pilot_binds_review_contracts_and_larger_budget(
         approved_execution_hash=unapproved["execution_hash"],
     )
 
-    assert approved["ready"] is True
+    assert approved["ready"] is False
     assert approved["suite"]["cost_limit_usd"] == 13
     assert approved["execution_hash"] == unapproved["execution_hash"]
+    assert {row["code"] for row in approved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE"
+    }
 
 
 @pytest.mark.parametrize(

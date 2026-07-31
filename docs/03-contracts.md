@@ -1765,3 +1765,24 @@ V7 rejected-patch evidence는 `rejected-mutation-retry-v2`와
 `tool-admission-blocked-v3`/`turn-mutation-barrier-v1`로 기록하며 `ToolCalled`가 없어야 한다.
 V7 source evidence version은 `trace-source-evidence-v7`이고 qualification envelope은 계속
 `trace-qualification-v2`다.
+
+### Consumed D-062 execution boundary
+
+`dev-no-memory-corrective-pilot-20260731-r1`의 execution hash
+`sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`는 정확히 한 번
+소비됐다. Schedule의 첫 row인 HF Hub `run_0ccfc8fd359a4785`만 terminal이며, original
+qualification failure 뒤 `QualificationFailureHalt`가 나머지 PDM과 pyfakefs row를
+not-started로 닫았다. 이 suite, hash와 experiment ID는 재실행하거나 continuation하지 않는다.
+
+HF run의 provider response 33개는 모두 completed였고 usage는 총 875,908 token, 계산 비용
+`$0.8408853`이다. 마지막 exact request는 남은 token으로 input과 25,000-token response
+allowance를 함께 예약할 수 없어 provider 호출 전에 차단됐다. Candidate 일곱 개는
+`git apply` preview에서 모두 거부됐으므로 `PatchPrepared=0`, `PatchApplied=0`, evaluator
+arrival=0이다. Read/search 30개도 `evidence_saturated`로 dispatch 전에 차단됐다.
+
+Original experiment result, campaign journal과 original qualification artifact는 append-only
+source evidence로 보존하며 덮어쓰지 않는다. 후속 분석에서 드러난 qualifier의
+v5-vs-v6/v7 nominal-reserve drift는 original gate를 true로 바꾸지 않는다. 이를 표현할
+qualification correction은 원본을 수정하지 않는 별도 artifact여야 하며, 그 module과
+artifact가 검증되기 전에는 pending으로만 기록한다. 따라서 이 run을 qualified, SCRR 또는
+no-memory baseline으로 세지 않는다.

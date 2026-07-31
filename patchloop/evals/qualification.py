@@ -1839,9 +1839,27 @@ def _v5_expected_tail_policy(
 
     if projection_stage not in {"pre_generation", "post_generation"}:
         raise RecoveryError("invalid v5 token-tail projection stage")
+    context_policy_version = manifest.context_policy_version
+    if context_policy_version == "phase-evidence-v5":
+        corrective_tool_calls = 0
+        corrective_model_calls = 3
+    elif context_policy_version in {
+        "phase-evidence-v6",
+        "phase-evidence-v7",
+    }:
+        corrective_tool_calls = 1
+        corrective_model_calls = 4
+    else:
+        raise RecoveryError(
+            "invalid v5 token-tail context policy version"
+        )
     reserve = {
-        "tool_calls": 4 + 2 * len(task.visible_checks),
-        "model_calls": 3,
+        "tool_calls": (
+            4
+            + 2 * len(task.visible_checks)
+            + corrective_tool_calls
+        ),
+        "model_calls": corrective_model_calls,
         "feedback_model_calls": 1,
     }
     model_calls_used = 0
@@ -5673,8 +5691,15 @@ def qualify_run(
     task_dir: str | Path,
     dataset_manifest_path: str | Path | None = None,
     root: str | Path | None = None,
+    persist: bool = True,
 ) -> dict[str, Any]:
-    """Qualify one terminal run and persist an immutable, private-safe artifact."""
+    """Qualify one terminal run and optionally persist its immutable artifact.
+
+    ``persist=False`` is the read-only recomputation path used by append-only
+    postmortem corrections. It still validates an existing qualification's
+    task, dataset, and source-evidence bindings, but never replaces or creates
+    the canonical qualification artifact.
+    """
 
     run_root = _runtime_root(root)
     state = StateStore(run_root / "state.sqlite3")
@@ -7325,6 +7350,9 @@ def qualify_run(
             }
         )
     payload["qualification_hash"] = sha256_text(canonical_json(payload))
+
+    if not persist:
+        return payload
 
     path.parent.mkdir(parents=True, exist_ok=True)
     encoded = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)

@@ -119,9 +119,11 @@ is preserved separately under `reports/live-pilot/`:
 - `experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`: consumed D-054/D-055
   Babel+Moto completion panel; 2/2 scope-compliant success and qualification, inspection only,
   never rerun
-- `experiments/dev-no-memory-budget-pilot-20260731-r1.yaml`: current unexecuted D-060
-  HF Hub/PDM/pyfakefs no-memory calibration; the checked-in config is inspectable but is not paid
-  execution authorization
+- `experiments/dev-no-memory-budget-pilot-20260731-r1.yaml`: consumed D-060
+  HF Hub/PDM/pyfakefs no-memory diagnostic; inspect only, never rerun
+- `experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml`: consumed D-062
+  corrective campaign; HF row only, original gate false, remaining rows not-started, inspect only,
+  never rerun or continue
 
 Superseded and pending D-052 contracts remain checked in for provenance:
 
@@ -529,7 +531,7 @@ A non-empty index is freezeable only when its vectors were created by
 `sentence-transformers/all-MiniLM-L6-v2` at the recorded commit. Empty or lexical placeholder indexes
 are rejected before any memory-condition campaign.
 
-## D-060 budget pressure and D-062 no-call preflight
+## D-060 budget pressure and consumed D-062 evidence
 
 Historical D-060 evidence can be diagnosed without changing it:
 
@@ -538,7 +540,7 @@ uv run patchloop budget `
   --experiment dev-no-memory-budget-pilot-20260731-r1
 ```
 
-Before any provider call, validate the new corrective suite:
+The historical D-062 preflight can still be recomputed read-only:
 
 ```powershell
 uv run patchloop evaluate `
@@ -546,13 +548,31 @@ uv run patchloop evaluate `
   --preflight-only
 ```
 
-The suite must report three memory-development tasks, no-memory repetition 1, embedded public review
+The suite reports three memory-development tasks, no-memory repetition 1, embedded public review
 contract hashes, `40/100/900000/1800`, output 25,000, run reserve `$4.1625`, total reserve
-`$12.4875` and cap `$13`. It must also emit a corrective-only runtime contract that binds v4/v7,
-the exact prompt/tool-schema hashes and harness commit. The persisted pricing block is re-derived by
-qualification and its freshness is checked against the immutable runner `RunStarted` timestamp. An
-unapproved invocation must remain blocked on live approval/hash. A
-dirty worktree, missing host credential, unavailable exact Docker images or stale pricing must also
-block it. The checked-in YAML is not paid authorization. Do not add approval flags until the source
-is clean, a fresh execution hash has been reviewed, and the user explicitly approves that exact hash
-and cap.
+`$12.4875` and cap `$13`. Its corrective-only runtime contract binds v4/v7, the exact
+prompt/tool-schema hashes and harness commit.
+
+That authorization was consumed exactly once under execution hash
+`sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`. Inspect the persisted
+experiment JSON and journal rather than invoking `evaluate` again:
+
+```powershell
+Get-Content .patchloop/experiments/dev-no-memory-corrective-pilot-20260731-r1.json
+Get-Content .patchloop/experiments/journals/dev-no-memory-corrective-pilot-20260731-r1.jsonl
+uv run patchloop budget `
+  --experiment dev-no-memory-corrective-pilot-20260731-r1
+```
+
+Expected immutable observations are one terminal HF row `run_0ccfc8fd359a4785`, two not-started
+rows, original gate false, 33 completed model calls, 875,908 tokens, `$0.8408853`, and a terminal
+exact-request budget block before any `PatchPrepared`, `PatchApplied` or evaluator receipt. The
+trace also contains 30 non-dispatched read/search admission blocks and seven patch-preview failures.
+Original result, journal and qualification artifacts must not be edited or regenerated in place.
+The independently identified qualifier reserve-version drift requires a separate append-only
+correction artifact; until that artifact exists and passes its own verification, treat the correction
+as pending and the original qualification as failed.
+
+Do not rerun or continue D-062. The next live invocation must follow an offline
+`phase-evidence-v8` saturation-context gate and use a new experiment identity, clean execution hash,
+explicit cost cap and separate user approval for a single pilot.

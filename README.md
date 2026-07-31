@@ -5,13 +5,19 @@
 2026-07-31 현재 D-060 3-run 진단은 HF Hub만 total-token budget에 막혔고,
 PDM과 pyfakefs는 budget과 무관한 task failure였다. 후속 D-062는 과거 run을 변경하지 않고
 `tool_schema_version=v4`/`phase-evidence-v7` corrective runtime, 공개 issue 기반 review
-checklist, rejected-patch 지속 복구와 read/search saturation을 offline으로 구현했다. 새
-3-task no-memory corrective pilot은 `40 model / 100 tool / 900,000 token / 1,800초`,
-per-call output 25,000, 보수적 비용 reserve `$12.4875`와 suite cap `$13`으로만 준비돼
-있으며 provider call은 아직 없다. 이 tuning panel은 baseline, memory admission과 core
-결과에서 제외된다. Corrective runtime의 prompt/tool schema/version/commit과 가격 파생값은
-execution plan과 hash에 결속되고, qualification은 실제 `RunStarted` 시각의 72시간 가격
-freshness와 runtime CAS를 독립적으로 재검산한다.
+checklist, rejected-patch 지속 복구와 read/search saturation을 구현했다. 3-task no-memory
+corrective pilot `dev-no-memory-corrective-pilot-20260731-r1`은 승인 execution hash
+`sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`로 정확히 한 번
+소비됐다. 첫 HF Hub row `run_0ccfc8fd359a4785`만 terminal에 도달한 뒤 original trace
+qualification이 fail-closed해 campaign이 멈췄고 PDM과 pyfakefs row는 시작되지 않았다.
+HF run은 33개 provider response가 모두 completed였지만 875,908 token 뒤 exact-request
+budget block으로 끝났으며 `PatchPrepared`/`PatchApplied`와 evaluator 도달은 모두 0이다.
+관찰 비용은 `$0.8408853`이다. Original result, journal과 qualification artifact는
+immutable하며, 독립 분석에서 확인된 qualifier reserve-version drift의 append-only correction
+artifact는 아직 pending이다. Original campaign gate는 false이고 이 tuning evidence는 SCRR,
+no-memory baseline, memory admission 또는 core 결과가 아니다. D-062는 재실행하지 않으며,
+다음 gate는 saturation을 context contract에 반영하는 새 version의 offline 검증과 별도
+승인된 single live pilot이다.
 
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을

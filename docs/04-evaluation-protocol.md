@@ -817,3 +817,23 @@ SCRR는 별도 task outcome으로 보고 gate 조건에 넣지 않는다. 이 pu
 memory candidate/admission, core aggregate와 모든 memory-effect headline에서 제외한다. Frozen
 rate reserve는 run당 `$4.1625`, 3-run `$12.4875`, suite cap `$13`이며 execution에는 clean
 hash와 별도 비용 승인이 필요하다.
+
+이 authorization은 이후 execution hash
+`sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`에 대해 정확히 한
+번 소비됐다. Experiment `dev-no-memory-corrective-pilot-20260731-r1`은 첫 HF Hub row
+`run_0ccfc8fd359a4785`만 실행한 뒤 original trace qualification failure로 fail-closed했다.
+PDM과 pyfakefs row는 not-started이고, original `no-memory-corrective-pilot-gate-v1` verdict는
+false로 유지한다. Original result, journal과 qualification artifact를 수정하거나 이
+experiment/hash를 재실행해서 denominator를 채우지 않는다.
+
+HF run은 33개 completed response에서 875,908 token과 `$0.8408853`의 list-price cost를
+기록했다. Exact-request budget block 전까지 `PatchPrepared`/`PatchApplied`와 evaluator
+receipt는 없었다. Trace에는 saturation 이후 dispatch되지 않은 read/search 30건과 preview에서
+거부된 patch candidate 7건이 있다. 특히 saturation admission과 model-visible phase contract가
+불일치했으므로 이 run은 model capability, SCRR 또는 no-memory 성능 baseline이 아니다.
+
+Original qualification failure와 별개로 qualifier의 v5-vs-v6/v7 reserve-version drift가
+관찰됐지만, append-only correction artifact가 검증·생성되기 전에는 correction을 완료했다고
+보고하지 않는다. 다음 gate는 v7을 소급 변경하지 않는 새 `phase-evidence-v8` saturation-context
+계약의 offline evidence다. 그 뒤에도 D-062 continuation이 아니라 새 execution identity와
+별도 비용 승인을 가진 single live pilot만 허용한다.

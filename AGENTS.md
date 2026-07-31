@@ -13,8 +13,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
 - 현재 milestone은 `D-060 three-task no-memory budget pilot live-complete and diagnosed;
-  D-062 v4/v7 corrective runtime and budget diagnostics offline-complete;
-  900k three-task corrective preflight, clean commit and separate live approval pending`이다.
+  D-062 900k corrective campaign consumed once and halted after first-row original qualification;
+  phase-evidence-v8 saturation-context offline fix and a separately approved single pilot pending`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -25,8 +25,19 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   기준으로 공식 가격 확인이 72시간 이내인지 재계산한다.
   Checked-in `dev-no-memory-corrective-pilot-20260731-r1`은 3 task 각 1회 no-memory,
   40 model/100 tool/900,000 token/1,800초, output 25,000, reserve `$12.4875`, cap `$13`인
-  tuning-only suite다. 아직 provider call이나 paid 승인은 없고 baseline, memory admission과
-  core를 열지 않는다.
+  tuning-only suite다. 승인 execution hash
+  `sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`로 정확히 한 번
+  소비됐고 첫 HF Hub row `run_0ccfc8fd359a4785`만 terminal에 도달했다. 이 run은 33개
+  completed model call과 875,908 token, 계산 비용 `$0.8408853`을 기록한 뒤 exact-request
+  budget에서 차단됐다. 일곱 `apply_patch` candidate는 모두 preview에서 거부되어
+  `PatchPrepared`/`PatchApplied`와 evaluator 도달은 0이다. Original qualification failure로
+  campaign이 fail-closed해 PDM과 pyfakefs row는 시작되지 않았고 original gate는 false다.
+  Result, journal과 original qualification artifact는 immutable하다. 후속 독립 분석은
+  qualifier의 v5-vs-v6/v7 reserve-version drift를 분리했지만 append-only qualification
+  correction artifact는 아직 pending이므로 qualified run으로 주장하지 않는다. Trace에는
+  saturation이 context의 allowed action에 반영되지 않아 차단된 read/search 30회와 patch
+  preview failure 7회가 관찰됐다. 이 결과는 SCRR/no-memory baseline, memory admission 또는
+  core evidence가 아니며 D-062 suite/hash는 재실행하지 않는다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -196,11 +207,15 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `run_6b4f13316e714785`는 각각 153,702와 252,066 token에서 official evaluator에 도달한
   non-budget task failure다. `patchloop budget` derivation은 HF exact deficit 5,171과 v5
   same-prefix minimum 658,739를 재계산하며 원 artifact를 변경하지 않는다.
-  D-062 corrective suite는 v4/v7 runtime과 900,000-token ceiling을 offline으로만 검증했다.
-  V7 projection의 historical HF same-prefix minimum은 697,790이고 새 ceiling은 약 202k
-  여유를 둔다. 이 값은 completion guarantee나 core budget이 아니다. 새 suite는 clean
-  execution hash와 최대 `$13` 별도 승인이 있기 전에는 실행하지 않으며 memory admission과
-  96-run core campaign도 계속 보류한다.
+  D-062 corrective suite의 offline 계약 뒤 승인 hash
+  `sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`가 정확히 한 번
+  소비됐다. HF Hub `run_0ccfc8fd359a4785` 하나만 실행된 뒤 original qualification
+  failure가 campaign을 fail-closed했고 나머지 두 row는 not-started다. 900,000-token ceiling은
+  completion guarantee가 아니었고 run은 875,908 token에서 exact-request budget에 막혔다.
+  Original campaign artifacts와 false gate는 immutable하며 D-062를 계속하거나 재실행하지
+  않는다. 다음 gate는 `evidence_saturated`를 model-visible phase contract에 반영하는 새
+  `phase-evidence-v8` offline contract와, 그 계약에 대한 별도 hash·비용 승인의 single live
+  pilot이다. Memory admission과 96-run core campaign은 계속 보류한다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

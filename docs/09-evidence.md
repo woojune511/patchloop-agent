@@ -2051,10 +2051,13 @@ a valid baseline. D-052 has now completed the token-aware corrective-tail and fu
 contract offline under `phase-evidence-v5`; it made no provider call. A leak-safe
 maintainer-assisted proposal now deduplicates the two tox repetitions and holds the unresolved
 Loguru source. Memory admission is deferred. D-060's small memory-development no-memory budget
-pilot has now completed once and is immutable diagnostic evidence. The next possible paid step is
-the separately approved D-062 900k corrective panel; it currently has only offline evidence and no
-clean execution hash or approval. The Babel+Moto high-budget panel has already completed 2/2 and is
-immutable. No later live run is currently approved, and no 96-run core campaign has been executed.
+pilot has now completed once and is immutable diagnostic evidence. D-062 was then consumed exactly
+once under its approved 900k corrective execution hash, but only the HF row ran before an original
+qualification failure halted the campaign; the two remaining rows were not started. The Babel+Moto
+high-budget panel has already completed 2/2 and is immutable. D-062 cannot be rerun or continued.
+The next proposed paid step comes only after a new versioned saturation-context offline gate and must
+be a separately approved single pilot. No later live run is currently approved, and no 96-run core
+campaign has been executed.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
@@ -2063,7 +2066,7 @@ reclaim. The timeout path remains synthetic on the first registered visible chec
 schedule row or 96-run core campaign has been executed. Rejected mutating-tool input rehydration
 has offline qualification and one controlled live exercise, but no natural recovery-rate evidence.
 
-## D-060 diagnosis and D-062 offline evidence
+## D-060 diagnosis and consumed D-062 evidence
 
 The consumed D-060 experiment remains bound to execution hash
 `sha256:61a7208bd6ee1a45b08511407d0c8c0658976685245a11d422077efdf9bdef4f`.
@@ -2074,21 +2077,32 @@ The read-only budget derivation reproduced all three terminal rows without chang
 - PDM `run_4352391174814d1d`: 153,702 tokens and no binding budget dimension.
 - pyfakefs `run_6b4f13316e714785`: 252,066 tokens and no binding budget dimension.
 
-D-062 adds a read-only `budget-pressure-v1` derivation and a separate unconsumed corrective suite.
-Offline evidence covers exact-public checklist validation, private-marker and malformed YAML rejection,
-`task-review-v2` completion, invalid numeric hunk feedback, rejected candidate source-snapshot CAS,
-retry persistence and clearing, apply-response barrier persistence plus crash resume reconciliation,
-six-replay evidence saturation/reset, v7 qualification check inclusion, full corrective runtime CAS
-descriptor/semantic tamper rejection, RunStarted-bound pricing recomputation and historical experiment
-compatibility. Corrective provenance has 15 adversarial tests; public review/experiment tests pass
-121/121, budget diagnostics 7/7 and historical v4/D-055 evidence checks 3/3. The checked-in 900k suite
-has no live run ID, usage or SCRR result. Until a clean
-preflight hash is separately approved, all claims stop at offline contract readiness.
+D-062 added a read-only `budget-pressure-v1` derivation and a separate corrective suite. Its approved
+execution hash was
+`sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`, consumed exactly once
+by experiment `dev-no-memory-corrective-pilot-20260731-r1`. Only HF Hub
+`run_0ccfc8fd359a4785` reached terminal state. Original trace qualification failed and the runner
+fail-closed with `QualificationFailureHalt`, leaving PDM and pyfakefs not-started. The original
+campaign gate is false.
+
+The HF run recorded 33 completed model responses, 875,908 total tokens and `$0.8408853` calculated
+cost before exact-request budget admission blocked the next provider call. Seven `apply_patch`
+candidates all failed preview, so `PatchPrepared`, `PatchApplied`, evaluator arrival and SCRR
+observation are all absent. Six semantic replays did activate gateway saturation, but the v7 context
+continued advertising read/search; 30 such calls were durably blocked without dispatch. This is live
+failure evidence for saturation-context integration and raw-diff reliability, not a no-memory model
+performance baseline.
+
+The original experiment result, hash-chained campaign journal and original qualification artifacts are
+immutable. Independent replay identified a v5-vs-v6/v7 nominal-reserve drift in the qualifier. A
+correction may only be represented by a separate append-only correction artifact; its implementation
+and artifact are still pending, so no corrected qualification claim is made here and the original
+false gate remains unchanged. The suite, experiment ID and execution hash must not be rerun.
 
 After the provenance hardening, the full repository collection was 790 tests: 783 passed and seven
 environment-dependent cases skipped; Ruff and `git diff --check` passed. The final deterministic
 currency-rendering change then re-ran its 49 directly related provenance/public-review/budget tests.
-A no-call preflight emitted the exact v4/v7 runtime contract and `$4.1625`/`$12.4875` reserves, but
-remained `ready=false` because the worktree is intentionally dirty, Docker/images are unavailable in
-the current sandbox, and no live-cost/hash approval was supplied. Its dirty-worktree hash is not an
-approval-ready execution identity.
+The next gate is not a D-062 continuation. It is an offline `phase-evidence-v8` contract that makes
+six-replay saturation visible in the authoritative context/phase contract while preserving historical
+v7 rendering and qualification. Only after that executable evidence passes may a new single-task
+suite obtain a fresh clean execution hash, explicit cost cap and separate live approval.

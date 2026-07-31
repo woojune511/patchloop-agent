@@ -85,6 +85,55 @@ PROBE_ID = "python-diagnostic"
 PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
 
 
+@pytest.mark.parametrize(
+    (
+        "context_policy_version",
+        "corrective_tool_calls",
+        "model_calls",
+        "projected_model_turns",
+    ),
+    [
+        ("phase-evidence-v5", 0, 3, 5),
+        ("phase-evidence-v6", 1, 4, 6),
+        ("phase-evidence-v7", 1, 4, 6),
+    ],
+)
+def test_expected_token_tail_policy_uses_versioned_corrective_reserve(
+    context_policy_version: str,
+    corrective_tool_calls: int,
+    model_calls: int,
+    projected_model_turns: int,
+) -> None:
+    package = load_task_package(MEMORY_TASK)
+    manifest = build_manifest(
+        package,
+        run_id=f"run_{context_policy_version}",
+        sandbox_backend="local",
+    ).model_copy(
+        update={"context_policy_version": context_policy_version}
+    )
+
+    policy = qualification_module._v5_expected_tail_policy(
+        task=package.public,
+        events=[],
+        manifest=manifest,
+        projection_stage="pre_generation",
+    )
+
+    assert policy["nominal_reserve"] == {
+        "tool_calls": (
+            4
+            + 2 * len(package.public.visible_checks)
+            + corrective_tool_calls
+        ),
+        "model_calls": model_calls,
+        "feedback_model_calls": 1,
+    }
+    assert policy["token_projection"]["projected_model_turns"] == (
+        projected_model_turns
+    )
+
+
 def _with_probe_profile(package):
     return package.model_copy(
         update={

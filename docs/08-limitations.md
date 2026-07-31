@@ -590,18 +590,27 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 These are deliberate hard gates. The repository rejects an incomplete core experiment manifest instead of
 silently lowering the design or fabricating missing results.
 
-## D-062 corrective pilot remains unexecuted
+## D-062 corrective campaign was consumed but is not a baseline
 
-- D-060 is diagnostic evidence, not a no-memory performance baseline. Only HF Hub was budget-bound;
-  PDM and pyfakefs failed hidden acceptance with substantial budget headroom.
-- The new v4/v7 public-review, persistent retry, barrier recovery and evidence-saturation paths have
-  offline tests only. They have not shown a live-model improvement.
-- Runtime CAS, corrective execution-hash binding and RunStarted-bound pricing freshness have adversarial
-  offline tests only; no provider run has yet exercised those new qualification checks.
-- The 900k total-token ceiling was chosen from a same-prefix counterfactual. New prompt/tool schema,
-  model behavior and output use can still consume it before 40 calls; it is not a completion guarantee.
-- The `$12.4875` figure is a conservative list-price authorization reserve, not measured spend or an
-  invoice prediction. A future approval must also reconsider the project-wide `$150` manual cap.
-- The three-task corrective purpose is excluded from comparison, memory admission and core. Its result
-  cannot justify changing the final all-condition budget without another frozen fairness decision.
-- No provider call, fresh clean execution hash or paid approval exists for this suite yet.
+- Execution hash
+  `sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031` was consumed exactly
+  once for `dev-no-memory-corrective-pilot-20260731-r1`. It is not reusable authorization.
+- Only HF Hub `run_0ccfc8fd359a4785` ran. Original trace qualification failed closed and the campaign
+  recorded `QualificationFailureHalt`; PDM and pyfakefs were not started. The original campaign gate
+  remains false.
+- The HF run used 875,908 tokens over 33 completed provider responses and recorded `$0.8408853` in
+  deterministic list-price cost before an exact-request budget block. It produced no `PatchPrepared`,
+  `PatchApplied` or evaluator result, so it has no SCRR observation.
+- The trace exposed a live v7 policy gap: six-replay saturation blocked 30 read/search actions at the
+  gateway, but the model-visible context continued advertising those actions until token tail. Seven
+  subsequent raw-diff candidates all failed patch preview. Increasing the ceiling alone does not
+  isolate either behavior.
+- Original experiment result, campaign journal and original qualification artifacts are immutable.
+  Independent analysis identified v5-vs-v6/v7 nominal-reserve drift in the qualifier, but an
+  append-only correction module/artifact remains pending. Until it exists and is verified, do not
+  claim corrected qualification or alter the false gate.
+- This tuning purpose remains excluded from comparison, memory admission and core. One incomplete row
+  and two not-started rows are not a no-memory performance denominator and cannot justify a final
+  all-condition budget.
+- D-062 must not be rerun or continued. The next proposed gate is an offline versioned
+  `phase-evidence-v8` saturation-context fix, followed by a new separately approved single live pilot.

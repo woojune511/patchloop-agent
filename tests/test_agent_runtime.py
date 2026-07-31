@@ -3010,6 +3010,10 @@ def test_v4_corrective_mock_run_completes_structured_review(
     check_ids = {
         check["check_id"] for check in qualification["checks"]
     }
+    checks = {
+        check["check_id"]: check
+        for check in qualification["checks"]
+    }
     assert {
         "public_review_contract",
         "investigation_evidence",
@@ -3018,6 +3022,8 @@ def test_v4_corrective_mock_run_completes_structured_review(
         "rejected_patch_retry_context",
         "self_validation_lifecycle",
     } <= check_ids
+    assert checks["investigation_evidence"]["passed"] is True
+    assert checks["investigation_lifecycle"]["passed"] is True
 
 
 def test_v7_rejected_patch_retry_clears_after_success_and_qualifies(

@@ -2,8 +2,8 @@
 
 상태: **Implementation baseline active**  
 현재 milestone: **D-060 three-task no-memory budget pilot live-complete and diagnosed;
-D-062 v4/v7 corrective runtime, public-review and budget diagnostics offline-complete;
-900k three-task corrective preflight, clean commit and separate live approval pending**
+D-062 900k corrective campaign consumed once and halted after first-row original qualification;
+phase-evidence-v8 saturation-context offline fix and separate single live pilot pending**
 
 2026-07-31 구현 스냅샷:
 
@@ -14,7 +14,7 @@ D-062 v4/v7 corrective runtime, public-review and budget diagnostics offline-com
 | Phase 3 state machine | historical v2/v5와 opt-in v3/v6 보존; corrective v4/v7 offline-complete | Public checklist review, rejected-patch source snapshot/persistence, apply same-turn barrier와 crash reconciliation, six-replay evidence saturation, hash-bound runtime CAS와 request-by-request qualification 재계산 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-060 3-run diagnostic complete; corrective pilot pending | HF Hub만 total-token binding, PDM/pyfakefs는 non-budget task failure; `patchloop budget` read-only derivation과 900k corrective suite 구현, usable baseline은 아직 없음 |
+| Phase 6 evaluation | D-060 diagnostic complete; D-062 consumed and halted after row 1 | D-062 HF는 33 completed calls/875,908 tokens 뒤 exact-budget block, patch/evaluator 0; PDM/pyfakefs not-started, original gate false, usable baseline은 아직 없음 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -86,8 +86,19 @@ usable no-memory baseline은 아직 없다. D-052에서 token-aware corrective t
 harder completion probe의 600,000-token no-memory completion panel을 별도 계약으로 고정했다.
 그 panel은 exact hash 승인 아래 한 번 실행돼 scope-compliant success 2/2와 qualification을 통과했다.
 D-060의 memory-development 3-task budget pilot도 exact hash로 한 번 실행됐다. HF Hub만
-total-token budget에 막혔고 PDM/pyfakefs는 evaluator에 도달한 task failure였다. 다음은
-이 원인을 분리해 검증하는 v4/v7 900k corrective pilot의 clean preflight와 별도 승인이다.
+total-token budget에 막혔고 PDM/pyfakefs는 evaluator에 도달한 task failure였다. 후속 D-062
+v4/v7 900k corrective pilot은 승인 hash
+`sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031`로 정확히 한 번
+소비됐지만 HF Hub `run_0ccfc8fd359a4785` 뒤 original qualification failure로 중단됐다.
+나머지 두 row는 시작되지 않았고 original gate는 false다. 이 trace는 saturation이 context에
+반영되지 않은 gap과 일곱 patch preview failure를 보여주므로 baseline으로 쓰지 않는다. 다음은
+새 `phase-evidence-v8` saturation-context offline gate이며, 통과 뒤에도 별도 승인된 single
+pilot만 실행한다.
+
+D-062 original result, journal과 qualification artifact는 immutable하다. 후속 독립 분석은
+qualification failure에서 v5-vs-v6/v7 nominal-reserve drift를 분리했지만, 이를 표현하는
+append-only correction module/artifact가 검증되기 전에는 original qualification과 false gate를
+변경하지 않는다.
 
 동결 evidence:
 
@@ -113,7 +124,7 @@ total-token budget에 막혔고 PDM/pyfakefs는 evaluator에 도달한 task fail
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — completion live gate passed; baseline pilot pending
+## Current live trace gate — D-062 consumed; v8 corrective single pilot pending
 
 목표: 각 paid invocation 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -146,7 +157,8 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 11e | completed; immutable diagnostic | 작은 memory-development no-memory budget pilot | 승인 hash `sha256:61a720...bdef4f`로 3/3 terminal·qualified. HF Hub만 token-bound, PDM/pyfakefs는 official hidden task failure, SCRR 0/3; baseline·memory index source로 사용하지 않고 재실행 금지 |
 | 11f | completed (offline + Docker), live use not approved | D-056/D-057 opt-in tool v3/context v6 self-validation | Public-v2 profile + dedicated clean-image optional `run_probe`, current-diff `review_task`, v3 submission/source qualification, recovery와 v1-v5 byte-stability; 실제 Docker isolation E2E 3/3과 mock official-evaluator smoke 통과, 별도 승인 전 live/campaign 금지 |
 | 11g | completed (offline), live use not approved | D-059 profile-bearing full agent probe lifecycle | Dataset 밖 `csv-quoted-newline@2` fixture에서 mock agent가 registered probe를 clean Docker image로 실행하고 그 event를 same-diff review에 인용한 뒤 official evaluator까지 완료; 전체 live qualification은 의도적으로 false |
-| 11h | offline complete; clean approval pending | D-062 corrective no-memory pilot | `patchloop budget` read-only diagnosis, public checklist `task-review-v2`, persistent retry/source snapshot, apply barrier crash recovery, six-replay saturation, corrective runtime CAS와 RunStarted-bound pricing qualification. Same 3 tasks, 900k/40/100/1,800초, reserve `$12.4875`, cap `$13`; comparison/memory/core 제외, provider call 0 |
+| 11h | consumed once; original gate false; immutable | D-062 corrective no-memory pilot | 승인 hash `sha256:464a6...4031`; HF `run_0ccfc8fd359a4785`만 terminal 후 `QualificationFailureHalt`, PDM/pyfakefs not-started. 33 completed calls, 875,908 tokens, `$0.8408853`, exact-budget block, patch/evaluator 0; baseline·memory/core 제외, 재실행 금지 |
+| 11i | proposed; offline evidence pending | Phase-evidence-v8 saturation-context correction | Six-replay saturation을 다음 context의 authoritative allowed actions에 반영하고 historical v7 rendering을 보존한다. Offline qualification과 regression 뒤 새 suite/hash/비용 승인의 single live pilot만 허용 |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.
