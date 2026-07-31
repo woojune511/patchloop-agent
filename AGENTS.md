@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-054 high-budget no-memory completion panel offline complete;
-  clean no-call preflight and separate live approval pending`이다.
+- 현재 milestone은 `D-055 high-budget no-memory completion panel live complete;
+  fair no-memory baseline budget decision pending`이다.
   Rejected-patch retry context와 execution-hash-bound `experiment-diagnostic-v1` consumer는
   offline evidence를 통과했다. 승인된 mini D-037 r3는 provider에서 실행됐지만 rejected mutation이
   생기기 전에 per-call output allowance를 소진해 실제 retry는 아직 검증하지 못했다.
@@ -142,12 +142,24 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   index build는 의도적으로 보류한다. D-054는 실행되지 않은 250k single pilot을
   `superseded-unexecuted`로 보존하고, Babel+Moto 각 1회 `no_memory` completion panel을
   `40 model / 100 tool / 600,000 token / 1,800초`, per-call output 25,000, suite cap
-  `$6`로 고정한다. Conservative reserve는 run당 `$2.8125`, 두 run `$5.625`이며 measured
-  `$4.981546875`와 합친 현재 수동 계획값은 `$10.606546875`다. Completion gate는 2/2
-  qualified evaluator arrival와 budget terminal 0을 요구하지만 SCRR success는 별도다.
-  이 contract는 offline 검증만 완료했고 provider call은 없다. 다음 gate는 clean no-call
-  preflight와 exact execution hash를 검토한 별도 live 승인이다. 그 전에는 memory admission,
-  새 no-memory baseline이나 96-run core campaign을 실행하지 않는다.
+  `$6`로 고정했다. 승인 hash
+  `sha256:444cd7f2d00b3925a1227d1e9fc0436c68ba9700005b8416572c5fd654de1f78`로
+  provider에서 정확히 한 번 실행한 D-055 campaign은 Babel
+  `run_685c492e34f84fef`와 Moto `run_0814be408332479e` 모두 official hidden,
+  regression, scope, safety와 `trace-qualification-v2` 25/25를 통과했다.
+  Completion과 20% panel-headroom gate도 2/2 통과했고 budget/infrastructure/
+  qualification error는 0이다. 사용량은 각각 65,652 input + 3,304 output,
+  106,597 input + 2,838 output token이며 총 계산 비용은 `$0.15682575`다.
+  19/19 request의 exact input count가 provider usage와 일치했고 모두 completed,
+  truncation disabled, `store=false`, previous-response dependency 0이었다.
+  Result hash는
+  `sha256:a540ff52f271cd22c58ca561e559d9608ac50b99889a523f8a9a3d80cf8822ba`다.
+  이 experiment ID와 approval hash는 immutable하며 재실행하지 않는다. 이 두 task의
+  성공은 runtime completion ceiling 검증이지 memory 효과나 12-task baseline이 아니다.
+  다음 gate는 immutable V4 resource maxima로 고정한 pyfakefs/PDM/HF Hub를 각각 한 번
+  실행하는 provisional `480k token / 40 model / 100 tool / 1,800초` no-memory pilot이다.
+  아직 suite는 만들지 않았으며 새 config/hash, 비용 검토와 별도 승인이 필요하다. 그 전에는
+  memory admission이나 96-run core campaign을 실행하지 않는다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

@@ -1,0 +1,22 @@
+diff --git a/moto/dynamodb/models/table.py b/moto/dynamodb/models/table.py
+index 441f66f..32b33dc 100644
+--- a/moto/dynamodb/models/table.py
++++ b/moto/dynamodb/models/table.py
+@@ -754,8 +754,6 @@ class Table(CloudFormationModel):
+         if scan_index_forward is False:
+             results.reverse()
+ 
+-        scanned_count = len(list(self.all_items()))
+-
+         results = copy.deepcopy(results)
+         if index_name:
+             index = self.get_index(index_name)
+@@ -765,6 +763,8 @@ class Table(CloudFormationModel):
+             results, limit, exclusive_start_key, scanned_index=index_name
+         )
+ 
++        scanned_count = len(results)
++
+         if filter_expression is not None:
+             results = [item for item in results if filter_expression.expr(item)]
+ 

@@ -3165,3 +3165,194 @@ def test_v4_no_memory_campaign_has_no_private_or_provider_payload() -> None:
             token for token in private_tokens if token in checked_text
         )
         assert leaked == []
+
+
+def test_d055_completion_panel_report_preserves_gate_and_usage_evidence() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-validation-gpt54mini-completion-v6-20260731-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == "completion-panel-evidence-v1"
+    assert payload["harness_commit"] == (
+        "59621ecfa8538ecf693d3d5075ae84937b7a777d"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:444cd7f2d00b3925a1227d1e9fc0436c68ba9700005b8416572c5fd654de1f78"
+    )
+    assert payload["result_hash"] == (
+        "sha256:a540ff52f271cd22c58ca561e559d9608ac50b99889a523f8a9a3d80cf8822ba"
+    )
+    gate = payload["completion_gate"]
+    assert gate["passed"] is True
+    assert gate["terminal_runs"] == gate["qualified_runs"] == 2
+    assert gate["evaluator_reached_runs"] == gate["official_evaluator_runs"] == 2
+    assert gate["task_successes"] == 2
+    assert gate["infrastructure_errors"] == 0
+    assert gate["qualification_errors"] == 0
+    assert gate["diagnostic_errors"] == 0
+    assert gate["budget_terminal_runs"] == 0
+    assert gate["panel_headroom"]["passed"] is True
+    assert (
+        gate["panel_headroom"]["sufficient_to_freeze_comparison_budget"]
+        is False
+    )
+
+    runs = payload["runs"]
+    assert {run["task_id"] for run in runs} == {
+        "babel-strict-grouped-decimal-trailing-zeroes",
+        "moto-query-scanned-count",
+    }
+    assert {run["run_id"] for run in runs} == {
+        "run_685c492e34f84fef",
+        "run_0814be408332479e",
+    }
+    assert all(run["outcome_kind"] == "resolved" for run in runs)
+    assert all(run["official"] is True for run in runs)
+    assert all(run["scope_compliant_success"] is True for run in runs)
+    assert all(set(run["verdicts"].values()) == {"pass"} for run in runs)
+    assert all(
+        run["qualification"]["passed_checks"]
+        == run["qualification"]["total_checks"]
+        == 25
+        for run in runs
+    )
+    assert all(
+        run["qualification"]["memory_candidate_eligible"] is False
+        for run in runs
+    )
+    assert all(
+        run["lifecycle"]["patch_prepared"]
+        == run["lifecycle"]["patch_applied"]
+        == run["lifecycle"]["submission_attempted"]
+        == run["lifecycle"]["submission_accepted"]
+        == 1
+        for run in runs
+    )
+    assert all(
+        run["lifecycle"]["duplicate_mutation_observed"] is False
+        for run in runs
+    )
+
+    totals = payload["totals"]
+    assert totals["input_tokens"] == sum(
+        run["usage"]["input_tokens"] for run in runs
+    )
+    assert totals["output_tokens"] == sum(
+        run["usage"]["output_tokens"] for run in runs
+    )
+    assert totals["reasoning_output_tokens"] == sum(
+        run["usage"]["reasoning_output_tokens"] for run in runs
+    )
+    assert totals["model_calls"] == sum(
+        run["usage"]["model_calls"] for run in runs
+    )
+    assert totals["input_token_count_calls"] == totals["model_calls"] == 19
+    assert totals["tool_calls"] == sum(
+        run["usage"]["tool_calls"] for run in runs
+    )
+    assert totals["model_cost_usd"] == pytest.approx(0.15682575)
+    assert all(
+        run["telemetry"]["input_count_matches"]
+        == run["telemetry"]["total_count_matches"]
+        == run["telemetry"]["completed_responses"]
+        == run["usage"]["model_calls"]
+        for run in runs
+    )
+    assert all(
+        run["telemetry"]["incomplete_responses"] == 0
+        for run in runs
+    )
+    assert payload["branch_activity"] == {
+        "token_tail_admission_blocks": 0,
+        "semantic_replays": 0,
+    }
+    assert "source_artifacts" not in payload
+    assert len(payload["raw_local_artifacts"]) == 5
+    assert all(
+        artifact["bytes"] > 0
+        and artifact["path"].startswith(".patchloop/")
+        and artifact["sha256"].startswith("sha256:")
+        for artifact in payload["raw_local_artifacts"]
+    )
+    for artifact in payload["raw_local_artifacts"]:
+        if Path(artifact["path"]).exists():
+            _assert_artifact_identity(artifact)
+    portable_by_role = {
+        artifact["role"]: artifact
+        for artifact in payload["portable_artifacts"]
+    }
+    assert set(portable_by_role) == {
+        "final-submitted-git-diff-babel",
+        "final-submitted-git-diff-moto",
+    }
+    for artifact in portable_by_role.values():
+        _assert_artifact_identity(artifact)
+    assert {
+        run["submitted_patch_sha256"] for run in runs
+    } == {
+        artifact["sha256"] for artifact in portable_by_role.values()
+    }
+
+
+def test_d055_completion_panel_report_excludes_private_and_provider_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-validation-gpt54mini-completion-v6-20260731-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8") + "".join(
+        Path(artifact["path"]).read_text(encoding="utf-8")
+        for artifact in payload["portable_artifacts"]
+    )
+    assert "OPENAI_API_KEY" not in checked_text
+    assert "Bearer " not in checked_text
+    for task_id in {
+        "babel-strict-grouped-decimal-trailing-zeroes",
+        "moto-query-scanned-count",
+    }:
+        package = load_task_package(f"tasks/dev-validation/{task_id}")
+        private_tokens = _private_leak_tokens(package, api_key=None)
+        leaked = sorted(
+            token for token in private_tokens if token in checked_text
+        )
+        assert leaked == []

@@ -114,7 +114,7 @@ Historical D-045/D-047 절차는 Babel #1042 development-validation task 한 개
 cost limit은 $2, 12-run campaign은 $20이었다. 그 두 historical 12-run campaign은 각각
 evaluator 도달 0/12와 3/12로 budget-confounded였으므로 usable no-memory baseline이 아니다.
 
-현재 D-054 순서는 다음과 같다.
+완료된 D-054 순서는 다음과 같다.
 
 1. Babel #1042와 Moto #7208 development-validation task를 `no_memory`로 각각 1회 실행한다.
 2. 두 run 모두 `trace-qualification-v2`, exact prompt telemetry, leakage 검사,
@@ -122,11 +122,14 @@ evaluator 도달 0/12와 3/12로 budget-confounded였으므로 usable no-memory 
 3. Infrastructure/qualification/diagnostic error와 token/model/tool/wall budget terminal이
    하나라도 있으면 completion gate를 닫는다. Hidden/SCRR 결과는 별도로 보고하되 runtime
    completion gate의 필수조건으로 사용하지 않는다.
-4. 20% headroom gate를 함께 계산해 후속 fair budget을 정할 수 있는지 판정한다.
+4. 20% headroom gate를 함께 계산해 후속 fair-budget 검토 입력으로 쓸 수 있는지 판정한다.
 5. 이 gate를 통과하고 별도의 no-memory baseline budget을 동결하기 전에는
    memory-development live campaign과 memory index build를 진행하지 않는다.
 
-D-054 panel의 cost limit은 총 $6이다. Development-validation trace는 memory source나
+D-054 panel의 cost limit은 총 $6이었다. 두 run은 모두 official evaluator의
+hidden/regression/scope/safety를 통과했고 panel SCRR 2/2, qualification 25/25,
+completion/headroom gate를 기록했다. 실제 계산 비용은 `$0.15682575`였다.
+Development-validation trace는 memory source나
 core SCRR 분모가 아니다. 이후 no-memory baseline이 확보되면 qualification된 unresolved
 failure만 append-only human review 대상으로 삼으며, resolved run은 trace evidence로만 남긴다.
 
@@ -378,10 +381,10 @@ schedule에는 포함하지 않는다.
 
 Run manifest hash가 다르면 같은 controlled block으로 집계하지 않는다. Provider가 immutable model snapshot을 제공하지 않으면 실행 시점과 provider revision을 기록하고 limitation으로 보고한다.
 
-현재 D-054 development-validation completion block은
+소비된 D-054 development-validation completion block은
 `gpt-5.4-mini-2026-03-17`, reasoning `medium`, mode `standard`, service tier `default`,
 max output 25,000 token과 run budget
-`40 model call / 100 tool call / 600,000 total token / 1,800초`를 고정한다.
+`40 model call / 100 tool call / 600,000 total token / 1,800초`를 고정했다.
 이는 두 task의 runtime completion을 진단하기 위한 높은 ceiling이며 memory-development나
 core의 비교 budget을 자동으로 정하지 않는다. D-052의
 `21 model call / 50 tool call / 250,000 total token / 900초` memory-development/core
@@ -412,8 +415,11 @@ runtime을 offline에서 다시 고정하기 전에는 새 baseline 후보를 �
 그 future-only runtime을 `phase-evidence-v5`와 250,000 total-token 계약으로 offline
 검증했다. Provider call은 없었다. D-054는 cross-run memory admission을 보류하고,
 실행되지 않은 250k single pilot을 supersede한 뒤 Babel과 Moto 두 development-validation
-task에 600,000-token no-memory completion ceiling을 적용한다. 이 panel 전에는 새 baseline
-후보나 memory condition을 실행하지 않는다. 21/200,000 계약으로 이미 소비된
+task에 600,000-token no-memory completion ceiling을 적용했다. Exact hash로 한 번 실행된
+panel은 official evaluator 기준 scope-compliant success 2/2와
+qualification·completion/headroom을 통과했고 immutable로
+닫혔다. 이 결과만으로 comparison budget을 동결하지 않으며 작은 memory-development
+no-memory pilot 전에는 memory condition을 실행하지 않는다. 21/200,000 계약으로 이미 소비된
 `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
 `dev-validation-gpt54mini-investigation-v4-20260730-r1`,
 `dev-no-memory-v4-20260730-r1`은 immutable historical evidence다.
@@ -460,9 +466,10 @@ standard rate는 input $0.75/M, cached input $0.075/M, output $4.50/M이며 별�
 cache-write rate는 없다. Preflight는 verification age가 72시간을 넘거나 rate가 다르면
 실행하지 않는다. D-054 completion panel의 600,000 total과 25,000 response allowance를
 frozen repository의 최고 rate로 예약한 authorization reserve는 run당 `$2.8125`, 두 run
-`$5.625`이고 suite cap은 `$6`다. 지금까지의 measured list-price `$4.981546875`와 합친
-현재 수동 계획값은 `$10.606546875`다. D-052의 12-run `$14.85`와 core `$118.80` reserve는
-calibration 뒤 변경될 수 있는 draft라 현재 승인 합계에 넣지 않는다. Reserve는 예측
+`$5.625`이고 suite cap은 `$6`였다. 실제 계산 비용은 `$0.15682575`였고, 이를 이전
+measured list-price `$4.981546875`에 더한 누적 합은 `$5.138372625`다. D-052의 12-run
+`$14.85`와 core `$118.80` reserve는 calibration 뒤 변경될 수 있는 draft라 현재 승인
+합계에 넣지 않는다. Reserve는 예측
 지출이나 invoice·무료 사용 증거가 아니다. Project-wide `$150` 상한은 machine-enforced가
 아니며 runner가 강제하는 것은 각 suite의 `cost_limit_usd`다.
 
@@ -526,16 +533,23 @@ Memory utilization과 negative-transfer 원인은 자동 metric만으로 단정�
    reserve와 execution hash를 검토한다.
 6. Explicit invocation approval을 durable execution plan으로 저장하고 campaign/run start를
    journal에 fsync한 뒤 Babel+Moto D-054 completion panel을 실행하고 trace를 qualification한다.
-7. `no-memory-completion-gate-v1`과 20% headroom 결과를 보고 동일 모델·runtime에서 사용할
-   후속 fair budget을 별도 동결한다.
-8. 새 승인 아래 여섯 memory-development task의 no-memory baseline을 실행한다.
-9. Eligible failure의 append-only human review를 거쳐 memory index와 retrieval config를
+7. Immutable V4 resource evidence로 고정한 pyfakefs, PDM, Hugging Face Hub 세 task를
+   provisional `480k token / 40 model / 100 tool / 1,800초` no-memory suite에서 각각
+   한 번 실행한다. 새 suite, execution hash, 비용 검토와 별도 승인이 필요하다.
+8. 세 run 모두 terminal·qualified·official evaluator arrival, budget/infrastructure/
+   qualification error 0인지 확인한다. SCRR는 completion과 분리해 보고한다.
+9. 통과하면 전체 여섯 memory-development task를 포함하는 별도 no-memory calibration으로
+   task coverage를 확보한다. Provisional budget에서 나온 run은 최종 comparison denominator로
+   소급 편입하지 않는다.
+10. 세-task 및 여섯-task 관찰값과 전체 비용 계획을 검토한 뒤 모든 memory 조건에 동일한
+    fair budget을 동결하고, 새 승인 아래 no-memory baseline을 수집한다.
+11. Eligible failure의 append-only human review를 거쳐 memory index와 retrieval config를
    freeze한다.
-10. Condition/task/repetition 실행 순서를 seed 기반으로 섞는다.
-11. 각 run의 manifest, raw event, checkpoint, result, artifact와 verifier result를
+12. Condition/task/repetition 실행 순서를 seed 기반으로 섞는다.
+13. 각 run의 manifest, raw event, checkpoint, result, artifact와 verifier result를
     immutable하게 저장하고 `source_evidence_hash`로 결속한다.
-11. 사전 정의된 aggregation script로 paired result를 계산한다.
-12. Task-level matrix, aggregate, confidence interval, failure trace를 함께 공개한다.
+14. 사전 정의된 aggregation script로 paired result를 계산한다.
+15. Task-level matrix, aggregate, confidence interval, failure trace를 함께 공개한다.
 
 실패한 run을 동일 ID로 다시 실행해 결과를 덮어쓰지 않는다. Retry는 새 attempt ID로 연결한다.
 

@@ -493,9 +493,9 @@ cached input $0.075, output $4.50이며 별도 cache-write rate는 게시되지 
 SDK version, Git commit과 execution window를 provenance로 남긴다.
 
 D-054 completion panel은 600,000 run-total token과 25,000 output allowance를 모두 최고
-output rate로 잡아 run당 `$2.8125`, 두 run `$5.625`, suite cap `$6`를 사용한다. 이는 실제
-지출이나 invoice 예측이 아니다. 현재까지 측정된 list-price 비용 `$4.981546875`와 panel
-reserve의 수동 합은 `$10.606546875`다. D-052의 12-run `$14.85`와 96-run `$118.80`은
+output rate로 잡아 run당 `$2.8125`, 두 run `$5.625`, suite cap `$6`를 사용했다. 실제
+계산 비용은 `$0.15682575`였고 현재까지 측정된 list-price 합은 `$5.138372625`다.
+D-052의 12-run `$14.85`와 96-run `$118.80`은
 calibration 뒤 바뀔 수 있는 comparison draft라 현재 승인 합계에 넣지 않는다. Project-wide
 `$150` 상한은 machine-enforced guard가 아니며, 실행기는 각 suite의 `cost_limit_usd`만
 강제한다.
@@ -568,8 +568,9 @@ harness retry branch와 evaluator 도달을 검증했지만 natural recovery rat
 Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. Primary r2와 v4 pilot
 `run_d7207fbb06184dd3`까지 포함한 열두 paid pilot의 계산상 총액은 `$1.740790125`이고,
 첫 12-run development campaign의 계산 비용 `$1.3931925`를 더한 전체 list-price 합계는
-`$3.133982625`였다. V4 12-run campaign은 `$1.84756425`를 추가해 현재 전체
-list-price 합계가 `$4.981546875`다. 실제 invoice/free daily usage 적용 여부는 확인하지
+`$3.133982625`였다. V4 12-run campaign은 `$1.84756425`를 추가해 D-051 시점 합계가
+`$4.981546875`였다. D-055 completion panel의 `$0.15682575`를 더한 현재 사용량 기반
+list-price 합계는 `$5.138372625`다. 실제 invoice/free daily usage 적용 여부는 확인하지
 않았다. R5, r6, primary r1/r2, v4 pilot, 두 12-run campaign과 모든 소비된 hash는 자동
 재실행하지 않는다. 특히 21-call/200,000-token 계약으로 소비된
 `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
@@ -577,12 +578,15 @@ list-price 합계가 `$4.981546875`다. 실제 invoice/free daily usage 적용 �
 `dev-no-memory-v4-20260730-r1`은 immutable historical evidence다. 실행되지 않은 250k
 single-pilot config
 `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`은
-`superseded-unexecuted`로 보존되어 preflight에서 차단된다. Current paid candidate는
-`experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`이다. Babel control과
-Moto harder completion probe를 `no_memory`, 각 1회, 40 model/100 tool/600k token/1,800초로 실행한다.
-두 run 모두 evaluator에 도달해야 completion gate가 통과하며 hidden/SCRR success는 별도
-결과다. Memory human admission과 index build는 이 panel과 새 no-memory baseline 뒤까지
-보류한다.
+`superseded-unexecuted`로 보존되어 preflight에서 차단된다. D-054 completion config
+`experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`은 exact hash 승인 아래
+한 번 실행된 뒤 immutable로 닫혔다. Babel `run_685c492e34f84fef`와 Moto
+`run_0814be408332479e`는 모두 official hidden/regression/scope/safety와 trace qualification
+25/25를 통과했다. Completion/headroom gate는 2/2, budget·infrastructure·qualification
+error는 0이었다. 총 사용량은 172,249 input + 6,142 output token, 계산 비용은
+`$0.15682575`다. 이는 두 development-validation task의 runtime completion evidence이며
+memory 효과나 usable 12-task no-memory baseline은 아니다. Memory human admission과 index
+build는 작은 memory-development no-memory budget pilot 뒤까지 보류한다.
 
 OpenAI integration은 공식 [Responses API migration guide](https://developers.openai.com/api/docs/guides/migrate-to-responses),
 [function calling guide](https://developers.openai.com/api/docs/guides/function-calling),

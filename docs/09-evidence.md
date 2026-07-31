@@ -2,14 +2,14 @@
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
-## D-054 high-budget no-memory completion panel — offline contract only
+## D-055 high-budget no-memory completion panel — live-complete
 
 Cross-run memory admission is deferred because the V4 0/12 result contains nine pre-evaluator
 exact-request budget failures and is not a usable no-memory baseline. The read-only structured
 review proposal below remains historical candidate/hold evidence; no human review history or
 memory index was created.
 
-The new paid candidate is
+The consumed suite is
 [`dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`](../experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml).
 It freezes the two admitted development-validation tasks—Babel as the previously completed control
 and Moto as the harder state-accounting probe—at one `no_memory` repetition each. The model remains
@@ -20,26 +20,59 @@ Official OpenAI documentation was rechecked at 2026-07-30T22:25:47Z. The model p
 400,000-token context window, 272,000 max input and 128,000 max output; the configured 25,000
 per-call output is within that limit. Standard list prices remain input `$0.75/M`, cached input
 `$0.075/M`, output `$4.50/M`. PatchLoop's conservative formula therefore reserves `$2.8125` per
-run and `$5.625` for the panel under a `$6` suite cap. These are authorization reserves, not spend
-or invoice predictions.
+run and `$5.625` for the panel under a `$6` suite cap. The user approved execution hash
+`sha256:444cd7f2d00b3925a1227d1e9fc0436c68ba9700005b8416572c5fd654de1f78`,
+bound to commit `59621ec`, the two Docker image digests and OpenAI SDK 2.47.0. The runner consumed
+that authorization exactly once.
 
 `no-memory-completion-gate-v1` separates runtime completion from task correctness. It requires
 2/2 terminal rows, qualified traces and official evaluator arrival with zero infrastructure,
 qualification, diagnostic or budget-terminal failures. Hidden/SCRR success is reported but is not required:
 a hidden task failure after the evaluator ran is still completion evidence. A separate 20%
-headroom check uses 480,000 token, 32 model calls, 80 tool calls and 1,440 seconds per run before
-the result can inform a future fair-budget review. Passing it is necessary but not sufficient to
-freeze a comparison budget; a separate memory-development no-memory pilot and cost review remain.
+headroom check uses 480,000 token, 32 model calls, 80 tool calls and 1,440 seconds per run.
+
+| Task | Run | Usage | Cost | Outcome |
+| --- | --- | ---: | ---: | --- |
+| Babel #1042 | `run_685c492e34f84fef` | 65,652 input + 3,304 output; 8 model / 9 tool; 47,040 ms | `$0.064107` | official hidden/regression/scope/safety pass; qualification 25/25 |
+| Moto #7208 | `run_0814be408332479e` | 106,597 input + 2,838 output; 11 model / 14 tool; 95,593 ms | `$0.09271875` | official hidden/regression/scope/safety pass; qualification 25/25 |
+
+The completion and panel-headroom gates passed 2/2. Infrastructure, qualification, diagnostic and
+budget-terminal counts are all zero; both tasks also happened to pass SCRR. Across 19 generation
+events, exact input and total token counts matched provider usage 19/19. Every response completed
+with truncation disabled, `store=false`, no `previous_response_id`, no incomplete reason and no
+cached input. Each run has one prepared patch, one applied mutation and one accepted submission;
+there is no duplicate mutation evidence.
+
+Actual calculated list-price cost is `$0.15682575`. The immutable experiment result hash is
+`sha256:a540ff52f271cd22c58ca561e559d9608ac50b99889a523f8a9a3d80cf8822ba`;
+the hash-chained `CampaignCompleted` event records the same hash. The experiment ID and approval
+hash are now preflight-immutable.
+
+The portable
+[completion report](../reports/live-pilot/dev-validation-gpt54mini-completion-v6-20260731-r1.json),
+[Babel submitted diff](../reports/live-pilot/artifacts/run_685c492e34f84fef-submitted.patch) and
+[Moto submitted diff](../reports/live-pilot/artifacts/run_0814be408332479e-submitted.patch)
+preserve the public claims boundary. The raw plan, journal, result and qualification bytes remain
+hash-bound local `.patchloop` artifacts; a clean checkout cannot independently rehash those full
+raw traces.
 
 The unexecuted 250k single pilot
 `dev-validation-gpt54mini-token-tail-v5-20260730-r1` is preserved as
 `superseded-unexecuted`; preflight rejects it with `SUPERSEDED_SUITE`. The memory-development and
-core 250k templates remain pending drafts and are not authorized. No provider call, experiment
-result or completion measurement was made in this checkpoint.
+core 250k templates remain pending drafts and are not authorized. The successful n=2 panel proves
+that this runtime can complete these two development-validation tasks under the 600k ceiling. It
+does not estimate six-task baseline SCRR, failure distribution, memory benefit or a core budget.
+Both traces had zero token-tail admission blocks and zero semantic replay. A 480k token / 40 model /
+100 tool / 1,800 second, three-task memory-development pilot is only a provisional next candidate.
+Its exact tasks are frozen from the immutable V4 campaign by resource maxima: pyfakefs for observed
+total-token and wall-clock maxima, PDM for model-call maximum, and Hugging Face Hub for tool-call
+maximum among budget-terminal tasks, with task ID ascending as the tie-break. It requires a new
+suite, execution hash, cost review and explicit approval.
 
-Current-tree verification partitioned every test file into four isolated groups and collected
-658 tests: 655 passed and 3 existing environment/evidence-dependent tests skipped. Repository-wide
-Ruff and `git diff --check` passed.
+Pre-run commit `59621ec` partitioned every test file into four isolated groups and collected
+658 tests: 655 passed and 3 existing environment/evidence-dependent tests skipped. The post-run
+immutable closure then passed 218 tests across experiment, trace-qualification and portable
+live-evidence coverage; repository-wide Ruff and `git diff --check` passed.
 
 ## Structured memory review proposal — human admission still pending
 
@@ -70,9 +103,9 @@ Validation reported three sources, two groups, one candidate, one hold, nine exc
 passing leak scan. It also reported `human_review_status=pending`,
 `review_history_written=false` and `memory_index_built=false`. No provider call was made.
 
-Current-tree regression now contains 658 collected tests: 655 passed and 3 existing
-environment/evidence-dependent tests skipped across the four isolated groups. Repository-wide
-Ruff and `git diff --check` passed.
+Pre-run regression evidence contains 658 collected tests: 655 passed and 3 existing
+environment/evidence-dependent tests skipped across the four isolated groups. Post-run closure
+validation is reported in the D-055 section above.
 The remaining memory gate was append-only human approval bound to proposal/rule/group provenance,
 a group-aware builder and an exact embedding revision. D-054 now defers that work until the
 completion panel and a new no-memory baseline establish an unconfounded source set.
@@ -128,11 +161,11 @@ The experiments consumed under the 21-call/200,000-token contract
 `dev-no-memory-v4-20260730-r1` remain immutable and are not requalified under V5.
 
 The D-052 draft reserves were `$1.2375` for one run, `$14.85` for 12 runs and `$118.80`
-for 96 runs. They are not current authorizations. D-054 replaces only the pilot calibration with
-two `$2.8125` reserves, or `$5.625`; measured list-price through D-051 plus this panel is the
-current manual planning total `$10.606546875`. Reserves are neither spend nor invoice predictions.
-The project-wide `$150` cap is not machine-enforced; only suite-specific `cost_limit_usd` is
-enforced.
+for 96 runs. They are not current authorizations. D-054 reserved two `$2.8125` runs, or
+`$5.625`, but the completed panel's calculated cost was `$0.15682575`. Adding it to the prior
+measured list-price total gives `$5.138372625`. Reserves are neither spend nor invoice
+predictions. The project-wide `$150` cap is not machine-enforced; only suite-specific
+`cost_limit_usd` is enforced.
 
 ## Historical D-045 200k future-primary contract
 
@@ -213,8 +246,8 @@ All consumed Terra pilot IDs, model-candidate mini r1/r2, D-037 r3-r6, primary r
 experiment IDs and v4 pilot `run_d7207fbb06184dd3` are now preflight-immutable even if an approval
 hash is supplied. No paid suite is currently approved. D-052 later closed the token-aware
 corrective-tail design offline without a provider call. The maintainer-assisted structured proposal
-is now validated, but D-054 defers human admission/group-aware index construction. The current paid
-gate is the separately approved two-task completion panel; it has not run.
+is now validated, but D-054 defers human admission/group-aware index construction. The later D-055
+two-task completion panel ran once and passed; it is also preflight-immutable.
 
 Offline verification collected 571 tests and completed 569 passes with 2 existing skips. The three
 directly affected runtime/qualification/experiment files contributed 238 passes. Repository-wide
@@ -1893,8 +1926,9 @@ a valid baseline. D-052 has now completed the token-aware corrective-tail and fu
 contract offline under `phase-evidence-v5`; it made no provider call. A leak-safe
 maintainer-assisted proposal now deduplicates the two tox repetitions and holds the unresolved
 Loguru source. Memory admission is deferred. The next paid step is a separately approved
-Babel+Moto high-budget completion panel, followed by a new no-memory budget decision and baseline.
-No such live run is currently approved, and no 96-run core campaign has been executed.
+small memory-development no-memory budget pilot; the Babel+Moto high-budget panel has already
+completed 2/2 and is immutable. No later live run is currently approved, and no 96-run core
+campaign has been executed.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated

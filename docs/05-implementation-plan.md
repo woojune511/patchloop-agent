@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-054 high-budget no-memory completion panel offline-complete;
-clean no-call preflight and separate live approval pending**
+현재 milestone: **D-055 high-budget no-memory completion panel live-complete;
+fair no-memory baseline budget decision pending**
 
 2026-07-31 구현 스냅샷:
 
@@ -13,7 +13,7 @@ clean no-call preflight and separate live approval pending**
 | Phase 3 state machine | tool v2/context v5/D-052 token-tail hardening offline-complete | Rejected-patch rehydration, durable investigation ledger, semantic replay, token-aware read/search admission과 request-by-request qualification 재계산 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | high-budget two-task completion contract implemented; valid baseline pending | Babel+Moto, `no_memory`, 40/100/600k/1,800초, $6 cap과 completion/headroom gate를 offline 검증; provider run과 usable no-memory baseline은 아직 없음 |
+| Phase 6 evaluation | high-budget two-task completion live gate passed; valid baseline pending | Babel+Moto scope-compliant success 2/2, qualification·completion/headroom pass, budget error 0, `$0.15682575`; usable no-memory baseline은 아직 없음 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -82,8 +82,9 @@ usable no-memory baseline은 아직 없다. D-052에서 token-aware corrective t
 250,000-token contract를 offline 검증했다. 세 task failure의 structured review proposal은
 두 semantic group으로 검증됐지만, budget-confounded baseline에서 memory를 먼저 승인하지
 않기로 했다. D-054는 실행되지 않은 250k single pilot을 supersede하고 Babel control과 Moto
-harder completion probe의 600,000-token no-memory completion panel을 별도 계약으로 고정했다. 다음은
-clean no-call preflight와 별도 승인된 두-run panel이다.
+harder completion probe의 600,000-token no-memory completion panel을 별도 계약으로 고정했다.
+그 panel은 exact hash 승인 아래 한 번 실행돼 scope-compliant success 2/2와 qualification을 통과했다.
+다음은 memory-development의 작은 no-memory budget pilot 계약이다.
 
 동결 evidence:
 
@@ -109,7 +110,7 @@ clean no-call preflight와 별도 승인된 두-run panel이다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live trace gate — v5 offline contract frozen; review and pilot pending
+## Current live trace gate — completion live gate passed; baseline pilot pending
 
 목표: 각 paid invocation 전에 실행 계약과 비용 경계를 machine-check하고, 단일 pilot의 완전한
 trace를 증명한 뒤에만 12-run development campaign을 연다.
@@ -137,9 +138,9 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 10c | completed; diagnostic only | 새 ID의 memory-development 6 task × 2회, `no_memory`, $20 cap | 12/12 terminal·qualified, evaluator 3/12, SCRR 0/12; 9 budget-confounded agent failure + 3 hidden task failure |
 | 11a | completed (offline), no provider call | D-052 `phase-evidence-v5` token projection과 future 250,000-token contract | Pre/post-generation 5/4-turn projection, equality cutoff, read/search-only admission block, strict exact-request guard와 historical non-reinterpretation 검증 |
 | 11b | proposal validated; admission deferred | Append-only failure review와 memory build | Budget-confounded 9개 제외; task failure 3개를 public evidence만으로 두 group에 결속. Tox 2회는 candidate rule 1개, Loguru는 causal uncertainty로 hold; no-memory completion 전에는 human approval/index build를 진행하지 않음 |
-| 11c | offline-complete; provider not called | D-054 high-budget no-memory completion panel | Babel+Moto 각 1회, 40 model/100 tool/600k token/1,800초, $6 cap; 2/2 evaluator arrival와 budget terminal 0을 SCRR과 분리한 machine gate |
-| 11d | pending | Clean no-call preflight와 별도 live approval | Exact committed source/Docker/SDK/pricing/execution hash를 제시한 뒤에만 provider call; 결과로 fair comparison budget을 결정 |
-| 11e | not started | 새 no-memory baseline | Completion panel과 budget freeze 뒤 새 suite/hash로 실행; 그 결과 전에는 memory approval/index/core 금지 |
+| 11c | completed; immutable live evidence | D-054/D-055 high-budget no-memory completion panel | Babel+Moto scope-compliant success 2/2, qualification 25/25·completion/headroom pass, budget error 0, `$0.15682575`; exact hash와 experiment ID 재실행 금지 |
+| 11d | completed | Clean preflight와 separate live approval | Commit `59621ec`, Docker digest, SDK 2.47.0과 exact execution hash를 결속해 두 run을 한 번 실행 |
+| 11e | pending | 작은 memory-development no-memory budget pilot | V4 resource maxima로 고정한 pyfakefs/PDM/HF Hub를 480k token, 40 model, 100 tool, 1,800초 후보에서 각 1회 별도 suite/hash/승인으로 검증; 그 결과 전에는 memory approval/index/core 금지 |
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.
@@ -346,13 +347,13 @@ margin이다. Historical D-045 primary contract의 run reserve는 25,000/200,000
 `$1.0125`, 12-run은 `$12.15`, 96-run은 `$97.20`이었다. D-052 comparison draft의 frozen
 repository-rate reserve는 25,000/250,000에서 run당 `$1.2375`, 12-run `$14.85`, 96-run
 `$118.80`이었다. D-054 completion calibration은 25,000/600,000에서 run당 `$2.8125`,
-두 run `$5.625`, suite cap `$6`를 사용한다. 현재까지 measured list-price
-`$4.981546875`와 panel reserve의 수동 합은 `$10.606546875`다. 아직 freeze되지 않은
+두 run `$5.625`, suite cap `$6`를 사용했다. 실제 두 run은 `$0.15682575`였고 현재까지
+measured list-price 합은 `$5.138372625`다. 아직 freeze되지 않은
 12-run/core reserve는 이 현재 승인 합계에 넣지 않는다. Reserve는 spend나 invoice
 prediction이 아니며 project-wide `$150` cap은 machine-enforced가 아니다. Runner는
 suite별 `cost_limit_usd`만 강제한다.
 
-### Historical evidence preserved; D-054 completion preflight pending
+### Historical evidence preserved; D-054 completion live gate passed
 
 - 관련 unit/integration test와 Ruff가 통과한다.
 - Approval 없는 `--preflight-only`가 API call 없이 execution hash와 blocker를 출력한다.
@@ -403,18 +404,18 @@ suite별 `cost_limit_usd`만 강제한다.
 - D-054에서 memory admission을 의도적으로 뒤로 미뤘다. 실행되지 않은
   `dev-validation-gpt54mini-token-tail-v5-20260730-r1`은
   `superseded-unexecuted`이며 preflight가 실행을 거부한다.
-- 현재 paid candidate는
-  `experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml` 한 개다.
-  Babel control과 Moto harder completion probe를 각 1회 실행하며 `40/100/600,000/1,800초`,
-  per-call output 25,000, conservative reserve `$5.625`, suite cap `$6`를 사용한다.
+- `experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`은 승인된 exact hash로
+  한 번 실행된 immutable evidence다. Babel과 Moto는 각각 8/11 model call,
+  65,652/106,597 input token으로 official evaluator의 scope-compliant success와
+  qualification 25/25를 통과했다.
 - `no-memory-completion-gate-v1`은 두 run 모두 terminal·qualified이고 official evaluator에
   도달하며 infrastructure/qualification/budget terminal이 0일 때만 통과한다. Hidden/SCRR
   성공은 별도 결과이고 gate 필수조건이 아니다. 두 run 모두 480k token, 32 model call,
   80 tool call, 1,440초 안이면 후속 fair-budget 검토 입력이 된다. 이는 freeze의
   필요조건일 뿐 충분조건이 아니다.
-- 다음 work item은 이 panel의 clean no-call preflight와 exact execution hash 생성이다.
-  Provider call은 사용자의 별도 `$6` 승인 뒤에만 가능하다. Memory human admission,
-  group-aware builder와 새 no-memory baseline은 panel 결과 뒤에 재개한다.
+- 다음 work item은 이 두-task 결과를 직접 일반화하지 않고, memory-development의 작은
+  no-memory 표본에서 후보 budget과 completion을 새 suite/hash/승인으로 검증하는 것이다.
+  Memory human admission과 group-aware builder는 그 baseline 결과 뒤에 재개한다.
 - Hard-crash journal을 안전하게 inspect/resume하는 절차는 아직 exit gate를 통과하지 않았다.
 
 2026-07-28 첫 paid pilot `run_c6f13dd9a1a1472d`는 ready preflight 뒤 `$0.34025875`를

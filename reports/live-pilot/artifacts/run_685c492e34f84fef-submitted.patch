@@ -1,0 +1,23 @@
+diff --git a/babel/numbers.py b/babel/numbers.py
+index 01f1ca7..83a4221 100644
+--- a/babel/numbers.py
++++ b/babel/numbers.py
+@@ -1098,8 +1098,17 @@ def parse_decimal(
+     except decimal.InvalidOperation as exc:
+         raise NumberFormatError(f"{string!r} is not a valid decimal number") from exc
+     if strict and group_symbol in string:
++        def strip_insignificant_zeroes(value: str) -> str:
++            integer, sep, fraction = value.partition(decimal_symbol)
++            if not sep:
++                return value
++            fraction = fraction.rstrip('0')
++            if not fraction:
++                return integer
++            return integer + sep + fraction
++
+         proper = format_decimal(parsed, locale=locale, decimal_quantization=False, numbering_system=numbering_system)
+-        if string != proper and string.rstrip('0') != (proper + decimal_symbol):
++        if strip_insignificant_zeroes(string) != strip_insignificant_zeroes(proper):
+             try:
+                 parsed_alt = decimal.Decimal(string.replace(decimal_symbol, '')
+                                                    .replace(group_symbol, '.'))

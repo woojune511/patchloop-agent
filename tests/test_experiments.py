@@ -318,6 +318,34 @@ def test_unexecuted_250k_v5_pilot_is_superseded_and_never_runnable(
     }
 
 
+def test_consumed_completion_panel_is_loadable_but_never_runnable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+
+    suite = eval_runner.load_suite(COMPLETION_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(COMPLETION_PILOT_SUITE)
+    approved = eval_runner.preflight_suite(
+        COMPLETION_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert suite.tasks == [
+        (
+            "tasks/dev-validation/"
+            "babel-strict-grouped-decimal-trailing-zeroes/public.yaml"
+        ),
+        "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+    ]
+    assert suite.budget == eval_runner.GPT54_MINI_COMPLETION_BUDGET
+    assert approved["ready"] is False
+    assert {
+        row["code"] for row in approved["blockers"]
+    } == {"HISTORICAL_SUITE_IMMUTABLE"}
+
+
 def test_consumed_no_memory_campaign_is_never_runnable(
     tmp_path: Path,
     monkeypatch,

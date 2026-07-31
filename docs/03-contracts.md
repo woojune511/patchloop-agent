@@ -262,7 +262,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | Purpose | Exact contract |
 | --- | --- |
 | `offline-smoke` | `model=mock`; API 호출 없음 |
-| `development-validation-live-pilot` | Current D-054: Babel #1042 + Moto #7208, `no_memory`, task별 repetition 1, 총 2 run, $6 상한. Historical single-task IDs는 당시 계약으로만 읽음 |
+| `development-validation-live-pilot` | Consumed D-054: Babel #1042 + Moto #7208, `no_memory`, task별 repetition 1, 총 2 run, $6 상한. Historical IDs는 당시 task/budget 계약으로만 읽고 재실행 금지 |
 | `development-validation-model-candidate-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, dated candidate model, $2 상한; primary campaign gate와 분리된 historical diagnostic lane |
 | `memory-development-no-memory` | frozen memory-development 여섯 task, `no_memory`, repetition 2, 총 12 run, $20 상한 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
@@ -312,7 +312,7 @@ cost_limit_usd: 6
 reserve가 아니다. D-052 이전에 소비된 primary/development suite의 21/200,000 계약과
 historical diagnostic suite의 20-call 의미는 변경하지 않는다.
 
-Current completion panel task set은 Babel과 Moto의 위 두 canonical path로 exact match한다.
+Consumed completion panel task set은 Babel과 Moto의 위 두 canonical path로 exact match한다.
 과거 single-task pilot ID와 실행되지 않았지만 superseded된 D-052 v5 ID는 Babel path와
 당시 budget을 그대로 읽어 evidence identity를 보존한다.
 Current 600k completion qualification은 approved execution plan의 task row가 suite task와
@@ -375,8 +375,9 @@ D-054 completion ceiling의 authorization reserve는 run당
 `(600,000 + 25,000) × $4.50/M = $2.8125`, 두 run `$5.625`이며 suite cap은 `$6`다.
 이는 실제 spend나 invoice prediction이 아니다. D-052 comparison draft의 12-run
 `$14.85`와 96-run `$118.80`은 calibration 뒤 변경될 수 있으므로 현재 paid authorization
-합계로 보지 않는다. 지금까지 측정된 list-price `$4.981546875`와 completion panel reserve를
-합하면 `$10.606546875`다. Project-wide `$150` 상한은 machine-enforced field가 아니며,
+합계로 보지 않는다. Completion panel의 실제 계산 비용은 `$0.15682575`이고, 지금까지
+측정된 list-price 합은 `$5.138372625`다. Project-wide `$150` 상한은 machine-enforced
+field가 아니며,
 runner는 각 suite의 `cost_limit_usd`만 강제한다.
 
 과거 Terra r1-r3 experiment ID와 r3 계약
@@ -400,14 +401,16 @@ D-052의 실행되지 않은 single-pilot template
 `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`
 (`dev-validation-gpt54mini-token-tail-v5-20260730-r1`)은 D-054가
 `superseded-unexecuted`로 보존하며 preflight에서 `SUPERSEDED_SUITE`로 차단한다.
-Current paid candidate는
-`experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`이다.
+`experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`도 exact hash로 한 번
+실행된 뒤 `HISTORICAL_SUITE_IMMUTABLE`로 닫혔다. 같은 experiment ID와 approval hash를
+다시 제공해도 실행할 수 없다.
 `experiments/dev-no-memory-v5.template.yaml` (`dev-no-memory-v5-20260730-r1`)와
 `experiments/core.template.yaml`의 250k 값은 calibration 결과 전 pending draft다.
 Development template의 `pilot_run_id`는 `null`이라 accepted v5 pilot 전에는 실행할 수
 없고, core template의 embedding revision도 freeze 전 marker를 유지하므로 core 실행을
-허용하지 않는다. 다음 gate는 completion panel의 clean no-call preflight와 별도 승인이다.
-Memory human admission과 index build도 panel과 새 baseline 뒤까지 보류한다. 이미 소비된
+허용하지 않는다. 다음 paid candidate는 아직 만들지 않았다. 다음 gate는
+memory-development의 작은 no-memory budget pilot을 별도 suite/hash로 설계하는 것이다.
+Memory human admission과 index build도 새 baseline 뒤까지 보류한다. 이미 소비된
 mini model-candidate r1/r2와 D-037 r3-r6 diagnostic suite도
 `HISTORICAL_SUITE_IMMUTABLE`이며 approval/hash를 다시 제공해도 실행할 수 없다.
 

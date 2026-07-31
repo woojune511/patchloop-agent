@@ -214,7 +214,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   pilot is one development-validation task, not a development/core campaign result.
 - `experiment-v2` now distinguishes offline smoke, development-validation live pilot,
   memory-development no-memory campaign and core purpose. Historical single-task pilots retain
-  their original Babel-only and $2 contracts. Current D-054 instead fixes Babel+Moto to
+  their original Babel-only and $2 contracts. Consumed D-054 instead fixed Babel+Moto to
   `no_memory` × 1 each, a 600,000-token diagnostic ceiling and a $6 suite cap. The six-task
   development and core templates remain unexecuted pending drafts and are not authorized.
   Historical D-045 fixed then-future primary runs to `gpt-5.4-mini-2026-03-17`,
@@ -373,9 +373,10 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   but made no provider call. A hash-bound, leak-scanned maintainer-assisted review proposal now
   separates one tox candidate group from one unresolved Loguru hold group. It is not automatic
   PatchLoop-agent self-review evidence. Human approval and group-aware index admission remain open
-  and are intentionally deferred. D-054 supersedes the unexecuted 250k single pilot with a
-  two-task, 600k no-memory completion panel. That panel is implemented and tested offline but has
-  made no provider call; the next paid step is not another 12-run campaign.
+  and are intentionally deferred. D-054 superseded the unexecuted 250k single pilot with a
+  two-task, 600k no-memory completion panel. The separately approved provider campaign passed
+  official evaluation, qualification and completion/headroom 2/2 for `$0.15682575`. It is
+  immutable two-task calibration evidence, not a no-memory baseline or memory-effect result.
 - `model-generation-block-v2` covers admission to the next provider generation. A model response
   whose measured duration itself crosses the wall limit and a later call inside the same
   multi-tool response that encounters the tool cap still terminate through the older
@@ -384,9 +385,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
 - The 600,000-token completion ceiling is cumulative across stateless turns; it is not a
   single-request context size. PatchLoop counts each exact request and disables provider
   truncation, but it does not yet enforce the model page's 272,000-token max-input limit with a
-  separate local terminal schema. Current context construction is bounded and prior requests were
-  far smaller, but an oversized future request could still be rejected by the provider. Such a run
-  would fail the completion gate rather than count as a completed baseline.
+  separate local terminal schema. D-054's maximum exact request was 11,832 tokens for Babel and
+  16,927 for Moto, so this boundary was not exercised. An oversized future request could still be
+  rejected by the provider and would fail its gate rather than count as a completed baseline.
 - The official `patchloop evaluate` CLI recomputes the full preflight and execution hash before
   issuing live capability. The lower-level host-trusted
   `issue_live_execution_authorization()` helper does not independently reconstruct the entire
@@ -405,8 +406,9 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   The hold explicitly means public evidence did not identify a defensible causal rule. Calibration
   traces are not eligible. The V5 budget and token-aware admission contract do not prove that a
   future run will finish or that the next 12-run collection will be a usable baseline. The D-054
-  600k ceiling is likewise a two-task diagnostic, not a frozen comparison budget or performance
-  baseline. Even 2/2 completion cannot establish a population success rate.
+  600k ceiling completed 2/2, but it remains a two-task diagnostic rather than a frozen comparison
+  budget or performance baseline. It did not exercise the token-tail admission block or semantic
+  replay. Even 2/2 SCRR cannot establish a population success rate.
 - The checked-in proposal binds the portable campaign report and submitted patches, but full
   `memory validate-review` also reopens the ignored local failure, qualification, event and state
   artifacts. A clean checkout without that exported runtime evidence cannot reproduce the full
@@ -520,11 +522,12 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   runs' calculated list-price total was `$0.77412075`. Corrective primary r2 and v4 pilot
   `run_d7207fbb06184dd3` bring twelve paid pilots to `$1.740790125`; adding the first 12-run
   campaign gives 24 paid run attempts and `$3.133982625`. The v4 12-run campaign adds
-  `$1.84756425`, for 36 paid run attempts and `$4.981546875`. These are usage-based estimates, not
-  verified invoice charges.
-- At frozen repository rates, D-054 reserves `$2.8125` per completion run and `$5.625` for the
-  two-run panel. Adding that reserve to measured `$4.981546875` gives the current manual planning
-  total `$10.606546875`. D-052's `$14.85` development and `$118.80` core figures remain unfrozen
+  `$1.84756425`, for 36 paid run attempts and `$4.981546875`. D-054 adds two completed attempts and
+  `$0.15682575`, bringing the usage-derived list-price total to `$5.138372625`. These are estimates,
+  not verified invoice charges.
+- At frozen repository rates, D-054 reserved `$2.8125` per completion run and `$5.625` for the
+  two-run panel, but measured only `$0.15682575`. D-052's `$14.85` development and `$118.80` core
+  figures remain unfrozen
   drafts and are not current paid authorizations. None of these values is measured spend or an
   invoice forecast. The project-wide `$150` cap is not machine-enforced; the runner enforces
   suite-specific `cost_limit_usd`, so an operator must check the global total separately before

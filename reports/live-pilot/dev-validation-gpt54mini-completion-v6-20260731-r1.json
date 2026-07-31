@@ -1,0 +1,227 @@
+{
+  "schema_version": "completion-panel-evidence-v1",
+  "recorded_at": "2026-07-30T23:46:09.137527Z",
+  "experiment_id": "dev-validation-gpt54mini-completion-v6-20260731-r1",
+  "purpose": "development-validation-live-pilot",
+  "config_path": "experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml",
+  "harness_commit": "59621ecfa8538ecf693d3d5075ae84937b7a777d",
+  "execution_hash": "sha256:444cd7f2d00b3925a1227d1e9fc0436c68ba9700005b8416572c5fd654de1f78",
+  "suite_hash": "sha256:e4e653acf808881cb5ebb2104f9da67b0487ceb0df67a6bcc27160354d93fc67",
+  "schedule_hash": "sha256:4bf8f6361ff7b64d77022983d597289f483f7dead96f0abccd478d65c5da73f1",
+  "execution_plan_hash": "sha256:4acaffe21cf6a4d0f7971d2fe1b4bf7a38d3a68311d33c6d61a4fd6c95f865d9",
+  "result_hash": "sha256:a540ff52f271cd22c58ca561e559d9608ac50b99889a523f8a9a3d80cf8822ba",
+  "journal_final_event_hash": "sha256:2d9190971b5c8dfbd7db7c6a05c696aebc0852c90d0273cce060d7f34e8f9ade",
+  "model": {
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "store": false,
+    "previous_response_id_used": false
+  },
+  "environment": {
+    "agent_and_evaluator_images": [
+      "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+      "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+    ],
+    "git_clean_at_execution": true,
+    "custom_openai_base_url_present": false
+  },
+  "budget": {
+    "max_model_calls": 40,
+    "max_tool_calls": 100,
+    "max_total_tokens": 600000,
+    "wall_clock_timeout_seconds": 1800,
+    "authorization_reserve_usd": 5.625,
+    "suite_cost_limit_usd": 6.0
+  },
+  "completion_gate": {
+    "schema_version": "no-memory-completion-gate-v1",
+    "passed": true,
+    "expected_runs": 2,
+    "terminal_runs": 2,
+    "qualified_runs": 2,
+    "evaluator_reached_runs": 2,
+    "official_evaluator_runs": 2,
+    "task_successes": 2,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "budget_terminal_runs": 0,
+    "panel_headroom": {
+      "passed": true,
+      "max_total_tokens": 480000,
+      "max_model_calls": 32,
+      "max_tool_calls": 80,
+      "max_wall_clock_ms": 1440000,
+      "sufficient_to_freeze_comparison_budget": false
+    }
+  },
+  "totals": {
+    "input_tokens": 172249,
+    "cached_input_tokens": 0,
+    "output_tokens": 6142,
+    "reasoning_output_tokens": 4938,
+    "model_calls": 19,
+    "input_token_count_calls": 19,
+    "tool_calls": 23,
+    "model_cost_usd": 0.15682575
+  },
+  "runs": [
+    {
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "run_id": "run_685c492e34f84fef",
+      "outcome_kind": "resolved",
+      "official": true,
+      "scope_compliant_success": true,
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "usage": {
+        "input_tokens": 65652,
+        "cached_input_tokens": 0,
+        "output_tokens": 3304,
+        "reasoning_output_tokens": 2755,
+        "model_calls": 8,
+        "input_token_count_calls": 8,
+        "tool_calls": 9,
+        "wall_clock_ms": 47040,
+        "model_cost_usd": 0.064107,
+        "maximum_exact_input_tokens": 11832
+      },
+      "telemetry": {
+        "input_count_matches": 8,
+        "total_count_matches": 8,
+        "completed_responses": 8,
+        "incomplete_responses": 0,
+        "truncation_disabled_responses": 8
+      },
+      "lifecycle": {
+        "patch_prepared": 1,
+        "patch_applied": 1,
+        "tool_failures": 0,
+        "submission_attempted": 1,
+        "submission_accepted": 1,
+        "duplicate_mutation_observed": false
+      },
+      "submitted_patch_sha256": "sha256:4557ee5f1efc546ad328417a0f7b9f5c03602e4db310afa0691a08386d733477",
+      "qualification": {
+        "schema_version": "trace-qualification-v2",
+        "passed_checks": 25,
+        "total_checks": 25,
+        "leakage_scan_passed": true,
+        "memory_candidate_eligible": false,
+        "qualification_hash": "sha256:414de2a3ea397f14a69ad2e85a279be71b39363139ec582d193fb791301bd3e9"
+      }
+    },
+    {
+      "task_id": "moto-query-scanned-count",
+      "run_id": "run_0814be408332479e",
+      "outcome_kind": "resolved",
+      "official": true,
+      "scope_compliant_success": true,
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "usage": {
+        "input_tokens": 106597,
+        "cached_input_tokens": 0,
+        "output_tokens": 2838,
+        "reasoning_output_tokens": 2183,
+        "model_calls": 11,
+        "input_token_count_calls": 11,
+        "tool_calls": 14,
+        "wall_clock_ms": 95593,
+        "model_cost_usd": 0.09271875,
+        "maximum_exact_input_tokens": 16927
+      },
+      "telemetry": {
+        "input_count_matches": 11,
+        "total_count_matches": 11,
+        "completed_responses": 11,
+        "incomplete_responses": 0,
+        "truncation_disabled_responses": 11
+      },
+      "lifecycle": {
+        "patch_prepared": 1,
+        "patch_applied": 1,
+        "tool_failures": 0,
+        "submission_attempted": 1,
+        "submission_accepted": 1,
+        "duplicate_mutation_observed": false
+      },
+      "submitted_patch_sha256": "sha256:98344ffe842945e03086c72bee2a606e123f3e15b6126b18288a46dd8b35a586",
+      "qualification": {
+        "schema_version": "trace-qualification-v2",
+        "passed_checks": 25,
+        "total_checks": 25,
+        "leakage_scan_passed": true,
+        "memory_candidate_eligible": false,
+        "qualification_hash": "sha256:956ed1ff7864709bfecd9b97ba607bdfb9cd13eb1f30806e8540b0a1574c265a"
+      }
+    }
+  ],
+  "branch_activity": {
+    "token_tail_admission_blocks": 0,
+    "semantic_replays": 0
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; raw provider payloads and evaluator-only details are not bundled in a clean checkout.",
+    "portable_artifacts": "Only the two public-source final submitted diffs are bundled.",
+    "provider_private_exclusion": "Provider request and response bodies, secrets, private task specifications, hidden assertions and evaluator-only payloads are excluded."
+  },
+  "portable_artifacts": [
+    {
+      "role": "final-submitted-git-diff-babel",
+      "path": "reports/live-pilot/artifacts/run_685c492e34f84fef-submitted.patch",
+      "bytes": 1148,
+      "sha256": "sha256:4557ee5f1efc546ad328417a0f7b9f5c03602e4db310afa0691a08386d733477"
+    },
+    {
+      "role": "final-submitted-git-diff-moto",
+      "path": "reports/live-pilot/artifacts/run_0814be408332479e-submitted.patch",
+      "bytes": 783,
+      "sha256": "sha256:98344ffe842945e03086c72bee2a606e123f3e15b6126b18288a46dd8b35a586"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "path": ".patchloop/experiments/dev-validation-gpt54mini-completion-v6-20260731-r1.json",
+      "bytes": 19550,
+      "sha256": "sha256:a540ff52f271cd22c58ca561e559d9608ac50b99889a523f8a9a3d80cf8822ba"
+    },
+    {
+      "path": ".patchloop/experiments/journals/dev-validation-gpt54mini-completion-v6-20260731-r1.jsonl",
+      "bytes": 4226,
+      "sha256": "sha256:01085ff545a63b7e013f15e1d4bc461a45ecf8c608a08458b11fee10722343ed"
+    },
+    {
+      "path": ".patchloop/experiments/plans/444cd7f2d00b3925a1227d1e9fc0436c68ba9700005b8416572c5fd654de1f78.json",
+      "bytes": 7219,
+      "sha256": "sha256:751a71d6b1d8f7a830c7c5beefe23d0312ada3567e7628ce628a73ce64b6d193"
+    },
+    {
+      "path": ".patchloop/qualifications/run_685c492e34f84fef.json",
+      "bytes": 9419,
+      "sha256": "sha256:ed5843ed6f897c6a88f0be07e5b8ccaeb9a6b8361ee2d3adf4de2eb8feff5274"
+    },
+    {
+      "path": ".patchloop/qualifications/run_0814be408332479e.json",
+      "bytes": 9685,
+      "sha256": "sha256:756c6e9a7238d81a4e1270b4389951908907a1a9c3ddd53683860974c2aa3d0b"
+    }
+  ],
+  "interpretation": {
+    "established": "The no-memory agent completed and officially resolved both development-validation tasks without budget, infrastructure, qualification, truncation, or duplicate-mutation failure.",
+    "not_established": "This two-task panel does not establish a six-task no-memory baseline, memory benefit, held-out performance, or a fair core comparison budget.",
+    "next_gate": "Run a separately versioned and approved resource-stratified memory-development no-memory pilot before memory admission or comparison-budget freeze."
+  }
+}

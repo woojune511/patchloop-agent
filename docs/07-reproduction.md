@@ -105,13 +105,17 @@ is preserved separately under `reports/live-pilot/`:
   `phase-evidence-v4` development-validation pilot; inspect only, never rerun
 - `experiments/dev-no-memory-v4.template.yaml`: consumed second six-task `no_memory` × 2
   campaign; terminal inspection only, never rerun
+- `experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml`: consumed D-054/D-055
+  Babel+Moto completion panel; 2/2 scope-compliant success and qualification, inspection only,
+  never rerun
 
-Future D-052 contracts are checked in but have not made a provider call:
+Superseded and pending D-052 contracts remain checked in for provenance:
 
 - `experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml`:
-  `dev-validation-gpt54mini-token-tail-v5-20260730-r1`, single v5 pilot
+  unexecuted `dev-validation-gpt54mini-token-tail-v5-20260730-r1`, now
+  `superseded-unexecuted`
 - `experiments/dev-no-memory-v5.template.yaml`: `dev-no-memory-v5-20260730-r1`;
-  `pilot_run_id: null` blocks it until an accepted v5 pilot is explicitly bound
+  `pilot_run_id: null` and the unfrozen budget keep it non-executable
 - `experiments/core.template.yaml`: future 96-run v5 matrix; the embedding revision remains a
   freeze marker, so this is not executable core authorization
 
@@ -119,33 +123,39 @@ The four experiment identities consumed under the 21-call/200,000-token contract
 `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,
 `dev-validation-gpt54mini-investigation-v4-20260730-r1` and
 `dev-no-memory-v4-20260730-r1` are immutable historical evidence. Do not edit, rebind or rerun
-them under the D-052 budget.
+them under the D-052 budget. The D-055 experiment
+`dev-validation-gpt54mini-completion-v6-20260731-r1` is likewise immutable after consuming its
+exact approval hash once.
 
-As of 2026-07-29 the official
+As of 2026-07-30 the official
 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing) for the primary mini contract is $0.75/M
 uncached input, $0.075/M cached input and $4.50/M output, with no separate published cache-write
 rate. The suite pins `gpt-5.4-mini-2026-03-17`. Recheck the price within 72 hours of every live
 invocation and record the installed SDK version, clean Git commit and execution timestamp.
 
-At the frozen repository rates, D-052's conservative future authorization reserve is `$1.2375`
-for one run, `$14.85` for 12 runs and `$118.80` for 96 runs. These are reserves, not measured
-spend or invoice predictions. The measured list-price total remains `$4.981546875`; adding one
-future pilot and both future campaign reserves produces the manual planning total
-`$139.869046875`. The project-wide `$150` cap is not machine-enforced; only each suite's
+At those frozen repository rates, D-054 reserved `$5.625` under a `$6` suite cap. The completed
+panel used a calculated `$0.15682575`, bringing the usage-derived list-price total to
+`$5.138372625`. D-052's `$14.85` development and `$118.80` core numbers remain unfrozen draft
+reserves rather than current authorizations. Reserves are not measured spend or invoice
+predictions. The project-wide `$150` cap is not machine-enforced; only each suite's
 `cost_limit_usd` is enforced.
 
-Inspect the v5 pilot contract without approval flags and without a provider call:
+Inspect the consumed D-055 contract without approval flags and without a provider call:
 
 ```powershell
 git status --short
 uv run patchloop evaluate `
-  --suite experiments/dev-validation-gpt54mini-token-tail-v5-pilot-r1.yaml `
+  --suite experiments/dev-validation-gpt54mini-completion-v6-pilot-r1.yaml `
   --preflight-only
 ```
 
-Do not add `--approve-live-cost` or `--approved-execution-hash` for this inspection. Do not
-attempt the v5 development suite while `pilot_run_id` is `null`, and do not run core while the
-embedding revision is not frozen.
+It must report `HISTORICAL_SUITE_IMMUTABLE`. Do not add `--approve-live-cost` or
+`--approved-execution-hash`, delete its journal/result or reuse the consumed hash. The portable
+aggregate is
+[`dev-validation-gpt54mini-completion-v6-20260731-r1.json`](../reports/live-pilot/dev-validation-gpt54mini-completion-v6-20260731-r1.json).
+No next paid suite is checked in yet. The provisional three-task memory-development calibration
+requires a new config, execution hash, cost review and explicit approval; do not attempt the
+pending v5 development template or core template.
 
 Configure `OPENAI_API_KEY` in the host process without printing it. Leave `OPENAI_BASE_URL` and
 `OPENAI_API_BASE` unset. The historical r1 inspection-only preflight is:
@@ -317,14 +327,15 @@ attempt still persists its run ID, events, usage including cached/cache-write to
 cost and terminal outcome. The suite halts after the first infrastructure, qualification or required
 trace-exercise error and records remaining rows as not started.
 
-Twelve paid one-run pilots exist when this guide was updated. The v4 pilot
+Before D-055, twelve paid one-run pilots existed. The v4 pilot
 `run_d7207fbb06184dd3` is an accepted official run; the twelve-pilot cumulative calculated
 list-price cost is `$1.740790125`. The first 12-run development campaign raises the total to
 `$3.133982625`; the v4 12-run campaign adds `$1.84756425`, making 36 paid run attempts and
-`$4.981546875` in calculated list-price cost. Actual invoice or free daily usage treatment was not
-verified. The D-052 future reserves are `$1.2375` + `$14.85` + `$118.80`; together with measured
-actuals they form the manual `$139.869046875` planning total, not spend. The `$150` project cap is
-not a global runtime guard. No consumed suite/hash may be rerun.
+`$4.981546875` in calculated list-price cost. D-055 adds two completed attempts and
+`$0.15682575`, making 38 paid run attempts and a usage-derived total of `$5.138372625`. Actual
+invoice or free daily usage treatment was not verified. D-052's development/core reserves remain
+unfrozen drafts, not current paid authorizations. The `$150` project cap is not a global runtime
+guard. No consumed suite/hash may be rerun.
 
 The D-037 offline gate and its single controlled live exercise are complete. The next request after a
 rejected mutating-tool call receives the exact budget-bounded candidate bytes, content hash and
