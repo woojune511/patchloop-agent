@@ -381,7 +381,9 @@ model-visible phase contract를 같은 prefix에서 합성해야 한다는 새 v
 Original campaign result, hash-chained journal과 qualification artifact는 immutable하다.
 Original qualification failure로 campaign이 fail-closed했기 때문에 나머지 PDM/pyfakefs
 row는 시작되지 않았고 original gate는 false다. 독립 분석에서 qualifier의 v5-vs-v6/v7
-reserve-version drift가 분리됐지만 append-only correction artifact는 아직 pending이다.
+reserve-version drift가 분리됐고, 별도 `trace-qualification-correction-v1`
+`qcor_8b6ff812...4870b6`가 corrected trace integrity를 통과했다. Canonical qualification과
+campaign result는 수정하지 않았으므로 original gate와 task outcome은 그대로다.
 D-062는 계속하거나 재실행하지 않는다. 다음 architecture gate는 새 `phase-evidence-v8`
 saturation-context 계약을 offline에서 검증한 뒤 별도 승인된 single live pilot으로 확인하는
 것이다.

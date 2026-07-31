@@ -13,8 +13,9 @@ qualification이 fail-closed해 campaign이 멈췄고 PDM과 pyfakefs row는 시
 HF run은 33개 provider response가 모두 completed였지만 875,908 token 뒤 exact-request
 budget block으로 끝났으며 `PatchPrepared`/`PatchApplied`와 evaluator 도달은 모두 0이다.
 관찰 비용은 `$0.8408853`이다. Original result, journal과 qualification artifact는
-immutable하며, 독립 분석에서 확인된 qualifier reserve-version drift의 append-only correction
-artifact는 아직 pending이다. Original campaign gate는 false이고 이 tuning evidence는 SCRR,
+immutable하다. Qualifier reserve-version drift는 별도 append-only correction
+`qcor_8b6ff812...4870b6`로 재계산돼 corrected trace qualification은 통과했지만, original
+campaign gate와 task outcome은 false 그대로다. 이 tuning evidence는 SCRR,
 no-memory baseline, memory admission 또는 core 결과가 아니다. D-062는 재실행하지 않으며,
 다음 gate는 saturation을 context contract에 반영하는 새 version의 offline 검증과 별도
 승인된 single live pilot이다.

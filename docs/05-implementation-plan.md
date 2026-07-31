@@ -96,9 +96,9 @@ v4/v7 900k corrective pilot은 승인 hash
 pilot만 실행한다.
 
 D-062 original result, journal과 qualification artifact는 immutable하다. 후속 독립 분석은
-qualification failure에서 v5-vs-v6/v7 nominal-reserve drift를 분리했지만, 이를 표현하는
-append-only correction module/artifact가 검증되기 전에는 original qualification과 false gate를
-변경하지 않는다.
+qualification failure에서 v5-vs-v6/v7 nominal-reserve drift를 분리했다. Append-only
+correction `qcor_8b6ff812...4870b6`는 corrected trace qualification을 통과했지만 original
+qualification, false campaign gate와 task outcome은 변경하지 않는다.
 
 동결 evidence:
 

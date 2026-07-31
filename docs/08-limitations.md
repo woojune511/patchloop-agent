@@ -606,9 +606,9 @@ silently lowering the design or fabricating missing results.
   subsequent raw-diff candidates all failed patch preview. Increasing the ceiling alone does not
   isolate either behavior.
 - Original experiment result, campaign journal and original qualification artifacts are immutable.
-  Independent analysis identified v5-vs-v6/v7 nominal-reserve drift in the qualifier, but an
-  append-only correction module/artifact remains pending. Until it exists and is verified, do not
-  claim corrected qualification or alter the false gate.
+  Independent analysis identified v5-vs-v6/v7 nominal-reserve drift in the qualifier. Append-only
+  correction `qcor_8b6ff812...4870b6` validates corrected trace integrity, but it does not alter the
+  canonical qualification, original false campaign gate or failed task outcome.
 - This tuning purpose remains excluded from comparison, memory admission and core. One incomplete row
   and two not-started rows are not a no-memory performance denominator and cannot justify a final
   all-condition budget.

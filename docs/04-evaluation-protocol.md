@@ -833,7 +833,8 @@ receipt는 없었다. Trace에는 saturation 이후 dispatch되지 않은 read/s
 불일치했으므로 이 run은 model capability, SCRR 또는 no-memory 성능 baseline이 아니다.
 
 Original qualification failure와 별개로 qualifier의 v5-vs-v6/v7 reserve-version drift가
-관찰됐지만, append-only correction artifact가 검증·생성되기 전에는 correction을 완료했다고
-보고하지 않는다. 다음 gate는 v7을 소급 변경하지 않는 새 `phase-evidence-v8` saturation-context
+관찰됐다. Append-only correction `qcor_8b6ff812...4870b6`는 corrected trace qualification을
+통과했지만 original result, qualification, campaign gate와 task outcome은 변경하지 않는다.
+다음 gate는 v7을 소급 변경하지 않는 새 `phase-evidence-v8` saturation-context
 계약의 offline evidence다. 그 뒤에도 D-062 continuation이 아니라 새 execution identity와
 별도 비용 승인을 가진 single live pilot만 허용한다.

@@ -33,8 +33,9 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   `PatchPrepared`/`PatchApplied`와 evaluator 도달은 0이다. Original qualification failure로
   campaign이 fail-closed해 PDM과 pyfakefs row는 시작되지 않았고 original gate는 false다.
   Result, journal과 original qualification artifact는 immutable하다. 후속 독립 분석은
-  qualifier의 v5-vs-v6/v7 reserve-version drift를 분리했지만 append-only qualification
-  correction artifact는 아직 pending이므로 qualified run으로 주장하지 않는다. Trace에는
+  qualifier의 v5-vs-v6/v7 reserve-version drift를 분리했고 append-only correction
+  `qcor_8b6ff812...4870b6`는 corrected trace qualification을 통과했다. 이 correction은
+  original campaign gate나 task outcome을 바꾸지 않는다. Trace에는
   saturation이 context의 allowed action에 반영되지 않아 차단된 read/search 30회와 patch
   preview failure 7회가 관찰됐다. 이 결과는 SCRR/no-memory baseline, memory admission 또는
   core evidence가 아니며 D-062 suite/hash는 재실행하지 않는다.

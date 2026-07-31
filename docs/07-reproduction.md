@@ -569,9 +569,19 @@ rows, original gate false, 33 completed model calls, 875,908 tokens, `$0.8408853
 exact-request budget block before any `PatchPrepared`, `PatchApplied` or evaluator receipt. The
 trace also contains 30 non-dispatched read/search admission blocks and seven patch-preview failures.
 Original result, journal and qualification artifacts must not be edited or regenerated in place.
-The independently identified qualifier reserve-version drift requires a separate append-only
-correction artifact; until that artifact exists and passes its own verification, treat the correction
-as pending and the original qualification as failed.
+The independently identified qualifier reserve-version drift is recorded separately at:
+
+```powershell
+Get-Content .patchloop/qualification-corrections/v1/run_0ccfc8fd359a4785/qcor_8b6ff81250263bf37ebf8f0239de12719760db012a62ca81e4f124f2624870b6.json
+```
+
+It binds correction hash `sha256:a240256fe26eed6277b6668a985e2a20df6a94125cf7e7e813f25c3d4975961c`,
+corrected qualification hash `sha256:803460fb5703c5d6423bd125f0b32b4e6d690114712367b5884ccdfad96e2b12`
+and harness commit `b35bb91caf8a28313f305bd5507d0a4fba9079e8`.
+The corrected failed-check list is empty and exact repeated creation preserved the correction file
+SHA-256 `sha256:fc6c469a989a7109d0d6b0ac8f609171aba87cdf8c3df543dd25bc75916d49c9`.
+This validates corrected trace integrity only; the canonical
+qualification, original false campaign gate and failed task outcome remain unchanged.
 
 Do not rerun or continue D-062. The next live invocation must follow an offline
 `phase-evidence-v8` saturation-context gate and use a new experiment identity, clean execution hash,

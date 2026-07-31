@@ -1782,7 +1782,16 @@ arrival=0이다. Read/search 30개도 `evidence_saturated`로 dispatch 전에 �
 
 Original experiment result, campaign journal과 original qualification artifact는 append-only
 source evidence로 보존하며 덮어쓰지 않는다. 후속 분석에서 드러난 qualifier의
-v5-vs-v6/v7 nominal-reserve drift는 original gate를 true로 바꾸지 않는다. 이를 표현할
-qualification correction은 원본을 수정하지 않는 별도 artifact여야 하며, 그 module과
-artifact가 검증되기 전에는 pending으로만 기록한다. 따라서 이 run을 qualified, SCRR 또는
-no-memory baseline으로 세지 않는다.
+v5-vs-v6/v7 nominal-reserve drift는 original gate를 true로 바꾸지 않는다.
+
+`trace-qualification-correction-v1` writer는 승인된 original qualification hash와 source
+evidence hash를 요구하고, source를 재계산 전후 검증하며 canonical qualification bytes가
+변하지 않았음을 다시 확인한다. Corrected 전체 semantics/hash, original failed check IDs,
+clean harness commit, package version, reason과 timestamp를 content-derived `qcor_<sha256>`에
+결속해 `qualification-corrections/v1/<run-id>/` 아래 exclusive-create한다. 동일 semantics는
+exact-idempotent이고 기존 path의 다른 bytes는 덮어쓰지 않고 거부한다.
+
+D-062 correction `qcor_8b6ff812...4870b6`는 original failed checks
+`investigation_evidence`와 `investigation_lifecycle`를 corrected failed check 0개로
+재계산했고 corrected trace qualification은 통과했다. 그러나 original campaign gate와 HF
+task outcome은 그대로이므로 이 run을 SCRR 또는 no-memory baseline으로 세지 않는다.

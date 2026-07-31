@@ -2094,14 +2094,19 @@ failure evidence for saturation-context integration and raw-diff reliability, no
 performance baseline.
 
 The original experiment result, hash-chained campaign journal and original qualification artifacts are
-immutable. Independent replay identified a v5-vs-v6/v7 nominal-reserve drift in the qualifier. A
-correction may only be represented by a separate append-only correction artifact; its implementation
-and artifact are still pending, so no corrected qualification claim is made here and the original
-false gate remains unchanged. The suite, experiment ID and execution hash must not be rerun.
+immutable. Independent replay identified a v5-vs-v6/v7 nominal-reserve drift in the qualifier.
+Append-only correction `qcor_8b6ff812...4870b6` is bound to correction hash
+`sha256:a240256fe26eed6277b6668a985e2a20df6a94125cf7e7e813f25c3d4975961c`, corrected
+qualification hash `sha256:803460fb5703c5d6423bd125f0b32b4e6d690114712367b5884ccdfad96e2b12` and clean
+harness commit `b35bb91caf8a28313f305bd5507d0a4fba9079e8`. The original two failed checks become an
+empty corrected failed-check list and corrected trace integrity passes. Exact repeated creation left
+the correction file SHA-256
+`sha256:fc6c469a989a7109d0d6b0ac8f609171aba87cdf8c3df543dd25bc75916d49c9` unchanged. This does not modify the canonical
+qualification, original false campaign gate or failed task outcome. The suite, experiment ID and
+execution hash must not be rerun.
 
-After the provenance hardening, the full repository collection was 790 tests: 783 passed and seven
-environment-dependent cases skipped; Ruff and `git diff --check` passed. The final deterministic
-currency-rendering change then re-ran its 49 directly related provenance/public-review/budget tests.
+After the correction implementation, the full repository collection was 798 tests: 791 passed and
+seven environment-dependent cases skipped; Ruff and `git diff --check` passed.
 The next gate is not a D-062 continuation. It is an offline `phase-evidence-v8` contract that makes
 six-replay saturation visible in the authoritative context/phase contract while preserving historical
 v7 rendering and qualification. Only after that executable evidence passes may a new single-task
