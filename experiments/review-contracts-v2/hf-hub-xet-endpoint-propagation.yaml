@@ -1,0 +1,66 @@
+schema_version: public-review-contract-v2
+task_id: hf-hub-xet-endpoint-propagation
+task_version: 1
+public_spec_hash: sha256:8f7b0ea5f92ec9d843b8053f0739b42570b7407d76fe6f7a7ea6fd08c481a075
+requirements:
+  - requirement_id: req-64fd5304816b
+    source: issue.description
+    source_excerpt: Ensure request-specific endpoint context is preserved through every file metadata access path.
+    coverage_targets:
+      - coverage_target_id: cov-cfbbcc6d3e1c
+        description: Inspect the HfApi file metadata access path after the current patch.
+        evidence_kind: current_diff_inspection
+        path: src/huggingface_hub/hf_api.py
+        anchor: def get_hf_file_metadata(
+      - coverage_target_id: cov-92159184a168
+        description: Inspect the top-level file metadata request path after the current patch.
+        evidence_kind: current_diff_inspection
+        path: src/huggingface_hub/file_download.py
+        anchor: def get_hf_file_metadata(
+      - coverage_target_id: cov-4a50318c1d0f
+        description: Inspect the metadata error-handling access path after the current patch.
+        evidence_kind: current_diff_inspection
+        path: src/huggingface_hub/file_download.py
+        anchor: def _get_metadata_or_catch_error(
+      - coverage_target_id: cov-abb46af2f81e
+        description: Inspect the Xet refresh metadata parsing path after the current patch.
+        evidence_kind: current_diff_inspection
+        path: src/huggingface_hub/utils/_xet.py
+        anchor: def parse_xet_file_data_from_response(
+  - requirement_id: req-8f29e1ce32d9
+    source: issue.description
+    source_excerpt: Rebase refresh routes owned by the default Hub origin onto the configured endpoint
+    coverage_targets:
+      - coverage_target_id: cov-d68916712e67
+        description: Validate default Hub refresh-route rebasing with the registered public regression.
+        evidence_kind: passing_validation
+        check_ids:
+          - upstream-xet-regression
+  - requirement_id: req-b7643041c7c0
+    source: issue.description
+    source_excerpt: preserving relative routes
+    coverage_targets:
+      - coverage_target_id: cov-29754236e727
+        description: Validate relative refresh-route preservation with the registered public regression.
+        evidence_kind: passing_validation
+        check_ids:
+          - upstream-xet-regression
+  - requirement_id: req-db00ba080be5
+    source: issue.description
+    source_excerpt: routes already owned by another origin
+    coverage_targets:
+      - coverage_target_id: cov-636fe1208ba8
+        description: Validate other-origin refresh-route preservation with the registered public regression.
+        evidence_kind: passing_validation
+        check_ids:
+          - upstream-xet-regression
+  - requirement_id: req-c94188b110c2
+    source: issue.description
+    source_excerpt: callers that do not provide an explicit endpoint.
+    coverage_targets:
+      - coverage_target_id: cov-ed25c76e553a
+        description: Validate callers without an explicit endpoint with the registered public regression.
+        evidence_kind: passing_validation
+        check_ids:
+          - upstream-xet-regression
+content_hash: sha256:51c6c4ace6bb46a5919cc7cfe13088e456088a0f5ed9d87b67eb75b5a7221cce

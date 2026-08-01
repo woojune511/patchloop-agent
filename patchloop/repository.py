@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from patchloop.errors import ContractError
-from patchloop.util import directory_hash, sha256_bytes
+from patchloop.util import directory_hash, safe_relative_path, sha256_bytes
 
 ALLOWED_REMOTE_REPOSITORIES = {
     "https://github.com/agronholm/anyio.git",
@@ -282,6 +282,32 @@ class WorkspaceManager:
                 "workspace root is outside the managed workspace directory"
             )
         return resolved
+
+    def read_base_file(
+        self,
+        workspace: str | Path,
+        relative_path: str,
+    ) -> bytes:
+        """Read one exact file from Git HEAD, never from the mutable worktree."""
+
+        resolved = self.validate_managed_workspace(workspace)
+        normalized = safe_relative_path(
+            relative_path,
+            field_name="base revision file path",
+        )
+        result = subprocess.run(
+            ["git", "show", f"HEAD:{normalized}"],
+            cwd=resolved,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            detail = result.stderr.decode("utf-8", errors="replace").strip()
+            raise ContractError(
+                "public review base revision file is unavailable: "
+                f"{normalized!r}: {detail}"
+            )
+        return result.stdout
 
     @staticmethod
     def apply_patch(workspace: Path, patch_path: str | Path) -> str:

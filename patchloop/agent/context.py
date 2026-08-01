@@ -38,6 +38,7 @@ from patchloop.util import (
 RECENT_EVENT_LIMIT = 12
 TOOL_RESULT_CHARACTER_LIMIT = 12_000
 REVIEW_EVIDENCE_SCHEMA = "review-evidence-v1"
+REVIEW_EVIDENCE_V2_SCHEMA = "review-evidence-v2"
 INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v4",
     "phase-evidence-v5",
@@ -45,6 +46,7 @@ INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v7",
     "phase-evidence-v8",
     "phase-evidence-v9",
+    "phase-evidence-v10",
 }
 RETRY_CONTEXT_POLICIES = {
     "phase-evidence-v3",
@@ -54,6 +56,7 @@ PERSISTENT_RETRY_CONTEXT_POLICIES = {
     "phase-evidence-v7",
     "phase-evidence-v8",
     "phase-evidence-v9",
+    "phase-evidence-v10",
 }
 
 
@@ -514,6 +517,97 @@ def _semantic_tool_result(raw: str) -> tuple[Any, bool]:
     }, True
 
 
+def _validate_v10_review_result_document(
+    event: RunEvent,
+    *,
+    document: Any,
+    rendered_result: Any,
+    rendered_truncated: bool,
+) -> bool:
+    """Bind V10 review evidence metadata to the exact CAS result document.
+
+    V9 intentionally keeps its historical event-only interpretation.  V10 is
+    stricter: metadata may select a result only when it agrees with the result
+    bytes that were written by the tool gateway.  The return value reports an
+    authoritative tool-side truncation that makes the result non-citable.
+    """
+
+    tool = event.payload.get("tool")
+    if (
+        event.type != EventType.TOOL_SUCCEEDED
+        or event.actor != "tool-gateway"
+        or event.payload.get("status") != "succeeded"
+        or tool not in {"run_check", "read_file"}
+        or not isinstance(document, dict)
+        or not isinstance(rendered_result, dict)
+    ):
+        raise RecoveryError("v10 review evidence has an invalid tool identity")
+    event_diff_hash = event.payload.get("worktree_diff_hash")
+    document_diff_hash = document.get("worktree_diff_hash")
+    if (
+        not isinstance(event_diff_hash, str)
+        or document_diff_hash != event_diff_hash
+        or rendered_result.get("worktree_diff_hash") != document_diff_hash
+    ):
+        raise RecoveryError(
+            "v10 review evidence conflicts with its current-diff result"
+        )
+
+    if tool == "run_check":
+        if (
+            not isinstance(document.get("check_id"), str)
+            or type(document.get("passed")) is not bool
+            or type(document.get("timed_out")) is not bool
+            or type(document.get("truncated")) is not bool
+            or event.payload.get("check_id") != document.get("check_id")
+            or event.payload.get("passed") is not document.get("passed")
+            or event.payload.get("timed_out") is not document.get("timed_out")
+            or (
+                not rendered_truncated
+                and any(
+                    rendered_result.get(key) != document.get(key)
+                    for key in (
+                        "check_id",
+                        "passed",
+                        "timed_out",
+                        "truncated",
+                        "worktree_diff_hash",
+                    )
+                )
+            )
+        ):
+            raise RecoveryError(
+                "v10 run_check event conflicts with its result document"
+            )
+        if document["passed"] is True and document["timed_out"] is True:
+            raise RecoveryError(
+                "v10 run_check result has inconsistent completion semantics"
+            )
+        return bool(document["timed_out"] or document["truncated"])
+
+    if (
+        not isinstance(document.get("path"), str)
+        or not isinstance(document.get("content"), str)
+        or (
+            "truncated" in document
+            and type(document.get("truncated")) is not bool
+        )
+        or (
+            not rendered_truncated
+            and (
+                rendered_result.get("path") != document.get("path")
+                or rendered_result.get("content") != document.get("content")
+                or rendered_result.get("worktree_diff_hash")
+                != document.get("worktree_diff_hash")
+            )
+        )
+    ):
+        raise RecoveryError(
+            "v10 read_file evidence conflicts with its result document"
+        )
+    return document.get("truncated") is True
+
+
 def _context_event(
     event: RunEvent,
     *,
@@ -548,10 +642,22 @@ def _context_event(
                 and event.payload.get("tool")
                 in {"run_check", "get_diff"}
             )
+            v10_review_anchor_outcome = bool(
+                policy_version == "phase-evidence-v10"
+                and event.type == EventType.TOOL_SUCCEEDED
+                and event.payload.get("tool")
+                in {"run_check", "get_diff"}
+            )
+            v10_coverage_outcome = bool(
+                policy_version == "phase-evidence-v10"
+                and event.type == EventType.TOOL_SUCCEEDED
+                and event.payload.get("tool") in {"run_check", "read_file"}
+            )
             if policy_version in INVESTIGATION_CONTEXT_POLICIES and (
                 v4_inspection_outcome
                 or v4_semantic_replay
                 or v9_review_anchor_outcome
+                or v10_review_anchor_outcome
             ):
                 if artifact_store is None:
                     raise RecoveryError(
@@ -566,7 +672,11 @@ def _context_event(
                         "v9 review anchor lacks a result artifact"
                         if v9_review_anchor_outcome
                         else (
-                            "investigation outcome lacks a result artifact"
+                            "v10 review anchor lacks a result artifact"
+                            if v10_review_anchor_outcome
+                            else (
+                                "investigation outcome lacks a result artifact"
+                            )
                         )
                     ) from exc
                 if (
@@ -579,7 +689,11 @@ def _context_event(
                         "v9 review anchor conflicts with its artifact"
                         if v9_review_anchor_outcome
                         else (
-                            "v4 inspection outcome conflicts with its artifact"
+                            "v10 review anchor conflicts with its artifact"
+                            if v10_review_anchor_outcome
+                            else (
+                                "v4 inspection outcome conflicts with its artifact"
+                            )
                         )
                     )
                 try:
@@ -592,7 +706,11 @@ def _context_event(
                         "v9 review anchor is not valid UTF-8"
                         if v9_review_anchor_outcome
                         else (
-                            "v4 inspection outcome is not valid UTF-8"
+                            "v10 review anchor is not valid UTF-8"
+                            if v10_review_anchor_outcome
+                            else (
+                                "v4 inspection outcome is not valid UTF-8"
+                            )
                         )
                     ) from exc
             else:
@@ -609,6 +727,17 @@ def _context_event(
                     payload["tool_result"] = json.loads(raw)
                 else:
                     payload["tool_result"], truncated = _semantic_tool_result(raw)
+                if v10_coverage_outcome:
+                    document = json.loads(raw)
+                    truncated = bool(
+                        truncated
+                        or _validate_v10_review_result_document(
+                            event,
+                            document=document,
+                            rendered_result=payload["tool_result"],
+                            rendered_truncated=truncated,
+                        )
+                    )
                 parsed_available = True
             except json.JSONDecodeError:
                 payload["tool_result"] = {"unavailable": True}
@@ -760,6 +889,221 @@ def _pinned_review_evidence(
     return visible, evidence, pinned_tool_results
 
 
+def _pinned_review_evidence_v10(
+    task: PublicTask,
+    events: list[RunEvent],
+    *,
+    phase: Phase,
+    worktree_diff_hash: str,
+    artifact_store: ArtifactStore | None,
+    public_review_contract: PublicReviewContract,
+) -> tuple[dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
+    """Pin exact public coverage evidence for the current mutation and diff."""
+
+    readiness = diff_bound_evidence(
+        task,
+        events,
+        worktree_diff_hash,
+        phase=phase,
+        structured_review_required=True,
+        coverage_review_required=True,
+        probe_available=bool(task.probe_profiles),
+    )
+    pinning_active = bool(
+        phase == Phase.REVIEW
+        and readiness.mutation_present
+        and not readiness.pending_checks
+        and readiness.review_event_sequence is not None
+    )
+    events_by_sequence = {event.sequence: event for event in events}
+    rendered_by_sequence: dict[
+        int,
+        tuple[dict[str, Any], dict[str, Any]],
+    ] = {}
+
+    def render_tool_result(
+        event: RunEvent,
+    ) -> tuple[dict[str, Any], dict[str, Any]]:
+        cached = rendered_by_sequence.get(event.sequence)
+        if cached is not None:
+            return cached
+        rendered_event, result_evidence = _context_event(
+            event,
+            policy_version="phase-evidence-v10",
+            artifact_store=artifact_store,
+        )
+        if result_evidence is None:
+            raise RecoveryError(
+                "v10 review evidence is not a durable tool result"
+            )
+        rendered_by_sequence[event.sequence] = (
+            rendered_event,
+            result_evidence,
+        )
+        return rendered_event, result_evidence
+
+    coverage_target_event_sequences: dict[str, list[int]] = {
+        target.coverage_target_id: []
+        for requirement in public_review_contract.requirements
+        for target in requirement.coverage_targets
+    }
+    if pinning_active:
+        mutation_sequence = readiness.mutation_event_sequence
+        assert mutation_sequence is not None
+        passing_events = [
+            events_by_sequence[sequence]
+            for sequence in readiness.current_diff_check_event_sequences
+        ]
+        inspection_candidates = [
+            event
+            for event in reversed(events)
+            if event.sequence > mutation_sequence
+            and event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool") == "read_file"
+            and event.payload.get("worktree_diff_hash")
+            == worktree_diff_hash
+        ]
+        for requirement in public_review_contract.requirements:
+            for target in requirement.coverage_targets:
+                if target.evidence_kind == "passing_validation":
+                    target_sequences = sorted(
+                        {
+                            event.sequence
+                            for event in passing_events
+                            if event.payload.get("check_id")
+                            in target.check_ids
+                        }
+                    )
+                    coverage_target_event_sequences[
+                        target.coverage_target_id
+                    ] = target_sequences
+                    continue
+
+                assert target.path is not None
+                assert target.anchor is not None
+                for event in inspection_candidates:
+                    rendered_event, result_evidence = render_tool_result(event)
+                    if (
+                        result_evidence.get("available") is not True
+                        or result_evidence.get("truncated") is not False
+                    ):
+                        continue
+                    tool_result = rendered_event["payload"].get("tool_result")
+                    if not isinstance(tool_result, dict):
+                        continue
+                    content = tool_result.get("content")
+                    if (
+                        tool_result.get("path") == target.path
+                        and isinstance(content, str)
+                        and target.anchor in content
+                    ):
+                        coverage_target_event_sequences[
+                            target.coverage_target_id
+                        ] = [event.sequence]
+                        break
+
+    target_sequences_in_order: list[int] = []
+    seen_sequences: set[int] = set()
+    for sequences in coverage_target_event_sequences.values():
+        for sequence in sequences:
+            if sequence not in seen_sequences:
+                target_sequences_in_order.append(sequence)
+                seen_sequences.add(sequence)
+    requested_sequences = list(target_sequences_in_order)
+    if pinning_active:
+        for sequence in readiness.current_diff_check_event_sequences:
+            if sequence not in seen_sequences:
+                requested_sequences.append(sequence)
+                seen_sequences.add(sequence)
+        assert readiness.review_event_sequence is not None
+        if readiness.review_event_sequence not in seen_sequences:
+            requested_sequences.append(readiness.review_event_sequence)
+
+    pinned_results: list[dict[str, Any]] = []
+    pinned_tool_results: list[dict[str, Any]] = []
+    complete_sequences: list[int] = []
+    incomplete_sequences: list[int] = []
+    for sequence in requested_sequences:
+        event = events_by_sequence.get(sequence)
+        if event is None:
+            raise RecoveryError(
+                "v10 review evidence references a missing durable event"
+            )
+        rendered_event, result_evidence = render_tool_result(event)
+        pinned_results.append(rendered_event)
+        pinned_tool_results.append(result_evidence)
+        if (
+            result_evidence.get("available") is True
+            and result_evidence.get("truncated") is False
+        ):
+            complete_sequences.append(sequence)
+        else:
+            incomplete_sequences.append(sequence)
+
+    complete_sequence_set = set(complete_sequences)
+    coverage_target_event_sequences = {
+        target_id: [
+            sequence
+            for sequence in sequences
+            if sequence in complete_sequence_set
+        ]
+        for target_id, sequences in coverage_target_event_sequences.items()
+    }
+    passing_check_sequences = [
+        sequence
+        for sequence in readiness.current_diff_check_event_sequences
+        if sequence in complete_sequence_set
+    ]
+    source_get_diff_sequence = (
+        readiness.review_event_sequence
+        if readiness.review_event_sequence in complete_sequence_set
+        else None
+    )
+    citable_sequences: list[int] = []
+    seen_citable: set[int] = set()
+    for sequences in coverage_target_event_sequences.values():
+        for sequence in sequences:
+            if sequence not in seen_citable:
+                citable_sequences.append(sequence)
+                seen_citable.add(sequence)
+    for sequence in passing_check_sequences:
+        if sequence not in seen_citable:
+            citable_sequences.append(sequence)
+            seen_citable.add(sequence)
+    if (
+        source_get_diff_sequence is not None
+        and source_get_diff_sequence not in seen_citable
+    ):
+        citable_sequences.append(source_get_diff_sequence)
+
+    visible = {
+        "schema_version": REVIEW_EVIDENCE_V2_SCHEMA,
+        "pinning_active": pinning_active,
+        "worktree_diff_hash": worktree_diff_hash,
+        "mutation_event_sequence": readiness.mutation_event_sequence,
+        "coverage_target_event_sequences": (
+            coverage_target_event_sequences
+        ),
+        "passing_check_event_sequences": passing_check_sequences,
+        "source_get_diff_sequence": source_get_diff_sequence,
+        "citable_event_sequences": citable_sequences,
+        "incomplete_event_sequences": incomplete_sequences,
+        "pinned_results": pinned_results,
+        "citation_rule": (
+            "review_task may cite only citable_event_sequences and must "
+            "resolve every public coverage target; investigation_ledger "
+            "source_call_sequence values are not review citations"
+        ),
+    }
+    evidence = {
+        key: value
+        for key, value in visible.items()
+        if key not in {"pinned_results", "citation_rule"}
+    }
+    evidence["pinned_tool_results"] = pinned_tool_results
+    return visible, evidence, pinned_tool_results
+
+
 def build_context_with_evidence(
     task: PublicTask,
     events: list[RunEvent],
@@ -777,6 +1121,7 @@ def build_context_with_evidence(
         "phase-evidence-v7",
         "phase-evidence-v8",
         "phase-evidence-v9",
+        "phase-evidence-v10",
     }
     investigation_compat_policy = (
         "phase-evidence-v6"
@@ -785,10 +1130,30 @@ def build_context_with_evidence(
             "phase-evidence-v7",
             "phase-evidence-v8",
             "phase-evidence-v9",
+            "phase-evidence-v10",
         }
         else policy_version
     )
-    if policy_version in {
+    if policy_version == "phase-evidence-v10":
+        if (
+            public_review_contract is None
+            or public_review_contract.schema_version
+            != "public-review-contract-v2"
+        ):
+            raise RecoveryError(
+                "phase-evidence-v10 requires a public-review-contract-v2"
+            )
+        try:
+            validate_public_review_contract(
+                public_review_contract,
+                task=task,
+                public_spec_hash=sha256_json(task.model_dump(mode="json")),
+            )
+        except ContractError as exc:
+            raise RecoveryError(
+                "phase-evidence-v10 public review contract is not public-bound"
+            ) from exc
+    elif policy_version in {
         "phase-evidence-v7",
         "phase-evidence-v8",
         "phase-evidence-v9",
@@ -831,6 +1196,7 @@ def build_context_with_evidence(
         "phase-evidence-v7",
         "phase-evidence-v8",
         "phase-evidence-v9",
+        "phase-evidence-v10",
     }:
         selected_events = eligible_events[-RECENT_EVENT_LIMIT:]
     else:
@@ -886,6 +1252,37 @@ def build_context_with_evidence(
             for event in selected_events
             if event.sequence not in pinned_sequences
         ]
+    elif policy_version == "phase-evidence-v10":
+        assert public_review_contract is not None
+        (
+            review_evidence,
+            review_evidence_build,
+            pinned_tool_results,
+        ) = _pinned_review_evidence_v10(
+            task,
+            events,
+            phase=phase,
+            worktree_diff_hash=diff_hash,
+            artifact_store=artifact_store,
+            public_review_contract=public_review_contract,
+        )
+        pinned_sequences = {
+            item["sequence"]
+            for item in review_evidence["pinned_results"]
+        }
+        recent = [
+            item for item in recent if item["sequence"] not in pinned_sequences
+        ]
+        recent_tool_results = [
+            item
+            for item in recent_tool_results
+            if item["event_sequence"] not in pinned_sequences
+        ]
+        visible_selected_events = [
+            event
+            for event in selected_events
+            if event.sequence not in pinned_sequences
+        ]
     else:
         visible_selected_events = selected_events
     tool_results_by_sequence = {
@@ -906,6 +1303,7 @@ def build_context_with_evidence(
         "phase-evidence-v7",
         "phase-evidence-v8",
         "phase-evidence-v9",
+        "phase-evidence-v10",
     }:
         readiness = diff_bound_evidence(
             task,
@@ -914,17 +1312,24 @@ def build_context_with_evidence(
             presented_tool_results=tool_results,
             phase=phase,
             structured_review_required=self_validation_policy,
+            coverage_review_required=(
+                policy_version == "phase-evidence-v10"
+            ),
             probe_available=probe_available,
         )
         phase_contract = {
             "schema_version": (
-                "phase-contract-v3"
-                if policy_version
-                in {"phase-evidence-v8", "phase-evidence-v9"}
+                "phase-contract-v4"
+                if policy_version == "phase-evidence-v10"
                 else (
-                    "phase-contract-v2"
-                    if self_validation_policy
-                    else "phase-contract-v1"
+                    "phase-contract-v3"
+                    if policy_version
+                    in {"phase-evidence-v8", "phase-evidence-v9"}
+                    else (
+                        "phase-contract-v2"
+                        if self_validation_policy
+                        else "phase-contract-v1"
+                    )
                 )
             ),
             "current_phase": phase.value,
@@ -965,6 +1370,17 @@ def build_context_with_evidence(
                     ],
                     "task_review_event_sequence": (
                         readiness.task_review_event_sequence
+                    ),
+                }
+            )
+        if policy_version == "phase-evidence-v10":
+            phase_contract.update(
+                {
+                    "task_review_coverage_complete": (
+                        readiness.task_review_coverage_complete
+                    ),
+                    "unresolved_coverage_target_ids": list(
+                        readiness.unresolved_coverage_target_ids
                     ),
                 }
             )
@@ -1084,7 +1500,8 @@ def build_context_with_evidence(
             "phase_contract": phase_contract,
             **(
                 {"review_evidence": review_evidence}
-                if policy_version == "phase-evidence-v9"
+                if policy_version
+                in {"phase-evidence-v9", "phase-evidence-v10"}
                 else {}
             ),
             "recent_events": payload["recent_events"],
@@ -1129,6 +1546,7 @@ def build_context_with_evidence(
                 if policy_version in {
                     "phase-evidence-v8",
                     "phase-evidence-v9",
+                    "phase-evidence-v10",
                 }:
                     saturation = evidence_saturation_state(events)
                     reason_codes = list(tail["block_reasons"])
@@ -1163,31 +1581,35 @@ def build_context_with_evidence(
     }
     evidence = {
         "schema_version": (
-            "context-build-evidence-v1"
-            if policy_version == "v1"
+            "context-build-evidence-v10"
+            if policy_version == "phase-evidence-v10"
             else (
-                "context-build-evidence-v2"
-                if policy_version == "phase-evidence-v2"
+                "context-build-evidence-v1"
+                if policy_version == "v1"
                 else (
-                    "context-build-evidence-v3"
-                    if policy_version == "phase-evidence-v3"
+                    "context-build-evidence-v2"
+                    if policy_version == "phase-evidence-v2"
                     else (
-                        "context-build-evidence-v4"
-                        if policy_version == "phase-evidence-v4"
+                        "context-build-evidence-v3"
+                        if policy_version == "phase-evidence-v3"
                         else (
-                            "context-build-evidence-v5"
-                            if policy_version == "phase-evidence-v5"
+                            "context-build-evidence-v4"
+                            if policy_version == "phase-evidence-v4"
                             else (
-                                "context-build-evidence-v9"
-                                if policy_version == "phase-evidence-v9"
+                                "context-build-evidence-v5"
+                                if policy_version == "phase-evidence-v5"
                                 else (
-                                    "context-build-evidence-v8"
-                                    if policy_version == "phase-evidence-v8"
+                                    "context-build-evidence-v9"
+                                    if policy_version == "phase-evidence-v9"
                                     else (
-                                        "context-build-evidence-v7"
-                                        if policy_version
-                                        == "phase-evidence-v7"
-                                        else "context-build-evidence-v6"
+                                        "context-build-evidence-v8"
+                                        if policy_version == "phase-evidence-v8"
+                                        else (
+                                            "context-build-evidence-v7"
+                                            if policy_version
+                                            == "phase-evidence-v7"
+                                            else "context-build-evidence-v6"
+                                        )
                                     )
                                 )
                             )
@@ -1229,7 +1651,10 @@ def build_context_with_evidence(
         evidence["rejected_mutation_retry"] = (
             rejected_mutation_retry_evidence
         )
-    if policy_version == "phase-evidence-v9":
+    if policy_version in {
+        "phase-evidence-v9",
+        "phase-evidence-v10",
+    }:
         assert review_evidence_build is not None
         evidence["review_evidence"] = review_evidence_build
     if policy_version in INVESTIGATION_CONTEXT_POLICIES:
@@ -1266,6 +1691,7 @@ def build_context_with_evidence(
             "phase-evidence-v7",
             "phase-evidence-v8",
             "phase-evidence-v9",
+            "phase-evidence-v10",
         }:
             tail = ledger["tail_policy"]
             projection = tail["token_projection"]
@@ -1308,6 +1734,7 @@ def build_context_with_evidence(
         if policy_version in {
             "phase-evidence-v8",
             "phase-evidence-v9",
+            "phase-evidence-v10",
         }:
             evidence["read_search_policy"] = phase_contract[
                 "read_search_policy"

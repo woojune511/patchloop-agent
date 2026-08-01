@@ -79,6 +79,7 @@ def build_manifest(
     saturation_live_pilot: bool = False,
     review_evidence_validation: bool = False,
     review_evidence_live_pilot: bool = False,
+    coverage_review_validation: bool = False,
     public_review_contract: PublicReviewContract | None = None,
 ) -> RunManifest:
     validation_mode_count = sum(
@@ -89,6 +90,7 @@ def build_manifest(
             saturation_live_pilot,
             review_evidence_validation,
             review_evidence_live_pilot,
+            coverage_review_validation,
         )
     )
     if validation_mode_count > 1:
@@ -128,6 +130,15 @@ def build_manifest(
         raise ContractError(
             "review-evidence validation v4/v9 cannot declare an experiment context"
         )
+    if coverage_review_validation and provider != "mock":
+        raise ContractError(
+            "coverage-review validation v5/v10 is offline-only and requires "
+            "the mock provider"
+        )
+    if coverage_review_validation and experiment_context is not None:
+        raise ContractError(
+            "coverage-review validation v5/v10 cannot declare an experiment context"
+        )
     if saturation_live_pilot and (
         provider != "openai"
         or experiment_context is None
@@ -154,6 +165,7 @@ def build_manifest(
         or saturation_live_pilot
         or review_evidence_validation
         or review_evidence_live_pilot
+        or coverage_review_validation
     ):
         from patchloop.agent.review import (
             validate_public_review_contract,
@@ -173,7 +185,8 @@ def build_manifest(
     elif public_review_contract is not None:
         raise ContractError(
             "public review contract requires corrective validation v4/v7 or "
-            "saturation-context validation v4/v8 or review-evidence validation v4/v9"
+            "saturation-context validation v4/v8, review-evidence validation "
+            "v4/v9, or coverage-review validation v5/v10"
         )
     sdk_version = None
     if provider == "openai":
@@ -199,6 +212,8 @@ def build_manifest(
         tool_schema_version=(
             "v1"
             if provider == "replay"
+            else "v5"
+            if coverage_review_validation
             else "v4"
             if (
                 corrective_validation
@@ -214,6 +229,8 @@ def build_manifest(
         context_policy_version=(
             "v1"
             if provider == "replay"
+            else "phase-evidence-v10"
+            if coverage_review_validation
             else "phase-evidence-v9"
             if review_evidence_validation or review_evidence_live_pilot
             else "phase-evidence-v8"

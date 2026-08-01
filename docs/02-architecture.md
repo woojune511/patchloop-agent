@@ -82,7 +82,7 @@ stateDiagram-v2
     IMPLEMENT --> VERIFY
     VERIFY --> REVIEW: required visible checks pass
     VERIFY --> IMPLEMENT: actionable failure
-    REVIEW --> IMPLEMENT: diff or scope issue
+    REVIEW --> IMPLEMENT: diff, scope, or incomplete declared coverage
     REVIEW --> DONE: submission ready
     DONE --> [*]
 ```
@@ -94,7 +94,7 @@ stateDiagram-v2
 | `PLAN` | 위 mutation evidence에 결속된 `PhaseChanged`; 별도 plan file은 아직 없음 |
 | `IMPLEMENT` | Current-diff visible check 성공 시 `VERIFY`로 전이 |
 | `VERIFY` | 모든 required current-diff check 뒤 성공한 `get_diff` |
-| `REVIEW` | Complete `get_diff`가 다음 request에 포함되고 `finish_task`가 acceptance를 통과 |
+| `REVIEW` | V1-V9은 각 version의 complete `get_diff`와, 해당 version이 요구하는 경우 structured review를 따른다. Opt-in V10은 선언된 모든 public coverage target이 verified인 same-diff `task-review-v3`까지 요구하며 partial review는 `IMPLEMENT`로 되돌린다. |
 | `DONE` | `SubmissionAccepted`, immutable submitted-patch CAS artifact와 DONE checkpoint |
 
 Invalid transition은 거부하고 event로 남긴다. `DONE`은 evaluator 성공을 뜻하지 않는다. Agent submission이 끝났다는 의미이며, 최종 outcome은 evaluator가 결정한다.
@@ -121,7 +121,7 @@ MVP agent-visible tool을 작게 유지한다.
 | `apply_patch` | 기존 tracked text file에 raw Git unified diff 적용 | hunk count만 recount; stable action ID, zero-untracked와 path/scope policy 필요 |
 | `run_check` | registered check 실행 | arbitrary command 금지, result를 current diff에 결속 |
 | `get_diff` | current diff와 size summary 확인 | check 뒤의 final review evidence |
-| `finish_task` | final submission control signal | current-diff check와 model-visible final diff review 필요 |
+| `finish_task` | final submission control signal | current-diff check와 model-visible final diff review 필요; V10은 exact public target coverage도 완료돼야 함 |
 
 Checkpoint 저장은 runner 내부 동작이며 agent tool이 아니다. `finish_task`도
 shell/repository tool이 아니라 orchestrator control action이다.
@@ -495,3 +495,76 @@ descriptor/content hash와 `ContextBuilt` mirror를 결속한다. Qualifier의
 event prefix에서 current mutation, required passing checks, final diff와 citable order를 다시
 계산한다. 이 correction은 self-attestation의 증거 전달을 안정화할 뿐 hidden evaluator를
 예측하거나 review를 primary grader로 승격하지 않는다.
+
+## 15. D-069 public coverage review boundary
+
+`phase-evidence-v10`은 V9 artifact를 고치는 버전이 아니라 별도 opt-in runtime이다. Manifest는
+exact `tool_schema_version=v5` / `context_policy_version=phase-evidence-v10`,
+`public-review-contract-v2`와 `SYSTEM_PROMPT_V7`을 함께 요구한다. Factory selector는
+`coverage_review_validation=True`, mock provider, experiment 부재만 허용한다. Replay,
+OpenAI/arbitrary provider, experiment context와 다른 validation mode의 결합은 start 전에 fail
+closed한다. Runtime descriptor는 `corrective-runtime-contract-v4`다. Historical V1-V9
+manifest, request rendering, runtime descriptor와 source evidence를 다시 만들거나 재해석하지
+않는다.
+
+V10은 `all`, `every`, `each` 같은 공개 문장을 runtime keyword 규칙으로 자동 판정하지 않는다.
+Maintainer가 public issue requirement마다 하나 이상의 explicit coverage target을 작성한다. Target은
+다음 두 종류뿐이다.
+
+```text
+current_diff_inspection := latest PatchApplied 뒤의 same-diff complete read_file
+                           AND exact public path
+                           AND declared one-line anchor가 content에 존재
+
+passing_validation      := same-diff passing registered visible run_check
+                           AND target이 선언한 check_id와 일치
+```
+
+Contract가 model context에 들어가기 전에 runner는 각 inspection anchor가 mutable worktree가 아니라
+Git `HEAD`의 public base file bytes에 이미 존재하는지 확인한다. Ordered target/path/anchor와 base file
+hash는 `public-review-base-provenance-v1` CAS artifact로 `RunStarted`에 남고, resume과 qualifier는 같은
+descriptor, bytes와 base-derived document를 다시 검증한다. 따라서 reference patch에만 등장하는
+solution line을 anchor로 넣어 model에 노출하는 경로는 `ContextBuilt`/`ModelCalled` 전에 fail closed한다.
+
+Context builder는 REVIEW readiness가 성립하면 `review-evidence-v2`를 만든다. Contract의 target
+순서대로 `coverage_target_event_sequences`를 계산하고, target evidence를 먼저 안정적으로
+deduplicate한 뒤 나머지 passing check와 final `get_diff`를 더해 exact
+`citable_event_sequences`를 만든다. Read/check/diff result의 event payload, artifact descriptor,
+content hash, bytes, current diff identity와 complete/untruncated 상태가 모두 일치해야 한다. 특히
+`run_check`의 `check_id/passed/timed_out/truncated/diff hash`와 `read_file`의
+`path/content/diff hash`는 CAS result document와 exact match해야 하므로 실패한 check나 stale read를
+event metadata만 바꿔 current evidence로 승격할 수 없다.
+`context-build-evidence-v10`과 `phase-contract-v4`는 이 mapping, unresolved target IDs와
+submission readiness를 request artifact에 결속한다.
+
+Gateway의 tool v5 `review_task`는 모든 public requirement와 target ID를 정확히 한 번씩
+평가하게 한다. Target은 자신에게 광고된 sequence만 인용할 수 있고, parent requirement의 status와
+evidence는 child target status/evidence의 canonical ordered roll-up과 같아야 한다. Gateway는
+target evidence kind를 durable artifact에서 독립 검증한 뒤 `task-review-v3`,
+`task-review-result-v3`와 `public-review-coverage-v1`을 CAS에 저장한다. 이 결과의
+`deterministic_correctness_claimed`는 항상 false다.
+
+일부 target이 `partially_verified` 또는 `unverified`여도 valid review 자체는 버리지 않는다.
+`ReviewRecorded`와 tool result를 append-only로 보존한 뒤 runner가 `REVIEW → IMPLEMENT`로
+전이하고, 다음 context에 unresolved target IDs와 public remediation action을 제공한다. Agent는
+필요한 inspection/visible validation과 current final diff evidence를 새로 제시한 뒤 review를
+다시 수행한다. `finish_task`는 current mutation/diff의 authoritative target 순서와 verified
+target 순서가 정확히 같고 unresolved list가 비어 있으며 `coverage_complete=true`인 경우에만
+submission을 accept한다. Partial artifact, stale mutation epoch 또는 다른 target의 citation으로
+이 gate를 우회할 수 없다.
+
+Recovery는 target decision을 checkpoint boolean에서 신뢰하지 않는다. Durable contract,
+mutation/check/read/diff/review events, request artifact와 CAS bytes에서 coverage mapping과 readiness를
+다시 계산한다. 중단된 partial review는 complete로 승격하지 않고, corrective transition 또는
+submission lifecycle의 누락된 suffix만 검증 후 보충한다. 이 과정은 기존 patch action identity와
+idempotent mutation 경계를 바꾸지 않는다.
+
+V10 qualifier는 `trace-source-evidence-v10`에 runtime/context/review/submission/recovery source를
+결속하고, public contract와 target mapping을 runner 선언과 독립적으로 재구성해야 한다. 이 경계가
+증명하는 것은 **maintainer가 선언한 public target마다 same-diff evidence가 있었고 lifecycle이 그
+결정을 지켰다**는 사실뿐이다. Complete review, accepted submission과 evaluation이 실제로 관찰되지
+않은 terminal trace는 공집합 조건으로 이 gate를 통과할 수 없다. Target set의 완전성, anchor의
+의미적 충분성, hidden acceptance, task correctness, SCRR, live model 개선이나 cross-run memory
+효과는 증명하지 않는다. D-067은 immutable hidden task failure이고 V10은 그 run이나 D-068
+correction을 재실행·수정하지 않는다. D-069 최종 offline evidence는 971 collected,
+964 passed/7 environment-dependent skipped이며 provider call은 없었다.

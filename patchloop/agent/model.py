@@ -75,6 +75,17 @@ SYSTEM_PROMPT_V6 = (
     "citable_event_sequences in the rejection result instead of repeating "
     "stale sequence IDs."
 )
+SYSTEM_PROMPT_V7 = (
+    SYSTEM_PROMPT_V6
+    + " The public-review-contract-v2 decomposes broad words such as all, "
+    "every, and each into explicit coverage_targets. In REVIEW, inspect every "
+    "current_diff_inspection target after the latest patch and cite only that "
+    "target's advertised review_evidence sequences. A passing_validation target "
+    "must cite an advertised passing registered check. Roll each requirement "
+    "status up from its targets. A valid partial review is preserved but is not "
+    "submission-ready; follow phase_contract corrective actions, obtain the "
+    "missing public evidence, review the refreshed final diff, and review again."
+)
 SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 
 
@@ -350,22 +361,148 @@ class MockModelAdapter:
             try:
                 payload = json.loads(context)
                 recent_events = payload["recent_events"]
+                allowed_actions = payload["phase_contract"][
+                    "allowed_next_actions"
+                ]
+                review_evidence = payload.get("review_evidence")
+                pinned_results = (
+                    review_evidence.get("pinned_results", [])
+                    if isinstance(review_evidence, dict)
+                    else []
+                )
+                evidence_events = [*recent_events, *pinned_results]
+                review_contract = payload.get("public_review_contract")
+                contract_requirements = (
+                    review_contract.get("requirements")
+                    if isinstance(review_contract, dict)
+                    else None
+                )
+                coverage_target_sequences = (
+                    review_evidence.get(
+                        "coverage_target_event_sequences"
+                    )
+                    if isinstance(review_evidence, dict)
+                    and review_evidence.get("schema_version")
+                    == "review-evidence-v2"
+                    else None
+                )
+                if (
+                    isinstance(contract_requirements, list)
+                    and isinstance(coverage_target_sequences, dict)
+                ):
+                    inspection_targets = [
+                        target
+                        for requirement in contract_requirements
+                        if isinstance(requirement, dict)
+                        for target in requirement.get("coverage_targets", [])
+                        if isinstance(target, dict)
+                        and target.get("evidence_kind")
+                        == "current_diff_inspection"
+                    ]
+                    missing_target = next(
+                        (
+                            target
+                            for target in inspection_targets
+                            if not coverage_target_sequences.get(
+                                target.get("coverage_target_id")
+                            )
+                        ),
+                        None,
+                    )
+                    if missing_target is not None:
+                        target_path = missing_target.get("path")
+                        target_anchor = missing_target.get("anchor")
+                        if not isinstance(target_path, str) or not isinstance(
+                            target_anchor,
+                            str,
+                        ):
+                            raise ContractError(
+                                "mock coverage target lacks path and anchor"
+                            )
+                        matching_line = None
+                        for event in reversed(recent_events):
+                            event_payload = event.get("payload", {})
+                            if (
+                                event.get("type") != "ToolSucceeded"
+                                or event_payload.get("tool")
+                                != "search_files"
+                            ):
+                                continue
+                            tool_result = event_payload.get("tool_result", {})
+                            for match in tool_result.get("matches", []):
+                                if (
+                                    match.get("path") == target_path
+                                    and target_anchor
+                                    in str(match.get("text", ""))
+                                    and isinstance(match.get("line"), int)
+                                ):
+                                    matching_line = int(match["line"])
+                                    break
+                            if matching_line is not None:
+                                break
+                        if (
+                            matching_line is not None
+                            and "read_file" in allowed_actions
+                        ):
+                            return ModelTurn(
+                                text=(
+                                    "Inspect the missing current-diff coverage "
+                                    "target around its public anchor."
+                                ),
+                                tool_calls=[
+                                    RequestedTool(
+                                        "read_file",
+                                        (
+                                            f"mock-{self.task_id}-coverage-read-"
+                                            f"{missing_target['coverage_target_id']}"
+                                        ),
+                                        {
+                                            "path": target_path,
+                                            "start_line": max(
+                                                1,
+                                                matching_line - 20,
+                                            ),
+                                            "end_line": matching_line + 20,
+                                        },
+                                    )
+                                ],
+                            )
+                        if "search_files" in allowed_actions:
+                            return ModelTurn(
+                                text=(
+                                    "Locate the missing public coverage anchor "
+                                    "before recording the structured review."
+                                ),
+                                tool_calls=[
+                                    RequestedTool(
+                                        "search_files",
+                                        (
+                                            f"mock-{self.task_id}-coverage-search-"
+                                            f"{missing_target['coverage_target_id']}"
+                                        ),
+                                        {
+                                            "query": target_anchor,
+                                            "path_glob": target_path,
+                                        },
+                                    )
+                                ],
+                            )
                 check_event = next(
                     item
-                    for item in reversed(recent_events)
+                    for item in reversed(evidence_events)
                     if item.get("type") == "ToolSucceeded"
                     and item["payload"].get("tool") == "run_check"
                 )
                 diff_event = next(
                     item
-                    for item in reversed(recent_events)
+                    for item in reversed(evidence_events)
                     if item.get("type") == "ToolSucceeded"
                     and item["payload"].get("tool") == "get_diff"
                 )
                 probe_event = (
                     next(
                         item
-                        for item in reversed(recent_events)
+                        for item in reversed(evidence_events)
                         if item.get("type") == "ToolSucceeded"
                         and item["payload"].get("tool") == "run_probe"
                     )
@@ -427,26 +564,89 @@ class MockModelAdapter:
                     residual_risks.append(
                         "The registered issue-derived probe did not pass."
                     )
-            review_contract = payload.get("public_review_contract")
-            contract_requirements = (
-                review_contract.get("requirements")
-                if isinstance(review_contract, dict)
-                else None
-            )
             if isinstance(contract_requirements, list):
-                requirement_rows = [
-                    {
-                        "requirement_id": item["requirement_id"],
-                        "status": requirement_status,
-                        "evidence_event_sequences": (
-                            evidence_event_sequences
-                        ),
-                        "notes": requirement_notes,
-                    }
-                    for item in contract_requirements
-                    if isinstance(item, dict)
-                    and isinstance(item.get("requirement_id"), str)
-                ]
+                coverage_rows: list[dict[str, Any]] = []
+                requirement_rows = []
+                for item in contract_requirements:
+                    if not isinstance(item, dict) or not isinstance(
+                        item.get("requirement_id"),
+                        str,
+                    ):
+                        continue
+                    targets = item.get("coverage_targets")
+                    if (
+                        isinstance(targets, list)
+                        and isinstance(coverage_target_sequences, dict)
+                    ):
+                        requirement_sequences: list[int] = []
+                        target_statuses: list[str] = []
+                        for target in targets:
+                            target_id = target["coverage_target_id"]
+                            sequences = list(
+                                coverage_target_sequences.get(target_id, [])
+                            )
+                            target_status = (
+                                "verified" if sequences else "unverified"
+                            )
+                            target_statuses.append(target_status)
+                            for sequence in sequences:
+                                if sequence not in requirement_sequences:
+                                    requirement_sequences.append(sequence)
+                            coverage_rows.append(
+                                {
+                                    "coverage_target_id": target_id,
+                                    "status": target_status,
+                                    "evidence_event_sequences": sequences,
+                                    "notes": (
+                                        "The request-bound target evidence is "
+                                        "complete for the current diff."
+                                        if sequences
+                                        else (
+                                            "No request-bound current-diff "
+                                            "evidence is available yet."
+                                        )
+                                    ),
+                                }
+                            )
+                        rolled_status = (
+                            "verified"
+                            if all(
+                                status == "verified"
+                                for status in target_statuses
+                            )
+                            else (
+                                "unverified"
+                                if all(
+                                    status == "unverified"
+                                    for status in target_statuses
+                                )
+                                else "partially_verified"
+                            )
+                        )
+                        requirement_rows.append(
+                            {
+                                "requirement_id": item["requirement_id"],
+                                "status": rolled_status,
+                                "evidence_event_sequences": (
+                                    requirement_sequences
+                                ),
+                                "notes": (
+                                    "Requirement status is rolled up from its "
+                                    "request-bound public coverage targets."
+                                ),
+                            }
+                        )
+                    else:
+                        requirement_rows.append(
+                            {
+                                "requirement_id": item["requirement_id"],
+                                "status": requirement_status,
+                                "evidence_event_sequences": (
+                                    evidence_event_sequences
+                                ),
+                                "notes": requirement_notes,
+                            }
+                        )
                 residual_rows = (
                     [
                         {
@@ -465,7 +665,12 @@ class MockModelAdapter:
                         }
                         for risk in residual_risks
                     ]
-                    if requirement_status != "verified"
+                    if (
+                        any(
+                            item["status"] != "verified"
+                            for item in requirement_rows
+                        )
+                    )
                     else []
                 )
             else:
@@ -488,6 +693,14 @@ class MockModelAdapter:
                         f"mock-{self.task_id}-task-review",
                         {
                             "requirements": requirement_rows,
+                            **(
+                                {"coverage_targets": coverage_rows}
+                                if isinstance(
+                                    coverage_target_sequences,
+                                    dict,
+                                )
+                                else {}
+                            ),
                             "targeted_validation": targeted_validation,
                             "residual_risks": residual_rows,
                         },

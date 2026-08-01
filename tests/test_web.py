@@ -7,7 +7,12 @@ import httpx
 
 from patchloop.contracts import EventType, RunEvent
 from patchloop.util import utc_now
-from patchloop.web import _build_trace_view, _checkpoint_action_label, app
+from patchloop.web import (
+    _build_trace_view,
+    _checkpoint_action_label,
+    app,
+    templates,
+)
 
 
 def _event(
@@ -70,6 +75,91 @@ def _trace_events() -> list[RunEvent]:
             {"message": "invalid phase transition: VERIFY -> DONE"},
         ),
     ]
+
+
+def _coverage_contract():
+    return SimpleNamespace(
+        requirements=[
+            SimpleNamespace(
+                requirement_id="req-public-paths",
+                coverage_targets=[
+                    SimpleNamespace(
+                        coverage_target_id="cov-parser-path",
+                        description="Inspect the parser entry path.",
+                        evidence_kind="current_diff_inspection",
+                        path="example/parser.py",
+                        anchor="def parse_rows",
+                        check_ids=[],
+                    ),
+                    SimpleNamespace(
+                        coverage_target_id="cov-visible-check",
+                        description="Validate the registered regression check.",
+                        evidence_kind="passing_validation",
+                        path=None,
+                        anchor=None,
+                        check_ids=["visible"],
+                    ),
+                ],
+            )
+        ]
+    )
+
+
+def _coverage_review_payload(*, complete: bool) -> dict:
+    verified_ids = (
+        ["cov-parser-path", "cov-visible-check"]
+        if complete
+        else ["cov-visible-check"]
+    )
+    unresolved_ids = [] if complete else ["cov-parser-path"]
+    rows = [
+        {
+            "coverage_target_id": "cov-parser-path",
+            "requirement_id": "req-public-paths",
+            "status": "verified" if complete else "unverified",
+            "evidence_event_sequences": [8] if complete else [],
+            "notes": (
+                "The current-diff source path was inspected."
+                if complete
+                else "The source path still needs inspection."
+            ),
+        },
+        {
+            "coverage_target_id": "cov-visible-check",
+            "requirement_id": "req-public-paths",
+            "status": "verified",
+            "evidence_event_sequences": [5],
+            "notes": "The registered visible check passed.",
+        },
+    ]
+    coverage = {
+        "schema_version": "public-review-coverage-v1",
+        "authoritative_coverage_target_ids": [
+            "cov-parser-path",
+            "cov-visible-check",
+        ],
+        "verified_coverage_target_ids": verified_ids,
+        "unresolved_coverage_target_ids": unresolved_ids,
+        "coverage_complete": complete,
+        "ready_for_submission": complete,
+        "deterministic_correctness_claimed": False,
+    }
+    return {
+        "tool": "review_task",
+        "review_schema_version": "task-review-v3",
+        "coverage_target_count": 2,
+        "coverage_complete": complete,
+        "verified_coverage_target_ids": verified_ids,
+        "unresolved_coverage_target_ids": unresolved_ids,
+        "public_review_coverage": coverage,
+        "worktree_diff_hash": "sha256:" + ("c" * 64),
+        "review": {
+            "schema_version": "task-review-v3",
+            "worktree_diff_hash": "sha256:" + ("c" * 64),
+            "coverage_targets": rows,
+            "public_review_coverage": coverage,
+        },
+    }
 
 
 def test_health_route() -> None:
@@ -206,6 +296,103 @@ def test_v3_trace_labels_probe_and_semantic_self_review() -> None:
         "structured public-evidence review recorded · "
         "2 requirements / 1 validations / 1 residual risks"
     ) in summaries
+
+
+def test_v10_trace_surfaces_target_coverage_history() -> None:
+    events = [
+        _event(1, EventType.RUN_STARTED, {"task_id": "viewer-test"}),
+        _event(
+            2,
+            EventType.TOOL_SUCCEEDED,
+            _coverage_review_payload(complete=False),
+        ),
+        _event(
+            3,
+            EventType.PHASE_CHANGED,
+            {"from": "REVIEW", "to": "IMPLEMENT"},
+        ),
+        _event(
+            4,
+            EventType.TOOL_SUCCEEDED,
+            _coverage_review_payload(complete=True),
+        ),
+        _event(
+            5,
+            EventType.REVIEW_RECORDED,
+            {
+                "self_attestation": True,
+                "source_task_review_sequence": 4,
+                "worktree_diff_hash": "sha256:" + ("c" * 64),
+            },
+        ),
+    ]
+
+    trace = _build_trace_view(
+        events,
+        tool_schema_version="v5",
+        public_review_contract=_coverage_contract(),
+    )
+
+    coverage = trace["coverage_review"]
+    assert coverage["supported"] is True
+    assert coverage["recorded"] is True
+    assert len(coverage["reviews"]) == 2
+    assert coverage["reviews"][0]["coverage_complete"] is False
+    assert coverage["reviews"][0]["unresolved_coverage_target_ids"] == [
+        "cov-parser-path"
+    ]
+    assert coverage["latest"]["coverage_complete"] is True
+    assert coverage["latest"]["status_label"] == "2/2 targets verified"
+    assert coverage["latest"]["rows"][0] == {
+        "coverage_target_id": "cov-parser-path",
+        "requirement_id": "req-public-paths",
+        "description": "Inspect the parser entry path.",
+        "evidence_label": "read example/parser.py · anchor def parse_rows",
+        "status": "verified",
+        "tone": "completed",
+        "evidence_event_sequences": [8],
+        "evidence_sequences_label": "8",
+        "notes": "The current-diff source path was inspected.",
+    }
+    assert trace["lifecycle"]["review"]["label"] == (
+        "public coverage review bound to final diff"
+    )
+    partial_event = next(
+        item for item in trace["critical"] if item["event"].sequence == 2
+    )
+    assert partial_event["tone"] == "accent"
+    assert partial_event["summary"] == (
+        "public coverage review incomplete · 1/2 targets verified"
+    )
+
+
+def test_v10_events_template_renders_inspectable_public_coverage() -> None:
+    trace = _build_trace_view(
+        [
+            _event(1, EventType.RUN_STARTED),
+            _event(
+                2,
+                EventType.TOOL_SUCCEEDED,
+                _coverage_review_payload(complete=True),
+            ),
+        ],
+        tool_schema_version="v5",
+        public_review_contract=_coverage_contract(),
+    )
+
+    html = templates.get_template("events.html").render(trace=trace)
+
+    assert "Public coverage review" in html
+    assert "Declared public process coverage only" in html
+    assert "task-review-v3 · public-review-coverage-v1" in html
+    assert "Inspect the parser entry path." in html
+    assert "read example/parser.py · anchor def parse_rows" in html
+    assert "cov-parser-path" in html
+    assert ">8<" in html
+
+    legacy = _build_trace_view([], tool_schema_version="v4")
+    legacy_html = templates.get_template("events.html").render(trace=legacy)
+    assert "Public coverage review" not in legacy_html
 
 
 def test_v2_trace_distinguishes_no_submission_from_incomplete_attempt() -> None:

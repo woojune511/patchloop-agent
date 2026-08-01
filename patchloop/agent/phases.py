@@ -41,6 +41,8 @@ class EvidenceState:
     review_presented_to_model: bool
     task_review_event_sequence: int | None
     task_review_presented_to_model: bool
+    task_review_coverage_complete: bool | None
+    unresolved_coverage_target_ids: tuple[str, ...]
     submission_ready: bool
     missing_evidence: tuple[str, ...]
     allowed_next_actions: tuple[str, ...]
@@ -54,6 +56,7 @@ def diff_bound_evidence(
     presented_tool_results: Iterable[dict[str, Any]] = (),
     phase: Phase | None = None,
     structured_review_required: bool = False,
+    coverage_review_required: bool = False,
     probe_available: bool = False,
 ) -> EvidenceState:
     """Derive latest-check and final-review readiness without private data."""
@@ -162,6 +165,26 @@ def diff_bound_evidence(
         task_review_event is not None
         and task_review_event.sequence in presented_sequences
     )
+    task_review_coverage_complete = (
+        task_review_event.payload.get("coverage_complete") is True
+        if task_review_event is not None
+        else None
+    )
+    raw_unresolved_coverage_target_ids = (
+        (
+            task_review_event.payload.get(
+                "unresolved_coverage_target_ids"
+            )
+            or []
+        )
+        if task_review_event is not None
+        else []
+    )
+    unresolved_coverage_target_ids = tuple(
+        item
+        for item in raw_unresolved_coverage_target_ids
+        if isinstance(item, str)
+    )
     missing: list[str] = []
     if not mutation_present:
         missing.append("successful_mutation_current_diff")
@@ -176,6 +199,12 @@ def diff_bound_evidence(
             missing.append("structured_task_review_current_diff")
         elif not task_review_presented:
             missing.append("structured_task_review_not_presented")
+        if (
+            coverage_review_required
+            and task_review_event is not None
+            and not task_review_coverage_complete
+        ):
+            missing.append("public_review_coverage_incomplete")
     if phase is not None and phase != Phase.REVIEW:
         missing.append("review_phase")
 
@@ -209,7 +238,25 @@ def diff_bound_evidence(
             *optional_probe,
         )
     elif structured_review_required and task_review_event is None:
-        allowed = ("review_task", "apply_patch", *optional_probe)
+        allowed = (
+            "review_task",
+            "apply_patch",
+            *(
+                ("read_file", "search_files")
+                if coverage_review_required
+                else ()
+            ),
+            *optional_probe,
+        )
+    elif coverage_review_required and not task_review_coverage_complete:
+        allowed = (
+            "get_diff",
+            "run_check",
+            "apply_patch",
+            "read_file",
+            "search_files",
+            *optional_probe,
+        )
     elif structured_review_required and not task_review_presented:
         allowed = ("apply_patch",)
     else:
@@ -232,6 +279,8 @@ def diff_bound_evidence(
             task_review_event.sequence if task_review_event else None
         ),
         task_review_presented_to_model=task_review_presented,
+        task_review_coverage_complete=task_review_coverage_complete,
+        unresolved_coverage_target_ids=unresolved_coverage_target_ids,
         submission_ready=not missing,
         missing_evidence=tuple(missing),
         allowed_next_actions=allowed,

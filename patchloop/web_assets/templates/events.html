@@ -13,6 +13,56 @@
   <article><span>Tool-result truncation</span><strong>{{ trace.telemetry.truncated_tool_results }}</strong><small>{{ trace.telemetry.request_artifacts }}/{{ trace.telemetry.turn_count }} request artifacts bound</small></article>
 </div>
 
+{% if trace.coverage_review.supported %}
+<div class="coverage-panel">
+  <h3>Public coverage review</h3>
+  <p class="lede">Declared public process coverage only. It is not a correctness or hidden-test verdict.</p>
+  {% if trace.coverage_review.recorded %}
+    {% for review in trace.coverage_review.reviews %}
+    <details class="coverage-review {{ review.tone }}" {% if loop.last %}open{% endif %}>
+      <summary>
+        <span class="seq">{{ review.sequence }}</span>
+        <strong>{{ "complete" if review.coverage_complete else "incomplete" }}</strong>
+        <span>{{ review.status_label }}</span>
+        <code>{{ review.worktree_diff_hash }}</code>
+      </summary>
+      <div class="coverage-review-body">
+        <p class="schema-label">task-review-v3 · public-review-coverage-v1</p>
+        <table class="coverage-table">
+          <thead><tr><th>Target</th><th>Required public evidence</th><th>Status</th><th>Evidence events</th></tr></thead>
+          <tbody>
+          {% for target in review.rows %}
+            <tr>
+              <td><strong>{{ target.description }}</strong><small><code>{{ target.coverage_target_id }}</code><br>{{ target.requirement_id }}</small></td>
+              <td>{{ target.evidence_label }}</td>
+              <td><span class="pill {{ target.tone }}">{{ target.status }}</span></td>
+              <td><strong>{{ target.evidence_sequences_label }}</strong>{% if target.notes %}<small>{{ target.notes }}</small>{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% if review.unresolved_coverage_target_ids %}
+          <p class="coverage-warning"><strong>Still unresolved:</strong> {{ review.unresolved_coverage_target_ids | join(", ") }}</p>
+        {% endif %}
+      </div>
+    </details>
+    {% endfor %}
+  {% else %}
+    <div class="coverage-empty">
+      <strong>No task-review-v3 artifact has been recorded.</strong>
+      <p>{{ trace.coverage_review.declared_target_count }} declared target(s) await current-diff evidence.</p>
+      {% if trace.coverage_review.declared_targets %}
+      <ul>
+        {% for target in trace.coverage_review.declared_targets %}
+          <li><strong>{{ target.description }}</strong> · {{ target.evidence_label }} <code>{{ target.coverage_target_id }}</code></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endif %}
+
 <h3>Critical path</h3>
 <ol class="critical-path">
 {% for item in trace.critical %}

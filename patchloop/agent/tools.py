@@ -39,6 +39,7 @@ from patchloop.contracts import (
     EventType,
     FaultSpec,
     Phase,
+    PublicReviewCoverageTarget,
     PublicTask,
     RegisteredProbeProfile,
     ToolResult,
@@ -390,6 +391,63 @@ review_v4["parameters"]["properties"]["residual_risks"] = {
         "additionalProperties": False,
     },
 }
+TOOL_SCHEMAS_V5: list[dict[str, Any]] = copy.deepcopy(TOOL_SCHEMAS_V4)
+review_v5 = next(
+    item for item in TOOL_SCHEMAS_V5 if item["name"] == "review_task"
+)
+review_v5["description"] = (
+    "Assess every public requirement and every coverage_target_id exactly once. "
+    "Use only the target-specific event sequences advertised by review_evidence. "
+    "A partial or unverified target is preserved as review evidence but prevents "
+    "submission and returns the run to corrective investigation."
+)
+review_v5["parameters"]["properties"]["coverage_targets"] = {
+    "type": "array",
+    "minItems": 1,
+    "maxItems": 20,
+    "items": {
+        "type": "object",
+        "properties": {
+            "coverage_target_id": {
+                "type": "string",
+                "pattern": "^cov-[0-9a-f]{12}$",
+            },
+            "status": {
+                "type": "string",
+                "enum": ["verified", "partially_verified", "unverified"],
+            },
+            "evidence_event_sequences": {
+                "type": "array",
+                "maxItems": 20,
+                "items": {"type": "integer", "minimum": 1},
+            },
+            "notes": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000,
+            },
+        },
+        "required": [
+            "coverage_target_id",
+            "status",
+            "evidence_event_sequences",
+            "notes",
+        ],
+        "additionalProperties": False,
+    },
+}
+review_v5["parameters"]["required"] = [
+    "requirements",
+    "coverage_targets",
+    "targeted_validation",
+    "residual_risks",
+]
+next(
+    item for item in TOOL_SCHEMAS_V5 if item["name"] == "finish_task"
+)["description"] = (
+    "Submit the current patch for deterministic evaluation only after every "
+    "public coverage target is verified in a same-diff task-review-v3 artifact."
+)
 TOOL_SCHEMAS = TOOL_SCHEMAS_V2
 
 _EVENT_ERROR_MESSAGE_LIMIT = 2_000
@@ -400,6 +458,7 @@ _INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v7",
     "phase-evidence-v8",
     "phase-evidence-v9",
+    "phase-evidence-v10",
 }
 _TOKEN_TAIL_CONTEXT_POLICIES = {
     "phase-evidence-v5",
@@ -407,10 +466,11 @@ _TOKEN_TAIL_CONTEXT_POLICIES = {
     "phase-evidence-v7",
     "phase-evidence-v8",
     "phase-evidence-v9",
+    "phase-evidence-v10",
 }
-_STRUCTURED_TOOL_SCHEMAS = {"v2", "v3", "v4"}
-_SELF_VALIDATION_TOOL_SCHEMAS = {"v3", "v4"}
-_PATCH_RETRY_TOOL_SCHEMA = "v4"
+_STRUCTURED_TOOL_SCHEMAS = {"v2", "v3", "v4", "v5"}
+_SELF_VALIDATION_TOOL_SCHEMAS = {"v3", "v4", "v5"}
+_PATCH_RETRY_TOOL_SCHEMAS = {"v4", "v5"}
 _PROBE_SOURCE_LIMIT_BYTES = 12_000
 _PROBE_OUTPUT_LIMIT_BYTES = 64_000
 _REVIEW_INPUT_LIMIT_BYTES = 8_000
@@ -742,6 +802,7 @@ def _investigation_compat_version(policy_version: str) -> str:
             "phase-evidence-v7",
             "phase-evidence-v8",
             "phase-evidence-v9",
+            "phase-evidence-v10",
         }
         else policy_version
     )
@@ -913,7 +974,7 @@ class ToolGateway:
                 str(arguments["patch"]),
                 media_type="text/x-diff",
             )
-            if self.tool_schema_version == _PATCH_RETRY_TOOL_SCHEMA:
+            if self.tool_schema_version in _PATCH_RETRY_TOOL_SCHEMAS:
                 patch_source_artifact = self.artifacts.put_json(
                     self._bounded_patch_source_snapshot(
                         str(arguments["patch"]),
@@ -1046,7 +1107,8 @@ class ToolGateway:
                     and name in {"run_probe", "review_task"}
                 )
                 or (
-                    self.context_policy_version == "phase-evidence-v9"
+                    self.context_policy_version
+                    in {"phase-evidence-v9", "phase-evidence-v10"}
                     and name in {"run_check", "get_diff"}
                 )
                 else None
@@ -1100,7 +1162,7 @@ class ToolGateway:
     ) -> ToolResult:
         """Durably close a call emitted after the v4 apply-patch barrier."""
 
-        if self.tool_schema_version != _PATCH_RETRY_TOOL_SCHEMA:
+        if self.tool_schema_version not in _PATCH_RETRY_TOOL_SCHEMAS:
             raise ContractError(
                 "same-turn mutation barriers require tool schema v4"
             )
@@ -1207,7 +1269,7 @@ class ToolGateway:
     def reconcile_same_turn_barriers(self) -> int:
         """Close a v4 model response suffix after a recovered apply result."""
 
-        if self.tool_schema_version != _PATCH_RETRY_TOOL_SCHEMA:
+        if self.tool_schema_version not in _PATCH_RETRY_TOOL_SCHEMAS:
             return 0
         created = 0
         object_root = self.artifacts.objects.resolve()
@@ -1411,6 +1473,7 @@ class ToolGateway:
                 "phase-evidence-v7",
                 "phase-evidence-v8",
                 "phase-evidence-v9",
+                "phase-evidence-v10",
             }
             and name in {"read_file", "search_files"}
             and semantic_replay_count >= _EVIDENCE_SATURATION_THRESHOLD
@@ -2248,6 +2311,23 @@ class ToolGateway:
                     ),
                 }
             )
+        if self.tool_schema_version == "v5" and name == "review_task":
+            payload.update(
+                {
+                    "coverage_target_count": result.output.get(
+                        "coverage_target_count"
+                    ),
+                    "coverage_complete": result.output.get(
+                        "coverage_complete"
+                    ),
+                    "verified_coverage_target_ids": result.output.get(
+                        "verified_coverage_target_ids"
+                    ),
+                    "unresolved_coverage_target_ids": result.output.get(
+                        "unresolved_coverage_target_ids"
+                    ),
+                }
+            )
         return payload
 
     def _complete_result(
@@ -2652,6 +2732,10 @@ class ToolGateway:
                     self.tool_schema_version
                     in _SELF_VALIDATION_TOOL_SCHEMAS
                     and name in {"run_probe", "review_task"}
+                )
+                or (
+                    self.context_policy_version == "phase-evidence-v10"
+                    and name in {"run_check", "get_diff"}
                 )
                 else None
             )
@@ -3462,7 +3546,7 @@ class ToolGateway:
                     "guidance": "Reduce the patch to the smallest scoped change.",
                 },
             )
-        if self.tool_schema_version == _PATCH_RETRY_TOOL_SCHEMA:
+        if self.tool_schema_version in _PATCH_RETRY_TOOL_SCHEMAS:
             _validate_raw_git_patch(
                 patch,
                 diagnose_hunk_headers=True,
@@ -3816,7 +3900,7 @@ class ToolGateway:
                     "guidance": "Reduce the patch to the smallest scoped change.",
                 },
             )
-        if self.tool_schema_version == _PATCH_RETRY_TOOL_SCHEMA:
+        if self.tool_schema_version in _PATCH_RETRY_TOOL_SCHEMAS:
             _validate_raw_git_patch(
                 patch,
                 diagnose_hunk_headers=True,
@@ -4181,6 +4265,7 @@ class ToolGateway:
         requirements: list[dict[str, Any]],
         targeted_validation: list[dict[str, Any]],
         residual_risks: list[Any],
+        coverage_targets: list[dict[str, Any]] | None = None,
         *,
         execution_context: dict[str, Any] | None,
     ) -> dict[str, Any]:
@@ -4188,13 +4273,23 @@ class ToolGateway:
             "requirements": requirements,
             "targeted_validation": targeted_validation,
             "residual_risks": residual_risks,
+            **(
+                {"coverage_targets": coverage_targets}
+                if self.tool_schema_version == "v5"
+                else {}
+            ),
         }
+        review_input_limit = (
+            16_000
+            if self.tool_schema_version == "v5"
+            else _REVIEW_INPUT_LIMIT_BYTES
+        )
         if (
             len(canonical_json(review_input).encode("utf-8"))
-            > _REVIEW_INPUT_LIMIT_BYTES
+            > review_input_limit
         ):
             raise PolicyViolation(
-                "review_task input exceeds 8000 bytes",
+                f"review_task input exceeds {review_input_limit} bytes",
                 details={
                     "stage": "review",
                     "reason": "review_input_too_large",
@@ -4261,6 +4356,7 @@ class ToolGateway:
         }
         events_by_sequence = {event.sequence: event for event in events}
         citable_sequences = set(presented_sequences)
+        review_evidence: dict[str, Any] | None = None
         passing_validation_sequences = {
             sequence
             for sequence in presented_sequences
@@ -4274,11 +4370,14 @@ class ToolGateway:
                 and event.payload.get("passed") is True
             )
         }
-        if self.context_policy_version == "phase-evidence-v9":
+        if self.context_policy_version in {
+            "phase-evidence-v9",
+            "phase-evidence-v10",
+        }:
             review_evidence = execution_context.get("review_evidence")
             if not isinstance(review_evidence, dict):
                 raise ContractError(
-                    "review_task requires bound v9 review evidence",
+                    "review_task requires bound review evidence",
                     details={
                         "schema_version": "review-citation-error-v1",
                         "stage": "review",
@@ -4297,9 +4396,14 @@ class ToolGateway:
             raw_mutation = review_evidence.get(
                 "mutation_event_sequence"
             )
+            expected_review_evidence_schema = (
+                "review-evidence-v2"
+                if self.context_policy_version == "phase-evidence-v10"
+                else "review-evidence-v1"
+            )
             if (
                 review_evidence.get("schema_version")
-                != "review-evidence-v1"
+                != expected_review_evidence_schema
                 or review_evidence.get("pinning_active") is not True
                 or review_evidence.get("worktree_diff_hash")
                 != summary.patch_hash
@@ -4313,13 +4417,16 @@ class ToolGateway:
                 or type(raw_mutation) is not int
                 or raw_mutation != mutation_sequence
                 or raw_source_diff != source_get_diff_sequence
-                or raw_citable != [*raw_passing, raw_source_diff]
+                or (
+                    self.context_policy_version == "phase-evidence-v9"
+                    and raw_citable != [*raw_passing, raw_source_diff]
+                )
                 or not set(raw_citable).issubset(presented_sequences)
                 or set(raw_passing)
                 != set(readiness.current_diff_check_event_sequences)
             ):
                 raise ContractError(
-                    "review_task v9 review evidence is inconsistent",
+                    "review_task review evidence is inconsistent",
                     details={
                         "schema_version": "review-citation-error-v1",
                         "stage": "review",
@@ -4339,10 +4446,24 @@ class ToolGateway:
         review_contract = self.state.get_manifest(
             self.run_id
         ).public_review_contract
-        review_v2 = self.tool_schema_version == "v4"
-        if review_v2 and review_contract is None:
+        contract_review = self.tool_schema_version in {"v4", "v5"}
+        coverage_review = self.tool_schema_version == "v5"
+        if contract_review and review_contract is None:
             raise RecoveryError(
-                "tool schema v4 review lacks its public review contract"
+                "contract-bound review lacks its public review contract"
+            )
+        expected_contract_schema = (
+            "public-review-contract-v2"
+            if coverage_review
+            else "public-review-contract-v1"
+        )
+        if (
+            contract_review
+            and review_contract is not None
+            and review_contract.schema_version != expected_contract_schema
+        ):
+            raise RecoveryError(
+                "public review contract version conflicts with the tool schema"
             )
         authoritative_requirements = {
             item.requirement_id: item.source_excerpt
@@ -4352,6 +4473,72 @@ class ToolGateway:
                 else []
             )
         }
+        authoritative_targets: dict[str, Any] = {}
+        target_parent_requirement: dict[str, str] = {}
+        if coverage_review:
+            assert review_contract is not None
+            for requirement in review_contract.requirements:
+                for target in requirement.coverage_targets:
+                    authoritative_targets[target.coverage_target_id] = target
+                    target_parent_requirement[target.coverage_target_id] = (
+                        requirement.requirement_id
+                    )
+            if review_evidence is None:
+                raise RecoveryError(
+                    "coverage review lacks its request-bound review evidence"
+                )
+            raw_target_evidence = review_evidence.get(
+                "coverage_target_event_sequences"
+            )
+            if (
+                not isinstance(raw_target_evidence, dict)
+                or len(raw_target_evidence) != len(authoritative_targets)
+                or set(raw_target_evidence) != set(authoritative_targets)
+                or any(
+                    not isinstance(sequences, list)
+                    or any(type(sequence) is not int for sequence in sequences)
+                    or sequences != sorted(set(sequences))
+                    for sequences in raw_target_evidence.values()
+                )
+            ):
+                raise ContractError(
+                    "review_task coverage evidence target mapping is inconsistent"
+                )
+            expected_citable: list[int] = []
+            for target_id in authoritative_targets:
+                sequences = raw_target_evidence[target_id]
+                for sequence in sequences:
+                    if sequence not in expected_citable:
+                        expected_citable.append(sequence)
+            for sequence in review_evidence["passing_check_event_sequences"]:
+                if sequence not in expected_citable:
+                    expected_citable.append(sequence)
+            if source_get_diff_sequence not in expected_citable:
+                expected_citable.append(source_get_diff_sequence)
+            if review_evidence["citable_event_sequences"] != expected_citable:
+                raise ContractError(
+                    "review_task coverage evidence citations are not canonical"
+                )
+            for target_id in authoritative_targets:
+                sequences = raw_target_evidence[target_id]
+                target = authoritative_targets[target_id]
+                for sequence in sequences:
+                    event = self._validate_review_evidence_sequence(
+                        sequence,
+                        events_by_sequence=events_by_sequence,
+                        presented_sequences=presented_sequences,
+                        citable_sequences=citable_sequences,
+                        passing_validation_sequences=(
+                            passing_validation_sequences
+                        ),
+                        source_get_diff_sequence=source_get_diff_sequence,
+                        mutation_sequence=mutation_sequence,
+                        worktree_diff_hash=summary.patch_hash,
+                    )
+                    self._validate_coverage_target_evidence(
+                        target,
+                        event,
+                    )
         normalized_requirements: list[dict[str, Any]] = []
         observed_requirement_ids: list[str] = []
         for item in requirements:
@@ -4362,7 +4549,7 @@ class ToolGateway:
                     "evidence_event_sequences",
                     "notes",
                 }
-                if review_v2
+                if contract_review
                 else {
                     "requirement",
                     "status",
@@ -4377,7 +4564,7 @@ class ToolGateway:
             requirement_id = item.get("requirement_id")
             requirement = (
                 authoritative_requirements.get(requirement_id)
-                if review_v2
+                if contract_review
                 else item["requirement"]
             )
             status = item["status"]
@@ -4403,7 +4590,7 @@ class ToolGateway:
                 raise ContractError(
                     "review_task requirement fields are invalid"
                 )
-            if review_v2:
+            if contract_review:
                 if (
                     not isinstance(requirement_id, str)
                     or requirement_id not in authoritative_requirements
@@ -4435,7 +4622,7 @@ class ToolGateway:
                     "evidence_event_sequences": list(sequences),
                     "notes": notes.strip(),
                 }
-            if review_v2:
+            if contract_review:
                 normalized_requirement.update(
                     {
                         "requirement_id": requirement_id,
@@ -4446,11 +4633,156 @@ class ToolGateway:
                 normalized_requirement["requirement"] = requirement.strip()
             normalized_requirements.append(normalized_requirement)
 
-        if review_v2 and set(observed_requirement_ids) != set(
+        if contract_review and set(observed_requirement_ids) != set(
             authoritative_requirements
         ):
             raise ContractError(
                 "review_task must assess every public review requirement exactly once"
+            )
+        if contract_review:
+            requirement_rows_by_id = {
+                item["requirement_id"]: item
+                for item in normalized_requirements
+            }
+            normalized_requirements = [
+                requirement_rows_by_id[requirement_id]
+                for requirement_id in authoritative_requirements
+            ]
+
+        normalized_coverage_targets: list[dict[str, Any]] = []
+        coverage_statuses: dict[str, str] = {}
+        if coverage_review:
+            if (
+                not isinstance(coverage_targets, list)
+                or len(coverage_targets) != len(authoritative_targets)
+            ):
+                raise ContractError(
+                    "review_task must assess every public coverage target exactly once"
+                )
+            observed_target_ids: set[str] = set()
+            assert review_evidence is not None
+            target_evidence = review_evidence[
+                "coverage_target_event_sequences"
+            ]
+            for item in coverage_targets:
+                if not isinstance(item, dict) or set(item) != {
+                    "coverage_target_id",
+                    "status",
+                    "evidence_event_sequences",
+                    "notes",
+                }:
+                    raise ContractError(
+                        "review_task coverage target has an invalid shape"
+                    )
+                target_id = item["coverage_target_id"]
+                status = item["status"]
+                sequences = item["evidence_event_sequences"]
+                notes = item["notes"]
+                if (
+                    not isinstance(target_id, str)
+                    or target_id not in authoritative_targets
+                    or target_id in observed_target_ids
+                    or status
+                    not in {
+                        "verified",
+                        "partially_verified",
+                        "unverified",
+                    }
+                    or not isinstance(sequences, list)
+                    or len(sequences) > 20
+                    or len(set(sequences)) != len(sequences)
+                    or any(type(sequence) is not int for sequence in sequences)
+                    or not isinstance(notes, str)
+                    or not notes.strip()
+                    or len(notes) > 2000
+                ):
+                    raise ContractError(
+                        "review_task coverage target fields are invalid"
+                    )
+                authoritative_sequences = target_evidence[target_id]
+                if not set(sequences).issubset(authoritative_sequences):
+                    raise ContractError(
+                        "review_task coverage target cites unrelated evidence"
+                    )
+                if status == "verified" and (
+                    not authoritative_sequences
+                    or sequences != authoritative_sequences
+                ):
+                    raise ContractError(
+                        "verified coverage target requires all advertised evidence"
+                    )
+                if status == "partially_verified" and not sequences:
+                    raise ContractError(
+                        "partially verified coverage target requires evidence"
+                    )
+                if status == "unverified" and sequences:
+                    raise ContractError(
+                        "unverified coverage target cannot cite supporting evidence"
+                    )
+                observed_target_ids.add(target_id)
+                coverage_statuses[target_id] = status
+                normalized_coverage_targets.append(
+                    {
+                        "coverage_target_id": target_id,
+                        "requirement_id": target_parent_requirement[target_id],
+                        "status": status,
+                        "evidence_event_sequences": list(sequences),
+                        "notes": notes.strip(),
+                    }
+                )
+            if observed_target_ids != set(authoritative_targets):
+                raise ContractError(
+                    "review_task coverage targets are missing or duplicated"
+                )
+            coverage_rows_by_id = {
+                item["coverage_target_id"]: item
+                for item in normalized_coverage_targets
+            }
+            normalized_coverage_targets = [
+                coverage_rows_by_id[target_id]
+                for target_id in authoritative_targets
+            ]
+            requirement_rows = {
+                item["requirement_id"]: item
+                for item in normalized_requirements
+            }
+            for requirement in review_contract.requirements:
+                target_ids = [
+                    target.coverage_target_id
+                    for target in requirement.coverage_targets
+                ]
+                statuses = [coverage_statuses[target_id] for target_id in target_ids]
+                expected_status = (
+                    "verified"
+                    if all(status == "verified" for status in statuses)
+                    else (
+                        "unverified"
+                        if all(status == "unverified" for status in statuses)
+                        else "partially_verified"
+                    )
+                )
+                row = requirement_rows[requirement.requirement_id]
+                expected_sequences: list[int] = []
+                for target_id in target_ids:
+                    target_row = next(
+                        item
+                        for item in normalized_coverage_targets
+                        if item["coverage_target_id"] == target_id
+                    )
+                    for sequence in target_row["evidence_event_sequences"]:
+                        if sequence not in expected_sequences:
+                            expected_sequences.append(sequence)
+                if row["status"] != expected_status:
+                    raise ContractError(
+                        "review_task requirement status conflicts with target roll-up"
+                    )
+                if row["evidence_event_sequences"] != expected_sequences:
+                    raise ContractError(
+                        "review_task requirement evidence conflicts with target roll-up"
+                    )
+        elif coverage_targets is not None:
+            raise ContractError(
+                "coverage_targets requires tool schema v5"
             )
 
         if (
@@ -4567,7 +4899,7 @@ class ToolGateway:
                 },
             )
         normalized_residual_risks: list[Any] = []
-        if review_v2:
+        if contract_review:
             if not isinstance(residual_risks, list) or len(residual_risks) > 20:
                 raise ContractError(
                     "review_task residual risks have an invalid shape"
@@ -4639,9 +4971,47 @@ class ToolGateway:
             normalized_residual_risks = [
                 item.strip() for item in residual_risks
             ]
+        verified_coverage_target_ids = [
+            target_id
+            for target_id in authoritative_targets
+            if coverage_statuses.get(target_id) == "verified"
+        ]
+        unresolved_coverage_target_ids = [
+            target_id
+            for target_id in authoritative_targets
+            if coverage_statuses.get(target_id) != "verified"
+        ]
+        coverage_complete = bool(
+            coverage_review and not unresolved_coverage_target_ids
+        )
+        public_review_coverage = (
+            {
+                "schema_version": "public-review-coverage-v1",
+                "authoritative_coverage_target_ids": list(
+                    authoritative_targets
+                ),
+                "verified_coverage_target_ids": (
+                    verified_coverage_target_ids
+                ),
+                "unresolved_coverage_target_ids": (
+                    unresolved_coverage_target_ids
+                ),
+                "coverage_complete": coverage_complete,
+                "ready_for_submission": coverage_complete,
+                "deterministic_correctness_claimed": False,
+            }
+            if coverage_review
+            else None
+        )
         review = {
             "schema_version": (
-                "task-review-v2" if review_v2 else "task-review-v1"
+                "task-review-v3"
+                if coverage_review
+                else (
+                    "task-review-v2"
+                    if contract_review
+                    else "task-review-v1"
+                )
             ),
             "run_id": self.run_id,
             "request_artifact_id": request_artifact_id,
@@ -4649,11 +5019,19 @@ class ToolGateway:
             "mutation_event_sequence": mutation_sequence,
             "source_get_diff_sequence": source_get_diff_sequence,
             "requirements": normalized_requirements,
+            **(
+                {
+                    "coverage_targets": normalized_coverage_targets,
+                    "public_review_coverage": public_review_coverage,
+                }
+                if coverage_review
+                else {}
+            ),
             "targeted_validation": normalized_validation,
             "residual_risks": normalized_residual_risks,
             "deterministic_correctness_claimed": False,
         }
-        if review_v2:
+        if contract_review:
             assert review_contract is not None
             review.update(
                 {
@@ -4669,9 +5047,13 @@ class ToolGateway:
         review_artifact = self.artifacts.put_json(review)
         result = {
             "schema_version": (
-                "task-review-result-v2"
-                if review_v2
-                else "task-review-result-v1"
+                "task-review-result-v3"
+                if coverage_review
+                else (
+                    "task-review-result-v2"
+                    if contract_review
+                    else "task-review-result-v1"
+                )
             ),
             "review_schema_version": review["schema_version"],
             "review_artifact": review_artifact.model_dump(mode="json"),
@@ -4682,17 +5064,35 @@ class ToolGateway:
             "mutation_event_sequence": mutation_sequence,
             "source_get_diff_sequence": source_get_diff_sequence,
             "requirement_count": len(normalized_requirements),
+            **(
+                {
+                    "coverage_target_count": len(
+                        normalized_coverage_targets
+                    ),
+                    "coverage_complete": coverage_complete,
+                    "verified_coverage_target_ids": (
+                        verified_coverage_target_ids
+                    ),
+                    "unresolved_coverage_target_ids": (
+                        unresolved_coverage_target_ids
+                    ),
+                    "public_review_coverage": public_review_coverage,
+                }
+                if coverage_review
+                else {}
+            ),
             "targeted_validation_count": len(normalized_validation),
             "residual_risk_count": len(residual_risks),
             "self_attestation": True,
             "deterministic_correctness_claimed": False,
         }
-        if review_v2:
+        if contract_review:
             assert review_contract is not None
             result["public_review_contract_hash"] = (
                 review_contract.content_hash
             )
-        if len(canonical_json(result).encode("utf-8")) > 12_000:
+        review_result_limit = 24_000 if coverage_review else 12_000
+        if len(canonical_json(result).encode("utf-8")) > review_result_limit:
             raise PolicyViolation(
                 "review_task result cannot be presented completely",
                 details={
@@ -4701,6 +5101,81 @@ class ToolGateway:
                 },
             )
         return result
+
+    def _validate_coverage_target_evidence(
+        self,
+        target: PublicReviewCoverageTarget,
+        event: Any,
+    ) -> None:
+        """Independently bind one V10 citation to its public target kind."""
+
+        try:
+            descriptor = Artifact.model_validate(
+                event.payload.get("result_artifact")
+            )
+            if (
+                event.payload.get("artifact_id") != descriptor.artifact_id
+                or event.payload.get("artifact_path") != descriptor.path
+            ):
+                raise ValueError("descriptor identity mismatch")
+            document = json.loads(
+                self.artifacts.read_bytes(descriptor).decode(
+                    "utf-8",
+                    errors="strict",
+                )
+            )
+        except (
+            OSError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            raise RecoveryError(
+                "coverage evidence lacks a valid result artifact"
+            ) from exc
+        if (
+            event.type != EventType.TOOL_SUCCEEDED
+            or event.actor != "tool-gateway"
+            or event.payload.get("status") != "succeeded"
+            or not isinstance(document, dict)
+            or not isinstance(event.payload.get("worktree_diff_hash"), str)
+            or document.get("worktree_diff_hash")
+            != event.payload.get("worktree_diff_hash")
+        ):
+            raise ContractError(
+                "coverage evidence conflicts with its current-diff result"
+            )
+
+        if target.evidence_kind == "passing_validation":
+            if (
+                event.payload.get("tool") != "run_check"
+                or event.payload.get("passed") is not True
+                or event.payload.get("check_id") not in target.check_ids
+                or document.get("check_id") != event.payload.get("check_id")
+                or document.get("passed") is not event.payload.get("passed")
+                or document.get("timed_out")
+                is not event.payload.get("timed_out")
+                or document.get("timed_out") is not False
+                or document.get("truncated") is not False
+            ):
+                raise ContractError(
+                    "coverage target requires a complete passing allowed validation"
+                )
+            return
+        if event.payload.get("tool") != "read_file":
+            raise ContractError(
+                "coverage target requires current-diff file inspection"
+            )
+        if (
+            document.get("path") != target.path
+            or not isinstance(document.get("content"), str)
+            or target.anchor not in document["content"]
+            or document.get("truncated") is True
+        ):
+            raise ContractError(
+                "coverage inspection evidence does not match its path and anchor"
+            )
 
     @staticmethod
     def _validate_review_evidence_sequence(

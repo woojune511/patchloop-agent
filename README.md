@@ -44,8 +44,24 @@ D-068 append-only correction
 `qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032`은 corrected trace
 qualification 33/33을 통과하지만 원 run, hidden failure, SCRR 또는 campaign gate를 바꾸지
 않는다. 이 run은 baseline·memory admission·core에서 제외하며 승인 hash를 재사용하거나
-experiment를 재실행하지 않는다. 현재 source 전체 회귀는 925 collected, 918 passed/7
-environment-dependent skipped이고 Ruff와 `git diff --check`도 통과했다.
+experiment를 재실행하지 않는다. D-068 source snapshot의 전체 회귀는 925 collected,
+918 passed/7 environment-dependent skipped이고 Ruff와 `git diff --check`도 통과했다.
+
+2026-08-02 D-069는 D-067의 공개 요구사항 분석에서 드러난 “all/every/each” 범위 문제를
+별도 `tool_schema_version=v5` / `phase-evidence-v10` offline gate로 구현하고 검증했다. Maintainer가
+`public-review-contract-v2`에서 각 공개 requirement를 명시적인 `coverage_targets`로 분해하고,
+각 target은 최신 patch 뒤의 exact path/anchor `read_file` inspection 또는 current-diff passing
+visible check만 증거로 받을 수 있다. `review_task`는 target별 상태와 인용을 정확히 한 번씩
+기록해 `task-review-v3`를 만든다. 일부 target만 확인된 review도 append-only evidence로
+보존하지만 REVIEW에서 IMPLEMENT로 되돌리고, 모든 target이 verified인 exact same-diff review가
+생기기 전에는 `finish_task`를 거부한다. 이 계약은 **선언된 공개 coverage를 실제로 검토했는지**를
+강제할 뿐 target 목록의 완전성, hidden acceptance, task correctness 또는 memory 효과를
+증명하지 않는다. V10은 mock/no-experiment 전용이며 D-067을 재실행하거나 D-067/D-068 및
+V1-V9 artifact를 소급 변경하지 않는다. Inspection anchor는 모델 context 전에 Git base revision에
+원래 존재했음을 `public-review-base-provenance-v1` CAS로 증명하며, event metadata와 result artifact
+bytes가 다른 check/read, 부분 review 뒤 조기 제출, 손상된 finish recovery와 공집합 terminal gate를
+모두 fail closed한다. 최종 offline 회귀는 971 collected, 964 passed/7 environment-dependent
+skipped였고 Ruff와 `git diff --check`도 통과했다. Provider call은 없었다.
 
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을

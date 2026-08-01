@@ -203,18 +203,112 @@ class PublicTask(StrictModel):
         return self
 
 
+class PublicReviewCoverageTarget(StrictModel):
+    """One public, requirement-bound code or validation coverage target."""
+
+    coverage_target_id: str = Field(pattern=r"^cov-[0-9a-f]{12}$")
+    description: str = Field(min_length=1, max_length=1_000)
+    evidence_kind: Literal[
+        "current_diff_inspection",
+        "passing_validation",
+    ]
+    path: str | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    anchor: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=500,
+        exclude_if=lambda value: value is None,
+    )
+    check_ids: list[str] = Field(
+        default_factory=list,
+        max_length=20,
+        exclude_if=lambda value: not value,
+    )
+
+    @field_validator("description")
+    @classmethod
+    def validate_normalized_description(cls, value: str) -> str:
+        if re.sub(r"\s+", " ", value).strip() != value:
+            raise ValueError(
+                "public review coverage target description must use normalized whitespace"
+            )
+        return value
+
+    @field_validator("path")
+    @classmethod
+    def validate_public_path(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return safe_relative_path(value, field_name="public review coverage target path")
+
+    @field_validator("anchor")
+    @classmethod
+    def validate_exact_anchor(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        if value != value.strip() or "\n" in value or "\r" in value:
+            raise ValueError(
+                "public review coverage target anchor must be one exact, trimmed line"
+            )
+        return value
+
+    @field_validator("check_ids")
+    @classmethod
+    def validate_check_ids(cls, values: list[str]) -> list[str]:
+        if any(re.fullmatch(r"[a-z][a-z0-9_-]+", value) is None for value in values):
+            raise ValueError("public review coverage target check IDs are invalid")
+        if values != sorted(set(values)):
+            raise ValueError(
+                "public review coverage target check IDs must be unique and sorted"
+            )
+        return values
+
+    @model_validator(mode="after")
+    def validate_evidence_shape(self) -> PublicReviewCoverageTarget:
+        if self.evidence_kind == "current_diff_inspection":
+            if self.path is None or self.anchor is None:
+                raise ValueError(
+                    "current-diff inspection coverage targets require path and anchor"
+                )
+            if "check_ids" in self.model_fields_set:
+                raise ValueError(
+                    "current-diff inspection coverage targets cannot declare check_ids"
+                )
+        else:
+            if not self.check_ids:
+                raise ValueError(
+                    "passing-validation coverage targets require nonempty check_ids"
+                )
+            if "path" in self.model_fields_set or "anchor" in self.model_fields_set:
+                raise ValueError(
+                    "passing-validation coverage targets cannot declare path or anchor"
+                )
+        return self
+
+
 class PublicReviewRequirement(StrictModel):
     """One stable, public issue clause required by structured review."""
 
     requirement_id: str = Field(pattern=r"^req-[0-9a-f]{12}$")
     source: Literal["issue.description"] = "issue.description"
     source_excerpt: str = Field(min_length=1, max_length=1_000)
+    coverage_targets: list[PublicReviewCoverageTarget] = Field(
+        default_factory=list,
+        max_length=20,
+        exclude_if=lambda value: not value,
+    )
 
 
 class PublicReviewContract(StrictModel):
     """Hash-bound public checklist without evaluator or reference data."""
 
-    schema_version: Literal["public-review-contract-v1"] = (
+    schema_version: Literal[
+        "public-review-contract-v1",
+        "public-review-contract-v2",
+    ] = (
         "public-review-contract-v1"
     )
     task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
@@ -242,6 +336,33 @@ class PublicReviewContract(StrictModel):
             raise ValueError(
                 "public review source excerpts must be unique"
             )
+        coverage_targets = [
+            target
+            for requirement in self.requirements
+            for target in requirement.coverage_targets
+        ]
+        if self.schema_version == "public-review-contract-v1":
+            if any(
+                "coverage_targets" in requirement.model_fields_set
+                for requirement in self.requirements
+            ):
+                raise ValueError(
+                    "public-review-contract-v1 cannot declare coverage targets"
+                )
+        else:
+            if any(not requirement.coverage_targets for requirement in self.requirements):
+                raise ValueError(
+                    "public-review-contract-v2 requires coverage targets for every requirement"
+                )
+            if len(coverage_targets) > 20:
+                raise ValueError(
+                    "public-review-contract-v2 supports at most 20 coverage targets"
+                )
+            target_ids = [
+                target.coverage_target_id for target in coverage_targets
+            ]
+            if len(target_ids) != len(set(target_ids)):
+                raise ValueError("public review coverage target IDs must be unique")
         expected_hash = sha256_json(
             self.model_dump(mode="json", exclude={"content_hash"})
         )
@@ -876,24 +997,51 @@ class RunManifest(StrictModel):
             self.tool_schema_version == "v4"
             and self.context_policy_version == "phase-evidence-v9"
         )
+        coverage_review_pair_v10 = (
+            self.tool_schema_version == "v5"
+            and self.context_policy_version == "phase-evidence-v10"
+        )
         corrective_pair = (
             corrective_pair_v7
             or saturation_pair_v8
             or review_evidence_pair_v9
+            or coverage_review_pair_v10
         )
         corrective_declared = bool(
-            self.tool_schema_version == "v4"
+            self.tool_schema_version in {"v4", "v5"}
             or self.context_policy_version
-            in {"phase-evidence-v7", "phase-evidence-v8", "phase-evidence-v9"}
+            in {
+                "phase-evidence-v7",
+                "phase-evidence-v8",
+                "phase-evidence-v9",
+                "phase-evidence-v10",
+            }
             or self.public_review_contract is not None
         )
         if corrective_declared and (
             not corrective_pair or self.public_review_contract is None
         ):
             raise ValueError(
-                "corrective runtime requires tool v4, phase-evidence-v7 or "
-                "phase-evidence-v8 or phase-evidence-v9, "
+                "corrective runtime requires an exact v4/v7-v9 or v5/v10 pair, "
                 "and a public review contract"
+            )
+        if (
+            self.public_review_contract is not None
+            and (
+                (
+                    coverage_review_pair_v10
+                    and self.public_review_contract.schema_version
+                    != "public-review-contract-v2"
+                )
+                or (
+                    not coverage_review_pair_v10
+                    and self.public_review_contract.schema_version
+                    != "public-review-contract-v1"
+                )
+            )
+        ):
+            raise ValueError(
+                "public review contract version conflicts with the runtime pair"
             )
         if (
             self.experiment is not None
@@ -975,6 +1123,13 @@ class RunManifest(StrictModel):
             raise ValueError(
                 "review-evidence pilot purpose requires the OpenAI provider"
             )
+        if coverage_review_pair_v10 and (
+            self.model.provider != "mock" or self.experiment is not None
+        ):
+            raise ValueError(
+                "phase-evidence-v10 coverage review is offline-only and requires "
+                "the mock provider without an experiment context"
+            )
         return self
 
 
@@ -1024,7 +1179,7 @@ class Checkpoint(StrictModel):
 
 class ToolCall(StrictModel):
     tool: str
-    tool_schema_version: Literal["v1", "v2", "v3", "v4"] = "v1"
+    tool_schema_version: Literal["v1", "v2", "v3", "v4", "v5"] = "v1"
     action_id: str
     run_id: str
     input: dict[str, Any] = Field(default_factory=dict)

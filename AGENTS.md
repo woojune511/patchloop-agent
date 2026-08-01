@@ -12,7 +12,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-068 append-only V9 pinned-diff qualification correction complete;
+- 현재 milestone은 `D-069 V10 public-coverage review offline gate complete;
   D-067 live run remains an immutable hidden task failure`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
@@ -268,6 +268,25 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   corrected trace qualification 33/33을 통과했다. 이 정정은 original artifact, hidden failure,
   task outcome, SCRR 또는 campaign gate를 바꾸지 않는다. D-067과 승인 hash는 재사용·재실행하지
   않으며 comparison denominator, memory admission과 core에서 제외한다.
+  D-069는 broad quantified public requirement를 maintainer-authored
+  `public-review-contract-v2.coverage_targets`로 분해하는 exact tool v5/context V10 offline
+  gate다. Target evidence는 latest patch/current diff에 결속된 exact path+anchor inspection 또는
+  advertised passing visible check만 허용한다. `review-evidence-v2`, `task-review-v3`,
+  `public-review-coverage-v1`, `phase-contract-v4`, `context-build-evidence-v10`,
+  `corrective-runtime-contract-v4`와 `trace-source-evidence-v10`은 모든 target의 exact-once
+  판정과 parent roll-up을 결속한다. Partial review는 artifact로 보존한 뒤 `REVIEW → IMPLEMENT`로
+  되돌리고, same-diff authoritative target이 모두 verified되기 전 `finish_task`를 거부한다.
+  Inspection anchor는 mutable patch가 아니라 Git base revision에 존재해야 하고
+  `public-review-base-provenance-v1` CAS가 start/resume/qualification/source hash에 결속된다.
+  Check/read event metadata는 result artifact bytes와 독립 대조하며, reordered target input은 contract
+  순서로 정규화하고 missing finish provenance, stale/relabelled evidence, vacuous terminal과 malformed
+  self-validation lifecycle을 fail closed한다.
+  V10은 `coverage_review_validation=True`의 mock/no-experiment 전용이며 live/provider/replay와
+  experiment를 허용하지 않는다. 이는 선언된 public review process coverage일 뿐 target set의
+  완전성, hidden correctness, SCRR 또는 memory 효과를 증명하지 않는다. V1-V9와 D-067/D-068
+  artifact는 immutable하고 D-067을 재실행하지 않는다. Offline acceptance는 971 collected,
+  964 passed/7 environment-dependent skipped, Ruff와 `git diff --check`로 완료됐다. 이 완료는 다음
+  paid/memory gate를 자동으로 열지 않는다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

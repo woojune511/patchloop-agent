@@ -1933,3 +1933,102 @@ source/correction harness commit과 corrected semantics를 결속해
 기록한다. 동일 semantic body의 반복 호출은 같은 correction ID와 최초 timestamp를 반환해야
 한다. Corrected trace integrity는 original campaign gate, task outcome, SCRR, comparison
 eligibility 또는 memory admission을 소급 변경하지 않는다.
+
+## 15. Phase-evidence-v10 public coverage review
+
+D-069는 D-067의 공개 issue를 사후 정답으로 바꾸지 않고, 넓은 범위의 공개 requirement를
+검토 가능한 단위로 분해하는 별도 offline 계약이다. `all`, `every`, `each` 같은 단어를
+runtime NLP로 추측하지 않는다. Task maintainer가 `public-review-contract-v2`에 각
+requirement의 `coverage_targets`를 명시하며, schema는 모든 requirement에 target이 하나 이상
+있고 전체 target 수가 20개 이하이며 `coverage_target_id`가 전역에서 유일한지 검사한다.
+V1 contract에 target field를 추가하는 것은 허용하지 않으므로 기존 V1 serialization과 hash는
+그대로 유지된다.
+
+```yaml
+schema_version: public-review-contract-v2
+requirements:
+  - requirement_id: req-...
+    source: issue.description
+    source_excerpt: Ensure context is preserved through every metadata access path.
+    coverage_targets:
+      - coverage_target_id: cov-...
+        description: Inspect one declared metadata access path after the patch.
+        evidence_kind: current_diff_inspection
+        path: src/package/api.py
+        anchor: "def get_metadata("
+      - coverage_target_id: cov-...
+        description: Validate the declared endpoint behavior.
+        evidence_kind: passing_validation
+        check_ids: [upstream-regression]
+```
+
+Target ID는 parent requirement ID와 normalized description, evidence kind, path/anchor 또는
+정렬된 check ID를 canonical JSON으로 hash해 `cov-<12 hex>`로 만든다. 두 evidence kind의
+shape는 섞을 수 없다.
+
+- `current_diff_inspection`: public task의 allowed path와 한 줄 exact anchor가 필요하다. Latest
+  successful patch 뒤, current worktree diff hash에 결속된 complete `read_file` result가 exact
+  path와 anchor를 실제로 포함해야 한다. 또한 anchor는 model context 생성 전에 Git public base
+  revision의 해당 path에 이미 존재해야 한다. Ordered target/path/anchor와 base file hash는
+  `public-review-base-provenance-v1` CAS에 기록되며 start, resume, qualification과
+  `trace-source-evidence-v10`이 같은 bytes를 검증한다.
+- `passing_validation`: non-empty, sorted, unique check ID가 필요하며 모두 public task의 visible
+  check여야 한다. Current diff에 결속된 advertised passing `run_check` event만 인용할 수 있다.
+
+V10 manifest는 exact `tool_schema_version=v5` / `context_policy_version=phase-evidence-v10`와
+`public-review-contract-v2`를 함께 요구한다. `coverage_review_validation=True`, mock provider,
+experiment context 부재의 조합만 허용하며 replay, OpenAI, experiment와 mixed validation mode는
+fail closed한다. Runtime은 `SYSTEM_PROMPT_V7`, `TOOL_SCHEMAS_V5`,
+`corrective-runtime-contract-v4`, `context-build-evidence-v10`과
+`phase-contract-v4`를 사용한다. 이 selector는 live capability나 paid execution hash를 만들지
+않는다.
+
+REVIEW request의 `review-evidence-v2`는 contract 순서 그대로
+`coverage_target_event_sequences`를 제공한다. Target evidence를 먼저 순서대로 deduplicate한 뒤
+current-diff passing checks와 final `get_diff`를 더해 `citable_event_sequences`를 만든다. 모든
+pinned result는 complete/untruncated여야 하고 event payload, result artifact descriptor와 실제
+CAS bytes가 같은 diff/path/check를 가리켜야 한다. `run_check`의 pass/check/timeout/truncation과
+`read_file`의 path/content/diff identity도 exact 비교하므로 event metadata 재표시로 실패 또는 stale
+결과를 승격할 수 없다. JSON object key 순서는 의미로 사용하지 않고 exact target key membership을
+검증한 뒤 target/review rows와 citation은 contract 순서로 canonicalize한다.
+
+Tool v5 `review_task`는 모든 requirement와 coverage target을 정확히 한 번씩 제출한다. Target
+status는 `verified`, `partially_verified`, `unverified` 중 하나이며 target에 광고된 exact evidence
+sequence만 인용한다. Gateway는 evidence kind를 독립 검증하고 parent requirement의 status와
+evidence를 child target의 ordered roll-up과 정확히 맞춘다. 결과는 `task-review-v3`,
+`task-review-result-v3`와 다음 `public-review-coverage-v1` 결정을 CAS에 보존한다.
+
+```json
+{
+  "schema_version": "public-review-coverage-v1",
+  "authoritative_coverage_target_ids": ["cov-..."],
+  "verified_coverage_target_ids": [],
+  "unresolved_coverage_target_ids": ["cov-..."],
+  "coverage_complete": false,
+  "ready_for_submission": false,
+  "deterministic_correctness_claimed": false
+}
+```
+
+Valid partial review는 실패로 버리지 않고 `ReviewRecorded`/tool result와 artifact로 남긴다. 다만
+runner는 즉시 `REVIEW → IMPLEMENT`로 전이하고 phase contract에
+`public_review_coverage_incomplete`와 unresolved target ID를 제시한다. 이후 agent는 필요한
+public inspection/validation을 수행하고 current final diff evidence를 본 뒤 review를 다시 제출해야 한다.
+`finish_task`는 current mutation/diff에 결속된 `task-review-v3`에서 authoritative target 순서,
+verified target 순서, empty unresolved list와 `coverage_complete=true`가 모두 정확히 일치할 때만
+accept한다. Crash/resume 뒤에도 incomplete review를 complete로 합성하거나 target evidence를
+다른 mutation epoch에서 재사용하지 않는다.
+
+Qualifier의 V10-only coverage checks는 request/context/CAS에서 target mapping을 독립 재구성하고,
+partial-review corrective transition과 submission ordering, terminal/recovery source를 검증한다.
+`targeted_validation`과 residual-risk row도 request-bound CAS와 public contract에 맞는지 재검증하고,
+tool v5 probe 사용 시 기존 self-validation lifecycle을 동일하게 요구한다. Complete coverage review,
+accepted submission과 evaluation이 없는 generic terminal trace는 gate를 닫지 못한다. Source schema는
+`trace-source-evidence-v10`이다. 이 검증은 evidence와 lifecycle integrity에 대한 것이며 target
+문구의 의미적 충분성이나 code correctness를 LLM으로 채점하지 않는다.
+
+Checked-in 예시는
+`experiments/review-contracts-v2/hf-hub-xet-endpoint-propagation.yaml`이다. D-067에서 사용한
+공개 issue clause를 네 code-path inspection target과 네 visible-validation target으로 표현하지만,
+새 live suite나 D-067 재실행 권한이 아니다. 이 V2 sidecar는 original D-067 manifest, run,
+qualification/correction, hidden failure, SCRR와 frozen dataset을 변경하지 않는다.

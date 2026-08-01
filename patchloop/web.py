@@ -81,6 +81,26 @@ def _event_summary(event: RunEvent) -> str:
             )
         if tool == "review_task":
             if event.type == EventType.TOOL_SUCCEEDED:
+                if payload.get("review_schema_version") == "task-review-v3":
+                    total = payload.get("coverage_target_count")
+                    verified = payload.get("verified_coverage_target_ids")
+                    verified_count = (
+                        len(verified) if isinstance(verified, list) else 0
+                    )
+                    coverage_state = (
+                        "complete"
+                        if payload.get("coverage_complete") is True
+                        else "incomplete"
+                    )
+                    target_counts = (
+                        f" · {verified_count}/{total} targets verified"
+                        if type(total) is int
+                        else ""
+                    )
+                    return (
+                        f"public coverage review {coverage_state}"
+                        f"{target_counts}"
+                    )
                 requirements = payload.get("requirement_count")
                 validations = payload.get("targeted_validation_count")
                 risks = payload.get("residual_risk_count")
@@ -148,6 +168,14 @@ def _event_summary(event: RunEvent) -> str:
 
 
 def _event_tone(event: RunEvent) -> str:
+    partial_coverage_review = (
+        event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "review_task"
+        and event.payload.get("review_schema_version") == "task-review-v3"
+        and event.payload.get("coverage_complete") is not True
+    )
+    if partial_coverage_review:
+        return "accent"
     failed_check = (
         event.type == EventType.TOOL_SUCCEEDED
         and event.payload.get("tool") == "run_check"
@@ -228,10 +256,179 @@ def _turn_view(number: int, events: list[RunEvent]) -> dict[str, Any]:
     }
 
 
+def _field(value: Any, name: str, default: Any = None) -> Any:
+    if isinstance(value, dict):
+        return value.get(name, default)
+    return getattr(value, name, default)
+
+
+def _coverage_target_metadata(
+    public_review_contract: Any | None,
+) -> list[dict[str, Any]]:
+    targets: list[dict[str, Any]] = []
+    requirements = _field(public_review_contract, "requirements", []) or []
+    for requirement in requirements:
+        requirement_id = _field(requirement, "requirement_id", "unknown")
+        for target in _field(requirement, "coverage_targets", []) or []:
+            target_id = _field(target, "coverage_target_id")
+            if not isinstance(target_id, str):
+                continue
+            evidence_kind = _field(target, "evidence_kind", "unknown")
+            path = _field(target, "path")
+            anchor = _field(target, "anchor")
+            check_ids = list(_field(target, "check_ids", []) or [])
+            if evidence_kind == "current_diff_inspection":
+                evidence_label = f"read {path} · anchor {anchor}"
+            elif evidence_kind == "passing_validation":
+                evidence_label = (
+                    "passing visible check · " + ", ".join(check_ids)
+                )
+            else:
+                evidence_label = str(evidence_kind)
+            targets.append(
+                {
+                    "coverage_target_id": target_id,
+                    "requirement_id": requirement_id,
+                    "description": _field(
+                        target,
+                        "description",
+                        "Declared public coverage target",
+                    ),
+                    "evidence_kind": evidence_kind,
+                    "evidence_label": evidence_label,
+                }
+            )
+    return targets
+
+
+def _coverage_review_view(
+    events: list[RunEvent],
+    *,
+    tool_schema_version: str | None,
+    public_review_contract: Any | None,
+) -> dict[str, Any]:
+    declared_targets = _coverage_target_metadata(public_review_contract)
+    metadata_by_id = {
+        item["coverage_target_id"]: item for item in declared_targets
+    }
+    reviews: list[dict[str, Any]] = []
+    for event in events:
+        if not (
+            event.type == EventType.TOOL_SUCCEEDED
+            and event.payload.get("tool") == "review_task"
+            and event.payload.get("review_schema_version") == "task-review-v3"
+        ):
+            continue
+        review_document = event.payload.get("review")
+        if not isinstance(review_document, dict):
+            review_document = {}
+        coverage = event.payload.get("public_review_coverage")
+        if not isinstance(coverage, dict):
+            nested_coverage = review_document.get("public_review_coverage")
+            coverage = nested_coverage if isinstance(nested_coverage, dict) else {}
+        raw_rows = review_document.get("coverage_targets")
+        rows: list[dict[str, Any]] = []
+        if isinstance(raw_rows, list):
+            for raw_row in raw_rows:
+                if not isinstance(raw_row, dict):
+                    continue
+                target_id = raw_row.get("coverage_target_id")
+                if not isinstance(target_id, str):
+                    continue
+                metadata = metadata_by_id.get(target_id, {})
+                sequences = raw_row.get("evidence_event_sequences")
+                if not isinstance(sequences, list):
+                    sequences = []
+                status = str(raw_row.get("status", "unknown"))
+                rows.append(
+                    {
+                        "coverage_target_id": target_id,
+                        "requirement_id": raw_row.get(
+                            "requirement_id",
+                            metadata.get("requirement_id", "unknown"),
+                        ),
+                        "description": metadata.get(
+                            "description",
+                            "Declared public coverage target",
+                        ),
+                        "evidence_label": metadata.get(
+                            "evidence_label",
+                            "public evidence",
+                        ),
+                        "status": status,
+                        "tone": (
+                            "completed"
+                            if status == "verified"
+                            else "failed"
+                            if status == "unverified"
+                            else "neutral"
+                        ),
+                        "evidence_event_sequences": sequences,
+                        "evidence_sequences_label": (
+                            ", ".join(str(sequence) for sequence in sequences)
+                            if sequences
+                            else "none"
+                        ),
+                        "notes": raw_row.get("notes", ""),
+                    }
+                )
+        authoritative_ids = coverage.get(
+            "authoritative_coverage_target_ids",
+            [item["coverage_target_id"] for item in declared_targets],
+        )
+        verified_ids = coverage.get(
+            "verified_coverage_target_ids",
+            event.payload.get("verified_coverage_target_ids", []),
+        )
+        unresolved_ids = coverage.get(
+            "unresolved_coverage_target_ids",
+            event.payload.get("unresolved_coverage_target_ids", []),
+        )
+        total = (
+            len(authoritative_ids)
+            if isinstance(authoritative_ids, list)
+            else event.payload.get("coverage_target_count", len(rows))
+        )
+        verified_count = len(verified_ids) if isinstance(verified_ids, list) else 0
+        complete = coverage.get("coverage_complete") is True
+        if not coverage:
+            complete = event.payload.get("coverage_complete") is True
+        reviews.append(
+            {
+                "sequence": event.sequence,
+                "schema_version": event.payload.get("review_schema_version"),
+                "worktree_diff_hash": event.payload.get(
+                    "worktree_diff_hash",
+                    review_document.get("worktree_diff_hash", "unknown"),
+                ),
+                "coverage_complete": complete,
+                "tone": "completed" if complete else "failed",
+                "status_label": (
+                    f"{verified_count}/{total} targets verified"
+                ),
+                "verified_count": verified_count,
+                "target_count": total,
+                "unresolved_coverage_target_ids": (
+                    unresolved_ids if isinstance(unresolved_ids, list) else []
+                ),
+                "rows": rows,
+            }
+        )
+    return {
+        "supported": tool_schema_version == "v5",
+        "recorded": bool(reviews),
+        "declared_targets": declared_targets,
+        "declared_target_count": len(declared_targets),
+        "reviews": reviews,
+        "latest": reviews[-1] if reviews else None,
+    }
+
+
 def _build_trace_view(
     events: list[RunEvent],
     *,
     tool_schema_version: str | None = None,
+    public_review_contract: Any | None = None,
 ) -> dict[str, Any]:
     model_events = [
         event for event in events if event.type == EventType.MODEL_CALLED
@@ -318,6 +515,11 @@ def _build_trace_view(
     attempted_events = [
         event for event in events if event.type == EventType.SUBMISSION_ATTEMPTED
     ]
+    coverage_review = _coverage_review_view(
+        events,
+        tool_schema_version=tool_schema_version,
+        public_review_contract=public_review_contract,
+    )
     if accepted_events:
         submission = {
             "tone": "completed",
@@ -336,7 +538,7 @@ def _build_trace_view(
                 "recorded outcome"
             ),
         }
-    elif tool_schema_version in {"v2", "v3", "v4"}:
+    elif tool_schema_version in {"v2", "v3", "v4", "v5"}:
         submission = {
             "tone": "neutral",
             "label": "submission not attempted",
@@ -350,26 +552,53 @@ def _build_trace_view(
         review_events or accepted_events or rejected_events
         or attempted_events
     )
-    review = {
-        "tone": "completed" if review_events else "neutral",
-        "label": (
-            "structured self-review bound to final diff"
-            if (
-                review_events
-                and review_events[-1].payload.get(
-                    "self_attestation"
+    if tool_schema_version == "v5":
+        latest_coverage = coverage_review["latest"]
+        if review_events and latest_coverage is not None:
+            review = {
+                "tone": "completed",
+                "label": "public coverage review bound to final diff",
+            }
+        elif latest_coverage is not None:
+            review = {
+                "tone": (
+                    "completed"
+                    if latest_coverage["coverage_complete"]
+                    else "failed"
+                ),
+                "label": (
+                    "public coverage review complete; submission not yet bound"
+                    if latest_coverage["coverage_complete"]
+                    else "public coverage review incomplete · "
+                    + latest_coverage["status_label"]
+                ),
+            }
+        else:
+            review = {
+                "tone": "neutral",
+                "label": "public coverage review not recorded",
+            }
+    else:
+        review = {
+            "tone": "completed" if review_events else "neutral",
+            "label": (
+                "structured self-review bound to final diff"
+                if (
+                    review_events
+                    and review_events[-1].payload.get(
+                        "self_attestation"
+                    )
+                    is True
                 )
-                is True
-            )
-            else "final diff review recorded"
-            if review_events
-            else "final diff review not recorded"
-            if lifecycle_available
-            else "final diff review not reached"
-            if tool_schema_version in {"v2", "v3", "v4"}
-            else "legacy review telemetry unavailable"
-        ),
-    }
+                else "final diff review recorded"
+                if review_events
+                else "final diff review not recorded"
+                if lifecycle_available
+                else "final diff review not reached"
+                if tool_schema_version in {"v2", "v3", "v4"}
+                else "legacy review telemetry unavailable"
+            ),
+        }
     return {
         "event_count": len(events),
         "model_turn_count": len(model_events),
@@ -387,6 +616,7 @@ def _build_trace_view(
                 for event in events
             ),
         },
+        "coverage_review": coverage_review,
         "telemetry": {
             "available": bool(telemetry_events),
             "turn_count": len(telemetry_events),
@@ -498,6 +728,11 @@ def run_detail(request: Request, run_id: str):
             "trace": _build_trace_view(
                 events,
                 tool_schema_version=manifest.tool_schema_version,
+                public_review_contract=getattr(
+                    manifest,
+                    "public_review_contract",
+                    None,
+                ),
             ),
         },
     )
@@ -524,6 +759,11 @@ def run_events(request: Request, run_id: str):
             "trace": _build_trace_view(
                 state.list_events(run_id),
                 tool_schema_version=manifest.tool_schema_version,
+                public_review_contract=getattr(
+                    manifest,
+                    "public_review_contract",
+                    None,
+                ),
             )
         },
     )

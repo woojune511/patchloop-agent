@@ -920,3 +920,69 @@ correction harness에서 `persist=false`로 재계산한다. Original bytes가 �
 content-addressed correction을 exclusive-create하며 동일 호출은 idempotent해야 한다. Corrected
 qualification pass는 trace integrity만 뜻한다. Original campaign gate, hidden verdict,
 `task_failure`, SCRR=false와 baseline/memory/core exclusion은 불변이다.
+
+### D-069 V10 offline public-coverage protocol
+
+D-069는 D-067 hidden failure를 다시 실행하거나 채점하는 experiment가 아니다. 공개 issue의
+quantified requirement가 단일 requirement status와 한 visible check만으로 완료되는 것을 막기 위한
+offline lifecycle gate다. Maintainer는 `public-review-contract-v2`에서 각 requirement를 explicit
+coverage target으로 분해한다. Runtime은 `all`/`every`/`each` keyword만 보고 target을 자동 생성하지
+않으며, target set의 완전성은 별도 authoring review 책임이다.
+
+Factory admission과 그 결과 manifest selector는 다음 exact conjunction이다.
+
+```text
+build_manifest coverage_review_validation == true
+AND emitted tool_schema_version == v5
+AND context_policy_version == phase-evidence-v10
+AND public_review_contract.schema_version == public-review-contract-v2
+AND provider == mock
+AND experiment context is absent
+```
+
+Replay, OpenAI 또는 arbitrary provider, experiment-bearing manifest, mixed validation mode는
+qualification 대상이 아니라 manifest/start 단계에서 fail closed해야 한다. Factory boolean은
+RunManifest field로 영속되지 않으므로 qualifier는 이를 사후 추측하지 않고, 결과 manifest의 exact
+v5/v10/contract-v2/mock/no-experiment selector와 runtime source를 검증한다. V10 source는
+`corrective-runtime-contract-v4`, `context-build-evidence-v10`, `review-evidence-v2`,
+`task-review-v3`, `public-review-coverage-v1`, `public-review-base-provenance-v1`과
+`trace-source-evidence-v10`을 사용한다. V1-V9 source schema와 historical qualification은 기존
+version과 bytes로 유지한다.
+
+Offline acceptance는 최소 다음 논리곱을 검증한다.
+
+```text
+V2 contract가 exact public task/hash에 결속되고 private/reference marker가 없음
+AND 모든 requirement가 하나 이상의 canonical, unique coverage target을 가짐
+AND 모든 inspection anchor가 model call 전 Git public base bytes에 존재하고 provenance CAS와 일치
+AND current_diff_inspection citation이 latest mutation 뒤 same-diff read/path/anchor CAS와 일치
+AND passing_validation citation이 same-diff passing visible check와 target check_id에 일치
+AND check/read event metadata가 result artifact의 pass/path/content/diff/timeout/truncation과 exact match
+AND review-evidence-v2 target mapping과 citable order를 qualifier가 event/CAS에서 독립 재구성
+AND review_task가 every requirement/target을 exact once 평가
+AND parent requirement status/evidence가 child target의 canonical roll-up과 일치
+AND targeted_validation/residual-risk 및 optional probe lifecycle이 public contract/CAS와 일치
+AND incomplete review가 durable evidence로 보존된 뒤 REVIEW에서 IMPLEMENT로 전이
+AND incomplete coverage 상태의 finish_task가 SubmissionAccepted를 만들지 않음
+AND complete same-diff target review 뒤에만 submission lifecycle이 진행됨
+AND complete review + accepted submission + evaluation이 실제로 관찰되어 공집합 terminal이 아님
+AND crash/resume이 partial decision을 complete로 합성하거나 stale target evidence를 재사용하지 않음
+AND missing/duplicate/wrong-kind/wrong-diff/descriptor/hash/bytes/sequence tamper가 fail closed
+AND historical V1-V9 contract, rendering과 qualification evidence가 변하지 않음
+```
+
+Partial review는 qualification corruption이 아니다. Target row shape와 인용이 유효하면
+`coverage_complete=false`인 `task-review-v3`를 보존하고 corrective lifecycle을 검증한다. 반대로
+partial review를 곧바로 submission-ready로 처리하거나, unresolved target 없이 complete라고
+기록하거나, 다른 target에 광고된 citation으로 target을 verified 처리하면 qualification failure다.
+
+Checked-in HF Hub V2 sidecar는 four code-path inspection targets와 four visible-validation targets를
+가진 공개 fixture다. 이는 D-067 original suite/manifest의 replacement, frozen dataset change,
+reference patch 또는 hidden oracle가 아니며 paid execution capability를 발급하지 않는다.
+
+D-069 offline acceptance는 complete다. V10 집중 통합 회귀와 repository-wide 971 collected,
+964 passed/7 environment-dependent skipped, Ruff 및 `git diff --check`가 통과했고 provider call은
+없었다. 증명 범위는 여전히 declared public process coverage와 trace integrity뿐이다. Hidden
+acceptance, task correctness, SCRR, live model 성능, no-memory baseline 또는 cross-run memory
+benefit은 별도 deterministic evaluator/live campaign evidence 없이는 주장하지 않는다.
+D-067/D-068 outcome과 artifact는 immutable하다.

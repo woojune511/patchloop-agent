@@ -664,3 +664,34 @@ silently lowering the design or fabricating missing results.
 - The checked-in D-067 YAML retains false/null authorization fields and the consumed execution hash is not
   reusable. No rerun is planned; the next evidence gap is leak-safe, public-evidence-only analysis of the
   hidden-acceptance task failure and requirement coverage.
+
+## Phase-evidence-v10 public coverage completion is not correctness
+
+- D-069 adds an offline process-coverage gate. A maintainer must explicitly decompose each public
+  requirement into `coverage_targets`; PatchLoop does not infer an exhaustive target set from words such
+  as `all`, `every` or `each`. A missing or poorly chosen target therefore remains an authoring risk.
+- A `current_diff_inspection` target proves only that a complete same-diff `read_file` result after the
+  latest patch contained the declared public path and anchor. It does not prove that the function was
+  changed correctly, that every caller was found or that the inspected branch executed. V10 now proves
+  that the anchor already existed in the Git public base via `public-review-base-provenance-v1`, which
+  blocks reference-patch-only anchor leakage, but a maintainer must still audit the target description
+  and the semantic sufficiency of the chosen base anchor.
+- A `passing_validation` target proves only that an advertised visible registered check passed on the
+  current diff. One check may be deliberately mapped to more than one declared behavior target, but this
+  mapping is public contract metadata, not independent path coverage or hidden-oracle evidence.
+- Tool v5 records every target and rolls requirement status up from those rows. A valid partial review is
+  retained as inspectable evidence and sends the phase from REVIEW back to IMPLEMENT. Submission remains
+  blocked until the exact authoritative target list is verified in a current-diff `task-review-v3`.
+  This is a lifecycle invariant, not an LLM semantic grade.
+- The V10 selector is mock/no-experiment only. It authorizes no OpenAI call, live suite, paid execution
+  hash, baseline row, memory admission or core run. A future live V10 lane would require a new decision,
+  frozen suite, clean execution hash, cost approval and separate evidence.
+- D-067 remains an immutable hidden-acceptance task failure and D-068 remains its append-only trace
+  qualification correction. The V2 HF Hub review sidecar and V10 tests do not rerun either artifact,
+  change SCRR, repair the submitted patch or prove why hidden acceptance failed.
+- Historical V1-V9 manifests, tool/context rendering and source evidence retain their original semantics.
+  V10 qualification can establish target-evidence, corrective-transition, submission and recovery
+  integrity only; it cannot establish hidden correctness or cross-run memory benefit.
+- D-069's offline implementation gate completed with 971 collected, 964 passed/7 environment-dependent
+  skipped, Ruff and `git diff --check`; no provider call was made. This closes implementation integrity,
+  not a live model, baseline, SCRR or memory-effect claim.
