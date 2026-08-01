@@ -636,7 +636,7 @@ silently lowering the design or fabricating missing results.
 - One tuning task with completion gate false is not a no-memory baseline and cannot support task
   correctness, SCRR, a memory-effect claim or core-performance claim. Memory admission remains closed.
 
-## Phase-evidence-v9 and the larger future ceiling are not measured improvements
+## Phase-evidence-v9 live arrival and corrected trace integrity are not performance improvements
 
 - D-066 implements a versioned presentation correction, not a model-quality change. Pinning current-diff
   passing checks and the final diff prevents recent-event eviction, but it cannot guarantee that the
@@ -646,18 +646,21 @@ silently lowering the design or fabricating missing results.
   successful patch resets the epoch count.
 - `review-citation-error-v1` exposes only public exact sequence metadata. It does not reveal hidden tests,
   reference patches or evaluator feedback and must not be described as an oracle hint.
-- V9 qualification independently rebuilds review anchors and checks CAS, but generic phase-readiness and
-  deterministic task grading retain their existing contracts. A passing trace qualification would mean
-  evidence integrity, not task correctness.
+- V9 qualification independently rebuilds review anchors and checks request/source CAS, exact integer
+  sequences and pinned presentation, but generic phase-readiness and deterministic task grading retain
+  their existing contracts. Corrected trace qualification means evidence integrity, not task correctness.
 - D-066 focused validation completed with 504 collected, 502 passed/2 skipped, and repository-wide
   regression completed with 879 collected, 872 passed/7 environment-dependent skipped. This closes
   the offline implementation gate only; it is still not V9 live evidence.
-- D-067's 60 model / 100 tool / 1.2M token / 1,800-second limits are a future one-task diagnostic ceiling,
-  not a recommendation for the 12-task baseline or 96-run core campaign. Its `$5.5125` is a conservative
-  authorization reserve, not expected spend or an invoice prediction.
-- The checked-in D-067 YAML is explicitly unapproved: live cost is false, execution hash and run ID are
-  null, clean no-call preflight is pending and no provider call has occurred. It cannot be executed until
-  the offline gate, fresh environment bindings, a new exact hash and separate user approval all exist.
-- Even a future D-067 completion-gate pass would exclude task success, comparison eligibility and memory
-  admission by contract. It would only show that this one no-memory runtime reached the evaluator without
-  infrastructure, qualification or budget termination.
+- D-067 consumed one approved execution hash. The run used 344,754/1,200,000 tokens, 21/60 model calls,
+  36/100 tool calls and `$0.2880024`; no budget dimension bound. This does not recommend the larger ceiling
+  for a 12-task baseline or 96-run core campaign and does not support another budget increase.
+- The run reached the official evaluator and passed regression/scope/safety, but hidden acceptance failed.
+  It remains `task_failure`, SCRR=false, comparison-ineligible and memory-ineligible. Evaluator arrival is
+  not correctness.
+- Original qualification 32/33 and the original false campaign gate remain immutable. D-068 correction
+  `qcor_51b725...3c032` records corrected trace qualification 33/33 in a separate artifact. It does not
+  rewrite the original result, remove the hidden failure or turn the run into a baseline or memory source.
+- The checked-in D-067 YAML retains false/null authorization fields and the consumed execution hash is not
+  reusable. No rerun is planned; the next evidence gap is leak-safe, public-evidence-only analysis of the
+  hidden-acceptance task failure and requirement coverage.

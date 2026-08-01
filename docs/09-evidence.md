@@ -2253,7 +2253,7 @@ E2E reaches the evaluator and passes the V9-specific review, saturation, self-va
 contracts, but whole-run `qualified` intentionally remains false because live campaign, approved-plan,
 Docker-provenance and official-evaluator gates do not apply to that offline selector.
 
-## D-067 future V9 completion pilot — unapproved no-call contract
+## D-067 V9 completion pilot — consumed live result
 
 The checked-in suite `dev-no-memory-review-evidence-v9-pilot-20260801-r1` fixes one frozen HF Hub task,
 one `no_memory` repetition, `gpt-5.4-mini-2026-03-17` medium/standard/default, v4/v9/runtime-v3,
@@ -2262,8 +2262,48 @@ At the dated standard rate, the deterministic conservative reserve is `$5.5125` 
 `$6`. The purpose is tuning-only and its completion gate excludes task success, comparison eligibility
 and memory admission.
 
-This is not live evidence. The YAML records `live_cost_approved=false`, no approved execution hash and
-no pilot run ID. A clean no-call preflight has not yet been sealed, no execution plan has been approved,
-and no provider request or cost was created. D-067 may proceed only after a fresh clean preflight and a
-separate explicit user approval of its exact hash and cost cap. D-064 remains immutable and its consumed
-hash is not reusable.
+Approved execution hash
+`sha256:f1b7d78243af8c87e3ec83f9373312f171073e0713a23fbc51c909fac0be6982` was consumed exactly once at
+source harness `db144051f7f3d5049498971593df548697789dcf`. Run `run_4c77b1102e224785` reached the
+official evaluator with 332,204 input + 12,550 output = 344,754 tokens, 21/60 model calls, 36/100 tool
+calls, 121,894 ms and calculated cost `$0.2880024`. No budget dimension bound. Regression, scope and
+safety passed, while hidden acceptance failed; the outcome is `task_failure` and SCRR remains false.
+
+The original completion gate remains false: terminal/evaluator/official counts are 1/1, but qualified
+runs are 0/1 with one qualification error. Original qualification hash
+`sha256:8840382b824dc27015e82d2949d39ada06c8169efe0fdcda3b219c3a1dece59e` passed 32/33; only
+`submission_lifecycle.complete_source_in_context` was false. Its file bytes remain
+`sha256:1e3558eeee6ab505fe313a3f75ab4ae958e85876010321b74500c8c7a3464d2c`. The result, journal and
+false gate are immutable, and the consumed hash is not reusable.
+
+## D-068 V9 pinned-diff qualification correction — append-only complete
+
+The common submission qualifier now recognizes a V9 final `get_diff` pinned outside recent events only
+after independently validating request CAS, source descriptor/path/size/hash/bytes, exact integer
+sequences, current-diff identity, untruncated content and exactly one nested and top-level presentation.
+Non-object source JSON, float/bool sequence aliases, missing/duplicate anchors and independent sidecar
+tampering fail closed. Parameterized regression preserves the historical V1-V8 recent-event-only rule.
+
+Correction `qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032`, created by clean harness
+`24fc92b9bbca5b1b9714a5a1f20d0dfbbc01205a`, binds the original qualification and unchanged source
+evidence hash `sha256:2096b9a6114dc767aabd5e2d35d89077c91993a8cad6c42eeae99e223539f572`.
+Its correction hash is `sha256:836b013bccbdbcc7d0eecde24248b86eff353d1adef281f07b215c3ded65f0ed` and corrected qualification
+hash is `sha256:1bff6db36a32104c2417c6aef65e8dcda50e00e71b451c51d78ae8df75df954c`. Corrected trace
+qualification passes 33/33 while retaining `task_failure` and memory ineligibility. The tracked writer
+regression verifies content-addressed idempotency; the canonical qualification bytes remained unchanged.
+
+Portable evidence is checked in at
+`reports/live-pilot/dev-no-memory-review-evidence-v9-pilot-20260801-r1.json`. Local immutable hashes
+include experiment result `sha256:71bb203ae2ffaf3deeaa9523273410c83bb477a0574b99279242c2e764caf96d`, journal
+`sha256:62e22e068fc08d1de91c8c9d78c9e94b6b2dd75cc1a216b75b5dc7ee916050c0`, final journal event
+`sha256:e2ae51f8cad76dcd7a3a54365184858d2a471d51024164ffe734a0ad2902230a`, execution-plan file
+`sha256:d7d5497c1d1a464c7962bc89fea73c693e26801db3e25ed24fce2858f4eaa532`, run result
+`sha256:e3f4a855ae1d53bcf3381cfe1bc35167503e2774dd80308e929ce2184bcafe8b` and correction file
+`sha256:2a78f098a0d5ff9782fd5e4385a1b56b2b23623475554f0f2c295cc2b99fba71`.
+
+The current repository-wide regression collected 925 tests: 918 passed and seven environment-dependent
+tests skipped. Ruff and `git diff --check` passed. No provider call or added cost occurred while fixing
+the qualifier, creating the correction or sealing this report. Corrected trace integrity does not change
+the hidden failure, `task_failure`, SCRR=false, original campaign gate, comparison exclusion, memory
+admission or core status. The next gate is leak-safe, public-evidence-only analysis of the
+hidden-acceptance task failure and requirement coverage, not a budget increase or a rerun.

@@ -621,7 +621,7 @@ Expected raw file hashes are respectively `7f956827...849ac`, `f4b245b4...efc24`
 byte hash. The run established the V8 saturation/reset policy branch only. It did not submit or reach
 the evaluator and therefore is not task-success, SCRR, baseline or memory-effect evidence.
 
-## D-066/D-067 V9 offline gate and unapproved pilot inspection
+## D-066-D-068 V9 offline gate, consumed pilot and correction inspection
 
 D-066's focused, credential-free validation set is:
 
@@ -641,7 +641,7 @@ The focused run collected 504 tests: 502 passed and two existing capability-depe
 The separate repository-wide run collected 879 tests: 872 passed and seven environment-dependent tests
 skipped. Ruff and `git diff --check` passed. These are D-066 offline results, not reused D-064 evidence.
 
-The future suite may be inspected without authorizing a provider call:
+The checked-in source suite can still be inspected without authorizing a provider call:
 
 ```powershell
 $env:UV_CACHE_DIR = ".uv-cache"
@@ -650,14 +650,26 @@ uv run patchloop evaluate `
   --preflight-only
 ```
 
-Do not add `--approve-live-cost` or `--approved-execution-hash`. The checked-in state is intentionally
-`live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`; the preflight must
-therefore remain not ready for paid execution. It should describe the exact HF Hub/no-memory row,
-v4/v9/runtime-v3, 60 model calls, 100 tool calls, 1,200,000 total tokens, 1,800 seconds, output 25,000,
-reserve `$5.5125` and cap `$6`. A dirty checkout, stale price verification, Docker/image drift or other
-environment mismatch may add further blockers and must not be bypassed.
+Do not add `--approve-live-cost` or `--approved-execution-hash`. The checked-in state intentionally
+remains `live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`; it is a source
+contract, not authority for a second paid run. Historical execution hash
+`sha256:f1b7d78243af8c87e3ec83f9373312f171073e0713a23fbc51c909fac0be6982` was consumed exactly once
+and must not be reused.
 
-No clean execution hash has been approved for D-067. A later provider invocation requires all of the
-following in a separate step: completed D-066 offline evidence, clean no-call preflight, exact current
-Docker/SDK/Git/price bindings, a newly printed execution hash and explicit user approval for at most
-`$6`. Until then, running `patchloop evaluate` without `--preflight-only` is out of scope.
+Inspect the immutable local result and append-only correction without calling the provider:
+
+```powershell
+$runId = "run_4c77b1102e224785"
+$correctionId = "qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032"
+Get-Content -Raw -Encoding utf8 ".patchloop/experiments/dev-no-memory-review-evidence-v9-pilot-20260801-r1.json"
+Get-Content -Raw -Encoding utf8 ".patchloop/qualifications/$runId.json"
+Get-Content -Raw -Encoding utf8 ".patchloop/qualification-corrections/v1/$runId/$correctionId.json"
+Get-Content -Raw -Encoding utf8 "reports/live-pilot/dev-no-memory-review-evidence-v9-pilot-20260801-r1.json"
+```
+
+The canonical qualification must remain false with file SHA-256
+`1e3558eeee6ab505fe313a3f75ab4ae958e85876010321b74500c8c7a3464d2c`; the correction file must be
+separate with SHA-256 `2a78f098a0d5ff9782fd5e4385a1b56b2b23623475554f0f2c295cc2b99fba71`.
+The correction records corrected qualification 33/33, but the experiment result must still show the
+original false gate, hidden failure, `task_failure`, SCRR=false, comparison exclusion and memory
+admission false. These commands are read-only; no provider credential is needed.

@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-066 V9 review-evidence offline gate complete; D-067 future completion pilot
-contract checked in but unapproved and no-call preflight pending**
+현재 milestone: **D-068 append-only V9 pinned-diff qualification correction complete; D-067 live
+run remains an immutable hidden task failure**
 
 2026-08-01 구현 스냅샷:
 
@@ -10,10 +10,10 @@ contract checked in but unapproved and no-call preflight pending**
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | historical v2-v8 보존; review-evidence v4/v9 offline gate complete | Current-diff check/diff pinning, exact citation authority, structured rejection details, active-epoch three-rejection guard와 independent V9 qualification; focused 502 passed/2 skipped, full 872 passed/7 skipped |
+| Phase 3 state machine | historical v2-v8 보존; review-evidence v4/v9 live qualification correction complete | Current-diff check/diff pinning, exact citation authority, active-epoch guard와 V9 pinned-source qualification; current full 918 passed/7 skipped |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-064 immutable; D-067 future one-row suite unapproved | V9 offline gate 전 no-call preflight/hash/provider call 금지; proposed 60/100/1.2M/1,800초도 baseline·memory admission 제외 |
+| Phase 6 evaluation | D-067 consumed once; original gate false; immutable | Official evaluator reached without budget binding; hidden task failure, original qualification/gate preserved, corrected trace only; baseline·memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -99,9 +99,10 @@ source hash를 보존했다. D-064는 기존 purpose를 완화하지 않는 exac
 다음 변경 D-066은 provider 호출 없이 REVIEW evidence-loop correction을 V9으로 구현했다.
 Current-diff passing check와 final diff를 recent-event window 밖에 pin하고 exact citable sequence,
 structured rejection과 active-epoch three-rejection guard를 추가했다. 집중·전체 회귀는
-통과했으며 D-064는 재실행하지 않는다. D-067 future suite는 60 model/100 tool/
-1,200,000 token/1,800초로 상한을 넓혔지만 승인, execution hash, no-call preflight와 provider
-call은 모두 아직 없다.
+통과했으며 D-064는 재실행하지 않는다. D-067은 60 model/100 tool/1,200,000 token/1,800초
+상한의 별도 승인 hash로 정확히 한 번 실행됐다. Official evaluator에 도달했으나 hidden
+acceptance가 실패했고 budget은 bind하지 않았다. D-068은 V9 pinned diff qualification만
+append-only로 정정했으며 original result와 campaign gate를 바꾸지 않는다.
 
 D-062 original result, journal과 qualification artifact는 immutable하다. 후속 독립 분석은
 qualification failure에서 v5-vs-v6/v7 nominal-reserve drift를 분리했다. Append-only
@@ -169,7 +170,8 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 11i | completed (offline), no provider call | D-063 phase-evidence-v8 saturation-context correction | Six-replay saturation을 다음 context의 authoritative allowed actions에 반영하고 historical v7 rendering을 보존. Mock-only manifest, crash/resume reset E2E, independent saturation qualification과 representative v7 golden 통과 |
 | 11j | consumed once; diagnostic pass; completion false; immutable | Separate V8 single live pilot | `run_45e3edc434d749f7`: qualification 30/30, saturation seq 101→patch seq 106→reset seq 110 pass. 14 review rejection 뒤 model calls 40/40에서 evaluator 전 종료; 659,373 tokens, 64 tools, `$0.6140766`; baseline·memory/core 제외, 재실행 금지 |
 | 11k | completed (offline); no provider call | D-066 phase-evidence-v9 review-evidence correction | `review_evidence_validation=True` mock/no-experiment selector; passing current-diff checks와 final diff를 12-event window 밖에 pin, exact citable list와 `review-citation-error-v1`, active mutation epoch당 3회 rejection terminal guard, independent `review_evidence_context_contract`; focused 502 passed/2 skipped, full 872 passed/7 skipped, V8 semantics 보존 |
-| 11l | contract checked in; unapproved; no-call preflight pending | D-067 separate V9 completion pilot | Exact HF Hub/no-memory 1회, v4/v9/runtime-v3, 60 model/100 tool/1.2M token/1,800초, output 25k, reserve `$5.5125`, cap `$6`; live false/hash null/run null, comparison·memory/core 제외 |
+| 11l | consumed once; evaluator reached; original gate false; immutable | D-067 separate V9 completion pilot | `run_4c77b1102e224785`: 344,754 tokens, 21 model/36 tool, `$0.2880024`; no budget bind, official evaluator reached, hidden fail과 `task_failure`; original qualification 32/33, comparison·memory/core 제외, 재실행 금지 |
+| 11m | completed (offline); no provider call | D-068 append-only V9 qualification correction | V9 pinned final diff를 request/source CAS와 exact integer sequence로 검증하고 float/bool/duplicate/sidecar tamper를 거부; `qcor_51b725...3c032` corrected qualification 33/33, original qualification/gate/outcome/SCRR 불변; current full 918 passed/7 skipped |
 
 D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
 815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner
@@ -187,10 +189,13 @@ sanitized evidence를 회귀 테스트하며, task correctness나 memory 효과�
 Post-run seal 전체 회귀는 839 collected, 832 passed/7 environment-dependent skipped로 통과했고
 Ruff와 `git diff --check`도 통과했다.
 
-D-066/D-067 source change의 집중 회귀는 504 collected, 502 passed/2 skipped였고
+D-066 당시 source change의 집중 회귀는 504 collected, 502 passed/2 skipped였고
 repository-wide regression은 879 collected, 872 passed/7 environment-dependent skipped다.
-Ruff와 `git diff --check`도 통과했으며 provider call은 없었다. 이 offline gate는 D-067의
-clean no-call preflight나 provider execution approval을 대신하지 않는다.
+D-068 correction source는 repository-wide 925 collected, 918 passed/7
+environment-dependent skipped, Ruff와 `git diff --check`를 통과했다. Correction 생성·검증
+중 provider call은 없었다. 다음 gate는 budget 증액이나 memory admission이 아니라 D-067
+hidden-acceptance task failure의 원인과 requirement coverage를 public evidence만으로 분석하는
+leak-safe offline 단계다.
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.

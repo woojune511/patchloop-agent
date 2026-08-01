@@ -1,0 +1,172 @@
+{
+  "schema_version": "review-evidence-v9-pilot-evidence-v1",
+  "recorded_at": "2026-08-01T07:25:03.133959Z",
+  "experiment_id": "dev-no-memory-review-evidence-v9-pilot-20260801-r1",
+  "purpose": "memory-development-no-memory-review-evidence-pilot",
+  "config_path": "experiments/dev-no-memory-review-evidence-v9-pilot-20260801-r1.yaml",
+  "source_harness_commit": "db144051f7f3d5049498971593df548697789dcf",
+  "correction_harness_commit": "24fc92b9bbca5b1b9714a5a1f20d0dfbbc01205a",
+  "execution_hash": "sha256:f1b7d78243af8c87e3ec83f9373312f171073e0713a23fbc51c909fac0be6982",
+  "suite_hash": "sha256:7899832d11a05fbb774a28ee662ce680e265cb3e51395f8410002d90e09e5d9f",
+  "execution_plan_hash": "sha256:ac1520caa08b330c21f71b89db6f0d260edab7f0fbc52eaa9794c1dba29648e7",
+  "result_hash": "sha256:71bb203ae2ffaf3deeaa9523273410c83bb477a0574b99279242c2e764caf96d",
+  "journal_file_hash": "sha256:62e22e068fc08d1de91c8c9d78c9e94b6b2dd75cc1a216b75b5dc7ee916050c0",
+  "journal_final_event_hash": "sha256:e2ae51f8cad76dcd7a3a54365184858d2a471d51024164ffe734a0ad2902230a",
+  "model": {
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "store": false,
+    "previous_response_id_used": false
+  },
+  "budget": {
+    "max_model_calls": 60,
+    "max_tool_calls": 100,
+    "max_total_tokens": 1200000,
+    "wall_clock_timeout_seconds": 1800,
+    "authorization_reserve_usd": 5.5125,
+    "suite_cost_limit_usd": 6.0
+  },
+  "original_completion_gate": {
+    "schema_version": "v9-review-evidence-live-pilot-gate-v1",
+    "passed": false,
+    "expected_runs": 1,
+    "terminal_runs": 1,
+    "qualified_runs": 0,
+    "evaluator_reached_runs": 1,
+    "official_evaluator_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 1,
+    "diagnostic_errors": 0,
+    "budget_terminal_runs": 0,
+    "task_successes": 0,
+    "task_success_required": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "immutable": true,
+    "retroactively_recomputed": false
+  },
+  "run": {
+    "task_id": "hf-hub-xet-endpoint-propagation",
+    "run_id": "run_4c77b1102e224785",
+    "outcome_kind": "task_failure",
+    "official": true,
+    "scope_compliant_success": false,
+    "verdicts": {
+      "hidden_tests": "fail",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "usage": {
+      "input_tokens": 332204,
+      "cached_input_tokens": 26112,
+      "output_tokens": 12550,
+      "reasoning_output_tokens": 9706,
+      "total_tokens": 344754,
+      "model_calls": 21,
+      "tool_calls": 36,
+      "wall_clock_ms": 121894,
+      "model_cost_usd": 0.2880024
+    },
+    "budget_headroom": {
+      "model_calls": 39,
+      "tool_calls": 64,
+      "total_tokens": 855246,
+      "wall_clock_ms": 1678106,
+      "binding_dimension": "none"
+    },
+    "submitted_patch_file_sha256": "sha256:e30cb245bb556ce22fcc79bed31dcf97423c622419fb71bf31bf956aa3b29599"
+  },
+  "qualification": {
+    "source_evidence_hash": "sha256:2096b9a6114dc767aabd5e2d35d89077c91993a8cad6c42eeae99e223539f572",
+    "original": {
+      "qualification_hash": "sha256:8840382b824dc27015e82d2949d39ada06c8169efe0fdcda3b219c3a1dece59e",
+      "qualified": false,
+      "trace_integrity_passed": false,
+      "passed_checks": 32,
+      "total_checks": 33,
+      "failed_check_ids": [
+        "submission_lifecycle"
+      ],
+      "complete_source_in_context": false,
+      "file_sha256": "sha256:1e3558eeee6ab505fe313a3f75ab4ae958e85876010321b74500c8c7a3464d2c",
+      "immutable": true
+    },
+    "append_only_correction": {
+      "correction_id": "qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032",
+      "semantic_body_hash": "sha256:51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032",
+      "correction_hash": "sha256:836b013bccbdbcc7d0eecde24248b86eff353d1adef281f07b215c3ded65f0ed",
+      "file_sha256": "sha256:2a78f098a0d5ff9782fd5e4385a1b56b2b23623475554f0f2c295cc2b99fba71",
+      "corrected_qualification_hash": "sha256:1bff6db36a32104c2417c6aef65e8dcda50e00e71b451c51d78ae8df75df954c",
+      "corrected_qualified": true,
+      "corrected_trace_integrity_passed": true,
+      "passed_checks": 33,
+      "total_checks": 33,
+      "failed_check_ids": [],
+      "complete_source_in_context": true,
+      "corrected_outcome_kind": "task_failure",
+      "corrected_memory_candidate_eligible": false,
+      "original_qualification_rewritten": false,
+      "original_campaign_gate_recomputed": false,
+      "task_outcome_changed": false,
+      "scrr_changed": false
+    }
+  },
+  "raw_local_artifacts": [
+    {
+      "role": "experiment-result",
+      "path": ".patchloop/experiments/dev-no-memory-review-evidence-v9-pilot-20260801-r1.json",
+      "bytes": 13935,
+      "sha256": "sha256:71bb203ae2ffaf3deeaa9523273410c83bb477a0574b99279242c2e764caf96d"
+    },
+    {
+      "role": "campaign-journal",
+      "path": ".patchloop/experiments/journals/dev-no-memory-review-evidence-v9-pilot-20260801-r1.jsonl",
+      "bytes": 2753,
+      "sha256": "sha256:62e22e068fc08d1de91c8c9d78c9e94b6b2dd75cc1a216b75b5dc7ee916050c0"
+    },
+    {
+      "role": "execution-plan-file",
+      "path": ".patchloop/experiments/plans/f1b7d78243af8c87e3ec83f9373312f171073e0713a23fbc51c909fac0be6982.json",
+      "bytes": 7857,
+      "sha256": "sha256:d7d5497c1d1a464c7962bc89fea73c693e26801db3e25ed24fce2858f4eaa532"
+    },
+    {
+      "role": "run-result",
+      "path": ".patchloop/artifacts/runs/run_4c77b1102e224785/result.json",
+      "bytes": 4985,
+      "sha256": "sha256:e3f4a855ae1d53bcf3381cfe1bc35167503e2774dd80308e929ce2184bcafe8b"
+    },
+    {
+      "role": "original-trace-qualification",
+      "path": ".patchloop/qualifications/run_4c77b1102e224785.json",
+      "bytes": 16862,
+      "sha256": "sha256:1e3558eeee6ab505fe313a3f75ab4ae958e85876010321b74500c8c7a3464d2c"
+    },
+    {
+      "role": "qualification-correction",
+      "path": ".patchloop/qualification-corrections/v1/run_4c77b1102e224785/qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032.json",
+      "bytes": 18832,
+      "sha256": "sha256:2a78f098a0d5ff9782fd5e4385a1b56b2b23623475554f0f2c295cc2b99fba71"
+    },
+    {
+      "role": "submitted-patch",
+      "path": ".patchloop/runs/run_4c77b1102e224785/submitted.patch",
+      "bytes": 2305,
+      "sha256": "sha256:e30cb245bb556ce22fcc79bed31dcf97423c622419fb71bf31bf956aa3b29599"
+    }
+  ],
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; canonical result, journal, qualification and campaign-gate bytes remain unchanged.",
+    "correction_scope": "The append-only artifact corrects V9 pinned-diff trace qualification only; it does not rewrite the run or task result.",
+    "provider_private_exclusion": "Provider request and response bodies, secrets, private task specifications, hidden assertions and evaluator-only payloads are excluded."
+  },
+  "interpretation": {
+    "established": "The live V9 run reached the official evaluator without a budget termination, and the append-only correction validates the pinned current-diff submission context under the corrected V9 qualifier.",
+    "not_established": "Hidden acceptance failed, so the run remains task_failure with SCRR false and is not a no-memory baseline, comparison denominator, memory source or core result.",
+    "next_gate": "Perform leak-safe, public-evidence-only analysis of the hidden-acceptance task failure and requirement coverage; do not increase the budget, admit memory or rerun this immutable experiment."
+  }
+}

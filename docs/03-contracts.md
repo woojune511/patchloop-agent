@@ -297,7 +297,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-budget-pilot` | V4 budget-terminal resource maxima로 고정한 HF Hub/PDM/pyfakefs, `no_memory`, repetition 1, 총 3 run, $7 상한; memory source와 comparison denominator에서 제외 |
 | `memory-development-no-memory-corrective-pilot` | Consumed D-062 HF Hub/PDM/pyfakefs corrective panel, v4/v7, 900k, $13 상한; immutable하고 재실행 금지 |
 | `memory-development-no-memory-saturation-pilot` | D-064 HF Hub 한 task, `no_memory`, repetition 1, v4/v8/runtime-v2, 900k, $5 상한; 자연 saturation/reset diagnostic이며 memory source와 comparison denominator에서 제외 |
-| `memory-development-no-memory-review-evidence-pilot` | D-067 future HF Hub 한 task, `no_memory`, repetition 1, v4/v9/runtime-v3, 60/100/1.2M/1,800초, output 25k, reserve $5.5125와 $6 상한; 아직 승인·hash·provider call 없음 |
+| `memory-development-no-memory-review-evidence-pilot` | Consumed D-067 HF Hub 한 task, `no_memory`, repetition 1, v4/v9/runtime-v3, 60/100/1.2M/1,800초, output 25k, $6 상한; immutable hidden task failure이며 재실행·comparison·memory admission 금지 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -1913,6 +1913,23 @@ D-067 suite 계약은 exact HF Hub task 한 개, no-memory 한 번,
 `gpt-5.4-mini-2026-03-17` medium/standard/default, 60 model call, 100 tool call,
 1,200,000 total token, 1,800초, per-call output 25,000이다. Dated standard pricing에서
 authorization reserve는 `(1,200,000 + 25,000) × $4.50/M = $5.5125`, suite cap은 `$6`다.
-`live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`은 required current
-state다. 이는 tuning-only completion proposal이며 comparison denominator와 memory admission은
-항상 false다.
+Checked-in source YAML의 `live_cost_approved=false`, `approved_execution_hash=null`,
+`pilot_run_id=null`은 재실행 capability가 없는 source boundary로 유지한다. 별도 승인 plan의
+execution hash는 한 번 소비됐으며, 이 tuning-only run의 comparison denominator와 memory
+admission은 항상 false다.
+
+D-068 correction은 V9 `submission_lifecycle.complete_source_in_context`를 판정할 때 request
+artifact CAS를 먼저 검증하고, durable `ToolSucceeded` event의 `result_artifact` descriptor와
+bytes에서 final `get_diff` anchor를 독립 재구성한다. V9에서는 source sequence가 recent events에
+없고 `review_evidence.pinned_results`, nested `pinned_tool_results`와 top-level `tool_results`에
+각각 정확히 한 번 존재해야 한다. 모든 sequence는 JSON integer여야 하며 float/bool alias,
+중복, truncation, wrong diff, descriptor/hash/size/path tamper는 fail closed한다. V1-V8은 기존
+recent-event-only semantics를 유지한다.
+
+과거 qualification 해석을 고칠 때 canonical qualification이나 campaign result를 덮어쓰지
+않는다. `trace-qualification-correction-v1`은 original qualification hash, source evidence hash,
+source/correction harness commit과 corrected semantics를 결속해
+`qualification-corrections/v1/<run-id>/<qcor-id>.json`에 content-addressed append-only artifact로
+기록한다. 동일 semantic body의 반복 호출은 같은 correction ID와 최초 timestamp를 반환해야
+한다. Corrected trace integrity는 original campaign gate, task outcome, SCRR, comparison
+eligibility 또는 memory admission을 소급 변경하지 않는다.

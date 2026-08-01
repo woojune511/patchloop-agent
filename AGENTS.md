@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-066 phase-evidence-v9 offline gate complete;
-  D-067 future live pilot unapproved and no-call preflight pending`이다.
+- 현재 milestone은 `D-068 append-only V9 pinned-diff qualification correction complete;
+  D-067 live run remains an immutable hidden task failure`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -257,14 +257,17 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   504 collected, 502 passed/2 skipped였고 repository-wide 회귀는 879 collected,
   872 passed/7 environment-dependent skipped로 통과했다. Ruff와 `git diff --check`도
   통과했으며 provider 호출은 없었다.
-  D-067 checked-in future suite
-  `dev-no-memory-review-evidence-v9-pilot-20260801-r1`은 exact HF Hub 한 task, no-memory 1회,
-  v4/v9/runtime-v3, 60 model/100 tool/1,200,000 token/1,800초, output 25,000,
-  `$5.5125` reserve와 `$6` cap이다. `live_cost_approved=false`, execution hash와 pilot run ID는
-  null이며 clean no-call preflight도 아직 수행하지 않았다. Suite 파일과 budget 증액은 paid
-  권한이 아니고 별도 clean hash와 사용자의 명시적 승인이 있기 전 provider 호출을 금지한다.
-  D-067은 completion tuning 전용이며 comparison denominator, memory admission과 core에서
-  제외한다.
+  D-067 `dev-no-memory-review-evidence-v9-pilot-20260801-r1`은 승인 execution hash
+  `sha256:f1b7d78243af8c87e3ec83f9373312f171073e0713a23fbc51c909fac0be6982`로 정확히
+  한 번 실행됐다. `run_4c77b1102e224785`는 344,754 token, 21/60 model call, 36/100 tool
+  call과 `$0.2880024`를 사용해 official evaluator에 도달했다. Regression/scope/safety는
+  통과했지만 hidden acceptance가 실패해 outcome은 `task_failure`, SCRR은 false다. Budget
+  binding은 없었다. Original qualification과 false campaign gate는 immutable하다. D-068은
+  V9 pinned `get_diff`를 recent-events 밖에서도 인정하도록 qualifier를 보정하고 append-only
+  correction `qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032`로
+  corrected trace qualification 33/33을 통과했다. 이 정정은 original artifact, hidden failure,
+  task outcome, SCRR 또는 campaign gate를 바꾸지 않는다. D-067과 승인 hash는 재사용·재실행하지
+  않으며 comparison denominator, memory admission과 core에서 제외한다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

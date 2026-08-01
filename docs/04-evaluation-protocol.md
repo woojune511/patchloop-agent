@@ -889,18 +889,34 @@ AND historical V8 rendering and qualification remain unchanged
 회귀는 504 collected, 502 passed/2 skipped였고 full regression은 879 collected,
 872 passed/7 environment-dependent skipped로 통과했다. 이는 offline integrity evidence다.
 
-### D-067 unapproved V9 completion-pilot protocol
+### D-067 historical V9 completion-pilot protocol and consumed outcome
 
-Offline gate 이후에만 고려할 future suite
+Offline gate 이후 별도 승인으로 실행한 suite
 `dev-no-memory-review-evidence-v9-pilot-20260801-r1`은 HF Hub 한 task, `no_memory` 1회,
 tool v4/context v9/runtime v3, 60 model/100 tool/1,200,000 token/1,800초와 output 25,000으로
 고정한다. Dated standard rate의 conservative authorization reserve는 `$5.5125`, cap은 `$6`다.
 40→60 model call과 900k→1.2M token 증액은 D-064 tail을 그대로 재생한다는 예측이 아니라
 review correction 뒤 남는 우발적 headroom이다.
 
-현재 YAML은 `live_cost_approved=false`, execution hash와 pilot run ID가 null이다. Clean
-no-call preflight, execution hash 생성, 비용 승인과 provider call은 모두 아직 수행하지 않는다.
-Future `v9-review-evidence-live-pilot-gate-v1`은 terminal·qualified·official evaluator arrival와
-budget/infrastructure/qualification error 0을 요구하되 task success를 요구하지 않는다. 따라서
-통과하더라도 completion/runtime evidence일 뿐 SCRR, comparison baseline, failure-memory admission
-또는 core budget evidence가 아니다.
+승인 execution hash는 정확히 한 번 소비됐고 `run_4c77b1102e224785`는 terminal과 official
+evaluator에 도달했다. Budget terminal과 infrastructure error는 0이었지만 original
+qualification이 32/33이라 `qualified_runs=0`, `qualification_errors=1`이고 campaign gate는
+false다. Hidden acceptance도 실패했으므로 outcome은 `task_failure`, SCRR=false다. 이 original
+gate는 append-only correction 뒤에도 재계산하지 않는다. Checked-in YAML의 false/null 값은
+새 실행을 허용하지 않는 source boundary이며 실행 hash를 재사용하지 않는다.
+
+### D-068 append-only V9 qualification-correction protocol
+
+V9-aware qualifier는 pinned final diff를 recent-events의 대체 증거로 인정하되 request CAS와
+source descriptor/path/size/hash/bytes, exact integer sequence, current diff identity, untruncated
+body와 nested/top-level exact-one presentation을 모두 검증한다. Historical V1-V8은 recent-event
+source를 계속 요구한다. Float/bool sequence alias, duplicate source, missing citable source와
+independent sidecar tamper corpus는 모두 fail closed해야 한다.
+
+Correction writer는 original qualification hash
+`sha256:8840382b824dc27015e82d2949d39ada06c8169efe0fdcda3b219c3a1dece59e`와 source evidence hash
+`sha256:2096b9a6114dc767aabd5e2d35d89077c91993a8cad6c42eeae99e223539f572`를 확인하고 clean
+correction harness에서 `persist=false`로 재계산한다. Original bytes가 전후 동일할 때만 새
+content-addressed correction을 exclusive-create하며 동일 호출은 idempotent해야 한다. Corrected
+qualification pass는 trace integrity만 뜻한다. Original campaign gate, hidden verdict,
+`task_failure`, SCRR=false와 baseline/memory/core exclusion은 불변이다.

@@ -35,12 +35,17 @@ Offline selector는 `review_evidence_validation=True`의 mock/no-experiment 조�
 live selector는 exact D-067 purpose와 OpenAI 조합만 허용한다.
 Stale sequence rejection은 `review-citation-error-v1`로 현재 citable sequence를 반환하며,
 같은 mutation epoch에서 review가 세 번 거절되면 추가 generation 전에 terminal로 닫는다.
-Historical V8 trace와 context semantics는 변경하지 않는다. D-067의 별도 future suite는 같은
-HF Hub task를 no-memory 1회, v4/v9/runtime-v3, 60 model/100 tool/1,200,000 token/1,800초,
-output 25,000, reserve `$5.5125`, cap `$6`로 고정하지만 아직 승인·execution hash·provider
-call이 없다. D-066 집중 회귀는 504 collected, 502 passed/2 skipped였고 repository-wide
-회귀는 879 collected, 872 passed/7 environment-dependent skipped로 통과했다. Clean no-call
-preflight와 별도 비용 승인이 끝나기 전에는 이 suite를 실행하지 않는다.
+Historical V8 trace와 context semantics는 변경하지 않는다. D-067은 별도 승인 hash로 정확히
+한 번 실행됐고, `run_4c77b1102e224785`는 344,754 token과 `$0.2880024`를 사용해 official
+evaluator에 도달했다. Budget은 bind하지 않았으며 regression/scope/safety는 통과했지만 hidden
+acceptance가 실패해 `task_failure`, SCRR=false다. Original qualification은 V9 pinned diff를
+recent-events 밖에서 인정하지 않아 32/33이었고 original campaign gate도 false로 보존한다.
+D-068 append-only correction
+`qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032`은 corrected trace
+qualification 33/33을 통과하지만 원 run, hidden failure, SCRR 또는 campaign gate를 바꾸지
+않는다. 이 run은 baseline·memory admission·core에서 제외하며 승인 hash를 재사용하거나
+experiment를 재실행하지 않는다. 현재 source 전체 회귀는 925 collected, 918 passed/7
+environment-dependent skipped이고 Ruff와 `git diff --check`도 통과했다.
 
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을

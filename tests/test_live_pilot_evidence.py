@@ -3493,3 +3493,238 @@ def test_d064_saturation_report_excludes_private_and_provider_payload() -> None:
     private_tokens = _private_leak_tokens(package, api_key=None)
     leaked = sorted(token for token in private_tokens if token in checked_text)
     assert leaked == []
+
+
+def test_d067_v9_report_preserves_original_gate_and_append_only_correction() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-review-evidence-v9-pilot-20260801-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "review-evidence-v9-pilot-evidence-v1"
+    )
+    assert payload["source_harness_commit"] == (
+        "db144051f7f3d5049498971593df548697789dcf"
+    )
+    assert payload["correction_harness_commit"] == (
+        "24fc92b9bbca5b1b9714a5a1f20d0dfbbc01205a"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:f1b7d78243af8c87e3ec83f9373312f171073e0713a23fbc51c909fac0be6982"
+    )
+
+    gate = payload["original_completion_gate"]
+    assert gate["passed"] is False
+    assert gate["terminal_runs"] == 1
+    assert gate["qualified_runs"] == 0
+    assert gate["evaluator_reached_runs"] == 1
+    assert gate["official_evaluator_runs"] == 1
+    assert gate["qualification_errors"] == 1
+    assert gate["budget_terminal_runs"] == 0
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+    assert gate["immutable"] is True
+    assert gate["retroactively_recomputed"] is False
+
+    run = payload["run"]
+    assert run["run_id"] == "run_4c77b1102e224785"
+    assert run["outcome_kind"] == "task_failure"
+    assert run["official"] is True
+    assert run["scope_compliant_success"] is False
+    assert run["verdicts"] == {
+        "hidden_tests": "fail",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass",
+    }
+    assert run["usage"] == {
+        "input_tokens": 332204,
+        "cached_input_tokens": 26112,
+        "output_tokens": 12550,
+        "reasoning_output_tokens": 9706,
+        "total_tokens": 344754,
+        "model_calls": 21,
+        "tool_calls": 36,
+        "wall_clock_ms": 121894,
+        "model_cost_usd": 0.2880024,
+    }
+    assert run["budget_headroom"]["binding_dimension"] == "none"
+
+    qualification = payload["qualification"]
+    original = qualification["original"]
+    correction = qualification["append_only_correction"]
+    assert qualification["source_evidence_hash"] == (
+        "sha256:2096b9a6114dc767aabd5e2d35d89077c91993a8cad6c42eeae99e223539f572"
+    )
+    assert original["qualification_hash"] == (
+        "sha256:8840382b824dc27015e82d2949d39ada06c8169efe0fdcda3b219c3a1dece59e"
+    )
+    assert original["qualified"] is False
+    assert original["passed_checks"] == 32
+    assert original["total_checks"] == 33
+    assert original["failed_check_ids"] == ["submission_lifecycle"]
+    assert original["complete_source_in_context"] is False
+    assert correction["correction_id"] == (
+        "qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032"
+    )
+    assert correction["corrected_qualification_hash"] == (
+        "sha256:1bff6db36a32104c2417c6aef65e8dcda50e00e71b451c51d78ae8df75df954c"
+    )
+    assert correction["correction_hash"] == (
+        "sha256:836b013bccbdbcc7d0eecde24248b86eff353d1adef281f07b215c3ded65f0ed"
+    )
+    assert correction["file_sha256"] == (
+        "sha256:2a78f098a0d5ff9782fd5e4385a1b56b2b23623475554f0f2c295cc2b99fba71"
+    )
+    assert correction["corrected_qualified"] is True
+    assert correction["corrected_trace_integrity_passed"] is True
+    assert correction["passed_checks"] == correction["total_checks"] == 33
+    assert correction["failed_check_ids"] == []
+    assert correction["complete_source_in_context"] is True
+    assert correction["corrected_outcome_kind"] == "task_failure"
+    assert correction["corrected_memory_candidate_eligible"] is False
+    assert correction["original_qualification_rewritten"] is False
+    assert correction["original_campaign_gate_recomputed"] is False
+    assert correction["task_outcome_changed"] is False
+    assert correction["scrr_changed"] is False
+
+    assert payload["raw_local_artifacts"] == [
+        {
+            "role": "experiment-result",
+            "path": (
+                ".patchloop/experiments/"
+                "dev-no-memory-review-evidence-v9-pilot-20260801-r1.json"
+            ),
+            "bytes": 13935,
+            "sha256": (
+                "sha256:71bb203ae2ffaf3deeaa9523273410c83bb477a0574b99279242c2e764caf96d"
+            ),
+        },
+        {
+            "role": "campaign-journal",
+            "path": (
+                ".patchloop/experiments/journals/"
+                "dev-no-memory-review-evidence-v9-pilot-20260801-r1.jsonl"
+            ),
+            "bytes": 2753,
+            "sha256": (
+                "sha256:62e22e068fc08d1de91c8c9d78c9e94b6b2dd75cc1a216b75b5dc7ee916050c0"
+            ),
+        },
+        {
+            "role": "execution-plan-file",
+            "path": (
+                ".patchloop/experiments/plans/"
+                "f1b7d78243af8c87e3ec83f9373312f171073e0713a23fbc51c909fac0be6982.json"
+            ),
+            "bytes": 7857,
+            "sha256": (
+                "sha256:d7d5497c1d1a464c7962bc89fea73c693e26801db3e25ed24fce2858f4eaa532"
+            ),
+        },
+        {
+            "role": "run-result",
+            "path": (
+                ".patchloop/artifacts/runs/"
+                "run_4c77b1102e224785/result.json"
+            ),
+            "bytes": 4985,
+            "sha256": (
+                "sha256:e3f4a855ae1d53bcf3381cfe1bc35167503e2774dd80308e929ce2184bcafe8b"
+            ),
+        },
+        {
+            "role": "original-trace-qualification",
+            "path": (
+                ".patchloop/qualifications/"
+                "run_4c77b1102e224785.json"
+            ),
+            "bytes": 16862,
+            "sha256": (
+                "sha256:1e3558eeee6ab505fe313a3f75ab4ae958e85876010321b74500c8c7a3464d2c"
+            ),
+        },
+        {
+            "role": "qualification-correction",
+            "path": (
+                ".patchloop/qualification-corrections/v1/"
+                "run_4c77b1102e224785/"
+                "qcor_51b72504161eddf250e872cc533dbfc5a315c377971e8a6f19a74a380fe3c032.json"
+            ),
+            "bytes": 18832,
+            "sha256": (
+                "sha256:2a78f098a0d5ff9782fd5e4385a1b56b2b23623475554f0f2c295cc2b99fba71"
+            ),
+        },
+        {
+            "role": "submitted-patch",
+            "path": (
+                ".patchloop/runs/run_4c77b1102e224785/"
+                "submitted.patch"
+            ),
+            "bytes": 2305,
+            "sha256": (
+                "sha256:e30cb245bb556ce22fcc79bed31dcf97423c622419fb71bf31bf956aa3b29599"
+            ),
+        },
+    ]
+    for artifact in payload["raw_local_artifacts"]:
+        if Path(artifact["path"]).exists():
+            _assert_artifact_identity(artifact)
+
+
+def test_d067_v9_report_excludes_private_and_provider_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-review-evidence-v9-pilot-20260801-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    assert "OPENAI_API_KEY" not in checked_text
+    assert "Bearer " not in checked_text
+    package = load_task_package(
+        "tasks/dev-train/hf-hub-xet-endpoint-propagation"
+    )
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    leaked = sorted(token for token in private_tokens if token in checked_text)
+    assert leaked == []
