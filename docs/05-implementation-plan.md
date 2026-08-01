@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-070 exact V10 coverage-review live-pilot contract implemented; clean
-no-call preflight pending; live execution not approved**
+현재 milestone: **D-070 exact V10 coverage-review live-pilot contract and clean no-call preflight
+complete; live execution not approved**
 
 2026-08-02 구현 스냅샷:
 
@@ -178,7 +178,7 @@ hidden acceptance를 대신하지 않으며 live campaign을 열지 않는다.
 | 11l | consumed once; evaluator reached; original gate false; immutable | D-067 separate V9 completion pilot | `run_4c77b1102e224785`: 344,754 tokens, 21 model/36 tool, `$0.2880024`; no budget bind, official evaluator reached, hidden fail과 `task_failure`; original qualification 32/33, comparison·memory/core 제외, 재실행 금지 |
 | 11m | completed (offline); no provider call | D-068 append-only V9 qualification correction | V9 pinned final diff를 request/source CAS와 exact integer sequence로 검증하고 float/bool/duplicate/sidecar tamper를 거부; `qcor_51b725...3c032` corrected qualification 33/33, original qualification/gate/outcome/SCRR 불변; current full 918 passed/7 skipped |
 | 11n | completed (offline); no provider call | D-069 V10 public-coverage review gate | `public-review-contract-v2`, tool v5/context v10/runtime v4, Git-base anchor provenance, CAS-bound inspection/visible-check evidence, `task-review-v3`, partial REVIEW→IMPLEMENT, finish/recovery/qualification tamper gate; 971 collected, 964 passed/7 skipped, mock/no-experiment only, D-067/V1-V9 immutable |
-| 11o | offline contract complete; clean no-call preflight pending; live not approved | D-070 exact V10 single-task live-pilot contract | New purpose and exact experiment ID, HF Hub/no-memory ×1, 60/100/1.2M/1,800초, $5.5125 reserve/$6 cap, V2 sidecar and v5/v10/runtime-v4 hash binding, non-vacuous coverage completion gate; 988 collected, 981 passed/7 skipped; task success not required, comparison/memory/core excluded |
+| 11o | offline contract + host no-call preflight complete; live not approved | D-070 exact V10 single-task live-pilot contract | New purpose and exact experiment ID, HF Hub/no-memory ×1, 60/100/1.2M/1,800초, $5.5125 reserve/$6 cap, V2 sidecar and v5/v10/runtime-v4 hash binding, non-vacuous coverage completion gate; 988 collected, 981 passed/7 skipped; host environment passed and only approval/hash blockers remain; task success not required, comparison/memory/core excluded |
 
 D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
 815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner

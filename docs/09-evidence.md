@@ -2321,3 +2321,7 @@ Offline validation collected 988 tests: 981 passed and seven environment-depende
 and `git diff --check` passed. No provider call or model cost occurred. This is contract and preflight
 preparation evidence only; it is not a V10 live result, SCRR row, no-memory baseline, memory admission or
 core evidence. A clean execution hash and explicit user cost approval remain separate requirements.
+
+The host no-call preflight confirmed the pinned Docker image identity, SDK 2.47.0, API-key presence
+without exposing its value, clean Git state and pricing freshness. Its only blockers were the intentionally
+absent invocation cost approval and exact approved execution hash. No provider call was made.

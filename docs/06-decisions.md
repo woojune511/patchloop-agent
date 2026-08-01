@@ -160,7 +160,7 @@ Evidence/issue:
   요구하지 않으며 comparison, memory admission과 core에서 제외한다. D-060/D-067은 hard-immutable다.
 - Date: 2026-08-02
 - Evidence/issue: D-069 offline V10 gate와 D-070 988 collected, 981 passed/7 skipped contract
-  regression; live evidence는 아직 없음.
+  regression, host no-call preflight environment pass; live evidence는 아직 없음.
 
 ## Deferred ideas
 

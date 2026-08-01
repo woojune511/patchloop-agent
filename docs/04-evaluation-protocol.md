@@ -1018,4 +1018,6 @@ Task success는 gate predicate가 아니라 별도 관찰값이다. 따라서 hi
 통과할 수 있지만 SCRR은 false로 남는다. 이 pilot은 comparison denominator, failure-memory
 admission과 core에서 제외한다. D-060과 D-067 experiment ID는 hard-immutable이며 재실행하지 않는다.
 D-070 offline contract 회귀는 988 collected, 981 passed/7 environment-dependent skipped, Ruff와
-`git diff --check`를 통과했다. Provider call은 없었으며 live evidence는 아직 없다.
+`git diff --check`를 통과했다. Host no-call preflight는 Docker/pinned image, SDK, key presence,
+clean Git과 pricing freshness를 통과했고 approval/hash 두 blocker만 남겼다. Provider call은
+없었으며 live evidence는 아직 없다.
