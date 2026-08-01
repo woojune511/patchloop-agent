@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 import sqlite3
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -568,6 +569,24 @@ def _v9_review_anchor_case(
         context_build["review_evidence"]["pinned_tool_results"][0][
             "artifact_id"
         ] = "art_forged"
+    elif tamper_target == "float_visible_sequence":
+        rendered_payload["review_evidence"][
+            "citable_event_sequences"
+        ] = [2.0, 3.0]
+    elif tamper_target == "float_build_sequence":
+        context_build["review_evidence"][
+            "citable_event_sequences"
+        ] = [2.0, 3.0]
+    elif tamper_target == "float_pinned_sequence":
+        rendered_payload["review_evidence"]["pinned_results"][0][
+            "sequence"
+        ] = 2.0
+    elif tamper_target == "float_presented_sequence":
+        context_build["tool_results"][0]["event_sequence"] = 2.0
+    elif tamper_target == "bool_mutation_sequence":
+        rendered_payload["review_evidence"][
+            "mutation_event_sequence"
+        ] = True
     context = json.dumps(rendered_payload, ensure_ascii=False)
     request_body = {"context": context}
     request_hash = sha256_text(canonical_json(request_body))
@@ -659,6 +678,11 @@ def test_v9_review_evidence_contract_rejects_forged_citation_list(
         "recent_duplicate",
         "non_object_context",
         "cas_bytes",
+        "float_visible_sequence",
+        "float_build_sequence",
+        "float_pinned_sequence",
+        "float_presented_sequence",
+        "bool_mutation_sequence",
     ],
 )
 def test_v9_review_evidence_contract_rejects_anchor_tampering(
@@ -672,6 +696,313 @@ def test_v9_review_evidence_contract_rejects_anchor_tampering(
 
     assert valid is False
     assert details["failed_context_sequences"] == [4]
+
+
+def _submission_get_diff_presentation_case(
+    tmp_path: Path,
+    *,
+    context_policy_version: str | None,
+    pinned: bool,
+    tamper_target: str | None = None,
+) -> tuple[bool, bool]:
+    artifacts = ArtifactStore(tmp_path / "artifacts")
+    diff_artifact = artifacts.put_json(
+        []
+        if tamper_target == "non_object_source"
+        else {
+            "tool": "get_diff",
+            "patch": PATCH_TEXT,
+            "patch_hash": DIFF_HASH,
+            "worktree_diff_hash": DIFF_HASH,
+        }
+    )
+    source_event = _v8_event(
+        3,
+        EventType.TOOL_SUCCEEDED,
+        payload={
+            "tool": "get_diff",
+            "worktree_diff_hash": DIFF_HASH,
+            "artifact_id": diff_artifact.artifact_id,
+            "artifact_path": diff_artifact.path,
+            "result_artifact": diff_artifact.model_dump(mode="json"),
+        },
+    )
+    expected_event, expected_tool_result = (
+        qualification_module._v9_recompute_review_anchor(
+            source_event,
+            artifact_store=artifacts,
+        )
+    )
+    review_fields = {
+        "schema_version": "review-evidence-v1",
+        "pinning_active": pinned,
+        "worktree_diff_hash": DIFF_HASH,
+        "mutation_event_sequence": 1,
+        "passing_check_event_sequences": [2] if pinned else [],
+        "source_get_diff_sequence": 3 if pinned else None,
+        "citable_event_sequences": [2, 3] if pinned else [],
+        "incomplete_event_sequences": [],
+    }
+    rendered_payload: dict[str, object] = {
+        "recent_events": [] if pinned else [deepcopy(expected_event)],
+    }
+    context_build: dict[str, object] = {
+        "tool_results": [deepcopy(expected_tool_result)],
+    }
+    if pinned:
+        rendered_payload["review_evidence"] = {
+            **deepcopy(review_fields),
+            "pinned_results": [deepcopy(expected_event)],
+            "citation_rule": (
+                "review_task may cite only citable_event_sequences; "
+                "investigation_ledger source_call_sequence values are not "
+                "review citations"
+            ),
+        }
+        context_build.update(
+            {
+                "schema_version": "context-build-evidence-v9",
+                "review_evidence": {
+                    **deepcopy(review_fields),
+                    "pinned_tool_results": [
+                        deepcopy(expected_tool_result)
+                    ],
+                },
+            }
+        )
+
+    if tamper_target == "pinned_body":
+        rendered_payload["review_evidence"]["pinned_results"][0][
+            "payload"
+        ]["tool_result"]["patch"] += "# forged\n"
+    elif tamper_target == "wrong_sequence":
+        rendered_payload["review_evidence"][
+            "source_get_diff_sequence"
+        ] = 30
+    elif tamper_target == "wrong_artifact_presented":
+        context_build["tool_results"][0]["artifact_id"] = "art_forged"
+    elif tamper_target == "wrong_artifact_pinned":
+        context_build["review_evidence"]["pinned_tool_results"][0][
+            "artifact_id"
+        ] = "art_forged"
+    elif tamper_target == "truncated_presented":
+        context_build["tool_results"][0]["truncated"] = True
+    elif tamper_target == "truncated_pinned":
+        context_build["review_evidence"]["pinned_tool_results"][0][
+            "truncated"
+        ] = True
+    elif tamper_target == "recent_duplicate":
+        rendered_payload["recent_events"].append(
+            deepcopy(expected_event)
+        )
+    elif tamper_target == "missing_pinned":
+        rendered_payload["review_evidence"]["pinned_results"] = []
+    elif tamper_target == "duplicate_pinned_result":
+        rendered_payload["review_evidence"]["pinned_results"].append(
+            deepcopy(expected_event)
+        )
+    elif tamper_target == "duplicate_pinned_tool_result":
+        context_build["review_evidence"][
+            "pinned_tool_results"
+        ].append(deepcopy(expected_tool_result))
+    elif tamper_target == "duplicate_presented_tool_result":
+        context_build["tool_results"].append(
+            deepcopy(expected_tool_result)
+        )
+    elif tamper_target == "citable_missing":
+        rendered_payload["review_evidence"][
+            "citable_event_sequences"
+        ] = [2]
+    elif tamper_target == "incomplete_source":
+        rendered_payload["review_evidence"][
+            "incomplete_event_sequences"
+        ] = [3]
+    elif tamper_target == "visible_source_sequence_float":
+        rendered_payload["review_evidence"][
+            "source_get_diff_sequence"
+        ] = 3.0
+    elif tamper_target == "build_source_sequence_float":
+        context_build["review_evidence"][
+            "source_get_diff_sequence"
+        ] = 3.0
+    elif tamper_target == "visible_citable_sequence_float":
+        rendered_payload["review_evidence"][
+            "citable_event_sequences"
+        ] = [2, 3.0]
+    elif tamper_target == "build_citable_sequence_float":
+        context_build["review_evidence"][
+            "citable_event_sequences"
+        ] = [2, 3.0]
+    elif tamper_target == "visible_incomplete_sequence_float":
+        rendered_payload["review_evidence"][
+            "incomplete_event_sequences"
+        ] = [99.0]
+    elif tamper_target == "build_incomplete_sequence_bool":
+        context_build["review_evidence"][
+            "incomplete_event_sequences"
+        ] = [False]
+    elif tamper_target == "pinned_result_sequence_float":
+        rendered_payload["review_evidence"]["pinned_results"][0][
+            "sequence"
+        ] = 3.0
+    elif tamper_target == "pinned_tool_sequence_float":
+        context_build["review_evidence"]["pinned_tool_results"][0][
+            "event_sequence"
+        ] = 3.0
+    elif tamper_target == "presented_sequence_float":
+        context_build["tool_results"][0]["event_sequence"] = 3.0
+
+    rendered_context = json.dumps(rendered_payload, ensure_ascii=False)
+    request_body = {"context": rendered_context}
+    request_hash = sha256_text(canonical_json(request_body))
+    request_artifact = artifacts.put_json(
+        {
+            "schema_version": "model-request-evidence-v1",
+            "provider": "mock",
+            "request_body": request_body,
+            "request_body_hash": request_hash,
+            "context_build": context_build,
+        }
+    )
+    context_event = _v8_event(
+        4,
+        EventType.CONTEXT_BUILT,
+        payload={
+            "artifact_id": request_artifact.artifact_id,
+            "artifact_path": request_artifact.path,
+            "request_body_hash": request_hash,
+            "context_hash": sha256_text(rendered_context),
+        },
+    )
+    if tamper_target == "request_cas":
+        Path(request_artifact.path).write_text(
+            '{"forged": true}',
+            encoding="utf-8",
+        )
+    elif tamper_target == "source_cas":
+        Path(diff_artifact.path).write_text(
+            '{"patch": "forged"}',
+            encoding="utf-8",
+        )
+    elif tamper_target == "request_path_escape":
+        escaped = tmp_path / "escaped-request.json"
+        escaped.write_bytes(Path(request_artifact.path).read_bytes())
+        context_event.payload["artifact_path"] = str(escaped)
+    elif tamper_target == "source_descriptor_hash":
+        source_event.payload["result_artifact"]["content_hash"] = (
+            f"sha256:{'0' * 64}"
+        )
+    elif tamper_target == "source_descriptor_size":
+        source_event.payload["result_artifact"]["size_bytes"] += 1
+    elif tamper_target == "source_descriptor_path_escape":
+        escaped = tmp_path / "escaped-source.json"
+        escaped.write_bytes(Path(diff_artifact.path).read_bytes())
+        source_event.payload["artifact_path"] = str(escaped)
+        source_event.payload["result_artifact"]["path"] = str(escaped)
+
+    return qualification_module._complete_get_diff_in_request(
+        context_event=context_event,
+        source_event=source_event,
+        accepted_diff=DIFF_HASH,
+        expected_provider="mock",
+        context_policy_version=context_policy_version,
+        artifact_root=tmp_path / "artifacts",
+    )
+
+
+def test_v9_submission_accepts_complete_pinned_get_diff_outside_recent_events(
+    tmp_path: Path,
+) -> None:
+    request_valid, complete_source = _submission_get_diff_presentation_case(
+        tmp_path,
+        context_policy_version="phase-evidence-v9",
+        pinned=True,
+    )
+
+    assert request_valid is True
+    assert complete_source is True
+
+
+@pytest.mark.parametrize(
+    "tamper_target",
+    [
+        "pinned_body",
+        "wrong_sequence",
+        "wrong_artifact_presented",
+        "wrong_artifact_pinned",
+        "truncated_presented",
+        "truncated_pinned",
+        "recent_duplicate",
+        "missing_pinned",
+        "duplicate_pinned_result",
+        "duplicate_pinned_tool_result",
+        "duplicate_presented_tool_result",
+        "citable_missing",
+        "incomplete_source",
+        "visible_source_sequence_float",
+        "build_source_sequence_float",
+        "visible_citable_sequence_float",
+        "build_citable_sequence_float",
+        "visible_incomplete_sequence_float",
+        "build_incomplete_sequence_bool",
+        "pinned_result_sequence_float",
+        "pinned_tool_sequence_float",
+        "presented_sequence_float",
+        "non_object_source",
+        "request_cas",
+        "source_cas",
+        "request_path_escape",
+        "source_descriptor_hash",
+        "source_descriptor_size",
+        "source_descriptor_path_escape",
+    ],
+)
+def test_v9_submission_rejects_tampered_pinned_get_diff(
+    tmp_path: Path,
+    tamper_target: str,
+) -> None:
+    _, complete_source = _submission_get_diff_presentation_case(
+        tmp_path,
+        context_policy_version="phase-evidence-v9",
+        pinned=True,
+        tamper_target=tamper_target,
+    )
+
+    assert complete_source is False
+
+
+@pytest.mark.parametrize(
+    "context_policy_version",
+    [
+        None,
+        "phase-evidence-v1",
+        "phase-evidence-v2",
+        "phase-evidence-v3",
+        "phase-evidence-v4",
+        "phase-evidence-v5",
+        "phase-evidence-v6",
+        "phase-evidence-v7",
+        "phase-evidence-v8",
+    ],
+)
+def test_historical_submission_keeps_recent_event_only_semantics(
+    tmp_path: Path,
+    context_policy_version: str | None,
+) -> None:
+    request_valid, complete_source = _submission_get_diff_presentation_case(
+        tmp_path / "recent",
+        context_policy_version=context_policy_version,
+        pinned=False,
+    )
+    _, pinned_only_source = _submission_get_diff_presentation_case(
+        tmp_path / "pinned",
+        context_policy_version=context_policy_version,
+        pinned=True,
+    )
+
+    assert request_valid is True
+    assert complete_source is True
+    assert pinned_only_source is False
 
 
 def test_v9_review_rejection_terminal_contract_resets_on_patch() -> None:

@@ -2158,9 +2158,17 @@ def _v9_review_evidence_context_contract(
                 raise RecoveryError(
                     "v9 review evidence has unknown or missing fields"
                 )
-            if any(visible.get(key) != value for key, value in visible_fields.items()):
+            if any(
+                canonical_json(visible.get(key))
+                != canonical_json(value)
+                for key, value in visible_fields.items()
+            ):
                 raise RecoveryError("v9 visible review anchors failed recomputation")
-            if any(build.get(key) != value for key, value in visible_fields.items()):
+            if any(
+                canonical_json(build.get(key))
+                != canonical_json(value)
+                for key, value in visible_fields.items()
+            ):
                 raise RecoveryError("v9 review build anchors failed recomputation")
             mirror_fields = {
                 "review_evidence_pinning_active": active,
@@ -2178,15 +2186,18 @@ def _v9_review_evidence_context_contract(
                 ),
             }
             if any(
-                context_event.payload.get(key) != value
+                canonical_json(context_event.payload.get(key))
+                != canonical_json(value)
                 for key, value in mirror_fields.items()
             ):
                 raise RecoveryError("v9 review evidence mirrors are invalid")
             pinned_results = visible.get("pinned_results")
             pinned_tool_results = build.get("pinned_tool_results")
             if (
-                pinned_results != expected_pinned_results
-                or pinned_tool_results != expected_pinned_tool_results
+                canonical_json(pinned_results)
+                != canonical_json(expected_pinned_results)
+                or canonical_json(pinned_tool_results)
+                != canonical_json(expected_pinned_tool_results)
             ):
                 raise RecoveryError(
                     "v9 pinned review results failed CAS recomputation"
@@ -2221,17 +2232,27 @@ def _v9_review_evidence_context_contract(
             ):
                 raise RecoveryError("v9 review citation rule is invalid")
             presented = context_build.get("tool_results")
-            if not isinstance(presented, list):
+            if (
+                not isinstance(presented, list)
+                or not all(
+                    isinstance(item, dict)
+                    and type(item.get("event_sequence")) is int
+                    for item in presented
+                )
+            ):
                 raise RecoveryError("v9 review tool results are invalid")
             for expected in expected_pinned_tool_results:
                 matches = [
                     item
                     for item in presented
                     if isinstance(item, dict)
+                    and type(item.get("event_sequence")) is int
                     and item.get("event_sequence")
                     == expected["event_sequence"]
+                    and canonical_json(item)
+                    == canonical_json(expected)
                 ]
-                if matches != [expected]:
+                if len(matches) != 1:
                     raise RecoveryError(
                         "v9 review anchor presentation failed CAS recomputation"
                     )
@@ -5319,6 +5340,8 @@ def _complete_get_diff_in_request(
     source_event,
     accepted_diff: str,
     expected_provider: str | None,
+    context_policy_version: str | None = None,
+    artifact_root: Path | None = None,
 ) -> tuple[bool, bool]:
     """Validate the request body and prove it contains the full get_diff result."""
 
@@ -5327,6 +5350,11 @@ def _complete_get_diff_in_request(
     try:
         request_valid, request_evidence = _request_evidence_payload(
             context_event,
+            artifact_root=(
+                artifact_root
+                if context_policy_version == "phase-evidence-v9"
+                else None
+            ),
             expected_provider=expected_provider,
         )
         if not request_valid or request_evidence is None:
@@ -5348,6 +5376,176 @@ def _complete_get_diff_in_request(
         recent_events = rendered_payload.get("recent_events", [])
         if not isinstance(recent_events, list):
             return request_valid, False
+        if context_policy_version == "phase-evidence-v9":
+            if artifact_root is None:
+                return request_valid, False
+            expected_rendered_event, expected_tool_result = (
+                _v9_recompute_review_anchor(
+                    source_event,
+                    artifact_store=ArtifactStore(artifact_root),
+                )
+            )
+            source_artifact = expected_rendered_event["payload"][
+                "tool_result"
+            ]
+            if not isinstance(source_artifact, dict):
+                return request_valid, False
+            review_evidence = rendered_payload.get("review_evidence")
+            context_build = request_evidence.get("context_build")
+            build_review_evidence = (
+                context_build.get("review_evidence")
+                if isinstance(context_build, dict)
+                else None
+            )
+            if (
+                not isinstance(review_evidence, dict)
+                or not isinstance(context_build, dict)
+                or context_build.get("schema_version")
+                != "context-build-evidence-v9"
+                or not isinstance(build_review_evidence, dict)
+            ):
+                return request_valid, False
+            pinned_results = review_evidence.get("pinned_results")
+            pinned_tool_results = build_review_evidence.get(
+                "pinned_tool_results"
+            )
+            presented_results = context_build.get("tool_results")
+            if (
+                not isinstance(pinned_results, list)
+                or not isinstance(pinned_tool_results, list)
+                or not isinstance(presented_results, list)
+                or not all(
+                    isinstance(item, dict)
+                    and type(item.get("sequence")) is int
+                    for item in pinned_results
+                )
+                or not all(
+                    isinstance(item, dict)
+                    and type(item.get("event_sequence")) is int
+                    for item in pinned_tool_results
+                )
+                or not all(
+                    isinstance(item, dict)
+                    and type(item.get("event_sequence")) is int
+                    for item in presented_results
+                )
+                or not all(
+                    isinstance(item, dict)
+                    and type(item.get("sequence")) is int
+                    for item in recent_events
+                )
+            ):
+                return request_valid, False
+
+            source_sequence = source_event.sequence
+            recent_source = [
+                item
+                for item in recent_events
+                if item.get("sequence") == source_sequence
+            ]
+            pinned_source = [
+                item
+                for item in pinned_results
+                if item.get("sequence") == source_sequence
+            ]
+            pinned_tool_source = [
+                item
+                for item in pinned_tool_results
+                if item.get("event_sequence") == source_sequence
+            ]
+            presented_source = [
+                item
+                for item in presented_results
+                if item.get("event_sequence") == source_sequence
+            ]
+            citable_sequences = review_evidence.get(
+                "citable_event_sequences"
+            )
+            incomplete_sequences = review_evidence.get(
+                "incomplete_event_sequences"
+            )
+            build_citable_sequences = build_review_evidence.get(
+                "citable_event_sequences"
+            )
+            build_incomplete_sequences = build_review_evidence.get(
+                "incomplete_event_sequences"
+            )
+            complete_source = bool(
+                review_evidence.get("schema_version")
+                == "review-evidence-v1"
+                and review_evidence.get("pinning_active") is True
+                and review_evidence.get("worktree_diff_hash")
+                == accepted_diff
+                and type(
+                    review_evidence.get("source_get_diff_sequence")
+                )
+                is int
+                and review_evidence["source_get_diff_sequence"]
+                == source_sequence
+                and isinstance(citable_sequences, list)
+                and all(
+                    type(sequence) is int
+                    for sequence in citable_sequences
+                )
+                and citable_sequences.count(source_sequence) == 1
+                and isinstance(incomplete_sequences, list)
+                and all(
+                    type(sequence) is int
+                    for sequence in incomplete_sequences
+                )
+                and source_sequence not in incomplete_sequences
+                and build_review_evidence.get("schema_version")
+                == "review-evidence-v1"
+                and build_review_evidence.get("pinning_active") is True
+                and build_review_evidence.get("worktree_diff_hash")
+                == accepted_diff
+                and type(
+                    build_review_evidence.get(
+                        "source_get_diff_sequence"
+                    )
+                )
+                is int
+                and build_review_evidence[
+                    "source_get_diff_sequence"
+                ]
+                == source_sequence
+                and isinstance(build_citable_sequences, list)
+                and all(
+                    type(sequence) is int
+                    for sequence in build_citable_sequences
+                )
+                and build_citable_sequences.count(source_sequence)
+                == 1
+                and isinstance(build_incomplete_sequences, list)
+                and all(
+                    type(sequence) is int
+                    for sequence in build_incomplete_sequences
+                )
+                and source_sequence
+                not in build_incomplete_sequences
+                and not recent_source
+                and len(pinned_source) == 1
+                and canonical_json(pinned_source[0])
+                == canonical_json(expected_rendered_event)
+                and len(pinned_tool_source) == 1
+                and canonical_json(pinned_tool_source[0])
+                == canonical_json(expected_tool_result)
+                and len(presented_source) == 1
+                and canonical_json(presented_source[0])
+                == canonical_json(expected_tool_result)
+                and expected_tool_result.get("tool") == "get_diff"
+                and expected_tool_result.get("worktree_diff_hash")
+                == accepted_diff
+                and expected_tool_result.get("available") is True
+                and expected_tool_result.get("truncated") is False
+                and source_artifact.get("patch_hash") == accepted_diff
+                and source_artifact.get("worktree_diff_hash")
+                == accepted_diff
+                and isinstance(source_artifact.get("patch"), str)
+                and sha256_text(source_artifact["patch"])
+                == accepted_diff
+            )
+            return request_valid, complete_source
         source_artifact = json.loads(
             Path(str(source_event.payload["artifact_path"])).read_text(encoding="utf-8")
         )
@@ -5386,7 +5584,15 @@ def _complete_get_diff_in_request(
             and isinstance(source_artifact.get("patch"), str)
             and sha256_text(source_artifact["patch"]) == accepted_diff
         )
-    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
+    except (
+        KeyError,
+        OSError,
+        RecoveryError,
+        TypeError,
+        ValueError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+    ):
         return False, False
     return request_valid, complete_source
 
@@ -7787,6 +7993,10 @@ def qualify_run(
                     context_event=context_event,
                     source_event=source_event,
                     accepted_diff=accepted_diff,
+                    context_policy_version=(
+                        manifest.context_policy_version
+                    ),
+                    artifact_root=run_root / "artifacts",
                     expected_provider=(
                         manifest.model.provider
                         if manifest.context_policy_version

@@ -3741,6 +3741,12 @@ def test_v9_review_evidence_retry_completes_and_validates_contracts(
     assert checks["review_evidence_context_contract"]["details"][
         "failed_context_sequences"
     ] == []
+    assert checks["submission_lifecycle"]["passed"] is True, checks[
+        "submission_lifecycle"
+    ]
+    assert checks["submission_lifecycle"]["details"][
+        "complete_source_in_context"
+    ] is True
     assert checks["self_validation_lifecycle"]["passed"] is True
     assert checks["public_review_contract"]["passed"] is True
     assert checks["saturation_context_contract"]["passed"] is True
