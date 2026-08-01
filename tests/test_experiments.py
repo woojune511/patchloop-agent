@@ -746,6 +746,7 @@ def test_saturation_pilot_has_exact_no_call_preflight_contract(
     assert suite.diagnostic is not None
     assert suite.diagnostic.profile == "v8-saturation-context-v1"
     assert {row["code"] for row in unapproved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -779,9 +780,12 @@ def test_saturation_pilot_has_exact_no_call_preflight_contract(
         approved_execution_hash=unapproved["execution_hash"],
     )
 
-    assert approved["ready"] is True
+    assert approved["ready"] is False
     assert approved["execution_hash"] == unapproved["execution_hash"]
     assert approved["suite"]["cost_limit_usd"] == 5
+    assert {row["code"] for row in approved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE"
+    }
 
 
 def test_saturation_approved_plan_binds_paid_boundary_and_qualification_inputs(
@@ -798,6 +802,12 @@ def test_saturation_approved_plan_binds_paid_boundary_and_qualification_inputs(
     monkeypatch.setattr(
         "patchloop.runtime.version",
         lambda _package: "2.47.0",
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_SATURATION_PILOT_EXPERIMENT_IDS,
     )
 
     suite = eval_runner.load_suite(SATURATION_PILOT_SUITE)

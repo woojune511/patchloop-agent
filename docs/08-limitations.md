@@ -613,8 +613,9 @@ silently lowering the design or fabricating missing results.
   and two not-started rows are not a no-memory performance denominator and cannot justify a final
   all-condition budget.
 - D-062 must not be rerun or continued. D-063 completed the offline versioned
-  `phase-evidence-v8` saturation-context fix, and D-064 added its exact single-task live contract. The
-  next gate is a clean no-call execution hash followed by separate cost approval and one provider run.
+  `phase-evidence-v8` saturation-context fix, and D-064 consumed its exact single-task live contract
+  once. The live policy diagnostic passed, but task completion did not; neither result is a no-memory
+  performance denominator.
 
 ## Phase-evidence-v8 does not establish model improvement
 
@@ -626,8 +627,11 @@ silently lowering the design or fabricating missing results.
 - The V8 qualifier independently recomputes saturation, mutation epoch, tail reasons and resulting
   action filtering. Generic tool-result presentation still relies on the existing exact context rebuild
   plus CAS validation; V8 is not a fully independent second implementation of every phase-readiness rule.
-- The D-064 live pilot contract now exists, but its clean execution hash, explicit cost approval and
-  provider execution remain unperformed. It must not reuse D-062 authorization or resume its two
-  not-started rows.
-- Even if the D-064 pilot reaches the evaluator, one tuning task is not a no-memory baseline and cannot
-  support a memory-effect or core-performance claim.
+- D-064 execution hash `sha256:dcade27f...b85c` was consumed exactly once. The qualified trace exercised
+  saturation at sequence 101, a later patch at sequence 106 and reset at sequence 110, so the V8 policy
+  diagnostic passed. The suite and hash are immutable and must not be rerun or reused.
+- The same run was rejected by `review_task` 14 times and exhausted 40 model calls before submission or
+  evaluator arrival. It retained 240,627 tokens, 36 tool calls and 1,479,781 ms of headroom; therefore
+  this is a review-evidence/model-call failure, not evidence that the 900,000-token ceiling was too low.
+- One tuning task with completion gate false is not a no-memory baseline and cannot support task
+  correctness, SCRR, a memory-effect claim or core-performance claim. Memory admission remains closed.

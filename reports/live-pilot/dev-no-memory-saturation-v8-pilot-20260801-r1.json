@@ -1,0 +1,175 @@
+{
+  "schema_version": "saturation-pilot-evidence-v1",
+  "recorded_at": "2026-08-01T02:11:34.091569Z",
+  "experiment_id": "dev-no-memory-saturation-v8-pilot-20260801-r1",
+  "purpose": "memory-development-no-memory-saturation-pilot",
+  "config_path": "experiments/dev-no-memory-saturation-v8-pilot-20260801-r1.yaml",
+  "harness_commit": "c542142c4e4530bd7e9dca28a5efc2cebc11a7f9",
+  "execution_hash": "sha256:dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c",
+  "suite_hash": "sha256:88a054e81ae253315e80f405b1d4ba35b02a6df8bf88dad4e38e16b689f256bf",
+  "schedule_hash": "sha256:1f42b92a3c369a97edcb87b20614ac24ac9a5477416088f12b8c776519351bfd",
+  "execution_plan_hash": "sha256:297261447db53b3c7a19fdc18a0bbda8326f04b4b6ab01d52c2c969ed66400c3",
+  "result_hash": "sha256:7f9568274488d0b8ddd5b0b7269e6e177df9939260a3872d4006873a951849ac",
+  "journal_file_hash": "sha256:f4b245b4f7e6811364756c5dbd216071d2ed57e115ed436d8744721ed68efc24",
+  "journal_final_event_hash": "sha256:a9dd243b67fcf92af8ace1f95b188aedc58df6a89e9bf448c1769c010f4aea26",
+  "model": {
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "store": false,
+    "previous_response_id_used": false
+  },
+  "environment": {
+    "agent_and_evaluator_image": "docker.io/swerebenchv2/huggingface-huggingface-hub@sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f",
+    "git_clean_at_execution": true,
+    "custom_openai_base_url_present": false
+  },
+  "budget": {
+    "max_model_calls": 40,
+    "max_tool_calls": 100,
+    "max_total_tokens": 900000,
+    "wall_clock_timeout_seconds": 1800,
+    "authorization_reserve_usd": 4.1625,
+    "suite_cost_limit_usd": 5.0
+  },
+  "completion_gate": {
+    "schema_version": "v8-saturation-live-pilot-gate-v1",
+    "passed": false,
+    "expected_runs": 1,
+    "terminal_runs": 1,
+    "qualified_runs": 1,
+    "evaluator_reached_runs": 0,
+    "official_evaluator_runs": 0,
+    "task_successes": 0,
+    "task_success_required": false,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "diagnostic_passed_runs": 1,
+    "budget_terminal_runs": 1,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false
+  },
+  "diagnostic": {
+    "schema_version": "experiment-diagnostic-result-v1",
+    "profile": "v8-saturation-context-v1",
+    "status": "passed",
+    "saturated_context_sequences": [101],
+    "post_saturation_patch_sequences": [106],
+    "reset_context_sequences": [110],
+    "failed_reset_context_sequences": []
+  },
+  "run": {
+    "task_id": "hf-hub-xet-endpoint-propagation",
+    "run_id": "run_45e3edc434d749f7",
+    "outcome_kind": "agent_failure",
+    "official": false,
+    "scope_compliant_success": false,
+    "evaluation_status": "not_run",
+    "usage": {
+      "input_tokens": 618370,
+      "cached_input_tokens": 50688,
+      "output_tokens": 41003,
+      "reasoning_output_tokens": 30444,
+      "total_tokens": 659373,
+      "model_calls": 40,
+      "tool_calls": 64,
+      "wall_clock_ms": 320219,
+      "model_cost_usd": 0.6140766
+    },
+    "telemetry": {
+      "completed_responses": 40,
+      "incomplete_responses": 0,
+      "truncation_disabled_responses": 40,
+      "input_count_matches": 40,
+      "total_count_matches": 40
+    },
+    "lifecycle": {
+      "event_count": 300,
+      "patch_prepared": 2,
+      "patch_applied": 2,
+      "registered_checks_succeeded": 2,
+      "diff_reads_succeeded": 5,
+      "search_calls": 21,
+      "read_calls": 20,
+      "semantic_replays": 8,
+      "read_search_admission_blocks": 1,
+      "review_task_calls": 14,
+      "review_task_rejections": 14,
+      "submission_attempted": 0,
+      "evaluator_reached": false
+    },
+    "review_rejections": {
+      "complete_current_diff_evidence_missing": 13,
+      "passing_current_diff_check_missing": 1
+    },
+    "terminal_budget": {
+      "reason_code": "model_call_budget_exhausted",
+      "generation_started": false,
+      "binding_dimension": "model_calls",
+      "headroom": {
+        "model_calls": 0,
+        "tool_calls": 36,
+        "total_tokens": 240627,
+        "wall_clock_ms": 1479781
+      }
+    },
+    "qualification": {
+      "schema_version": "trace-qualification-v2",
+      "qualified": true,
+      "passed_checks": 30,
+      "total_checks": 30,
+      "leakage_scan_passed": true,
+      "evaluation_reached": false,
+      "memory_candidate_eligible": false,
+      "failure_record_id": "fail_10086a8c4f575042b3bea194944de5f8",
+      "source_evidence_hash": "sha256:12f05608636cf02a4e6d78baef4439922dd9a03aef0a50f74b24189337f2e074",
+      "qualification_hash": "sha256:94cba6063bac69a28f97172f75bc0c86f566c9824b53bad6f226c3f7dbe46722"
+    },
+    "final_unsubmitted_diff": {
+      "sha256": "sha256:95928836ddf5187ff580da2248d142f4e0e086e804ef313ec6d04de7935abbff",
+      "added_lines": 27,
+      "deleted_lines": 4,
+      "changed_files": 2
+    }
+  },
+  "raw_local_artifacts": [
+    {
+      "role": "experiment-result",
+      "path": ".patchloop/experiments/dev-no-memory-saturation-v8-pilot-20260801-r1.json",
+      "bytes": 11558,
+      "sha256": "sha256:7f9568274488d0b8ddd5b0b7269e6e177df9939260a3872d4006873a951849ac"
+    },
+    {
+      "role": "campaign-journal",
+      "path": ".patchloop/experiments/journals/dev-no-memory-saturation-v8-pilot-20260801-r1.jsonl",
+      "bytes": 2711,
+      "sha256": "sha256:f4b245b4f7e6811364756c5dbd216071d2ed57e115ed436d8744721ed68efc24"
+    },
+    {
+      "role": "execution-plan-file",
+      "path": ".patchloop/experiments/plans/dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c.json",
+      "bytes": 8033,
+      "sha256": "sha256:e8c8c6a431dca0306f4b373ed9dbb5cdb144d35a0e583da3c5faccbe727da51b"
+    },
+    {
+      "role": "trace-qualification",
+      "path": ".patchloop/qualifications/run_45e3edc434d749f7.json",
+      "bytes": 18940,
+      "sha256": "sha256:517971066c84f71fc35779654b76fcb1c63c2541c6a7a68ca3938cf3560ee807"
+    }
+  ],
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; raw provider payloads and evaluator-only details are not bundled in a clean checkout.",
+    "portable_artifacts": "No patch is bundled because the agent never submitted and the evaluator never accepted a candidate.",
+    "provider_private_exclusion": "Provider request and response bodies, secrets, private task specifications, hidden assertions and evaluator-only payloads are excluded."
+  },
+  "interpretation": {
+    "established": "The live V8 trace exercised saturation, removed read/search, applied a later patch and reopened investigation in a new mutation epoch with qualified trace evidence.",
+    "not_established": "The run did not submit or reach the evaluator and therefore does not establish task correctness, SCRR, a no-memory baseline, memory benefit or a core comparison budget.",
+    "next_gate": "Correct the current-diff review evidence presentation loop offline before proposing a separately versioned completion pilot; do not rerun this experiment or reuse its execution hash."
+  }
+}

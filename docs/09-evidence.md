@@ -2055,9 +2055,9 @@ pilot has now completed once and is immutable diagnostic evidence. D-062 was the
 once under its approved 900k corrective execution hash, but only the HF row ran before an original
 qualification failure halted the campaign; the two remaining rows were not started. The Babel+Moto
 high-budget panel has already completed 2/2 and is immutable. D-062 cannot be rerun or continued.
-D-063 has now completed the versioned saturation-context offline gate without a provider call. The
-next proposed paid step must be a separately contracted and approved single pilot. No later live run
-is currently approved, and no 96-run core campaign has been executed.
+D-063 completed the versioned saturation-context offline gate without a provider call. D-064 then
+contracted and consumed one separately approved single pilot; that run is immutable and no later live
+run is approved. No usable no-memory baseline or 96-run core campaign has been executed.
 
 The context-reset trigger, persistent-state-off arm and stress matrix runner/report remain
 unimplemented. The production stress injector still uses cooperative suspension, while an isolated
@@ -2169,11 +2169,54 @@ inconclusive or fail, while the separate completion gate still requires official
 Task success is not required, and the one-row result cannot enter comparison headlines or failure-memory
 admission.
 
-No provider request, live execution capability or model cost is created by the checked-in contract and
-tests. The clean no-call execution hash and explicit cost approval remain separate gates.
+At the contract-implementation gate, no provider request, live execution capability or model cost was
+created by the checked-in files and tests. The later execution remained a separate hash-and-cost gate.
 
 Final offline executable evidence: the repository-wide run collected 837 tests and completed with
 830 passed and seven environment-dependent skips in 405.1 seconds. The exact approved-plan integration
 also exercised `qualify_run(persist=False)` and passed its public review, runtime-v2, execution-plan and
 pricing-at-start checks while intentionally failing overall qualification because no synthetic terminal
 trace was fabricated. Repository-wide Ruff and `git diff --check` passed after the final change.
+
+## D-065 consumed D-064 live result and immutable seal
+
+The user-approved execution hash
+`sha256:dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c` was consumed exactly once
+for experiment `dev-no-memory-saturation-v8-pilot-20260801-r1` at harness commit
+`c542142c4e4530bd7e9dca28a5efc2cebc11a7f9`. The single run was
+`run_45e3edc434d749f7`. The raw result file hashes to
+`sha256:7f9568274488d0b8ddd5b0b7269e6e177df9939260a3872d4006873a951849ac`; the journal file hashes to
+`sha256:f4b245b4f7e6811364756c5dbd216071d2ed57e115ed436d8744721ed68efc24` and its final
+`CampaignCompleted` event hash is
+`sha256:a9dd243b67fcf92af8ace1f95b188aedc58df6a89e9bf448c1769c010f4aea26`. The canonical execution-plan
+hash is `sha256:297261447db53b3c7a19fdc18a0bbda8326f04b4b6ab01d52c2c969ed66400c3`; the plan file's distinct
+byte hash is `sha256:e8c8c6a431dca0306f4b373ed9dbb5cdb144d35a0e583da3c5faccbe727da51b`.
+
+Trace qualification passed 30/30 with leakage scan pass and qualification hash
+`sha256:94cba6063bac69a28f97172f75bc0c86f566c9824b53bad6f226c3f7dbe46722`. The independent
+`v8-saturation-context-v1` diagnostic passed: context sequence 101 removed read/search after natural
+saturation, a patch was applied at sequence 106, and context sequence 110 reopened investigation after
+the mutation-epoch reset. There were no infrastructure, qualification or diagnostic errors.
+
+The completion gate nevertheless failed. All 40 provider responses completed with truncation disabled
+and exact input/total telemetry matched 40/40, but 14 `review_task` calls were rejected. Thirteen cited
+an incomplete set of current-diff presented evidence; the final attempt cited a current diff after the
+passing check had fallen out of the presented result window. The run exhausted its 40-model-call limit
+before generation 41, submission or evaluator arrival. It used 618,370 input tokens including 50,688
+cached, 41,003 output tokens including 30,444 reasoning, 64 tool calls and 320,219 ms. Total usage was
+659,373 tokens and deterministic list-price cost was `$0.6140766`. Remaining headroom was 240,627 tokens,
+36 tool calls and 1,479,781 ms, so model calls—not the total-token ceiling—were the binding dimension.
+
+This establishes only the live V8 policy exercise. It does not establish correctness of the unsubmitted
+27-addition/4-deletion diff, task success, SCRR, a no-memory baseline, memory benefit or a core budget.
+The sanitized portable record is
+[`reports/live-pilot/dev-no-memory-saturation-v8-pilot-20260801-r1.json`](../reports/live-pilot/dev-no-memory-saturation-v8-pilot-20260801-r1.json);
+raw provider bodies, private task data and hidden evaluator payloads remain local-only. The exact
+experiment ID is now source-level immutable even in a clean clone, and the result/journal already block
+duplicate execution locally. D-064 is not rerun. The next gate is an offline current-diff review-evidence
+presentation correction before any separately versioned live completion proposal.
+
+Post-run source sealing and portable-evidence verification collected 839 tests: 832 passed and seven
+environment-dependent tests skipped in 506.1 seconds. The directly affected experiment and evidence
+modules passed 152/152. Repository-wide Ruff and `git diff --check` also passed. No additional provider
+request was made while producing or verifying this seal.

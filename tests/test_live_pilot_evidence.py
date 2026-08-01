@@ -3356,3 +3356,140 @@ def test_d055_completion_panel_report_excludes_private_and_provider_payload() ->
             token for token in private_tokens if token in checked_text
         )
         assert leaked == []
+
+
+def test_d064_saturation_report_preserves_split_gate_and_usage_evidence() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-saturation-v8-pilot-20260801-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == "saturation-pilot-evidence-v1"
+    assert payload["harness_commit"] == (
+        "c542142c4e4530bd7e9dca28a5efc2cebc11a7f9"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c"
+    )
+    assert payload["result_hash"] == (
+        "sha256:7f9568274488d0b8ddd5b0b7269e6e177df9939260a3872d4006873a951849ac"
+    )
+    assert payload["journal_final_event_hash"] == (
+        "sha256:a9dd243b67fcf92af8ace1f95b188aedc58df6a89e9bf448c1769c010f4aea26"
+    )
+
+    gate = payload["completion_gate"]
+    assert gate["passed"] is False
+    assert gate["terminal_runs"] == gate["qualified_runs"] == 1
+    assert gate["evaluator_reached_runs"] == 0
+    assert gate["official_evaluator_runs"] == 0
+    assert gate["diagnostic_passed_runs"] == 1
+    assert gate["budget_terminal_runs"] == 1
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+
+    diagnostic = payload["diagnostic"]
+    assert diagnostic["status"] == "passed"
+    assert diagnostic["saturated_context_sequences"] == [101]
+    assert diagnostic["post_saturation_patch_sequences"] == [106]
+    assert diagnostic["reset_context_sequences"] == [110]
+    assert diagnostic["failed_reset_context_sequences"] == []
+
+    run = payload["run"]
+    assert run["run_id"] == "run_45e3edc434d749f7"
+    assert run["outcome_kind"] == "agent_failure"
+    assert run["official"] is False
+    assert run["evaluation_status"] == "not_run"
+    assert run["usage"] == {
+        "input_tokens": 618370,
+        "cached_input_tokens": 50688,
+        "output_tokens": 41003,
+        "reasoning_output_tokens": 30444,
+        "total_tokens": 659373,
+        "model_calls": 40,
+        "tool_calls": 64,
+        "wall_clock_ms": 320219,
+        "model_cost_usd": 0.6140766,
+    }
+    assert run["telemetry"]["completed_responses"] == 40
+    assert run["telemetry"]["incomplete_responses"] == 0
+    assert run["telemetry"]["input_count_matches"] == 40
+    assert run["telemetry"]["total_count_matches"] == 40
+    assert run["lifecycle"]["review_task_calls"] == 14
+    assert run["lifecycle"]["review_task_rejections"] == 14
+    assert run["lifecycle"]["submission_attempted"] == 0
+    assert run["terminal_budget"]["binding_dimension"] == "model_calls"
+    assert run["terminal_budget"]["headroom"] == {
+        "model_calls": 0,
+        "tool_calls": 36,
+        "total_tokens": 240627,
+        "wall_clock_ms": 1479781,
+    }
+    assert run["qualification"]["qualified"] is True
+    assert run["qualification"]["passed_checks"] == 30
+    assert run["qualification"]["total_checks"] == 30
+    assert run["qualification"]["memory_candidate_eligible"] is False
+
+    assert len(payload["raw_local_artifacts"]) == 4
+    for artifact in payload["raw_local_artifacts"]:
+        assert artifact["bytes"] > 0
+        assert artifact["path"].startswith(".patchloop/")
+        assert artifact["sha256"].startswith("sha256:")
+        if Path(artifact["path"]).exists():
+            _assert_artifact_identity(artifact)
+
+
+def test_d064_saturation_report_excludes_private_and_provider_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-saturation-v8-pilot-20260801-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    assert "OPENAI_API_KEY" not in checked_text
+    assert "Bearer " not in checked_text
+    package = load_task_package(
+        "tasks/dev-train/hf-hub-xet-endpoint-propagation"
+    )
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    leaked = sorted(token for token in private_tokens if token in checked_text)
+    assert leaked == []

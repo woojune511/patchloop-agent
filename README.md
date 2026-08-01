@@ -18,17 +18,15 @@ immutable하다. Qualifier reserve-version drift는 별도 append-only correctio
 campaign gate와 task outcome은 false 그대로다. 이 tuning evidence는 SCRR,
 no-memory baseline, memory admission 또는 core 결과가 아니다. D-062는 재실행하지 않는다.
 
-2026-08-01 현재 D-063 `phase-evidence-v8` offline gate와 D-064 별도 live pilot 계약이
-구현됐다. V8은 같은 durable prefix의 six-replay saturation과 token/model/tool tail을
-`phase-contract-v3.read_search_policy`로 합성해 다음 request에서 read/search를 제거하고,
-successful patch 뒤 새 mutation epoch에서 탐색을 다시 연다. Generic V8은 여전히
-mock/no-experiment로 닫혀 있다. 유일한 live exception인
-`memory-development-no-memory-saturation-pilot`은 HF Hub 한 task, no-memory 1회,
-v4/v8/runtime-v2, 900k token과 `$5` 상한을 exact suite로 고정한다. Qualification과 자연
-saturation→patch→reset exercise diagnostic은 분리되며, branch 미관찰은 inconclusive로
-보존하고 자동 재실행하지 않는다. 이 결과는 memory admission과 headline comparison에서
-제외된다. 현재까지 이 D-064 변경에는 OpenAI 호출이나 비용 지출이 없고, clean no-call
-preflight hash와 사용자의 별도 비용 승인은 아직 남아 있다.
+2026-08-01 D-064 V8 saturation pilot은 execution hash
+`sha256:dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c`로 정확히 한 번
+실행됐다. `run_45e3edc434d749f7`의 trace qualification은 30/30이고, 자연
+saturation→read/search 제거→patch→mutation-epoch reset 진단도 통과했다. 반면 agent는
+`review_task` 증거를 14회 거절당한 뒤 40/40 model-call 상한에서 종료되어 제출과 evaluator
+도달은 0이다. 659,373 token, 64 tool call, 계산 비용 `$0.6140766`을 기록했으며 completion
+gate는 false다. 따라서 이 결과는 V8 policy exercise의 live 근거일 뿐 task correctness,
+SCRR, no-memory baseline, memory admission 또는 core 결과가 아니다. 이 experiment와 승인
+hash는 immutable하며 재실행하지 않는다.
 
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을

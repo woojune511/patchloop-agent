@@ -12,9 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-063 phase-evidence-v8 saturation-context offline gate complete;
-  D-064 separate one-task live pilot contract complete and no-call preflight pending;
-  live execution not approved`이다.
+- 현재 milestone은 `D-064 exact V8 saturation pilot consumed once; live policy diagnostic
+  passed; completion gate false before evaluator; immutable review-evidence-loop evidence`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -232,8 +231,18 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   Runner start/resume는 runtime version만 보지 않고 approved plan의 task, schedule, model, budget,
   pricing, image, review와 harness identity 전체를 qualification과 같은 comparator로 재검증한다.
   D-064 final offline regression은 837 collected, 830 passed/7 environment-dependent skipped다.
-  Checked-in suite와 no-call preflight는 provider 권한이 아니며 clean execution hash와 별도
-  비용 승인이 필요하다. Memory admission과 96-run core campaign은 계속 보류한다.
+  이후 승인 execution hash
+  `sha256:dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c`로 정확히 한 번
+  실행된 `run_45e3edc434d749f7`은 trace qualification 30/30과 자연 saturation seq 101,
+  post-saturation patch seq 106, reset context seq 110을 기록해 V8 diagnostic을 통과했다.
+  그러나 `review_task` evidence가 14회 거절된 뒤 40/40 model-call 상한에서 제출·evaluator
+  전에 끝났다. 사용량은 618,370 input + 41,003 output, 총 659,373 token, 64 tool call,
+  계산 비용 `$0.6140766`이다. Completion gate는 false이고 comparison denominator와 memory
+  admission도 false다. 이 suite/hash/run은 immutable하며 재실행하지 않는다. 다음 gate는
+  current-diff passing-check와 diff evidence를 REVIEW context에 지속 제시하는 loop correction의
+  offline 검증이다. Post-run immutable seal과 sanitized evidence 뒤 전체 회귀는 839 collected,
+  832 passed/7 environment-dependent skipped이며 Ruff와 `git diff --check`도 통과했다. Memory
+  admission과 96-run core campaign은 계속 보류한다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

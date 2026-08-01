@@ -586,23 +586,37 @@ qualification, original false campaign gate and failed task outcome remain uncha
 Do not rerun or continue D-062. D-063 supplied the offline `phase-evidence-v8` gate and D-064 now
 supplies a new one-row experiment identity and contract; neither changes the historical D-062 result.
 
-## D-064 exact V8 live-pilot no-call preflight
+## D-064 exact V8 live-pilot inspection only
 
-From a clean commit with the digest-pinned evaluator image available, run only:
+D-064 was consumed exactly once. Do not add `--approve-live-cost`, reuse execution hash
+`sha256:dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c`, delete local evidence to
+make the suite appear new, or rerun/resume this experiment. A no-call inspection is still safe:
 
 ```powershell
+$env:UV_CACHE_DIR = ".uv-cache"
 uv run patchloop evaluate `
   --suite experiments/dev-no-memory-saturation-v8-pilot-20260801-r1.yaml `
   --preflight-only
+uv run pytest -q `
+  tests/test_experiments.py `
+  tests/test_live_pilot_evidence.py -k "d064 or saturation"
 ```
 
-This command must not construct an agent or call OpenAI. It reports one HF Hub task, `no_memory`
-repetition 1, v4/v8/runtime-v2, `40/100/900000/1800`, output 25,000, reserve `$4.1625`, cap `$5`,
-the exact public review contract and a new execution hash. On an otherwise ready host the remaining
-blockers are the missing invocation approval and hash match.
+Preflight must remain `ready=false` with `HISTORICAL_SUITE_IMMUTABLE`; a checkout that retains raw local
+evidence can additionally report existing-result/journal blockers. The portable sanitized record is
+[`reports/live-pilot/dev-no-memory-saturation-v8-pilot-20260801-r1.json`](../reports/live-pilot/dev-no-memory-saturation-v8-pilot-20260801-r1.json).
+When the original local artifacts are available, verify their byte identities without modifying them:
 
-Do not add `--approve-live-cost` or `--approved-execution-hash` until that exact output has been
-reviewed and the user separately approves one run with a maximum `$5` cap. Runtime start/resume then
-revalidates the complete approved task, schedule, model, budget, pricing, image, SDK, harness and review
-identity before any provider request. A valid but naturally unexercised saturation/reset branch is
-preserved as inconclusive and does not authorize an automatic rerun.
+```powershell
+Get-FileHash -Algorithm SHA256 `
+  .patchloop/experiments/dev-no-memory-saturation-v8-pilot-20260801-r1.json,
+  .patchloop/experiments/journals/dev-no-memory-saturation-v8-pilot-20260801-r1.jsonl,
+  .patchloop/experiments/plans/dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c.json,
+  .patchloop/qualifications/run_45e3edc434d749f7.json
+```
+
+Expected raw file hashes are respectively `7f956827...849ac`, `f4b245b4...efc24`,
+`e8c8c6a4...da51b` and `51797106...e807`. The separate canonical execution-plan hash is
+`sha256:297261447db53b3c7a19fdc18a0bbda8326f04b4b6ab01d52c2c969ed66400c3`; it is not the plan file's
+byte hash. The run established the V8 saturation/reset policy branch only. It did not submit or reach
+the evaluator and therefore is not task-success, SCRR, baseline or memory-effect evidence.

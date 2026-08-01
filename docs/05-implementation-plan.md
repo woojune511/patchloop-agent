@@ -1,9 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-063 phase-evidence-v8 saturation-context offline gate complete;
-D-064 separate one-task live pilot contract complete and no-call preflight pending;
-live execution not approved**
+현재 milestone: **D-064 V8 saturation pilot consumed once; live diagnostic passed;
+completion gate false before evaluator; review-evidence loop correction pending**
 
 2026-08-01 구현 스냅샷:
 
@@ -14,7 +13,7 @@ live execution not approved**
 | Phase 3 state machine | historical v2/v5와 opt-in v3/v6/v7 보존; saturation-context v4/v8 offline-complete | Public checklist review, rejected-patch source snapshot/persistence, apply same-turn barrier와 crash reconciliation, model-visible six-replay saturation, hash-bound runtime CAS와 independent saturation qualification |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-060 diagnostic complete; D-062 consumed and halted after row 1 | D-062 HF는 33 completed calls/875,908 tokens 뒤 exact-budget block, patch/evaluator 0; PDM/pyfakefs not-started, original gate false, usable baseline은 아직 없음 |
+| Phase 6 evaluation | D-064 single live diagnostic consumed; usable baseline pending | V8 saturation/read-search removal/post-patch reset diagnostic pass; 14 review rejection 뒤 40-call exhaustion, evaluator 0, completion gate false, baseline·memory admission 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -94,8 +93,10 @@ v4/v7 900k corrective pilot은 승인 hash
 반영되지 않은 gap과 일곱 patch preview failure를 보여주므로 baseline으로 쓰지 않는다.
 D-063 `phase-evidence-v8`은 이 gap만 mock/offline에서 닫았고 historical v7 rendering과 D-062
 source hash를 보존했다. D-064는 기존 purpose를 완화하지 않는 exact single-task live pilot
-계약을 별도 purpose와 runtime v2로 구현했다. 다음은 clean no-call preflight로 새 execution hash를
-만드는 것이며, 그 hash와 비용 승인이 있기 전에는 provider를 호출하지 않는다.
+계약을 별도 purpose와 runtime v2로 구현한 뒤 승인 hash
+`sha256:dcade27f9f89efd6c349db58cbe732c0c81f1bbaf3bbb05e6c14b4ca62f2b85c`로 정확히 한 번
+실행했다. Live V8 diagnostic은 통과했지만 completion gate는 evaluator 전에 false로 끝났다.
+다음은 provider 호출 없는 REVIEW evidence-loop correction과 회귀 검증이며 D-064는 재실행하지 않는다.
 
 D-062 original result, journal과 qualification artifact는 immutable하다. 후속 독립 분석은
 qualification failure에서 v5-vs-v6/v7 nominal-reserve drift를 분리했다. Append-only
@@ -161,7 +162,7 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 11g | completed (offline), live use not approved | D-059 profile-bearing full agent probe lifecycle | Dataset 밖 `csv-quoted-newline@2` fixture에서 mock agent가 registered probe를 clean Docker image로 실행하고 그 event를 same-diff review에 인용한 뒤 official evaluator까지 완료; 전체 live qualification은 의도적으로 false |
 | 11h | consumed once; original gate false; immutable | D-062 corrective no-memory pilot | 승인 hash `sha256:464a6...4031`; HF `run_0ccfc8fd359a4785`만 terminal 후 `QualificationFailureHalt`, PDM/pyfakefs not-started. 33 completed calls, 875,908 tokens, `$0.8408853`, exact-budget block, patch/evaluator 0; baseline·memory/core 제외, 재실행 금지 |
 | 11i | completed (offline), no provider call | D-063 phase-evidence-v8 saturation-context correction | Six-replay saturation을 다음 context의 authoritative allowed actions에 반영하고 historical v7 rendering을 보존. Mock-only manifest, crash/resume reset E2E, independent saturation qualification과 representative v7 golden 통과 |
-| 11j | completed (offline contract), no provider call | Separate V8 single live pilot contract | 새 `memory-development-no-memory-saturation-pilot` purpose는 HF Hub 한 task, no-memory 1회, 40/100/900k/1,800초, output 25,000, v4/v8/runtime-v2와 자연 saturation/reset diagnostic을 고정한다. Clean no-call preflight hash와 별도 비용 승인은 아직 pending |
+| 11j | consumed once; diagnostic pass; completion false; immutable | Separate V8 single live pilot | `run_45e3edc434d749f7`: qualification 30/30, saturation seq 101→patch seq 106→reset seq 110 pass. 14 review rejection 뒤 model calls 40/40에서 evaluator 전 종료; 659,373 tokens, 64 tools, `$0.6140766`; baseline·memory/core 제외, 재실행 금지 |
 
 D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
 815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner
@@ -171,9 +172,13 @@ crash/resume E2E와 전체 회귀를 다시 통과했다. D-062 source hash는
 불변이며 provider call은 없었다.
 
 D-064 exact live-contract 변경 뒤 repository 전체는 837 tests를 수집해 830 passed/7
-environment-dependent skipped로 완료했다. 이 수치는 provider 실행 결과가 아니라 purpose,
-preflight/paid boundary, qualification diagnostic, report exclusion과 기존 경로의 offline
-regression evidence다.
+environment-dependent skipped로 완료했다. 이후 exact execution hash를 한 번 소비한 live run은
+618,370 input, 41,003 output, 총 659,373 token과 `$0.6140766`을 기록했다. 40 provider response는
+모두 completed이고 input/total telemetry도 40/40 일치했다. V8 diagnostic과 trace integrity는
+통과했지만 completion gate는 false다. 이 결과와 별개로 source-level consumed-ID seal과 portable
+sanitized evidence를 회귀 테스트하며, task correctness나 memory 효과는 주장하지 않는다.
+Post-run seal 전체 회귀는 839 collected, 832 passed/7 environment-dependent skipped로 통과했고
+Ruff와 `git diff --check`도 통과했다.
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.
