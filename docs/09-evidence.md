@@ -2146,3 +2146,34 @@ environment-dependent skips. The repository-wide run collected 822 tests and com
 and seven environment-dependent skips in 403.33 seconds. Repository-wide Ruff and `git diff --check`
 passed. The D-062 source evidence hash was recalculated after the final qualifier change and remained
 exactly `sha256:53148b2b42e82ddcb6083b1b317df3c7f8598972ed61fac0f69c65c5acff4351`.
+
+## D-064 exact V8 live-pilot contract evidence
+
+D-064 adds a new `memory-development-no-memory-saturation-pilot` purpose rather than reopening or
+continuing D-062. Its checked-in suite fixes one HF Hub task, one `no_memory` repetition,
+`gpt-5.4-mini-2026-03-17` medium/standard/default, tool v4/context v8/runtime contract v2,
+40 model calls, 100 tool calls, 900,000 total tokens, 1,800 seconds and 25,000 output tokens per call.
+The deterministic worst-case reserve is `$4.1625` under the dated official price snapshot and the
+suite cap is `$5`.
+
+Generic V8 remains mock-only and experiment-free. The exact D-064 exception requires the OpenAI
+provider, frozen HF task, public review contract and new saturation purpose. At `AgentRunner.start` and
+`resume`, a runtime-version-only plan is insufficient: the persisted approved plan must also match the
+suite, task/private identity, schedule row, model, budget, memory, fault, pricing, image, SDK, harness
+commit and public review contract through the same independent comparison used by qualification.
+
+The `v8-saturation-context-v1` diagnostic now uses the common hash-bound
+`experiment-diagnostic-result-v1` envelope and is deliberately independent of evaluator arrival.
+A structurally qualified trace can therefore classify the natural saturation/reset branch as pass,
+inconclusive or fail, while the separate completion gate still requires official evaluator arrival.
+Task success is not required, and the one-row result cannot enter comparison headlines or failure-memory
+admission.
+
+No provider request, live execution capability or model cost is created by the checked-in contract and
+tests. The clean no-call execution hash and explicit cost approval remain separate gates.
+
+Final offline executable evidence: the repository-wide run collected 837 tests and completed with
+830 passed and seven environment-dependent skips in 405.1 seconds. The exact approved-plan integration
+also exercised `qualify_run(persist=False)` and passed its public review, runtime-v2, execution-plan and
+pricing-at-start checks while intentionally failing overall qualification because no synthetic terminal
+trace was fabricated. Repository-wide Ruff and `git diff --check` passed after the final change.

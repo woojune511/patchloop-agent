@@ -423,12 +423,27 @@ prefix에서 계산한 gateway 판단과 일치시키는 것이다. Runtime desc
 `corrective-runtime-contract-v2`, context evidence는 `context-build-evidence-v8`, source
 evidence는 `trace-source-evidence-v8`을 사용한다.
 
-이 version은 우선 mock/offline opt-in으로만 생성할 수 있다. OpenAI/replay provider와
-experiment context는 fail closed하며, live pilot purpose·suite·execution hash·비용 승인은 이
-offline gate와 별도의 후속 변경이다.
+Generic V8은 계속 mock/offline opt-in으로만 생성할 수 있다. OpenAI/replay provider와
+experiment context는 fail closed한다. 유일한 예외는 D-064의 exact
+`memory-development-no-memory-saturation-pilot`이며, 이 purpose는 OpenAI provider,
+한 개의 frozen HF Hub task, public review contract와 별도 execution plan을 모두 요구한다.
 
 D-063 offline E2E는 여섯 semantic replay 직후 process가 중단된 상태에서 새 runner가 같은
 durable prefix를 resume하도록 강제했다. Resume의 첫 context는 read/search를 제거했고,
 successful patch 뒤 다음 context는 replay count 0과 새 epoch로 탐색을 다시 열었다. 같은 run의
 `saturation_context_contract`도 통과해 runner, state store, context artifact와 qualifier를 한
 경로로 연결했다. 이 결과는 live model 행동이나 task 난이도에 대한 evidence가 아니다.
+
+## 13. D-064 single live saturation pilot boundary
+
+D-064는 D-062 continuation이 아니라 새 execution identity를 갖는 one-row diagnostic이다.
+Preflight는 exact HF Hub task, no-memory 1회, mini snapshot, v4/v8/runtime-v2, 900k budget,
+evaluator image, harness commit, SDK, 공식 가격 freshness와 public review contract를 한 hash에
+묶는다. Checked-in suite와 `--preflight-only`는 provider capability를 발급하지 않는다.
+
+Qualification은 모든 V8 context의 policy/action/CAS가 신뢰 가능한지를 계속 판정한다. 별도
+diagnostic은 실제로 saturation context가 나타나 read/search가 제거됐는지, 그 뒤 successful
+patch와 다음 context가 존재할 때 replay count 0과 새 mutation epoch로 reset됐는지를 판정한다.
+Branch가 나타나지 않으면 valid trace를 `inconclusive`로 보존하고 자동 재실행하지 않는다.
+Task success는 이 policy gate의 필요조건이 아니며 결과는 memory admission과 headline
+comparison에서 제외한다.

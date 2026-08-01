@@ -1,9 +1,9 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-060 three-task no-memory budget pilot live-complete and diagnosed;
-D-062 900k corrective campaign consumed once and halted after first-row original qualification;
-phase-evidence-v8 saturation-context offline gate complete; separate single live pilot contract pending**
+현재 milestone: **D-063 phase-evidence-v8 saturation-context offline gate complete;
+D-064 separate one-task live pilot contract complete and no-call preflight pending;
+live execution not approved**
 
 2026-08-01 구현 스냅샷:
 
@@ -93,8 +93,9 @@ v4/v7 900k corrective pilot은 승인 hash
 나머지 두 row는 시작되지 않았고 original gate는 false다. 이 trace는 saturation이 context에
 반영되지 않은 gap과 일곱 patch preview failure를 보여주므로 baseline으로 쓰지 않는다.
 D-063 `phase-evidence-v8`은 이 gap만 mock/offline에서 닫았고 historical v7 rendering과 D-062
-source hash를 보존했다. 다음은 기존 purpose를 완화하지 않는 새 single-task live pilot 계약이며,
-새 hash와 비용 승인이 있기 전에는 provider를 호출하지 않는다.
+source hash를 보존했다. D-064는 기존 purpose를 완화하지 않는 exact single-task live pilot
+계약을 별도 purpose와 runtime v2로 구현했다. 다음은 clean no-call preflight로 새 execution hash를
+만드는 것이며, 그 hash와 비용 승인이 있기 전에는 provider를 호출하지 않는다.
 
 D-062 original result, journal과 qualification artifact는 immutable하다. 후속 독립 분석은
 qualification failure에서 v5-vs-v6/v7 nominal-reserve drift를 분리했다. Append-only
@@ -160,7 +161,7 @@ trace를 증명한 뒤에만 12-run development campaign을 연다.
 | 11g | completed (offline), live use not approved | D-059 profile-bearing full agent probe lifecycle | Dataset 밖 `csv-quoted-newline@2` fixture에서 mock agent가 registered probe를 clean Docker image로 실행하고 그 event를 same-diff review에 인용한 뒤 official evaluator까지 완료; 전체 live qualification은 의도적으로 false |
 | 11h | consumed once; original gate false; immutable | D-062 corrective no-memory pilot | 승인 hash `sha256:464a6...4031`; HF `run_0ccfc8fd359a4785`만 terminal 후 `QualificationFailureHalt`, PDM/pyfakefs not-started. 33 completed calls, 875,908 tokens, `$0.8408853`, exact-budget block, patch/evaluator 0; baseline·memory/core 제외, 재실행 금지 |
 | 11i | completed (offline), no provider call | D-063 phase-evidence-v8 saturation-context correction | Six-replay saturation을 다음 context의 authoritative allowed actions에 반영하고 historical v7 rendering을 보존. Mock-only manifest, crash/resume reset E2E, independent saturation qualification과 representative v7 golden 통과 |
-| 11j | proposed; not approved | Separate V8 single live pilot contract | 기존 D-062 purpose/hash를 재사용하지 않고 exact one-task suite, runtime v2, clean execution hash와 별도 비용 승인을 만든 뒤 한 번만 실행 |
+| 11j | completed (offline contract), no provider call | Separate V8 single live pilot contract | 새 `memory-development-no-memory-saturation-pilot` purpose는 HF Hub 한 task, no-memory 1회, 40/100/900k/1,800초, output 25,000, v4/v8/runtime-v2와 자연 saturation/reset diagnostic을 고정한다. Clean no-call preflight hash와 별도 비용 승인은 아직 pending |
 
 D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
 815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner
@@ -168,6 +169,11 @@ D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository �
 crash/resume E2E와 전체 회귀를 다시 통과했다. D-062 source hash는
 `sha256:53148b2b42e82ddcb6083b1b317df3c7f8598972ed61fac0f69c65c5acff4351`로
 불변이며 provider call은 없었다.
+
+D-064 exact live-contract 변경 뒤 repository 전체는 837 tests를 수집해 830 passed/7
+environment-dependent skipped로 완료했다. 이 수치는 provider 실행 결과가 아니라 purpose,
+preflight/paid boundary, qualification diagnostic, report exclusion과 기존 경로의 offline
+regression evidence다.
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.

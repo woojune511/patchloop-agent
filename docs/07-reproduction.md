@@ -583,6 +583,26 @@ SHA-256 `sha256:fc6c469a989a7109d0d6b0ac8f609171aba87cdf8c3df543dd25bc75916d49c9
 This validates corrected trace integrity only; the canonical
 qualification, original false campaign gate and failed task outcome remain unchanged.
 
-Do not rerun or continue D-062. The next live invocation must follow an offline
-`phase-evidence-v8` saturation-context gate and use a new experiment identity, clean execution hash,
-explicit cost cap and separate user approval for a single pilot.
+Do not rerun or continue D-062. D-063 supplied the offline `phase-evidence-v8` gate and D-064 now
+supplies a new one-row experiment identity and contract; neither changes the historical D-062 result.
+
+## D-064 exact V8 live-pilot no-call preflight
+
+From a clean commit with the digest-pinned evaluator image available, run only:
+
+```powershell
+uv run patchloop evaluate `
+  --suite experiments/dev-no-memory-saturation-v8-pilot-20260801-r1.yaml `
+  --preflight-only
+```
+
+This command must not construct an agent or call OpenAI. It reports one HF Hub task, `no_memory`
+repetition 1, v4/v8/runtime-v2, `40/100/900000/1800`, output 25,000, reserve `$4.1625`, cap `$5`,
+the exact public review contract and a new execution hash. On an otherwise ready host the remaining
+blockers are the missing invocation approval and hash match.
+
+Do not add `--approve-live-cost` or `--approved-execution-hash` until that exact output has been
+reviewed and the user separately approves one run with a maximum `$5` cap. Runtime start/resume then
+revalidates the complete approved task, schedule, model, budget, pricing, image, SDK, harness and review
+identity before any provider request. A valid but naturally unexercised saturation/reset branch is
+preserved as inconclusive and does not authorize an automatic rerun.

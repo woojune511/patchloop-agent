@@ -12,10 +12,9 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-060 three-task no-memory budget pilot live-complete and diagnosed;
-  D-062 900k corrective campaign consumed once and halted after first-row original qualification;
-  phase-evidence-v8 saturation-context offline gate complete and a separate single pilot contract
-  pending`이다.
+- 현재 milestone은 `D-063 phase-evidence-v8 saturation-context offline gate complete;
+  D-064 separate one-task live pilot contract complete and no-call preflight pending;
+  live execution not approved`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -225,8 +224,16 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   유지됐다. 관련 regression은 377 passed/2 skipped, 전체는 822 collected,
   815 passed/7 environment-dependent skipped였고 Ruff와 `git diff --check`도 통과했다.
   D-063은 provider call, live suite, approval hash 또는 비용 evidence가 아니다.
-  다음 gate는 기존 D-062 purpose를 완화하지 않는 별도 single-task live pilot contract와 새
-  hash·비용 승인이다. Memory admission과 96-run core campaign은 계속 보류한다.
+  D-064는 새 `memory-development-no-memory-saturation-pilot` purpose와 exact HF Hub 한 task,
+  no-memory 1회, v4/v8/runtime-v2, 40 model/100 tool/900,000 token/1,800초, output 25,000,
+  `$4.1625` reserve와 `$5` cap을 별도 suite로 고정한다. Qualification은 V8 trace integrity를,
+  `v8-saturation-context-v1` diagnostic은 자연 saturation/read-search removal/post-patch reset을
+  각각 판정한다. Generic V8은 mock/no-experiment이고 exact 새 purpose만 OpenAI exception이다.
+  Runner start/resume는 runtime version만 보지 않고 approved plan의 task, schedule, model, budget,
+  pricing, image, review와 harness identity 전체를 qualification과 같은 comparator로 재검증한다.
+  D-064 final offline regression은 837 collected, 830 passed/7 environment-dependent skipped다.
+  Checked-in suite와 no-call preflight는 provider 권한이 아니며 clean execution hash와 별도
+  비용 승인이 필요하다. Memory admission과 96-run core campaign은 계속 보류한다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

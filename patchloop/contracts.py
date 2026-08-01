@@ -46,6 +46,9 @@ class ExperimentPurpose(StrEnum):
     MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT = (
         "memory-development-no-memory-corrective-pilot"
     )
+    MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT = (
+        "memory-development-no-memory-saturation-pilot"
+    )
     CORE = "core"
 
 
@@ -890,15 +893,41 @@ class RunManifest(StrictModel):
             raise ValueError(
                 "corrective pilot purpose requires the v4/v7 runtime contract"
             )
-        if saturation_pair_v8 and self.experiment is not None:
+        saturation_live_pilot = bool(
+            self.experiment is not None
+            and self.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+        )
+        if (
+            saturation_pair_v8
+            and self.experiment is not None
+            and not saturation_live_pilot
+        ):
             raise ValueError(
                 "phase-evidence-v8 saturation context is offline-only and "
-                "cannot declare an experiment context"
+                "cannot declare an experiment context outside the exact "
+                "saturation pilot purpose"
             )
-        if saturation_pair_v8 and self.model.provider != "mock":
+        if (
+            saturation_pair_v8
+            and self.model.provider != "mock"
+            and not (
+                saturation_live_pilot
+                and self.model.provider == "openai"
+            )
+        ):
             raise ValueError(
                 "phase-evidence-v8 saturation context is offline-only and "
-                "requires the mock provider"
+                "requires the mock provider outside the exact saturation "
+                "pilot purpose"
+            )
+        if saturation_live_pilot and not saturation_pair_v8:
+            raise ValueError(
+                "saturation pilot purpose requires the v4/v8 runtime contract"
+            )
+        if saturation_live_pilot and self.model.provider != "openai":
+            raise ValueError(
+                "saturation pilot purpose requires the OpenAI provider"
             )
         return self
 

@@ -10,13 +10,25 @@ import yaml
 from pydantic import ValidationError
 from typer.testing import CliRunner
 
+from patchloop.agent.runner import AgentRunner
+from patchloop.artifacts import ArtifactStore
 from patchloop.cli import app
-from patchloop.contracts import DatasetRole, ExperimentPurpose, FaultSpec
+from patchloop.contracts import (
+    DatasetRole,
+    EventType,
+    ExperimentPurpose,
+    ExperimentRunContext,
+    FaultSpec,
+    MemoryCondition,
+    PublicReviewContract,
+)
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
 from patchloop.evals import qualification as trace_qualification
 from patchloop.evals import runner as eval_runner
 from patchloop.evals.runner import ExperimentSuite
+from patchloop.runtime import build_manifest
+from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
@@ -34,6 +46,9 @@ BUDGET_PILOT_SUITE = (
 )
 CORRECTIVE_PILOT_SUITE = (
     "experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml"
+)
+SATURATION_PILOT_SUITE = (
+    "experiments/dev-no-memory-saturation-v8-pilot-20260801-r1.yaml"
 )
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
@@ -703,6 +718,367 @@ def test_corrective_pilot_binds_review_contracts_and_larger_budget(
     assert {row["code"] for row in approved["blockers"]} == {
         "HISTORICAL_SUITE_IMMUTABLE"
     }
+
+
+def test_saturation_pilot_has_exact_no_call_preflight_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 1, 12, tzinfo=UTC),
+    )
+
+    suite = eval_runner.load_suite(SATURATION_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(SATURATION_PILOT_SUITE)
+
+    assert suite.purpose == (
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+    )
+    assert suite.tasks == [eval_runner.SATURATION_PILOT_TASK]
+    assert suite.conditions == [eval_runner.MemoryCondition.NO_MEMORY]
+    assert suite.repetitions == 1
+    assert suite.budget == (
+        eval_runner.GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
+    )
+    assert suite.diagnostic is not None
+    assert suite.diagnostic.profile == "v8-saturation-context-v1"
+    assert {row["code"] for row in unapproved["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert unapproved["expected_runs"] == 1
+    assert [row["task_id"] for row in unapproved["tasks"]] == [
+        eval_runner.SATURATION_PILOT_TASK_ID
+    ]
+    assert unapproved["tasks"][0]["public_review_contract"][
+        "content_hash"
+    ].startswith("sha256:")
+    assert unapproved["runtime_contract"] == {
+        "schema_version": "corrective-runtime-contract-v2",
+        "tool_schema_version": "v4",
+        "context_policy_version": "phase-evidence-v8",
+        "system_prompt_hash": sha256_text(eval_runner.SYSTEM_PROMPT_V5),
+        "tool_schema_hash": sha256_text(
+            canonical_json(eval_runner.TOOL_SCHEMAS_V4)
+        ),
+        "harness_git_commit": "a" * 40,
+    }
+    assert unapproved["pricing"][
+        "per_run_cost_reserve_usd"
+    ] == pytest.approx(4.1625)
+    assert unapproved["pricing"][
+        "budget_upper_bound_usd"
+    ] == pytest.approx(4.1625)
+
+    approved = eval_runner.preflight_suite(
+        SATURATION_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert approved["ready"] is True
+    assert approved["execution_hash"] == unapproved["execution_hash"]
+    assert approved["suite"]["cost_limit_usd"] == 5
+
+
+def test_saturation_approved_plan_binds_paid_boundary_and_qualification_inputs(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    boundary_at = datetime(2026, 8, 1, 12, tzinfo=UTC)
+    monkeypatch.setattr(eval_runner, "utc_now", lambda: boundary_at)
+    monkeypatch.setattr(
+        "patchloop.runtime.git_commit",
+        lambda: "a" * 40,
+    )
+    monkeypatch.setattr(
+        "patchloop.runtime.version",
+        lambda _package: "2.47.0",
+    )
+
+    suite = eval_runner.load_suite(SATURATION_PILOT_SUITE)
+    unsigned = eval_runner.preflight_suite(SATURATION_PILOT_SUITE)
+    approved = eval_runner.preflight_suite(
+        SATURATION_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unsigned["execution_hash"],
+    )
+    assert approved["ready"] is True
+    plan = eval_runner._persist_preflight_plan(approved)
+    item = approved["schedule"][0]
+    task_path = Path(item["task"])
+    package = load_task_package(task_path.parent)
+    task_row = approved["tasks"][0]
+    experiment = ExperimentRunContext(
+        experiment_id=suite.experiment_id,
+        purpose=suite.purpose,
+        suite_hash=approved["suite_hash"],
+        execution_hash=approved["execution_hash"],
+        dataset_manifest_hash=approved["dataset"]["manifest_hash"],
+        dataset_role=DatasetRole(item["dataset_role"]),
+        schedule_seed=suite.seed,
+        schedule_order=item["order"],
+        schedule_row_id=item["schedule_row_id"],
+        repetition=item["repetition"],
+    )
+    manifest = build_manifest(
+        package,
+        run_id="run_saturation_paid_boundary",
+        provider=suite.model,
+        model_id=suite.model_id,
+        memory_condition=MemoryCondition(item["condition"]),
+        sandbox_backend="docker",
+        budget=suite.budget,
+        agent_image_digest=item["evaluator_image_digest"],
+        evaluator_image_digest=item["evaluator_image_digest"],
+        input_price_per_million_usd=suite.input_price_per_million_usd,
+        cached_input_price_per_million_usd=(
+            suite.cached_input_price_per_million_usd
+        ),
+        cache_write_input_price_per_million_usd=(
+            suite.cache_write_input_price_per_million_usd
+        ),
+        output_price_per_million_usd=suite.output_price_per_million_usd,
+        reasoning_effort=suite.reasoning_effort,
+        reasoning_mode=suite.reasoning_mode,
+        service_tier=suite.service_tier,
+        max_output_tokens=suite.max_output_tokens,
+        fault=eval_runner._diagnostic_fault(suite),
+        experiment_context=experiment,
+        saturation_live_pilot=True,
+        public_review_contract=PublicReviewContract.model_validate(
+            task_row["public_review_contract"]
+        ),
+    )
+    eval_runner._assert_manifest_matches_preflight(
+        manifest,
+        suite=suite,
+        preflight=approved,
+        item={**task_row, **item},
+    )
+    authorization = SimpleNamespace(plan_path=plan["path"])
+    assert AgentRunner._live_plan_matches_manifest(
+        manifest,
+        authorization,
+    ) is True
+
+    plan_payload = json.loads(
+        Path(plan["path"]).read_text(encoding="utf-8")
+    )
+    assert trace_qualification._execution_plan_matches(
+        plan=plan_payload,
+        manifest=manifest,
+    ) is True
+    freshness = eval_runner._pricing_freshness_evidence(
+        suite,
+        boundary_at=boundary_at,
+    )
+    assert eval_runner._pricing_freshness_passed(freshness) is True
+
+    run_root = tmp_path / "runtime"
+    state = StateStore(run_root / "state.sqlite3")
+    state.create_run(manifest)
+    artifacts = ArtifactStore(run_root / "artifacts")
+    system_prompt, tools = AgentRunner._runtime_contract(manifest)
+    runtime_artifact = artifacts.put_json(
+        {
+            "schema_version": "corrective-runtime-contract-v2",
+            "system_prompt": system_prompt,
+            "tools": tools,
+            "tool_schema_version": "v4",
+            "context_policy_version": "phase-evidence-v8",
+        }
+    )
+    monkeypatch.setattr(
+        "patchloop.state.store.utc_now",
+        lambda: boundary_at,
+    )
+    state.append_event(
+        manifest.run_id,
+        EventType.RUN_STARTED,
+        actor="runner",
+        payload={
+            "task_id": manifest.task_id,
+            "artifact_id": runtime_artifact.artifact_id,
+            "artifact_path": runtime_artifact.path,
+            "artifact_role": "runtime-contract",
+            "runtime_contract_artifact": runtime_artifact.model_dump(
+                mode="json"
+            ),
+        },
+    )
+    qualification = trace_qualification.qualify_run(
+        manifest.run_id,
+        task_dir=task_path.parent,
+        root=run_root,
+        persist=False,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+    assert checks["public_review_contract"]["passed"] is True
+    assert checks["corrective_runtime_contract"]["passed"] is True
+    assert checks["approved_execution_plan"]["passed"] is True
+    assert checks["pricing_start_freshness"]["passed"] is True
+    assert checks["saturation_context_contract"]["passed"] is False
+    assert qualification["qualified"] is False
+
+    tampered = manifest.model_copy(deep=True)
+    tampered.budget = tampered.budget.model_copy(
+        update={"max_total_tokens": 899_999}
+    )
+    assert AgentRunner._live_plan_matches_manifest(
+        tampered,
+        authorization,
+    ) is False
+
+    tampered = manifest.model_copy(deep=True)
+    tampered.experiment.schedule_row_id = "sha256:" + "f" * 64
+    assert AgentRunner._live_plan_matches_manifest(
+        tampered,
+        authorization,
+    ) is False
+
+
+@pytest.mark.parametrize(
+    ("mutation", "match"),
+    [
+        ("task", "exactly the frozen HF Hub task"),
+        ("repetition", "exactly the frozen HF Hub task"),
+        ("condition", "exactly the frozen HF Hub task"),
+        ("budget", "max_total_tokens=900000"),
+        ("output", "max_total_tokens=900000"),
+        ("cap", "requires cost_limit_usd=5"),
+        ("estimate", "requires estimated_cost_usd=4.1625"),
+        ("diagnostic", "exact v8 saturation diagnostic"),
+    ],
+)
+def test_saturation_pilot_rejects_contract_drift(
+    mutation: str,
+    match: str,
+) -> None:
+    payload = yaml.safe_load(
+        Path(SATURATION_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    if mutation == "task":
+        payload["tasks"] = [
+            "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml"
+        ]
+    elif mutation == "repetition":
+        payload["repetitions"] = 2
+    elif mutation == "condition":
+        payload["conditions"] = ["structured"]
+    elif mutation == "budget":
+        payload["budget"]["max_total_tokens"] = 899_999
+    elif mutation == "output":
+        payload["max_output_tokens"] = 24_999
+    elif mutation == "cap":
+        payload["cost_limit_usd"] = 6
+    elif mutation == "estimate":
+        payload["estimated_cost_usd"] = 4
+    else:
+        payload["diagnostic"] = None
+
+    with pytest.raises(ValidationError, match=match):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_saturation_diagnostic_separates_pass_inconclusive_and_failure() -> None:
+    base = {
+        "qualified": True,
+        "evaluation_reached": True,
+        "qualification_hash": "sha256:" + "a" * 64,
+        "trace_features": {
+            "saturation_context": {
+                "check_count": 1,
+                "check_passed": True,
+                "saturated_context_count": 1,
+                "read_search_removed_saturated_context_sequences": [20],
+                "post_saturation_patch_count": 1,
+                "reset_opportunity_count": 1,
+                "reset_context_count": 1,
+                "reset_context_sequences": [30],
+                "failed_reset_context_sequences": [],
+            }
+        },
+    }
+
+    passed = eval_runner._saturation_diagnostic_result(base)
+    assert passed["status"] == "passed"
+    assert passed["reason_code"] is None
+    assert passed["required_trace_features"] == ["saturation_context"]
+    assert passed["qualification_hash"] == base["qualification_hash"]
+    assert passed["features"]["saturation_context"][
+        "reset_context_sequences"
+    ] == [30]
+
+    before_evaluator = json.loads(json.dumps(base))
+    before_evaluator["evaluation_reached"] = False
+    assert eval_runner._saturation_diagnostic_result(before_evaluator)[
+        "status"
+    ] == "passed"
+
+    no_saturation = json.loads(json.dumps(base))
+    feature = no_saturation["trace_features"]["saturation_context"]
+    feature["saturated_context_count"] = 0
+    feature["read_search_removed_saturated_context_sequences"] = []
+    assert eval_runner._saturation_diagnostic_result(no_saturation)[
+        "reason_code"
+    ] == "saturation_not_observed"
+
+    failed_reset = json.loads(json.dumps(base))
+    feature = failed_reset["trace_features"]["saturation_context"]
+    feature["reset_context_count"] = 0
+    feature["reset_context_sequences"] = []
+    feature["failed_reset_context_sequences"] = [30]
+    failed = eval_runner._saturation_diagnostic_result(failed_reset)
+    assert failed["status"] == "failed"
+    assert failed["reason_code"] == "post_saturation_reset_not_verified"
+
+
+def test_saturation_completion_gate_requires_exercise_not_task_success() -> None:
+    suite = eval_runner.load_suite(SATURATION_PILOT_SUITE)
+    row = {
+        "attempt_status": "terminal",
+        "run_id": "run_saturation",
+        "result": {
+            "official": True,
+            "evaluation_status": "completed",
+            "scope_compliant_success": False,
+            "terminal_error": None,
+        },
+        "qualification": {
+            "qualified": True,
+            "evaluation_reached": True,
+        },
+        "diagnostic": {"status": "passed"},
+        "infrastructure_error": None,
+        "qualification_error": None,
+        "diagnostic_error": None,
+    }
+
+    gate = eval_runner._completion_gate(suite, [row])
+
+    assert gate is not None
+    assert gate["schema_version"] == "v8-saturation-live-pilot-gate-v1"
+    assert gate["passed"] is True
+    assert gate["task_successes"] == 0
+    assert gate["task_success_required"] is False
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+
+    row["diagnostic"] = {"status": "inconclusive"}
+    row["diagnostic_error"] = {"type": "TraceExerciseInconclusive"}
+    assert eval_runner._completion_gate(suite, [row])["passed"] is False
+
+    row["diagnostic"] = {"status": "passed"}
+    row["diagnostic_error"] = None
+    row["qualification"]["evaluation_reached"] = False
+    assert eval_runner._completion_gate(suite, [row])["passed"] is False
 
 
 @pytest.mark.parametrize(

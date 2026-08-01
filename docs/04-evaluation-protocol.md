@@ -838,3 +838,29 @@ Original qualification failure와 별개로 qualifier의 v5-vs-v6/v7 reserve-ver
 다음 gate는 v7을 소급 변경하지 않는 새 `phase-evidence-v8` saturation-context
 계약의 offline evidence다. 그 뒤에도 D-062 continuation이 아니라 새 execution identity와
 별도 비용 승인을 가진 single live pilot만 허용한다.
+
+### D-064 V8 single live pilot protocol
+
+새 suite `dev-no-memory-saturation-v8-pilot-20260801-r1`은 HF Hub 한 task를 `no_memory`로
+한 번만 실행한다. Model/runtime/budget은 `gpt-5.4-mini-2026-03-17`, medium/standard/default,
+tool v4/context v8/runtime contract v2, 40 model/100 tool/900,000 total token/1,800초,
+output 25,000으로 고정한다. Worst-case reserve는 `$4.1625`, suite cap은 `$5`다.
+
+`trace-qualification-v2`는 trace 구조와 public/private boundary를 판정한다. 별도
+`v8-saturation-context-v1` diagnostic은 다음을 요구한다.
+
+```text
+saturated_context_count >= 1
+AND saturated context에서 read_file/search_files가 allowed_next_actions에 없음
+AND post-saturation successful PatchApplied 뒤 첫 context가 존재
+AND 그 context의 semantic_replay_count == 0
+AND mutation_epoch_sequence == PatchApplied.sequence
+AND failed_reset_context_sequences == []
+```
+
+Trace가 유효하지만 saturation이나 reset opportunity가 나타나지 않으면 inconclusive다. 이는
+자동 재실행 권한이 아니며 그 1회 결과를 그대로 보존한다. Gate는 terminal·qualified·official
+evaluator arrival, diagnostic pass와 infrastructure/qualification/diagnostic/budget error 0을
+요구하지만 SCRR는 요구하지 않는다. 이 결과는 tuning/policy evidence이며 comparison
+denominator, failure-memory admission과 core headline을 열지 않는다. Checked-in suite와
+no-call preflight는 비용 승인이나 provider 호출 권한이 아니다.

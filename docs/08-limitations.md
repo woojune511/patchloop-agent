@@ -613,20 +613,21 @@ silently lowering the design or fabricating missing results.
   and two not-started rows are not a no-memory performance denominator and cannot justify a final
   all-condition budget.
 - D-062 must not be rerun or continued. D-063 completed the offline versioned
-  `phase-evidence-v8` saturation-context fix; the next proposed gate is a new separately contracted and
-  approved single live pilot.
+  `phase-evidence-v8` saturation-context fix, and D-064 added its exact single-task live contract. The
+  next gate is a clean no-call execution hash followed by separate cost approval and one provider run.
 
 ## Phase-evidence-v8 does not establish model improvement
 
 - V8 changes only the model-visible admission contract for a gateway policy that already existed. It
   does not improve patch parsing, increase the budget or add cross-run memory.
-- The offline selector is deliberately limited to mock runs without experiment context. Its passing
-  tests establish contract consistency, crash/resume reconstruction and tamper detection, not provider
-  behavior, SCRR or task success.
+- The generic V8 selector remains limited to mock runs without experiment context. D-064 adds one exact
+  exception for the separately versioned HF Hub saturation pilot purpose, runtime contract and suite;
+  it does not relax the generic selector or authorize a provider call.
 - The V8 qualifier independently recomputes saturation, mutation epoch, tail reasons and resulting
   action filtering. Generic tool-result presentation still relies on the existing exact context rebuild
   plus CAS validation; V8 is not a fully independent second implementation of every phase-readiness rule.
-- A future single live pilot needs a new purpose, clean execution hash, explicit cost cap and separate
-  approval. It must not reuse D-062 authorization or resume its two not-started rows.
-- Even if a future pilot reaches the evaluator, one tuning task is not a no-memory baseline and cannot
+- The D-064 live pilot contract now exists, but its clean execution hash, explicit cost approval and
+  provider execution remain unperformed. It must not reuse D-062 authorization or resume its two
+  not-started rows.
+- Even if the D-064 pilot reaches the evaluator, one tuning task is not a no-memory baseline and cannot
   support a memory-effect or core-performance claim.

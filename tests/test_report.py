@@ -148,6 +148,7 @@ def test_report_separates_infrastructure_and_not_started_rows(
     assert report["analysis_ready"] is False
     assert report["headline_metrics"] is None
     assert report["paired_scrr_difference_vs_no_memory"] is None
+    assert report["success_failure_flips_vs_no_memory"] is None
 
 
 def test_report_excludes_trace_qualification_failures_from_research_metrics(
@@ -388,6 +389,76 @@ def test_report_keeps_complete_budget_pilot_out_of_headline_comparison(
     assert report["analysis_basis"] == (
         "available-case-diagnostic-not-for-headlines"
     )
+    assert report["analysis_blockers"] == [
+        "experiment purpose is calibration-only and excluded from "
+        "the comparison denominator"
+    ]
+    assert report["headline_metrics"] is None
+    assert report["paired_scrr_difference_vs_no_memory"] is None
+    assert report["success_failure_flips_vs_no_memory"] is None
+
+
+def test_report_keeps_saturation_pilot_out_of_headlines(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    root = tmp_path / "runtime"
+    experiment_dir = root / "experiments"
+    experiment_dir.mkdir(parents=True)
+    result = _result("run_saturation", False)
+    result["outcome_kind"] = "task_failure"
+    raw = {
+        "purpose": "memory-development-no-memory-saturation-pilot",
+        "schedule_seed": 20260723,
+        "expected_runs": 1,
+        "infrastructure_errors": 0,
+        "suite": {
+            "tasks": ["task-hf-hub"],
+            "conditions": ["no_memory"],
+            "repetitions": 1,
+        },
+        "completion_gate": {
+            "schema_version": "v8-saturation-live-pilot-gate-v1",
+            "passed": True,
+            "comparison_denominator_eligible": False,
+            "memory_admission_unlocked": False,
+        },
+        "runs": [
+            {
+                "task_id": "hf-hub",
+                "split": "dev-train",
+                "condition": "no_memory",
+                "repetition": 1,
+                "attempt_status": "terminal",
+                "run_id": result["run_id"],
+                "usage": result["usage"],
+                "result": result,
+                "infrastructure_error": None,
+                "qualification": {"qualified": True},
+                "qualification_error": None,
+                "diagnostic": {"status": "passed"},
+                "diagnostic_error": None,
+            }
+        ],
+    }
+    (experiment_dir / "saturation-pilot.json").write_text(
+        json.dumps(raw),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(report_module, "runtime_root", lambda: root)
+
+    report_module.build_report(
+        "saturation-pilot",
+        tmp_path / "report-saturation-pilot",
+    )
+    report = json.loads(
+        (tmp_path / "report-saturation-pilot" / "report.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert report["metrics"]["no_memory"]["runs"] == 1
+    assert report["analysis_ready"] is False
     assert report["analysis_blockers"] == [
         "experiment purpose is calibration-only and excluded from "
         "the comparison denominator"

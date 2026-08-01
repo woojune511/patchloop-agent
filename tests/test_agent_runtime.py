@@ -266,6 +266,64 @@ def test_saturation_context_validation_rejects_experiment_and_other_modes() -> N
             )
 
 
+def test_saturation_live_pilot_is_the_only_openai_v8_exception() -> None:
+    package = load_task_package(Path(TASK).parent)
+    review_contract = _smoke_review_contract(package)
+    experiment = ExperimentRunContext(
+        experiment_id="saturation-live-pilot-test",
+        purpose=(
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+        ),
+        suite_hash="sha256:" + ("a" * 64),
+        execution_hash="sha256:" + ("b" * 64),
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + ("c" * 64),
+        repetition=1,
+    )
+
+    manifest = build_manifest(
+        package,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        experiment_context=experiment,
+        saturation_live_pilot=True,
+        public_review_contract=review_contract,
+    )
+
+    assert manifest.tool_schema_version == "v4"
+    assert manifest.context_policy_version == "phase-evidence-v8"
+    assert manifest.model.provider == "openai"
+    assert manifest.experiment == experiment
+
+    with pytest.raises(
+        ContractError,
+        match="OpenAI provider and the exact",
+    ):
+        build_manifest(
+            package,
+            provider="mock",
+            experiment_context=experiment,
+            saturation_live_pilot=True,
+            public_review_contract=review_contract,
+        )
+    wrong_purpose = experiment.model_copy(
+        update={"purpose": ExperimentPurpose.OFFLINE_SMOKE}
+    )
+    with pytest.raises(
+        ContractError,
+        match="OpenAI provider and the exact",
+    ):
+        build_manifest(
+            package,
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            experiment_context=wrong_purpose,
+            saturation_live_pilot=True,
+            public_review_contract=review_contract,
+        )
+
+
 @pytest.mark.parametrize(
     ("field", "replacement"),
     [
@@ -3306,6 +3364,15 @@ def test_v8_saturation_survives_crash_then_resets_and_qualifies(
     saturation_check = checks["saturation_context_contract"]
     assert saturation_check["passed"] is True, saturation_check
     assert saturation_check["details"]["saturated_context_count"] >= 1
+    assert saturation_check["details"][
+        "read_search_removed_saturated_context_sequences"
+    ]
+    assert saturation_check["details"]["post_saturation_patch_count"] >= 1
+    assert saturation_check["details"]["reset_opportunity_count"] >= 1
+    assert saturation_check["details"]["reset_context_count"] >= 1
+    assert saturation_check["details"][
+        "failed_reset_context_sequences"
+    ] == []
 
 
 def test_v7_rejected_patch_retry_clears_after_success_and_qualifies(

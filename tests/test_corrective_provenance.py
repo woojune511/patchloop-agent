@@ -72,18 +72,43 @@ def _manifest(*, experiment: bool = False):
     )
 
 
-def _saturation_manifest():
+def _saturation_manifest(*, experiment: bool = False):
     package = load_task_package(TASK)
     contract = load_public_review_contract(
         REVIEW,
         task=package.public,
         public_spec_hash=package.public_spec_hash,
     )
+    context = (
+        ExperimentRunContext(
+            experiment_id="saturation-provenance-test",
+            purpose=(
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+            ),
+            suite_hash="sha256:" + ("e" * 64),
+            execution_hash="sha256:" + ("f" * 64),
+            dataset_manifest_hash="sha256:" + ("1" * 64),
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("2" * 64),
+            repetition=1,
+        )
+        if experiment
+        else None
+    )
     return build_manifest(
         package,
         run_id="run_saturation_provenance",
-        saturation_context_validation=True,
+        provider="openai" if experiment else "mock",
+        model_id=(
+            "gpt-5.4-mini-2026-03-17"
+            if experiment
+            else "mock-v1"
+        ),
+        saturation_context_validation=not experiment,
+        saturation_live_pilot=experiment,
         public_review_contract=contract,
+        experiment_context=context,
     )
 
 
@@ -387,14 +412,28 @@ def test_corrective_runtime_block_changes_execution_hash() -> None:
     ) != approved_hash
 
 
-def test_agent_boundary_matches_exact_corrective_runtime_plan(
+@pytest.mark.parametrize("saturation", [False, True])
+def test_agent_boundary_rejects_runtime_only_plan(
     tmp_path: Path,
+    saturation: bool,
 ) -> None:
-    manifest = _manifest(experiment=True)
+    manifest = (
+        _saturation_manifest(experiment=True)
+        if saturation
+        else _manifest(experiment=True)
+    )
     runtime_contract = {
-        "schema_version": "corrective-runtime-contract-v1",
+        "schema_version": (
+            "corrective-runtime-contract-v2"
+            if saturation
+            else "corrective-runtime-contract-v1"
+        ),
         "tool_schema_version": "v4",
-        "context_policy_version": "phase-evidence-v7",
+        "context_policy_version": (
+            "phase-evidence-v8"
+            if saturation
+            else "phase-evidence-v7"
+        ),
         "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
         "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V4)),
         "harness_git_commit": manifest.harness_git_commit,
@@ -403,16 +442,6 @@ def test_agent_boundary_matches_exact_corrective_runtime_plan(
     plan_path.write_text("{}", encoding="utf-8")
     authorization = type("Authorization", (), {"plan_path": str(plan_path)})()
 
-    plan_path.write_text(
-        canonical_json({"runtime_contract": runtime_contract}),
-        encoding="utf-8",
-    )
-    assert AgentRunner._live_plan_matches_manifest(
-        manifest,
-        authorization,
-    ) is True
-
-    runtime_contract["tool_schema_version"] = "v3"
     plan_path.write_text(
         canonical_json({"runtime_contract": runtime_contract}),
         encoding="utf-8",

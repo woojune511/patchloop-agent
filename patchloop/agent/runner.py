@@ -417,7 +417,7 @@ class AgentRunner:
         manifest: RunManifest,
         authorization: LiveExecutionAuthorization,
     ) -> bool:
-        """Bind the corrective runtime version and prompt/tool hashes at start/resume."""
+        """Bind the complete hash-approved plan at the paid-call boundary."""
 
         try:
             plan = json.loads(
@@ -433,25 +433,28 @@ class AgentRunner:
             and manifest.experiment.purpose
             == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
         )
-        if not corrective:
-            return runtime_contract is None
-        expected = {
-            "schema_version": "corrective-runtime-contract-v1",
-            "tool_schema_version": manifest.tool_schema_version,
-            "context_policy_version": manifest.context_policy_version,
-            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
-            "tool_schema_hash": sha256_text(
-                canonical_json(TOOL_SCHEMAS_V4)
-            ),
-            "harness_git_commit": manifest.harness_git_commit,
-        }
-        return bool(
-            manifest.tool_schema_version == "v4"
-            and manifest.context_policy_version == "phase-evidence-v7"
-            and manifest.public_review_contract is not None
-            and isinstance(runtime_contract, dict)
-            and canonical_json(runtime_contract) == canonical_json(expected)
+        saturation = bool(
+            manifest.experiment is not None
+            and manifest.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
         )
+        if not corrective and not saturation:
+            return runtime_contract is None
+        try:
+            # Keep start/resume on the same complete suite, task, schedule,
+            # model, budget, pricing, review and runtime comparison used by
+            # post-run qualification. This import is local to avoid making
+            # the agent runner depend on evaluation modules at import time.
+            from patchloop.evals.qualification import (
+                _execution_plan_matches,
+            )
+
+            return _execution_plan_matches(
+                plan=plan,
+                manifest=manifest,
+            )
+        except Exception:
+            return False
 
     def _execute(
         self,

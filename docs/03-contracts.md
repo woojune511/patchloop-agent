@@ -295,6 +295,8 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `development-validation-model-candidate-pilot` | Babel #1042 한 task, `no_memory`, repetition 1, dated candidate model, $2 상한; primary campaign gate와 분리된 historical diagnostic lane |
 | `memory-development-no-memory` | frozen memory-development 여섯 task, `no_memory`, repetition 2, 총 12 run, $20 상한 |
 | `memory-development-no-memory-budget-pilot` | V4 budget-terminal resource maxima로 고정한 HF Hub/PDM/pyfakefs, `no_memory`, repetition 1, 총 3 run, $7 상한; memory source와 comparison denominator에서 제외 |
+| `memory-development-no-memory-corrective-pilot` | Consumed D-062 HF Hub/PDM/pyfakefs corrective panel, v4/v7, 900k, $13 상한; immutable하고 재실행 금지 |
+| `memory-development-no-memory-saturation-pilot` | D-064 HF Hub 한 task, `no_memory`, repetition 1, v4/v8/runtime-v2, 900k, $5 상한; 자연 saturation/reset diagnostic이며 memory source와 comparison denominator에서 제외 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -484,10 +486,13 @@ diagnostic:
     - rejected_patch_retry_context
 ```
 
-이 block은 `experiment-v2`의 `development-validation-model-candidate-pilot`에서만 허용되며
-feature는 정확히 한 번 선언해야 한다. Normalized suite, execution hash와 durable approved
-plan이 이 block을 포함하므로 승인 뒤 제거·변경하면 hash가 달라지고 실행 전에 거부된다.
-Block이 없는 historical r1/r2 suite는 기존 normalized identity를 유지한다.
+이 block은 `experiment-v2`의 명시적으로 versioned diagnostic purpose에서만 허용된다.
+D-037 계열 `development-validation-model-candidate-pilot`은
+`rejected_patch_retry_context`, D-064의 exact
+`memory-development-no-memory-saturation-pilot`은 `saturation_context`를 정확히 한 번
+선언해야 한다. Normalized suite, execution hash와 durable approved plan이 이 block을
+포함하므로 승인 뒤 제거·변경하면 hash가 달라지고 실행 전에 거부된다. Block이 없는
+historical r1/r2 suite는 기존 normalized identity를 유지한다.
 
 R3 `run_e90f7c52aa134182`는 rejected mutation 전에 per-call 4,096-token allowance를
 reasoning에서 소진해 `incomplete/max_output_tokens`로 끝났다. 이 terminal suite/run은
@@ -1799,9 +1804,11 @@ task outcome은 그대로이므로 이 run을 SCRR 또는 no-memory baseline으�
 ## 13. Phase-evidence-v8 saturation context
 
 V8 manifest는 exact `tool_schema_version=v4` / `context_policy_version=phase-evidence-v8`
-pair와 `PublicReviewContract`를 요구한다. 이 pair는 offline saturation-context validation을
-위한 별도 opt-in이며, historical corrective purpose의 v4/v7 pair를 대체하거나 완화하지
-않는다. 현재 V8 manifest는 mock provider와 experiment context 부재만 허용한다.
+pair와 `PublicReviewContract`를 요구한다. 이 pair는 historical corrective purpose의 v4/v7
+pair를 대체하거나 완화하지 않는다. Generic V8은 mock provider와 experiment context 부재만
+허용한다. 유일한 live exception은 exact
+`memory-development-no-memory-saturation-pilot` purpose이며 OpenAI provider, frozen HF Hub
+task, approved execution plan과 `corrective-runtime-contract-v2`가 모두 필요하다.
 
 V8 request의 `phase_contract`는 `phase-contract-v3`이고 다음 exact object를 포함한다.
 
@@ -1842,3 +1849,11 @@ filtering을 독립 재계산한다. 일반적인 tool-result presentation avail
 통과한다. `corrective-runtime-contract-v2`의 prompt/tool/context bytes와 CAS,
 `trace-source-evidence-v8`도 별도로 결속한다. V7은 계속 `phase-contract-v2`,
 `context-build-evidence-v7`, `corrective-runtime-contract-v1`과 기존 source hash를 사용한다.
+
+D-064의 `v8-saturation-context-v1` diagnostic은 qualification과 별도다. Qualification은
+모든 V8 context가 독립 재계산과 CAS 검사를 통과했는지를 판정한다. Diagnostic은 최소 한
+saturated context에서 read/search가 제거됐고, 그 뒤 successful `PatchApplied`와 첫 후속
+context가 존재할 때 `semantic_replay_count=0`, 새 `mutation_epoch_sequence`,
+`evidence_saturated` 제거가 확인돼야 pass다. Saturation 또는 reset opportunity가 자연 발생하지
+않으면 inconclusive이고 자동 재실행하지 않는다. 이 purpose의
+`memory_candidate_eligible`는 항상 false다.

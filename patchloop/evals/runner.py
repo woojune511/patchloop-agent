@@ -144,6 +144,12 @@ GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT = Budget(
     max_total_tokens=900_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=900_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -179,11 +185,22 @@ MEMORY_DEVELOPMENT_BUDGET_PILOT_TASK_IDS = {
     Path(path).parent.name
     for path in MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
 }
+SATURATION_PILOT_TASK = (
+    "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml"
+)
+SATURATION_PILOT_TASK_ID = Path(SATURATION_PILOT_TASK).parent.name
 PUBLIC_REVIEW_CONTRACT_ROOT = Path("experiments/review-contracts")
 CORRECTIVE_TOOL_SCHEMA_VERSION = "v4"
 CORRECTIVE_CONTEXT_POLICY_VERSION = "phase-evidence-v7"
 CORRECTIVE_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v1"
+SATURATION_CONTEXT_POLICY_VERSION = "phase-evidence-v8"
+SATURATION_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v2"
 PRICING_START_VERIFICATION_SCHEMA = "pricing-start-verification-v1"
+
+HASH_BOUND_CORRECTIVE_PURPOSES = {
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+}
 
 
 def _normalized_task_path(value: str) -> str:
@@ -197,15 +214,24 @@ def _corrective_runtime_contract(
 ) -> dict[str, Any] | None:
     """Return the corrective-only runtime identity approved by the execution hash."""
 
-    if (
-        suite.purpose
-        != ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-    ):
+    if suite.purpose not in HASH_BOUND_CORRECTIVE_PURPOSES:
         return None
+    saturation_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+    )
     return {
-        "schema_version": CORRECTIVE_RUNTIME_CONTRACT_SCHEMA,
+        "schema_version": (
+            SATURATION_RUNTIME_CONTRACT_SCHEMA
+            if saturation_pilot
+            else CORRECTIVE_RUNTIME_CONTRACT_SCHEMA
+        ),
         "tool_schema_version": CORRECTIVE_TOOL_SCHEMA_VERSION,
-        "context_policy_version": CORRECTIVE_CONTEXT_POLICY_VERSION,
+        "context_policy_version": (
+            SATURATION_CONTEXT_POLICY_VERSION
+            if saturation_pilot
+            else CORRECTIVE_CONTEXT_POLICY_VERSION
+        ),
         "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
         "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V4)),
         "harness_git_commit": harness_git_commit,
@@ -234,10 +260,7 @@ def _pricing_contract(
         else 0.0
     )
     budget_upper_bound = schedule_size * per_run_cost_reserve
-    if (
-        suite.purpose
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-    ):
+    if suite.purpose in HASH_BOUND_CORRECTIVE_PURPOSES:
         # Keep the approval-facing currency values stable instead of exposing
         # binary floating-point tails such as 12.487499999999999.
         per_run_cost_reserve = round(per_run_cost_reserve, 12)
@@ -260,10 +283,7 @@ def _pricing_contract(
         "per_run_cost_reserve_usd": per_run_cost_reserve,
         "budget_upper_bound_usd": budget_upper_bound,
     }
-    if (
-        suite.purpose
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-    ):
+    if suite.purpose in HASH_BOUND_CORRECTIVE_PURPOSES:
         payload["start_time_verification"] = _pricing_freshness_evidence(
             suite,
             boundary_at=checked_at,
@@ -384,9 +404,10 @@ class ExperimentDiagnostic(BaseModel):
         "d037-rejected-patch-retry-v2",
         "d037-rejected-patch-retry-v3",
         "d037-rejected-patch-retry-v4",
+        "v8-saturation-context-v1",
     ]
     required_trace_features: list[
-        Literal["rejected_patch_retry_context"]
+        Literal["rejected_patch_retry_context", "saturation_context"]
     ] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -395,12 +416,15 @@ class ExperimentDiagnostic(BaseModel):
             self.required_trace_features
         ):
             raise ValueError("diagnostic trace features must be unique")
-        if self.required_trace_features != [
-            "rejected_patch_retry_context"
-        ]:
+        expected_features = (
+            ["saturation_context"]
+            if self.profile == "v8-saturation-context-v1"
+            else ["rejected_patch_retry_context"]
+        )
+        if self.required_trace_features != expected_features:
             raise ValueError(
-                "d037 diagnostic requires exactly "
-                "rejected_patch_retry_context"
+                f"{self.profile} diagnostic requires exactly "
+                f"{expected_features[0]}"
             )
         return self
 
@@ -492,14 +516,27 @@ class ExperimentSuite(BaseModel):
             )
             if self.purpose != legacy_purpose:
                 raise ValueError("experiment-v1 purpose conflicts with the legacy core flag")
-        if self.diagnostic is not None and (
-            self.schema_version != "experiment-v2"
-            or self.purpose
-            != ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
-        ):
+        diagnostic_allowed = bool(
+            self.schema_version == "experiment-v2"
+            and (
+                (
+                    self.purpose
+                    == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
+                    and self.diagnostic is not None
+                    and self.diagnostic.profile.startswith("d037-")
+                )
+                or (
+                    self.purpose
+                    == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+                    and self.diagnostic is not None
+                    and self.diagnostic.profile == "v8-saturation-context-v1"
+                )
+            )
+        )
+        if self.diagnostic is not None and not diagnostic_allowed:
             raise ValueError(
-                "diagnostic profiles are allowed only for an experiment-v2 "
-                "development-validation model-candidate pilot"
+                "diagnostic profiles are allowed only when the profile matches "
+                "its experiment-v2 purpose"
             )
 
         if self.purpose == ExperimentPurpose.OFFLINE_SMOKE:
@@ -682,6 +719,37 @@ class ExperimentSuite(BaseModel):
                 cost_limit=13,
                 budget=GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT,
             )
+        elif (
+            self.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+        ):
+            if (
+                [_normalized_task_path(task) for task in self.tasks]
+                != [SATURATION_PILOT_TASK]
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+            ):
+                raise ValueError(
+                    "memory-development no-memory saturation pilot requires "
+                    "exactly the frozen HF Hub task, no_memory, and one repetition"
+                )
+            if (
+                self.diagnostic is None
+                or self.diagnostic.profile != "v8-saturation-context-v1"
+                or self.diagnostic.required_trace_features
+                != ["saturation_context"]
+            ):
+                raise ValueError(
+                    "saturation pilot requires the exact v8 saturation diagnostic"
+                )
+            self._require_live_defaults(
+                cost_limit=5,
+                budget=GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT,
+            )
+            if self.estimated_cost_usd != 4.1625:
+                raise ValueError(
+                    "saturation pilot requires estimated_cost_usd=4.1625"
+                )
         elif self.purpose == ExperimentPurpose.CORE:
             if len(set(self.tasks)) != 12:
                 raise ValueError("core experiment requires exactly 12 unique held-out tasks")
@@ -1096,6 +1164,7 @@ def _expected_role_and_split(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
     }:
         return {DatasetRole.MEMORY_DEVELOPMENT}, DatasetRole.MEMORY_DEVELOPMENT
     if purpose == ExperimentPurpose.CORE:
@@ -1191,8 +1260,7 @@ def preflight_suite(
                 review_contract: PublicReviewContract | None = None
                 review_contract_path: str | None = None
                 if (
-                    suite.purpose
-                    == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+                    suite.purpose in HASH_BOUND_CORRECTIVE_PURPOSES
                 ):
                     candidate = ensure_within(
                         repository_root(),
@@ -1303,6 +1371,16 @@ def preflight_suite(
             blockers,
             "CORRECTIVE_PILOT_TASK_SET_MISMATCH",
             "corrective pilot must use its exact three frozen resource-max tasks",
+        )
+    if (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+        and loaded_ids != {SATURATION_PILOT_TASK_ID}
+    ):
+        _block(
+            blockers,
+            "SATURATION_PILOT_TASK_SET_MISMATCH",
+            "saturation pilot must use exactly the frozen HF Hub task",
         )
 
     schedule, schedule_hash = _make_schedule(suite, task_rows)
@@ -1645,11 +1723,19 @@ def _assert_manifest_matches_preflight(
         expected_runtime_contract is not None
         or manifest.tool_schema_version == CORRECTIVE_TOOL_SCHEMA_VERSION
         or manifest.context_policy_version
-        == CORRECTIVE_CONTEXT_POLICY_VERSION
+        in {
+            CORRECTIVE_CONTEXT_POLICY_VERSION,
+            SATURATION_CONTEXT_POLICY_VERSION,
+        }
         or manifest.public_review_contract is not None
     ):
         actual_runtime_contract = {
-            "schema_version": CORRECTIVE_RUNTIME_CONTRACT_SCHEMA,
+            "schema_version": (
+                SATURATION_RUNTIME_CONTRACT_SCHEMA
+                if manifest.context_policy_version
+                == SATURATION_CONTEXT_POLICY_VERSION
+                else CORRECTIVE_RUNTIME_CONTRACT_SCHEMA
+            ),
             "tool_schema_version": manifest.tool_schema_version,
             "context_policy_version": manifest.context_policy_version,
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
@@ -1928,10 +2014,191 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
                     ),
                 }
             )
+    saturation_checks = [
+        check
+        for check in raw_checks
+        if (
+            isinstance(check, dict)
+            and check.get("check_id") == "saturation_context_contract"
+        )
+    ]
+    saturation_feature: dict[str, Any] = {
+        "check_count": len(saturation_checks),
+        "check_passed": None,
+        "saturated_context_count": None,
+        "read_search_removed_saturated_context_sequences": None,
+        "post_saturation_patch_count": None,
+        "reset_opportunity_count": None,
+        "reset_context_count": None,
+        "reset_context_sequences": None,
+        "failed_reset_context_sequences": None,
+    }
+    if len(saturation_checks) == 1:
+        check = saturation_checks[0]
+        details = check.get("details")
+        if not isinstance(details, dict):
+            details = {}
+
+        def safe_count(name: str) -> int | None:
+            value = details.get(name)
+            return value if type(value) is int and value >= 0 else None
+
+        def safe_sequences(name: str) -> list[int] | None:
+            value = details.get(name)
+            if isinstance(value, list) and all(
+                type(sequence) is int and sequence >= 1
+                for sequence in value
+            ):
+                return list(value)
+            return None
+
+        saturation_feature.update(
+            {
+                "check_passed": (
+                    check.get("passed")
+                    if type(check.get("passed")) is bool
+                    else None
+                ),
+                "saturated_context_count": safe_count(
+                    "saturated_context_count"
+                ),
+                "read_search_removed_saturated_context_sequences": (
+                    safe_sequences(
+                        "read_search_removed_saturated_context_sequences"
+                    )
+                ),
+                "post_saturation_patch_count": safe_count(
+                    "post_saturation_patch_count"
+                ),
+                "reset_opportunity_count": safe_count(
+                    "reset_opportunity_count"
+                ),
+                "reset_context_count": safe_count(
+                    "reset_context_count"
+                ),
+                "reset_context_sequences": safe_sequences(
+                    "reset_context_sequences"
+                ),
+                "failed_reset_context_sequences": safe_sequences(
+                    "failed_reset_context_sequences"
+                ),
+            }
+        )
     summary["trace_features"] = {
-        "rejected_patch_retry_context": retry_feature
+        "rejected_patch_retry_context": retry_feature,
+        "saturation_context": saturation_feature,
     }
     return summary
+
+
+def _saturation_diagnostic_result(
+    qualification: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Classify natural V8 branch exercise without redefining trace validity."""
+
+    status = "failed"
+    reason_code: str | None = "qualification_unavailable"
+    trace_features = (
+        qualification.get("trace_features")
+        if isinstance(qualification, dict)
+        else None
+    )
+    feature = (
+        trace_features.get("saturation_context")
+        if isinstance(trace_features, dict)
+        else None
+    )
+    evidence = {
+        "check_count": None,
+        "check_passed": None,
+        "saturated_context_count": None,
+        "read_search_removed_saturated_context_sequences": None,
+        "post_saturation_patch_count": None,
+        "reset_opportunity_count": None,
+        "reset_context_count": None,
+        "reset_context_sequences": None,
+        "failed_reset_context_sequences": None,
+    }
+    if isinstance(feature, dict):
+        evidence.update(
+            {key: feature.get(key) for key in evidence}
+        )
+    counts_valid = all(
+        type(evidence[name]) is int and evidence[name] >= 0
+        for name in (
+            "check_count",
+            "saturated_context_count",
+            "post_saturation_patch_count",
+            "reset_opportunity_count",
+            "reset_context_count",
+        )
+    )
+    sequences_valid = all(
+        isinstance(evidence[name], list)
+        and all(
+            type(sequence) is int and sequence >= 1
+            for sequence in evidence[name]
+        )
+        for name in (
+            "read_search_removed_saturated_context_sequences",
+            "reset_context_sequences",
+            "failed_reset_context_sequences",
+        )
+    )
+    evidence_consistent = bool(
+        counts_valid
+        and sequences_valid
+        and evidence["saturated_context_count"]
+        == len(
+            evidence[
+                "read_search_removed_saturated_context_sequences"
+            ]
+        )
+        and evidence["reset_context_count"]
+        == len(evidence["reset_context_sequences"])
+        and evidence["reset_context_count"]
+        <= evidence["reset_opportunity_count"]
+        <= evidence["post_saturation_patch_count"]
+    )
+    if isinstance(qualification, dict):
+        if qualification.get("qualified") is not True:
+            reason_code = "qualification_not_passed"
+        elif evidence["check_count"] != 1:
+            reason_code = "qualification_check_cardinality"
+        elif evidence["check_passed"] is not True:
+            reason_code = "qualification_check_failed"
+        elif not evidence_consistent:
+            reason_code = "qualification_evidence_malformed"
+        elif evidence["saturated_context_count"] == 0:
+            status = "inconclusive"
+            reason_code = "saturation_not_observed"
+        elif evidence["post_saturation_patch_count"] == 0:
+            status = "inconclusive"
+            reason_code = "post_saturation_patch_not_observed"
+        elif evidence["reset_opportunity_count"] == 0:
+            status = "inconclusive"
+            reason_code = "post_saturation_reset_not_observed"
+        elif (
+            evidence["reset_context_count"] >= 1
+            and not evidence["failed_reset_context_sequences"]
+        ):
+            status = "passed"
+            reason_code = None
+        else:
+            reason_code = "post_saturation_reset_not_verified"
+    return {
+        "schema_version": "experiment-diagnostic-result-v1",
+        "profile": "v8-saturation-context-v1",
+        "required_trace_features": ["saturation_context"],
+        "status": status,
+        "reason_code": reason_code,
+        "qualification_hash": (
+            qualification.get("qualification_hash")
+            if isinstance(qualification, dict)
+            else None
+        ),
+        "features": {"saturation_context": evidence},
+    }
 
 
 def _diagnostic_result(
@@ -1942,6 +2209,8 @@ def _diagnostic_result(
 
     if suite.diagnostic is None:
         return None
+    if suite.diagnostic.profile == "v8-saturation-context-v1":
+        return _saturation_diagnostic_result(qualification)
     controlled_profile = (
         suite.diagnostic.profile
         == "d037-rejected-patch-retry-v4"
@@ -2188,7 +2457,22 @@ def _completion_gate(
         }
         == MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS
     )
-    if not completion_panel and not budget_pilot and not corrective_pilot:
+    saturation_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+        and suite.budget
+        == GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
+        and [_normalized_task_path(task) for task in suite.tasks]
+        == [SATURATION_PILOT_TASK]
+    )
+    if not any(
+        (
+            completion_panel,
+            budget_pilot,
+            corrective_pilot,
+            saturation_pilot,
+        )
+    ):
         return None
 
     budget_terminal_run_ids: list[str] = []
@@ -2237,12 +2521,23 @@ def _completion_gate(
     diagnostic_errors = sum(
         row.get("diagnostic_error") is not None for row in rows
     )
+    diagnostic_passed_runs = sum(
+        (row.get("diagnostic") or {}).get("status") == "passed"
+        for row in rows
+    )
     task_successes = sum(
         (row.get("result") or {}).get("scope_compliant_success") is True
         for row in rows
     )
     completion_passed = bool(
-        expected_runs == (3 if budget_pilot or corrective_pilot else 2)
+        expected_runs
+        == (
+            1
+            if saturation_pilot
+            else 3
+            if budget_pilot or corrective_pilot
+            else 2
+        )
         and terminal_runs == expected_runs
         and qualified_runs == expected_runs
         and evaluator_reached_runs == expected_runs
@@ -2250,12 +2545,18 @@ def _completion_gate(
         and infrastructure_errors == 0
         and qualification_errors == 0
         and diagnostic_errors == 0
+        and (
+            not saturation_pilot
+            or diagnostic_passed_runs == expected_runs
+        )
         and not budget_terminal_run_ids
     )
-    if budget_pilot or corrective_pilot:
+    if budget_pilot or corrective_pilot or saturation_pilot:
         return {
             "schema_version": (
-                "no-memory-corrective-pilot-gate-v1"
+                "v8-saturation-live-pilot-gate-v1"
+                if saturation_pilot
+                else "no-memory-corrective-pilot-gate-v1"
                 if corrective_pilot
                 else "no-memory-budget-pilot-gate-v1"
             ),
@@ -2268,6 +2569,11 @@ def _completion_gate(
             "infrastructure_errors": infrastructure_errors,
             "qualification_errors": qualification_errors,
             "diagnostic_errors": diagnostic_errors,
+            **(
+                {"diagnostic_passed_runs": diagnostic_passed_runs}
+                if saturation_pilot
+                else {}
+            ),
             "budget_terminal_runs": len(budget_terminal_run_ids),
             "budget_terminal_run_ids": budget_terminal_run_ids,
             "task_successes": task_successes,
@@ -2439,6 +2745,7 @@ def evaluate_suite(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
     }
     halt_reason: dict[str, str] | None = None
 
@@ -2576,6 +2883,10 @@ def evaluate_suite(
             corrective_validation=(
                 suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+            ),
+            saturation_live_pilot=(
+                suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
             ),
             public_review_contract=(
                 PublicReviewContract.model_validate(

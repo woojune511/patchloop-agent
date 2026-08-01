@@ -9,6 +9,7 @@ from pathlib import Path
 
 from patchloop.contracts import (
     Budget,
+    ExperimentPurpose,
     ExperimentRunContext,
     FaultSpec,
     MemoryCondition,
@@ -75,6 +76,7 @@ def build_manifest(
     self_validation: bool = False,
     corrective_validation: bool = False,
     saturation_context_validation: bool = False,
+    saturation_live_pilot: bool = False,
     public_review_contract: PublicReviewContract | None = None,
 ) -> RunManifest:
     validation_mode_count = sum(
@@ -82,12 +84,13 @@ def build_manifest(
             self_validation,
             corrective_validation,
             saturation_context_validation,
+            saturation_live_pilot,
         )
     )
     if validation_mode_count > 1:
         raise ContractError(
             "self-validation v3/v6, corrective validation v4/v7, and "
-            "saturation-context validation v4/v8 are mutually exclusive"
+            "offline/live saturation-context validation v4/v8 are mutually exclusive"
         )
     if self_validation and provider == "openai":
         raise ContractError(
@@ -111,7 +114,17 @@ def build_manifest(
         raise ContractError(
             "saturation-context validation v4/v8 cannot declare an experiment context"
         )
-    if corrective_validation or saturation_context_validation:
+    if saturation_live_pilot and (
+        provider != "openai"
+        or experiment_context is None
+        or experiment_context.purpose
+        != ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+    ):
+        raise ContractError(
+            "saturation live pilot requires the OpenAI provider and the exact "
+            "memory-development saturation experiment purpose"
+        )
+    if corrective_validation or saturation_context_validation or saturation_live_pilot:
         from patchloop.agent.review import (
             validate_public_review_contract,
         )
@@ -156,7 +169,7 @@ def build_manifest(
             "v1"
             if provider == "replay"
             else "v4"
-            if corrective_validation or saturation_context_validation
+            if corrective_validation or saturation_context_validation or saturation_live_pilot
             else "v3"
             if self_validation
             else "v2"
@@ -165,7 +178,7 @@ def build_manifest(
             "v1"
             if provider == "replay"
             else "phase-evidence-v8"
-            if saturation_context_validation
+            if saturation_context_validation or saturation_live_pilot
             else "phase-evidence-v7"
             if corrective_validation
             else "phase-evidence-v6"

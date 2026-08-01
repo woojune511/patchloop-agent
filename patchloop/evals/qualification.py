@@ -79,6 +79,12 @@ _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT = Budget(
     max_total_tokens=900_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=900_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
 )
@@ -107,6 +113,7 @@ _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
     ExperimentPurpose.CORE,
 }
 
@@ -430,6 +437,12 @@ def _execution_plan_matches(
                 and parsed_suite.budget
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
             )
+            or (
+                parsed_suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+                and parsed_suite.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
+            )
         ):
             if (
                 len(tasks) != len(parsed_suite.tasks)
@@ -557,10 +570,10 @@ def _execution_plan_matches(
         and task.get("evaluator_image_digest") == manifest.evaluator_image_digest
         and task.get("evaluator_image_digest") == manifest.agent_image_digest
     )
-    if (
-        experiment.purpose
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-    ):
+    if experiment.purpose in {
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+    }:
         task_matches = bool(
             task_matches
             and isinstance(task.get("public_review_contract_path"), str)
@@ -2319,6 +2332,7 @@ def _v8_saturation_context_evidence(
     verified_sequences: list[int] = []
     saturated_sequences: list[int] = []
     policy_hashes: list[str] = []
+    policies_by_context_sequence: dict[int, dict[str, Any]] = {}
     checkpoints_by_id = {
         checkpoint.checkpoint_id: checkpoint for checkpoint in checkpoints
     }
@@ -2459,6 +2473,7 @@ def _v8_saturation_context_evidence(
                 )
 
             verified_sequences.append(context_event.sequence)
+            policies_by_context_sequence[context_event.sequence] = expected_policy
             if "evidence_saturated" in expected_policy["reason_codes"]:
                 saturated_sequences.append(context_event.sequence)
             policy_hashes.append(
@@ -2475,6 +2490,73 @@ def _v8_saturation_context_evidence(
         ) as exc:
             failed_sequences.append(context_event.sequence)
             failed_reasons[context_event.sequence] = str(exc)
+    applied_events = sorted(
+        (
+            event
+            for event in events
+            if event.type == EventType.PATCH_APPLIED
+        ),
+        key=lambda event: event.sequence,
+    )
+    post_saturation_patch_sequences: list[int] = []
+    reset_opportunity_sequences: list[int] = []
+    reset_context_sequences: list[int] = []
+    failed_reset_context_sequences: list[int] = []
+    for patch_event in applied_events:
+        prior_patch_sequence = max(
+            (
+                event.sequence
+                for event in applied_events
+                if event.sequence < patch_event.sequence
+            ),
+            default=None,
+        )
+        active_epoch_saturation = any(
+            sequence < patch_event.sequence
+            and policies_by_context_sequence[sequence].get(
+                "mutation_epoch_sequence"
+            )
+            == prior_patch_sequence
+            for sequence in saturated_sequences
+        )
+        if not active_epoch_saturation:
+            continue
+        post_saturation_patch_sequences.append(patch_event.sequence)
+        next_context = next(
+            (
+                event
+                for event in context_events
+                if event.sequence > patch_event.sequence
+            ),
+            None,
+        )
+        next_patch_sequence = min(
+            (
+                event.sequence
+                for event in applied_events
+                if event.sequence > patch_event.sequence
+            ),
+            default=None,
+        )
+        if next_context is None or (
+            next_patch_sequence is not None
+            and next_patch_sequence < next_context.sequence
+        ):
+            continue
+        reset_opportunity_sequences.append(patch_event.sequence)
+        policy = policies_by_context_sequence.get(next_context.sequence)
+        reset_valid = bool(
+            isinstance(policy, dict)
+            and policy.get("semantic_replay_count") == 0
+            and policy.get("mutation_epoch_sequence")
+            == patch_event.sequence
+            and "evidence_saturated"
+            not in policy.get("reason_codes", [])
+        )
+        if reset_valid:
+            reset_context_sequences.append(next_context.sequence)
+        else:
+            failed_reset_context_sequences.append(next_context.sequence)
     return bool(context_events) and not failed_sequences, {
         "context_count": len(context_events),
         "verified_context_count": len(verified_sequences),
@@ -2483,6 +2565,14 @@ def _v8_saturation_context_evidence(
         "failed_context_reasons": failed_reasons,
         "saturated_context_count": len(saturated_sequences),
         "saturated_context_sequences": saturated_sequences,
+        "read_search_removed_saturated_context_sequences": saturated_sequences,
+        "post_saturation_patch_count": len(post_saturation_patch_sequences),
+        "post_saturation_patch_sequences": post_saturation_patch_sequences,
+        "reset_opportunity_count": len(reset_opportunity_sequences),
+        "reset_opportunity_patch_sequences": reset_opportunity_sequences,
+        "reset_context_count": len(reset_context_sequences),
+        "reset_context_sequences": reset_context_sequences,
+        "failed_reset_context_sequences": failed_reset_context_sequences,
         "read_search_policy_hashes": policy_hashes,
     }
 
@@ -6817,6 +6907,12 @@ def qualify_run(
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
             )
             or (
+                manifest.experiment.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+                and manifest.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
+            )
+            or (
                 (
                     manifest.experiment.purpose
                     in {
@@ -6910,6 +7006,9 @@ def qualify_run(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT: {
             DatasetRole.MEMORY_DEVELOPMENT
         },
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT: {
+            DatasetRole.MEMORY_DEVELOPMENT
+        },
         ExperimentPurpose.CORE: {
             DatasetRole.CORE_SAME_REPO,
             DatasetRole.CORE_CROSS_REPO,
@@ -6977,7 +7076,10 @@ def qualify_run(
     if (
         experiment is not None
         and experiment.purpose
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
+        in {
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+        }
     ):
         from patchloop.evals.runner import (
             ExperimentSuite,
@@ -7488,6 +7590,7 @@ def qualify_run(
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
                 ExperimentPurpose.CORE,
             }
             or (
