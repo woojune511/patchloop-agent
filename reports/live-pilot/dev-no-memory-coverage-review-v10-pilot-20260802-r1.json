@@ -1,0 +1,221 @@
+{
+  "schema_version": "coverage-review-v10-pilot-evidence-v1",
+  "recorded_at": "2026-08-01T21:06:22.5247136Z",
+  "experiment_id": "dev-no-memory-coverage-review-v10-pilot-20260802-r1",
+  "purpose": "memory-development-no-memory-coverage-review-pilot",
+  "config_path": "experiments/dev-no-memory-coverage-review-v10-pilot-20260802-r1.yaml",
+  "source_harness_commit": "52c6f78098bbc147eb4147da8ee9d0e36b10b489",
+  "execution_hash": "sha256:cc361c4fa569085b0268a419ec86a7a91ec87719206d604227d2cb45a9c46914",
+  "suite_hash": "sha256:81d02afd2dfa945b55e4b8b786f0bbd219560406cbcebbb92ebd329746312e84",
+  "schedule_hash": "sha256:307b4616cff32bcb4222f10f06bd1dce0c47cafe1fc78e8cd25cc43b06c143b7",
+  "execution_plan_artifact_hash": "sha256:fe973b0cb153d5f3cba0aa8b950a545ac5cdcdd5804c5a12a31005cb702ffce9",
+  "execution_plan_file_hash": "sha256:69a3098cc60d2db607b355371c1681a01f83b73dcf32a386c64be80b34133972",
+  "result_hash": "sha256:0db9c9017c42851fdd3154751df2d3f092013b24ca64d9c99979e28cf36b6d95",
+  "journal_file_hash": "sha256:e7d6ec1455066930db0e75d96b09a860c6a0cf3729811799d9f52a05f0edf5fe",
+  "journal_final_event_hash": "sha256:1efe72ff3a79cc9ad90f377f2cb21ed1c624bb82e32a26cf0e9fefddf2930ea3",
+  "model": {
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "store": false,
+    "previous_response_id_used": false,
+    "completed_responses": 28,
+    "exact_input_token_matches": 28,
+    "exact_total_token_matches": 28,
+    "truncated_responses": 0
+  },
+  "budget": {
+    "max_model_calls": 60,
+    "max_tool_calls": 100,
+    "max_total_tokens": 1200000,
+    "wall_clock_timeout_seconds": 1800,
+    "authorization_reserve_usd": 5.5125,
+    "suite_cost_limit_usd": 6.0
+  },
+  "original_completion_gate": {
+    "schema_version": "v10-coverage-review-live-pilot-gate-v1",
+    "passed": false,
+    "expected_runs": 1,
+    "terminal_runs": 1,
+    "qualified_runs": 0,
+    "evaluator_reached_runs": 0,
+    "official_evaluator_runs": 0,
+    "infrastructure_errors": 0,
+    "qualification_errors": 1,
+    "diagnostic_errors": 0,
+    "coverage_lifecycle_observed_runs": 0,
+    "budget_terminal_runs": 0,
+    "task_successes": 0,
+    "task_success_required": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "immutable": true,
+    "retroactively_recomputed": false
+  },
+  "run": {
+    "task_id": "hf-hub-xet-endpoint-propagation",
+    "run_id": "run_6cc69fc1170c4a44",
+    "outcome_kind": "agent_failure",
+    "agent_submission_status": "failed",
+    "evaluation_status": "not_run",
+    "official": false,
+    "scope_compliant_success": false,
+    "terminal_error": {
+      "type": "SubmissionProtocolError",
+      "code": "SUBMISSION_PROTOCOL_ERROR",
+      "message": "structured review evidence was rejected three times"
+    },
+    "usage": {
+      "input_tokens": 611450,
+      "cached_input_tokens": 58880,
+      "output_tokens": 56103,
+      "reasoning_output_tokens": 44831,
+      "total_tokens": 667553,
+      "model_calls": 28,
+      "tool_calls": 50,
+      "wall_clock_ms": 353004,
+      "model_cost_usd": 0.671307
+    },
+    "budget_headroom": {
+      "model_calls": 32,
+      "tool_calls": 50,
+      "total_tokens": 532447,
+      "wall_clock_ms": 1446996,
+      "binding_dimension": "none"
+    },
+    "candidate_patch_sha256": "sha256:5735b7125d464b00824c2e10f6eff0eab801db1c31277f9173ed49495d00404f"
+  },
+  "public_review_postmortem": {
+    "latest_mutation_event_sequence": 137,
+    "accepted_partial_review_sequence": 190,
+    "coverage_target_count": 8,
+    "verified_target_count": 7,
+    "unresolved_target_id": "cov-92159184a168",
+    "required_public_path": "src/huggingface_hub/file_download.py",
+    "required_public_anchor": "def get_hf_file_metadata(",
+    "anchor_line_in_run_workspace": 1401,
+    "corrective_read_event_sequence": 196,
+    "corrective_read_range": {
+      "start_line": 1407,
+      "end_line": 1478
+    },
+    "anchor_search_event_sequence": 208,
+    "complete_review_rejection_sequences": [220, 225, 230],
+    "submitted_unrelated_event_sequence": 169,
+    "authoritative_allowed_event_sequences": [],
+    "rejection_error_code": "CONTRACT_ERROR",
+    "rejection_message": "review_task coverage target cites unrelated evidence",
+    "rejection_error_details_were_empty": true,
+    "primary_cause": "agent omitted the exact anchor from the corrective read and repeatedly cited unrelated evidence",
+    "contributing_harness_gap": "rejection feedback did not identify the offending target, submitted sequence or authoritative allowed sequences"
+  },
+  "qualification": {
+    "qualification_hash": "sha256:86bb3dd4c472049c6a94ee5f5ffb857e3061f32a0a6a6e068fd573ac98896061",
+    "source_evidence_hash": "sha256:de139e587f812347f0e101688fb05b63ec0e76578261d7ff5eb5e52570a804b3",
+    "qualified": false,
+    "trace_integrity_passed": false,
+    "leakage_scan_passed": true,
+    "passed_checks": 30,
+    "total_checks": 34,
+    "failed_check_ids": [
+      "coverage_decision_integrity",
+      "coverage_submission_lifecycle",
+      "coverage_recovery_contract",
+      "coverage_terminal_contract"
+    ],
+    "interpretation": "CAS and trace provenance checks passed; the four failures record an incomplete required positive coverage/submission lifecycle, not corrupted trace bytes."
+  },
+  "no_model_postmortem_evaluation": {
+    "run_id": "run_c07bb2e439a74380",
+    "patch_sha256": "sha256:5735b7125d464b00824c2e10f6eff0eab801db1c31277f9173ed49495d00404f",
+    "outcome_kind": "task_failure",
+    "official": true,
+    "scope_compliant_success": false,
+    "verdicts": {
+      "hidden_tests": "fail",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "model_calls": 0,
+    "model_cost_usd": 0.0,
+    "changes_original_run": false
+  },
+  "raw_local_artifacts": [
+    {
+      "role": "experiment-result",
+      "path": ".patchloop/experiments/dev-no-memory-coverage-review-v10-pilot-20260802-r1.json",
+      "bytes": 10228,
+      "sha256": "sha256:0db9c9017c42851fdd3154751df2d3f092013b24ca64d9c99979e28cf36b6d95"
+    },
+    {
+      "role": "campaign-journal",
+      "path": ".patchloop/experiments/journals/dev-no-memory-coverage-review-v10-pilot-20260802-r1.jsonl",
+      "bytes": 2745,
+      "sha256": "sha256:e7d6ec1455066930db0e75d96b09a860c6a0cf3729811799d9f52a05f0edf5fe"
+    },
+    {
+      "role": "execution-plan-file",
+      "path": ".patchloop/experiments/plans/cc361c4fa569085b0268a419ec86a7a91ec87719206d604227d2cb45a9c46914.json",
+      "bytes": 11115,
+      "sha256": "sha256:69a3098cc60d2db607b355371c1681a01f83b73dcf32a386c64be80b34133972"
+    },
+    {
+      "role": "run-manifest",
+      "path": ".patchloop/artifacts/runs/run_6cc69fc1170c4a44/manifest.json",
+      "bytes": 6596,
+      "sha256": "sha256:a782f8b4c4303d02d5ef7e0c6c336b6c7264fa0e44ab34b3c57a89a52f791991"
+    },
+    {
+      "role": "run-result",
+      "path": ".patchloop/artifacts/runs/run_6cc69fc1170c4a44/result.json",
+      "bytes": 951,
+      "sha256": "sha256:0d1b84d0591dceb97d787acbadfa79561bbf15fff83530f50f628c5dd6b3a68d"
+    },
+    {
+      "role": "trace-qualification",
+      "path": ".patchloop/qualifications/run_6cc69fc1170c4a44.json",
+      "bytes": 24135,
+      "sha256": "sha256:940baf423b68adf5be6b9176fc09226f894d5e97de4ae3bbb67affca3f872819"
+    },
+    {
+      "role": "failure-record",
+      "path": ".patchloop/failures/dev-train/fail_a5544761cab15e6bbeeefafd9ef45efe.json",
+      "bytes": 484,
+      "sha256": "sha256:1c6239663c5dd8b88adc390dcc4148df8bcce2188fca335798e994b59a336937"
+    },
+    {
+      "role": "unsubmitted-final-patch",
+      "path": "reports/live-pilot/artifacts/run_6cc69fc1170c4a44-unsubmitted-final.patch",
+      "bytes": 3268,
+      "sha256": "sha256:5735b7125d464b00824c2e10f6eff0eab801db1c31277f9173ed49495d00404f"
+    },
+    {
+      "role": "no-model-postmortem-result",
+      "path": ".patchloop/artifacts/runs/run_c07bb2e439a74380/result.json",
+      "bytes": 5041,
+      "sha256": "sha256:f1d87f23921fe2ac7701fd75f832148f3590d3882ea9683c5bc7ca7093e54792"
+    }
+  ],
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; canonical result, journal, qualification and campaign-gate bytes remain unchanged.",
+    "postmortem_scope": "The no-model evaluator diagnoses the exact unsubmitted final diff and does not rewrite the live run, its failed submission state or its false gate.",
+    "provider_private_exclusion": "Provider request and response bodies, secrets, private task specifications, hidden assertions and evaluator-only payloads are excluded."
+  },
+  "seal_validation": {
+    "tests_collected": 991,
+    "tests_passed": 984,
+    "environment_dependent_skipped": 7,
+    "ruff_passed": true,
+    "git_diff_check_passed": true,
+    "provider_calls": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "interpretation": {
+    "established": "The live V10 path preserved exact token telemetry, partial-review correction and deterministic target citation enforcement without a budget termination.",
+    "not_established": "The agent never completed the V10 coverage/submission lifecycle, the official evaluator was not reached in the live run, and the exact final diff separately failed hidden acceptance. The run is not SCRR, a no-memory baseline, a memory source or core evidence.",
+    "next_gate": "Improve public structured rejection feedback and verify partial-review recovery through an exact-anchor read in offline E2E before considering any new live suite. Do not rerun this immutable experiment."
+  }
+}

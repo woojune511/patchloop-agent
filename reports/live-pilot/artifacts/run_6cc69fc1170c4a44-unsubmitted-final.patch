@@ -1,0 +1,80 @@
+diff --git a/src/huggingface_hub/file_download.py b/src/huggingface_hub/file_download.py
+index 98748fd..f0d315d 100644
+--- a/src/huggingface_hub/file_download.py
++++ b/src/huggingface_hub/file_download.py
+@@ -1407,6 +1407,7 @@ def get_hf_file_metadata(
+     library_version: Optional[str] = None,
+     user_agent: Union[Dict, str, None] = None,
+     headers: Optional[Dict[str, str]] = None,
++    endpoint: Optional[str] = None,
+ ) -> HfFileMetadata:
+     """Fetch metadata of a file versioned on the Hub for a given url.
+ 
+@@ -1471,7 +1472,7 @@ def get_hf_file_metadata(
+         size=_int_or_none(
+             r.headers.get(constants.HUGGINGFACE_HEADER_X_LINKED_SIZE) or r.headers.get("Content-Length")
+         ),
+-        xet_file_data=parse_xet_file_data_from_response(r),  # type: ignore
++        xet_file_data=parse_xet_file_data_from_response(r, endpoint=endpoint),  # type: ignore
+     )
+ 
+ 
+@@ -1531,7 +1532,7 @@ def _get_metadata_or_catch_error(
+         try:
+             try:
+                 metadata = get_hf_file_metadata(
+-                    url=url, proxies=proxies, timeout=etag_timeout, headers=headers, token=token
++                    url=url, proxies=proxies, timeout=etag_timeout, headers=headers, token=token, endpoint=endpoint
+                 )
+             except EntryNotFoundError as http_error:
+                 if storage_folder is not None and relative_filename is not None:
+diff --git a/src/huggingface_hub/hf_api.py b/src/huggingface_hub/hf_api.py
+index e53fcfb..500b5d1 100644
+--- a/src/huggingface_hub/hf_api.py
++++ b/src/huggingface_hub/hf_api.py
+@@ -5392,6 +5392,7 @@ class HfApi:
+             library_name=self.library_name,
+             library_version=self.library_version,
+             user_agent=self.user_agent,
++            endpoint=self.endpoint,
+         )
+ 
+     @validate_hf_hub_args
+diff --git a/src/huggingface_hub/utils/_xet.py b/src/huggingface_hub/utils/_xet.py
+index e80b0e8..73d7875 100644
+--- a/src/huggingface_hub/utils/_xet.py
++++ b/src/huggingface_hub/utils/_xet.py
+@@ -1,6 +1,7 @@
+ from dataclasses import dataclass
+ from enum import Enum
+ from typing import Dict, Optional
++from urllib.parse import urlparse
+ 
+ import requests
+ 
+@@ -26,7 +27,7 @@ class XetConnectionInfo:
+     endpoint: str
+ 
+ 
+-def parse_xet_file_data_from_response(response: requests.Response) -> Optional[XetFileData]:
++def parse_xet_file_data_from_response(response: requests.Response, endpoint: Optional[str] = None) -> Optional[XetFileData]:
+     """
+     Parse XET file metadata from an HTTP response.
+ 
+@@ -53,6 +54,16 @@ def parse_xet_file_data_from_response(response: requests.Response) -> Optional[X
+     except KeyError:
+         return None
+ 
++    if endpoint is not None:
++        parsed_refresh_route = urlparse(refresh_route)
++        default_endpoint = urlparse(constants._HF_DEFAULT_ENDPOINT)
++        if parsed_refresh_route.scheme and parsed_refresh_route.netloc == default_endpoint.netloc:
++            parsed_endpoint = urlparse(endpoint)
++            refresh_route = parsed_refresh_route._replace(
++                scheme=parsed_endpoint.scheme,
++                netloc=parsed_endpoint.netloc,
++            ).geturl()
++
+     return XetFileData(
+         file_hash=file_hash,
+         refresh_route=refresh_route,

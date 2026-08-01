@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-070 exact V10 coverage-review live-pilot contract and
-  clean no-call preflight complete; live execution not approved`이다.
+- 현재 milestone은 `D-071 D-070 immutable live evidence sealed; structured
+  coverage-rejection feedback offline correction pending`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -295,6 +295,22 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   통과했고 provider call은 없었다. Host no-call preflight는 Docker와 pinned evaluator image,
   SDK 2.47.0, API-key presence, clean Git과 fresh official pricing을 통과했으며 남은 blocker는
   invocation cost approval과 exact execution-hash mismatch뿐이다.
+  D-070 승인 execution hash
+  `sha256:cc361c4fa569085b0268a419ec86a7a91ec87719206d604227d2cb45a9c46914`는
+  정확히 한 번 소비됐다. `run_6cc69fc1170c4a44`는 28/28 completed response와 exact input/total
+  token telemetry, 611,450 input + 56,103 output token, 50 tool call, 계산상 `$0.671307`을
+  기록했다. Budget dimension은 bind하지 않았고 532,447 token과 32 model call이 남았다.
+  첫 V10 review는 8 target 중 7개를 verified한 valid partial review였지만, agent는 1401행 anchor를
+  1407행부터 읽어 놓친 뒤 unrelated sequence 169를 세 번 인용했다. Structured review가 세 번
+  거부되어 submission protocol failure로 종료됐고 evaluator에는 도달하지 않았다. Qualification은
+  30/34이며 네 coverage lifecycle check만 실패했다. 별도 no-model postmortem
+  `run_c07bb2e439a74380`은 exact unsubmitted diff의 regression/scope/safety pass와 hidden fail을
+  확인했지만 original run, gate와 SCRR을 바꾸지 않는다. D-070 experiment ID와 hash는
+  hard-immutable이며 재실행하지 않는다. 이 결과는 baseline, memory admission 또는 core evidence가
+  아니다. 다음 gate는 offending target/sequence/allowed evidence를 public structured error로
+  반환하고 exact-anchor recovery E2E를 offline에서 검증하는 것이다.
+  D-071 evidence seal 회귀는 991 collected, 984 passed/7 environment-dependent skipped이며 Ruff와
+  `git diff --check`도 통과했다. 이 seal 과정의 provider call과 추가 model cost는 0이다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

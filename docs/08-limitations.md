@@ -683,10 +683,19 @@ silently lowering the design or fabricating missing results.
   retained as inspectable evidence and sends the phase from REVIEW back to IMPLEMENT. Submission remains
   blocked until the exact authoritative target list is verified in a current-diff `task-review-v3`.
   This is a lifecycle invariant, not an LLM semantic grade.
-- Generic V10 remains mock/no-experiment only. D-070 adds one exact OpenAI exception and a frozen
-  one-task suite, but the checked-in YAML and no-call preflight do not authorize a provider call. A clean
-  execution hash, explicit cost approval and separate live evidence are still required. Until then there is
-  no V10 live row, baseline row, memory admission or core result.
+- Generic V10 remains mock/no-experiment only. D-070 added one exact OpenAI exception and consumed its
+  approved execution hash once. `run_6cc69fc1170c4a44` used 667,553 tokens and `$0.671307` with no
+  binding budget dimension, but stopped before evaluator arrival after three unrelated coverage-evidence
+  citations. The valid partial review covered 7/8 declared targets; it did not complete the required
+  positive V10 lifecycle. This is a live diagnostic row, not a baseline, memory admission or core result.
+- The exact unsubmitted D-070 diff separately failed hidden acceptance in zero-model postmortem
+  `run_c07bb2e439a74380` while regression/scope/safety passed. That derived evaluation does not rewrite the
+  live run's `evaluation_status=not_run`, false gate or qualification. Neither the process failure nor the
+  hidden task failure supports a budget increase or live rerun.
+- V10's citation validator correctly rejected the unrelated sequence, but its error artifact returned an
+  empty details object and did not identify the offending target or authoritative allowed sequences. This
+  is a recovery-feedback limitation to fix offline; the context did contain the empty authoritative map, so
+  it is not evidence that completion was impossible or that the validator was wrong.
 - D-067 remains an immutable hidden-acceptance task failure and D-068 remains its append-only trace
   qualification correction. The V2 HF Hub review sidecar and V10 tests do not rerun either artifact,
   change SCRR, repair the submitted patch or prove why hidden acceptance failed.

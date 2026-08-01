@@ -70,12 +70,17 @@ skipped였고 Ruff와 `git diff --check`도 통과했다. Provider call은 없�
 sidecar, prompt/tool/runtime hash, task/image/dataset/pricing/schedule과 clean harness commit은 같은
 execution hash에 결속된다. `v10-coverage-review-live-pilot-gate-v1`은 official evaluator 도달과
 non-vacuous 다섯 coverage qualification check를 요구하지만 task success는 요구하지 않는다.
-이 checked-in suite와 no-call preflight는 provider 호출 권한이 아니며, 별도 실행 hash와 사용자의
-명시적 비용 승인 전에는 live call을 하지 않는다. D-060과 D-067은 hard-immutable이다. D-070
-offline contract 회귀는 988 collected, 981 passed/7 environment-dependent skipped, Ruff와
-`git diff --check`를 통과했고 provider call은 없었다. Host no-call preflight는 Docker/pinned
-image, SDK, key presence, clean Git과 pricing freshness를 통과했으며, 명시적 비용 승인과 exact
-execution hash가 없어서 의도대로 `ready=false`다.
+Checked-in suite 자체는 provider 권한이 아니며, clean preflight 뒤 승인된 execution hash
+`sha256:cc361c4fa569085b0268a419ec86a7a91ec87719206d604227d2cb45a9c46914`로 정확히 한 번만
+실행됐다. `run_6cc69fc1170c4a44`는 28/28 completed response, 667,553 total token, 50 tool call과
+계산상 `$0.671307`을 기록했고 budget은 bind하지 않았다. 첫 partial review는 7/8 target을 정확히
+판정했지만, agent가 1401행 anchor를 1407행부터 읽어 놓친 뒤 unrelated evidence를 세 번 인용해
+submission protocol failure로 종료됐다. Evaluator 도달은 0이고 qualification은 30/34다. 별도
+no-model postmortem `run_c07bb2e439a74380`에서도 exact final diff가 regression/scope/safety는
+통과했지만 hidden acceptance는 실패했다. 따라서 이 결과는 SCRR, no-memory baseline, memory
+admission 또는 core evidence가 아니다. 원 run·false gate·qualification은 immutable하고 D-070 ID와
+hash는 재실행하지 않는다. Sanitized evidence는
+`reports/live-pilot/dev-no-memory-coverage-review-v10-pilot-20260802-r1.json`에 보존한다.
 
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을

@@ -2308,9 +2308,9 @@ the hidden failure, `task_failure`, SCRR=false, original campaign gate, comparis
 admission or core status. The next gate is leak-safe, public-evidence-only analysis of the
 hidden-acceptance task failure and requirement coverage, not a budget increase or a rerun.
 
-## D-070 V10 live-pilot contract evidence
+## D-070 V10 live-pilot contract and consumed-result evidence
 
-D-070 introduces a new, unconsumed one-row purpose rather than reusing D-067. The checked-in suite fixes
+D-070 introduced a new one-row purpose rather than reusing D-067. The checked-in suite fixes
 HF Hub/no-memory ×1, `gpt-5.4-mini-2026-03-17` medium/standard/default, tool v5/context V10/runtime-v4,
 60 model calls, 100 tool calls, 1,200,000 total tokens, 1,800 seconds, 25,000 output tokens and a $6 cap.
 The execution plan binds the V2 public-review sidecar, prompt/tool hashes, frozen task/image/dataset,
@@ -2318,10 +2318,33 @@ pricing, SDK, schedule and clean harness commit. Its post-run gate requires offi
 non-vacuous evidence from all five V10 coverage checks while recording task success separately.
 
 Offline validation collected 988 tests: 981 passed and seven environment-dependent tests skipped. Ruff
-and `git diff --check` passed. No provider call or model cost occurred. This is contract and preflight
-preparation evidence only; it is not a V10 live result, SCRR row, no-memory baseline, memory admission or
-core evidence. A clean execution hash and explicit user cost approval remain separate requirements.
+and `git diff --check` passed before execution. The host no-call preflight then confirmed the pinned image,
+SDK 2.47.0, API-key presence without exposing its value, clean Git and pricing freshness.
 
-The host no-call preflight confirmed the pinned Docker image identity, SDK 2.47.0, API-key presence
-without exposing its value, clean Git state and pricing freshness. Its only blockers were the intentionally
-absent invocation cost approval and exact approved execution hash. No provider call was made.
+Execution hash `sha256:cc361c4fa569085b0268a419ec86a7a91ec87719206d604227d2cb45a9c46914`
+was consumed exactly once by `run_6cc69fc1170c4a44`. All 28 provider responses completed with exact
+input/total token telemetry, truncation disabled, `store=false` and no previous-response dependency. Usage
+was 611,450 input tokens including 58,880 cached, 56,103 output including 44,831 reasoning, 50 tool calls,
+353,004 ms and `$0.671307` at the recorded list rates. The run retained 32 model calls, 50 tool calls,
+532,447 tokens and 1,446,996 ms; no budget dimension bound.
+
+The first V10 review was a valid partial review: seven of eight targets were verified and
+`cov-92159184a168` remained unresolved. Its corrective read requested lines 1407–1478 although the public
+anchor `def get_hf_file_metadata(` was at line 1401. A later search found the anchor but did not create the
+required same-diff read evidence. Three subsequent review calls cited unrelated sequence 169 against an
+authoritative empty allowed-sequence list and were rejected. The run ended with `SubmissionProtocolError`
+before submission or evaluator arrival. Qualification passed 30/34 checks; only the four positive coverage
+lifecycle checks failed. This is incomplete lifecycle evidence, not trace/CAS corruption.
+
+Zero-model postmortem `run_c07bb2e439a74380` evaluated the exact diff hash
+`sha256:5735b7125d464b00824c2e10f6eff0eab801db1c31277f9173ed49495d00404f`. Regression,
+scope and safety passed, but hidden acceptance failed. This derived result does not rewrite the live run,
+gate, qualification or SCRR. The live experiment and authorization hash are hard-immutable and will not be
+rerun. The sanitized evidence seal is
+`reports/live-pilot/dev-no-memory-coverage-review-v10-pilot-20260802-r1.json`. It is not a no-memory
+baseline, memory source or core result; the next gate is offline structured rejection feedback and
+exact-anchor recovery E2E.
+
+The post-run source seal completed with 991 tests collected: 984 passed and seven environment-dependent
+tests skipped. Ruff and `git diff --check` passed. Sealing, hard-immutability validation and the no-model
+postmortem added no provider call or model cost.

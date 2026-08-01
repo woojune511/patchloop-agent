@@ -873,6 +873,12 @@ def test_coverage_review_pilot_has_exact_no_call_preflight_contract(
     _ready_live_environment(monkeypatch, tmp_path)
     monkeypatch.setattr(
         eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_COVERAGE_REVIEW_PILOT_EXPERIMENT_IDS,
+    )
+    monkeypatch.setattr(
+        eval_runner,
         "utc_now",
         lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
     )
@@ -939,11 +945,40 @@ def test_coverage_review_pilot_has_exact_no_call_preflight_contract(
     assert approved["blockers"] == []
 
 
+def test_consumed_coverage_review_pilot_is_hard_immutable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+    )
+    unsigned = eval_runner.preflight_suite(COVERAGE_REVIEW_PILOT_SUITE)
+    approved = eval_runner.preflight_suite(
+        COVERAGE_REVIEW_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unsigned["execution_hash"],
+    )
+
+    assert approved["ready"] is False
+    assert {row["code"] for row in approved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE"
+    }
+
+
 def test_coverage_review_approved_plan_binds_v10_runtime_and_sidecar(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_COVERAGE_REVIEW_PILOT_EXPERIMENT_IDS,
+    )
     monkeypatch.setattr(
         eval_runner,
         "utc_now",

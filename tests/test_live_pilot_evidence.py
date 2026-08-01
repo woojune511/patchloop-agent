@@ -3728,3 +3728,167 @@ def test_d067_v9_report_excludes_private_and_provider_payload() -> None:
     private_tokens = _private_leak_tokens(package, api_key=None)
     leaked = sorted(token for token in private_tokens if token in checked_text)
     assert leaked == []
+
+
+def test_d070_v10_report_seals_terminal_failure_and_postmortem() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-coverage-review-v10-pilot-20260802-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "coverage-review-v10-pilot-evidence-v1"
+    )
+    assert payload["source_harness_commit"] == (
+        "52c6f78098bbc147eb4147da8ee9d0e36b10b489"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:cc361c4fa569085b0268a419ec86a7a91ec87719206d604227d2cb45a9c46914"
+    )
+
+    gate = payload["original_completion_gate"]
+    assert gate["passed"] is False
+    assert gate["terminal_runs"] == 1
+    assert gate["qualified_runs"] == 0
+    assert gate["evaluator_reached_runs"] == 0
+    assert gate["official_evaluator_runs"] == 0
+    assert gate["qualification_errors"] == 1
+    assert gate["budget_terminal_runs"] == 0
+    assert gate["coverage_lifecycle_observed_runs"] == 0
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+    assert gate["immutable"] is True
+    assert gate["retroactively_recomputed"] is False
+
+    run = payload["run"]
+    assert run["run_id"] == "run_6cc69fc1170c4a44"
+    assert run["outcome_kind"] == "agent_failure"
+    assert run["agent_submission_status"] == "failed"
+    assert run["evaluation_status"] == "not_run"
+    assert run["official"] is False
+    assert run["scope_compliant_success"] is False
+    assert run["terminal_error"]["code"] == "SUBMISSION_PROTOCOL_ERROR"
+    assert run["usage"] == {
+        "input_tokens": 611450,
+        "cached_input_tokens": 58880,
+        "output_tokens": 56103,
+        "reasoning_output_tokens": 44831,
+        "total_tokens": 667553,
+        "model_calls": 28,
+        "tool_calls": 50,
+        "wall_clock_ms": 353004,
+        "model_cost_usd": 0.671307,
+    }
+    assert run["budget_headroom"]["binding_dimension"] == "none"
+
+    review = payload["public_review_postmortem"]
+    assert review["accepted_partial_review_sequence"] == 190
+    assert review["coverage_target_count"] == 8
+    assert review["verified_target_count"] == 7
+    assert review["anchor_line_in_run_workspace"] == 1401
+    assert review["corrective_read_range"] == {
+        "start_line": 1407,
+        "end_line": 1478,
+    }
+    assert review["complete_review_rejection_sequences"] == [220, 225, 230]
+    assert review["submitted_unrelated_event_sequence"] == 169
+    assert review["authoritative_allowed_event_sequences"] == []
+    assert review["rejection_error_details_were_empty"] is True
+
+    qualification = payload["qualification"]
+    assert qualification["qualified"] is False
+    assert qualification["trace_integrity_passed"] is False
+    assert qualification["leakage_scan_passed"] is True
+    assert qualification["passed_checks"] == 30
+    assert qualification["total_checks"] == 34
+    assert qualification["failed_check_ids"] == [
+        "coverage_decision_integrity",
+        "coverage_submission_lifecycle",
+        "coverage_recovery_contract",
+        "coverage_terminal_contract",
+    ]
+
+    postmortem = payload["no_model_postmortem_evaluation"]
+    assert postmortem["run_id"] == "run_c07bb2e439a74380"
+    assert postmortem["outcome_kind"] == "task_failure"
+    assert postmortem["official"] is True
+    assert postmortem["scope_compliant_success"] is False
+    assert postmortem["verdicts"] == {
+        "hidden_tests": "fail",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass",
+    }
+    assert postmortem["model_calls"] == 0
+    assert postmortem["model_cost_usd"] == 0
+    assert postmortem["changes_original_run"] is False
+
+    assert payload["seal_validation"] == {
+        "tests_collected": 991,
+        "tests_passed": 984,
+        "environment_dependent_skipped": 7,
+        "ruff_passed": True,
+        "git_diff_check_passed": True,
+        "provider_calls": 0,
+        "added_model_cost_usd": 0.0,
+    }
+
+    for artifact in payload["raw_local_artifacts"]:
+        if Path(artifact["path"]).exists():
+            _assert_artifact_identity(artifact)
+
+
+def test_d070_v10_report_excludes_private_and_provider_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-coverage-review-v10-pilot-20260802-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    assert "OPENAI_API_KEY" not in checked_text
+    assert "Bearer " not in checked_text
+    package = load_task_package(
+        "tasks/dev-train/hf-hub-xet-endpoint-propagation"
+    )
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    leaked = sorted(token for token in private_tokens if token in checked_text)
+    assert leaked == []

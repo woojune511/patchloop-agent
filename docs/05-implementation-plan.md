@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-070 exact V10 coverage-review live-pilot contract and clean no-call preflight
-complete; live execution not approved**
+현재 milestone: **D-071 D-070 immutable live evidence sealed; structured coverage-rejection feedback
+offline correction pending**
 
 2026-08-02 구현 스냅샷:
 
@@ -13,7 +13,7 @@ complete; live execution not approved**
 | Phase 3 state machine | historical V1-V9 보존; public-coverage v5/v10 offline gate complete | Explicit public coverage targets, base-anchor provenance, target-bound current-diff evidence, partial-review corrective transition과 submission block; exact D-070 live exception is hash-gated |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-067 consumed once; original gate false; immutable | Official evaluator reached without budget binding; hidden task failure, original qualification/gate preserved, corrected trace only; baseline·memory/core 제외 |
+| Phase 6 evaluation | D-070 consumed once; original gate false; immutable | V10 partial review 7/8 후 repeated unrelated citation으로 evaluator 전 agent failure; no-model exact-diff postmortem도 hidden fail; baseline·memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -178,7 +178,8 @@ hidden acceptance를 대신하지 않으며 live campaign을 열지 않는다.
 | 11l | consumed once; evaluator reached; original gate false; immutable | D-067 separate V9 completion pilot | `run_4c77b1102e224785`: 344,754 tokens, 21 model/36 tool, `$0.2880024`; no budget bind, official evaluator reached, hidden fail과 `task_failure`; original qualification 32/33, comparison·memory/core 제외, 재실행 금지 |
 | 11m | completed (offline); no provider call | D-068 append-only V9 qualification correction | V9 pinned final diff를 request/source CAS와 exact integer sequence로 검증하고 float/bool/duplicate/sidecar tamper를 거부; `qcor_51b725...3c032` corrected qualification 33/33, original qualification/gate/outcome/SCRR 불변; current full 918 passed/7 skipped |
 | 11n | completed (offline); no provider call | D-069 V10 public-coverage review gate | `public-review-contract-v2`, tool v5/context v10/runtime v4, Git-base anchor provenance, CAS-bound inspection/visible-check evidence, `task-review-v3`, partial REVIEW→IMPLEMENT, finish/recovery/qualification tamper gate; 971 collected, 964 passed/7 skipped, mock/no-experiment only, D-067/V1-V9 immutable |
-| 11o | offline contract + host no-call preflight complete; live not approved | D-070 exact V10 single-task live-pilot contract | New purpose and exact experiment ID, HF Hub/no-memory ×1, 60/100/1.2M/1,800초, $5.5125 reserve/$6 cap, V2 sidecar and v5/v10/runtime-v4 hash binding, non-vacuous coverage completion gate; 988 collected, 981 passed/7 skipped; host environment passed and only approval/hash blockers remain; task success not required, comparison/memory/core excluded |
+| 11o | consumed once; original gate false; immutable | D-070 exact V10 single-task live pilot | `run_6cc69fc1170c4a44`: 28/28 completed exact-token responses, 667,553 tokens, 50 tools, `$0.671307`, no budget bind. Valid partial review 7/8 뒤 missing anchor와 unrelated citation 3회로 evaluator 전 agent failure; qualification 30/34. No-model `run_c07bb2e439a74380`도 exact diff hidden fail; baseline·memory/core 제외, 재실행 금지 |
+| 11p | evidence seal complete; recovery correction pending (offline only) | D-071 structured coverage-rejection recovery correction | D-070 source-level immutable ID와 sanitized report는 991 collected, 984 passed/7 skipped로 검증 완료. 다음으로 offending target ID, submitted/allowed sequences와 required path/anchor를 public structured error로 반환하고 partial review → exact-anchor read → complete review → finish/evaluator recovery E2E를 통과시킨다. D-070 raw artifact와 qualification은 재작성하지 않음 |
 
 D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
 815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner

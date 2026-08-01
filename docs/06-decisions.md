@@ -162,6 +162,29 @@ Evidence/issue:
 - Evidence/issue: D-069 offline V10 gate와 D-070 988 collected, 981 passed/7 skipped contract
   regression, host no-call preflight environment pass; live evidence는 아직 없음.
 
+## D-071 accepted decision
+
+- Status: accepted
+- Supersedes: D-070의 "live evidence는 아직 없음" 상태만 supersede하며 D-069 offline 계약과
+  D-070 원 artifact를 변경하지 않는다.
+- Context: 승인 execution hash
+  `sha256:cc361c4fa569085b0268a419ec86a7a91ec87719206d604227d2cb45a9c46914`로 exact D-070
+  one-row suite가 한 번 실행됐다.
+- Decision: `run_6cc69fc1170c4a44`와 original false gate/qualification을 immutable evidence로
+  보존하고 experiment ID를 source-level hard-immutable set에 추가한다. Run은 667,553 token,
+  28 model/50 tool, 계산상 `$0.671307`을 사용했고 budget은 bind하지 않았다. Valid partial review가
+  7/8 target을 판정한 뒤 agent가 missing anchor를 보완하지 않고 unrelated evidence를 세 번
+  인용해 evaluator 전 `SubmissionProtocolError`로 종료됐다. 별도 zero-model evaluator
+  `run_c07bb2e439a74380`은 exact unsubmitted diff의 hidden fail을 append-only로 기록하되 live
+  outcome, SCRR와 gate를 바꾸지 않는다.
+- Consequences: D-070/hash는 재실행·재사용하지 않는다. Baseline, memory admission과 core는 계속
+  닫힌다. 다음 변경은 budget 증액이나 live retry가 아니라 public structured rejection feedback과
+  exact-anchor recovery의 offline E2E다.
+- Date: 2026-08-02
+- Evidence/issue: sanitized seal
+  `reports/live-pilot/dev-no-memory-coverage-review-v10-pilot-20260802-r1.json`; qualification 30/34,
+  evaluator reached 0, no-model exact-diff hidden fail.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.
