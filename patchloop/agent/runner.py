@@ -463,7 +463,12 @@ class AgentRunner:
             and manifest.experiment.purpose
             == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
         )
-        if not corrective and not saturation and not review_evidence:
+        coverage_review = bool(
+            manifest.experiment is not None
+            and manifest.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+        )
+        if not corrective and not saturation and not review_evidence and not coverage_review:
             return runtime_contract is None
         try:
             # Keep start/resume on the same complete suite, task, schedule,

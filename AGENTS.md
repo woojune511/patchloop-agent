@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-069 V10 public-coverage review offline gate complete;
-  D-067 live run remains an immutable hidden task failure`이다.
+- 현재 milestone은 `D-070 exact V10 coverage-review live-pilot contract
+  implemented; clean no-call preflight pending; live execution not approved`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -281,12 +281,18 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   Check/read event metadata는 result artifact bytes와 독립 대조하며, reordered target input은 contract
   순서로 정규화하고 missing finish provenance, stale/relabelled evidence, vacuous terminal과 malformed
   self-validation lifecycle을 fail closed한다.
-  V10은 `coverage_review_validation=True`의 mock/no-experiment 전용이며 live/provider/replay와
-  experiment를 허용하지 않는다. 이는 선언된 public review process coverage일 뿐 target set의
+  Generic V10은 `coverage_review_validation=True`의 mock/no-experiment 전용이다. 유일한 live
+  exception은 D-070의 exact `memory-development-no-memory-coverage-review-pilot` purpose와
+  OpenAI provider, v5/v10/runtime-v4, V2 HF Hub sidecar를 함께 요구한다. Checked-in suite와
+  no-call preflight는 provider 권한이 아니며 별도 clean execution hash와 비용 승인이 필요하다.
+  이는 선언된 public review process coverage일 뿐 target set의
   완전성, hidden correctness, SCRR 또는 memory 효과를 증명하지 않는다. V1-V9와 D-067/D-068
   artifact는 immutable하고 D-067을 재실행하지 않는다. Offline acceptance는 971 collected,
   964 passed/7 environment-dependent skipped, Ruff와 `git diff --check`로 완료됐다. 이 완료는 다음
-  paid/memory gate를 자동으로 열지 않는다.
+  paid/memory gate를 자동으로 열지 않는다. D-060과 D-067 experiment ID는 결과 파일 유무와
+  무관하게 hard-immutable set에 포함되어 재실행되지 않는다. D-070 offline contract 회귀는
+  988 collected, 981 passed/7 environment-dependent skipped, Ruff와 `git diff --check`를
+  통과했고 provider call은 없었다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

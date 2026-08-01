@@ -2307,3 +2307,17 @@ the qualifier, creating the correction or sealing this report. Corrected trace i
 the hidden failure, `task_failure`, SCRR=false, original campaign gate, comparison exclusion, memory
 admission or core status. The next gate is leak-safe, public-evidence-only analysis of the
 hidden-acceptance task failure and requirement coverage, not a budget increase or a rerun.
+
+## D-070 V10 live-pilot contract evidence
+
+D-070 introduces a new, unconsumed one-row purpose rather than reusing D-067. The checked-in suite fixes
+HF Hub/no-memory ×1, `gpt-5.4-mini-2026-03-17` medium/standard/default, tool v5/context V10/runtime-v4,
+60 model calls, 100 tool calls, 1,200,000 total tokens, 1,800 seconds, 25,000 output tokens and a $6 cap.
+The execution plan binds the V2 public-review sidecar, prompt/tool hashes, frozen task/image/dataset,
+pricing, SDK, schedule and clean harness commit. Its post-run gate requires official evaluator arrival and
+non-vacuous evidence from all five V10 coverage checks while recording task success separately.
+
+Offline validation collected 988 tests: 981 passed and seven environment-dependent tests skipped. Ruff
+and `git diff --check` passed. No provider call or model cost occurred. This is contract and preflight
+preparation evidence only; it is not a V10 live result, SCRR row, no-memory baseline, memory admission or
+core evidence. A clean execution hash and explicit user cost approval remain separate requirements.

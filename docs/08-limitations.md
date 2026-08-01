@@ -683,9 +683,10 @@ silently lowering the design or fabricating missing results.
   retained as inspectable evidence and sends the phase from REVIEW back to IMPLEMENT. Submission remains
   blocked until the exact authoritative target list is verified in a current-diff `task-review-v3`.
   This is a lifecycle invariant, not an LLM semantic grade.
-- The V10 selector is mock/no-experiment only. It authorizes no OpenAI call, live suite, paid execution
-  hash, baseline row, memory admission or core run. A future live V10 lane would require a new decision,
-  frozen suite, clean execution hash, cost approval and separate evidence.
+- Generic V10 remains mock/no-experiment only. D-070 adds one exact OpenAI exception and a frozen
+  one-task suite, but the checked-in YAML and no-call preflight do not authorize a provider call. A clean
+  execution hash, explicit cost approval and separate live evidence are still required. Until then there is
+  no V10 live row, baseline row, memory admission or core result.
 - D-067 remains an immutable hidden-acceptance task failure and D-068 remains its append-only trace
   qualification correction. The V2 HF Hub review sidecar and V10 tests do not rerun either artifact,
   change SCRR, repair the submitted patch or prove why hidden acceptance failed.

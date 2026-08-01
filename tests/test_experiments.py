@@ -53,6 +53,9 @@ SATURATION_PILOT_SUITE = (
 REVIEW_EVIDENCE_PILOT_SUITE = (
     "experiments/dev-no-memory-review-evidence-v9-pilot-20260801-r1.yaml"
 )
+COVERAGE_REVIEW_PILOT_SUITE = (
+    "experiments/dev-no-memory-coverage-review-v10-pilot-20260802-r1.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -626,6 +629,7 @@ def test_memory_development_budget_pilot_has_exact_preflight_contract(
         eval_runner.GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
     )
     assert {row["code"] for row in unapproved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -655,7 +659,7 @@ def test_memory_development_budget_pilot_has_exact_preflight_contract(
         approved_execution_hash=unapproved["execution_hash"],
     )
 
-    assert approved["ready"] is True
+    assert approved["ready"] is False
     assert approved["execution_hash"] == unapproved["execution_hash"]
     assert approved["suite"]["cost_limit_usd"] == 7
     assert approved["suite"]["budget"] == {
@@ -663,6 +667,9 @@ def test_memory_development_budget_pilot_has_exact_preflight_contract(
         "max_tool_calls": 100,
         "max_total_tokens": 480_000,
         "wall_clock_timeout_seconds": 1_800,
+    }
+    assert {row["code"] for row in approved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE"
     }
 
 
@@ -817,6 +824,7 @@ def test_review_evidence_pilot_has_exact_no_call_preflight_contract(
     assert suite.max_output_tokens == 25_000
     assert suite.diagnostic is None
     assert {row["code"] for row in unapproved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
@@ -850,10 +858,181 @@ def test_review_evidence_pilot_has_exact_no_call_preflight_contract(
         approved_execution_hash=unapproved["execution_hash"],
     )
 
+    assert approved["ready"] is False
+    assert approved["execution_hash"] == unapproved["execution_hash"]
+    assert approved["suite"]["cost_limit_usd"] == 6
+    assert {row["code"] for row in approved["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE"
+    }
+
+
+def test_coverage_review_pilot_has_exact_no_call_preflight_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+    )
+
+    suite = eval_runner.load_suite(COVERAGE_REVIEW_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(COVERAGE_REVIEW_PILOT_SUITE)
+
+    assert suite.purpose == (
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+    )
+    assert suite.tasks == [eval_runner.COVERAGE_REVIEW_PILOT_TASK]
+    assert suite.conditions == [eval_runner.MemoryCondition.NO_MEMORY]
+    assert suite.repetitions == 1
+    assert suite.budget == (
+        eval_runner.GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT
+    )
+    assert suite.max_output_tokens == 25_000
+    assert suite.diagnostic is None
+    assert {row["code"] for row in unapproved["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert unapproved["expected_runs"] == 1
+    assert [row["task_id"] for row in unapproved["tasks"]] == [
+        eval_runner.COVERAGE_REVIEW_PILOT_TASK_ID
+    ]
+    task = unapproved["tasks"][0]
+    assert task["public_review_contract_path"] == (
+        "experiments/review-contracts-v2/"
+        "hf-hub-xet-endpoint-propagation.yaml"
+    )
+    assert task["public_review_contract"]["schema_version"] == (
+        "public-review-contract-v2"
+    )
+    assert task["public_review_contract"]["content_hash"] == (
+        "sha256:51c6c4ace6bb46a5919cc7cfe13088e456088a0f5ed9d87b67eb75b5a7221cce"
+    )
+    assert unapproved["runtime_contract"] == {
+        "schema_version": "corrective-runtime-contract-v4",
+        "tool_schema_version": "v5",
+        "context_policy_version": "phase-evidence-v10",
+        "system_prompt_hash": sha256_text(eval_runner.SYSTEM_PROMPT_V7),
+        "tool_schema_hash": sha256_text(
+            canonical_json(eval_runner.TOOL_SCHEMAS_V5)
+        ),
+        "harness_git_commit": "a" * 40,
+    }
+    assert unapproved["pricing"][
+        "per_run_cost_reserve_usd"
+    ] == pytest.approx(5.5125)
+    assert unapproved["pricing"][
+        "budget_upper_bound_usd"
+    ] == pytest.approx(5.5125)
+
+    approved = eval_runner.preflight_suite(
+        COVERAGE_REVIEW_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
     assert approved["ready"] is True
     assert approved["execution_hash"] == unapproved["execution_hash"]
     assert approved["suite"]["cost_limit_usd"] == 6
     assert approved["blockers"] == []
+
+
+def test_coverage_review_approved_plan_binds_v10_runtime_and_sidecar(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+    )
+    monkeypatch.setattr("patchloop.runtime.git_commit", lambda: "a" * 40)
+    monkeypatch.setattr("patchloop.runtime.version", lambda _package: "2.47.0")
+
+    suite = eval_runner.load_suite(COVERAGE_REVIEW_PILOT_SUITE)
+    unsigned = eval_runner.preflight_suite(COVERAGE_REVIEW_PILOT_SUITE)
+    approved = eval_runner.preflight_suite(
+        COVERAGE_REVIEW_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unsigned["execution_hash"],
+    )
+    plan = eval_runner._persist_preflight_plan(approved)
+    item = approved["schedule"][0]
+    task_row = approved["tasks"][0]
+    task_path = Path(item["task"])
+    package = load_task_package(task_path.parent)
+    experiment = ExperimentRunContext(
+        experiment_id=suite.experiment_id,
+        purpose=suite.purpose,
+        suite_hash=approved["suite_hash"],
+        execution_hash=approved["execution_hash"],
+        dataset_manifest_hash=approved["dataset"]["manifest_hash"],
+        dataset_role=DatasetRole(item["dataset_role"]),
+        schedule_seed=suite.seed,
+        schedule_order=item["order"],
+        schedule_row_id=item["schedule_row_id"],
+        repetition=item["repetition"],
+    )
+    manifest = build_manifest(
+        package,
+        run_id="run_coverage_review_paid_boundary",
+        provider=suite.model,
+        model_id=suite.model_id,
+        memory_condition=MemoryCondition(item["condition"]),
+        sandbox_backend="docker",
+        budget=suite.budget,
+        agent_image_digest=item["evaluator_image_digest"],
+        evaluator_image_digest=item["evaluator_image_digest"],
+        input_price_per_million_usd=suite.input_price_per_million_usd,
+        cached_input_price_per_million_usd=(
+            suite.cached_input_price_per_million_usd
+        ),
+        cache_write_input_price_per_million_usd=(
+            suite.cache_write_input_price_per_million_usd
+        ),
+        output_price_per_million_usd=suite.output_price_per_million_usd,
+        reasoning_effort=suite.reasoning_effort,
+        reasoning_mode=suite.reasoning_mode,
+        service_tier=suite.service_tier,
+        max_output_tokens=suite.max_output_tokens,
+        experiment_context=experiment,
+        coverage_review_live_pilot=True,
+        public_review_contract=PublicReviewContract.model_validate(
+            task_row["public_review_contract"]
+        ),
+    )
+
+    eval_runner._assert_manifest_matches_preflight(
+        manifest,
+        suite=suite,
+        preflight=approved,
+        item={**task_row, **item},
+    )
+    authorization = SimpleNamespace(plan_path=plan["path"])
+    assert AgentRunner._live_plan_matches_manifest(manifest, authorization) is True
+    plan_payload = json.loads(Path(plan["path"]).read_text(encoding="utf-8"))
+    assert trace_qualification._execution_plan_matches(
+        plan=plan_payload,
+        manifest=manifest,
+    ) is True
+
+    tampered = json.loads(json.dumps(plan_payload))
+    tampered["runtime_contract"]["tool_schema_version"] = "v4"
+    assert trace_qualification._execution_plan_matches(
+        plan=tampered,
+        manifest=manifest,
+    ) is False
+    tampered = json.loads(json.dumps(plan_payload))
+    tampered["tasks"][0]["public_review_contract"]["content_hash"] = (
+        "sha256:" + ("0" * 64)
+    )
+    assert trace_qualification._execution_plan_matches(
+        plan=tampered,
+        manifest=manifest,
+    ) is False
 
 
 def test_saturation_approved_plan_binds_paid_boundary_and_qualification_inputs(
@@ -1108,6 +1287,61 @@ def test_review_evidence_pilot_rejects_contract_drift(
         ExperimentSuite.model_validate(payload)
 
 
+@pytest.mark.parametrize(
+    ("mutation", "match"),
+    [
+        ("id", "exact D-070 id"),
+        ("purpose", "D-070 experiment id"),
+        ("task", "exact D-070 id"),
+        ("repetition", "exact D-070 id"),
+        ("condition", "exact D-070 id"),
+        ("model_calls", "max_model_calls=60"),
+        ("tool_calls", "max_tool_calls=100"),
+        ("tokens", "max_total_tokens=1200000"),
+        ("wall", "wall_clock_timeout_seconds=1800"),
+        ("output", "max_model_calls=60"),
+        ("cap", "requires cost_limit_usd=6"),
+        ("estimate", "requires estimated_cost_usd=5.5125"),
+    ],
+)
+def test_coverage_review_pilot_rejects_contract_drift(
+    mutation: str,
+    match: str,
+) -> None:
+    payload = yaml.safe_load(
+        Path(COVERAGE_REVIEW_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    if mutation == "id":
+        payload["experiment_id"] = "alternate-coverage-review-pilot"
+    elif mutation == "purpose":
+        payload["purpose"] = "memory-development-no-memory-review-evidence-pilot"
+    elif mutation == "task":
+        payload["tasks"] = [
+            "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml"
+        ]
+    elif mutation == "repetition":
+        payload["repetitions"] = 2
+    elif mutation == "condition":
+        payload["conditions"] = ["structured"]
+    elif mutation == "model_calls":
+        payload["budget"]["max_model_calls"] = 59
+    elif mutation == "tool_calls":
+        payload["budget"]["max_tool_calls"] = 99
+    elif mutation == "tokens":
+        payload["budget"]["max_total_tokens"] = 1_199_999
+    elif mutation == "wall":
+        payload["budget"]["wall_clock_timeout_seconds"] = 1_799
+    elif mutation == "output":
+        payload["max_output_tokens"] = 24_999
+    elif mutation == "cap":
+        payload["cost_limit_usd"] = 7
+    else:
+        payload["estimated_cost_usd"] = 5.5
+
+    with pytest.raises(ValidationError, match=match):
+        ExperimentSuite.model_validate(payload)
+
+
 def test_saturation_diagnostic_separates_pass_inconclusive_and_failure() -> None:
     base = {
         "qualified": True,
@@ -1200,6 +1434,12 @@ def test_saturation_completion_gate_requires_exercise_not_task_success() -> None
     row["diagnostic_error"] = None
     row["qualification"]["evaluation_reached"] = False
     assert eval_runner._completion_gate(suite, [row])["passed"] is False
+    row["qualification"]["evaluation_reached"] = True
+    row["result"]["terminal_error"] = {
+        "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "details": {"reason_code": "model_call_budget_exhausted"},
+    }
+    assert eval_runner._completion_gate(suite, [row])["passed"] is False
 
 
 def test_review_evidence_completion_gate_requires_evaluator_not_task_success() -> None:
@@ -1241,6 +1481,128 @@ def test_review_evidence_completion_gate_requires_evaluator_not_task_success() -
         "details": {"reason_code": "model_call_budget_exhausted"},
     }
     assert eval_runner._completion_gate(suite, [row])["passed"] is False
+
+
+def test_coverage_review_completion_gate_requires_nonvacuous_v10_lifecycle() -> None:
+    suite = eval_runner.load_suite(COVERAGE_REVIEW_PILOT_SUITE)
+    row = {
+        "attempt_status": "terminal",
+        "run_id": "run_coverage_review",
+        "result": {
+            "official": True,
+            "evaluation_status": "completed",
+            "scope_compliant_success": False,
+            "terminal_error": None,
+        },
+        "qualification": {
+            "qualified": True,
+            "evaluation_reached": True,
+            "trace_features": {
+                "public_coverage_review": {"observed": True}
+            },
+        },
+        "diagnostic": None,
+        "infrastructure_error": None,
+        "qualification_error": None,
+        "diagnostic_error": None,
+    }
+
+    gate = eval_runner._completion_gate(suite, [row])
+
+    assert gate is not None
+    assert gate["schema_version"] == "v10-coverage-review-live-pilot-gate-v1"
+    assert gate["passed"] is True
+    assert gate["coverage_lifecycle_observed_runs"] == 1
+    assert gate["task_successes"] == 0
+    assert gate["task_success_required"] is False
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+
+    row["qualification"]["trace_features"] = {}
+    assert eval_runner._completion_gate(suite, [row])["passed"] is False
+    row["qualification"]["trace_features"] = {
+        "public_coverage_review": {"observed": True}
+    }
+    row["result"]["terminal_error"] = {
+        "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "details": {"reason_code": "model_call_budget_exhausted"},
+    }
+    assert eval_runner._completion_gate(suite, [row])["passed"] is False
+
+
+def test_terminal_qualification_sanitizes_nonvacuous_v10_coverage_feature(
+    monkeypatch,
+) -> None:
+    checks = [
+        {
+            "check_id": "public_coverage_contract",
+            "passed": True,
+            "details": {"coverage_target_count": 8},
+        },
+        {
+            "check_id": "coverage_decision_integrity",
+            "passed": True,
+            "details": {"coverage_complete_review_count": 1},
+        },
+        {
+            "check_id": "coverage_submission_lifecycle",
+            "passed": True,
+            "details": {
+                "accepted_submission_count": 1,
+                "evaluation_completed": True,
+            },
+        },
+        {
+            "check_id": "coverage_recovery_contract",
+            "passed": True,
+            "details": {
+                "nonvacuous": True,
+                "accepted_finish_count": 1,
+            },
+        },
+        {
+            "check_id": "coverage_terminal_contract",
+            "passed": True,
+            "details": {
+                "coverage_complete_review_sequences": [41],
+                "accepted_submission_count": 1,
+                "evaluation_completed": True,
+            },
+        },
+    ]
+    payload = {
+        "qualified": True,
+        "checks": checks,
+    }
+    monkeypatch.setattr(
+        trace_qualification,
+        "qualify_run",
+        lambda *_args, **_kwargs: payload,
+    )
+
+    summary = eval_runner._qualify_terminal_run(
+        "run_coverage_feature",
+        eval_runner.COVERAGE_REVIEW_PILOT_TASK,
+    )
+    feature = summary["trace_features"]["public_coverage_review"]
+    assert feature["observed"] is True
+    assert feature["coverage_target_count"] == 8
+    assert feature["check_counts"] == {
+        "public_coverage_contract": 1,
+        "coverage_decision_integrity": 1,
+        "coverage_submission_lifecycle": 1,
+        "coverage_recovery_contract": 1,
+        "coverage_terminal_contract": 1,
+    }
+
+    payload["checks"] = [*checks, checks[0]]
+    duplicated = eval_runner._qualify_terminal_run(
+        "run_coverage_feature_duplicate",
+        eval_runner.COVERAGE_REVIEW_PILOT_TASK,
+    )
+    assert duplicated["trace_features"]["public_coverage_review"][
+        "observed"
+    ] is False
 
 
 @pytest.mark.parametrize(

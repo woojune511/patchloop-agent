@@ -91,6 +91,12 @@ _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT = Budget(
+    max_model_calls=60,
+    max_tool_calls=100,
+    max_total_tokens=1_200_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
 )
@@ -121,6 +127,7 @@ _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
     ExperimentPurpose.CORE,
 }
 
@@ -459,6 +466,12 @@ def _execution_plan_matches(
                 and parsed_suite.budget
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
             )
+            or (
+                parsed_suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+                and parsed_suite.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT
+            )
         ):
             if (
                 len(tasks) != len(parsed_suite.tasks)
@@ -528,6 +541,15 @@ def _execution_plan_matches(
             == "corrective-runtime-contract-v3"
             and expected_runtime_contract.get("context_policy_version")
             == "phase-evidence-v9"
+        )
+        or (
+            manifest.tool_schema_version == "v5"
+            and manifest.context_policy_version == "phase-evidence-v10"
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
+            == "corrective-runtime-contract-v4"
+            and expected_runtime_contract.get("context_policy_version")
+            == "phase-evidence-v10"
         )
     )
     runtime_contract_matches = bool(
@@ -599,6 +621,7 @@ def _execution_plan_matches(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
     }:
         task_matches = bool(
             task_matches
@@ -2623,8 +2646,18 @@ def _v10_public_coverage_contract_evidence(
     exact_selector = bool(
         manifest.tool_schema_version == "v5"
         and manifest.context_policy_version == "phase-evidence-v10"
-        and manifest.model.provider == "mock"
-        and manifest.experiment is None
+        and (
+            (
+                manifest.model.provider == "mock"
+                and manifest.experiment is None
+            )
+            or (
+                manifest.model.provider == "openai"
+                and manifest.experiment is not None
+                and manifest.experiment.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+            )
+        )
     )
     started = [
         event for event in events if event.type == EventType.RUN_STARTED
@@ -10342,6 +10375,12 @@ def qualify_run(
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
             )
             or (
+                manifest.experiment.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+                and manifest.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT
+            )
+            or (
                 (
                     manifest.experiment.purpose
                     in {
@@ -10441,6 +10480,9 @@ def qualify_run(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT: {
             DatasetRole.MEMORY_DEVELOPMENT
         },
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT: {
+            DatasetRole.MEMORY_DEVELOPMENT
+        },
         ExperimentPurpose.CORE: {
             DatasetRole.CORE_SAME_REPO,
             DatasetRole.CORE_CROSS_REPO,
@@ -10512,6 +10554,7 @@ def qualify_run(
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
         }
     ):
         from patchloop.evals.runner import (
@@ -11115,6 +11158,7 @@ def qualify_run(
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
                 ExperimentPurpose.CORE,
             }
             or (
@@ -11452,6 +11496,12 @@ def qualify_run(
         trace_check_ids.add("public_coverage_contract")
         trace_check_ids.add("corrective_runtime_contract")
         trace_check_ids.add("turn_mutation_barrier")
+        if (
+            experiment is not None
+            and experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+        ):
+            trace_check_ids.add("pricing_start_freshness")
     if manifest.context_policy_version in {
         "phase-evidence-v3",
         "phase-evidence-v4",

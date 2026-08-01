@@ -22,6 +22,8 @@ from patchloop.agent.tools import TOOL_SCHEMAS_V4, TOOL_SCHEMAS_V5
 from patchloop.contracts import (
     Artifact,
     EventType,
+    ExperimentPurpose,
+    ExperimentRunContext,
     Phase,
     PublicReviewContract,
     ToolResult,
@@ -88,6 +90,73 @@ def _v10_manifest(package, *, run_id: str) -> tuple[PublicReviewContract, object
         public_review_contract=contract,
     )
     return contract, manifest
+
+
+def test_coverage_review_live_pilot_is_the_only_openai_v10_exception() -> None:
+    package = load_task_package(TASK.parent)
+    contract = _smoke_v2_contract(package)
+    experiment = ExperimentRunContext(
+        experiment_id="coverage-review-live-pilot-test",
+        purpose=(
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+        ),
+        suite_hash="sha256:" + ("a" * 64),
+        execution_hash="sha256:" + ("b" * 64),
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + ("c" * 64),
+        repetition=1,
+    )
+
+    manifest = build_manifest(
+        package,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        experiment_context=experiment,
+        coverage_review_live_pilot=True,
+        public_review_contract=contract,
+    )
+
+    assert manifest.tool_schema_version == "v5"
+    assert manifest.context_policy_version == "phase-evidence-v10"
+    assert manifest.model.provider == "openai"
+    assert manifest.experiment == experiment
+    prompt, tools = AgentRunner._runtime_contract(manifest)
+    assert prompt == SYSTEM_PROMPT_V7
+    assert tools == TOOL_SCHEMAS_V5
+
+    with pytest.raises(ContractError, match="OpenAI provider and the exact"):
+        build_manifest(
+            package,
+            provider="mock",
+            experiment_context=experiment,
+            coverage_review_live_pilot=True,
+            public_review_contract=contract,
+        )
+    with pytest.raises(ContractError, match="OpenAI provider and the exact"):
+        build_manifest(
+            package,
+            provider="openai",
+            experiment_context=experiment.model_copy(
+                update={"purpose": ExperimentPurpose.OFFLINE_SMOKE}
+            ),
+            coverage_review_live_pilot=True,
+            public_review_contract=contract,
+        )
+    with pytest.raises(ContractError, match="mutually exclusive"):
+        build_manifest(
+            package,
+            provider="openai",
+            experiment_context=experiment,
+            coverage_review_validation=True,
+            coverage_review_live_pilot=True,
+            public_review_contract=contract,
+        )
+
+    payload = manifest.model_dump(mode="json")
+    payload["experiment"]["purpose"] = ExperimentPurpose.OFFLINE_SMOKE.value
+    with pytest.raises(ValueError, match="outside the exact coverage-review"):
+        type(manifest).model_validate(payload)
 
 
 def _with_inspection_anchor(

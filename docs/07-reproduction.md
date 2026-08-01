@@ -673,3 +673,16 @@ separate with SHA-256 `2a78f098a0d5ff9782fd5e4385a1b56b2b23623475554f0f2c295cc2b
 The correction records corrected qualification 33/33, but the experiment result must still show the
 original false gate, hidden failure, `task_failure`, SCRR=false, comparison exclusion and memory
 admission false. These commands are read-only; no provider credential is needed.
+
+Inspect the unapproved D-070 V10 contract without issuing a provider call:
+
+```powershell
+$env:UV_CACHE_DIR = ".uv-cache"
+uv run --env-file .env patchloop evaluate `
+  --suite experiments/dev-no-memory-coverage-review-v10-pilot-20260802-r1.yaml `
+  --preflight-only
+```
+
+Do not add `--approve-live-cost` or `--approved-execution-hash` until the final clean execution hash has
+been reviewed and the user separately approves the `$6` cap. The preflight may read API-key presence from
+the host `.env`, but it does not print the value or call the provider.

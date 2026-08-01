@@ -144,6 +144,24 @@ Date:
 Evidence/issue:
 ```
 
+## D-070 accepted decision
+
+- Status: accepted
+- Supersedes: D-069의 "V10 live selector 없음" 경계만 future live lane에 대해 supersede하며,
+  D-069 offline evidence와 D-067/D-068 artifact는 변경하지 않는다.
+- Context: D-069 V10 public-coverage lifecycle은 offline에서 통과했지만 provider에서 exact V10
+  path를 관찰한 evidence는 없다.
+- Decision: 별도 `memory-development-no-memory-coverage-review-pilot` purpose와 exact
+  `dev-no-memory-coverage-review-v10-pilot-20260802-r1` ID만 OpenAI v5/v10/runtime-v4 exception으로
+  허용한다. HF Hub/no-memory ×1, 60 model/100 tool/1.2M token/1,800초/output 25k, reserve
+  `$5.5125`, cap `$6`를 고정한다. V2 sidecar와 runtime/pricing/task/image/schedule/commit을 execution
+  hash에 묶고 non-vacuous coverage lifecycle과 official evaluator 도달을 post-run gate로 사용한다.
+- Consequences: checked-in suite와 no-call preflight는 실행 승인이 아니다. Task success는 gate에
+  요구하지 않으며 comparison, memory admission과 core에서 제외한다. D-060/D-067은 hard-immutable다.
+- Date: 2026-08-02
+- Evidence/issue: D-069 offline V10 gate와 D-070 988 collected, 981 passed/7 skipped contract
+  regression; live evidence는 아직 없음.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

@@ -298,6 +298,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-corrective-pilot` | Consumed D-062 HF Hub/PDM/pyfakefs corrective panel, v4/v7, 900k, $13 상한; immutable하고 재실행 금지 |
 | `memory-development-no-memory-saturation-pilot` | D-064 HF Hub 한 task, `no_memory`, repetition 1, v4/v8/runtime-v2, 900k, $5 상한; 자연 saturation/reset diagnostic이며 memory source와 comparison denominator에서 제외 |
 | `memory-development-no-memory-review-evidence-pilot` | Consumed D-067 HF Hub 한 task, `no_memory`, repetition 1, v4/v9/runtime-v3, 60/100/1.2M/1,800초, output 25k, $6 상한; immutable hidden task failure이며 재실행·comparison·memory admission 금지 |
+| `memory-development-no-memory-coverage-review-pilot` | D-070 exact HF Hub 한 task, `no_memory`, repetition 1, v5/v10/runtime-v4, 60/100/1.2M/1,800초, output 25k, $6 상한; tuning-only이며 comparison·memory admission 제외, 별도 hash/비용 승인 전 live 실행 금지 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -1976,12 +1977,15 @@ shape는 섞을 수 없다.
   check여야 한다. Current diff에 결속된 advertised passing `run_check` event만 인용할 수 있다.
 
 V10 manifest는 exact `tool_schema_version=v5` / `context_policy_version=phase-evidence-v10`와
-`public-review-contract-v2`를 함께 요구한다. `coverage_review_validation=True`, mock provider,
-experiment context 부재의 조합만 허용하며 replay, OpenAI, experiment와 mixed validation mode는
-fail closed한다. Runtime은 `SYSTEM_PROMPT_V7`, `TOOL_SCHEMAS_V5`,
+`public-review-contract-v2`를 함께 요구한다. Generic selector는
+`coverage_review_validation=True`, mock provider, experiment context 부재의 조합만 허용한다.
+유일한 live exception은 `coverage_review_live_pilot=True`, exact
+`memory-development-no-memory-coverage-review-pilot` purpose와 OpenAI provider의 논리곱이다.
+Replay, arbitrary experiment와 mixed validation mode는 fail closed한다. Runtime은
+`SYSTEM_PROMPT_V7`, `TOOL_SCHEMAS_V5`,
 `corrective-runtime-contract-v4`, `context-build-evidence-v10`과
-`phase-contract-v4`를 사용한다. 이 selector는 live capability나 paid execution hash를 만들지
-않는다.
+`phase-contract-v4`를 사용한다. Checked-in D-070 suite와 no-call preflight만으로는 live
+capability가 생기지 않는다. Clean execution hash에 대한 별도 invocation approval이 필요하다.
 
 REVIEW request의 `review-evidence-v2`는 contract 순서 그대로
 `coverage_target_event_sequences`를 제공한다. Target evidence를 먼저 순서대로 deduplicate한 뒤

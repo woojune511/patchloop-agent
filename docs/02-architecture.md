@@ -500,10 +500,14 @@ event prefix에서 current mutation, required passing checks, final diff와 cita
 
 `phase-evidence-v10`은 V9 artifact를 고치는 버전이 아니라 별도 opt-in runtime이다. Manifest는
 exact `tool_schema_version=v5` / `context_policy_version=phase-evidence-v10`,
-`public-review-contract-v2`와 `SYSTEM_PROMPT_V7`을 함께 요구한다. Factory selector는
+`public-review-contract-v2`와 `SYSTEM_PROMPT_V7`을 함께 요구한다. Generic factory selector는
 `coverage_review_validation=True`, mock provider, experiment 부재만 허용한다. Replay,
-OpenAI/arbitrary provider, experiment context와 다른 validation mode의 결합은 start 전에 fail
-closed한다. Runtime descriptor는 `corrective-runtime-contract-v4`다. Historical V1-V9
+arbitrary provider, experiment context와 다른 validation mode의 결합은 start 전에 fail
+closed한다. D-070만 별도 `coverage_review_live_pilot=True`, exact
+`memory-development-no-memory-coverage-review-pilot` purpose와 OpenAI provider 조합을 허용한다.
+이 exception도 approved execution plan의 task, V2 sidecar, runtime, pricing, image, schedule과
+clean commit이 모두 일치해야 start/resume할 수 있다. Runtime descriptor는
+`corrective-runtime-contract-v4`다. Historical V1-V9
 manifest, request rendering, runtime descriptor와 source evidence를 다시 만들거나 재해석하지
 않는다.
 

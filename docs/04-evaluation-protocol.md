@@ -986,3 +986,36 @@ D-069 offline acceptance는 complete다. V10 집중 통합 회귀와 repository-
 acceptance, task correctness, SCRR, live model 성능, no-memory baseline 또는 cross-run memory
 benefit은 별도 deterministic evaluator/live campaign evidence 없이는 주장하지 않는다.
 D-067/D-068 outcome과 artifact는 immutable하다.
+
+### D-070 exact V10 live-pilot protocol
+
+D-070은 D-069의 generic mock selector를 넓히지 않고 exact
+`memory-development-no-memory-coverage-review-pilot` purpose만 OpenAI 예외로 허용한다. Suite는
+HF Hub 한 task, `no_memory` 한 번, `gpt-5.4-mini-2026-03-17`
+medium/standard/default, 60 model call, 100 tool call, 1,200,000 total token, 1,800초와
+25,000 per-call output으로 고정한다. Dated standard output rate로 모든 1,225,000 token을
+보수적으로 계산한 reserve는 `$5.5125`, suite cap은 `$6`다.
+
+Preflight와 start/resume/qualification은 exact experiment ID, frozen dataset row와 image,
+`public-review-contract-v2` bytes, v5/v10/runtime-v4 prompt/tool hashes, SDK, clean harness commit,
+pricing freshness와 randomized schedule을 같은 execution hash로 다시 계산한다. Checked-in YAML과
+`--preflight-only`는 capability가 아니다. Clean execution hash에 대한 사용자의 별도 비용 승인 전
+provider call을 금지한다.
+
+Post-run `v10-coverage-review-live-pilot-gate-v1`은 한 row의 terminal trace qualification,
+official evaluator 도달, budget/infrastructure/qualification error 부재와 다음 다섯 check의
+non-vacuous evidence를 요구한다.
+
+```text
+public_coverage_contract
+AND coverage_decision_integrity
+AND coverage_submission_lifecycle
+AND coverage_recovery_contract
+AND coverage_terminal_contract
+```
+
+Task success는 gate predicate가 아니라 별도 관찰값이다. 따라서 hidden failure도 process gate는
+통과할 수 있지만 SCRR은 false로 남는다. 이 pilot은 comparison denominator, failure-memory
+admission과 core에서 제외한다. D-060과 D-067 experiment ID는 hard-immutable이며 재실행하지 않는다.
+D-070 offline contract 회귀는 988 collected, 981 passed/7 environment-dependent skipped, Ruff와
+`git diff --check`를 통과했다. Provider call은 없었으며 live evidence는 아직 없다.
