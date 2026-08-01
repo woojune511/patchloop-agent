@@ -635,3 +635,29 @@ silently lowering the design or fabricating missing results.
   this is a review-evidence/model-call failure, not evidence that the 900,000-token ceiling was too low.
 - One tuning task with completion gate false is not a no-memory baseline and cannot support task
   correctness, SCRR, a memory-effect claim or core-performance claim. Memory admission remains closed.
+
+## Phase-evidence-v9 and the larger future ceiling are not measured improvements
+
+- D-066 implements a versioned presentation correction, not a model-quality change. Pinning current-diff
+  passing checks and the final diff prevents recent-event eviction, but it cannot guarantee that the
+  model cites them correctly, produces a valid patch, passes hidden acceptance or reaches the evaluator.
+- The three-review-rejection guard bounds one active mutation epoch; it deliberately converts a fourth
+  would-be generation into a structured terminal failure. It is not an automatic retry policy and a new
+  successful patch resets the epoch count.
+- `review-citation-error-v1` exposes only public exact sequence metadata. It does not reveal hidden tests,
+  reference patches or evaluator feedback and must not be described as an oracle hint.
+- V9 qualification independently rebuilds review anchors and checks CAS, but generic phase-readiness and
+  deterministic task grading retain their existing contracts. A passing trace qualification would mean
+  evidence integrity, not task correctness.
+- D-066 focused validation completed with 504 collected, 502 passed/2 skipped, and repository-wide
+  regression completed with 879 collected, 872 passed/7 environment-dependent skipped. This closes
+  the offline implementation gate only; it is still not V9 live evidence.
+- D-067's 60 model / 100 tool / 1.2M token / 1,800-second limits are a future one-task diagnostic ceiling,
+  not a recommendation for the 12-task baseline or 96-run core campaign. Its `$5.5125` is a conservative
+  authorization reserve, not expected spend or an invoice prediction.
+- The checked-in D-067 YAML is explicitly unapproved: live cost is false, execution hash and run ID are
+  null, clean no-call preflight is pending and no provider call has occurred. It cannot be executed until
+  the offline gate, fresh environment bindings, a new exact hash and separate user approval all exist.
+- Even a future D-067 completion-gate pass would exclude task success, comparison eligibility and memory
+  admission by contract. It would only show that this one no-memory runtime reached the evaluator without
+  infrastructure, qualification or budget termination.

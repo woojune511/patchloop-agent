@@ -21,6 +21,7 @@ _CALIBRATION_ONLY_PURPOSES = {
     "memory-development-no-memory-budget-pilot",
     "memory-development-no-memory-corrective-pilot",
     "memory-development-no-memory-saturation-pilot",
+    "memory-development-no-memory-review-evidence-pilot",
 }
 
 

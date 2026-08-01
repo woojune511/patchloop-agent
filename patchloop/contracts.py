@@ -49,6 +49,9 @@ class ExperimentPurpose(StrEnum):
     MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT = (
         "memory-development-no-memory-saturation-pilot"
     )
+    MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT = (
+        "memory-development-no-memory-review-evidence-pilot"
+    )
     CORE = "core"
 
 
@@ -869,11 +872,19 @@ class RunManifest(StrictModel):
             self.tool_schema_version == "v4"
             and self.context_policy_version == "phase-evidence-v8"
         )
-        corrective_pair = corrective_pair_v7 or saturation_pair_v8
+        review_evidence_pair_v9 = (
+            self.tool_schema_version == "v4"
+            and self.context_policy_version == "phase-evidence-v9"
+        )
+        corrective_pair = (
+            corrective_pair_v7
+            or saturation_pair_v8
+            or review_evidence_pair_v9
+        )
         corrective_declared = bool(
             self.tool_schema_version == "v4"
             or self.context_policy_version
-            in {"phase-evidence-v7", "phase-evidence-v8"}
+            in {"phase-evidence-v7", "phase-evidence-v8", "phase-evidence-v9"}
             or self.public_review_contract is not None
         )
         if corrective_declared and (
@@ -881,7 +892,7 @@ class RunManifest(StrictModel):
         ):
             raise ValueError(
                 "corrective runtime requires tool v4, phase-evidence-v7 or "
-                "phase-evidence-v8, "
+                "phase-evidence-v8 or phase-evidence-v9, "
                 "and a public review contract"
             )
         if (
@@ -928,6 +939,41 @@ class RunManifest(StrictModel):
         if saturation_live_pilot and self.model.provider != "openai":
             raise ValueError(
                 "saturation pilot purpose requires the OpenAI provider"
+            )
+        review_evidence_live_pilot = bool(
+            self.experiment is not None
+            and self.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+        )
+        if (
+            review_evidence_pair_v9
+            and self.experiment is not None
+            and not review_evidence_live_pilot
+        ):
+            raise ValueError(
+                "phase-evidence-v9 review evidence is offline-only and cannot "
+                "declare an experiment context outside the exact review-evidence "
+                "pilot purpose"
+            )
+        if (
+            review_evidence_pair_v9
+            and self.model.provider != "mock"
+            and not (
+                review_evidence_live_pilot
+                and self.model.provider == "openai"
+            )
+        ):
+            raise ValueError(
+                "phase-evidence-v9 review evidence is offline-only and requires "
+                "the mock provider outside the exact review-evidence pilot purpose"
+            )
+        if review_evidence_live_pilot and not review_evidence_pair_v9:
+            raise ValueError(
+                "review-evidence pilot purpose requires the v4/v9 runtime contract"
+            )
+        if review_evidence_live_pilot and self.model.provider != "openai":
+            raise ValueError(
+                "review-evidence pilot purpose requires the OpenAI provider"
             )
         return self
 

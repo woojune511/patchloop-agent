@@ -864,3 +864,43 @@ evaluator arrival, diagnostic pass와 infrastructure/qualification/diagnostic/bu
 요구하지만 SCRR는 요구하지 않는다. 이 결과는 tuning/policy evidence이며 comparison
 denominator, failure-memory admission과 core headline을 열지 않는다. Checked-in suite와
 no-call preflight는 비용 승인이나 provider 호출 권한이 아니다.
+
+### D-066 V9 offline review-evidence protocol
+
+D-064의 total-token ceiling에는 240,627 token이 남았고 binding dimension은 40 model calls였다.
+그러나 먼저 증액만 하면 14회 review rejection 원인을 섞으므로, D-066은 provider 없이 다음
+논리곱을 검증하는 versioned correction이다.
+이 offline path는 `review_evidence_validation=True` + mock provider + experiment 부재만 허용하며,
+live V9은 exact D-067 purpose + OpenAI provider selector로 분리한다.
+
+```text
+phase-evidence-v9 request in REVIEW
+AND current-diff required passing checks pinned outside recent-event eviction
+AND final current-diff get_diff pinned outside recent-event eviction
+AND exact citable sequence list visible to model and tool gateway
+AND stale/forged/wrong-diff citation rejected with review-citation-error-v1
+AND qualifier independently rebuilds the same anchors and artifact CAS
+AND three review failures in one mutation epoch terminate before another generation
+AND successful PatchApplied resets the rejection epoch
+AND historical V8 rendering and qualification remain unchanged
+```
+
+이 gate는 task success, live model improvement 또는 memory 효과를 측정하지 않는다. 집중
+회귀는 504 collected, 502 passed/2 skipped였고 full regression은 879 collected,
+872 passed/7 environment-dependent skipped로 통과했다. 이는 offline integrity evidence다.
+
+### D-067 unapproved V9 completion-pilot protocol
+
+Offline gate 이후에만 고려할 future suite
+`dev-no-memory-review-evidence-v9-pilot-20260801-r1`은 HF Hub 한 task, `no_memory` 1회,
+tool v4/context v9/runtime v3, 60 model/100 tool/1,200,000 token/1,800초와 output 25,000으로
+고정한다. Dated standard rate의 conservative authorization reserve는 `$5.5125`, cap은 `$6`다.
+40→60 model call과 900k→1.2M token 증액은 D-064 tail을 그대로 재생한다는 예측이 아니라
+review correction 뒤 남는 우발적 headroom이다.
+
+현재 YAML은 `live_cost_approved=false`, execution hash와 pilot run ID가 null이다. Clean
+no-call preflight, execution hash 생성, 비용 승인과 provider call은 모두 아직 수행하지 않는다.
+Future `v9-review-evidence-live-pilot-gate-v1`은 terminal·qualified·official evaluator arrival와
+budget/infrastructure/qualification error 0을 요구하되 task success를 요구하지 않는다. 따라서
+통과하더라도 completion/runtime evidence일 뿐 SCRR, comparison baseline, failure-memory admission
+또는 core budget evidence가 아니다.

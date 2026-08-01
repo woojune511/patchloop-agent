@@ -2220,3 +2220,50 @@ Post-run source sealing and portable-evidence verification collected 839 tests: 
 environment-dependent tests skipped in 506.1 seconds. The directly affected experiment and evidence
 modules passed 152/152. Repository-wide Ruff and `git diff --check` also passed. No additional provider
 request was made while producing or verifying this seal.
+
+## D-066 phase-evidence-v9 correction — offline gate complete
+
+D-066 adds an opt-in `phase-evidence-v9` path without modifying the consumed D-064 suite, run or V8
+artifacts. The V9 request carries `review-evidence-v1`: required passing checks and the final current-diff
+`get_diff` are rendered from durable artifacts outside the 12-event recent window, deduplicated by
+sequence and included in the exact tool execution context. `SYSTEM_PROMPT_V6` names this top-level block
+as the only review citation authority and explicitly excludes investigation-ledger navigation sequences.
+
+The production-equivalent offline selector is `review_evidence_validation=True` with the mock provider
+and no experiment context. Replay, arbitrary providers, experiment-bearing manifests and mixed
+validation modes fail closed. The only live V9 selector remains the exact D-067 review-evidence purpose
+with the OpenAI provider and its separately approved execution plan.
+
+The gateway verifies the pinned diff, latest mutation, required check set, final-diff sequence and exact
+citable ordering. Invalid citations return public `review-citation-error-v1` details containing the
+current citable and passing-validation sequences rather than an unstructured stale-ID error. The runner
+counts failed `review_task` calls only after the latest successful patch and stops before another model
+generation when three failures occur in that epoch; a later successful patch resets the count.
+
+Provenance is versioned as `corrective-runtime-contract-v3`, `context-build-evidence-v9` and
+`trace-source-evidence-v9`. Qualification adds `review_evidence_context_contract`, which rebuilds the
+current mutation, check and diff anchors from durable events and verifies request/evidence/ContextBuilt
+mirrors plus artifact CAS. Historical V8 rendering remains on its existing schema and is not reclassified.
+
+The focused regression collected 504 tests: 502 passed and two existing capability-dependent tests
+skipped. Repository-wide pytest collected 879 tests: 872 passed and seven environment-dependent tests
+skipped. Ruff and `git diff --check` passed. This closes only the D-066 offline gate: no execution hash,
+provider request, cost, live campaign task result or SCRR observation was created. The mock/no-experiment
+E2E reaches the evaluator and passes the V9-specific review, saturation, self-validation and public-review
+contracts, but whole-run `qualified` intentionally remains false because live campaign, approved-plan,
+Docker-provenance and official-evaluator gates do not apply to that offline selector.
+
+## D-067 future V9 completion pilot — unapproved no-call contract
+
+The checked-in suite `dev-no-memory-review-evidence-v9-pilot-20260801-r1` fixes one frozen HF Hub task,
+one `no_memory` repetition, `gpt-5.4-mini-2026-03-17` medium/standard/default, v4/v9/runtime-v3,
+60 model calls, 100 tool calls, 1,200,000 total tokens, 1,800 seconds and 25,000 output tokens per call.
+At the dated standard rate, the deterministic conservative reserve is `$5.5125` and the suite cap is
+`$6`. The purpose is tuning-only and its completion gate excludes task success, comparison eligibility
+and memory admission.
+
+This is not live evidence. The YAML records `live_cost_approved=false`, no approved execution hash and
+no pilot run ID. A clean no-call preflight has not yet been sealed, no execution plan has been approved,
+and no provider request or cost was created. D-067 may proceed only after a fresh clean preflight and a
+separate explicit user approval of its exact hash and cost cap. D-064 remains immutable and its consumed
+hash is not reusable.

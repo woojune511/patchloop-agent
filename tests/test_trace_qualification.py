@@ -8,6 +8,11 @@ from pathlib import Path
 import pytest
 
 from patchloop.agent.context import build_context_with_evidence
+from patchloop.agent.review import (
+    normalize_public_issue_text,
+    public_review_contract_content_hash,
+    public_review_requirement_id,
+)
 from patchloop.agent.runner import AgentRunner
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
@@ -20,6 +25,7 @@ from patchloop.contracts import (
     ExperimentRunContext,
     FaultSpec,
     Phase,
+    PublicReviewContract,
     RegisteredProbeProfile,
     RunEvent,
     RunOutcomeKind,
@@ -89,6 +95,27 @@ SELF_VALIDATION_TASK = Path(
 )
 
 
+def _qualification_review_contract(package) -> PublicReviewContract:
+    excerpt = normalize_public_issue_text(
+        package.public.issue.description
+    )
+    payload = {
+        "schema_version": "public-review-contract-v1",
+        "task_id": package.public.task_id,
+        "task_version": package.public.task_version,
+        "public_spec_hash": package.public_spec_hash,
+        "requirements": [
+            {
+                "requirement_id": public_review_requirement_id(excerpt),
+                "source": "issue.description",
+                "source_excerpt": excerpt,
+            }
+        ],
+    }
+    payload["content_hash"] = public_review_contract_content_hash(payload)
+    return PublicReviewContract.model_validate(payload)
+
+
 @pytest.mark.parametrize(
     (
         "context_policy_version",
@@ -101,6 +128,7 @@ SELF_VALIDATION_TASK = Path(
         ("phase-evidence-v6", 1, 4, 6),
         ("phase-evidence-v7", 1, 4, 6),
         ("phase-evidence-v8", 1, 4, 6),
+        ("phase-evidence-v9", 1, 4, 6),
     ],
 )
 def test_expected_token_tail_policy_uses_versioned_corrective_reserve(
@@ -159,27 +187,29 @@ def _v8_event(
 def _v8_saturation_case(
     tmp_path: Path,
     *,
+    context_policy_version: str = "phase-evidence-v8",
     tail_blocked: bool = False,
     allowed_next_actions: list[str] | None = None,
     phase_overrides: dict | None = None,
 ) -> tuple[bool, dict, dict]:
     package = load_task_package(SELF_VALIDATION_TASK)
-    base_manifest = build_manifest(
+    review_contract = _qualification_review_contract(package)
+    manifest = build_manifest(
         package,
         run_id="run_v8_qualification",
         sandbox_backend="local",
+        saturation_context_validation=(
+            context_policy_version == "phase-evidence-v8"
+        ),
+        review_evidence_validation=(
+            context_policy_version == "phase-evidence-v9"
+        ),
+        public_review_contract=review_contract,
     )
-    manifest = base_manifest.model_copy(
-        update={
-            "tool_schema_version": "v4",
-            "context_policy_version": "phase-evidence-v8",
-            **(
-                {"budget": Budget(max_tool_calls=1)}
-                if tail_blocked
-                else {}
-            ),
-        }
-    )
+    if tail_blocked:
+        manifest = manifest.model_copy(
+            update={"budget": Budget(max_tool_calls=1)}
+        )
     prefix = [
         _v8_event(
             sequence,
@@ -234,7 +264,11 @@ def _v8_saturation_case(
     request_body = {"context": rendered_context}
     request_body_hash = sha256_text(canonical_json(request_body))
     context_build = {
-        "schema_version": "context-build-evidence-v8",
+        "schema_version": (
+            "context-build-evidence-v9"
+            if context_policy_version == "phase-evidence-v9"
+            else "context-build-evidence-v8"
+        ),
         "tool_results": [],
         "read_search_policy": read_search_policy,
     }
@@ -339,6 +373,18 @@ def test_v8_saturation_context_keeps_probe_when_only_reads_are_saturated(
     ]
 
 
+def test_v9_saturation_context_accepts_v9_context_build_schema(
+    tmp_path: Path,
+) -> None:
+    valid, details, _ = _v8_saturation_case(
+        tmp_path,
+        context_policy_version="phase-evidence-v9",
+    )
+
+    assert valid is True, details
+    assert details["verified_context_sequences"] == [7]
+
+
 def test_v8_saturation_context_removes_probe_for_strict_tail_reserve(
     tmp_path: Path,
 ) -> None:
@@ -418,6 +464,369 @@ def test_v8_saturation_context_requires_at_least_one_context(
 
     assert valid is False
     assert details["context_count"] == 0
+
+
+def _v9_review_anchor_case(
+    tmp_path: Path,
+    *,
+    citable_sequences: list[int] | None = None,
+    tamper_target: str | None = None,
+) -> tuple[bool, dict]:
+    package = load_task_package(SELF_VALIDATION_TASK)
+    review_contract = _qualification_review_contract(package)
+    manifest = build_manifest(
+        package,
+        run_id="run_v9_review_qualification",
+        sandbox_backend="local",
+        review_evidence_validation=True,
+        public_review_contract=review_contract,
+    )
+    check_id = package.public.visible_checks[0].id
+    artifacts = ArtifactStore(tmp_path / "artifacts")
+    check_artifact = artifacts.put_json(
+        {
+            "tool": "run_check",
+            "check_id": check_id,
+            "passed": True,
+            "stdout": "current diff check passed",
+        }
+    )
+    diff_artifact = artifacts.put_json(
+        {
+            "tool": "get_diff",
+            "patch": PATCH_TEXT,
+            "worktree_diff_hash": HASH,
+        }
+    )
+    events = [
+        _v8_event(
+            1,
+            EventType.PATCH_APPLIED,
+            payload={"worktree_diff_hash": HASH},
+        ),
+        _v8_event(
+            2,
+            EventType.TOOL_SUCCEEDED,
+            payload={
+                "tool": "run_check",
+                "check_id": check_id,
+                "passed": True,
+                "worktree_diff_hash": HASH,
+                "artifact_id": check_artifact.artifact_id,
+                "artifact_path": check_artifact.path,
+                "result_artifact": check_artifact.model_dump(mode="json"),
+            },
+        ),
+        _v8_event(
+            3,
+            EventType.TOOL_SUCCEEDED,
+            payload={
+                "tool": "get_diff",
+                "worktree_diff_hash": HASH,
+                "artifact_id": diff_artifact.artifact_id,
+                "artifact_path": diff_artifact.path,
+                "result_artifact": diff_artifact.model_dump(mode="json"),
+            },
+        ),
+    ]
+    checkpoint = Checkpoint(
+        checkpoint_id="ckpt_v9_review_qualification",
+        run_id=manifest.run_id,
+        through_sequence=3,
+        phase=Phase.REVIEW,
+        repository_head=package.public.repository.base_commit,
+        worktree_diff_hash=HASH,
+        created_at=utc_now(),
+    )
+    built = build_context_with_evidence(
+        package.public,
+        events,
+        checkpoint,
+        policy_version="phase-evidence-v9",
+        artifact_store=artifacts,
+        budget=manifest.budget,
+        max_output_tokens=manifest.model.max_output_tokens,
+        public_review_contract=review_contract,
+    )
+    rendered_payload = json.loads(built.rendered)
+    context_build = json.loads(canonical_json(built.evidence))
+    if citable_sequences is not None:
+        rendered_payload["review_evidence"][
+            "citable_event_sequences"
+        ] = citable_sequences
+    if tamper_target == "pinned_result":
+        rendered_payload["review_evidence"]["pinned_results"][0][
+            "payload"
+        ]["tool_result"]["passed"] = False
+    elif tamper_target == "recent_duplicate":
+        rendered_payload["recent_events"].append(
+            rendered_payload["review_evidence"]["pinned_results"][0]
+        )
+    elif tamper_target == "non_object_context":
+        rendered_payload = []
+    elif tamper_target == "pinned_tool_result":
+        context_build["review_evidence"]["pinned_tool_results"][0][
+            "artifact_id"
+        ] = "art_forged"
+    context = json.dumps(rendered_payload, ensure_ascii=False)
+    request_body = {"context": context}
+    request_hash = sha256_text(canonical_json(request_body))
+    artifact = artifacts.put_json(
+        {
+            "schema_version": "model-request-evidence-v1",
+            "provider": "mock",
+            "request_body": request_body,
+            "request_body_hash": request_hash,
+            "context_build": context_build,
+        }
+    )
+    if tamper_target == "cas_bytes":
+        Path(check_artifact.path).write_text(
+            '{"passed": false}',
+            encoding="utf-8",
+        )
+    review_evidence = built.evidence["review_evidence"]
+    context_event = _v8_event(
+        4,
+        EventType.CONTEXT_BUILT,
+        payload={
+            "artifact_id": artifact.artifact_id,
+            "artifact_path": artifact.path,
+            "request_body_hash": request_hash,
+            "context_hash": sha256_text(context),
+            "review_evidence_pinning_active": review_evidence[
+                "pinning_active"
+            ],
+            "review_evidence_worktree_diff_hash": review_evidence[
+                "worktree_diff_hash"
+            ],
+            "review_evidence_mutation_event_sequence": review_evidence[
+                "mutation_event_sequence"
+            ],
+            "review_evidence_passing_check_event_sequences": (
+                review_evidence["passing_check_event_sequences"]
+            ),
+            "review_evidence_source_get_diff_sequence": review_evidence[
+                "source_get_diff_sequence"
+            ],
+            "review_evidence_citable_event_sequences": review_evidence[
+                "citable_event_sequences"
+            ],
+            "review_evidence_incomplete_event_sequences": review_evidence[
+                "incomplete_event_sequences"
+            ],
+        },
+    )
+    valid, details = (
+        qualification_module._v9_review_evidence_context_contract(
+            root=tmp_path,
+            manifest=manifest,
+            package=package,
+            events=[*events, context_event],
+            context_events=[context_event],
+        )
+    )
+    return valid, details
+
+
+def test_v9_review_evidence_contract_accepts_current_diff_anchors(
+    tmp_path: Path,
+) -> None:
+    valid, details = _v9_review_anchor_case(tmp_path)
+
+    assert valid is True, details
+    assert details["active_context_sequences"] == [4]
+    assert details["verified_anchor_sequences"] == [2, 3]
+
+
+def test_v9_review_evidence_contract_rejects_forged_citation_list(
+    tmp_path: Path,
+) -> None:
+    valid, details = _v9_review_anchor_case(
+        tmp_path,
+        citable_sequences=[1, 2, 3],
+    )
+
+    assert valid is False
+    assert details["failed_context_sequences"] == [4]
+
+
+@pytest.mark.parametrize(
+    "tamper_target",
+    [
+        "pinned_result",
+        "pinned_tool_result",
+        "recent_duplicate",
+        "non_object_context",
+        "cas_bytes",
+    ],
+)
+def test_v9_review_evidence_contract_rejects_anchor_tampering(
+    tmp_path: Path,
+    tamper_target: str,
+) -> None:
+    valid, details = _v9_review_anchor_case(
+        tmp_path,
+        tamper_target=tamper_target,
+    )
+
+    assert valid is False
+    assert details["failed_context_sequences"] == [4]
+
+
+def test_v9_review_rejection_terminal_contract_resets_on_patch() -> None:
+    events = [
+        _v8_event(1, EventType.PATCH_APPLIED),
+        _v8_event(
+            2,
+            EventType.TOOL_FAILED,
+            payload={"tool": "review_task"},
+        ),
+        _v8_event(
+            3,
+            EventType.TOOL_FAILED,
+            payload={"tool": "review_task"},
+        ),
+        _v8_event(4, EventType.PATCH_APPLIED),
+        _v8_event(
+            5,
+            EventType.TOOL_FAILED,
+            payload={"tool": "review_task"},
+        ),
+        _v8_event(
+            6,
+            EventType.TOOL_FAILED,
+            payload={"tool": "review_task"},
+        ),
+        _v8_event(7, EventType.RUN_COMPLETED),
+    ]
+
+    valid, details = (
+        qualification_module._v9_review_rejection_terminal_contract(
+            events
+        )
+    )
+
+    assert valid is True
+    assert details["terminal_rejection_count"] == 0
+    assert details["reset_mutation_sequences"] == [4]
+
+
+def test_v9_third_review_rejection_must_end_in_run_failure() -> None:
+    events = [
+        _v8_event(1, EventType.PATCH_APPLIED),
+        *[
+            _v8_event(
+                sequence,
+                EventType.TOOL_FAILED,
+                payload={"tool": "review_task"},
+            )
+            for sequence in range(2, 5)
+        ],
+        _v8_event(5, EventType.CHECKPOINT_SAVED),
+        _v8_event(
+            6,
+            EventType.RUN_FAILED,
+            payload={
+                "error_type": "SubmissionProtocolError",
+                "error_code": "SUBMISSION_PROTOCOL_ERROR",
+                "message": (
+                    "structured review evidence was rejected three times"
+                ),
+            },
+        ),
+    ]
+
+    valid, details = (
+        qualification_module._v9_review_rejection_terminal_contract(
+            events
+        )
+    )
+
+    assert valid is True
+    assert details["terminal_rejection_sequences"] == [4]
+    assert details["verified_terminal_rejection_count"] == 1
+
+
+@pytest.mark.parametrize(
+    ("event_type", "payload"),
+    [
+        (EventType.MODEL_CALLED, {}),
+        (EventType.TOOL_CALLED, {"tool": "run_check"}),
+        (EventType.TOOL_SUCCEEDED, {"tool": "review_task"}),
+        (EventType.SUBMISSION_ATTEMPTED, {}),
+        (EventType.PATCH_APPLIED, {}),
+    ],
+)
+def test_v9_rejects_progress_after_third_review_rejection(
+    event_type: EventType,
+    payload: dict,
+) -> None:
+    events = [
+        _v8_event(1, EventType.PATCH_APPLIED),
+        *[
+            _v8_event(
+                sequence,
+                EventType.TOOL_FAILED,
+                payload={"tool": "review_task"},
+            )
+            for sequence in range(2, 5)
+        ],
+        _v8_event(5, event_type, payload=payload),
+        _v8_event(
+            6,
+            EventType.RUN_FAILED,
+            payload={
+                "error_type": "SubmissionProtocolError",
+                "error_code": "SUBMISSION_PROTOCOL_ERROR",
+                "message": (
+                    "structured review evidence was rejected three times"
+                ),
+            },
+        ),
+    ]
+
+    valid, details = (
+        qualification_module._v9_review_rejection_terminal_contract(
+            events
+        )
+    )
+
+    assert valid is False
+    assert details["failed_terminal_rejection_sequences"] == [4]
+    assert details["forbidden_after_terminal_sequences"] == {4: [5]}
+
+
+def test_v9_third_review_rejection_rejects_unrelated_run_failure() -> None:
+    events = [
+        _v8_event(1, EventType.PATCH_APPLIED),
+        *[
+            _v8_event(
+                sequence,
+                EventType.TOOL_FAILED,
+                payload={"tool": "review_task"},
+            )
+            for sequence in range(2, 5)
+        ],
+        _v8_event(
+            5,
+            EventType.RUN_FAILED,
+            payload={
+                "error_type": "ModelGenerationBudgetError",
+                "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+                "message": "model call budget exhausted",
+            },
+        ),
+    ]
+
+    valid, details = (
+        qualification_module._v9_review_rejection_terminal_contract(
+            events
+        )
+    )
+
+    assert valid is False
+    assert details["failed_terminal_rejection_sequences"] == [4]
 
 
 def _with_probe_profile(package):

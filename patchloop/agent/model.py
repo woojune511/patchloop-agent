@@ -64,6 +64,17 @@ SYSTEM_PROMPT_V5 = (
     "a later patch attempt succeeds or supersedes it, so use the rehydrated "
     "candidate, validator feedback, and exact source context when repairing it."
 )
+SYSTEM_PROMPT_V6 = (
+    SYSTEM_PROMPT_V5
+    + " In REVIEW, use the top-level review_evidence as the only citation "
+    "authority. Cite only its citable_event_sequences, including a pinned "
+    "passing check for targeted_validation and its pinned final get_diff for "
+    "repository evidence. investigation_ledger source_call_sequence and "
+    "source_call_sequences values are navigation provenance, not review "
+    "citations. If review_task is rejected, follow the structured "
+    "citable_event_sequences in the rejection result instead of repeating "
+    "stale sequence IDs."
+)
 SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 
 

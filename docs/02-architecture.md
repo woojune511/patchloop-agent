@@ -447,3 +447,51 @@ patch와 다음 context가 존재할 때 replay count 0과 새 mutation epoch로
 Branch가 나타나지 않으면 valid trace를 `inconclusive`로 보존하고 자동 재실행하지 않는다.
 Task success는 이 policy gate의 필요조건이 아니며 결과는 memory admission과 headline
 comparison에서 제외한다.
+
+## 14. D-066 review-evidence persistence boundary
+
+`phase-evidence-v9`은 D-064의 REVIEW loop만 분리해 고친다. V8의 saturation/reset semantics와
+tool schema v4는 유지하고, prompt를 `SYSTEM_PROMPT_V6`, runtime descriptor를
+`corrective-runtime-contract-v3`로 올린다. V9은 exact review-evidence pilot purpose 외의
+OpenAI manifest에서 fail closed하며 historical V8 request를 다시 렌더링하지 않는다.
+Production-equivalent offline selector `review_evidence_validation=True`는 mock provider와
+experiment 부재를 동시에 요구한다. Replay, arbitrary provider, experiment-bearing manifest와
+다른 validation mode의 결합은 factory에서 fail closed한다. Live selector는 exact D-067
+purpose와 OpenAI provider 조합만 허용한다.
+
+REVIEW phase에서 mutation, required current-diff checks와 final `get_diff`가 준비되면 context
+builder는 일반 recent-event 12개 창과 독립적으로 다음 anchor를 pin한다.
+
+```json
+{
+  "schema_version": "review-evidence-v1",
+  "pinning_active": true,
+  "worktree_diff_hash": "sha256:...",
+  "mutation_event_sequence": 106,
+  "passing_check_event_sequences": [203],
+  "source_get_diff_sequence": 209,
+  "citable_event_sequences": [203, 209],
+  "incomplete_event_sequences": []
+}
+```
+
+Pinned result는 rendered request의 top-level `review_evidence.pinned_results`와 execution
+context의 full tool-result evidence에 모두 포함되며 sequence 순으로 deduplicate된다. 따라서
+반복된 review failure가 recent-event 창을 밀어내도 current-diff check와 diff CAS는 사라지지
+않는다. Investigation ledger의 `source_call_sequence(s)`는 navigation provenance일 뿐 review
+citation authority가 아니다.
+
+Gateway는 V9에서 `review-evidence-v1`의 diff, mutation, passing-check, final-diff와 citable
+sequence가 durable state 및 exact request와 일치하는지 확인한다. 거절 시
+`review-citation-error-v1`에 reason, invalid sequence, exact citable sequence, passing
+validation sequence와 source diff sequence를 반환해 stale ID 반복을 피한다. 같은 mutation
+epoch의 `review_task` failure가 세 번 누적되면 runner는 다음 model generation 전에 terminal
+submission-protocol failure로 닫는다. Successful `PatchApplied`는 새 epoch를 시작하므로 count를
+0으로 재계산한다.
+
+`context-build-evidence-v9`과 `trace-source-evidence-v9`은 rendered bytes, pinned artifact
+descriptor/content hash와 `ContextBuilt` mirror를 결속한다. Qualifier의
+`review_evidence_context_contract`는 runtime context builder의 선언을 신뢰하지 않고 durable
+event prefix에서 current mutation, required passing checks, final diff와 citable order를 다시
+계산한다. 이 correction은 self-attestation의 증거 전달을 안정화할 뿐 hidden evaluator를
+예측하거나 review를 primary grader로 승격하지 않는다.

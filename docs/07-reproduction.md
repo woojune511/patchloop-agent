@@ -620,3 +620,44 @@ Expected raw file hashes are respectively `7f956827...849ac`, `f4b245b4...efc24`
 `sha256:297261447db53b3c7a19fdc18a0bbda8326f04b4b6ab01d52c2c969ed66400c3`; it is not the plan file's
 byte hash. The run established the V8 saturation/reset policy branch only. It did not submit or reach
 the evaluator and therefore is not task-success, SCRR, baseline or memory-effect evidence.
+
+## D-066/D-067 V9 offline gate and unapproved pilot inspection
+
+D-066's focused, credential-free validation set is:
+
+```powershell
+$env:UV_CACHE_DIR = ".uv-cache"
+uv run pytest -q `
+  tests/test_context.py `
+  tests/test_tool_gateway.py `
+  tests/test_agent_runtime.py `
+  tests/test_trace_qualification.py `
+  tests/test_experiments.py
+uv run ruff check .
+git diff --check
+```
+
+The focused run collected 504 tests: 502 passed and two existing capability-dependent tests skipped.
+The separate repository-wide run collected 879 tests: 872 passed and seven environment-dependent tests
+skipped. Ruff and `git diff --check` passed. These are D-066 offline results, not reused D-064 evidence.
+
+The future suite may be inspected without authorizing a provider call:
+
+```powershell
+$env:UV_CACHE_DIR = ".uv-cache"
+uv run patchloop evaluate `
+  --suite experiments/dev-no-memory-review-evidence-v9-pilot-20260801-r1.yaml `
+  --preflight-only
+```
+
+Do not add `--approve-live-cost` or `--approved-execution-hash`. The checked-in state is intentionally
+`live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`; the preflight must
+therefore remain not ready for paid execution. It should describe the exact HF Hub/no-memory row,
+v4/v9/runtime-v3, 60 model calls, 100 tool calls, 1,200,000 total tokens, 1,800 seconds, output 25,000,
+reserve `$5.5125` and cap `$6`. A dirty checkout, stale price verification, Docker/image drift or other
+environment mismatch may add further blockers and must not be bypassed.
+
+No clean execution hash has been approved for D-067. A later provider invocation requires all of the
+following in a separate step: completed D-066 offline evidence, clean no-call preflight, exact current
+Docker/SDK/Git/price bindings, a newly printed execution hash and explicit user approval for at most
+`$6`. Until then, running `patchloop evaluate` without `--preflight-only` is out of scope.

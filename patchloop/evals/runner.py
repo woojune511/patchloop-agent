@@ -15,7 +15,7 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
-from patchloop.agent.model import SYSTEM_PROMPT_V3, SYSTEM_PROMPT_V5
+from patchloop.agent.model import SYSTEM_PROMPT_V3, SYSTEM_PROMPT_V5, SYSTEM_PROMPT_V6
 from patchloop.agent.review import load_public_review_contract
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
 from patchloop.agent.tools import TOOL_SCHEMAS_V2, TOOL_SCHEMAS_V4
@@ -154,6 +154,12 @@ GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT = Budget(
     max_total_tokens=900_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT = Budget(
+    max_model_calls=60,
+    max_tool_calls=100,
+    max_total_tokens=1_200_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -193,17 +199,22 @@ SATURATION_PILOT_TASK = (
     "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml"
 )
 SATURATION_PILOT_TASK_ID = Path(SATURATION_PILOT_TASK).parent.name
+REVIEW_EVIDENCE_PILOT_TASK = SATURATION_PILOT_TASK
+REVIEW_EVIDENCE_PILOT_TASK_ID = SATURATION_PILOT_TASK_ID
 PUBLIC_REVIEW_CONTRACT_ROOT = Path("experiments/review-contracts")
 CORRECTIVE_TOOL_SCHEMA_VERSION = "v4"
 CORRECTIVE_CONTEXT_POLICY_VERSION = "phase-evidence-v7"
 CORRECTIVE_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v1"
 SATURATION_CONTEXT_POLICY_VERSION = "phase-evidence-v8"
 SATURATION_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v2"
+REVIEW_EVIDENCE_CONTEXT_POLICY_VERSION = "phase-evidence-v9"
+REVIEW_EVIDENCE_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v3"
 PRICING_START_VERIFICATION_SCHEMA = "pricing-start-verification-v1"
 
 HASH_BOUND_CORRECTIVE_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
 }
 
 
@@ -224,19 +235,29 @@ def _corrective_runtime_contract(
         suite.purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
     )
+    review_evidence_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+    )
     return {
         "schema_version": (
-            SATURATION_RUNTIME_CONTRACT_SCHEMA
+            REVIEW_EVIDENCE_RUNTIME_CONTRACT_SCHEMA
+            if review_evidence_pilot
+            else SATURATION_RUNTIME_CONTRACT_SCHEMA
             if saturation_pilot
             else CORRECTIVE_RUNTIME_CONTRACT_SCHEMA
         ),
         "tool_schema_version": CORRECTIVE_TOOL_SCHEMA_VERSION,
         "context_policy_version": (
-            SATURATION_CONTEXT_POLICY_VERSION
+            REVIEW_EVIDENCE_CONTEXT_POLICY_VERSION
+            if review_evidence_pilot
+            else SATURATION_CONTEXT_POLICY_VERSION
             if saturation_pilot
             else CORRECTIVE_CONTEXT_POLICY_VERSION
         ),
-        "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
+        "system_prompt_hash": sha256_text(
+            SYSTEM_PROMPT_V6 if review_evidence_pilot else SYSTEM_PROMPT_V5
+        ),
         "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V4)),
         "harness_git_commit": harness_git_commit,
     }
@@ -754,6 +775,28 @@ class ExperimentSuite(BaseModel):
                 raise ValueError(
                     "saturation pilot requires estimated_cost_usd=4.1625"
                 )
+        elif (
+            self.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+        ):
+            if (
+                [_normalized_task_path(task) for task in self.tasks]
+                != [REVIEW_EVIDENCE_PILOT_TASK]
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+            ):
+                raise ValueError(
+                    "memory-development no-memory review-evidence pilot requires "
+                    "exactly the frozen HF Hub task, no_memory, and one repetition"
+                )
+            self._require_live_defaults(
+                cost_limit=6,
+                budget=GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT,
+            )
+            if self.estimated_cost_usd != 5.5125:
+                raise ValueError(
+                    "review-evidence pilot requires estimated_cost_usd=5.5125"
+                )
         elif self.purpose == ExperimentPurpose.CORE:
             if len(set(self.tasks)) != 12:
                 raise ValueError("core experiment requires exactly 12 unique held-out tasks")
@@ -1169,6 +1212,7 @@ def _expected_role_and_split(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
     }:
         return {DatasetRole.MEMORY_DEVELOPMENT}, DatasetRole.MEMORY_DEVELOPMENT
     if purpose == ExperimentPurpose.CORE:
@@ -1385,6 +1429,16 @@ def preflight_suite(
             blockers,
             "SATURATION_PILOT_TASK_SET_MISMATCH",
             "saturation pilot must use exactly the frozen HF Hub task",
+        )
+    if (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+        and loaded_ids != {REVIEW_EVIDENCE_PILOT_TASK_ID}
+    ):
+        _block(
+            blockers,
+            "REVIEW_EVIDENCE_PILOT_TASK_SET_MISMATCH",
+            "review-evidence pilot must use exactly the frozen HF Hub task",
         )
 
     schedule, schedule_hash = _make_schedule(suite, task_rows)
@@ -1730,19 +1784,27 @@ def _assert_manifest_matches_preflight(
         in {
             CORRECTIVE_CONTEXT_POLICY_VERSION,
             SATURATION_CONTEXT_POLICY_VERSION,
+            REVIEW_EVIDENCE_CONTEXT_POLICY_VERSION,
         }
         or manifest.public_review_contract is not None
     ):
         actual_runtime_contract = {
             "schema_version": (
-                SATURATION_RUNTIME_CONTRACT_SCHEMA
+                REVIEW_EVIDENCE_RUNTIME_CONTRACT_SCHEMA
                 if manifest.context_policy_version
-                == SATURATION_CONTEXT_POLICY_VERSION
+                == REVIEW_EVIDENCE_CONTEXT_POLICY_VERSION
+                else SATURATION_RUNTIME_CONTRACT_SCHEMA
+                if manifest.context_policy_version == SATURATION_CONTEXT_POLICY_VERSION
                 else CORRECTIVE_RUNTIME_CONTRACT_SCHEMA
             ),
             "tool_schema_version": manifest.tool_schema_version,
             "context_policy_version": manifest.context_policy_version,
-            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
+            "system_prompt_hash": sha256_text(
+                SYSTEM_PROMPT_V6
+                if manifest.context_policy_version
+                == REVIEW_EVIDENCE_CONTEXT_POLICY_VERSION
+                else SYSTEM_PROMPT_V5
+            ),
             "tool_schema_hash": sha256_text(
                 canonical_json(TOOL_SCHEMAS_V4)
             ),
@@ -2469,12 +2531,21 @@ def _completion_gate(
         and [_normalized_task_path(task) for task in suite.tasks]
         == [SATURATION_PILOT_TASK]
     )
+    review_evidence_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+        and suite.budget
+        == GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
+        and [_normalized_task_path(task) for task in suite.tasks]
+        == [REVIEW_EVIDENCE_PILOT_TASK]
+    )
     if not any(
         (
             completion_panel,
             budget_pilot,
             corrective_pilot,
             saturation_pilot,
+            review_evidence_pilot,
         )
     ):
         return None
@@ -2537,7 +2608,7 @@ def _completion_gate(
         expected_runs
         == (
             1
-            if saturation_pilot
+            if saturation_pilot or review_evidence_pilot
             else 3
             if budget_pilot or corrective_pilot
             else 2
@@ -2555,10 +2626,17 @@ def _completion_gate(
         )
         and not budget_terminal_run_ids
     )
-    if budget_pilot or corrective_pilot or saturation_pilot:
+    if (
+        budget_pilot
+        or corrective_pilot
+        or saturation_pilot
+        or review_evidence_pilot
+    ):
         return {
             "schema_version": (
-                "v8-saturation-live-pilot-gate-v1"
+                "v9-review-evidence-live-pilot-gate-v1"
+                if review_evidence_pilot
+                else "v8-saturation-live-pilot-gate-v1"
                 if saturation_pilot
                 else "no-memory-corrective-pilot-gate-v1"
                 if corrective_pilot
@@ -2750,6 +2828,7 @@ def evaluate_suite(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
     }
     halt_reason: dict[str, str] | None = None
 
@@ -2891,6 +2970,10 @@ def evaluate_suite(
             saturation_live_pilot=(
                 suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+            ),
+            review_evidence_live_pilot=(
+                suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
             ),
             public_review_contract=(
                 PublicReviewContract.model_validate(

@@ -85,6 +85,12 @@ _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT = Budget(
     max_total_tokens=900_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT = Budget(
+    max_model_calls=60,
+    max_tool_calls=100,
+    max_total_tokens=1_200_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
 )
@@ -114,6 +120,7 @@ _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
     ExperimentPurpose.CORE,
 }
 
@@ -141,7 +148,9 @@ _SOURCE_EVIDENCE_SCHEMA_VERSION_V5 = "trace-source-evidence-v5"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V6 = "trace-source-evidence-v6"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V7 = "trace-source-evidence-v7"
 _SOURCE_EVIDENCE_SCHEMA_VERSION_V8 = "trace-source-evidence-v8"
+_SOURCE_EVIDENCE_SCHEMA_VERSION_V9 = "trace-source-evidence-v9"
 _V8_EVIDENCE_SATURATION_THRESHOLD = 6
+_V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT = 12_000
 _EMPTY_DIFF_HASH = sha256_text("")
 
 
@@ -443,6 +452,12 @@ def _execution_plan_matches(
                 and parsed_suite.budget
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
             )
+            or (
+                parsed_suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+                and parsed_suite.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
+            )
         ):
             if (
                 len(tasks) != len(parsed_suite.tasks)
@@ -503,6 +518,15 @@ def _execution_plan_matches(
             == "corrective-runtime-contract-v2"
             and expected_runtime_contract.get("context_policy_version")
             == "phase-evidence-v8"
+        )
+        or (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v9"
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
+            == "corrective-runtime-contract-v3"
+            and expected_runtime_contract.get("context_policy_version")
+            == "phase-evidence-v9"
         )
     )
     runtime_contract_matches = bool(
@@ -573,6 +597,7 @@ def _execution_plan_matches(
     if experiment.purpose in {
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
     }:
         task_matches = bool(
             task_matches
@@ -814,7 +839,7 @@ def _corrective_runtime_contract_evidence(
 ) -> tuple[bool, dict[str, Any]]:
     """Validate one corrective runtime contract through its full CAS descriptor."""
 
-    from patchloop.agent.model import SYSTEM_PROMPT_V5
+    from patchloop.agent.model import SYSTEM_PROMPT_V5, SYSTEM_PROMPT_V6
     from patchloop.agent.tools import TOOL_SCHEMAS_V4
 
     candidates = [
@@ -874,6 +899,14 @@ def _corrective_runtime_contract_evidence(
             "tool_schema_version": "v4",
             "context_policy_version": "phase-evidence-v8",
         }
+    elif manifest.context_policy_version == "phase-evidence-v9":
+        expected = {
+            "schema_version": "corrective-runtime-contract-v3",
+            "system_prompt": SYSTEM_PROMPT_V6,
+            "tools": TOOL_SCHEMAS_V4,
+            "tool_schema_version": "v4",
+            "context_policy_version": "phase-evidence-v9",
+        }
     else:
         expected = None
     try:
@@ -886,7 +919,7 @@ def _corrective_runtime_contract_evidence(
         and canonical_json(observed) == canonical_json(expected)
         and manifest.tool_schema_version == "v4"
         and manifest.context_policy_version
-        in {"phase-evidence-v7", "phase-evidence-v8"}
+        in {"phase-evidence-v7", "phase-evidence-v8", "phase-evidence-v9"}
     )
     details["semantic_contract_valid"] = semantic_valid
     return bool(
@@ -1629,18 +1662,22 @@ def _v4_investigation_context_evidence(
     verified_hashes: list[str] = []
     policy_version = manifest.context_policy_version
     evidence_schema = (
-        "context-build-evidence-v8"
-        if policy_version == "phase-evidence-v8"
+        "context-build-evidence-v9"
+        if policy_version == "phase-evidence-v9"
         else (
-            "context-build-evidence-v7"
-            if policy_version == "phase-evidence-v7"
+            "context-build-evidence-v8"
+            if policy_version == "phase-evidence-v8"
             else (
-                "context-build-evidence-v6"
-                if policy_version == "phase-evidence-v6"
+                "context-build-evidence-v7"
+                if policy_version == "phase-evidence-v7"
                 else (
-                    "context-build-evidence-v5"
-                    if policy_version == "phase-evidence-v5"
-                    else "context-build-evidence-v4"
+                    "context-build-evidence-v6"
+                    if policy_version == "phase-evidence-v6"
+                    else (
+                        "context-build-evidence-v5"
+                        if policy_version == "phase-evidence-v5"
+                        else "context-build-evidence-v4"
+                    )
                 )
             )
         )
@@ -1758,6 +1795,7 @@ def _v4_investigation_context_evidence(
                 "phase-evidence-v6",
                 "phase-evidence-v7",
                 "phase-evidence-v8",
+                "phase-evidence-v9",
             }:
                 expected_tail = _v5_expected_tail_policy(
                     task=package.public,
@@ -1843,6 +1881,505 @@ def _v4_investigation_context_evidence(
     )
 
 
+def _v9_truncate_review_json_strings(value: Any, limit: int) -> Any:
+    """Frozen independent copy of V9 model-context field truncation."""
+
+    if isinstance(value, str):
+        if len(value) <= limit:
+            return value
+        marker = "\n...[field truncated for model context]"
+        return value[: max(0, limit - len(marker))] + marker
+    if isinstance(value, list):
+        return [
+            _v9_truncate_review_json_strings(item, limit)
+            for item in value
+        ]
+    if isinstance(value, dict):
+        return {
+            key: _v9_truncate_review_json_strings(item, limit)
+            for key, item in value.items()
+        }
+    return value
+
+
+def _v9_semantic_review_tool_result(raw: str) -> tuple[Any, bool]:
+    """Recompute the V9 rendered result without calling the context builder."""
+
+    parsed = json.loads(raw)
+    if len(raw) <= _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT:
+        return parsed, False
+    per_string_limit = _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT
+    truncated = parsed
+    while per_string_limit > 256:
+        truncated = _v9_truncate_review_json_strings(
+            parsed,
+            per_string_limit,
+        )
+        if len(
+            json.dumps(truncated, ensure_ascii=False, default=str)
+        ) <= _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT:
+            return truncated, True
+        per_string_limit //= 2
+    truncated = _v9_truncate_review_json_strings(parsed, 256)
+    if len(
+        json.dumps(truncated, ensure_ascii=False, default=str)
+    ) <= _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT:
+        return truncated, True
+    top_level_keys = (
+        [str(key)[:120] for key in list(parsed)[:20]]
+        if isinstance(parsed, dict)
+        else []
+    )
+    return {
+        "truncated": True,
+        "original_characters": len(raw),
+        "top_level_keys": top_level_keys,
+        "summary": (
+            "Tool result exceeded the context limit after semantic field "
+            "truncation; inspect targeted evidence instead."
+        ),
+    }, True
+
+
+def _v9_recompute_review_anchor(
+    event: Any,
+    *,
+    artifact_store: ArtifactStore,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Rebuild one pinned anchor from its durable event and CAS bytes."""
+
+    if event.type != EventType.TOOL_SUCCEEDED:
+        raise RecoveryError("v9 review anchor is not ToolSucceeded")
+    try:
+        descriptor = Artifact.model_validate(
+            event.payload.get("result_artifact")
+        )
+    except ValueError as exc:
+        raise RecoveryError(
+            "v9 review anchor lacks a valid result artifact"
+        ) from exc
+    if (
+        event.payload.get("artifact_id") != descriptor.artifact_id
+        or event.payload.get("artifact_path") != descriptor.path
+    ):
+        raise RecoveryError(
+            "v9 review anchor conflicts with its CAS descriptor"
+        )
+    raw = artifact_store.read_bytes(descriptor).decode(
+        "utf-8",
+        errors="strict",
+    )
+    rendered_result, truncated = _v9_semantic_review_tool_result(raw)
+    payload = dict(event.payload)
+    payload["tool_result"] = rendered_result
+    included_characters = len(
+        json.dumps(rendered_result, ensure_ascii=False, default=str)
+    )
+    return (
+        {
+            "sequence": event.sequence,
+            "type": event.type.value,
+            "actor": event.actor,
+            "payload": payload,
+        },
+        {
+            "event_sequence": event.sequence,
+            "original_characters": len(raw),
+            "included_characters": included_characters,
+            "truncated": truncated,
+            "available": True,
+            "tool": payload.get("tool"),
+            "worktree_diff_hash": payload.get("worktree_diff_hash"),
+            "artifact_id": payload.get("artifact_id"),
+        },
+    )
+
+
+def _v9_review_evidence_context_contract(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    package: TaskPackage,
+    events: list[Any],
+    context_events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Independently recompute V9 current-diff review citation anchors."""
+
+    from patchloop.agent.context import REVIEW_EVIDENCE_SCHEMA
+    from patchloop.agent.phases import diff_bound_evidence
+
+    artifact_root = root / "artifacts"
+    artifact_store = ArtifactStore(artifact_root)
+    failed_sequences: list[int] = []
+    failure_reasons: list[dict[str, Any]] = []
+    active_sequences: list[int] = []
+    verified_anchor_sequences: list[int] = []
+    for context_event in context_events:
+        try:
+            request_valid, request_evidence = _request_evidence_payload(
+                context_event,
+                artifact_root=artifact_root,
+                expected_provider=manifest.model.provider,
+            )
+            if not request_valid or request_evidence is None:
+                raise RecoveryError("v9 request evidence is invalid")
+            rendered = _request_context(
+                request_evidence["request_body"],
+                allow_direct_context=manifest.model.provider in {"mock", "replay"},
+            )
+            parsed = json.loads(rendered)
+            if not isinstance(parsed, dict):
+                raise RecoveryError("v9 rendered context is not an object")
+            context_build = request_evidence.get("context_build")
+            visible = parsed.get("review_evidence")
+            build = (
+                context_build.get("review_evidence")
+                if isinstance(context_build, dict)
+                else None
+            )
+            if (
+                not isinstance(context_build, dict)
+                or context_build.get("schema_version")
+                != "context-build-evidence-v9"
+                or not isinstance(visible, dict)
+                or not isinstance(build, dict)
+                or visible.get("schema_version") != REVIEW_EVIDENCE_SCHEMA
+                or build.get("schema_version") != REVIEW_EVIDENCE_SCHEMA
+            ):
+                raise RecoveryError("v9 review evidence envelope is invalid")
+            checkpoint = parsed.get("checkpoint")
+            phase = Phase(parsed.get("phase"))
+            diff_hash = (
+                checkpoint.get("worktree_diff_hash")
+                if isinstance(checkpoint, dict)
+                else _EMPTY_DIFF_HASH
+            )
+            if not isinstance(diff_hash, str):
+                raise RecoveryError("v9 review evidence has no diff identity")
+            source_events = [
+                event
+                for event in events
+                if event.sequence < context_event.sequence
+            ]
+            readiness = diff_bound_evidence(
+                package.public,
+                source_events,
+                diff_hash,
+                phase=phase,
+                structured_review_required=True,
+                probe_available=bool(package.public.probe_profiles),
+            )
+            active = bool(
+                phase == Phase.REVIEW
+                and readiness.mutation_present
+                and not readiness.pending_checks
+                and readiness.review_event_sequence is not None
+            )
+            requested_check_sequences = (
+                list(readiness.current_diff_check_event_sequences)
+                if active
+                else []
+            )
+            requested_diff_sequence = (
+                readiness.review_event_sequence if active else None
+            )
+            requested_sequences = [
+                *requested_check_sequences,
+                *(
+                    [requested_diff_sequence]
+                    if requested_diff_sequence is not None
+                    else []
+                ),
+            ]
+            events_by_sequence = {
+                event.sequence: event for event in source_events
+            }
+            expected_pinned_results: list[dict[str, Any]] = []
+            expected_pinned_tool_results: list[dict[str, Any]] = []
+            complete_sequences: list[int] = []
+            incomplete_sequences: list[int] = []
+            for sequence in requested_sequences:
+                source_event = events_by_sequence.get(sequence)
+                if source_event is None:
+                    raise RecoveryError(
+                        "v9 review anchor durable event is unavailable"
+                    )
+                rendered_anchor, tool_anchor = (
+                    _v9_recompute_review_anchor(
+                        source_event,
+                        artifact_store=artifact_store,
+                    )
+                )
+                if tool_anchor.get("worktree_diff_hash") != diff_hash:
+                    raise RecoveryError(
+                        "v9 review anchor is not bound to the current diff"
+                    )
+                expected_pinned_results.append(rendered_anchor)
+                expected_pinned_tool_results.append(tool_anchor)
+                if (
+                    tool_anchor["available"] is True
+                    and tool_anchor["truncated"] is False
+                ):
+                    complete_sequences.append(sequence)
+                else:
+                    incomplete_sequences.append(sequence)
+            check_sequences = [
+                sequence
+                for sequence in requested_check_sequences
+                if sequence in complete_sequences
+            ]
+            diff_sequence = (
+                requested_diff_sequence
+                if requested_diff_sequence in complete_sequences
+                else None
+            )
+            citable = [
+                *check_sequences,
+                *([diff_sequence] if diff_sequence is not None else []),
+            ]
+            visible_fields = {
+                "schema_version": REVIEW_EVIDENCE_SCHEMA,
+                "pinning_active": active,
+                "worktree_diff_hash": diff_hash,
+                "mutation_event_sequence": readiness.mutation_event_sequence,
+                "passing_check_event_sequences": check_sequences,
+                "source_get_diff_sequence": diff_sequence,
+                "citable_event_sequences": citable,
+                "incomplete_event_sequences": incomplete_sequences,
+            }
+            if set(visible) != {
+                *visible_fields,
+                "pinned_results",
+                "citation_rule",
+            } or set(build) != {
+                *visible_fields,
+                "pinned_tool_results",
+            }:
+                raise RecoveryError(
+                    "v9 review evidence has unknown or missing fields"
+                )
+            if any(visible.get(key) != value for key, value in visible_fields.items()):
+                raise RecoveryError("v9 visible review anchors failed recomputation")
+            if any(build.get(key) != value for key, value in visible_fields.items()):
+                raise RecoveryError("v9 review build anchors failed recomputation")
+            mirror_fields = {
+                "review_evidence_pinning_active": active,
+                "review_evidence_worktree_diff_hash": diff_hash,
+                "review_evidence_mutation_event_sequence": (
+                    readiness.mutation_event_sequence
+                ),
+                "review_evidence_passing_check_event_sequences": (
+                    check_sequences
+                ),
+                "review_evidence_source_get_diff_sequence": diff_sequence,
+                "review_evidence_citable_event_sequences": citable,
+                "review_evidence_incomplete_event_sequences": (
+                    incomplete_sequences
+                ),
+            }
+            if any(
+                context_event.payload.get(key) != value
+                for key, value in mirror_fields.items()
+            ):
+                raise RecoveryError("v9 review evidence mirrors are invalid")
+            pinned_results = visible.get("pinned_results")
+            pinned_tool_results = build.get("pinned_tool_results")
+            if (
+                pinned_results != expected_pinned_results
+                or pinned_tool_results != expected_pinned_tool_results
+            ):
+                raise RecoveryError(
+                    "v9 pinned review results failed CAS recomputation"
+                )
+            recent_events = parsed.get("recent_events")
+            recent_sequences = (
+                [
+                    item.get("sequence")
+                    for item in recent_events
+                    if isinstance(item, dict)
+                    and type(item.get("sequence")) is int
+                ]
+                if isinstance(recent_events, list)
+                else []
+            )
+            pinned_sequences = [
+                item["sequence"] for item in expected_pinned_results
+            ]
+            if (
+                not isinstance(recent_events, list)
+                or len(recent_sequences) != len(recent_events)
+                or len(pinned_sequences) != len(set(pinned_sequences))
+                or set(pinned_sequences).intersection(recent_sequences)
+            ):
+                raise RecoveryError(
+                    "v9 review anchors are duplicated in recent events"
+                )
+            if visible.get("citation_rule") != (
+                "review_task may cite only citable_event_sequences; "
+                "investigation_ledger source_call_sequence values are not "
+                "review citations"
+            ):
+                raise RecoveryError("v9 review citation rule is invalid")
+            presented = context_build.get("tool_results")
+            if not isinstance(presented, list):
+                raise RecoveryError("v9 review tool results are invalid")
+            for expected in expected_pinned_tool_results:
+                matches = [
+                    item
+                    for item in presented
+                    if isinstance(item, dict)
+                    and item.get("event_sequence")
+                    == expected["event_sequence"]
+                ]
+                if matches != [expected]:
+                    raise RecoveryError(
+                        "v9 review anchor presentation failed CAS recomputation"
+                    )
+            if active:
+                active_sequences.append(context_event.sequence)
+                verified_anchor_sequences.extend(citable)
+        except (
+            KeyError,
+            OSError,
+            RecoveryError,
+            TypeError,
+            ValueError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as exc:
+            failed_sequences.append(context_event.sequence)
+            failure_reasons.append(
+                {"sequence": context_event.sequence, "reason": str(exc)}
+            )
+    return bool(context_events) and not failed_sequences, {
+        "context_count": len(context_events),
+        "verified_context_count": len(context_events) - len(failed_sequences),
+        "active_context_sequences": active_sequences,
+        "verified_anchor_sequences": sorted(set(verified_anchor_sequences)),
+        "failed_context_sequences": failed_sequences,
+        "failure_reasons": failure_reasons,
+    }
+
+
+def _v9_review_rejection_terminal_contract(
+    events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Verify the three-rejection stop and mutation-epoch reset contract."""
+
+    mutations = sorted(
+        (
+            event
+            for event in events
+            if event.type == EventType.PATCH_APPLIED
+        ),
+        key=lambda event: event.sequence,
+    )
+    terminal_rejection_sequences: list[int] = []
+    failed_terminal_rejection_sequences: list[int] = []
+    reset_mutation_sequences: list[int] = []
+    forbidden_after_terminal: dict[int, list[int]] = {}
+    for index, mutation in enumerate(mutations):
+        next_mutation_sequence = (
+            mutations[index + 1].sequence
+            if index + 1 < len(mutations)
+            else None
+        )
+        epoch_failures = [
+            event
+            for event in events
+            if event.sequence > mutation.sequence
+            and (
+                next_mutation_sequence is None
+                or event.sequence < next_mutation_sequence
+            )
+            and event.type == EventType.TOOL_FAILED
+            and event.payload.get("tool") == "review_task"
+        ]
+        if index > 0:
+            previous_mutation = mutations[index - 1]
+            previous_failures = [
+                event
+                for event in events
+                if previous_mutation.sequence < event.sequence
+                < mutation.sequence
+                and event.type == EventType.TOOL_FAILED
+                and event.payload.get("tool") == "review_task"
+            ]
+            if previous_failures:
+                reset_mutation_sequences.append(mutation.sequence)
+        if len(epoch_failures) < 3:
+            continue
+        third = epoch_failures[2]
+        terminal_rejection_sequences.append(third.sequence)
+        later_forbidden = [
+            event.sequence
+            for event in events
+            if event.sequence > third.sequence
+            and (
+                event.type
+                in {
+                    EventType.CONTEXT_BUILT,
+                    EventType.MEMORY_RETRIEVED,
+                    EventType.MODEL_CALLED,
+                    EventType.TOOL_CALLED,
+                    EventType.TOOL_REPLAYED,
+                    EventType.TOOL_SUCCEEDED,
+                    EventType.TOOL_FAILED,
+                    EventType.TOOL_ADMISSION_BLOCKED,
+                    EventType.PATCH_PREPARED,
+                    EventType.PATCH_APPLIED,
+                    EventType.CHECK_STARTED,
+                    EventType.CHECK_FINISHED,
+                    EventType.REVIEW_RECORDED,
+                    EventType.SUBMISSION_ATTEMPTED,
+                    EventType.SUBMISSION_REJECTED,
+                    EventType.SUBMISSION_ACCEPTED,
+                }
+            )
+        ]
+        run_failed_after = [
+            event
+            for event in events
+            if event.sequence > third.sequence
+            and event.type == EventType.RUN_FAILED
+        ]
+        terminal_failure_bound = bool(
+            len(run_failed_after) == 1
+            and run_failed_after[0].payload.get("error_type")
+            == "SubmissionProtocolError"
+            and run_failed_after[0].payload.get("error_code")
+            == "SUBMISSION_PROTOCOL_ERROR"
+            and run_failed_after[0].payload.get("message")
+            == "structured review evidence was rejected three times"
+        )
+        terminal_ok = bool(
+            not later_forbidden
+            and terminal_failure_bound
+            and not any(
+                event.sequence > third.sequence
+                and event.type == EventType.RUN_COMPLETED
+                for event in events
+            )
+        )
+        if not terminal_ok:
+            failed_terminal_rejection_sequences.append(third.sequence)
+            forbidden_after_terminal[third.sequence] = later_forbidden
+    return not failed_terminal_rejection_sequences, {
+        "mutation_epoch_count": len(mutations),
+        "terminal_rejection_count": len(terminal_rejection_sequences),
+        "terminal_rejection_sequences": terminal_rejection_sequences,
+        "verified_terminal_rejection_count": (
+            len(terminal_rejection_sequences)
+            - len(failed_terminal_rejection_sequences)
+        ),
+        "failed_terminal_rejection_sequences": (
+            failed_terminal_rejection_sequences
+        ),
+        "forbidden_after_terminal_sequences": forbidden_after_terminal,
+        "reset_mutation_sequences": reset_mutation_sequences,
+    }
+
+
 def _v4_no_progress_streak(events: list[Any]) -> int:
     from patchloop.agent.investigation import (
         INVESTIGATION_LOOP_SCHEMA,
@@ -1901,6 +2438,7 @@ def _v5_expected_tail_policy(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         corrective_tool_calls = 1
         corrective_model_calls = 4
@@ -2327,6 +2865,10 @@ def _v8_saturation_context_evidence(
     """Verify v8 saturation visibility without replaying the context builder."""
 
     artifact_root = root / "artifacts"
+    expected_context_build_schema = {
+        "phase-evidence-v8": "context-build-evidence-v8",
+        "phase-evidence-v9": "context-build-evidence-v9",
+    }.get(manifest.context_policy_version)
     failed_sequences: list[int] = []
     failed_reasons: dict[int, str] = {}
     verified_sequences: list[int] = []
@@ -2353,10 +2895,11 @@ def _v8_saturation_context_evidence(
             )
             context_build = request_evidence.get("context_build")
             if (
-                not isinstance(rendered, str)
+                expected_context_build_schema is None
+                or not isinstance(rendered, str)
                 or not isinstance(context_build, dict)
                 or context_build.get("schema_version")
-                != "context-build-evidence-v8"
+                != expected_context_build_schema
             ):
                 raise RecoveryError("v8 context build evidence is invalid")
             parsed_context = json.loads(rendered)
@@ -2615,6 +3158,7 @@ def _v4_investigation_lifecycle_evidence(
             "phase-evidence-v6",
             "phase-evidence-v7",
             "phase-evidence-v8",
+            "phase-evidence-v9",
         }
         else INVESTIGATION_POLICY_VERSION
     )
@@ -2626,6 +3170,7 @@ def _v4_investigation_lifecycle_evidence(
             "phase-evidence-v6",
             "phase-evidence-v7",
             "phase-evidence-v8",
+            "phase-evidence-v9",
         }
         else TOOL_ADMISSION_SCHEMA
     )
@@ -2930,7 +3475,8 @@ def _v4_investigation_lifecycle_evidence(
             manifest=manifest,
             projection_stage="post_generation",
         )["nominal_reserve"]
-        if manifest.context_policy_version == "phase-evidence-v8"
+        if manifest.context_policy_version
+        in {"phase-evidence-v8", "phase-evidence-v9"}
         else nominal_tail_reserve(
             package.public,
             context_policy_version=manifest.context_policy_version,
@@ -2963,6 +3509,7 @@ def _v4_investigation_lifecycle_evidence(
             "phase-evidence-v6",
             "phase-evidence-v7",
             "phase-evidence-v8",
+            "phase-evidence-v9",
         }:
             calculated_tail_policy = _v5_expected_tail_policy(
                 task=package.public,
@@ -2991,12 +3538,13 @@ def _v4_investigation_lifecycle_evidence(
         )
         saturation_threshold = (
             _V8_EVIDENCE_SATURATION_THRESHOLD
-            if manifest.context_policy_version == "phase-evidence-v8"
+            if manifest.context_policy_version
+            in {"phase-evidence-v8", "phase-evidence-v9"}
             else 6
         )
         evidence_saturated = bool(
             manifest.context_policy_version
-            in {"phase-evidence-v7", "phase-evidence-v8"}
+            in {"phase-evidence-v7", "phase-evidence-v8", "phase-evidence-v9"}
             and tool in {"read_file", "search_files"}
             and semantic_replay_count >= saturation_threshold
         )
@@ -3595,6 +4143,7 @@ def _request_runtime_contract_valid(
         SYSTEM_PROMPT_V3,
         SYSTEM_PROMPT_V4,
         SYSTEM_PROMPT_V5,
+        SYSTEM_PROMPT_V6,
     )
     from patchloop.agent.tools import (
         TOOL_SCHEMAS_V1,
@@ -3635,6 +4184,12 @@ def _request_runtime_contract_valid(
         in {"phase-evidence-v7", "phase-evidence-v8"}
     ):
         system_prompt = SYSTEM_PROMPT_V5
+        tools = TOOL_SCHEMAS_V4
+    elif (
+        manifest.tool_schema_version == "v4"
+        and manifest.context_policy_version == "phase-evidence-v9"
+    ):
+        system_prompt = SYSTEM_PROMPT_V6
         tools = TOOL_SCHEMAS_V4
     else:
         return False
@@ -3719,6 +4274,7 @@ def _generation_block_common_valid(
                 "phase-evidence-v6",
                 "phase-evidence-v7",
                 "phase-evidence-v8",
+                "phase-evidence-v9",
             }
             else None
         ),
@@ -4078,7 +4634,10 @@ def _rejected_patch_retry_context_evidence(
             manifest=manifest,
             events=events,
         )
-    if manifest.context_policy_version == "phase-evidence-v8":
+    if manifest.context_policy_version in {
+        "phase-evidence-v8",
+        "phase-evidence-v9",
+    }:
         return _v7_rejected_patch_retry_context_evidence(
             root=root,
             manifest=manifest,
@@ -4228,6 +4787,7 @@ def _rejected_patch_retry_context_evidence(
                     "phase-evidence-v6",
                     "phase-evidence-v7",
                     "phase-evidence-v8",
+                    "phase-evidence-v9",
                 }
                 else None
             ),
@@ -4321,6 +4881,7 @@ def _rejected_patch_retry_context_evidence(
                             "phase-evidence-v6",
                             "phase-evidence-v7",
                             "phase-evidence-v8",
+                            "phase-evidence-v9",
                         }
                         else None
                     ),
@@ -4964,6 +5525,7 @@ def _self_validation_lifecycle_evidence(
 
     artifact_root = (root / "artifacts").resolve()
     review_v2 = manifest.tool_schema_version == "v4"
+    review_v9 = manifest.context_policy_version == "phase-evidence-v9"
     review_contract = manifest.public_review_contract
     authoritative_requirements = {
         item.requirement_id: item.source_excerpt
@@ -5050,6 +5612,118 @@ def _self_validation_lifecycle_evidence(
                 and item.get("truncated") is False
             )
         }
+
+    def v9_failed_review_input_shape_valid(arguments: Any) -> bool:
+        """Require citation failures to follow a structurally valid review."""
+
+        if not isinstance(arguments, dict) or set(arguments) != {
+            "requirements",
+            "targeted_validation",
+            "residual_risks",
+        }:
+            return False
+        requirements = arguments["requirements"]
+        targeted = arguments["targeted_validation"]
+        residual_risks = arguments["residual_risks"]
+        if (
+            not isinstance(requirements, list)
+            or not 1 <= len(requirements) <= 20
+            or not isinstance(targeted, list)
+            or not 1 <= len(targeted) <= 20
+            or not isinstance(residual_risks, list)
+            or len(residual_risks) > 20
+        ):
+            return False
+        observed_requirement_ids: list[str] = []
+        for item in requirements:
+            if not isinstance(item, dict) or set(item) != {
+                "requirement_id",
+                "status",
+                "evidence_event_sequences",
+                "notes",
+            }:
+                return False
+            requirement_id = item.get("requirement_id")
+            sequences = item.get("evidence_event_sequences")
+            notes = item.get("notes")
+            if (
+                not isinstance(requirement_id, str)
+                or requirement_id not in authoritative_requirements
+                or requirement_id in observed_requirement_ids
+                or item.get("status")
+                not in {
+                    "verified",
+                    "partially_verified",
+                    "unverified",
+                }
+                or not isinstance(sequences, list)
+                or len(sequences) > 20
+                or any(type(sequence) is not int for sequence in sequences)
+                or len(sequences) != len(set(sequences))
+                or (
+                    item.get("status") != "unverified"
+                    and not sequences
+                )
+                or not isinstance(notes, str)
+                or not notes.strip()
+                or len(notes) > 2000
+            ):
+                return False
+            observed_requirement_ids.append(requirement_id)
+        if set(observed_requirement_ids) != set(authoritative_requirements):
+            return False
+        seen_targeted_sequences: set[int] = set()
+        for item in targeted:
+            if not isinstance(item, dict) or set(item) != {
+                "kind",
+                "event_sequence",
+                "outcome",
+                "notes",
+            }:
+                return False
+            sequence = item.get("event_sequence")
+            notes = item.get("notes")
+            if (
+                item.get("kind")
+                not in {
+                    "probe",
+                    "registered_check",
+                    "repository_evidence",
+                }
+                or type(sequence) is not int
+                or sequence in seen_targeted_sequences
+                or item.get("outcome")
+                not in {"passed", "failed", "inconclusive"}
+                or not isinstance(notes, str)
+                or not notes.strip()
+                or len(notes) > 2000
+            ):
+                return False
+            seen_targeted_sequences.add(sequence)
+        return all(
+            isinstance(item, dict)
+            and set(item) == {"requirement_ids", "risk", "mitigation"}
+            and isinstance(item.get("requirement_ids"), list)
+            and bool(item["requirement_ids"])
+            and len(item["requirement_ids"]) <= 20
+            and all(
+                isinstance(requirement_id, str)
+                for requirement_id in item["requirement_ids"]
+            )
+            and len(item["requirement_ids"])
+            == len(set(item["requirement_ids"]))
+            and all(
+                requirement_id in authoritative_requirements
+                for requirement_id in item["requirement_ids"]
+            )
+            and isinstance(item.get("risk"), str)
+            and bool(item["risk"].strip())
+            and len(item["risk"]) <= 1000
+            and isinstance(item.get("mitigation"), str)
+            and bool(item["mitigation"].strip())
+            and len(item["mitigation"]) <= 1000
+            for item in residual_risks
+        )
 
     for call in calls:
         tool = str(call.payload.get("tool"))
@@ -5205,12 +5879,295 @@ def _self_validation_lifecycle_evidence(
             failed_call_sequences.append(call.sequence)
             continue
         if outcome.type == EventType.TOOL_FAILED:
+            v9_failed_review_ok = True
+            if review_v9 and tool == "review_task":
+                execution_context = input_payload.get(
+                    "execution_context"
+                )
+                request_artifact_id = (
+                    execution_context.get("request_artifact_id")
+                    if isinstance(execution_context, dict)
+                    else None
+                )
+                matching_contexts = [
+                    event
+                    for event in events
+                    if event.type == EventType.CONTEXT_BUILT
+                    and event.payload.get("artifact_id")
+                    == request_artifact_id
+                    and event.sequence < call.sequence
+                ]
+                context_event = (
+                    matching_contexts[0]
+                    if len(matching_contexts) == 1
+                    else None
+                )
+                request_valid = False
+                request_evidence = None
+                if context_event is not None:
+                    request_valid, request_evidence = (
+                        _request_evidence_payload(
+                            context_event,
+                            artifact_root=artifact_root,
+                            expected_provider=manifest.model.provider,
+                        )
+                    )
+                context_build = (
+                    request_evidence.get("context_build")
+                    if isinstance(request_evidence, dict)
+                    else None
+                )
+                request_review_evidence = (
+                    context_build.get("review_evidence")
+                    if isinstance(context_build, dict)
+                    else None
+                )
+                presented = (
+                    execution_context.get("presented_tool_results")
+                    if isinstance(execution_context, dict)
+                    else None
+                )
+                matching_model_calls = [
+                    event
+                    for event in events
+                    if event.type == EventType.MODEL_CALLED
+                    and event.payload.get("request_artifact_id")
+                    == request_artifact_id
+                    and context_event is not None
+                    and context_event.sequence
+                    < event.sequence
+                    < call.sequence
+                ]
+                request_binding_ok = bool(
+                    isinstance(execution_context, dict)
+                    and set(execution_context)
+                    == {
+                        "request_artifact_id",
+                        "phase",
+                        "presented_tool_results",
+                        "review_evidence",
+                    }
+                    and execution_context.get("phase") == "REVIEW"
+                    and isinstance(request_artifact_id, str)
+                    and call.payload.get("request_artifact_id")
+                    == request_artifact_id
+                    and call.payload.get("request_phase") == "REVIEW"
+                    and request_valid
+                    and isinstance(context_build, dict)
+                    and context_build.get("tool_results") == presented
+                    and isinstance(request_review_evidence, dict)
+                    and execution_context.get("review_evidence")
+                    == request_review_evidence
+                    and _request_runtime_contract_valid(
+                        request_evidence.get("request_body"),
+                        manifest,
+                    )
+                    and len(matching_model_calls) == 1
+                )
+                rejection_details = result_payload.get("error_details")
+                expected_citable = (
+                    request_review_evidence.get(
+                        "citable_event_sequences"
+                    )
+                    if isinstance(request_review_evidence, dict)
+                    else None
+                )
+                expected_passing = (
+                    request_review_evidence.get(
+                        "passing_check_event_sequences"
+                    )
+                    if isinstance(request_review_evidence, dict)
+                    else None
+                )
+                expected_diff = (
+                    request_review_evidence.get(
+                        "source_get_diff_sequence"
+                    )
+                    if isinstance(request_review_evidence, dict)
+                    else None
+                )
+                expected_mutation = (
+                    request_review_evidence.get(
+                        "mutation_event_sequence"
+                    )
+                    if isinstance(request_review_evidence, dict)
+                    else None
+                )
+                current_diff_hash = call.payload.get(
+                    "worktree_diff_hash"
+                )
+                mutation_event = (
+                    events_by_sequence.get(expected_mutation)
+                    if type(expected_mutation) is int
+                    else None
+                )
+                diff_event = (
+                    events_by_sequence.get(expected_diff)
+                    if type(expected_diff) is int
+                    else None
+                )
+                epoch_binding_ok = bool(
+                    isinstance(current_diff_hash, str)
+                    and isinstance(request_review_evidence, dict)
+                    and request_review_evidence.get("pinning_active")
+                    is True
+                    and request_review_evidence.get(
+                        "worktree_diff_hash"
+                    )
+                    == current_diff_hash
+                    and mutation_event is not None
+                    and mutation_event.type == EventType.PATCH_APPLIED
+                    and mutation_event.payload.get("worktree_diff_hash")
+                    == current_diff_hash
+                    and diff_event is not None
+                    and diff_event.type == EventType.TOOL_SUCCEEDED
+                    and diff_event.payload.get("tool") == "get_diff"
+                    and diff_event.payload.get("worktree_diff_hash")
+                    == current_diff_hash
+                    and context_event is not None
+                    and mutation_event.sequence < diff_event.sequence
+                    < context_event.sequence < call.sequence
+                    and not any(
+                        event.type == EventType.PATCH_APPLIED
+                        and mutation_event.sequence
+                        < event.sequence
+                        < call.sequence
+                        for event in events
+                    )
+                )
+                raw_requirements = (
+                    arguments.get("requirements")
+                    if isinstance(arguments, dict)
+                    else None
+                )
+                raw_targeted_validation = (
+                    arguments.get("targeted_validation")
+                    if isinstance(arguments, dict)
+                    else None
+                )
+                citation_sequences: set[int] = set()
+                for requirement in (
+                    raw_requirements
+                    if isinstance(raw_requirements, list)
+                    else []
+                ):
+                    raw_sequences = (
+                        requirement.get("evidence_event_sequences")
+                        if isinstance(requirement, dict)
+                        else None
+                    )
+                    citation_sequences.update(
+                        sequence
+                        for sequence in (
+                            raw_sequences
+                            if isinstance(raw_sequences, list)
+                            else []
+                        )
+                        if type(sequence) is int
+                    )
+                citation_sequences.update(
+                    item["event_sequence"]
+                    for item in (
+                        raw_targeted_validation
+                        if isinstance(raw_targeted_validation, list)
+                        else []
+                    )
+                    if isinstance(item, dict)
+                    and type(item.get("event_sequence")) is int
+                )
+                sequence_failure_reasons = {
+                    "invalid_event_sequence",
+                    "evidence_precedes_current_mutation",
+                    "evidence_event_missing",
+                    "evidence_not_tool_succeeded",
+                    "evidence_not_current_diff",
+                    "evidence_not_presented",
+                    "evidence_not_citable",
+                }
+                reason = (
+                    rejection_details.get("reason")
+                    if isinstance(rejection_details, dict)
+                    else None
+                )
+                expected_detail_keys = {
+                    "schema_version",
+                    "stage",
+                    "reason",
+                    "citable_event_sequences",
+                    "passing_validation_event_sequences",
+                    "source_get_diff_sequence",
+                    *(
+                        {"invalid_event_sequence"}
+                        if reason in sequence_failure_reasons
+                        else set()
+                    ),
+                }
+                rejection_binding_ok = bool(
+                    v9_failed_review_input_shape_valid(arguments)
+                    and isinstance(rejection_details, dict)
+                    and set(rejection_details) == expected_detail_keys
+                    and rejection_details.get("schema_version")
+                    == "review-citation-error-v1"
+                    and rejection_details.get("stage") == "review"
+                    and reason
+                    in {
+                        *sequence_failure_reasons,
+                        "targeted_validation_missing",
+                    }
+                    and rejection_details.get(
+                        "citable_event_sequences"
+                    )
+                    == (
+                        sorted(expected_citable)
+                        if isinstance(expected_citable, list)
+                        and all(
+                            type(sequence) is int
+                            for sequence in expected_citable
+                        )
+                        else None
+                    )
+                    and rejection_details.get(
+                        "passing_validation_event_sequences"
+                    )
+                    == (
+                        sorted(expected_passing)
+                        if isinstance(expected_passing, list)
+                        and all(
+                            type(sequence) is int
+                            for sequence in expected_passing
+                        )
+                        else None
+                    )
+                    and rejection_details.get(
+                        "source_get_diff_sequence"
+                    )
+                    == expected_diff
+                    and (
+                        reason == "targeted_validation_missing"
+                        or rejection_details.get(
+                            "invalid_event_sequence"
+                        )
+                        in citation_sequences
+                    )
+                )
+                v9_failed_review_ok = bool(
+                    request_binding_ok
+                    and epoch_binding_ok
+                    and rejection_binding_ok
+                )
             failure_ok = bool(
                 result_payload.get("tool") == tool
                 and result_payload.get("status")
                 == outcome.payload.get("status")
                 and outcome.payload.get("status")
                 in {"rejected", "failed"}
+                and result_payload.get("error_code")
+                == outcome.payload.get("error_code")
+                and result_payload.get("error_message")
+                == outcome.payload.get("error_message")
+                and result_payload.get("error_details")
+                == outcome.payload.get("error_details")
+                and v9_failed_review_ok
             )
             if not failure_ok:
                 failed_call_sequences.append(call.sequence)
@@ -5317,6 +6274,12 @@ def _self_validation_lifecycle_evidence(
         execution_context = input_payload.get(
             "execution_context"
         )
+        expected_execution_context_keys = {
+            "request_artifact_id",
+            "phase",
+            "presented_tool_results",
+            *({"review_evidence"} if review_v9 else set()),
+        }
         request_artifact_id = (
             execution_context.get("request_artifact_id")
             if isinstance(execution_context, dict)
@@ -5359,14 +6322,90 @@ def _self_validation_lifecycle_evidence(
             and context_event is not None
             and context_event.sequence < event.sequence < call.sequence
         ]
+        request_context_build = (
+            request_evidence.get("context_build")
+            if isinstance(request_evidence, dict)
+            else None
+        )
+        request_review_evidence = (
+            request_context_build.get("review_evidence")
+            if isinstance(request_context_build, dict)
+            else None
+        )
+        execution_review_evidence = (
+            execution_context.get("review_evidence")
+            if isinstance(execution_context, dict)
+            else None
+        )
+        v9_citable_sequences = (
+            request_review_evidence.get("citable_event_sequences")
+            if isinstance(request_review_evidence, dict)
+            else None
+        )
+        v9_passing_check_sequences = (
+            request_review_evidence.get(
+                "passing_check_event_sequences"
+            )
+            if isinstance(request_review_evidence, dict)
+            else None
+        )
+        v9_source_get_diff_sequence = (
+            request_review_evidence.get("source_get_diff_sequence")
+            if isinstance(request_review_evidence, dict)
+            else None
+        )
+        v9_citable_sequence_set = {
+            sequence
+            for sequence in (
+                v9_citable_sequences
+                if isinstance(v9_citable_sequences, list)
+                else []
+            )
+            if type(sequence) is int
+        }
+        v9_passing_check_sequence_set = {
+            sequence
+            for sequence in (
+                v9_passing_check_sequences
+                if isinstance(v9_passing_check_sequences, list)
+                else []
+            )
+            if type(sequence) is int
+        }
+        v9_review_context_ok = bool(
+            not review_v9
+            or (
+                isinstance(request_review_evidence, dict)
+                and execution_review_evidence
+                == request_review_evidence
+                and isinstance(v9_citable_sequences, list)
+                and all(
+                    type(sequence) is int
+                    for sequence in v9_citable_sequences
+                )
+                and len(v9_citable_sequences)
+                == len(set(v9_citable_sequences))
+                and isinstance(v9_passing_check_sequences, list)
+                and all(
+                    type(sequence) is int
+                    for sequence in v9_passing_check_sequences
+                )
+                and set(v9_passing_check_sequences).issubset(
+                    v9_citable_sequence_set
+                )
+                and (
+                    v9_source_get_diff_sequence is None
+                    or (
+                        type(v9_source_get_diff_sequence) is int
+                        and v9_source_get_diff_sequence
+                        in v9_citable_sequence_set
+                    )
+                )
+            )
+        )
         request_context_ok = bool(
             isinstance(execution_context, dict)
-            and set(execution_context)
-            == {
-                "request_artifact_id",
-                "phase",
-                "presented_tool_results",
-            }
+            and set(execution_context) == expected_execution_context_keys
             and execution_context.get("phase") == "REVIEW"
             and isinstance(request_artifact_id, str)
             and call.payload.get("request_artifact_id")
@@ -5374,10 +6413,9 @@ def _self_validation_lifecycle_evidence(
             and call.payload.get("request_phase") == "REVIEW"
             and request_valid
             and isinstance(request_evidence, dict)
-            and request_evidence.get("context_build", {}).get(
-                "tool_results"
-            )
-            == presented
+            and isinstance(request_context_build, dict)
+            and request_context_build.get("tool_results") == presented
+            and v9_review_context_ok
             and _request_runtime_contract_valid(
                 request_evidence.get("request_body"),
                 manifest,
@@ -5420,6 +6458,11 @@ def _self_validation_lifecycle_evidence(
             and source_get_diff.payload.get("tool") == "get_diff"
             and source_get_diff.payload.get("worktree_diff_hash")
             == worktree_diff_hash
+            and (
+                not review_v9
+                or source_get_diff.sequence
+                == v9_source_get_diff_sequence
+            )
             and mutation.sequence < source_get_diff.sequence
             < call.sequence < outcome.sequence
             and source_get_diff.sequence in presented_sequences
@@ -5552,6 +6595,10 @@ def _self_validation_lifecycle_evidence(
                         and type(sequence) is int
                         and sequence > mutation.sequence
                         and sequence in presented_sequences
+                        and (
+                            not review_v9
+                            or sequence in v9_citable_sequence_set
+                        )
                         and cited is not None
                         and cited.type
                         == EventType.TOOL_SUCCEEDED
@@ -5648,6 +6695,25 @@ def _self_validation_lifecycle_evidence(
                     and mutation is not None
                     and sequence > mutation.sequence
                     and sequence in presented_sequences
+                    and (
+                        not review_v9
+                        or (
+                            sequence in v9_citable_sequence_set
+                            and (
+                                (
+                                    kind
+                                    in {"probe", "registered_check"}
+                                    and sequence
+                                    in v9_passing_check_sequence_set
+                                )
+                                or (
+                                    kind == "repository_evidence"
+                                    and sequence
+                                    == v9_source_get_diff_sequence
+                                )
+                            )
+                        )
+                    )
                     and cited is not None
                     and cited.type == EventType.TOOL_SUCCEEDED
                     and cited.payload.get("tool")
@@ -6053,6 +7119,11 @@ def _self_validation_lifecycle_evidence(
             and manifest.context_policy_version == "phase-evidence-v8"
             and manifest.public_review_contract is not None
         )
+        or (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v9"
+            and manifest.public_review_contract is not None
+        )
     )
     passed = bool(
         version_pair_valid
@@ -6236,6 +7307,7 @@ def calculate_source_evidence_hash(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         _, _, _, investigation_artifacts, _ = _artifact_evidence(
             root=run_root,
@@ -6266,6 +7338,7 @@ def calculate_source_evidence_hash(
             "phase-evidence-v6": _SOURCE_EVIDENCE_SCHEMA_VERSION_V6,
             "phase-evidence-v7": _SOURCE_EVIDENCE_SCHEMA_VERSION_V7,
             "phase-evidence-v8": _SOURCE_EVIDENCE_SCHEMA_VERSION_V8,
+            "phase-evidence-v9": _SOURCE_EVIDENCE_SCHEMA_VERSION_V9,
         }[manifest.context_policy_version]
         snapshot["investigation_artifacts"] = investigation_artifacts
         snapshot[
@@ -6723,6 +7796,7 @@ def qualify_run(
                             "phase-evidence-v6",
                             "phase-evidence-v7",
                             "phase-evidence-v8",
+                            "phase-evidence-v9",
                         }
                         else None
                     ),
@@ -6913,6 +7987,12 @@ def qualify_run(
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
             )
             or (
+                manifest.experiment.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+                and manifest.budget
+                == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
+            )
+            or (
                 (
                     manifest.experiment.purpose
                     in {
@@ -7009,6 +8089,9 @@ def qualify_run(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT: {
             DatasetRole.MEMORY_DEVELOPMENT
         },
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT: {
+            DatasetRole.MEMORY_DEVELOPMENT
+        },
         ExperimentPurpose.CORE: {
             DatasetRole.CORE_SAME_REPO,
             DatasetRole.CORE_CROSS_REPO,
@@ -7079,6 +8162,7 @@ def qualify_run(
         in {
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
         }
     ):
         from patchloop.evals.runner import (
@@ -7171,6 +8255,7 @@ def qualify_run(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         (
             investigation_artifact_integrity,
@@ -7316,6 +8401,7 @@ def qualify_run(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         artifact_details[
             "investigation_artifact_count"
@@ -7332,6 +8418,7 @@ def qualify_run(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         (
             rejected_patch_retry_context_ok,
@@ -7422,6 +8509,7 @@ def qualify_run(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         (
             investigation_evidence_ok,
@@ -7453,7 +8541,10 @@ def qualify_run(
             investigation_lifecycle_ok,
             **investigation_lifecycle_details,
         )
-        if manifest.context_policy_version == "phase-evidence-v8":
+        if manifest.context_policy_version in {
+            "phase-evidence-v8",
+            "phase-evidence-v9",
+        }:
             (
                 saturation_context_ok,
                 saturation_context_details,
@@ -7469,6 +8560,31 @@ def qualify_run(
                 "saturation_context_contract",
                 saturation_context_ok,
                 **saturation_context_details,
+            )
+        if manifest.context_policy_version == "phase-evidence-v9":
+            (
+                review_evidence_context_ok,
+                review_evidence_context_details,
+            ) = _v9_review_evidence_context_contract(
+                root=run_root,
+                manifest=manifest,
+                package=package,
+                events=events,
+                context_events=context_events,
+            )
+            add(
+                "review_evidence_context_contract",
+                review_evidence_context_ok,
+                **review_evidence_context_details,
+            )
+            (
+                review_rejection_terminal_ok,
+                review_rejection_terminal_details,
+            ) = _v9_review_rejection_terminal_contract(events)
+            add(
+                "review_rejection_terminal_contract",
+                review_rejection_terminal_ok,
+                **review_rejection_terminal_details,
             )
     if manifest.tool_schema_version == "v4":
         (
@@ -7505,6 +8621,7 @@ def qualify_run(
             "phase-evidence-v6",
             "phase-evidence-v7",
             "phase-evidence-v8",
+            "phase-evidence-v9",
         }
         and len(generation_blocked_events) == 1
         and context_events
@@ -7591,6 +8708,7 @@ def qualify_run(
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
                 ExperimentPurpose.CORE,
             }
             or (
@@ -7659,10 +8777,11 @@ def qualify_run(
     if manifest.context_policy_version in {
         "phase-evidence-v3",
         "phase-evidence-v4",
-        "phase-evidence-v5",
-        "phase-evidence-v6",
-        "phase-evidence-v7",
-        "phase-evidence-v8",
+                        "phase-evidence-v5",
+                        "phase-evidence-v6",
+                        "phase-evidence-v7",
+                        "phase-evidence-v8",
+                        "phase-evidence-v9",
     }:
         prompt_telemetry_details.update(
             {
@@ -7929,6 +9048,7 @@ def qualify_run(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         trace_check_ids.add("rejected_patch_retry_context")
     if manifest.context_policy_version in {
@@ -7937,11 +9057,18 @@ def qualify_run(
         "phase-evidence-v6",
         "phase-evidence-v7",
         "phase-evidence-v8",
+        "phase-evidence-v9",
     }:
         trace_check_ids.add("investigation_evidence")
         trace_check_ids.add("investigation_lifecycle")
-    if manifest.context_policy_version == "phase-evidence-v8":
+    if manifest.context_policy_version in {
+        "phase-evidence-v8",
+        "phase-evidence-v9",
+    }:
         trace_check_ids.add("saturation_context_contract")
+    if manifest.context_policy_version == "phase-evidence-v9":
+        trace_check_ids.add("review_evidence_context_contract")
+        trace_check_ids.add("review_rejection_terminal_contract")
     if controlled_rejection_mode:
         trace_check_ids.add("controlled_diagnostic_boundary")
     trace_integrity = all(

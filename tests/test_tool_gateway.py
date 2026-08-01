@@ -137,9 +137,16 @@ def _smoke_gateway(
     saturation_context_validation = (
         manifest_context_policy_version == "phase-evidence-v8"
     )
+    review_evidence_validation = (
+        manifest_context_policy_version == "phase-evidence-v9"
+    )
     public_review_contract = (
         _smoke_review_contract(package)
-        if corrective_validation or saturation_context_validation
+        if (
+            corrective_validation
+            or saturation_context_validation
+            or review_evidence_validation
+        )
         else None
     )
     manifest = build_manifest(
@@ -150,6 +157,7 @@ def _smoke_gateway(
         max_output_tokens=max_output_tokens,
         corrective_validation=corrective_validation,
         saturation_context_validation=saturation_context_validation,
+        review_evidence_validation=review_evidence_validation,
         public_review_contract=public_review_contract,
     ).model_copy(
         update={
@@ -836,6 +844,45 @@ def test_v8_context_exposes_saturation_and_resets_only_after_mutation(
     }
     assert {"read_file", "search_files"}.issubset(
         after_mutation_payload["phase_contract"]["allowed_next_actions"]
+    )
+
+
+def test_v9_gateway_enforces_rendered_evidence_saturation(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_gateway_v9_evidence_saturation",
+        tool_schema_version="v4",
+        manifest_context_policy_version="phase-evidence-v9",
+        gateway_context_policy_version="phase-evidence-v9",
+    )
+    search = {"query": "parse_rows", "path_glob": "**/*.py"}
+    assert gateway.execute(
+        "search_files",
+        "v9-search-first",
+        search,
+    ).status == "succeeded"
+    for index in range(6):
+        replay = gateway.execute(
+            "search_files",
+            f"v9-search-replay-{index}",
+            search,
+        )
+        assert replay.output["semantic_replay"] is True
+
+    blocked = gateway.execute(
+        "search_files",
+        "v9-search-after-saturation",
+        {"query": "csv", "path_glob": "**/*.py"},
+    )
+
+    assert blocked.error_code == "TOOL_ADMISSION_BLOCKED"
+    assert blocked.output["error_details"]["reason_codes"] == [
+        "evidence_saturated"
+    ]
+    assert not any(
+        event.type == EventType.TOOL_CALLED
+        and event.correlation_id == "v9-search-after-saturation"
+        for event in gateway.state.list_events(gateway.run_id)
     )
 
 
@@ -4416,3 +4463,152 @@ def test_v3_review_rejects_unpresented_evidence(tmp_path) -> None:
 
     assert rejected.status == "rejected"
     assert "complete current-diff" in (rejected.error_message or "")
+
+
+def test_v9_review_rejection_names_exact_citable_sequences(tmp_path) -> None:
+    _, _, gateway = _smoke_gateway(
+        tmp_path,
+        "run_v9_review_citations",
+        tool_schema_version="v4",
+        manifest_context_policy_version="phase-evidence-v9",
+        gateway_context_policy_version="phase-evidence-v9",
+    )
+    reference = Path(
+        "tasks/smoke/csv-quoted-newline/reference.patch"
+    ).read_text(encoding="utf-8")
+    assert gateway.execute(
+        "apply_patch",
+        "v9-review-patch",
+        {"patch": reference},
+    ).status == "succeeded"
+    check_id = gateway.task.visible_checks[0].id
+    assert gateway.execute(
+        "run_check",
+        "v9-review-check",
+        {"check_id": check_id},
+    ).output["passed"] is True
+    assert gateway.execute(
+        "get_diff",
+        "v9-review-diff",
+        {},
+    ).status == "succeeded"
+    events = gateway.state.list_events(gateway.run_id)
+    mutation_event = next(
+        event for event in events if event.type == EventType.PATCH_APPLIED
+    )
+    check_call = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_CALLED
+        and event.payload.get("tool") == "run_check"
+    )
+    check_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "run_check"
+    )
+    diff_event = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "get_diff"
+    )
+    for event in (check_event, diff_event):
+        descriptor = Artifact.model_validate(
+            event.payload["result_artifact"]
+        )
+        assert event.payload["artifact_id"] == descriptor.artifact_id
+        assert event.payload["artifact_path"] == descriptor.path
+        assert gateway.artifacts.read_bytes(descriptor)
+    manifest = gateway.state.get_manifest(gateway.run_id)
+    assert manifest.public_review_contract is not None
+    requirement_id = manifest.public_review_contract.requirements[
+        0
+    ].requirement_id
+    presented = [
+        {
+            "event_sequence": check_event.sequence,
+            "available": True,
+            "truncated": False,
+        },
+        {
+            "event_sequence": diff_event.sequence,
+            "available": True,
+            "truncated": False,
+        },
+    ]
+    review_evidence = {
+        "schema_version": "review-evidence-v1",
+        "pinning_active": True,
+        "worktree_diff_hash": diff_event.payload[
+            "worktree_diff_hash"
+        ],
+        "mutation_event_sequence": mutation_event.sequence,
+        "passing_check_event_sequences": [check_event.sequence],
+        "source_get_diff_sequence": diff_event.sequence,
+        "citable_event_sequences": [
+            check_event.sequence,
+            diff_event.sequence,
+        ],
+    }
+    execution_context = {
+        "request_artifact_id": "artifact-v9-review-request",
+        "phase": "REVIEW",
+        "presented_tool_results": presented,
+        "review_evidence": review_evidence,
+    }
+    arguments = {
+        "requirements": [
+            {
+                "requirement_id": requirement_id,
+                "status": "verified",
+                "evidence_event_sequences": [check_call.sequence],
+                "notes": "Intentionally cites the call rather than its result.",
+            }
+        ],
+        "targeted_validation": [
+            {
+                "kind": "registered_check",
+                "event_sequence": check_event.sequence,
+                "outcome": "passed",
+                "notes": "The current-diff registered check passed.",
+            }
+        ],
+        "residual_risks": [],
+    }
+
+    rejected = gateway.execute(
+        "review_task",
+        "v9-review-invalid-citation",
+        arguments,
+        execution_context=execution_context,
+    )
+
+    assert rejected.status == "rejected"
+    assert rejected.output["error_details"] == {
+        "schema_version": "review-citation-error-v1",
+        "stage": "review",
+        "invalid_event_sequence": check_call.sequence,
+        "citable_event_sequences": [
+            check_event.sequence,
+            diff_event.sequence,
+        ],
+        "passing_validation_event_sequences": [check_event.sequence],
+        "source_get_diff_sequence": diff_event.sequence,
+        "reason": "evidence_not_tool_succeeded",
+    }
+
+    arguments["requirements"][0]["evidence_event_sequences"] = [
+        check_event.sequence,
+        diff_event.sequence,
+    ]
+    accepted = gateway.execute(
+        "review_task",
+        "v9-review-valid-citations",
+        arguments,
+        execution_context=execution_context,
+    )
+
+    assert accepted.status == "succeeded"
+    assert accepted.output["source_get_diff_sequence"] == diff_event.sequence

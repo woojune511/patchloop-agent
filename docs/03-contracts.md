@@ -297,6 +297,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-budget-pilot` | V4 budget-terminal resource maxima로 고정한 HF Hub/PDM/pyfakefs, `no_memory`, repetition 1, 총 3 run, $7 상한; memory source와 comparison denominator에서 제외 |
 | `memory-development-no-memory-corrective-pilot` | Consumed D-062 HF Hub/PDM/pyfakefs corrective panel, v4/v7, 900k, $13 상한; immutable하고 재실행 금지 |
 | `memory-development-no-memory-saturation-pilot` | D-064 HF Hub 한 task, `no_memory`, repetition 1, v4/v8/runtime-v2, 900k, $5 상한; 자연 saturation/reset diagnostic이며 memory source와 comparison denominator에서 제외 |
+| `memory-development-no-memory-review-evidence-pilot` | D-067 future HF Hub 한 task, `no_memory`, repetition 1, v4/v9/runtime-v3, 60/100/1.2M/1,800초, output 25k, reserve $5.5125와 $6 상한; 아직 승인·hash·provider call 없음 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -1857,3 +1858,61 @@ context가 존재할 때 `semantic_replay_count=0`, 새 `mutation_epoch_sequence
 `evidence_saturated` 제거가 확인돼야 pass다. Saturation 또는 reset opportunity가 자연 발생하지
 않으면 inconclusive이고 자동 재실행하지 않는다. 이 purpose의
 `memory_candidate_eligible`는 항상 false다.
+
+## 14. Phase-evidence-v9 review evidence
+
+V9 manifest는 exact `tool_schema_version=v4` / `context_policy_version=phase-evidence-v9`,
+`PublicReviewContract`, `SYSTEM_PROMPT_V6`와 `corrective-runtime-contract-v3`를 요구한다.
+Offline V9은 `review_evidence_validation=True`, mock provider, experiment 부재의 exact 조합만
+허용한다. Replay, arbitrary provider, experiment context와 다른 validation mode 결합은
+fail closed하며 RunManifest도 v4/v9를 mock/no-experiment 또는 아래 exact live exception으로만
+허용한다. 유일한 live selector는 exact
+`memory-development-no-memory-review-evidence-pilot` purpose와 OpenAI provider 조합이다. Suite
+파일만으로 실행 capability가 생기지 않으며 approved execution plan이 없으면 start/resume가
+fail closed한다.
+
+REVIEW readiness가 충족된 request에는 top-level `review_evidence`가 반드시 존재한다.
+
+```text
+schema_version == review-evidence-v1
+pinning_active == true
+worktree_diff_hash == checkpoint/current workspace diff hash
+mutation_event_sequence == latest successful PatchApplied
+passing_check_event_sequences == required current-diff passing checks
+source_get_diff_sequence == latest eligible current-diff final get_diff
+citable_event_sequences == passing_check_event_sequences + [source_get_diff_sequence]
+incomplete_event_sequences == []
+```
+
+`pinned_results`는 위 citable sequence의 full, untruncated current-diff `ToolSucceeded` result를
+담는다. 같은 sequence가 recent event에도 있으면 한 번만 execution context에 제시한다. Missing
+event, unavailable artifact, truncation, wrong diff, wrong order 또는 forged citation list는
+recovery/qualification failure다.
+
+V9 `review_task`의 requirement evidence와 targeted validation은 오직
+`citable_event_sequences`를 인용할 수 있다. Targeted validation은
+`passing_check_event_sequences` 중 하나를, source diff는 exact
+`source_get_diff_sequence`를 사용해야 한다. 위반은 `review-citation-error-v1` details와 함께
+rejected result로 남는다. Details는 private/hidden assertion을 포함하지 않고 다음 public
+field만 사용한다.
+
+```text
+schema_version, stage, reason, invalid_event_sequence,
+citable_event_sequences, passing_validation_event_sequences,
+source_get_diff_sequence
+```
+
+같은 active mutation epoch에서 failed `review_task` 세 건은 recoverable limit을 넘는다. Runner는
+네 번째 generation을 시작하지 않고 structured terminal failure를 남긴다. 새 successful patch
+뒤에는 이전 review failure를 세지 않는다. `review_evidence_context_contract`는 V9 request,
+`context-build-evidence-v9`, `ContextBuilt` mirror, artifact CAS와 independently rebuilt anchor를
+모두 비교한다. Source evidence schema는 `trace-source-evidence-v9`이며 V1-V8 artifact는
+소급 변경하지 않는다.
+
+D-067 suite 계약은 exact HF Hub task 한 개, no-memory 한 번,
+`gpt-5.4-mini-2026-03-17` medium/standard/default, 60 model call, 100 tool call,
+1,200,000 total token, 1,800초, per-call output 25,000이다. Dated standard pricing에서
+authorization reserve는 `(1,200,000 + 25,000) × $4.50/M = $5.5125`, suite cap은 `$6`다.
+`live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`은 required current
+state다. 이는 tuning-only completion proposal이며 comparison denominator와 memory admission은
+항상 false다.

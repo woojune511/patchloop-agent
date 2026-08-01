@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-064 exact V8 saturation pilot consumed once; live policy diagnostic
-  passed; completion gate false before evaluator; immutable review-evidence-loop evidence`이다.
+- 현재 milestone은 `D-066 phase-evidence-v9 offline gate complete;
+  D-067 future live pilot unapproved and no-call preflight pending`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -243,6 +243,28 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   offline 검증이다. Post-run immutable seal과 sanitized evidence 뒤 전체 회귀는 839 collected,
   832 passed/7 environment-dependent skipped이며 Ruff와 `git diff --check`도 통과했다. Memory
   admission과 96-run core campaign은 계속 보류한다.
+  D-066은 historical V8을 바꾸지 않고 `phase-evidence-v9`, `SYSTEM_PROMPT_V6`,
+  `review-evidence-v1`, `context-build-evidence-v9`, `trace-source-evidence-v9`와
+  `corrective-runtime-contract-v3`를 별도 opt-in으로 추가한다. REVIEW에서는 current-diff
+  passing check와 final `get_diff`를 recent-event window 밖에 pin하고 exact citable sequence를
+  request/tool execution/qualification에 결속한다. Stale citation rejection은
+  `review-citation-error-v1`로 허용 sequence를 반환하며 같은 mutation epoch의 세 번째
+  `review_task` failure 뒤 추가 model generation을 막는다. 새 successful patch는 이 count를
+  reset한다. Offline V9은 `review_evidence_validation=True`의 mock/no-experiment 조합만
+  허용하고 replay, arbitrary provider, experiment/mixed mode는 fail closed한다. Live V9은
+  exact D-067 purpose와 OpenAI selector만 허용한다. Qualifier는 pinned evidence와 CAS를
+  독립 재구성한다. 집중 회귀는
+  504 collected, 502 passed/2 skipped였고 repository-wide 회귀는 879 collected,
+  872 passed/7 environment-dependent skipped로 통과했다. Ruff와 `git diff --check`도
+  통과했으며 provider 호출은 없었다.
+  D-067 checked-in future suite
+  `dev-no-memory-review-evidence-v9-pilot-20260801-r1`은 exact HF Hub 한 task, no-memory 1회,
+  v4/v9/runtime-v3, 60 model/100 tool/1,200,000 token/1,800초, output 25,000,
+  `$5.5125` reserve와 `$6` cap이다. `live_cost_approved=false`, execution hash와 pilot run ID는
+  null이며 clean no-call preflight도 아직 수행하지 않았다. Suite 파일과 budget 증액은 paid
+  권한이 아니고 별도 clean hash와 사용자의 명시적 승인이 있기 전 provider 호출을 금지한다.
+  D-067은 completion tuning 전용이며 comparison denominator, memory admission과 core에서
+  제외한다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

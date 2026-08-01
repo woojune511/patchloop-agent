@@ -16,6 +16,7 @@ import pytest
 from patchloop.agent.model import (
     MOCK_TASK_SCRIPTS,
     SYSTEM_PROMPT_V5,
+    SYSTEM_PROMPT_V6,
     MockModelAdapter,
     ModelTurn,
     ModelTurnError,
@@ -56,7 +57,7 @@ from patchloop.runtime import build_manifest
 from patchloop.sandbox import DockerSandbox, LocalSandbox
 from patchloop.sandbox.runner import PROBE_IMAGE
 from patchloop.task_loader import load_task_package
-from patchloop.util import sha256_bytes, sha256_text, utc_now
+from patchloop.util import canonical_json, sha256_bytes, sha256_text, utc_now
 from patchloop.verifier import EvaluationEngine
 
 TASK = "tasks/smoke/csv-quoted-newline/public.yaml"
@@ -322,6 +323,173 @@ def test_saturation_live_pilot_is_the_only_openai_v8_exception() -> None:
             saturation_live_pilot=True,
             public_review_contract=review_contract,
         )
+
+
+def test_review_evidence_live_pilot_is_the_only_openai_v9_exception() -> None:
+    package = load_task_package(Path(TASK).parent)
+    review_contract = _smoke_review_contract(package)
+    experiment = ExperimentRunContext(
+        experiment_id="review-evidence-live-pilot-test",
+        purpose=(
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+        ),
+        suite_hash="sha256:" + ("a" * 64),
+        execution_hash="sha256:" + ("b" * 64),
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + ("c" * 64),
+        repetition=1,
+    )
+
+    manifest = build_manifest(
+        package,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        experiment_context=experiment,
+        review_evidence_live_pilot=True,
+        public_review_contract=review_contract,
+    )
+
+    assert manifest.tool_schema_version == "v4"
+    assert manifest.context_policy_version == "phase-evidence-v9"
+    assert manifest.model.provider == "openai"
+    assert manifest.experiment == experiment
+
+    with pytest.raises(
+        ContractError,
+        match="OpenAI provider and the exact",
+    ):
+        build_manifest(
+            package,
+            provider="mock",
+            experiment_context=experiment,
+            review_evidence_live_pilot=True,
+            public_review_contract=review_contract,
+        )
+    wrong_purpose = experiment.model_copy(
+        update={
+            "purpose": (
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
+            )
+        }
+    )
+    with pytest.raises(
+        ContractError,
+        match="OpenAI provider and the exact",
+    ):
+        build_manifest(
+            package,
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            experiment_context=wrong_purpose,
+            review_evidence_live_pilot=True,
+            public_review_contract=review_contract,
+        )
+    with pytest.raises(ContractError, match="mutually exclusive"):
+        build_manifest(
+            package,
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            experiment_context=experiment,
+            saturation_live_pilot=True,
+            review_evidence_live_pilot=True,
+            public_review_contract=review_contract,
+        )
+
+
+@pytest.mark.parametrize(
+    "provider",
+    ["openai", "replay", "offline-fixture"],
+)
+def test_review_evidence_validation_requires_mock_provider(
+    provider: str,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+
+    with pytest.raises(
+        ContractError,
+        match="offline-only.*mock provider",
+    ):
+        build_manifest(
+            package,
+            provider=provider,
+            review_evidence_validation=True,
+            public_review_contract=_smoke_review_contract(package),
+        )
+
+
+def test_review_evidence_validation_rejects_experiment_and_other_modes() -> None:
+    package = load_task_package(Path(TASK).parent)
+    review_contract = _smoke_review_contract(package)
+    experiment = ExperimentRunContext(
+        experiment_id="review-evidence-offline-test",
+        purpose=ExperimentPurpose.OFFLINE_SMOKE,
+        suite_hash="sha256:" + ("a" * 64),
+        execution_hash="sha256:" + ("b" * 64),
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + ("c" * 64),
+        repetition=1,
+    )
+
+    with pytest.raises(ContractError, match="cannot declare an experiment"):
+        build_manifest(
+            package,
+            review_evidence_validation=True,
+            public_review_contract=review_contract,
+            experiment_context=experiment,
+        )
+    for incompatible in (
+        {"self_validation": True},
+        {"corrective_validation": True},
+        {"saturation_context_validation": True},
+        {"saturation_live_pilot": True},
+        {"review_evidence_live_pilot": True},
+    ):
+        with pytest.raises(ContractError, match="mutually exclusive"):
+            build_manifest(
+                package,
+                review_evidence_validation=True,
+                public_review_contract=review_contract,
+                **incompatible,
+            )
+
+
+def test_review_evidence_validation_manifest_is_mock_only_without_experiment() -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_v9_review_evidence_offline_contract",
+        review_evidence_validation=True,
+        public_review_contract=_smoke_review_contract(package),
+    )
+
+    prompt, tools = AgentRunner._runtime_contract(manifest)
+    assert manifest.model.provider == "mock"
+    assert manifest.experiment is None
+    assert manifest.tool_schema_version == "v4"
+    assert manifest.context_policy_version == "phase-evidence-v9"
+    assert prompt == SYSTEM_PROMPT_V6
+    assert tools == TOOL_SCHEMAS_V4
+
+    payload = manifest.model_dump(mode="json")
+    payload["model"]["provider"] = "offline-fixture"
+    with pytest.raises(ValueError, match="offline-only.*mock provider"):
+        type(manifest).model_validate(payload)
+
+    payload = manifest.model_dump(mode="json")
+    payload["experiment"] = ExperimentRunContext(
+        experiment_id="wrong-v9-offline-experiment",
+        purpose=ExperimentPurpose.OFFLINE_SMOKE,
+        suite_hash="sha256:" + ("d" * 64),
+        execution_hash="sha256:" + ("e" * 64),
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + ("f" * 64),
+        repetition=1,
+    ).model_dump(mode="json")
+    with pytest.raises(ValueError, match="cannot declare an experiment"):
+        type(manifest).model_validate(payload)
 
 
 @pytest.mark.parametrize(
@@ -3375,6 +3543,457 @@ def test_v8_saturation_survives_crash_then_resets_and_qualifies(
     ] == []
 
 
+def test_v9_review_evidence_retry_completes_and_validates_contracts(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    contract = _smoke_review_contract(package)
+    manifest = build_manifest(
+        package,
+        run_id="run_v9_review_evidence_e2e",
+        sandbox_backend="local",
+        review_evidence_validation=True,
+        public_review_contract=contract,
+    )
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+
+    class ReviewRetryAdapter(MockModelAdapter):
+        def __init__(self) -> None:
+            super().__init__(package.public.task_id)
+            self.review_attempts = 0
+            self.review_contexts: list[dict[str, Any]] = []
+
+        def next_turn(self, context, tools):
+            counts = {
+                name: self.completed_tools.count(name)
+                for name in set(self.completed_tools)
+            }
+            if (
+                counts.get("get_diff", 0) > 0
+                and counts.get("review_task", 0) == 0
+            ):
+                payload = json.loads(context)
+                review_evidence = payload["review_evidence"]
+                self.review_contexts.append(payload)
+                passing_sequences = review_evidence[
+                    "passing_check_event_sequences"
+                ]
+                source_diff_sequence = review_evidence[
+                    "source_get_diff_sequence"
+                ]
+                assert passing_sequences
+                assert isinstance(source_diff_sequence, int)
+
+                if self.review_attempts == 0:
+                    cited_sequences = [
+                        review_evidence["mutation_event_sequence"]
+                    ]
+                    targeted_sequence = cited_sequences[0]
+                elif self.review_attempts == 1:
+                    cited_sequences = [source_diff_sequence + 100_000]
+                    targeted_sequence = cited_sequences[0]
+                else:
+                    cited_sequences = list(
+                        review_evidence["citable_event_sequences"]
+                    )
+                    targeted_sequence = passing_sequences[0]
+                self.review_attempts += 1
+
+                return ModelTurn(
+                    text="Retry review using the exact V9 citation authority.",
+                    tool_calls=[
+                        RequestedTool(
+                            "review_task",
+                            f"v9-review-attempt-{self.review_attempts}",
+                            {
+                                "requirements": [
+                                    {
+                                        "requirement_id": (
+                                            contract.requirements[0].requirement_id
+                                        ),
+                                        "status": "verified",
+                                        "evidence_event_sequences": (
+                                            cited_sequences
+                                        ),
+                                        "notes": (
+                                            "The registered check and final diff "
+                                            "cover the public requirement."
+                                        ),
+                                    }
+                                ],
+                                "targeted_validation": [
+                                    {
+                                        "kind": "registered_check",
+                                        "event_sequence": targeted_sequence,
+                                        "outcome": "passed",
+                                        "notes": (
+                                            "The registered public check passed."
+                                        ),
+                                    }
+                                ],
+                                "residual_risks": [],
+                            },
+                        )
+                    ],
+                )
+            return super().next_turn(context, tools)
+
+    adapter = ReviewRetryAdapter()
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    result = runner.start(TASK, model="mock", manifest=manifest)
+    events = runner.state.list_events(manifest.run_id)
+
+    assert result["scope_compliant_success"] is True
+    assert adapter.review_attempts == 3
+    review_failures = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("tool") == "review_task"
+    ]
+    assert len(review_failures) == 2
+    assert all(
+        event.payload["error_details"]["schema_version"]
+        == "review-citation-error-v1"
+        for event in review_failures
+    )
+    review_success = next(
+        event
+        for event in events
+        if event.type == EventType.TOOL_SUCCEEDED
+        and event.payload.get("tool") == "review_task"
+    )
+    assert review_success.payload["review_schema_version"] == "task-review-v2"
+    assert any(event.type == EventType.RUN_COMPLETED for event in events)
+    assert runner.state.latest_checkpoint(manifest.run_id).phase == Phase.DONE
+
+    final_review_context = adapter.review_contexts[-1]
+    pinned = final_review_context["review_evidence"]
+    assert pinned["pinning_active"] is True
+    assert pinned["citable_event_sequences"] == [
+        *pinned["passing_check_event_sequences"],
+        pinned["source_get_diff_sequence"],
+    ]
+    recent_sequences = {
+        event["sequence"]
+        for event in final_review_context["recent_events"]
+    }
+    assert set(pinned["citable_event_sequences"]).isdisjoint(
+        recent_sequences
+    )
+    assert [
+        event["sequence"] for event in pinned["pinned_results"]
+    ] == pinned["citable_event_sequences"]
+    assert any(
+        event.get("payload", {}).get("error_details", {}).get(
+            "schema_version"
+        )
+        == "review-citation-error-v1"
+        for event in final_review_context["recent_events"]
+    )
+
+    started = next(
+        event for event in events if event.type == EventType.RUN_STARTED
+    )
+    runtime_artifact = Artifact.model_validate(
+        started.payload["runtime_contract_artifact"]
+    )
+    runtime_document = json.loads(
+        runner.artifacts.read_bytes(runtime_artifact).decode("utf-8")
+    )
+    assert runtime_document == {
+        "schema_version": "corrective-runtime-contract-v3",
+        "system_prompt": SYSTEM_PROMPT_V6,
+        "tools": TOOL_SCHEMAS_V4,
+        "tool_schema_version": "v4",
+        "context_policy_version": "phase-evidence-v9",
+    }
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=runner.root,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+    # This mock/no-experiment/local gate deliberately does not satisfy the
+    # live campaign, approved-plan, Docker-provenance, or official-evaluator
+    # checks that define whole-trace qualification.
+    assert qualification["qualified"] is False
+    assert qualification["evaluation_reached"] is True
+    assert checks["review_evidence_context_contract"]["passed"] is True, checks[
+        "review_evidence_context_contract"
+    ]
+    assert checks["review_evidence_context_contract"]["details"][
+        "active_context_sequences"
+    ]
+    assert checks["review_evidence_context_contract"]["details"][
+        "failed_context_sequences"
+    ] == []
+    assert checks["self_validation_lifecycle"]["passed"] is True
+    assert checks["public_review_contract"]["passed"] is True
+    assert checks["saturation_context_contract"]["passed"] is True
+    assert checks["review_rejection_terminal_contract"]["passed"] is True
+
+
+def test_v9_third_review_rejection_stops_actual_agent_loop(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    contract = _smoke_review_contract(package)
+    manifest = build_manifest(
+        package,
+        run_id="run_v9_review_rejection_terminal_e2e",
+        sandbox_backend="local",
+        review_evidence_validation=True,
+        public_review_contract=contract,
+    )
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+
+    class AlwaysInvalidReviewAdapter(MockModelAdapter):
+        def __init__(self) -> None:
+            super().__init__(package.public.task_id)
+            self.review_attempts = 0
+
+        def next_turn(self, context, tools):
+            counts = {
+                name: self.completed_tools.count(name)
+                for name in set(self.completed_tools)
+            }
+            if (
+                counts.get("get_diff", 0) > 0
+                and counts.get("review_task", 0) == 0
+            ):
+                payload = json.loads(context)
+                review_evidence = payload["review_evidence"]
+                invalid_sequence = review_evidence[
+                    "mutation_event_sequence"
+                ]
+                self.review_attempts += 1
+                return ModelTurn(
+                    text="Intentionally cite a non-citable mutation event.",
+                    tool_calls=[
+                        RequestedTool(
+                            "review_task",
+                            f"v9-terminal-review-{self.review_attempts}",
+                            {
+                                "requirements": [
+                                    {
+                                        "requirement_id": (
+                                            contract.requirements[
+                                                0
+                                            ].requirement_id
+                                        ),
+                                        "status": "verified",
+                                        "evidence_event_sequences": [
+                                            invalid_sequence
+                                        ],
+                                        "notes": (
+                                            "This citation is deliberately invalid."
+                                        ),
+                                    }
+                                ],
+                                "targeted_validation": [
+                                    {
+                                        "kind": "registered_check",
+                                        "event_sequence": invalid_sequence,
+                                        "outcome": "passed",
+                                        "notes": (
+                                            "This citation is deliberately invalid."
+                                        ),
+                                    }
+                                ],
+                                "residual_risks": [],
+                            },
+                        )
+                    ],
+                )
+            return super().next_turn(context, tools)
+
+    adapter = AlwaysInvalidReviewAdapter()
+    runner = AgentRunner(tmp_path / "runtime")
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        lambda *_args, **_kwargs: adapter,
+    )
+
+    result = runner.start(TASK, model="mock", manifest=manifest)
+    events = runner.state.list_events(manifest.run_id)
+    review_calls = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_CALLED
+        and event.payload.get("tool") == "review_task"
+    ]
+    review_failures = [
+        event
+        for event in events
+        if event.type == EventType.TOOL_FAILED
+        and event.payload.get("tool") == "review_task"
+    ]
+    review_request_ids = {
+        event.payload["request_artifact_id"] for event in review_calls
+    }
+    review_model_calls = [
+        event
+        for event in events
+        if event.type == EventType.MODEL_CALLED
+        and event.payload.get("request_artifact_id")
+        in review_request_ids
+    ]
+
+    assert adapter.review_attempts == 3
+    assert len(review_calls) == len(review_failures) == 3
+    assert len(review_model_calls) == 3
+    assert result["outcome_kind"] == RunOutcomeKind.AGENT_FAILURE.value
+    assert result["terminal_error"] == {
+        "type": "SubmissionProtocolError",
+        "message": "structured review evidence was rejected three times",
+        "code": "SUBMISSION_PROTOCOL_ERROR",
+    }
+    third_failure = review_failures[-1]
+    terminal = events[-1]
+    assert terminal.type == EventType.RUN_FAILED
+    assert terminal.payload["error_code"] == "SUBMISSION_PROTOCOL_ERROR"
+    assert not any(
+        event.sequence > third_failure.sequence
+        and event.type
+        in {
+            EventType.CONTEXT_BUILT,
+            EventType.MODEL_CALLED,
+            EventType.TOOL_CALLED,
+            EventType.TOOL_SUCCEEDED,
+            EventType.TOOL_FAILED,
+            EventType.SUBMISSION_ATTEMPTED,
+        }
+        for event in events
+    )
+    checkpoint = runner.state.latest_checkpoint(manifest.run_id)
+    assert checkpoint is not None
+    assert checkpoint.through_sequence >= third_failure.sequence
+    assert result["usage"]["model_calls"] == sum(
+        event.type == EventType.MODEL_CALLED for event in events
+    )
+
+    qualification = qualify_run(
+        manifest.run_id,
+        task_dir=Path(TASK).parent,
+        root=runner.root,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+    assert checks["review_rejection_terminal_contract"]["passed"] is True
+    assert checks["self_validation_lifecycle"]["passed"] is True
+
+    first_review_call = review_calls[0]
+    original_input = Artifact.model_validate(
+        first_review_call.payload["input_artifact"]
+    )
+    original_document = json.loads(
+        runner.artifacts.read_bytes(original_input).decode("utf-8")
+    )
+    for tamper_target in (
+        "review_evidence",
+        "malformed_requirements",
+        "unhashable_sequences",
+        "unhashable_residual_ids",
+    ):
+        forged_document = json.loads(json.dumps(original_document))
+        if tamper_target == "review_evidence":
+            forged_document["execution_context"]["review_evidence"][
+                "worktree_diff_hash"
+            ] = "sha256:" + ("f" * 64)
+        else:
+            if tamper_target == "malformed_requirements":
+                forged_document["input"]["requirements"] = None
+            elif tamper_target == "unhashable_sequences":
+                forged_document["input"]["requirements"][0][
+                    "evidence_event_sequences"
+                ] = [{}]
+            else:
+                forged_document["input"]["residual_risks"] = [
+                    {
+                        "requirement_ids": [{}],
+                        "risk": "Malformed requirement identity.",
+                        "mitigation": "Reject the trace.",
+                    }
+                ]
+        forged_artifact = runner.artifacts.put_json(forged_document)
+        forged_events = []
+        for event in events:
+            if event.sequence != first_review_call.sequence:
+                forged_events.append(event)
+                continue
+            payload = dict(event.payload)
+            payload.update(
+                {
+                    "artifact_id": forged_artifact.artifact_id,
+                    "artifact_path": forged_artifact.path,
+                    "input_artifact": forged_artifact.model_dump(
+                        mode="json"
+                    ),
+                    "input_hash": sha256_text(
+                        canonical_json(
+                            {
+                                "tool": "review_task",
+                                "input": forged_document["input"],
+                            }
+                        )
+                    ),
+                    "normalized_call_hash": sha256_text(
+                        canonical_json(
+                            {
+                                "tool": "review_task",
+                                "input": forged_document["input"],
+                                "worktree_diff_hash": payload[
+                                    "worktree_diff_hash"
+                                ],
+                                "state_marker": None,
+                            }
+                        )
+                    ),
+                }
+            )
+            forged_events.append(
+                event.model_copy(update={"payload": payload})
+            )
+
+        lifecycle_ok, lifecycle_details = (
+            qualification_module._self_validation_lifecycle_evidence(
+                root=runner.root,
+                manifest=manifest,
+                package=package,
+                events=forged_events,
+                result=RunResult.model_validate(result),
+            )
+        )
+
+        assert lifecycle_ok is False, (
+            tamper_target,
+            lifecycle_details,
+        )
+        assert first_review_call.sequence in lifecycle_details[
+            "failed_call_sequences"
+        ]
+
+
 def test_v7_rejected_patch_retry_clears_after_success_and_qualifies(
     tmp_path,
     monkeypatch,
@@ -4965,3 +5584,41 @@ def test_resume_reuses_durable_controlled_rejection_before_checkpoint(
         str(controlled_call.payload["input_hash"]),
     )
     assert prior_after == prior_before
+
+
+def test_v9_review_rejection_guard_counts_only_active_mutation_epoch(
+    tmp_path,
+) -> None:
+    package = load_task_package(Path(TASK).parent)
+    manifest = build_manifest(
+        package,
+        run_id="run_v9_review_rejection_guard",
+        sandbox_backend="local",
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+    runner.state.create_run(manifest)
+    runner.state.append_event(
+        manifest.run_id,
+        EventType.PATCH_APPLIED,
+        actor="tool-gateway",
+        payload={"worktree_diff_hash": "sha256:" + ("1" * 64)},
+    )
+    for attempt in range(3):
+        runner.state.append_event(
+            manifest.run_id,
+            EventType.TOOL_FAILED,
+            actor="tool-gateway",
+            correlation_id=f"review-{attempt}",
+            payload={"tool": "review_task", "status": "rejected"},
+        )
+
+    assert runner._review_rejection_count(manifest.run_id) == 3
+
+    runner.state.append_event(
+        manifest.run_id,
+        EventType.PATCH_APPLIED,
+        actor="tool-gateway",
+        payload={"worktree_diff_hash": "sha256:" + ("2" * 64)},
+    )
+
+    assert runner._review_rejection_count(manifest.run_id) == 0

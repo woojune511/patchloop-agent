@@ -50,6 +50,9 @@ CORRECTIVE_PILOT_SUITE = (
 SATURATION_PILOT_SUITE = (
     "experiments/dev-no-memory-saturation-v8-pilot-20260801-r1.yaml"
 )
+REVIEW_EVIDENCE_PILOT_SUITE = (
+    "experiments/dev-no-memory-review-evidence-v9-pilot-20260801-r1.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -788,6 +791,71 @@ def test_saturation_pilot_has_exact_no_call_preflight_contract(
     }
 
 
+def test_review_evidence_pilot_has_exact_no_call_preflight_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 1, 12, tzinfo=UTC),
+    )
+
+    suite = eval_runner.load_suite(REVIEW_EVIDENCE_PILOT_SUITE)
+    unapproved = eval_runner.preflight_suite(REVIEW_EVIDENCE_PILOT_SUITE)
+
+    assert suite.purpose == (
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+    )
+    assert suite.tasks == [eval_runner.REVIEW_EVIDENCE_PILOT_TASK]
+    assert suite.conditions == [eval_runner.MemoryCondition.NO_MEMORY]
+    assert suite.repetitions == 1
+    assert suite.budget == (
+        eval_runner.GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
+    )
+    assert suite.max_output_tokens == 25_000
+    assert suite.diagnostic is None
+    assert {row["code"] for row in unapproved["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert unapproved["expected_runs"] == 1
+    assert [row["task_id"] for row in unapproved["tasks"]] == [
+        eval_runner.REVIEW_EVIDENCE_PILOT_TASK_ID
+    ]
+    assert unapproved["tasks"][0]["public_review_contract"][
+        "content_hash"
+    ].startswith("sha256:")
+    assert unapproved["runtime_contract"] == {
+        "schema_version": "corrective-runtime-contract-v3",
+        "tool_schema_version": "v4",
+        "context_policy_version": "phase-evidence-v9",
+        "system_prompt_hash": sha256_text(eval_runner.SYSTEM_PROMPT_V6),
+        "tool_schema_hash": sha256_text(
+            canonical_json(eval_runner.TOOL_SCHEMAS_V4)
+        ),
+        "harness_git_commit": "a" * 40,
+    }
+    assert unapproved["pricing"][
+        "per_run_cost_reserve_usd"
+    ] == pytest.approx(5.5125)
+    assert unapproved["pricing"][
+        "budget_upper_bound_usd"
+    ] == pytest.approx(5.5125)
+
+    approved = eval_runner.preflight_suite(
+        REVIEW_EVIDENCE_PILOT_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=unapproved["execution_hash"],
+    )
+
+    assert approved["ready"] is True
+    assert approved["execution_hash"] == unapproved["execution_hash"]
+    assert approved["suite"]["cost_limit_usd"] == 6
+    assert approved["blockers"] == []
+
+
 def test_saturation_approved_plan_binds_paid_boundary_and_qualification_inputs(
     tmp_path: Path,
     monkeypatch,
@@ -997,6 +1065,49 @@ def test_saturation_pilot_rejects_contract_drift(
         ExperimentSuite.model_validate(payload)
 
 
+@pytest.mark.parametrize(
+    ("mutation", "match"),
+    [
+        ("task", "exactly the frozen HF Hub task"),
+        ("repetition", "exactly the frozen HF Hub task"),
+        ("condition", "exactly the frozen HF Hub task"),
+        ("model_calls", "max_model_calls=60"),
+        ("tokens", "max_model_calls=60"),
+        ("output", "max_model_calls=60"),
+        ("cap", "requires cost_limit_usd=6"),
+        ("estimate", "requires estimated_cost_usd=5.5125"),
+    ],
+)
+def test_review_evidence_pilot_rejects_contract_drift(
+    mutation: str,
+    match: str,
+) -> None:
+    payload = yaml.safe_load(
+        Path(REVIEW_EVIDENCE_PILOT_SUITE).read_text(encoding="utf-8")
+    )
+    if mutation == "task":
+        payload["tasks"] = [
+            "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml"
+        ]
+    elif mutation == "repetition":
+        payload["repetitions"] = 2
+    elif mutation == "condition":
+        payload["conditions"] = ["structured"]
+    elif mutation == "model_calls":
+        payload["budget"]["max_model_calls"] = 59
+    elif mutation == "tokens":
+        payload["budget"]["max_total_tokens"] = 1_199_999
+    elif mutation == "output":
+        payload["max_output_tokens"] = 24_999
+    elif mutation == "cap":
+        payload["cost_limit_usd"] = 7
+    else:
+        payload["estimated_cost_usd"] = 5.5
+
+    with pytest.raises(ValidationError, match=match):
+        ExperimentSuite.model_validate(payload)
+
+
 def test_saturation_diagnostic_separates_pass_inconclusive_and_failure() -> None:
     base = {
         "qualified": True,
@@ -1088,6 +1199,47 @@ def test_saturation_completion_gate_requires_exercise_not_task_success() -> None
     row["diagnostic"] = {"status": "passed"}
     row["diagnostic_error"] = None
     row["qualification"]["evaluation_reached"] = False
+    assert eval_runner._completion_gate(suite, [row])["passed"] is False
+
+
+def test_review_evidence_completion_gate_requires_evaluator_not_task_success() -> None:
+    suite = eval_runner.load_suite(REVIEW_EVIDENCE_PILOT_SUITE)
+    row = {
+        "attempt_status": "terminal",
+        "run_id": "run_review_evidence",
+        "result": {
+            "official": True,
+            "evaluation_status": "completed",
+            "scope_compliant_success": False,
+            "terminal_error": None,
+        },
+        "qualification": {
+            "qualified": True,
+            "evaluation_reached": True,
+        },
+        "diagnostic": None,
+        "infrastructure_error": None,
+        "qualification_error": None,
+        "diagnostic_error": None,
+    }
+
+    gate = eval_runner._completion_gate(suite, [row])
+
+    assert gate is not None
+    assert gate["schema_version"] == "v9-review-evidence-live-pilot-gate-v1"
+    assert gate["passed"] is True
+    assert gate["task_successes"] == 0
+    assert gate["task_success_required"] is False
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+
+    row["qualification"]["evaluation_reached"] = False
+    assert eval_runner._completion_gate(suite, [row])["passed"] is False
+    row["qualification"]["evaluation_reached"] = True
+    row["result"]["terminal_error"] = {
+        "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "details": {"reason_code": "model_call_budget_exhausted"},
+    }
     assert eval_runner._completion_gate(suite, [row])["passed"] is False
 
 

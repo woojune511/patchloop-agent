@@ -399,12 +399,14 @@ _INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v6",
     "phase-evidence-v7",
     "phase-evidence-v8",
+    "phase-evidence-v9",
 }
 _TOKEN_TAIL_CONTEXT_POLICIES = {
     "phase-evidence-v5",
     "phase-evidence-v6",
     "phase-evidence-v7",
     "phase-evidence-v8",
+    "phase-evidence-v9",
 }
 _STRUCTURED_TOOL_SCHEMAS = {"v2", "v3", "v4"}
 _SELF_VALIDATION_TOOL_SCHEMAS = {"v3", "v4"}
@@ -735,7 +737,12 @@ def _investigation_compat_version(policy_version: str) -> str:
 
     return (
         "phase-evidence-v6"
-        if policy_version in {"phase-evidence-v7", "phase-evidence-v8"}
+        if policy_version
+        in {
+            "phase-evidence-v7",
+            "phase-evidence-v8",
+            "phase-evidence-v9",
+        }
         else policy_version
     )
 
@@ -1037,6 +1044,10 @@ class ToolGateway:
                     self.tool_schema_version
                     in _SELF_VALIDATION_TOOL_SCHEMAS
                     and name in {"run_probe", "review_task"}
+                )
+                or (
+                    self.context_policy_version == "phase-evidence-v9"
+                    and name in {"run_check", "get_diff"}
                 )
                 else None
             )
@@ -1396,7 +1407,11 @@ class ToolGateway:
         )
         evidence_saturated = (
             self.context_policy_version
-            in {"phase-evidence-v7", "phase-evidence-v8"}
+            in {
+                "phase-evidence-v7",
+                "phase-evidence-v8",
+                "phase-evidence-v9",
+            }
             and name in {"read_file", "search_files"}
             and semantic_replay_count >= _EVIDENCE_SATURATION_THRESHOLD
         )
@@ -4245,6 +4260,74 @@ class ToolGateway:
             )
         }
         events_by_sequence = {event.sequence: event for event in events}
+        citable_sequences = set(presented_sequences)
+        passing_validation_sequences = {
+            sequence
+            for sequence in presented_sequences
+            if (
+                (event := events_by_sequence.get(sequence)) is not None
+                and event.type == EventType.TOOL_SUCCEEDED
+                and event.payload.get("worktree_diff_hash")
+                == summary.patch_hash
+                and event.payload.get("tool")
+                in {"run_check", "run_probe"}
+                and event.payload.get("passed") is True
+            )
+        }
+        if self.context_policy_version == "phase-evidence-v9":
+            review_evidence = execution_context.get("review_evidence")
+            if not isinstance(review_evidence, dict):
+                raise ContractError(
+                    "review_task requires bound v9 review evidence",
+                    details={
+                        "schema_version": "review-citation-error-v1",
+                        "stage": "review",
+                        "reason": "review_evidence_missing",
+                    },
+                )
+            raw_citable = review_evidence.get(
+                "citable_event_sequences"
+            )
+            raw_passing = review_evidence.get(
+                "passing_check_event_sequences"
+            )
+            raw_source_diff = review_evidence.get(
+                "source_get_diff_sequence"
+            )
+            raw_mutation = review_evidence.get(
+                "mutation_event_sequence"
+            )
+            if (
+                review_evidence.get("schema_version")
+                != "review-evidence-v1"
+                or review_evidence.get("pinning_active") is not True
+                or review_evidence.get("worktree_diff_hash")
+                != summary.patch_hash
+                or not isinstance(raw_citable, list)
+                or not isinstance(raw_passing, list)
+                or any(type(sequence) is not int for sequence in raw_citable)
+                or any(type(sequence) is not int for sequence in raw_passing)
+                or len(set(raw_citable)) != len(raw_citable)
+                or len(set(raw_passing)) != len(raw_passing)
+                or type(raw_source_diff) is not int
+                or type(raw_mutation) is not int
+                or raw_mutation != mutation_sequence
+                or raw_source_diff != source_get_diff_sequence
+                or raw_citable != [*raw_passing, raw_source_diff]
+                or not set(raw_citable).issubset(presented_sequences)
+                or set(raw_passing)
+                != set(readiness.current_diff_check_event_sequences)
+            ):
+                raise ContractError(
+                    "review_task v9 review evidence is inconsistent",
+                    details={
+                        "schema_version": "review-citation-error-v1",
+                        "stage": "review",
+                        "reason": "review_evidence_inconsistent",
+                    },
+                )
+            citable_sequences = set(raw_citable)
+            passing_validation_sequences = set(raw_passing)
 
         if (
             not isinstance(requirements, list)
@@ -4339,6 +4422,11 @@ class ToolGateway:
                     sequence,
                     events_by_sequence=events_by_sequence,
                     presented_sequences=presented_sequences,
+                    citable_sequences=citable_sequences,
+                    passing_validation_sequences=(
+                        passing_validation_sequences
+                    ),
+                    source_get_diff_sequence=source_get_diff_sequence,
                     mutation_sequence=mutation_sequence,
                     worktree_diff_hash=summary.patch_hash,
                 )
@@ -4411,6 +4499,11 @@ class ToolGateway:
                 sequence,
                 events_by_sequence=events_by_sequence,
                 presented_sequences=presented_sequences,
+                citable_sequences=citable_sequences,
+                passing_validation_sequences=(
+                    passing_validation_sequences
+                ),
+                source_get_diff_sequence=source_get_diff_sequence,
                 mutation_sequence=mutation_sequence,
                 worktree_diff_hash=summary.patch_hash,
             )
@@ -4459,8 +4552,18 @@ class ToolGateway:
             raise PolicyViolation(
                 "review_task needs a passing current-diff probe or registered check",
                 details={
+                    "schema_version": "review-citation-error-v1",
                     "stage": "review",
                     "reason": "targeted_validation_missing",
+                    "citable_event_sequences": sorted(
+                        citable_sequences
+                    ),
+                    "passing_validation_event_sequences": sorted(
+                        passing_validation_sequences
+                    ),
+                    "source_get_diff_sequence": (
+                        source_get_diff_sequence
+                    ),
                 },
             )
         normalized_residual_risks: list[Any] = []
@@ -4605,26 +4708,54 @@ class ToolGateway:
         *,
         events_by_sequence: dict[int, Any],
         presented_sequences: set[int],
+        citable_sequences: set[int],
+        passing_validation_sequences: set[int],
+        source_get_diff_sequence: int,
         mutation_sequence: int,
         worktree_diff_hash: str,
     ):
+        details = {
+            "schema_version": "review-citation-error-v1",
+            "stage": "review",
+            "invalid_event_sequence": (
+                sequence if type(sequence) is int else None
+            ),
+            "citable_event_sequences": sorted(citable_sequences),
+            "passing_validation_event_sequences": sorted(
+                passing_validation_sequences
+            ),
+            "source_get_diff_sequence": source_get_diff_sequence,
+        }
         if type(sequence) is not int or sequence <= mutation_sequence:
+            details["reason"] = (
+                "invalid_event_sequence"
+                if type(sequence) is not int
+                else "evidence_precedes_current_mutation"
+            )
             raise ContractError(
-                "review_task evidence must follow the current mutation"
+                "review_task evidence must follow the current mutation",
+                details=details,
             )
         event = events_by_sequence.get(sequence)
-        if (
-            event is None
-            or event.type != EventType.TOOL_SUCCEEDED
-            or event.payload.get("worktree_diff_hash")
-            != worktree_diff_hash
-            or sequence not in presented_sequences
-        ):
+        if event is None:
+            details["reason"] = "evidence_event_missing"
+        elif event.type != EventType.TOOL_SUCCEEDED:
+            details["reason"] = "evidence_not_tool_succeeded"
+        elif event.payload.get("worktree_diff_hash") != worktree_diff_hash:
+            details["reason"] = "evidence_not_current_diff"
+        elif sequence not in presented_sequences:
+            details["reason"] = "evidence_not_presented"
+        elif sequence not in citable_sequences:
+            details["reason"] = "evidence_not_citable"
+        else:
+            return event
+        if "reason" in details:
             raise ContractError(
                 "review_task evidence must be a complete current-diff "
-                "ToolSucceeded result in this request"
+                "ToolSucceeded result in this request",
+                details=details,
             )
-        return event
+        raise RecoveryError("review citation validation reached invalid state")
 
     def _get_diff(self) -> dict[str, Any]:
         summary = WorkspaceManager.diff_summary(self.workspace)

@@ -7,21 +7,49 @@ import pytest
 
 from patchloop.agent.context import (
     RECENT_EVENT_LIMIT,
+    REVIEW_EVIDENCE_SCHEMA,
     TOOL_RESULT_CHARACTER_LIMIT,
     build_context,
     build_context_with_evidence,
+)
+from patchloop.agent.review import (
+    normalize_public_issue_text,
+    public_review_contract_content_hash,
+    public_review_requirement_id,
 )
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     Artifact,
     Budget,
+    Checkpoint,
     EventType,
+    Phase,
+    PublicReviewContract,
     RegisteredProbeProfile,
     RunEvent,
 )
 from patchloop.errors import RecoveryError
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_text, utc_now
+
+
+def _public_review_contract(task) -> PublicReviewContract:
+    excerpt = normalize_public_issue_text(task.issue.description)
+    payload = {
+        "schema_version": "public-review-contract-v1",
+        "task_id": task.task_id,
+        "task_version": task.task_version,
+        "public_spec_hash": sha256_text(canonical_json(task.model_dump(mode="json"))),
+        "requirements": [
+            {
+                "requirement_id": public_review_requirement_id(excerpt),
+                "source": "issue.description",
+                "source_excerpt": excerpt,
+            }
+        ],
+    }
+    payload["content_hash"] = public_review_contract_content_hash(payload)
+    return PublicReviewContract.model_validate(payload)
 
 
 def _rejected_patch_events(
@@ -649,3 +677,237 @@ def test_v6_context_omits_probe_when_task_has_no_profile(
         rendered["rules"]["registered_probe_profiles_only"]
         is True
     )
+
+
+def test_v9_pins_current_diff_review_evidence_outside_recent_window(
+    tmp_path,
+) -> None:
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+    artifacts = ArtifactStore(tmp_path / "artifacts")
+    diff_hash = "sha256:" + ("9" * 64)
+    check_artifact = artifacts.put_json(
+        {
+            "check_id": task.visible_checks[0].id,
+            "passed": True,
+            "worktree_diff_hash": diff_hash,
+        }
+    )
+    diff_artifact = artifacts.put_json(
+        {
+            "patch": "diff --git a/a.py b/a.py\n",
+            "patch_hash": diff_hash,
+            "worktree_diff_hash": diff_hash,
+        }
+    )
+    rejection_artifact = artifacts.put_json(
+        {
+            "tool": "review_task",
+            "status": "rejected",
+            "error_code": "CONTRACT_ERROR",
+            "error_message": "stale review citation",
+            "error_details": {},
+        }
+    )
+    events = [
+        RunEvent(
+            event_id="v9-mutation",
+            run_id="run_v9_review_pin",
+            sequence=1,
+            type=EventType.PATCH_APPLIED,
+            timestamp=utc_now(),
+            actor="tool-gateway",
+            payload={"worktree_diff_hash": diff_hash},
+        ),
+        RunEvent(
+            event_id="v9-check",
+            run_id="run_v9_review_pin",
+            sequence=2,
+            type=EventType.TOOL_SUCCEEDED,
+            timestamp=utc_now(),
+            actor="tool-gateway",
+            payload={
+                "tool": "run_check",
+                "check_id": task.visible_checks[0].id,
+                "passed": True,
+                "worktree_diff_hash": diff_hash,
+                "artifact_id": check_artifact.artifact_id,
+                "artifact_path": check_artifact.path,
+                "result_artifact": check_artifact.model_dump(mode="json"),
+            },
+        ),
+        RunEvent(
+            event_id="v9-diff",
+            run_id="run_v9_review_pin",
+            sequence=3,
+            type=EventType.TOOL_SUCCEEDED,
+            timestamp=utc_now(),
+            actor="tool-gateway",
+            payload={
+                "tool": "get_diff",
+                "worktree_diff_hash": diff_hash,
+                "artifact_id": diff_artifact.artifact_id,
+                "artifact_path": diff_artifact.path,
+                "result_artifact": diff_artifact.model_dump(mode="json"),
+            },
+        ),
+    ]
+    for sequence in range(4, 4 + RECENT_EVENT_LIMIT + 2):
+        events.append(
+            RunEvent(
+                event_id=f"v9-review-failure-{sequence}",
+                run_id="run_v9_review_pin",
+                sequence=sequence,
+                type=EventType.TOOL_FAILED,
+                timestamp=utc_now(),
+                actor="tool-gateway",
+                payload={
+                    "tool": "review_task",
+                    "status": "rejected",
+                    "error_code": "CONTRACT_ERROR",
+                    "error_message": "stale review citation",
+                    "error_details": {},
+                    "artifact_id": rejection_artifact.artifact_id,
+                    "artifact_path": rejection_artifact.path,
+                },
+            )
+        )
+    checkpoint = Checkpoint(
+        checkpoint_id="ckpt_v9_review_pin",
+        run_id="run_v9_review_pin",
+        through_sequence=events[-1].sequence,
+        phase=Phase.REVIEW,
+        repository_head="0" * 40,
+        worktree_diff_hash=diff_hash,
+        created_at=utc_now(),
+    )
+
+    built = build_context_with_evidence(
+        task,
+        events,
+        checkpoint,
+        policy_version="phase-evidence-v9",
+        artifact_store=artifacts,
+        budget=Budget(),
+        max_output_tokens=4096,
+        public_review_contract=_public_review_contract(task),
+    )
+    rendered = json.loads(built.rendered)
+    review = rendered["review_evidence"]
+
+    assert built.evidence["schema_version"] == "context-build-evidence-v9"
+    assert review["schema_version"] == REVIEW_EVIDENCE_SCHEMA
+    assert review["pinning_active"] is True
+    assert review["passing_check_event_sequences"] == [2]
+    assert review["source_get_diff_sequence"] == 3
+    assert review["citable_event_sequences"] == [2, 3]
+    assert [item["sequence"] for item in review["pinned_results"]] == [2, 3]
+    assert 2 not in built.evidence["events"]["included_sequences"]
+    assert 3 not in built.evidence["events"]["included_sequences"]
+    assert {2, 3}.issubset(
+        {
+            item["event_sequence"]
+            for item in built.evidence["tool_results"]
+        }
+    )
+    assert rendered["phase_contract"]["allowed_next_actions"] == [
+        "review_task",
+        "apply_patch",
+    ]
+
+
+def test_v9_review_anchor_body_appears_once_inside_recent_window(
+    tmp_path,
+) -> None:
+    task = load_task_package("tasks/smoke/csv-quoted-newline").public
+    artifacts = ArtifactStore(tmp_path / "artifacts")
+    diff_hash = "sha256:" + ("8" * 64)
+    check_marker = "v9-unique-current-diff-check-body"
+    diff_marker = "v9-unique-current-diff-patch-body"
+    check_artifact = artifacts.put_json(
+        {
+            "tool": "run_check",
+            "check_id": task.visible_checks[0].id,
+            "passed": True,
+            "stdout": check_marker,
+        }
+    )
+    diff_artifact = artifacts.put_json(
+        {
+            "tool": "get_diff",
+            "patch": diff_marker,
+            "worktree_diff_hash": diff_hash,
+        }
+    )
+    events = [
+        RunEvent(
+            event_id="v9-recent-mutation",
+            run_id="run_v9_review_recent_dedup",
+            sequence=1,
+            type=EventType.PATCH_APPLIED,
+            timestamp=utc_now(),
+            actor="tool-gateway",
+            payload={"worktree_diff_hash": diff_hash},
+        ),
+        RunEvent(
+            event_id="v9-recent-check",
+            run_id="run_v9_review_recent_dedup",
+            sequence=2,
+            type=EventType.TOOL_SUCCEEDED,
+            timestamp=utc_now(),
+            actor="tool-gateway",
+            payload={
+                "tool": "run_check",
+                "check_id": task.visible_checks[0].id,
+                "passed": True,
+                "worktree_diff_hash": diff_hash,
+                "artifact_id": check_artifact.artifact_id,
+                "artifact_path": check_artifact.path,
+                "result_artifact": check_artifact.model_dump(mode="json"),
+            },
+        ),
+        RunEvent(
+            event_id="v9-recent-diff",
+            run_id="run_v9_review_recent_dedup",
+            sequence=3,
+            type=EventType.TOOL_SUCCEEDED,
+            timestamp=utc_now(),
+            actor="tool-gateway",
+            payload={
+                "tool": "get_diff",
+                "worktree_diff_hash": diff_hash,
+                "artifact_id": diff_artifact.artifact_id,
+                "artifact_path": diff_artifact.path,
+                "result_artifact": diff_artifact.model_dump(mode="json"),
+            },
+        ),
+    ]
+    checkpoint = Checkpoint(
+        checkpoint_id="ckpt_v9_review_recent_dedup",
+        run_id="run_v9_review_recent_dedup",
+        through_sequence=3,
+        phase=Phase.REVIEW,
+        repository_head="0" * 40,
+        worktree_diff_hash=diff_hash,
+        created_at=utc_now(),
+    )
+
+    built = build_context_with_evidence(
+        task,
+        events,
+        checkpoint,
+        policy_version="phase-evidence-v9",
+        artifact_store=artifacts,
+        budget=Budget(),
+        max_output_tokens=4096,
+        public_review_contract=_public_review_contract(task),
+    )
+    rendered = json.loads(built.rendered)
+
+    assert [
+        item["sequence"]
+        for item in rendered["review_evidence"]["pinned_results"]
+    ] == [2, 3]
+    assert [item["sequence"] for item in rendered["recent_events"]] == [1]
+    assert built.evidence["events"]["included_sequences"] == [1]
+    assert built.rendered.count(check_marker) == 1
+    assert built.rendered.count(diff_marker) == 1

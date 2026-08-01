@@ -19,6 +19,7 @@ from patchloop.agent.model import (
     SYSTEM_PROMPT_V3,
     SYSTEM_PROMPT_V4,
     SYSTEM_PROMPT_V5,
+    SYSTEM_PROMPT_V6,
     MockModelAdapter,
     ModelAdapter,
     OpenAIResponsesAdapter,
@@ -84,6 +85,7 @@ from patchloop.verifier import EvaluationEngine
 
 _LIVE_AUTHORIZATION_GUARD = object()
 _MAX_RECOVERABLE_SUBMISSION_REJECTIONS = 2
+_MAX_RECOVERABLE_REVIEW_REJECTIONS = 2
 _EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
 _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
 _COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
@@ -438,7 +440,12 @@ class AgentRunner:
             and manifest.experiment.purpose
             == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
         )
-        if not corrective and not saturation:
+        review_evidence = bool(
+            manifest.experiment is not None
+            and manifest.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
+        )
+        if not corrective and not saturation and not review_evidence:
             return runtime_contract is None
         try:
             # Keep start/resume on the same complete suite, task, schedule,
@@ -604,11 +611,14 @@ class AgentRunner:
                     **(
                         {
                             "schema_version": (
-                                "corrective-runtime-contract-v2"
+                                "corrective-runtime-contract-v3"
+                                if manifest.context_policy_version
+                                == "phase-evidence-v9"
+                                else "corrective-runtime-contract-v2"
                             )
                         }
                         if manifest.context_policy_version
-                        == "phase-evidence-v8"
+                        in {"phase-evidence-v8", "phase-evidence-v9"}
                         else {}
                     ),
                     "system_prompt": system_prompt,
@@ -687,6 +697,14 @@ class AgentRunner:
                 bool(package.public.probe_profiles),
             )
             while True:
+                if (
+                    manifest.context_policy_version == "phase-evidence-v9"
+                    and self._review_rejection_count(manifest.run_id)
+                    > _MAX_RECOVERABLE_REVIEW_REJECTIONS
+                ):
+                    raise SubmissionProtocolError(
+                        "structured review evidence was rejected three times"
+                    )
                 if manifest.context_policy_version not in {
                     "phase-evidence-v3",
                     "phase-evidence-v4",
@@ -694,6 +712,7 @@ class AgentRunner:
                     "phase-evidence-v6",
                     "phase-evidence-v7",
                     "phase-evidence-v8",
+                    "phase-evidence-v9",
                 }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -729,6 +748,7 @@ class AgentRunner:
                     "phase-evidence-v6",
                     "phase-evidence-v7",
                     "phase-evidence-v8",
+                    "phase-evidence-v9",
                 }:
                     # V5 binds the ledger to the exact durable prefix. A
                     # MemoryRetrieved event appended above must therefore be
@@ -884,6 +904,7 @@ class AgentRunner:
                                         "phase-evidence-v6",
                                         "phase-evidence-v7",
                                         "phase-evidence-v8",
+                                        "phase-evidence-v9",
                                     }
                                     else {}
                                 ),
@@ -912,6 +933,7 @@ class AgentRunner:
                                         "phase-evidence-v6",
                                         "phase-evidence-v7",
                                         "phase-evidence-v8",
+                                        "phase-evidence-v9",
                                     }
                                     else {}
                                 ),
@@ -923,6 +945,7 @@ class AgentRunner:
                                 "phase-evidence-v6",
                                 "phase-evidence-v7",
                                 "phase-evidence-v8",
+                                "phase-evidence-v9",
                             }
                             else {}
                         ),
@@ -955,7 +978,49 @@ class AgentRunner:
                                 ),
                             }
                             if manifest.context_policy_version
-                            == "phase-evidence-v8"
+                            in {"phase-evidence-v8", "phase-evidence-v9"}
+                            else {}
+                        ),
+                        **(
+                            {
+                                "review_evidence_pinning_active": (
+                                    built_context.evidence[
+                                        "review_evidence"
+                                    ]["pinning_active"]
+                                ),
+                                "review_evidence_worktree_diff_hash": (
+                                    built_context.evidence[
+                                        "review_evidence"
+                                    ]["worktree_diff_hash"]
+                                ),
+                                "review_evidence_mutation_event_sequence": (
+                                    built_context.evidence[
+                                        "review_evidence"
+                                    ]["mutation_event_sequence"]
+                                ),
+                                "review_evidence_passing_check_event_sequences": (
+                                    built_context.evidence[
+                                        "review_evidence"
+                                    ]["passing_check_event_sequences"]
+                                ),
+                                "review_evidence_source_get_diff_sequence": (
+                                    built_context.evidence[
+                                        "review_evidence"
+                                    ]["source_get_diff_sequence"]
+                                ),
+                                "review_evidence_citable_event_sequences": (
+                                    built_context.evidence[
+                                        "review_evidence"
+                                    ]["citable_event_sequences"]
+                                ),
+                                "review_evidence_incomplete_event_sequences": (
+                                    built_context.evidence[
+                                        "review_evidence"
+                                    ]["incomplete_event_sequences"]
+                                ),
+                            }
+                            if manifest.context_policy_version
+                            == "phase-evidence-v9"
                             else {}
                         ),
                     },
@@ -967,6 +1032,7 @@ class AgentRunner:
                     "phase-evidence-v6",
                     "phase-evidence-v7",
                     "phase-evidence-v8",
+                    "phase-evidence-v9",
                 }:
                     pre_generation_reason = self._pre_generation_budget_reason(
                         manifest,
@@ -1000,6 +1066,7 @@ class AgentRunner:
                             "phase-evidence-v6",
                             "phase-evidence-v7",
                             "phase-evidence-v8",
+                            "phase-evidence-v9",
                         }:
                             usage.input_token_count_calls += 1
                             self._block_model_generation(
@@ -1031,6 +1098,7 @@ class AgentRunner:
                             "phase-evidence-v6",
                             "phase-evidence-v7",
                             "phase-evidence-v8",
+                            "phase-evidence-v9",
                         }
                         and usage.input_tokens + usage.output_tokens
                         >= manifest.budget.max_total_tokens
@@ -1322,6 +1390,18 @@ class AgentRunner:
                                     [],
                                 )
                             ),
+                            **(
+                                {
+                                    "review_evidence": (
+                                        built_context.evidence.get(
+                                            "review_evidence"
+                                        )
+                                    )
+                                }
+                                if manifest.context_policy_version
+                                == "phase-evidence-v9"
+                                else {}
+                            ),
                         }
                         if call.name == "review_task"
                         else None
@@ -1389,6 +1469,16 @@ class AgentRunner:
                         result,
                         task=package.public,
                     )
+                    if (
+                        manifest.context_policy_version == "phase-evidence-v9"
+                        and call.name == "review_task"
+                        and result.status != "succeeded"
+                        and self._review_rejection_count(manifest.run_id)
+                        > _MAX_RECOVERABLE_REVIEW_REJECTIONS
+                    ):
+                        raise SubmissionProtocolError(
+                            "structured review evidence was rejected three times"
+                        )
                     if (
                         call.name == "run_check"
                         and result.status == "succeeded"
@@ -2023,6 +2113,7 @@ class AgentRunner:
             "phase-evidence-v6",
             "phase-evidence-v7",
             "phase-evidence-v8",
+            "phase-evidence-v9",
         }:
             evidence_task = (
                 task
@@ -2040,6 +2131,7 @@ class AgentRunner:
                         "phase-evidence-v6",
                         "phase-evidence-v7",
                         "phase-evidence-v8",
+                        "phase-evidence-v9",
                     }
                 ),
                 probe_available=bool(evidence_task.probe_profiles),
@@ -2176,6 +2268,11 @@ class AgentRunner:
             in {"phase-evidence-v7", "phase-evidence-v8"}
         ):
             return SYSTEM_PROMPT_V5, TOOL_SCHEMAS_V4
+        if (
+            manifest.tool_schema_version == "v4"
+            and manifest.context_policy_version == "phase-evidence-v9"
+        ):
+            return SYSTEM_PROMPT_V6, TOOL_SCHEMAS_V4
         raise ContractError(
             "unsupported tool schema and context policy version combination"
         )
@@ -2818,6 +2915,25 @@ class AgentRunner:
         return sum(
             event.type == EventType.SUBMISSION_REJECTED
             for event in self.state.list_events(run_id)
+        )
+
+    def _review_rejection_count(self, run_id: str) -> int:
+        """Count failed structured reviews in the active mutation epoch."""
+
+        events = self.state.list_events(run_id)
+        mutation_sequence = max(
+            (
+                event.sequence
+                for event in events
+                if event.type == EventType.PATCH_APPLIED
+            ),
+            default=0,
+        )
+        return sum(
+            event.sequence > mutation_sequence
+            and event.type == EventType.TOOL_FAILED
+            and event.payload.get("tool") == "review_task"
+            for event in events
         )
 
     def _reconcile_submission_recovery(

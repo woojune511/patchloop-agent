@@ -35,6 +35,7 @@ class EvidenceState:
     mutation_present: bool
     completed_checks: tuple[str, ...]
     pending_checks: tuple[str, ...]
+    current_diff_check_event_sequences: tuple[int, ...]
     latest_check_sequence: int | None
     review_event_sequence: int | None
     review_presented_to_model: bool
@@ -102,6 +103,10 @@ def diff_bound_evidence(
         )
     )
     pending = tuple(check_id for check_id in required if check_id not in completed)
+    current_diff_check_event_sequences = tuple(
+        latest_checks[check_id].sequence
+        for check_id in completed
+    )
     latest_check_sequence = (
         max(event.sequence for event in latest_checks.values())
         if latest_checks
@@ -217,6 +222,9 @@ def diff_bound_evidence(
         mutation_present=mutation_present,
         completed_checks=completed,
         pending_checks=pending,
+        current_diff_check_event_sequences=(
+            current_diff_check_event_sequences
+        ),
         latest_check_sequence=latest_check_sequence,
         review_event_sequence=review_event.sequence if review_event else None,
         review_presented_to_model=review_presented,
