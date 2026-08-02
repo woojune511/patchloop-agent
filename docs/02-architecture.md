@@ -795,3 +795,56 @@ guard를 없앤 실행은 D-079 evidence가 아니다.
 Gate pass는 “다른 retained guard 전에 call-count censorship 없이 evaluator까지 workflow가 완료됨”만
 뜻한다. 이 one-row architecture는 calibration-only이며 baseline, memory admission, comparison budget 또는
 core를 열지 않는다.
+
+## 22. D-080 append-only gate-summary correction architecture
+
+D-079 live runtime과 full trace qualification은 정상 동작했다. `run_606349c2c56342d4`는 terminal,
+qualified, official evaluator completion과 `disabled_call_guard_contract` pass를 모두 남겼다. 그러나 당시
+campaign producer는 terminal qualification을 작은 summary로 만들면서 raw `checks` collection을 생략했고,
+completion-gate consumer는 그 생략된 collection에서 check를 다시 찾았다. 따라서 original gate의
+`call_guard_contract_passed=false`는 runtime/trace 위반이 아니라 representation 경계의 projection
+mismatch다.
+
+D-080은 full qualifier checks를 campaign artifact에 복사하지 않는다. 대신 허용된 gate predicate만 다음
+sanitized projection으로 축약한다.
+
+```json
+{
+  "gate_checks": {
+    "disabled_call_guard_contract": {
+      "schema_version": "qualification-gate-check-projection-v1",
+      "check_id": "disabled_call_guard_contract",
+      "check_count": 1,
+      "passed": true
+    }
+  }
+}
+```
+
+Producer는 full qualification의 exact check ID를 세어 projection을 만든다. Consumer는 `gate_checks`의
+outer key set이 `{"disabled_call_guard_contract"}`와 정확히 같고 각 projection의 inner key set이
+`{"schema_version", "check_id", "check_count", "passed"}`와 정확히 같은지 먼저 검사한다. 이어
+`schema_version == qualification-gate-check-projection-v1`, key와 embedded `check_id` 일치,
+`check_count`가 bool이 아닌 strict integer `1`, `passed is true`를 모두 요구한다. Boolean, float, string
+count를 포함한 missing, duplicate, extra, relabelled, non-boolean 또는 malformed projection은 fail closed한다.
+이 경계는 gate가 full private/diagnostic check details에 의존하거나
+campaign artifact가 불필요한 qualifier internals를 노출하는 것을 막는다.
+
+Historical experiment result와 original false gate는 재계산·수정하지 않는다. Correction manifest
+`reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`은
+`workflow-completion-gate-summary-correction-manifest-v1`이고, semantic body는
+`workflow-completion-gate-summary-correction-v2`다. Correction ID
+`gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`의 digest는
+`semantic_body_hash=sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`와 같다.
+따라서 ID 하나가 original source identity와 artifact hashes, correction harness commit
+`7e40e27446bcf011f700c219a96983e5670422f4`, projection contract, exact cause, original gate의 전체
+payload, corrected gate의 전체 payload와 claims boundary를 함께 결속한다.
+
+Corrected gate는 별도 derived schema가 아니라 original과 같은 `workflow-completion-probe-gate-v1`의 exact
+payload다. `call_guard_contract_passed`와 그 결과인 `passed`만 correction evidence에 따라 true이며 나머지
+predicate와 값은 original payload와 동일하다. 대체 여부는 gate payload에 임의 field를 넣지 않고
+`claims_boundary.original_gate_replaced=false`로 기록한다. D-080 architecture는 provider를 다시 호출하지 않고
+기존 bytes를 검증·봉인한다. Hidden task failure, SCRR false, calibration exclusion과 baseline/memory/core
+closure도 바꾸지 않는다. Final verification은 focused 331 passed, repository-wide 1,162 collected 중 1,155
+passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와 `git diff --check`를 통과했다.
+Provider call은 0이며 추가 model cost는 `$0`이다.

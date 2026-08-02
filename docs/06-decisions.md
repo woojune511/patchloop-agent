@@ -480,6 +480,44 @@ Evidence/issue:
   Provider call/model cost는 0이다. Live 결과가 승인·생성되면 별도 D-080 seal에서 immutable evidence와
   measured usage/cost를 기록한다.
 
+### D-080 accepted decision — seal D-079 result and correct only the gate-summary projection
+
+- Status: accepted append-only result/correction seal with final offline verification complete. Focused tests are
+  331 passed; repository-wide regression is 1,162 collected, 1,155 passed and 7 environment-dependent skipped.
+  Ruff, Python compileall, JSON parse and `git diff --check` passed. D-080 itself makes zero provider call and adds
+  `$0` model cost.
+- Preserves: D-079 suite, execution hash, run, raw result, journal, qualification, submitted diff, original
+  `workflow-completion-probe-gate-v1` false와 hidden task failure를 수정·재실행·합산하지 않는다.
+- Live result: `run_606349c2c56342d4`는 84 model/119 tool, 1,790,707 token, 856,559ms와
+  `$1.81747785`를 사용해 terminal·qualified·official evaluator에 도달했다. Token 1,209,293과 wall
+  6,343,441ms가 남았고 binding dimension은 none이다.
+- Outcome boundary: Regression/scope/safety는 pass, hidden acceptance는 fail이므로 task outcome은
+  `task_failure`, SCRR false다. Process completion과 correctness를 합치지 않는다.
+- Defect: Full qualification의 `disabled_call_guard_contract`는 exact 1/1 pass였지만 historical terminal
+  summary가 raw checks를 생략했고 gate consumer가 그 collection을 검색했다. Original false는
+  `qualification-summary-projection-mismatch`이며 runtime/trace violation이 아니다.
+- Correction: `gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`의 suffix는
+  semantic body hash `sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`와 같다.
+  Body는 source identity와 raw result/qualification/source-evidence hashes, correction harness commit
+  `7e40e27446bcf011f700c219a96983e5670422f4`, projection contract, exact cause, original gate의 전체
+  payload, corrected gate의 전체 payload와 claims boundary를 함께 결속한다.
+- Gate semantics: Original과 corrected payload는 모두 `workflow-completion-probe-gate-v1`이다. Corrected
+  payload의 process pass는 append-only correction 안에만 있고, `claims_boundary.original_gate_replaced=false`와
+  `original_artifacts_modified=false`가 원 gate와 artifacts가 그대로임을 명시한다.
+- Forward contract: Summary producer는 full checks 대신 `qualification-gate-check-projection-v1` sanitized
+  projection을 만든다. Consumer는 exact outer key set과 exact
+  `schema_version/check_id/check_count/passed` inner key set, schema/ID, strict integer count 1과 boolean true를
+  모두 요구하고 absence, duplicate, extra key, bool/float/string count, type drift와 tamper를 fail closed한다.
+- Claims boundary: D-079/D-080은 calibration-only다. Derived gate pass는 agent workflow completion만
+  보여주며 task quality, general completion rate, memory effect 또는 fair comparison budget을 증명하지
+  않는다. Baseline, comparison denominator, memory admission과 core는 닫혀 있고 자동 재실행·hidden-driven
+  tuning은 금지한다.
+- Date: 2026-08-03
+- Evidence/issue: Portable sanitized record
+  `reports/live-pilot/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json`과 portable correction manifest
+  `reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`; raw local artifacts는
+  hash로만 참조하고 provider bodies, private evaluator assertions와 reference patch를 포함하지 않는다.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

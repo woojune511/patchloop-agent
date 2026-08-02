@@ -2509,3 +2509,67 @@ measured token/cost, gate outcome 또는 SCRR가 없다. Clean no-call preflight
 exact environment를 결속한 hash를 만든 뒤 사용자가 그 hash와 최대 `$14`를 명시적으로 승인해야 정확히
 한 번 실행할 수 있다. 승인된 live result가 생기면 D-079 source contract를 바꾸지 않고 별도 D-080
 append-only seal에서 보존한다.
+
+## 23. D-080 gate-summary projection and correction contract
+
+D-080은 D-079 source/runtime contract의 새 invocation이 아니다. Exact execution
+`sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791`과 run
+`run_606349c2c56342d4`의 immutable result를 입력으로 하는 evidence seal이다.
+
+Terminal qualification summary는 workflow-completion purpose에서 다음 exact projection을 가진다.
+
+```yaml
+gate_checks:
+  disabled_call_guard_contract:
+    schema_version: qualification-gate-check-projection-v1
+    check_id: disabled_call_guard_contract
+    check_count: 1
+    passed: true
+```
+
+Projection producer는 full `trace-qualification-v2.checks`에서 exact ID match를 세고 boolean pass만
+전달한다. Consumer acceptance는 다음 논리곱이다.
+
+```text
+gate_checks is an object
+AND set(gate_checks.keys) == {disabled_call_guard_contract}
+AND set(projection.keys) == {schema_version, check_id, check_count, passed}
+AND schema_version == qualification-gate-check-projection-v1
+AND embedded check_id equals the key
+AND type(check_count) is strict integer AND check_count == 1
+AND passed is exactly true
+```
+
+Raw full-check list를 terminal summary에 넣지 않는다. Missing/duplicate/extra outer 또는 inner key, wrong
+schema/ID, count 0 또는 2 이상, boolean/float/string count, truthiness와 malformed object는 모두 false다. Historical
+summary에 projection이 없다는 이유로 original result를 새 schema로 재해석하지 않는다.
+
+Portable append-only manifest는
+`reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`이고 schema는
+`workflow-completion-gate-summary-correction-manifest-v1`이다. Correction identity
+`gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`의 digest는 semantic body의
+canonical SHA-256인 `sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`와 같아야 한다.
+`workflow-completion-gate-summary-correction-v2` body는 다음 immutable source에 결속된다.
+
+```text
+experiment result SHA-256 = sha256:c9f85ac52b0b3933625966c2bd6af1f6b57bdc974f2c141aa74bd21a2700ee28
+qualification file SHA-256 = sha256:4d7a15f9984394b6ab798f78e391c6b0d5632bc0e6d4d4c9c4876eb5028c8168
+qualification hash = sha256:0368ef128ac6bb22ec4b15bac0ad6f77d73869c1f4d82c8537defd67aaa99d82
+source evidence hash = sha256:5efce76a94abfe48bcce9f63283cd0459fd9606c4a05d4c008430d52437b5928
+```
+
+Body는 source identity와 위 hashes뿐 아니라 correction harness commit
+`7e40e27446bcf011f700c219a96983e5670422f4`, package identity, projection schema/outer-inner exact-key
+contract, `qualification-summary-projection-mismatch` cause, original gate의 exact full payload, corrected gate의
+exact full payload와 claims boundary를 모두 포함한다. 이 중 하나가 달라지면 semantic body hash와 correction
+ID도 달라진다.
+
+Original과 corrected gate의 schema는 모두 `workflow-completion-probe-gate-v1`이다. Corrected payload는
+`call_guard_contract_passed=true`와 그에 따른 `passed=true`를 기록하지만 task success 0,
+`task_success_required=false`, comparison denominator false와 memory admission false를 그대로 유지한다.
+Correction-specific claims는 gate object에 넣지 않고 `claims_boundary`에 둔다. 이 boundary는
+`original_artifacts_modified=false`, `original_gate_replaced=false`, `task_outcome_changed=false`, task success/SCRR
+false, calibration-only true, comparison/memory/core false를 정확히 결속한다. D-080 seal/verification은 provider
+call 0과 추가 model cost `$0`로 수행됐다. Contract verification은 focused 331 passed, repository-wide 1,162
+collected 중 1,155 passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와
+`git diff --check`를 통과했다.

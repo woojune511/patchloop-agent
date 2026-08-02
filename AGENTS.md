@@ -12,8 +12,32 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-079 bounded pyfakefs workflow-completion probe source/offline contract;
-  clean no-call preflight and separate live approval pending`이다. Exact experiment ID는
+- 현재 milestone은 `D-080 D-079 workflow completion observed; original gate projection defect sealed
+  with an append-only derived correction; no baseline freeze`다. 승인 execution hash
+  `sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791`로 D-079를 정확히
+  한 번 실행한 `run_606349c2c56342d4`는 84 model/119 tool call, 1,790,707 token, 856,559ms와
+  계산 비용 `$1.81747785`를 사용해 terminal·qualified·official evaluator에 도달했다. Token
+  1,209,293과 wall 6,343,441ms가 남았고 budget binding은 없다. Regression/scope/safety는 통과했지만
+  hidden acceptance가 실패해 `task_failure`/SCRR false다. Original gate false는 runtime/trace violation이
+  아니라 terminal qualification summary producer가 raw checks를 생략하고 consumer가 그 collection을
+  찾은 `qualification-summary-projection-mismatch`다. Original experiment result와 gate는 immutable하다.
+  Append-only correction
+  `gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`와 semantic body hash
+  `sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`는 source identity,
+  correction harness commit `7e40e27446bcf011f700c219a96983e5670422f4`, projection contract, exact
+  cause, original gate, exact corrected gate와 claims boundary를 함께 결속한다. Corrected gate는 original과
+  같은 `workflow-completion-probe-gate-v1` schema의 별도 append-only payload이며 original gate를 대체하지
+  않는다. 새 terminal summary의 `qualification-gate-check-projection-v1`은 outer key exact-one과 inner
+  `check_count/check_id/passed/schema_version` exact key set을 요구해 missing, duplicate, extra, wrong ID/type와
+  malformed projection을 fail closed한다. `check_count`는 strict integer `1`만 허용하고 bool/float/string을
+  거부한다. D-080 final verification은 focused 331 passed, repository-wide 1,162 collected 중 1,155 passed/7
+  environment-dependent skipped, Ruff, Python compileall, JSON parse와 `git diff --check` pass다. Provider call은
+  0이고 추가 model cost는 `$0`이다. D-079/D-080은 calibration-only이고 comparison denominator,
+  no-memory baseline, memory admission과 core를 열지 않으며 자동 재실행·hidden-driven tuning을 승인하지
+  않는다. Portable seal은 `reports/live-pilot/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json`,
+  correction manifest는 `reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`에 있다.
+  Historical D-079 source milestone은 `bounded pyfakefs workflow-completion probe source/offline contract`
+  였다. Exact experiment ID는
   `pyfakefs-workflow-completion-probe-v2v5-20260803-r1`, purpose는
   `workflow-completion-probe`다. Frozen pyfakefs development task를 `no_memory`로 정확히 한 번 사용하고
   `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
@@ -22,11 +46,11 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   total token 3,000,000과 wall 7,200초를 강제한다. Exact-request token, cost, loop, constrained-tool,
   Docker/network/evaluator guard도 유지한다. Runtime contract는
   `workflow-completion-runtime-contract-v1`, gate는 `workflow-completion-probe-gate-v1`이다.
-  Conservative authorization reserve는 `$13.6125`, cap은 `$14`이지만 source/offline evidence는 provider
+  Conservative authorization reserve는 `$13.6125`, cap은 `$14`이며 당시 source/offline evidence는 provider
   call, execution hash, 사용자 비용 승인, run/result, measured usage/cost 또는 gate outcome을 만들지
-  않는다. Clean commit의 no-call preflight와 exact hash·최대 `$14`에 대한 별도 명시적 승인 전에는
-  live 실행하지 않는다. D-079는 calibration-only이며 comparison denominator, no-memory baseline,
-  memory admission과 core를 열지 않는다. Live invocation이 일어나면 결과 seal은 별도 D-080이다.
+  않았다. Clean commit의 no-call preflight와 exact hash·최대 `$14`에 대한 별도 명시적 승인 전에는
+  live 실행하지 않았고, 이후 exact invocation과 결과는 위 D-080 seal에만 속한다. D-079는
+  calibration-only이며 comparison denominator, no-memory baseline, memory admission과 core를 열지 않는다.
   Source/offline gate는 repository-wide 1,182 collected, 1,175 passed/7 environment-dependent skipped,
   Ruff, compileall과 `git diff --check`를 통과했다. 2026-08-02T16:35:25Z 공식 standard pricing도
   `$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output으로 재확인했으며 provider call/model cost는 0이다.

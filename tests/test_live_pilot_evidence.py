@@ -4759,3 +4759,400 @@ def test_d077_budget_only_readiness_report_excludes_private_payload() -> None:
         private_tokens = _private_leak_tokens(package, api_key=None)
         leaked.extend(token for token in private_tokens if token in checked_text)
     assert sorted(set(leaked)) == []
+
+
+def test_d080_workflow_completion_seal_keeps_process_and_task_outcomes_separate(
+) -> None:
+    from datetime import datetime
+
+    path = Path(
+        "reports/live-pilot/"
+        "pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "workflow-completion-probe-d080-evidence-v1"
+    )
+    assert payload["source_harness_commit"] == (
+        "66fefde373f75729eef0e68fecc2f56a9bb1c174"
+    )
+    source_audit_started_at = datetime.fromisoformat(
+        payload["source_audit_started_at"].replace("Z", "+00:00")
+    )
+    sealed_at = datetime.fromisoformat(
+        payload["sealed_at"].replace("Z", "+00:00")
+    )
+    assert source_audit_started_at < sealed_at
+    assert payload["recorded_at"] == payload["sealed_at"]
+    assert payload["execution_hash"] == (
+        "sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791"
+    )
+    assert payload["original_completion_gate"]["passed"] is False
+    assert payload["original_completion_gate"]["immutable"] is True
+    correction = payload["gate_summary_correction"]
+    correction_artifact = _artifact_for_role(
+        payload,
+        "gate-summary-correction-manifest",
+    )
+    _assert_artifact_identity(correction_artifact)
+    assert correction["portable_artifact"] == correction_artifact
+    correction_manifest = json.loads(
+        Path(correction_artifact["path"]).read_text(encoding="utf-8")
+    )
+    semantic_body = correction_manifest["semantic_body"]
+    expected_hash = sha256_text(canonical_json(semantic_body))
+    expected_id = "gcor_" + expected_hash.removeprefix("sha256:")
+    assert correction_manifest["semantic_body_hash"] == expected_hash
+    assert correction_manifest["correction_id"] == expected_id
+    assert correction["semantic_body_hash"] == expected_hash
+    assert correction["correction_id"] == expected_id
+    assert correction["correction_id"] == (
+        "gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861"
+    )
+    assert correction["correction_harness_commit"] == (
+        "7e40e27446bcf011f700c219a96983e5670422f4"
+    )
+    assert semantic_body["correction_harness"]["git_commit"] == (
+        correction["correction_harness_commit"]
+    )
+    assert semantic_body["cause"]["runtime_or_trace_violation"] is False
+    assert semantic_body["original_completion_gate"]["passed"] is False
+    assert semantic_body["corrected_completion_gate"]["passed"] is True
+    assert semantic_body["claims_boundary"]["original_artifacts_modified"] is False
+    assert correction["original_gate_passed"] is False
+    assert correction["corrected_gate_passed"] is True
+    assert correction["replaces_original_gate"] is False
+    for section, field, replacement in (
+        ("cause", "runtime_or_trace_violation", True),
+        ("corrected_completion_gate", "qualified_runs", 0),
+        ("claims_boundary", "task_success", True),
+    ):
+        tampered = json.loads(json.dumps(semantic_body))
+        tampered[section][field] = replacement
+        assert sha256_text(canonical_json(tampered)) != expected_hash
+
+    run = payload["run"]
+    assert run["outcome_kind"] == "task_failure"
+    assert run["evaluation_status"] == "completed"
+    assert run["official"] is True
+    assert run["scope_compliant_success"] is False
+    assert run["verdicts"] == {
+        "hidden_tests": "fail",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass",
+    }
+    assert payload["claims_boundary"]["corrected_process_gate_passed"] is True
+    assert payload["claims_boundary"]["task_success"] is False
+    assert payload["claims_boundary"]["scrr"] is False
+    assert payload["claims_boundary"]["calibration_only"] is True
+    assert payload["claims_boundary"][
+        "no_memory_performance_baseline_established"
+    ] is False
+    assert payload["claims_boundary"]["memory_admission_unlocked"] is False
+
+
+def test_d080_workflow_completion_seal_matches_raw_evidence_when_present(
+) -> None:
+    from patchloop.evals import runner as eval_runner
+
+    path = Path(
+        "reports/live-pilot/"
+        "pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    artifacts = payload["raw_local_artifacts"]
+
+    assert len(artifacts) == 12
+    assert len({artifact["role"] for artifact in artifacts}) == len(artifacts)
+    assert len({artifact["path"] for artifact in artifacts}) == len(artifacts)
+    result_artifact = next(
+        artifact for artifact in artifacts if artifact["role"] == "experiment-result"
+    )
+    if not Path(result_artifact["path"]).exists():
+        pytest.skip("raw local D-079 evidence is not bundled")
+
+    for artifact in artifacts:
+        assert Path(artifact["path"]).exists()
+        _assert_artifact_identity(artifact)
+
+    raw_result = json.loads(
+        Path(result_artifact["path"]).read_text(encoding="utf-8")
+    )
+    raw_row = raw_result["runs"][0]
+    assert raw_result["execution_hash"] == payload["execution_hash"]
+    assert raw_result["suite_hash"] == payload["suite_hash"]
+    assert raw_result["schedule_hash"] == payload["schedule_hash"]
+    assert raw_result["completion_gate"]["passed"] is False
+    for key, value in raw_result["completion_gate"].items():
+        assert payload["original_completion_gate"][key] == value
+
+    raw_qualification = load_trace_qualification(raw_row["run_id"])
+    assert raw_qualification["qualification_hash"] == (
+        payload["qualification"]["qualification_hash"]
+    )
+    assert raw_qualification["source_evidence_hash"] == (
+        payload["qualification"]["source_evidence_hash"]
+    )
+    assert calculate_source_evidence_hash(raw_row["run_id"]) == (
+        payload["qualification"]["source_evidence_hash"]
+    )
+    assert len(raw_qualification["checks"]) == 28
+    assert sum(check["passed"] for check in raw_qualification["checks"]) == 28
+    guard_checks = [
+        check
+        for check in raw_qualification["checks"]
+        if check["check_id"] == "disabled_call_guard_contract"
+    ]
+    assert len(guard_checks) == 1
+    assert guard_checks[0]["passed"] is True
+
+    corrected_row = {
+        **raw_row,
+        "qualification": eval_runner._terminal_qualification_summary(
+            raw_qualification
+        ),
+    }
+    schedule = [
+        {
+            key: raw_row[key]
+            for key in (
+                "order",
+                "schedule_row_id",
+                "task_id",
+                "split",
+                "dataset_role",
+                "condition",
+                "repetition",
+            )
+        }
+    ]
+    corrected_gate = eval_runner._completion_gate(
+        eval_runner.load_suite(
+            "experiments/"
+            "pyfakefs-workflow-completion-probe-v2v5-20260803-r1.yaml"
+        ),
+        [corrected_row],
+        expected_execution_hash=payload["execution_hash"],
+        expected_schedule=schedule,
+    )
+    assert corrected_gate is not None
+    assert corrected_gate["call_guard_contract_passed"] is True
+    assert corrected_gate["passed"] is True
+    correction_artifact = _artifact_for_role(
+        payload,
+        "gate-summary-correction-manifest",
+    )
+    correction_manifest = json.loads(
+        Path(correction_artifact["path"]).read_text(encoding="utf-8")
+    )
+    semantic_body = correction_manifest["semantic_body"]
+    assert corrected_gate == semantic_body["corrected_completion_gate"]
+    assert raw_result["completion_gate"] == semantic_body[
+        "original_completion_gate"
+    ]
+    assert result_artifact["sha256"] == semantic_body["source"][
+        "raw_result_sha256"
+    ]
+    qualification_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["role"] == "trace-qualification"
+    )
+    assert qualification_artifact["sha256"] == semantic_body["source"][
+        "qualification_file_sha256"
+    ]
+    assert raw_qualification["qualification_hash"] == semantic_body["source"][
+        "qualification_hash"
+    ]
+    assert raw_qualification["source_evidence_hash"] == semantic_body["source"][
+        "source_evidence_hash"
+    ]
+
+    usage = raw_row["usage"]
+    expected_cost = (
+        (usage["input_tokens"] - usage["cached_input_tokens"]) * 0.75
+        + usage["cached_input_tokens"] * 0.075
+        + usage["output_tokens"] * 4.5
+    ) / 1_000_000
+    assert usage["model_cost_usd"] == pytest.approx(expected_cost)
+    assert payload["budget"]["actual_usage"]["model_cost_usd"] == pytest.approx(
+        expected_cost
+    )
+
+    analysis_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["role"] == "post-run-analysis-report"
+    )
+    analysis = json.loads(
+        Path(analysis_artifact["path"]).read_text(encoding="utf-8")
+    )
+    assert analysis["analysis_ready"] is False
+    assert analysis["metrics"] == {}
+    assert analysis["headline_metrics"] is None
+    assert analysis["diagnostic_metrics"]["no_memory"]["scrr"]["estimate"] == 0
+
+    journal_artifact = next(
+        artifact for artifact in artifacts if artifact["role"] == "campaign-journal"
+    )
+    journal_rows = [
+        json.loads(line)
+        for line in Path(journal_artifact["path"])
+        .read_text(encoding="utf-8")
+        .splitlines()
+    ]
+    previous_hash = None
+    for sequence, row in enumerate(journal_rows, start=1):
+        recorded_hash = row.pop("event_hash")
+        assert row["sequence"] == sequence
+        assert row["previous_event_hash"] == previous_hash
+        assert sha256_text(canonical_json(row)) == recorded_hash
+        previous_hash = recorded_hash
+    assert previous_hash == payload["journal_seal"]["final_event_hash"]
+    assert journal_rows[-1]["payload"]["result_hash"] == (
+        payload["journal_seal"]["result_hash"]
+    )
+
+
+def test_d080_workflow_completion_seal_excludes_private_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json"
+    )
+    checked_text = path.read_text(encoding="utf-8")
+    payload = json.loads(checked_text)
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "checks",
+        "check_id",
+        "details",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "reference_patch",
+        "hidden_assertion",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested for child in value.values() for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested for child in value for nested in walk_keys(child)
+            }
+        return set()
+
+    correction_artifact = _artifact_for_role(
+        payload,
+        "gate-summary-correction-manifest",
+    )
+    correction_text = Path(correction_artifact["path"]).read_text(
+        encoding="utf-8"
+    )
+    correction_payload = json.loads(correction_text)
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    assert forbidden_keys.isdisjoint(walk_keys(correction_payload))
+    checked_text += correction_text
+    for marker in (
+        "OPENAI_API_KEY",
+        "Bearer ",
+        "sk-",
+        '"request_body"',
+        '"response_id"',
+        '"private_spec_hash"',
+        '"reference_patch"',
+    ):
+        assert marker not in checked_text
+
+    package = load_task_package(
+        "tasks/dev-train/pyfakefs-makedirs-parent-traversal"
+    )
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    leaked = [token for token in private_tokens if token in checked_text]
+    assert sorted(set(leaked)) == []
+
+
+def test_d080_consumed_probe_is_blocked_even_without_local_result(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime
+
+    from patchloop.errors import ContractError
+    from patchloop.evals import runner as eval_runner
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-secret-never-rendered")
+    monkeypatch.delenv("OPENAI_BASE_URL", raising=False)
+    monkeypatch.delenv("OPENAI_API_BASE", raising=False)
+    monkeypatch.setattr(
+        eval_runner,
+        "_git_state",
+        lambda: {"available": True, "commit": "a" * 40, "clean": True},
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "_docker_image_state",
+        lambda images: {
+            "available": True,
+            "images": [
+                {
+                    "image": image,
+                    "identity": image.rsplit("@", 1)[-1],
+                    "ready": True,
+                }
+                for image in sorted(set(images))
+            ],
+        },
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "_openai_sdk_state",
+        lambda: {"installed": True, "version": "2.47.0"},
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 17, tzinfo=UTC),
+    )
+    monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
+
+    suite_path = (
+        "experiments/"
+        "pyfakefs-workflow-completion-probe-v2v5-20260803-r1.yaml"
+    )
+    preflight = eval_runner.preflight_suite(suite_path)
+    blocker_codes = {blocker["code"] for blocker in preflight["blockers"]}
+
+    assert "HISTORICAL_SUITE_IMMUTABLE" in blocker_codes
+    assert "EXPERIMENT_RESULT_EXISTS" not in blocker_codes
+    assert "EXPERIMENT_JOURNAL_EXISTS" not in blocker_codes
+
+    class ForbiddenRunner:
+        def __init__(self) -> None:
+            pytest.fail("historical D-079 must be blocked before runner construction")
+
+    monkeypatch.setattr(eval_runner, "AgentRunner", ForbiddenRunner)
+    with pytest.raises(ContractError, match="preflight failed"):
+        eval_runner.evaluate_suite(
+            suite_path,
+            approve_live_cost=True,
+            approved_execution_hash=preflight["execution_hash"],
+        )

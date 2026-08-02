@@ -910,3 +910,32 @@ silently lowering the design or fabricating missing results.
 - At the source/offline stage there is no provider request, execution hash authority, approved spend, run/result,
   measured usage/cost or gate outcome. A later invocation, if explicitly approved, must be sealed separately and
   must not rewrite D-078 or imply automatic reruns.
+
+## D-080 corrects evidence aggregation, not agent correctness or efficiency
+
+- The D-079 workflow did reach the official evaluator, but the submitted patch hidden-failed. Correcting the
+  call-guard projection cannot turn that task outcome into success or SCRR and must not be used to tune against
+  hidden behavior.
+- The original gate remains false in the immutable experiment result. The derived true gate is an append-only
+  interpretation bound to the full qualification and explicitly does not replace or retroactively rewrite the
+  original artifact.
+- The sanitized `gate_checks` projection closes this exact producer/consumer mismatch. It does not prove that all
+  future qualification-summary fields are complete; every newly consumed predicate still needs an explicit,
+  versioned, exact-one fail-closed projection.
+- The hardened correction ID `gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`
+  and matching semantic body hash bind the source, correction harness commit
+  `7e40e27446bcf011f700c219a96983e5670422f4`, cause, both exact gate payloads and claims boundary. This binding
+  prevents partial reinterpretation; it does not make the corrected gate a replacement for the original.
+- `qualification-gate-check-projection-v1` accepts only the exact outer/inner key sets and strict integer
+  `check_count=1`; booleans, floats, strings and extra fields fail closed. This validates the named projection,
+  not arbitrary future summary schemas.
+- One 84-model/119-tool trajectory does not establish a generic budget. Most calls occurred in REPRODUCE and 41
+  repeated investigations were semantically replayed, so the observation mixes task/model stochasticity with an
+  exploration-control efficiency issue.
+- Model/tool count admission was intentionally absent, but token, wall, exact-request, loop, cost and sandbox
+  boundaries remained. Completion in this row does not show that those retained guards can never bind elsewhere.
+- D-080 adds no provider call and no model cost. Final verification completed with 331 focused tests passed;
+  repository-wide 1,162 collected, 1,155 passed and 7 environment-dependent skipped; Ruff, Python compileall,
+  JSON parse and `git diff --check` passed. These checks validate the correction implementation, not task success.
+- Calibration-only, `analysis_ready=false`, no-memory/comparison exclusion, memory-admission closure and core
+  closure remain in force despite the derived process-gate pass.

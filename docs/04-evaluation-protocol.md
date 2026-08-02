@@ -1281,3 +1281,56 @@ Pass/fail 어느 쪽도 자동 재실행, hidden-driven tuning, comparison budge
 failure-memory admission 또는 core campaign을 승인하지 않는다. Source/offline stage에는 provider call,
 execution hash, cost approval, run/result, measured cost와 gate outcome이 없다. Fresh-pricing no-call preflight의
 exact hash와 최대 `$14` 승인을 별도로 받은 뒤에만 한 번 실행하고, 결과는 별도 D-080 seal로 닫는다.
+
+### D-080 D-079 result interpretation and append-only gate correction
+
+D-080 평가는 같은 run에서 서로 다른 세 predicate를 합치지 않는다.
+
+```text
+workflow/process observation:
+  terminal + qualified + official evaluator reached
+  AND no infrastructure/qualification/diagnostic/budget/terminal-loop confound
+  => completed
+
+task correctness:
+  regression + scope + safety pass
+  AND hidden acceptance fail
+  => task_failure / SCRR false
+
+historical campaign gate artifact:
+  original call_guard_contract_passed false due to omitted summary projection
+  => original gate remains immutable false
+
+derived correction:
+  full qualification disabled_call_guard_contract exact 1/1 pass
+  AND all other original process predicates true
+  => derived process gate true, original not replaced
+```
+
+이 correction의 input projection은 `qualification-gate-check-projection-v1`이다. Consumer는 outer key set을
+`disabled_call_guard_contract` 하나로, inner key set을 `schema_version/check_id/check_count/passed` 네 개로
+정확히 제한한 뒤 schema/ID 일치, strict integer count 1과 boolean true를 검사한다. Boolean/float/string
+count를 포함한 missing, duplicate, extra 또는 malformed field는 모두 fail closed한다. Correction
+`gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`의 semantic body hash는
+`sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`이고 correction harness commit은
+`7e40e27446bcf011f700c219a96983e5670422f4`다. ID는 source, correction harness, cause, exact original/
+corrected `workflow-completion-probe-gate-v1` payload와 claims boundary를 함께 결속한다.
+
+Run은 84 model/119 tool call, 1,790,707 token과 856,559ms를 사용했다. Token 1,209,293과 wall
+6,343,441ms가 남았고 call counters는 limit이 아니며 blocked tool, exact-request block과 budget terminal은
+0이다. 따라서 D-078에서 관찰된 50-model-call admission이 이 별도 trajectory의 completion을 censor했을
+조건이라는 public process evidence는 얻었다. 다만 한 stochastic row가 일반 completion probability나
+frozen comparison budget을 정하지는 않는다.
+
+Public trace efficiency는 별도 diagnostic이다. 84 model call 중 73개와 119 tool call 중 104개가
+REPRODUCE에서 발생했고 semantic replay가 repeated read/search 41회를 감지했다. Rejected candidate 3개는
+모두 mutation 전에 거부됐고 retry context 3/3이 검증됐다. 이 관찰은 workflow가 구현되지 않았다는
+근거가 아니라 exploration-control 효율 개선 후보이며 hidden outcome을 이용한 tuning 권한이 아니다.
+
+D-080 correction은 stored result와 full qualification hash만 읽으며 provider request를 보내지 않는다.
+Portable manifest는 `reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`이다.
+Original result/gate, hidden task outcome과 SCRR를 수정하지 않는다. Corrected process gate true도
+calibration-only exclusion, `analysis_ready=false`, no-memory baseline, memory admission과 core closure를
+변경하지 않는다. Final offline verification은 focused 331 passed, repository-wide 1,162 collected 중 1,155
+passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와 `git diff --check`를 통과했다.
+Provider call은 0이며 추가 model cost는 `$0`이다.

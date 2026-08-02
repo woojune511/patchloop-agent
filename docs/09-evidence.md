@@ -2668,3 +2668,76 @@ Next, a clean no-call preflight must bind task/package/image/evaluator, SDK, pro
 pricing and the harness commit. Only a separate explicit approval of that exact hash and maximum `$14` may authorize
 one invocation. The row remains calibration-only and excluded from baseline, comparison, memory admission and core
 regardless of hidden outcome. Any approved live result belongs to a later D-080 append-only evidence seal.
+
+## D-080 D-079 live result and append-only gate-summary correction seal
+
+The approved D-079 execution hash
+`sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791` was consumed exactly
+once at source harness commit `66fefde373f75729eef0e68fecc2f56a9bb1c174`. Exact identities are:
+
+- suite: `sha256:0683bebba0363b3535bfb5024dae2516705fa21c393ac78e841be52634ba85aa`
+- schedule: `sha256:8f1bd5502ff4fb3b73625b9a8e066c596f751aa9e4d7699455547b7a8ba40522`
+- execution-plan semantic artifact: `sha256:cd4eb385743093dc55f03987d079564630cb9f03c2ea86defd7c1f8321b1856a`
+- experiment result file: `sha256:c9f85ac52b0b3933625966c2bd6af1f6b57bdc974f2c141aa74bd21a2700ee28`
+- campaign journal file: `sha256:b134a467e04c6b03559dd0b0ea0db379a1d480ccaa4a4cdcbea2596fb056fe84`
+- journal final event: `sha256:48c1ada3aed7cc0dfa05bfc0a6a3f04a061e97dbf1edcf712bfc18ab6d446b1c`
+- qualification file/hash: `sha256:4d7a15f9984394b6ab798f78e391c6b0d5632bc0e6d4d4c9c4876eb5028c8168` /
+  `sha256:0368ef128ac6bb22ec4b15bac0ad6f77d73869c1f4d82c8537defd67aaa99d82`
+- qualification source evidence: `sha256:5efce76a94abfe48bcce9f63283cd0459fd9606c4a05d4c008430d52437b5928`
+- submitted diff: `sha256:3da446ede6cd014c0c2b7d292f340c14bc0779d5f875f60df96a0d5242da675c`
+
+Run `run_606349c2c56342d4` reached a terminal result, passed trace qualification 28/28 and completed the
+official evaluator. It used 1,663,819 input + 126,888 output = 1,790,707 token, 84 model calls, 119 tool calls,
+856,559ms and usage-derived list-price cost `$1.81747785`. All 84 responses completed, exact input/total token
+telemetry matched and no previous-response dependency was used. Remaining headroom was 1,209,293 token and
+6,343,441ms; model/tool headroom is null because the counters were observability-only. Binding dimension, blocked
+tools, exact-request blocks, budget terminals and terminal-loop failures were all absent.
+
+The submitted one-file diff changed `pyfakefs/fake_os.py` by +20/-1 with no dependency, test-file or public-API
+change. Registered regression, scope and safety passed, while hidden acceptance failed. Therefore workflow
+completion was observed but task outcome is `task_failure`, scope-compliant success/SCRR are false. Public trace
+diagnostics record 73/84 model and 104/119 tool calls in REPRODUCE, 41 semantic replays, three rejected candidates
+with three verified retry episodes, two prepared/applied patches, one passing registered check, final diff review
+and one accepted submission. No hidden assertion or reference patch content was used for this analysis.
+
+The immutable original gate is false only because `call_guard_contract_passed=false`; every other process
+predicate is true. The full qualification artifact independently records one
+`disabled_call_guard_contract` check with pass true, null model/tool limits, valid runtime contract and zero
+forbidden generation/tail or context/admission failure. The historical terminal summary omitted raw checks while
+the gate consumer searched that omitted collection. This is
+`qualification-summary-projection-mismatch`, not a runtime or trace violation.
+
+Append-only correction
+`gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861` has semantic body hash
+`sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`. The digest equivalence makes the
+ID commit to the source identities above, correction harness commit
+`7e40e27446bcf011f700c219a96983e5670422f4`, projection contract, exact mismatch cause, exact original gate,
+exact corrected gate and claims boundary as one semantic body. Both gate payloads use
+`workflow-completion-probe-gate-v1`: the append-only corrected payload records
+`call_guard_contract_passed=true` and `passed=true`, but it does not replace or mutate the original false payload.
+
+The forward producer emits only a sanitized `qualification-gate-check-projection-v1` object under
+`gate_checks.disabled_call_guard_contract`. The consumer requires the outer key set to contain exactly that one
+ID and the inner key set to contain exactly `schema_version`, `check_id`, `check_count` and `passed`; it then checks
+the exact schema/ID, strict integer count 1 and boolean true. Missing, duplicate, extra, relabelled or malformed
+fields fail closed. In particular, `check_count=true`, `1.0` and `"1"` are rejected rather than accepted through
+Python truthiness or equality coercion.
+
+The portable sanitized seal is
+`reports/live-pilot/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json`. Its portable correction manifest is
+`reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`, 4,591 bytes with SHA-256
+`sha256:45a73a5000befa4f4d0ccbde739c686778f25a77cafe245a1529c35671bda3dd`. The manifest uses outer schema
+`workflow-completion-gate-summary-correction-manifest-v1` and semantic body schema
+`workflow-completion-gate-summary-correction-v2`. It excludes provider bodies, private task/evaluator content,
+hidden assertions and reference patches. D-080 adds no provider call and `$0` model cost. Final verification passed
+331 focused tests; repository-wide collection was 1,162 with 1,155 passed and 7 environment-dependent skipped.
+Ruff, Python compileall, JSON parse and `git diff --check` also passed. The cumulative usage-derived list-price ledger
+through D-080 is 55 unique paid runs and `$15.072655275`; this is not an invoice or free-tier claim.
+
+The claims boundary states `original_artifacts_modified=false`, `original_gate_replaced=false`,
+`task_outcome_changed=false`, task success/SCRR false, calibration-only true and comparison/memory/core false. Thus
+the corrected process gate does not change task failure, SCRR, `analysis_ready=false` or calibration-only status.
+Comparison denominator, no-memory baseline, memory admission and core remain closed. Automatic rerun, original
+artifact rewrite and hidden-driven tuning are not authorized. The next decision is to verify the projection fix
+offline and choose a condition-neutral baseline budget from public completion evidence without treating this
+single 84-call trajectory as the frozen population budget.

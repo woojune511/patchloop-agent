@@ -1,0 +1,113 @@
+{
+  "schema_version": "workflow-completion-gate-summary-correction-manifest-v1",
+  "correction_id": "gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861",
+  "semantic_body_hash": "sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861",
+  "semantic_body": {
+    "schema_version": "workflow-completion-gate-summary-correction-v2",
+    "source": {
+      "experiment_id": "pyfakefs-workflow-completion-probe-v2v5-20260803-r1",
+      "run_id": "run_606349c2c56342d4",
+      "source_harness_commit": "66fefde373f75729eef0e68fecc2f56a9bb1c174",
+      "execution_hash": "sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791",
+      "suite_hash": "sha256:0683bebba0363b3535bfb5024dae2516705fa21c393ac78e841be52634ba85aa",
+      "schedule_hash": "sha256:8f1bd5502ff4fb3b73625b9a8e066c596f751aa9e4d7699455547b7a8ba40522",
+      "raw_result_sha256": "sha256:c9f85ac52b0b3933625966c2bd6af1f6b57bdc974f2c141aa74bd21a2700ee28",
+      "qualification_file_sha256": "sha256:4d7a15f9984394b6ab798f78e391c6b0d5632bc0e6d4d4c9c4876eb5028c8168",
+      "qualification_hash": "sha256:0368ef128ac6bb22ec4b15bac0ad6f77d73869c1f4d82c8537defd67aaa99d82",
+      "source_evidence_hash": "sha256:5efce76a94abfe48bcce9f63283cd0459fd9606c4a05d4c008430d52437b5928"
+    },
+    "correction_harness": {
+      "git_commit": "7e40e27446bcf011f700c219a96983e5670422f4",
+      "package_name": "patchloop",
+      "package_version": "0.1.0",
+      "projection_schema_version": "qualification-gate-check-projection-v1"
+    },
+    "projection_contract": {
+      "purpose": "workflow-completion-probe",
+      "outer_keys": [
+        "disabled_call_guard_contract"
+      ],
+      "inner_keys": [
+        "check_count",
+        "check_id",
+        "passed",
+        "schema_version"
+      ],
+      "qualifier_match_count": 1,
+      "qualifier_passed": true,
+      "missing_duplicate_malformed_or_extra_fields_fail_closed": true,
+      "raw_qualifier_details_projected": false
+    },
+    "cause": {
+      "type": "qualification-summary-projection-mismatch",
+      "producer_behavior": "the terminal qualification summary omitted qualifier checks",
+      "consumer_behavior": "the completion gate searched the omitted checks collection",
+      "runtime_or_trace_violation": false
+    },
+    "original_completion_gate": {
+      "schema_version": "workflow-completion-probe-gate-v1",
+      "passed": false,
+      "expected_runs": 1,
+      "terminal_runs": 1,
+      "qualified_runs": 1,
+      "evaluator_reached_runs": 1,
+      "official_evaluator_runs": 1,
+      "infrastructure_errors": 0,
+      "qualification_errors": 0,
+      "diagnostic_errors": 0,
+      "task_identity_passed": true,
+      "row_binding_passed": true,
+      "run_binding_passed": true,
+      "schedule_binding_passed": true,
+      "execution_binding_passed": true,
+      "call_guard_policy": "model-tool-observability-only-v1",
+      "call_guard_contract_passed": false,
+      "terminal_loop_failure_runs": 0,
+      "terminal_loop_failure_run_ids": [],
+      "budget_terminal_runs": 0,
+      "budget_terminal_run_ids": [],
+      "task_successes": 0,
+      "task_success_required": false,
+      "comparison_denominator_eligible": false,
+      "memory_admission_unlocked": false
+    },
+    "corrected_completion_gate": {
+      "schema_version": "workflow-completion-probe-gate-v1",
+      "passed": true,
+      "expected_runs": 1,
+      "terminal_runs": 1,
+      "qualified_runs": 1,
+      "evaluator_reached_runs": 1,
+      "official_evaluator_runs": 1,
+      "infrastructure_errors": 0,
+      "qualification_errors": 0,
+      "diagnostic_errors": 0,
+      "task_identity_passed": true,
+      "row_binding_passed": true,
+      "run_binding_passed": true,
+      "schedule_binding_passed": true,
+      "execution_binding_passed": true,
+      "call_guard_policy": "model-tool-observability-only-v1",
+      "call_guard_contract_passed": true,
+      "terminal_loop_failure_runs": 0,
+      "terminal_loop_failure_run_ids": [],
+      "budget_terminal_runs": 0,
+      "budget_terminal_run_ids": [],
+      "task_successes": 0,
+      "task_success_required": false,
+      "comparison_denominator_eligible": false,
+      "memory_admission_unlocked": false
+    },
+    "claims_boundary": {
+      "original_artifacts_modified": false,
+      "original_gate_replaced": false,
+      "task_outcome_changed": false,
+      "task_success": false,
+      "scrr": false,
+      "calibration_only": true,
+      "comparison_denominator_eligible": false,
+      "memory_admission_unlocked": false,
+      "core_campaign_unlocked": false
+    }
+  }
+}

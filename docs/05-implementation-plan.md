@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-079 bounded pyfakefs workflow-completion probe source/offline contract;
-clean no-call preflight and separate live approval pending**
+현재 milestone: **D-080 D-079 workflow completion result and append-only gate-summary correction sealed and
+verified; no baseline freeze**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ clean no-call preflight and separate live approval pending**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-079 workflow-completion probe source/offline contract | pyfakefs 1 row, model/tool call observability-only, 3M token/7,200초/$14 cap; provider/hash/approval/run/result 없음, comparison/memory/core 제외 |
+| Phase 6 evaluation | D-080 D-079 live result seal | 1/1 workflow completion, derived process gate pass, hidden task failure; original false gate immutable, comparison/memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -59,6 +59,16 @@ model-call admission confound만 분리하기 위해 pyfakefs 한 task를
 sandbox/evaluator/cost guard를 유지한다. `$13.6125` reserve와 `$14` cap은 authorization bound일 뿐
 현재 측정 비용이 아니다. 이 probe는 calibration-only이며 gate가 통과해도 comparison budget을 동결하거나
 no-memory baseline, memory admission 또는 core를 열지 않는다.
+
+D-080은 그 exact probe의 live result를 봉인한다. `run_606349c2c56342d4`는 84 model/119 tool call 뒤
+official evaluator에 도달했고 budget confound는 없었지만 hidden task failure였다. Historical original
+gate false는 qualification-summary projection mismatch 때문이며 correction
+`gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`의 derived process gate만
+true다. Semantic body hash는 `sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`,
+correction harness commit은 `7e40e27446bcf011f700c219a96983e5670422f4`다. Original artifact와 task
+outcome은 바꾸지 않는다. Final verification은 focused 331 passed, repository-wide 1,162 collected 중 1,155
+passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와 `git diff --check`를 통과했다.
+Provider call은 0이며 추가 model cost는 `$0`이다.
 
 ## 1. Sequencing rule
 
@@ -164,7 +174,55 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current workflow-completion gate — D-079 bounded pyfakefs probe
+## Current result-seal gate — D-080 D-079 live completion and projection correction
+
+목표: D-079의 정확히 한 번 실행된 결과를 재실행하거나 원 artifact를 수정하지 않고 봉인한다. 실제
+workflow completion, hidden task outcome과 gate aggregation defect를 분리하고, 앞으로 같은 exact-one
+qualifier check를 안전하게 전달하는 sanitized projection을 검증한다.
+
+### Ordered work items
+
+1. **완료:** Execution hash
+   `sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791`, source commit
+   `66fefde373f75729eef0e68fecc2f56a9bb1c174`, run `run_606349c2c56342d4`와 raw result,
+   journal, qualification, submitted diff identity를 hash-bound로 고정한다.
+2. **완료:** Workflow completion과 task correctness를 분리한다. Run은 terminal·qualified·official
+   evaluator에 도달했고 budget binding은 없지만 hidden acceptance 실패로 task outcome은
+   `task_failure`/SCRR false다.
+3. **완료:** Original gate false와 `call_guard_contract_passed=false`를 immutable하게 보존한다. Full
+   qualification의 `disabled_call_guard_contract`는 실제로 exact 1/1 pass였으므로 false 원인을
+   `qualification-summary-projection-mismatch`로 분류한다.
+4. **완료:** Append-only correction
+   `gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`를 raw result와
+   qualification file/hash/source-evidence hash, correction harness commit
+   `7e40e27446bcf011f700c219a96983e5670422f4`, cause, exact original/corrected gate와 claims boundary에
+   결속한다. Semantic body hash는
+   `sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`다. Corrected gate true는
+   process completion만 정정하며 original gate나 task outcome을 대체하지 않는다. Portable manifest는
+   `reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`이다.
+5. **완료:** Terminal qualification summary는 full checks를 campaign result에 복사하지
+   않고 `qualification-gate-check-projection-v1`의 `schema_version`, `check_id`, `check_count`, `passed`만
+   투영한다. Consumer는 outer key exact-one과 inner exact key set, exact schema/ID, strict integer count 1과
+   boolean true를 요구해 absence, duplicate, extra, bool/float/string count, wrong ID/type과 tamper를 fail
+   closed한다.
+6. **완료:** Focused projection/tamper tests는 331 passed다. Repository-wide regression은 1,162 collected 중
+   1,155 passed/7 environment-dependent skipped이고 Ruff, Python compileall, sanitized JSON parse와
+   `git diff --check`도 통과했다.
+7. **완료:** D-080 seal 작성과 검증은 provider call 0, 추가 model cost `$0`이다. 같은 D-079 ID/hash/run을
+   재사용하거나 재실행하지 않는다.
+8. **후속 결정:** Public completion evidence로 condition-neutral comparison budget 후보를 정하되, 한
+   pyfakefs trajectory의 84-call 관찰값을 그대로 frozen population budget으로 승격하지 않는다.
+
+### Gate status — derived process gate passed; task correctness failed
+
+- Actual usage는 84 model/119 tool, 1,790,707 token, 856,559ms, `$1.81747785`다.
+- Headroom은 token 1,209,293과 wall 6,343,441ms이고 budget terminal/blocked tool은 0이다.
+- Durable qualification은 28/28이며 call-guard contract는 1/1 pass다.
+- Original gate false는 immutable하고 derived corrected gate만 true다.
+- Calibration-only, `analysis_ready=false`, comparison denominator, no-memory baseline, memory admission과
+  core는 계속 닫혀 있다.
+
+## Historical workflow-completion source gate — D-079 bounded pyfakefs probe
 
 목표: D-078의 pyfakefs trace에서 유일하게 남은 model-call admission confound를 hidden correctness와
 분리해 측정한다. Four-row readiness를 다시 돌리거나 hidden 결과에 맞춰 prompt/tool/context를 tuning하지
@@ -187,20 +245,20 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
 5. **완료:** `workflow-completion-probe-gate-v1`은 1/1 exact identity, terminal, qualified,
    official evaluator와 zero infrastructure/qualification/diagnostic error, retained-guard integrity 및
    disabled-call-guard contract를 요구한다. Hidden acceptance와 SCRR는 gate predicate가 아니다.
-6. **완료:** Focused와 repository-wide offline regression은 1,182 collected, 1,175 passed/7
+6. **완료:** 당시 focused와 repository-wide offline regression은 1,182 collected, 1,175 passed/7
    environment-dependent skipped, Ruff, compileall과 `git diff --check`를 통과했다. Tracked source/docs를
-   clean commit으로 만드는 단계이며 provider call, execution hash, 사용자 승인, run/result, measured
-   usage/cost 또는 gate outcome은 아직 없다.
+   clean commit으로 만드는 source 단계에는 provider call, execution hash, 사용자 승인, run/result,
+   measured usage/cost 또는 gate outcome이 없었다.
 7. **승인 전 금지:** Clean no-call preflight에서 task/package/image/evaluator, SDK, fresh official pricing,
    exact prompt/tool/runtime와 randomized schedule을 결속한다. `$13.6125` reserve와 `$14` cap은
    authorization bound이며, 생성된 exact hash와 최대 `$14`에 대한 별도 명시적 승인 전에는 provider를
    호출하지 않는다.
-8. **승인 후 한 번:** Exact 한 row를 한 번 실행한다. Pass는 call-count censorship 없이 evaluator에
+8. **완료:** 승인 뒤 exact 한 row를 한 번 실행했다. Pass는 call-count censorship 없이 evaluator에
    도달했다는 뜻이고 correctness, memory effect 또는 fair comparison budget을 뜻하지 않는다. Failure도
    자동 재실행이나 task-specific tuning을 승인하지 않는다.
-9. Live 결과가 생기면 original artifact를 바꾸지 않고 별도 D-080 append-only seal로 기록한다.
+9. **완료:** Live 결과를 original artifact를 바꾸지 않는 별도 D-080 append-only seal로 기록한다.
 
-### Gate status — source/offline stage; live evidence absent
+### Gate status — historical source/offline closure; live result is sealed by D-080
 
 - D-079는 calibration-only이며 `analysis_ready=false`, comparison denominator, no-memory baseline,
   memory admission과 core는 닫혀 있다.

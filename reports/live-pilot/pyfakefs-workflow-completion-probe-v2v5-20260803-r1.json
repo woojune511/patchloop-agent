@@ -1,0 +1,398 @@
+{
+  "schema_version": "workflow-completion-probe-d080-evidence-v1",
+  "experiment_id": "pyfakefs-workflow-completion-probe-v2v5-20260803-r1",
+  "purpose": "workflow-completion-probe",
+  "recorded_at": "2026-08-02T17:51:07Z",
+  "source_audit_started_at": "2026-08-02T17:15:07Z",
+  "sealed_at": "2026-08-02T17:51:07Z",
+  "source_harness_commit": "66fefde373f75729eef0e68fecc2f56a9bb1c174",
+  "execution_hash": "sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791",
+  "suite_hash": "sha256:0683bebba0363b3535bfb5024dae2516705fa21c393ac78e841be52634ba85aa",
+  "schedule_hash": "sha256:8f1bd5502ff4fb3b73625b9a8e066c596f751aa9e4d7699455547b7a8ba40522",
+  "execution_plan_hash": "sha256:cd4eb385743093dc55f03987d079564630cb9f03c2ea86defd7c1f8321b1856a",
+  "dataset": {
+    "dataset_id": "patchloop-benchmark-v1",
+    "manifest_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786"
+  },
+  "runtime_contract": {
+    "schema_version": "workflow-completion-runtime-contract-v1",
+    "call_guard_policy": "model-tool-observability-only-v1",
+    "tool_schema_version": "v2",
+    "context_policy_version": "phase-evidence-v5",
+    "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+    "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+    "transport_max_retries": 0,
+    "agent_image_digest": "sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c",
+    "evaluator_image_digest": "sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c"
+  },
+  "model_tuple": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "memory_condition": "no_memory",
+    "repetitions": 1,
+    "schedule_seed": 20260723
+  },
+  "budget": {
+    "per_run": {
+      "max_model_calls": null,
+      "max_tool_calls": null,
+      "max_total_tokens": 3000000,
+      "wall_clock_timeout_seconds": 7200,
+      "max_output_tokens": 25000
+    },
+    "pricing": {
+      "verified_at": "2026-08-02T16:35:25Z",
+      "source_url": "https://developers.openai.com/api/docs/pricing",
+      "input_price_per_million_usd": 0.75,
+      "cached_input_price_per_million_usd": 0.075,
+      "output_price_per_million_usd": 4.5,
+      "authorization_reserve_usd": 13.6125,
+      "cost_limit_usd": 14.0
+    },
+    "actual_usage": {
+      "input_tokens": 1663819,
+      "cached_input_tokens": 2048,
+      "output_tokens": 126888,
+      "reasoning_output_tokens": 120880,
+      "total_tokens": 1790707,
+      "model_calls": 84,
+      "tool_calls": 119,
+      "wall_clock_ms": 856559,
+      "model_cost_usd": 1.81747785
+    },
+    "headroom": {
+      "model_calls": null,
+      "tool_calls": null,
+      "total_tokens": 1209293,
+      "wall_clock_ms": 6343441
+    },
+    "binding_dimension": "none",
+    "blocked_tool_count": 0,
+    "exact_request_blocked": false,
+    "observed_prefix_minimum_total_budget": 1815619
+  },
+  "original_completion_gate": {
+    "schema_version": "workflow-completion-probe-gate-v1",
+    "passed": false,
+    "expected_runs": 1,
+    "terminal_runs": 1,
+    "qualified_runs": 1,
+    "evaluator_reached_runs": 1,
+    "official_evaluator_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "task_identity_passed": true,
+    "row_binding_passed": true,
+    "run_binding_passed": true,
+    "schedule_binding_passed": true,
+    "execution_binding_passed": true,
+    "call_guard_policy": "model-tool-observability-only-v1",
+    "call_guard_contract_passed": false,
+    "terminal_loop_failure_runs": 0,
+    "terminal_loop_failure_run_ids": [],
+    "budget_terminal_runs": 0,
+    "budget_terminal_run_ids": [],
+    "task_successes": 0,
+    "task_success_required": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "immutable": true,
+    "retroactively_recomputed": false
+  },
+  "gate_summary_correction": {
+    "correction_id": "gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861",
+    "semantic_body_hash": "sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861",
+    "correction_harness_commit": "7e40e27446bcf011f700c219a96983e5670422f4",
+    "portable_artifact": {
+      "role": "gate-summary-correction-manifest",
+      "path": "reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json",
+      "bytes": 4591,
+      "sha256": "sha256:45a73a5000befa4f4d0ccbde739c686778f25a77cafe245a1529c35671bda3dd"
+    },
+    "original_gate_passed": false,
+    "corrected_gate_passed": true,
+    "replaces_original_gate": false
+  },
+  "run": {
+    "task_id": "pyfakefs-makedirs-parent-traversal",
+    "dataset_role": "memory-development",
+    "run_id": "run_606349c2c56342d4",
+    "schedule_row_id": "sha256:cc36dc7b31162eed434cb6d84b4aa5b46ae33de99e9ab5a6a3d09900335e8804",
+    "outcome_kind": "task_failure",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "official": true,
+    "scope_compliant_success": false,
+    "verdicts": {
+      "hidden_tests": "fail",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "submitted_diff": {
+      "content_hash": "sha256:3da446ede6cd014c0c2b7d292f340c14bc0779d5f875f60df96a0d5242da675c",
+      "size_bytes": 1090,
+      "changed_files": [
+        "pyfakefs/fake_os.py"
+      ],
+      "added_lines": 20,
+      "deleted_lines": 1,
+      "dependency_changes": 0,
+      "test_file_changes": 0,
+      "public_api_changes": 0
+    }
+  },
+  "qualification": {
+    "schema_version": "trace-qualification-v2",
+    "qualification_hash": "sha256:0368ef128ac6bb22ec4b15bac0ad6f77d73869c1f4d82c8537defd67aaa99d82",
+    "source_evidence_hash": "sha256:5efce76a94abfe48bcce9f63283cd0459fd9606c4a05d4c008430d52437b5928",
+    "qualified": true,
+    "trace_integrity_passed": true,
+    "leakage_scan_passed": true,
+    "evaluation_reached": true,
+    "passed_checks": 28,
+    "total_checks": 28,
+    "disabled_call_guard_contract": {
+      "check_count": 1,
+      "passed": true,
+      "model_call_limit": null,
+      "tool_call_limit": null,
+      "runtime_contract_valid": true,
+      "forbidden_generation_block_count": 0,
+      "forbidden_tail_block_count": 0,
+      "context_tail_failure_count": 0,
+      "admission_tail_failure_count": 0
+    },
+    "memory_candidate_eligible": false
+  },
+  "public_trace_diagnostics": {
+    "analysis_basis": "public task, public trace metadata, submitted diff and aggregate verifier verdicts only",
+    "hidden_assertions_or_reference_patch_read": false,
+    "events": 583,
+    "checkpoints": 120,
+    "model_telemetry": {
+      "completed_responses": 84,
+      "incomplete_responses": 0,
+      "exact_input_count_matches": 84,
+      "exact_total_count_matches": 84,
+      "truncation_disabled": 84,
+      "store_false": 84,
+      "previous_response_dependency": 0
+    },
+    "phase_usage": {
+      "REPRODUCE": {
+        "model_calls": 73,
+        "tool_calls": 104
+      },
+      "PLAN": {
+        "model_calls": 0,
+        "tool_calls": 0
+      },
+      "IMPLEMENT": {
+        "model_calls": 9,
+        "tool_calls": 13
+      },
+      "VERIFY": {
+        "model_calls": 1,
+        "tool_calls": 1
+      },
+      "REVIEW": {
+        "model_calls": 1,
+        "tool_calls": 1
+      }
+    },
+    "tool_calls": {
+      "search_files": 56,
+      "read_file": 55,
+      "apply_patch": 5,
+      "run_check": 1,
+      "get_diff": 1,
+      "finish_task": 1
+    },
+    "loop_control": {
+      "detected": 41,
+      "replayed": 41,
+      "read_replays": 29,
+      "search_replays": 12,
+      "terminal_loop_failure": false
+    },
+    "mutation_lifecycle": {
+      "rejected_candidates": 3,
+      "verified_retry_episodes": 3,
+      "failed_source_failure_sequences": [],
+      "patches_prepared": 2,
+      "patches_applied": 2,
+      "review_recorded": 1,
+      "submission_attempted": 1,
+      "submission_accepted": 1
+    },
+    "visible_validation": {
+      "registered_checks_run": 1,
+      "registered_checks_passed": 1,
+      "final_diff_observed": true
+    }
+  },
+  "analysis": {
+    "analysis_ready": false,
+    "ordinary_metrics_empty": true,
+    "analysis_basis": "available-case-diagnostic-not-for-headlines",
+    "workflow_completion_observed": true,
+    "call_count_censorship_removed": true,
+    "process_gate_after_projection_correction": "passed",
+    "task_correctness": "failed",
+    "primary_runtime_observation": "the former 50-model-call boundary was a completion confound; the same fixed V2/V5 workflow reached official evaluation after 84 model and 119 tool calls when count admission was disabled",
+    "efficiency_observation": "73 of 84 model calls and 104 of 119 tool calls occurred in REPRODUCE; semantic replay detected repeated reads and searches but did not force a strategy or phase change",
+    "public_correctness_observation": "the submitted patch passed the registered regression and all scope and safety policies but did not satisfy hidden acceptance",
+    "hidden_failure_used_for_tuning": false
+  },
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "all_scheduled_runs_terminal": true,
+    "all_terminal_traces_qualified": true,
+    "official_evaluator_reached": true,
+    "infrastructure_confound_observed": false,
+    "budget_confound_observed": false,
+    "original_gate_false_due_to_aggregation_defect": true,
+    "corrected_process_gate_passed": true,
+    "task_success": false,
+    "scrr": false,
+    "calibration_only": true,
+    "analysis_ready": false,
+    "no_memory_performance_baseline_established": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "core_campaign_unlocked": false
+  },
+  "cost_ledger": {
+    "prior_unique_paid_runs": 54,
+    "prior_usage_derived_list_price_usd": 13.255177425,
+    "added_unique_paid_runs": 1,
+    "added_usage_derived_list_price_usd": 1.81747785,
+    "through_d080_unique_paid_runs": 55,
+    "through_d080_usage_derived_list_price_usd": 15.072655275,
+    "actual_invoice_or_free_tier_treatment_claimed": false
+  },
+  "next_gate": {
+    "automatic_rerun_authorized": false,
+    "hidden_failure_tuning_authorized": false,
+    "original_artifact_rewrite_authorized": false,
+    "projection_contract_fix_required": false,
+    "baseline_freeze_authorized": false,
+    "memory_admission_authorized": false,
+    "required_next_action": "verify the sanitized qualification gate projection fix and choose a condition-neutral baseline budget from public completion evidence"
+  },
+  "portable_artifacts": [
+    {
+      "role": "gate-summary-correction-manifest",
+      "path": "reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json",
+      "bytes": 4591,
+      "sha256": "sha256:45a73a5000befa4f4d0ccbde739c686778f25a77cafe245a1529c35671bda3dd"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "role": "suite-source",
+      "path": "experiments/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.yaml",
+      "bytes": 1488,
+      "sha256": "sha256:b2b0b2a9515497cc26609f28ef89e7b8de8dadb9e693c15225e3977ee828deca"
+    },
+    {
+      "role": "experiment-result",
+      "path": ".patchloop/experiments/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json",
+      "bytes": 15393,
+      "sha256": "sha256:c9f85ac52b0b3933625966c2bd6af1f6b57bdc974f2c141aa74bd21a2700ee28"
+    },
+    {
+      "role": "campaign-journal",
+      "path": ".patchloop/experiments/journals/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.jsonl",
+      "bytes": 2713,
+      "sha256": "sha256:b134a467e04c6b03559dd0b0ea0db379a1d480ccaa4a4cdcbea2596fb056fe84"
+    },
+    {
+      "role": "execution-plan-file",
+      "path": ".patchloop/experiments/plans/70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791.json",
+      "bytes": 6353,
+      "sha256": "sha256:bb679bfeafc767d67ac7b00cd65d8fbbcd4be04b7865dfd84d2bcf48f58dc672"
+    },
+    {
+      "role": "run-manifest",
+      "path": ".patchloop/artifacts/runs/run_606349c2c56342d4/manifest.json",
+      "bytes": 2382,
+      "sha256": "sha256:13c301f3c76e5297c434571d8f6a2d67e3d4c77996fc863b6e0d2df6c486db1c"
+    },
+    {
+      "role": "run-result",
+      "path": ".patchloop/artifacts/runs/run_606349c2c56342d4/result.json",
+      "bytes": 4979,
+      "sha256": "sha256:1d71c2046b8b5b31bcbc46afb1b8615866b9fab7ef6fa5f0ecf75c5aa1a82d4d"
+    },
+    {
+      "role": "evaluation-receipt",
+      "path": ".patchloop/artifacts/runs/run_606349c2c56342d4/evaluation-receipt.json",
+      "bytes": 599,
+      "sha256": "sha256:c4cf727cdc05add6e478d62ccf99a8bb3931f63f1ac0e5b712889b5f6332c29d"
+    },
+    {
+      "role": "trace-qualification",
+      "path": ".patchloop/qualifications/run_606349c2c56342d4.json",
+      "bytes": 18124,
+      "sha256": "sha256:4d7a15f9984394b6ab798f78e391c6b0d5632bc0e6d4d4c9c4876eb5028c8168"
+    },
+    {
+      "role": "failure-record",
+      "path": ".patchloop/failures/dev-train/fail_49a8d9131b6e5179bf3b61d4999562c2.json",
+      "bytes": 604,
+      "sha256": "sha256:a1363783639398ddbd492b5176086fc985343aeab09ca75d24c9ac8bae884934"
+    },
+    {
+      "role": "submitted-diff",
+      "path": ".patchloop/artifacts/objects/sha256/3d/a446ede6cd014c0c2b7d292f340c14bc0779d5f875f60df96a0d5242da675c",
+      "bytes": 1090,
+      "sha256": "sha256:3da446ede6cd014c0c2b7d292f340c14bc0779d5f875f60df96a0d5242da675c"
+    },
+    {
+      "role": "post-run-analysis-source",
+      "path": ".patchloop/analysis/pyfakefs-workflow-completion-probe-v2v5-20260803-r1/raw-experiment.json",
+      "bytes": 15661,
+      "sha256": "sha256:0bdc6b40ab4a626e6f0dabbb0976a2bdf53ca51eab32d4120df2acff7d447449"
+    },
+    {
+      "role": "post-run-analysis-report",
+      "path": ".patchloop/analysis/pyfakefs-workflow-completion-probe-v2v5-20260803-r1/report.json",
+      "bytes": 2150,
+      "sha256": "sha256:bd9ef0ab1736cf3fcdf55a909f3826ea2cc969a62363781fcfc3e1ca92bfe43c"
+    }
+  ],
+  "journal_seal": {
+    "final_sequence": 4,
+    "final_event_type": "CampaignCompleted",
+    "final_event_hash": "sha256:48c1ada3aed7cc0dfa05bfc0a6a3f04a061e97dbf1edcf712bfc18ab6d446b1c",
+    "previous_event_hash": "sha256:d8e8d90f68584a77b94b43b4a128ae961d99c48f43ef58bcddb60648621984f2",
+    "result_hash": "sha256:c9f85ac52b0b3933625966c2bd6af1f6b57bdc974f2c141aa74bd21a2700ee28"
+  },
+  "evidence_policy": {
+    "portable_scope": "sanitized metadata only; no provider body, private task, hidden assertion or reference patch content",
+    "raw_local_artifacts": "hash-bound local evidence; inspect in place and do not commit",
+    "provider_private_exclusion": true,
+    "evaluator_private_exclusion": true
+  },
+  "evidence_validation": {
+    "raw_artifact_hashes_verified": true,
+    "journal_hash_chain_verified": true,
+    "run_and_qualification_bindings_verified": true,
+    "gate_correction_identity_verified": true,
+    "private_leak_scan_passed": true,
+    "validation_scope": "D-080 append-only source seal after the single approved D-079 workflow-completion invocation",
+    "focused_regression": "331 passed",
+    "repository_regression": "1,162 collected; 1,155 passed; 7 environment-dependent skipped",
+    "static_checks": "Ruff, Python compileall, JSON parse, and git diff --check passed",
+    "provider_calls": 0,
+    "added_model_cost_usd": 0.0
+  }
+}

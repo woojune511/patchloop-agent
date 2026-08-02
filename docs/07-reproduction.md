@@ -977,6 +977,90 @@ Docker image/evaluator, SDK, clean harness commit, prompt/tool/runtime, schedule
 다시 검사한다. Dirty source, package/image/SDK drift, stale pricing, runtime/policy mismatch는 blocker다.
 
 Preflight가 만든 exact execution hash와 최대 `$14`를 사용자에게 별도로 제시한다. 명시적 승인 전에는
-live command를 실행하지 않는다. 현재 source/offline 단계에는 provider call, hash authority, user approval,
-run ID/result, measured usage/cost, SCRR 또는 gate outcome이 없다. 승인 뒤 exact experiment를 한 번만
-실행하며, 결과를 재현할 때는 raw artifacts와 이후 D-080 sanitized seal을 읽고 같은 ID를 재실행하지 않는다.
+live command를 실행하지 않는다. 당시 source/offline 단계에는 provider call, hash authority, user approval,
+run ID/result, measured usage/cost, SCRR 또는 gate outcome이 없었다. 이후 approved exact experiment는 한
+번만 실행됐고 아래 D-080 sanitized seal에 기록됐다. 결과를 재현할 때는 raw artifacts와 seal을 읽고 같은
+ID를 재실행하지 않는다.
+
+## D-080 D-079 live result and gate correction inspection — do not rerun
+
+D-079 execution hash와 experiment ID는 이미 정확히 한 번 소비됐다. Live command를 다시 실행하지 말고
+portable seal을 읽는다.
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  reports/live-pilot/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json
+
+Get-Content -Raw -Encoding utf8 `
+  reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json
+
+Get-FileHash -Algorithm SHA256 `
+  reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json
+
+Get-FileHash -Algorithm SHA256 `
+  .patchloop/experiments/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json
+
+Get-FileHash -Algorithm SHA256 `
+  .patchloop/qualifications/run_606349c2c56342d4.json
+```
+
+Local raw files가 남아 있다면 hashes는 각각 experiment result
+`c9f85ac52b0b3933625966c2bd6af1f6b57bdc974f2c141aa74bd21a2700ee28`, qualification file
+`4d7a15f9984394b6ab798f78e391c6b0d5632bc0e6d4d4c9c4876eb5028c8168`이어야 한다. Local
+`.patchloop` files는 clean clone에 없을 수 있으며 portable record는 private/provider content가 아니라
+sanitized metadata와 hashes만 가진다.
+
+Correction manifest의 portable file hash는
+`sha256:45a73a5000befa4f4d0ccbde739c686778f25a77cafe245a1529c35671bda3dd`이고 bytes는 4,591이어야
+한다. Main portable record의 compact pointer와 manifest body를 함께 검사한다.
+
+```text
+original_completion_gate.passed = false
+original_completion_gate.call_guard_contract_passed = false
+original_completion_gate.immutable = true
+
+gate_summary_correction.correction_id =
+  gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861
+gate_summary_correction.semantic_body_hash =
+  sha256:6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861
+gate_summary_correction.correction_harness_commit =
+  7e40e27446bcf011f700c219a96983e5670422f4
+gate_summary_correction.original_gate_passed = false
+gate_summary_correction.corrected_gate_passed = true
+gate_summary_correction.replaces_original_gate = false
+
+manifest.semantic_body.correction_harness.projection_schema_version =
+  qualification-gate-check-projection-v1
+manifest.semantic_body.projection_contract.outer_keys =
+  [disabled_call_guard_contract]
+manifest.semantic_body.projection_contract.inner_keys =
+  [check_count, check_id, passed, schema_version]
+manifest.semantic_body.original_completion_gate.schema_version =
+  workflow-completion-probe-gate-v1
+manifest.semantic_body.original_completion_gate.passed = false
+manifest.semantic_body.corrected_completion_gate.schema_version =
+  workflow-completion-probe-gate-v1
+manifest.semantic_body.corrected_completion_gate.passed = true
+manifest.semantic_body.claims_boundary.original_gate_replaced = false
+manifest.semantic_body.claims_boundary.task_success = false
+manifest.semantic_body.claims_boundary.scrr = false
+```
+
+Correction ID의 digest와 `semantic_body_hash`가 같아야 한다. 이 semantic body가 source identity,
+correction harness, projection contract, exact cause, original/corrected gate의 전체 payload와 claims boundary를
+모두 결속하므로 일부 field만 떼어 새 correction이라고 주장할 수 없다. Forward consumer는 outer/inner key
+set을 정확히 검사하며 `check_count`는 Python `bool`을 포함한 truthy 값이 아니라 strict integer `1`이어야
+한다. 따라서 `true`, `1.0`, `"1"`은 모두 거부한다.
+
+Forward projection과 seal validation은 provider를 호출하지 않는 offline command로만 수행한다.
+
+```powershell
+uv run --cache-dir .uv-cache pytest `
+  tests/test_workflow_completion_probe.py `
+  tests/test_live_pilot_evidence.py -q
+```
+
+Final verification evidence는 focused 331 passed, repository-wide 1,162 collected 중 1,155 passed/7
+environment-dependent skipped다. Ruff, Python compileall, JSON parse와 `git diff --check`도 통과했다. D-080
+verification의 provider call은 0이고 추가 model cost는 `$0`이다. Hidden assertion,
+private evaluator output 또는 reference patch를 reproduction 절차에서 열거나 portable record에 넣지 않는다.
