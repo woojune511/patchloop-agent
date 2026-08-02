@@ -395,6 +395,29 @@ def test_v10_events_template_renders_inspectable_public_coverage() -> None:
     assert "Public coverage review" not in legacy_html
 
 
+def test_v11_trace_uses_public_coverage_lifecycle() -> None:
+    trace = _build_trace_view(
+        [
+            _event(1, EventType.RUN_STARTED),
+            _event(
+                2,
+                EventType.TOOL_SUCCEEDED,
+                _coverage_review_payload(complete=False),
+            ),
+        ],
+        tool_schema_version="v6",
+        public_review_contract=_coverage_contract(),
+    )
+
+    assert trace["coverage_review"]["supported"] is True
+    review_label = trace["lifecycle"]["review"]["label"]
+    assert review_label.startswith("public coverage review incomplete")
+    assert review_label.endswith("1/2 targets verified")
+    assert trace["lifecycle"]["submission"]["label"] == (
+        "submission not attempted"
+    )
+
+
 def test_v2_trace_distinguishes_no_submission_from_incomplete_attempt() -> None:
     no_submission = _build_trace_view(
         [_event(1, EventType.RUN_STARTED)],
@@ -494,8 +517,8 @@ def test_run_route_renders_summary_before_collapsible_raw_trace(
     manifest = SimpleNamespace(
         run_id="run_viewer_test",
         task_id="viewer-test",
-        tool_schema_version="v2",
-        context_policy_version="phase-evidence-v3",
+        tool_schema_version="v6",
+        context_policy_version="phase-evidence-v11",
         memory=SimpleNamespace(condition=SimpleNamespace(value="no_memory")),
         model=SimpleNamespace(
             model_id="gpt-test",

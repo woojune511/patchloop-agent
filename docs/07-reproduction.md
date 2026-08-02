@@ -674,7 +674,7 @@ The correction records corrected qualification 33/33, but the experiment result 
 original false gate, hidden failure, `task_failure`, SCRR=false, comparison exclusion and memory
 admission false. These commands are read-only; no provider credential is needed.
 
-Inspect the unapproved D-070 V10 contract without issuing a provider call:
+Inspect the consumed, immutable D-070 V10 contract without issuing a provider call:
 
 ```powershell
 $env:UV_CACHE_DIR = ".uv-cache"
@@ -683,6 +683,28 @@ uv run --env-file .env patchloop evaluate `
   --preflight-only
 ```
 
-Do not add `--approve-live-cost` or `--approved-execution-hash` until the final clean execution hash has
-been reviewed and the user separately approves the `$6` cap. The preflight may read API-key presence from
-the host `.env`, but it does not print the value or call the provider.
+Do not add `--approve-live-cost` or reuse the consumed execution hash. The preflight may read API-key
+presence from the host `.env`, but it must fail closed on the historical immutable suite before any
+provider request.
+
+Reproduce the D-071 V11 offline correction without loading `.env` or issuing a provider call:
+
+```powershell
+.venv\Scripts\python.exe -m pytest -q `
+  tests/test_coverage_rejection_v11.py `
+  tests/test_coverage_review_v10.py `
+  tests/test_trace_qualification_v10.py `
+  tests/test_web.py
+.venv\Scripts\ruff.exe check .
+.venv\Scripts\python.exe -m compileall -q patchloop
+git diff --check
+```
+
+The focused test must exercise a durable structured rejection, fresh-runner reclaim, exact-anchor
+recovery, two-rejection same-worker continuation, batched multi-check recovery, refreshed diff, complete
+review, evaluator arrival and one mutation. Its tamper matrix must
+reject missing/retagged source and recovery calls, forged source/refreshed diff bytes, forged clearing
+feedback/build/review mirrors, malformed source coverage rows, missing prepared-patch intent,
+cleared-request worker-claim drift, missing model-response tool declarations, orphan review/mutation,
+old-worker activity across the designated restart boundary, duplicate outcomes and duplicate mutation. V10
+compatibility remains a separate assertion; this command creates no live execution authority or cost.

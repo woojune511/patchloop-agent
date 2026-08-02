@@ -2036,3 +2036,98 @@ Checked-in 예시는
 공개 issue clause를 네 code-path inspection target과 네 visible-validation target으로 표현하지만,
 새 live suite나 D-067 재실행 권한이 아니다. 이 V2 sidecar는 original D-067 manifest, run,
 qualification/correction, hidden failure, SCRR와 frozen dataset을 변경하지 않는다.
+
+## 16. Phase-evidence-v11 structured coverage rejection
+
+V11 manifest는 exact `tool_schema_version=v6` / `context_policy_version=phase-evidence-v11`,
+`public-review-contract-v2`, `SYSTEM_PROMPT_V8`와 `corrective-runtime-contract-v5`를 함께
+사용한다. Factory의 `coverage_rejection_validation=True`는 mock/no-experiment에서만
+선택 가능하며 replay, OpenAI, experiment context와 mixed validation mode를 거부한다.
+V10 v5/v10 pair와 D-070 live exception은 기존 contract/hash로 계속 해석한다.
+
+Tool v6의 target-specific citation rejection result는 다음 exact public shape를 사용한다.
+
+```json
+{
+  "error_code": "COVERAGE_CITATION_REJECTED",
+  "error_details": {
+    "schema_version": "coverage-citation-error-v1",
+    "stage": "review",
+    "reason": "target_evidence_not_allowed",
+    "coverage_target_id": "cov-...",
+    "requirement_id": "req-...",
+    "submitted_event_sequences": [169],
+    "allowed_event_sequences": [],
+    "invalid_event_sequences": [169],
+    "evidence_kind": "current_diff_inspection",
+    "required_evidence": {
+      "tool": "read_file",
+      "path": "src/package/api.py",
+      "anchor": "def get_metadata("
+    },
+    "mutation_event_sequence": 120,
+    "worktree_diff_hash": "sha256:...",
+    "source_get_diff_sequence": 165,
+    "guidance": "public bounded remediation guidance"
+  }
+}
+```
+
+`reason`은 `target_evidence_not_allowed`, `verified_target_evidence_mismatch` 또는
+active feedback 뒤 stale sequence만 다시 제출한 `fresh_target_evidence_required`다. `passing_validation` target의
+`required_evidence`는 `{"tool":"run_check","check_ids":[...]}`다. Sequence는 positive
+JSON integer의 unique list이며 submitted/allowed에서 invalid list를 결정적으로 재계산한다.
+Error event와 result CAS, request input CAS의 arguments/execution context, target-specific
+`review-evidence-v2` mapping, mutation/diff/source-diff identity와 public contract가 exact
+match해야 한다. JSON object key order는 target identity가 아니며 exact target-key membership을
+확인한 뒤 contract order로 canonicalize한다.
+
+유효한 active rejection은 다음 request의 top-level에
+`coverage-rejection-feedback-v1`로 복원된다.
+
+```text
+source_call_sequence, source_failure_sequence, action_id, error_code
+reason, coverage_target_id, requirement_id
+submitted_event_sequences, allowed_event_sequences, invalid_event_sequences
+evidence_kind, required_evidence
+mutation_event_sequence, worktree_diff_hash, source_get_diff_sequence, guidance
+```
+
+`context-build-evidence-v11`은 feedback inclusion, canonical content hash, input/result CAS
+descriptor와 source-through sequence를 보존한다. 별도 `worker-claim-evidence-v1`은 V11
+model-request CAS top-level과 `ContextBuilt` payload에 exact mirror되며 claim ID, owner ID,
+PID, hostname, claimed time, prior status와 reclaimed flag를 포함한다.
+Active source `ToolFailed`는 bounded `recent_events`에서 제거하여 top-level feedback만
+authoritative하게 한다. Feedback은 같은 mutation에서 corrective read/check/diff를 수행해도
+유지된다. Source와 recovery/clearing tool call은 request CAS뿐 아니라 `ModelCalled` response CAS의
+exact `{name, action_id, arguments}` 선언에도 결속된다. Source rejection의
+call/input/request/result를 먼저 완전 재검증한 뒤, 그 exact
+visible feedback과 build evidence를 실제 request CAS에서 받은 complete `review_task` 또는
+correlated `ToolCalled → PatchPrepared(patch-mutation-intent-v1 CAS) → ToolSucceeded →
+PatchApplied`를 가진 새 mutation만 제거할 수 있다. Complete review는 call arguments의 모든
+requirement/target row, canonical target mapping, 실제 anchor/check result CAS와 roll-up을 다시
+계산해야 한다. Valid partial review와 orphan/self-consistent-forged clearing event는 feedback을
+제거하지 않는다. Feedback이 inactive인 후속 `ContextBuilt`도 request CAS의 active worker claim과
+exact mirror되어야 한다.
+
+연속 rejection에서는 각 source request가 직전 durable prefix의 active feedback과 일치해야 한다.
+후속 recovery/read/check/diff request는 과거 rejection이 아니라 최신 unresolved rejection을 rehydrate한다.
+첫 rejection 뒤 fresh runner reclaim은 필수지만, 그 runner가 stale retry로 다시 거절된 경우 새 worker를
+한 번 더 만들지 않고 같은 durable claim으로 복구를 계속할 수 있다. 첫 rejection과 fresh request 사이의
+run event는 `state-store`의 `CheckpointSaved`만 허용하며 old-worker model/tool activity는 fail closed한다.
+`passing_validation` target이 여러
+fresh check sequence를 광고하면 complete review는 그 전체를 제출하고 runtime/qualifier는 batched
+single-generation call을 포함한 각 call/result provenance를 독립 검증한다.
+
+V11 qualifier는 V10 public-coverage checks에
+`coverage_rejection_recovery_contract`를 추가한다. 적어도 하나의 non-vacuous
+structured rejection, source call/result CAS, 첫 rejection에 결속된 restart worker claim 이후의 exact feedback,
+target에 맞는 후속 current-diff evidence, 그 뒤의 content-valid refreshed `get_diff`, complete review,
+feedback clearing, submission/evaluation와
+single-mutation lifecycle을 independently rebuild한다. Target/sequence/required evidence,
+result descriptor/bytes, resumed context, source/recovery tool call, 최초/갱신 diff bytes,
+clearing request feedback/build mirror, orphan success/mutation 또는 duplicate mutation tamper는
+fail closed해야 한다. Source evidence는 `trace-source-evidence-v11`이고 qualification
+envelope은 `trace-qualification-v2`를 유지한다. Mock/non-campaign run의 overall
+qualification은 campaign provenance 부재로 false일 수 있으며, 그 경우에도 전용 check
+pass와 separate local evaluator result를 별도로 보고한다.

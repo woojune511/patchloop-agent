@@ -21,6 +21,7 @@ from patchloop.agent.model import (
     SYSTEM_PROMPT_V5,
     SYSTEM_PROMPT_V6,
     SYSTEM_PROMPT_V7,
+    SYSTEM_PROMPT_V8,
     MockModelAdapter,
     ModelAdapter,
     OpenAIResponsesAdapter,
@@ -37,6 +38,7 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS_V3,
     TOOL_SCHEMAS_V4,
     TOOL_SCHEMAS_V5,
+    TOOL_SCHEMAS_V6,
     ToolGateway,
 )
 from patchloop.artifacts import ArtifactStore
@@ -300,7 +302,7 @@ class AgentRunner:
                 self_validation=self_validation,
             )
         if (
-            manifest.tool_schema_version in {"v3", "v4", "v5"}
+            manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}
             and package.public.probe_profiles
             and manifest.probe_image_digest is None
         ):
@@ -310,7 +312,7 @@ class AgentRunner:
             )
         allowed_statuses = _allowed_worker_statuses or {RunStatus.CREATED}
         with self.ownership.acquire(manifest.run_id) as worker:
-            self.state.claim_run_for_worker(
+            worker_claim = self.state.claim_run_for_worker(
                 manifest.run_id,
                 owner_id=worker.owner_id,
                 owner_pid=worker.pid,
@@ -350,6 +352,7 @@ class AgentRunner:
                     public_review_base_provenance=(
                         public_review_base_provenance
                     ),
+                    worker_claim=worker_claim,
                 )
             except RunOwnershipConflict:
                 raise
@@ -493,14 +496,17 @@ class AgentRunner:
         task: PublicTask,
         workspace: Path,
     ) -> Artifact | None:
-        """Build once, then validate and reuse V10 base-anchor provenance."""
+        """Build once, then validate and reuse V10/V11 base-anchor provenance."""
 
-        if manifest.context_policy_version != "phase-evidence-v10":
+        if manifest.context_policy_version not in {
+            "phase-evidence-v10",
+            "phase-evidence-v11",
+        }:
             return None
         contract = manifest.public_review_contract
         if contract is None:
             raise ContractError(
-                "V10 requires a public review contract for base provenance"
+                "V10/V11 requires a public review contract for base provenance"
             )
         expected = build_public_review_base_provenance(
             contract,
@@ -525,7 +531,7 @@ class AgentRunner:
             or started[0].payload.get("task_id") != manifest.task_id
         ):
             raise RecoveryError(
-                "V10 run lacks one authoritative base provenance source"
+                "V10/V11 run lacks one authoritative base provenance source"
             )
         try:
             artifact = Artifact.model_validate(
@@ -544,11 +550,11 @@ class AgentRunner:
             )
         except (UnicodeDecodeError, ValueError, RecoveryError, ContractError) as exc:
             raise RecoveryError(
-                "V10 public review base provenance is invalid"
+                "V10/V11 public review base provenance is invalid"
             ) from exc
         if document != expected:
             raise RecoveryError(
-                "V10 public review base provenance does not match Git HEAD"
+                "V10/V11 public review base provenance does not match Git HEAD"
             )
         return artifact
 
@@ -560,9 +566,17 @@ class AgentRunner:
         model: str,
         *,
         public_review_base_provenance: Artifact | None = None,
+        worker_claim: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         task_dir = package.root
         system_prompt, tool_schemas = self._runtime_contract(manifest)
+        if (
+            manifest.context_policy_version == "phase-evidence-v11"
+            and worker_claim is None
+        ):
+            raise RecoveryError(
+                "phase-evidence-v11 requires an active worker claim"
+            )
         sandbox = (
             self._docker_sandbox(package)
             if manifest.sandbox_backend == "docker"
@@ -574,7 +588,7 @@ class AgentRunner:
         ):
             raise ContractError("run manifest evaluator image does not match the task environment")
         if (
-            manifest.tool_schema_version in {"v3", "v4", "v5"}
+            manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}
             and manifest.probe_image_digest is not None
             and (
                 not isinstance(sandbox, DockerSandbox)
@@ -602,11 +616,12 @@ class AgentRunner:
         )
         existing_events = self.state.list_events(manifest.run_id)
         if (
-            manifest.context_policy_version == "phase-evidence-v10"
+            manifest.context_policy_version
+            in {"phase-evidence-v10", "phase-evidence-v11"}
             and public_review_base_provenance is None
         ):
             raise ContractError(
-                "V10 execution requires public review base provenance"
+                "V10/V11 execution requires public review base provenance"
             )
         checkpoint = self.state.latest_checkpoint(manifest.run_id)
         recovered_initial_phase: Phase | None = None
@@ -709,14 +724,19 @@ class AgentRunner:
                     **(
                         {
                             "schema_version": (
-                                "corrective-runtime-contract-v4"
+                                "corrective-runtime-contract-v5"
                                 if manifest.context_policy_version
-                                == "phase-evidence-v10"
+                                == "phase-evidence-v11"
                                 else (
-                                    "corrective-runtime-contract-v3"
+                                    "corrective-runtime-contract-v4"
                                     if manifest.context_policy_version
-                                    == "phase-evidence-v9"
-                                    else "corrective-runtime-contract-v2"
+                                    == "phase-evidence-v10"
+                                    else (
+                                        "corrective-runtime-contract-v3"
+                                        if manifest.context_policy_version
+                                        == "phase-evidence-v9"
+                                        else "corrective-runtime-contract-v2"
+                                    )
                                 )
                             )
                         }
@@ -725,6 +745,7 @@ class AgentRunner:
                             "phase-evidence-v8",
                             "phase-evidence-v9",
                             "phase-evidence-v10",
+                            "phase-evidence-v11",
                         }
                         else {}
                     ),
@@ -749,7 +770,7 @@ class AgentRunner:
                                 runtime_contract.model_dump(mode="json")
                             )
                         }
-                        if manifest.tool_schema_version in {"v4", "v5"}
+                        if manifest.tool_schema_version in {"v4", "v5", "v6"}
                         else {}
                     ),
                     **(
@@ -817,7 +838,11 @@ class AgentRunner:
             while True:
                 if (
                     manifest.context_policy_version
-                    in {"phase-evidence-v9", "phase-evidence-v10"}
+                    in {
+                        "phase-evidence-v9",
+                        "phase-evidence-v10",
+                        "phase-evidence-v11",
+                    }
                     and self._review_rejection_count(manifest.run_id)
                     > _MAX_RECOVERABLE_REVIEW_REJECTIONS
                 ):
@@ -833,6 +858,7 @@ class AgentRunner:
                     "phase-evidence-v8",
                     "phase-evidence-v9",
                     "phase-evidence-v10",
+                    "phase-evidence-v11",
                 }:
                     self._assert_budget(manifest, usage)
                 events = self.state.list_events(manifest.run_id)
@@ -870,6 +896,7 @@ class AgentRunner:
                     "phase-evidence-v8",
                     "phase-evidence-v9",
                     "phase-evidence-v10",
+                    "phase-evidence-v11",
                 }:
                     # V5 binds the ledger to the exact durable prefix. A
                     # MemoryRetrieved event appended above must therefore be
@@ -889,6 +916,14 @@ class AgentRunner:
                     ),
                 )
                 context = built_context.rendered
+                coverage_rejection_feedback = (
+                    json.loads(context).get(
+                        "coverage_rejection_feedback"
+                    )
+                    if manifest.context_policy_version
+                    == "phase-evidence-v11"
+                    else None
+                )
                 if isinstance(adapter, OpenAIResponsesAdapter):
                     request_body = adapter.request_payload(
                         context,
@@ -905,6 +940,16 @@ class AgentRunner:
                     }
                     request_endpoint = None
                 request_body_hash = sha256_text(canonical_json(request_body))
+                worker_claim_evidence = (
+                    {
+                        "schema_version": "worker-claim-evidence-v1",
+                        **worker_claim,
+                    }
+                    if manifest.context_policy_version
+                    == "phase-evidence-v11"
+                    and worker_claim is not None
+                    else None
+                )
                 request_artifact = self.artifacts.put_json(
                     {
                         "schema_version": "model-request-evidence-v1",
@@ -913,6 +958,11 @@ class AgentRunner:
                         "request_body": request_body,
                         "request_body_hash": request_body_hash,
                         "context_build": built_context.evidence,
+                        **(
+                            {"worker_claim": worker_claim_evidence}
+                            if worker_claim_evidence is not None
+                            else {}
+                        ),
                     }
                 )
                 self.state.append_event(
@@ -943,6 +993,11 @@ class AgentRunner:
                         "artifact_path": request_artifact.path,
                         "artifact_role": "model-request-evidence",
                         "provider_state_used": False,
+                        **(
+                            {"worker_claim": worker_claim_evidence}
+                            if worker_claim_evidence is not None
+                            else {}
+                        ),
                         **(
                             {
                                 "investigation_ledger_hash": (
@@ -1027,6 +1082,7 @@ class AgentRunner:
                                         "phase-evidence-v8",
                                         "phase-evidence-v9",
                                         "phase-evidence-v10",
+                                        "phase-evidence-v11",
                                     }
                                     else {}
                                 ),
@@ -1057,6 +1113,7 @@ class AgentRunner:
                                         "phase-evidence-v8",
                                         "phase-evidence-v9",
                                         "phase-evidence-v10",
+                                        "phase-evidence-v11",
                                     }
                                     else {}
                                 ),
@@ -1070,6 +1127,7 @@ class AgentRunner:
                                 "phase-evidence-v8",
                                 "phase-evidence-v9",
                                 "phase-evidence-v10",
+                                "phase-evidence-v11",
                             }
                             else {}
                         ),
@@ -1106,6 +1164,7 @@ class AgentRunner:
                                 "phase-evidence-v8",
                                 "phase-evidence-v9",
                                 "phase-evidence-v10",
+                                "phase-evidence-v11",
                             }
                             else {}
                         ),
@@ -1148,7 +1207,11 @@ class AgentRunner:
                                 ),
                             }
                             if manifest.context_policy_version
-                            in {"phase-evidence-v9", "phase-evidence-v10"}
+                            in {
+                                "phase-evidence-v9",
+                                "phase-evidence-v10",
+                                "phase-evidence-v11",
+                            }
                             else {}
                         ),
                         **(
@@ -1162,7 +1225,19 @@ class AgentRunner:
                                 )
                             }
                             if manifest.context_policy_version
-                            == "phase-evidence-v10"
+                            in {"phase-evidence-v10", "phase-evidence-v11"}
+                            else {}
+                        ),
+                        **(
+                            {
+                                "coverage_rejection_feedback": (
+                                    built_context.evidence.get(
+                                        "coverage_rejection_feedback"
+                                    )
+                                )
+                            }
+                            if manifest.context_policy_version
+                            == "phase-evidence-v11"
                             else {}
                         ),
                     },
@@ -1176,6 +1251,7 @@ class AgentRunner:
                     "phase-evidence-v8",
                     "phase-evidence-v9",
                     "phase-evidence-v10",
+                    "phase-evidence-v11",
                 }:
                     pre_generation_reason = self._pre_generation_budget_reason(
                         manifest,
@@ -1211,6 +1287,7 @@ class AgentRunner:
                             "phase-evidence-v8",
                             "phase-evidence-v9",
                             "phase-evidence-v10",
+                            "phase-evidence-v11",
                         }:
                             usage.input_token_count_calls += 1
                             self._block_model_generation(
@@ -1244,6 +1321,7 @@ class AgentRunner:
                             "phase-evidence-v8",
                             "phase-evidence-v9",
                             "phase-evidence-v10",
+                            "phase-evidence-v11",
                         }
                         and usage.input_tokens + usage.output_tokens
                         >= manifest.budget.max_total_tokens
@@ -1397,7 +1475,7 @@ class AgentRunner:
                     if call.name == "finish_task"
                 ]
                 v4_apply_precedes_finish = (
-                    manifest.tool_schema_version in {"v4", "v5"}
+                    manifest.tool_schema_version in {"v4", "v5", "v6"}
                     and bool(finish_calls)
                     and any(
                         call.name == "apply_patch"
@@ -1461,6 +1539,7 @@ class AgentRunner:
                             "v3",
                             "v4",
                             "v5",
+                            "v6",
                         }:
                             raise ContractError(
                                 "finish_task is unavailable in tool schema v1"
@@ -1545,7 +1624,21 @@ class AgentRunner:
                                     )
                                 }
                                 if manifest.context_policy_version
-                                in {"phase-evidence-v9", "phase-evidence-v10"}
+                                in {
+                                    "phase-evidence-v9",
+                                    "phase-evidence-v10",
+                                    "phase-evidence-v11",
+                                }
+                                else {}
+                            ),
+                            **(
+                                {
+                                    "coverage_rejection_feedback": (
+                                        coverage_rejection_feedback
+                                    )
+                                }
+                                if manifest.context_policy_version
+                                == "phase-evidence-v11"
                                 else {}
                             ),
                         }
@@ -1559,7 +1652,7 @@ class AgentRunner:
                         execution_context=execution_context,
                     )
                     if (
-                        manifest.tool_schema_version in {"v4", "v5"}
+                        manifest.tool_schema_version in {"v4", "v5", "v6"}
                         and call.name == "apply_patch"
                     ):
                         for blocked_index, blocked_call in enumerate(
@@ -1617,7 +1710,11 @@ class AgentRunner:
                     )
                     if (
                         manifest.context_policy_version
-                        in {"phase-evidence-v9", "phase-evidence-v10"}
+                        in {
+                            "phase-evidence-v9",
+                            "phase-evidence-v10",
+                            "phase-evidence-v11",
+                        }
                         and call.name == "review_task"
                         and result.status != "succeeded"
                         and self._review_rejection_count(manifest.run_id)
@@ -1653,7 +1750,7 @@ class AgentRunner:
                             "worker terminated immediately after durable patch checkpoint"
                         )
                     if (
-                        manifest.tool_schema_version in {"v4", "v5"}
+                        manifest.tool_schema_version in {"v4", "v5", "v6"}
                         and call.name == "apply_patch"
                     ):
                         break
@@ -1694,7 +1791,7 @@ class AgentRunner:
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         summary = WorkspaceManager.diff_summary(workspace)
         submitted_patch_artifact: Artifact | None = None
-        if manifest.tool_schema_version in {"v2", "v3", "v4", "v5"}:
+        if manifest.tool_schema_version in {"v2", "v3", "v4", "v5", "v6"}:
             accepted_events = [
                 event
                 for event in self.state.list_events(manifest.run_id)
@@ -2262,6 +2359,7 @@ class AgentRunner:
             "phase-evidence-v8",
             "phase-evidence-v9",
             "phase-evidence-v10",
+            "phase-evidence-v11",
         }:
             evidence_task = (
                 task
@@ -2281,10 +2379,12 @@ class AgentRunner:
                         "phase-evidence-v8",
                         "phase-evidence-v9",
                         "phase-evidence-v10",
+                        "phase-evidence-v11",
                     }
                 ),
                 coverage_review_required=(
-                    manifest.context_policy_version == "phase-evidence-v10"
+                    manifest.context_policy_version
+                    in {"phase-evidence-v10", "phase-evidence-v11"}
                 ),
                 probe_available=bool(evidence_task.probe_profiles),
             )
@@ -2430,6 +2530,11 @@ class AgentRunner:
             and manifest.context_policy_version == "phase-evidence-v10"
         ):
             return SYSTEM_PROMPT_V7, TOOL_SCHEMAS_V5
+        if (
+            manifest.tool_schema_version == "v6"
+            and manifest.context_policy_version == "phase-evidence-v11"
+        ):
+            return SYSTEM_PROMPT_V8, TOOL_SCHEMAS_V6
         raise ContractError(
             "unsupported tool schema and context policy version combination"
         )
@@ -2534,9 +2639,9 @@ class AgentRunner:
             presented_tool_results=context_evidence.get("tool_results", []),
             phase=phase,
             structured_review_required=(
-                tool_schema_version in {"v3", "v4", "v5"}
+                tool_schema_version in {"v3", "v4", "v5", "v6"}
             ),
-            coverage_review_required=(tool_schema_version == "v5"),
+            coverage_review_required=(tool_schema_version in {"v5", "v6"}),
         )
         missing_evidence = list(readiness.missing_evidence)
         missing_evidence.extend(additional_missing_evidence)
@@ -2550,7 +2655,7 @@ class AgentRunner:
         if accepted:
             task_review_event = None
             task_review_artifact = None
-            if tool_schema_version in {"v3", "v4", "v5"}:
+            if tool_schema_version in {"v3", "v4", "v5", "v6"}:
                 task_review_event = next(
                     (
                         event
@@ -2587,7 +2692,7 @@ class AgentRunner:
                     review_document.get("schema_version")
                     != (
                         "task-review-v3"
-                        if tool_schema_version == "v5"
+                        if tool_schema_version in {"v5", "v6"}
                         else (
                             "task-review-v2"
                             if tool_schema_version == "v4"
@@ -2612,7 +2717,7 @@ class AgentRunner:
                         "structured review artifact conflicts with current "
                         "trace evidence"
                     )
-                if tool_schema_version in {"v4", "v5"}:
+                if tool_schema_version in {"v4", "v5", "v6"}:
                     review_contract = self.state.get_manifest(
                         run_id
                     ).public_review_contract
@@ -2639,7 +2744,7 @@ class AgentRunner:
                         raise RecoveryError(
                             "task review does not cover its public contract"
                         )
-                    if tool_schema_version == "v5":
+                    if tool_schema_version in {"v5", "v6"}:
                         coverage_rows = review_document.get(
                             "coverage_targets"
                         )
@@ -2831,6 +2936,7 @@ class AgentRunner:
             "v3",
             "v4",
             "v5",
+            "v6",
         }
         source_task_review_sequence = None
         task_review_artifact = None
@@ -2917,7 +3023,7 @@ class AgentRunner:
                 )
                 expected_review_schema = (
                     "task-review-v3"
-                    if source_tool_schema == "v5"
+                    if source_tool_schema in {"v5", "v6"}
                     else (
                         "task-review-v2"
                         if source_tool_schema == "v4"
@@ -2925,7 +3031,7 @@ class AgentRunner:
                     )
                 )
                 coverage_consistent = True
-                if source_tool_schema == "v5":
+                if source_tool_schema in {"v5", "v6"}:
                     review_contract = manifest.public_review_contract
                     coverage_rows = review_document.get(
                         "coverage_targets"
@@ -3232,7 +3338,13 @@ class AgentRunner:
         """Repair an interrupted structured submission before another call."""
 
         checkpoint = self.state.latest_checkpoint(manifest.run_id)
-        if manifest.tool_schema_version not in {"v2", "v3", "v4", "v5"}:
+        if manifest.tool_schema_version not in {
+            "v2",
+            "v3",
+            "v4",
+            "v5",
+            "v6",
+        }:
             return phase, checkpoint, None
         self._reconcile_unstructured_submission_lifecycle(manifest.run_id)
         calls: dict[str, Any] = {}
@@ -3670,11 +3782,11 @@ class AgentRunner:
                 manifest.task_id,
                 completed_tools,
                 structured_finish=manifest.tool_schema_version
-                in {"v2", "v3", "v4", "v5"},
+                in {"v2", "v3", "v4", "v5", "v6"},
                 structured_review=manifest.tool_schema_version
-                in {"v3", "v4", "v5"},
+                in {"v3", "v4", "v5", "v6"},
                 structured_probe=(
-                    manifest.tool_schema_version in {"v3", "v4", "v5"}
+                    manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}
                     and manifest.probe_image_digest is not None
                     and probe_available
                 ),

@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-071 D-070 immutable live evidence sealed; structured
-  coverage-rejection feedback offline correction pending`이다.
+- 현재 milestone은 `D-071 structured coverage-rejection feedback and exact-anchor
+  restart recovery offline gate complete; no V11 live execution approved`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -309,8 +309,31 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   hard-immutable이며 재실행하지 않는다. 이 결과는 baseline, memory admission 또는 core evidence가
   아니다. 다음 gate는 offending target/sequence/allowed evidence를 public structured error로
   반환하고 exact-anchor recovery E2E를 offline에서 검증하는 것이다.
-  D-071 evidence seal 회귀는 991 collected, 984 passed/7 environment-dependent skipped이며 Ruff와
+  D-071 evidence seal 회귀는 999 collected, 992 passed/7 environment-dependent skipped이며 Ruff와
   `git diff --check`도 통과했다. 이 seal 과정의 provider call과 추가 model cost는 0이다.
+  후속 D-071 offline correction은 historical V10을 바꾸지 않고 exact
+  `tool_schema_version=v6` / `phase-evidence-v11`, `SYSTEM_PROMPT_V8`,
+  `corrective-runtime-contract-v5`를 별도 opt-in으로 추가했다. Gateway는 잘못된
+  coverage citation을 target/requirement, submitted/allowed/invalid sequence, public
+  path+anchor 또는 registered check ID, mutation/diff identity를 담은
+  `coverage-citation-error-v1`로 닫는다. Context builder는 source call/failure와
+  prior model-request/response-declared tool call, input/result CAS를 검증해
+  `coverage-rejection-feedback-v1`를 bounded recent-event window
+  밖에 지속하고, 원 rejection을 먼저 완전 재검증한 뒤 exact feedback을 받은 complete
+  후속 review나 실제 call/outcome/CAS에 결속된 새 mutation이 있을 때만 제거한다.
+  V11 request CAS와 `ContextBuilt`는 active `worker-claim-evidence-v1`를 mirror하며 stale
+  target citation만 반복한 review는 fresh target evidence 전까지 다시 거부한다. 첫 rejection의
+  fresh-worker reclaim은 필수이고, 그 worker의 후속 stale rejection은 같은 claim에서 최신 feedback으로
+  복구할 수 있다. 첫 failure와 fresh request 사이에는 state-store checkpoint만 허용하고 old-worker
+  model/tool activity는 qualification에서 거부한다. 전용 mock E2E는 durable rejection 직후 `SystemExit`, fresh runner resume,
+  two-rejection same-worker continuation, exact-anchor read와 batched multi-check evidence, refreshed diff,
+  complete review, finish/evaluator까지 통과하며
+  `PatchPrepared`/`PatchApplied` 1/1을 유지했다. Qualifier의
+  `coverage_rejection_recovery_contract`는 rejection/result/context/first-restart claim, latest-feedback
+  supersession, every fresh recovery call/result, refreshed final-diff CAS와
+  duplicate mutation tamper를 독립 재구성한다. Generic V11은 mock/no-experiment
+  전용이고 provider call·비용 evidence, SCRR, no-memory baseline, memory admission 또는
+  core 결과가 아니다. D-070 ID/hash/run/original qualification은 immutable하다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

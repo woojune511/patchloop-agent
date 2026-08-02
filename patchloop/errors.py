@@ -13,6 +13,12 @@ class ContractError(PatchLoopError):
     code = "CONTRACT_ERROR"
 
 
+class CoverageCitationError(ContractError):
+    """A public coverage target cited evidence outside its bound authority."""
+
+    code = "COVERAGE_CITATION_REJECTED"
+
+
 class SubmissionProtocolError(ContractError):
     code = "SUBMISSION_PROTOCOL_ERROR"
 

@@ -415,7 +415,7 @@ def _coverage_review_view(
             }
         )
     return {
-        "supported": tool_schema_version == "v5",
+        "supported": tool_schema_version in {"v5", "v6"},
         "recorded": bool(reviews),
         "declared_targets": declared_targets,
         "declared_target_count": len(declared_targets),
@@ -538,7 +538,7 @@ def _build_trace_view(
                 "recorded outcome"
             ),
         }
-    elif tool_schema_version in {"v2", "v3", "v4", "v5"}:
+    elif tool_schema_version in {"v2", "v3", "v4", "v5", "v6"}:
         submission = {
             "tone": "neutral",
             "label": "submission not attempted",
@@ -552,7 +552,7 @@ def _build_trace_view(
         review_events or accepted_events or rejected_events
         or attempted_events
     )
-    if tool_schema_version == "v5":
+    if tool_schema_version in {"v5", "v6"}:
         latest_coverage = coverage_review["latest"]
         if review_events and latest_coverage is not None:
             review = {

@@ -81,6 +81,7 @@ def build_manifest(
     review_evidence_live_pilot: bool = False,
     coverage_review_validation: bool = False,
     coverage_review_live_pilot: bool = False,
+    coverage_rejection_validation: bool = False,
     public_review_contract: PublicReviewContract | None = None,
 ) -> RunManifest:
     validation_mode_count = sum(
@@ -93,6 +94,7 @@ def build_manifest(
             review_evidence_live_pilot,
             coverage_review_validation,
             coverage_review_live_pilot,
+            coverage_rejection_validation,
         )
     )
     if validation_mode_count > 1:
@@ -100,7 +102,8 @@ def build_manifest(
             "self-validation v3/v6, corrective validation v4/v7, and "
             "offline/live saturation-context validation v4/v8 and offline/live "
             "review-evidence validation v4/v9 and offline/live coverage-review "
-            "validation v5/v10 are mutually exclusive"
+            "validation v5/v10 and coverage-rejection validation v6/v11 are "
+            "mutually exclusive"
         )
     if self_validation and provider == "openai":
         raise ContractError(
@@ -142,6 +145,16 @@ def build_manifest(
         raise ContractError(
             "coverage-review validation v5/v10 cannot declare an experiment context"
         )
+    if coverage_rejection_validation and provider != "mock":
+        raise ContractError(
+            "coverage-rejection validation v6/v11 is offline-only and requires "
+            "the mock provider"
+        )
+    if coverage_rejection_validation and experiment_context is not None:
+        raise ContractError(
+            "coverage-rejection validation v6/v11 cannot declare an experiment "
+            "context"
+        )
     if coverage_review_live_pilot and (
         provider != "openai"
         or experiment_context is None
@@ -180,6 +193,7 @@ def build_manifest(
         or review_evidence_live_pilot
         or coverage_review_validation
         or coverage_review_live_pilot
+        or coverage_rejection_validation
     ):
         from patchloop.agent.review import (
             validate_public_review_contract,
@@ -189,7 +203,8 @@ def build_manifest(
             raise ContractError(
                 "corrective validation v4/v7 and saturation-context validation "
                 "v4/v8, review-evidence validation v4/v9, and coverage-review "
-                "validation v5/v10 require a public review contract"
+                "validation v5/v10 and coverage-rejection validation v6/v11 "
+                "require a public review contract"
             )
         validate_public_review_contract(
             public_review_contract,
@@ -200,7 +215,8 @@ def build_manifest(
         raise ContractError(
             "public review contract requires corrective validation v4/v7 or "
             "saturation-context validation v4/v8, review-evidence validation "
-            "v4/v9, or coverage-review validation v5/v10"
+            "v4/v9, coverage-review validation v5/v10, or coverage-rejection "
+            "validation v6/v11"
         )
     sdk_version = None
     if provider == "openai":
@@ -226,6 +242,8 @@ def build_manifest(
         tool_schema_version=(
             "v1"
             if provider == "replay"
+            else "v6"
+            if coverage_rejection_validation
             else "v5"
             if coverage_review_validation or coverage_review_live_pilot
             else "v4"
@@ -243,6 +261,8 @@ def build_manifest(
         context_policy_version=(
             "v1"
             if provider == "replay"
+            else "phase-evidence-v11"
+            if coverage_rejection_validation
             else "phase-evidence-v10"
             if coverage_review_validation or coverage_review_live_pilot
             else "phase-evidence-v9"

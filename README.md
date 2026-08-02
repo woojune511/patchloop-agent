@@ -82,6 +82,34 @@ admission 또는 core evidence가 아니다. 원 run·false gate·qualification�
 hash는 재실행하지 않는다. Sanitized evidence는
 `reports/live-pilot/dev-no-memory-coverage-review-v10-pilot-20260802-r1.json`에 보존한다.
 
+2026-08-02 D-071은 D-070에서 드러난 회복 feedback gap만 별도
+`tool_schema_version=v6` / `phase-evidence-v11` offline gate로 닫았다. V11 gateway는
+잘못 인용한 target의 ID, parent requirement, submitted/allowed/invalid sequence,
+필요한 공개 path+anchor 또는 registered check ID와 current mutation/diff identity를
+`coverage-citation-error-v1`로 반환한다. Context builder는 correlated
+`ToolCalled`/`ToolFailed`, 실제 prior model-request CAS와 그 model response가 선언한 exact tool call,
+input/result CAS bytes를 다시 검증한 뒤 이 정보를
+`coverage-rejection-feedback-v1`로 recent-event window 밖에 exact rehydrate한다. 원
+rejection의 전체 public requirement/target mapping과 evidence lifecycle을 먼저 재검증한 뒤,
+그 exact feedback을 받은 complete review가 call arguments·public contract·실제 anchor/check
+evidence와 모두 일치하거나 새 mutation이 `ToolCalled → PatchPrepared(intent CAS) →
+ToolSucceeded → PatchApplied`에 결속되고 그 mutation call도 실제 model response가 선언했을 때만
+feedback을 제거한다. 전용 restart E2E는 durable
+rejection 직후 worker 종료, fresh-runner resume, exact-anchor `read_file`, refreshed
+`get_diff`, complete review, `finish_task`와 separate local evaluator까지 연결했고
+`PatchApplied` 1회를 유지했다. V11 model-request CAS와 `ContextBuilt`는 active
+`worker-claim-evidence-v1`도 active 및 cleared request마다 함께 mirror한다. Qualifier의
+`coverage_rejection_recovery_contract`는 첫 rejection의 restart를 필수로 하되 같은 worker의 후속
+stale retry/rejection과 최신 feedback supersession을 허용한다. 단일 model response가 여러 public
+validation check를 요청한 경우에도 모든 fresh cited result의 provenance를 독립 재구성하며 duplicate
+mutation, response-tool-call tamper와 첫 rejection 뒤 resume 전 old-worker activity를 거부한다.
+전용 focused test가 통과했다. Generic V11은
+mock/no-experiment 전용이고 이 변경에서 provider call과 model cost는 0이다.
+D-070 run·false gate·qualification은 불변이며, 이 offline 결과는 SCRR,
+no-memory baseline, memory admission 또는 core evidence가 아니다. Final repository regression은
+999 collected, 992 passed/7 environment-dependent skipped이며 Ruff, compileall과
+`git diff --check`도 통과했다.
+
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.
@@ -325,6 +353,12 @@ public.yaml → stateless context builder → model adapter
   `investigation-policy-v2`, `investigation-ledger-v2`, `investigation-tail-policy-v2`,
   `context-build-evidence-v5`, `trace-source-evidence-v5`를 사용하며 qualification contract는
   계속 `trace-qualification-v2`다.
+- `phase-evidence-v11`은 V10 public-coverage semantics를 유지하면서 target-specific
+  `coverage-citation-error-v1`을 CAS에 보존하고 restart 뒤에도
+  `coverage-rejection-feedback-v1`를 exact rehydrate한다. Prior request CAS와 active worker
+  claim을 함께 결속하고, stale citation만 반복하면 fresh target evidence를 요구한다. 후속 exact public evidence와
+  complete review·submission이 같은 mutation/diff에 결속되는지 전용 qualifier가
+  독립 재구성하며, generic selector는 mock/no-experiment만 허용한다.
 - 현재 campaign 경로는 registered `search_files`, `read_file`, `apply_patch`, `run_check`,
   `get_diff`와 orchestrator control `finish_task`만 허용한다. D-056 opt-in v3의
   `run_probe`와 `review_task`는 offline 구현, 실제 Docker isolation E2E와 mock

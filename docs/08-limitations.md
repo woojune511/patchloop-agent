@@ -693,9 +693,10 @@ silently lowering the design or fabricating missing results.
   live run's `evaluation_status=not_run`, false gate or qualification. Neither the process failure nor the
   hidden task failure supports a budget increase or live rerun.
 - V10's citation validator correctly rejected the unrelated sequence, but its error artifact returned an
-  empty details object and did not identify the offending target or authoritative allowed sequences. This
-  is a recovery-feedback limitation to fix offline; the context did contain the empty authoritative map, so
-  it is not evidence that completion was impossible or that the validator was wrong.
+  empty details object and did not identify the offending target or authoritative allowed sequences. D-071
+  closes this recovery-feedback gap only in a new offline v6/v11 path; the immutable D-070 request, error,
+  qualification and false gate are not rewritten. The original context did contain the empty authoritative
+  map, so the trace is still not evidence that completion was impossible or that the V10 validator was wrong.
 - D-067 remains an immutable hidden-acceptance task failure and D-068 remains its append-only trace
   qualification correction. The V2 HF Hub review sidecar and V10 tests do not rerun either artifact,
   change SCRR, repair the submitted patch or prove why hidden acceptance failed.
@@ -705,3 +706,42 @@ silently lowering the design or fabricating missing results.
 - D-069's offline implementation gate completed with 971 collected, 964 passed/7 environment-dependent
   skipped, Ruff and `git diff --check`; no provider call was made. This closes implementation integrity,
   not a live model, baseline, SCRR or memory-effect claim.
+
+## Phase-evidence-v11 recovery feedback remains offline evidence
+
+- D-071 adds exact tool v6/context v11 rather than changing V10. Structured
+  `coverage-citation-error-v1` identifies the public target, parent requirement, submitted/allowed/invalid
+  sequences and required path+anchor or visible-check IDs. It does not contain hidden assertions,
+  reference patch content or evaluator feedback.
+- `coverage-rejection-feedback-v1` is rebuilt from the durable rejected-review input/result CAS and
+  request-bound coverage mapping. The source rejection is fully rebuilt before clearing; it remains
+  visible across a fresh-runner resume until a complete review that received that exact feedback, or a
+  complete review whose arguments and public citations independently rebuild, or a
+  `ToolCalled`/`PatchPrepared` intent/success/`PatchApplied`-bound new mutation, clears it. A valid
+  partial review or orphan/self-consistent-forged success cannot clear it;
+  the active source failure is omitted from the bounded recent-event list so two competing model-visible
+  authorities are not created.
+- V11 additionally binds the rejected input to one actual prior model-request CAS and mirrors the
+  active `worker-claim-evidence-v1` in that request artifact and `ContextBuilt`, including the first
+  context after feedback clears. Repeating only stale
+  target sequences is rejected until target-matching fresh public evidence is present.
+- Source/recovery/review/mutation calls also have to appear exactly in the corresponding `ModelCalled`
+  response CAS. The first rejection must cross a durable fresh-worker reclaim; a second stale retry may
+  be rejected and recover on that same worker, with later requests bound to the newest unresolved
+  feedback. Any model/tool event between the first durable rejection and fresh request fails the restart
+  contract. Multi-check validation citations, including batched calls, are all provenance-checked.
+- The focused E2E kills the worker immediately after the durable structured rejection, resumes the same
+  run, obtains the exact public anchor, refreshes the diff, completes review and submission, reaches the
+  separate local evaluator and keeps one `PatchPrepared`/`PatchApplied`. Dedicated qualification and
+  tamper assertions reject changed feedback/result/request CAS, worker claim or mirror drift, missing
+  source/recovery calls, malformed source coverage rows, forged source/refreshed diff evidence, forged
+  clearing feedback/build/review mirrors, missing patch intent, cleared-request claim drift, orphan
+  review/mutation and duplicate mutation.
+- These are deterministic mock/local recovery scenarios. Generic V11 is intentionally
+  mock/no-experiment only; no OpenAI/provider call, live execution hash, cost approval or model cost was
+  created. Repository-wide regression totals are reported only from the final separate validation below.
+- Final repository-wide validation collected 999 tests and completed with 992 passed plus seven
+  environment-dependent skips in 525.1 seconds. Ruff, Python compileall and `git diff --check` passed.
+- An offline evaluator pass on the calibration fixture does not measure live model recovery, HF Hub task
+  correctness, SCRR, a no-memory baseline, memory admission or cross-run memory benefit. D-070 remains an
+  immutable failed live diagnostic and is not eligible for rerun, comparison, memory or core use.

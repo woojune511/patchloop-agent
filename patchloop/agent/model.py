@@ -86,6 +86,16 @@ SYSTEM_PROMPT_V7 = (
     "submission-ready; follow phase_contract corrective actions, obtain the "
     "missing public evidence, review the refreshed final diff, and review again."
 )
+SYSTEM_PROMPT_V8 = (
+    SYSTEM_PROMPT_V7
+    + " If review_task returns coverage_rejection_feedback, use its offending "
+    "coverage target, required public path and anchor or registered check IDs, "
+    "and rejection-time sequence diagnostics to choose the exact recovery action. "
+    "Obtain fresh evidence for that target, then cite only the target's current "
+    "review_evidence.coverage_target_event_sequences entry in the new review. "
+    "The feedback's allowed_event_sequences describe the rejected request and may "
+    "be stale after recovery. Never repeat a sequence identified as invalid."
+)
 SYSTEM_PROMPT = SYSTEM_PROMPT_V2
 
 

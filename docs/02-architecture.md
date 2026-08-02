@@ -94,7 +94,7 @@ stateDiagram-v2
 | `PLAN` | 위 mutation evidence에 결속된 `PhaseChanged`; 별도 plan file은 아직 없음 |
 | `IMPLEMENT` | Current-diff visible check 성공 시 `VERIFY`로 전이 |
 | `VERIFY` | 모든 required current-diff check 뒤 성공한 `get_diff` |
-| `REVIEW` | V1-V9은 각 version의 complete `get_diff`와, 해당 version이 요구하는 경우 structured review를 따른다. Opt-in V10은 선언된 모든 public coverage target이 verified인 same-diff `task-review-v3`까지 요구하며 partial review는 `IMPLEMENT`로 되돌린다. |
+| `REVIEW` | V1-V9은 각 version의 complete `get_diff`와, 해당 version이 요구하는 경우 structured review를 따른다. Opt-in V10/V11은 선언된 모든 public coverage target이 verified인 same-diff `task-review-v3`까지 요구하며 partial review는 `IMPLEMENT`로 되돌린다. V11 target citation rejection은 restart-safe structured feedback을 남긴다. |
 | `DONE` | `SubmissionAccepted`, immutable submitted-patch CAS artifact와 DONE checkpoint |
 
 Invalid transition은 거부하고 event로 남긴다. `DONE`은 evaluator 성공을 뜻하지 않는다. Agent submission이 끝났다는 의미이며, 최종 outcome은 evaluator가 결정한다.
@@ -121,7 +121,7 @@ MVP agent-visible tool을 작게 유지한다.
 | `apply_patch` | 기존 tracked text file에 raw Git unified diff 적용 | hunk count만 recount; stable action ID, zero-untracked와 path/scope policy 필요 |
 | `run_check` | registered check 실행 | arbitrary command 금지, result를 current diff에 결속 |
 | `get_diff` | current diff와 size summary 확인 | check 뒤의 final review evidence |
-| `finish_task` | final submission control signal | current-diff check와 model-visible final diff review 필요; V10은 exact public target coverage도 완료돼야 함 |
+| `finish_task` | final submission control signal | current-diff check와 model-visible final diff review 필요; V10/V11은 exact public target coverage도 완료돼야 함 |
 
 Checkpoint 저장은 runner 내부 동작이며 agent tool이 아니다. `finish_task`도
 shell/repository tool이 아니라 orchestrator control action이다.
@@ -572,3 +572,57 @@ V10 qualifier는 `trace-source-evidence-v10`에 runtime/context/review/submissio
 효과는 증명하지 않는다. D-067은 immutable hidden task failure이고 V10은 그 run이나 D-068
 correction을 재실행·수정하지 않는다. D-069 최종 offline evidence는 971 collected,
 964 passed/7 environment-dependent skipped이며 provider call은 없었다.
+
+## 16. D-071 structured coverage-rejection recovery boundary
+
+`phase-evidence-v11`은 V10을 수정하는 호환 patch가 아니라 exact
+`tool_schema_version=v6`, `SYSTEM_PROMPT_V8`, `corrective-runtime-contract-v5`를 사용하는
+별도 offline opt-in이다. Generic selector는 `coverage_rejection_validation=True`, mock
+provider, experiment context 부재의 논리곱만 허용한다. Replay, OpenAI,
+experiment-bearing manifest와 다른 validation mode와의 결합은 start 전에 fail
+closed한다. V10 request, runtime descriptor, source evidence와 D-070 artifact는 재생성하거나
+소급 해석하지 않는다.
+
+Tool v6 `review_task`가 target에 advertisement되지 않은 sequence를 인용하거나
+`verified`인 target에 advertised evidence 전체를 제출하지 않으면 gateway는
+`COVERAGE_CITATION_REJECTED`/`coverage-citation-error-v1`을 반환한다. Error에는 공개
+target/requirement ID, submitted/allowed/invalid event sequence, evidence kind, 필요한 exact
+path+anchor 또는 registered check IDs, current mutation sequence, diff hash, source final-diff
+sequence와 remediation guidance만 들어간다. Private spec, hidden assertion, reference patch와
+evaluator result는 feedback source가 아니다.
+
+V11 context builder는 checkpoint flag나 terminal workspace를 신뢰하지 않는다. Durable
+`ToolCalled(review_task)` input CAS, correlated `ToolFailed` result CAS, exact request-bound
+`review-evidence-v2`, public contract와 current mutation/diff를 다시 검증한 뒤 top-level
+`coverage_rejection_feedback` (`coverage-rejection-feedback-v1`)를 bounded recent-event window
+밖에 넣는다. Source failure event는 feedback이 active인 동안 recent event에서 제거해
+model-visible authority를 하나로 유지한다. Rejected call의 request ID는 실제 prior
+`ContextBuilt` model-request CAS에 결속되고, 그 `ModelCalled` response CAS가 exact
+action/tool/arguments를 실제로 선언해야 한다. 같은 결속은 fresh read/check, refreshed diff,
+clearing review와 clearing mutation에도 적용된다. V11 model-request artifact와 `ContextBuilt`는
+해당 request를 만든 active `worker-claim-evidence-v1`를 함께 mirror한다. 같은 mutation epoch에서 exact public evidence를
+추가해 review를 다시 하는 동안 feedback은 지속된다. 원 rejection을 먼저 완전 재구성한
+뒤 그 exact feedback을 받은 complete review 또는 실제
+`ToolCalled → PatchPrepared(patch-mutation-intent-v1 CAS) → ToolSucceeded → PatchApplied`
+전체 lifecycle에 결속된 새 mutation만 feedback을 제거한다. Complete review도 submitted
+arguments, authoritative public target mapping과 underlying anchor/check event를 다시 계산한다.
+Valid partial review와 orphan/self-consistent-forged success/mutation은 feedback을 제거하지
+않는다. Feedback이 지워진 다음 request도 request CAS와 `ContextBuilt`의 active worker claim
+mirror를 검증한다. 연속 rejection이 생기면 각 rejection 직후 첫 request는 당시 feedback을 exact
+rehydrate하고, 이후 recovery request는 durable prefix에서 계산한 최신 unresolved rejection만 사용한다.
+첫 rejection은 fresh worker reclaim을 반드시 통과하지만 그 worker가 낸 후속 rejection은 같은 worker가
+이어 복구할 수 있다. 첫 durable rejection과 fresh runner의 첫 `ContextBuilt` 사이에는 state-store의
+checkpoint bookkeeping만 허용하고 model/tool activity가 있으면 qualification을 거부한다.
+
+전용 exact-anchor recovery E2E는 structured rejection을 durable하게 남긴 직후 worker를
+종료하고 fresh `AgentRunner`가 같은 run을 resume하게 한다. 첫 resumed request의
+feedback이 rejection CAS와 exact match한 뒤, advertised public path/anchor를 포함한
+`read_file`, refreshed `get_diff`, complete `task-review-v3`, `finish_task`와 separate evaluator
+순서를 통과해야 한다. `coverage_rejection_recovery_contract`는 source error, request,
+rehydrated context, exact active restart worker claim, source/recovery call lifecycle,
+recovery read/refreshed-diff/review/submission을 CAS에서 독립 재구성하고
+duplicate `PatchApplied`를 거부한다. `passing_validation` target이 여러 fresh check result를 광고하면
+한 generation의 batched tool calls를 포함해 모든 cited result를 검증한 뒤 refreshed diff를 허용한다.
+이 branch는 public recovery protocol의 integrity만
+검증하며 hidden correctness, SCRR, live model improvement 또는 cross-run memory 효과를
+의미하지 않는다.

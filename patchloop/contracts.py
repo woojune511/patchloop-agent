@@ -1004,20 +1004,26 @@ class RunManifest(StrictModel):
             self.tool_schema_version == "v5"
             and self.context_policy_version == "phase-evidence-v10"
         )
+        coverage_rejection_pair_v11 = (
+            self.tool_schema_version == "v6"
+            and self.context_policy_version == "phase-evidence-v11"
+        )
         corrective_pair = (
             corrective_pair_v7
             or saturation_pair_v8
             or review_evidence_pair_v9
             or coverage_review_pair_v10
+            or coverage_rejection_pair_v11
         )
         corrective_declared = bool(
-            self.tool_schema_version in {"v4", "v5"}
+            self.tool_schema_version in {"v4", "v5", "v6"}
             or self.context_policy_version
             in {
                 "phase-evidence-v7",
                 "phase-evidence-v8",
                 "phase-evidence-v9",
                 "phase-evidence-v10",
+                "phase-evidence-v11",
             }
             or self.public_review_contract is not None
         )
@@ -1025,19 +1031,25 @@ class RunManifest(StrictModel):
             not corrective_pair or self.public_review_contract is None
         ):
             raise ValueError(
-                "corrective runtime requires an exact v4/v7-v9 or v5/v10 pair, "
-                "and a public review contract"
+                "corrective runtime requires an exact v4/v7-v9, v5/v10, or "
+                "v6/v11 pair, and a public review contract"
             )
         if (
             self.public_review_contract is not None
             and (
                 (
-                    coverage_review_pair_v10
+                    (
+                        coverage_review_pair_v10
+                        or coverage_rejection_pair_v11
+                    )
                     and self.public_review_contract.schema_version
                     != "public-review-contract-v2"
                 )
                 or (
-                    not coverage_review_pair_v10
+                    not (
+                        coverage_review_pair_v10
+                        or coverage_rejection_pair_v11
+                    )
                     and self.public_review_contract.schema_version
                     != "public-review-contract-v1"
                 )
@@ -1161,6 +1173,16 @@ class RunManifest(StrictModel):
             raise ValueError(
                 "coverage-review pilot purpose requires the OpenAI provider"
             )
+        if coverage_rejection_pair_v11 and self.experiment is not None:
+            raise ValueError(
+                "phase-evidence-v11 coverage rejection recovery is offline-only "
+                "and cannot declare an experiment context"
+            )
+        if coverage_rejection_pair_v11 and self.model.provider != "mock":
+            raise ValueError(
+                "phase-evidence-v11 coverage rejection recovery is offline-only "
+                "and requires the mock provider"
+            )
         return self
 
 
@@ -1210,7 +1232,7 @@ class Checkpoint(StrictModel):
 
 class ToolCall(StrictModel):
     tool: str
-    tool_schema_version: Literal["v1", "v2", "v3", "v4", "v5"] = "v1"
+    tool_schema_version: Literal["v1", "v2", "v3", "v4", "v5", "v6"] = "v1"
     action_id: str
     run_id: str
     input: dict[str, Any] = Field(default_factory=dict)

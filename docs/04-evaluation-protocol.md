@@ -1020,4 +1020,58 @@ admission과 core에서 제외한다. D-060과 D-067 experiment ID는 hard-immut
 D-070 offline contract 회귀는 988 collected, 981 passed/7 environment-dependent skipped, Ruff와
 `git diff --check`를 통과했다. Host no-call preflight는 Docker/pinned image, SDK, key presence,
 clean Git과 pricing freshness를 통과했고 approval/hash 두 blocker만 남겼다. Provider call은
-없었으며 live evidence는 아직 없다.
+이 preflight snapshot 시점에는 없었다. 이후 한 번 소비된 live outcome은 아래
+D-071 context에 별도로 보존한다.
+
+### D-071 V11 structured rejection and exact-anchor recovery protocol
+
+D-070은 이후 별도 승인 hash로 정확히 한 번 실행됐다. Original
+`run_6cc69fc1170c4a44`는 valid partial review 7/8 뒤 missing anchor를 읽지 않은 채
+unrelated evidence sequence를 반복 인용해 evaluator 전 submission-protocol failure로 끝났다.
+Original gate/qualification/outcome은 immutable하며 D-071은 이 run을 재실행하지 않는다.
+
+D-071은 provider 없이 exact v6/v11 mock path에서 다음 논리곱을 검증한다.
+
+```text
+wrong target citation is rejected as coverage-citation-error-v1
+AND error names target/requirement, submitted/allowed/invalid sequences
+AND error gives only required public path+anchor or registered check IDs
+AND source ToolCalled/ToolFailed and input/result CAS are exact
+AND every source/recovery/clearing call resolves to one actual model request and declared response tool call
+AND worker exits immediately after the durable rejection
+AND only state-store checkpoint bookkeeping occurs before the fresh runner's first request
+AND model-request CAS and ContextBuilt mirror the exact active worker claim
+AND a fresh runner's first request rehydrates coverage-rejection-feedback-v1
+AND the active source failure is not duplicated in recent_events
+AND exact-anchor current-diff evidence is obtained after resume
+AND a later stale retry may be rejected again and then recover on the same reclaimed worker
+AND the latest unresolved rejection, not an older rejection, is present in each recovery request
+AND every fresh cited validation result is bound, including batched calls from one model response
+AND refreshed get_diff precedes one complete task-review-v3
+AND the source rejection is fully rebuilt before any clearing decision
+AND only a complete review whose arguments and citations rebuild against public evidence clears it
+AND any mutation clear has ToolCalled -> PatchPrepared intent -> success -> PatchApplied provenance
+AND source, resumed, and cleared requests bind the latest active worker claim
+AND submission reaches the separate evaluator
+AND PatchPrepared/PatchApplied remain exactly one
+AND qualifier independently rebuilds every binding
+```
+
+Tamper corpus은 error detail의 allowed sequence, rejection result descriptor/CAS, prior request
+identity, restart worker claim/request/mirror, source/recovery tool-call lifecycle, 최초/갱신
+diff result CAS, malformed source target mapping, forged clearing feedback/build/review mirror,
+missing prepared-patch intent, cleared-request worker claim, orphan review/mutation과 duplicate mutation을
+각각 fail closed해야 한다. Stale target sequence만 반복 제출한 retry도 fresh public
+evidence 전에는 다시 structured rejection되어야 한다. Focused
+`tests/test_coverage_rejection_v11.py`는 durable rejection 직후 `SystemExit`, fresh-runner
+resume, 두 rejection 뒤 same-worker recovery, exact-anchor read, multiple/batched validation checks,
+complete review, submission과 separate local evaluator, V10 다섯 coverage check 및 새
+`coverage_rejection_recovery_contract`의 pass를 검증했다.
+Mock/non-campaign run의 overall qualification은 live campaign provenance와 별개이다.
+
+이 protocol은 public recovery feedback의 delivery/integrity를 검증할 뿐, target set의 의미적
+충분성, hidden acceptance, live model recovery rate, SCRR, no-memory baseline 또는 memory
+효과를 증명하지 않는다. D-071 implementation은 OpenAI/provider call을 실행하지
+않았고 추가 model cost는 0이다. 별도 live suite/hash/비용 승인은 없다. Final repository
+regression은 999 collected, 992 passed/7 environment-dependent skipped이며 Ruff, compileall과
+`git diff --check`도 통과했다.

@@ -2348,3 +2348,46 @@ exact-anchor recovery E2E.
 The post-run source seal completed with 991 tests collected: 984 passed and seven environment-dependent
 tests skipped. Ruff and `git diff --check` passed. Sealing, hard-immutability validation and the no-model
 postmortem added no provider call or model cost.
+
+## D-071 V11 structured rejection recovery — offline gate complete
+
+D-071 leaves the consumed D-070 V10 run, false gate, qualification and no-model postmortem immutable.
+It adds a separate offline-only tool-v6/context-v11/runtime-v5 path whose
+`coverage-citation-error-v1` names the rejected public target, parent requirement,
+submitted/allowed/invalid event sequences and the exact public path+anchor or visible-check IDs needed
+for recovery. Private task data, hidden assertions, reference patches and evaluator feedback are not
+inputs to this structure.
+
+`coverage-rejection-feedback-v1` is rebuilt from durable source input/result CAS, the public review
+mapping and the exact request/model response that declared the rejected call. The same request/response
+tool-call binding applies to fresh recovery evidence, refreshed diff, clearing review and a clearing
+mutation. A mutation may clear feedback only through one exact
+`ToolCalled -> PatchPrepared(intent CAS) -> ToolSucceeded -> PatchApplied` chain. Partial review,
+orphan success, missing response declarations, forged CAS/mirrors and duplicate mutation fail closed.
+
+The designated first rejection crosses a real stale-RUNNING reclaim. Only state-store checkpoint
+bookkeeping may occur between that durable failure and the fresh runner's first request. A stale retry
+may create a second rejection on the reclaimed worker; later contexts then carry the newest unresolved
+feedback and the same worker may complete recovery. Passing-validation targets may cite multiple fresh
+results, including multiple tool calls from one model response; runtime and qualifier bind every cited
+call/result independently before accepting the refreshed diff and complete review.
+
+Executable evidence includes three positive boundaries: exact-anchor restart recovery, two rejections
+with one restart and same-worker completion, and a two-check batched validation recovery. Each reaches
+the separate local evaluator without a duplicate patch. The tamper corpus covers source/recovery/clearing
+request and response CAS, worker claims, stale feedback, old-worker activity across the restart boundary,
+target mapping/key-order handling, result bytes, prepared-patch intent, orphan events and duplicate
+mutation.
+
+Final validation results:
+
+- `tests/test_coverage_rejection_v11.py`: 7 passed.
+- V11/V10/trace-qualification/viewer focused bundle: 43 passed.
+- Repository-wide pytest: 999 collected, 992 passed and seven environment-dependent skips in 525.1
+  seconds.
+- Repository-wide Ruff, Python compileall and `git diff --check`: passed.
+
+No `.env` credential was loaded, no provider request was made, no live execution hash or cost approval
+was created, and added model cost was zero. This proves only the offline public recovery protocol and
+trace-integrity boundary. It is not SCRR, a no-memory baseline, memory admission, a live-model recovery
+rate or core-campaign evidence.

@@ -47,6 +47,7 @@ from patchloop.contracts import (
 from patchloop.errors import (
     ContractError,
     ControlledDiagnosticRejection,
+    CoverageCitationError,
     PolicyViolation,
     RecoveryError,
 )
@@ -448,6 +449,17 @@ next(
     "Submit the current patch for deterministic evaluation only after every "
     "public coverage target is verified in a same-diff task-review-v3 artifact."
 )
+TOOL_SCHEMAS_V6: list[dict[str, Any]] = copy.deepcopy(TOOL_SCHEMAS_V5)
+next(
+    item for item in TOOL_SCHEMAS_V6 if item["name"] == "review_task"
+)["description"] = (
+    "Assess every public requirement and every coverage_target_id exactly once. "
+    "Use only the target-specific event sequences advertised by review_evidence. "
+    "If a target citation is rejected, follow the target-specific structured "
+    "feedback and obtain the required current-diff evidence before retrying. A "
+    "partial or unverified target is preserved as review evidence but prevents "
+    "submission and returns the run to corrective investigation."
+)
 TOOL_SCHEMAS = TOOL_SCHEMAS_V2
 
 _EVENT_ERROR_MESSAGE_LIMIT = 2_000
@@ -459,6 +471,7 @@ _INVESTIGATION_CONTEXT_POLICIES = {
     "phase-evidence-v8",
     "phase-evidence-v9",
     "phase-evidence-v10",
+    "phase-evidence-v11",
 }
 _TOKEN_TAIL_CONTEXT_POLICIES = {
     "phase-evidence-v5",
@@ -467,10 +480,11 @@ _TOKEN_TAIL_CONTEXT_POLICIES = {
     "phase-evidence-v8",
     "phase-evidence-v9",
     "phase-evidence-v10",
+    "phase-evidence-v11",
 }
-_STRUCTURED_TOOL_SCHEMAS = {"v2", "v3", "v4", "v5"}
-_SELF_VALIDATION_TOOL_SCHEMAS = {"v3", "v4", "v5"}
-_PATCH_RETRY_TOOL_SCHEMAS = {"v4", "v5"}
+_STRUCTURED_TOOL_SCHEMAS = {"v2", "v3", "v4", "v5", "v6"}
+_SELF_VALIDATION_TOOL_SCHEMAS = {"v3", "v4", "v5", "v6"}
+_PATCH_RETRY_TOOL_SCHEMAS = {"v4", "v5", "v6"}
 _PROBE_SOURCE_LIMIT_BYTES = 12_000
 _PROBE_OUTPUT_LIMIT_BYTES = 64_000
 _REVIEW_INPUT_LIMIT_BYTES = 8_000
@@ -803,6 +817,7 @@ def _investigation_compat_version(policy_version: str) -> str:
             "phase-evidence-v8",
             "phase-evidence-v9",
             "phase-evidence-v10",
+            "phase-evidence-v11",
         }
         else policy_version
     )
@@ -1108,7 +1123,11 @@ class ToolGateway:
                 )
                 or (
                     self.context_policy_version
-                    in {"phase-evidence-v9", "phase-evidence-v10"}
+                    in {
+                        "phase-evidence-v9",
+                        "phase-evidence-v10",
+                        "phase-evidence-v11",
+                    }
                     and name in {"run_check", "get_diff"}
                 )
                 else None
@@ -1474,6 +1493,7 @@ class ToolGateway:
                 "phase-evidence-v8",
                 "phase-evidence-v9",
                 "phase-evidence-v10",
+                "phase-evidence-v11",
             }
             and name in {"read_file", "search_files"}
             and semantic_replay_count >= _EVIDENCE_SATURATION_THRESHOLD
@@ -2311,7 +2331,7 @@ class ToolGateway:
                     ),
                 }
             )
-        if self.tool_schema_version == "v5" and name == "review_task":
+        if self.tool_schema_version in {"v5", "v6"} and name == "review_task":
             payload.update(
                 {
                     "coverage_target_count": result.output.get(
@@ -2734,7 +2754,8 @@ class ToolGateway:
                     and name in {"run_probe", "review_task"}
                 )
                 or (
-                    self.context_policy_version == "phase-evidence-v10"
+                    self.context_policy_version
+                    in {"phase-evidence-v10", "phase-evidence-v11"}
                     and name in {"run_check", "get_diff"}
                 )
                 else None
@@ -4275,13 +4296,13 @@ class ToolGateway:
             "residual_risks": residual_risks,
             **(
                 {"coverage_targets": coverage_targets}
-                if self.tool_schema_version == "v5"
+                if self.tool_schema_version in {"v5", "v6"}
                 else {}
             ),
         }
         review_input_limit = (
             16_000
-            if self.tool_schema_version == "v5"
+            if self.tool_schema_version in {"v5", "v6"}
             else _REVIEW_INPUT_LIMIT_BYTES
         )
         if (
@@ -4373,6 +4394,7 @@ class ToolGateway:
         if self.context_policy_version in {
             "phase-evidence-v9",
             "phase-evidence-v10",
+            "phase-evidence-v11",
         }:
             review_evidence = execution_context.get("review_evidence")
             if not isinstance(review_evidence, dict):
@@ -4398,7 +4420,8 @@ class ToolGateway:
             )
             expected_review_evidence_schema = (
                 "review-evidence-v2"
-                if self.context_policy_version == "phase-evidence-v10"
+                if self.context_policy_version
+                in {"phase-evidence-v10", "phase-evidence-v11"}
                 else "review-evidence-v1"
             )
             if (
@@ -4446,8 +4469,36 @@ class ToolGateway:
         review_contract = self.state.get_manifest(
             self.run_id
         ).public_review_contract
-        contract_review = self.tool_schema_version in {"v4", "v5"}
-        coverage_review = self.tool_schema_version == "v5"
+        contract_review = self.tool_schema_version in {"v4", "v5", "v6"}
+        coverage_review = self.tool_schema_version in {"v5", "v6"}
+        structured_coverage_rejection = bool(
+            self.tool_schema_version == "v6"
+            and self.context_policy_version == "phase-evidence-v11"
+        )
+        active_coverage_rejection = (
+            execution_context.get("coverage_rejection_feedback")
+            if structured_coverage_rejection
+            else None
+        )
+        if active_coverage_rejection is not None and (
+            not isinstance(active_coverage_rejection, dict)
+            or active_coverage_rejection.get("schema_version")
+            != "coverage-rejection-feedback-v1"
+            or not isinstance(
+                active_coverage_rejection.get("coverage_target_id"),
+                str,
+            )
+            or type(
+                active_coverage_rejection.get("source_failure_sequence")
+            )
+            is not int
+            or active_coverage_rejection["source_failure_sequence"] < 1
+            or active_coverage_rejection.get("worktree_diff_hash")
+            != summary.patch_hash
+        ):
+            raise RecoveryError(
+                "v11 review has invalid active coverage rejection feedback"
+            )
         if contract_review and review_contract is None:
             raise RecoveryError(
                 "contract-bound review lacks its public review contract"
@@ -4583,6 +4634,7 @@ class ToolGateway:
                 or not isinstance(sequences, list)
                 or len(sequences) > 20
                 or len(set(sequences)) != len(sequences)
+                or any(type(sequence) is not int for sequence in sequences)
                 or not isinstance(notes, str)
                 or not notes.strip()
                 or len(notes) > 2000
@@ -4604,19 +4656,25 @@ class ToolGateway:
                 raise ContractError(
                     "verified review requirements need cited evidence"
                 )
-            for sequence in sequences:
-                self._validate_review_evidence_sequence(
-                    sequence,
-                    events_by_sequence=events_by_sequence,
-                    presented_sequences=presented_sequences,
-                    citable_sequences=citable_sequences,
-                    passing_validation_sequences=(
-                        passing_validation_sequences
-                    ),
-                    source_get_diff_sequence=source_get_diff_sequence,
-                    mutation_sequence=mutation_sequence,
-                    worktree_diff_hash=summary.patch_hash,
-                )
+            # V11 validates citations at the coverage-target boundary below.
+            # Deferring the parent roll-up prevents a globally uncitable child
+            # sequence from being reduced to a generic requirement error before
+            # the gateway can return the offending target and its exact public
+            # recovery evidence. V10 and earlier keep their historical order.
+            if not structured_coverage_rejection:
+                for sequence in sequences:
+                    self._validate_review_evidence_sequence(
+                        sequence,
+                        events_by_sequence=events_by_sequence,
+                        presented_sequences=presented_sequences,
+                        citable_sequences=citable_sequences,
+                        passing_validation_sequences=(
+                            passing_validation_sequences
+                        ),
+                        source_get_diff_sequence=source_get_diff_sequence,
+                        mutation_sequence=mutation_sequence,
+                        worktree_diff_hash=summary.patch_hash,
+                    )
             normalized_requirement = {
                     "status": status,
                     "evidence_event_sequences": list(sequences),
@@ -4701,6 +4759,17 @@ class ToolGateway:
                     )
                 authoritative_sequences = target_evidence[target_id]
                 if not set(sequences).issubset(authoritative_sequences):
+                    if structured_coverage_rejection:
+                        raise self._coverage_citation_error(
+                            reason="target_evidence_not_allowed",
+                            target=authoritative_targets[target_id],
+                            requirement_id=target_parent_requirement[target_id],
+                            submitted_sequences=sequences,
+                            allowed_sequences=authoritative_sequences,
+                            mutation_sequence=mutation_sequence,
+                            worktree_diff_hash=summary.patch_hash,
+                            source_get_diff_sequence=source_get_diff_sequence,
+                        )
                     raise ContractError(
                         "review_task coverage target cites unrelated evidence"
                     )
@@ -4708,8 +4777,47 @@ class ToolGateway:
                     not authoritative_sequences
                     or sequences != authoritative_sequences
                 ):
+                    if structured_coverage_rejection:
+                        raise self._coverage_citation_error(
+                            reason="verified_target_evidence_mismatch",
+                            target=authoritative_targets[target_id],
+                            requirement_id=target_parent_requirement[target_id],
+                            submitted_sequences=sequences,
+                            allowed_sequences=authoritative_sequences,
+                            mutation_sequence=mutation_sequence,
+                            worktree_diff_hash=summary.patch_hash,
+                            source_get_diff_sequence=source_get_diff_sequence,
+                        )
                     raise ContractError(
                         "verified coverage target requires all advertised evidence"
+                    )
+                if (
+                    structured_coverage_rejection
+                    and isinstance(active_coverage_rejection, dict)
+                    and active_coverage_rejection.get(
+                        "coverage_target_id"
+                    )
+                    == target_id
+                    and (
+                        status != "verified"
+                        or not any(
+                            sequence
+                            > active_coverage_rejection[
+                                "source_failure_sequence"
+                            ]
+                            for sequence in sequences
+                        )
+                    )
+                ):
+                    raise self._coverage_citation_error(
+                        reason="fresh_target_evidence_required",
+                        target=authoritative_targets[target_id],
+                        requirement_id=target_parent_requirement[target_id],
+                        submitted_sequences=sequences,
+                        allowed_sequences=authoritative_sequences,
+                        mutation_sequence=mutation_sequence,
+                        worktree_diff_hash=summary.patch_hash,
+                        source_get_diff_sequence=source_get_diff_sequence,
                     )
                 if status == "partially_verified" and not sequences:
                     raise ContractError(
@@ -5101,6 +5209,67 @@ class ToolGateway:
                 },
             )
         return result
+
+    @staticmethod
+    def _coverage_citation_error(
+        *,
+        reason: str,
+        target: PublicReviewCoverageTarget,
+        requirement_id: str,
+        submitted_sequences: list[int],
+        allowed_sequences: list[int],
+        mutation_sequence: int,
+        worktree_diff_hash: str,
+        source_get_diff_sequence: int,
+    ) -> CoverageCitationError:
+        """Build bounded, public-only feedback for one V11 target rejection."""
+
+        invalid_sequences = [
+            sequence
+            for sequence in submitted_sequences
+            if sequence not in allowed_sequences
+        ]
+        if target.evidence_kind == "current_diff_inspection":
+            required_evidence: dict[str, Any] = {
+                "tool": "read_file",
+                "path": target.path,
+                "anchor": target.anchor,
+            }
+            guidance = (
+                "Locate the exact public anchor if needed, then use read_file "
+                "to obtain a complete current-diff result containing it. Retry "
+                "with only the refreshed target-specific advertised sequences."
+            )
+        else:
+            required_evidence = {
+                "tool": "run_check",
+                "check_ids": list(target.check_ids),
+            }
+            guidance = (
+                "Run an allowed registered check for this target on the current "
+                "diff, then retry with only the refreshed target-specific "
+                "advertised sequences."
+            )
+        details = {
+            "schema_version": "coverage-citation-error-v1",
+            "stage": "review",
+            "reason": reason,
+            "coverage_target_id": target.coverage_target_id,
+            "requirement_id": requirement_id,
+            "submitted_event_sequences": list(submitted_sequences),
+            "allowed_event_sequences": list(allowed_sequences),
+            "invalid_event_sequences": invalid_sequences,
+            "evidence_kind": target.evidence_kind,
+            "required_evidence": required_evidence,
+            "mutation_event_sequence": mutation_sequence,
+            "worktree_diff_hash": worktree_diff_hash,
+            "source_get_diff_sequence": source_get_diff_sequence,
+            "guidance": guidance,
+        }
+        return CoverageCitationError(
+            "review_task coverage target citation was rejected",
+            details=details,
+        )
 
     def _validate_coverage_target_evidence(
         self,

@@ -185,6 +185,36 @@ Evidence/issue:
   `reports/live-pilot/dev-no-memory-coverage-review-v10-pilot-20260802-r1.json`; qualification 30/34,
   evaluator reached 0, no-model exact-diff hidden fail.
 
+### D-071 implementation completion addendum
+
+- Status: accepted and offline-verified
+- Context: D-070의 v5/v10 validator는 unrelated citation을 정확히 거부했지만 public error
+  details가 비어 있어 agent가 offending target의 exact anchor를 회복할 수 없었다.
+- Decision: Historical V10을 바꾸지 않고 offline-only `tool v6 / phase-evidence-v11`,
+  `SYSTEM_PROMPT_V8`, `corrective-runtime-contract-v5`를 추가한다. Gateway는
+  target/requirement, submitted/allowed/invalid sequence, required public path+anchor 또는 visible
+  check ID, mutation/diff/source-diff identity를 `coverage-citation-error-v1`로 반환한다.
+  Context builder는 source call/failure와 input/result CAS를 재검증해 active rejection을
+  `coverage-rejection-feedback-v1`로 restart 뒤에도 exact rehydrate한다. Source rejection을
+  먼저 완전 재검증하고 exact feedback/build evidence를 받은 complete review가 call arguments와
+  authoritative public evidence에 일치하거나 새 mutation이 `ToolCalled`/`PatchPrepared` intent
+  CAS/success/`PatchApplied` 전체 lifecycle에 결속될 때만 clear한다. Rejected call은 실제 prior
+  request CAS와 실제 `ModelCalled` response tool call에 결속하고 V11 request/`ContextBuilt`는 active 및 clear request의
+  `worker-claim-evidence-v1`를 mirror한다. Stale target evidence만
+  반복 제출하면 fresh evidence 전까지 다시 거부한다. Qualifier는
+  `coverage_rejection_recovery_contract`로 first-rejection restart claim, same-worker 후속 rejection,
+  latest-feedback supersession, batched multi-check recovery evidence, complete review/submission과 single
+  mutation을 독립 재구성하고 first rejection 뒤 resume 전 old-worker activity를 거부한다.
+- Consequences: Generic V11은 `coverage_rejection_validation=True` + mock + no experiment에서만
+  선택한다. Dedicated E2E는 durable rejection 직후 worker exit, fresh resume,
+  exact-anchor read, refreshed diff, complete review, separate local evaluator와 target/result/context/restart/recovery,
+  orphan/forged-clearing 및 duplicate-mutation tamper rejection을 통과했다. 이 결정은 provider 권한, live 비용
+  승인, SCRR, no-memory baseline, memory admission 또는 core gate를 열지 않는다.
+- Date: 2026-08-02
+- Evidence/issue: `tests/test_coverage_rejection_v11.py` 7/7, focused bundle 43/43, repository-wide
+  999 collected and 992 passed/7 environment-dependent skipped; Ruff, compileall and `git diff --check`
+  pass. D-070 experiment/hash/run/original qualification and no-model postmortem remain immutable.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.
