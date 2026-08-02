@@ -1149,3 +1149,28 @@ gate pass와 hidden failure가 동시에 유효하다. D-073은 original result/
 함께 seal한다. 이 row는 재실행하지 않으며
 comparison denominator, memory admission, SCRR baseline과 core에서 제외한다. D-073 seal 과정의 provider
 call과 추가 model cost는 0이고 live hard-restart는 여전히 별도 fault exercise다.
+
+### D-074 retrospective stop rule and next baseline gate
+
+D-069~D-072는 exact HF Hub task에서 V10/V11 public-review/recovery path를 관찰한 diagnostic lane으로
+종료한다. 이 lane은 generic no-memory agent를 대체하거나 generic baseline의 선행조건이 아니다.
+Generic development/core comparison은 task-specific coverage sidecar 없이 V2/V5 pair를 사용한다.
+
+현재 template의 `21 model / 50 tool / 250,000 total token / 900초`는 D-052 당시의 pending draft이고,
+D-055/D-060 및 후속 diagnostic usage를 반영해 freeze된 comparison budget이 아니다. 따라서 이를
+그대로 실행하지 않는다. 다음 paid gate 전에는 exact generic model/prompt/tool/context/budget tuple을
+먼저 결정하고, 그 tuple과 current harness commit을 사용한 작은 diverse development readiness panel을
+별도 manifest로 고정한다.
+
+Readiness panel은 모든 row의 terminal persistence, trace qualification, official evaluator arrival와
+infrastructure/qualification/diagnostic/budget confound 0을 요구한다. Hidden/SCRR success는 요구하지
+않는다. 이 panel이 통과하면 tuple을 동결하고 no-memory baseline을 수집한다. 이후 valid hidden failure,
+scope-compliant task failure와 predeclared budget 안의 agent failure는 결과로 보존하며, 한 task의 hidden
+failure를 통과시키기 위한 prompt/tool/coverage contract 변경이나 같은 task corrective live loop를
+진행하지 않는다.
+
+Baseline freeze 전 code change를 다시 허용하는 사유는 public/private boundary, infrastructure,
+qualification corruption, deterministic tool/runtime contract 또는 systemic budget confound처럼 결과의
+신뢰성을 깨는 문제로 제한한다. 모델이 충분한 public evidence와 frozen budget 안에서 잘못된 patch를
+제출한 것은 baseline 성능이지 harness blocker가 아니다. Live hard restart는 별도 reliability protocol로
+측정하고 fault-free no-memory baseline을 막지 않는다.

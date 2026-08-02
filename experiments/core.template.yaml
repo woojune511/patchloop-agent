@@ -1,3 +1,6 @@
+# D-074: planning-only, fail-closed template. The 21/50/250k tuple below is
+# stale and unvalidated; do not authorize or execute it until the generic
+# V2/V5 no-memory baseline tuple and memory index are separately frozen.
 schema_version: experiment-v2
 experiment_id: core-YYYYMMDD
 purpose: core

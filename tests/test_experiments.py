@@ -2115,6 +2115,142 @@ def test_future_comparison_templates_remain_at_250k_pending_calibration() -> Non
         assert payload["budget"]["max_total_tokens"] == 250_000
 
 
+@pytest.mark.parametrize(
+    "suite_path",
+    [
+        "experiments/dev-no-memory-v5.template.yaml",
+        "experiments/core.template.yaml",
+    ],
+)
+def test_generic_comparison_manifests_exclude_v10_v11_review_contracts(
+    suite_path: str,
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr("patchloop.runtime.git_commit", lambda: "a" * 40)
+    monkeypatch.setattr("patchloop.runtime.version", lambda _package: "2.47.0")
+    if suite_path == "experiments/core.template.yaml":
+        payload = yaml.safe_load(Path(suite_path).read_text(encoding="utf-8"))
+        payload["experiment_id"] = "core-d074-regression"
+        payload["embedding_revision"] = "d074-test-revision"
+        suite_path = tmp_path / "core-d074-regression.yaml"
+        suite_path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    suite = eval_runner.load_suite(suite_path)
+    preflight = eval_runner.preflight_suite(suite_path)
+    item = preflight["schedule"][0]
+    package = load_task_package(Path(item["task"]).parent)
+    manifest = build_manifest(
+        package,
+        provider=suite.model,
+        model_id=suite.model_id,
+        memory_condition=MemoryCondition(item["condition"]),
+        budget=suite.budget,
+        max_output_tokens=suite.max_output_tokens,
+        experiment_context=ExperimentRunContext(
+            experiment_id=suite.experiment_id,
+            purpose=suite.purpose,
+            suite_hash=preflight["suite_hash"],
+            execution_hash=preflight["execution_hash"],
+            dataset_manifest_hash=preflight["dataset"]["manifest_hash"],
+            dataset_role=DatasetRole(item["dataset_role"]),
+            schedule_seed=suite.seed,
+            schedule_order=item["order"],
+            schedule_row_id=item["schedule_row_id"],
+            repetition=item["repetition"],
+        ),
+    )
+
+    assert "runtime_contract" not in preflight
+    assert all(
+        "public_review_contract" not in row
+        and "public_review_contract_path" not in row
+        for row in preflight["tasks"]
+    )
+    assert manifest.tool_schema_version == "v2"
+    assert manifest.context_policy_version == "phase-evidence-v5"
+    assert manifest.public_review_contract is None
+
+
+@pytest.mark.parametrize(
+    (
+        "run_id",
+        "purpose",
+        "experiment_id",
+    ),
+    [
+        (
+            "run_6cc69fc1170c4a44",
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+            "dev-no-memory-coverage-review-v10-pilot-20260802-r1",
+        ),
+        (
+            "run_e2132144a8774b05",
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
+            "dev-no-memory-coverage-rejection-v11-pilot-20260802-r1",
+        ),
+    ],
+)
+def test_consumed_v10_v11_pilots_cannot_unlock_generic_development_campaign(
+    run_id: str,
+    purpose: ExperimentPurpose,
+    experiment_id: str,
+    monkeypatch,
+) -> None:
+    suite = eval_runner.load_suite("experiments/dev-no-memory-v5.template.yaml")
+    source_hash = "sha256:" + ("a" * 64)
+    monkeypatch.setattr(
+        trace_qualification,
+        "load_trace_qualification",
+        lambda *_args, **_kwargs: {
+            "schema_version": "trace-qualification-v2",
+            "run_id": run_id,
+            "purpose": purpose.value,
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "leakage_scan_passed": True,
+            "evaluation_reached": True,
+            "qualification_hash": "sha256:" + ("b" * 64),
+            "source_evidence_hash": source_hash,
+            "outcome_kind": "task_failure",
+            "model_provider": "openai",
+            "model_id": suite.model_id,
+            "reasoning_effort": suite.reasoning_effort,
+            "reasoning_mode": suite.reasoning_mode,
+            "service_tier": suite.service_tier,
+            "max_output_tokens": suite.max_output_tokens,
+            "budget": suite.budget.model_dump(mode="json"),
+            "harness_git_commit": "a" * 40,
+            "tool_schema_version": "v2",
+            "context_policy_version": "phase-evidence-v5",
+            "runtime_contract_content_hash": (
+                eval_runner._expected_runtime_contract_hash()
+            ),
+            "memory_condition": "no_memory",
+            "fault_type": "none",
+        },
+    )
+    monkeypatch.setattr(
+        trace_qualification,
+        "calculate_source_evidence_hash",
+        lambda *_args, **_kwargs: source_hash,
+    )
+
+    pilot = eval_runner._pilot_qualification(
+        run_id,
+        suite,
+        expected_harness_commit="a" * 40,
+    )
+
+    assert experiment_id in eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert pilot["run_id"] == run_id
+    assert pilot["purpose"] == purpose.value
+    assert pilot["qualified"] is False
+    assert pilot["contract_mismatches"] == []
+    assert pilot["reason"] == "pilot evidence requirements are not satisfied"
+
+
 def test_gpt54mini_pilot_has_exact_model_budget_and_pricing_contract(
     tmp_path: Path,
     monkeypatch,

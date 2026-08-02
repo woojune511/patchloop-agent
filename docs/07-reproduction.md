@@ -775,3 +775,31 @@ The sealed source was verified with 375 focused tests (374 passed and one enviro
 1,025 repository-wide tests (1,018 passed and seven environment-dependent skips). Ruff, Python compileall
 and `git diff --check` also passed. These checks belong to the D-073 source seal; they are not a second live
 invocation.
+
+## D-074 no-call baseline-readiness audit
+
+D-069~D-073 is an immutable diagnostic/evidence-seal history. Do not reproduce it by rerunning the HF Hub
+V10/V11 suites, and do not copy their task-specific review sidecar into a generic development or core
+manifest. The generic no-memory lane remains tool V2/context V5.
+
+The following files are inspection inputs only:
+
+```powershell
+Get-Content -Raw -Encoding utf8 experiments/dev-no-memory-v5.template.yaml
+Get-Content -Raw -Encoding utf8 experiments/core.template.yaml
+Get-Content -Raw -Encoding utf8 `
+  reports/live-pilot/dev-validation-gpt54mini-completion-v6-20260731-r1.json
+Get-Content -Raw -Encoding utf8 `
+  .patchloop/experiments/dev-no-memory-budget-pilot-20260731-r1.json
+```
+
+The `21/50/250,000/900` values in the two templates are stale, unvalidated drafts. Do not add
+`--approve-live-cost`, compute an approval hash for them or run them as-is. The next reproducible live
+artifact must instead come from a newly checked-in, small diverse development readiness panel whose exact
+generic V2/V5 model/prompt/tool/context/budget tuple matches the intended no-memory baseline. Its process
+gate requires terminal qualified official-evaluator rows with no infrastructure, qualification, diagnostic
+or budget confound; hidden task success is reported separately and is not required.
+
+After that panel passes, freeze the exact tuple and collect the no-memory baseline without tuning against
+individual hidden failures. Provider hard-kill/reclaim reproduction remains part of the separate reliability
+suite and is not a prerequisite for this fault-free baseline gate.

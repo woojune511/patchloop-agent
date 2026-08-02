@@ -417,13 +417,13 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   two-task, 600k no-memory completion panel. The separately approved provider campaign passed
   official evaluation, qualification and completion/headroom 2/2 for `$0.15682575`. It is
   immutable two-task calibration evidence, not a no-memory baseline or memory-effect result.
-- D-060 checks in the separate three-task budget-pilot purpose, exact suite and offline result
-  gate, but no provider run exists yet. The current worktree is dirty, so any hash computed before
-  a clean commit would bind the old commit identity without binding the uncommitted source bytes
-  and must not be approved. A clean no-call preflight must still verify the three actual Docker
-  image identities, OpenAI SDK, credential presence and pricing age. Passing the future 3/3 runtime
-  gate would not itself establish SCRR, a final comparison budget, memory benefit or permission to
-  build the memory index.
+- D-060's earlier pre-execution state is superseded by its consumed live evidence. Approved hash
+  `sha256:61a7208bd6ee1a45b08511407d0c8c0658976685245a11d422077efdf9bdef4f` ran exactly once:
+  all three rows were terminal and qualified, HF Hub stopped before evaluation on an exact-request
+  token budget, and PDM/pyfakefs reached the official evaluator and failed hidden acceptance. Thus the
+  original 3/3 completion gate is false, but only the HF row is budget-confounded. The two hidden task
+  failures are not budget evidence. This run does not establish SCRR, a final comparison budget, memory
+  benefit or permission to build the memory index, and its suite/hash/run IDs are not rerun.
 - `model-generation-block-v2` covers admission to the next provider generation. A model response
   whose measured duration itself crosses the wall limit and a later call inside the same
   multi-tool response that encounters the tool cap still terminate through the older
@@ -791,3 +791,23 @@ silently lowering the design or fabricating missing results.
 - D-073's post-run source seal collected 375 focused tests (374 passed/1 environment-dependent skipped)
   and 1,025 repository tests (1,018 passed/7 environment-dependent skipped). These counts validate the
   immutable guard and portable evidence, not a second provider execution or hidden-task correctness.
+
+## D-074 baseline-readiness boundary remains open
+
+- D-069~D-072/V10/V11 are now retired as diagnostic-only paths. Their immutable evidence remains useful
+  for public review and recovery contracts, but none is a prerequisite for the generic no-memory baseline.
+  The historical D-067 note that named hidden-failure requirement analysis as the next evidence gap is not
+  the current sequencing rule.
+- Generic memory-development/core still uses tool V2/context V5 and must not load the HF-specific V10/V11
+  review sidecar. Promoting V10/V11 to a generic runtime would require a separate cross-task contract and is
+  not implied by D-072 readiness.
+- The checked-in `21 model / 50 tool / 250,000 token / 900 seconds` templates are stale and unvalidated.
+  D-055 showed two-task V2/V5 completion at a higher ceiling; D-060 showed one resource-heavy budget
+  confound; the later one-task ceilings do not freeze a population budget. Running the current templates
+  as-is would reintroduce the confound the calibration sequence was intended to remove.
+- The next gate is only: choose an exact generic tuple and fair budget, run one small diverse development
+  readiness panel on that exact tuple with terminal/qualified/evaluator completion and no
+  infrastructure/qualification/diagnostic/budget confound, then freeze and collect no-memory. Task success
+  is not required for the panel, and hidden task failures do not justify another same-task correction loop.
+- Live provider hard kill, stale-run reclaim and fresh-worker recovery remain unmeasured. They belong to a
+  separately approved reliability experiment and do not block the fault-free no-memory baseline.

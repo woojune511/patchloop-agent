@@ -2479,3 +2479,28 @@ Post-run source-seal verification collected 375 focused tests: 374 passed and on
 was skipped. The repository-wide matrix collected 1,025 tests: 1,018 passed and seven environment-dependent
 tests were skipped. Ruff, Python compileall and `git diff --check` also passed. These are D-073 seal-integrity
 checks, not another live invocation or evidence that the hidden task was solved.
+
+## D-074 retrospective evidence boundary
+
+D-074 adds no provider run, test result, performance measurement or new task outcome. It is a read-only
+consistency decision over the existing evidence:
+
+- D-055 established that the generic V2/V5 agent can complete two development-validation tasks through the
+  official evaluator; it did not freeze a comparison budget.
+- D-060 established that two resource-stratified rows reached the evaluator and hidden-failed while only HF
+  Hub was budget-confounded.
+- D-067 reached the official evaluator without budget binding and remains a hidden task failure. Its
+  append-only qualification correction does not create a need for hidden-failure-driven tuning.
+- D-070 exposed a diagnostic V10 submission-feedback failure, D-071 closed that feedback path offline, and
+  D-072 showed one V11 live readiness row could reach the evaluator. These exact HF Hub V10/V11 artifacts
+  remain diagnostic-only and are not baseline prerequisites.
+
+The evidence therefore supports stopping the same-task corrective loop. Generic development/core remains
+tool V2/context V5 without the task-specific coverage sidecar. The current `21/50/250,000/900` templates are
+stale and must not be executed as-is. The next evidence-producing step, after a separate configuration
+decision, is one small diverse development readiness panel on the exact intended generic tuple and budget.
+Its gate separates process readiness from correctness: every row must be terminal, qualified, reach the
+official evaluator and avoid infrastructure/qualification/diagnostic/budget confounds, while hidden/SCRR
+success remains an outcome rather than a prerequisite. Passing that gate permits tuple freeze and a fresh
+no-memory baseline; it does not permit task-specific hidden tuning. Live hard restart remains a separate
+reliability evidence gap.

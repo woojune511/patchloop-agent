@@ -125,9 +125,9 @@ submission lifecycle과 기존 phase-evidence-v2 artifact의 해석은 그대로
 | Q-007 | Similarity embedding을 local model로 고정할지 | Offline reproducibility와 품질 | Phase 5 시작 전 |
 | Q-008 | Small-sample bootstrap의 resampling unit을 task로만 둘지, repetition hierarchy를 반영할지 | Confidence interval 해석 | Phase 6 시작 전 |
 
-Q-005는 D-021/D-022와 이를 supersede한 D-045/D-052로 해결했다. 앞으로의 primary live
-block은 `gpt-5.4-mini-2026-03-17`, medium/standard/default, 25,000 per-call output과
-250,000 run-total budget, SDK/Git/time provenance를 고정한다.
+Q-005는 D-021/D-022와 이를 supersede한 D-045/D-052에서 당시 값이 정해졌지만, D-074가
+future baseline tuple/budget 부분을 다시 supersede한다. 기존 21/50/250,000 template은
+stale/unvalidated이며 새 exact V2/V5 tuple과 readiness panel 결정 전에는 실행하지 않는다.
 
 ## Decision change template
 
@@ -277,6 +277,46 @@ Evidence/issue:
 - Date: 2026-08-02
 - Evidence/issue: immutable local experiment result and qualification for `run_e2132144a8774b05`;
   portable evidence `reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`.
+
+### D-074 accepted decision — semantic rollback to generic baseline preparation
+
+- Status: accepted; policy rollback recorded, exact baseline tuple/readiness panel pending
+- Supersedes: D-052의 future 21 model/50 tool/250,000 token/900초 tuple과 D-069~D-072를
+  baseline-readiness prerequisite로 취급하던 sequencing만 supersede한다. D-069~D-073의 code,
+  raw/portable evidence, schema/qualifier decoder, consumed experiment ID와 immutable guard는
+  삭제하거나 소급 변경하지 않는다.
+- Context: D-055는 두 development-validation task에서 budget/infrastructure/qualification
+  confound 없이 evaluator completion을 보였고, D-060은 HF Hub의 budget bind와 PDM/pyfakefs의
+  non-budget hidden task failure를 분리했다. 그 뒤 D-067은 budget bind 없이 evaluator에
+  도달했지만 hidden acceptance에 실패했다. D-069~D-072는 같은 HF Hub diagnostic에서 public
+  coverage/recovery contract를 계속 정교화했고 모든 row를 baseline, memory admission과 core에서
+  제외했다. 이 sequence는 harness branch evidence로는 보존 가치가 있지만 generic no-memory
+  baseline을 시작하기 위한 추가 선행조건으로 삼으면 task-specific adaptive tuning 위험이 있다.
+- Decision: D-069~D-072의 V10/V11과 exact HF Hub V2 review sidecar lane을
+  `retired diagnostic-only`로 분류한다. Generic development/core runtime은
+  `tool_schema_version=v2`와 `context_policy_version=phase-evidence-v5`를 유지한다. HF Hub
+  sidecar를 generic path나 다른 task로 복사·확장하지 않고, retired V10/V11 live pilot의 gate나
+  qualification을 generic campaign prerequisite로 사용하지 않는다.
+- Budget/freeze decision: 현재 checked-in 21/50/250,000/900초 template은 stale/unvalidated
+  draft이며 그대로 실행하지 않는다. 다음 live approval 전에 exact model snapshot/reasoning,
+  system prompt, V2/V5 tool/context, retry, sandbox image, evaluator와 budget을 하나의 새 tuple로
+  결정한다. 그 tuple은 서로 다른 repository와 failure pattern의 작은 predeclared development
+  readiness panel에서 검증한다. 각 row는 terminal·qualified이고 official evaluator에 도달해야
+  하며 infrastructure, qualification 또는 budget confound가 없어야 한다. Task success,
+  hidden acceptance와 SCRR pass는 이 readiness gate의 필수조건이 아니다.
+- Tuning boundary: Baseline freeze 전 hidden task failure는 immutable outcome으로만 기록하고
+  prompt, tool schema, context policy, checklist, sidecar 또는 task-specific validation 변경의 trigger로
+  사용하지 않는다. Condition-neutral runtime defect는 public trace/contract로 독립 입증하고 새
+  decision에서 수정한 뒤 readiness panel 전체를 다시 검증해야 한다.
+- Reliability boundary: Live hard restart는 별도 reliability suite/hash/approval에서 측정한다.
+  그 evidence가 없다는 사실은 limitation으로 남지만 generic no-memory baseline의 blocker가 아니다.
+- Consequences: Historical V10/V11 decoder와 offline diagnostic tests는 evidence 해석을 위해 남는다.
+  Memory admission과 four-condition/core campaign은 exact tuple, diverse readiness panel과 usable
+  no-memory baseline이 순서대로 닫힐 때까지 보류한다. D-074 자체는 provider/API call, execution
+  hash 또는 비용 evidence를 만들지 않는다.
+- Date: 2026-08-02
+- Evidence/issue: Retrospective comparison of immutable D-055, D-060, D-067, D-070 and D-072
+  outcomes; generic V2/V5 runtime selector and historical consumed-ID guards remain source-enforced.
 
 ## Deferred ideas
 

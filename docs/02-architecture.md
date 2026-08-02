@@ -694,3 +694,30 @@ mutation-preview retry와 investigation policy가 실제 provider trace에서도
 이는 `coverage-citation-error-v1`이 발생한 뒤의 structured coverage recovery가 아니며 live
 hard-restart/reclaim evidence로도 사용하지 않는다. 이 row는 comparison denominator, memory admission과
 core input에 들어가지 않는다.
+
+## 19. D-074 generic baseline boundary
+
+D-069~D-072의 V10/V11 경로는 한 HF Hub development task에서 public review와 recovery 계약을
+진단한 historical opt-in lane이다. 이 경로와 task-specific `public-review-contract-v2` sidecar는
+generic `memory-development-no-memory` 또는 `core` manifest가 선택하지 않는다. 현재 generic
+comparison architecture는 `tool_schema_version=v2`, `context_policy_version=phase-evidence-v5`를
+유지한다. V10/V11 readiness나 hidden acceptance 성공은 generic baseline의 선행조건이 아니다.
+
+현재 template의 `21 model / 50 tool / 250,000 token / 900초`는 실행되지 않은 stale draft다.
+D-060과 뒤의 진단 run이 보여준 resource 분포를 반영한 final comparison budget이 아니므로 그대로
+실행하거나 execution capability로 승격하지 않는다. 다음 architecture gate는 다음 순서로 제한한다.
+
+```text
+choose exact generic V2/V5 model + prompt + tool + context + budget tuple
+  -> run one small, diverse development readiness panel on that exact tuple
+  -> require terminal + qualified + official evaluator arrival for every panel row
+     and zero infrastructure/qualification/diagnostic/budget confound
+     while task success remains an observation, not a gate
+  -> freeze the tuple
+  -> collect the no-memory baseline without task-specific tuning
+```
+
+Panel이나 baseline의 hidden failure는 agent outcome으로 보존한다. Private evaluator 결과나 한 task의
+hidden failure를 근거로 prompt, tool, sidecar 또는 review policy를 다시 조정하지 않는다. Live provider
+hard restart와 stale-run reclaim은 fault-free baseline readiness가 아니라 별도 reliability experiment의
+gate다.

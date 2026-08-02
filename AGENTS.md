@@ -12,8 +12,17 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-073 D-072 live result evidence seal complete; readiness gate passed,
-  recovery remained inconclusive and task correctness failed; no live hard-restart evidence exists`이다.
+- 현재 milestone은 `D-074 semantic rollback recorded; generic V2/V5 baseline tuple and budget
+  selection pending; no live baseline run is approved`이다. D-069~D-072의 V10/V11 및 exact HF Hub
+  sidecar lane은 `retired diagnostic-only`이며 baseline readiness의 선행조건이 아니다. 해당 code,
+  raw/portable artifact와 consumed-ID guard는 append-only evidence로 보존하지만 generic
+  development/core path에 복사하거나 확장하지 않는다. Generic comparison path는
+  `tool_schema_version=v2`/`phase-evidence-v5`로 유지한다. 기존 21 model/50 tool/250,000 token
+  template은 stale/unvalidated 상태이므로 그대로 실행하지 않는다. 다음 gate는 exact model,
+  prompt, tool, retry, evaluator와 budget tuple을 먼저 결정한 뒤 작은 multi-repository dev readiness
+  panel에서 infrastructure/qualification/budget confound가 없음을 검증하는 것이다. 이 gate는 task
+  success를 요구하지 않으며 hidden task failure를 근거로 baseline freeze 전에 prompt/tool/context를
+  다시 조정하지 않는다. Live hard restart는 별도 reliability exercise이고 baseline blocker가 아니다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch

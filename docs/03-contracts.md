@@ -2236,3 +2236,45 @@ inconclusive다. Saturation과 patch count도 coverage recovery 또는 fresh-wor
 D-073 seal artifact는
 `reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`이다. Seal 생성은 raw
 artifact를 변경하지 않고 provider를 추가 호출하지 않으며 추가 model cost는 0이다.
+
+## 19. D-074 generic no-memory readiness contract
+
+이 절은 D-069~D-073 artifact나 판정을 다시 해석하지 않고, 다음 generic no-memory 실행의 경계를
+명시한다. 현재 baseline/core의 generic runtime pair는 다음과 같다.
+
+```text
+tool_schema_version = v2
+context_policy_version = phase-evidence-v5
+task-specific public-review-contract-v2 sidecar = absent
+coverage_review_validation = false
+coverage_rejection_validation = false
+```
+
+`memory-development-no-memory-review-evidence-pilot`,
+`memory-development-no-memory-coverage-review-pilot`과
+`memory-development-no-memory-coverage-rejection-pilot`은 consumed diagnostic purpose다. Generic
+`memory-development-no-memory`와 `core` loader는 이 purpose의 V9/V10/V11 runtime이나 HF Hub
+sidecar를 선택해서는 안 된다. 이 diagnostic lane의 pass, fail 또는 inconclusive 판정은 generic
+baseline preflight의 prerequisite가 아니다.
+
+현재 `experiments/dev-no-memory-v5.template.yaml`과 `experiments/core.template.yaml`의
+`21/50/250,000/900` budget은 `stale-unvalidated`다. Exact generic tuple과 fair budget이 새로
+결정되고 같은 tuple을 사용한 development readiness evidence에 결속되기 전에는 이 값을 live
+execution plan으로 승인하지 않는다. 새 readiness panel의 exact task list와 budget은 별도 checked-in
+contract에서 고정하며, 그 gate는 다음 논리곱을 사용한다.
+
+```text
+expected diverse development rows are complete
+AND every row is terminal and trace-qualified
+AND every row reaches the official evaluator
+AND infrastructure_error_count == 0
+AND qualification_error_count == 0
+AND diagnostic_error_count == 0
+AND budget_terminal_count == 0
+```
+
+`task_successes`와 SCRR는 별도 관찰값이며 위 gate의 항이 아니다. Hidden failure는 readiness failure가
+아니고, baseline freeze 전 task-specific prompt/tool/review correction의 입력으로 사용하지 않는다.
+Gate가 통과하면 model/prompt/tool/context/budget/container/evaluator tuple을 동결한 뒤 별도 승인으로
+no-memory baseline을 수집한다. Provider hard kill, stale `RUNNING` reclaim과 fresh-worker recovery는
+이 gate에 합치지 않고 별도 reliability suite에서 판정한다.

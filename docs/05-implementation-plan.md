@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-073 D-072 live-result evidence seal complete; readiness passed, recovery
-inconclusive, hidden task acceptance failed; no live hard-restart evidence exists**
+현재 milestone: **D-074 semantic rollback recorded; generic V2/V5 baseline tuple and budget
+selection pending; no live baseline run approved**
 
 2026-08-02 구현 스냅샷:
 
@@ -10,10 +10,10 @@ inconclusive, hidden task acceptance failed; no live hard-restart evidence exist
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | historical V1-V10 보존; coverage-recovery v6/v11 offline gate와 의미 보존 모듈 분리 complete | Target-specific structured rejection, CAS-bound feedback rehydration, restart exact-anchor recovery; generic V11 mock/no-experiment only |
+| Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-070 immutable; D-072 exact one-row consumed once and D-073 evidence-sealed | `run_e2132144a8774b05`: official evaluator, qualification 36/36, readiness gate pass; rejection 0으로 recovery inconclusive, hidden fail/SCRR false; comparison·memory/core 제외 |
+| Phase 6 evaluation | baseline tuple/budget selection pending | 기존 21/50/250k template은 stale/unvalidated이고 실행 금지; 작은 diverse dev readiness panel 뒤 exact V2/V5 tuple freeze 필요 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -32,6 +32,12 @@ smoke, 스무 research admission과 dataset freeze는 2026-07-28까지 통과했
 stress schedule은 아직 실행되지 않았다. 두 Live OpenAI 12-run development campaign은
 diagnostic으로 완료됐지만 usable no-memory baseline과 96-run core campaign은 완료되지
 않았으며 `docs/08-limitations.md`에서 별도로 추적한다.
+
+D-074는 D-069~D-072의 historical code와 evidence를 삭제하지 않는다. V10/V11 및 task-specific
+HF Hub sidecar는 `retired diagnostic-only`로 유지하며 generic baseline의 readiness 선행조건에서
+제외한다. Generic dev/core runtime은 V2/V5를 유지하지만, D-052의 21 model/50 tool/250,000 token
+template은 현재 exact baseline tuple로 승인되거나 실행 검증된 값이 아니므로 그대로 실행하지
+않는다. 다음 live work는 아래 D-074 gate를 먼저 닫아야 한다.
 
 ## 1. Sequencing rule
 
@@ -137,7 +143,47 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current evidence-seal gate — D-073 D-072 live result closure
+## Current baseline-freeze gate — D-074 semantic rollback
+
+목표: 한 HF Hub task의 hidden failure를 따라 prompt/tool/context를 계속 바꾸던 diagnostic lane과
+공정한 no-memory baseline 준비를 분리한다. Historical evidence는 append-only로 보존하면서 generic
+V2/V5 comparison tuple을 작은 diverse development panel에서 검증한 뒤 한 번만 freeze한다.
+
+### Ordered work items
+
+1. D-069~D-072의 V10/V11, exact live purposes와 HF Hub V2 sidecar를
+   `retired diagnostic-only`로 분류한다. Raw/portable artifact, decoders, historical selectors와
+   consumed-ID guards는 삭제하거나 소급 변경하지 않는다.
+2. Generic development/core manifest가 `tool_schema_version=v2`,
+   `context_policy_version=phase-evidence-v5`를 유지하고 public-review sidecar를 선택하지 않는지
+   executable regression으로 고정한다. Retired V10/V11 pilot의 success 또는 qualification이 generic
+   campaign prerequisite를 충족하지 못하는지도 검증한다.
+3. Exact model snapshot/reasoning, system prompt, tool schema, context policy, retry, sandbox image,
+   evaluator와 budget tuple을 새 decision/config로 선택한다. 기존 21/50/250k/900초 template은
+   stale/unvalidated이므로 이 결정 전에 실행하지 않는다.
+4. 서로 다른 repository와 failure pattern을 포함한 작은 development readiness panel을 사전 선언한다.
+   각 row는 terminal·qualified이고 official evaluator에 도달해야 하며 infrastructure,
+   qualification 또는 budget-terminal confound가 없어야 한다. Hidden/SCRR task success는 이 gate의
+   필수조건이 아니다.
+5. Panel의 hidden task failure는 outcome으로만 보존한다. Baseline freeze 전 prompt, tool, context,
+   checklist 또는 task-specific sidecar 변경의 trigger로 사용하지 않는다. Condition-neutral runtime
+   defect가 public trace/contract로 독립 입증되면 새 decision과 panel 전체 재검증을 요구한다.
+6. Readiness가 통과하면 exact tuple과 no-memory suite를 freeze하고 baseline을 실행한다. Failure memory
+   admission과 네 조건 비교는 usable no-memory baseline 뒤에만 재개한다.
+7. Live hard restart는 별도 reliability suite/hash/approval로 다루며 baseline readiness blocker로
+   두지 않는다.
+
+### Exit gate — pending
+
+- Historical D-069~D-073 evidence와 immutable guards가 byte/history 관점에서 보존된다.
+- Generic dev/core는 V2/V5이고 HF Hub V2 sidecar 또는 V10/V11 selector를 사용하지 않는다.
+- 기존 21/50/250k template은 실행 불가 상태로 명확히 표시된다.
+- Exact generic tuple과 diverse readiness panel이 사전 선언되고, task success와 분리된
+  no-confound acceptance가 executable evidence로 통과한다.
+- Hidden failure에 따른 task-specific adaptive tuning 없이 baseline freeze가 완료된다.
+- Live hard-restart 미실행은 별도 limitation으로 남지만 baseline 진행을 막지 않는다.
+
+## Historical evidence-seal gate — D-073 D-072 live result closure
 
 목표: 정확히 한 번 승인·소비된 D-072 live result를 raw artifact 변경 없이 hard-immutable set과
 portable evidence에 seal한다. Readiness gate pass, recovery occurrence와 task correctness를 분리해

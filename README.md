@@ -2,6 +2,22 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-02 D-074는 최근 diagnostic sequence를 삭제하지 않고 baseline 경로에서 의미상
+rollback한다. D-069~D-072의 V10/V11과 exact HF Hub review sidecar는 모두
+`retired diagnostic-only`다. Raw/portable evidence, schema decoder와 consumed-ID guard는
+append-only로 보존하지만 baseline readiness prerequisite로 사용하지 않고 generic dev/core에
+sidecar를 복사하거나 확장하지 않는다. 실제 comparison 후보는 계속
+`tool_schema_version=v2`/`phase-evidence-v5`다. 다만 기존
+`21 model call / 50 tool call / 250,000 token / 900초` template은 실행으로 검증된 baseline
+budget이 아니라 stale draft이므로 **그대로 실행하지 않는다.** 다음 paid gate를 열기 전에 exact
+model snapshot, reasoning, prompt, tool, retry, image, evaluator와 budget tuple을 하나로 선택하고,
+서로 다른 repository/pattern을 포함한 작은 development readiness panel에서 terminal trace,
+qualification과 evaluator 도달을 확인한다. 이 readiness 판정은 task success를 요구하지 않지만
+infrastructure, qualification 또는 budget confound는 허용하지 않는다. Hidden task failure는
+그 자체로 baseline freeze 전 prompt/tool/context 변경의 근거가 될 수 없다. Live hard restart는
+별도 reliability experiment이며 no-memory baseline의 blocker가 아니다. D-074 기록 과정에서
+provider call은 수행하지 않는다.
+
 2026-07-31 현재 D-060 3-run 진단은 HF Hub만 total-token budget에 막혔고,
 PDM과 pyfakefs는 budget과 무관한 task failure였다. 후속 D-062는 과거 run을 변경하지 않고
 `tool_schema_version=v4`/`phase-evidence-v7` corrective runtime, 공개 issue 기반 review
@@ -527,6 +543,11 @@ patchloop serve
 Responses API adapter는 host process에서만 API key를 읽고 container, checkpoint, event payload에
 전달하지 않는다. 현재 live sequence는 primary config와 historical diagnostic lane으로
 분리한다.
+
+D-074 이후 아래 purpose/cap 표는 이미 소비됐거나 과거에 계획된 contract를 해석하기 위한
+historical inventory다. Generic no-memory/core 실행 권한이나 현재 budget 승인이 아니다. 새 live
+baseline은 V2/V5 exact tuple과 readiness panel을 별도 decision/config/hash로 동결하기 전까지
+시작하지 않는다.
 
 | Purpose | Task/condition/repetition | 상한 |
 | --- | --- | ---: |
