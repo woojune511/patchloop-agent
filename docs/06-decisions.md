@@ -419,6 +419,34 @@ Evidence/issue:
   `git diff --check`를 통과했다. Provider/result evidence가 없고 readiness, SCRR, baseline 또는
   memory-effect claim을 만들지 않는다.
 
+### D-078 accepted decision — seal failed D-077 budget-only readiness outcome
+
+- Status: accepted append-only result seal. 승인 execution hash
+  `sha256:de73e622fcaa4cec85191cceb01efdb0d27cc6a5a6b8f05c7cd4844df50763f5`는 source harness
+  commit `4a2596e43398af094f1f17bcb0cb1a7945cb7058`에서 정확히 한 번 소비됐다.
+- Preserves: D-077 suite, raw result, hash-chained journal, plan, run artifact, qualification과 original
+  false gate를 수정·재개·합산하지 않는다. R2 experiment ID를 consumed hard-immutable set에 추가하고
+  재실행하지 않는다.
+- Result: 4/4 terminal·qualified, 3/4 official evaluator, infrastructure/qualification/diagnostic error 0,
+  budget-terminal 1이다. HF Hub와 Babel은 hidden acceptance 실패, Moto는 SCRR, pyfakefs는 evaluator
+  전에 `model_call_budget_exhausted`로 끝났다. Hidden outcome은 readiness pass requirement가 아니다.
+- Remaining confound: pyfakefs는 50 model call을 모두 사용했지만 387,160 token, 16 tool call과
+  1,100,745ms가 남았다. D-077의 HF row는 D-075의 total-token terminal을 재현하지 않고 evaluator에
+  도달했으며, D-077에서 관찰된 유일한 binding dimension은 model-call admission이다.
+- Usage/cost: 1,816,830 input + 181,254 output = 1,998,084 token, 125 model call, 219 tool call,
+  usage-derived cost `$2.1782655`다. 이는 `$23` authorization cap이나 실제 invoice가 아니다.
+- Claims boundary: Report의 1/4 SCRR는 calibration-only diagnostic이고 ordinary metrics는 비어 있다.
+  Readiness gate, comparison denominator, no-memory baseline, memory admission과 core는 모두 닫혀 있다.
+  D-078은 자동 재실행, 추가 budget 증가 또는 hidden-failure 기반 prompt/tool/context tuning을 승인하지
+  않는다.
+- Date: 2026-08-03
+- Evidence/issue: Sanitized record
+  `reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r2.json`, result SHA-256
+  `sha256:22385cf6efd9b54de960cfe5b55c812ba74d3275ac9496f7db16fd0cb727e5fe`, journal final event
+  `sha256:0a65f0bd0e20caa4f1cedd41433a63f53c6aa2a965ee256531a0d71777ba4b62`와 네 qualification.
+  Seal verification은 focused 11 passed, repository-wide 1,099 collected/1,092 passed/7 skipped,
+  Ruff, compileall, JSON parse와 `git diff --check`를 통과했고 provider call/model cost는 0이다.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

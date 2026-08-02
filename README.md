@@ -2,6 +2,25 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-03 D-078은 승인 hash
+`sha256:de73e622fcaa4cec85191cceb01efdb0d27cc6a5a6b8f05c7cd4844df50763f5`로
+D-077 budget-only four-row panel을 정확히 한 번 실행한 결과를 append-only로 seal한다. 네 row는
+모두 terminal·trace-qualified이고 error는 0이었지만 official evaluator 도달은 3/4라 readiness
+gate는 **실패**했다. HF Hub와 Babel은 hidden acceptance 실패, Moto는 SCRR, pyfakefs
+`run_415695539ad24658`는 812,840 token과 84 tool call을 사용한 뒤 50 model-call 상한에 걸려
+evaluator 전에 종료됐다. 이때 token 387,160, tool call 16과 wall 1,100,745ms가 남았다. 총
+사용량은 1,816,830 input + 181,254 output =
+1,998,084 token, 125 model call, 219 tool call, 계산 비용 `$2.1782655`다. 이는 남은 process
+confound가 total-token이 아니라 model-call admission임을 보여주지만, 1/4 SCRR는 calibration-only
+diagnostic이며 no-memory baseline이나 memory admission 근거가 아니다. R2 ID/hash/run/result는
+immutable하고 재실행하지 않는다. Sanitized record는
+`reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r2.json`에 있다. D-076까지의 50개와
+D-077의 네 unique run을 합친 usage-derived list-price 누계는 54개 run, `$13.255177425`이며 실제
+invoice나 free-tier 적용액을 뜻하지 않는다.
+봉인 검증은 D-077/generic focused 11개와 repository-wide 1,099개를 수집해 각각 11 passed,
+1,092 passed/7 environment-dependent skipped를 기록했고 Ruff, compileall, JSON parse와
+`git diff --check`를 통과했다. 이 검증은 provider call과 추가 model cost 0이다.
+
 2026-08-02 D-077은 D-076의 public budget-confound evidence를 condition-neutral하게 반영한
 새 exact successor suite `generic-baseline-readiness-v2v5-20260802-r2`를 고정한다. D-075와
 동일한 Babel/Moto/pyfakefs/HF Hub task와 순서, model/reasoning/tier, `SYSTEM_PROMPT_V3`, tool
@@ -9,9 +28,9 @@ v2/context `phase-evidence-v5`, SDK transport retry 0, output 25,000, tool 100, 
 유지하고 budget만 model call 40→50, total token 850,000→1,200,000으로 올린다.
 2026-08-02T13:11:37Z에 공식 rate를 다시 확인한 authorization reserve는 run당 `$5.5125`, four-row
 `$22.05`, suite cap `$23`이다. 이는 completion guarantee나 예상 invoice가 아니다. 이 source
-contract에는 provider call, execution hash, 사용자 승인, run, measured cost 또는 gate outcome이
-아직 없다. Clean no-call preflight가 만든 새 exact hash와 최대 `$23`에 대한 명시적 승인이 있어야
-한 번 실행할 수 있으며 comparison denominator, memory admission과 core는 계속 닫혀 있다.
+contract 시점에는 provider call, execution hash, 사용자 승인, run, measured cost 또는 gate outcome이
+없었다. 이후 D-078에 기록된 단일 승인 실행으로 hash가 소비됐으며 comparison denominator,
+memory admission과 core는 계속 닫혀 있다.
 Focused readiness matrix와 repository-wide pytest는 통과했다. 전체 1,095개 중 1,088 passed/7
 environment-dependent skipped였고 Ruff, compileall과 `git diff --check`도 통과했다. 이는 offline
 contract evidence이며 provider call과 추가 model cost는 0이다.

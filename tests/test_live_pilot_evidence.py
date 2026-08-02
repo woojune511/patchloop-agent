@@ -4481,3 +4481,281 @@ def test_d075_generic_readiness_report_excludes_private_and_provider_payload() -
         private_tokens = _private_leak_tokens(package, api_key=None)
         leaked.extend(token for token in private_tokens if token in checked_text)
     assert sorted(set(leaked)) == []
+
+
+def test_d077_budget_only_readiness_report_preserves_failed_gate() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "generic-baseline-readiness-v2v5-20260802-r2.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "generic-baseline-readiness-d077-evidence-v1"
+    )
+    assert payload["source_harness_commit"] == (
+        "4a2596e43398af094f1f17bcb0cb1a7945cb7058"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:de73e622fcaa4cec85191cceb01efdb0d27cc6a5a6b8f05c7cd4844df50763f5"
+    )
+    assert payload["runtime_contract"] == {
+        "schema_version": "generic-baseline-runtime-contract-v1",
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+        "system_prompt_hash": (
+            "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b"
+        ),
+        "tool_schema_hash": (
+            "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827"
+        ),
+        "transport_max_retries": 0,
+        "harness_git_commit": "4a2596e43398af094f1f17bcb0cb1a7945cb7058",
+    }
+    assert payload["budget"]["actual_campaign_usage"] == {
+        "input_tokens": 1_816_830,
+        "cached_input_tokens": 0,
+        "output_tokens": 181_254,
+        "reasoning_output_tokens": 165_716,
+        "total_tokens": 1_998_084,
+        "model_calls": 125,
+        "tool_calls": 219,
+        "wall_clock_ms": 1_309_338,
+        "model_cost_usd": 2.1782655,
+    }
+
+    gate = payload["original_completion_gate"]
+    assert gate["passed"] is False
+    assert gate["terminal_runs"] == gate["qualified_runs"] == 4
+    assert gate["evaluator_reached_runs"] == 3
+    assert gate["official_evaluator_runs"] == 3
+    assert gate["budget_terminal_runs"] == 1
+    assert gate["budget_terminal_run_ids"] == ["run_415695539ad24658"]
+    assert gate["task_successes"] == 1
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+    assert gate["immutable"] is True
+    assert gate["retroactively_recomputed"] is False
+
+    runs = {run["run_id"]: run for run in payload["runs"]}
+    assert set(runs) == {
+        "run_d5155046063644ad",
+        "run_48cfb695d0be4c7d",
+        "run_4896f998af9644b2",
+        "run_415695539ad24658",
+    }
+    assert runs["run_4896f998af9644b2"]["scope_compliant_success"] is True
+    pyfakefs = runs["run_415695539ad24658"]
+    assert pyfakefs["evaluation_status"] == "not_run"
+    assert pyfakefs["budget_pressure"]["binding_dimension"] == "model_calls"
+    assert pyfakefs["budget_pressure"]["binding_reason"] == (
+        "model_call_budget_exhausted"
+    )
+    assert pyfakefs["usage"]["model_calls"] == 50
+    assert pyfakefs["usage"]["total_tokens"] == 812_840
+
+    qualifications = {
+        item["run_id"]: item for item in payload["qualifications"]
+    }
+    assert set(qualifications) == set(runs)
+    assert [
+        qualifications[run_id]["total_checks"]
+        for run_id in (
+            "run_d5155046063644ad",
+            "run_48cfb695d0be4c7d",
+            "run_4896f998af9644b2",
+            "run_415695539ad24658",
+        )
+    ] == [27, 27, 27, 26]
+    assert all(item["qualified"] for item in qualifications.values())
+    assert all(
+        item["passed_checks"] == item["total_checks"]
+        for item in qualifications.values()
+    )
+    assert all(
+        item["memory_candidate_eligible"] is False
+        for item in qualifications.values()
+    )
+
+    analysis = payload["analysis"]
+    assert analysis["analysis_ready"] is False
+    assert analysis["ordinary_metrics_empty"] is True
+    assert analysis["diagnostic_scrr"]["estimate"] == 0.25
+    claims = payload["claims_boundary"]
+    assert claims["readiness_gate_passed"] is False
+    assert claims["remaining_binding_dimension"] == "model_calls"
+    assert claims["no_memory_performance_baseline_established"] is False
+    assert claims["comparison_denominator_eligible"] is False
+    assert claims["memory_admission_unlocked"] is False
+    assert claims["core_campaign_unlocked"] is False
+    assert payload["next_gate"] == {
+        "automatic_rerun_authorized": False,
+        "automatic_budget_increase_authorized": False,
+        "prompt_tool_or_context_tuning_authorized": False,
+        "baseline_freeze_authorized": False,
+        "memory_admission_authorized": False,
+        "required_next_action": (
+            "review the remaining pyfakefs model-call completion confound "
+            "without tuning to hidden outcomes"
+        ),
+    }
+    assert payload["portable_artifacts"] == []
+
+
+def test_d077_budget_only_readiness_report_matches_raw_artifacts_when_present(
+) -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "generic-baseline-readiness-v2v5-20260802-r2.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    artifacts = payload["raw_local_artifacts"]
+
+    assert len(artifacts) == 20
+    assert len({artifact["role"] for artifact in artifacts}) == len(artifacts)
+    assert len({artifact["path"] for artifact in artifacts}) == len(artifacts)
+    assert all(artifact["path"].startswith(".patchloop/") for artifact in artifacts)
+
+    result_artifact = next(
+        artifact for artifact in artifacts if artifact["role"] == "experiment-result"
+    )
+    if not Path(result_artifact["path"]).exists():
+        return
+
+    for artifact in artifacts:
+        assert Path(artifact["path"]).exists()
+        _assert_artifact_identity(artifact)
+
+    raw_result = json.loads(
+        Path(result_artifact["path"]).read_text(encoding="utf-8")
+    )
+    assert raw_result["execution_hash"] == payload["execution_hash"]
+    assert raw_result["suite_hash"] == payload["suite_hash"]
+    assert raw_result["schedule_hash"] == payload["schedule_hash"]
+    assert raw_result["actual_model_cost_usd"] == pytest.approx(
+        payload["budget"]["actual_campaign_usage"]["model_cost_usd"]
+    )
+    for key, value in raw_result["completion_gate"].items():
+        assert payload["original_completion_gate"][key] == value
+
+    evidence_runs = {run["run_id"]: run for run in payload["runs"]}
+    for row in raw_result["runs"]:
+        run = evidence_runs[row["run_id"]]
+        result = row["result"]
+        assert run["task_id"] == row["task_id"]
+        for key in (
+            "outcome_kind",
+            "official",
+            "evaluation_status",
+            "scope_compliant_success",
+        ):
+            assert run[key] == result[key]
+        for key in (
+            "input_tokens",
+            "cached_input_tokens",
+            "output_tokens",
+            "reasoning_output_tokens",
+            "model_calls",
+            "tool_calls",
+            "wall_clock_ms",
+            "model_cost_usd",
+        ):
+            assert run["usage"][key] == result["usage"][key]
+        assert run["usage"]["total_tokens"] == (
+            result["usage"]["input_tokens"] + result["usage"]["output_tokens"]
+        )
+
+    evidence_qualifications = {
+        item["run_id"]: item for item in payload["qualifications"]
+    }
+    for run_id, qualification in evidence_qualifications.items():
+        raw_qualification = load_trace_qualification(run_id)
+        assert raw_qualification["qualification_hash"] == (
+            qualification["qualification_hash"]
+        )
+        assert raw_qualification["source_evidence_hash"] == (
+            qualification["source_evidence_hash"]
+        )
+        assert calculate_source_evidence_hash(run_id) == (
+            qualification["source_evidence_hash"]
+        )
+        assert raw_qualification["qualified"] == qualification["qualified"]
+        assert len(raw_qualification["checks"]) == qualification["total_checks"]
+        assert sum(check["passed"] for check in raw_qualification["checks"]) == (
+            qualification["passed_checks"]
+        )
+
+    report_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["role"] == "post-run-analysis-report"
+    )
+    report = json.loads(Path(report_artifact["path"]).read_text(encoding="utf-8"))
+    assert report["analysis_ready"] is False
+    assert report["metrics"] == {}
+    assert report["diagnostic_metrics"]["no_memory"]["scrr"]["estimate"] == 0.25
+
+
+def test_d077_budget_only_readiness_report_excludes_private_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "generic-baseline-readiness-v2v5-20260802-r2.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested for child in value.values() for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested for child in value for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    for marker in (
+        "OPENAI_API_KEY",
+        "Bearer ",
+        "sk-",
+        '"request_body"',
+        '"response_id"',
+        '"private_spec_hash"',
+    ):
+        assert marker not in checked_text
+
+    task_paths = (
+        "tasks/dev-train/hf-hub-xet-endpoint-propagation",
+        "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes",
+        "tasks/dev-validation/moto-query-scanned-count",
+        "tasks/dev-train/pyfakefs-makedirs-parent-traversal",
+    )
+    leaked: list[str] = []
+    for task_path in task_paths:
+        package = load_task_package(task_path)
+        private_tokens = _private_leak_tokens(package, api_key=None)
+        leaked.extend(token for token in private_tokens if token in checked_text)
+    assert sorted(set(leaked)) == []

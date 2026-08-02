@@ -12,21 +12,29 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-077 budget-only generic V2/V5 readiness successor source/offline gate
-  complete; clean no-call preflight and explicit live approval pending`이다. 새 exact successor
+- 현재 milestone은 `D-078 failed D-077 budget-only readiness result sealed; no rerun or next
+  budget escalation authorized`이다. 새 exact successor
   `generic-baseline-readiness-v2v5-20260802-r2`는 D-075와 같은 Babel, Moto, pyfakefs, HF Hub
   task와 순서, `no_memory`, `gpt-5.4-mini-2026-03-17` medium/standard/default,
   `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0, output 25,000,
   tool 100과 wall 1,800초를 유지하고 budget만 model call 40→50과 total token
   850,000→1,200,000으로 바꾼다. 2026-08-02T13:11:37Z에 공식 rate를 다시 확인한 conservative
-  reserve는 run당 `$5.5125`, four-row `$22.05`, suite cap `$23`이다. Source config와 offline
-  evidence는 provider 권한이 아니며 현재 execution hash, 비용 승인, run, measured cost와 gate
-  outcome은 없다. Clean no-call preflight와 새 exact hash에 대한 최대 `$23`의 명시적 사용자 승인
-  전에는 provider를 호출하지 않는다. D-077도 calibration-only이고 comparison denominator,
-  memory admission과 core를 열지 않으며, readiness pass 뒤 별도 freeze decision이 필요하다.
-  Focused readiness matrix와 repository-wide 1,095-test 회귀는 통과했고 1,088 passed/7
-  environment-dependent skipped였으며 Ruff, compileall과 `git diff --check`도 통과했다. 이 evidence의
-  provider call과 model cost는 0이고 clean preflight hash나 live outcome을 만들지 않는다.
+  reserve는 run당 `$5.5125`, four-row `$22.05`, suite cap `$23`이다. 승인 execution hash
+  `sha256:de73e622fcaa4cec85191cceb01efdb0d27cc6a5a6b8f05c7cd4844df50763f5`는 정확히 한 번
+  소비됐다. 4/4 terminal·qualified와 error 0에도 official evaluator는 3/4만 도달했다. HF Hub와
+  Babel은 hidden acceptance 실패, Moto는 SCRR이고 pyfakefs `run_415695539ad24658`는 50 model
+  call에서 evaluator 전에 종료됐다. Pyfakefs에는 387,160 token, 16 tool call, 1,100,745ms가
+  남아 있어 binding dimension은 model call뿐이다. 따라서 original gate는 false다. 총 사용량은
+  1,998,084 token, 125 model/219 tool call, 계산 비용 `$2.1782655`다. D-077은
+  calibration-only이고 1/4 SCRR는 diagnostic일 뿐 comparison denominator, memory admission과
+  core를 열지 않는다. R2 ID/hash/run/result는 immutable하며 재실행하지 않는다. D-078은 다음
+  budget 증가나 prompt/tool/context tuning을 승인하지 않는다.
+  D-078 seal verification은 focused 11 passed와 repository-wide 1,099 collected,
+  1,092 passed/7 environment-dependent skipped를 기록했고 Ruff, compileall, JSON parse와
+  `git diff --check`를 통과했다. Provider call과 추가 model cost는 0이다.
+  Historical D-077 source-stage focused readiness matrix와 repository-wide 1,095-test 회귀는 통과했고
+  1,088 passed/7 environment-dependent skipped였으며 Ruff, compileall과 `git diff --check`도
+  통과했다. 그 source-stage evidence만의 provider call과 model cost는 0이었다.
   Historical D-075 checked-in exact suite
   `generic-baseline-readiness-v2v5-20260802-r1`은 Babel, Moto, pyfakefs와 HF Hub 네 development
   task를 `no_memory`로 각 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
@@ -44,9 +52,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   call-budget guard에 걸려 evaluator 도달이 2/4였다. 따라서 original readiness gate는 false이고
   2/4 SCRR는 calibration-only diagnostic일 뿐 no-memory baseline이 아니다. 사용량은 1,708,824 token,
   95 model/142 tool call, 계산 비용 `$1.76403675`다. Experiment ID/hash/run/result는 immutable하며
-  재실행하지 않는다. Condition-neutral next candidate는 50/100/1,200,000/1,800초지만 아직 source
-  suite, completion guarantee, approval 또는 frozen comparison budget이 아니다. 새 tuple을 채택하면
-  새 four-row readiness panel과 exact hash/cost 승인이 필요하다. D-069~D-073의
+  재실행하지 않는다. 당시 condition-neutral next candidate 50/100/1,200,000/1,800초는 이후 D-077로
+  정확히 한 번 실행됐지만 completion하지 못했고 frozen comparison budget도 아니다. D-069~D-073의
   V10/V11 및 exact HF Hub sidecar lane은 계속 `retired diagnostic-only`이고 historical artifact와
   consumed-ID guard는 append-only로 보존한다. 기존 21/50/250,000/900 template도 계속
   stale/unvalidated다. Hidden failure는 baseline freeze 전 task-specific tuning trigger가 아니고,

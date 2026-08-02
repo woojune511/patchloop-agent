@@ -254,6 +254,12 @@ def test_d077_generic_readiness_is_an_exact_budget_only_successor(
         "utc_now",
         lambda: datetime(2026, 8, 2, 14, tzinfo=UTC),
     )
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS,
+    )
 
     old_suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_SUITE)
     suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_D077_SUITE)
@@ -285,7 +291,7 @@ def test_d077_generic_readiness_is_an_exact_budget_only_successor(
     assert suite.cost_limit_usd == 23
     assert (
         suite.experiment_id
-        not in eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
+        in eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
     )
     assert {row["code"] for row in preflight["blockers"]} == {
         "LIVE_COST_NOT_APPROVED",
@@ -326,7 +332,22 @@ def test_generic_readiness_rejects_cross_profile_budget_pairing(
         ExperimentSuite.model_validate(payload)
 
 
+@pytest.mark.parametrize(
+    ("suite_path", "experiment_id"),
+    [
+        (
+            GENERIC_BASELINE_READINESS_SUITE,
+            eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
+        ),
+        (
+            GENERIC_BASELINE_READINESS_D077_SUITE,
+            eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID,
+        ),
+    ],
+)
 def test_consumed_generic_baseline_readiness_is_immutable(
+    suite_path: str,
+    experiment_id: str,
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -334,16 +355,17 @@ def test_consumed_generic_baseline_readiness_is_immutable(
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
-        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+        lambda: datetime(2026, 8, 2, 14, tzinfo=UTC),
     )
 
-    preflight = eval_runner.preflight_suite(GENERIC_BASELINE_READINESS_SUITE)
+    preflight = eval_runner.preflight_suite(suite_path)
 
     assert {
-        eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+        eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
+        eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID,
     } == eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
     assert (
-        eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+        experiment_id
         in eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
     )
     assert {row["code"] for row in preflight["blockers"]} == {

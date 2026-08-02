@@ -1,10 +1,10 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-077 budget-only generic V2/V5 readiness successor source/offline gate complete;
-clean no-call preflight pending; no live approval**
+현재 milestone: **D-078 failed D-077 budget-only readiness result sealed; no rerun or next
+budget escalation authorized**
 
-2026-08-02 구현 스냅샷:
+2026-08-03 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ clean no-call preflight pending; no live approval**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-077 budget-only successor offline gate passed | D-075 false gate는 immutable; same four-row V2/V5에서 50 model-call/1.2M token만 변경, 1,095 collected/1,088 passed/7 skipped; preflight/live pending, comparison/memory/core 제외 |
+| Phase 6 evaluation | D-077 live gate failed and D-078 seal complete | 4/4 terminal·qualified, 3/4 evaluator, error 0; pyfakefs model-call confound 1개, comparison/memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -47,8 +47,10 @@ D-077은 이 두 public budget confound에만 condition-neutral headroom을 주�
 `generic-baseline-readiness-v2v5-20260802-r2`를 선택한다. Task/order/model/prompt/tool V2/context V5,
 retry 0, output 25,000, tool 100과 wall 1,800초는 그대로 두고 model call만 50, total token만
 1,200,000으로 바꾼다. 2026-08-02T13:11:37Z 공식 rate 재확인 기준 reserve는 four-row `$22.05`,
-cap은 `$23`이다. 아직 provider call, execution hash, 승인, run, measured cost와 gate outcome은 없다.
-Source/offline evidence 뒤 clean no-call preflight와 exact hash에 대한 별도 승인이 필요하다.
+cap은 `$23`이다. 이후 clean hash가 승인되어 정확히 한 번 실행됐고, 4/4 terminal·qualified와 error
+0에도 evaluator 도달은 3/4라 gate는 false였다. Pyfakefs만 50 model call에서 종료됐고 token/tool/wall은
+bind하지 않았다. D-078은 raw artifact를 바꾸지 않고 이 결과를 seal하며 자동 재실행이나 budget 증가를
+승인하지 않는다.
 
 ## 1. Sequencing rule
 
@@ -174,26 +176,32 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
    `analysis-report-v2`를 유지하고, 4/4 terminal·qualified·official evaluator 및 모든 confound 0을
    요구하되 task success는 요구하지 않는다. Calibration-only와 comparison/memory/core exclusion을
    유지한다.
-6. **다음:** Offline executable gate를 통과한 tracked source/docs를 clean commit으로 만든다. 그 뒤
+6. **완료:** Offline executable gate를 통과한 tracked source/docs를 clean commit으로 만든다. 그 뒤
    `.env` 값을 출력하거나 provider를 호출하지 않는 preflight에서 Docker, pinned image/evaluator,
    SDK와 72시간 이내 pricing을 결속한 새 execution hash를 만든다.
 7. **승인 전 금지:** 2026-08-02T13:11:37Z 공식 rate 기준 run당 `$5.5125`, four-row `$22.05`,
    cap `$23`은 authorization bound다. Exact hash와 최대 `$23`에 대한 명시적 사용자 승인 전에는
    provider call을 수행하지 않는다.
-8. 승인되면 새 suite를 정확히 한 번 실행하고 partial row 재실행 없이 original gate를 판정한다.
-   결과는 다음 append-only decision/evidence seal에서 기록한다.
+8. **완료:** 승인 hash로 새 suite를 정확히 한 번 실행하고 partial row 재실행 없이 original gate를
+   판정했다. D-078 append-only decision/evidence seal이 결과를 기록한다.
 9. Gate pass 뒤에도 comparison tuple/no-memory baseline은 별도 freeze decision 전까지 시작하지 않는다.
    Live hard restart/reclaim은 별도 reliability suite로 남긴다.
 
-### Gate status — source/offline gate passed; clean preflight/live evidence pending
+### Gate status — live gate failed; D-078 append-only seal
 
 - D-075 r1 ID/hash/run/result/false gate와 consumed guard는 immutable하다.
-- D-077은 source authorization도 live authority도 아니며 현재 execution hash와 approval이 없다.
-- Provider call, run ID, measured usage/cost, SCRR와 gate outcome은 아직 존재하지 않는다.
-- Readiness candidate ceiling은 completion guarantee나 frozen comparison budget이 아니다.
+- D-077 approval hash는 정확히 한 번 소비됐고 r2 experiment ID와 네 run은 immutable하다.
+- 4/4 terminal·qualified, 3/4 official evaluator, error 0, budget-terminal 1로 original gate는 false다.
+- HF Hub/Babel은 hidden fail, Moto는 SCRR, pyfakefs는 50 model-call guard로 evaluator 전에 끝났다.
+- 총 1,998,084 token, 125 model/219 tool call과 `$2.1782655`를 사용했다.
+- Readiness candidate ceiling은 completion guarantee나 frozen comparison budget이 아니었고,
+  diagnostic 1/4 SCRR는 baseline 또는 memory-effect evidence가 아니다.
 - Focused readiness matrix와 repository-wide 1,095-test 회귀가 통과했고 1,088 passed/7
   environment-dependent skipped였다. Ruff, compileall과 `git diff --check`도 통과했으며 provider call과
   model cost는 0이다.
+- D-078 seal verification은 focused 11 passed와 repository-wide 1,099 collected,
+  1,092 passed/7 environment-dependent skipped를 기록했다. Ruff, compileall, JSON parse와
+  `git diff --check`도 통과했고 추가 provider call/model cost는 0이다.
 
 ## Historical baseline-readiness gate — D-075 exact generic V2/V5 contract
 

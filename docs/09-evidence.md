@@ -2587,3 +2587,45 @@ A clean no-call preflight must next bind the exact commit, package/image/evaluat
 pricing, randomized schedule and prompt/tool/retry. The resulting hash and maximum `$23` then require separate
 explicit user approval before one live invocation. Comparison, memory admission, no-memory baseline and core
 remain closed throughout this source stage.
+
+## D-078 D-077 live budget-only readiness result seal
+
+The user approved execution hash
+`sha256:de73e622fcaa4cec85191cceb01efdb0d27cc6a5a6b8f05c7cd4844df50763f5` for one D-077
+four-row invocation under the `$23` cap. The source harness commit was
+`4a2596e43398af094f1f17bcb0cb1a7945cb7058`. Recomputed source identities match the persisted plan:
+
+- suite: `sha256:ce1881bf3e4d2012c03e6ff043546d9720a0202131deda658bc5750df581fc0c`
+- schedule: `sha256:44d868a753898029ed7205e438db07660c7542906592f1aa831e48c3ed41a38e`
+- result file: `sha256:22385cf6efd9b54de960cfe5b55c812ba74d3275ac9496f7db16fd0cb727e5fe`
+- journal file: `sha256:91f162be3099661535e0621918e67d32f64c6cf2ccc147040fa386e79796e66e`
+- journal final event: `sha256:0a65f0bd0e20caa4f1cedd41433a63f53c6aa2a965ee256531a0d71777ba4b62`
+- raw plan file: `sha256:473ad3ad2f6b708d0d71fceb335fc6d0588ed3676ef71e44ccd9340c702181ed`
+
+The ten-event campaign journal is contiguous and its hash chain validates. CampaignCompleted binds the result
+hash above. SQLite state, per-run manifest/result, experiment rows, event-derived usage, independent budget
+pressure, qualifications and three evaluator receipts agree byte-semantically.
+
+| Task | Run | Outcome | Evaluator | Binding budget | Tokens | Model/tool calls | Cost |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: |
+| HF Hub | `run_d5155046063644ad` | hidden task failure | official completed | none | 804,527 | 43/96 | `$0.7844715` |
+| Babel | `run_48cfb695d0be4c7d` | hidden task failure | official completed | none | 41,410 | 6/6 | `$0.04153125` |
+| Moto | `run_4896f998af9644b2` | resolved/SCRR | official completed | none | 339,307 | 26/33 | `$0.35209275` |
+| pyfakefs | `run_415695539ad24658` | agent failure | not run | 50 model calls | 812,840 | 50/84 | `$1.00017` |
+
+Qualification passed 27/27, 27/27, 27/27 and 26/26 respectively; every trace integrity and leakage flag is
+true. Total usage is 1,816,830 input + 181,254 output = 1,998,084 token, 125 model and 219 tool calls, with
+calculated cost `$2.1782655`. All 125 provider responses completed and exact requested-input telemetry matched.
+
+The immutable `generic-baseline-readiness-gate-v1` result is false: 4/4 terminal and qualified, 3/4 official
+evaluator, zero infrastructure/qualification/diagnostic errors and one model-call budget terminal. The report
+keeps `analysis_ready=false`, ordinary metrics empty and 1/4 SCRR diagnostic-only. The portable sanitized record
+is `reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r2.json`; raw provider bodies, secrets, private
+task specifications, hidden assertions and reference patches are excluded. D-078 adds the r2 experiment ID to
+the consumed hard-immutable set. It does not rerun the panel, change the original gate, freeze a no-memory
+baseline, admit memory or authorize another budget increase.
+
+D-078 seal verification selected 11 D-077/generic tests and all passed. Repository-wide pytest collected
+1,099 tests: 1,092 passed and seven environment-dependent tests were skipped. Ruff, Python compileall, JSON
+parsing and `git diff --check` passed. These checks made no provider request and added zero model cost; they
+validate the immutable guard and sanitized record, not another readiness run or a changed task outcome.

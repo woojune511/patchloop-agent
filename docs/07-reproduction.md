@@ -912,3 +912,31 @@ package/image/SDK drift or stale pricing is an additional blocker and must be re
 The preflight-produced execution hash is ephemeral authority for that exact clean state. Do not write it into the
 source YAML or change tracked files afterward. Present the hash and maximum `$23` to the user for explicit
 approval. Until that separate approval, provider call, run ID, measured cost and readiness outcome remain absent.
+
+## D-078 D-077 live result inspection — do not rerun
+
+The separately approved D-077 execution hash
+`sha256:de73e622fcaa4cec85191cceb01efdb0d27cc6a5a6b8f05c7cd4844df50763f5` was consumed exactly
+once. Do not invoke `patchloop evaluate` with live flags for this experiment ID or hash again. Inspect the
+sanitized record and diagnostic report instead:
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r2.json
+
+Get-Content -Raw -Encoding utf8 `
+  .patchloop/analysis/generic-baseline-readiness-v2v5-20260802-r2/report.json
+
+Get-FileHash -Algorithm SHA256 `
+  .patchloop/experiments/generic-baseline-readiness-v2v5-20260802-r2.json
+```
+
+The raw result SHA-256 must be
+`22385cf6efd9b54de960cfe5b55c812ba74d3275ac9496f7db16fd0cb727e5fe`. The journal must contain ten
+contiguous hash-bound events ending at
+`sha256:0a65f0bd0e20caa4f1cedd41433a63f53c6aa2a965ee256531a0d71777ba4b62`. The observed gate is 4/4
+terminal·qualified, 3/4 official evaluator, zero infrastructure/qualification/diagnostic errors and one
+model-call budget terminal, so it is false. `report.json` must keep `analysis_ready=false`, ordinary metrics
+empty and 1/4 SCRR only under diagnostic metrics. Local `.patchloop` evidence may be absent on a clean clone;
+the checked-in record contains sanitized metadata and hashes, not provider bodies, secrets, hidden assertions or
+private task specifications. D-078 authorizes neither a rerun nor another budget increase.

@@ -872,3 +872,21 @@ silently lowering the design or fabricating missing results.
 - Even a four-row readiness pass would only remove the observed process confound for this exact tuple. It would
   not prove task quality or memory benefit and would not by itself start no-memory, admit memory or open core.
   Hidden failures must not trigger task-specific tuning, and live restart/reclaim remains a separate limitation.
+
+## D-078 seals a second failed readiness panel; model-call completion remains open
+
+- D-077 was executed exactly once and all four rows terminated with qualified traces, but only three reached the
+  official evaluator. Pyfakefs exhausted 50 model calls before submission. Therefore the original readiness gate
+  remains false even though infrastructure, qualification and diagnostic errors were zero.
+- D-077's HF row did not reproduce the prior total-token terminal and reached the evaluator with 395,473 tokens
+  remaining. This stochastic comparison does not establish that the larger token ceiling caused the changed
+  trajectory. Pyfakefs still had 387,160 tokens, 16 tool calls and 1,100,745ms remaining, so the only observed
+  D-077 binding dimension is model-call admission rather than token, tool or wall-clock pressure.
+- HF Hub and Babel hidden failures are task outcomes, not evidence that PatchLoop's agent loop is unimplemented and
+  not permission to tune prompts or tools against hidden behavior. Moto's success likewise does not make the panel
+  a baseline.
+- The descriptive 1/4 SCRR is available-case calibration evidence only. `analysis_ready=false`, ordinary metrics
+  are empty, and comparison, no-memory baseline, failure-memory admission and core remain closed.
+- The `$2.1782655` usage-derived cost is not an invoice claim. D-078 seals the result and consumed ID but does not
+  choose a larger model-call budget, authorize another run or decide whether the four-row all-evaluator gate should
+  be retained unchanged. That requires a separate retrospective decision using public process evidence only.

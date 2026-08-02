@@ -115,7 +115,10 @@ CONSUMED_COVERAGE_REJECTION_PILOT_EXPERIMENT_IDS = frozenset(
     {"dev-no-memory-coverage-rejection-v11-pilot-20260802-r1"}
 )
 CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS = frozenset(
-    {"generic-baseline-readiness-v2v5-20260802-r1"}
+    {
+        "generic-baseline-readiness-v2v5-20260802-r1",
+        "generic-baseline-readiness-v2v5-20260802-r2",
+    }
 )
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
