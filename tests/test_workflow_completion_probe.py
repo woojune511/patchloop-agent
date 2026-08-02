@@ -461,6 +461,9 @@ def test_workflow_completion_gate_fails_closed_on_malformed_projection(
         "extra_inner_field",
         "extra_outer_check",
         "false_result",
+        "boolean_count",
+        "float_count",
+        "string_count",
     ],
 )
 def test_workflow_completion_gate_rejects_projection_schema_drift(
@@ -486,6 +489,12 @@ def test_workflow_completion_gate_rejects_projection_schema_drift(
         gate_checks["different_check"] = dict(projection)
     elif mutation == "false_result":
         projection["passed"] = False
+    elif mutation == "boolean_count":
+        projection["check_count"] = True
+    elif mutation == "float_count":
+        projection["check_count"] = 1.0
+    elif mutation == "string_count":
+        projection["check_count"] = "1"
     else:  # pragma: no cover - parametrization is exhaustive
         raise AssertionError(mutation)
 

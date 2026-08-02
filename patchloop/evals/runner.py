@@ -3530,6 +3530,7 @@ def _completion_gate(
             and projection.get("schema_version")
             == QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA
             and projection.get("check_id") == check_id
+            and type(projection.get("check_count")) is int
             and projection.get("check_count") == 1
             and projection.get("passed") is True
         )
