@@ -1451,9 +1451,13 @@ class ToolGateway:
         )
         remaining_model_calls = (
             manifest.budget.max_model_calls - model_calls_used
+            if manifest.budget.max_model_calls is not None
+            else None
         )
         remaining_tool_calls = (
             manifest.budget.max_tool_calls - tool_calls_used
+            if manifest.budget.max_tool_calls is not None
+            else None
         )
         calculated_tail_policy = None
         if self.context_policy_version in _TOKEN_TAIL_CONTEXT_POLICIES:
@@ -1473,10 +1477,15 @@ class ToolGateway:
             )
         else:
             block_reasons = []
-            if remaining_tool_calls <= reserve["tool_calls"]:
+            if (
+                remaining_tool_calls is not None
+                and remaining_tool_calls <= reserve["tool_calls"]
+            ):
                 block_reasons.append("tool_tail_reserved")
-            if remaining_model_calls <= (
-                reserve["model_calls"] + reserve["feedback_model_calls"]
+            if (
+                remaining_model_calls is not None
+                and remaining_model_calls
+                <= reserve["model_calls"] + reserve["feedback_model_calls"]
             ):
                 block_reasons.append("model_tail_reserved")
         epoch = mutation_epoch(events)

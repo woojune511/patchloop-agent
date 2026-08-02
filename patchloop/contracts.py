@@ -36,6 +36,7 @@ class MemoryCondition(StrEnum):
 class ExperimentPurpose(StrEnum):
     OFFLINE_SMOKE = "offline-smoke"
     GENERIC_BASELINE_READINESS = "generic-baseline-readiness"
+    WORKFLOW_COMPLETION_PROBE = "workflow-completion-probe"
     DEVELOPMENT_VALIDATION_LIVE_PILOT = "development-validation-live-pilot"
     DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT = (
         "development-validation-model-candidate-pilot"
@@ -899,8 +900,8 @@ class DatasetManifest(StrictModel):
 
 
 class Budget(StrictModel):
-    max_model_calls: int = Field(default=20, ge=1)
-    max_tool_calls: int = Field(default=50, ge=1)
+    max_model_calls: int | None = Field(default=20, ge=1)
+    max_tool_calls: int | None = Field(default=50, ge=1)
     max_total_tokens: int = Field(default=80_000, ge=1)
     wall_clock_timeout_seconds: int = Field(default=900, ge=1)
 
@@ -1229,19 +1230,60 @@ class RunManifest(StrictModel):
             and self.experiment.purpose
             == ExperimentPurpose.GENERIC_BASELINE_READINESS
         )
-        if generic_baseline_readiness and not (
+        workflow_completion_probe = bool(
+            self.experiment is not None
+            and self.experiment.purpose
+            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        )
+        v2v5_live_contract = (
             self.tool_schema_version == "v2"
             and self.context_policy_version == "phase-evidence-v5"
             and self.model.provider == "openai"
+            and self.model.reasoning_effort == "medium"
+            and self.model.reasoning_mode == "standard"
+            and self.model.service_tier == "default"
             and self.model.transport_max_retries == 0
             and self.memory.condition == MemoryCondition.NO_MEMORY
             and self.fault.type == "none"
             and self.public_review_contract is None
-        ):
+        )
+        if generic_baseline_readiness and not v2v5_live_contract:
             raise ValueError(
                 "generic baseline readiness requires OpenAI, the exact v2/v5 "
                 "runtime, transport_max_retries=0, no_memory, no fault, and no "
                 "public review sidecar"
+            )
+        if workflow_completion_probe and not v2v5_live_contract:
+            raise ValueError(
+                "workflow completion probe requires OpenAI, the exact v2/v5 "
+                "runtime, transport_max_retries=0, no_memory, no fault, and no "
+                "public review sidecar"
+            )
+        count_limits_disabled = bool(
+            self.budget.max_model_calls is None
+            or self.budget.max_tool_calls is None
+        )
+        if workflow_completion_probe and not (
+            self.budget.max_model_calls is None
+            and self.budget.max_tool_calls is None
+            and self.budget.max_total_tokens == 3_000_000
+            and self.budget.wall_clock_timeout_seconds == 7_200
+            and self.experiment is not None
+            and self.experiment.experiment_id
+            == "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
+            and self.task_id == "pyfakefs-makedirs-parent-traversal"
+            and self.model.model_id == "gpt-5.4-mini-2026-03-17"
+            and self.model.max_output_tokens == 25_000
+        ):
+            raise ValueError(
+                "workflow completion probe requires the exact pyfakefs identity, "
+                "dated mini model, disabled call limits, 3M token ceiling, and "
+                "7200-second wall ceiling"
+            )
+        if count_limits_disabled and not workflow_completion_probe:
+            raise ValueError(
+                "disabled model/tool call limits are reserved for the exact "
+                "workflow completion probe purpose"
             )
         return self
 

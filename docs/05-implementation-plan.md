@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-078 failed D-077 budget-only readiness result sealed; no rerun or next
-budget escalation authorized**
+현재 milestone: **D-079 bounded pyfakefs workflow-completion probe source/offline contract;
+clean no-call preflight and separate live approval pending**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ budget escalation authorized**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-077 live gate failed and D-078 seal complete | 4/4 terminal·qualified, 3/4 evaluator, error 0; pyfakefs model-call confound 1개, comparison/memory/core 제외 |
+| Phase 6 evaluation | D-079 workflow-completion probe source/offline contract | pyfakefs 1 row, model/tool call observability-only, 3M token/7,200초/$14 cap; provider/hash/approval/run/result 없음, comparison/memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -51,6 +51,14 @@ cap은 `$23`이다. 이후 clean hash가 승인되어 정확히 한 번 실행�
 0에도 evaluator 도달은 3/4라 gate는 false였다. Pyfakefs만 50 model call에서 종료됐고 token/tool/wall은
 bind하지 않았다. D-078은 raw artifact를 바꾸지 않고 이 결과를 seal하며 자동 재실행이나 budget 증가를
 승인하지 않는다.
+
+D-079는 D-078의 hidden outcome을 고치거나 four-row gate를 재실행하지 않는다. Public trace에서 남은
+model-call admission confound만 분리하기 위해 pyfakefs 한 task를
+`pyfakefs-workflow-completion-probe-v2v5-20260803-r1`로 선택한다. Model/tool call budget은 `null`로
+두고 관찰만 하되 3,000,000 total token, 7,200초 wall, output 25,000과 기존 exact-request, loop,
+sandbox/evaluator/cost guard를 유지한다. `$13.6125` reserve와 `$14` cap은 authorization bound일 뿐
+현재 측정 비용이 아니다. 이 probe는 calibration-only이며 gate가 통과해도 comparison budget을 동결하거나
+no-memory baseline, memory admission 또는 core를 열지 않는다.
 
 ## 1. Sequencing rule
 
@@ -156,7 +164,55 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current baseline-readiness gate — D-077 budget-only generic V2/V5 successor
+## Current workflow-completion gate — D-079 bounded pyfakefs probe
+
+목표: D-078의 pyfakefs trace에서 유일하게 남은 model-call admission confound를 hidden correctness와
+분리해 측정한다. Four-row readiness를 다시 돌리거나 hidden 결과에 맞춰 prompt/tool/context를 tuning하지
+않고, exact 한 row에서 call-count censorship 없이 기존 workflow가 official evaluator까지 완료되는지를
+관찰한다.
+
+### Ordered work items
+
+1. **고정:** purpose `workflow-completion-probe`, experiment ID
+   `pyfakefs-workflow-completion-probe-v2v5-20260803-r1`, exact task
+   `tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml`, `no_memory`, repetition 1을 사용한다.
+2. **고정:** model/reasoning/tier, `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK retry 0,
+   output 25,000, sidecar absent와 fault none을 유지한다.
+3. **고정:** model/tool call limits는 `null`이고 `model-tool-observability-only-v1` 아래 사용량만 기록한다.
+   Total token 3,000,000, wall 7,200초, exact-request token admission, loop, phase/idempotency,
+   constrained-tool, Docker/network/evaluator와 cost guard는 계속 fail closed한다.
+4. **완료:** `workflow-completion-runtime-contract-v1`과 trace evidence를 execution hash,
+   manifest, runner start/resume 및 qualification에서 독립 결속하고, call-limit drift나 retained-guard
+   완화를 거부한다.
+5. **완료:** `workflow-completion-probe-gate-v1`은 1/1 exact identity, terminal, qualified,
+   official evaluator와 zero infrastructure/qualification/diagnostic error, retained-guard integrity 및
+   disabled-call-guard contract를 요구한다. Hidden acceptance와 SCRR는 gate predicate가 아니다.
+6. **완료:** Focused와 repository-wide offline regression은 1,182 collected, 1,175 passed/7
+   environment-dependent skipped, Ruff, compileall과 `git diff --check`를 통과했다. Tracked source/docs를
+   clean commit으로 만드는 단계이며 provider call, execution hash, 사용자 승인, run/result, measured
+   usage/cost 또는 gate outcome은 아직 없다.
+7. **승인 전 금지:** Clean no-call preflight에서 task/package/image/evaluator, SDK, fresh official pricing,
+   exact prompt/tool/runtime와 randomized schedule을 결속한다. `$13.6125` reserve와 `$14` cap은
+   authorization bound이며, 생성된 exact hash와 최대 `$14`에 대한 별도 명시적 승인 전에는 provider를
+   호출하지 않는다.
+8. **승인 후 한 번:** Exact 한 row를 한 번 실행한다. Pass는 call-count censorship 없이 evaluator에
+   도달했다는 뜻이고 correctness, memory effect 또는 fair comparison budget을 뜻하지 않는다. Failure도
+   자동 재실행이나 task-specific tuning을 승인하지 않는다.
+9. Live 결과가 생기면 original artifact를 바꾸지 않고 별도 D-080 append-only seal로 기록한다.
+
+### Gate status — source/offline stage; live evidence absent
+
+- D-079는 calibration-only이며 `analysis_ready=false`, comparison denominator, no-memory baseline,
+  memory admission과 core는 닫혀 있다.
+- D-078의 r2 suite/hash/four runs/result/false gate와 consumed-ID guard는 immutable하다.
+- Source config나 offline test pass는 provider capability, execution authority, measured completion 또는
+  SCRR evidence가 아니다.
+- `LoopDetected` event가 존재한다는 사실만으로 실패하지 않는다. Loop-control integrity가 통과하고
+  retained guard 안에서 terminal/evaluator lifecycle이 완성되는지를 판정한다.
+- Official standard pricing은 2026-08-02T16:35:25Z에 `$0.75/M` input, `$0.075/M` cached input,
+  `$4.50/M` output으로 재확인했다. Offline verification의 provider call과 model cost는 0이다.
+
+## Historical baseline-readiness gate — D-077 budget-only generic V2/V5 successor
 
 목표: D-075에서 실제로 관찰된 HF Hub total-token과 pyfakefs model-call confound에만 동일한 headroom을
 적용하고, 다른 model-facing/evaluator 변수를 고정한 새 four-row panel로 process readiness를 다시

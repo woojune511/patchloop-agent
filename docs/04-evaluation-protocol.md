@@ -1245,3 +1245,39 @@ hash와 최대 `$23`에 대한 별도 명시적 승인이 있어야 campaign을 
 Offline protocol validation은 1,095 collected, 1,088 passed/7 environment-dependent skipped와 Ruff,
 compileall, `git diff --check`로 닫혔다. Provider call과 추가 model cost는 0이며 clean-host preflight와
 live gate는 아직 실행되지 않았다.
+
+### D-079 bounded workflow-completion probe protocol
+
+D-079는 D-078에서 확인한 pyfakefs model-call admission confound만 다루는 one-row calibration이다.
+Four-row readiness를 반복하거나 hidden acceptance를 개선하는 실험이 아니다. Exact task는
+`pyfakefs-makedirs-parent-traversal`, condition은 `no_memory`, repetition은 1이다. Generic V2/V5
+model/prompt/tool/context, SDK retry 0과 output 25,000을 유지한다.
+
+Model/tool call limits는 `null`이며 `model-tool-observability-only-v1` 아래 count와 usage만 추적한다.
+3,000,000 total token, 7,200초 wall, exact-request response reservation, cost authorization, loop controls,
+constrained tools, Docker/network isolation과 evaluator safety는 계속 강제한다. 따라서 이 probe는
+call-count censorship을 제거하지만 무제한 실행은 아니다.
+
+`workflow-completion-probe-gate-v1`은 exact 1/1 terminal·qualified·official evaluator completion,
+infrastructure/qualification/diagnostic error 0, disabled-call-guard contract와 retained-guard integrity를
+요구한다. Hidden pass와 SCRR는 요구하지 않는다. 의미는 다음처럼 분리한다.
+
+```text
+gate pass:
+  call-count admission에 잘리지 않고 retained guard 안에서 evaluator까지 workflow 완료
+
+gate fail:
+  evaluator 전 non-completion, invalid qualification/guard evidence 또는 infrastructure/diagnostic error
+
+task outcome:
+  official hidden acceptance/SCRR는 별도 관찰값이며 gate predicate가 아님
+```
+
+`LoopDetected` 같은 semantic-replay event가 한 번 존재하는 것 자체는 gate failure가 아니다. Loop policy의
+event/CAS가 유효하고 이후 terminal lifecycle을 완료하면 integrity를 통과할 수 있다. 반대로 loop control,
+total-token 또는 wall guard에서 evaluator 전에 종료되면 probe gate는 false다.
+
+Pass/fail 어느 쪽도 자동 재실행, hidden-driven tuning, comparison budget freeze, no-memory baseline,
+failure-memory admission 또는 core campaign을 승인하지 않는다. Source/offline stage에는 provider call,
+execution hash, cost approval, run/result, measured cost와 gate outcome이 없다. Fresh-pricing no-call preflight의
+exact hash와 최대 `$14` 승인을 별도로 받은 뒤에만 한 번 실행하고, 결과는 별도 D-080 seal로 닫는다.

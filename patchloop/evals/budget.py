@@ -339,10 +339,10 @@ def calculate_budget_pressure(
     if not isinstance(budget, Mapping) or not isinstance(model, Mapping):
         raise ValueError("manifest budget and model must be mappings")
     limits = {
-        "model_calls": _required_nonnegative_int(
+        "model_calls": _optional_nonnegative_int(
             budget.get("max_model_calls"), label="budget.max_model_calls"
         ),
-        "tool_calls": _required_nonnegative_int(
+        "tool_calls": _optional_nonnegative_int(
             budget.get("max_tool_calls"), label="budget.max_tool_calls"
         ),
         "total_tokens": _required_nonnegative_int(
@@ -354,10 +354,44 @@ def calculate_budget_pressure(
         )
         * 1000,
     }
+    call_limits_disabled = bool(
+        limits["model_calls"] is None or limits["tool_calls"] is None
+    )
+    if call_limits_disabled:
+        try:
+            exact_manifest = RunManifest.model_validate(manifest_payload)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "disabled model/tool call limits require the exact workflow "
+                "completion probe contract"
+            ) from exc
+        if not (
+            exact_manifest.experiment is not None
+            and exact_manifest.experiment.purpose.value
+            == "workflow-completion-probe"
+            and exact_manifest.experiment.experiment_id
+            == "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
+            and limits["model_calls"] is None
+            and limits["tool_calls"] is None
+            and limits["total_tokens"] == 3_000_000
+            and limits["wall_clock_ms"] == 7_200_000
+        ):
+            raise ValueError(
+                "disabled model/tool call limits require the exact workflow "
+                "completion probe contract"
+            )
     max_output_tokens = _required_nonnegative_int(
         model.get("max_output_tokens"),
         label="model.max_output_tokens",
     )
+    if call_limits_disabled and not (
+        model.get("model_id") == "gpt-5.4-mini-2026-03-17"
+        and max_output_tokens == 25_000
+    ):
+        raise ValueError(
+            "workflow completion probe diagnostics require the exact model and "
+            "output allowance"
+        )
     event_payloads = [_mapping(event, label="event") for event in events]
     for event in event_payloads:
         event_run_id = event.get("run_id")
@@ -370,7 +404,11 @@ def calculate_budget_pressure(
 
     usage = _observed_usage(event_payloads, result)
     headroom = {
-        dimension: (limit - int(usage[dimension]) if usage.get(dimension) is not None else None)
+        dimension: (
+            limit - int(usage[dimension])
+            if limit is not None and usage.get(dimension) is not None
+            else None
+        )
         for dimension, limit in limits.items()
     }
 

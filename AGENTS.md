@@ -12,8 +12,26 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-078 failed D-077 budget-only readiness result sealed; no rerun or next
-  budget escalation authorized`이다. 새 exact successor
+- 현재 milestone은 `D-079 bounded pyfakefs workflow-completion probe source/offline contract;
+  clean no-call preflight and separate live approval pending`이다. Exact experiment ID는
+  `pyfakefs-workflow-completion-probe-v2v5-20260803-r1`, purpose는
+  `workflow-completion-probe`다. Frozen pyfakefs development task를 `no_memory`로 정확히 한 번 사용하고
+  `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
+  `phase-evidence-v5`, SDK transport retry 0, output 25,000을 고정한다. Budget은 model/tool call을
+  `null`로 두어 `model-tool-observability-only-v1` 아래 admission guard가 아니라 관찰값으로만 기록하고,
+  total token 3,000,000과 wall 7,200초를 강제한다. Exact-request token, cost, loop, constrained-tool,
+  Docker/network/evaluator guard도 유지한다. Runtime contract는
+  `workflow-completion-runtime-contract-v1`, gate는 `workflow-completion-probe-gate-v1`이다.
+  Conservative authorization reserve는 `$13.6125`, cap은 `$14`이지만 source/offline evidence는 provider
+  call, execution hash, 사용자 비용 승인, run/result, measured usage/cost 또는 gate outcome을 만들지
+  않는다. Clean commit의 no-call preflight와 exact hash·최대 `$14`에 대한 별도 명시적 승인 전에는
+  live 실행하지 않는다. D-079는 calibration-only이며 comparison denominator, no-memory baseline,
+  memory admission과 core를 열지 않는다. Live invocation이 일어나면 결과 seal은 별도 D-080이다.
+  Source/offline gate는 repository-wide 1,182 collected, 1,175 passed/7 environment-dependent skipped,
+  Ruff, compileall과 `git diff --check`를 통과했다. 2026-08-02T16:35:25Z 공식 standard pricing도
+  `$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output으로 재확인했으며 provider call/model cost는 0이다.
+  Historical D-078 milestone은 `failed D-077 budget-only readiness result sealed; no automatic rerun or
+  hidden-driven tuning authorized`다. Exact predecessor
   `generic-baseline-readiness-v2v5-20260802-r2`는 D-075와 같은 Babel, Moto, pyfakefs, HF Hub
   task와 순서, `no_memory`, `gpt-5.4-mini-2026-03-17` medium/standard/default,
   `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0, output 25,000,

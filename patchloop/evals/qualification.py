@@ -121,6 +121,18 @@ _GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=3_000_000,
+    wall_clock_timeout_seconds=7_200,
+)
+_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID = (
+    "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
+)
+_WORKFLOW_COMPLETION_CALL_GUARD_POLICY = (
+    "model-tool-observability-only-v1"
+)
 _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     "generic-baseline-readiness-v2v5-20260802-r1": (
         _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
@@ -145,6 +157,7 @@ _HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS = frozenset(
 )
 _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
 _COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
+_OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v3"
 _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
     {
         "model_call_budget_exhausted",
@@ -154,6 +167,7 @@ _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
 )
 _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.GENERIC_BASELINE_READINESS,
+    ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
     ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
@@ -176,12 +190,24 @@ def _generic_baseline_readiness_budget_matches(
     return expected is not None and budget == expected
 
 
+def _workflow_completion_probe_budget_matches(
+    experiment_id: str,
+    budget: Budget,
+) -> bool:
+    return bool(
+        experiment_id == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+        and budget == _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+    )
+
+
 def _purpose_dataset_roles(purpose: ExperimentPurpose) -> set[DatasetRole]:
     if purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
         return {
             DatasetRole.DEVELOPMENT_VALIDATION,
             DatasetRole.MEMORY_DEVELOPMENT,
         }
+    if purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
+        return {DatasetRole.MEMORY_DEVELOPMENT}
     if purpose in {
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
@@ -521,6 +547,14 @@ def _execution_plan_matches(
             )
             or (
                 parsed_suite.purpose
+                == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+                and _workflow_completion_probe_budget_matches(
+                    parsed_suite.experiment_id,
+                    parsed_suite.budget,
+                )
+            )
+            or (
+                parsed_suite.purpose
                 == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
                 and parsed_suite.budget == _GPT54_MINI_COMPLETION_BUDGET
             )
@@ -611,6 +645,17 @@ def _execution_plan_matches(
             and expected_runtime_contract.get("schema_version")
             == "generic-baseline-runtime-contract-v1"
             and expected_runtime_contract.get("transport_max_retries") == 0
+        )
+        or (
+            manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v5"
+            and manifest.model.transport_max_retries == 0
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
+            == "workflow-completion-runtime-contract-v1"
+            and expected_runtime_contract.get("transport_max_retries") == 0
+            and expected_runtime_contract.get("call_guard_policy")
+            == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
         )
         or (
             manifest.tool_schema_version == "v4"
@@ -1019,14 +1064,27 @@ def _generic_baseline_runtime_contract_evidence(
     )
     details["event_identity_valid"] = event_identity_valid
     details["descriptor_binding_valid"] = descriptor_binding_valid
+    workflow_completion_probe = bool(
+        manifest.experiment is not None
+        and manifest.experiment.purpose
+        == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+    )
     expected = {
-        "schema_version": "generic-baseline-runtime-evidence-v1",
+        "schema_version": (
+            "workflow-completion-runtime-evidence-v1"
+            if workflow_completion_probe
+            else "generic-baseline-runtime-evidence-v1"
+        ),
         "transport_max_retries": 0,
         "system_prompt": SYSTEM_PROMPT_V3,
         "tools": TOOL_SCHEMAS_V2,
         "tool_schema_version": "v2",
         "context_policy_version": "phase-evidence-v5",
     }
+    if workflow_completion_probe:
+        expected["call_guard_policy"] = (
+            _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        )
     try:
         observed = json.loads(content) if content is not None else None
     except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
@@ -1036,7 +1094,10 @@ def _generic_baseline_runtime_contract_evidence(
         and canonical_json(observed) == canonical_json(expected)
         and manifest.experiment is not None
         and manifest.experiment.purpose
-        == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+        }
         and manifest.tool_schema_version == "v2"
         and manifest.context_policy_version == "phase-evidence-v5"
         and manifest.model.transport_max_retries == 0
@@ -4872,20 +4933,32 @@ def _v5_expected_tail_policy(
     )
     remaining_model_calls = (
         manifest.budget.max_model_calls - model_calls_used
+        if manifest.budget.max_model_calls is not None
+        else None
     )
     remaining_tool_calls = (
         manifest.budget.max_tool_calls - tool_calls_used
+        if manifest.budget.max_tool_calls is not None
+        else None
     )
     remaining_after_next = (
         max(0, remaining_model_calls - 1)
-        if projection_stage == "pre_generation"
+        if (
+            projection_stage == "pre_generation"
+            and remaining_model_calls is not None
+        )
         else remaining_model_calls
     )
     reasons = []
-    if remaining_tool_calls <= reserve["tool_calls"]:
+    if (
+        remaining_tool_calls is not None
+        and remaining_tool_calls <= reserve["tool_calls"]
+    ):
         reasons.append("tool_tail_reserved")
-    if remaining_after_next <= (
-        reserve["model_calls"] + reserve["feedback_model_calls"]
+    if (
+        remaining_after_next is not None
+        and remaining_after_next
+        <= reserve["model_calls"] + reserve["feedback_model_calls"]
     ):
         reasons.append("model_tail_reserved")
     if token_blocked:
@@ -5916,9 +5989,13 @@ def _v4_investigation_lifecycle_evidence(
         )
         remaining_model_calls = (
             manifest.budget.max_model_calls - model_calls_used
+            if manifest.budget.max_model_calls is not None
+            else None
         )
         remaining_tool_calls = (
             manifest.budget.max_tool_calls - tool_calls_used
+            if manifest.budget.max_tool_calls is not None
+            else None
         )
         calculated_tail_policy = None
         if manifest.context_policy_version in {
@@ -5941,10 +6018,15 @@ def _v4_investigation_lifecycle_evidence(
             )
         else:
             reason_codes = []
-            if remaining_tool_calls <= reserve["tool_calls"]:
+            if (
+                remaining_tool_calls is not None
+                and remaining_tool_calls <= reserve["tool_calls"]
+            ):
                 reason_codes.append("tool_tail_reserved")
-            if remaining_model_calls <= (
-                reserve["model_calls"]
+            if (
+                remaining_model_calls is not None
+                and remaining_model_calls
+                <= reserve["model_calls"]
                 + reserve["feedback_model_calls"]
             ):
                 reason_codes.append("model_tail_reserved")
@@ -6942,6 +7024,11 @@ def _counter_generation_block_valid(
     reason_code = payload.get("reason_code")
     usage = _budget_usage_before(events, blocked_event.sequence)
     if (
+        manifest.budget.max_model_calls is None
+        or manifest.budget.max_tool_calls is None
+    ):
+        return False
+    if (
         payload.get("schema_version") != _COUNTER_GENERATION_BLOCK_SCHEMA
         or reason_code not in _COUNTER_GENERATION_BLOCK_REASONS
         or blocked_event.actor != "budget-guard"
@@ -7035,6 +7122,102 @@ def _counter_generation_block_valid(
     )
 
 
+def _optional_counter_generation_block_valid(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events,
+    context_event,
+    blocked_event,
+    expected_retry_candidate_hash: str | None,
+) -> bool:
+    """Validate the wall-only block for the exact disabled-call probe."""
+
+    payload = blocked_event.payload
+    usage = _budget_usage_before(events, blocked_event.sequence)
+    experiment = manifest.experiment
+    expected_fields = {
+        "schema_version",
+        "reason_code",
+        "error_code",
+        "generation_started",
+        "request_artifact_id",
+        "request_artifact_path",
+        "request_body_hash",
+        "requested_input_tokens",
+        "remaining_tokens",
+        "max_output_tokens",
+        "input_token_count_calls",
+        "retry_context_present",
+        "retry_candidate_content_hash",
+        "model_calls_used",
+        "max_model_calls",
+        "tool_calls_used",
+        "max_tool_calls",
+        "wall_clock_ms",
+        "wall_clock_timeout_ms",
+        "total_tokens_used",
+        "max_total_tokens",
+        "disabled_budget_dimensions",
+    }
+    integer_fields = {
+        "input_token_count_calls",
+        "model_calls_used",
+        "tool_calls_used",
+        "wall_clock_ms",
+        "wall_clock_timeout_ms",
+        "total_tokens_used",
+        "max_total_tokens",
+    }
+    if (
+        payload.get("schema_version")
+        != _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA
+        or payload.get("reason_code") != "wall_clock_budget_exhausted"
+        or blocked_event.actor != "budget-guard"
+        or usage is None
+        or set(payload) != expected_fields
+        or any(
+            type(payload.get(field)) is not int or payload[field] < 0
+            for field in integer_fields
+        )
+        or experiment is None
+        or experiment.purpose
+        != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        or experiment.experiment_id
+        != _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+        or manifest.budget
+        != _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+    ):
+        return False
+    wall_limit_ms = manifest.budget.wall_clock_timeout_seconds * 1000
+    return bool(
+        _generation_block_common_valid(
+            root=root,
+            manifest=manifest,
+            events=events,
+            context_event=context_event,
+            blocked_event=blocked_event,
+            expected_retry_candidate_hash=expected_retry_candidate_hash,
+        )
+        and payload.get("disabled_budget_dimensions")
+        == ["model_calls", "tool_calls"]
+        and payload.get("max_model_calls") is None
+        and payload.get("max_tool_calls") is None
+        and payload.get("requested_input_tokens") is None
+        and payload.get("remaining_tokens") is None
+        and payload.get("input_token_count_calls") == 0
+        and payload.get("model_calls_used") == usage["model_calls"]
+        and payload.get("tool_calls_used") == usage["tool_calls"]
+        and payload.get("wall_clock_ms") == usage["wall_clock_ms"]
+        and usage["wall_clock_ms"] >= wall_limit_ms
+        and payload.get("wall_clock_timeout_ms") == wall_limit_ms
+        and payload.get("total_tokens_used") == usage["total_tokens"]
+        and payload.get("max_total_tokens")
+        == manifest.budget.max_total_tokens
+        and usage["total_tokens"] <= manifest.budget.max_total_tokens
+    )
+
+
 def _model_generation_block_valid(
     *,
     root: Path,
@@ -7051,6 +7234,18 @@ def _model_generation_block_valid(
         == _COUNTER_GENERATION_BLOCK_SCHEMA
     ):
         return _counter_generation_block_valid(
+            root=root,
+            manifest=manifest,
+            events=events,
+            context_event=context_event,
+            blocked_event=blocked_event,
+            expected_retry_candidate_hash=expected_retry_candidate_hash,
+        )
+    if (
+        blocked_event.payload.get("schema_version")
+        == _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA
+    ):
+        return _optional_counter_generation_block_valid(
             root=root,
             manifest=manifest,
             events=events,
@@ -10169,9 +10364,15 @@ def qualify_run(
     )
     add("task_identity", task_identity)
     generic_runtime_content_hash: str | None = None
+    generic_runtime_ok = False
+    generic_runtime_details: dict[str, Any] = {}
     if (
         experiment is not None
-        and experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and experiment.purpose
+        in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+        }
     ):
         (
             generic_runtime_ok,
@@ -10188,6 +10389,114 @@ def qualify_run(
             "generic_runtime_contract",
             generic_runtime_ok,
             **generic_runtime_details,
+        )
+    if (
+        experiment is not None
+        and experiment.purpose
+        == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+    ):
+        forbidden_generation_blocks = [
+            event.sequence
+            for event in events
+            if event.type == EventType.MODEL_GENERATION_BLOCKED
+            and event.payload.get("reason_code")
+            in {
+                "model_call_budget_exhausted",
+                "tool_call_budget_exhausted",
+            }
+        ]
+        forbidden_tail_blocks = [
+            event.sequence
+            for event in events
+            if event.type == EventType.TOOL_ADMISSION_BLOCKED
+            and any(
+                reason
+                in {
+                    "model_tail_reserved",
+                    "tool_tail_reserved",
+                }
+                for reason in event.payload.get("reason_codes", [])
+            )
+        ]
+        context_tail_failures = [
+            event.sequence
+            for event in events
+            if event.type == EventType.CONTEXT_BUILT
+            and (
+                not isinstance(
+                    event.payload.get("investigation_tail_block_reasons"),
+                    list,
+                )
+                or any(
+                    reason in {"model_tail_reserved", "tool_tail_reserved"}
+                    for reason in event.payload.get(
+                        "investigation_tail_block_reasons",
+                        [],
+                    )
+                )
+            )
+        ]
+        admission_tail_failures = []
+        for event in events:
+            if event.type != EventType.TOOL_ADMISSION_BLOCKED:
+                continue
+            error_details = event.payload.get("error_details")
+            tail_policy = (
+                error_details.get("tail_policy")
+                if isinstance(error_details, dict)
+                else None
+            )
+            remaining_budget = (
+                tail_policy.get("remaining_budget")
+                if isinstance(tail_policy, dict)
+                else None
+            )
+            if (
+                event.payload.get("max_model_calls") is not None
+                or event.payload.get("max_tool_calls") is not None
+                or not isinstance(error_details, dict)
+                or error_details.get("remaining_model_calls") is not None
+                or error_details.get("remaining_tool_calls") is not None
+                or (
+                    isinstance(remaining_budget, dict)
+                    and (
+                        remaining_budget.get("model_calls") is not None
+                        or remaining_budget.get("model_calls_after_next_generation")
+                        is not None
+                        or remaining_budget.get("tool_calls") is not None
+                    )
+                )
+            ):
+                admission_tail_failures.append(event.sequence)
+        call_guard_contract_ok = bool(
+            experiment.experiment_id
+            == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+            and manifest.budget
+            == _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+            and manifest.budget.max_model_calls is None
+            and manifest.budget.max_tool_calls is None
+            and generic_runtime_ok
+            and any(
+                event.type == EventType.CONTEXT_BUILT for event in events
+            )
+            and not forbidden_generation_blocks
+            and not forbidden_tail_blocks
+            and not context_tail_failures
+            and not admission_tail_failures
+        )
+        add(
+            "disabled_call_guard_contract",
+            call_guard_contract_ok,
+            policy_version=_WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
+            model_call_limit=manifest.budget.max_model_calls,
+            tool_call_limit=manifest.budget.max_tool_calls,
+            forbidden_generation_block_sequences=(
+                forbidden_generation_blocks
+            ),
+            forbidden_tail_block_sequences=forbidden_tail_blocks,
+            runtime_contract_valid=generic_runtime_ok,
+            context_tail_failure_sequences=context_tail_failures,
+            admission_tail_failure_sequences=admission_tail_failures,
         )
     corrective_runtime_content_hash: str | None = None
     if manifest.tool_schema_version in {"v4", "v5", "v6"}:
@@ -10714,6 +11023,15 @@ def qualify_run(
             )
             or (
                 manifest.experiment.purpose
+                == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+                and _workflow_completion_probe_budget_matches(
+                    manifest.experiment.experiment_id,
+                    manifest.budget,
+                )
+                and manifest.model.transport_max_retries == 0
+            )
+            or (
+                manifest.experiment.purpose
                 == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
                 and manifest.experiment.experiment_id
                 not in (
@@ -10909,6 +11227,7 @@ def qualify_run(
         and experiment.purpose
         in {
             ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
@@ -11440,6 +11759,7 @@ def qualify_run(
         in {
             _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA,
             _COUNTER_GENERATION_BLOCK_SCHEMA,
+            _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA,
         }
         for event in generation_blocked_events
     )
@@ -11537,6 +11857,7 @@ def qualify_run(
             experiment.purpose
             in {
                 ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
                 ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
@@ -11577,7 +11898,10 @@ def qualify_run(
             if (
                 experiment is not None
                 and experiment.purpose
-                == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                in {
+                    ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                    ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+                }
             ):
                 request_evidence_ok, request_evidence = (
                     _request_evidence_payload(
@@ -11694,7 +12018,10 @@ def qualify_run(
     counter_usage_required = bool(
         len(generation_blocked_events) == 1
         and generation_blocked_events[0].payload.get("schema_version")
-        == _COUNTER_GENERATION_BLOCK_SCHEMA
+        in {
+            _COUNTER_GENERATION_BLOCK_SCHEMA,
+            _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA,
+        }
     )
     counter_usage = (
         _budget_usage_before(
@@ -11734,6 +12061,7 @@ def qualify_run(
 
     pilot_purposes = {
         ExperimentPurpose.GENERIC_BASELINE_READINESS,
+        ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
     }
@@ -11899,10 +12227,16 @@ def qualify_run(
         trace_check_ids.add("worker_claim_provenance")
     if (
         experiment is not None
-        and experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and experiment.purpose
+        in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+        }
     ):
         trace_check_ids.add("generic_runtime_contract")
         trace_check_ids.add("pricing_start_freshness")
+        if experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
+            trace_check_ids.add("disabled_call_guard_contract")
     if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
         trace_check_ids.add("self_validation_lifecycle")
     if manifest.tool_schema_version == "v4":
@@ -12027,7 +12361,11 @@ def qualify_run(
     }
     if (
         experiment is not None
-        and experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and experiment.purpose
+        in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+        }
     ):
         payload.update(
             {
@@ -12055,7 +12393,10 @@ def qualify_run(
                     if (
                         experiment is not None
                         and experiment.purpose
-                        == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                        in {
+                            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+                        }
                     )
                     else _runtime_contract_content_hash(events)
                 ),

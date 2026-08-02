@@ -890,3 +890,23 @@ silently lowering the design or fabricating missing results.
 - The `$2.1782655` usage-derived cost is not an invoice claim. D-078 seals the result and consumed ID but does not
   choose a larger model-call budget, authorize another run or decide whether the four-row all-evaluator gate should
   be retained unchanged. That requires a separate retrospective decision using public process evidence only.
+
+## D-079 is a single workflow-completion probe, not a new baseline budget
+
+- D-079 observes one pyfakefs trajectory. Even if it reaches the evaluator, one stochastic row does not estimate
+  generic completion probability, justify a population budget or show that 50 model calls was globally too small.
+- Model/tool call limits are intentionally `null` only for this calibration identity. That makes their counters
+  observability-only; it does not remove the 3,000,000-token, 7,200-second, exact-request, cost, loop, sandbox,
+  constrained-tool or evaluator boundaries. Those retained guards can still end the run before evaluation.
+- Removing call-count admission does not guarantee completion. Semantic replay, repeated timeout, submission
+  rejection, total-token, wall, provider or infrastructure failure can remain terminal outcomes and must be
+  reported rather than tuned away.
+- The `$13.6125` reserve and `$14` cap are authorization bounds derived for the checked-in ceiling, not observed
+  spend, an invoice, a completion guarantee or proof of free-tier eligibility. Fresh pricing still has to pass the
+  clean no-call preflight.
+- The probe is calibration-only and deliberately uses a budget/call policy that is not the frozen four-condition
+  comparison budget. Its trace cannot enter the no-memory denominator or failure-memory index, and it cannot open
+  core. Hidden success or failure must not trigger task-specific prompt/tool/context changes.
+- At the source/offline stage there is no provider request, execution hash authority, approved spend, run/result,
+  measured usage/cost or gate outcome. A later invocation, if explicitly approved, must be sealed separately and
+  must not rewrite D-078 or imply automatic reruns.

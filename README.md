@@ -2,6 +2,25 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-03 D-079는 D-078에서 남은 model-call admission confound를 hidden correctness와 분리해
+측정하는 단일 pyfakefs workflow-completion probe를 source/offline 계약으로 고정한다. Exact ID는
+`pyfakefs-workflow-completion-probe-v2v5-20260803-r1`, purpose는
+`workflow-completion-probe`이며, `gpt-5.4-mini-2026-03-17` medium/standard/default,
+`SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0, output 25,000을
+유지한다. Model/tool call limit은 `null`로 두어 `model-tool-observability-only-v1` 아래 계측만 하고,
+3,000,000 total token, 7,200초 wall, exact-request token admission, loop/sandbox/evaluator/cost guard는
+계속 강제한다. Runtime과 gate는 각각 `workflow-completion-runtime-contract-v1`과
+`workflow-completion-probe-gate-v1`이다. Conservative authorization reserve는 `$13.6125`, cap은
+`$14`이지만 현재 source/offline 단계에는 provider call, execution hash, 사용자 비용 승인, run/result,
+measured usage/cost와 gate outcome이 모두 없다. Clean no-call preflight가 만든 exact hash와 최대 `$14`에
+대한 별도 승인이 있어야 한 번 실행할 수 있다. D-079는 calibration-only이며 baseline, memory admission,
+comparison과 core에서 제외한다. D-078의 suite/hash/run/result와 false gate는 immutable하다.
+
+Source/offline 검증은 repository-wide 1,182 collected, 1,175 passed/7 environment-dependent skipped,
+Ruff, compileall과 `git diff --check`를 통과했다. 2026-08-02T16:35:25Z 공식 standard pricing은
+`$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output으로 재확인했다. 이 검증의 provider call과
+model cost는 0이며 clean no-call preflight와 별도 live 승인은 계속 남아 있다.
+
 2026-08-03 D-078은 승인 hash
 `sha256:de73e622fcaa4cec85191cceb01efdb0d27cc6a5a6b8f05c7cd4844df50763f5`로
 D-077 budget-only four-row panel을 정확히 한 번 실행한 결과를 append-only로 seal한다. 네 row는

@@ -940,3 +940,43 @@ model-call budget terminal, so it is false. `report.json` must keep `analysis_re
 empty and 1/4 SCRR only under diagnostic metrics. Local `.patchloop` evidence may be absent on a clean clone;
 the checked-in record contains sanitized metadata and hashes, not provider bodies, secrets, hidden assertions or
 private task specifications. D-078 authorizes neither a rerun nor another budget increase.
+
+## D-079 workflow-completion probe source audit and no-call preflight
+
+D-079 source를 먼저 읽고 exact one-row identity와 bounded observability-only policy를 확인한다.
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  experiments/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.yaml
+
+uv run --cache-dir .uv-cache pytest `
+  tests/test_workflow_completion_probe.py `
+  tests/test_experiments.py `
+  tests/test_trace_qualification.py `
+  tests/test_report.py -q
+```
+
+Source에는 exact pyfakefs task 한 개, `no_memory` repetition 1, dated mini medium/standard/default,
+prompt V3, tool V2/context V5, SDK retry 0, output 25,000이 있어야 한다. Model/tool limits는 YAML `null`,
+total token은 3,000,000, wall은 7,200초여야 한다. `null`은 call event와 usage 계측을 없애는 값이 아니라
+`model-tool-observability-only-v1` 아래 call-count admission만 끄는 값이다. Exact-request, token, wall,
+loop, cost, sandbox와 evaluator guard는 유지돼야 한다.
+
+Offline verification과 tracked documentation이 끝난 clean commit에서만 다음 no-call preflight를 실행한다.
+이 명령은 API-key presence를 검사할 수 있지만 provider request를 보내면 안 된다.
+
+```powershell
+uv run --cache-dir .uv-cache --env-file .env patchloop evaluate `
+  --suite experiments/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.yaml `
+  --preflight-only
+```
+
+`--approve-live-cost`나 approved hash를 이 단계에 추가하지 않는다. Preflight는 exact task/package,
+Docker image/evaluator, SDK, clean harness commit, prompt/tool/runtime, schedule과 fresh official pricing을
+결속해야 한다. Expected source reserve는 `$13.6125`, cap은 `$14`이지만 preflight 시점의 공식 가격 freshness를
+다시 검사한다. Dirty source, package/image/SDK drift, stale pricing, runtime/policy mismatch는 blocker다.
+
+Preflight가 만든 exact execution hash와 최대 `$14`를 사용자에게 별도로 제시한다. 명시적 승인 전에는
+live command를 실행하지 않는다. 현재 source/offline 단계에는 provider call, hash authority, user approval,
+run ID/result, measured usage/cost, SCRR 또는 gate outcome이 없다. 승인 뒤 exact experiment를 한 번만
+실행하며, 결과를 재현할 때는 raw artifacts와 이후 D-080 sanitized seal을 읽고 같은 ID를 재실행하지 않는다.

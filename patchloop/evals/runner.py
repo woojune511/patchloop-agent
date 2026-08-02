@@ -225,6 +225,12 @@ GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=3_000_000,
+    wall_clock_timeout_seconds=7_200,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -267,6 +273,17 @@ GENERIC_BASELINE_READINESS_TASKS = [
 GENERIC_BASELINE_READINESS_TASK_IDS = {
     Path(path).parent.name for path in GENERIC_BASELINE_READINESS_TASKS
 }
+WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID = (
+    "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
+)
+WORKFLOW_COMPLETION_PROBE_TASK = (
+    "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml"
+)
+WORKFLOW_COMPLETION_PROBE_TASK_ID = Path(
+    WORKFLOW_COMPLETION_PROBE_TASK
+).parent.name
+WORKFLOW_COMPLETION_PROBE_ESTIMATED_COST_USD = 13.6125
+WORKFLOW_COMPLETION_PROBE_COST_LIMIT_USD = 14.0
 MEMORY_DEVELOPMENT_TASKS = {
     "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
     "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
@@ -319,6 +336,10 @@ COVERAGE_REJECTION_TOOL_SCHEMA_VERSION = "v6"
 COVERAGE_REJECTION_CONTEXT_POLICY_VERSION = "phase-evidence-v11"
 COVERAGE_REJECTION_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v5"
 GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA = "generic-baseline-runtime-contract-v1"
+WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA = (
+    "workflow-completion-runtime-contract-v1"
+)
+WORKFLOW_COMPLETION_CALL_GUARD_POLICY = "model-tool-observability-only-v1"
 PRICING_START_VERIFICATION_SCHEMA = "pricing-start-verification-v1"
 
 HASH_BOUND_CORRECTIVE_PURPOSES = {
@@ -330,6 +351,7 @@ HASH_BOUND_CORRECTIVE_PURPOSES = {
 }
 HASH_BOUND_RUNTIME_PURPOSES = HASH_BOUND_CORRECTIVE_PURPOSES | {
     ExperimentPurpose.GENERIC_BASELINE_READINESS,
+    ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
 }
 
 
@@ -429,6 +451,17 @@ def _experiment_runtime_contract(
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
             "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
             "transport_max_retries": suite.transport_max_retries,
+            "harness_git_commit": harness_git_commit,
+        }
+    if suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
+        return {
+            "schema_version": WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA,
+            "tool_schema_version": "v2",
+            "context_policy_version": "phase-evidence-v5",
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
+            "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
+            "transport_max_retries": suite.transport_max_retries,
+            "call_guard_policy": WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
             "harness_git_commit": harness_git_commit,
         }
     return _corrective_runtime_contract(
@@ -758,12 +791,47 @@ class ExperimentSuite(BaseModel):
                 "baseline readiness purpose"
             )
         if (
-            self.purpose != ExperimentPurpose.GENERIC_BASELINE_READINESS
+            self.experiment_id == WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+            and self.purpose != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        ):
+            raise ValueError(
+                "workflow completion probe experiment id requires the exact "
+                "workflow completion probe purpose"
+            )
+        if (
+            self.purpose
+            not in {
+                ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+            }
             and self.transport_max_retries is not None
         ):
             raise ValueError(
-                "transport_max_retries is frozen only for the exact generic "
-                "baseline readiness profiles"
+                "transport_max_retries is frozen only for exact generic v2/v5 "
+                "live profiles"
+            )
+        count_limits_disabled = bool(
+            self.budget.max_model_calls is None
+            or self.budget.max_tool_calls is None
+        )
+        if (
+            self.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            and not (
+                self.budget.max_model_calls is None
+                and self.budget.max_tool_calls is None
+            )
+        ):
+            raise ValueError(
+                "workflow completion probe requires both model and tool call "
+                "limits to be disabled"
+            )
+        if (
+            count_limits_disabled
+            and self.purpose != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        ):
+            raise ValueError(
+                "disabled model/tool call limits are reserved for the exact "
+                "workflow completion probe"
             )
 
         if self.purpose == ExperimentPurpose.OFFLINE_SMOKE:
@@ -827,6 +895,35 @@ class ExperimentSuite(BaseModel):
                 raise ValueError(
                     "generic baseline readiness requires "
                     f"estimated_cost_usd={estimated_cost:g} for its exact id"
+                )
+        elif self.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
+            if (
+                self.experiment_id != WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+                or [_normalized_task_path(task) for task in self.tasks]
+                != [WORKFLOW_COMPLETION_PROBE_TASK]
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+                or self.transport_max_retries != 0
+                or self.live_cost_approved is not False
+                or self.approved_execution_hash is not None
+                or self.pilot_run_id is not None
+            ):
+                raise ValueError(
+                    "workflow completion probe requires its exact registered id, "
+                    "single pyfakefs task, no_memory, one repetition, "
+                    "transport_max_retries=0, and no embedded approval or pilot"
+                )
+            self._require_live_defaults(
+                cost_limit=WORKFLOW_COMPLETION_PROBE_COST_LIMIT_USD,
+                budget=GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET,
+            )
+            if (
+                self.estimated_cost_usd
+                != WORKFLOW_COMPLETION_PROBE_ESTIMATED_COST_USD
+            ):
+                raise ValueError(
+                    "workflow completion probe requires "
+                    "estimated_cost_usd=13.6125"
                 )
         elif self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
             normalized_tasks = {
@@ -1521,6 +1618,8 @@ def _expected_role_and_split(
             DatasetRole.DEVELOPMENT_VALIDATION,
             DatasetRole.MEMORY_DEVELOPMENT,
         }, expected
+    if purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
+        return {DatasetRole.MEMORY_DEVELOPMENT}, DatasetRole.MEMORY_DEVELOPMENT
     if purpose in {
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
@@ -1704,6 +1803,15 @@ def preflight_suite(
             blockers,
             "GENERIC_BASELINE_READINESS_TASK_SET_MISMATCH",
             "generic baseline readiness must use exactly the frozen four-task panel",
+        )
+    if (
+        suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        and loaded_ids != {WORKFLOW_COMPLETION_PROBE_TASK_ID}
+    ):
+        _block(
+            blockers,
+            "WORKFLOW_COMPLETION_PROBE_TASK_MISMATCH",
+            "workflow completion probe must use exactly the frozen pyfakefs task",
         )
     expected_live_pilot_ids = (
         COMPLETION_PANEL_TASK_IDS
@@ -2148,6 +2256,21 @@ def _assert_manifest_matches_preflight(
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
             "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
             "transport_max_retries": manifest.model.transport_max_retries,
+            "harness_git_commit": manifest.harness_git_commit,
+        }
+    elif (
+        isinstance(expected_runtime_contract, dict)
+        and expected_runtime_contract.get("schema_version")
+        == WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA
+    ):
+        actual_runtime_contract = {
+            "schema_version": WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA,
+            "tool_schema_version": manifest.tool_schema_version,
+            "context_policy_version": manifest.context_policy_version,
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
+            "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
+            "transport_max_retries": manifest.model.transport_max_retries,
+            "call_guard_policy": WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
             "harness_git_commit": manifest.harness_git_commit,
         }
     elif (
@@ -3105,6 +3228,14 @@ def _completion_gate(
         == GENERIC_BASELINE_READINESS_TASKS
         and suite.transport_max_retries == 0
     )
+    workflow_completion_probe = bool(
+        suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        and suite.experiment_id == WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+        and suite.budget == GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+        and [_normalized_task_path(task) for task in suite.tasks]
+        == [WORKFLOW_COMPLETION_PROBE_TASK]
+        and suite.transport_max_retries == 0
+    )
     budget_pilot = bool(
         suite.purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
@@ -3160,6 +3291,7 @@ def _completion_gate(
     if not any(
         (
             generic_baseline_readiness,
+            workflow_completion_probe,
             completion_panel,
             budget_pilot,
             corrective_pilot,
@@ -3195,7 +3327,8 @@ def _completion_gate(
         if generic_baseline_readiness
         else 1
         if (
-            saturation_pilot
+            workflow_completion_probe
+            or saturation_pilot
             or review_evidence_pilot
             or coverage_review_pilot
             or coverage_rejection_pilot
@@ -3205,10 +3338,15 @@ def _completion_gate(
         else 2
     )
     readiness_task_identity_passed = bool(
-        not generic_baseline_readiness
+        not (generic_baseline_readiness or workflow_completion_probe)
         or (
             len(rows) == expected_runs
-            and {row.get("task_id") for row in rows} == GENERIC_BASELINE_READINESS_TASK_IDS
+            and {row.get("task_id") for row in rows}
+            == (
+                GENERIC_BASELINE_READINESS_TASK_IDS
+                if generic_baseline_readiness
+                else {WORKFLOW_COMPLETION_PROBE_TASK_ID}
+            )
         )
     )
     readiness_run_ids = [row.get("run_id") for row in rows]
@@ -3232,7 +3370,7 @@ def _completion_gate(
         )
 
     readiness_run_binding_passed = bool(
-        not generic_baseline_readiness
+        not (generic_baseline_readiness or workflow_completion_probe)
         or (
             len(rows) == expected_runs
             and all(isinstance(run_id, str) and run_id for run_id in readiness_run_ids)
@@ -3247,7 +3385,7 @@ def _completion_gate(
         )
     )
     readiness_schedule_binding_passed = bool(
-        not generic_baseline_readiness
+        not (generic_baseline_readiness or workflow_completion_probe)
         or (
             len(expected_schedule_rows) == expected_runs
             and len(expected_schedule_by_id) == expected_runs
@@ -3279,7 +3417,7 @@ def _completion_gate(
         )
     )
     readiness_execution_binding_passed = bool(
-        not generic_baseline_readiness
+        not (generic_baseline_readiness or workflow_completion_probe)
         or (
             valid_sha256_identity(expected_execution_hash)
             and len(rows) == expected_runs
@@ -3291,7 +3429,7 @@ def _completion_gate(
         )
     )
     readiness_row_binding_passed = bool(
-        not generic_baseline_readiness
+        not (generic_baseline_readiness or workflow_completion_probe)
         or (
             readiness_run_binding_passed
             and readiness_schedule_binding_passed
@@ -3332,6 +3470,56 @@ def _completion_gate(
         (row.get("result") or {}).get("scope_compliant_success") is True
         for row in rows
     )
+
+    def qualification_check_passed(
+        row: dict[str, Any],
+        check_id: str,
+    ) -> bool:
+        qualification = row.get("qualification") or {}
+        checks = qualification.get("checks") or []
+        return any(
+            isinstance(check, dict)
+            and check.get("check_id") == check_id
+            and check.get("passed") is True
+            for check in checks
+        )
+
+    call_guard_contract_passed = bool(
+        not workflow_completion_probe
+        or (
+            len(rows) == expected_runs
+            and all(
+                qualification_check_passed(
+                    row,
+                    "disabled_call_guard_contract",
+                )
+                for row in rows
+            )
+        )
+    )
+    terminal_loop_failure_run_ids = [
+        row["run_id"]
+        for row in rows
+        if isinstance(row.get("run_id"), str)
+        and any(
+            "loop" in str(value).lower()
+            for value in (
+                ((row.get("result") or {}).get("terminal_error") or {}).get(
+                    "type"
+                ),
+                ((row.get("result") or {}).get("terminal_error") or {}).get(
+                    "code"
+                ),
+                (
+                    ((row.get("result") or {}).get("terminal_error") or {}).get(
+                        "details"
+                    )
+                    or {}
+                ).get("reason_code"),
+            )
+            if value is not None
+        )
+    ]
     coverage_lifecycle_observed_runs = sum(
         (
             (((row.get("qualification") or {}).get("trace_features") or {}).get(
@@ -3355,6 +3543,7 @@ def _completion_gate(
         len(rows) == expected_runs
         and readiness_task_identity_passed
         and readiness_row_binding_passed
+        and call_guard_contract_passed
         and terminal_runs == expected_runs
         and qualified_runs == expected_runs
         and evaluator_reached_runs == expected_runs
@@ -3381,9 +3570,14 @@ def _completion_gate(
             )
         )
         and not budget_terminal_run_ids
+        and (
+            not workflow_completion_probe
+            or not terminal_loop_failure_run_ids
+        )
     )
     if (
         generic_baseline_readiness
+        or workflow_completion_probe
         or budget_pilot
         or corrective_pilot
         or saturation_pilot
@@ -3395,6 +3589,8 @@ def _completion_gate(
             "schema_version": (
                 "generic-baseline-readiness-gate-v1"
                 if generic_baseline_readiness
+                else "workflow-completion-probe-gate-v1"
+                if workflow_completion_probe
                 else "v11-coverage-rejection-live-pilot-gate-v1"
                 if coverage_rejection_pilot
                 else "v10-coverage-review-live-pilot-gate-v1"
@@ -3424,7 +3620,25 @@ def _completion_gate(
                     "schedule_binding_passed": (readiness_schedule_binding_passed),
                     "execution_binding_passed": (readiness_execution_binding_passed),
                 }
-                if generic_baseline_readiness
+                if generic_baseline_readiness or workflow_completion_probe
+                else {}
+            ),
+            **(
+                {
+                    "call_guard_policy": (
+                        WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+                    ),
+                    "call_guard_contract_passed": (
+                        call_guard_contract_passed
+                    ),
+                    "terminal_loop_failure_runs": len(
+                        terminal_loop_failure_run_ids
+                    ),
+                    "terminal_loop_failure_run_ids": (
+                        terminal_loop_failure_run_ids
+                    ),
+                }
+                if workflow_completion_probe
                 else {}
             ),
             **(
@@ -3629,6 +3843,7 @@ def evaluate_suite(
     )
     qualification_required = suite.purpose in {
         ExperimentPurpose.GENERIC_BASELINE_READINESS,
+        ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,

@@ -785,16 +785,32 @@ def tail_policy(
         tool_calls_used = sum(
             event.type == EventType.TOOL_CALLED for event in source_events
         )
-        model_remaining = budget.max_model_calls - model_calls_used
-        tool_remaining = budget.max_tool_calls - tool_calls_used
+        model_remaining = (
+            budget.max_model_calls - model_calls_used
+            if budget.max_model_calls is not None
+            else None
+        )
+        tool_remaining = (
+            budget.max_tool_calls - tool_calls_used
+            if budget.max_tool_calls is not None
+            else None
+        )
         model_remaining_after_next_generation = (
             max(0, model_remaining - 1)
-            if projection_stage == "pre_generation"
+            if (
+                projection_stage == "pre_generation"
+                and model_remaining is not None
+            )
             else model_remaining
         )
-        tool_blocked = tool_remaining <= reserve["tool_calls"]
-        model_blocked = model_remaining_after_next_generation <= (
-            reserve["model_calls"] + reserve["feedback_model_calls"]
+        tool_blocked = bool(
+            tool_remaining is not None
+            and tool_remaining <= reserve["tool_calls"]
+        )
+        model_blocked = bool(
+            model_remaining_after_next_generation is not None
+            and model_remaining_after_next_generation
+            <= reserve["model_calls"] + reserve["feedback_model_calls"]
         )
         token_projection = _token_tail_projection(
             source_events,

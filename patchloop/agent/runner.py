@@ -97,6 +97,7 @@ _MAX_RECOVERABLE_REVIEW_REJECTIONS = 2
 _EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
 _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
 _COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
+_OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v3"
 _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
     {
         "model_call_budget_exhausted",
@@ -481,9 +482,15 @@ class AgentRunner:
             and manifest.experiment.purpose
             == ExperimentPurpose.GENERIC_BASELINE_READINESS
         )
+        workflow_completion_probe = bool(
+            manifest.experiment is not None
+            and manifest.experiment.purpose
+            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        )
         if not any(
             (
                 generic_baseline_readiness,
+                workflow_completion_probe,
                 corrective,
                 saturation,
                 review_evidence,
@@ -1526,7 +1533,10 @@ class AgentRunner:
                     and len(turn.tool_calls) != 1
                     and not v4_apply_precedes_finish
                 ):
-                    if usage.tool_calls >= manifest.budget.max_tool_calls:
+                    if (
+                        manifest.budget.max_tool_calls is not None
+                        and usage.tool_calls >= manifest.budget.max_tool_calls
+                    ):
                         raise ContractError("tool call budget exhausted")
                     finish_call = finish_calls[0]
                     result, _, should_stop = self._finish_task(
@@ -1568,7 +1578,10 @@ class AgentRunner:
                         )
                     continue
                 for call_index, call in enumerate(turn.tool_calls, 1):
-                    if usage.tool_calls >= manifest.budget.max_tool_calls:
+                    if (
+                        manifest.budget.max_tool_calls is not None
+                        and usage.tool_calls >= manifest.budget.max_tool_calls
+                    ):
                         raise ContractError("tool call budget exhausted")
                     if call.name == "finish_task":
                         if manifest.tool_schema_version not in {
@@ -2494,8 +2507,26 @@ class AgentRunner:
             worktree_diff_hash=summary.patch_hash,
             last_patch_hash=last_patch_hash,
             remaining_budget={
-                "model_calls": manifest.budget.max_model_calls - usage.model_calls,
-                "tool_calls": manifest.budget.max_tool_calls - usage.tool_calls,
+                **(
+                    {
+                        "model_calls": (
+                            manifest.budget.max_model_calls
+                            - usage.model_calls
+                        )
+                    }
+                    if manifest.budget.max_model_calls is not None
+                    else {}
+                ),
+                **(
+                    {
+                        "tool_calls": (
+                            manifest.budget.max_tool_calls
+                            - usage.tool_calls
+                        )
+                    }
+                    if manifest.budget.max_tool_calls is not None
+                    else {}
+                ),
                 "tokens": manifest.budget.max_total_tokens
                 - usage.input_tokens
                 - usage.output_tokens,
@@ -2532,20 +2563,32 @@ class AgentRunner:
         system_prompt: str,
         tool_schemas: list[dict[str, Any]],
     ) -> dict[str, Any] | None:
-        if (
-            manifest.experiment is None
-            or manifest.experiment.purpose
-            != ExperimentPurpose.GENERIC_BASELINE_READINESS
-        ):
+        if manifest.experiment is None or manifest.experiment.purpose not in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+        }:
             return None
-        return {
-            "schema_version": "generic-baseline-runtime-evidence-v1",
+        workflow_completion_probe = bool(
+            manifest.experiment.purpose
+            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        )
+        document = {
+            "schema_version": (
+                "workflow-completion-runtime-evidence-v1"
+                if workflow_completion_probe
+                else "generic-baseline-runtime-evidence-v1"
+            ),
             "transport_max_retries": manifest.model.transport_max_retries,
             "system_prompt": system_prompt,
             "tools": tool_schemas,
             "tool_schema_version": manifest.tool_schema_version,
             "context_policy_version": manifest.context_policy_version,
         }
+        if workflow_completion_probe:
+            document["call_guard_policy"] = (
+                "model-tool-observability-only-v1"
+            )
+        return document
 
     def _validate_generic_baseline_runtime_resume_contract(
         self,
@@ -4136,9 +4179,15 @@ class AgentRunner:
         manifest: RunManifest,
         usage: Usage,
     ) -> str | None:
-        if usage.model_calls >= manifest.budget.max_model_calls:
+        if (
+            manifest.budget.max_model_calls is not None
+            and usage.model_calls >= manifest.budget.max_model_calls
+        ):
             return "model_call_budget_exhausted"
-        if usage.tool_calls >= manifest.budget.max_tool_calls:
+        if (
+            manifest.budget.max_tool_calls is not None
+            and usage.tool_calls >= manifest.budget.max_tool_calls
+        ):
             return "tool_call_budget_exhausted"
         if (
             usage.wall_clock_ms
@@ -4193,9 +4242,17 @@ class AgentRunner:
         if reason_code == "exact_request_budget_exceeded":
             payload["schema_version"] = _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA
         elif reason_code in _COUNTER_GENERATION_BLOCK_REASONS:
+            optional_call_limits = bool(
+                manifest.budget.max_model_calls is None
+                or manifest.budget.max_tool_calls is None
+            )
             payload.update(
                 {
-                    "schema_version": _COUNTER_GENERATION_BLOCK_SCHEMA,
+                    "schema_version": (
+                        _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA
+                        if optional_call_limits
+                        else _COUNTER_GENERATION_BLOCK_SCHEMA
+                    ),
                     "model_calls_used": usage.model_calls,
                     "max_model_calls": manifest.budget.max_model_calls,
                     "tool_calls_used": usage.tool_calls,
@@ -4210,6 +4267,15 @@ class AgentRunner:
                     "max_total_tokens": manifest.budget.max_total_tokens,
                 }
             )
+            if optional_call_limits:
+                payload["disabled_budget_dimensions"] = [
+                    dimension
+                    for dimension, limit in (
+                        ("model_calls", manifest.budget.max_model_calls),
+                        ("tool_calls", manifest.budget.max_tool_calls),
+                    )
+                    if limit is None
+                ]
         self.state.append_event(
             manifest.run_id,
             EventType.MODEL_GENERATION_BLOCKED,
@@ -4226,9 +4292,15 @@ class AgentRunner:
         raise ModelGenerationBudgetError(message, details=payload)
 
     def _assert_budget(self, manifest: RunManifest, usage: Usage) -> None:
-        if usage.model_calls >= manifest.budget.max_model_calls:
+        if (
+            manifest.budget.max_model_calls is not None
+            and usage.model_calls >= manifest.budget.max_model_calls
+        ):
             raise ContractError("model call budget exhausted")
-        if usage.tool_calls >= manifest.budget.max_tool_calls:
+        if (
+            manifest.budget.max_tool_calls is not None
+            and usage.tool_calls >= manifest.budget.max_tool_calls
+        ):
             raise ContractError("tool call budget exhausted")
         if usage.input_tokens + usage.output_tokens >= manifest.budget.max_total_tokens:
             raise ContractError("token budget exhausted")
@@ -4237,7 +4309,10 @@ class AgentRunner:
 
     @staticmethod
     def _assert_consumed_budget(manifest: RunManifest, usage: Usage) -> None:
-        if usage.model_calls > manifest.budget.max_model_calls:
+        if (
+            manifest.budget.max_model_calls is not None
+            and usage.model_calls > manifest.budget.max_model_calls
+        ):
             raise ContractError("model call budget exceeded")
         if usage.input_tokens + usage.output_tokens > manifest.budget.max_total_tokens:
             raise ContractError("token budget exceeded")

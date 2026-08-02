@@ -758,3 +758,40 @@ completion 및 zero confound를 통과해도 source row는 calibration-only로 �
 별도 decision에서 comparison tuple을 동결하고 새 no-memory baseline execution identity를 만들어야
 한다. 그 decision이 budget, runtime code 또는 harness commit을 D-075와 다르게 만들면 D-075 evidence를
 새 tuple의 readiness로 승격하지 않고 final tuple에 결속된 second readiness panel을 실행한다.
+
+## 21. D-079 workflow-completion probe architecture
+
+D-079는 generic V2/V5 agent의 prompt, tool, context 또는 evaluator를 변경하지 않고 call-count admission
+layer만 별도 policy로 분리한다. Exact one-row path는 pyfakefs development task,
+`gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
+`phase-evidence-v5`, SDK transport retry 0과 output 25,000을 사용한다. Historical D-075/D-077 execution과
+D-078 seal은 읽기 전용이며 새 probe의 row나 gate에 합치지 않는다.
+
+`model-tool-observability-only-v1`에서 model/tool call limit의 `null`은 두 counter를 admission guard로
+사용하지 않는다는 뜻이다. `ModelCalled`, `ToolCalled`와 usage reconciliation은 계속 durable trace에
+남는다. 이는 run 전체가 무제한이라는 뜻이 아니다. 다음 boundary는 계속 강제된다.
+
+```text
+exact input + full 25,000 response token admission
+3,000,000 total-token ceiling
+7,200-second wall-clock ceiling
+fresh-pricing and explicit cost authorization
+semantic-replay, repeated-timeout and finite submission-rejection controls
+phase transition, mutation idempotency and constrained-tool gateway
+Docker network isolation, evaluator separation and safety verification
+SDK transport retry = 0
+```
+
+Execution plan의 `workflow-completion-runtime-contract-v1`과 runner trace의
+`workflow-completion-runtime-evidence-v1`은 exact task/runtime bytes, call policy, `null` limits,
+retained limits와 clean harness identity를 서로 다른 representation으로 결속한다. Generated manifest와
+start/resume comparator는 approved plan에서 drift하면 fail closed하고, qualifier는 trace CAS bytes에서
+같은 meaning을 독립 재구성한다. 따라서 model/tool call guard를 되살리거나, 반대로 token/wall/loop/sandbox
+guard를 없앤 실행은 D-079 evidence가 아니다.
+
+`workflow-completion-probe-gate-v1`은 exact 1/1 row가 terminal·qualified이고 official evaluator를
+완료했으며 infrastructure/qualification/diagnostic error가 0인지, call counters가 실제로 observability-only
+였는지, retained guard evidence가 온전한지를 판정한다. Hidden acceptance와 SCRR는 gate predicate가 아니다.
+Gate pass는 “다른 retained guard 전에 call-count censorship 없이 evaluator까지 workflow가 완료됨”만
+뜻한다. 이 one-row architecture는 calibration-only이며 baseline, memory admission, comparison budget 또는
+core를 열지 않는다.

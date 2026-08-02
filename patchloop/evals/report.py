@@ -19,6 +19,7 @@ from patchloop.util import sha256_bytes
 
 _CALIBRATION_ONLY_PURPOSES = {
     "generic-baseline-readiness",
+    "workflow-completion-probe",
     "memory-development-no-memory-budget-pilot",
     "memory-development-no-memory-corrective-pilot",
     "memory-development-no-memory-saturation-pilot",

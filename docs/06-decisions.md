@@ -447,6 +447,39 @@ Evidence/issue:
   Seal verification은 focused 11 passed, repository-wide 1,099 collected/1,092 passed/7 skipped,
   Ruff, compileall, JSON parse와 `git diff --check`를 통과했고 provider call/model cost는 0이다.
 
+### D-079 accepted decision — isolate call-count censorship with one bounded pyfakefs completion probe
+
+- Status: accepted source/offline contract decision; executable offline verification complete, clean no-call
+  preflight와 separate live approval pending. Provider call, execution hash, user approval, run/result, measured
+  usage/cost와 gate outcome은 아직 없다.
+- Preserves: D-077 r2 suite/hash/four runs/false gate와 D-078 append-only seal을 수정·재개·합산하지 않는다.
+  Hidden outcomes도 prompt/tool/context tuning input으로 사용하지 않는다.
+- Exact identity: purpose `workflow-completion-probe`, experiment ID
+  `pyfakefs-workflow-completion-probe-v2v5-20260803-r1`, frozen pyfakefs task, `no_memory`, repetition 1이다.
+- Fixed runtime: `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
+  `phase-evidence-v5`, SDK retry 0, output 25,000, sidecar absent와 fault none을 유지한다.
+- Controlled policy: `model-tool-observability-only-v1` 아래 model/tool call limit은 `null`이고 counters는
+  기록·reconcile한다. 3,000,000 total token, 7,200초 wall, exact-request, cost, loop, constrained-tool,
+  Docker/network/evaluator guard는 계속 강제한다. Runtime schema는
+  `workflow-completion-runtime-contract-v1`이다.
+- Gate/report boundary: `workflow-completion-probe-gate-v1`은 1/1 terminal·qualified·official evaluator,
+  zero infrastructure/qualification/diagnostic error와 call-policy/retained-guard integrity를 요구하되 hidden
+  pass나 SCRR는 요구하지 않는다. Calibration-only이며 comparison denominator, baseline, memory admission과
+  core는 닫혀 있다.
+- Authorization boundary: Conservative reserve `$13.6125`와 cap `$14`는 source authorization bounds다.
+  Fresh official pricing을 포함한 clean no-call preflight의 exact hash와 최대 `$14`에 대한 별도 명시적
+  승인 전에는 provider를 호출하지 않는다. Pass/fail 뒤 자동 재실행도 없다.
+- Rationale: D-078 pyfakefs row는 token/tool/wall headroom이 남은 채 model-call 50에서만 종료됐다.
+  한 task의 call-count guard만 orthogonal하게 제거하면 agent를 hidden behavior에 맞추지 않고 workflow
+  completion distribution의 오른쪽 꼬리를 관찰할 수 있다. 단일 row이므로 일반 completion rate나 fair
+  comparison budget을 추정하지 않는다.
+- Date: 2026-08-03
+- Evidence/issue: Source/runtime/gate contracts와 repository-wide 1,182 collected, 1,175 passed/7
+  environment-dependent skipped, Ruff, compileall, `git diff --check`. Official standard pricing은
+  2026-08-02T16:35:25Z에 `$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output으로 재확인했다.
+  Provider call/model cost는 0이다. Live 결과가 승인·생성되면 별도 D-080 seal에서 immutable evidence와
+  measured usage/cost를 기록한다.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

@@ -2629,3 +2629,42 @@ D-078 seal verification selected 11 D-077/generic tests and all passed. Reposito
 1,099 tests: 1,092 passed and seven environment-dependent tests were skipped. Ruff, Python compileall, JSON
 parsing and `git diff --check` passed. These checks made no provider request and added zero model cost; they
 validate the immutable guard and sanitized record, not another readiness run or a changed task outcome.
+
+## D-079 workflow-completion probe source/offline evidence boundary
+
+D-079 adds a separate source identity for the public process question left by D-078: can the exact pyfakefs
+generic V2/V5 workflow reach the official evaluator when model/tool call counters are observed but do not censor
+admission? It does not alter or combine D-077's consumed hash, four runs, false gate or D-078 seal.
+
+The checked-in contract fixes purpose `workflow-completion-probe`, experiment ID
+`pyfakefs-workflow-completion-probe-v2v5-20260803-r1`, one frozen pyfakefs task, `no_memory` repetition 1,
+the dated mini medium/standard/default, prompt V3, tool V2/context V5, SDK retry 0 and output 25,000. Runtime schema
+`workflow-completion-runtime-contract-v1` selects policy `model-tool-observability-only-v1`: model/tool limits are
+`null`, while count and usage telemetry remain required. Total-token 3,000,000, wall 7,200 seconds and the existing
+exact-request, cost, loop, state/idempotency, constrained-tool, Docker/network/evaluator guards remain active.
+
+The source conservative authorization reserve is `$13.6125` under a `$14` cap. It is not measured spend. Official
+standard pricing was reverified at 2026-08-02T16:35:25Z as `$0.75/M` input, `$0.075/M` cached input and `$4.50/M`
+output. Pricing freshness must still be checked again at the clean no-call preflight boundary.
+
+At this source/offline stage the evidence ledger intentionally records:
+
+```text
+provider calls = 0
+execution hash = absent
+user cost approval = absent
+run ID/result = absent
+measured usage/cost = absent
+live qualification/evaluator receipt = absent
+workflow-completion-probe-gate-v1 outcome = absent
+SCRR/task outcome = absent
+```
+
+The source/config and offline contract tests are not provider capability or execution authority. Repository-wide
+verification collected 1,182 tests: 1,175 passed and seven environment-dependent tests skipped. Ruff, compileall
+and `git diff --check` also passed; provider calls and model cost were zero. The clean commit identity remains to be
+created before preflight.
+Next, a clean no-call preflight must bind task/package/image/evaluator, SDK, prompt/tool/runtime, schedule, fresh
+pricing and the harness commit. Only a separate explicit approval of that exact hash and maximum `$14` may authorize
+one invocation. The row remains calibration-only and excluded from baseline, comparison, memory admission and core
+regardless of hidden outcome. Any approved live result belongs to a later D-080 append-only evidence seal.

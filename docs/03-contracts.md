@@ -301,6 +301,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-coverage-review-pilot` | D-070 exact HF Hub 한 task, `no_memory`, repetition 1, v5/v10/runtime-v4, 60/100/1.2M/1,800초, output 25k, $6 상한; tuning-only이며 comparison·memory admission 제외, 별도 hash/비용 승인 전 live 실행 금지 |
 | `memory-development-no-memory-coverage-rejection-pilot` | Consumed D-072 exact HF Hub 한 task, `no_memory`, repetition 1, v6/v11/runtime-v5, 60/100/1.2M/1,800초, output 25k, reserve $5.5125/$6 상한; readiness gate pass/recovery inconclusive/hidden task failure인 immutable row이며 재실행·comparison·memory admission 금지 |
 | `generic-baseline-readiness` | D-075 r1은 consumed/immutable false gate다. D-077 r2는 같은 four-row generic V2/V5 tuple에서 model-call 50/total token 1.2M만 적용한 budget-only successor, reserve $22.05/$23 상한, calibration-only이며 clean hash와 별도 승인 전 live 실행 금지 |
+| `workflow-completion-probe` | D-079 exact pyfakefs 한 row, `no_memory` repetition 1, generic V2/V5, model/tool call `null`·observability-only, 3M token/7,200초/output 25k, reserve $13.6125/$14 cap; calibration-only이며 clean hash와 별도 승인 전 live 실행 금지 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -2444,3 +2445,67 @@ pinned task/image/evaluator, SDK, pricing freshness, randomized schedule과 exac
 preflight hash를 만든 뒤 사용자가 그 hash와 최대 `$23`을 명시적으로 승인해야 정확히 한 번 실행할 수 있다.
 Source/runtime/qualification/report 계약은 repository-wide 1,095-test 회귀와 Ruff, compileall,
 `git diff --check`를 통과했다. 이 offline closure는 provider capability, execution hash나 live outcome이 아니다.
+
+## 22. D-079 exact workflow-completion probe contract
+
+D-079는 D-077의 false four-row gate를 수정하거나 재실행하지 않는 별도 calibration identity다.
+
+```yaml
+purpose: workflow-completion-probe
+experiment_id: pyfakefs-workflow-completion-probe-v2v5-20260803-r1
+tasks:
+  - tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml
+conditions: [no_memory]
+repetitions: 1
+model: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+system_prompt: SYSTEM_PROMPT_V3
+tool_schema_version: v2
+context_policy_version: phase-evidence-v5
+transport_max_retries: 0
+max_output_tokens: 25000
+budget:
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 3000000
+  wall_clock_timeout_seconds: 7200
+```
+
+`max_model_calls: null`과 `max_tool_calls: null`은 `model-tool-observability-only-v1`에서 call-count
+admission을 비활성화하지만 counters, event sequence와 usage reconciliation을 비활성화하지 않는다.
+Runtime document는 schema `workflow-completion-runtime-contract-v1`, trace mirror는
+`workflow-completion-runtime-evidence-v1`을 사용한다. Plan, generated manifest, runner start/resume와
+qualification은 exact prompt/tool bytes, versions, task/package/image/evaluator, SDK retry, call policy,
+budget, pricing과 clean harness commit을 독립 비교한다.
+
+Call policy 변경으로 완화할 수 없는 retained guard는 exact-request input + full response reservation,
+3,000,000 total token, 7,200초 wall, cost authorization, loop controls, state-machine/idempotency,
+constrained tools, Docker/network isolation 및 official evaluator separation이다. 이 중 하나라도 manifest나
+trace에서 누락·완화되면 qualification은 fail closed한다.
+
+Gate schema `workflow-completion-probe-gate-v1`은 다음 논리곱이다.
+
+```text
+exact pyfakefs row 1/1
+AND terminal 1/1
+AND trace-qualified 1/1
+AND official evaluator reached/completed 1/1
+AND infrastructure/qualification/diagnostic error = 0
+AND disabled call-guard contract valid
+AND retained token/wall/loop/sandbox/cost guard integrity valid
+```
+
+Hidden acceptance, task success와 SCRR는 gate 조건이 아니다. 모든 row는 calibration-only이고
+`analysis_included=0`, `comparison_denominator_eligible=false`,
+`memory_admission_unlocked=false`를 유지한다. Pass는 uncensored call-count workflow completion만
+보이며 comparison fairness, memory effect 또는 task correctness를 증명하지 않는다.
+
+Checked-in conservative reserve는 `$13.6125`, suite cap은 `$14`이다. Source/config/offline test는
+live authority가 아니다. 이 단계에는 provider call, execution hash, 사용자 비용 승인, run ID/result,
+measured token/cost, gate outcome 또는 SCRR가 없다. Clean no-call preflight에서 fresh official pricing과
+exact environment를 결속한 hash를 만든 뒤 사용자가 그 hash와 최대 `$14`를 명시적으로 승인해야 정확히
+한 번 실행할 수 있다. 승인된 live result가 생기면 D-079 source contract를 바꾸지 않고 별도 D-080
+append-only seal에서 보존한다.
