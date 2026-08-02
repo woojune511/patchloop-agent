@@ -734,14 +734,44 @@ must keep generic V11 mock/no-experiment only and permit only this exact purpose
 exception. They must classify zero rejection as integrity-pass-capable but recovery-inconclusive, and fail
 an observed rejection unless every structured public source/recovery/clearing CAS verifies.
 
-These commands are not a clean-machine preflight and do not leave a clean-host execution plan/hash or a
-user-approved capability in the real runtime. The unit tests calculate a synthetic hash and exercise the
+These commands reproduce the historical offline contract only; they are not a clean-machine preflight and
+do not create a new execution capability. The unit tests calculate a synthetic hash and exercise the
 approval branch only inside a fake environment and temporary root. Do not add `--approve-live-cost`, load
-`.env` or invoke `patchloop evaluate` for this suite as part of D-072 offline reproduction. A future clean
-no-call preflight and paid invocation require a new explicit handoff. Provider hard-kill/reclaim is also a
-separate follow-up fault exercise rather than a requirement of this one-row contract.
+`.env` or invoke `patchloop evaluate` for this suite as part of offline reproduction. The exact D-072 live
+invocation has already consumed its approved hash and must not be repeated. Provider hard-kill/reclaim is
+also a separate follow-up fault exercise rather than a requirement of this one-row contract.
 
 The 2026-08-02 reference execution collected 322 focused tests with 321 passed/1
 environment-dependent skipped and 1,022 repository tests with 1,015 passed/7 environment-dependent
 skipped. Ruff, Python compileall and `git diff --check` also passed. These are offline results from
 in-memory Responses doubles; they are not provider or cost evidence.
+
+Inspect the D-073 portable seal for the one consumed D-072 invocation:
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json
+```
+
+The sealed record must identify exact execution hash
+`sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`, run
+`run_e2132144a8774b05`, completion gate `passed=true`, qualification 36/36, official evaluator arrival and
+recovery status `inconclusive/rejection_not_observed`. It must report hidden fail with
+regression/scope/safety pass, `task_failure`, SCRR=false, no budget binding, and usage 797,862 input +
+64,465 output = 862,327 token, 35 model call, 57 tool call, 369,385ms and `$0.841833`.
+
+The 17 rejected candidates/17 verified retries refer to rejected-patch mutation-preview recovery, while
+the structured coverage rejection count is 0. Likewise saturated context count 17 and one post-saturation
+`PatchApplied` do not make the coverage recovery diagnostic pass. A reproduction or report consumer must
+not collapse these counters into one rejection type.
+
+On the source host, the portable record can be traced back to the append-only experiment result, campaign
+journal and `.patchloop/qualifications/run_e2132144a8774b05.json`; a clean checkout intentionally does not
+vendor those large/private raw artifacts. Do not mutate them or invoke the suite again to “reproduce” the
+result. Verify the portable seal and consumed-ID guard instead. D-073 performs no provider call and adds no
+model cost; live hard restart remains unmeasured.
+
+The sealed source was verified with 375 focused tests (374 passed and one environment-dependent skip) and
+1,025 repository-wide tests (1,018 passed and seven environment-dependent skips). Ruff, Python compileall
+and `git diff --check` also passed. These checks belong to the D-073 source seal; they are not a second live
+invocation.

@@ -2408,8 +2408,8 @@ The new checked-in suite
 `memory-development-no-memory-coverage-rejection-pilot`, one HF Hub/no-memory row,
 `gpt-5.4-mini-2026-03-17` medium/standard/default, v6/v11/runtime-v5,
 60 model/100 tool/1,200,000 token/1,800 seconds, output 25,000, reserve `$5.5125` and cap `$6`.
-Generic V11 remains mock/no-experiment only; only this exact purpose and OpenAI provider form the future
-exception.
+Generic V11 remains mock/no-experiment only; only this exact purpose and OpenAI provider form the exact
+live exception.
 
 The offline result contract separates integrity from whether a natural rejection occurs. Zero rejection
 can leave the recovery check integrity-valid with `exercise_status=inconclusive` and
@@ -2419,10 +2419,10 @@ must verify; any failed sequence makes the readiness gate false. The gate does n
 always leaves comparison-denominator and memory-admission eligibility false. Live hard restart is outside
 this row and remains a separate follow-up fault exercise.
 
-This section records implementation artifacts, not a live result. The suite contains
+This subsection records the D-072 offline implementation stage, not its later live result. The source suite contains
 `live_cost_approved=false`, `approved_execution_hash=null` and `pilot_run_id=null`. No clean-host preflight,
 real-runtime persisted execution plan/hash, user invocation approval, provider request, live result or cost
-evidence is claimed here. The preflight unit test computes a synthetic execution hash and exercises the
+evidence was claimed at that stage. The preflight unit test computes a synthetic execution hash and exercises the
 approval branch only under a fake environment and temporary root; it leaves no usable live capability.
 
 Final offline verification on 2026-08-02 produced:
@@ -2434,3 +2434,48 @@ Final offline verification on 2026-08-02 produced:
 
 The live-shaped tests use in-memory Responses doubles. D-070 remains immutable; SCRR, no-memory baseline,
 memory admission and core campaign remain closed.
+
+## D-073 D-072 live-result evidence seal
+
+After the offline contract closed, a clean-host no-call preflight produced execution hash
+`sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`. The user explicitly
+approved that exact hash for one `gpt-5.4-mini-2026-03-17` D-072 V11 live-readiness invocation with a `$6`
+cap. It was consumed exactly once and is not reusable.
+
+The immutable experiment result records:
+
+| Field | Observed value |
+| --- | --- |
+| Run | `run_e2132144a8774b05` |
+| Terminal / infrastructure / qualification errors | true / 0 / 0 |
+| Completion gate | `v11-coverage-rejection-live-pilot-gate-v1`, passed |
+| Official evaluator | reached |
+| Trace qualification | 36/36 passed |
+| Coverage rejection diagnostic | `inconclusive/rejection_not_observed`; rejection count 0 |
+| Official verdicts | hidden fail; regression/scope/safety pass |
+| Outcome / SCRR | `task_failure` / false |
+| Usage | 797,862 input + 64,465 output = 862,327 token; 35 model calls; 57 tool calls; 369,385ms |
+| Calculated model cost | `$0.841833` |
+| Budget binding | none |
+| Rejected-patch retry | 17 rejected candidates, 17 verified retry episodes, no failed source sequence |
+| Saturation / mutation | 17 saturated contexts; one post-saturation `PatchApplied` |
+
+The completion gate is true because it measures official evaluator arrival, qualified trace and public coverage
+lifecycle; task success is deliberately not a gate requirement. Hidden acceptance failure therefore remains the
+authoritative task outcome. Similarly, 17 rejected-patch retries are mutation-preview candidate failures, not
+`coverage-citation-error-v1` review rejections. They do not change the structured coverage rejection count of 0 or
+turn the recovery diagnostic into a pass. Saturation and one applied patch also do not establish fresh-worker
+recovery.
+
+D-073 adds the experiment ID to the hard-immutable consumed set and binds its approved execution hash/run to
+sanitized portable evidence at
+`reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`. It does not alter the original
+result, hash-chained journal, qualification, failure record or campaign gate. This run and hash are not rerun, and
+the row remains ineligible for comparison, memory admission, a no-memory baseline or the core campaign. Live
+provider hard kill/reclaim is still unmeasured. D-073 sealing made no provider request and added zero model cost;
+the only provider activity described here is the single approved D-072 invocation.
+
+Post-run source-seal verification collected 375 focused tests: 374 passed and one environment-dependent test
+was skipped. The repository-wide matrix collected 1,025 tests: 1,018 passed and seven environment-dependent
+tests were skipped. Ruff, Python compileall and `git diff --check` also passed. These are D-073 seal-integrity
+checks, not another live invocation or evidence that the hidden task was solved.

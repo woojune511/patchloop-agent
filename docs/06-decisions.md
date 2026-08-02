@@ -217,7 +217,7 @@ Evidence/issue:
 
 ### D-072 accepted decision
 
-- Status: implemented offline; live invocation unapproved
+- Status: implemented offline; exact live invocation later consumed once and sealed by D-073
 - Context: D-071은 exact-anchor restart recovery를 닫았지만 V11-specific reconstruction이 큰
   context/qualification module에 남아 있었고, generic mock contract를 넓히지 않으면서 자연 live
   rejection의 관찰 여부와 trace integrity를 분리할 one-row readiness contract가 필요했다.
@@ -228,13 +228,13 @@ Evidence/issue:
   `dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`은 HF Hub 한 task, `no_memory` 1회,
   v6/v11/runtime-v5, 60 model/100 tool/1,200,000 token/1,800초, output 25,000,
   reserve `$5.5125`/cap `$6`로 고정한다. Generic V11은 mock/no-experiment 전용이고 이 exact
-  purpose+OpenAI pair만 future exception이다.
+  purpose+OpenAI pair만 exact live exception이다.
 - Diagnostic decision: 자연 rejection이 0이면 recovery exercise는
   `inconclusive/rejection_not_observed`지만 다른 integrity 조건이 참이면 qualification/readiness가
   통과할 수 있다. Rejection이 하나 이상이면 모든 structured public source와 recovery/clearing CAS를
   검증하고 하나라도 실패하면 gate를 닫는다. Live hard restart는 exact row의 필수조건이 아니라 별도
   후속 fault exercise다.
-- Consequences: Checked-in suite는 `live_cost_approved=false`, `approved_execution_hash=null`,
+- Consequences: Checked-in source suite는 `live_cost_approved=false`, `approved_execution_hash=null`,
   `pilot_run_id=null`이다. 이 변경은 clean-host preflight, 실제 runtime에 persist한 execution
   plan/hash, 사용자 비용 승인, provider call 또는 cost evidence가 아니다. Offline test의 temporary
   synthetic hash/approval branch는 usable capability를 만들지 않는다. D-070 run/hash/gate는 immutable하며
@@ -244,7 +244,39 @@ Evidence/issue:
 - Evidence/issue: exact suite와 offline selector/qualification/report contract; focused 322 collected,
   321 passed/1 environment-dependent skipped, repository 전체 1,022 collected, 1,015 passed/7
   environment-dependent skipped. Ruff, Python compileall과 `git diff --check` 통과. API/network/provider
-  call과 model cost는 0이고, clean-host/persisted execution hash와 사용자 approval은 없다.
+  call과 model cost는 0이고, 이 offline decision 시점에는 clean-host/persisted execution hash와 사용자
+  approval이 없었다.
+
+### D-073 accepted decision — D-072 live-result evidence seal
+
+- Status: accepted; append-only seal complete, no additional provider call
+- Supersedes: D-072의 `live invocation unapproved` 상태만 supersede한다. D-072 contract와 offline
+  verification, D-070 artifact, raw D-072 result/journal/qualification/gate는 변경하지 않는다.
+- Context: Clean-host no-call preflight 뒤 사용자가 execution hash
+  `sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`로 exact HF Hub
+  one-row invocation을 최대 `$6` 아래 명시 승인했다. Hash는 정확히 한 번 소비됐다.
+- Decision: `run_e2132144a8774b05`와 experiment ID/hash를 immutable evidence로 보존하고 source-level
+  consumed-ID hard seal 및 sanitized portable evidence
+  `reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`을 추가한다. Original
+  raw artifact를 수정하거나 qualification/outcome/campaign gate를 다시 쓰지 않는다.
+- Result: Run은 official evaluator, trace qualification 36/36과 readiness gate를 통과했다.
+  Structured coverage rejection은 0이라 recovery exercise는
+  `inconclusive/rejection_not_observed`다. Regression/scope/safety는 pass, hidden acceptance는 fail이며
+  outcome은 `task_failure`, SCRR=false다. Usage는 797,862 input + 64,465 output = 862,327 token,
+  35 model call, 57 tool call, 369,385ms, 계산 비용 `$0.841833`이고 budget binding은 없다.
+- Diagnostic boundary: Rejected-patch candidate/retry 17/17, saturated context 17개와 post-saturation
+  `PatchApplied` 1회가 trace qualification에서 검증됐다. 이는 mutation-preview retry 및 investigation
+  policy evidence이지 structured coverage-citation rejection recovery나 live hard-restart evidence가
+  아니다.
+- Consequences: Suite/hash/run을 재실행하지 않는다. Readiness pass를 task success 또는 recovery pass로
+  표현하지 않으며 comparison denominator, memory admission, no-memory baseline과 core에서 제외한다.
+  Live hard restart는 별도 fault suite/hash/승인이 필요한 후속 경계다. D-073 seal 자체의 provider call과
+  추가 model cost는 0이다. Seal verification은 focused 375 collected, 374 passed/1
+  environment-dependent skipped와 repository 전체 1,025 collected, 1,018 passed/7
+  environment-dependent skipped를 기록했고 Ruff, Python compileall과 `git diff --check`도 통과했다.
+- Date: 2026-08-02
+- Evidence/issue: immutable local experiment result and qualification for `run_e2132144a8774b05`;
+  portable evidence `reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`.
 
 ## Deferred ideas
 

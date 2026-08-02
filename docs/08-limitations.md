@@ -746,13 +746,13 @@ silently lowering the design or fabricating missing results.
   correctness, SCRR, a no-memory baseline, memory admission or cross-run memory benefit. D-070 remains an
   immutable failed live diagnostic and is not eligible for rerun, comparison, memory or core use.
 
-## D-072 live-readiness contract is not live recovery evidence
+## D-072 live-readiness pass is not recovery or task-success evidence
 
 - D-072 extracts the large V11 context and qualification helpers into dedicated modules without changing
   the D-071 tool/context/schema contract. This is maintainability work, not evidence of better model
   behavior. Historical V10/V11 artifacts are not regenerated or reinterpreted because of the move.
-- `memory-development-no-memory-coverage-rejection-pilot` is one exact future OpenAI exception; generic
-  V11 remains mock/no-experiment only. The checked-in suite fixes one HF Hub/no-memory row,
+- `memory-development-no-memory-coverage-rejection-pilot` is one exact OpenAI exception; generic V11
+  remains mock/no-experiment only. The checked-in suite fixes one HF Hub/no-memory row,
   60 model/100 tool/1,200,000 token/1,800 seconds, output 25,000 and reserve `$5.5125`/cap `$6`.
   These maxima do not predict actual usage, task success or recovery occurrence.
 - A natural run with zero structured coverage rejection may pass trace qualification while the recovery
@@ -762,14 +762,32 @@ silently lowering the design or fabricating missing results.
 - The exact live branch deliberately does not require a worker restart. D-071's mock E2E proves the
   deterministic restart contract, but live provider hard kill, stale-run reclaim and fresh-worker recovery
   remain a separate fault exercise requiring their own suite, execution hash, approval and evidence.
-- The suite currently records `live_cost_approved=false`, `approved_execution_hash=null` and
-  `pilot_run_id=null`. D-072 did not perform a clean-host preflight, persist a usable execution plan/hash,
-  obtain user cost approval, issue a provider request or incur/report model cost. Unit tests calculate a
-  synthetic hash and exercise approval logic only in a fake environment and temporary root. A checked-in
-  cost reserve is not cost evidence.
-- D-070 remains immutable. The D-072 tuning-only contract excludes its future row from comparison and
-  memory admission, does not require task success for readiness and does not open SCRR, a no-memory
-  baseline, the memory index or the 96-run core campaign.
+- The source suite still records `live_cost_approved=false`, `approved_execution_hash=null` and
+  `pilot_run_id=null`; those fields mean the YAML alone cannot authorize a call. A separate clean-host
+  preflight and user approval bound execution hash
+  `sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`, which was consumed
+  exactly once. The offline synthetic hash tests are not evidence for that call.
+- `run_e2132144a8774b05` passed the readiness campaign gate and qualification 36/36 and reached the
+  official evaluator, but structured coverage rejection count was 0. Its recovery status is therefore
+  `inconclusive/rejection_not_observed`, not passed. The run cannot establish a natural rejection-recovery
+  rate or live hard-restart behavior.
+- Rejected-patch retry 17/17 is a different mutation-preview recovery mechanism. Saturated context count
+  17 and one post-saturation `PatchApplied` are investigation-policy evidence. Neither metric converts the
+  zero coverage-citation rejection into coverage recovery evidence.
+- The official evaluator reported hidden fail and regression/scope/safety pass, so outcome is
+  `task_failure` and SCRR=false. Readiness does not require task success; campaign-gate pass must not be
+  reported as benchmark success.
+- Usage was 797,862 input + 64,465 output = 862,327 token, 35 model call, 57 tool call, 369,385ms and
+  calculated cost `$0.841833`. No budget dimension bound, but one non-binding run does not establish a safe
+  completion budget for other tasks.
+- D-070 remains immutable. D-073 puts the consumed D-072 experiment ID in the source-level immutable set
+  and binds its approved hash/run to portable evidence without
+  changing raw result, journal, qualification or gate. The suite/hash/run cannot be rerun and remains
+  excluded from comparison and memory admission; it does not open a no-memory baseline, the memory index
+  or the 96-run core campaign. D-073 itself made no provider call and incurred no additional model cost.
 - D-072's 1,022 collected, 1,015 passed/7 environment-dependent skipped repository verification and
   322 collected, 321 passed/1 environment-dependent skipped focused verification use in-memory Responses
   doubles. They validate offline request/trace contracts only and are not live-model recovery evidence.
+- D-073's post-run source seal collected 375 focused tests (374 passed/1 environment-dependent skipped)
+  and 1,025 repository tests (1,018 passed/7 environment-dependent skipped). These counts validate the
+  immutable guard and portable evidence, not a second provider execution or hidden-task correctness.

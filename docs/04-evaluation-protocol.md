@@ -1088,7 +1088,7 @@ Checked-in `dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`은 HF Hub �
 `gpt-5.4-mini-2026-03-17` medium/standard/default, runtime은 v6/v11/runtime-v5이고 budget은
 60 model/100 tool/1,200,000 token/1,800초, output 25,000이다. Worst-case reserve는 `$5.5125`,
 suite cap은 `$6`다. Generic V11은 계속 mock/no-experiment 전용이고 exact purpose+OpenAI pair만
-future exception이다.
+exact live exception이다.
 
 Live readiness는 자연 rejection을 강제로 만들지 않고 다음과 같이 판정한다.
 
@@ -1112,9 +1112,40 @@ AND infrastructure/qualification/budget error absent
   recovery만 판정한다. Provider hard kill과 stale-run reclaim을 live로 시험하는 fault exercise는 별도
   후속 suite·execution hash·비용 승인이 필요하다.
 
-현재 suite의 `live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`은 no-call
-상태를 나타낸다. D-072 구현 단계에서는 clean-host preflight, 실제 runtime에 persist할 execution
-plan/hash, 사용자 invocation approval, provider request와 cost evidence를 생성하지 않는다. Offline
-test는 fake environment와 temporary root에서 synthetic hash 및 approval branch를 검증할 뿐 usable
-capability를 남기지 않는다. D-070 run/hash/gate는 immutable하고 이 contract는 memory admission이나
-core campaign을 열지 않는다.
+Checked-in source suite의 `live_cost_approved=false`, `approved_execution_hash=null`,
+`pilot_run_id=null`은 source config만으로는 no-call이라는 뜻이다. D-072 contract 구현 단계에서는
+clean-host preflight, persisted execution plan/hash, 사용자 invocation approval, provider request와 cost
+evidence를 생성하지 않았다. Offline test도 fake environment와 temporary root에서 synthetic hash 및
+approval branch만 검증했다. 이후의 exact approved invocation과 source suite를 혼동하지 않는다.
+D-070 run/hash/gate는 immutable하고 이 contract는 memory admission이나 core campaign을 열지 않는다.
+
+### D-073 D-072 live-result evaluation record
+
+별도 clean-host preflight와 사용자 승인 뒤 execution hash
+`sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`를 정확히 한 번 소비했다.
+`run_e2132144a8774b05`는 다음과 같이 판정됐다.
+
+```text
+terminal = true
+official evaluator reached = true
+trace qualification = 36/36
+readiness campaign gate = true
+coverage_rejection_exercise = inconclusive/rejection_not_observed
+hidden/regression/scope/safety = fail/pass/pass/pass
+outcome/SCRR = task_failure/false
+budget_terminal = false
+```
+
+따라서 이 run은 D-072의 live request/trace/evaluator readiness를 검증했지만 structured coverage
+rejection이 실제로 발생하지 않아 rejection 후 recovery는 검증하거나 반증하지 않았다. 17개의
+rejected patch candidate와 verified retry 17회는 별도 `rejected_patch_retry_context` check이고,
+`coverage-citation-error-v1` count 0을 바꾸지 않는다. Saturated context 17개 뒤 `PatchApplied` 1회가
+발생한 사실도 investigation policy evidence이지 coverage recovery evidence가 아니다.
+
+Usage는 797,862 input + 64,465 output = 862,327 token, 35 model call, 57 tool call, 369,385ms,
+계산 비용 `$0.841833`이며 budget dimension은 bind하지 않았다. Task success는 gate 조건이 아니므로
+gate pass와 hidden failure가 동시에 유효하다. D-073은 original result/journal/qualification/gate를
+수정하지 않고 consumed ID를 source-level immutable set에 추가하며 승인 hash와 portable evidence를
+함께 seal한다. 이 row는 재실행하지 않으며
+comparison denominator, memory admission, SCRR baseline과 core에서 제외한다. D-073 seal 과정의 provider
+call과 추가 model cost는 0이고 live hard-restart는 여전히 별도 fault exercise다.

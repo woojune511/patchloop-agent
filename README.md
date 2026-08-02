@@ -119,18 +119,34 @@ purpose `memory-development-no-memory-coverage-rejection-pilot`과 suite
 HF Hub 한 task, `no_memory` 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
 v6/v11/runtime-v5, 60 model/100 tool/1,200,000 token/1,800초, output 25,000,
 reserve `$5.5125`/cap `$6`로 고정된다. Generic V11은 계속 mock/no-experiment 전용이고 이 exact
-purpose만 future OpenAI exception이다. 자연 coverage rejection이 없으면 trace qualification은
+purpose만 OpenAI exception이다. 자연 coverage rejection이 없으면 trace qualification은
 통과할 수 있지만 recovery exercise는 `inconclusive`이고, rejection이 하나라도 있으면 관찰된 모든
 structured public error와 request/response/tool/result/recovery/clearing CAS가 검증돼야 한다. Live hard
 restart는 별도 후속 fault exercise다. Checked-in suite의 `live_cost_approved=false`,
-`approved_execution_hash=null`, `pilot_run_id=null`은 provider 권한이 없다는 뜻이다. D-072에서는
-API call이나 clean-host preflight를 하지 않았고 실제 runtime에서 사용할 persisted execution
-plan/hash, 사용자 비용 승인·비용 evidence도 만들지 않았다. Offline test는 temporary root의 fake
-environment에서 synthetic hash와 approval branch만 검증했다. D-070은 immutable하고
-baseline·memory admission·core gate는 계속 닫혀 있다. Final offline verification은
+`approved_execution_hash=null`, `pilot_run_id=null`은 source config만으로 provider 권한이 없다는
+뜻이다. D-072 contract 구현 시점에는 API call이나 clean-host preflight를 하지 않았고 offline test는
+temporary root의 fake environment에서 synthetic hash와 approval branch만 검증했다. D-070은
+immutable하고 baseline·memory admission·core gate는 계속 닫혀 있다. Final offline verification은
 focused 322 collected, 321 passed/1 environment-dependent skipped와 repository 전체 1,022 collected,
 1,015 passed/7 environment-dependent skipped를 기록했다. Ruff, Python compileall과
 `git diff --check`도 통과했고 API/network/provider call은 0이었다.
+
+2026-08-02 D-073은 이후 별도로 승인된 D-072 execution hash
+`sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`를 정확히 한 번 소비한
+live result를 seal한다. `run_e2132144a8774b05`는 official evaluator에 도달하고 trace qualification
+36/36과 readiness campaign gate를 통과했다. 다만 structured coverage rejection은 0이라 recovery
+exercise는 `inconclusive/rejection_not_observed`이고 live recovery가 검증된 것은 아니다. Run은
+797,862 input + 64,465 output = 862,327 token, 35 model call, 57 tool call, 369,385ms와 계산 비용
+`$0.841833`을 기록했으며 budget dimension은 bind하지 않았다. Rejected-patch retry 17/17,
+saturated context 17개와 post-saturation patch 1회는 검증됐지만 structured coverage-citation recovery와
+서로 다른 진단이다. Regression/scope/safety는 통과했으나 hidden acceptance가 실패해
+`task_failure`, SCRR=false다. D-073 seal은 consumed ID를 hard-immutable set에 추가하고 portable
+evidence를 `reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`에 보존할 뿐
+raw result·journal·qualification·campaign gate를 수정하지 않는다. Suite/hash/run은 재실행하지 않고
+comparison, memory admission과 core에서 제외한다. D-073 seal 중 provider call과 추가 model cost는 0이다.
+Seal 회귀는 focused 375 collected, 374 passed/1 environment-dependent skipped와 repository 전체
+1,025 collected, 1,018 passed/7 environment-dependent skipped를 기록했고 Ruff, Python compileall,
+`git diff --check`도 통과했다.
 
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을

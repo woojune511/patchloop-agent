@@ -299,7 +299,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-saturation-pilot` | D-064 HF Hub 한 task, `no_memory`, repetition 1, v4/v8/runtime-v2, 900k, $5 상한; 자연 saturation/reset diagnostic이며 memory source와 comparison denominator에서 제외 |
 | `memory-development-no-memory-review-evidence-pilot` | Consumed D-067 HF Hub 한 task, `no_memory`, repetition 1, v4/v9/runtime-v3, 60/100/1.2M/1,800초, output 25k, $6 상한; immutable hidden task failure이며 재실행·comparison·memory admission 금지 |
 | `memory-development-no-memory-coverage-review-pilot` | D-070 exact HF Hub 한 task, `no_memory`, repetition 1, v5/v10/runtime-v4, 60/100/1.2M/1,800초, output 25k, $6 상한; tuning-only이며 comparison·memory admission 제외, 별도 hash/비용 승인 전 live 실행 금지 |
-| `memory-development-no-memory-coverage-rejection-pilot` | D-072 exact HF Hub 한 task, `no_memory`, repetition 1, v6/v11/runtime-v5, 60/100/1.2M/1,800초, output 25k, reserve $5.5125/$6 상한; V11 live-readiness 전용이며 generic V11, comparison·memory admission과 분리, 별도 hash/비용 승인 전 live 실행 금지 |
+| `memory-development-no-memory-coverage-rejection-pilot` | Consumed D-072 exact HF Hub 한 task, `no_memory`, repetition 1, v6/v11/runtime-v5, 60/100/1.2M/1,800초, output 25k, reserve $5.5125/$6 상한; readiness gate pass/recovery inconclusive/hidden task failure인 immutable row이며 재실행·comparison·memory admission 금지 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -2173,7 +2173,7 @@ cost_limit_usd: 6
 Purpose와 experiment ID, exact one-row task/schedule/model/budget/pricing, dataset/image/review sidecar,
 v6/v11/runtime-v5와 clean harness identity 중 하나라도 다르면 start/resume와 qualification은 fail
 closed한다. Generic V11은 `coverage_rejection_validation=True` + mock + no experiment에서만 허용되고,
-위 exact purpose의 OpenAI pair만 future live exception이다. Checked-in suite,
+위 exact purpose의 OpenAI pair만 exact live exception이다. Checked-in suite,
 `live_cost_approved=false`, null hash/run ID는 live capability 또는 비용 승인이 아니다.
 
 `coverage_rejection_recovery_contract`의 live-pilot 판정은 rejection occurrence와 trace integrity를
@@ -2196,3 +2196,43 @@ task success를 요구하거나 comparison denominator/memory admission을 열�
 gate failure다. Live-pilot branch는 rejection이 생겨도 worker restart를 필수로 만들지 않는다.
 Provider process hard kill, stale `RUNNING` reclaim과 fresh-worker request를 live로 검증하는 fault
 exercise는 별도 suite/hash/비용 승인 아래 후속으로 수행한다.
+
+## 18. D-073 consumed D-072 result contract
+
+Approved execution hash
+`sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`는 exact D-072 tuple로
+정확히 한 번 소비됐다. Experiment ID는 source-level hard-immutable set에 들어가고 승인 hash는 그
+consumed ID의 portable evidence에 결속된다. Start/resume/preflight는 같은 ID의 재사용을 거부하며,
+동일한 execution payload는 experiment ID를 포함하므로 같은 hash로도 다시 승인될 수 없다. Original result, campaign journal,
+qualification과 completion gate는 append-only이고 D-073 portable evidence는 이 raw evidence를
+교체하거나 outcome을 다시 계산하지 않는다.
+
+`run_e2132144a8774b05`의 immutable contract realization은 다음과 같다.
+
+```text
+completion gate = passed
+trace qualification = 36 / 36
+official evaluator reached = true
+coverage rejection count = 0
+coverage rejection exercise = inconclusive / rejection_not_observed
+outcome = task_failure
+SCRR = false
+verdicts = hidden fail, regression/scope/safety pass
+usage = 797,862 input + 64,465 output = 862,327 token
+        35 model call, 57 tool call, 369,385 ms, $0.841833
+budget binding = none
+rejected-patch retry = 17 candidates / 17 verified retries
+saturated contexts = 17
+PatchApplied = 1
+```
+
+`rejected-patch retry`는 mutation preview rejection의 candidate-context 복구 계약이고
+`coverage rejection`은 `review_task`의 `coverage-citation-error-v1` 계약이다. 전자는 17회
+관찰됐지만 후자는 0회이므로 `coverage_rejection_recovery_contract`는 integrity-pass이면서 exercise는
+inconclusive다. Saturation과 patch count도 coverage recovery 또는 fresh-worker restart를 대체하지
+않는다. Task success는 readiness gate 조건이 아니므로 gate pass와 hidden failure가 동시에 존재할 수
+있다. 이 row는 comparison denominator와 memory admission에서 제외되고 core run으로 승격되지 않는다.
+
+D-073 seal artifact는
+`reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`이다. Seal 생성은 raw
+artifact를 변경하지 않고 provider를 추가 호출하지 않으며 추가 model cost는 0이다.

@@ -650,7 +650,7 @@ cost reserve/cap = $5.5125 / $6
 ```
 
 Generic `coverage_rejection_validation=True`은 계속 mock/no-experiment 전용이다. 위 exact purpose와
-OpenAI provider 조합만 future exception이며 checked-in YAML 자체는 capability가 아니다. Approval,
+OpenAI provider 조합만 exact live exception이며 checked-in YAML 자체는 capability가 아니다. Approval,
 execution hash와 run ID가 null인 동안 runner는 provider call 전에 fail closed한다.
 
 Live row에서는 자연 rejection 발생 자체를 요구하지 않는다. Rejection 0이면 일반 trace-integrity와
@@ -661,3 +661,36 @@ request/response/tool/result CAS가 검증되어야 하고 하나라도 불완�
 worker에서 자연적으로 관찰된 recovery를 판정하는 계약이다. 실제 provider process를 rejection 직후
 종료하고 fresh worker로 resume하는 live hard-restart exercise는 별도 fault schedule과 별도 승인이
 필요한 후속 경계이며 이 one-row pilot의 완료 조건이 아니다.
+
+## 18. D-073 D-072 live-result evidence seal
+
+D-073은 runtime behavior를 변경하거나 provider를 다시 호출하는 phase가 아니다. Exact D-072
+experiment ID를 consumed hard-immutable set에 추가하고, 승인 execution hash
+`sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`를 append-only raw
+result·campaign journal·trace qualification을 가리키는 sanitized portable evidence에 결속해
+`reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`에 고정한다. Raw artifact
+bytes와 original campaign gate는 수정하지 않으며 D-073 자체의 provider call과 추가 model cost는 0이다.
+
+Sealed run `run_e2132144a8774b05`는 다음 세 판정 축을 의도적으로 분리한다.
+
+```text
+readiness/integrity:
+  official evaluator reached
+  AND trace qualification 36/36
+  AND campaign gate passed
+
+recovery occurrence:
+  structured coverage rejection count = 0
+  => inconclusive / rejection_not_observed
+
+task correctness:
+  regression + scope + safety pass
+  AND hidden acceptance fail
+  => task_failure / SCRR false
+```
+
+Rejected-patch retry 17/17과 saturated context 17개, post-saturation `PatchApplied` 1회는 각각 기존
+mutation-preview retry와 investigation policy가 실제 provider trace에서도 작동했음을 보여준다. 하지만
+이는 `coverage-citation-error-v1`이 발생한 뒤의 structured coverage recovery가 아니며 live
+hard-restart/reclaim evidence로도 사용하지 않는다. 이 row는 comparison denominator, memory admission과
+core input에 들어가지 않는다.

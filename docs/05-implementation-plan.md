@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-072 exact V11 live-readiness contract complete; no clean preflight,
-execution hash, cost approval or provider run exists**
+현재 milestone: **D-073 D-072 live-result evidence seal complete; readiness passed, recovery
+inconclusive, hidden task acceptance failed; no live hard-restart evidence exists**
 
 2026-08-02 구현 스냅샷:
 
@@ -13,7 +13,7 @@ execution hash, cost approval or provider run exists**
 | Phase 3 state machine | historical V1-V10 보존; coverage-recovery v6/v11 offline gate와 의미 보존 모듈 분리 complete | Target-specific structured rejection, CAS-bound feedback rehydration, restart exact-anchor recovery; generic V11 mock/no-experiment only |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-070 immutable; D-072 exact one-row V11 live-readiness contract unapproved | HF Hub 1-row 60/100/1.2M/1,800초, reserve $5.5125/cap $6; rejection 0은 inconclusive, rejection 관찰 시 모든 public CAS recovery 필수; no execution hash/provider evidence |
+| Phase 6 evaluation | D-070 immutable; D-072 exact one-row consumed once and D-073 evidence-sealed | `run_e2132144a8774b05`: official evaluator, qualification 36/36, readiness gate pass; rejection 0으로 recovery inconclusive, hidden fail/SCRR false; comparison·memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -137,14 +137,12 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current live-readiness gate — D-072 exact V11 pilot contract
+## Current evidence-seal gate — D-073 D-072 live result closure
 
-목표: 완료된 D-071 public recovery semantics를 바꾸지 않고 helper를 전용 모듈로 분리한 뒤,
-generic V11을 mock/no-experiment 전용으로 유지하면서 exact HF Hub one-row만 future OpenAI
-exception으로 허용하는 no-call contract를 고정한다. 자연 rejection 0은 recovery diagnostic
-`inconclusive`, rejection 관찰 시 모든 structured public CAS recovery를 필수로 판정한다. Live hard
-restart는 별도 후속 fault exercise이며 이 gate는 task correctness, baseline, memory admission 또는
-core를 열지 않는다.
+목표: 정확히 한 번 승인·소비된 D-072 live result를 raw artifact 변경 없이 hard-immutable set과
+portable evidence에 seal한다. Readiness gate pass, recovery occurrence와 task correctness를 분리해
+기록하고, structured rejection 0을 recovery success로 승격하지 않는다. Live hard restart는 별도 후속
+fault exercise이며 이 closure는 baseline, memory admission 또는 core를 열지 않는다.
 
 ### Frozen sequence
 
@@ -183,7 +181,8 @@ core를 열지 않는다.
 | 11n | completed (offline); no provider call | D-069 V10 public-coverage review gate | `public-review-contract-v2`, tool v5/context v10/runtime v4, Git-base anchor provenance, CAS-bound inspection/visible-check evidence, `task-review-v3`, partial REVIEW→IMPLEMENT, finish/recovery/qualification tamper gate; 971 collected, 964 passed/7 skipped, mock/no-experiment only, D-067/V1-V9 immutable |
 | 11o | consumed once; original gate false; immutable | D-070 exact V10 single-task live pilot | `run_6cc69fc1170c4a44`: 28/28 completed exact-token responses, 667,553 tokens, 50 tools, `$0.671307`, no budget bind. Valid partial review 7/8 뒤 missing anchor와 unrelated citation 3회로 evaluator 전 agent failure; qualification 30/34. No-model `run_c07bb2e439a74380`도 exact diff hidden fail; baseline·memory/core 제외, 재실행 금지 |
 | 11p | completed (offline); no provider call | D-071 structured coverage-rejection recovery correction | Exact v6/v11/runtime-v5; target-specific feedback, model request/response tool-call CAS와 active worker-claim mirror, first-rejection restart, same-worker second rejection/latest-feedback recovery, exact-anchor and batched multi-check evidence, refreshed diff→complete review→finish/evaluator E2E, dedicated qualifier/tamper and single-mutation assertions pass. D-070 raw artifact/qualification immutable; baseline·memory/core 제외 |
-| 11q | implemented (offline contract); live unapproved | D-072 V11 live-readiness contract and semantic-preserving module split | Context/qualifier V11 helpers를 전용 모듈로 분리하고 existing imports/contracts 유지. Exact `dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`: HF Hub 1-row, no-memory, v6/v11/runtime-v5, 60/100/1.2M/1,800초/output25k, reserve `$5.5125`/cap `$6`; approval/hash/run ID null. Rejection 0은 integrity-pass 가능+diagnostic inconclusive, rejection>0은 every public CAS recovery 필수. Hard-restart live exercise·memory/core는 별도 후속 |
+| 11q | consumed once; readiness pass; recovery inconclusive; immutable | D-072 V11 live-readiness contract and exact one-row invocation | Context/qualifier V11 helper 분리와 exact contract 뒤 hash `sha256:12fb0f...080d`를 한 번 소비. `run_e2132144a8774b05`: official evaluator, qualification 36/36, gate true; coverage rejection 0으로 recovery inconclusive, hidden fail/SCRR false. 862,327 tokens, 35 model/57 tool, `$0.841833`, no budget bind; 재실행·comparison·memory/core 금지 |
+| 11r | completed; append-only seal; no provider call | D-073 consumed-ID hard seal and portable evidence | D-072 experiment ID를 hard-immutable set에 추가하고 승인 hash/run과 sanitized evidence를 `reports/live-pilot/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json`에 결속. Raw result/journal/qualification/gate 불변; 17 rejected-patch retries와 saturation 17은 coverage rejection recovery가 아님. Focused 374 passed/1 skipped, full 1,018 passed/7 skipped; D-073 추가 model cost 0 |
 
 D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
 815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner
@@ -218,17 +217,28 @@ repository-wide 999 collected, 992 passed/7 environment-dependent skipped를 기
 Python compileall과 `git diff --check`도 통과했다. Provider call, execution hash 또는 model cost는
 생성하지 않았고 D-070 artifact와 false gate는 그대로다.
 
-D-072는 위 D-071 수치를 새 source 변경의 회귀 수치로 재사용하지 않는다. 이번 work item은
+D-072 offline contract는 위 D-071 수치를 새 source 변경의 회귀 수치로 재사용하지 않았다. 해당 work item은
 `patchloop.agent.coverage_rejection`/`patchloop.evals.coverage_rejection` 의미 보존 분리와 exact
-one-row suite·selector·qualification/report gate의 offline contract까지다. Checked-in config는
-`live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`이며 clean preflight,
-실제 runtime에 persist한 execution plan/hash, 사용자 비용 승인, provider call과 live cost evidence는
-아직 없다. Offline test는 fake environment와 temporary root에서 synthetic hash와 approval branch만
-검증했다. Final offline verification은
+one-row suite·selector·qualification/report gate의 offline contract를 먼저 닫았다. Checked-in config의
+`live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`은 source config 단독으로
+실행 권한이 없다는 의미다. Offline test는 fake environment와 temporary root에서 synthetic hash와
+approval branch만 검증했다. Final offline verification은
 focused 322 collected, 321 passed/1 environment-dependent skipped와 repository 전체 1,022 collected,
 1,015 passed/7 environment-dependent skipped를 기록했고 Ruff, Python compileall과
-`git diff --check`도 통과했다. 다음 executable gate는 별도 clean no-call preflight와 invocation
-approval을 만드는 것이다. 그 뒤에도 live hard restart와 memory/core는 자동으로 열리지 않는다.
+`git diff --check`도 통과했다.
+
+이후 clean-host no-call preflight와 사용자 승인으로 execution hash
+`sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`를 한 번 소비했다.
+`run_e2132144a8774b05`는 797,862 input + 64,465 output = 862,327 token, 35 model call, 57 tool call,
+369,385ms와 `$0.841833`을 기록했고 어떤 budget dimension도 bind하지 않았다. Official evaluator와
+qualification 36/36, readiness gate는 통과했지만 structured coverage rejection이 0이라 recovery는
+`inconclusive/rejection_not_observed`다. Regression/scope/safety pass와 hidden fail로 outcome은
+`task_failure`, SCRR=false다. Rejected-patch retry 17/17, saturated context 17개와 post-saturation
+`PatchApplied` 1회는 별도 runtime 진단이며 coverage rejection recovery를 증명하지 않는다.
+D-073은 이 result/journal/qualification/gate를 수정하지 않고 consumed ID를 hard-immutable set에
+추가하며 승인 hash/run과 portable evidence를
+seal한다. D-072 suite/hash/run은 재실행하지 않으며 live hard restart와 memory/core는 자동으로 열리지
+않는다. D-073 과정의 provider call과 추가 model cost는 0이다.
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.

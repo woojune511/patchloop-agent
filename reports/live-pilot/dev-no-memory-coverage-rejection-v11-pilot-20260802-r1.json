@@ -1,0 +1,266 @@
+{
+  "schema_version": "coverage-rejection-v11-pilot-evidence-v1",
+  "recorded_at": "2026-08-02T07:55:48.440954Z",
+  "experiment_id": "dev-no-memory-coverage-rejection-v11-pilot-20260802-r1",
+  "purpose": "memory-development-no-memory-coverage-rejection-pilot",
+  "config_path": "experiments/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.yaml",
+  "source_harness_commit": "07f64c20103054d454a13584f2ea581b1363f268",
+  "execution_hash": "sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d",
+  "suite_hash": "sha256:48f47b6a3602409cc635c4c549f7fbc0154a87b4221e0531cc91037ea7e6ddaa",
+  "schedule_hash": "sha256:26e4f0ea5325c83c1e84960d5998744ea96551e1fea8dce87d32dfd9f9a99c2c",
+  "dataset_manifest_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786",
+  "public_spec_hash": "sha256:8f7b0ea5f92ec9d843b8053f0739b42570b7407d76fe6f7a7ea6fd08c481a075",
+  "execution_plan_artifact_hash": "sha256:675b5de672087e3a07c744fe172c2a590c00d64fa14ac8e814e8287ccc7e5b9a",
+  "execution_plan_file_hash": "sha256:4ff5acab5fce3ac7e0a10156be6c516d14ccb7ff3f97856793d90097f799a49e",
+  "result_hash": "sha256:2f2cba6276cfae5e31aa47fd91bdd8ad98ab1cce79135a7d6af5e7bb82be6a59",
+  "journal_file_hash": "sha256:6b3e098e9cd448b224babb18ebfbef70c7d38a0c000fcfb586f3cd7bc669b220",
+  "journal_final_event_hash": "sha256:fb25e914a27ccac8888b11e28a4d8b20d5f44c73b95d4238f098e253b295712f",
+  "runtime_contract": {
+    "schema_version": "corrective-runtime-contract-v5",
+    "tool_schema_version": "v6",
+    "context_policy_version": "phase-evidence-v11",
+    "system_prompt_hash": "sha256:4dc0b19db38886bc4c7e274f3ce5a31b135fd10b632a54f4b40d97fa24b0e876",
+    "tool_schema_hash": "sha256:ead74f31a873d2fc2f92e7bdff36af4deb818981e756b94cbe0d75ef27d5b748"
+  },
+  "environment_identity": {
+    "evaluator_image": "docker.io/swerebenchv2/huggingface-huggingface-hub@sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f",
+    "evaluator_image_identity": "sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f",
+    "openai_sdk_version": "2.47.0"
+  },
+  "model": {
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "store": false,
+    "previous_response_id_used": false,
+    "model_event_count": 35,
+    "exact_input_token_matches": 35,
+    "model_generation_blocked_count": 0
+  },
+  "budget": {
+    "max_model_calls": 60,
+    "max_tool_calls": 100,
+    "max_total_tokens": 1200000,
+    "wall_clock_timeout_seconds": 1800,
+    "authorization_reserve_usd": 5.5125,
+    "suite_cost_limit_usd": 6.0
+  },
+  "original_completion_gate": {
+    "schema_version": "v11-coverage-rejection-live-pilot-gate-v1",
+    "passed": true,
+    "expected_runs": 1,
+    "terminal_runs": 1,
+    "qualified_runs": 1,
+    "evaluator_reached_runs": 1,
+    "official_evaluator_runs": 1,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "coverage_lifecycle_observed_runs": 1,
+    "coverage_rejection_exercise": {
+      "status": "inconclusive",
+      "passed_runs": 0,
+      "inconclusive_runs": 1,
+      "failed_runs": 0
+    },
+    "budget_terminal_runs": 0,
+    "task_successes": 0,
+    "task_success_required": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "immutable": true,
+    "retroactively_recomputed": false
+  },
+  "run": {
+    "task_id": "hf-hub-xet-endpoint-propagation",
+    "run_id": "run_e2132144a8774b05",
+    "outcome_kind": "task_failure",
+    "agent_submission_status": "completed",
+    "evaluation_status": "completed",
+    "official": true,
+    "scope_compliant_success": false,
+    "verdicts": {
+      "hidden_tests": "fail",
+      "regression_tests": "pass",
+      "scope_policy": "pass",
+      "safety_policy": "pass"
+    },
+    "usage": {
+      "input_tokens": 797862,
+      "cached_input_tokens": 69120,
+      "output_tokens": 64465,
+      "reasoning_output_tokens": 42807,
+      "total_tokens": 862327,
+      "model_calls": 35,
+      "tool_calls": 57,
+      "wall_clock_ms": 369385,
+      "model_cost_usd": 0.841833
+    },
+    "budget_headroom": {
+      "model_calls": 25,
+      "tool_calls": 43,
+      "total_tokens": 337673,
+      "wall_clock_ms": 1430615,
+      "binding_dimension": "none"
+    },
+    "public_submitted_patch": {
+      "bytes": 4176,
+      "sha256": "sha256:d149f69d26f6580d6ca44fd4ff8704b8f760e0a51d2658401fdefbe1992aa31c",
+      "changed_file_count": 3,
+      "added_lines": 32,
+      "deleted_lines": 5
+    }
+  },
+  "qualification": {
+    "qualification_hash": "sha256:496d1a835199a96a2237793eb3e2f34143e20e53b4b9e5e57f12040aac04fe72",
+    "source_evidence_hash": "sha256:5914bc5d4a317fb0995f1336551430beb4f9e745321b07c4c5e06f156b501ba8",
+    "file_sha256": "sha256:9378e6158a51d318336fc802d9028bbea5875a675577cd9bc420b9022f22beaa",
+    "qualified": true,
+    "trace_integrity_passed": true,
+    "leakage_scan_passed": true,
+    "evaluation_reached": true,
+    "passed_checks": 36,
+    "total_checks": 36,
+    "failed_check_ids": [],
+    "memory_candidate_eligible": false
+  },
+  "public_lifecycle": {
+    "coverage_target_count": 8,
+    "complete_review_count": 1,
+    "accepted_submission_count": 1,
+    "evaluation_completed": true,
+    "all_coverage_checks_passed": true
+  },
+  "coverage_rejection_exercise": {
+    "status": "inconclusive",
+    "reason": "rejection_not_observed",
+    "coverage_citation_rejection_count": 0,
+    "verified_coverage_citation_rejection_count": 0,
+    "failed_rejection_sequences": [],
+    "restart_observed": false,
+    "live_recovery_validated": false
+  },
+  "separate_patch_candidate_retry_context": {
+    "rejected_candidate_count": 17,
+    "retry_episode_count": 17,
+    "verified_retry_count": 17,
+    "failed_source_failure_sequences": [],
+    "not_coverage_citation_rejections": true
+  },
+  "saturation_context": {
+    "check_passed": true,
+    "saturated_context_count": 17,
+    "post_saturation_patch_count": 1,
+    "reset_opportunity_count": 1,
+    "reset_context_count": 1,
+    "failed_reset_context_sequences": []
+  },
+  "portable_artifacts": [
+    {
+      "role": "final-submitted-public-source-diff",
+      "path": "reports/live-pilot/artifacts/run_e2132144a8774b05-submitted.patch",
+      "bytes": 4176,
+      "sha256": "sha256:d149f69d26f6580d6ca44fd4ff8704b8f760e0a51d2658401fdefbe1992aa31c"
+    }
+  ],
+  "raw_local_artifacts": [
+    {
+      "role": "experiment-result",
+      "path": ".patchloop/experiments/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json",
+      "bytes": 15663,
+      "sha256": "sha256:2f2cba6276cfae5e31aa47fd91bdd8ad98ab1cce79135a7d6af5e7bb82be6a59"
+    },
+    {
+      "role": "campaign-journal",
+      "path": ".patchloop/experiments/journals/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.jsonl",
+      "bytes": 2731,
+      "sha256": "sha256:6b3e098e9cd448b224babb18ebfbef70c7d38a0c000fcfb586f3cd7bc669b220"
+    },
+    {
+      "role": "execution-plan-file",
+      "path": ".patchloop/experiments/plans/12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d.json",
+      "bytes": 11131,
+      "sha256": "sha256:4ff5acab5fce3ac7e0a10156be6c516d14ccb7ff3f97856793d90097f799a49e"
+    },
+    {
+      "role": "run-manifest",
+      "path": ".patchloop/artifacts/runs/run_e2132144a8774b05/manifest.json",
+      "bytes": 6602,
+      "sha256": "sha256:370dec01885b0452495b3547c3f0708d382fe8fbc3466d6786fca93e001e5025"
+    },
+    {
+      "role": "run-result",
+      "path": ".patchloop/artifacts/runs/run_e2132144a8774b05/result.json",
+      "bytes": 5068,
+      "sha256": "sha256:0a426d9470e10a2dfdd4fd8b87587f1835f08a927f630d036494b3ef8eea8b1b"
+    },
+    {
+      "role": "evaluation-receipt",
+      "path": ".patchloop/artifacts/runs/run_e2132144a8774b05/evaluation-receipt.json",
+      "bytes": 599,
+      "sha256": "sha256:de109bd00edd9825a5ea2ee80dd7583a3b897b902979f3a10663df14960df48c"
+    },
+    {
+      "role": "trace-qualification",
+      "path": ".patchloop/qualifications/run_e2132144a8774b05.json",
+      "bytes": 29320,
+      "sha256": "sha256:9378e6158a51d318336fc802d9028bbea5875a675577cd9bc420b9022f22beaa"
+    },
+    {
+      "role": "submitted-patch",
+      "path": ".patchloop/runs/run_e2132144a8774b05/submitted.patch",
+      "bytes": 4176,
+      "sha256": "sha256:d149f69d26f6580d6ca44fd4ff8704b8f760e0a51d2658401fdefbe1992aa31c"
+    }
+  ],
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "trace_qualified": true,
+    "public_coverage_lifecycle_completed": true,
+    "readiness_gate_passed": true,
+    "structured_coverage_rejection_observed": false,
+    "coverage_rejection_recovery_live_validated": false,
+    "live_hard_restart_validated": false,
+    "task_success": false,
+    "scrr": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "core_campaign_unlocked": false
+  },
+  "evidence_policy": {
+    "raw_local_artifacts": "Hash-bound local-only evidence; canonical result, journal, plan, run and qualification bytes remain unchanged.",
+    "public_patch_scope": "The final submitted public-source diff is copied byte-for-byte into one hash-bound portable artifact; hidden tests, private assertions and reference patches are not bundled.",
+    "provider_private_exclusion": "Provider request and response bodies, secrets, private task specifications, hidden assertions, evaluator-only payloads and reference patches are excluded."
+  },
+  "evidence_validation": {
+    "raw_artifact_hashes_verified": true,
+    "private_leak_scan_passed": true,
+    "validation_scope": "D-073 append-only source seal after the single approved D-072 invocation",
+    "focused_regression": {
+      "collected": 375,
+      "passed": 374,
+      "environment_dependent_skipped": 1,
+      "failed": 0
+    },
+    "repository_regression": {
+      "collected": 1025,
+      "passed": 1018,
+      "environment_dependent_skipped": 7,
+      "failed": 0
+    },
+    "static_checks": {
+      "ruff": "passed",
+      "python_compileall": "passed",
+      "git_diff_check": "passed"
+    },
+    "provider_calls": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "interpretation": {
+    "established": "The exact V11 live row completed one qualified public coverage and submission lifecycle, reached the official evaluator and stayed within every configured budget dimension.",
+    "not_established": "No structured coverage citation rejection occurred, so live rejection recovery remains inconclusive. Hidden acceptance failed, so this is not SCRR, a no-memory performance baseline, a memory source or core evidence.",
+    "next_gate": "Preserve this execution hash and run as immutable evidence. A separate approved fault exercise is required to validate live structured-rejection recovery or hard-restart reclaim."
+  }
+}

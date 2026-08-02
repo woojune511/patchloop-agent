@@ -19,4 +19,5 @@ reports/memory-development/artifacts/run_0794d94df2f24d87-submitted.patch -white
 reports/live-pilot/artifacts/run_685c492e34f84fef-submitted.patch -whitespace
 reports/live-pilot/artifacts/run_0814be408332479e-submitted.patch -whitespace
 reports/live-pilot/artifacts/run_6cc69fc1170c4a44-unsubmitted-final.patch -whitespace
+reports/live-pilot/artifacts/run_e2132144a8774b05-submitted.patch -whitespace
 fixtures/task-packages/self-validation-csv-quoted-newline/reference.patch -whitespace

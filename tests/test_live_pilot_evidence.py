@@ -3892,3 +3892,283 @@ def test_d070_v10_report_excludes_private_and_provider_payload() -> None:
     private_tokens = _private_leak_tokens(package, api_key=None)
     leaked = sorted(token for token in private_tokens if token in checked_text)
     assert leaked == []
+
+
+def test_d072_v11_report_seals_qualified_inconclusive_live_result() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "coverage-rejection-v11-pilot-evidence-v1"
+    )
+    assert payload["source_harness_commit"] == (
+        "07f64c20103054d454a13584f2ea581b1363f268"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d"
+    )
+    assert payload["runtime_contract"] == {
+        "schema_version": "corrective-runtime-contract-v5",
+        "tool_schema_version": "v6",
+        "context_policy_version": "phase-evidence-v11",
+        "system_prompt_hash": (
+            "sha256:4dc0b19db38886bc4c7e274f3ce5a31b135fd10b632a54f4b40d97fa24b0e876"
+        ),
+        "tool_schema_hash": (
+            "sha256:ead74f31a873d2fc2f92e7bdff36af4deb818981e756b94cbe0d75ef27d5b748"
+        ),
+    }
+
+    gate = payload["original_completion_gate"]
+    assert gate["passed"] is True
+    assert gate["terminal_runs"] == 1
+    assert gate["qualified_runs"] == 1
+    assert gate["evaluator_reached_runs"] == 1
+    assert gate["official_evaluator_runs"] == 1
+    assert gate["infrastructure_errors"] == 0
+    assert gate["qualification_errors"] == 0
+    assert gate["diagnostic_errors"] == 0
+    assert gate["budget_terminal_runs"] == 0
+    assert gate["task_successes"] == 0
+    assert gate["task_success_required"] is False
+    assert gate["coverage_rejection_exercise"] == {
+        "status": "inconclusive",
+        "passed_runs": 0,
+        "inconclusive_runs": 1,
+        "failed_runs": 0,
+    }
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+    assert gate["immutable"] is True
+    assert gate["retroactively_recomputed"] is False
+
+    run = payload["run"]
+    assert run["run_id"] == "run_e2132144a8774b05"
+    assert run["outcome_kind"] == "task_failure"
+    assert run["agent_submission_status"] == "completed"
+    assert run["evaluation_status"] == "completed"
+    assert run["official"] is True
+    assert run["scope_compliant_success"] is False
+    assert run["verdicts"] == {
+        "hidden_tests": "fail",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass",
+    }
+    assert run["usage"] == {
+        "input_tokens": 797862,
+        "cached_input_tokens": 69120,
+        "output_tokens": 64465,
+        "reasoning_output_tokens": 42807,
+        "total_tokens": 862327,
+        "model_calls": 35,
+        "tool_calls": 57,
+        "wall_clock_ms": 369385,
+        "model_cost_usd": 0.841833,
+    }
+    assert run["budget_headroom"] == {
+        "model_calls": 25,
+        "tool_calls": 43,
+        "total_tokens": 337673,
+        "wall_clock_ms": 1430615,
+        "binding_dimension": "none",
+    }
+    assert run["public_submitted_patch"] == {
+        "bytes": 4176,
+        "sha256": (
+            "sha256:d149f69d26f6580d6ca44fd4ff8704b8f760e0a51d2658401fdefbe1992aa31c"
+        ),
+        "changed_file_count": 3,
+        "added_lines": 32,
+        "deleted_lines": 5,
+    }
+
+    qualification = payload["qualification"]
+    assert qualification["qualification_hash"] == (
+        "sha256:496d1a835199a96a2237793eb3e2f34143e20e53b4b9e5e57f12040aac04fe72"
+    )
+    assert qualification["source_evidence_hash"] == (
+        "sha256:5914bc5d4a317fb0995f1336551430beb4f9e745321b07c4c5e06f156b501ba8"
+    )
+    assert qualification["qualified"] is True
+    assert qualification["trace_integrity_passed"] is True
+    assert qualification["leakage_scan_passed"] is True
+    assert qualification["evaluation_reached"] is True
+    assert qualification["passed_checks"] == qualification["total_checks"] == 36
+    assert qualification["failed_check_ids"] == []
+    assert qualification["memory_candidate_eligible"] is False
+
+    exercise = payload["coverage_rejection_exercise"]
+    assert exercise == {
+        "status": "inconclusive",
+        "reason": "rejection_not_observed",
+        "coverage_citation_rejection_count": 0,
+        "verified_coverage_citation_rejection_count": 0,
+        "failed_rejection_sequences": [],
+        "restart_observed": False,
+        "live_recovery_validated": False,
+    }
+    retry = payload["separate_patch_candidate_retry_context"]
+    assert retry["rejected_candidate_count"] == 17
+    assert retry["retry_episode_count"] == retry["verified_retry_count"] == 17
+    assert retry["failed_source_failure_sequences"] == []
+    assert retry["not_coverage_citation_rejections"] is True
+    assert payload["saturation_context"] == {
+        "check_passed": True,
+        "saturated_context_count": 17,
+        "post_saturation_patch_count": 1,
+        "reset_opportunity_count": 1,
+        "reset_context_count": 1,
+        "failed_reset_context_sequences": [],
+    }
+
+    claims = payload["claims_boundary"]
+    assert claims["readiness_gate_passed"] is True
+    assert claims["structured_coverage_rejection_observed"] is False
+    assert claims["coverage_rejection_recovery_live_validated"] is False
+    assert claims["live_hard_restart_validated"] is False
+    assert claims["task_success"] is False
+    assert claims["scrr"] is False
+    assert claims["comparison_denominator_eligible"] is False
+    assert claims["memory_admission_unlocked"] is False
+    assert claims["core_campaign_unlocked"] is False
+
+    validation = payload["evidence_validation"]
+    assert validation == {
+        "raw_artifact_hashes_verified": True,
+        "private_leak_scan_passed": True,
+        "validation_scope": (
+            "D-073 append-only source seal after the single approved "
+            "D-072 invocation"
+        ),
+        "focused_regression": {
+            "collected": 375,
+            "passed": 374,
+            "environment_dependent_skipped": 1,
+            "failed": 0,
+        },
+        "repository_regression": {
+            "collected": 1025,
+            "passed": 1018,
+            "environment_dependent_skipped": 7,
+            "failed": 0,
+        },
+        "static_checks": {
+            "ruff": "passed",
+            "python_compileall": "passed",
+            "git_diff_check": "passed",
+        },
+        "provider_calls": 0,
+        "added_model_cost_usd": 0.0,
+    }
+
+    portable_patch = _artifact_for_role(
+        payload, "final-submitted-public-source-diff"
+    )
+    _assert_artifact_identity(portable_patch)
+    assert portable_patch["sha256"] == run["public_submitted_patch"]["sha256"]
+    raw_submitted = next(
+        artifact
+        for artifact in payload["raw_local_artifacts"]
+        if artifact["role"] == "submitted-patch"
+    )
+    assert portable_patch["bytes"] == raw_submitted["bytes"]
+    assert portable_patch["sha256"] == raw_submitted["sha256"]
+    if Path(raw_submitted["path"]).exists():
+        assert Path(portable_patch["path"]).read_bytes() == Path(
+            raw_submitted["path"]
+        ).read_bytes()
+
+    for artifact in payload["raw_local_artifacts"]:
+        if Path(artifact["path"]).exists():
+            _assert_artifact_identity(artifact)
+
+    if Path(".patchloop/qualifications/run_e2132144a8774b05.json").exists():
+        raw_qualification = load_trace_qualification("run_e2132144a8774b05")
+        assert raw_qualification["qualification_hash"] == (
+            qualification["qualification_hash"]
+        )
+        saturation_check = next(
+            check
+            for check in raw_qualification["checks"]
+            if check["check_id"] == "saturation_context_contract"
+        )
+        assert saturation_check["passed"] == (
+            payload["saturation_context"]["check_passed"]
+        )
+        for key in (
+            "saturated_context_count",
+            "post_saturation_patch_count",
+            "reset_opportunity_count",
+            "reset_context_count",
+            "failed_reset_context_sequences",
+        ):
+            assert saturation_check["details"][key] == (
+                payload["saturation_context"][key]
+            )
+        assert calculate_source_evidence_hash("run_e2132144a8774b05") == (
+            qualification["source_evidence_hash"]
+        )
+
+
+def test_d072_v11_report_excludes_private_and_provider_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    portable_patch = _artifact_for_role(
+        payload, "final-submitted-public-source-diff"
+    )
+    portable_patch_path = Path(portable_patch["path"])
+    checked_text = path.read_text(encoding="utf-8")
+    checked_text += portable_patch_path.read_text(encoding="utf-8")
+    assert "OPENAI_API_KEY" not in checked_text
+    assert "Bearer " not in checked_text
+    package = load_task_package(
+        "tasks/dev-train/hf-hub-xet-endpoint-propagation"
+    )
+    private_tokens = _private_leak_tokens(package, api_key=None)
+    leaked = sorted(token for token in private_tokens if token in checked_text)
+    assert leaked == []
