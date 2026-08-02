@@ -120,6 +120,9 @@ CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS = frozenset(
         "generic-baseline-readiness-v2v5-20260802-r2",
     }
 )
+CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS = frozenset(
+    {"pyfakefs-workflow-completion-probe-v2v5-20260803-r1"}
+)
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
     | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
@@ -133,6 +136,7 @@ HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     | CONSUMED_COVERAGE_REVIEW_PILOT_EXPERIMENT_IDS
     | CONSUMED_COVERAGE_REJECTION_PILOT_EXPERIMENT_IDS
     | CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
+    | CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS
 )
 SINGLE_TASK_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
@@ -340,6 +344,9 @@ WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA = (
     "workflow-completion-runtime-contract-v1"
 )
 WORKFLOW_COMPLETION_CALL_GUARD_POLICY = "model-tool-observability-only-v1"
+QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA = (
+    "qualification-gate-check-projection-v1"
+)
 PRICING_START_VERIFICATION_SCHEMA = "pricing-start-verification-v1"
 
 HASH_BOUND_CORRECTIVE_PURPOSES = {
@@ -2432,14 +2439,28 @@ def _assert_manifest_matches_preflight(
         raise ContractError("run manifest does not match the approved execution plan")
 
 
-def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
-    from patchloop.evals.qualification import qualify_run
+def _qualification_gate_check_projection(
+    raw_checks: Any,
+    check_id: str,
+) -> dict[str, Any]:
+    """Project one qualifier check without copying its potentially sensitive details."""
 
-    task_path = Path(task)
-    payload = qualify_run(
-        run_id,
-        task_dir=task_path.parent if task_path.is_file() else task_path,
-    )
+    checks = raw_checks if isinstance(raw_checks, list) else []
+    matches = [
+        check
+        for check in checks
+        if isinstance(check, dict) and check.get("check_id") == check_id
+    ]
+    passed = matches[0].get("passed") if len(matches) == 1 else None
+    return {
+        "schema_version": QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA,
+        "check_id": check_id,
+        "check_count": len(matches),
+        "passed": passed if type(passed) is bool else None,
+    }
+
+
+def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     summary = {
         key: payload.get(key)
         for key in (
@@ -2463,6 +2484,14 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
     raw_checks = payload.get("checks")
     if not isinstance(raw_checks, list):
         raw_checks = []
+    if payload.get("purpose") == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE.value:
+        check_id = "disabled_call_guard_contract"
+        summary["gate_checks"] = {
+            check_id: _qualification_gate_check_projection(
+                raw_checks,
+                check_id,
+            )
+        }
     retry_checks = [
         check
         for check in raw_checks
@@ -2865,6 +2894,17 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
         "coverage_rejection_recovery": coverage_rejection_feature,
     }
     return summary
+
+
+def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
+    from patchloop.evals.qualification import qualify_run
+
+    task_path = Path(task)
+    payload = qualify_run(
+        run_id,
+        task_dir=task_path.parent if task_path.is_file() else task_path,
+    )
+    return _terminal_qualification_summary(payload)
 
 
 def _saturation_diagnostic_result(
@@ -3476,12 +3516,22 @@ def _completion_gate(
         check_id: str,
     ) -> bool:
         qualification = row.get("qualification") or {}
-        checks = qualification.get("checks") or []
-        return any(
-            isinstance(check, dict)
-            and check.get("check_id") == check_id
-            and check.get("passed") is True
-            for check in checks
+        gate_checks = qualification.get("gate_checks")
+        projection = (
+            gate_checks.get(check_id)
+            if isinstance(gate_checks, dict)
+            else None
+        )
+        return bool(
+            isinstance(projection, dict)
+            and set(gate_checks) == {check_id}
+            and set(projection)
+            == {"schema_version", "check_id", "check_count", "passed"}
+            and projection.get("schema_version")
+            == QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA
+            and projection.get("check_id") == check_id
+            and projection.get("check_count") == 1
+            and projection.get("passed") is True
         )
 
     call_guard_contract_passed = bool(

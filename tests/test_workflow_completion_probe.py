@@ -97,6 +97,14 @@ def test_workflow_completion_probe_suite_loads_exact_contract() -> None:
     assert pricing["budget_upper_bound_usd"] == pytest.approx(13.6125)
 
 
+def test_consumed_workflow_completion_probe_is_hard_immutable() -> None:
+    assert len(eval_runner.CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS) == 1
+    assert (
+        eval_runner.WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+        in eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    )
+
+
 @pytest.mark.parametrize(
     "mutation",
     [
@@ -277,6 +285,236 @@ def test_workflow_completion_runtime_disables_only_call_count_guards() -> None:
     )
     with pytest.raises(ContractError, match="token budget exceeded"):
         AgentRunner._assert_consumed_budget(manifest, token_exceeded)
+
+
+def _workflow_probe_gate_fixture(
+    checks: Any,
+) -> tuple[dict[str, Any], dict[str, Any], str]:
+    run_id = "run_workflow_summary_contract"
+    execution_hash = "sha256:" + ("e" * 64)
+    schedule_row = {
+        "order": 1,
+        "schedule_row_id": "sha256:" + ("d" * 64),
+        "task_id": eval_runner.WORKFLOW_COMPLETION_PROBE_TASK_ID,
+        "split": "dev-train",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 1,
+    }
+    qualification = eval_runner._terminal_qualification_summary(
+        {
+            "schema_version": "trace-qualification-v2",
+            "run_id": run_id,
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "leakage_scan_passed": True,
+            "evaluation_reached": True,
+            "outcome_kind": "task_failure",
+            "purpose": ExperimentPurpose.WORKFLOW_COMPLETION_PROBE.value,
+            "dataset_role": "memory-development",
+            "task_id": schedule_row["task_id"],
+            "execution_hash": execution_hash,
+            "schedule_row_id": schedule_row["schedule_row_id"],
+            "memory_candidate_eligible": False,
+            "failure_record_id": "fail_summary_contract",
+            "qualification_hash": "sha256:" + ("f" * 64),
+            "checks": checks,
+        }
+    )
+    row = {
+        **schedule_row,
+        "attempt_status": "terminal",
+        "run_id": run_id,
+        "result": {
+            "run_id": run_id,
+            "official": True,
+            "evaluation_status": "completed",
+            "outcome_kind": "task_failure",
+            "scope_compliant_success": False,
+            "terminal_error": None,
+        },
+        "qualification": qualification,
+        "diagnostic": None,
+        "infrastructure_error": None,
+        "qualification_error": None,
+        "diagnostic_error": None,
+    }
+    return row, schedule_row, execution_hash
+
+
+def test_workflow_completion_summary_projects_gate_check_and_gate_passes() -> None:
+    row, schedule_row, execution_hash = _workflow_probe_gate_fixture(
+        [
+            {
+                "check_id": "disabled_call_guard_contract",
+                "passed": True,
+                "details": {"must_not_be_projected": "sensitive"},
+            }
+        ]
+    )
+
+    assert "checks" not in row["qualification"]
+    assert row["qualification"]["gate_checks"] == {
+        "disabled_call_guard_contract": {
+            "schema_version": "qualification-gate-check-projection-v1",
+            "check_id": "disabled_call_guard_contract",
+            "check_count": 1,
+            "passed": True,
+        }
+    }
+    gate = eval_runner._completion_gate(
+        eval_runner.load_suite(SUITE_PATH),
+        [row],
+        expected_execution_hash=execution_hash,
+        expected_schedule=[schedule_row],
+    )
+
+    assert gate is not None
+    assert gate["call_guard_contract_passed"] is True
+    assert gate["passed"] is True
+
+
+def test_terminal_qualifier_producer_preserves_sanitized_gate_projection(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from patchloop.evals import qualification as qualification_module
+
+    row, _, _ = _workflow_probe_gate_fixture([])
+    raw_payload = {
+        **row["qualification"],
+        "checks": [
+            {
+                "check_id": "disabled_call_guard_contract",
+                "passed": True,
+                "details": {"must_not_be_projected": "sensitive"},
+            }
+        ],
+    }
+    monkeypatch.setattr(
+        qualification_module,
+        "qualify_run",
+        lambda *_args, **_kwargs: raw_payload,
+    )
+
+    summary = eval_runner._qualify_terminal_run(
+        row["run_id"],
+        eval_runner.WORKFLOW_COMPLETION_PROBE_TASK,
+    )
+
+    assert "checks" not in summary
+    assert summary["gate_checks"] == {
+        "disabled_call_guard_contract": {
+            "schema_version": "qualification-gate-check-projection-v1",
+            "check_id": "disabled_call_guard_contract",
+            "check_count": 1,
+            "passed": True,
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    "checks",
+    [
+        None,
+        {},
+        [],
+        [
+            {
+                "check_id": "disabled_call_guard_contract",
+                "passed": 1,
+            }
+        ],
+        [
+            {
+                "check_id": "disabled_call_guard_contract",
+                "passed": True,
+            },
+            {
+                "check_id": "disabled_call_guard_contract",
+                "passed": True,
+            },
+        ],
+    ],
+)
+def test_workflow_completion_gate_fails_closed_on_malformed_projection(
+    checks: Any,
+) -> None:
+    row, schedule_row, execution_hash = _workflow_probe_gate_fixture(checks)
+
+    gate = eval_runner._completion_gate(
+        eval_runner.load_suite(SUITE_PATH),
+        [row],
+        expected_execution_hash=execution_hash,
+        expected_schedule=[schedule_row],
+    )
+
+    assert gate is not None
+    assert gate["call_guard_contract_passed"] is False
+    assert gate["passed"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wrong_schema",
+        "wrong_inner_id",
+        "extra_inner_field",
+        "extra_outer_check",
+        "false_result",
+    ],
+)
+def test_workflow_completion_gate_rejects_projection_schema_drift(
+    mutation: str,
+) -> None:
+    row, schedule_row, execution_hash = _workflow_probe_gate_fixture(
+        [
+            {
+                "check_id": "disabled_call_guard_contract",
+                "passed": True,
+            }
+        ]
+    )
+    gate_checks = row["qualification"]["gate_checks"]
+    projection = gate_checks["disabled_call_guard_contract"]
+    if mutation == "wrong_schema":
+        projection["schema_version"] = "qualification-gate-check-projection-v0"
+    elif mutation == "wrong_inner_id":
+        projection["check_id"] = "different_check"
+    elif mutation == "extra_inner_field":
+        projection["details"] = {"unexpected": True}
+    elif mutation == "extra_outer_check":
+        gate_checks["different_check"] = dict(projection)
+    elif mutation == "false_result":
+        projection["passed"] = False
+    else:  # pragma: no cover - parametrization is exhaustive
+        raise AssertionError(mutation)
+
+    gate = eval_runner._completion_gate(
+        eval_runner.load_suite(SUITE_PATH),
+        [row],
+        expected_execution_hash=execution_hash,
+        expected_schedule=[schedule_row],
+    )
+
+    assert gate is not None
+    assert gate["call_guard_contract_passed"] is False
+    assert gate["passed"] is False
+
+
+def test_non_workflow_qualification_summary_has_no_gate_projection() -> None:
+    summary = eval_runner._terminal_qualification_summary(
+        {
+            "purpose": ExperimentPurpose.GENERIC_BASELINE_READINESS.value,
+            "checks": [
+                {
+                    "check_id": "disabled_call_guard_contract",
+                    "passed": True,
+                }
+            ],
+        }
+    )
+
+    assert "gate_checks" not in summary
 
 
 def test_workflow_completion_probe_report_is_calibration_only(
