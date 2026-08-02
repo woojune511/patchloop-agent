@@ -388,6 +388,37 @@ Evidence/issue:
   consumed-ID guard. Result raw file SHA-256 is
   `sha256:ba2670e8f1bb79e0af9cf56d02841014cc3e66d58db85b114459776af277d30d`.
 
+### D-077 accepted decision — adopt a budget-only generic V2/V5 readiness successor
+
+- Status: accepted and offline-verified source-contract decision; clean no-call preflight pending; no
+  provider call, execution hash, live approval, run, measured cost or gate outcome.
+- Preserves: D-075 r1 suite/hash/run/result/false gate와 D-076 append-only seal을 수정·재개·합산하지 않는다.
+  Historical consumed-ID guard와 calibration-only reporting boundary도 유지한다.
+- Exact successor: 새 experiment ID는 `generic-baseline-readiness-v2v5-20260802-r2`, purpose는
+  `generic-baseline-readiness`다. Ordered Babel/Moto/pyfakefs/HF Hub task와 원 dataset role,
+  `no_memory` repetition 1을 그대로 사용한다.
+- Controlled change: `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool
+  v2/context V5, SDK retry 0, output 25,000, tool 100, wall 1,800초, sidecar absent와 fault none은
+  바꾸지 않는다. Model call만 40→50, total token만 850,000→1,200,000으로 올린다. 다른 drift가
+  생기면 budget-only evidence가 아니라 새 tuple로 versioning한다.
+- Gate/report boundary: `generic-baseline-readiness-gate-v1`은 계속 exact 4/4 terminal·qualified·official
+  evaluator completion과 infrastructure/qualification/diagnostic/budget-terminal 0을 요구한다. Hidden
+  acceptance와 SCRR는 요구하지 않는다. 모든 row는 calibration-only이고 comparison denominator,
+  failure-memory admission과 core에서 제외한다. Pass도 comparison/no-memory budget을 자동 freeze하지 않는다.
+- Authorization boundary: 공식 rate는 2026-08-02T13:11:37Z에 다시 확인했다. Conservative reserve는
+  `$5.5125`/run, `$22.05`/four rows, cap `$23`이며 completion guarantee, 예상 비용 또는 invoice가 아니다.
+  Tracked source와 offline tests를 clean commit으로 만든 뒤 no-call preflight가 새 exact hash를 계산해야
+  하고, 사용자가 그 hash와 최대 `$23`을 명시적으로 승인해야 한 번 실행할 수 있다.
+- Rationale: D-075 public trace가 HF Hub total-token과 pyfakefs model-call budget만 readiness confound로
+  식별했다. 두 limit에 모든 row가 공유하는 headroom을 주면 hidden outcome에 맞춘 task-specific tuning
+  없이 runtime completion을 다시 판정할 수 있다. 50/1.2M은 observed headroom에 기반한 heuristic이지
+  completion 보장이 아니다.
+- Date: 2026-08-02
+- Evidence/issue: D-076 immutable public budget facts와 dated official pricing verification. D-077 source
+  및 offline gate는 1,095 collected/1,088 passed/7 environment-dependent skipped, Ruff, compileall과
+  `git diff --check`를 통과했다. Provider/result evidence가 없고 readiness, SCRR, baseline 또는
+  memory-effect claim을 만들지 않는다.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

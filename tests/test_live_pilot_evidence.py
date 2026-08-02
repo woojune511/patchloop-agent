@@ -4311,8 +4311,21 @@ def test_d075_generic_readiness_report_preserves_gate_and_budget_confound() -> N
     assert claims["comparison_denominator_eligible"] is False
     assert claims["memory_admission_unlocked"] is False
     assert claims["core_campaign_unlocked"] is False
-    assert payload["next_gate_candidate"]["change_scope"] == "budget-only"
-    assert payload["next_gate_candidate"]["authorized_by_this_record"] is False
+    assert payload["next_gate_candidate"] == {
+        "change_scope": "budget-only",
+        "frozen_model_prompt_tool_retry_evaluator_tuple": True,
+        "proposed_per_run_budget": {
+            "max_model_calls": 50,
+            "max_tool_calls": 100,
+            "max_total_tokens": 1_200_000,
+            "wall_clock_timeout_seconds": 1_800,
+            "max_output_tokens": 25_000,
+        },
+        "proposed_per_run_cost_reserve_usd": 5.5125,
+        "proposed_four_run_reserve_usd": 22.05,
+        "requires_new_suite_execution_hash_and_cost_approval": True,
+        "authorized_by_this_record": False,
+    }
     assert payload["portable_artifacts"] == []
 
 

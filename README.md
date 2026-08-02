@@ -2,6 +2,20 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-02 D-077은 D-076의 public budget-confound evidence를 condition-neutral하게 반영한
+새 exact successor suite `generic-baseline-readiness-v2v5-20260802-r2`를 고정한다. D-075와
+동일한 Babel/Moto/pyfakefs/HF Hub task와 순서, model/reasoning/tier, `SYSTEM_PROMPT_V3`, tool
+v2/context `phase-evidence-v5`, SDK transport retry 0, output 25,000, tool 100, wall 1,800초를
+유지하고 budget만 model call 40→50, total token 850,000→1,200,000으로 올린다.
+2026-08-02T13:11:37Z에 공식 rate를 다시 확인한 authorization reserve는 run당 `$5.5125`, four-row
+`$22.05`, suite cap `$23`이다. 이는 completion guarantee나 예상 invoice가 아니다. 이 source
+contract에는 provider call, execution hash, 사용자 승인, run, measured cost 또는 gate outcome이
+아직 없다. Clean no-call preflight가 만든 새 exact hash와 최대 `$23`에 대한 명시적 승인이 있어야
+한 번 실행할 수 있으며 comparison denominator, memory admission과 core는 계속 닫혀 있다.
+Focused readiness matrix와 repository-wide pytest는 통과했다. 전체 1,095개 중 1,088 passed/7
+environment-dependent skipped였고 Ruff, compileall과 `git diff --check`도 통과했다. 이는 offline
+contract evidence이며 provider call과 추가 model cost는 0이다.
+
 2026-08-02 D-076은 사용자가 승인한 exact execution hash
 `sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66`로 D-075
 four-row readiness panel을 정확히 한 번 실행한 결과를 seal한다. 네 row는 모두 terminal이고 trace

@@ -871,3 +871,44 @@ provider bodies, secrets, private task specs, hidden assertions and reference pa
 
 The next 50/100/1,200,000/1,800 candidate is not a reproduction command or approved run. It requires a new
 checked-in suite, clean execution hash and explicit cost approval.
+
+## D-077 budget-only successor source audit and no-call preflight
+
+D-077 assigns the new exact ID `generic-baseline-readiness-v2v5-20260802-r2`. Inspect its source and run only
+offline tests before creating live authority:
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml
+
+uv run --cache-dir .uv-cache pytest `
+  tests/test_model_adapter.py `
+  tests/test_experiments.py `
+  tests/test_report.py `
+  tests/test_trace_qualification.py -q
+```
+
+The exact contract must retain the four D-075 tasks and order, model/reasoning/tier, prompt V3, tool V2/context
+V5, SDK retry 0, output 25,000, tool 100, wall 1,800 seconds, absent sidecar and fault-free policy. Only model
+calls 40→50 and total tokens 850,000→1,200,000 may differ. The D-075 r1 source, consumed hash, run artifacts and
+false gate must remain unchanged.
+
+After all tracked source and documentation is committed and `git status --short` is empty, run the new suite's
+preflight. This command may inspect API-key presence but must not send a provider request:
+
+```powershell
+uv run --cache-dir .uv-cache --env-file .env patchloop evaluate `
+  --suite experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml `
+  --preflight-only
+```
+
+Do not add `--approve-live-cost` or an approved hash at this stage. On an otherwise ready host the output must
+show the exact four-row schedule, 50/100/1,200,000/1,800 budget, 25,000 output, `$5.5125` per-run reserve,
+`$22.05` total reserve and `$23` cap. It must bind the clean commit, task/private package, Docker image/evaluator,
+SDK, randomized schedule, prompt/tool/retry and the official rate rechecked at 2026-08-02T13:11:37Z. Expected
+authorization blockers remain live-cost approval and approved-execution-hash mismatch. Any dirty source,
+package/image/SDK drift or stale pricing is an additional blocker and must be resolved before requesting approval.
+
+The preflight-produced execution hash is ephemeral authority for that exact clean state. Do not write it into the
+source YAML or change tracked files afterward. Present the hash and maximum `$23` to the user for explicit
+approval. Until that separate approval, provider call, run ID, measured cost and readiness outcome remain absent.

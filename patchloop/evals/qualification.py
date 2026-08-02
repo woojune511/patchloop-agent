@@ -115,6 +115,20 @@ _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET = Budget(
     max_total_tokens=850_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET = Budget(
+    max_model_calls=50,
+    max_tool_calls=100,
+    max_total_tokens=1_200_000,
+    wall_clock_timeout_seconds=1_800,
+)
+_GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
+    "generic-baseline-readiness-v2v5-20260802-r1": (
+        _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+    ),
+    "generic-baseline-readiness-v2v5-20260802-r2": (
+        _GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
+    ),
+}
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
 )
@@ -150,6 +164,16 @@ _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
     ExperimentPurpose.CORE,
 }
+
+
+def _generic_baseline_readiness_budget_matches(
+    experiment_id: str,
+    budget: Budget,
+) -> bool:
+    expected = _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
+        experiment_id
+    )
+    return expected is not None and budget == expected
 
 
 def _purpose_dataset_roles(purpose: ExperimentPurpose) -> set[DatasetRole]:
@@ -490,8 +514,10 @@ def _execution_plan_matches(
             (
                 parsed_suite.purpose
                 == ExperimentPurpose.GENERIC_BASELINE_READINESS
-                and parsed_suite.budget
-                == _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+                and _generic_baseline_readiness_budget_matches(
+                    parsed_suite.experiment_id,
+                    parsed_suite.budget,
+                )
             )
             or (
                 parsed_suite.purpose
@@ -944,7 +970,7 @@ def _generic_baseline_runtime_contract_evidence(
     manifest: RunManifest,
     events: list[Any],
 ) -> tuple[bool, dict[str, Any]]:
-    """Bind the D-075 V2/V5 prompt, tools, and retry policy to trace CAS."""
+    """Bind the exact generic V2/V5 prompt, tools, and retry policy to trace CAS."""
 
     from patchloop.agent.model import SYSTEM_PROMPT_V3
     from patchloop.agent.tools import TOOL_SCHEMAS_V2
@@ -10680,8 +10706,10 @@ def qualify_run(
             or (
                 manifest.experiment.purpose
                 == ExperimentPurpose.GENERIC_BASELINE_READINESS
-                and manifest.budget
-                == _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+                and _generic_baseline_readiness_budget_matches(
+                    manifest.experiment.experiment_id,
+                    manifest.budget,
+                )
                 and manifest.model.transport_max_retries == 0
             )
             or (

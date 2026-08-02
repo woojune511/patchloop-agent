@@ -216,6 +216,12 @@ GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET = Budget(
     max_total_tokens=850_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET = Budget(
+    max_model_calls=50,
+    max_tool_calls=100,
+    max_total_tokens=1_200_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -234,6 +240,21 @@ COMPLETION_PANEL_TASK_IDS = {
 GENERIC_BASELINE_READINESS_EXPERIMENT_ID = (
     "generic-baseline-readiness-v2v5-20260802-r1"
 )
+GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID = (
+    "generic-baseline-readiness-v2v5-20260802-r2"
+)
+GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
+    GENERIC_BASELINE_READINESS_EXPERIMENT_ID: (
+        GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+    ),
+    GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID: (
+        GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
+    ),
+}
+GENERIC_BASELINE_READINESS_COST_BY_EXPERIMENT_ID = {
+    GENERIC_BASELINE_READINESS_EXPERIMENT_ID: (15.75, 16.0),
+    GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID: (22.05, 23.0),
+}
 GENERIC_BASELINE_READINESS_TASKS = [
     PILOT_TASK,
     "tasks/dev-validation/moto-query-scanned-count/public.yaml",
@@ -725,19 +746,21 @@ class ExperimentSuite(BaseModel):
                 "its experiment-v2 purpose"
             )
         if (
-            self.experiment_id == GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+            self.experiment_id
+            in GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID
             and self.purpose != ExperimentPurpose.GENERIC_BASELINE_READINESS
         ):
             raise ValueError(
-                "the D-075 experiment id requires the generic baseline readiness purpose"
+                "generic baseline readiness experiment ids require the generic "
+                "baseline readiness purpose"
             )
         if (
             self.purpose != ExperimentPurpose.GENERIC_BASELINE_READINESS
             and self.transport_max_retries is not None
         ):
             raise ValueError(
-                "transport_max_retries is frozen only for the D-075 generic "
-                "baseline readiness purpose"
+                "transport_max_retries is frozen only for the exact generic "
+                "baseline readiness profiles"
             )
 
         if self.purpose == ExperimentPurpose.OFFLINE_SMOKE:
@@ -765,8 +788,17 @@ class ExperimentSuite(BaseModel):
             )
 
         if self.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
+            expected_budget = (
+                GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
+                    self.experiment_id
+                )
+            )
+            expected_cost = GENERIC_BASELINE_READINESS_COST_BY_EXPERIMENT_ID.get(
+                self.experiment_id
+            )
             if (
-                self.experiment_id != GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+                expected_budget is None
+                or expected_cost is None
                 or [_normalized_task_path(task) for task in self.tasks]
                 != GENERIC_BASELINE_READINESS_TASKS
                 or self.conditions != [MemoryCondition.NO_MEMORY]
@@ -777,17 +809,21 @@ class ExperimentSuite(BaseModel):
                 or self.pilot_run_id is not None
             ):
                 raise ValueError(
-                    "generic baseline readiness requires the exact D-075 id, "
+                    "generic baseline readiness requires an exact registered id, "
                     "ordered four-task panel, no_memory, one repetition, "
                     "transport_max_retries=0, and no embedded approval or pilot"
                 )
+            assert expected_budget is not None
+            assert expected_cost is not None
+            estimated_cost, cost_limit = expected_cost
             self._require_live_defaults(
-                cost_limit=16,
-                budget=GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET,
+                cost_limit=cost_limit,
+                budget=expected_budget,
             )
-            if self.estimated_cost_usd != 15.75:
+            if self.estimated_cost_usd != estimated_cost:
                 raise ValueError(
-                    "generic baseline readiness requires estimated_cost_usd=15.75"
+                    "generic baseline readiness requires "
+                    f"estimated_cost_usd={estimated_cost:g} for its exact id"
                 )
         elif self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
             normalized_tasks = {
@@ -3056,8 +3092,12 @@ def _completion_gate(
     )
     generic_baseline_readiness = bool(
         suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
-        and suite.experiment_id == GENERIC_BASELINE_READINESS_EXPERIMENT_ID
-        and suite.budget == GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+        and suite.experiment_id
+        in GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID
+        and suite.budget
+        == GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
+            suite.experiment_id
+        )
         and [_normalized_task_path(task) for task in suite.tasks]
         == GENERIC_BASELINE_READINESS_TASKS
         and suite.transport_max_retries == 0

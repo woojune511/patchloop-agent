@@ -300,6 +300,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-review-evidence-pilot` | Consumed D-067 HF Hub 한 task, `no_memory`, repetition 1, v4/v9/runtime-v3, 60/100/1.2M/1,800초, output 25k, $6 상한; immutable hidden task failure이며 재실행·comparison·memory admission 금지 |
 | `memory-development-no-memory-coverage-review-pilot` | D-070 exact HF Hub 한 task, `no_memory`, repetition 1, v5/v10/runtime-v4, 60/100/1.2M/1,800초, output 25k, $6 상한; tuning-only이며 comparison·memory admission 제외, 별도 hash/비용 승인 전 live 실행 금지 |
 | `memory-development-no-memory-coverage-rejection-pilot` | Consumed D-072 exact HF Hub 한 task, `no_memory`, repetition 1, v6/v11/runtime-v5, 60/100/1.2M/1,800초, output 25k, reserve $5.5125/$6 상한; readiness gate pass/recovery inconclusive/hidden task failure인 immutable row이며 재실행·comparison·memory admission 금지 |
+| `generic-baseline-readiness` | D-075 r1은 consumed/immutable false gate다. D-077 r2는 같은 four-row generic V2/V5 tuple에서 model-call 50/total token 1.2M만 적용한 budget-only successor, reserve $22.05/$23 상한, calibration-only이며 clean hash와 별도 승인 전 live 실행 금지 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -2382,3 +2383,64 @@ fresh official verification 없이는 fail closed한다.
 comparison tuple을 동결해야 한다. Final budget 또는 harness commit이 D-075와 다르면 이 panel을 same-tuple
 evidence로 재사용하지 않고 새 exact suite/hash/approval의 readiness panel을 먼저 통과한다. 기존
 21/50/250,000/900 template은 계속 stale/unvalidated다.
+
+## 21. D-077 budget-only generic readiness successor contract
+
+새 exact experiment ID는 `generic-baseline-readiness-v2v5-20260802-r2`이고 purpose는 기존과 같은
+`generic-baseline-readiness`다. D-075 r1을 수정하거나 재개하지 않으며 다음 ordered task와 dataset
+role을 그대로 사용한다.
+
+```text
+tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+tasks/dev-validation/moto-query-scanned-count/public.yaml
+tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml
+tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml
+```
+
+모든 row는 `no_memory`, repetition 1이다. Budget-confound 외 변수를 고정하기 위해 다음 항목은
+D-075와 동일해야 한다.
+
+```text
+model/provider = gpt-5.4-mini-2026-03-17 / openai
+reasoning = medium / standard
+service tier = default
+system prompt = SYSTEM_PROMPT_V3
+tool/context = v2 / phase-evidence-v5
+transport_max_retries = 0
+public review sidecar = absent
+fault = none
+condition = no_memory
+max output = 25,000
+max tool calls = 100
+wall clock = 1,800 seconds
+```
+
+의도적으로 바뀌는 두 값만 다음과 같다.
+
+```text
+max model calls = 50   # D-075: 40
+max total tokens = 1,200,000   # D-075: 850,000
+```
+
+Task/order/role/package, prompt와 tool bytes, model selector, retry, output, tool/wall limit, image/evaluator와
+fault policy drift는 preflight, execution plan, generated manifest, runner start/resume와 qualification에서
+fail closed한다. 새 clean harness commit은 새 execution identity의 일부지만 model-facing runtime 의미를
+변경하지 않는다. 이 invariant가 깨지면 D-077을 budget-only evidence로 부르지 않고 별도 tuple과 readiness
+panel로 versioning한다. D-075 experiment ID, execution hash, run, result와 false gate는 immutable하며
+D-077 authority 또는 outcome으로 재사용하지 않는다.
+
+Gate와 report 경계는 D-075의 `generic-baseline-readiness-gate-v1` 및 `analysis-report-v2`를 그대로
+사용한다. Exact 4/4 task identity, terminal, qualified, evaluator-reached와 official-completed,
+infrastructure/qualification/diagnostic/budget-terminal 0을 모두 요구한다. Hidden acceptance, task success와
+SCRR는 gate predicate가 아니다. 모든 row는 `calibration_only=1`, `analysis_included=0`이고
+`comparison_denominator_eligible=false`, `memory_admission_unlocked=false`다. Gate가 통과해도 comparison
+budget이나 no-memory baseline은 별도 freeze decision 전까지 열리지 않는다.
+
+공식 rate는 2026-08-02T13:11:37Z에 다시 확인했다. 보수적 authorization reserve는
+`(1,200,000 + 25,000) × $4.50/M = $5.5125`/run, four-row `$22.05`, suite cap `$23`이다.
+이는 completion guarantee, 예상 비용 또는 invoice가 아니다. Source suite와 offline test에는 provider call,
+execution hash, 비용 승인, run ID, measured usage/cost 또는 gate outcome이 없다. Clean checkout에서 Docker,
+pinned task/image/evaluator, SDK, pricing freshness, randomized schedule과 exact source를 다시 결속한 no-call
+preflight hash를 만든 뒤 사용자가 그 hash와 최대 `$23`을 명시적으로 승인해야 정확히 한 번 실행할 수 있다.
+Source/runtime/qualification/report 계약은 repository-wide 1,095-test 회귀와 Ruff, compileall,
+`git diff --check`를 통과했다. 이 offline closure는 provider capability, execution hash나 live outcome이 아니다.

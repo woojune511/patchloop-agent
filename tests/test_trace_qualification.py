@@ -1185,7 +1185,10 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
     purpose = manifest.experiment.purpose
     if purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
         return eval_runner.load_suite(
-            "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+            "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
+            if manifest.experiment.experiment_id
+            == eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
+            else "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
         )
     if (
         purpose
@@ -1620,7 +1623,10 @@ def _terminal_trace(
     )
     generic_suite = (
         eval_runner.load_suite(
-            "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+            "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
+            if experiment_id
+            == eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
+            else "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
         )
         if generic_baseline_readiness
         else None
@@ -4947,6 +4953,52 @@ def test_high_budget_completion_pilot_model_contract_qualifies(
         "max_total_tokens"
     ] == 600_000
     assert qualification["memory_candidate_eligible"] is False
+
+
+def test_d077_generic_baseline_readiness_full_row_qualifies(
+    tmp_path: Path,
+) -> None:
+    budget = eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
+    experiment_id = (
+        eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
+    )
+    run_id, result, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.GENERIC_BASELINE_READINESS,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=False,
+        prompt_telemetry=True,
+        budget=budget,
+        max_output_tokens=25_000,
+        experiment_id=experiment_id,
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=tmp_path,
+        persist=False,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+
+    assert result.official is True
+    assert qualification["qualified"] is True, [
+        check for check in qualification["checks"] if not check["passed"]
+    ]
+    assert checks["approved_execution_plan"]["passed"] is True
+    assert checks["frozen_model_contract"]["passed"] is True
+    assert checks["generic_runtime_contract"]["passed"] is True
+    assert qualification_module._generic_baseline_readiness_budget_matches(
+        experiment_id,
+        budget,
+    )
+    assert not qualification_module._generic_baseline_readiness_budget_matches(
+        eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
+        budget,
+    )
 
 
 def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_requests(

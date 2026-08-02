@@ -1216,3 +1216,32 @@ cap `$16`이다. Checked-in YAML의 false/null approval fields와 no-call prefli
 prompt/tool/retry와 randomized schedule을 결속한 exact execution hash에 사용자가 별도 승인해야 live
 campaign을 한 번 시작할 수 있다. 이 offline contract 단계는 provider request, measured cost, readiness
 outcome, SCRR 또는 baseline evidence를 생성하지 않는다.
+
+### D-077 budget-only generic readiness successor protocol
+
+D-077은 D-075 r1을 재실행하거나 false gate를 수정하지 않는다. 새 exact ID
+`generic-baseline-readiness-v2v5-20260802-r2`로 같은 Babel, Moto, pyfakefs, HF Hub ordered row를
+`no_memory` 한 번씩 실행하는 successor다. Model snapshot, reasoning/service tier, `SYSTEM_PROMPT_V3`,
+tool v2/context V5, SDK retry 0, output 25,000, tool 100, wall 1,800초, task package, image/evaluator와
+fault-free policy는 고정하고 model-call ceiling만 40→50, total-token ceiling만
+850,000→1,200,000으로 바꾼다. 다른 model-facing 또는 evaluator 변수가 바뀌면 budget-only panel이
+아니므로 새 tuple로 versioning한다.
+
+`generic-baseline-readiness-gate-v1`의 의미는 바꾸지 않는다. 네 row 모두 terminal·qualified이고 official
+evaluator를 완료해야 하며 infrastructure, qualification, diagnostic, token/model/tool/wall budget-terminal은
+0이어야 한다. Hidden acceptance와 SCRR는 별도 task outcome이므로 gate pass를 요구하지 않는다. 한 row라도
+budget에 막히면 panel gate는 false이며 해당 row만 추가 실행하거나 D-075/D-077 결과를 합쳐 gate를 만들지
+않는다. Hidden result를 보고 prompt/tool/context, task sidecar나 budget을 task별로 조정하지 않는다.
+
+이 panel도 report에서 calibration-only이며 ordinary metric, comparison denominator, failure-memory admission과
+core에서 제외한다. Gate pass 뒤에도 같은 exact tuple을 comparison budget으로 채택할지는 별도 freeze
+decision으로 결정한다. Live hard restart/reclaim은 별도 reliability protocol이고 이 fault-free readiness
+panel에 합치지 않는다.
+
+2026-08-02T13:11:37Z에 재확인한 공식 rate 기준 reserve는 `$5.5125`/run, `$22.05`/four rows,
+cap `$23`이다. Source contract와 offline verification은 paid authority가 아니다. 현재 provider call,
+execution hash, 사용자 승인, run, measured cost와 gate outcome은 없다. Clean no-call preflight가 만든 exact
+hash와 최대 `$23`에 대한 별도 명시적 승인이 있어야 campaign을 한 번 시작할 수 있다.
+Offline protocol validation은 1,095 collected, 1,088 passed/7 environment-dependent skipped와 Ruff,
+compileall, `git diff --check`로 닫혔다. Provider call과 추가 model cost는 0이며 clean-host preflight와
+live gate는 아직 실행되지 않았다.

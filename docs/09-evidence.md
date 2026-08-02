@@ -2564,3 +2564,26 @@ D-076 seal verification selected 51 D-075/generic tests and all 51 passed. Repos
 1,089 tests: 1,082 passed and seven environment-dependent tests were skipped. Ruff, Python compileall and
 `git diff --check` passed. These checks made no provider request and added zero model cost; they validate the
 source seal, not another readiness run or a changed original outcome.
+
+## D-077 budget-only successor source/offline evidence boundary
+
+D-077 declares the new exact successor `generic-baseline-readiness-v2v5-20260802-r2`. It preserves D-075's
+ordered Babel/Moto/pyfakefs/HF Hub rows, dataset roles, `no_memory` repetition 1,
+`gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool V2/context V5, SDK retry 0,
+output 25,000, tool 100, wall 1,800 seconds, absent sidecar and fault-free policy. Only model calls 40→50 and
+total tokens 850,000→1,200,000 change. D-075's source, approved hash, four runs, raw/portable evidence and false
+gate remain immutable and are not D-077 evidence.
+
+The official rate was rechecked at 2026-08-02T13:11:37Z. The resulting conservative authorization reserve is
+`$5.5125` per run and `$22.05` for four rows under a `$23` cap. These are source authorization bounds, not
+measured usage, expected cost or invoice data.
+
+At this source-contract point no provider call, execution hash, user cost approval, run ID, measured token/cost,
+live qualification, evaluator receipt, SCRR or readiness gate outcome exists for D-077. Focused readiness tests
+and the repository-wide matrix passed; the latter collected 1,095 tests with 1,088 passed and seven
+environment-dependent skips. Ruff, Python compileall and `git diff --check` also passed. These are executable
+offline contract facts with zero provider call and zero added model cost, not a clean-host preflight or live gate.
+A clean no-call preflight must next bind the exact commit, package/image/evaluator, SDK,
+pricing, randomized schedule and prompt/tool/retry. The resulting hash and maximum `$23` then require separate
+explicit user approval before one live invocation. Comparison, memory admission, no-memory baseline and core
+remain closed throughout this source stage.

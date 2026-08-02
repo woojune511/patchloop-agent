@@ -852,3 +852,23 @@ silently lowering the design or fabricating missing results.
   D-075 retroactively. A changed tuple needs a new four-row panel, hash and approval before baseline freeze.
 - Hidden outcomes do not justify task-specific tuning. Live hard restart/reclaim also remains a separate
   unmeasured reliability exercise.
+
+## D-077 is a budget-only readiness candidate, not a completion or baseline claim
+
+- D-077 uses a new r2 experiment identity. It does not amend, resume or combine D-075's consumed execution,
+  false gate or two successful rows. Partial reuse would destroy the four-row same-tuple readiness denominator.
+- The 50-model-call and 1,200,000-token ceilings are condition-neutral heuristics derived from D-075's public
+  budget terminals. They are not a completion guarantee, measured requirement or frozen comparison budget.
+  Tool 100, wall 1,800 seconds and per-call output 25,000 are unchanged.
+- A budget-only interpretation is valid only while task/order/package, model, prompt, tool V2/context V5,
+  retry 0, image/evaluator, sidecar and fault policy remain fixed. Any other change needs a separately named tuple
+  and readiness panel rather than being attributed to budget headroom.
+- The `$5.5125` per-run, `$22.05` four-row reserve and `$23` cap use the official rate rechecked at
+  2026-08-02T13:11:37Z. They are authorization bounds, not expected spend, free-tier eligibility or invoice
+  evidence. No measured D-077 cost exists before a separately approved invocation.
+- Source config, offline tests and no-call preflight do not authorize provider traffic. At the source-contract
+  stage there is no execution hash, user approval, run, SCRR or gate outcome. A clean exact hash and explicit
+  maximum-`$23` approval are required before one invocation.
+- Even a four-row readiness pass would only remove the observed process confound for this exact tuple. It would
+  not prove task quality or memory benefit and would not by itself start no-memory, admit memory or open core.
+  Hidden failures must not trigger task-specific tuning, and live restart/reclaim remains a separate limitation.

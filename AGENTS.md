@@ -12,8 +12,22 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-076 D-075 live readiness result sealed; gate failed on two budget
-  confounds; no baseline freeze approved`이다. Checked-in exact suite
+- 현재 milestone은 `D-077 budget-only generic V2/V5 readiness successor source/offline gate
+  complete; clean no-call preflight and explicit live approval pending`이다. 새 exact successor
+  `generic-baseline-readiness-v2v5-20260802-r2`는 D-075와 같은 Babel, Moto, pyfakefs, HF Hub
+  task와 순서, `no_memory`, `gpt-5.4-mini-2026-03-17` medium/standard/default,
+  `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0, output 25,000,
+  tool 100과 wall 1,800초를 유지하고 budget만 model call 40→50과 total token
+  850,000→1,200,000으로 바꾼다. 2026-08-02T13:11:37Z에 공식 rate를 다시 확인한 conservative
+  reserve는 run당 `$5.5125`, four-row `$22.05`, suite cap `$23`이다. Source config와 offline
+  evidence는 provider 권한이 아니며 현재 execution hash, 비용 승인, run, measured cost와 gate
+  outcome은 없다. Clean no-call preflight와 새 exact hash에 대한 최대 `$23`의 명시적 사용자 승인
+  전에는 provider를 호출하지 않는다. D-077도 calibration-only이고 comparison denominator,
+  memory admission과 core를 열지 않으며, readiness pass 뒤 별도 freeze decision이 필요하다.
+  Focused readiness matrix와 repository-wide 1,095-test 회귀는 통과했고 1,088 passed/7
+  environment-dependent skipped였으며 Ruff, compileall과 `git diff --check`도 통과했다. 이 evidence의
+  provider call과 model cost는 0이고 clean preflight hash나 live outcome을 만들지 않는다.
+  Historical D-075 checked-in exact suite
   `generic-baseline-readiness-v2v5-20260802-r1`은 Babel, Moto, pyfakefs와 HF Hub 네 development
   task를 `no_memory`로 각 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
   `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0,

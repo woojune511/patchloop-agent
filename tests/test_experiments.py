@@ -62,6 +62,9 @@ COVERAGE_REJECTION_PILOT_SUITE = (
 GENERIC_BASELINE_READINESS_SUITE = (
     "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
 )
+GENERIC_BASELINE_READINESS_D077_SUITE = (
+    "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -241,6 +244,88 @@ def test_generic_baseline_readiness_has_exact_no_call_preflight_contract(
     assert preflight["pricing"]["budget_upper_bound_usd"] == 15.75
 
 
+def test_d077_generic_readiness_is_an_exact_budget_only_successor(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 14, tzinfo=UTC),
+    )
+
+    old_suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_SUITE)
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_D077_SUITE)
+    preflight = eval_runner.preflight_suite(
+        GENERIC_BASELINE_READINESS_D077_SUITE
+    )
+    expected_payload = eval_runner._suite_payload(old_suite)
+    expected_payload["experiment_id"] = (
+        eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
+    )
+    expected_payload["budget"] = (
+        eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET.model_dump(
+            mode="json"
+        )
+    )
+    expected_payload["estimated_cost_usd"] = 22.05
+    expected_payload["cost_limit_usd"] = 23.0
+    expected_payload["pricing_verified_at"] = "2026-08-02T13:11:37Z"
+
+    assert eval_runner._suite_payload(suite) == expected_payload
+    assert suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+    assert suite.tasks == eval_runner.GENERIC_BASELINE_READINESS_TASKS
+    assert suite.transport_max_retries == 0
+    assert suite.max_output_tokens == 25_000
+    assert suite.budget == (
+        eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
+    )
+    assert suite.estimated_cost_usd == 22.05
+    assert suite.cost_limit_usd == 23
+    assert (
+        suite.experiment_id
+        not in eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
+    )
+    assert {row["code"] for row in preflight["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert preflight["expected_runs"] == 4
+    assert preflight["runtime_contract"] == {
+        **eval_runner._experiment_runtime_contract(
+            old_suite,
+            harness_git_commit="a" * 40,
+        )
+    }
+    assert preflight["pricing"]["per_run_cost_reserve_usd"] == 5.5125
+    assert preflight["pricing"]["budget_upper_bound_usd"] == 22.05
+
+
+@pytest.mark.parametrize(
+    ("suite_path", "foreign_budget"),
+    [
+        (
+            GENERIC_BASELINE_READINESS_SUITE,
+            eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET,
+        ),
+        (
+            GENERIC_BASELINE_READINESS_D077_SUITE,
+            eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET,
+        ),
+    ],
+)
+def test_generic_readiness_rejects_cross_profile_budget_pairing(
+    suite_path: str,
+    foreign_budget,
+) -> None:
+    payload = yaml.safe_load(Path(suite_path).read_text(encoding="utf-8"))
+    payload["budget"] = foreign_budget.model_dump(mode="json")
+
+    with pytest.raises(ValidationError, match="model/run-budget contract"):
+        ExperimentSuite.model_validate(payload)
+
+
 def test_consumed_generic_baseline_readiness_is_immutable(
     tmp_path: Path,
     monkeypatch,
@@ -282,6 +367,15 @@ def test_transport_retry_field_preserves_historical_suite_hashes() -> None:
         suite = eval_runner.load_suite(path)
         assert "transport_max_retries" not in suite.model_dump(mode="json")
         assert eval_runner._suite_hash(suite) == expected_hash
+
+
+def test_d075_generic_readiness_suite_hash_remains_stable() -> None:
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_SUITE)
+
+    assert suite.transport_max_retries == 0
+    assert eval_runner._suite_hash(suite) == (
+        "sha256:cddd650f11a50591efbab018f817a40979842201e8a1ad584dffd7876d7db951"
+    )
 
 
 @pytest.mark.parametrize(
@@ -362,7 +456,9 @@ def test_generic_baseline_readiness_rejects_tuple_drift(mutation: str) -> None:
         ExperimentSuite.model_validate(payload)
 
 
-def _readiness_gate_schedule() -> list[dict]:
+def _readiness_gate_schedule(
+    experiment_id: str = eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
+) -> list[dict]:
     rows = []
     for order, task_id in enumerate(
         sorted(eval_runner.GENERIC_BASELINE_READINESS_TASK_IDS),
@@ -392,7 +488,7 @@ def _readiness_gate_schedule() -> list[dict]:
         row["schedule_row_id"] = sha256_text(
             canonical_json(
                 {
-                    "experiment_id": (eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID),
+                    "experiment_id": experiment_id,
                     **row,
                 }
             )
@@ -471,6 +567,40 @@ def test_generic_baseline_readiness_gate_accepts_task_failures_without_confound(
     assert gate["task_success_required"] is False
     assert gate["comparison_denominator_eligible"] is False
     assert gate["memory_admission_unlocked"] is False
+
+
+def test_d077_generic_readiness_gate_keeps_the_same_completion_boundary() -> None:
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_D077_SUITE)
+    schedule = _readiness_gate_schedule(suite.experiment_id)
+    execution_hash = "sha256:" + ("b" * 64)
+    rows = [
+        _readiness_gate_row(schedule_row, execution_hash)
+        for schedule_row in schedule
+    ]
+
+    passed = eval_runner._completion_gate(
+        suite,
+        rows,
+        expected_execution_hash=execution_hash,
+        expected_schedule=schedule,
+    )
+    assert passed is not None
+    assert passed["schema_version"] == "generic-baseline-readiness-gate-v1"
+    assert passed["passed"] is True
+
+    rows[0]["result"]["terminal_error"] = {
+        "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "details": {"reason_code": "model_call_budget_exhausted"},
+    }
+    failed = eval_runner._completion_gate(
+        suite,
+        rows,
+        expected_execution_hash=execution_hash,
+        expected_schedule=schedule,
+    )
+    assert failed is not None
+    assert failed["passed"] is False
+    assert failed["budget_terminal_runs"] == 1
 
 
 @pytest.mark.parametrize(
