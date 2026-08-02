@@ -59,6 +59,9 @@ COVERAGE_REVIEW_PILOT_SUITE = (
 COVERAGE_REJECTION_PILOT_SUITE = (
     "experiments/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.yaml"
 )
+GENERIC_BASELINE_READINESS_SUITE = (
+    "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -179,6 +182,645 @@ def test_expected_runtime_contract_hash_uses_phase_evidence_v5() -> None:
     ).encode("utf-8")
 
     assert eval_runner._expected_runtime_contract_hash() == sha256_bytes(encoded)
+
+
+def test_generic_baseline_readiness_has_exact_no_call_preflight_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+    )
+
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_SUITE)
+    preflight = eval_runner.preflight_suite(GENERIC_BASELINE_READINESS_SUITE)
+
+    assert suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+    assert suite.tasks == eval_runner.GENERIC_BASELINE_READINESS_TASKS
+    assert suite.conditions == [MemoryCondition.NO_MEMORY]
+    assert suite.repetitions == 1
+    assert suite.transport_max_retries == 0
+    assert suite.budget == eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+    assert suite.max_output_tokens == 25_000
+    assert suite.estimated_cost_usd == 15.75
+    assert suite.cost_limit_usd == 16
+    assert {row["code"] for row in preflight["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert preflight["expected_runs"] == 4
+    assert [row["task"] for row in preflight["tasks"]] == suite.tasks
+    assert {row["dataset_role"] for row in preflight["tasks"]} == {
+        DatasetRole.DEVELOPMENT_VALIDATION.value,
+        DatasetRole.MEMORY_DEVELOPMENT.value,
+    }
+    assert trace_qualification._purpose_dataset_roles(suite.purpose) == {
+        DatasetRole.DEVELOPMENT_VALIDATION,
+        DatasetRole.MEMORY_DEVELOPMENT,
+    }
+    assert all("public_review_contract" not in row for row in preflight["tasks"])
+    assert preflight["runtime_contract"] == {
+        "schema_version": "generic-baseline-runtime-contract-v1",
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+        "system_prompt_hash": sha256_text(eval_runner.SYSTEM_PROMPT_V3),
+        "tool_schema_hash": sha256_text(canonical_json(eval_runner.TOOL_SCHEMAS_V2)),
+        "transport_max_retries": 0,
+        "harness_git_commit": "a" * 40,
+    }
+    assert preflight["pricing"]["per_run_cost_reserve_usd"] == 3.9375
+    assert preflight["pricing"]["budget_upper_bound_usd"] == 15.75
+
+
+def test_transport_retry_field_preserves_historical_suite_hashes() -> None:
+    expected = {
+        COMPLETION_PILOT_SUITE: (
+            "sha256:e4e653acf808881cb5ebb2104f9da67b0487ceb0df67a6bcc27160354d93fc67"
+        ),
+        COVERAGE_REJECTION_PILOT_SUITE: (
+            "sha256:48f47b6a3602409cc635c4c549f7fbc0154a87b4221e0531cc91037ea7e6ddaa"
+        ),
+    }
+
+    for path, expected_hash in expected.items():
+        suite = eval_runner.load_suite(path)
+        assert "transport_max_retries" not in suite.model_dump(mode="json")
+        assert eval_runner._suite_hash(suite) == expected_hash
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "id",
+        "purpose",
+        "task_order",
+        "task_missing",
+        "condition",
+        "repetition",
+        "model",
+        "reasoning",
+        "service_tier",
+        "retry_missing",
+        "retry_nonzero",
+        "retry_bool",
+        "model_calls",
+        "tool_calls",
+        "tokens",
+        "wall",
+        "output",
+        "cap",
+        "estimate",
+        "embedded_approval",
+        "pilot",
+        "sidecar",
+    ],
+)
+def test_generic_baseline_readiness_rejects_tuple_drift(mutation: str) -> None:
+    payload = yaml.safe_load(Path(GENERIC_BASELINE_READINESS_SUITE).read_text(encoding="utf-8"))
+    if mutation == "id":
+        payload["experiment_id"] = "alternate-generic-readiness"
+    elif mutation == "purpose":
+        payload["purpose"] = "offline-smoke"
+    elif mutation == "task_order":
+        payload["tasks"] = list(reversed(payload["tasks"]))
+    elif mutation == "task_missing":
+        payload["tasks"] = payload["tasks"][:-1]
+    elif mutation == "condition":
+        payload["conditions"] = ["structured"]
+    elif mutation == "repetition":
+        payload["repetitions"] = 2
+    elif mutation == "model":
+        payload["model_id"] = "gpt-5.4-mini"
+    elif mutation == "reasoning":
+        payload["reasoning_effort"] = "low"
+    elif mutation == "service_tier":
+        payload["service_tier"] = "priority"
+    elif mutation == "retry_missing":
+        payload.pop("transport_max_retries")
+    elif mutation == "retry_nonzero":
+        payload["transport_max_retries"] = 1
+    elif mutation == "retry_bool":
+        payload["transport_max_retries"] = False
+    elif mutation == "model_calls":
+        payload["budget"]["max_model_calls"] = 39
+    elif mutation == "tool_calls":
+        payload["budget"]["max_tool_calls"] = 99
+    elif mutation == "tokens":
+        payload["budget"]["max_total_tokens"] = 849_999
+    elif mutation == "wall":
+        payload["budget"]["wall_clock_timeout_seconds"] = 1_799
+    elif mutation == "output":
+        payload["max_output_tokens"] = 24_999
+    elif mutation == "cap":
+        payload["cost_limit_usd"] = 17
+    elif mutation == "estimate":
+        payload["estimated_cost_usd"] = 15.74
+    elif mutation == "embedded_approval":
+        payload["live_cost_approved"] = True
+    elif mutation == "pilot":
+        payload["pilot_run_id"] = "run_forbidden"
+    else:
+        payload["public_review_contract"] = {}
+
+    with pytest.raises(ValidationError):
+        ExperimentSuite.model_validate(payload)
+
+
+def _readiness_gate_schedule() -> list[dict]:
+    rows = []
+    for order, task_id in enumerate(
+        sorted(eval_runner.GENERIC_BASELINE_READINESS_TASK_IDS),
+        1,
+    ):
+        split = (
+            "dev-validation"
+            if task_id
+            in {
+                "babel-strict-grouped-decimal-trailing-zeroes",
+                "moto-query-scanned-count",
+            }
+            else "dev-train"
+        )
+        row = {
+            "order": order,
+            "task_id": task_id,
+            "split": split,
+            "dataset_role": (
+                DatasetRole.DEVELOPMENT_VALIDATION.value
+                if split == "dev-validation"
+                else DatasetRole.MEMORY_DEVELOPMENT.value
+            ),
+            "condition": MemoryCondition.NO_MEMORY.value,
+            "repetition": 1,
+        }
+        row["schedule_row_id"] = sha256_text(
+            canonical_json(
+                {
+                    "experiment_id": (eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID),
+                    **row,
+                }
+            )
+        )
+        rows.append(row)
+    return rows
+
+
+def _readiness_gate_row(
+    schedule_row: dict,
+    execution_hash: str,
+) -> dict:
+    task_id = schedule_row["task_id"]
+    run_id = f"run_{task_id.replace('-', '_')}"
+    return {
+        **{
+            field: schedule_row[field]
+            for field in (
+                "order",
+                "schedule_row_id",
+                "task_id",
+                "split",
+                "dataset_role",
+                "condition",
+                "repetition",
+            )
+        },
+        "attempt_status": "terminal",
+        "run_id": run_id,
+        "result": {
+            "run_id": run_id,
+            "official": True,
+            "evaluation_status": "completed",
+            "outcome_kind": "task_failure",
+            "scope_compliant_success": False,
+            "terminal_error": None,
+        },
+        "qualification": {
+            "run_id": run_id,
+            "task_id": task_id,
+            "schedule_row_id": schedule_row["schedule_row_id"],
+            "execution_hash": execution_hash,
+            "qualified": True,
+            "evaluation_reached": True,
+        },
+        "diagnostic": None,
+        "infrastructure_error": None,
+        "qualification_error": None,
+        "diagnostic_error": None,
+    }
+
+
+def test_generic_baseline_readiness_gate_accepts_task_failures_without_confound() -> None:
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_SUITE)
+    schedule = _readiness_gate_schedule()
+    execution_hash = "sha256:" + ("a" * 64)
+    rows = [_readiness_gate_row(schedule_row, execution_hash) for schedule_row in schedule]
+
+    gate = eval_runner._completion_gate(
+        suite,
+        rows,
+        expected_execution_hash=execution_hash,
+        expected_schedule=schedule,
+    )
+
+    assert gate is not None
+    assert gate["schema_version"] == "generic-baseline-readiness-gate-v1"
+    assert gate["passed"] is True
+    assert gate["expected_runs"] == 4
+    assert gate["task_identity_passed"] is True
+    assert gate["row_binding_passed"] is True
+    assert gate["run_binding_passed"] is True
+    assert gate["schedule_binding_passed"] is True
+    assert gate["execution_binding_passed"] is True
+    assert gate["task_successes"] == 0
+    assert gate["task_success_required"] is False
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "missing_row",
+        "duplicate_task",
+        "nonterminal",
+        "unqualified",
+        "evaluator_not_reached",
+        "unofficial",
+        "infrastructure",
+        "qualification_error",
+        "diagnostic_error",
+        "budget_terminal",
+        "duplicate_run_id",
+        "duplicate_schedule_row_id",
+        "result_run_mismatch",
+        "schedule_order_mismatch",
+        "qualification_run_mismatch",
+        "qualification_task_mismatch",
+        "qualification_schedule_mismatch",
+        "qualification_execution_mismatch",
+        "all_schedule_ids_relabelled",
+        "all_execution_hashes_relabelled",
+        "expected_schedule_missing",
+        "expected_execution_missing",
+    ],
+)
+def test_generic_baseline_readiness_gate_rejects_confound(mutation: str) -> None:
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_SUITE)
+    schedule = _readiness_gate_schedule()
+    execution_hash: str | None = "sha256:" + ("a" * 64)
+    rows = [_readiness_gate_row(schedule_row, execution_hash) for schedule_row in schedule]
+    if mutation == "missing_row":
+        rows.pop()
+    elif mutation == "duplicate_task":
+        rows[-1]["task_id"] = rows[0]["task_id"]
+    elif mutation == "nonterminal":
+        rows[0]["attempt_status"] = "not_started"
+    elif mutation == "unqualified":
+        rows[0]["qualification"]["qualified"] = False
+    elif mutation == "evaluator_not_reached":
+        rows[0]["qualification"]["evaluation_reached"] = False
+    elif mutation == "unofficial":
+        rows[0]["result"]["official"] = False
+    elif mutation == "infrastructure":
+        rows[0]["infrastructure_error"] = {"type": "ProviderUnavailable"}
+    elif mutation == "qualification_error":
+        rows[0]["qualification_error"] = {"type": "TraceQualificationFailed"}
+    elif mutation == "diagnostic_error":
+        rows[0]["diagnostic_error"] = {"type": "UnexpectedDiagnostic"}
+    elif mutation == "duplicate_run_id":
+        rows[-1]["run_id"] = rows[0]["run_id"]
+        rows[-1]["qualification"]["run_id"] = rows[0]["run_id"]
+    elif mutation == "duplicate_schedule_row_id":
+        rows[-1]["schedule_row_id"] = rows[0]["schedule_row_id"]
+        rows[-1]["qualification"]["schedule_row_id"] = rows[0]["schedule_row_id"]
+    elif mutation == "result_run_mismatch":
+        rows[0]["result"]["run_id"] = "run_wrong"
+    elif mutation == "schedule_order_mismatch":
+        rows[0]["order"] = rows[1]["order"]
+    elif mutation == "qualification_run_mismatch":
+        rows[0]["qualification"]["run_id"] = "run_wrong"
+    elif mutation == "qualification_task_mismatch":
+        rows[0]["qualification"]["task_id"] = "wrong-task"
+    elif mutation == "qualification_schedule_mismatch":
+        rows[0]["qualification"]["schedule_row_id"] = "sha256:" + ("b" * 64)
+    elif mutation == "qualification_execution_mismatch":
+        rows[0]["qualification"]["execution_hash"] = "sha256:" + ("b" * 64)
+    elif mutation == "all_schedule_ids_relabelled":
+        for index, row in enumerate(rows):
+            replacement = sha256_text(f"relabeled-schedule:{index}")
+            row["schedule_row_id"] = replacement
+            row["qualification"]["schedule_row_id"] = replacement
+    elif mutation == "all_execution_hashes_relabelled":
+        for row in rows:
+            row["qualification"]["execution_hash"] = "sha256:" + ("b" * 64)
+    elif mutation == "expected_schedule_missing":
+        schedule = None
+    elif mutation == "expected_execution_missing":
+        execution_hash = None
+    else:
+        rows[0]["result"]["terminal_error"] = {
+            "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+            "details": {"reason_code": "total_token_budget_exhausted"},
+        }
+
+    gate = eval_runner._completion_gate(
+        suite,
+        rows,
+        expected_execution_hash=execution_hash,
+        expected_schedule=schedule,
+    )
+
+    assert gate is not None
+    assert gate["passed"] is False
+
+
+def test_generic_baseline_readiness_binds_manifest_plan_and_paid_boundary(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+    )
+    monkeypatch.setattr("patchloop.runtime.git_commit", lambda: "a" * 40)
+    preflight = eval_runner.preflight_suite(GENERIC_BASELINE_READINESS_SUITE)
+    captured = []
+
+    class FakeRunner:
+        def start(self, _task, *, manifest, **_):
+            captured.append(manifest)
+            return {
+                "run_id": manifest.run_id,
+                "outcome_kind": "task_failure",
+                "official": True,
+                "evaluation_status": "completed",
+                "scope_compliant_success": False,
+                "terminal_error": None,
+                "usage": {
+                    "model_cost_usd": 0.1,
+                    "model_calls": 2,
+                    "tool_calls": 1,
+                    "input_tokens": 100,
+                    "output_tokens": 20,
+                    "wall_clock_ms": 1_000,
+                },
+            }
+
+    monkeypatch.setattr(eval_runner, "AgentRunner", FakeRunner)
+
+    def qualify_fake(run_id: str, _task: str) -> dict:
+        current = captured[-1]
+        assert current.experiment is not None
+        return {
+            "run_id": run_id,
+            "task_id": current.task_id,
+            "schedule_row_id": current.experiment.schedule_row_id,
+            "execution_hash": current.experiment.execution_hash,
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "evaluation_reached": True,
+            "qualification_hash": "sha256:" + "e" * 64,
+        }
+
+    monkeypatch.setattr(
+        eval_runner,
+        "_qualify_terminal_run",
+        qualify_fake,
+    )
+
+    result = eval_runner.evaluate_suite(
+        GENERIC_BASELINE_READINESS_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=preflight["execution_hash"],
+    )
+
+    assert len(captured) == 4
+    assert result["completion_gate"]["passed"] is True
+    assert all(manifest.tool_schema_version == "v2" for manifest in captured)
+    assert all(manifest.context_policy_version == "phase-evidence-v5" for manifest in captured)
+    assert all(manifest.model.transport_max_retries == 0 for manifest in captured)
+    assert all(manifest.public_review_contract is None for manifest in captured)
+
+    plan_path = Path(result["execution_plan"]["path"])
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    manifest = captured[0]
+    schedule_item = preflight["schedule"][0]
+    task_item = next(
+        row for row in preflight["tasks"] if row["task_id"] == schedule_item["task_id"]
+    )
+    item = {**task_item, **schedule_item}
+    authorization = SimpleNamespace(
+        plan_path=str(plan_path),
+        plan_hash=sha256_bytes(plan_path.read_bytes()),
+    )
+    assert trace_qualification._execution_plan_matches(
+        plan=plan,
+        manifest=manifest,
+    )
+    assert AgentRunner._live_plan_matches_manifest(manifest, authorization)
+
+    tampered_model = manifest.model.model_copy(update={"transport_max_retries": None})
+    tampered = manifest.model_copy(update={"model": tampered_model})
+    with pytest.raises(ContractError, match="approved execution plan"):
+        eval_runner._assert_manifest_matches_preflight(
+            tampered,
+            suite=eval_runner.load_suite(GENERIC_BASELINE_READINESS_SUITE),
+            preflight=preflight,
+            item=item,
+        )
+    assert not trace_qualification._execution_plan_matches(
+        plan=plan,
+        manifest=tampered,
+    )
+    assert not AgentRunner._live_plan_matches_manifest(tampered, authorization)
+
+    invalid_manifest = manifest.model_dump(mode="json")
+    invalid_manifest["model"].pop("transport_max_retries")
+    with pytest.raises(ValidationError, match="generic baseline readiness"):
+        type(manifest).model_validate(invalid_manifest)
+
+    sidecar_runtime = manifest.model_dump(mode="json")
+    sidecar_runtime["tool_schema_version"] = "v5"
+    sidecar_runtime["context_policy_version"] = "phase-evidence-v10"
+    with pytest.raises(ValidationError, match="corrective runtime"):
+        type(manifest).model_validate(sidecar_runtime)
+
+    run_root = tmp_path / "qualification-runtime"
+    state = StateStore(run_root / "state.sqlite3")
+    artifacts = ArtifactStore(run_root / "artifacts")
+    system_prompt, tools = AgentRunner._runtime_contract(manifest)
+    exact_runtime = {
+        "schema_version": "generic-baseline-runtime-evidence-v1",
+        "transport_max_retries": 0,
+        "system_prompt": system_prompt,
+        "tools": tools,
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+    }
+    task_path = next(
+        Path(path)
+        for path in eval_runner.GENERIC_BASELINE_READINESS_TASKS
+        if Path(path).parent.name == manifest.task_id
+    )
+    monkeypatch.setattr(
+        "patchloop.state.store.utc_now",
+        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+    )
+
+    cases = {
+        "valid": None,
+        "wrong_prompt": "wrong_prompt",
+        "wrong_tools": "wrong_tools",
+        "retry_missing": "retry_missing",
+        "retry_nonzero": "retry_nonzero",
+        "descriptor_mismatch": "descriptor_mismatch",
+        "path_mismatch": "path_mismatch",
+        "non_runner": "non_runner",
+        "duplicate_started": "duplicate_started",
+        "request_prompt_tamper": "request_prompt_tamper",
+    }
+    for case, mutation in cases.items():
+        candidate = manifest.model_copy(
+            deep=True,
+            update={"run_id": f"run_generic_runtime_{case}"},
+        )
+        state.create_run(candidate)
+        runtime_payload = json.loads(json.dumps(exact_runtime))
+        if mutation == "wrong_prompt":
+            runtime_payload["system_prompt"] += "\nwrong"
+        elif mutation == "wrong_tools":
+            runtime_payload["tools"] = []
+        elif mutation == "retry_missing":
+            runtime_payload.pop("transport_max_retries")
+        elif mutation == "retry_nonzero":
+            runtime_payload["transport_max_retries"] = 1
+        runtime_artifact = artifacts.put_json(runtime_payload)
+        descriptor = runtime_artifact.model_dump(mode="json")
+        event_payload = {
+            "task_id": candidate.task_id,
+            "artifact_id": runtime_artifact.artifact_id,
+            "artifact_path": runtime_artifact.path,
+            "artifact_role": "runtime-contract",
+            "runtime_contract_artifact": descriptor,
+        }
+        if mutation == "descriptor_mismatch":
+            event_payload["artifact_id"] = "art_wrong"
+        elif mutation == "path_mismatch":
+            event_payload["runtime_contract_artifact"] = {
+                **descriptor,
+                "path": f"{descriptor['path']}.wrong",
+            }
+        state.append_event(
+            candidate.run_id,
+            EventType.RUN_STARTED,
+            actor="model" if mutation == "non_runner" else "runner",
+            payload=event_payload,
+        )
+        if mutation == "duplicate_started":
+            state.append_event(
+                candidate.run_id,
+                EventType.RUN_STARTED,
+                actor="runner",
+                payload=event_payload,
+            )
+        if mutation in {None, "request_prompt_tamper"}:
+            rendered_context = "public generic readiness context"
+            request_body = {
+                "model": candidate.model.model_id,
+                "input": [
+                    {
+                        "role": "system",
+                        "content": system_prompt
+                        + ("\nwrong" if mutation == "request_prompt_tamper" else ""),
+                    },
+                    {"role": "user", "content": rendered_context},
+                ],
+                "tools": tools,
+                "store": False,
+                "reasoning": {"effort": "medium"},
+                "service_tier": "default",
+                "max_output_tokens": 25_000,
+                "truncation": "disabled",
+            }
+            request_hash = sha256_text(canonical_json(request_body))
+            request_artifact = artifacts.put_json(
+                {
+                    "schema_version": "model-request-evidence-v1",
+                    "provider": "openai",
+                    "request_body": request_body,
+                    "request_body_hash": request_hash,
+                    "context_build": {},
+                }
+            )
+            state.append_event(
+                candidate.run_id,
+                EventType.CONTEXT_BUILT,
+                actor="context-builder",
+                payload={
+                    "artifact_id": request_artifact.artifact_id,
+                    "artifact_path": request_artifact.path,
+                    "request_body_hash": request_hash,
+                    "context_hash": sha256_text(rendered_context),
+                },
+            )
+            response_artifact = artifacts.put_text("public completed response")
+            state.append_event(
+                candidate.run_id,
+                EventType.MODEL_CALLED,
+                actor="model-adapter",
+                payload={
+                    "artifact_id": response_artifact.artifact_id,
+                    "artifact_path": response_artifact.path,
+                    "prompt_telemetry_version": "prompt-token-integrity-v1",
+                    "requested_input_tokens": 0,
+                    "input_tokens": 0,
+                    "cached_input_tokens": 0,
+                    "cache_write_input_tokens": 0,
+                    "output_tokens": 0,
+                    "reasoning_output_tokens": 0,
+                    "total_tokens": 0,
+                    "input_token_count_match": True,
+                    "total_token_count_match": True,
+                    "input_token_count_calls": 1,
+                    "response_status": "completed",
+                    "response_truncation": "disabled",
+                    "response_incomplete_reason": None,
+                    "response_model": candidate.model.model_id,
+                    "request_artifact_id": request_artifact.artifact_id,
+                    "request_artifact_path": request_artifact.path,
+                    "request_body_hash": request_hash,
+                },
+            )
+        qualification = trace_qualification.qualify_run(
+            candidate.run_id,
+            task_dir=task_path.parent,
+            root=run_root,
+            persist=False,
+        )
+        checks = {check["check_id"]: check for check in qualification["checks"]}
+        runtime_artifact_mutations = {
+            "wrong_prompt",
+            "wrong_tools",
+            "retry_missing",
+            "retry_nonzero",
+            "descriptor_mismatch",
+            "path_mismatch",
+            "non_runner",
+            "duplicate_started",
+        }
+        assert checks["generic_runtime_contract"]["passed"] is (
+            mutation not in runtime_artifact_mutations
+        )
+        if mutation is None:
+            assert qualification["runtime_contract_content_hash"] == (runtime_artifact.content_hash)
+            assert checks["prompt_token_integrity"]["passed"] is True
+        elif mutation == "request_prompt_tamper":
+            assert checks["prompt_token_integrity"]["passed"] is False
 
 
 def test_live_campaign_approval_is_an_invocation_preflight_gate(

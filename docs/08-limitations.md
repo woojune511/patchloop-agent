@@ -811,3 +811,28 @@ silently lowering the design or fabricating missing results.
   is not required for the panel, and hidden task failures do not justify another same-task correction loop.
 - Live provider hard kill, stale-run reclaim and fresh-worker recovery remain unmeasured. They belong to a
   separately approved reliability experiment and do not block the fault-free no-memory baseline.
+
+## D-075 readiness contract is not live readiness or a frozen baseline
+
+- D-075 checks in an exact four-task generic V2/V5 suite and validates its schema, runtime binding,
+  qualification and gate logic offline. No provider request, live row, measured cost, SCRR or readiness
+  outcome was produced by that implementation evidence.
+- The 850,000-token, 40-model-call, 100-tool-call and 1,800-second values are a candidate completion
+  ceiling for the readiness panel. They are not a measured requirement and are not the final fair budget
+  for no-memory or the four memory conditions. The old 21/50/250,000/900 templates also remain stale.
+- The panel mixes two development-validation and two memory-development tasks. It does not move tasks
+  between dataset roles, admit their traces to memory or make its rows eligible for headline/comparison
+  reporting. Its purpose is calibration-only.
+- `transport_max_retries=0` removes hidden SDK request retransmission for this new suite; it does not
+  disable PatchLoop's trace-visible rejected-action retry, idempotent recovery or resume. Historical
+  manifests omit the field and retain their original client behavior and hashes.
+- A gate pass would only show that all four exact rows terminated, qualified and completed the official
+  evaluator without infrastructure, qualification, diagnostic or budget confounds. Hidden failures may
+  coexist with a pass, and they must not trigger another same-task prompt/tool/sidecar correction loop.
+- The checked-in `$15.75` reserve and `$16` cap are authorization bounds, not expected or observed spend.
+  The source suite has no approval hash. A clean no-call preflight and explicit user approval are still
+  required before one live invocation, and stale pricing must be refreshed first.
+- Even after a live gate pass, comparison-budget freeze and no-memory baseline collection require a
+  separate decision. If that decision changes budget, runtime code or harness commit, a second exact readiness
+  panel is required; D-075 cannot qualify the changed tuple. Live hard restart remains an independent
+  reliability evidence gap.

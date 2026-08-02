@@ -126,8 +126,10 @@ submission lifecycle과 기존 phase-evidence-v2 artifact의 해석은 그대로
 | Q-008 | Small-sample bootstrap의 resampling unit을 task로만 둘지, repetition hierarchy를 반영할지 | Confidence interval 해석 | Phase 6 시작 전 |
 
 Q-005는 D-021/D-022와 이를 supersede한 D-045/D-052에서 당시 값이 정해졌지만, D-074가
-future baseline tuple/budget 부분을 다시 supersede한다. 기존 21/50/250,000 template은
-stale/unvalidated이며 새 exact V2/V5 tuple과 readiness panel 결정 전에는 실행하지 않는다.
+future baseline tuple/budget 부분을 다시 supersede한다. D-075는
+`40 model / 100 tool / 850,000 token / 1,800초`를 exact four-task readiness 후보 ceiling으로
+선택했지만 comparison budget으로 동결하지 않았다. 기존 21/50/250,000/900 template은 계속
+stale/unvalidated이며 D-075 live gate와 별도 freeze decision 전에는 실행하지 않는다.
 
 ## Decision change template
 
@@ -317,6 +319,44 @@ Evidence/issue:
 - Date: 2026-08-02
 - Evidence/issue: Retrospective comparison of immutable D-055, D-060, D-067, D-070 and D-072
   outcomes; generic V2/V5 runtime selector and historical consumed-ID guards remain source-enforced.
+
+### D-075 accepted decision — exact generic V2/V5 readiness contract
+
+- Status: accepted and offline-verified; live invocation not approved
+- Supersedes: D-074의 `exact baseline tuple/readiness panel pending` 상태 중 readiness 후보 tuple과
+  source contract만 supersede한다. D-074의 semantic rollback, historical evidence boundary와
+  comparison budget 미동결 상태는 유지한다.
+- Context: Generic no-memory path가 task-specific V10/V11 corrective lane과 분리됐지만 기존
+  21/50/250,000/900 template은 budget-confounded historical evidence를 반영하지 못했다. Final
+  comparison budget을 즉시 동결하기 전에 서로 다른 repository/pattern의 작은 V2/V5 panel이 exact
+  runtime tuple로 evaluator까지 안정적으로 완료되는지 검증해야 한다.
+- Decision: Exact purpose/ID를 `generic-baseline-readiness` /
+  `generic-baseline-readiness-v2v5-20260802-r1`로 정하고 Babel, Moto, pyfakefs와 HF Hub를 ordered
+  `no_memory` single rows로 고정한다. Model은 `gpt-5.4-mini-2026-03-17`
+  medium/standard/default, prompt/tool/context는 `SYSTEM_PROMPT_V3`/v2/`phase-evidence-v5`,
+  per-call output은 25,000이다. Budget은 40 model/100 tool/850,000 total token/1,800초다.
+- Retry decision: 새 suite는 `transport_max_retries=0`을 필수로 하고
+  `generic-baseline-runtime-contract-v1`에 retry, prompt/tool hash와 clean harness commit을 결속한다.
+  이는 OpenAI SDK의 opaque transport retry만 끄며 PatchLoop의 durable logical retry/recovery는
+  유지한다. Historical config의 `None`은 field를 serialize하지 않고 기존 `OpenAI()` behavior와
+  suite/manifest hash를 보존한다.
+- Gate decision: `generic-baseline-readiness-gate-v1`은 exact 4 task, 4 terminal, 4 qualified,
+  4 evaluator reached, 4 official completed evaluator와 infrastructure/qualification/diagnostic/budget
+  error 0을 요구한다. Task success와 SCRR는 요구하지 않는다. Purpose는 calibration-only이며
+  `comparison_denominator_eligible=false`, `memory_admission_unlocked=false`다.
+- Cost/approval: Dated source pricing의 conservative reserve는 run당 `$3.9375`, four-row `$15.75`,
+  cap `$16`이다. Source YAML은 approval false와 null execution hash/run ID를 유지한다. Offline contract,
+  source suite와 no-call preflight는 provider capability가 아니며 clean exact execution hash에 대한 별도
+  사용자 승인이 필요하다. Pricing age가 start 기준 72시간을 넘으면 다시 확인한다.
+- Consequences: 850k는 readiness 후보 ceiling이지 fair comparison budget이 아니다. Live panel이
+  gate를 통과한 뒤 hidden outcome에 맞춘 task-specific tuning 없이 별도 decision으로 comparison tuple을
+  freeze한다. Final budget/runtime/harness commit이 D-075와 다르면 same-tuple readiness를 주장하지 않고
+  second exact readiness panel을 요구한다. 기존 21/50/250,000/900 template, memory admission,
+  no-memory baseline과 core는 계속 보류한다. Live hard restart는 별도 reliability lane이다.
+- Date: 2026-08-02
+- Evidence/issue: Exact suite/schema, mixed-role preflight, runtime/plan/manifest/start/resume/qualification
+  drift rejection, task-success-independent gate, report exclusion and historical suite-hash regression;
+  no provider/API call or measured live result in this decision.
 
 ## Deferred ideas
 

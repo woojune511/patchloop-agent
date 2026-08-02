@@ -62,6 +62,7 @@ def test_report_reaggregates_at_task_level(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(report_module, "runtime_root", lambda: root)
     report_module.build_report("sample", tmp_path / "report")
     report = json.loads((tmp_path / "report" / "report.json").read_text(encoding="utf-8"))
+    assert report["schema_version"] == "analysis-report-v2"
     assert report["metrics"]["no_memory"]["scrr"]["estimate"] == 0.75
     assert report["metrics"]["no_memory"]["scrr"]["tasks"] == 2
     with (tmp_path / "report" / "runs.csv").open(
@@ -146,6 +147,7 @@ def test_report_separates_infrastructure_and_not_started_rows(
     assert metrics["scope_violation"]["estimate"] == 0.0
     assert metrics["total_cost_usd"] == 0.2
     assert report["analysis_ready"] is False
+    assert report["schema_version"] == "analysis-report-v2"
     assert report["headline_metrics"] is None
     assert report["paired_scrr_difference_vs_no_memory"] is None
     assert report["success_failure_flips_vs_no_memory"] is None
@@ -156,6 +158,86 @@ def test_coverage_rejection_pilot_is_calibration_only() -> None:
         "memory-development-no-memory-coverage-rejection-pilot"
         in report_module._CALIBRATION_ONLY_PURPOSES
     )
+
+
+def test_generic_baseline_readiness_is_row_and_metric_excluded(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    root = tmp_path / "runtime"
+    experiment_dir = root / "experiments"
+    experiment_dir.mkdir(parents=True)
+    tasks = ["babel", "moto", "pyfakefs", "hf-hub"]
+    runs = []
+    for task_id in tasks:
+        result = _result(f"run_{task_id}", False)
+        result["outcome_kind"] = "task_failure"
+        runs.append(
+            {
+                "task_id": task_id,
+                "split": "dev-validation"
+                if task_id in {"babel", "moto"}
+                else "dev-train",
+                "condition": "no_memory",
+                "repetition": 1,
+                "attempt_status": "terminal",
+                "run_id": result["run_id"],
+                "usage": result["usage"],
+                "result": result,
+                "infrastructure_error": None,
+                "qualification": {"qualified": True},
+                "qualification_error": None,
+                "diagnostic": None,
+                "diagnostic_error": None,
+            }
+        )
+    raw = {
+        "purpose": "generic-baseline-readiness",
+        "schedule_seed": 20260723,
+        "expected_runs": 4,
+        "infrastructure_errors": 0,
+        "suite": {
+            "tasks": tasks,
+            "conditions": ["no_memory"],
+            "repetitions": 1,
+        },
+        "runs": runs,
+    }
+    (experiment_dir / "generic-readiness.json").write_text(
+        json.dumps(raw),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(report_module, "runtime_root", lambda: root)
+
+    report_module.build_report(
+        "generic-readiness",
+        tmp_path / "report-generic-readiness",
+    )
+    report = json.loads(
+        (
+            tmp_path / "report-generic-readiness" / "report.json"
+        ).read_text(encoding="utf-8")
+    )
+    with (
+        tmp_path / "report-generic-readiness" / "runs.csv"
+    ).open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.DictReader(handle))
+
+    assert "generic-baseline-readiness" in (
+        report_module._CALIBRATION_ONLY_PURPOSES
+    )
+    assert report["schema_version"] == "analysis-report-v2"
+    assert report["analysis_ready"] is False
+    assert report["metrics"] == {}
+    assert report["diagnostic_metrics"]["no_memory"]["runs"] == 4
+    assert report["headline_metrics"] is None
+    assert all(row["calibration_only"] == "1" for row in rows)
+    assert all(row["analysis_included"] == "0" for row in rows)
+    assert all(row["exclusion_reason"] == "calibration_only" for row in rows)
+    html_report = (
+        tmp_path / "report-generic-readiness" / "report.html"
+    ).read_text(encoding="utf-8")
+    assert "Diagnostic calibration metrics" in html_report
 
 
 def test_report_excludes_trace_qualification_failures_from_research_metrics(
@@ -391,7 +473,8 @@ def test_report_keeps_complete_budget_pilot_out_of_headline_comparison(
         )
     )
 
-    assert report["metrics"]["no_memory"]["runs"] == 3
+    assert report["metrics"] == {}
+    assert report["diagnostic_metrics"]["no_memory"]["runs"] == 3
     assert report["analysis_ready"] is False
     assert report["analysis_basis"] == (
         "available-case-diagnostic-not-for-headlines"
@@ -464,7 +547,8 @@ def test_report_keeps_saturation_pilot_out_of_headlines(
         )
     )
 
-    assert report["metrics"]["no_memory"]["runs"] == 1
+    assert report["metrics"] == {}
+    assert report["diagnostic_metrics"]["no_memory"]["runs"] == 1
     assert report["analysis_ready"] is False
     assert report["analysis_blockers"] == [
         "experiment purpose is calibration-only and excluded from "

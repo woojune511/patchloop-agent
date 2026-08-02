@@ -12,17 +12,22 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-074 semantic rollback recorded; generic V2/V5 baseline tuple and budget
-  selection pending; no live baseline run is approved`이다. D-069~D-072의 V10/V11 및 exact HF Hub
-  sidecar lane은 `retired diagnostic-only`이며 baseline readiness의 선행조건이 아니다. 해당 code,
-  raw/portable artifact와 consumed-ID guard는 append-only evidence로 보존하지만 generic
-  development/core path에 복사하거나 확장하지 않는다. Generic comparison path는
-  `tool_schema_version=v2`/`phase-evidence-v5`로 유지한다. 기존 21 model/50 tool/250,000 token
-  template은 stale/unvalidated 상태이므로 그대로 실행하지 않는다. 다음 gate는 exact model,
-  prompt, tool, retry, evaluator와 budget tuple을 먼저 결정한 뒤 작은 multi-repository dev readiness
-  panel에서 infrastructure/qualification/budget confound가 없음을 검증하는 것이다. 이 gate는 task
-  success를 요구하지 않으며 hidden task failure를 근거로 baseline freeze 전에 prompt/tool/context를
-  다시 조정하지 않는다. Live hard restart는 별도 reliability exercise이고 baseline blocker가 아니다.
+- 현재 milestone은 `D-075 generic V2/V5 baseline-readiness contract complete offline; no live
+  readiness execution approved`이다. Checked-in exact suite
+  `generic-baseline-readiness-v2v5-20260802-r1`은 Babel, Moto, pyfakefs와 HF Hub 네 development
+  task를 `no_memory`로 각 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
+  `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0,
+  40 model/100 tool/850,000 token/1,800초와 output 25,000으로 고정한다. Gate는 4/4
+  terminal·qualified·official evaluator completion과 infrastructure/qualification/diagnostic/budget
+  confound 0을 요구하지만 task success나 SCRR는 요구하지 않는다. Suite는 calibration-only이고
+  comparison denominator와 memory admission을 열지 않는다. 850k는 readiness 후보 ceiling이지
+  frozen comparison budget이 아니다. Final tuple이나 harness commit이 달라지면 새 readiness panel이
+  필요하다. Source config와 no-call preflight는 live capability가 아니며
+  clean execution hash와 최대 `$16` invocation에 대한 별도 사용자 승인이 필요하다. D-069~D-073의
+  V10/V11 및 exact HF Hub sidecar lane은 계속 `retired diagnostic-only`이고 historical artifact와
+  consumed-ID guard는 append-only로 보존한다. 기존 21/50/250,000/900 template도 계속
+  stale/unvalidated다. Hidden failure는 baseline freeze 전 task-specific tuning trigger가 아니고,
+  live hard restart는 별도 reliability exercise다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch

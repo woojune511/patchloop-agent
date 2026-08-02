@@ -18,6 +18,7 @@ from patchloop.state import StateStore
 from patchloop.util import sha256_bytes
 
 _CALIBRATION_ONLY_PURPOSES = {
+    "generic-baseline-readiness",
     "memory-development-no-memory-budget-pilot",
     "memory-development-no-memory-corrective-pilot",
     "memory-development-no-memory-saturation-pilot",
@@ -359,6 +360,7 @@ def build_report(experiment: str, output: str | Path) -> dict:
     raw_copy = output_dir / "raw-experiment.json"
     normalized_raw = _bundle_run_evidence(raw, output_dir)
     raw_copy.write_text(json.dumps(normalized_raw, indent=2, ensure_ascii=False), encoding="utf-8")
+    calibration_only = raw.get("purpose") in _CALIBRATION_ONLY_PURPOSES
     by_condition: dict[str, list[dict]] = defaultdict(list)
     rows = []
     for run in raw["runs"]:
@@ -414,8 +416,15 @@ def build_report(experiment: str, output: str | Path) -> dict:
                 "diagnostic_error": json.dumps(
                     run.get("diagnostic_error") or {}
                 ),
-                "analysis_included": int(_is_research_outcome(run)),
-                "exclusion_reason": _exclusion_reason(run) or "",
+                "calibration_only": int(calibration_only),
+                "analysis_included": int(
+                    not calibration_only and _is_research_outcome(run)
+                ),
+                "exclusion_reason": (
+                    "calibration_only"
+                    if calibration_only
+                    else _exclusion_reason(run) or ""
+                ),
             }
         )
 
@@ -506,8 +515,10 @@ def build_report(experiment: str, output: str | Path) -> dict:
             "mean_total_tokens": mean(total_tokens) if total_tokens else 0,
         }
 
+    analysis_metrics = {} if calibration_only else metrics
+    diagnostic_metrics = metrics if calibration_only else None
     report = {
-        "schema_version": "analysis-report-v1",
+        "schema_version": "analysis-report-v2",
         "experiment_id": experiment,
         "source": raw_copy.name,
         "source_runtime_hash": sha256_bytes(source.read_bytes()),
@@ -521,8 +532,11 @@ def build_report(experiment: str, output: str | Path) -> dict:
             "analysis_basis": readiness["analysis_basis"],
         },
         **readiness,
-        "metrics": metrics,
-        "headline_metrics": metrics if readiness["analysis_ready"] else None,
+        "metrics": analysis_metrics,
+        "diagnostic_metrics": diagnostic_metrics,
+        "headline_metrics": (
+            analysis_metrics if readiness["analysis_ready"] else None
+        ),
         "paired_scrr_difference_vs_no_memory": (
             _paired_differences(task_scrr_by_condition, raw["schedule_seed"])
             if readiness["analysis_ready"]
@@ -557,12 +571,22 @@ def build_report(experiment: str, output: str | Path) -> dict:
             "headline comparison.</strong></p>"
         )
     )
+    table_heading = (
+        "Diagnostic calibration metrics"
+        if calibration_only
+        else "Analysis metrics"
+    )
     (output_dir / "report.html").write_text(
         "<!doctype html><meta charset='utf-8'><title>PatchLoop report</title>"
         f"<h1>Experiment {html.escape(experiment)}</h1>"
         f"{readiness_banner}"
+        f"<h2>{table_heading}</h2>"
         "<table><thead><tr><th>Condition</th><th>SCRR</th><th>95% CI</th>"
         f"<th>Tasks</th></tr></thead><tbody>{table_rows}</tbody></table>",
         encoding="utf-8",
     )
-    return {"report": str(output_dir / "report.json"), "metrics": metrics}
+    return {
+        "report": str(output_dir / "report.json"),
+        "metrics": analysis_metrics,
+        "diagnostic_metrics": diagnostic_metrics,
+    }

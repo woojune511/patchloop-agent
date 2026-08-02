@@ -1174,3 +1174,45 @@ qualification corruption, deterministic tool/runtime contract 또는 systemic bu
 신뢰성을 깨는 문제로 제한한다. 모델이 충분한 public evidence와 frozen budget 안에서 잘못된 patch를
 제출한 것은 baseline 성능이지 harness blocker가 아니다. Live hard restart는 별도 reliability protocol로
 측정하고 fault-free no-memory baseline을 막지 않는다.
+
+### D-075 exact generic readiness protocol
+
+Checked-in `generic-baseline-readiness-v2v5-20260802-r1`은 D-074의 작은 diverse panel을 다음 네
+development row로 구체화한다.
+
+| Order | Dataset role | Task | Public failure surface |
+| ---: | --- | --- | --- |
+| 1 | Development validation | Babel strict grouped-decimal trailing zeroes | numeric parsing/format boundary |
+| 2 | Development validation | Moto query scanned count | query-state accounting |
+| 3 | Memory development | pyfakefs makedirs parent traversal | path/parent semantics |
+| 4 | Memory development | Hugging Face Hub xet endpoint propagation | endpoint/config propagation |
+
+모든 row는 `no_memory` 한 번이며 `gpt-5.4-mini-2026-03-17`, medium/standard/default,
+`SYSTEM_PROMPT_V3`, tool v2/context v5, SDK transport retry 0, output 25,000을 공유한다. Run budget은
+40 model call, 100 tool call, 850,000 total token, 1,800초다. SDK transport retry 0은 provider
+request의 숨은 재전송을 제거해 model call/usage evidence와 실제 request 횟수를 맞추기 위한 controlled
+variable이다. PatchLoop의 event-visible tool retry와 worker recovery는 변경하지 않는다. Historical
+suite는 retry field를 생략한 채 기존 adapter behavior와 hash를 유지한다.
+
+Gate `generic-baseline-readiness-gate-v1`은 4/4 exact task identity, terminal result, trace
+qualification, evaluator arrival와 official completed evaluation, 그리고 infrastructure,
+qualification, diagnostic 및 token/model/tool/wall budget terminal 0을 요구한다. Hidden pass,
+scope-compliant success와 SCRR는 별도 task outcome이며 gate에 넣지 않는다. 따라서 four-row hidden
+failure도 다른 predicate가 모두 참이면 process readiness pass가 될 수 있다.
+
+Purpose는 calibration-only다. Readiness row는 report의 baseline/headline/paired comparison에서 제외하고
+CSV에는 `calibration_only=1`, `analysis_included=0`, `exclusion_reason=calibration_only`로 남긴다.
+이 출력 경계 변경은 `analysis-report-v2`로 versioning한다. JSON의 일반 `metrics`는 비우고 관찰용
+집계만 `diagnostic_metrics`에 두며 HTML에도 diagnostic calibration table로 표시한다. Failure-memory candidate나
+index admission을 만들지 않는다. Gate pass도 850k를 comparison budget으로
+자동 동결하지 않는다. 이후 public trace에서 condition-neutral systemic confound가 없는지 확인하고,
+hidden outcome에 맞춘 task-specific 수정 없이 별도 decision으로 no-memory/comparison tuple을 동결한다.
+그 decision이 D-075 budget 또는 harness commit을 바꾸면 final tuple에 대한 second readiness panel이
+필요하며 D-075 gate를 소급 승격하지 않는다.
+
+Dated standard pricing block의 conservative reserve는 run당 `$3.9375`, four-row `$15.75`, suite
+cap `$16`이다. Checked-in YAML의 false/null approval fields와 no-call preflight는 provider 권한이
+아니다. Clean harness commit, task/private package, dataset role, image/evaluator, SDK, pricing freshness,
+prompt/tool/retry와 randomized schedule을 결속한 exact execution hash에 사용자가 별도 승인해야 live
+campaign을 한 번 시작할 수 있다. 이 offline contract 단계는 provider request, measured cost, readiness
+outcome, SCRR 또는 baseline evidence를 생성하지 않는다.

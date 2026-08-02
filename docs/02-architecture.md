@@ -721,3 +721,40 @@ Panel이나 baseline의 hidden failure는 agent outcome으로 보존한다. Priv
 hidden failure를 근거로 prompt, tool, sidecar 또는 review policy를 다시 조정하지 않는다. Live provider
 hard restart와 stale-run reclaim은 fault-free baseline readiness가 아니라 별도 reliability experiment의
 gate다.
+
+## 20. D-075 generic baseline-readiness architecture
+
+D-075는 generic comparison architecture를 V10/V11로 확장하지 않는다. Exact readiness path는
+`SYSTEM_PROMPT_V3`, tool schema v2, context `phase-evidence-v5`를 사용하고
+`public-review-contract-v2` sidecar, coverage review/rejection selector와 fault injection을 모두
+제외한다. Four-row suite는 development-validation의 Babel·Moto와 memory-development의
+pyfakefs·Hugging Face Hub를 함께 사용하지만, source dataset role을 바꾸거나 memory entry를 만들지
+않는다.
+
+Provider adapter의 retry 경계는 두 층으로 분리한다.
+
+```text
+transport retry: OpenAI SDK 내부 request 재전송
+logical recovery: PatchLoop event/action/checkpoint 기반의 trace-visible retry와 resume
+```
+
+Readiness manifest만 `transport_max_retries=0`을 필수로 가지며 adapter는
+`OpenAI(max_retries=0)`으로 구성된다. Injected test client는 이 constructor 경계를 우회하지 않고
+그대로 사용한다. Historical manifest의 field가 `None`이면 기존처럼 `OpenAI()`를 생성하고 field를
+serialization에서 생략하므로 historical suite/manifest hash와 당시 runtime 의미를 변경하지 않는다.
+
+Execution hash에는 `generic-baseline-runtime-contract-v1`이 들어간다. 이 plan document는 exact
+tool/context version, `SYSTEM_PROMPT_V3`와 `TOOL_SCHEMAS_V2` content hash, transport retry 0과 clean
+`harness_git_commit`을 결속한다. `RunStarted`는 구조가 다른
+`generic-baseline-runtime-evidence-v1` CAS에 실제 prompt/tool bytes, version과 retry를 저장한다.
+Start/resume comparator는 plan representation을, qualifier는 plan과 trace representation을 각각 독립
+재구성해 hash/bytes가 같은 runtime constants에 귀결되는지 확인한다. Task package, dataset role,
+evaluator/image와 pricing은 기존 execution-plan boundary에 함께 결속된다.
+
+Readiness source budget은 `40 model / 100 tool / 850,000 token / 1,800 seconds`, per-call output
+25,000이다. 이는 four-row runtime completion을 관찰할 후보 ceiling이며 comparison budget freeze가
+아니다. Gate가 4/4 exact task identity, terminal persistence, trace qualification와 official evaluator
+completion 및 zero confound를 통과해도 source row는 calibration-only로 남는다. 그 결과를 검토한 뒤
+별도 decision에서 comparison tuple을 동결하고 새 no-memory baseline execution identity를 만들어야
+한다. 그 decision이 budget, runtime code 또는 harness commit을 D-075와 다르게 만들면 D-075 evidence를
+새 tuple의 readiness로 승격하지 않고 final tuple에 결속된 second readiness panel을 실행한다.

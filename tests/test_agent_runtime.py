@@ -4509,6 +4509,168 @@ def test_created_run_can_be_resumed_without_a_prior_worker_claim(
     assert claims[0]["prior_status"] == RunStatus.CREATED.value
 
 
+def _generic_readiness_manifest(package, *, run_id: str):
+    return build_manifest(
+        package,
+        run_id=run_id,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        sandbox_backend="local",
+        transport_max_retries=0,
+        max_output_tokens=25_000,
+        budget=Budget(
+            max_model_calls=40,
+            max_tool_calls=100,
+            max_total_tokens=850_000,
+            wall_clock_timeout_seconds=1_800,
+        ),
+        experiment_context=ExperimentRunContext(
+            experiment_id="generic-baseline-readiness-v2v5-20260802-r1",
+            purpose=ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            suite_hash="sha256:" + ("a" * 64),
+            execution_hash="sha256:" + ("b" * 64),
+            dataset_manifest_hash="sha256:" + ("c" * 64),
+            schedule_seed=20260723,
+            schedule_order=1,
+            schedule_row_id="sha256:" + ("d" * 64),
+            repetition=1,
+        ),
+    )
+
+
+def _tamper_generic_runtime_event(
+    runner: AgentRunner,
+    run_id: str,
+    *,
+    tamper: str,
+) -> None:
+    started = next(
+        event
+        for event in runner.state.list_events(run_id)
+        if event.type == EventType.RUN_STARTED
+    )
+    payload = json.loads(canonical_json(started.payload))
+    if tamper == "descriptor":
+        payload["runtime_contract_artifact"]["content_hash"] = (
+            "sha256:" + ("f" * 64)
+        )
+    else:
+        artifact = Artifact.model_validate(
+            payload["runtime_contract_artifact"]
+        )
+        document = json.loads(
+            runner.artifacts.read_bytes(artifact).decode("utf-8")
+        )
+        document["system_prompt"] += "\nsemantic drift"
+        replacement = runner.artifacts.put_json(document)
+        payload.update(
+            {
+                "artifact_id": replacement.artifact_id,
+                "artifact_path": replacement.path,
+                "runtime_contract_artifact": replacement.model_dump(
+                    mode="json"
+                ),
+            }
+        )
+    tampered = started.model_copy(update={"payload": payload})
+    with sqlite3.connect(runner.state.path) as connection:
+        connection.execute(
+            "UPDATE events SET event_json = ? "
+            "WHERE run_id = ? AND sequence = ?",
+            (
+                canonical_json(tampered.model_dump(mode="json")),
+                run_id,
+                started.sequence,
+            ),
+        )
+
+
+@pytest.mark.parametrize("checkpoint_present", [False, True])
+@pytest.mark.parametrize("tamper", ["descriptor", "semantic"])
+def test_generic_readiness_resume_rejects_runtime_artifact_tamper_before_model(
+    tmp_path,
+    monkeypatch,
+    checkpoint_present,
+    tamper,
+) -> None:
+    monkeypatch.setattr(
+        "patchloop.agent.runner.DockerSandbox.available",
+        lambda: False,
+    )
+    monkeypatch.setattr(
+        AgentRunner,
+        "_require_live_authorization",
+        lambda *_args, **_kwargs: None,
+    )
+    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    manifest = _generic_readiness_manifest(
+        package,
+        run_id=(
+            f"run_generic_resume_{tamper}_"
+            f"{'checkpoint' if checkpoint_present else 'prefix'}"
+        ),
+    )
+    runner = AgentRunner(tmp_path / "runtime")
+
+    if checkpoint_present:
+        class StopAtModelTurn:
+            @staticmethod
+            def next_turn(_context, _tools):
+                raise SystemExit("stop after initial checkpoint")
+
+        monkeypatch.setattr(
+            runner,
+            "_model_adapter",
+            lambda *_args, **_kwargs: StopAtModelTurn(),
+        )
+    else:
+        original_transition = runner._transition
+
+        def stop_after_run_started(*_args, **_kwargs):
+            raise SystemExit("stop before initial checkpoint")
+
+        monkeypatch.setattr(runner, "_transition", stop_after_run_started)
+
+    with pytest.raises(SystemExit):
+        runner.start(TASK, model="openai", manifest=manifest)
+    if not checkpoint_present:
+        monkeypatch.setattr(runner, "_transition", original_transition)
+    assert (
+        runner.state.latest_checkpoint(manifest.run_id) is not None
+    ) is checkpoint_present
+    system_prompt, tool_schemas = runner._runtime_contract(manifest)
+    runner._validate_generic_baseline_runtime_resume_contract(
+        manifest=manifest,
+        events=runner.state.list_events(manifest.run_id),
+        system_prompt=system_prompt,
+        tool_schemas=tool_schemas,
+    )
+    _tamper_generic_runtime_event(
+        runner,
+        manifest.run_id,
+        tamper=tamper,
+    )
+
+    model_boundary_reached = False
+
+    def fail_if_model_adapter_is_built(*_args, **_kwargs):
+        nonlocal model_boundary_reached
+        model_boundary_reached = True
+        raise AssertionError("resume reached the paid model boundary")
+
+    monkeypatch.setattr(
+        runner,
+        "_model_adapter",
+        fail_if_model_adapter_is_built,
+    )
+    with pytest.raises(
+        RecoveryError,
+        match="generic baseline runtime contract artifact",
+    ):
+        runner.resume(manifest.run_id)
+    assert model_boundary_reached is False
+
+
 def test_resume_recovers_run_started_before_first_checkpoint(
     tmp_path,
     monkeypatch,

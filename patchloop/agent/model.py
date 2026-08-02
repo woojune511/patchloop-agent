@@ -796,7 +796,22 @@ class OpenAIResponsesAdapter:
 
     def __init__(self, config: ModelConfig, client: OpenAI | None = None) -> None:
         self.config = config
-        self.client = client or OpenAI()
+        if client is not None:
+            if (
+                config.transport_max_retries is not None
+                and getattr(client, "max_retries", None)
+                != config.transport_max_retries
+            ):
+                raise ContractError(
+                    "injected OpenAI client transport retry policy does not "
+                    "match the run contract"
+                )
+            self.client = client
+        elif config.transport_max_retries is None:
+            # Historical manifests intentionally retain the SDK default.
+            self.client = OpenAI()
+        else:
+            self.client = OpenAI(max_retries=config.transport_max_retries)
 
     def request_payload(
         self,

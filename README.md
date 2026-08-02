@@ -2,6 +2,27 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-02 D-075는 D-074가 요구한 generic baseline-readiness 계약을 provider 호출 없이
+구현했다. 새 checked-in suite
+`generic-baseline-readiness-v2v5-20260802-r1`은 Babel, Moto, pyfakefs와 Hugging Face Hub의
+서로 다른 네 development task를 `no_memory`로 한 번씩 실행하도록 고정한다. Exact runtime은
+`gpt-5.4-mini-2026-03-17` medium/standard/default,
+`SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, per-call output 25,000,
+`40 model / 100 tool / 850,000 total token / 1,800초`이며 OpenAI SDK transport retry는
+`transport_max_retries=0`으로 명시한다. 이 값은 PatchLoop의 trace-visible logical recovery를
+끄는 것이 아니라 SDK 내부의 숨은 재전송만 금지한다. `generic-baseline-runtime-contract-v1`이
+prompt/tool hash, retry와 clean harness commit을 execution plan, manifest, start/resume와
+qualification에 결속하고, 별도 `generic-baseline-runtime-evidence-v1` RunStarted CAS가 실제
+prompt/tool bytes와 retry를 보존한다. `generic-baseline-readiness-gate-v1`은 exact 4/4 task identity,
+terminal·qualified·official evaluator completion과 infrastructure/qualification/diagnostic/budget
+confound 0을 요구하지만 hidden success와 SCRR는 요구하지 않는다. 이 suite는 calibration-only이고
+comparison denominator와 memory admission을 열지 않는다. Source의 reserve는 `$15.75`, cap은
+`$16`이지만 `live_cost_approved=false`와 null approval hash/run ID를 유지하므로 이 구현과 source
+suite만으로 provider 실행 권한은 생기지 않는다. 850k도 readiness 후보 ceiling일 뿐 아직 frozen
+comparison budget이 아니다. Post-panel decision이 budget이나 harness commit을 바꾸면 D-075를 그대로
+승격하지 않고 final tuple로 새 readiness panel을 통과해야 한다. Historical suite에서 retry field가
+없으면 serialization/hash와 기존 SDK behavior를 그대로 보존한다.
+
 2026-08-02 D-074는 최근 diagnostic sequence를 삭제하지 않고 baseline 경로에서 의미상
 rollback한다. D-069~D-072의 V10/V11과 exact HF Hub review sidecar는 모두
 `retired diagnostic-only`다. Raw/portable evidence, schema decoder와 consumed-ID guard는

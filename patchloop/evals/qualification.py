@@ -109,6 +109,12 @@ _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=850_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
 )
@@ -133,6 +139,7 @@ _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
     }
 )
 _CAMPAIGN_PURPOSES = {
+    ExperimentPurpose.GENERIC_BASELINE_READINESS,
     ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
@@ -143,6 +150,35 @@ _CAMPAIGN_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
     ExperimentPurpose.CORE,
 }
+
+
+def _purpose_dataset_roles(purpose: ExperimentPurpose) -> set[DatasetRole]:
+    if purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
+        return {
+            DatasetRole.DEVELOPMENT_VALIDATION,
+            DatasetRole.MEMORY_DEVELOPMENT,
+        }
+    if purpose in {
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
+    }:
+        return {DatasetRole.DEVELOPMENT_VALIDATION}
+    if purpose in {
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
+    }:
+        return {DatasetRole.MEMORY_DEVELOPMENT}
+    if purpose == ExperimentPurpose.CORE:
+        return {
+            DatasetRole.CORE_SAME_REPO,
+            DatasetRole.CORE_CROSS_REPO,
+        }
+    return set()
 
 _TERMINAL_EVENTS = {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
 _AGENT_VISIBLE_ARTIFACT_EVENTS = {
@@ -438,9 +474,9 @@ def _execution_plan_matches(
         # payload, and recalculate the hash using the same contract as preflight.
         from patchloop.evals.runner import (
             ExperimentSuite,
-            _corrective_runtime_contract,
             _diagnostic_fault,
             _execution_hash,
+            _experiment_runtime_contract,
             _make_schedule,
             _pricing_contract_matches,
             _suite_hash,
@@ -452,6 +488,12 @@ def _execution_plan_matches(
         completion_plan_matches = True
         if (
             (
+                parsed_suite.purpose
+                == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                and parsed_suite.budget
+                == _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+            )
+            or (
                 parsed_suite.purpose
                 == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
                 and parsed_suite.budget == _GPT54_MINI_COMPLETION_BUDGET
@@ -519,7 +561,7 @@ def _execution_plan_matches(
             openai_sdk=environment["openai_sdk"],
             pilot_qualification=pilot_qualification,
             runtime_contract=(
-                _corrective_runtime_contract(
+                _experiment_runtime_contract(
                     parsed_suite,
                     harness_git_commit=environment["git"].get(
                         "commit"
@@ -529,13 +571,22 @@ def _execution_plan_matches(
         )
     except (ImportError, KeyError, TypeError, ValueError):
         return False
-    expected_runtime_contract = _corrective_runtime_contract(
+    expected_runtime_contract = _experiment_runtime_contract(
         parsed_suite,
         harness_git_commit=environment["git"].get("commit"),
     )
-    corrective_runtime = bool(expected_runtime_contract is not None)
+    hash_bound_runtime = bool(expected_runtime_contract is not None)
     runtime_pair_matches = bool(
         (
+            manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v5"
+            and manifest.model.transport_max_retries == 0
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
+            == "generic-baseline-runtime-contract-v1"
+            and expected_runtime_contract.get("transport_max_retries") == 0
+        )
+        or (
             manifest.tool_schema_version == "v4"
             and manifest.context_policy_version == "phase-evidence-v7"
             and isinstance(expected_runtime_contract, dict)
@@ -583,7 +634,7 @@ def _execution_plan_matches(
     )
     runtime_contract_matches = bool(
         (
-            corrective_runtime
+            hash_bound_runtime
             and isinstance(runtime_contract, dict)
             and canonical_json(runtime_contract)
             == canonical_json(expected_runtime_contract)
@@ -591,10 +642,10 @@ def _execution_plan_matches(
             and manifest.harness_git_commit
             == expected_runtime_contract["harness_git_commit"]
         )
-        or (not corrective_runtime and runtime_contract is None)
+        or (not hash_bound_runtime and runtime_contract is None)
     )
     pricing_contract_matches = bool(
-        not corrective_runtime
+        not hash_bound_runtime
         or _pricing_contract_matches(
             parsed_suite,
             pricing,
@@ -610,6 +661,8 @@ def _execution_plan_matches(
         and parsed_suite.reasoning_effort == manifest.model.reasoning_effort
         and parsed_suite.reasoning_mode == manifest.model.reasoning_mode
         and parsed_suite.service_tier == manifest.model.service_tier
+        and parsed_suite.transport_max_retries
+        == manifest.model.transport_max_retries
         and parsed_suite.max_output_tokens == manifest.model.max_output_tokens
         and parsed_suite.input_price_per_million_usd
         == manifest.model.input_price_per_million_usd
@@ -883,6 +936,105 @@ def _nested_cas_artifact_evidence(
         return valid, item, content
     except (OSError, TypeError, ValueError):
         return False, item, None
+
+
+def _generic_baseline_runtime_contract_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Bind the D-075 V2/V5 prompt, tools, and retry policy to trace CAS."""
+
+    from patchloop.agent.model import SYSTEM_PROMPT_V3
+    from patchloop.agent.tools import TOOL_SCHEMAS_V2
+
+    candidates = [
+        event for event in events if event.type == EventType.RUN_STARTED
+    ]
+    details: dict[str, Any] = {
+        "run_started_count": len(candidates),
+        "event_sequence": (
+            candidates[0].sequence if len(candidates) == 1 else None
+        ),
+        "event_identity_valid": False,
+        "descriptor_binding_valid": False,
+        "cas_integrity_valid": False,
+        "semantic_contract_valid": False,
+        "system_prompt_hash": None,
+        "tool_schema_hash": None,
+        "content_hash": None,
+    }
+    if len(candidates) != 1:
+        return False, details
+    event = candidates[0]
+    raw_artifact = event.payload.get("runtime_contract_artifact")
+    cas_valid, cas_item, content = _nested_cas_artifact_evidence(
+        artifact_root=(root / "artifacts").resolve(),
+        event_id=event.event_id,
+        role="runtime-contract",
+        raw_artifact=raw_artifact,
+    )
+    details["cas_integrity_valid"] = cas_valid
+    details["content_hash"] = cas_item.get("actual_content_hash")
+    event_identity_valid = bool(
+        event.actor == "runner"
+        and event.run_id == manifest.run_id
+        and event.payload.get("task_id") == manifest.task_id
+        and event.payload.get("artifact_role") == "runtime-contract"
+    )
+    descriptor_binding_valid = bool(
+        isinstance(raw_artifact, dict)
+        and event.payload.get("artifact_id")
+        == raw_artifact.get("artifact_id")
+        and event.payload.get("artifact_path") == raw_artifact.get("path")
+        and raw_artifact.get("media_type")
+        == "application/json; charset=utf-8"
+    )
+    details["event_identity_valid"] = event_identity_valid
+    details["descriptor_binding_valid"] = descriptor_binding_valid
+    expected = {
+        "schema_version": "generic-baseline-runtime-evidence-v1",
+        "transport_max_retries": 0,
+        "system_prompt": SYSTEM_PROMPT_V3,
+        "tools": TOOL_SCHEMAS_V2,
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+    }
+    try:
+        observed = json.loads(content) if content is not None else None
+    except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
+        observed = None
+    semantic_valid = bool(
+        isinstance(observed, dict)
+        and canonical_json(observed) == canonical_json(expected)
+        and manifest.experiment is not None
+        and manifest.experiment.purpose
+        == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v5"
+        and manifest.model.transport_max_retries == 0
+        and manifest.public_review_contract is None
+    )
+    details["semantic_contract_valid"] = semantic_valid
+    details["system_prompt_hash"] = (
+        sha256_text(observed["system_prompt"])
+        if isinstance(observed, dict)
+        and isinstance(observed.get("system_prompt"), str)
+        else None
+    )
+    details["tool_schema_hash"] = (
+        sha256_text(canonical_json(observed["tools"]))
+        if isinstance(observed, dict)
+        and isinstance(observed.get("tools"), list)
+        else None
+    )
+    return bool(
+        event_identity_valid
+        and descriptor_binding_valid
+        and cas_valid
+        and semantic_valid
+    ), details
 
 
 def _corrective_runtime_contract_evidence(
@@ -9982,6 +10134,7 @@ def qualify_run(
         checks.append({"check_id": check_id, "passed": passed, "details": details})
         return passed
 
+    experiment = manifest.experiment
     task_identity = (
         manifest.task_id == package.public.task_id
         and manifest.task_version == package.public.task_version
@@ -9989,6 +10142,27 @@ def qualify_run(
         and manifest.private_spec_hash == package.private_spec_hash
     )
     add("task_identity", task_identity)
+    generic_runtime_content_hash: str | None = None
+    if (
+        experiment is not None
+        and experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+    ):
+        (
+            generic_runtime_ok,
+            generic_runtime_details,
+        ) = _generic_baseline_runtime_contract_evidence(
+            root=run_root,
+            manifest=manifest,
+            events=events,
+        )
+        generic_runtime_content_hash = generic_runtime_details.get(
+            "content_hash"
+        )
+        add(
+            "generic_runtime_contract",
+            generic_runtime_ok,
+            **generic_runtime_details,
+        )
     corrective_runtime_content_hash: str | None = None
     if manifest.tool_schema_version in {"v4", "v5", "v6"}:
         from patchloop.agent.review import (
@@ -10505,6 +10679,13 @@ def qualify_run(
             )
             or (
                 manifest.experiment.purpose
+                == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                and manifest.budget
+                == _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+                and manifest.model.transport_max_retries == 0
+            )
+            or (
+                manifest.experiment.purpose
                 == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
                 and manifest.experiment.experiment_id
                 not in (
@@ -10600,6 +10781,10 @@ def qualify_run(
     }
     if manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID:
         model_contract_details["max_total_tokens"] = manifest.budget.max_total_tokens
+    if manifest.model.transport_max_retries is not None:
+        model_contract_details["transport_max_retries"] = (
+            manifest.model.transport_max_retries
+        )
     add(
         "frozen_model_contract",
         model_contract_ok,
@@ -10632,39 +10817,10 @@ def qualify_run(
     except ContractError:
         dataset_entry = None
     experiment = manifest.experiment
-    purpose_roles = {
-        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT: {DatasetRole.DEVELOPMENT_VALIDATION},
-        ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT: {
-            DatasetRole.DEVELOPMENT_VALIDATION
-        },
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY: {DatasetRole.MEMORY_DEVELOPMENT},
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT: {
-            DatasetRole.MEMORY_DEVELOPMENT
-        },
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT: {
-            DatasetRole.MEMORY_DEVELOPMENT
-        },
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT: {
-            DatasetRole.MEMORY_DEVELOPMENT
-        },
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT: {
-            DatasetRole.MEMORY_DEVELOPMENT
-        },
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT: {
-            DatasetRole.MEMORY_DEVELOPMENT
-        },
-        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT: {
-            DatasetRole.MEMORY_DEVELOPMENT
-        },
-        ExperimentPurpose.CORE: {
-            DatasetRole.CORE_SAME_REPO,
-            DatasetRole.CORE_CROSS_REPO,
-        },
-    }
     purpose_role_ok = bool(
         experiment is not None
         and dataset_entry is not None
-        and dataset_entry.role in purpose_roles.get(experiment.purpose, set())
+        and dataset_entry.role in _purpose_dataset_roles(experiment.purpose)
     )
     canonical_package_ok = bool(
         dataset_entry is not None
@@ -10724,6 +10880,7 @@ def qualify_run(
         experiment is not None
         and experiment.purpose
         in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
@@ -11351,6 +11508,7 @@ def qualify_run(
         and (
             experiment.purpose
             in {
+                ExperimentPurpose.GENERIC_BASELINE_READINESS,
                 ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
                 ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT,
@@ -11387,6 +11545,29 @@ def qualify_run(
             context_event = (
                 matched_context_events[index] if index < len(matched_context_events) else None
             )
+            generic_request_runtime_ok = True
+            if (
+                experiment is not None
+                and experiment.purpose
+                == ExperimentPurpose.GENERIC_BASELINE_READINESS
+            ):
+                request_evidence_ok, request_evidence = (
+                    _request_evidence_payload(
+                        context_event,
+                        artifact_root=run_root / "artifacts",
+                        expected_provider=manifest.model.provider,
+                    )
+                    if context_event is not None
+                    else (False, None)
+                )
+                generic_request_runtime_ok = bool(
+                    request_evidence_ok
+                    and isinstance(request_evidence, dict)
+                    and _request_runtime_contract_valid(
+                        request_evidence.get("request_body"),
+                        manifest,
+                    )
+                )
             requested_input_tokens = payload.get("requested_input_tokens")
             input_tokens = int(payload.get("input_tokens", 0))
             output_tokens = int(payload.get("output_tokens", 0))
@@ -11412,6 +11593,7 @@ def qualify_run(
                 == context_event.payload.get("artifact_path")
                 and payload.get("request_body_hash")
                 == context_event.payload.get("request_body_hash")
+                and generic_request_runtime_ok
             )
             if not event_ok:
                 prompt_telemetry_ok = False
@@ -11523,6 +11705,7 @@ def qualify_run(
     add("persisted_result", persisted_result_ok, artifact_present=persisted_result is not None)
 
     pilot_purposes = {
+        ExperimentPurpose.GENERIC_BASELINE_READINESS,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
     }
@@ -11686,6 +11869,12 @@ def qualify_run(
     if structured_lifecycle_contract:
         trace_check_ids.add("submission_lifecycle")
         trace_check_ids.add("worker_claim_provenance")
+    if (
+        experiment is not None
+        and experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+    ):
+        trace_check_ids.add("generic_runtime_contract")
+        trace_check_ids.add("pricing_start_freshness")
     if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
         trace_check_ids.add("self_validation_lifecycle")
     if manifest.tool_schema_version == "v4":
@@ -11808,6 +11997,17 @@ def qualify_run(
         "source_evidence_hash": source_evidence_hash,
         "checks": checks,
     }
+    if (
+        experiment is not None
+        and experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+    ):
+        payload.update(
+            {
+                "task_id": manifest.task_id,
+                "execution_hash": experiment.execution_hash,
+                "schedule_row_id": experiment.schedule_row_id,
+            }
+        )
     if structured_lifecycle_contract:
         payload.update(
             {
@@ -11823,10 +12023,18 @@ def qualify_run(
                 "runtime_contract_content_hash": (
                     corrective_runtime_content_hash
                     if manifest.tool_schema_version in {"v4", "v5", "v6"}
+                    else generic_runtime_content_hash
+                    if (
+                        experiment is not None
+                        and experiment.purpose
+                        == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                    )
                     else _runtime_contract_content_hash(events)
                 ),
             }
         )
+        if manifest.model.transport_max_retries is not None:
+            payload["transport_max_retries"] = manifest.model.transport_max_retries
     payload["qualification_hash"] = sha256_text(canonical_json(payload))
 
     if not persist:

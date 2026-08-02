@@ -162,6 +162,72 @@ def test_gpt54mini_adapter_omits_gpt56_reasoning_controls() -> None:
     assert "previous_response_id" not in request
 
 
+def test_openai_adapter_binds_zero_transport_retries_without_changing_legacy(
+    monkeypatch,
+) -> None:
+    constructor_kwargs: list[dict] = []
+
+    def fake_openai(**kwargs):
+        constructor_kwargs.append(kwargs)
+        return SimpleNamespace(responses=FakeResponses())
+
+    monkeypatch.setattr("patchloop.agent.model.OpenAI", fake_openai)
+    legacy = ModelConfig(
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+    )
+    readiness = ModelConfig(
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        transport_max_retries=0,
+    )
+
+    OpenAIResponsesAdapter(legacy)
+    OpenAIResponsesAdapter(readiness)
+
+    assert constructor_kwargs == [{}, {"max_retries": 0}]
+    assert "transport_max_retries" not in legacy.model_dump(mode="json")
+    assert readiness.model_dump(mode="json")["transport_max_retries"] == 0
+    with pytest.raises(ValueError):
+        ModelConfig(
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            transport_max_retries=1,
+        )
+    with pytest.raises(ValueError, match="JSON integer 0"):
+        ModelConfig(
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            transport_max_retries=False,
+        )
+
+
+def test_openai_adapter_rejects_injected_client_retry_drift() -> None:
+    config = ModelConfig(
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        transport_max_retries=0,
+    )
+
+    with pytest.raises(ContractError, match="transport retry policy"):
+        OpenAIResponsesAdapter(
+            config,
+            client=SimpleNamespace(
+                responses=FakeResponses(),
+                max_retries=2,
+            ),
+        )
+
+    adapter = OpenAIResponsesAdapter(
+        config,
+        client=SimpleNamespace(
+            responses=FakeResponses(),
+            max_retries=0,
+        ),
+    )
+    assert adapter.client.max_retries == 0
+
+
 def test_openai_adapter_preserves_billed_usage_when_tool_arguments_are_invalid() -> None:
     responses = InvalidArgumentsResponses()
     adapter = OpenAIResponsesAdapter(

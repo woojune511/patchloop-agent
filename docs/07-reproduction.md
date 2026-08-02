@@ -803,3 +803,41 @@ or budget confound; hidden task success is reported separately and is not requir
 After that panel passes, freeze the exact tuple and collect the no-memory baseline without tuning against
 individual hidden failures. Provider hard-kill/reclaim reproduction remains part of the separate reliability
 suite and is not a prerequisite for this fault-free baseline gate.
+
+## D-075 generic readiness source audit
+
+The exact source suite is now checked in, but the following commands are read-only/no-call inspection steps.
+Do not add live approval flags unless the resulting clean execution hash and `$16` cap are separately approved.
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml
+
+uv run --cache-dir .uv-cache pytest `
+  tests/test_model_adapter.py `
+  tests/test_experiments.py `
+  tests/test_report.py -q
+
+uv run --cache-dir .uv-cache patchloop evaluate `
+  --suite experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml `
+  --preflight-only
+```
+
+The preflight must report exactly four ordered rows across development-validation and memory-development,
+tool v2/context V5, no public-review sidecar, `transport_max_retries=0`, a per-run reserve of `$3.9375`
+and total reserve `$15.75`. Before approval its blocker set must include live-cost approval and execution-hash
+mismatch; the API key value must never be printed. A dirty checkout, missing/pinned-image mismatch, package
+drift, SDK drift or pricing older than 72 hours adds a fail-closed blocker and must be fixed before asking for
+approval.
+
+The suite hash can be inspected as source identity, but it is not an invocation approval hash. The live
+execution hash also includes the clean Git commit, package/image/evaluator identities, randomized schedule and
+fresh environment state. Running preflight on a different commit is expected to produce a different execution
+hash. Do not write that hash into the source YAML or commit an approval toggle.
+
+Expected live gate semantics after a separately approved one-time run are 4/4 terminal, qualified,
+evaluator-reached and official-completed rows with zero infrastructure/qualification/diagnostic/budget
+confounds. The number of hidden successes may be zero without invalidating readiness. Readiness rows remain
+excluded from comparison and memory admission, and 850k remains unfrozen until a separate post-panel decision.
+If that decision changes the budget/runtime/harness commit, run a new final-tuple readiness panel instead of
+reusing the D-075 gate.

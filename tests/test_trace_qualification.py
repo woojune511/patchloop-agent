@@ -40,6 +40,7 @@ from patchloop.contracts import (
 from patchloop.dataset import load_dataset_manifest
 from patchloop.errors import ContractError
 from patchloop.evals import qualification as qualification_module
+from patchloop.evals import runner as eval_runner
 from patchloop.evals.failures import classify_failure
 from patchloop.evals.qualification import (
     _private_leak_tokens,
@@ -1182,6 +1183,10 @@ def _execution_plan_path_for_test(root: Path, execution_hash: str) -> Path:
 def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
     assert manifest.experiment is not None
     purpose = manifest.experiment.purpose
+    if purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
+        return eval_runner.load_suite(
+            "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+        )
     if (
         purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
@@ -1359,6 +1364,9 @@ def _write_execution_plan(
         suite.purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
     )
+    generic_baseline_readiness = (
+        suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+    )
     if (
         (
             suite.purpose
@@ -1366,17 +1374,23 @@ def _write_execution_plan(
             and suite.budget == completion_budget
         )
         or budget_pilot
+        or generic_baseline_readiness
     ):
-        dataset_role = (
-            DatasetRole.MEMORY_DEVELOPMENT
-            if budget_pilot
-            else DatasetRole.DEVELOPMENT_VALIDATION
-        )
         tasks = []
         for task_value in suite.tasks:
             task_path = Path(task_value)
             package = load_task_package(
                 task_path.parent if task_path.is_file() else task_path
+            )
+            dataset_role = (
+                DatasetRole.DEVELOPMENT_VALIDATION
+                if (
+                    generic_baseline_readiness
+                    and package.public.split == "dev-validation"
+                )
+                else DatasetRole.MEMORY_DEVELOPMENT
+                if generic_baseline_readiness or budget_pilot
+                else DatasetRole.DEVELOPMENT_VALIDATION
             )
             tasks.append(
                 {
@@ -1457,6 +1471,14 @@ def _write_execution_plan(
         },
     }
     pilot_qualification: dict[str, object] = {}
+    runtime_contract = (
+        eval_runner._experiment_runtime_contract(
+            suite,
+            harness_git_commit=manifest.harness_git_commit,
+        )
+        if generic_baseline_readiness
+        else None
+    )
     experiment.execution_hash = _execution_hash(
         suite,
         dataset=dataset,
@@ -1466,6 +1488,7 @@ def _write_execution_plan(
         docker_state=environment["docker"],
         openai_sdk=environment["openai_sdk"],
         pilot_qualification=pilot_qualification,
+        runtime_contract=runtime_contract,
     )
     payload = {
         "schema_version": "experiment-execution-plan-v1",
@@ -1489,6 +1512,13 @@ def _write_execution_plan(
         "blockers": [],
         "ready": True,
     }
+    if generic_baseline_readiness:
+        payload["runtime_contract"] = runtime_contract
+        payload["pricing"] = eval_runner._pricing_contract(
+            suite,
+            schedule_size=len(schedule),
+            checked_at=suite.pricing_verified_at,
+        )
     path = _execution_plan_path_for_test(root, experiment.execution_hash)
     path.parent.mkdir(parents=True)
     path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
@@ -1585,6 +1615,16 @@ def _terminal_trace(
         )
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
+    generic_baseline_readiness = (
+        purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+    )
+    generic_suite = (
+        eval_runner.load_suite(
+            "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+        )
+        if generic_baseline_readiness
+        else None
+    )
     outcome_label = "agent" if agent_failure else ("resolved" if resolved else "failure")
     run_id = f"run_qualification_{outcome_label}"
     effective_budget = budget
@@ -1617,6 +1657,27 @@ def _terminal_trace(
         budget=effective_budget,
         fault=fault,
         max_output_tokens=effective_max_output_tokens,
+        transport_max_retries=(0 if generic_baseline_readiness else None),
+        input_price_per_million_usd=(
+            generic_suite.input_price_per_million_usd
+            if generic_suite is not None
+            else None
+        ),
+        cached_input_price_per_million_usd=(
+            generic_suite.cached_input_price_per_million_usd
+            if generic_suite is not None
+            else None
+        ),
+        cache_write_input_price_per_million_usd=(
+            generic_suite.cache_write_input_price_per_million_usd
+            if generic_suite is not None
+            else None
+        ),
+        output_price_per_million_usd=(
+            generic_suite.output_price_per_million_usd
+            if generic_suite is not None
+            else None
+        ),
         agent_image_digest=(
             package.environment.image_digest if package.environment is not None else None
         ),
@@ -1638,6 +1699,7 @@ def _terminal_trace(
     elif (
         purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        or generic_baseline_readiness
     ):
         manifest.context_policy_version = "phase-evidence-v5"
     elif (
@@ -1655,10 +1717,14 @@ def _terminal_trace(
         experiment_id=(
             experiment_id
             or (
-                "dev-validation-gpt54mini-token-tail-v5-20260730-r1"
-                if purpose
-                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-                else "qualification-test"
+                eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+                if generic_baseline_readiness
+                else (
+                    "dev-validation-gpt54mini-token-tail-v5-20260730-r1"
+                    if purpose
+                    == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                    else "qualification-test"
+                )
             )
         ),
         purpose=purpose,
@@ -1691,7 +1757,20 @@ def _terminal_trace(
         manifest=manifest,
     )
     artifacts = ArtifactStore(tmp_path / "artifacts")
-    runtime_contract = artifacts.put_text("public runtime contract")
+    runtime_contract = (
+        artifacts.put_json(
+            {
+                "schema_version": "generic-baseline-runtime-evidence-v1",
+                "transport_max_retries": 0,
+                "system_prompt": AgentRunner._runtime_contract(manifest)[0],
+                "tools": AgentRunner._runtime_contract(manifest)[1],
+                "tool_schema_version": "v2",
+                "context_policy_version": "phase-evidence-v5",
+            }
+        )
+        if generic_baseline_readiness
+        else artifacts.put_text("public runtime contract")
+    )
     submitted_patch = artifacts.put_text(PATCH_TEXT, "text/x-diff")
     initial_model = artifacts.put_text("public model response: get_diff")
     get_diff_payload = {
@@ -1713,6 +1792,7 @@ def _terminal_trace(
         tool_results: list[dict] | None = None,
         runtime_contract: bool = False,
     ):
+        runtime_contract = runtime_contract or generic_baseline_readiness
         if manifest.context_policy_version == "phase-evidence-v5":
             built_context = build_context_with_evidence(
                 package.public,
@@ -1864,14 +1944,25 @@ def _terminal_trace(
         return payload
 
     def append_run_started() -> None:
+        payload: dict[str, object] = {
+            "artifact_id": runtime_contract.artifact_id,
+            "artifact_path": runtime_contract.path,
+        }
+        if generic_baseline_readiness:
+            payload.update(
+                {
+                    "task_id": manifest.task_id,
+                    "artifact_role": "runtime-contract",
+                    "runtime_contract_artifact": (
+                        runtime_contract.model_dump(mode="json")
+                    ),
+                }
+            )
         state.append_event(
             run_id,
             EventType.RUN_STARTED,
             actor="runner",
-            payload={
-                "artifact_id": runtime_contract.artifact_id,
-                "artifact_path": runtime_contract.path,
-            },
+            payload=payload,
         )
 
     initial_rendered_context = json.dumps(
@@ -4856,6 +4947,95 @@ def test_high_budget_completion_pilot_model_contract_qualifies(
         "max_total_tokens"
     ] == 600_000
     assert qualification["memory_candidate_eligible"] is False
+
+
+def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_requests(
+    tmp_path: Path,
+) -> None:
+    def build_row(root: Path) -> tuple[str, RunResult]:
+        run_id, result, _ = _terminal_trace(
+            root,
+            task_dir=PILOT_TASK,
+            purpose=ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            role=DatasetRole.DEVELOPMENT_VALIDATION,
+            resolved=False,
+            prompt_telemetry=True,
+            budget=eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET,
+            max_output_tokens=25_000,
+            experiment_id=(
+                eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+            ),
+        )
+        return run_id, result
+
+    valid_root = tmp_path / "valid"
+    run_id, result = build_row(valid_root)
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=valid_root,
+        persist=False,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+
+    assert result.official is True
+    assert result.evaluation_status == "completed"
+    assert result.outcome_kind == RunOutcomeKind.TASK_FAILURE
+    assert qualification["qualified"] is True, [
+        check for check in qualification["checks"] if not check["passed"]
+    ]
+    assert qualification["evaluation_reached"] is True
+    assert checks["approved_execution_plan"]["passed"] is True
+    assert checks["generic_runtime_contract"]["passed"] is True
+    assert checks["prompt_token_integrity"]["passed"] is True
+
+    runtime_root = tmp_path / "runtime-tamper"
+    runtime_run_id, _ = build_row(runtime_root)
+    runtime_state = StateStore(runtime_root / "state.sqlite3")
+    runtime_event = next(
+        event
+        for event in runtime_state.list_events(runtime_run_id)
+        if event.type == EventType.RUN_STARTED
+    )
+    Path(runtime_event.payload["artifact_path"]).write_bytes(b"{}")
+    runtime_tampered = qualify_run(
+        runtime_run_id,
+        task_dir=PILOT_TASK,
+        root=runtime_root,
+        persist=False,
+    )
+    runtime_checks = {
+        check["check_id"]: check
+        for check in runtime_tampered["checks"]
+    }
+    assert runtime_tampered["qualified"] is False
+    assert runtime_checks["generic_runtime_contract"]["passed"] is False
+
+    request_root = tmp_path / "request-tamper"
+    request_run_id, _ = build_row(request_root)
+    request_state = StateStore(request_root / "state.sqlite3")
+    request_event = next(
+        event
+        for event in request_state.list_events(request_run_id)
+        if event.type == EventType.MODEL_CALLED
+    )
+    Path(request_event.payload["request_artifact_path"]).write_bytes(
+        b'{"tampered":true}'
+    )
+    request_tampered = qualify_run(
+        request_run_id,
+        task_dir=PILOT_TASK,
+        root=request_root,
+        persist=False,
+    )
+    request_checks = {
+        check["check_id"]: check
+        for check in request_tampered["checks"]
+    }
+    assert request_tampered["qualified"] is False
+    assert request_checks["prompt_token_integrity"]["passed"] is False
 
 
 @pytest.mark.parametrize(

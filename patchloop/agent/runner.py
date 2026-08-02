@@ -476,8 +476,14 @@ class AgentRunner:
             and manifest.experiment.purpose
             == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
         )
+        generic_baseline_readiness = bool(
+            manifest.experiment is not None
+            and manifest.experiment.purpose
+            == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        )
         if not any(
             (
+                generic_baseline_readiness,
                 corrective,
                 saturation,
                 review_evidence,
@@ -628,6 +634,13 @@ class AgentRunner:
             fault=manifest.fault,
         )
         existing_events = self.state.list_events(manifest.run_id)
+        if existing_events:
+            self._validate_generic_baseline_runtime_resume_contract(
+                manifest=manifest,
+                events=existing_events,
+                system_prompt=system_prompt,
+                tool_schemas=tool_schemas,
+            )
         if (
             manifest.context_policy_version
             in {"phase-evidence-v10", "phase-evidence-v11"}
@@ -732,36 +745,45 @@ class AgentRunner:
                     )
                 self._reconcile_workspace(manifest, workspace)
         else:
-            runtime_contract = self.artifacts.put_json(
-                {
-                    **(
-                        {
-                            "schema_version": (
-                                "corrective-runtime-contract-v5"
-                                if manifest.context_policy_version
-                                == "phase-evidence-v11"
-                                else (
-                                    "corrective-runtime-contract-v4"
-                                    if manifest.context_policy_version
-                                    == "phase-evidence-v10"
-                                    else (
-                                        "corrective-runtime-contract-v3"
-                                        if manifest.context_policy_version
-                                        == "phase-evidence-v9"
-                                        else "corrective-runtime-contract-v2"
-                                    )
-                                )
-                            )
-                        }
+            generic_runtime_document = (
+                self._generic_baseline_runtime_evidence_document(
+                    manifest=manifest,
+                    system_prompt=system_prompt,
+                    tool_schemas=tool_schemas,
+                )
+            )
+            runtime_contract_metadata: dict[str, Any] = {}
+            if (
+                generic_runtime_document is None
+                and manifest.context_policy_version in {
+                    "phase-evidence-v8",
+                    "phase-evidence-v9",
+                    "phase-evidence-v10",
+                    "phase-evidence-v11",
+                }
+            ):
+                runtime_contract_metadata = {
+                    "schema_version": (
+                        "corrective-runtime-contract-v5"
                         if manifest.context_policy_version
-                        in {
-                            "phase-evidence-v8",
-                            "phase-evidence-v9",
-                            "phase-evidence-v10",
-                            "phase-evidence-v11",
-                        }
-                        else {}
-                    ),
+                        == "phase-evidence-v11"
+                        else (
+                            "corrective-runtime-contract-v4"
+                            if manifest.context_policy_version
+                            == "phase-evidence-v10"
+                            else (
+                                "corrective-runtime-contract-v3"
+                                if manifest.context_policy_version
+                                == "phase-evidence-v9"
+                                else "corrective-runtime-contract-v2"
+                            )
+                        )
+                    )
+                }
+            runtime_contract = self.artifacts.put_json(
+                generic_runtime_document
+                or {
+                    **runtime_contract_metadata,
                     "system_prompt": system_prompt,
                     "tools": tool_schemas,
                     "tool_schema_version": manifest.tool_schema_version,
@@ -783,7 +805,8 @@ class AgentRunner:
                                 runtime_contract.model_dump(mode="json")
                             )
                         }
-                        if manifest.tool_schema_version in {"v4", "v5", "v6"}
+                        if generic_runtime_document is not None
+                        or manifest.tool_schema_version in {"v4", "v5", "v6"}
                         else {}
                     ),
                     **(
@@ -2501,6 +2524,78 @@ class AgentRunner:
             payload={"from": current.value, "to": target.value},
         )
         return target
+
+    @staticmethod
+    def _generic_baseline_runtime_evidence_document(
+        *,
+        manifest: RunManifest,
+        system_prompt: str,
+        tool_schemas: list[dict[str, Any]],
+    ) -> dict[str, Any] | None:
+        if (
+            manifest.experiment is None
+            or manifest.experiment.purpose
+            != ExperimentPurpose.GENERIC_BASELINE_READINESS
+        ):
+            return None
+        return {
+            "schema_version": "generic-baseline-runtime-evidence-v1",
+            "transport_max_retries": manifest.model.transport_max_retries,
+            "system_prompt": system_prompt,
+            "tools": tool_schemas,
+            "tool_schema_version": manifest.tool_schema_version,
+            "context_policy_version": manifest.context_policy_version,
+        }
+
+    def _validate_generic_baseline_runtime_resume_contract(
+        self,
+        *,
+        manifest: RunManifest,
+        events: list[Any],
+        system_prompt: str,
+        tool_schemas: list[dict[str, Any]],
+    ) -> None:
+        expected = self._generic_baseline_runtime_evidence_document(
+            manifest=manifest,
+            system_prompt=system_prompt,
+            tool_schemas=tool_schemas,
+        )
+        if expected is None:
+            return
+        started = [
+            event for event in events if event.type == EventType.RUN_STARTED
+        ]
+        try:
+            if len(started) != 1:
+                raise ValueError("expected one RunStarted event")
+            event = started[0]
+            artifact = Artifact.model_validate(
+                event.payload.get("runtime_contract_artifact")
+            )
+            if (
+                event.actor != "runner"
+                or event.run_id != manifest.run_id
+                or event.payload.get("task_id") != manifest.task_id
+                or event.payload.get("artifact_role") != "runtime-contract"
+                or event.payload.get("artifact_id") != artifact.artifact_id
+                or event.payload.get("artifact_path") != artifact.path
+                or artifact.media_type
+                != "application/json; charset=utf-8"
+            ):
+                raise ValueError("runtime descriptor does not match RunStarted")
+            observed = json.loads(
+                self.artifacts.read_bytes(artifact).decode("utf-8")
+            )
+            if observed != expected:
+                raise ValueError("runtime evidence bytes do not match the manifest")
+        except (
+            UnicodeDecodeError,
+            ValueError,
+            RecoveryError,
+        ) as exc:
+            raise RecoveryError(
+                "generic baseline runtime contract artifact is invalid during recovery"
+            ) from exc
 
     @staticmethod
     def _runtime_contract(

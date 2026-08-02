@@ -35,6 +35,7 @@ class MemoryCondition(StrEnum):
 
 class ExperimentPurpose(StrEnum):
     OFFLINE_SMOKE = "offline-smoke"
+    GENERIC_BASELINE_READINESS = "generic-baseline-readiness"
     DEVELOPMENT_VALIDATION_LIVE_PILOT = "development-validation-live-pilot"
     DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT = (
         "development-validation-model-candidate-pilot"
@@ -912,12 +913,23 @@ class ModelConfig(StrictModel):
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = "medium"
     reasoning_mode: Literal["standard", "pro"] = "standard"
     service_tier: Literal["default", "flex", "priority"] = "default"
+    transport_max_retries: Literal[0] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     temperature: float = 0
     max_output_tokens: int = Field(default=4096, ge=1)
     input_price_per_million_usd: float | None = Field(default=None, ge=0)
     cached_input_price_per_million_usd: float | None = Field(default=None, ge=0)
     cache_write_input_price_per_million_usd: float | None = Field(default=None, ge=0)
     output_price_per_million_usd: float | None = Field(default=None, ge=0)
+
+    @field_validator("transport_max_retries", mode="before")
+    @classmethod
+    def validate_transport_max_retries_type(cls, value: Any) -> Any:
+        if value is not None and type(value) is not int:
+            raise ValueError("transport_max_retries must be the JSON integer 0")
+        return value
 
     @model_validator(mode="after")
     def validate_replay_identity(self) -> ModelConfig:
@@ -1211,6 +1223,25 @@ class RunManifest(StrictModel):
         if coverage_rejection_live_pilot and self.model.provider != "openai":
             raise ValueError(
                 "coverage-rejection pilot purpose requires the OpenAI provider"
+            )
+        generic_baseline_readiness = bool(
+            self.experiment is not None
+            and self.experiment.purpose
+            == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        )
+        if generic_baseline_readiness and not (
+            self.tool_schema_version == "v2"
+            and self.context_policy_version == "phase-evidence-v5"
+            and self.model.provider == "openai"
+            and self.model.transport_max_retries == 0
+            and self.memory.condition == MemoryCondition.NO_MEMORY
+            and self.fault.type == "none"
+            and self.public_review_contract is None
+        ):
+            raise ValueError(
+                "generic baseline readiness requires OpenAI, the exact v2/v5 "
+                "runtime, transport_max_retries=0, no_memory, no fault, and no "
+                "public review sidecar"
             )
         return self
 

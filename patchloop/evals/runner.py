@@ -13,7 +13,14 @@ from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from patchloop.agent.model import (
     SYSTEM_PROMPT_V3,
@@ -199,6 +206,12 @@ GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET = Budget(
+    max_model_calls=40,
+    max_tool_calls=100,
+    max_total_tokens=850_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -213,6 +226,18 @@ COMPLETION_PANEL_TASKS = {
 }
 COMPLETION_PANEL_TASK_IDS = {
     Path(path).parent.name for path in COMPLETION_PANEL_TASKS
+}
+GENERIC_BASELINE_READINESS_EXPERIMENT_ID = (
+    "generic-baseline-readiness-v2v5-20260802-r1"
+)
+GENERIC_BASELINE_READINESS_TASKS = [
+    PILOT_TASK,
+    "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+    "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+    "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+]
+GENERIC_BASELINE_READINESS_TASK_IDS = {
+    Path(path).parent.name for path in GENERIC_BASELINE_READINESS_TASKS
 }
 MEMORY_DEVELOPMENT_TASKS = {
     "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
@@ -265,6 +290,7 @@ COVERAGE_REVIEW_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v4"
 COVERAGE_REJECTION_TOOL_SCHEMA_VERSION = "v6"
 COVERAGE_REJECTION_CONTEXT_POLICY_VERSION = "phase-evidence-v11"
 COVERAGE_REJECTION_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v5"
+GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA = "generic-baseline-runtime-contract-v1"
 PRICING_START_VERIFICATION_SCHEMA = "pricing-start-verification-v1"
 
 HASH_BOUND_CORRECTIVE_PURPOSES = {
@@ -273,6 +299,9 @@ HASH_BOUND_CORRECTIVE_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
+}
+HASH_BOUND_RUNTIME_PURPOSES = HASH_BOUND_CORRECTIVE_PURPOSES | {
+    ExperimentPurpose.GENERIC_BASELINE_READINESS,
 }
 
 
@@ -357,6 +386,29 @@ def _corrective_runtime_contract(
     }
 
 
+def _experiment_runtime_contract(
+    suite: ExperimentSuite,
+    *,
+    harness_git_commit: Any,
+) -> dict[str, Any] | None:
+    """Return the execution-hash-bound runtime identity for an exact live suite."""
+
+    if suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
+        return {
+            "schema_version": GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA,
+            "tool_schema_version": "v2",
+            "context_policy_version": "phase-evidence-v5",
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
+            "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
+            "transport_max_retries": suite.transport_max_retries,
+            "harness_git_commit": harness_git_commit,
+        }
+    return _corrective_runtime_contract(
+        suite,
+        harness_git_commit=harness_git_commit,
+    )
+
+
 def _pricing_contract(
     suite: ExperimentSuite,
     *,
@@ -379,7 +431,7 @@ def _pricing_contract(
         else 0.0
     )
     budget_upper_bound = schedule_size * per_run_cost_reserve
-    if suite.purpose in HASH_BOUND_CORRECTIVE_PURPOSES:
+    if suite.purpose in HASH_BOUND_RUNTIME_PURPOSES:
         # Keep the approval-facing currency values stable instead of exposing
         # binary floating-point tails such as 12.487499999999999.
         per_run_cost_reserve = round(per_run_cost_reserve, 12)
@@ -402,7 +454,7 @@ def _pricing_contract(
         "per_run_cost_reserve_usd": per_run_cost_reserve,
         "budget_upper_bound_usd": budget_upper_bound,
     }
-    if suite.purpose in HASH_BOUND_CORRECTIVE_PURPOSES:
+    if suite.purpose in HASH_BOUND_RUNTIME_PURPOSES:
         payload["start_time_verification"] = _pricing_freshness_evidence(
             suite,
             boundary_at=checked_at,
@@ -569,6 +621,10 @@ class ExperimentSuite(BaseModel):
     reasoning_effort: Literal["medium"] = "medium"
     reasoning_mode: Literal["standard"] = "standard"
     service_tier: Literal["default"] = "default"
+    transport_max_retries: Literal[0] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     max_output_tokens: int = Field(default=4096, ge=1)
     budget: Budget = Field(default_factory=Budget)
     seed: int = 20260723
@@ -598,6 +654,13 @@ class ExperimentSuite(BaseModel):
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",
     )
+
+    @field_validator("transport_max_retries", mode="before")
+    @classmethod
+    def validate_transport_max_retries_type(cls, value: Any) -> Any:
+        if value is not None and type(value) is not int:
+            raise ValueError("transport_max_retries must be the JSON integer 0")
+        return value
 
     @model_validator(mode="before")
     @classmethod
@@ -657,6 +720,21 @@ class ExperimentSuite(BaseModel):
                 "diagnostic profiles are allowed only when the profile matches "
                 "its experiment-v2 purpose"
             )
+        if (
+            self.experiment_id == GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+            and self.purpose != ExperimentPurpose.GENERIC_BASELINE_READINESS
+        ):
+            raise ValueError(
+                "the D-075 experiment id requires the generic baseline readiness purpose"
+            )
+        if (
+            self.purpose != ExperimentPurpose.GENERIC_BASELINE_READINESS
+            and self.transport_max_retries is not None
+        ):
+            raise ValueError(
+                "transport_max_retries is frozen only for the D-075 generic "
+                "baseline readiness purpose"
+            )
 
         if self.purpose == ExperimentPurpose.OFFLINE_SMOKE:
             if self.schema_version == "experiment-v2" and self.model != "mock":
@@ -682,7 +760,32 @@ class ExperimentSuite(BaseModel):
                 "the D-072 experiment id requires the coverage-rejection pilot purpose"
             )
 
-        if self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
+        if self.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
+            if (
+                self.experiment_id != GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+                or [_normalized_task_path(task) for task in self.tasks]
+                != GENERIC_BASELINE_READINESS_TASKS
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+                or self.transport_max_retries != 0
+                or self.live_cost_approved is not False
+                or self.approved_execution_hash is not None
+                or self.pilot_run_id is not None
+            ):
+                raise ValueError(
+                    "generic baseline readiness requires the exact D-075 id, "
+                    "ordered four-task panel, no_memory, one repetition, "
+                    "transport_max_retries=0, and no embedded approval or pilot"
+                )
+            self._require_live_defaults(
+                cost_limit=16,
+                budget=GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET,
+            )
+            if self.estimated_cost_usd != 15.75:
+                raise ValueError(
+                    "generic baseline readiness requires estimated_cost_usd=15.75"
+                )
+        elif self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
             normalized_tasks = {
                 _normalized_task_path(task) for task in self.tasks
             }
@@ -1288,6 +1391,8 @@ def _suite_payload(suite: ExperimentSuite) -> dict[str, Any]:
     payload = suite.model_dump(mode="json")
     if payload.get("diagnostic") is None:
         payload.pop("diagnostic", None)
+    if payload.get("transport_max_retries") is None:
+        payload.pop("transport_max_retries", None)
     return payload
 
 
@@ -1364,6 +1469,15 @@ def _expected_role_and_split(
     purpose: ExperimentPurpose,
     split: str,
 ) -> tuple[set[DatasetRole], DatasetRole | None]:
+    if purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
+        expected = {
+            "dev-validation": DatasetRole.DEVELOPMENT_VALIDATION,
+            "dev-train": DatasetRole.MEMORY_DEVELOPMENT,
+        }.get(split)
+        return {
+            DatasetRole.DEVELOPMENT_VALIDATION,
+            DatasetRole.MEMORY_DEVELOPMENT,
+        }, expected
     if purpose in {
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
@@ -1539,6 +1653,15 @@ def preflight_suite(
             "DUPLICATE_TASK_IDENTITY",
             "experiment task paths must resolve to unique task identities",
         )
+    if (
+        suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and loaded_ids != GENERIC_BASELINE_READINESS_TASK_IDS
+    ):
+        _block(
+            blockers,
+            "GENERIC_BASELINE_READINESS_TASK_SET_MISMATCH",
+            "generic baseline readiness must use exactly the frozen four-task panel",
+        )
     expected_live_pilot_ids = (
         COMPLETION_PANEL_TASK_IDS
         if (
@@ -1665,7 +1788,7 @@ def preflight_suite(
         if suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
         else {"run_id": None, "qualified": None}
     )
-    runtime_contract = _corrective_runtime_contract(
+    runtime_contract = _experiment_runtime_contract(
         suite,
         harness_git_commit=git_state.get("commit"),
     )
@@ -1971,6 +2094,20 @@ def _assert_manifest_matches_preflight(
     expected_runtime_contract = preflight.get("runtime_contract")
     actual_runtime_contract: dict[str, Any] | None = None
     if (
+        isinstance(expected_runtime_contract, dict)
+        and expected_runtime_contract.get("schema_version")
+        == GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA
+    ):
+        actual_runtime_contract = {
+            "schema_version": GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA,
+            "tool_schema_version": manifest.tool_schema_version,
+            "context_policy_version": manifest.context_policy_version,
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
+            "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
+            "transport_max_retries": manifest.model.transport_max_retries,
+            "harness_git_commit": manifest.harness_git_commit,
+        }
+    elif (
         expected_runtime_contract is not None
         or manifest.tool_schema_version
         in {
@@ -2049,6 +2186,7 @@ def _assert_manifest_matches_preflight(
             "reasoning_effort": suite.reasoning_effort,
             "reasoning_mode": suite.reasoning_mode,
             "service_tier": suite.service_tier,
+            "transport_max_retries": suite.transport_max_retries,
             "max_output_tokens": suite.max_output_tokens,
             "input_price_per_million_usd": suite.input_price_per_million_usd,
             "cached_input_price_per_million_usd": (
@@ -2148,6 +2286,9 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
             "outcome_kind",
             "purpose",
             "dataset_role",
+            "task_id",
+            "execution_hash",
+            "schedule_row_id",
             "memory_candidate_eligible",
             "failure_record_id",
             "qualification_hash",
@@ -2894,6 +3035,9 @@ def _diagnostic_error(
 def _completion_gate(
     suite: ExperimentSuite,
     rows: list[dict[str, Any]],
+    *,
+    expected_execution_hash: str | None = None,
+    expected_schedule: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
     """Separate runtime completion from task success for the high-budget panel."""
 
@@ -2905,6 +3049,14 @@ def _completion_gate(
             _normalized_task_path(task) for task in suite.tasks
         }
         == COMPLETION_PANEL_TASKS
+    )
+    generic_baseline_readiness = bool(
+        suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and suite.experiment_id == GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+        and suite.budget == GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
+        and [_normalized_task_path(task) for task in suite.tasks]
+        == GENERIC_BASELINE_READINESS_TASKS
+        and suite.transport_max_retries == 0
     )
     budget_pilot = bool(
         suite.purpose
@@ -2960,6 +3112,7 @@ def _completion_gate(
     )
     if not any(
         (
+            generic_baseline_readiness,
             completion_panel,
             budget_pilot,
             corrective_pilot,
@@ -2990,7 +3143,114 @@ def _completion_gate(
         ):
             budget_terminal_run_ids.append(run_id)
 
-    expected_runs = len(rows)
+    expected_runs = (
+        4
+        if generic_baseline_readiness
+        else 1
+        if (
+            saturation_pilot
+            or review_evidence_pilot
+            or coverage_review_pilot
+            or coverage_rejection_pilot
+        )
+        else 3
+        if budget_pilot or corrective_pilot
+        else 2
+    )
+    readiness_task_identity_passed = bool(
+        not generic_baseline_readiness
+        or (
+            len(rows) == expected_runs
+            and {row.get("task_id") for row in rows} == GENERIC_BASELINE_READINESS_TASK_IDS
+        )
+    )
+    readiness_run_ids = [row.get("run_id") for row in rows]
+    readiness_schedule_row_ids = [row.get("schedule_row_id") for row in rows]
+    expected_schedule_rows = expected_schedule if isinstance(expected_schedule, list) else []
+    expected_schedule_row_ids = [
+        row.get("schedule_row_id") for row in expected_schedule_rows if isinstance(row, dict)
+    ]
+    expected_schedule_by_id = {
+        row["schedule_row_id"]: row
+        for row in expected_schedule_rows
+        if isinstance(row, dict) and isinstance(row.get("schedule_row_id"), str)
+    }
+
+    def valid_sha256_identity(value: Any) -> bool:
+        return bool(
+            isinstance(value, str)
+            and value.startswith("sha256:")
+            and len(value) == 71
+            and all(character in "0123456789abcdef" for character in value[7:])
+        )
+
+    readiness_run_binding_passed = bool(
+        not generic_baseline_readiness
+        or (
+            len(rows) == expected_runs
+            and all(isinstance(run_id, str) and run_id for run_id in readiness_run_ids)
+            and len(set(readiness_run_ids)) == expected_runs
+            and all(
+                isinstance(row.get("result"), dict)
+                and row["result"].get("run_id") == row.get("run_id")
+                and isinstance(row.get("qualification"), dict)
+                and row["qualification"].get("run_id") == row.get("run_id")
+                for row in rows
+            )
+        )
+    )
+    readiness_schedule_binding_passed = bool(
+        not generic_baseline_readiness
+        or (
+            len(expected_schedule_rows) == expected_runs
+            and len(expected_schedule_by_id) == expected_runs
+            and all(valid_sha256_identity(row_id) for row_id in expected_schedule_row_ids)
+            and len(rows) == expected_runs
+            and all(valid_sha256_identity(row_id) for row_id in readiness_schedule_row_ids)
+            and set(readiness_schedule_row_ids) == set(expected_schedule_row_ids)
+            and all(
+                (expected_row := expected_schedule_by_id.get(row.get("schedule_row_id")))
+                is not None
+                and all(
+                    row.get(field) == expected_row.get(field)
+                    for field in (
+                        "order",
+                        "schedule_row_id",
+                        "task_id",
+                        "split",
+                        "dataset_role",
+                        "condition",
+                        "repetition",
+                    )
+                )
+                and isinstance(row.get("qualification"), dict)
+                and row["qualification"].get("task_id") == expected_row.get("task_id")
+                and row["qualification"].get("schedule_row_id")
+                == expected_row.get("schedule_row_id")
+                for row in rows
+            )
+        )
+    )
+    readiness_execution_binding_passed = bool(
+        not generic_baseline_readiness
+        or (
+            valid_sha256_identity(expected_execution_hash)
+            and len(rows) == expected_runs
+            and all(
+                isinstance(row.get("qualification"), dict)
+                and row["qualification"].get("execution_hash") == expected_execution_hash
+                for row in rows
+            )
+        )
+    )
+    readiness_row_binding_passed = bool(
+        not generic_baseline_readiness
+        or (
+            readiness_run_binding_passed
+            and readiness_schedule_binding_passed
+            and readiness_execution_binding_passed
+        )
+    )
     terminal_runs = sum(row.get("attempt_status") == "terminal" for row in rows)
     qualified_runs = sum(
         (row.get("qualification") or {}).get("qualified") is True
@@ -3045,19 +3305,9 @@ def _completion_gate(
         for status in ("passed", "inconclusive", "failed")
     }
     completion_passed = bool(
-        expected_runs
-        == (
-            1
-            if (
-                saturation_pilot
-                or review_evidence_pilot
-                or coverage_review_pilot
-                or coverage_rejection_pilot
-            )
-            else 3
-            if budget_pilot or corrective_pilot
-            else 2
-        )
+        len(rows) == expected_runs
+        and readiness_task_identity_passed
+        and readiness_row_binding_passed
         and terminal_runs == expected_runs
         and qualified_runs == expected_runs
         and evaluator_reached_runs == expected_runs
@@ -3086,7 +3336,8 @@ def _completion_gate(
         and not budget_terminal_run_ids
     )
     if (
-        budget_pilot
+        generic_baseline_readiness
+        or budget_pilot
         or corrective_pilot
         or saturation_pilot
         or review_evidence_pilot
@@ -3095,7 +3346,9 @@ def _completion_gate(
     ):
         return {
             "schema_version": (
-                "v11-coverage-rejection-live-pilot-gate-v1"
+                "generic-baseline-readiness-gate-v1"
+                if generic_baseline_readiness
+                else "v11-coverage-rejection-live-pilot-gate-v1"
                 if coverage_rejection_pilot
                 else "v10-coverage-review-live-pilot-gate-v1"
                 if coverage_review_pilot
@@ -3116,6 +3369,17 @@ def _completion_gate(
             "infrastructure_errors": infrastructure_errors,
             "qualification_errors": qualification_errors,
             "diagnostic_errors": diagnostic_errors,
+            **(
+                {
+                    "task_identity_passed": readiness_task_identity_passed,
+                    "row_binding_passed": readiness_row_binding_passed,
+                    "run_binding_passed": readiness_run_binding_passed,
+                    "schedule_binding_passed": (readiness_schedule_binding_passed),
+                    "execution_binding_passed": (readiness_execution_binding_passed),
+                }
+                if generic_baseline_readiness
+                else {}
+            ),
             **(
                 {"diagnostic_passed_runs": diagnostic_passed_runs}
                 if saturation_pilot
@@ -3317,6 +3581,7 @@ def evaluate_suite(
         preflight["pricing"]["per_run_cost_reserve_usd"]
     )
     qualification_required = suite.purpose in {
+        ExperimentPurpose.GENERIC_BASELINE_READINESS,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
@@ -3457,6 +3722,7 @@ def evaluate_suite(
             reasoning_effort=suite.reasoning_effort,
             reasoning_mode=suite.reasoning_mode,
             service_tier=suite.service_tier,
+            transport_max_retries=suite.transport_max_retries,
             max_output_tokens=suite.max_output_tokens,
             fault=_diagnostic_fault(suite),
             experiment_context=experiment_context,
@@ -3715,7 +3981,12 @@ def evaluate_suite(
             if suite.diagnostic is not None
             else None
         ),
-        "completion_gate": _completion_gate(suite, results),
+        "completion_gate": _completion_gate(
+            suite,
+            results,
+            expected_execution_hash=preflight["execution_hash"],
+            expected_schedule=preflight["schedule"],
+        ),
         "not_started_runs": sum(
             row["attempt_status"] == "not_started" for row in results
         ),

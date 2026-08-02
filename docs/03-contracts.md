@@ -2278,3 +2278,107 @@ AND budget_terminal_count == 0
 Gate가 통과하면 model/prompt/tool/context/budget/container/evaluator tuple을 동결한 뒤 별도 승인으로
 no-memory baseline을 수집한다. Provider hard kill, stale `RUNNING` reclaim과 fresh-worker recovery는
 이 gate에 합치지 않고 별도 reliability suite에서 판정한다.
+
+## 20. D-075 exact generic V2/V5 readiness contract
+
+새 purpose는 `generic-baseline-readiness`이고 exact experiment ID는
+`generic-baseline-readiness-v2v5-20260802-r1`이다. Loader는 다음 ordered task list, single
+`no_memory` condition과 repetition 1을 요구한다.
+
+```text
+tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+tasks/dev-validation/moto-query-scanned-count/public.yaml
+tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml
+tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml
+```
+
+첫 두 row의 dataset role은 `development-validation`, 뒤 두 row는 `memory-development`다. Purpose의
+allowed-role contract는 이 두 role의 exact set이며 task order나 identity, role, package hash가
+달라지면 preflight/start/qualification이 fail closed한다. 이 혼합 panel은 dataset split을 바꾸지
+않고 report에서 calibration-only로 제외한다.
+
+Exact model/runtime tuple은 다음과 같다.
+
+```text
+model/provider = gpt-5.4-mini-2026-03-17 / openai
+reasoning = medium / standard
+service tier = default
+system prompt = SYSTEM_PROMPT_V3
+tool/context = v2 / phase-evidence-v5
+transport_max_retries = 0
+public review sidecar = absent
+fault = none
+condition = no_memory
+max output = 25,000
+run budget = 40 model / 100 tool / 850,000 total token / 1,800 seconds
+```
+
+`ModelConfig.transport_max_retries`는 exact JSON integer 0 또는 historical `None`만 허용한다.
+Readiness manifest는 0을 필수로 요구하고 model adapter는 `OpenAI(max_retries=0)`을 사용한다. 이는
+SDK transport retry만 끄며 constrained tool gateway, rejected-patch retry, idempotent action recovery와
+worker resume 계약은 그대로 유지한다. Historical `None`은 `OpenAI()`와 기존 SDK default를 유지하고
+serialization에서 field를 생략한다. 따라서 이 field 추가만으로 historical suite/manifest hash를
+바꾸지 않는다.
+
+Execution plan의 `runtime_contract`는 다음 canonical document다.
+
+```json
+{
+  "schema_version": "generic-baseline-runtime-contract-v1",
+  "tool_schema_version": "v2",
+  "context_policy_version": "phase-evidence-v5",
+  "system_prompt_hash": "sha256:<SYSTEM_PROMPT_V3 bytes>",
+  "tool_schema_hash": "sha256:<canonical TOOL_SCHEMAS_V2 bytes>",
+  "transport_max_retries": 0,
+  "harness_git_commit": "<clean commit>"
+}
+```
+
+Preflight, manifest factory, paid start/resume comparator와 qualifier는 suite를 신뢰하지 않고 위 document와
+task/schedule/model/budget/environment identity를 다시 구성한다. V10/V11 runtime이나
+`public-review-contract-v2`가 나타나거나 retry field가 누락·변조되면 provider call 전에 거부한다.
+Runner는 같은 schema name을 raw trace object에 재사용하지 않는다. Unique `RunStarted`의
+`generic-baseline-runtime-evidence-v1` artifact는 exact `SYSTEM_PROMPT_V3` bytes,
+`TOOL_SCHEMAS_V2` canonical value, v2/V5와 retry 0을 full CAS descriptor로 보존한다. Qualifier는
+top-level/nested descriptor, CAS path/hash/size/bytes와 모든 model-request body의 system/tools를 plan
+contract와 독립 대조한다. Resume 시 runner도 checkpoint 유무와 관계없이 이 unique `RunStarted`
+descriptor와 CAS bytes, semantic document를 model adapter 생성 전에 다시 검증하며 손상되면 추가 provider
+request 없이 `RecoveryError`로 종료한다.
+
+`generic-baseline-readiness-gate-v1`은 다음 논리곱을 사용한다.
+
+```text
+exact four task identities are present once each
+AND the row schedule IDs and order/task/split/role/condition/repetition fields
+    exactly match the frozen preflight schedule
+AND every row run_id is unique and equals both result.run_id and qualification.run_id
+AND every qualification task_id and schedule_row_id equal its exact frozen row
+AND every qualification execution_hash equals the approved preflight execution_hash
+AND terminal_runs == 4
+AND qualified_runs == 4
+AND evaluator_reached_runs == 4
+AND official_evaluator_runs == 4
+AND infrastructure_errors == 0
+AND qualification_errors == 0
+AND diagnostic_errors == 0
+AND budget_terminal_run_ids == []
+```
+
+`task_successes`는 관찰값이며 gate predicate가 아니다. Gate payload는
+`task_success_required=false`, `comparison_denominator_eligible=false`,
+`memory_admission_unlocked=false`를 명시한다. Hidden failure와 SCRR false는 runtime readiness와 함께
+존재할 수 있고 task-specific correction trigger가 아니다.
+
+Pricing source block의 dated standard rate로 보수적으로 모든 token을 최고 configured rate에 놓으면
+run당 reserve는 `(850,000 + 25,000) × $4.50/M = $3.9375`, four-row upper bound는 `$15.75`,
+suite cap은 `$16`이다. 이는 authorization reserve이지 예상 invoice가 아니다. Checked-in source는
+`live_cost_approved=false`, null execution hash와 null pilot ID를 유지한다. Source suite, offline tests와
+no-call preflight는 live capability가 아니며 clean commit에서 다시 계산한 exact execution hash와 별도
+사용자 승인이 있어야 한 번 실행할 수 있다. Pricing verification이 start 시각 기준 72시간을 넘으면
+fresh official verification 없이는 fail closed한다.
+
+850,000-token ceiling과 readiness pass는 final comparison budget freeze가 아니다. Panel 실행 결과를
+숨은 정답에 맞춰 tuning하지 않고 검토한 뒤, 별도 decision/config에서 모든 memory condition에 동일한
+comparison tuple을 동결해야 한다. Final budget 또는 harness commit이 D-075와 다르면 이 panel을 same-tuple
+evidence로 재사용하지 않고 새 exact suite/hash/approval의 readiness panel을 먼저 통과한다. 기존
+21/50/250,000/900 template은 계속 stale/unvalidated다.

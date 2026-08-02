@@ -2504,3 +2504,27 @@ official evaluator and avoid infrastructure/qualification/diagnostic/budget conf
 success remains an outcome rather than a prerequisite. Passing that gate permits tuple freeze and a fresh
 no-memory baseline; it does not permit task-specific hidden tuning. Live hard restart remains a separate
 reliability evidence gap.
+
+## D-075 offline contract evidence boundary
+
+D-075 produces source and executable offline contract evidence, not a live result. The checked-in exact suite
+selects ordered Babel, Moto, pyfakefs and HF Hub rows, `no_memory` once each, the dated mini snapshot at
+medium/standard/default, `SYSTEM_PROMPT_V3`, tool V2/context V5, transport retry 0, output 25,000 and
+40/100/850,000/1,800 per-run limits. The source authorization reserve is `$15.75` under a `$16` cap.
+
+Tests cover exact task/order/role/model/runtime/retry/budget drift, mixed-role preflight, no-sidecar manifests,
+execution-plan and paid start/resume comparators, qualification reconstruction, official evaluator completion,
+zero-success gate acceptance, each confound rejection and report/memory exclusion. Historical completion and
+V11 suite hashes remain unchanged because the optional retry field is omitted from their serialization.
+
+No source toggle, approved execution hash, run ID, provider response, measured usage/cost, task outcome or SCRR
+belongs to D-075 offline evidence. The new suite hash is source identity only. A clean-host no-call preflight can
+produce a commit/environment-bound execution hash for user review, but it is not authority to call the provider.
+Until a separately approved four-row invocation completes, the readiness gate is unmeasured and the comparison
+tuple, no-memory baseline, failure-memory admission and core campaign remain closed. Even after a pass, a changed
+final budget/runtime/harness commit requires its own readiness evidence rather than promotion of D-075.
+
+Final offline verification on 2026-08-02 ran repository-wide `pytest -q` to exit 0 with seven
+environment-dependent skips after the formatting-only diff cleanup. Focused runtime recovery, exact gate binding,
+positive qualification/tamper tests, Ruff, Python compileall and `git diff --check` also passed. No provider or
+network request was made by this verification.
