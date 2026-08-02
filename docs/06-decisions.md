@@ -128,8 +128,9 @@ submission lifecycle과 기존 phase-evidence-v2 artifact의 해석은 그대로
 Q-005는 D-021/D-022와 이를 supersede한 D-045/D-052에서 당시 값이 정해졌지만, D-074가
 future baseline tuple/budget 부분을 다시 supersede한다. D-075는
 `40 model / 100 tool / 850,000 token / 1,800초`를 exact four-task readiness 후보 ceiling으로
-선택했지만 comparison budget으로 동결하지 않았다. 기존 21/50/250,000/900 template은 계속
-stale/unvalidated이며 D-075 live gate와 별도 freeze decision 전에는 실행하지 않는다.
+선택했지만 live gate가 budget confound 2개로 실패해 comparison budget으로 동결하지 않았다.
+기존 21/50/250,000/900 template과 소비된 D-075 suite는 실행하지 않는다. 새 condition-neutral tuple의
+readiness pass와 별도 freeze decision 전에는 no-memory baseline을 시작하지 않는다.
 
 ## Decision change template
 
@@ -357,6 +358,35 @@ Evidence/issue:
 - Evidence/issue: Exact suite/schema, mixed-role preflight, runtime/plan/manifest/start/resume/qualification
   drift rejection, task-success-independent gate, report exclusion and historical suite-hash regression;
   no provider/API call or measured live result in this decision.
+
+### D-076 accepted decision — seal failed D-075 live readiness outcome
+
+- Status: accepted; one approved invocation consumed and append-only result seal recorded; readiness gate failed
+- Preserves: D-074 semantic rollback과 D-075 source/runtime/gate definition을 소급 변경하지 않는다.
+  Original result, journal, plan, run artifacts, qualifications와 false gate는 immutable하다.
+- Invocation: 사용자가 execution hash
+  `sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66`와 최대 `$16`을
+  승인했고 exact suite를 한 번 실행했다. 이 experiment ID와 hash는 소비됐으며 재실행하지 않는다.
+- Observed gate: 4/4 terminal, 4/4 qualified, 2/4 evaluator reached/official completed,
+  infrastructure/qualification/diagnostic error 0과 budget-terminal 2다. Babel과 Moto는 official
+  evaluator/SCRR를 통과했다. HF Hub는 809,867 token에서 exact-request total-token admission이,
+  pyfakefs는 40 model call에서 call admission이 bind했다. 따라서
+  `generic-baseline-readiness-gate-v1.passed=false`다.
+- Usage: 1,580,179 input + 128,645 output = 1,708,824 token, 95 model call, 142 tool call,
+  calculated model cost `$1.76403675`. Source reserve/cap과 measured spend를 혼동하지 않는다.
+- Reporting boundary: Panel은 calibration-only다. 2/4 SCRR는 diagnostic description이며 no-memory
+  baseline, memory 효과 또는 headline metric이 아니다. Comparison denominator, memory admission과
+  core는 false/closed를 유지한다.
+- Next tuple boundary: Public budget evidence는 50 model/100 tool/1,200,000 total token/1,800초를
+  condition-neutral candidate로 지지하지만 completion을 보장하지 않는다. D-076은 이 값을 freeze하거나
+  실행 승인하지 않는다. 채택한다면 prompt/tool/context/model/retry는 유지한 새 suite, clean harness
+  commit/execution hash와 별도 cost approval로 네 row 전체를 다시 검증해야 한다. Hidden outcome은
+  task-specific prompt/tool/sidecar tuning trigger로 사용하지 않는다.
+- Date: 2026-08-02
+- Evidence/issue: Hash-bound raw local result/journal/plan/run/qualification artifacts, portable sanitized
+  record `reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r1.json`, diagnostic-only report and
+  consumed-ID guard. Result raw file SHA-256 is
+  `sha256:ba2670e8f1bb79e0af9cf56d02841014cc3e66d58db85b114459776af277d30d`.
 
 ## Deferred ideas
 

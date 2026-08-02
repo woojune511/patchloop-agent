@@ -2,6 +2,27 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-02 D-076은 사용자가 승인한 exact execution hash
+`sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66`로 D-075
+four-row readiness panel을 정확히 한 번 실행한 결과를 seal한다. 네 row는 모두 terminal이고 trace
+qualification을 통과했으며 infrastructure/qualification/diagnostic error는 0이었다. 그러나 Babel
+`run_00d5fc0a8d914df4`와 Moto `run_96817acf84c046fc`만 official evaluator와 SCRR에 도달했다.
+HF Hub `run_466f7fb5275646e4`는 exact-request total-token guard, pyfakefs
+`run_7e10fe04319c4771`는 40 model-call guard에서 evaluator 전에 종료됐다. 따라서
+`generic-baseline-readiness-gate-v1`은 4/4 terminal·qualified, 2/4 evaluator reached,
+budget-terminal 2로 **실패**했다. 실제 사용량은 1,580,179 input + 128,645 output = 1,708,824
+token, 95 model call, 142 tool call과 계산 비용 `$1.76403675`다. Report의 2/4 SCRR는
+calibration-only diagnostic이며 no-memory baseline 수치가 아니다.
+
+D-075 experiment ID와 execution hash는 소비된 immutable evidence라 재실행하지 않는다. Sanitized
+portable record는 `reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r1.json`에 두고 raw
+result·journal·plan은 hash로만 결속한다. Comparison denominator, memory admission과 core는 계속
+닫혀 있다. Public evidence가 지지하는 다음 후보 headroom은 condition-neutral하게
+`50 model / 100 tool / 1,200,000 token / 1,800초`지만 completion guarantee나 승인된 suite가 아니다.
+이를 채택하면 새 config, clean execution hash, four-row readiness panel과 별도 비용 승인이 필요하다.
+현재 artifact에서 deduplicate한 50개 paid run의 usage-derived list-price 합은 `$11.076911925`이며
+free daily usage 또는 실제 invoice 적용 여부는 확인하지 않았다.
+
 2026-08-02 D-075는 D-074가 요구한 generic baseline-readiness 계약을 provider 호출 없이
 구현했다. 새 checked-in suite
 `generic-baseline-readiness-v2v5-20260802-r1`은 Babel, Moto, pyfakefs와 Hugging Face Hub의
@@ -735,7 +756,7 @@ SDK version, Git commit과 execution window를 provenance로 남긴다.
 
 D-054 completion panel은 600,000 run-total token과 25,000 output allowance를 모두 최고
 output rate로 잡아 run당 `$2.8125`, 두 run `$5.625`, suite cap `$6`를 사용했다. 실제
-계산 비용은 `$0.15682575`였고 현재까지 측정된 list-price 합은 `$5.138372625`다.
+계산 비용은 `$0.15682575`였고 D-055 시점까지 측정된 list-price 합은 `$5.138372625`였다.
 D-052의 12-run `$14.85`와 96-run `$118.80`은
 calibration 뒤 바뀔 수 있는 comparison draft라 현재 승인 합계에 넣지 않는다. Project-wide
 `$150` 상한은 machine-enforced guard가 아니며, 실행기는 각 suite의 `cost_limit_usd`만
@@ -810,8 +831,8 @@ Historical 일곱 mini run의 누적 계산 비용은 `$0.77412075`였다. Prima
 `run_d7207fbb06184dd3`까지 포함한 열두 paid pilot의 계산상 총액은 `$1.740790125`이고,
 첫 12-run development campaign의 계산 비용 `$1.3931925`를 더한 전체 list-price 합계는
 `$3.133982625`였다. V4 12-run campaign은 `$1.84756425`를 추가해 D-051 시점 합계가
-`$4.981546875`였다. D-055 completion panel의 `$0.15682575`를 더한 현재 사용량 기반
-list-price 합계는 `$5.138372625`다. 실제 invoice/free daily usage 적용 여부는 확인하지
+`$4.981546875`였다. D-055 completion panel의 `$0.15682575`를 더한 D-055 시점 사용량 기반
+list-price 합계는 `$5.138372625`였다. 실제 invoice/free daily usage 적용 여부는 확인하지
 않았다. R5, r6, primary r1/r2, v4 pilot, 두 12-run campaign과 모든 소비된 hash는 자동
 재실행하지 않는다. 특히 21-call/200,000-token 계약으로 소비된
 `dev-validation-gpt54mini-campaign-20260730-r2`, `dev-no-memory-20260728`,

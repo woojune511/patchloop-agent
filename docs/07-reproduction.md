@@ -150,7 +150,7 @@ rate. The suite pins `gpt-5.4-mini-2026-03-17`. Recheck the price within 72 hour
 invocation and record the installed SDK version, clean Git commit and execution timestamp.
 
 At those frozen repository rates, D-054 reserved `$5.625` under a `$6` suite cap. The completed
-panel used a calculated `$0.15682575`, bringing the usage-derived list-price total to
+panel used a calculated `$0.15682575`, bringing the D-055 point-in-time usage-derived list-price total to
 `$5.138372625`. D-052's `$14.85` development and `$118.80` core numbers remain unfrozen draft
 reserves rather than current authorizations. Reserves are not measured spend or invoice
 predictions. The project-wide `$150` cap is not machine-enforced; only each suite's
@@ -362,7 +362,7 @@ Before D-055, twelve paid one-run pilots existed. The v4 pilot
 list-price cost is `$1.740790125`. The first 12-run development campaign raises the total to
 `$3.133982625`; the v4 12-run campaign adds `$1.84756425`, making 36 paid run attempts and
 `$4.981546875` in calculated list-price cost. D-055 adds two completed attempts and
-`$0.15682575`, making 38 paid run attempts and a usage-derived total of `$5.138372625`. Actual
+`$0.15682575`, making 38 paid run attempts and a D-055 point-in-time usage-derived total of `$5.138372625`. Actual
 invoice or free daily usage treatment was not verified. D-052's development/core reserves remain
 unfrozen drafts, not current paid authorizations. The `$150` project cap is not a global runtime
 guard. No consumed suite/hash may be rerun.
@@ -806,8 +806,9 @@ suite and is not a prerequisite for this fault-free baseline gate.
 
 ## D-075 generic readiness source audit
 
-The exact source suite is now checked in, but the following commands are read-only/no-call inspection steps.
-Do not add live approval flags unless the resulting clean execution hash and `$16` cap are separately approved.
+At the D-075 source-contract point, the exact suite was checked in and the following were read-only/no-call
+inspection steps. The later approved hash has now been consumed; these commands remain useful for source audit,
+not for producing or reusing live authority.
 
 ```powershell
 Get-Content -Raw -Encoding utf8 `
@@ -835,9 +836,38 @@ execution hash also includes the clean Git commit, package/image/evaluator ident
 fresh environment state. Running preflight on a different commit is expected to produce a different execution
 hash. Do not write that hash into the source YAML or commit an approval toggle.
 
-Expected live gate semantics after a separately approved one-time run are 4/4 terminal, qualified,
+The predeclared live gate semantics for the separately approved one-time run were 4/4 terminal, qualified,
 evaluator-reached and official-completed rows with zero infrastructure/qualification/diagnostic/budget
 confounds. The number of hidden successes may be zero without invalidating readiness. Readiness rows remain
 excluded from comparison and memory admission, and 850k remains unfrozen until a separate post-panel decision.
 If that decision changes the budget/runtime/harness commit, run a new final-tuple readiness panel instead of
 reusing the D-075 gate.
+
+## D-076 D-075 live result inspection — do not rerun
+
+The separately approved D-075 execution hash
+`sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66` was consumed exactly
+once. Do not invoke `patchloop evaluate` with live flags for this experiment ID or hash again. Inspect the
+sanitized portable record and the diagnostic report instead:
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r1.json
+
+Get-Content -Raw -Encoding utf8 `
+  .patchloop/analysis/generic-baseline-readiness-v2v5-20260802-r1/report.json
+
+Get-FileHash -Algorithm SHA256 `
+  .patchloop/experiments/generic-baseline-readiness-v2v5-20260802-r1.json
+```
+
+The raw local result hash must be
+`ba2670e8f1bb79e0af9cf56d02841014cc3e66d58db85b114459776af277d30d`. The observed gate is
+4/4 terminal, 4/4 qualified, 2/4 official evaluator completion, zero infrastructure/qualification/diagnostic
+errors and two budget-terminal rows, so it is false. `report.json` must retain `analysis_ready=false`, empty
+ordinary metrics and the descriptive 2/4 SCRR only under diagnostic metrics. Local `.patchloop` artifacts are
+hash-bound evidence and may be absent on a clean clone; the checked-in portable record is sanitized and excludes
+provider bodies, secrets, private task specs, hidden assertions and reference patches.
+
+The next 50/100/1,200,000/1,800 candidate is not a reproduction command or approved run. It requires a new
+checked-in suite, clean execution hash and explicit cost approval.

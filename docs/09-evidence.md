@@ -205,7 +205,7 @@ The experiments consumed under the 21-call/200,000-token contract
 The D-052 draft reserves were `$1.2375` for one run, `$14.85` for 12 runs and `$118.80`
 for 96 runs. They are not current authorizations. D-054 reserved two `$2.8125` runs, or
 `$5.625`, but the completed panel's calculated cost was `$0.15682575`. Adding it to the prior
-measured list-price total gives `$5.138372625`. Reserves are neither spend nor invoice
+measured list-price total gives the D-055 point-in-time total `$5.138372625`. Reserves are neither spend nor invoice
 predictions. The project-wide `$150` cap is not machine-enforced; only suite-specific
 `cost_limit_usd` is enforced.
 
@@ -2518,13 +2518,49 @@ zero-success gate acceptance, each confound rejection and report/memory exclusio
 V11 suite hashes remain unchanged because the optional retry field is omitted from their serialization.
 
 No source toggle, approved execution hash, run ID, provider response, measured usage/cost, task outcome or SCRR
-belongs to D-075 offline evidence. The new suite hash is source identity only. A clean-host no-call preflight can
-produce a commit/environment-bound execution hash for user review, but it is not authority to call the provider.
-Until a separately approved four-row invocation completes, the readiness gate is unmeasured and the comparison
-tuple, no-memory baseline, failure-memory admission and core campaign remain closed. Even after a pass, a changed
-final budget/runtime/harness commit requires its own readiness evidence rather than promotion of D-075.
+belongs to D-075 offline evidence. The suite hash is source identity only. At that point a clean-host no-call
+preflight could produce a commit/environment-bound execution hash for user review, but it was not authority to
+call the provider. D-076 below records the later separately approved invocation. Its gate failed, so the
+comparison tuple, no-memory baseline, failure-memory admission and core campaign remain closed. A changed final
+budget/runtime/harness commit requires its own readiness evidence rather than promotion of D-075.
 
 Final offline verification on 2026-08-02 ran repository-wide `pytest -q` to exit 0 with seven
 environment-dependent skips after the formatting-only diff cleanup. Focused runtime recovery, exact gate binding,
 positive qualification/tamper tests, Ruff, Python compileall and `git diff --check` also passed. No provider or
 network request was made by this verification.
+
+## D-076 D-075 live readiness result seal
+
+The user approved execution hash
+`sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66` for exactly one
+four-row D-075 invocation under the `$16` cap. The source harness commit was
+`2c075abedf58cd8a2ec0d928d8e7ebb0ba9acd1a`. The result raw SHA-256 is
+`sha256:ba2670e8f1bb79e0af9cf56d02841014cc3e66d58db85b114459776af277d30d`; the journal file
+SHA-256 is `sha256:bbb86164dfa6fa3ff047df0d2dc025e5a63dd44b79564a84ba325e508cadc511`, and its final event
+hash is `sha256:deedc716e88fb7c0d47c5d041fefd7c0430b45e67164d5e13b7239eec57d817e`. The execution-plan
+canonical semantic hash is `sha256:b754f1ffab7ed436c5dcaa7b159570c68c7abcda58acf756d28d458655d35a59`;
+the raw plan-file SHA-256 is `sha256:9c4b2ffe838ee175489369896208f394928eb702a36ed52537841ef9f4629cb6`.
+
+| Task | Run | Outcome | Evaluator | Binding budget | Tokens | Model/tool calls | Cost |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: |
+| HF Hub | `run_466f7fb5275646e4` | `agent_failure` | not run | total token; exact deficit 9,586 | 809,867 | 37/67 | `$0.782049` |
+| Babel | `run_00d5fc0a8d914df4` | resolved/SCRR | official pass | none | 58,718 | 7/8 | `$0.0559485` |
+| Moto | `run_96817acf84c046fc` | resolved/SCRR | official pass | none | 115,809 | 11/15 | `$0.12862425` |
+| pyfakefs | `run_7e10fe04319c4771` | `agent_failure` | not run | 40 model calls | 724,430 | 40/52 | `$0.797415` |
+
+Every row's persisted result matches the campaign-embedded row. Qualification passed 26/26, 27/27, 27/27
+and 26/26 respectively, and the 490-file evidence index reconciles all referenced hashes. Total usage is
+1,580,179 input + 128,645 output = 1,708,824 token, 95 model and 142 tool calls, with calculated cost
+`$1.76403675` exactly reconciling to recorded prices.
+
+The immutable `generic-baseline-readiness-gate-v1` result is false: 4/4 terminal and qualified, 2/4 evaluator
+reached/official, zero infrastructure/qualification/diagnostic errors and two budget-terminal rows. The report
+keeps `analysis_ready=false`, ordinary metrics empty, and 2/4 SCRR diagnostic-only. Neither this result nor its
+append-only seal opens comparison, memory admission, a no-memory baseline or core. The portable sanitized record
+is `reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r1.json`; raw provider bodies, secrets, private
+task specifications, hidden assertions and reference patches are excluded.
+
+D-076 seal verification selected 51 D-075/generic tests and all 51 passed. Repository-wide pytest collected
+1,089 tests: 1,082 passed and seven environment-dependent tests were skipped. Ruff, Python compileall and
+`git diff --check` passed. These checks made no provider request and added zero model cost; they validate the
+source seal, not another readiness run or a changed original outcome.

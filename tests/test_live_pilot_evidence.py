@@ -4172,3 +4172,299 @@ def test_d072_v11_report_excludes_private_and_provider_payload() -> None:
     private_tokens = _private_leak_tokens(package, api_key=None)
     leaked = sorted(token for token in private_tokens if token in checked_text)
     assert leaked == []
+
+
+def test_d075_generic_readiness_report_preserves_gate_and_budget_confound() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "generic-baseline-readiness-v2v5-20260802-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+
+    assert payload["schema_version"] == (
+        "generic-baseline-readiness-d075-evidence-v1"
+    )
+    assert payload["source_harness_commit"] == (
+        "2c075abedf58cd8a2ec0d928d8e7ebb0ba9acd1a"
+    )
+    assert payload["execution_hash"] == (
+        "sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66"
+    )
+    assert payload["runtime_contract"] == {
+        "schema_version": "generic-baseline-runtime-contract-v1",
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+        "system_prompt_hash": (
+            "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b"
+        ),
+        "tool_schema_hash": (
+            "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827"
+        ),
+        "transport_max_retries": 0,
+        "harness_git_commit": "2c075abedf58cd8a2ec0d928d8e7ebb0ba9acd1a",
+    }
+    assert payload["model_tuple"] == {
+        "provider": "openai",
+        "model_id": "gpt-5.4-mini-2026-03-17",
+        "provider_sdk_version": "2.47.0",
+        "reasoning_effort": "medium",
+        "reasoning_mode": "standard",
+        "service_tier": "default",
+        "max_output_tokens": 25000,
+        "memory_condition": "no_memory",
+        "repetitions": 1,
+        "schedule_seed": 20260723,
+    }
+
+    gate = payload["original_completion_gate"]
+    assert gate == {
+        "schema_version": "generic-baseline-readiness-gate-v1",
+        "passed": False,
+        "expected_runs": 4,
+        "terminal_runs": 4,
+        "qualified_runs": 4,
+        "evaluator_reached_runs": 2,
+        "official_evaluator_runs": 2,
+        "infrastructure_errors": 0,
+        "qualification_errors": 0,
+        "diagnostic_errors": 0,
+        "task_identity_passed": True,
+        "row_binding_passed": True,
+        "run_binding_passed": True,
+        "schedule_binding_passed": True,
+        "execution_binding_passed": True,
+        "budget_terminal_runs": 2,
+        "budget_terminal_run_ids": [
+            "run_466f7fb5275646e4",
+            "run_7e10fe04319c4771",
+        ],
+        "task_successes": 2,
+        "task_success_required": False,
+        "comparison_denominator_eligible": False,
+        "memory_admission_unlocked": False,
+        "immutable": True,
+        "retroactively_recomputed": False,
+    }
+    assert payload["budget"]["actual_campaign_usage"] == {
+        "input_tokens": 1580179,
+        "cached_input_tokens": 0,
+        "output_tokens": 128645,
+        "reasoning_output_tokens": 116987,
+        "total_tokens": 1708824,
+        "model_calls": 95,
+        "tool_calls": 142,
+        "wall_clock_ms": 915695,
+        "model_cost_usd": 1.76403675,
+    }
+    assert payload["budget"]["terminal_bindings"] == {
+        "count": 2,
+        "run_ids": ["run_466f7fb5275646e4", "run_7e10fe04319c4771"],
+        "dimensions": {
+            "run_466f7fb5275646e4": "total_tokens",
+            "run_7e10fe04319c4771": "model_calls",
+        },
+    }
+
+    runs = {run["run_id"]: run for run in payload["runs"]}
+    assert set(runs) == {
+        "run_466f7fb5275646e4",
+        "run_00d5fc0a8d914df4",
+        "run_96817acf84c046fc",
+        "run_7e10fe04319c4771",
+    }
+    assert runs["run_00d5fc0a8d914df4"]["scope_compliant_success"] is True
+    assert runs["run_96817acf84c046fc"]["scope_compliant_success"] is True
+    assert runs["run_466f7fb5275646e4"]["budget_pressure"] == {
+        "binding_dimension": "total_tokens",
+        "terminal_reason": "exact_request_budget_exceeded",
+        "remaining_tokens": 40133,
+        "next_exact_input_tokens": 24719,
+        "response_allowance_tokens": 25000,
+        "exact_request_deficit_tokens": 9586,
+        "minimum_total_budget_same_prefix": 859586,
+        "maximum_observed_exploration_tail_minimum": 1034573,
+    }
+    assert runs["run_7e10fe04319c4771"]["budget_pressure"][
+        "binding_dimension"
+    ] == "model_calls"
+
+    qualifications = {
+        item["run_id"]: item for item in payload["qualifications"]
+    }
+    assert set(qualifications) == set(runs)
+    assert all(item["qualified"] for item in qualifications.values())
+    assert all(item["trace_integrity_passed"] for item in qualifications.values())
+    assert all(item["leakage_scan_passed"] for item in qualifications.values())
+    assert all(
+        item["passed_checks"] == item["total_checks"]
+        for item in qualifications.values()
+    )
+    assert all(
+        item["memory_candidate_eligible"] is False
+        for item in qualifications.values()
+    )
+
+    claims = payload["claims_boundary"]
+    assert claims["readiness_gate_passed"] is False
+    assert claims["budget_confound_observed"] is True
+    assert claims["no_memory_performance_baseline_established"] is False
+    assert claims["comparison_denominator_eligible"] is False
+    assert claims["memory_admission_unlocked"] is False
+    assert claims["core_campaign_unlocked"] is False
+    assert payload["next_gate_candidate"]["change_scope"] == "budget-only"
+    assert payload["next_gate_candidate"]["authorized_by_this_record"] is False
+    assert payload["portable_artifacts"] == []
+
+
+def test_d075_generic_readiness_report_matches_live_raw_artifacts_when_present() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "generic-baseline-readiness-v2v5-20260802-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    artifacts = payload["raw_local_artifacts"]
+
+    assert len(artifacts) == 19
+    assert len({artifact["role"] for artifact in artifacts}) == len(artifacts)
+    assert len({artifact["path"] for artifact in artifacts}) == len(artifacts)
+    assert all(artifact["path"].startswith(".patchloop/") for artifact in artifacts)
+
+    result_artifact = next(
+        artifact
+        for artifact in artifacts
+        if artifact["role"] == "experiment-result"
+    )
+    if not Path(result_artifact["path"]).exists():
+        return
+
+    for artifact in artifacts:
+        assert Path(artifact["path"]).exists()
+        _assert_artifact_identity(artifact)
+
+    raw_result = json.loads(
+        Path(result_artifact["path"]).read_text(encoding="utf-8")
+    )
+    assert raw_result["execution_hash"] == payload["execution_hash"]
+    assert raw_result["suite_hash"] == payload["suite_hash"]
+    assert raw_result["schedule_hash"] == payload["schedule_hash"]
+    assert raw_result["actual_model_cost_usd"] == pytest.approx(
+        payload["budget"]["actual_campaign_usage"]["model_cost_usd"]
+    )
+    for key, value in raw_result["completion_gate"].items():
+        assert payload["original_completion_gate"][key] == value
+
+    evidence_runs = {run["run_id"]: run for run in payload["runs"]}
+    for row in raw_result["runs"]:
+        run = evidence_runs[row["run_id"]]
+        result = row["result"]
+        assert run["task_id"] == row["task_id"]
+        for key in (
+            "outcome_kind",
+            "official",
+            "evaluation_status",
+            "scope_compliant_success",
+        ):
+            assert run[key] == result[key]
+        for key in (
+            "input_tokens",
+            "cached_input_tokens",
+            "output_tokens",
+            "reasoning_output_tokens",
+            "model_calls",
+            "tool_calls",
+            "wall_clock_ms",
+            "model_cost_usd",
+        ):
+            assert run["usage"][key] == result["usage"][key]
+        assert run["usage"]["total_tokens"] == (
+            result["usage"]["input_tokens"] + result["usage"]["output_tokens"]
+        )
+
+    evidence_qualifications = {
+        item["run_id"]: item for item in payload["qualifications"]
+    }
+    for run_id, qualification in evidence_qualifications.items():
+        raw_qualification = load_trace_qualification(run_id)
+        assert raw_qualification["qualification_hash"] == (
+            qualification["qualification_hash"]
+        )
+        assert raw_qualification["source_evidence_hash"] == (
+            qualification["source_evidence_hash"]
+        )
+        assert calculate_source_evidence_hash(run_id) == (
+            qualification["source_evidence_hash"]
+        )
+        assert raw_qualification["qualified"] == qualification["qualified"]
+        assert len(raw_qualification["checks"]) == qualification["total_checks"]
+        assert sum(check["passed"] for check in raw_qualification["checks"]) == (
+            qualification["passed_checks"]
+        )
+
+
+def test_d075_generic_readiness_report_excludes_private_and_provider_payload() -> None:
+    path = Path(
+        "reports/live-pilot/"
+        "generic-baseline-readiness-v2v5-20260802-r1.json"
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    forbidden_keys = {
+        "api_key",
+        "authorization",
+        "check_id",
+        "verifier_results",
+        "evidence_artifacts",
+        "artifact_path",
+        "headers",
+        "input",
+        "instructions",
+        "output",
+        "private_spec_hash",
+        "hidden_artifacts",
+        "request",
+        "request_body",
+        "response",
+        "response_error",
+        "response_id",
+        "system_fingerprint",
+        "text",
+    }
+
+    def walk_keys(value: object) -> set[str]:
+        if isinstance(value, dict):
+            return set(value) | {
+                nested
+                for child in value.values()
+                for nested in walk_keys(child)
+            }
+        if isinstance(value, list):
+            return {
+                nested
+                for child in value
+                for nested in walk_keys(child)
+            }
+        return set()
+
+    assert forbidden_keys.isdisjoint(walk_keys(payload))
+    checked_text = path.read_text(encoding="utf-8")
+    for marker in (
+        "OPENAI_API_KEY",
+        "Bearer ",
+        "sk-",
+        '"request_body"',
+        '"response_id"',
+        '"private_spec_hash"',
+    ):
+        assert marker not in checked_text
+
+    task_paths = (
+        "tasks/dev-train/hf-hub-xet-endpoint-propagation",
+        "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes",
+        "tasks/dev-validation/moto-query-scanned-count",
+        "tasks/dev-train/pyfakefs-makedirs-parent-traversal",
+    )
+    leaked: list[str] = []
+    for task_path in task_paths:
+        package = load_task_package(task_path)
+        private_tokens = _private_leak_tokens(package, api_key=None)
+        leaked.extend(token for token in private_tokens if token in checked_text)
+    assert sorted(set(leaked)) == []

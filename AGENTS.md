@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-075 generic V2/V5 baseline-readiness contract complete offline; no live
-  readiness execution approved`이다. Checked-in exact suite
+- 현재 milestone은 `D-076 D-075 live readiness result sealed; gate failed on two budget
+  confounds; no baseline freeze approved`이다. Checked-in exact suite
   `generic-baseline-readiness-v2v5-20260802-r1`은 Babel, Moto, pyfakefs와 HF Hub 네 development
   task를 `no_memory`로 각 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
   `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0,
@@ -23,7 +23,16 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   comparison denominator와 memory admission을 열지 않는다. 850k는 readiness 후보 ceiling이지
   frozen comparison budget이 아니다. Final tuple이나 harness commit이 달라지면 새 readiness panel이
   필요하다. Source config와 no-call preflight는 live capability가 아니며
-  clean execution hash와 최대 `$16` invocation에 대한 별도 사용자 승인이 필요하다. D-069~D-073의
+  clean execution hash와 최대 `$16` invocation에 대한 별도 사용자 승인이 필요했다. 승인 hash
+  `sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66`는 정확히 한 번
+  소비됐다. 네 row는 모두 terminal·qualified이고 error 0이었지만 Babel/Moto만 evaluator와 SCRR에
+  도달했다. HF Hub는 809,867 token 뒤 exact-request total-token guard, pyfakefs는 40 model call 뒤
+  call-budget guard에 걸려 evaluator 도달이 2/4였다. 따라서 original readiness gate는 false이고
+  2/4 SCRR는 calibration-only diagnostic일 뿐 no-memory baseline이 아니다. 사용량은 1,708,824 token,
+  95 model/142 tool call, 계산 비용 `$1.76403675`다. Experiment ID/hash/run/result는 immutable하며
+  재실행하지 않는다. Condition-neutral next candidate는 50/100/1,200,000/1,800초지만 아직 source
+  suite, completion guarantee, approval 또는 frozen comparison budget이 아니다. 새 tuple을 채택하면
+  새 four-row readiness panel과 exact hash/cost 승인이 필요하다. D-069~D-073의
   V10/V11 및 exact HF Hub sidecar lane은 계속 `retired diagnostic-only`이고 historical artifact와
   consumed-ID guard는 append-only로 보존한다. 기존 21/50/250,000/900 template도 계속
   stale/unvalidated다. Hidden failure는 baseline freeze 전 task-specific tuning trigger가 아니고,

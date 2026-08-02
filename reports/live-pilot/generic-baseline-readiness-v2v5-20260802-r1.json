@@ -1,0 +1,484 @@
+{
+  "schema_version": "generic-baseline-readiness-d075-evidence-v1",
+  "experiment_id": "generic-baseline-readiness-v2v5-20260802-r1",
+  "purpose": "generic-baseline-readiness",
+  "recorded_at": "2026-08-02T12:25:07.594395+00:00",
+  "source_harness_commit": "2c075abedf58cd8a2ec0d928d8e7ebb0ba9acd1a",
+  "execution_hash": "sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66",
+  "suite_hash": "sha256:cddd650f11a50591efbab018f817a40979842201e8a1ad584dffd7876d7db951",
+  "schedule_hash": "sha256:a9761ba78b1bfc073b75eede64085d40376fcdd3b30b73672ca29bd03c04c41a",
+  "dataset": {
+    "dataset_id": "patchloop-benchmark-v1",
+    "manifest_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786"
+  },
+  "runtime_contract": {
+    "schema_version": "generic-baseline-runtime-contract-v1",
+    "tool_schema_version": "v2",
+    "context_policy_version": "phase-evidence-v5",
+    "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+    "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+    "transport_max_retries": 0,
+    "harness_git_commit": "2c075abedf58cd8a2ec0d928d8e7ebb0ba9acd1a"
+  },
+  "model_tuple": {
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "provider_sdk_version": "2.47.0",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "max_output_tokens": 25000,
+    "memory_condition": "no_memory",
+    "repetitions": 1,
+    "schedule_seed": 20260723
+  },
+  "budget": {
+    "per_run": {
+      "max_model_calls": 40,
+      "max_tool_calls": 100,
+      "max_total_tokens": 850000,
+      "wall_clock_timeout_seconds": 1800
+    },
+    "pricing": {
+      "verified_at": "2026-08-01T18:56:47+00:00",
+      "source_url": "https://developers.openai.com/api/docs/pricing",
+      "input_price_per_million_usd": 0.75,
+      "cached_input_price_per_million_usd": 0.075,
+      "output_price_per_million_usd": 4.5,
+      "per_run_cost_reserve_usd": 3.9375,
+      "campaign_reserve_usd": 15.75,
+      "approved_cap_usd": 16.0
+    },
+    "actual_campaign_usage": {
+      "input_tokens": 1580179,
+      "cached_input_tokens": 0,
+      "output_tokens": 128645,
+      "reasoning_output_tokens": 116987,
+      "total_tokens": 1708824,
+      "model_calls": 95,
+      "tool_calls": 142,
+      "wall_clock_ms": 915695,
+      "model_cost_usd": 1.76403675
+    },
+    "terminal_bindings": {
+      "count": 2,
+      "run_ids": [
+        "run_466f7fb5275646e4",
+        "run_7e10fe04319c4771"
+      ],
+      "dimensions": {
+        "run_466f7fb5275646e4": "total_tokens",
+        "run_7e10fe04319c4771": "model_calls"
+      }
+    }
+  },
+  "original_completion_gate": {
+    "schema_version": "generic-baseline-readiness-gate-v1",
+    "passed": false,
+    "expected_runs": 4,
+    "terminal_runs": 4,
+    "qualified_runs": 4,
+    "evaluator_reached_runs": 2,
+    "official_evaluator_runs": 2,
+    "infrastructure_errors": 0,
+    "qualification_errors": 0,
+    "diagnostic_errors": 0,
+    "task_identity_passed": true,
+    "row_binding_passed": true,
+    "run_binding_passed": true,
+    "schedule_binding_passed": true,
+    "execution_binding_passed": true,
+    "budget_terminal_runs": 2,
+    "budget_terminal_run_ids": [
+      "run_466f7fb5275646e4",
+      "run_7e10fe04319c4771"
+    ],
+    "task_successes": 2,
+    "task_success_required": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "immutable": true,
+    "retroactively_recomputed": false
+  },
+  "runs": [
+    {
+      "task_id": "hf-hub-xet-endpoint-propagation",
+      "dataset_role": "memory-development",
+      "run_id": "run_466f7fb5275646e4",
+      "outcome_kind": "agent_failure",
+      "agent_submission_status": "failed",
+      "evaluation_status": "not_run",
+      "official": false,
+      "scope_compliant_success": false,
+      "verdicts": {
+        "hidden_tests": "not_run",
+        "regression_tests": "not_run",
+        "scope_policy": "not_run",
+        "safety_policy": "not_run"
+      },
+      "usage": {
+        "input_tokens": 763294,
+        "cached_input_tokens": 0,
+        "output_tokens": 46573,
+        "reasoning_output_tokens": 38900,
+        "total_tokens": 809867,
+        "model_calls": 37,
+        "tool_calls": 67,
+        "wall_clock_ms": 305341,
+        "model_cost_usd": 0.782049
+      },
+      "budget_pressure": {
+        "binding_dimension": "total_tokens",
+        "terminal_reason": "exact_request_budget_exceeded",
+        "remaining_tokens": 40133,
+        "next_exact_input_tokens": 24719,
+        "response_allowance_tokens": 25000,
+        "exact_request_deficit_tokens": 9586,
+        "minimum_total_budget_same_prefix": 859586,
+        "maximum_observed_exploration_tail_minimum": 1034573
+      }
+    },
+    {
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "dataset_role": "development-validation",
+      "run_id": "run_00d5fc0a8d914df4",
+      "outcome_kind": "resolved",
+      "agent_submission_status": "completed",
+      "evaluation_status": "completed",
+      "official": true,
+      "scope_compliant_success": true,
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "usage": {
+        "input_tokens": 55542,
+        "cached_input_tokens": 0,
+        "output_tokens": 3176,
+        "reasoning_output_tokens": 2699,
+        "total_tokens": 58718,
+        "model_calls": 7,
+        "tool_calls": 8,
+        "wall_clock_ms": 33437,
+        "model_cost_usd": 0.0559485
+      },
+      "budget_pressure": {
+        "binding_dimension": "none",
+        "remaining_model_calls": 33,
+        "remaining_tool_calls": 92,
+        "remaining_tokens": 791282,
+        "remaining_wall_clock_ms": 1766563
+      }
+    },
+    {
+      "task_id": "moto-query-scanned-count",
+      "dataset_role": "development-validation",
+      "run_id": "run_96817acf84c046fc",
+      "outcome_kind": "resolved",
+      "agent_submission_status": "completed",
+      "evaluation_status": "completed",
+      "official": true,
+      "scope_compliant_success": true,
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "usage": {
+        "input_tokens": 104671,
+        "cached_input_tokens": 0,
+        "output_tokens": 11138,
+        "reasoning_output_tokens": 10447,
+        "total_tokens": 115809,
+        "model_calls": 11,
+        "tool_calls": 15,
+        "wall_clock_ms": 123320,
+        "model_cost_usd": 0.12862425
+      },
+      "budget_pressure": {
+        "binding_dimension": "none",
+        "remaining_model_calls": 29,
+        "remaining_tool_calls": 85,
+        "remaining_tokens": 734191,
+        "remaining_wall_clock_ms": 1676680
+      }
+    },
+    {
+      "task_id": "pyfakefs-makedirs-parent-traversal",
+      "dataset_role": "memory-development",
+      "run_id": "run_7e10fe04319c4771",
+      "outcome_kind": "agent_failure",
+      "agent_submission_status": "failed",
+      "evaluation_status": "not_run",
+      "official": false,
+      "scope_compliant_success": false,
+      "verdicts": {
+        "hidden_tests": "not_run",
+        "regression_tests": "not_run",
+        "scope_policy": "not_run",
+        "safety_policy": "not_run"
+      },
+      "usage": {
+        "input_tokens": 656672,
+        "cached_input_tokens": 0,
+        "output_tokens": 67758,
+        "reasoning_output_tokens": 64941,
+        "total_tokens": 724430,
+        "model_calls": 40,
+        "tool_calls": 52,
+        "wall_clock_ms": 453597,
+        "model_cost_usd": 0.797415
+      },
+      "budget_pressure": {
+        "binding_dimension": "model_calls",
+        "terminal_reason": "model_call_budget_exhausted",
+        "remaining_model_calls": 0,
+        "remaining_tool_calls": 48,
+        "remaining_tokens": 125570,
+        "remaining_wall_clock_ms": 1346403,
+        "maximum_observed_exploration_tail_minimum": 882581
+      }
+    }
+  ],
+  "qualifications": [
+    {
+      "run_id": "run_466f7fb5275646e4",
+      "qualification_hash": "sha256:0718b6f5c372328adcfccadde5e3f67084845b5559c3bfe742b7d24bf93a335f",
+      "source_evidence_hash": "sha256:7003323b3a9353c6a487526b26cc9e1c4adfec7b58fe2511c05745ce1fad37fb",
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": false,
+      "passed_checks": 26,
+      "total_checks": 26,
+      "failed_check_ids": [],
+      "memory_candidate_eligible": false
+    },
+    {
+      "run_id": "run_00d5fc0a8d914df4",
+      "qualification_hash": "sha256:88306be1c5125f9f33435ed6d813d1d6c7705e933fd47229f4c87af480c0a661",
+      "source_evidence_hash": "sha256:1e6c4c451c3e734805622fb6328f052a08e7af1dd19394a67c67cae3787a1d61",
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": true,
+      "passed_checks": 27,
+      "total_checks": 27,
+      "failed_check_ids": [],
+      "memory_candidate_eligible": false
+    },
+    {
+      "run_id": "run_96817acf84c046fc",
+      "qualification_hash": "sha256:a7a04963bc2294fe79bb434707286c182ccc43fc585f1b7b5dd9590d8c154942",
+      "source_evidence_hash": "sha256:b2203b556e8356ff473d47d4f289fa2efcdaf04674ab0590a458c3bc7635860c",
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": true,
+      "passed_checks": 27,
+      "total_checks": 27,
+      "failed_check_ids": [],
+      "memory_candidate_eligible": false
+    },
+    {
+      "run_id": "run_7e10fe04319c4771",
+      "qualification_hash": "sha256:5134f75656679001c53ce21ea608a2f931a38ee97e86ecf5c4c198d9636d3f19",
+      "source_evidence_hash": "sha256:c5d3730fea8491d3b9a3c469020fce1f7fba1b95a017152e1eeab292ede0a86d",
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": false,
+      "passed_checks": 26,
+      "total_checks": 26,
+      "failed_check_ids": [],
+      "memory_candidate_eligible": false
+    }
+  ],
+  "journal_seal": {
+    "final_sequence": 10,
+    "final_event_type": "CampaignCompleted",
+    "final_event_hash": "sha256:deedc716e88fb7c0d47c5d041fefd7c0430b45e67164d5e13b7239eec57d817e",
+    "previous_event_hash": "sha256:c9b331b22c91442c1d27f9d6c8594cd5e6f05658d0c60879b56dd4440d9ad489",
+    "result_hash": "sha256:ba2670e8f1bb79e0af9cf56d02841014cc3e66d58db85b114459776af277d30d"
+  },
+  "claims_boundary": {
+    "paid_provider_path_exercised": true,
+    "all_scheduled_runs_terminal": true,
+    "all_terminal_traces_qualified": true,
+    "infrastructure_confound_observed": false,
+    "budget_confound_observed": true,
+    "readiness_gate_passed": false,
+    "task_successes": 2,
+    "task_success_required": false,
+    "no_memory_performance_baseline_established": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "core_campaign_unlocked": false,
+    "prompt_tool_or_context_tuning_justified_by_task_outcomes": false
+  },
+  "next_gate_candidate": {
+    "change_scope": "budget-only",
+    "frozen_model_prompt_tool_retry_evaluator_tuple": true,
+    "proposed_per_run_budget": {
+      "max_model_calls": 50,
+      "max_tool_calls": 100,
+      "max_total_tokens": 1200000,
+      "wall_clock_timeout_seconds": 1800,
+      "max_output_tokens": 25000
+    },
+    "proposed_per_run_cost_reserve_usd": 5.5125,
+    "proposed_four_run_reserve_usd": 22.05,
+    "requires_new_suite_execution_hash_and_cost_approval": true,
+    "authorized_by_this_record": false
+  },
+  "portable_artifacts": [],
+  "raw_local_artifacts": [
+    {
+      "role": "experiment-result",
+      "path": ".patchloop/experiments/generic-baseline-readiness-v2v5-20260802-r1.json",
+      "bytes": 43572,
+      "sha256": "sha256:ba2670e8f1bb79e0af9cf56d02841014cc3e66d58db85b114459776af277d30d"
+    },
+    {
+      "role": "campaign-journal",
+      "path": ".patchloop/experiments/journals/generic-baseline-readiness-v2v5-20260802-r1.jsonl",
+      "bytes": 7177,
+      "sha256": "sha256:bbb86164dfa6fa3ff047df0d2dc025e5a63dd44b79564a84ba325e508cadc511"
+    },
+    {
+      "role": "execution-plan-file",
+      "path": ".patchloop/experiments/plans/1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66.json",
+      "bytes": 11570,
+      "sha256": "sha256:9c4b2ffe838ee175489369896208f394928eb702a36ed52537841ef9f4629cb6"
+    },
+    {
+      "role": "hf-hub-run-manifest",
+      "path": ".patchloop/artifacts/runs/run_466f7fb5275646e4/manifest.json",
+      "bytes": 2368,
+      "sha256": "sha256:7264c5cde063679ed2c81a0e2de9ae119e8594dd68400cfabed4ec82bfe1d125"
+    },
+    {
+      "role": "hf-hub-run-result",
+      "path": ".patchloop/artifacts/runs/run_466f7fb5275646e4/result.json",
+      "bytes": 1853,
+      "sha256": "sha256:15ce897ffb56eecf3520b46091d994939575c252a8c7cf4406279251c9fbcf78"
+    },
+    {
+      "role": "hf-hub-trace-qualification",
+      "path": ".patchloop/qualifications/run_466f7fb5275646e4.json",
+      "bytes": 13247,
+      "sha256": "sha256:e18a970e1c02240a0c6358d85ccec2d4a537fea80a58ce989a22227d63e116c6"
+    },
+    {
+      "role": "babel-run-manifest",
+      "path": ".patchloop/artifacts/runs/run_00d5fc0a8d914df4/manifest.json",
+      "bytes": 2385,
+      "sha256": "sha256:ee827a930f33b2a2b94e66cec301a43071640265b8e3d45b76e91c337a213a8e"
+    },
+    {
+      "role": "babel-run-result",
+      "path": ".patchloop/artifacts/runs/run_00d5fc0a8d914df4/result.json",
+      "bytes": 4959,
+      "sha256": "sha256:00e0e3c1c3fa9943ea3cd0e8dcb2738e15809466514c2e8b4b5d12e85e310151"
+    },
+    {
+      "role": "babel-trace-qualification",
+      "path": ".patchloop/qualifications/run_00d5fc0a8d914df4.json",
+      "bytes": 10582,
+      "sha256": "sha256:69cfbad915afccb80052f133d211571ba63173634738177e0315ac9e92676c14"
+    },
+    {
+      "role": "moto-run-manifest",
+      "path": ".patchloop/artifacts/runs/run_96817acf84c046fc/manifest.json",
+      "bytes": 2365,
+      "sha256": "sha256:13924a3c79a1e37226bb5f0ca51a777e8c075afbd61640e8b5669f854b7fae5c"
+    },
+    {
+      "role": "moto-run-result",
+      "path": ".patchloop/artifacts/runs/run_96817acf84c046fc/result.json",
+      "bytes": 4964,
+      "sha256": "sha256:211351827c7060938a2f5785e2029f98d9f7c56f0c45c045250f09358fd69121"
+    },
+    {
+      "role": "moto-trace-qualification",
+      "path": ".patchloop/qualifications/run_96817acf84c046fc.json",
+      "bytes": 10916,
+      "sha256": "sha256:1b2b4b051c660e9e9ad42deaa872280ed7994239db3586007d6619d48fff8a0e"
+    },
+    {
+      "role": "pyfakefs-run-manifest",
+      "path": ".patchloop/artifacts/runs/run_7e10fe04319c4771/manifest.json",
+      "bytes": 2371,
+      "sha256": "sha256:7b85422d3e3e0388e1a8c7369fd984bb9b9739392031c4ed657a08fd2c915226"
+    },
+    {
+      "role": "pyfakefs-run-result",
+      "path": ".patchloop/artifacts/runs/run_7e10fe04319c4771/result.json",
+      "bytes": 2077,
+      "sha256": "sha256:3a5ff980c9da56a1c8d069d5392623ccad106fb2696cb98c4873311be70da085"
+    },
+    {
+      "role": "pyfakefs-trace-qualification",
+      "path": ".patchloop/qualifications/run_7e10fe04319c4771.json",
+      "bytes": 13039,
+      "sha256": "sha256:2735a18d862dd5ed0f1bc648860ed3dddc3a728a0608639fdddd4455bcc61e08"
+    },
+    {
+      "role": "babel-evaluation-receipt",
+      "path": ".patchloop/artifacts/runs/run_00d5fc0a8d914df4/evaluation-receipt.json",
+      "bytes": 599,
+      "sha256": "sha256:f37c68e0a9dcce0aaa4cba32fcc7f34cbbba5e4b42e81e8682a8cbeb8e4160b8"
+    },
+    {
+      "role": "moto-evaluation-receipt",
+      "path": ".patchloop/artifacts/runs/run_96817acf84c046fc/evaluation-receipt.json",
+      "bytes": 600,
+      "sha256": "sha256:7dded963b700649d84553cd8e3634a173d0bbd76f7782ca30e637aca18821559"
+    },
+    {
+      "role": "post-run-analysis-source",
+      "path": ".patchloop/analysis/generic-baseline-readiness-v2v5-20260802-r1/raw-experiment.json",
+      "bytes": 44444,
+      "sha256": "sha256:ca1d6cdc8647798158564994ea97c75acc7c56d3a739f92e56357bab14dc207c"
+    },
+    {
+      "role": "post-run-analysis-report",
+      "path": ".patchloop/analysis/generic-baseline-readiness-v2v5-20260802-r1/report.json",
+      "bytes": 2301,
+      "sha256": "sha256:dba8ab63c1034428c130a2b7a12d4ab7eeb6f0ae7207b16d98b1be90a65eb541"
+    }
+  ],
+  "evidence_policy": {
+    "portable_scope": "sanitized campaign, run, qualification, and budget summaries only",
+    "raw_local_artifacts": "local-only source paths and content hashes; raw bytes are not bundled",
+    "provider_private_exclusion": "provider request and response payloads, credentials, headers, and identifiers are excluded",
+    "evaluator_private_exclusion": "private task specifications, hidden assertions, reference patches, and verifier detail payloads are excluded"
+  },
+  "evidence_validation": {
+    "raw_artifact_hashes_verified": true,
+    "private_leak_scan_passed": true,
+    "validation_scope": "D-076 append-only source seal after the single approved D-075 generic readiness invocation",
+    "focused_regression": {
+      "collected": 51,
+      "passed": 51,
+      "environment_dependent_skipped": 0,
+      "failed": 0
+    },
+    "repository_regression": {
+      "collected": 1089,
+      "passed": 1082,
+      "environment_dependent_skipped": 7,
+      "failed": 0
+    },
+    "static_checks": {
+      "ruff": "passed",
+      "python_compileall": "passed",
+      "git_diff_check": "passed"
+    },
+    "provider_calls": 0,
+    "added_model_cost_usd": 0.0
+  }
+}

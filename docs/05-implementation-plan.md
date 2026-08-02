@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-075 generic V2/V5 baseline-readiness contract complete offline; clean no-call
-preflight and live readiness execution not yet approved**
+현재 milestone: **D-076 D-075 live result sealed; readiness gate failed on two budget confounds;
+new condition-neutral tuple decision pending**
 
 2026-08-02 구현 스냅샷:
 
@@ -13,7 +13,7 @@ preflight and live readiness execution not yet approved**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | exact readiness contract implemented; live evidence pending | Four-task V2/V5 suite, retry-0 runtime binding과 no-confound gate는 offline 검증; 850k는 candidate ceiling이고 comparison freeze 아님 |
+| Phase 6 evaluation | D-075 live panel completed but readiness gate failed | 4/4 terminal·qualified, 2/4 official evaluator, error 0, budget-terminal 2; calibration-only이고 comparison/memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -36,9 +36,12 @@ diagnostic으로 완료됐지만 usable no-memory baseline과 96-run core campai
 D-074는 D-069~D-072의 historical code와 evidence를 삭제하지 않는다. V10/V11 및 task-specific
 HF Hub sidecar는 `retired diagnostic-only`로 유지하며 generic baseline의 readiness 선행조건에서
 제외한다. D-075는 generic V2/V5, `SYSTEM_PROMPT_V3`, SDK transport retry 0과
-40/100/850,000/1,800초를 exact four-task readiness 후보로 고정했다. Source contract와 offline gate는
-완료됐지만 provider run은 없고 850k는 comparison budget으로 동결되지 않았다. 다음 live work는 clean
-no-call preflight, exact execution hash 검토와 별도 최대 `$16` invocation 승인 뒤에만 진행한다.
+40/100/850,000/1,800초를 exact four-task readiness 후보로 고정했고 승인 hash
+`sha256:1709a9e9911f980aafe28cdd9fe9ed486367c134e2dc9e465c88e01f9462bd66`로 정확히 한 번
+실행됐다. 4/4 terminal·qualified와 error 0에도 evaluator 도달은 2/4였다. HF Hub는 total-token,
+pyfakefs는 model-call guard에 걸렸으므로 readiness gate는 false다. D-076은 이 결과를 append-only로
+seal하며 D-075를 재실행하지 않는다. 850k는 comparison budget으로 동결되지 않았고 baseline,
+memory admission과 core는 계속 닫혀 있다.
 
 ## 1. Sequencing rule
 
@@ -166,26 +169,30 @@ task에서 한 번 검증한다. Process readiness와 hidden correctness를 분�
 5. **완료:** 이 purpose를 calibration-only로 report에서 제외하고 comparison denominator와 memory
    admission을 항상 false로 둔다. Historical suite는 retry field를 serialize하지 않아 기존 hash와
    adapter behavior를 보존한다.
-6. **대기:** clean commit에서 pricing freshness와 Docker/evaluator/task package를 no-call preflight로
+6. **완료:** clean commit에서 pricing freshness와 Docker/evaluator/task package를 no-call preflight로
    재검증하고 exact execution hash를 만든다. 이것은 실행 권한이 아니다.
-7. **대기:** 사용자가 exact hash와 최대 `$16` invocation을 별도 승인하면 four-row live panel을 한
-   번 실행한다. 실패 row를 같은 ID로 다시 실행하지 않는다.
-8. **대기:** Panel evidence를 hidden outcome에 맞춰 tuning하지 않고 검토한다. Gate pass 뒤 별도
-   decision으로 fair comparison tuple을 freeze한다. Budget/runtime/harness commit이 D-075와 달라지면
-   final tuple로 second readiness panel을 통과한 뒤 새 no-memory baseline을 수집한다.
+7. **완료:** 사용자가 exact hash와 최대 `$16` invocation을 별도 승인해 four-row live panel을 정확히
+   한 번 실행했다. Experiment ID, hash와 실패 row를 재실행하지 않는다.
+8. **완료:** Hidden outcome에 맞춘 tuning 없이 panel을 검토했다. 네 row는 terminal·qualified였지만
+   HF Hub total-token과 pyfakefs model-call confound 때문에 evaluator 도달이 2/4이고 gate는 false다.
+   Babel과 Moto의 성공 및 descriptive 2/4 SCRR는 calibration-only로 보존한다.
 9. Live hard restart는 별도 reliability suite/hash/approval로 다루며 baseline readiness blocker로
    두지 않는다.
+10. **다음:** Budget-confound public evidence로 condition-neutral tuple을 새 decision/config에서
+    선택한다. 50 model/100 tool/1,200,000 token/1,800초가 현재 evidence-based candidate지만
+    completion guarantee나 승인값은 아니다. 채택 시 새 exact hash와 four-row readiness panel을
+    별도로 승인·실행하고, 그 gate가 통과한 뒤에만 comparison tuple/no-memory baseline을 동결한다.
 
-### Offline contract gate — passed; live evidence gate — pending
+### Offline contract gate — passed; D-075 live readiness gate — failed
 
 - Historical D-069~D-073 evidence와 immutable guards가 byte/history 관점에서 보존된다.
 - Generic dev/core는 V2/V5이고 HF Hub V2 sidecar 또는 V10/V11 selector를 사용하지 않는다.
 - 기존 21/50/250k template은 실행 불가 상태로 명확히 표시된다.
 - Exact generic tuple과 diverse readiness panel, transport retry와 task-success-independent
   no-confound acceptance가 executable offline evidence로 통과한다.
-- 아직 없는 evidence는 clean-host preflight, provider four-row result, measured cost와 readiness gate
-  outcome이다. Source reserve `$15.75`/cap `$16`은 measured cost가 아니다.
-- Readiness live gate가 통과하기 전 850k를 comparison budget으로 표현하거나 baseline을 시작하지
+- Clean-host preflight와 one-time provider four-row result는 확보됐다. 실제 비용은 `$1.76403675`이고
+  original gate는 4/4 terminal·qualified, 2/4 evaluator, budget-terminal 2로 false다.
+- Readiness live gate가 통과하기 전 어떤 candidate ceiling도 comparison budget으로 표현하거나 baseline을 시작하지
   않는다.
 - Hidden failure에 따른 task-specific adaptive tuning 없이 별도 baseline freeze decision을 만든다.
 - Live hard-restart 미실행은 별도 limitation으로 남지만 baseline 진행을 막지 않는다.
@@ -554,9 +561,9 @@ margin이다. Historical D-045 primary contract의 run reserve는 25,000/200,000
 `$1.0125`, 12-run은 `$12.15`, 96-run은 `$97.20`이었다. D-052 comparison draft의 frozen
 repository-rate reserve는 25,000/250,000에서 run당 `$1.2375`, 12-run `$14.85`, 96-run
 `$118.80`이었다. D-054 completion calibration은 25,000/600,000에서 run당 `$2.8125`,
-두 run `$5.625`, suite cap `$6`를 사용했다. 실제 두 run은 `$0.15682575`였고 현재까지
-measured list-price 합은 `$5.138372625`다. 아직 freeze되지 않은
-12-run/core reserve는 이 현재 승인 합계에 넣지 않는다. Reserve는 spend나 invoice
+두 run `$5.625`, suite cap `$6`를 사용했다. 실제 두 run은 `$0.15682575`였고 D-055 시점까지
+measured list-price 합은 `$5.138372625`였다. 아직 freeze되지 않은
+12-run/core reserve는 이 D-055 시점 승인 합계에 넣지 않는다. Reserve는 spend나 invoice
 prediction이 아니며 project-wide `$150` cap은 machine-enforced가 아니다. Runner는
 suite별 `cost_limit_usd`만 강제한다.
 

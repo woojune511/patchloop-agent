@@ -191,6 +191,12 @@ def test_generic_baseline_readiness_has_exact_no_call_preflight_contract(
     _ready_live_environment(monkeypatch, tmp_path)
     monkeypatch.setattr(
         eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS,
+    )
+    monkeypatch.setattr(
+        eval_runner,
         "utc_now",
         lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
     )
@@ -233,6 +239,33 @@ def test_generic_baseline_readiness_has_exact_no_call_preflight_contract(
     }
     assert preflight["pricing"]["per_run_cost_reserve_usd"] == 3.9375
     assert preflight["pricing"]["budget_upper_bound_usd"] == 15.75
+
+
+def test_consumed_generic_baseline_readiness_is_immutable(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 2, 0, tzinfo=UTC),
+    )
+
+    preflight = eval_runner.preflight_suite(GENERIC_BASELINE_READINESS_SUITE)
+
+    assert {
+        eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+    } == eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
+    assert (
+        eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+        in eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    )
+    assert {row["code"] for row in preflight["blockers"]} == {
+        "HISTORICAL_SUITE_IMMUTABLE",
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
 
 
 def test_transport_retry_field_preserves_historical_suite_hashes() -> None:
@@ -542,6 +575,12 @@ def test_generic_baseline_readiness_binds_manifest_plan_and_paid_boundary(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS,
+    )
     monkeypatch.setattr(
         eval_runner,
         "utc_now",

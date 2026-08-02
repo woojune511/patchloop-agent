@@ -424,8 +424,8 @@ D-054 completion ceiling의 authorization reserve는 run당
 `(600,000 + 25,000) × $4.50/M = $2.8125`, 두 run `$5.625`이며 suite cap은 `$6`다.
 이는 실제 spend나 invoice prediction이 아니다. D-052 comparison draft의 12-run
 `$14.85`와 96-run `$118.80`은 calibration 뒤 변경될 수 있으므로 현재 paid authorization
-합계로 보지 않는다. Completion panel의 실제 계산 비용은 `$0.15682575`이고, 지금까지
-측정된 list-price 합은 `$5.138372625`다. Project-wide `$150` 상한은 machine-enforced
+합계로 보지 않는다. Completion panel의 실제 계산 비용은 `$0.15682575`이고, D-055 시점까지
+측정된 list-price 합은 `$5.138372625`였다. Project-wide `$150` 상한은 machine-enforced
 field가 아니며,
 runner는 각 suite의 `cost_limit_usd`만 강제한다.
 

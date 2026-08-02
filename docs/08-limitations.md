@@ -570,7 +570,7 @@ This file separates implemented behavior from the remaining 12-week campaign wor
   `run_d7207fbb06184dd3` bring twelve paid pilots to `$1.740790125`; adding the first 12-run
   campaign gives 24 paid run attempts and `$3.133982625`. The v4 12-run campaign adds
   `$1.84756425`, for 36 paid run attempts and `$4.981546875`. D-054 adds two completed attempts and
-  `$0.15682575`, bringing the usage-derived list-price total to `$5.138372625`. These are estimates,
+  `$0.15682575`, bringing the D-055 point-in-time usage-derived list-price total to `$5.138372625`. These are estimates,
   not verified invoice charges.
 - At frozen repository rates, D-054 reserved `$2.8125` per completion run and `$5.625` for the
   two-run panel, but measured only `$0.15682575`. D-052's `$14.85` development and `$118.80` core
@@ -812,11 +812,11 @@ silently lowering the design or fabricating missing results.
 - Live provider hard kill, stale-run reclaim and fresh-worker recovery remain unmeasured. They belong to a
   separately approved reliability experiment and do not block the fault-free no-memory baseline.
 
-## D-075 readiness contract is not live readiness or a frozen baseline
+## D-075 offline readiness contract was not itself live readiness
 
-- D-075 checks in an exact four-task generic V2/V5 suite and validates its schema, runtime binding,
-  qualification and gate logic offline. No provider request, live row, measured cost, SCRR or readiness
-  outcome was produced by that implementation evidence.
+- D-075 checked in an exact four-task generic V2/V5 suite and validated its schema, runtime binding,
+  qualification and gate logic offline. That implementation evidence alone produced no provider request,
+  live row, measured cost, SCRR or readiness outcome; D-076 below records the later invocation separately.
 - The 850,000-token, 40-model-call, 100-tool-call and 1,800-second values are a candidate completion
   ceiling for the readiness panel. They are not a measured requirement and are not the final fair budget
   for no-memory or the four memory conditions. The old 21/50/250,000/900 templates also remain stale.
@@ -830,9 +830,25 @@ silently lowering the design or fabricating missing results.
   evaluator without infrastructure, qualification, diagnostic or budget confounds. Hidden failures may
   coexist with a pass, and they must not trigger another same-task prompt/tool/sidecar correction loop.
 - The checked-in `$15.75` reserve and `$16` cap are authorization bounds, not expected or observed spend.
-  The source suite has no approval hash. A clean no-call preflight and explicit user approval are still
-  required before one live invocation, and stale pricing must be refreshed first.
+  The source suite has no approval hash. A clean no-call preflight and explicit user approval were required
+  outside the source file; D-076 records that the resulting authority was consumed exactly once.
 - Even after a live gate pass, comparison-budget freeze and no-memory baseline collection require a
   separate decision. If that decision changes budget, runtime code or harness commit, a second exact readiness
   panel is required; D-075 cannot qualify the changed tuple. Live hard restart remains an independent
   reliability evidence gap.
+
+## D-076 seals a failed readiness panel, not a baseline
+
+- The exact D-075 hash was approved and consumed once. All four rows terminated and qualified with zero
+  infrastructure, qualification or diagnostic errors, but only Babel and Moto reached the official evaluator.
+  HF Hub bound on total-token exact-request admission and pyfakefs bound on the 40-model-call limit.
+  Consequently the original readiness gate is false, even though two tasks achieved SCRR.
+- The descriptive 2/4 SCRR is calibration-only. It is excluded from ordinary report metrics, comparison,
+  memory admission and core, and must not be presented as a no-memory baseline estimate.
+- The panel used 1,708,824 token and calculated `$1.76403675` at the recorded rates. This is measured
+  usage-derived list-price cost, not the `$15.75` conservative authorization reserve or an invoice claim.
+- Increasing the candidate to 50 model calls and 1,200,000 total tokens is supported by observed public budget
+  headroom, but it remains a heuristic ceiling rather than a completion guarantee. It cannot be applied to
+  D-075 retroactively. A changed tuple needs a new four-row panel, hash and approval before baseline freeze.
+- Hidden outcomes do not justify task-specific tuning. Live hard restart/reclaim also remains a separate
+  unmeasured reliability exercise.

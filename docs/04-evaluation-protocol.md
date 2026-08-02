@@ -531,7 +531,7 @@ cache-write rate는 없다. Preflight는 verification age가 72시간을 넘거�
 실행하지 않는다. D-054 completion panel의 600,000 total과 25,000 response allowance를
 frozen repository의 최고 rate로 예약한 authorization reserve는 run당 `$2.8125`, 두 run
 `$5.625`이고 suite cap은 `$6`였다. 실제 계산 비용은 `$0.15682575`였고, 이를 이전
-measured list-price `$4.981546875`에 더한 누적 합은 `$5.138372625`다. D-052의 12-run
+measured list-price `$4.981546875`에 더한 D-055 시점 누적 합은 `$5.138372625`였다. D-052의 12-run
 `$14.85`와 core `$118.80` reserve는 calibration 뒤 변경될 수 있는 draft라 현재 승인
 합계에 넣지 않는다. Reserve는 예측
 지출이나 invoice·무료 사용 증거가 아니다. Project-wide `$150` 상한은 machine-enforced가
