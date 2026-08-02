@@ -110,6 +110,28 @@ no-memory baseline, memory admission 또는 core evidence가 아니다. Final re
 999 collected, 992 passed/7 environment-dependent skipped이며 Ruff, compileall과
 `git diff --check`도 통과했다.
 
+2026-08-02 D-072는 V11의 public contract를 바꾸지 않은 채 context helper를
+`patchloop/agent/coverage_rejection.py`, independent qualifier helper를
+`patchloop/evals/coverage_rejection.py`로 분리했다. 기존 import surface를 유지하므로 D-071의
+tool/context/schema와 historical artifact 의미를 새 version으로 재해석하지 않는다. 이어 별도 exact
+purpose `memory-development-no-memory-coverage-rejection-pilot`과 suite
+`dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`을 live-readiness 용도로 추가했다. 이 suite는
+HF Hub 한 task, `no_memory` 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
+v6/v11/runtime-v5, 60 model/100 tool/1,200,000 token/1,800초, output 25,000,
+reserve `$5.5125`/cap `$6`로 고정된다. Generic V11은 계속 mock/no-experiment 전용이고 이 exact
+purpose만 future OpenAI exception이다. 자연 coverage rejection이 없으면 trace qualification은
+통과할 수 있지만 recovery exercise는 `inconclusive`이고, rejection이 하나라도 있으면 관찰된 모든
+structured public error와 request/response/tool/result/recovery/clearing CAS가 검증돼야 한다. Live hard
+restart는 별도 후속 fault exercise다. Checked-in suite의 `live_cost_approved=false`,
+`approved_execution_hash=null`, `pilot_run_id=null`은 provider 권한이 없다는 뜻이다. D-072에서는
+API call이나 clean-host preflight를 하지 않았고 실제 runtime에서 사용할 persisted execution
+plan/hash, 사용자 비용 승인·비용 evidence도 만들지 않았다. Offline test는 temporary root의 fake
+environment에서 synthetic hash와 approval branch만 검증했다. D-070은 immutable하고
+baseline·memory admission·core gate는 계속 닫혀 있다. Final offline verification은
+focused 322 collected, 321 passed/1 environment-dependent skipped와 repository 전체 1,022 collected,
+1,015 passed/7 environment-dependent skipped를 기록했다. Ruff, Python compileall과
+`git diff --check`도 통과했고 API/network/provider call은 0이었다.
+
 PatchLoop는 Python coding agent의 model/tool call, patch, checkpoint와 hidden evaluator 결과를
 재현 가능한 artifact로 보존하고, 실패 memory 표현이 held-out 성능과 비용에 미치는 영향을
 비교하는 실험 harness다.

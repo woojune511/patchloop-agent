@@ -28,6 +28,7 @@ from patchloop.agent.runner import AgentRunner
 from patchloop.agent.tools import TOOL_SCHEMAS_V5, TOOL_SCHEMAS_V6
 from patchloop.contracts import (
     Artifact,
+    DatasetRole,
     EventType,
     ExperimentPurpose,
     ExperimentRunContext,
@@ -210,6 +211,73 @@ def test_v11_selector_is_offline_only_and_does_not_mutate_v10() -> None:
     payload["tool_schema_version"] = "v5"
     with pytest.raises(ValueError, match="exact .* pair"):
         RunManifest.model_validate(payload)
+
+
+def test_v11_live_selector_requires_exact_d072_openai_purpose() -> None:
+    package = load_task_package(TASK.parent)
+    contract = _smoke_v2_contract(package)
+    experiment = ExperimentRunContext(
+        experiment_id="dev-no-memory-coverage-rejection-v11-pilot-20260802-r1",
+        purpose=(
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+        ),
+        suite_hash="sha256:" + ("a" * 64),
+        execution_hash="sha256:" + ("b" * 64),
+        dataset_manifest_hash="sha256:" + ("d" * 64),
+        dataset_role=DatasetRole.MEMORY_DEVELOPMENT,
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + ("c" * 64),
+        repetition=1,
+    )
+
+    manifest = build_manifest(
+        package,
+        run_id="run_v11_live_selector",
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        experiment_context=experiment,
+        coverage_rejection_live_pilot=True,
+        public_review_contract=contract,
+    )
+    assert manifest.tool_schema_version == "v6"
+    assert manifest.context_policy_version == "phase-evidence-v11"
+    assert manifest.experiment == experiment
+
+    with pytest.raises(ContractError, match="requires the OpenAI provider"):
+        build_manifest(
+            package,
+            experiment_context=experiment,
+            coverage_rejection_live_pilot=True,
+            public_review_contract=contract,
+        )
+    wrong_experiment = experiment.model_copy(
+        update={"purpose": ExperimentPurpose.OFFLINE_SMOKE}
+    )
+    with pytest.raises(ContractError, match="exact .* purpose"):
+        build_manifest(
+            package,
+            provider="openai",
+            model_id="gpt-5.4-mini-2026-03-17",
+            experiment_context=wrong_experiment,
+            coverage_rejection_live_pilot=True,
+            public_review_contract=contract,
+        )
+
+
+def test_v10_v11_prompt_and_tool_contract_hashes_are_byte_stable() -> None:
+    assert sha256_text(SYSTEM_PROMPT_V7) == (
+        "sha256:b18fe8ccb54be6021beed8657ed745f812238e17c67b3055e4d1e069148ae7a6"
+    )
+    assert sha256_text(SYSTEM_PROMPT_V8) == (
+        "sha256:4dc0b19db38886bc4c7e274f3ce5a31b135fd10b632a54f4b40d97fa24b0e876"
+    )
+    assert sha256_text(canonical_json(TOOL_SCHEMAS_V5)) == (
+        "sha256:597f1f436cc0597f5a6dc58daa5545c1f1e05b091942a98d0c73401ebdfad414"
+    )
+    assert sha256_text(canonical_json(TOOL_SCHEMAS_V6)) == (
+        "sha256:ead74f31a873d2fc2f92e7bdff36af4deb818981e756b94cbe0d75ef27d5b748"
+    )
 
 
 @pytest.mark.parametrize(

@@ -626,3 +626,38 @@ duplicate `PatchApplied`를 거부한다. `passing_validation` target이 여러 
 이 branch는 public recovery protocol의 integrity만
 검증하며 hidden correctness, SCRR, live model improvement 또는 cross-run memory 효과를
 의미하지 않는다.
+
+## 17. D-072 V11 live-readiness boundary
+
+D-072의 첫 변경은 behavior change가 아니라 V11 helper의 의미 보존 모듈 분리다.
+`patchloop.agent.context`에 있던 structured-feedback reconstruction은
+`patchloop.agent.coverage_rejection`으로, `patchloop.evals.qualification`에 있던 independent
+recovery reconstruction은 `patchloop.evals.coverage_rejection`으로 이동한다. 기존 module의 import
+surface를 유지하고 tool/context/schema version, canonical JSON, artifact descriptor와 qualification
+check ID를 바꾸지 않으므로 historical V10/V11 evidence를 새 의미로 읽지 않는다.
+
+Live-readiness는 generic selector를 넓히지 않고 exact experiment exception으로 분리한다.
+
+```text
+purpose = memory-development-no-memory-coverage-rejection-pilot
+experiment_id = dev-no-memory-coverage-rejection-v11-pilot-20260802-r1
+task = HF Hub xet-endpoint-propagation
+condition/repetition = no_memory / 1
+runtime = tool v6 / phase-evidence-v11 / corrective-runtime-contract-v5
+budget = 60 model / 100 tool / 1,200,000 token / 1,800 seconds
+max_output_tokens = 25,000
+cost reserve/cap = $5.5125 / $6
+```
+
+Generic `coverage_rejection_validation=True`은 계속 mock/no-experiment 전용이다. 위 exact purpose와
+OpenAI provider 조합만 future exception이며 checked-in YAML 자체는 capability가 아니다. Approval,
+execution hash와 run ID가 null인 동안 runner는 provider call 전에 fail closed한다.
+
+Live row에서는 자연 rejection 발생 자체를 요구하지 않는다. Rejection 0이면 일반 trace-integrity와
+coverage lifecycle은 통과할 수 있지만 `coverage_rejection_recovery.exercise_status`는
+`inconclusive`, reason은 `rejection_not_observed`다. Rejection이 하나 이상이면 관찰된 모든
+`coverage-citation-error-v1` source와 후속 public evidence, refreshed diff, clearing review/mutation의
+request/response/tool/result CAS가 검증되어야 하고 하나라도 불완전하면 gate는 실패한다. 이는 같은
+worker에서 자연적으로 관찰된 recovery를 판정하는 계약이다. 실제 provider process를 rejection 직후
+종료하고 fresh worker로 resume하는 live hard-restart exercise는 별도 fault schedule과 별도 승인이
+필요한 후속 경계이며 이 one-row pilot의 완료 조건이 아니다.

@@ -12,8 +12,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-071 structured coverage-rejection feedback and exact-anchor
-  restart recovery offline gate complete; no V11 live execution approved`이다.
+- 현재 milestone은 `D-072 V11 live-readiness contract complete; exact suite remains
+  unapproved and no V11 provider execution or live hard-restart evidence exists`이다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은
   `tool_schema_version=v4`/`phase-evidence-v7`, public issue checklist, persistent rejected-patch
@@ -334,6 +334,25 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   duplicate mutation tamper를 독립 재구성한다. Generic V11은 mock/no-experiment
   전용이고 provider call·비용 evidence, SCRR, no-memory baseline, memory admission 또는
   core 결과가 아니다. D-070 ID/hash/run/original qualification은 immutable하다.
+  D-072는 D-071의 큰 V11 helper를 의미 보존 방식으로
+  `patchloop.agent.coverage_rejection`과 `patchloop.evals.coverage_rejection`에 분리하고,
+  historical tool/context/schema, artifact bytes와 D-070 evidence를 바꾸지 않는다. 새 exact
+  purpose `memory-development-no-memory-coverage-rejection-pilot`과 experiment ID
+  `dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`은 HF Hub 한 task, `no_memory` 1회,
+  v6/v11/runtime-v5, 60 model/100 tool/1,200,000 token/1,800초, output 25,000,
+  reserve `$5.5125`/cap `$6`로 고정된다. Generic V11은 계속 mock/no-experiment 전용이며
+  이 exact purpose만 future OpenAI exception이다. 자연 rejection이 0이면 trace integrity는
+  통과할 수 있지만 recovery diagnostic은 `inconclusive/rejection_not_observed`다. 하나 이상이면
+  관찰된 모든 structured public rejection과 source/recovery/clearing CAS가 검증돼야 하며 실패는
+  gate를 닫는다. Live hard restart는 이 one-row pilot의 요구사항이 아니라 별도 후속 fault
+  exercise다. Checked-in config의 approval/hash/run ID는 null이고 provider call, clean preflight,
+  실제 host에서 사용할 persisted execution plan/hash, 사용자 비용 승인 또는 비용 evidence는 생성되지
+  않았다. Offline test는 fake environment와 temporary root에서 synthetic hash와 approval branch만
+  검증한다. D-070은 immutable하며
+  memory admission, comparison denominator와 core campaign은 계속 닫힌다. D-072 final offline
+  verification은 focused 322 collected, 321 passed/1 environment-dependent skipped와 repository
+  전체 1,022 collected, 1,015 passed/7 environment-dependent skipped로 완료됐다. Ruff, Python
+  compileall과 `git diff --check`도 통과했으며 API/network/provider call은 0이다.
 - `docs/08-limitations.md`에 미완료라고 표시된 결과를 구현 또는 측정된 사실처럼 표현하지 않는다.
 - 다음 dataset/campaign gate는 이전 gate의 executable evidence를 확인한 뒤 통과시킨다.
 

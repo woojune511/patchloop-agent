@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-071 structured coverage-rejection feedback and exact-anchor restart
-recovery offline gate complete; live/memory gate not approved**
+현재 milestone: **D-072 exact V11 live-readiness contract complete; no clean preflight,
+execution hash, cost approval or provider run exists**
 
 2026-08-02 구현 스냅샷:
 
@@ -10,10 +10,10 @@ recovery offline gate complete; live/memory gate not approved**
 | --- | --- | --- |
 | Phase 1 evaluator | done (local + Docker) | Reference 통과, 6종 bad patch 거부, `official=true` |
 | Phase 2 agent | done (offline + Docker evaluator) | 3 task × mock/replay 6개 공식 run, 전체 trace와 valid patch 생성 |
-| Phase 3 state machine | historical V1-V10 보존; coverage-recovery v6/v11 offline gate complete | Target-specific structured rejection, CAS-bound feedback rehydration, restart exact-anchor recovery; generic V11 mock/no-experiment only |
+| Phase 3 state machine | historical V1-V10 보존; coverage-recovery v6/v11 offline gate와 의미 보존 모듈 분리 complete | Target-specific structured rejection, CAS-bound feedback rehydration, restart exact-anchor recovery; generic V11 mock/no-experiment only |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-070 consumed once and immutable; D-071 offline recovery only | V10 partial review 7/8 후 repeated unrelated citation으로 evaluator 전 agent failure; V11 restart E2E는 separate local evaluator에 도달했지만 live/SCRR/baseline·memory/core evidence가 아님 |
+| Phase 6 evaluation | D-070 immutable; D-072 exact one-row V11 live-readiness contract unapproved | HF Hub 1-row 60/100/1.2M/1,800초, reserve $5.5125/cap $6; rejection 0은 inconclusive, rejection 관찰 시 모든 public CAS recovery 필수; no execution hash/provider evidence |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -137,13 +137,14 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current trace-correction gate — D-071 V11 structured rejection recovery
+## Current live-readiness gate — D-072 exact V11 pilot contract
 
-목표: D-070의 잘못된 target citation을 offending target/sequence와 required public
-evidence가 있는 structured rejection으로 반환하고, 첫 worker restart 후 exact-anchor 또는
-multi-check evidence를 얻어 complete review·submission·evaluator로 복구하는지 offline에서
-machine-check한다. 이 gate는 task correctness나 hidden acceptance를 대신하지 않으며 live
-campaign, memory admission 또는 core를 열지 않는다.
+목표: 완료된 D-071 public recovery semantics를 바꾸지 않고 helper를 전용 모듈로 분리한 뒤,
+generic V11을 mock/no-experiment 전용으로 유지하면서 exact HF Hub one-row만 future OpenAI
+exception으로 허용하는 no-call contract를 고정한다. 자연 rejection 0은 recovery diagnostic
+`inconclusive`, rejection 관찰 시 모든 structured public CAS recovery를 필수로 판정한다. Live hard
+restart는 별도 후속 fault exercise이며 이 gate는 task correctness, baseline, memory admission 또는
+core를 열지 않는다.
 
 ### Frozen sequence
 
@@ -182,6 +183,7 @@ campaign, memory admission 또는 core를 열지 않는다.
 | 11n | completed (offline); no provider call | D-069 V10 public-coverage review gate | `public-review-contract-v2`, tool v5/context v10/runtime v4, Git-base anchor provenance, CAS-bound inspection/visible-check evidence, `task-review-v3`, partial REVIEW→IMPLEMENT, finish/recovery/qualification tamper gate; 971 collected, 964 passed/7 skipped, mock/no-experiment only, D-067/V1-V9 immutable |
 | 11o | consumed once; original gate false; immutable | D-070 exact V10 single-task live pilot | `run_6cc69fc1170c4a44`: 28/28 completed exact-token responses, 667,553 tokens, 50 tools, `$0.671307`, no budget bind. Valid partial review 7/8 뒤 missing anchor와 unrelated citation 3회로 evaluator 전 agent failure; qualification 30/34. No-model `run_c07bb2e439a74380`도 exact diff hidden fail; baseline·memory/core 제외, 재실행 금지 |
 | 11p | completed (offline); no provider call | D-071 structured coverage-rejection recovery correction | Exact v6/v11/runtime-v5; target-specific feedback, model request/response tool-call CAS와 active worker-claim mirror, first-rejection restart, same-worker second rejection/latest-feedback recovery, exact-anchor and batched multi-check evidence, refreshed diff→complete review→finish/evaluator E2E, dedicated qualifier/tamper and single-mutation assertions pass. D-070 raw artifact/qualification immutable; baseline·memory/core 제외 |
+| 11q | implemented (offline contract); live unapproved | D-072 V11 live-readiness contract and semantic-preserving module split | Context/qualifier V11 helpers를 전용 모듈로 분리하고 existing imports/contracts 유지. Exact `dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`: HF Hub 1-row, no-memory, v6/v11/runtime-v5, 60/100/1.2M/1,800초/output25k, reserve `$5.5125`/cap `$6`; approval/hash/run ID null. Rejection 0은 integrity-pass 가능+diagnostic inconclusive, rejection>0은 every public CAS recovery 필수. Hard-restart live exercise·memory/core는 별도 후속 |
 
 D-063 final offline evidence는 관련 묶음 377 passed/2 skipped, repository 전체 822 collected,
 815 passed/7 environment-dependent skipped, Ruff와 `git diff --check` 통과다. 실제 runner
@@ -215,6 +217,18 @@ D-071 final offline evidence는 focused V11 7/7, V11/V10/qualification/viewer �
 repository-wide 999 collected, 992 passed/7 environment-dependent skipped를 기록했다. Ruff,
 Python compileall과 `git diff --check`도 통과했다. Provider call, execution hash 또는 model cost는
 생성하지 않았고 D-070 artifact와 false gate는 그대로다.
+
+D-072는 위 D-071 수치를 새 source 변경의 회귀 수치로 재사용하지 않는다. 이번 work item은
+`patchloop.agent.coverage_rejection`/`patchloop.evals.coverage_rejection` 의미 보존 분리와 exact
+one-row suite·selector·qualification/report gate의 offline contract까지다. Checked-in config는
+`live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`이며 clean preflight,
+실제 runtime에 persist한 execution plan/hash, 사용자 비용 승인, provider call과 live cost evidence는
+아직 없다. Offline test는 fake environment와 temporary root에서 synthetic hash와 approval branch만
+검증했다. Final offline verification은
+focused 322 collected, 321 passed/1 environment-dependent skipped와 repository 전체 1,022 collected,
+1,015 passed/7 environment-dependent skipped를 기록했고 Ruff, Python compileall과
+`git diff --check`도 통과했다. 다음 executable gate는 별도 clean no-call preflight와 invocation
+approval을 만드는 것이다. 그 뒤에도 live hard restart와 memory/core는 자동으로 열리지 않는다.
 
 Order 9a의 final offline evidence는 571 collected, 569 passed/2 skipped, repository-wide
 Ruff와 `git diff --check` 통과다. 이 gate에서는 provider call을 실행하지 않았다.

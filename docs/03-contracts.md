@@ -299,6 +299,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-saturation-pilot` | D-064 HF Hub 한 task, `no_memory`, repetition 1, v4/v8/runtime-v2, 900k, $5 상한; 자연 saturation/reset diagnostic이며 memory source와 comparison denominator에서 제외 |
 | `memory-development-no-memory-review-evidence-pilot` | Consumed D-067 HF Hub 한 task, `no_memory`, repetition 1, v4/v9/runtime-v3, 60/100/1.2M/1,800초, output 25k, $6 상한; immutable hidden task failure이며 재실행·comparison·memory admission 금지 |
 | `memory-development-no-memory-coverage-review-pilot` | D-070 exact HF Hub 한 task, `no_memory`, repetition 1, v5/v10/runtime-v4, 60/100/1.2M/1,800초, output 25k, $6 상한; tuning-only이며 comparison·memory admission 제외, 별도 hash/비용 승인 전 live 실행 금지 |
+| `memory-development-no-memory-coverage-rejection-pilot` | D-072 exact HF Hub 한 task, `no_memory`, repetition 1, v6/v11/runtime-v5, 60/100/1.2M/1,800초, output 25k, reserve $5.5125/$6 상한; V11 live-readiness 전용이며 generic V11, comparison·memory admission과 분리, 별도 hash/비용 승인 전 live 실행 금지 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
 Primary comparison purpose는 다음 값을 고정한다.
@@ -2131,3 +2132,67 @@ fail closed해야 한다. Source evidence는 `trace-source-evidence-v11`이고 q
 envelope은 `trace-qualification-v2`를 유지한다. Mock/non-campaign run의 overall
 qualification은 campaign provenance 부재로 false일 수 있으며, 그 경우에도 전용 check
 pass와 separate local evaluator result를 별도로 보고한다.
+
+## 17. D-072 exact V11 live-readiness contract
+
+D-072의 `patchloop.agent.coverage_rejection`과 `patchloop.evals.coverage_rejection` 모듈 분리는
+D-071 함수의 canonical input/output, exception, schema version, artifact bytes와 qualification check
+ID를 바꾸지 않는 의미 보존 refactor다. `patchloop.agent.context`와
+`patchloop.evals.qualification`은 기존 import surface를 유지한다. Historical V10/V11 run은 원 source
+version으로 해석하며 이 이동을 이유로 재qualification하지 않는다.
+
+Exact live-readiness suite는 다음 tuple 전체를 요구한다.
+
+```yaml
+schema_version: experiment-v2
+experiment_id: dev-no-memory-coverage-rejection-v11-pilot-20260802-r1
+purpose: memory-development-no-memory-coverage-rejection-pilot
+tasks:
+  - tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml
+conditions: [no_memory]
+repetitions: 1
+model: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+max_output_tokens: 25000
+budget:
+  max_model_calls: 60
+  max_tool_calls: 100
+  max_total_tokens: 1200000
+  wall_clock_timeout_seconds: 1800
+seed: 20260723
+live_cost_approved: false
+approved_execution_hash: null
+pilot_run_id: null
+estimated_cost_usd: 5.5125
+cost_limit_usd: 6
+```
+
+Purpose와 experiment ID, exact one-row task/schedule/model/budget/pricing, dataset/image/review sidecar,
+v6/v11/runtime-v5와 clean harness identity 중 하나라도 다르면 start/resume와 qualification은 fail
+closed한다. Generic V11은 `coverage_rejection_validation=True` + mock + no experiment에서만 허용되고,
+위 exact purpose의 OpenAI pair만 future live exception이다. Checked-in suite,
+`live_cost_approved=false`, null hash/run ID는 live capability 또는 비용 승인이 아니다.
+
+`coverage_rejection_recovery_contract`의 live-pilot 판정은 rejection occurrence와 trace integrity를
+분리한다.
+
+```text
+rejection_count == 0
+  => check may pass, exercise_status=inconclusive,
+     exercise_reason=rejection_not_observed
+
+rejection_count > 0
+  => every observed structured public rejection and every source/recovery/
+     refreshed-diff/clearing request-response-tool-result CAS must verify
+  => any failed sequence makes check and live gate fail
+```
+
+따라서 `v11-coverage-rejection-live-pilot-gate-v1`은 exact row의 evaluator arrival, trace
+qualification, public coverage lifecycle과 `exercise_status in {passed, inconclusive}`를 요구하지만
+task success를 요구하거나 comparison denominator/memory admission을 열지 않는다. `failed`는 항상
+gate failure다. Live-pilot branch는 rejection이 생겨도 worker restart를 필수로 만들지 않는다.
+Provider process hard kill, stale `RUNNING` reclaim과 fresh-worker request를 live로 검증하는 fault
+exercise는 별도 suite/hash/비용 승인 아래 후속으로 수행한다.

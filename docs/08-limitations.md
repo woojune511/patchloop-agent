@@ -745,3 +745,31 @@ silently lowering the design or fabricating missing results.
 - An offline evaluator pass on the calibration fixture does not measure live model recovery, HF Hub task
   correctness, SCRR, a no-memory baseline, memory admission or cross-run memory benefit. D-070 remains an
   immutable failed live diagnostic and is not eligible for rerun, comparison, memory or core use.
+
+## D-072 live-readiness contract is not live recovery evidence
+
+- D-072 extracts the large V11 context and qualification helpers into dedicated modules without changing
+  the D-071 tool/context/schema contract. This is maintainability work, not evidence of better model
+  behavior. Historical V10/V11 artifacts are not regenerated or reinterpreted because of the move.
+- `memory-development-no-memory-coverage-rejection-pilot` is one exact future OpenAI exception; generic
+  V11 remains mock/no-experiment only. The checked-in suite fixes one HF Hub/no-memory row,
+  60 model/100 tool/1,200,000 token/1,800 seconds, output 25,000 and reserve `$5.5125`/cap `$6`.
+  These maxima do not predict actual usage, task success or recovery occurrence.
+- A natural run with zero structured coverage rejection may pass trace qualification while the recovery
+  diagnostic is `inconclusive/rejection_not_observed`. Such a row does not validate recovery. When one or
+  more rejections occur, every observed public source/recovery/clearing CAS must verify; a failed sequence
+  makes the readiness gate fail.
+- The exact live branch deliberately does not require a worker restart. D-071's mock E2E proves the
+  deterministic restart contract, but live provider hard kill, stale-run reclaim and fresh-worker recovery
+  remain a separate fault exercise requiring their own suite, execution hash, approval and evidence.
+- The suite currently records `live_cost_approved=false`, `approved_execution_hash=null` and
+  `pilot_run_id=null`. D-072 did not perform a clean-host preflight, persist a usable execution plan/hash,
+  obtain user cost approval, issue a provider request or incur/report model cost. Unit tests calculate a
+  synthetic hash and exercise approval logic only in a fake environment and temporary root. A checked-in
+  cost reserve is not cost evidence.
+- D-070 remains immutable. The D-072 tuning-only contract excludes its future row from comparison and
+  memory admission, does not require task success for readiness and does not open SCRR, a no-memory
+  baseline, the memory index or the 96-run core campaign.
+- D-072's 1,022 collected, 1,015 passed/7 environment-dependent skipped repository verification and
+  322 collected, 321 passed/1 environment-dependent skipped focused verification use in-memory Responses
+  doubles. They validate offline request/trace contracts only and are not live-model recovery evidence.

@@ -20,10 +20,16 @@ from patchloop.agent.model import (
     SYSTEM_PROMPT_V5,
     SYSTEM_PROMPT_V6,
     SYSTEM_PROMPT_V7,
+    SYSTEM_PROMPT_V8,
 )
 from patchloop.agent.review import load_public_review_contract
 from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
-from patchloop.agent.tools import TOOL_SCHEMAS_V2, TOOL_SCHEMAS_V4, TOOL_SCHEMAS_V5
+from patchloop.agent.tools import (
+    TOOL_SCHEMAS_V2,
+    TOOL_SCHEMAS_V4,
+    TOOL_SCHEMAS_V5,
+    TOOL_SCHEMAS_V6,
+)
 from patchloop.contracts import (
     Budget,
     DatasetRole,
@@ -183,6 +189,12 @@ GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT = Budget(
+    max_model_calls=60,
+    max_tool_calls=100,
+    max_total_tokens=1_200_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
@@ -229,6 +241,11 @@ COVERAGE_REVIEW_PILOT_TASK_ID = SATURATION_PILOT_TASK_ID
 COVERAGE_REVIEW_PILOT_EXPERIMENT_ID = (
     "dev-no-memory-coverage-review-v10-pilot-20260802-r1"
 )
+COVERAGE_REJECTION_PILOT_TASK = COVERAGE_REVIEW_PILOT_TASK
+COVERAGE_REJECTION_PILOT_TASK_ID = COVERAGE_REVIEW_PILOT_TASK_ID
+COVERAGE_REJECTION_PILOT_EXPERIMENT_ID = (
+    "dev-no-memory-coverage-rejection-v11-pilot-20260802-r1"
+)
 PUBLIC_REVIEW_CONTRACT_ROOT = Path("experiments/review-contracts")
 PUBLIC_REVIEW_CONTRACT_V2_ROOT = Path("experiments/review-contracts-v2")
 CORRECTIVE_TOOL_SCHEMA_VERSION = "v4"
@@ -241,6 +258,9 @@ REVIEW_EVIDENCE_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v3"
 COVERAGE_REVIEW_TOOL_SCHEMA_VERSION = "v5"
 COVERAGE_REVIEW_CONTEXT_POLICY_VERSION = "phase-evidence-v10"
 COVERAGE_REVIEW_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v4"
+COVERAGE_REJECTION_TOOL_SCHEMA_VERSION = "v6"
+COVERAGE_REJECTION_CONTEXT_POLICY_VERSION = "phase-evidence-v11"
+COVERAGE_REJECTION_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v5"
 PRICING_START_VERIFICATION_SCHEMA = "pricing-start-verification-v1"
 
 HASH_BOUND_CORRECTIVE_PURPOSES = {
@@ -248,6 +268,7 @@ HASH_BOUND_CORRECTIVE_PURPOSES = {
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
     ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
 }
 
 
@@ -276,9 +297,15 @@ def _corrective_runtime_contract(
         suite.purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
     )
+    coverage_rejection_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+    )
     return {
         "schema_version": (
-            COVERAGE_REVIEW_RUNTIME_CONTRACT_SCHEMA
+            COVERAGE_REJECTION_RUNTIME_CONTRACT_SCHEMA
+            if coverage_rejection_pilot
+            else COVERAGE_REVIEW_RUNTIME_CONTRACT_SCHEMA
             if coverage_review_pilot
             else REVIEW_EVIDENCE_RUNTIME_CONTRACT_SCHEMA
             if review_evidence_pilot
@@ -287,12 +314,16 @@ def _corrective_runtime_contract(
             else CORRECTIVE_RUNTIME_CONTRACT_SCHEMA
         ),
         "tool_schema_version": (
-            COVERAGE_REVIEW_TOOL_SCHEMA_VERSION
+            COVERAGE_REJECTION_TOOL_SCHEMA_VERSION
+            if coverage_rejection_pilot
+            else COVERAGE_REVIEW_TOOL_SCHEMA_VERSION
             if coverage_review_pilot
             else CORRECTIVE_TOOL_SCHEMA_VERSION
         ),
         "context_policy_version": (
-            COVERAGE_REVIEW_CONTEXT_POLICY_VERSION
+            COVERAGE_REJECTION_CONTEXT_POLICY_VERSION
+            if coverage_rejection_pilot
+            else COVERAGE_REVIEW_CONTEXT_POLICY_VERSION
             if coverage_review_pilot
             else REVIEW_EVIDENCE_CONTEXT_POLICY_VERSION
             if review_evidence_pilot
@@ -301,7 +332,9 @@ def _corrective_runtime_contract(
             else CORRECTIVE_CONTEXT_POLICY_VERSION
         ),
         "system_prompt_hash": sha256_text(
-            SYSTEM_PROMPT_V7
+            SYSTEM_PROMPT_V8
+            if coverage_rejection_pilot
+            else SYSTEM_PROMPT_V7
             if coverage_review_pilot
             else SYSTEM_PROMPT_V6
             if review_evidence_pilot
@@ -311,6 +344,8 @@ def _corrective_runtime_contract(
             canonical_json(
                 TOOL_SCHEMAS_V5
                 if coverage_review_pilot
+                else TOOL_SCHEMAS_V6
+                if coverage_rejection_pilot
                 else TOOL_SCHEMAS_V4
             )
         ),
@@ -634,6 +669,14 @@ class ExperimentSuite(BaseModel):
             raise ValueError(
                 "the D-070 experiment id requires the coverage-review pilot purpose"
             )
+        if (
+            self.experiment_id == COVERAGE_REJECTION_PILOT_EXPERIMENT_ID
+            and self.purpose
+            != ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+        ):
+            raise ValueError(
+                "the D-072 experiment id requires the coverage-rejection pilot purpose"
+            )
 
         if self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
             normalized_tasks = {
@@ -883,6 +926,30 @@ class ExperimentSuite(BaseModel):
             if self.estimated_cost_usd != 5.5125:
                 raise ValueError(
                     "coverage-review pilot requires estimated_cost_usd=5.5125"
+                )
+        elif (
+            self.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+        ):
+            if (
+                self.experiment_id != COVERAGE_REJECTION_PILOT_EXPERIMENT_ID
+                or [_normalized_task_path(task) for task in self.tasks]
+                != [COVERAGE_REJECTION_PILOT_TASK]
+                or self.conditions != [MemoryCondition.NO_MEMORY]
+                or self.repetitions != 1
+            ):
+                raise ValueError(
+                    "memory-development no-memory coverage-rejection pilot requires "
+                    "the exact D-072 id and frozen HF Hub task, no_memory, and "
+                    "one repetition"
+                )
+            self._require_live_defaults(
+                cost_limit=6,
+                budget=GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT,
+            )
+            if self.estimated_cost_usd != 5.5125:
+                raise ValueError(
+                    "coverage-rejection pilot requires estimated_cost_usd=5.5125"
                 )
         elif self.purpose == ExperimentPurpose.CORE:
             if len(set(self.tasks)) != 12:
@@ -1305,6 +1372,7 @@ def _expected_role_and_split(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
     }:
         return {DatasetRole.MEMORY_DEVELOPMENT}, DatasetRole.MEMORY_DEVELOPMENT
     if purpose == ExperimentPurpose.CORE:
@@ -1405,7 +1473,10 @@ def preflight_suite(
                     review_contract_root = (
                         PUBLIC_REVIEW_CONTRACT_V2_ROOT
                         if suite.purpose
-                        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+                        in {
+                            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+                            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
+                        }
                         else PUBLIC_REVIEW_CONTRACT_ROOT
                     )
                     candidate = ensure_within(
@@ -1547,6 +1618,16 @@ def preflight_suite(
             blockers,
             "COVERAGE_REVIEW_PILOT_TASK_SET_MISMATCH",
             "coverage-review pilot must use exactly the frozen HF Hub task",
+        )
+    if (
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+        and loaded_ids != {COVERAGE_REJECTION_PILOT_TASK_ID}
+    ):
+        _block(
+            blockers,
+            "COVERAGE_REJECTION_PILOT_TASK_SET_MISMATCH",
+            "coverage-rejection pilot must use exactly the frozen HF Hub task",
         )
 
     schedule, schedule_hash = _make_schedule(suite, task_rows)
@@ -1891,6 +1972,7 @@ def _assert_manifest_matches_preflight(
         in {
             CORRECTIVE_TOOL_SCHEMA_VERSION,
             COVERAGE_REVIEW_TOOL_SCHEMA_VERSION,
+            COVERAGE_REJECTION_TOOL_SCHEMA_VERSION,
         }
         or manifest.context_policy_version
         in {
@@ -1898,12 +1980,16 @@ def _assert_manifest_matches_preflight(
             SATURATION_CONTEXT_POLICY_VERSION,
             REVIEW_EVIDENCE_CONTEXT_POLICY_VERSION,
             COVERAGE_REVIEW_CONTEXT_POLICY_VERSION,
+            COVERAGE_REJECTION_CONTEXT_POLICY_VERSION,
         }
         or manifest.public_review_contract is not None
     ):
         actual_runtime_contract = {
             "schema_version": (
-                COVERAGE_REVIEW_RUNTIME_CONTRACT_SCHEMA
+                COVERAGE_REJECTION_RUNTIME_CONTRACT_SCHEMA
+                if manifest.context_policy_version
+                == COVERAGE_REJECTION_CONTEXT_POLICY_VERSION
+                else COVERAGE_REVIEW_RUNTIME_CONTRACT_SCHEMA
                 if manifest.context_policy_version
                 == COVERAGE_REVIEW_CONTEXT_POLICY_VERSION
                 else REVIEW_EVIDENCE_RUNTIME_CONTRACT_SCHEMA
@@ -1916,7 +2002,10 @@ def _assert_manifest_matches_preflight(
             "tool_schema_version": manifest.tool_schema_version,
             "context_policy_version": manifest.context_policy_version,
             "system_prompt_hash": sha256_text(
-                SYSTEM_PROMPT_V7
+                SYSTEM_PROMPT_V8
+                if manifest.context_policy_version
+                == COVERAGE_REJECTION_CONTEXT_POLICY_VERSION
+                else SYSTEM_PROMPT_V7
                 if manifest.context_policy_version
                 == COVERAGE_REVIEW_CONTEXT_POLICY_VERSION
                 else SYSTEM_PROMPT_V6
@@ -1926,7 +2015,10 @@ def _assert_manifest_matches_preflight(
             ),
             "tool_schema_hash": sha256_text(
                 canonical_json(
-                    TOOL_SCHEMAS_V5
+                    TOOL_SCHEMAS_V6
+                    if manifest.context_policy_version
+                    == COVERAGE_REJECTION_CONTEXT_POLICY_VERSION
+                    else TOOL_SCHEMAS_V5
                     if manifest.context_policy_version
                     == COVERAGE_REVIEW_CONTEXT_POLICY_VERSION
                     else TOOL_SCHEMAS_V4
@@ -2386,10 +2478,80 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
             and terminal_evaluation_completed is True
         ),
     }
+    coverage_rejection_checks = [
+        check
+        for check in raw_checks
+        if (
+            isinstance(check, dict)
+            and check.get("check_id")
+            == "coverage_rejection_recovery_contract"
+        )
+    ]
+    coverage_rejection_feature: dict[str, Any] = {
+        "check_count": len(coverage_rejection_checks),
+        "check_passed": None,
+        "exercise_status": "failed",
+        "rejection_count": None,
+        "verified_rejection_sequences": None,
+        "restart_observed": None,
+        "failed_rejection_sequences": None,
+    }
+    if len(coverage_rejection_checks) == 1:
+        check = coverage_rejection_checks[0]
+        details = check.get("details")
+        if not isinstance(details, dict):
+            details = {}
+        exercise_status = details.get("exercise_status")
+        rejection_count = details.get("rejection_count")
+        verified_sequences = details.get("verified_rejection_sequences")
+        failed_sequences = details.get("failed_rejection_sequences")
+        coverage_rejection_feature.update(
+            {
+                "check_passed": (
+                    check.get("passed")
+                    if type(check.get("passed")) is bool
+                    else None
+                ),
+                "exercise_status": (
+                    exercise_status
+                    if exercise_status in {"passed", "inconclusive", "failed"}
+                    else "failed"
+                ),
+                "rejection_count": (
+                    rejection_count
+                    if type(rejection_count) is int and rejection_count >= 0
+                    else None
+                ),
+                "verified_rejection_sequences": (
+                    list(verified_sequences)
+                    if isinstance(verified_sequences, list)
+                    and all(
+                        type(sequence) is int and sequence >= 1
+                        for sequence in verified_sequences
+                    )
+                    else None
+                ),
+                "restart_observed": (
+                    details.get("restart_observed")
+                    if type(details.get("restart_observed")) is bool
+                    else None
+                ),
+                "failed_rejection_sequences": (
+                    list(failed_sequences)
+                    if isinstance(failed_sequences, list)
+                    and all(
+                        type(sequence) is int and sequence >= 1
+                        for sequence in failed_sequences
+                    )
+                    else None
+                ),
+            }
+        )
     summary["trace_features"] = {
         "rejected_patch_retry_context": retry_feature,
         "saturation_context": saturation_feature,
         "public_coverage_review": coverage_feature,
+        "coverage_rejection_recovery": coverage_rejection_feature,
     }
     return summary
 
@@ -2784,6 +2946,14 @@ def _completion_gate(
         and [_normalized_task_path(task) for task in suite.tasks]
         == [COVERAGE_REVIEW_PILOT_TASK]
     )
+    coverage_rejection_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+        and suite.budget
+        == GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT
+        and [_normalized_task_path(task) for task in suite.tasks]
+        == [COVERAGE_REJECTION_PILOT_TASK]
+    )
     if not any(
         (
             completion_panel,
@@ -2792,6 +2962,7 @@ def _completion_gate(
             saturation_pilot,
             review_evidence_pilot,
             coverage_review_pilot,
+            coverage_rejection_pilot,
         )
     ):
         return None
@@ -2859,11 +3030,26 @@ def _completion_gate(
         )
         for row in rows
     )
+    coverage_rejection_exercise_statuses = [
+        (((row.get("qualification") or {}).get("trace_features") or {}).get(
+            "coverage_rejection_recovery"
+        ) or {}).get("exercise_status")
+        for row in rows
+    ]
+    coverage_rejection_exercise_counts = {
+        status: coverage_rejection_exercise_statuses.count(status)
+        for status in ("passed", "inconclusive", "failed")
+    }
     completion_passed = bool(
         expected_runs
         == (
             1
-            if saturation_pilot or review_evidence_pilot or coverage_review_pilot
+            if (
+                saturation_pilot
+                or review_evidence_pilot
+                or coverage_review_pilot
+                or coverage_rejection_pilot
+            )
             else 3
             if budget_pilot or corrective_pilot
             else 2
@@ -2880,8 +3066,18 @@ def _completion_gate(
             or diagnostic_passed_runs == expected_runs
         )
         and (
-            not coverage_review_pilot
+            not (coverage_review_pilot or coverage_rejection_pilot)
             or coverage_lifecycle_observed_runs == expected_runs
+        )
+        and (
+            not coverage_rejection_pilot
+            or (
+                len(coverage_rejection_exercise_statuses) == expected_runs
+                and coverage_rejection_exercise_counts["failed"] == 0
+                and coverage_rejection_exercise_counts["passed"]
+                + coverage_rejection_exercise_counts["inconclusive"]
+                == expected_runs
+            )
         )
         and not budget_terminal_run_ids
     )
@@ -2891,10 +3087,13 @@ def _completion_gate(
         or saturation_pilot
         or review_evidence_pilot
         or coverage_review_pilot
+        or coverage_rejection_pilot
     ):
         return {
             "schema_version": (
-                "v10-coverage-review-live-pilot-gate-v1"
+                "v11-coverage-rejection-live-pilot-gate-v1"
+                if coverage_rejection_pilot
+                else "v10-coverage-review-live-pilot-gate-v1"
                 if coverage_review_pilot
                 else "v9-review-evidence-live-pilot-gate-v1"
                 if review_evidence_pilot
@@ -2924,7 +3123,28 @@ def _completion_gate(
                         coverage_lifecycle_observed_runs
                     )
                 }
-                if coverage_review_pilot
+                if coverage_review_pilot or coverage_rejection_pilot
+                else {}
+            ),
+            **(
+                {
+                    "coverage_rejection_exercise": {
+                        "status": (
+                            coverage_rejection_exercise_statuses[0]
+                            if len(coverage_rejection_exercise_statuses) == 1
+                            and coverage_rejection_exercise_statuses[0]
+                            in {"passed", "inconclusive", "failed"}
+                            else "failed"
+                        ),
+                        "statuses": coverage_rejection_exercise_statuses,
+                        "passed_runs": coverage_rejection_exercise_counts["passed"],
+                        "inconclusive_runs": coverage_rejection_exercise_counts[
+                            "inconclusive"
+                        ],
+                        "failed_runs": coverage_rejection_exercise_counts["failed"],
+                    }
+                }
+                if coverage_rejection_pilot
                 else {}
             ),
             "budget_terminal_runs": len(budget_terminal_run_ids),
@@ -3101,6 +3321,7 @@ def evaluate_suite(
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
     }
     halt_reason: dict[str, str] | None = None
 
@@ -3250,6 +3471,10 @@ def evaluate_suite(
             coverage_review_live_pilot=(
                 suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
+            ),
+            coverage_rejection_live_pilot=(
+                suite.purpose
+                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
             ),
             public_review_contract=(
                 PublicReviewContract.model_validate(

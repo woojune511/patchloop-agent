@@ -55,6 +55,9 @@ class ExperimentPurpose(StrEnum):
     MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT = (
         "memory-development-no-memory-coverage-review-pilot"
     )
+    MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT = (
+        "memory-development-no-memory-coverage-rejection-pilot"
+    )
     CORE = "core"
 
 
@@ -1173,15 +1176,41 @@ class RunManifest(StrictModel):
             raise ValueError(
                 "coverage-review pilot purpose requires the OpenAI provider"
             )
-        if coverage_rejection_pair_v11 and self.experiment is not None:
+        coverage_rejection_live_pilot = bool(
+            self.experiment is not None
+            and self.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+        )
+        if (
+            coverage_rejection_pair_v11
+            and self.experiment is not None
+            and not coverage_rejection_live_pilot
+        ):
             raise ValueError(
                 "phase-evidence-v11 coverage rejection recovery is offline-only "
-                "and cannot declare an experiment context"
+                "and cannot declare an experiment context outside the exact "
+                "coverage-rejection pilot purpose"
             )
-        if coverage_rejection_pair_v11 and self.model.provider != "mock":
+        if (
+            coverage_rejection_pair_v11
+            and self.model.provider != "mock"
+            and not (
+                coverage_rejection_live_pilot
+                and self.model.provider == "openai"
+            )
+        ):
             raise ValueError(
                 "phase-evidence-v11 coverage rejection recovery is offline-only "
-                "and requires the mock provider"
+                "and requires the mock provider outside the exact "
+                "coverage-rejection pilot purpose"
+            )
+        if coverage_rejection_live_pilot and not coverage_rejection_pair_v11:
+            raise ValueError(
+                "coverage-rejection pilot purpose requires the v6/v11 runtime contract"
+            )
+        if coverage_rejection_live_pilot and self.model.provider != "openai":
+            raise ValueError(
+                "coverage-rejection pilot purpose requires the OpenAI provider"
             )
         return self
 

@@ -708,3 +708,40 @@ feedback/build/review mirrors, malformed source coverage rows, missing prepared-
 cleared-request worker-claim drift, missing model-response tool declarations, orphan review/mutation,
 old-worker activity across the designated restart boundary, duplicate outcomes and duplicate mutation. V10
 compatibility remains a separate assertion; this command creates no live execution authority or cost.
+
+Inspect the D-072 V11 live-readiness contract without loading `.env` or contacting a provider:
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  experiments/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.yaml
+.venv\Scripts\python.exe -m pytest -q `
+  tests/test_coverage_rejection_live_v11.py `
+  tests/test_experiments.py
+.venv\Scripts\ruff.exe check `
+  patchloop/agent/coverage_rejection.py `
+  patchloop/evals/coverage_rejection.py `
+  patchloop/evals/runner.py `
+  tests/test_coverage_rejection_live_v11.py `
+  tests/test_experiments.py
+git diff --check
+```
+
+The YAML must name exact purpose `memory-development-no-memory-coverage-rejection-pilot`, exact ID
+`dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`, one HF Hub/no-memory row,
+60/100/1,200,000/1,800 and output 25,000, with reserve `$5.5125`, cap `$6`,
+`live_cost_approved=false`, `approved_execution_hash=null` and `pilot_run_id=null`. Offline assertions
+must keep generic V11 mock/no-experiment only and permit only this exact purpose+OpenAI pair as a future
+exception. They must classify zero rejection as integrity-pass-capable but recovery-inconclusive, and fail
+an observed rejection unless every structured public source/recovery/clearing CAS verifies.
+
+These commands are not a clean-machine preflight and do not leave a clean-host execution plan/hash or a
+user-approved capability in the real runtime. The unit tests calculate a synthetic hash and exercise the
+approval branch only inside a fake environment and temporary root. Do not add `--approve-live-cost`, load
+`.env` or invoke `patchloop evaluate` for this suite as part of D-072 offline reproduction. A future clean
+no-call preflight and paid invocation require a new explicit handoff. Provider hard-kill/reclaim is also a
+separate follow-up fault exercise rather than a requirement of this one-row contract.
+
+The 2026-08-02 reference execution collected 322 focused tests with 321 passed/1
+environment-dependent skipped and 1,022 repository tests with 1,015 passed/7 environment-dependent
+skipped. Ruff, Python compileall and `git diff --check` also passed. These are offline results from
+in-memory Responses doubles; they are not provider or cost evidence.

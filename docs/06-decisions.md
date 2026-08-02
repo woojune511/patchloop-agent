@@ -215,6 +215,37 @@ Evidence/issue:
   999 collected and 992 passed/7 environment-dependent skipped; Ruff, compileall and `git diff --check`
   pass. D-070 experiment/hash/run/original qualification and no-model postmortem remain immutable.
 
+### D-072 accepted decision
+
+- Status: implemented offline; live invocation unapproved
+- Context: D-071은 exact-anchor restart recovery를 닫았지만 V11-specific reconstruction이 큰
+  context/qualification module에 남아 있었고, generic mock contract를 넓히지 않으면서 자연 live
+  rejection의 관찰 여부와 trace integrity를 분리할 one-row readiness contract가 필요했다.
+- Decision: D-071 helper를 의미 보존 방식으로 `patchloop.agent.coverage_rejection`과
+  `patchloop.evals.coverage_rejection`에 분리하고 기존 import surface, schema/version, canonical
+  artifact와 check ID를 유지한다. 새 exact purpose
+  `memory-development-no-memory-coverage-rejection-pilot`, ID
+  `dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`은 HF Hub 한 task, `no_memory` 1회,
+  v6/v11/runtime-v5, 60 model/100 tool/1,200,000 token/1,800초, output 25,000,
+  reserve `$5.5125`/cap `$6`로 고정한다. Generic V11은 mock/no-experiment 전용이고 이 exact
+  purpose+OpenAI pair만 future exception이다.
+- Diagnostic decision: 자연 rejection이 0이면 recovery exercise는
+  `inconclusive/rejection_not_observed`지만 다른 integrity 조건이 참이면 qualification/readiness가
+  통과할 수 있다. Rejection이 하나 이상이면 모든 structured public source와 recovery/clearing CAS를
+  검증하고 하나라도 실패하면 gate를 닫는다. Live hard restart는 exact row의 필수조건이 아니라 별도
+  후속 fault exercise다.
+- Consequences: Checked-in suite는 `live_cost_approved=false`, `approved_execution_hash=null`,
+  `pilot_run_id=null`이다. 이 변경은 clean-host preflight, 실제 runtime에 persist한 execution
+  plan/hash, 사용자 비용 승인, provider call 또는 cost evidence가 아니다. Offline test의 temporary
+  synthetic hash/approval branch는 usable capability를 만들지 않는다. D-070 run/hash/gate는 immutable하며
+  task success를 요구하지 않는 tuning-only readiness row는 comparison denominator, memory admission과
+  core를 열지 않는다.
+- Date: 2026-08-02
+- Evidence/issue: exact suite와 offline selector/qualification/report contract; focused 322 collected,
+  321 passed/1 environment-dependent skipped, repository 전체 1,022 collected, 1,015 passed/7
+  environment-dependent skipped. Ruff, Python compileall과 `git diff --check` 통과. API/network/provider
+  call과 model cost는 0이고, clean-host/persisted execution hash와 사용자 approval은 없다.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

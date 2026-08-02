@@ -151,6 +151,13 @@ def test_report_separates_infrastructure_and_not_started_rows(
     assert report["success_failure_flips_vs_no_memory"] is None
 
 
+def test_coverage_rejection_pilot_is_calibration_only() -> None:
+    assert (
+        "memory-development-no-memory-coverage-rejection-pilot"
+        in report_module._CALIBRATION_ONLY_PURPOSES
+    )
+
+
 def test_report_excludes_trace_qualification_failures_from_research_metrics(
     tmp_path,
     monkeypatch,

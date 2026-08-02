@@ -1075,3 +1075,46 @@ Mock/non-campaign run의 overall qualification은 live campaign provenance와 �
 않았고 추가 model cost는 0이다. 별도 live suite/hash/비용 승인은 없다. Final repository
 regression은 999 collected, 992 passed/7 environment-dependent skipped이며 Ruff, compileall과
 `git diff --check`도 통과했다.
+
+### D-072 V11 live-readiness protocol
+
+D-072는 먼저 D-071의 context/qualification helper를 전용 모듈로 분리한다. 이 refactor는
+tool/context/schema, canonical artifact와 qualifier check 의미를 바꾸지 않고 historical V10/V11
+evidence를 재해석하지 않는다. 이후 generic V11 mock selector와 분리된 exact
+`memory-development-no-memory-coverage-rejection-pilot` purpose를 추가한다.
+
+Checked-in `dev-no-memory-coverage-rejection-v11-pilot-20260802-r1`은 HF Hub 한 task를
+`no_memory`로 한 번만 실행하는 tuning-only row다. Model은
+`gpt-5.4-mini-2026-03-17` medium/standard/default, runtime은 v6/v11/runtime-v5이고 budget은
+60 model/100 tool/1,200,000 token/1,800초, output 25,000이다. Worst-case reserve는 `$5.5125`,
+suite cap은 `$6`다. Generic V11은 계속 mock/no-experiment 전용이고 exact purpose+OpenAI pair만
+future exception이다.
+
+Live readiness는 자연 rejection을 강제로 만들지 않고 다음과 같이 판정한다.
+
+```text
+evaluator_reached
+AND trace_qualified
+AND public_coverage_lifecycle_observed
+AND coverage_rejection_exercise.status in {passed, inconclusive}
+AND infrastructure/qualification/budget error absent
+```
+
+- Rejection이 0이면 `inconclusive/rejection_not_observed`다. 이는 recovery가 검증됐다는 뜻이
+  아니지만 다른 trace-integrity check가 모두 참이면 row qualification과 readiness gate는 통과할 수
+  있다.
+- Rejection이 하나 이상이면 모든 `coverage-citation-error-v1`, source model request/response와
+  tool input/result CAS, fresh public recovery evidence, refreshed diff, clearing review/mutation을 전부
+  재구성해야 한다. 누락·위조·실패 sequence가 하나라도 있으면 `failed`이며 gate도 false다.
+- Task success와 hidden acceptance는 readiness gate의 필수조건이 아니다. Outcome과 SCRR은 별도로
+  보고하며 이 row는 comparison denominator와 memory admission에서 제외한다.
+- Offline D-071은 실제 fresh-runner restart를 필수로 검증했지만 D-072 live row는 자연 rejection
+  recovery만 판정한다. Provider hard kill과 stale-run reclaim을 live로 시험하는 fault exercise는 별도
+  후속 suite·execution hash·비용 승인이 필요하다.
+
+현재 suite의 `live_cost_approved=false`, `approved_execution_hash=null`, `pilot_run_id=null`은 no-call
+상태를 나타낸다. D-072 구현 단계에서는 clean-host preflight, 실제 runtime에 persist할 execution
+plan/hash, 사용자 invocation approval, provider request와 cost evidence를 생성하지 않는다. Offline
+test는 fake environment와 temporary root에서 synthetic hash 및 approval branch를 검증할 뿐 usable
+capability를 남기지 않는다. D-070 run/hash/gate는 immutable하고 이 contract는 memory admission이나
+core campaign을 열지 않는다.

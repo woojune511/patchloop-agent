@@ -2391,3 +2391,46 @@ No `.env` credential was loaded, no provider request was made, no live execution
 was created, and added model cost was zero. This proves only the offline public recovery protocol and
 trace-integrity boundary. It is not SCRR, a no-memory baseline, memory admission, a live-model recovery
 rate or core-campaign evidence.
+
+## D-072 V11 live-readiness contract — offline implementation only
+
+D-072 first separates D-071 code by responsibility without changing its public semantics:
+
+- `patchloop/agent/coverage_rejection.py` owns V11 structured feedback reconstruction previously hosted
+  in `patchloop.agent.context`.
+- `patchloop/evals/coverage_rejection.py` owns V11 independent recovery reconstruction previously hosted
+  in `patchloop.evals.qualification`.
+- The original modules preserve their import surface. No tool/context/schema version, canonical artifact
+  shape or qualification check ID is changed, and D-070/D-071 evidence is not rewritten.
+
+The new checked-in suite
+`experiments/dev-no-memory-coverage-rejection-v11-pilot-20260802-r1.yaml` fixes exact purpose
+`memory-development-no-memory-coverage-rejection-pilot`, one HF Hub/no-memory row,
+`gpt-5.4-mini-2026-03-17` medium/standard/default, v6/v11/runtime-v5,
+60 model/100 tool/1,200,000 token/1,800 seconds, output 25,000, reserve `$5.5125` and cap `$6`.
+Generic V11 remains mock/no-experiment only; only this exact purpose and OpenAI provider form the future
+exception.
+
+The offline result contract separates integrity from whether a natural rejection occurs. Zero rejection
+can leave the recovery check integrity-valid with `exercise_status=inconclusive` and
+`exercise_reason=rejection_not_observed`. If any rejection occurs, all observed
+`coverage-citation-error-v1` source and subsequent public recovery/refreshed-diff/clearing CAS bindings
+must verify; any failed sequence makes the readiness gate false. The gate does not require task success and
+always leaves comparison-denominator and memory-admission eligibility false. Live hard restart is outside
+this row and remains a separate follow-up fault exercise.
+
+This section records implementation artifacts, not a live result. The suite contains
+`live_cost_approved=false`, `approved_execution_hash=null` and `pilot_run_id=null`. No clean-host preflight,
+real-runtime persisted execution plan/hash, user invocation approval, provider request, live result or cost
+evidence is claimed here. The preflight unit test computes a synthetic execution hash and exercises the
+approval branch only under a fake environment and temporary root; it leaves no usable live capability.
+
+Final offline verification on 2026-08-02 produced:
+
+- D-072-focused matrix: 322 collected, 321 passed/1 environment-dependent skipped, 0 failed.
+- Repository-wide matrix: 1,022 collected, 1,015 passed/7 environment-dependent skipped, 0 failed.
+- Ruff, Python compileall and `git diff --check`: passed.
+- API/network/provider calls and model cost: 0; clean-host/persisted execution hash and user approval: none.
+
+The live-shaped tests use in-memory Responses doubles. D-070 remains immutable; SCRR, no-memory baseline,
+memory admission and core campaign remain closed.

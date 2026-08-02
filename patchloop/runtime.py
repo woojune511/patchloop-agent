@@ -82,6 +82,7 @@ def build_manifest(
     coverage_review_validation: bool = False,
     coverage_review_live_pilot: bool = False,
     coverage_rejection_validation: bool = False,
+    coverage_rejection_live_pilot: bool = False,
     public_review_contract: PublicReviewContract | None = None,
 ) -> RunManifest:
     validation_mode_count = sum(
@@ -95,6 +96,7 @@ def build_manifest(
             coverage_review_validation,
             coverage_review_live_pilot,
             coverage_rejection_validation,
+            coverage_rejection_live_pilot,
         )
     )
     if validation_mode_count > 1:
@@ -155,6 +157,16 @@ def build_manifest(
             "coverage-rejection validation v6/v11 cannot declare an experiment "
             "context"
         )
+    if coverage_rejection_live_pilot and (
+        provider != "openai"
+        or experiment_context is None
+        or experiment_context.purpose
+        != ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
+    ):
+        raise ContractError(
+            "coverage-rejection live pilot requires the OpenAI provider and the exact "
+            "memory-development coverage-rejection experiment purpose"
+        )
     if coverage_review_live_pilot and (
         provider != "openai"
         or experiment_context is None
@@ -194,6 +206,7 @@ def build_manifest(
         or coverage_review_validation
         or coverage_review_live_pilot
         or coverage_rejection_validation
+        or coverage_rejection_live_pilot
     ):
         from patchloop.agent.review import (
             validate_public_review_contract,
@@ -243,7 +256,7 @@ def build_manifest(
             "v1"
             if provider == "replay"
             else "v6"
-            if coverage_rejection_validation
+            if coverage_rejection_validation or coverage_rejection_live_pilot
             else "v5"
             if coverage_review_validation or coverage_review_live_pilot
             else "v4"
@@ -262,7 +275,7 @@ def build_manifest(
             "v1"
             if provider == "replay"
             else "phase-evidence-v11"
-            if coverage_rejection_validation
+            if coverage_rejection_validation or coverage_rejection_live_pilot
             else "phase-evidence-v10"
             if coverage_review_validation or coverage_review_live_pilot
             else "phase-evidence-v9"
