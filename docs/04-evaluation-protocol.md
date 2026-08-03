@@ -1514,5 +1514,26 @@ Portable/correction paths는
 (`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`)와
 `reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
 (`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`)이고 final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다. Passed pilot은
-12-run 실행 승인이 아니다. 다음 protocol gate는 `$20 → $88` cap decision, 새 campaign source commit,
-fresh preflight/execution hash와 별도 비용 승인이다.
+12-run 실행 승인이 아니다. D-086 시점의 다음 protocol 후보는 `$20 → $88` cap decision이었지만,
+D-087의 `$25` accrued-spend protocol이 이 forward choice를 supersede한다.
+
+### D-087 no-memory campaign cost protocol
+
+새 12-run no-memory source는 performance 결과가 아니라 collection authority의 비용 경계다. Per-run resource는
+모든 future memory condition과 비교 가능한 D-083/D-084 tuple을 유지한다. Campaign cap `$25`는 D-081 r3의
+public process usage에서 사전 선택했고 hidden task outcome을 사용하지 않았다.
+
+다음 run admission은 `accrued_list_price_cost + full_next_run_reserve <= hard_cap`이다. Terminal outcome이
+task failure나 agent failure여도 발생한 usage는 누적한다. Usage가 없거나 invalid하면 reserve를 held 상태로
+남기고 fail closed한다. Cost stop으로 시작하지 못한 row가 하나라도 있으면 12-run completion/readiness gate는
+false이며 headline baseline, paired comparison과 memory admission 입력으로 사용할 수 없다.
+
+각 admitted row는 journal의 `RunCostReserved`가 fsync된 뒤 exact one-use paid-boundary capability를 발급받고,
+StateStore에서 atomic consume된 뒤에만 provider를 호출한다. 다음 row admission 전에 이전 row의 persisted
+qualification, source evidence와 result bytes/hash를 다시 읽고 provider token counters를 fixed nano-USD 가격으로
+재산출해 journal settlement와 exact 비교한다. 이 replay가 실패하거나 SQLite consumed set과 journal이 다르면
+campaign을 fail closed한다. Live resume은 request-level billing ambiguity 때문에 지원하지 않는다.
+
+Source gate 뒤의 live sequence는 반드시 clean commit -> fresh no-call preflight -> candidate execution hash ->
+exact hash와 max `$25` 별도 승인 -> one campaign invocation -> immutable result seal 순서다. Source artifact와
+preflight는 SCRR, success rate 또는 memory effect evidence가 아니다.

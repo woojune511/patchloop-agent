@@ -12,7 +12,34 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-086 D-085 measured-result and append-only budget-pressure correction sealed; no baseline or
+- 현재 milestone은 `D-087 exact 12-run no-memory campaign-local list-price-accrual cap source/offline gate
+  complete; $25 hard cap and full-next-run reservation bound; no clean preflight, approval, provider execution,
+  baseline, memory admission/index, or core authority`다. 새 exact source는
+  `experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml`이며 historical
+  `dev-no-memory-v5-20260730-r1`/`$20` template은 byte-immutable `superseded-unexecuted`로 보존한다.
+  D-081 r3의 public process cost만으로 12-run mean projection `$5.38278975`, max-run envelope
+  `$14.36724`, envelope + full next-run reserve `$21.67974`를 계산해 `$5` 단위로 올린 campaign-local
+  hard cap `$25`를 선택했다. Per-run token ceiling은 D-083/D-084의 1,600,000과 worst-rate reserve
+  `$7.3125`를 유지하며 12-run theoretical upper bound `$87.75`도 그대로 공개한다. 다음 row는
+  `accrued list-price cost + $7.3125 <= $25`일 때만 시작하고 equality는 허용한다. Reservation은
+  nano-USD로 runner/provider boundary 전에 append-only journal에 fsync하고 terminal usage의 token count로
+  settle한다. 각 row는 exact plan/journal/run/policy에 묶인 one-use capability를 받아 SQLite에서
+  `BEGIN IMMEDIATE`로 먼저 소비된 뒤에만 provider 경계를 넘는다. 다음 row 전에는 prior terminal의
+  qualification/source/result hash를 durable storage에서 다시 읽고 fixed nano-USD rate로 재계산한다.
+  Preserved SQLite anchor 아래 marker 삭제, journal reset, alternate runner root와 rehashed lower settlement는
+  모두 거부한다. Reserve가 부족하면 current/remaining row를 `not_started`로 남기며 completion gate는 false다.
+  Exact D-087 cost-policy hash는 suite/execution plan/hash, `RunManifest`, start paid boundary와
+  post-run `campaign_spend_cap_contract`에 결속된다. Campaign live resume은 plan을 재구성하기 전에
+  experiment ID 수준에서 fail closed하며 request-level billing ledger가 생길 때까지 열지 않는다. Source artifact는
+  `reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json`이고 SHA는
+  `sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`다. Final offline verification은
+  focused 68/68, repository-wide 1,472 collected 중 1,465 passed/7 skipped이며 provider call/cost는 0/$0다.
+  이 source는 12/12 completion을 보장하지 않고 invoice/free-tier/project-wide cap도 주장하지 않는다.
+  외부/request-level billing ledger는 아직 없으므로 전체 local DB와 journal을 함께 rollback하는 공격까지
+  막는다고 주장하지 않으며 exact D-087 live resume을 닫아 둔다.
+  Clean no-call preflight와 새 candidate hash, 최대 `$25`의 별도 사용자 승인 전에는 provider를 호출하지
+  않으며 no-memory baseline, comparison denominator, memory review/index와 core는 계속 닫혀 있다.
+- Historical D-086 milestone은 `D-085 measured-result and append-only budget-pressure correction sealed; no baseline or
   campaign authority`다. Exact approved execution hash
   `sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0`는 clean D-085 source commit
   `629b9fdd9f69d1522cf565a06ae9679abe3f60a7`에서 정확히 한 번 소비됐다. Babel run
@@ -33,8 +60,8 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   (`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`)이다. D-085 ID는 local result/journal 유무와 무관하게 hard-consumed다.
   Final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다. 이 single-row result는 workflow readiness와 한 task
   success만 증명하며 no-memory baseline, comparison denominator, memory admission/index, core와
-  `analysis_ready`는 열지 않는다. 다음 gate는 12-run cap을 `$20 → $88`로 바꿀지 별도로 결정하고 새 campaign
-  source commit·fresh preflight·execution hash·비용 승인을 준비하는 것이다.
+  `analysis_ready`는 열지 않는다. D-086 시점의 다음 후보는 12-run cap을 `$20 → $88`로 바꾸는 별도
+  decision이었지만, 이 forward choice는 현재 D-087의 `$25` accrued-spend source가 supersede했다.
 - Historical D-085 source milestone은 `exact condition-neutral comparison pilot source/offline gate complete; no clean preflight,
   approval or provider execution`이다. Exact pilot ID는
   `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`이고 frozen Babel development-validation task를

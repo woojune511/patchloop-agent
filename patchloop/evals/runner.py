@@ -7,7 +7,9 @@ import json
 import os
 import random
 import subprocess
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from decimal import ROUND_CEILING, Decimal, InvalidOperation
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Literal
@@ -30,7 +32,11 @@ from patchloop.agent.model import (
     SYSTEM_PROMPT_V8,
 )
 from patchloop.agent.review import load_public_review_contract
-from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
+from patchloop.agent.runner import (
+    AgentRunner,
+    issue_campaign_cost_reservation_authorization,
+    issue_live_execution_authorization,
+)
 from patchloop.agent.tools import (
     TOOL_SCHEMAS_V2,
     TOOL_SCHEMAS_V4,
@@ -38,6 +44,7 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS_V6,
 )
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Budget,
     DatasetRole,
@@ -47,13 +54,19 @@ from patchloop.contracts import (
     MemoryCondition,
     PublicReviewContract,
     RunManifest,
+    RunResult,
     TaskPackage,
+    Usage,
 )
 from patchloop.dataset import require_dataset_role, require_frozen_dataset
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.evals.budget import calculate_budget_pressure
 from patchloop.memory.store import latest_frozen_index
-from patchloop.runtime import build_manifest, repository_root, runtime_root
+from patchloop.runtime import (
+    build_manifest,
+    repository_root,
+    runtime_root,
+)
 from patchloop.sandbox import DockerSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, ensure_within, sha256_bytes, sha256_text, utc_now
@@ -92,7 +105,10 @@ CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS = frozenset(
     }
 )
 SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS = frozenset(
-    {"dev-validation-gpt54mini-token-tail-v5-20260730-r1"}
+    {
+        "dev-validation-gpt54mini-token-tail-v5-20260730-r1",
+        "dev-no-memory-v5-20260730-r1",
+    }
 )
 CONSUMED_COMPLETION_PANEL_EXPERIMENT_IDS = frozenset(
     {"dev-validation-gpt54mini-completion-v6-20260731-r1"}
@@ -393,6 +409,46 @@ CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_ID = (
 CONDITION_NEUTRAL_COMPARISON_CAMPAIGN_EXPERIMENT_ID = (
     "dev-no-memory-v5-20260730-r1"
 )
+CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY_SCHEMA = (
+    "campaign-list-price-accrual-cap-v1"
+)
+CONDITION_NEUTRAL_COMPARISON_COST_CONTROL_SCHEMA = (
+    "campaign-cost-control-evidence-v1"
+)
+CONDITION_NEUTRAL_COMPARISON_USAGE_EVIDENCE_SCHEMA = (
+    "campaign-cost-durable-usage-evidence-v1"
+)
+D087_FIXED_PRICING_SCHEMA = "d087-fixed-standard-list-price-v1"
+D087_PRICE_NANOS_PER_TOKEN = {
+    "uncached_input": 750,
+    "cached_input": 75,
+    "cache_write_input": 750,
+    "output": 4_500,
+}
+CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY = {
+    "schema_version": CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY_SCHEMA,
+    "accounting_scope": "campaign-local",
+    "accounting_basis": "usage-derived-standard-list-price",
+    "calibration_source_experiment_id": (
+        "generic-baseline-readiness-v2v5-20260803-r3"
+    ),
+    "calibration_source_report_hash": (
+        "sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2"
+    ),
+    "calibration_run_count": 4,
+    "scheduled_run_count": 12,
+    "expected_cost_usd": 5.38278975,
+    "empirical_envelope_usd": 14.36724,
+    "per_run_reserve_usd": 7.3125,
+    "cap_basis_usd": 21.67974,
+    "cap_rounding_increment_usd": 5.0,
+    "cap_usd": 25.0,
+    "schedule_worst_rate_upper_bound_usd": 87.75,
+    "next_row_admission": "accrued_plus_full_reserve_lte_cap",
+    "insufficient_reserve_action": "mark_remaining_rows_not_started",
+    "live_resume_policy": "disabled",
+}
+USD_NANOS = 1_000_000_000
 CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA = (
     "condition-neutral-comparison-pilot-admission-v1"
 )
@@ -747,6 +803,300 @@ def _experiment_runtime_contract(
     )
 
 
+def _is_accrued_spend_cap_suite(suite: ExperimentSuite) -> bool:
+    return bool(
+        suite.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+        and suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+        and suite.campaign_cost_policy is not None
+        and suite.campaign_cost_policy.model_dump(mode="json")
+        == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY
+    )
+
+
+def _usd_to_nanos(value: Any) -> int:
+    """Convert a non-negative USD amount to conservative integer nano-USD."""
+
+    if isinstance(value, bool):
+        raise ContractError("USD amount must be numeric, not boolean")
+    try:
+        amount = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError) as exc:
+        raise ContractError("USD amount must be a finite decimal") from exc
+    if not amount.is_finite() or amount < 0:
+        raise ContractError("USD amount must be finite and non-negative")
+    return int(
+        (amount * USD_NANOS).to_integral_value(rounding=ROUND_CEILING)
+    )
+
+
+def _nanos_to_usd(value: int) -> float:
+    if type(value) is not int or value < 0:
+        raise ContractError("nano-USD amount must be a non-negative integer")
+    return float(Decimal(value) / Decimal(USD_NANOS))
+
+
+def _d087_usage_payload(usage: Usage) -> dict[str, Any]:
+    payload = usage.model_dump(mode="json")
+    payload.pop("model_cost_usd", None)
+    return payload
+
+
+def _d087_fixed_cost_nanos(usage: Usage) -> int:
+    """Reprice D-087 tokens with exact integer nano-USD arithmetic."""
+
+    cached_tokens = usage.cached_input_tokens
+    cache_write_tokens = usage.cache_write_input_tokens
+    uncached_tokens = usage.input_tokens - cached_tokens - cache_write_tokens
+    if uncached_tokens < 0:
+        raise ContractError("D-087 usage has an invalid input-token breakdown")
+    return (
+        uncached_tokens * D087_PRICE_NANOS_PER_TOKEN["uncached_input"]
+        + cached_tokens * D087_PRICE_NANOS_PER_TOKEN["cached_input"]
+        + cache_write_tokens
+        * D087_PRICE_NANOS_PER_TOKEN["cache_write_input"]
+        + usage.output_tokens * D087_PRICE_NANOS_PER_TOKEN["output"]
+    )
+
+
+def _d087_usage_evidence(
+    usage: Usage,
+    *,
+    run_id: str,
+    schedule_row_id: str,
+    qualification_hash: str,
+    source_evidence_hash: str,
+    persisted_result_hash: str,
+) -> dict[str, Any]:
+    """Build the self-contained descriptor later checked against durable state."""
+
+    descriptor = {
+        "schema_version": CONDITION_NEUTRAL_COMPARISON_USAGE_EVIDENCE_SCHEMA,
+        "run_id": run_id,
+        "schedule_row_id": schedule_row_id,
+        "model_id": GPT54_MINI_PILOT_MODEL_ID,
+        "pricing_schema": D087_FIXED_PRICING_SCHEMA,
+        "price_nanos_per_token": dict(D087_PRICE_NANOS_PER_TOKEN),
+        "usage": _d087_usage_payload(usage),
+        "token_derived_cost_nanos": _d087_fixed_cost_nanos(usage),
+        "qualification_hash": qualification_hash,
+        "source_evidence_hash": source_evidence_hash,
+        "persisted_result_hash": persisted_result_hash,
+    }
+    return {
+        "descriptor": descriptor,
+        "content_hash": sha256_text(canonical_json(descriptor)),
+    }
+
+
+def _validate_d087_usage_evidence(
+    evidence: Any,
+    *,
+    run_id: str,
+    schedule_row_id: str,
+) -> int:
+    if not isinstance(evidence, dict) or set(evidence) != {
+        "descriptor",
+        "content_hash",
+    }:
+        raise ContractError("invalid D-087 durable usage evidence envelope")
+    descriptor = evidence.get("descriptor")
+    content_hash = evidence.get("content_hash")
+    expected_keys = {
+        "schema_version",
+        "run_id",
+        "schedule_row_id",
+        "model_id",
+        "pricing_schema",
+        "price_nanos_per_token",
+        "usage",
+        "token_derived_cost_nanos",
+        "qualification_hash",
+        "source_evidence_hash",
+        "persisted_result_hash",
+    }
+    if not (
+        isinstance(descriptor, dict)
+        and set(descriptor) == expected_keys
+        and descriptor.get("schema_version")
+        == CONDITION_NEUTRAL_COMPARISON_USAGE_EVIDENCE_SCHEMA
+        and descriptor.get("run_id") == run_id
+        and descriptor.get("schedule_row_id") == schedule_row_id
+        and descriptor.get("model_id") == GPT54_MINI_PILOT_MODEL_ID
+        and descriptor.get("pricing_schema") == D087_FIXED_PRICING_SCHEMA
+        and descriptor.get("price_nanos_per_token")
+        == D087_PRICE_NANOS_PER_TOKEN
+        and _is_sha256_identity(content_hash)
+        and sha256_text(canonical_json(descriptor)) == content_hash
+        and _is_sha256_identity(descriptor.get("qualification_hash"))
+        and _is_sha256_identity(descriptor.get("source_evidence_hash"))
+        and _is_sha256_identity(descriptor.get("persisted_result_hash"))
+    ):
+        raise ContractError("invalid D-087 durable usage evidence descriptor")
+    usage_payload = descriptor.get("usage")
+    if not isinstance(usage_payload, dict):
+        raise ContractError("D-087 durable usage evidence has no usage counters")
+    try:
+        usage = Usage.model_validate({**usage_payload, "model_cost_usd": 0.0})
+    except (TypeError, ValueError) as exc:
+        raise ContractError("invalid D-087 durable usage counters") from exc
+    if _d087_usage_payload(usage) != usage_payload:
+        raise ContractError("non-canonical D-087 durable usage counters")
+    recomputed_cost_nanos = _d087_fixed_cost_nanos(usage)
+    if descriptor.get("token_derived_cost_nanos") != recomputed_cost_nanos:
+        raise ContractError("D-087 durable usage cost does not match fixed pricing")
+    return recomputed_cost_nanos
+
+
+def _raw_qualification_check_passed(
+    qualification: dict[str, Any],
+    check_id: str,
+) -> bool:
+    checks = qualification.get("checks")
+    matches = [
+        check
+        for check in checks
+        if isinstance(check, dict) and check.get("check_id") == check_id
+    ] if isinstance(checks, list) else []
+    return bool(len(matches) == 1 and matches[0].get("passed") is True)
+
+
+def _load_d087_durable_usage_evidence(
+    run_id: str,
+    schedule_row_id: str,
+    run_root: Path,
+) -> dict[str, Any]:
+    """Reload D-087 token counters from hash-checked durable run evidence."""
+
+    from patchloop.evals.qualification import (
+        calculate_source_evidence_hash,
+        load_trace_qualification,
+    )
+
+    qualification = load_trace_qualification(run_id, root=run_root)
+    if not (
+        qualification.get("experiment_id")
+        == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+        and qualification.get("schedule_row_id") == schedule_row_id
+        and _raw_qualification_check_passed(
+            qualification,
+            "usage_reconciliation",
+        )
+        and _raw_qualification_check_passed(
+            qualification,
+            "persisted_result",
+        )
+    ):
+        raise ContractError("D-087 durable usage qualification is not admissible")
+    source_evidence_hash = calculate_source_evidence_hash(
+        run_id,
+        root=run_root,
+    )
+    if qualification.get("source_evidence_hash") != source_evidence_hash:
+        raise ContractError("D-087 durable source evidence changed after qualification")
+    result_path = run_root / "artifacts" / "runs" / run_id / "result.json"
+    try:
+        result_bytes = result_path.read_bytes()
+        result = RunResult.model_validate_json(result_bytes)
+    except (OSError, ValueError) as exc:
+        raise ContractError("D-087 durable result evidence is unavailable") from exc
+    if result.run_id != run_id:
+        raise ContractError("D-087 durable result run identity mismatch")
+    qualification_hash = qualification.get("qualification_hash")
+    if not _is_sha256_identity(qualification_hash):
+        raise ContractError("D-087 durable qualification has no content hash")
+    evidence = _d087_usage_evidence(
+        result.usage,
+        run_id=run_id,
+        schedule_row_id=schedule_row_id,
+        qualification_hash=qualification_hash,
+        source_evidence_hash=source_evidence_hash,
+        persisted_result_hash=sha256_bytes(result_bytes),
+    )
+    _validate_d087_usage_evidence(
+        evidence,
+        run_id=run_id,
+        schedule_row_id=schedule_row_id,
+    )
+    return evidence
+
+
+def _is_sha256_identity(value: Any) -> bool:
+    if not isinstance(value, str) or not value.startswith("sha256:"):
+        return False
+    digest = value.removeprefix("sha256:")
+    return len(digest) == 64 and all(character in "0123456789abcdef" for character in digest)
+
+
+def _campaign_cost_control(
+    suite: ExperimentSuite,
+    pricing: dict[str, Any],
+    *,
+    schedule_size: int,
+) -> dict[str, Any] | None:
+    """Bind D-087's rolling reserve separately from its 12-run upper bound."""
+
+    if not _is_accrued_spend_cap_suite(suite):
+        return None
+    assert suite.campaign_cost_policy is not None
+    policy = suite.campaign_cost_policy.model_dump(mode="json")
+    if not (
+        schedule_size == policy["scheduled_run_count"]
+        and suite.estimated_cost_usd == policy["expected_cost_usd"]
+        and suite.cost_limit_usd == policy["cap_usd"]
+        and pricing.get("per_run_cost_reserve_usd")
+        == policy["per_run_reserve_usd"]
+        and pricing.get("budget_upper_bound_usd")
+        == policy["schedule_worst_rate_upper_bound_usd"]
+    ):
+        raise ContractError("D-087 campaign cost policy does not match derived pricing")
+    descriptor = {
+        "schema_version": CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY_SCHEMA,
+        "policy": policy,
+        "schedule_size": schedule_size,
+        "hard_cap_nanos": _usd_to_nanos(policy["cap_usd"]),
+        "per_run_reserve_nanos": _usd_to_nanos(
+            policy["per_run_reserve_usd"]
+        ),
+        "schedule_upper_bound_nanos": _usd_to_nanos(
+            policy["schedule_worst_rate_upper_bound_usd"]
+        ),
+        "full_schedule_reserved": False,
+        "schedule_completion_guaranteed": False,
+        "invoice_or_free_tier_claim": False,
+    }
+    return {
+        "schema_version": CONDITION_NEUTRAL_COMPARISON_COST_CONTROL_SCHEMA,
+        "descriptor": descriptor,
+        "content_hash": sha256_text(canonical_json(descriptor)),
+    }
+
+
+def _campaign_cost_control_matches(
+    suite: ExperimentSuite,
+    cost_control: Any,
+    pricing: Any,
+    *,
+    schedule_size: int,
+) -> bool:
+    # Historical plans intentionally have neither pricing nor a campaign cost
+    # control.  Preserve those immutable identities; only the exact D-087
+    # successor requires the new paired evidence.
+    if not _is_accrued_spend_cap_suite(suite):
+        return cost_control is None
+    if not isinstance(pricing, dict):
+        return False
+    try:
+        expected = _campaign_cost_control(
+            suite,
+            pricing,
+            schedule_size=schedule_size,
+        )
+    except ContractError:
+        return False
+    return canonical_json(cost_control) == canonical_json(expected)
+
+
 def _pricing_contract(
     suite: ExperimentSuite,
     *,
@@ -792,6 +1142,16 @@ def _pricing_contract(
         "per_run_cost_reserve_usd": per_run_cost_reserve,
         "budget_upper_bound_usd": budget_upper_bound,
     }
+    if _is_accrued_spend_cap_suite(suite):
+        payload["cost_admission"] = {
+            "schema_version": (
+                CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY_SCHEMA
+            ),
+            "mode": "accrued-plus-full-next-run-reserve",
+            "hard_cap_usd": suite.cost_limit_usd,
+            "full_schedule_reserved": False,
+            "schedule_completion_guaranteed": False,
+        }
     if _has_hash_bound_runtime(suite):
         payload["start_time_verification"] = _pricing_freshness_evidence(
             suite,
@@ -896,7 +1256,11 @@ def _pricing_contract_matches(
         and _pricing_freshness_passed(verification)
         and suite.estimated_cost_usd > 0
         and suite.estimated_cost_usd <= suite.cost_limit_usd
-        and expected["budget_upper_bound_usd"] <= suite.cost_limit_usd
+        and (
+            expected["per_run_cost_reserve_usd"] <= suite.cost_limit_usd
+            if _is_accrued_spend_cap_suite(suite)
+            else expected["budget_upper_bound_usd"] <= suite.cost_limit_usd
+        )
     )
 
 
@@ -938,6 +1302,32 @@ class ExperimentDiagnostic(BaseModel):
         return self
 
 
+class CampaignCostPolicy(BaseModel):
+    """Exact D-087 campaign-local list-price accounting policy."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    schema_version: Literal["campaign-list-price-accrual-cap-v1"]
+    accounting_scope: Literal["campaign-local"]
+    accounting_basis: Literal["usage-derived-standard-list-price"]
+    calibration_source_experiment_id: str
+    calibration_source_report_hash: str = Field(
+        pattern=r"^sha256:[0-9a-f]{64}$"
+    )
+    calibration_run_count: int = Field(gt=0)
+    scheduled_run_count: int = Field(gt=0)
+    expected_cost_usd: float = Field(gt=0)
+    empirical_envelope_usd: float = Field(gt=0)
+    per_run_reserve_usd: float = Field(gt=0)
+    cap_basis_usd: float = Field(gt=0)
+    cap_rounding_increment_usd: float = Field(gt=0)
+    cap_usd: float = Field(gt=0)
+    schedule_worst_rate_upper_bound_usd: float = Field(gt=0)
+    next_row_admission: Literal["accrued_plus_full_reserve_lte_cap"]
+    insufficient_reserve_action: Literal["mark_remaining_rows_not_started"]
+    live_resume_policy: Literal["disabled"]
+
+
 class ExperimentSuite(BaseModel):
     """Human-authored, immutable campaign configuration.
 
@@ -976,6 +1366,10 @@ class ExperimentSuite(BaseModel):
         pattern=r"^run_[a-zA-Z0-9_-]+$",
     )
     diagnostic: ExperimentDiagnostic | None = None
+    campaign_cost_policy: CampaignCostPolicy | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     estimated_cost_usd: float = Field(default=0, ge=0)
     cost_limit_usd: float = Field(default=150, ge=0)
     pricing_verified_at: datetime | None = None
@@ -1084,6 +1478,41 @@ class ExperimentSuite(BaseModel):
             raise ValueError(
                 "the D-085 condition-neutral pilot experiment id requires the "
                 "development-validation-live-pilot purpose"
+            )
+        accrued_cap_source = bool(
+            self.experiment_id
+            == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+        )
+        if accrued_cap_source:
+            if self.purpose != ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
+                raise ValueError(
+                    "the D-087 accrued-cap id requires the memory-development "
+                    "no-memory purpose"
+                )
+            if self.campaign_cost_policy is None or (
+                self.campaign_cost_policy.model_dump(mode="json")
+                != CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY
+            ):
+                raise ValueError(
+                    "the D-087 accrued-cap source requires its exact campaign cost policy"
+                )
+            if (
+                self.pilot_run_id != "run_c355405d826641b9"
+                or self.live_cost_approved is not False
+                or self.approved_execution_hash is not None
+                or self.diagnostic is not None
+                or self.estimated_cost_usd
+                != CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY[
+                    "expected_cost_usd"
+                ]
+            ):
+                raise ValueError(
+                    "the D-087 accrued-cap source requires the sealed D-086 pilot, "
+                    "the exact usage-derived estimate, and no embedded approval"
+                )
+        elif self.campaign_cost_policy is not None:
+            raise ValueError(
+                "campaign_cost_policy is reserved for the exact D-087 successor"
             )
         future_comparison_profile = _is_frozen_comparison_runtime_profile(
             self,
@@ -1384,7 +1813,11 @@ class ExperimentSuite(BaseModel):
                     "development tasks, no_memory, and two repetitions"
                 )
             self._require_live_defaults(
-                cost_limit=20,
+                cost_limit=(
+                    CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_POLICY["cap_usd"]
+                    if accrued_cap_source
+                    else 20
+                ),
                 budget=(
                     GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET
                     if self.experiment_id in CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
@@ -1663,6 +2096,318 @@ def _append_campaign_event(
     return str(event["event_hash"])
 
 
+def _campaign_cost_journal_evidence(
+    path: Path,
+    cost_control: dict[str, Any],
+    *,
+    run_root: Path,
+    durable_usage_resolver: Callable[
+        [str, str, Path], dict[str, Any]
+    ] | None = None,
+) -> dict[str, Any]:
+    """Reconcile the durable D-087 reserve ledger before sealing a result."""
+
+    descriptor = cost_control.get("descriptor")
+    policy_hash = cost_control.get("content_hash")
+    if not (
+        cost_control.get("schema_version")
+        == CONDITION_NEUTRAL_COMPARISON_COST_CONTROL_SCHEMA
+        and isinstance(descriptor, dict)
+        and isinstance(policy_hash, str)
+        and sha256_text(canonical_json(descriptor)) == policy_hash
+    ):
+        raise ContractError("invalid campaign cost control evidence")
+    cap_nanos = descriptor.get("hard_cap_nanos")
+    reserve_nanos = descriptor.get("per_run_reserve_nanos")
+    if (
+        type(cap_nanos) is not int
+        or cap_nanos <= 0
+        or type(reserve_nanos) is not int
+        or reserve_nanos <= 0
+    ):
+        raise ContractError("invalid campaign cost control nano-USD values")
+    try:
+        events = [
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ContractError("invalid campaign cost journal") from exc
+    previous_hash: str | None = None
+    accrued_nanos = 0
+    held_nanos = 0
+    maximum_committed_nanos = 0
+    active_row_id: str | None = None
+    active_run_id: str | None = None
+    active_usage_evidence: dict[str, Any] | None = None
+    active_usage_evidence_hash: str | None = None
+    active_usage_reconciliation_passed: bool | None = None
+    active_stage = "idle"
+    reserved_rows: set[str] = set()
+    settled_rows: set[str] = set()
+    unavailable_count = 0
+    unavailable_row_id: str | None = None
+    spend_halted = False
+    campaign_started = False
+    for sequence, event in enumerate(events, start=1):
+        if not isinstance(event, dict):
+            raise ContractError("campaign cost journal event must be an object")
+        recorded_hash = event.get("event_hash")
+        body = {key: value for key, value in event.items() if key != "event_hash"}
+        if not (
+            event.get("schema_version") == "experiment-journal-event-v1"
+            and event.get("sequence") == sequence
+            and event.get("previous_event_hash") == previous_hash
+            and isinstance(event.get("recorded_at"), str)
+            and isinstance(recorded_hash, str)
+            and sha256_text(canonical_json(body)) == recorded_hash
+        ):
+            raise ContractError("campaign cost journal hash chain mismatch")
+        previous_hash = recorded_hash
+        event_type = event.get("event_type")
+        payload = event.get("payload")
+        if event_type == "CampaignStarted":
+            if not (
+                sequence == 1
+                and not campaign_started
+                and isinstance(payload, dict)
+                and payload.get("campaign_cost_control_hash") == policy_hash
+            ):
+                raise ContractError("invalid campaign cost journal start")
+            campaign_started = True
+            continue
+        if not campaign_started:
+            raise ContractError("campaign cost journal is missing its start event")
+        if event_type == "RunStarted":
+            run_id = payload.get("run_id") if isinstance(payload, dict) else None
+            if not (
+                active_stage == "reserved"
+                and isinstance(payload, dict)
+                and payload.get("schedule_row_id") == active_row_id
+                and run_id == active_run_id
+            ):
+                raise ContractError("invalid campaign cost run start ordering")
+            active_stage = "started"
+            continue
+        if event_type == "RunTerminal":
+            run_id = payload.get("run_id") if isinstance(payload, dict) else None
+            usage_evidence = (
+                payload.get("usage_evidence")
+                if isinstance(payload, dict)
+                else None
+            )
+            usage_evidence_hash = (
+                payload.get("usage_evidence_hash")
+                if isinstance(payload, dict)
+                else None
+            )
+            usage_reconciliation_passed = (
+                payload.get("usage_reconciliation_passed")
+                if isinstance(payload, dict)
+                else None
+            )
+            if not (
+                active_stage == "started"
+                and isinstance(payload, dict)
+                and payload.get("schedule_row_id") == active_row_id
+                and run_id == active_run_id
+                and type(usage_reconciliation_passed) is bool
+                and (
+                    (
+                        usage_evidence is None
+                        and usage_evidence_hash is None
+                    )
+                    or (
+                        isinstance(usage_evidence, dict)
+                        and _is_sha256_identity(usage_evidence_hash)
+                        and usage_evidence.get("content_hash")
+                        == usage_evidence_hash
+                    )
+                )
+            ):
+                raise ContractError("invalid campaign cost run terminal ordering")
+            if isinstance(usage_evidence, dict):
+                try:
+                    _validate_d087_usage_evidence(
+                        usage_evidence,
+                        run_id=run_id,
+                        schedule_row_id=active_row_id or "",
+                    )
+                except ContractError as exc:
+                    raise ContractError(
+                        "invalid campaign cost run terminal usage evidence"
+                    ) from exc
+            active_usage_evidence = usage_evidence
+            active_usage_evidence_hash = usage_evidence_hash
+            active_usage_reconciliation_passed = usage_reconciliation_passed
+            active_stage = "terminal"
+            continue
+        if event_type == "RunNotStarted":
+            if (
+                unavailable_row_id is not None
+                and (
+                    not isinstance(payload, dict)
+                    or payload.get("schedule_row_id") != unavailable_row_id
+                    or payload.get("reason_type") != "CostReserveUnavailable"
+                )
+            ):
+                raise ContractError("invalid unavailable-reserve stop ordering")
+            unavailable_row_id = None
+            continue
+        if event_type not in {
+            "RunCostReserved",
+            "RunCostSettled",
+            "CostReserveUnavailable",
+        }:
+            continue
+        if not isinstance(payload, dict):
+            raise ContractError("campaign cost journal payload must be an object")
+        row_id = payload.get("schedule_row_id")
+        common_valid = bool(
+            isinstance(row_id, str)
+            and payload.get("campaign_cost_control_hash") == policy_hash
+            and payload.get("cap_nanos") == cap_nanos
+            and payload.get("reserve_nanos") == reserve_nanos
+        )
+        if not common_valid:
+            raise ContractError("campaign cost journal policy binding mismatch")
+        if event_type == "RunCostReserved":
+            reserved_run_id = payload.get("run_id")
+            if (
+                active_stage != "idle"
+                or spend_halted
+                or active_row_id is not None
+                or row_id in reserved_rows
+                or not isinstance(reserved_run_id, str)
+                or not reserved_run_id
+                or payload.get("accrued_cost_nanos_before") != accrued_nanos
+                or payload.get("held_reserve_nanos_after") != reserve_nanos
+                or accrued_nanos + reserve_nanos > cap_nanos
+            ):
+                raise ContractError("invalid or duplicate campaign cost reservation")
+            active_row_id = row_id
+            active_run_id = reserved_run_id
+            held_nanos = reserve_nanos
+            reserved_rows.add(row_id)
+            active_stage = "reserved"
+        elif event_type == "RunCostSettled":
+            run_cost_nanos = payload.get("actual_run_cost_nanos")
+            usage_evidence_hash = payload.get("usage_evidence_hash")
+            expected_durable_evidence: dict[str, Any] | None = None
+            independently_recomputed_cost_nanos: int | None = None
+            if (
+                active_stage == "terminal"
+                and isinstance(active_run_id, str)
+                and isinstance(active_row_id, str)
+                and isinstance(active_usage_evidence, dict)
+            ):
+                resolver = (
+                    durable_usage_resolver
+                    or _load_d087_durable_usage_evidence
+                )
+                try:
+                    expected_durable_evidence = resolver(
+                        active_run_id,
+                        active_row_id,
+                        run_root,
+                    )
+                    independently_recomputed_cost_nanos = (
+                        _validate_d087_usage_evidence(
+                            expected_durable_evidence,
+                            run_id=active_run_id,
+                            schedule_row_id=active_row_id,
+                        )
+                    )
+                except (ContractError, OSError, TypeError, ValueError) as exc:
+                    raise ContractError(
+                        "D-087 durable usage evidence could not be revalidated"
+                    ) from exc
+            if (
+                active_stage != "terminal"
+                or active_row_id != row_id
+                or payload.get("run_id") != active_run_id
+                or row_id in settled_rows
+                or not isinstance(active_usage_evidence, dict)
+                or canonical_json(active_usage_evidence)
+                != canonical_json(expected_durable_evidence)
+                or _validate_d087_usage_evidence(
+                    active_usage_evidence,
+                    run_id=active_run_id or "",
+                    schedule_row_id=active_row_id or "",
+                )
+                != independently_recomputed_cost_nanos
+                or not _is_sha256_identity(usage_evidence_hash)
+                or usage_evidence_hash != active_usage_evidence_hash
+                or active_usage_reconciliation_passed is not True
+                or payload.get("usage_reconciliation_passed")
+                != active_usage_reconciliation_passed
+                or type(run_cost_nanos) is not int
+                or run_cost_nanos != independently_recomputed_cost_nanos
+                or run_cost_nanos < 0
+                or run_cost_nanos > reserve_nanos
+                or payload.get("accrued_cost_nanos_before") != accrued_nanos
+                or payload.get("accrued_cost_nanos_after")
+                != accrued_nanos + run_cost_nanos
+                or payload.get("held_reserve_nanos_after") != 0
+            ):
+                raise ContractError("invalid campaign cost settlement")
+            accrued_nanos += run_cost_nanos
+            held_nanos = 0
+            active_row_id = None
+            active_run_id = None
+            active_usage_evidence = None
+            active_usage_evidence_hash = None
+            active_usage_reconciliation_passed = None
+            active_stage = "idle"
+            settled_rows.add(row_id)
+        else:
+            if (
+                active_stage != "idle"
+                or spend_halted
+                or active_row_id is not None
+                or row_id in reserved_rows
+                or payload.get("accrued_cost_nanos") != accrued_nanos
+                or payload.get("held_reserve_nanos") != held_nanos
+                or accrued_nanos + held_nanos + reserve_nanos <= cap_nanos
+            ):
+                raise ContractError("invalid unavailable-reserve evidence")
+            unavailable_count += 1
+            unavailable_row_id = row_id
+            spend_halted = True
+        maximum_committed_nanos = max(
+            maximum_committed_nanos,
+            accrued_nanos + held_nanos,
+        )
+    if not campaign_started:
+        raise ContractError("campaign cost journal is missing its start event")
+    if unavailable_row_id is not None:
+        raise ContractError("unavailable reserve is missing its not-started row")
+    if active_stage not in {"idle", "terminal"}:
+        raise ContractError("campaign cost journal ends mid-run")
+    if accrued_nanos + held_nanos > cap_nanos:
+        raise ContractError("campaign cost journal exceeds the hard cap")
+    return {
+        "schema_version": "campaign-cost-qualification-v1",
+        "passed": True,
+        "fully_settled": active_stage == "idle",
+        "campaign_cost_control_hash": policy_hash,
+        "cap_nanos": cap_nanos,
+        "accrued_cost_nanos": accrued_nanos,
+        "held_reserve_nanos": held_nanos,
+        "maximum_committed_nanos": maximum_committed_nanos,
+        "reserved_runs": len(reserved_rows),
+        "settled_runs": len(settled_rows),
+        "reserve_unavailable_events": unavailable_count,
+        "active_schedule_row_id": active_row_id,
+        "active_run_id": active_run_id,
+        "active_usage_reconciliation_passed": (
+            active_usage_reconciliation_passed
+        ),
+        "live_resume_supported": False,
+    }
+
+
 def _safe_error_message(error: Exception) -> str:
     message = str(error)
     for name in ("OPENAI_API_KEY",):
@@ -1853,12 +2598,15 @@ def _pilot_qualification(
 def _requires_condition_neutral_pilot_admission(
     suite: ExperimentSuite,
 ) -> bool:
-    """Select only the future twelve-row D-083/D-084 no-memory campaign."""
+    """Select the historical source or exact D-087 twelve-row successor."""
 
     return bool(
         suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
         and suite.experiment_id
-        == CONDITION_NEUTRAL_COMPARISON_CAMPAIGN_EXPERIMENT_ID
+        in {
+            CONDITION_NEUTRAL_COMPARISON_CAMPAIGN_EXPERIMENT_ID,
+            CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
+        }
         and _is_frozen_comparison_runtime_profile(suite)
     )
 
@@ -2491,6 +3239,7 @@ def _execution_hash(
     pilot_qualification: dict[str, Any],
     runtime_contract: dict[str, Any] | None = None,
     pilot_admission: dict[str, Any] | None = None,
+    campaign_cost_control: dict[str, Any] | None = None,
 ) -> str:
     payload = _suite_payload(suite)
     payload.pop("live_cost_approved", None)
@@ -2515,6 +3264,11 @@ def _execution_hash(
         if not isinstance(pilot_admission_hash, str):
             raise ContractError("pilot admission has no canonical hash")
         execution_payload["pilot_admission_hash"] = pilot_admission_hash
+    if campaign_cost_control is not None:
+        content_hash = campaign_cost_control.get("content_hash")
+        if not isinstance(content_hash, str):
+            raise ContractError("campaign cost control has no canonical hash")
+        execution_payload["campaign_cost_control_hash"] = content_hash
     return sha256_text(
         canonical_json(execution_payload)
     )
@@ -2916,6 +3670,17 @@ def preflight_suite(
         suite,
         harness_git_commit=git_state.get("commit"),
     )
+    expected_prices = OFFICIAL_PRICES_BY_MODEL.get(suite.model_id)
+    pricing = _pricing_contract(
+        suite,
+        schedule_size=len(schedule),
+        checked_at=preflight_checked_at,
+    )
+    campaign_cost_control = _campaign_cost_control(
+        suite,
+        pricing,
+        schedule_size=len(schedule),
+    )
     execution_hash = _execution_hash(
         suite,
         dataset=dataset_identity,
@@ -2932,13 +3697,7 @@ def preflight_suite(
             and pilot_admission.get("admitted") is True
             else None
         ),
-    )
-
-    expected_prices = OFFICIAL_PRICES_BY_MODEL.get(suite.model_id)
-    pricing = _pricing_contract(
-        suite,
-        schedule_size=len(schedule),
-        checked_at=preflight_checked_at,
+        campaign_cost_control=campaign_cost_control,
     )
     theoretical_cost_upper_bound = pricing["budget_upper_bound_usd"]
 
@@ -2950,8 +3709,8 @@ def preflight_suite(
             _block(
                 blockers,
                 "SUPERSEDED_SUITE",
-                "this unexecuted 250k pilot was superseded by the high-budget "
-                "completion calibration and must not be run",
+                "this unexecuted source was superseded by a versioned successor "
+                "and must not be run",
             )
         if (
             suite.experiment_id
@@ -3061,7 +3820,19 @@ def preflight_suite(
                 "COST_ESTIMATE_EXCEEDS_LIMIT",
                 "estimated campaign cost exceeds cost_limit_usd",
             )
-        if theoretical_cost_upper_bound > suite.cost_limit_usd:
+        if (
+            _is_accrued_spend_cap_suite(suite)
+            and pricing["per_run_cost_reserve_usd"] > suite.cost_limit_usd
+        ):
+            _block(
+                blockers,
+                "NEXT_RUN_RESERVE_EXCEEDS_COST_LIMIT",
+                "one full frozen run reserve exceeds the campaign cost limit",
+            )
+        elif (
+            not _is_accrued_spend_cap_suite(suite)
+            and theoretical_cost_upper_bound > suite.cost_limit_usd
+        ):
             _block(
                 blockers,
                 "TOKEN_BUDGET_EXCEEDS_COST_LIMIT",
@@ -3165,6 +3936,8 @@ def preflight_suite(
     }
     if runtime_contract is not None:
         output_payload["runtime_contract"] = runtime_contract
+    if campaign_cost_control is not None:
+        output_payload["campaign_cost_control"] = campaign_cost_control
     if (
         pilot_admission is not None
         and pilot_admission.get("admitted") is True
@@ -3428,6 +4201,15 @@ def _assert_manifest_matches_preflight(
             "purpose": suite.purpose.value,
             "suite_hash": preflight["suite_hash"],
             "execution_hash": preflight["execution_hash"],
+            **(
+                {
+                    "campaign_cost_control_hash": preflight[
+                        "campaign_cost_control"
+                    ]["content_hash"]
+                }
+                if "campaign_cost_control" in preflight
+                else {}
+            ),
             "dataset_manifest_hash": (
                 preflight["dataset"]["manifest_hash"]
                 if preflight["dataset"] is not None
@@ -3500,6 +4282,29 @@ def _qualification_gate_check_projection(
     }
 
 
+def _qualification_projection_passed(
+    qualification: dict[str, Any] | None,
+    field: str,
+    check_id: str,
+) -> bool:
+    projection = (
+        qualification.get(field)
+        if isinstance(qualification, dict)
+        else None
+    )
+    return bool(
+        isinstance(projection, dict)
+        and set(projection)
+        == {"schema_version", "check_id", "check_count", "passed"}
+        and projection.get("schema_version")
+        == QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA
+        and projection.get("check_id") == check_id
+        and type(projection.get("check_count")) is int
+        and projection.get("check_count") == 1
+        and projection.get("passed") is True
+    )
+
+
 def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     summary = {
         key: payload.get(key)
@@ -3525,6 +4330,21 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     raw_checks = payload.get("checks")
     if not isinstance(raw_checks, list):
         raw_checks = []
+    if (
+        payload.get("experiment_id")
+        == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+    ):
+        summary["source_evidence_hash"] = payload.get("source_evidence_hash")
+        summary["usage_reconciliation"] = (
+            _qualification_gate_check_projection(
+                raw_checks,
+                "usage_reconciliation",
+            )
+        )
+        summary["persisted_result"] = _qualification_gate_check_projection(
+            raw_checks,
+            "persisted_result",
+        )
     call_guard_check_id = "disabled_call_guard_contract"
     comparison_no_memory_observability = bool(
         (
@@ -4366,6 +5186,7 @@ def _completion_gate(
         == [PILOT_TASK]
         and suite.repetitions == 1
     )
+    condition_neutral_campaign = _is_accrued_spend_cap_suite(suite)
     budget_pilot = bool(
         suite.purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
@@ -4423,6 +5244,7 @@ def _completion_gate(
             generic_baseline_readiness,
             workflow_completion_probe,
             condition_neutral_pilot,
+            condition_neutral_campaign,
             completion_panel,
             budget_pilot,
             corrective_pilot,
@@ -4454,7 +5276,9 @@ def _completion_gate(
             budget_terminal_run_ids.append(run_id)
 
     expected_runs = (
-        4
+        12
+        if condition_neutral_campaign
+        else 4
         if generic_baseline_readiness
         else 1
         if (
@@ -4474,6 +5298,7 @@ def _completion_gate(
             generic_baseline_readiness
             or workflow_completion_probe
             or condition_neutral_pilot
+            or condition_neutral_campaign
         )
         or (
             len(rows) == expected_runs
@@ -4481,6 +5306,8 @@ def _completion_gate(
             == (
                 GENERIC_BASELINE_READINESS_TASK_IDS
                 if generic_baseline_readiness
+                else MEMORY_DEVELOPMENT_TASK_IDS
+                if condition_neutral_campaign
                 else {PILOT_TASK_ID}
                 if condition_neutral_pilot
                 else {WORKFLOW_COMPLETION_PROBE_TASK_ID}
@@ -4512,6 +5339,7 @@ def _completion_gate(
             generic_baseline_readiness
             or workflow_completion_probe
             or condition_neutral_pilot
+            or condition_neutral_campaign
         )
         or (
             len(rows) == expected_runs
@@ -4531,6 +5359,7 @@ def _completion_gate(
             generic_baseline_readiness
             or workflow_completion_probe
             or condition_neutral_pilot
+            or condition_neutral_campaign
         )
         or (
             len(expected_schedule_rows) == expected_runs
@@ -4567,6 +5396,7 @@ def _completion_gate(
             generic_baseline_readiness
             or workflow_completion_probe
             or condition_neutral_pilot
+            or condition_neutral_campaign
         )
         or (
             valid_sha256_identity(expected_execution_hash)
@@ -4583,6 +5413,7 @@ def _completion_gate(
             generic_baseline_readiness
             or workflow_completion_probe
             or condition_neutral_pilot
+            or condition_neutral_campaign
         )
         or (
             readiness_run_binding_passed
@@ -4653,6 +5484,7 @@ def _completion_gate(
         workflow_completion_probe
         or generic_count_observability
         or condition_neutral_pilot
+        or condition_neutral_campaign
     )
     call_guard_contract_passed = bool(
         not call_guard_contract_required
@@ -4749,6 +5581,7 @@ def _completion_gate(
         generic_baseline_readiness
         or workflow_completion_probe
         or condition_neutral_pilot
+        or condition_neutral_campaign
         or budget_pilot
         or corrective_pilot
         or saturation_pilot
@@ -4760,6 +5593,8 @@ def _completion_gate(
             "schema_version": (
                 CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_SCHEMA
                 if condition_neutral_pilot
+                else "condition-neutral-no-memory-campaign-readiness-gate-v1"
+                if condition_neutral_campaign
                 else "generic-baseline-readiness-gate-v2"
                 if generic_count_observability
                 else "generic-baseline-readiness-gate-v1"
@@ -4781,6 +5616,12 @@ def _completion_gate(
             **(
                 {"gate_id": CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_ID}
                 if condition_neutral_pilot
+                else {
+                    "gate_id": (
+                        "d087-condition-neutral-no-memory-campaign-readiness"
+                    )
+                }
+                if condition_neutral_campaign
                 else {}
             ),
             "passed": completion_passed,
@@ -4804,6 +5645,7 @@ def _completion_gate(
                     generic_baseline_readiness
                     or workflow_completion_probe
                     or condition_neutral_pilot
+                    or condition_neutral_campaign
                 )
                 else {}
             ),
@@ -4992,6 +5834,20 @@ def evaluate_suite(
     suite = ExperimentSuite.model_validate(preflight["suite"])
     if not hmac.compare_digest(_suite_hash(suite), preflight["suite_hash"]):
         raise ContractError("approved preflight suite hash mismatch")
+    campaign_cost_control = preflight.get("campaign_cost_control")
+    accrued_cap_enabled = _is_accrued_spend_cap_suite(suite)
+    if accrued_cap_enabled != isinstance(campaign_cost_control, dict):
+        raise ContractError("approved preflight campaign cost control mismatch")
+    cost_control_descriptor = (
+        campaign_cost_control["descriptor"]
+        if isinstance(campaign_cost_control, dict)
+        else None
+    )
+    cost_control_hash = (
+        campaign_cost_control["content_hash"]
+        if isinstance(campaign_cost_control, dict)
+        else None
+    )
     plan = _persist_preflight_plan(preflight)
     if suite.model == "openai":
         _assert_live_environment_unchanged(preflight)
@@ -5008,6 +5864,11 @@ def evaluate_suite(
             "execution_hash": preflight["execution_hash"],
             "schedule_hash": preflight["schedule_hash"],
             "execution_plan_hash": plan["artifact_hash"],
+            **(
+                {"campaign_cost_control_hash": cost_control_hash}
+                if cost_control_hash is not None
+                else {}
+            ),
         },
     )
     live_authorization = (
@@ -5021,9 +5882,21 @@ def evaluate_suite(
     runner = AgentRunner()
     results = []
     actual_model_cost_usd = 0.0
+    actual_model_cost_nanos = 0
+    held_reserve_nanos = 0
     task_packages: dict[str, Any] = {}
     per_run_cost_reserve_usd = float(
         preflight["pricing"]["per_run_cost_reserve_usd"]
+    )
+    per_run_cost_reserve_nanos = (
+        int(cost_control_descriptor["per_run_reserve_nanos"])
+        if cost_control_descriptor is not None
+        else 0
+    )
+    hard_cap_nanos = (
+        int(cost_control_descriptor["hard_cap_nanos"])
+        if cost_control_descriptor is not None
+        else 0
     )
     qualification_required = suite.purpose in {
         ExperimentPurpose.GENERIC_BASELINE_READINESS,
@@ -5077,15 +5950,39 @@ def evaluate_suite(
                 },
             )
             continue
-        if (
+        reserve_unavailable = bool(
             suite.model == "openai"
-            and actual_model_cost_usd + per_run_cost_reserve_usd
-            > suite.cost_limit_usd
-        ):
+            and (
+                actual_model_cost_nanos
+                + held_reserve_nanos
+                + per_run_cost_reserve_nanos
+                > hard_cap_nanos
+                if accrued_cap_enabled
+                else actual_model_cost_usd + per_run_cost_reserve_usd
+                > suite.cost_limit_usd
+            )
+        )
+        if reserve_unavailable:
             halt_reason = {
                 "type": "CostReserveUnavailable",
                 "message": "remaining cost limit cannot reserve one full frozen run budget",
             }
+            if accrued_cap_enabled:
+                journal_sequence += 1
+                journal_hash = _append_campaign_event(
+                    journal_path,
+                    sequence=journal_sequence,
+                    previous_event_hash=journal_hash,
+                    event_type="CostReserveUnavailable",
+                    payload={
+                        **row_identity,
+                        "campaign_cost_control_hash": cost_control_hash,
+                        "accrued_cost_nanos": actual_model_cost_nanos,
+                        "held_reserve_nanos": held_reserve_nanos,
+                        "reserve_nanos": per_run_cost_reserve_nanos,
+                        "cap_nanos": hard_cap_nanos,
+                    },
+                )
             row = {
                 **row_identity,
                 "attempt_status": "not_started",
@@ -5133,6 +6030,11 @@ def evaluate_suite(
             purpose=suite.purpose,
             suite_hash=preflight["suite_hash"],
             execution_hash=preflight["execution_hash"],
+            campaign_cost_control_hash=(
+                preflight["campaign_cost_control"]["content_hash"]
+                if "campaign_cost_control" in preflight
+                else None
+            ),
             dataset_manifest_hash=(
                 preflight["dataset"]["manifest_hash"]
                 if preflight["dataset"] is not None
@@ -5206,6 +6108,27 @@ def evaluate_suite(
             preflight=preflight,
             item={**task_row, **item},
         )
+        if accrued_cap_enabled:
+            if held_reserve_nanos != 0:
+                raise ContractError("campaign already has an active cost reservation")
+            journal_sequence += 1
+            reservation_event_hash = _append_campaign_event(
+                journal_path,
+                sequence=journal_sequence,
+                previous_event_hash=journal_hash,
+                event_type="RunCostReserved",
+                payload={
+                    **row_identity,
+                    "run_id": manifest.run_id,
+                    "campaign_cost_control_hash": cost_control_hash,
+                    "accrued_cost_nanos_before": actual_model_cost_nanos,
+                    "held_reserve_nanos_after": per_run_cost_reserve_nanos,
+                    "reserve_nanos": per_run_cost_reserve_nanos,
+                    "cap_nanos": hard_cap_nanos,
+                },
+            )
+            journal_hash = reservation_event_hash
+            held_reserve_nanos = per_run_cost_reserve_nanos
         journal_sequence += 1
         journal_hash = _append_campaign_event(
             journal_path,
@@ -5217,6 +6140,16 @@ def evaluate_suite(
                 "run_id": manifest.run_id,
             },
         )
+        campaign_cost_reservation = (
+            issue_campaign_cost_reservation_authorization(
+                manifest,
+                live_authorization,
+                journal_path=journal_path,
+                reservation_event_hash=reservation_event_hash,
+            )
+            if accrued_cap_enabled and live_authorization is not None
+            else None
+        )
 
         try:
             result = runner.start(
@@ -5225,6 +6158,7 @@ def evaluate_suite(
                 memory_condition=MemoryCondition(item["condition"]),
                 manifest=manifest,
                 live_authorization=live_authorization,
+                campaign_cost_reservation=campaign_cost_reservation,
             )
             infrastructure_error = None
         except Exception as exc:
@@ -5247,8 +6181,37 @@ def evaluate_suite(
                 ),
             }
         usage = result.get("usage") if result is not None else None
-        if usage is not None:
-            actual_model_cost_usd += float(usage.get("model_cost_usd", 0))
+        settled_run_cost_nanos: int | None = None
+        validated_terminal_usage: Usage | None = None
+        durable_usage_evidence: dict[str, Any] | None = None
+        usage_evidence_hash: str | None = None
+        terminal_model_cost_usd = 0.0
+        if accrued_cap_enabled:
+            try:
+                if usage is None:
+                    raise ValueError("terminal result has no usage evidence")
+                usage_for_pricing = dict(usage)
+                usage_for_pricing["model_cost_usd"] = 0.0
+                validated_terminal_usage = Usage.model_validate(
+                    usage_for_pricing
+                )
+                settled_run_cost_nanos = _d087_fixed_cost_nanos(
+                    validated_terminal_usage
+                )
+                terminal_model_cost_usd = _nanos_to_usd(settled_run_cost_nanos)
+                if settled_run_cost_nanos > held_reserve_nanos:
+                    raise ValueError("token-derived run cost exceeds its full reserve")
+            except (ContractError, TypeError, ValueError) as exc:
+                settled_run_cost_nanos = None
+                validated_terminal_usage = None
+                if infrastructure_error is None:
+                    infrastructure_error = {
+                        "type": "CostAccountingUnavailable",
+                        "message": _safe_error_message(exc),
+                    }
+        elif usage is not None:
+            terminal_model_cost_usd = float(usage.get("model_cost_usd", 0))
+            actual_model_cost_usd += terminal_model_cost_usd
         qualification = None
         qualification_error = None
         diagnostic = _diagnostic_result(suite, qualification)
@@ -5270,6 +6233,89 @@ def evaluate_suite(
                     "type": type(exc).__name__,
                     "message": _safe_error_message(exc),
                 }
+        usage_reconciliation_passed = _qualification_projection_passed(
+            qualification,
+            "usage_reconciliation",
+            "usage_reconciliation",
+        )
+        persisted_result_passed = _qualification_projection_passed(
+            qualification,
+            "persisted_result",
+            "persisted_result",
+        )
+        if accrued_cap_enabled and settled_run_cost_nanos is not None:
+            if not (
+                usage_reconciliation_passed
+                and persisted_result_passed
+                and isinstance(qualification, dict)
+                and _is_sha256_identity(
+                    qualification.get("qualification_hash")
+                )
+                and _is_sha256_identity(
+                    qualification.get("source_evidence_hash")
+                )
+            ):
+                settled_run_cost_nanos = None
+                infrastructure_error = {
+                    "type": "CostAccountingUnavailable",
+                    "message": (
+                        "trace qualification did not provide exact passing "
+                        "usage_reconciliation and persisted_result evidence"
+                    ),
+                }
+            else:
+                try:
+                    durable_usage_evidence = (
+                        _load_d087_durable_usage_evidence(
+                            manifest.run_id,
+                            row_identity["schedule_row_id"],
+                            runtime_root(),
+                        )
+                    )
+                    durable_cost_nanos = _validate_d087_usage_evidence(
+                        durable_usage_evidence,
+                        run_id=manifest.run_id,
+                        schedule_row_id=row_identity["schedule_row_id"],
+                    )
+                    if validated_terminal_usage is None or (
+                        durable_usage_evidence["descriptor"]["usage"]
+                        != _d087_usage_payload(validated_terminal_usage)
+                    ):
+                        raise ContractError(
+                            "runtime usage differs from durable result usage"
+                        )
+                    if (
+                        durable_usage_evidence["descriptor"][
+                            "qualification_hash"
+                        ]
+                        != qualification["qualification_hash"]
+                        or durable_usage_evidence["descriptor"][
+                            "source_evidence_hash"
+                        ]
+                        != qualification["source_evidence_hash"]
+                    ):
+                        raise ContractError(
+                            "terminal qualification differs from durable evidence"
+                        )
+                    if durable_cost_nanos != settled_run_cost_nanos:
+                        raise ContractError(
+                            "runtime cost differs from durable token-derived cost"
+                        )
+                    settled_run_cost_nanos = durable_cost_nanos
+                    terminal_model_cost_usd = _nanos_to_usd(
+                        durable_cost_nanos
+                    )
+                    usage_evidence_hash = durable_usage_evidence[
+                        "content_hash"
+                    ]
+                except (ContractError, OSError, TypeError, ValueError) as exc:
+                    settled_run_cost_nanos = None
+                    durable_usage_evidence = None
+                    usage_evidence_hash = None
+                    infrastructure_error = {
+                        "type": "CostAccountingUnavailable",
+                        "message": _safe_error_message(exc),
+                    }
         budget_pressure = None
         runner_state = getattr(runner, "state", None)
         if runner_state is not None:
@@ -5315,7 +6361,18 @@ def evaluate_suite(
                     result.get("outcome_kind") if result is not None else None
                 ),
                 "model_cost_usd": (
-                    float(usage.get("model_cost_usd", 0)) if usage is not None else 0
+                    terminal_model_cost_usd
+                ),
+                **(
+                    {
+                        "usage_evidence": durable_usage_evidence,
+                        "usage_evidence_hash": usage_evidence_hash,
+                        "usage_reconciliation_passed": (
+                            usage_reconciliation_passed
+                        ),
+                    }
+                    if accrued_cap_enabled
+                    else {}
                 ),
                 "infrastructure_error_type": (
                     infrastructure_error["type"]
@@ -5344,6 +6401,33 @@ def evaluate_suite(
                 ),
             },
         )
+        if accrued_cap_enabled and settled_run_cost_nanos is not None:
+            accrued_before = actual_model_cost_nanos
+            actual_model_cost_nanos += settled_run_cost_nanos
+            held_reserve_nanos = 0
+            actual_model_cost_usd = _nanos_to_usd(actual_model_cost_nanos)
+            journal_sequence += 1
+            journal_hash = _append_campaign_event(
+                journal_path,
+                sequence=journal_sequence,
+                previous_event_hash=journal_hash,
+                event_type="RunCostSettled",
+                payload={
+                    **row_identity,
+                    "run_id": manifest.run_id,
+                    "campaign_cost_control_hash": cost_control_hash,
+                    "accrued_cost_nanos_before": accrued_before,
+                    "actual_run_cost_nanos": settled_run_cost_nanos,
+                    "usage_evidence_hash": usage_evidence_hash,
+                    "usage_reconciliation_passed": (
+                        usage_reconciliation_passed
+                    ),
+                    "accrued_cost_nanos_after": actual_model_cost_nanos,
+                    "held_reserve_nanos_after": held_reserve_nanos,
+                    "reserve_nanos": per_run_cost_reserve_nanos,
+                    "cap_nanos": hard_cap_nanos,
+                },
+            )
         if infrastructure_error is not None:
             halt_reason = {
                 "type": "InfrastructureFailureHalt",
@@ -5369,6 +6453,22 @@ def evaluate_suite(
                 ),
             }
 
+    campaign_cost_qualification = (
+        _campaign_cost_journal_evidence(
+            journal_path,
+            campaign_cost_control,
+            run_root=runtime_root(),
+        )
+        if isinstance(campaign_cost_control, dict)
+        else None
+    )
+    if campaign_cost_qualification is not None and (
+        campaign_cost_qualification["accrued_cost_nanos"]
+        != actual_model_cost_nanos
+        or campaign_cost_qualification["held_reserve_nanos"]
+        != held_reserve_nanos
+    ):
+        raise ContractError("campaign cost journal differs from runtime accounting")
     diagnostic_rows = [
         row["diagnostic"]
         for row in results
@@ -5438,6 +6538,14 @@ def evaluate_suite(
         ),
         "halt_reason": halt_reason,
         "actual_model_cost_usd": actual_model_cost_usd,
+        **(
+            {
+                "campaign_cost_control": campaign_cost_control,
+                "campaign_cost_qualification": campaign_cost_qualification,
+            }
+            if campaign_cost_control is not None
+            else {}
+        ),
         "dataset": preflight["dataset"],
         "execution_plan": plan,
         "campaign_journal": {
@@ -5472,6 +6580,14 @@ def evaluate_suite(
             "completed_runs": record["completed_runs"],
             "infrastructure_errors": record["infrastructure_errors"],
             "not_started_runs": record["not_started_runs"],
+            **(
+                {
+                    "campaign_cost_control_hash": cost_control_hash,
+                    "campaign_cost_qualification": campaign_cost_qualification,
+                }
+                if campaign_cost_qualification is not None
+                else {}
+            ),
         },
     )
     temporary = output.with_suffix(".json.tmp")

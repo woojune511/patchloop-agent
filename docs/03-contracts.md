@@ -2885,5 +2885,39 @@ reference patch는 금지한다. Path/SHA는
 D-085 ID는 hard-consumed라 local result/journal 존재 여부와 무관하게 재실행할 수 없다. Seal은 readiness와
 한 task success를 기록할 뿐 baseline/denominator/memory/core/analysis authority가 아니다. Future campaign의
 canonical pilot-admission hash는 별도 campaign commit을 포함하므로 이 seal이 미리 authoritative hash를 만들지
-않는다. 다음 contract는 `$88` cap, `pilot_run_id`, fresh pricing과 별도 clean campaign hash/승인을 고정하는
-separate source decision이다.
+않는다. D-086 시점의 다음 contract 후보는 `$88` cap을 고정하는 separate source decision이었지만,
+D-087의 `$25` accrued-spend contract가 이 forward choice를 supersede한다.
+
+## 29. D-087 campaign cost-control contract
+
+Exact successor `dev-no-memory-condition-neutral-accrued-cap-20260804-r1`만
+`campaign-list-price-accrual-cap-v1`을 가질 수 있다. Canonical policy는 campaign-local list-price accounting,
+`$25` hard cap, `$7.3125` full-next-run reserve, `$87.75` schedule upper bound, equality admission,
+`not_started` stop action과 disabled live resume을 결속한다. 다른 ID에 policy가 있거나 exact ID에서 field가
+빠지거나 달라지면 `ExperimentSuite` validation이 거부한다.
+
+Preflight의 `campaign-cost-control-evidence-v1`은 descriptor와 canonical content hash를 가진다. 그 hash는
+execution hash와 `ExperimentRunContext.campaign_cost_control_hash`에 들어간다. Exact D-087 context에서는 hash가
+필수이고 다른 experiment에서는 금지된다. Post-run qualifier는 plan을 재파싱하고 suite, pricing, descriptor와
+manifest hash를 독립 재계산해 `campaign_spend_cap_contract`로 검증한다.
+
+Campaign journal의 비용 event는 다음 순서를 따른다.
+
+```text
+RunCostReserved -> RunStarted -> RunTerminal -> RunCostSettled
+```
+
+각 event는 policy hash, schedule row, cap, reserve와 accrued/held nano-USD를 포함한다. Reserve 부족 시
+`CostReserveUnavailable` 뒤 row가 `RunNotStarted`가 된다. `campaign-cost-qualification-v1`은 hash chain,
+reservation/settlement cardinality, row identity와 모든 시점의 `accrued + held <= cap`을 재집계한다.
+
+Provider 경계를 넘기 위한 `CampaignCostReservationAuthorization`은 exact execution hash, schedule row,
+run ID, journal/root, policy hash와 latest reservation event hash를 묶는 one-use capability다. AgentRunner는
+canonical path/root equality를 다시 확인하고 StateStore의 D-087 consumption table에 `BEGIN IMMEDIATE`로
+원자적 insert한 뒤에만 model adapter를 호출할 수 있다. 같은 execution/row 또는 reservation event의 재사용은
+항상 거부한다. 다음 capability 발급 시 SQLite의 consumed set이 journal에 exact subset으로 남아 있는지 확인하고,
+모든 prior settlement의 durable qualification/source/result hash를 다시 로드해 token counter와 fixed
+nano-USD 가격을 독립 재계산한다. 표시용 `model_cost_usd`는 이 계산에 사용하지 않는다.
+
+이 contract는 preserved SQLite anchor 아래의 marker 삭제, journal reset, alternate root와 settlement 축소·rehash를
+차단한다. 외부/request-level billing ledger는 아직 구현하지 않았으므로 exact D-087 live resume은 fail closed다.

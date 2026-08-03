@@ -1,10 +1,10 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-086 D-085 measured-result and budget-pressure correction seal; baseline and all future
-campaign authority remain closed**
+현재 milestone: **D-087 12-run no-memory campaign-local accrued-spend cap source/offline gate; clean preflight,
+approval, provider execution, baseline, memory admission/index와 core authority는 닫힘**
 
-2026-08-03 구현 스냅샷:
+2026-08-04 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ campaign authority remain closed**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-086 measured pilot seal | D-085 Babel 1-row는 terminal·qualified·official evaluator와 original readiness gate pass; budget diagnostic selector gap은 append-only corrected; baseline/memory/core closed |
+| Phase 6 evaluation | D-087 accrued-spend source gate | 1.6M/run ceiling과 `$25` campaign cap 분리, `$7.3125` full-next-run reserve와 nano-USD journal 결속; no live authority, baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -97,6 +97,31 @@ no-memory trace qualifier는 approved plan, runtime CAS와 disabled-call observa
 검증한다. Core 네 condition은 동일 tuple의 plan/manifest/start-resume 구조만 지원한다. Memory index와
 condition별 terminal qualification, 기존 cost-cap conflict가 남아 live execution, baseline, denominator,
 memory admission과 core는 계속 닫혀 있다.
+
+### D-087 accrued-spend source gate
+
+D-086이 workflow readiness를 확인했으므로 historical `$20 → $88` 양자택일은 폐기한다. 대신 새 exact
+campaign ID에서 per-run resource ceiling과 campaign-local list-price cap을 분리한다. D-081 r3 public
+usage의 mean 12-run projection은 `$5.38278975`, max-run envelope은 `$14.36724`다. Envelope에 1회 전체
+reserve `$7.3125`를 더한 `$21.67974`를 `$5` 단위로 올려 hard cap `$25`를 선택한다. 이는 task success나
+hidden outcome을 사용한 선택이 아니다.
+
+각 row는 `accrued_nano_usd + 7,312,500,000 <= 25,000,000,000`일 때만 시작한다. Reservation은
+`RunCostReserved`로 provider boundary 전에 fsync하고, terminal usage token에서 재계산한 비용을
+`RunCostSettled`로 기록한다. 부족하면 `CostReserveUnavailable` 뒤 current/remaining row가
+`not_started`가 된다. `$87.75` 12-run theoretical bound는 disclosure로 남고 `$25`가 completion을
+보장하지는 않는다. Exact one-use capability와 SQLite atomic consumption이 runner/provider 진입 전에
+reservation을 소비한다. 다음 row는 prior qualification/source/result를 다시 로드해 token-derived nano-USD
+settlement를 검증한 뒤에만 열린다. Preserved SQLite anchor 아래 marker 삭제, journal reset, alternate root와
+lower-settlement rehash는 거부한다. Campaign resume은 external/request-level durable billing reservation 전까지
+금지한다.
+
+다음 executable gate는 새 source commit의 clean no-call preflight다. Fresh official price, Docker image,
+SDK, D-086 pilot admission과 exact cost-policy hash를 검증해 candidate execution hash를 만들되 provider는
+호출하지 않는다. 그 뒤에만 exact hash와 최대 `$25`에 대한 별도 사용자 승인을 요청한다. Campaign result가
+sealed되기 전에는 no-memory baseline, comparison denominator, memory admission/review/index와 core를 열지 않는다.
+Source/offline gate verification은 focused 68/68, repository-wide 1,472 collected 중 1,465 passed/7 skipped다.
+Artifact SHA는 `sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`이며 provider call/cost는 0/$0다.
 
 ## 1. Sequencing rule
 

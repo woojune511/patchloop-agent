@@ -66,6 +66,9 @@ class ExperimentPurpose(StrEnum):
 CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID = (
     "dev-validation-condition-neutral-v2v5-pilot-20260803-r1"
 )
+CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID = (
+    "dev-no-memory-condition-neutral-accrued-cap-20260804-r1"
+)
 
 
 class RunOutcomeKind(StrEnum):
@@ -478,6 +481,11 @@ class ExperimentRunContext(StrictModel):
     purpose: ExperimentPurpose
     suite_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     execution_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    campaign_cost_control_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
     dataset_manifest_hash: str | None = Field(
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",
@@ -487,6 +495,18 @@ class ExperimentRunContext(StrictModel):
     schedule_order: int = Field(ge=1)
     schedule_row_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repetition: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def bind_accrued_cap_context(self) -> ExperimentRunContext:
+        requires_cost_control = (
+            self.experiment_id
+            == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+        )
+        if requires_cost_control != (self.campaign_cost_control_hash is not None):
+            raise ValueError(
+                "the D-087 campaign alone requires campaign_cost_control_hash"
+            )
+        return self
 
 
 class DatasetAdmissionState(StrEnum):

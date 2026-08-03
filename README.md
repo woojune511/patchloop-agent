@@ -2,6 +2,34 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-087은 12-run no-memory campaign의 per-run 실행 ceiling과 실제 campaign 지출 cap을
+분리했다. 새 source
+`experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml`은 D-083/D-084의
+`null/null/1,600,000/1,800`, output 25,000, mini medium/standard/default, retry 0과 generic V2/V5
+runtime을 그대로 사용한다. Historical `$20` source는 수정하지 않고 `superseded-unexecuted`로 보존한다.
+
+D-081 r3의 public process usage에서 12-run mean `$5.38278975`, empirical max envelope `$14.36724`를
+계산하고, 여기에 full-next-run worst-rate reserve `$7.3125`를 더한 `$21.67974`를 `$5` 단위로 올려
+campaign-local hard cap을 `$25`로 정했다. 12-run theoretical upper bound `$87.75`는 계속 공개하지만
+up-front 승인액이나 예상 invoice로 취급하지 않는다. 다음 run은 `accrued + $7.3125 <= $25`인 경우에만
+시작한다. 비용은 nano-USD로 append-only reserve/settle journal에 기록하고 token usage에서 다시 계산한다.
+각 row reservation은 exact plan/journal/run/policy에 묶인 one-use capability이고 SQLite에서 원자적으로 소비된
+뒤에만 provider 호출 경계를 넘는다. 다음 row 전에는 이전 run의 qualification/source/result evidence를 다시
+읽어 fixed rate로 재계산하므로 표시용 cost, marker 삭제, journal reset이나 낮춘 settlement 재해시를 신뢰하지
+않는다. Reserve가 없으면 provider call 전에 남은 row를 `not_started`로 닫는다.
+
+이 정책은 `$25`로 12/12 completion을 보장하지 않으며 invoice, free-tier 적용액 또는 project-wide cap을
+주장하지 않는다. Source artifact는
+`reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json`
+(`sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`)이다. Offline verification은
+focused 68/68, repository-wide 1,472 collected 중 1,465 passed/7 skipped이고 provider call/cost는 0/$0다.
+외부/request-level billing ledger는 아직 없으므로 D-087 live resume은 계속 차단한다.
+아직 clean no-call preflight, candidate/approved hash, provider call 또는 baseline 결과는 없다. 다음 gate는
+clean commit에서 fresh pricing·Docker·SDK를 확인한 no-call preflight를 만들고, 그 exact hash와 최대 `$25`에
+대해 별도 승인을 받는 것이다.
+
+Historical D-086 evidence:
+
 2026-08-03 D-086은 exact D-085 invocation의 measured result와 budget-pressure selector correction을
 append-only로 봉인한다. 승인 hash
 `sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0`는 source commit
@@ -22,9 +50,9 @@ ID는 raw local evidence가 없어도 hard-consumed다.
 
 이 결과는 exact workflow readiness와 한 Babel task success를 관찰한 single-row calibration이다. Invoice나
 free-tier charge, no-memory 성능 baseline, comparison denominator, memory admission/index, core 또는
-`analysis_ready`를 만들지 않는다. 다음 gate는 `$20 → $88` 12-run cap을 별도 결정하고 새 clean campaign
-commit, fresh preflight/hash와 별도 비용 승인을 준비하는 것이다. D-085 source artifact와 decision은 historical
-immutable evidence로 유지한다.
+`analysis_ready`를 만들지 않는다. D-086 시점의 다음 후보는 `$20 → $88` 12-run cap decision이었지만,
+현재는 D-087의 `$25` accrued-spend source가 그 forward choice를 supersede한다. D-085 source artifact와
+decision은 historical immutable evidence로 유지한다.
 
 2026-08-03 D-085는 D-083/D-084 exact tuple을 실제 campaign 전에 한 번 exercise하기 위한
 single-row no-memory live-readiness pilot을 source/offline에서 고정한다. Exact suite

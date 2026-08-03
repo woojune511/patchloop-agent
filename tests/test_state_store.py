@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -18,6 +19,7 @@ from patchloop.contracts import (
 from patchloop.errors import (
     ActionConflict,
     ContractError,
+    RecoveryError,
     RunOwnershipConflict,
 )
 from patchloop.runtime import build_manifest
@@ -76,6 +78,87 @@ def test_action_id_is_idempotent_but_input_hash_cannot_change(tmp_path) -> None:
     assert store.get_action_result(manifest.run_id, "action-1", "sha256:a") == result
     with pytest.raises(ActionConflict):
         store.get_action_result(manifest.run_id, "action-1", "sha256:b")
+
+
+def test_d087_reservation_consumption_is_atomic_and_hash_checked(
+    tmp_path,
+) -> None:
+    path = tmp_path / "state.sqlite3"
+    first_store = StateStore(path)
+    second_store = StateStore(path)
+    manifest = _manifest()
+    first_store.create_run(manifest)
+    values = {
+        "execution_hash": "sha256:" + ("1" * 64),
+        "schedule_row_id": "sha256:" + ("2" * 64),
+        "run_id": manifest.run_id,
+        "reservation_event_hash": "sha256:" + ("3" * 64),
+        "control_hash": "sha256:" + ("4" * 64),
+    }
+
+    def consume(store: StateStore) -> str:
+        try:
+            store.record_d087_reservation_consumption(**values)
+        except ContractError:
+            return "rejected"
+        return "consumed"
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        outcomes = list(executor.map(consume, (first_store, second_store)))
+
+    assert sorted(outcomes) == ["consumed", "rejected"]
+    rows = first_store.list_d087_reservation_consumptions(
+        values["execution_hash"]
+    )
+    assert len(rows) == 1
+    assert rows[0]["schedule_row_id"] == values["schedule_row_id"]
+    assert rows[0]["run_id"] == manifest.run_id
+    assert rows[0]["content_hash"].startswith("sha256:")
+
+    with first_store._connect() as connection:
+        connection.execute(
+            "UPDATE d087_reservation_consumptions SET content_hash = ?",
+            ("sha256:" + ("f" * 64),),
+        )
+    with pytest.raises(RecoveryError, match="consumption state is invalid"):
+        first_store.list_d087_reservation_consumptions(
+            values["execution_hash"]
+        )
+
+
+def test_d087_consumption_rejects_rehashed_row_or_event_identity(
+    tmp_path,
+) -> None:
+    store = StateStore(tmp_path / "state.sqlite3")
+    first = _manifest()
+    second = _manifest()
+    store.create_run(first)
+    store.create_run(second)
+    values = {
+        "execution_hash": "sha256:" + ("1" * 64),
+        "schedule_row_id": "sha256:" + ("2" * 64),
+        "run_id": first.run_id,
+        "reservation_event_hash": "sha256:" + ("3" * 64),
+        "control_hash": "sha256:" + ("4" * 64),
+    }
+    store.record_d087_reservation_consumption(**values)
+
+    with pytest.raises(ContractError, match="already consumed"):
+        store.record_d087_reservation_consumption(
+            **{
+                **values,
+                "run_id": second.run_id,
+                "reservation_event_hash": "sha256:" + ("5" * 64),
+            }
+        )
+    with pytest.raises(ContractError, match="already consumed"):
+        store.record_d087_reservation_consumption(
+            **{
+                **values,
+                "schedule_row_id": "sha256:" + ("6" * 64),
+                "run_id": second.run_id,
+            }
+        )
 
 
 def test_worker_claim_is_atomic_and_records_running_reclaim(tmp_path) -> None:

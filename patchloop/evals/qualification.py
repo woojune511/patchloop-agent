@@ -9,6 +9,7 @@ from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Artifact,
     Budget,
@@ -672,6 +673,7 @@ def _execution_plan_matches(
     if experiment is None or plan is None:
         return False
     approval = plan.get("approval")
+    campaign_cost_control = plan.get("campaign_cost_control")
     dataset = plan.get("dataset")
     environment = plan.get("environment")
     pilot_admission = plan.get("pilot_admission")
@@ -719,6 +721,7 @@ def _execution_plan_matches(
         from patchloop.agent.tools import TOOL_SCHEMAS_V2
         from patchloop.evals.runner import (
             ExperimentSuite,
+            _campaign_cost_control_matches,
             _diagnostic_fault,
             _execution_hash,
             _experiment_runtime_contract,
@@ -731,6 +734,12 @@ def _execution_plan_matches(
 
         parsed_suite = ExperimentSuite.model_validate(suite)
         normalized_suite = _suite_payload(parsed_suite)
+        campaign_cost_control_matches = _campaign_cost_control_matches(
+            parsed_suite,
+            campaign_cost_control,
+            pricing,
+            schedule_size=len(schedule),
+        )
         completion_plan_matches = True
         if (
             (
@@ -828,6 +837,11 @@ def _execution_plan_matches(
             pilot_admission=(
                 pilot_admission
                 if isinstance(pilot_admission, dict)
+                else None
+            ),
+            campaign_cost_control=(
+                campaign_cost_control
+                if isinstance(campaign_cost_control, dict)
                 else None
             ),
         )
@@ -1025,6 +1039,15 @@ def _execution_plan_matches(
         == experiment.dataset_manifest_hash
         and manifest.memory.condition in parsed_suite.conditions
         and _diagnostic_fault(parsed_suite) == manifest.fault
+        and campaign_cost_control_matches
+        and (
+            experiment.campaign_cost_control_hash
+            == (
+                campaign_cost_control.get("content_hash")
+                if isinstance(campaign_cost_control, dict)
+                else None
+            )
+        )
         and completion_plan_matches
         and runtime_contract_matches
         and pricing_contract_matches
@@ -11612,6 +11635,58 @@ def qualify_run(
             and execution_plan["approval"].get("matches_execution_hash") is True
         ),
     )
+    accrued_cap_campaign = bool(
+        experiment is not None
+        and experiment.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+    )
+    if accrued_cap_campaign:
+        cost_control = (
+            execution_plan.get("campaign_cost_control")
+            if execution_plan is not None
+            else None
+        )
+        descriptor = (
+            cost_control.get("descriptor")
+            if isinstance(cost_control, dict)
+            else None
+        )
+        control_hash = (
+            cost_control.get("content_hash")
+            if isinstance(cost_control, dict)
+            else None
+        )
+        add(
+            "campaign_spend_cap_contract",
+            bool(
+                execution_plan_ok
+                and isinstance(descriptor, dict)
+                and isinstance(control_hash, str)
+                and sha256_text(canonical_json(descriptor)) == control_hash
+                and experiment.campaign_cost_control_hash == control_hash
+                and descriptor.get("hard_cap_nanos") == 25_000_000_000
+                and descriptor.get("per_run_reserve_nanos") == 7_312_500_000
+                and descriptor.get("schedule_upper_bound_nanos")
+                == 87_750_000_000
+                and descriptor.get("full_schedule_reserved") is False
+                and descriptor.get("schedule_completion_guaranteed") is False
+            ),
+            campaign_cost_control_hash=control_hash,
+            manifest_cost_control_hash=(
+                experiment.campaign_cost_control_hash
+            ),
+            hard_cap_nanos=(
+                descriptor.get("hard_cap_nanos")
+                if isinstance(descriptor, dict)
+                else None
+            ),
+            per_run_reserve_nanos=(
+                descriptor.get("per_run_reserve_nanos")
+                if isinstance(descriptor, dict)
+                else None
+            ),
+            live_resume_supported=False,
+        )
     if (
         experiment is not None
         and (
@@ -12640,6 +12715,8 @@ def qualify_run(
         trace_check_ids.add("pricing_start_freshness")
         if manifest.memory.condition == MemoryCondition.NO_MEMORY:
             trace_check_ids.add("disabled_call_guard_contract")
+    if accrued_cap_campaign:
+        trace_check_ids.add("campaign_spend_cap_contract")
     if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
         trace_check_ids.add("self_validation_lifecycle")
     if manifest.tool_schema_version == "v4":

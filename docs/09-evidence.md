@@ -2914,5 +2914,46 @@ passed gate. The portable evidence is
 
 D-085 is now hard-consumed. The result is single-row workflow-readiness calibration and one observed task success,
 not a no-memory baseline, comparison denominator, memory admission/index, core result or analysis-ready dataset.
-No provider call or added model cost belongs to the D-086 seal work itself. The next action is a separate decision on
-the `$88` 12-run cap and, only if accepted, a new clean campaign commit/preflight/hash and explicit cost approval.
+No provider call or added model cost belongs to the D-086 seal work itself. At D-086 time the next candidate was a
+separate `$88` 12-run cap decision; D-087 supersedes that forward choice without rewriting D-086.
+
+## D-087 campaign-local accrued-spend source evidence
+
+D-087 keeps the exact D-083/D-084 per-run tuple (`null/null/1,600,000/1,800`, output 25,000) while replacing the
+unexecuted historical `$20` campaign template with a new exact source identity. Public D-081 r3 process costs derive
+the policy without task-success or private-evaluator inputs:
+
+```text
+12-run mean projection = $5.38278975
+12-run empirical max envelope = $14.36724
+full next-run reserve = $7.3125
+cap basis = $21.67974
+campaign-local hard cap = $25
+12-run worst-rate disclosure = $87.75
+```
+
+A row is admitted only when `accrued + $7.3125 <= $25`. The reservation journal is hash chained and fsynced. An
+exact plan/journal/run/policy one-use capability is atomically consumed in SQLite before the provider boundary.
+Before another row can start, prior terminal qualification, source evidence and result bytes are reloaded and token
+usage is repriced with integer nano-USD fixed rates; displayed model cost is not trusted. With the SQLite anchor
+preserved, marker deletion, journal reset, alternate runner roots and rehashed lower settlements are rejected.
+
+This is a local campaign control, not an external billing ledger. Live resume remains disabled, and the implementation
+does not claim protection against rollback or deletion of the entire local database and journal together. The `$25`
+cap does not guarantee 12/12 completion; an unavailable full reserve marks the current and remaining rows
+`not_started` and makes the readiness gate false.
+
+```text
+suite path = experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml
+suite SHA = sha256:44de6899656c96830d3a0aa3326777848c5d632ef903eccc166839fa1caeaf79
+artifact path = reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json
+artifact SHA = sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe
+focused verification = 68/68
+repository verification = 1,472 collected; 1,465 passed; 7 skipped
+provider calls = 0
+model cost = $0
+```
+
+Clean preflight, candidate/approved execution hash, live campaign, no-memory baseline, comparison denominator,
+memory admission/index and core remain closed. A later provider invocation still requires a clean committed source,
+fresh no-call preflight and separate approval of the exact hash with maximum `$25` authority.

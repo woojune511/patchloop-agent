@@ -705,6 +705,38 @@ Evidence/issue:
   `pilot_run_id`, fresh pricing/preflight/hash와 별도 사용자 비용 승인이 필요하다.
 - Date: 2026-08-03
 
+### D-087 accepted source decision — campaign-local accrued list-price cap
+
+- Status: source/offline gate only. Clean preflight, candidate/approved execution hash와 provider execution은 없다.
+- Identity: 새 exact ID는 `dev-no-memory-condition-neutral-accrued-cap-20260804-r1`이다. Historical
+  `dev-no-memory-v5-20260730-r1` `$20` source와 D-083~D-086 artifact는 수정하지 않고
+  `superseded-unexecuted` predecessor로 보존한다.
+- Runtime: D-083/D-084의 mini medium/standard/default, retry 0, generic `SYSTEM_PROMPT_V3` + tool V2/context
+  V5, output 25,000, memory allowance 2,000, `null/null/1,600,000/1,800` tuple을 유지한다.
+- Cap derivation: D-081 r3 public process cost `$1.79426325 / 4 * 12 = $5.38278975`, max observed
+  `$1.19727 * 12 = $14.36724`, 여기에 full-run reserve `$7.3125`를 더한 `$21.67974`를 `$5` 단위로
+  올려 `$25`를 선택한다. Hidden outcome과 task success는 산식에 쓰지 않는다.
+- Admission: `accrued + full_next_run_reserve <= $25`일 때만 다음 row를 시작하고 equality는 허용한다.
+  Integer nano-USD로 비교하며 reserve/settlement는 append-only fsync journal과 token-derived cost로 검증한다.
+  Reserve가 부족하면 나머지는 `not_started`이고 readiness gate는 false다.
+- Bounds: `$87.75`는 12-run worst-rate theoretical upper bound로 계속 공개한다. `$25`는 campaign-local fixed
+  list-price accounting cap이며 invoice/free-tier/project-wide cap이나 12/12 completion guarantee가 아니다.
+- Binding: Cost policy/hash는 suite, execution plan/hash, `ExperimentRunContext`, manifest reconstruction,
+  start paid boundary와 post-run `campaign_spend_cap_contract`에 결속한다. Exact one-use capability는 SQLite
+  `BEGIN IMMEDIATE`로 row를 소비하고, next-row admission은 prior qualification/source/result를 reload해 fixed
+  nano-USD로 다시 계산한다. Preserved SQLite anchor 아래 marker 삭제, journal reset, alternate root와 lowered
+  settlement rehash는 거부한다. Campaign live resume은 external/request-level billing reservation ledger가
+  생길 때까지 fail closed다.
+- Authority: Baseline, comparison denominator, memory admission/review/index, core와 `analysis_ready`는 닫혀 있다.
+  다음 gate는 clean source commit의 fresh no-call preflight와 새 candidate hash이며, provider 실행에는 그 hash와
+  최대 `$25`에 대한 별도 사용자 승인이 필요하다.
+- Evidence:
+  `reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json`,
+  `sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`, focused 68/68,
+  repository-wide 1,472 collected 중 1,465 passed/7 skipped.
+- Provider calls/model cost for this decision: `0/$0`.
+- Date: 2026-08-04
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

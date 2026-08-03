@@ -1070,6 +1070,32 @@ silently lowering the design or fabricating missing results.
   make the portable metadata sufficient to recreate the full private evaluator or provider trace on a clean machine.
 - No-memory baseline, comparison denominator, memory admission/review/index, core and `analysis_ready` remain closed.
   D-085 source evidence stays historical and immutable.
-- The only next gate is a separate `$20 → $88` 12-run cap decision followed, if accepted, by a new clean campaign
-  commit, pilot admission binding, fresh pricing/preflight/hash and separate user cost approval. D-086 itself grants
-  none of that authority.
+- At D-086 time, the next candidate was a separate `$20 → $88` 12-run cap decision. D-087 now supersedes that
+  forward choice with its `$25` accrued-spend source; D-086 itself still grants no campaign authority.
+
+## D-087 caps campaign-local accrued list-price cost, not completion
+
+- D-087 supersedes the forward `$20 → $88` choice with a new exact source and `$25` campaign-local hard cap. It does
+  not rewrite the historical `$20` template or D-083~D-086 evidence.
+- The `$25` value is derived from D-081 r3 public process usage: `$5.38278975` 12-run mean projection,
+  `$14.36724` max-run envelope, plus one `$7.3125` full-run reserve, rounded from `$21.67974` to the next `$5`.
+  Hidden outcomes and task success are not used in this choice.
+- `$87.75` remains the worst-rate theoretical upper bound for all 12 run ceilings. It is disclosed rather than
+  reserved up front. Therefore `$25` cannot guarantee that all 12 runs will complete.
+- A row starts only if `accrued + $7.3125 <= $25`. Exact nano-USD comparison admits equality. If a full reserve is
+  unavailable, current and remaining rows are `not_started`, the completion gate is false, and the campaign cannot be
+  used as a no-memory baseline or comparison denominator.
+- Actual settlement is recomputed from terminal token usage at the fixed manifest rates; the result's displayed cost
+  is not trusted for cap admission. Missing or malformed usage leaves the full reservation held and fails closed.
+- The append-only journal makes row-level reserve/settle evidence durable, but D-087 intentionally disables live
+  resume. Supporting paid resume safely requires a request-level reservation/settlement ledger for the interval where
+  the provider may have billed a response before `ModelCalled` becomes durable.
+- A local SQLite one-use consumption anchor rejects marker deletion, journal reset, alternate runner roots and
+  rehashed lower settlements while that anchor is preserved. It is not an external billing ledger and does not claim
+  protection if an operator rolls back or deletes the entire local database and journal together.
+- `$25` is not a billed invoice, free-tier treatment, organization/project-wide spending limit, or prediction of
+  future provider charges. It applies only to this exact campaign under the fixed documented list-price manifest.
+- This source gate made zero provider calls and added `$0` model cost. Clean preflight, new execution hash, separate
+  max-`$25` user approval, campaign execution, baseline sealing, memory admission/index and core remain pending.
+- Final offline verification is focused 68/68 and repository-wide 1,472 collected, 1,465 passed/7 skipped. The
+  source artifact SHA is `sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`.

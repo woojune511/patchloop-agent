@@ -1215,3 +1215,44 @@ The original result's budget-pressure error remains immutable. The correction mu
 portable record must contain no provider body, private task/hash, hidden assertion, patch body or reference patch.
 Preflight/evaluate for the consumed D-085 ID must fail before runner construction even when local result/journal is
 absent. These commands make zero provider calls and do not authorize the separate `$88` 12-run decision.
+
+## Inspect the D-087 accrued-spend source gate without provider access
+
+이 단계는 source/contract만 검증하며 OpenAI provider를 호출하지 않는다.
+
+```powershell
+$env:UV_CACHE_DIR = ".uv-cache"
+$suite = "experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml"
+$artifact = "reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json"
+$legacy = "experiments/dev-no-memory-v5.template.yaml"
+
+Get-FileHash -Algorithm SHA256 $legacy
+Get-FileHash -Algorithm SHA256 $suite
+Get-Content -Raw -Encoding UTF8 $artifact | ConvertFrom-Json | Out-Null
+
+uv run pytest -o addopts='' -q `
+  tests/test_d087_campaign_cost_policy.py `
+  tests/test_d087_cost_journal.py `
+  tests/test_d087_cost_runner.py `
+  tests/test_d087_execution_binding.py `
+  tests/test_d087_source_gate_artifact.py `
+  tests/test_state_store.py
+uv run ruff check .
+uv run python -m compileall -q patchloop
+git diff --check
+```
+
+Historical source hash는
+`sha256:ef7f901a65764832f294e6e5d5706beb9f953523d669b292234d78bd7aa6a1a3`, 새 source hash는
+`sha256:44de6899656c96830d3a0aa3326777848c5d632ef903eccc166839fa1caeaf79`여야 한다. Artifact는
+`$5.38278975` mean projection, `$14.36724` empirical envelope, `$7.3125` full-next-run reserve,
+`$21.67974` cap basis, `$25` campaign cap과 `$87.75` theoretical schedule bound를 함께 기록해야 한다.
+Focused source/runtime/SQLite 검증은 68/68이어야 한다. 이 검증은 one-use reservation consumption,
+canonical journal/root binding, marker 삭제와 journal reset 거부, prior durable settlement reload/repricing을
+포함한다.
+Artifact SHA는 `sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`이고,
+repository-wide 결과는 1,472 collected 중 1,465 passed/7 skipped다.
+
+이 inspection은 candidate execution hash나 비용 승인을 만들지 않는다. 다음 단계에서는 먼저 이 변경을 clean
+commit으로 봉인한 다음, 공식 가격·Docker·SDK·D-086 pilot admission을 다시 확인하는 no-call preflight만
+실행한다. Provider 호출은 그 candidate hash와 최대 `$25`에 대한 별도 사용자 승인이 있을 때만 허용된다.

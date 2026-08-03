@@ -43,6 +43,7 @@ from patchloop.agent.tools import (
 )
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Artifact,
     Budget,
@@ -94,6 +95,13 @@ from patchloop.util import (
 from patchloop.verifier import EvaluationEngine
 
 _LIVE_AUTHORIZATION_GUARD = object()
+_CAMPAIGN_COST_RESERVATION_GUARD = object()
+_CAMPAIGN_COST_CONTROL_SCHEMA = "campaign-cost-control-evidence-v1"
+_CAMPAIGN_COST_POLICY_SCHEMA = "campaign-list-price-accrual-cap-v1"
+_CAMPAIGN_JOURNAL_EVENT_SCHEMA = "experiment-journal-event-v1"
+_CAMPAIGN_RESERVATION_CONSUMPTION_SCHEMA = (
+    "campaign-cost-reservation-consumption-v1"
+)
 _MAX_RECOVERABLE_SUBMISSION_REJECTIONS = 2
 _MAX_RECOVERABLE_REVIEW_REJECTIONS = 2
 _EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
@@ -122,6 +130,20 @@ class LiveExecutionAuthorization:
     execution_hash: str
     plan_path: str
     plan_hash: str
+    _guard: object
+
+
+@dataclass(frozen=True)
+class CampaignCostReservationAuthorization:
+    """One-use D-087 capability for one exact scheduled paid run."""
+
+    execution_hash: str
+    campaign_cost_control_hash: str
+    schedule_row_id: str
+    run_id: str
+    journal_path: str
+    journal_hash: str
+    reservation_event_hash: str
     _guard: object
 
 
@@ -167,6 +189,447 @@ def issue_live_execution_authorization(
     )
 
 
+def issue_campaign_cost_reservation_authorization(
+    manifest: RunManifest,
+    live_authorization: LiveExecutionAuthorization,
+    *,
+    journal_path: str | Path,
+    reservation_event_hash: str,
+) -> CampaignCostReservationAuthorization:
+    """Issue one D-087 paid-run capability from an fsynced journal prefix."""
+
+    AgentRunner._require_live_authorization(manifest, live_authorization)
+    if not _is_d087_paid_manifest(manifest):
+        raise ContractError(
+            "campaign cost reservation capabilities are reserved for D-087"
+        )
+    assert manifest.experiment is not None
+    plan = _load_live_execution_plan(live_authorization)
+    cost_control = plan.get("campaign_cost_control")
+    expected_journal_path = plan.get("journal_path")
+    resolved_journal_path, journal_root = _d087_journal_identity(
+        expected_journal_path,
+        journal_path,
+    )
+    if not isinstance(cost_control, dict):
+        raise ContractError(
+            "campaign reservation journal does not match the approved execution plan"
+        )
+    consumption_store = StateStore(journal_root / "state.sqlite3")
+    consumed_rows = consumption_store.list_d087_reservation_consumptions(
+        live_authorization.execution_hash
+    )
+    journal_hash = _validate_campaign_reservation_journal(
+        resolved_journal_path,
+        cost_control=cost_control,
+        execution_hash=live_authorization.execution_hash,
+        campaign_cost_control_hash=(
+            manifest.experiment.campaign_cost_control_hash
+        ),
+        schedule_row_id=manifest.experiment.schedule_row_id,
+        run_id=manifest.run_id,
+        reservation_event_hash=reservation_event_hash,
+        run_root=journal_root,
+        consumed_rows=consumed_rows,
+    )
+    authorization = CampaignCostReservationAuthorization(
+        execution_hash=live_authorization.execution_hash,
+        campaign_cost_control_hash=(
+            manifest.experiment.campaign_cost_control_hash
+        ),
+        schedule_row_id=manifest.experiment.schedule_row_id,
+        run_id=manifest.run_id,
+        journal_path=str(resolved_journal_path),
+        journal_hash=journal_hash,
+        reservation_event_hash=reservation_event_hash,
+        _guard=_CAMPAIGN_COST_RESERVATION_GUARD,
+    )
+    if _campaign_reservation_consumption_path(authorization).exists():
+        raise ContractError("campaign cost reservation was already consumed")
+    if any(
+        row["schedule_row_id"] == authorization.schedule_row_id
+        for row in consumed_rows
+    ):
+        raise ContractError("campaign cost reservation was already consumed")
+    return authorization
+
+
+def _is_d087_paid_manifest(manifest: RunManifest | None) -> bool:
+    return bool(
+        manifest is not None
+        and manifest.model.provider == "openai"
+        and manifest.experiment is not None
+        and manifest.experiment.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+    )
+
+
+def _load_live_execution_plan(
+    authorization: LiveExecutionAuthorization,
+) -> dict[str, Any]:
+    try:
+        plan = json.loads(
+            Path(authorization.plan_path).read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ContractError("approved live execution plan is unavailable") from exc
+    if not isinstance(plan, dict):
+        raise ContractError("approved live execution plan must be an object")
+    return plan
+
+
+def _d087_journal_identity(
+    expected_path: Any,
+    supplied_path: str | Path,
+) -> tuple[Path, Path]:
+    """Require the exact canonical D-087 journal path and return its root."""
+
+    if not isinstance(expected_path, str):
+        raise ContractError("approved D-087 plan has no journal path")
+    supplied_text = str(supplied_path)
+    expected = Path(expected_path)
+    supplied = Path(supplied_text)
+    expected_resolved = expected.resolve(strict=False)
+    supplied_resolved = supplied.resolve(strict=False)
+    if not (
+        expected.is_absolute()
+        and supplied.is_absolute()
+        and expected_path == str(expected_resolved)
+        and supplied_text == expected_path
+        and supplied_text == str(supplied_resolved)
+        and supplied_resolved.name
+        == f"{CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID}.jsonl"
+        and supplied_resolved.parent.name == "journals"
+        and supplied_resolved.parent.parent.name == "experiments"
+    ):
+        raise ContractError(
+            "D-087 journal path must be the exact canonical approved path"
+        )
+    return supplied_resolved, supplied_resolved.parents[2]
+
+
+def _campaign_reservation_consumption_path(
+    authorization: CampaignCostReservationAuthorization,
+) -> Path:
+    journal_path = Path(authorization.journal_path)
+    digest = authorization.reservation_event_hash.removeprefix("sha256:")
+    # Keep the marker next to the journal with a compact name.  The full
+    # digest still supplies collision resistance while avoiding Windows'
+    # legacy path-length boundary in deeply nested test/runtime roots.
+    return journal_path.parent / f".{digest}.consumed"
+
+
+def _valid_sha256_identity(value: Any) -> bool:
+    return bool(
+        isinstance(value, str)
+        and re.fullmatch(r"sha256:[0-9a-f]{64}", value) is not None
+    )
+
+
+def _validate_campaign_reservation_journal(
+    path: Path,
+    *,
+    cost_control: dict[str, Any],
+    execution_hash: str,
+    campaign_cost_control_hash: str,
+    schedule_row_id: str,
+    run_id: str,
+    reservation_event_hash: str,
+    run_root: Path,
+    consumed_rows: list[dict[str, str]],
+) -> str:
+    """Validate the full D-087 cost state and its exact latest reservation."""
+
+    descriptor = cost_control.get("descriptor")
+    control_hash = cost_control.get("content_hash")
+    if not (
+        cost_control.get("schema_version") == _CAMPAIGN_COST_CONTROL_SCHEMA
+        and isinstance(descriptor, dict)
+        and descriptor.get("schema_version") == _CAMPAIGN_COST_POLICY_SCHEMA
+        and _valid_sha256_identity(control_hash)
+        and sha256_text(canonical_json(descriptor)) == control_hash
+        and control_hash == campaign_cost_control_hash
+        and _valid_sha256_identity(execution_hash)
+        and _valid_sha256_identity(schedule_row_id)
+        and _valid_sha256_identity(reservation_event_hash)
+        and isinstance(run_id, str)
+        and bool(run_id)
+    ):
+        raise ContractError("invalid D-087 campaign reservation identity")
+    cap_nanos = descriptor.get("hard_cap_nanos")
+    reserve_nanos = descriptor.get("per_run_reserve_nanos")
+    if (
+        type(cap_nanos) is not int
+        or cap_nanos <= 0
+        or type(reserve_nanos) is not int
+        or reserve_nanos <= 0
+    ):
+        raise ContractError("invalid D-087 campaign reservation policy")
+    try:
+        raw = path.read_bytes()
+        if not raw or not raw.endswith(b"\n"):
+            raise ValueError("campaign journal is not newline-terminated")
+        events = [json.loads(line) for line in raw.decode("utf-8").splitlines()]
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ContractError("invalid D-087 campaign reservation journal") from exc
+
+    previous_hash: str | None = None
+    accrued_nanos = 0
+    stage = "before_campaign"
+    active_row_id: str | None = None
+    active_run_id: str | None = None
+    active_usage_evidence: dict[str, Any] | None = None
+    active_usage_evidence_hash: str | None = None
+    active_usage_reconciliation_passed: bool | None = None
+    reserved_rows: set[str] = set()
+    reservation_events: dict[str, dict[str, str]] = {}
+    latest_reservation: dict[str, Any] | None = None
+    spend_halted = False
+    for sequence, event in enumerate(events, start=1):
+        if not isinstance(event, dict):
+            raise ContractError("campaign journal event must be an object")
+        event_hash = event.get("event_hash")
+        body = {key: value for key, value in event.items() if key != "event_hash"}
+        if not (
+            set(event)
+            == {
+                "schema_version",
+                "sequence",
+                "event_type",
+                "recorded_at",
+                "previous_event_hash",
+                "payload",
+                "event_hash",
+            }
+            and event.get("schema_version") == _CAMPAIGN_JOURNAL_EVENT_SCHEMA
+            and type(event.get("sequence")) is int
+            and event.get("sequence") == sequence
+            and event.get("previous_event_hash") == previous_hash
+            and isinstance(event.get("recorded_at"), str)
+            and bool(event.get("recorded_at"))
+            and _valid_sha256_identity(event_hash)
+            and sha256_text(canonical_json(body)) == event_hash
+            and isinstance(event.get("payload"), dict)
+        ):
+            raise ContractError("campaign reservation journal hash chain mismatch")
+        previous_hash = event_hash
+        event_type = event["event_type"]
+        payload = event["payload"]
+
+        if event_type == "CampaignStarted":
+            if not (
+                sequence == 1
+                and stage == "before_campaign"
+                and payload.get("campaign_cost_control_hash") == control_hash
+                and payload.get("execution_hash") == execution_hash
+            ):
+                raise ContractError("invalid D-087 campaign journal start")
+            stage = "idle"
+            continue
+        if stage == "before_campaign":
+            raise ContractError("D-087 campaign journal has no start event")
+
+        if event_type == "RunCostReserved":
+            row_id = payload.get("schedule_row_id")
+            reserved_run_id = payload.get("run_id")
+            if not (
+                stage == "idle"
+                and not spend_halted
+                and isinstance(row_id, str)
+                and row_id not in reserved_rows
+                and isinstance(reserved_run_id, str)
+                and bool(reserved_run_id)
+                and payload.get("campaign_cost_control_hash") == control_hash
+                and payload.get("cap_nanos") == cap_nanos
+                and payload.get("reserve_nanos") == reserve_nanos
+                and payload.get("accrued_cost_nanos_before") == accrued_nanos
+                and payload.get("held_reserve_nanos_after") == reserve_nanos
+                and accrued_nanos + reserve_nanos <= cap_nanos
+            ):
+                raise ContractError("invalid D-087 campaign cost reservation")
+            active_row_id = row_id
+            active_run_id = reserved_run_id
+            reserved_rows.add(row_id)
+            latest_reservation = event
+            reservation_events[event_hash] = {
+                "schedule_row_id": row_id,
+                "run_id": reserved_run_id,
+                "control_hash": control_hash,
+            }
+            stage = "reserved"
+            continue
+        if event_type == "RunStarted":
+            if not (
+                stage == "reserved"
+                and payload.get("schedule_row_id") == active_row_id
+                and payload.get("run_id") == active_run_id
+            ):
+                raise ContractError("invalid D-087 campaign run start")
+            stage = "started"
+            continue
+        if event_type == "RunTerminal":
+            usage_evidence = payload.get("usage_evidence")
+            usage_evidence_hash = payload.get("usage_evidence_hash")
+            usage_reconciliation_passed = payload.get(
+                "usage_reconciliation_passed"
+            )
+            if not (
+                stage == "started"
+                and payload.get("schedule_row_id") == active_row_id
+                and payload.get("run_id") == active_run_id
+                and isinstance(usage_evidence, dict)
+                and _valid_sha256_identity(usage_evidence_hash)
+                and usage_evidence.get("content_hash")
+                == usage_evidence_hash
+                and usage_reconciliation_passed is True
+                and usage_evidence.get("descriptor", {}).get(
+                    "qualification_hash"
+                )
+                == payload.get("qualification_hash")
+            ):
+                raise ContractError("invalid D-087 campaign run terminal event")
+            try:
+                from patchloop.evals.runner import (
+                    _validate_d087_usage_evidence,
+                )
+
+                _validate_d087_usage_evidence(
+                    usage_evidence,
+                    run_id=active_run_id or "",
+                    schedule_row_id=active_row_id or "",
+                )
+            except (ContractError, ImportError, TypeError, ValueError) as exc:
+                raise ContractError(
+                    "invalid D-087 terminal durable usage descriptor"
+                ) from exc
+            active_usage_evidence = usage_evidence
+            active_usage_evidence_hash = usage_evidence_hash
+            active_usage_reconciliation_passed = (
+                usage_reconciliation_passed
+            )
+            stage = "terminal"
+            continue
+        if event_type == "RunCostSettled":
+            run_cost_nanos = payload.get("actual_run_cost_nanos")
+            try:
+                from patchloop.evals.runner import (
+                    _load_d087_durable_usage_evidence,
+                    _validate_d087_usage_evidence,
+                )
+
+                durable_usage_evidence = (
+                    _load_d087_durable_usage_evidence(
+                        active_run_id or "",
+                        active_row_id or "",
+                        run_root,
+                    )
+                )
+                durable_cost_nanos = _validate_d087_usage_evidence(
+                    durable_usage_evidence,
+                    run_id=active_run_id or "",
+                    schedule_row_id=active_row_id or "",
+                )
+            except (ContractError, ImportError, OSError, TypeError, ValueError) as exc:
+                raise ContractError(
+                    "D-087 prior settlement durable usage could not be revalidated"
+                ) from exc
+            if not (
+                stage == "terminal"
+                and payload.get("schedule_row_id") == active_row_id
+                and payload.get("run_id") == active_run_id
+                and payload.get("campaign_cost_control_hash") == control_hash
+                and payload.get("cap_nanos") == cap_nanos
+                and payload.get("reserve_nanos") == reserve_nanos
+                and type(run_cost_nanos) is int
+                and isinstance(active_usage_evidence, dict)
+                and canonical_json(active_usage_evidence)
+                == canonical_json(durable_usage_evidence)
+                and payload.get("usage_evidence_hash")
+                == active_usage_evidence_hash
+                and active_usage_reconciliation_passed is True
+                and payload.get("usage_reconciliation_passed") is True
+                and run_cost_nanos == durable_cost_nanos
+                and 0 <= run_cost_nanos <= reserve_nanos
+                and payload.get("accrued_cost_nanos_before") == accrued_nanos
+                and payload.get("accrued_cost_nanos_after")
+                == accrued_nanos + run_cost_nanos
+                and payload.get("held_reserve_nanos_after") == 0
+                and payload.get("usage_reconciliation_passed") is True
+                and _valid_sha256_identity(payload.get("usage_evidence_hash"))
+            ):
+                raise ContractError("invalid D-087 campaign cost settlement")
+            accrued_nanos += run_cost_nanos
+            active_row_id = None
+            active_run_id = None
+            active_usage_evidence = None
+            active_usage_evidence_hash = None
+            active_usage_reconciliation_passed = None
+            stage = "idle"
+            continue
+        if event_type == "CostReserveUnavailable":
+            if not (
+                stage == "idle"
+                and not spend_halted
+                and payload.get("campaign_cost_control_hash") == control_hash
+                and payload.get("cap_nanos") == cap_nanos
+                and payload.get("reserve_nanos") == reserve_nanos
+                and payload.get("accrued_cost_nanos") == accrued_nanos
+                and payload.get("held_reserve_nanos") == 0
+                and accrued_nanos + reserve_nanos > cap_nanos
+            ):
+                raise ContractError("invalid D-087 unavailable-reserve event")
+            spend_halted = True
+            stage = "halted"
+            continue
+        if event_type == "RunNotStarted":
+            if stage != "halted":
+                raise ContractError("invalid D-087 not-started event")
+            continue
+        if event_type == "CampaignCompleted":
+            if stage not in {"idle", "terminal", "halted"}:
+                raise ContractError("invalid D-087 campaign completion")
+            stage = "completed"
+            continue
+        raise ContractError(f"unsupported D-087 campaign journal event: {event_type}")
+
+    for consumed in consumed_rows:
+        reservation = reservation_events.get(
+            consumed.get("reservation_event_hash", "")
+        )
+        if not (
+            consumed.get("execution_hash") == execution_hash
+            and consumed.get("control_hash") == control_hash
+            and reservation is not None
+            and reservation.get("schedule_row_id")
+            == consumed.get("schedule_row_id")
+            and reservation.get("run_id") == consumed.get("run_id")
+            and reservation.get("control_hash")
+            == consumed.get("control_hash")
+        ):
+            raise ContractError(
+                "D-087 journal omits or rewrites a consumed reservation"
+            )
+
+    if not (
+        stage == "started"
+        and latest_reservation is not None
+        and latest_reservation.get("event_hash") == reservation_event_hash
+        and latest_reservation.get("payload", {}).get("schedule_row_id")
+        == schedule_row_id
+        and latest_reservation.get("payload", {}).get("run_id") == run_id
+        and events[-1].get("event_type") == "RunStarted"
+        and events[-1].get("payload", {}).get("schedule_row_id")
+        == schedule_row_id
+        and events[-1].get("payload", {}).get("run_id") == run_id
+        and events[-1].get("sequence")
+        == latest_reservation.get("sequence", 0) + 1
+    ):
+        raise ContractError(
+            "D-087 capability requires the exact latest reserved and started run"
+        )
+    return sha256_bytes(raw)
+
+
 class AgentRunner:
     def __init__(self, root: str | Path | None = None) -> None:
         self.root = Path(root) if root else runtime_root()
@@ -197,6 +660,9 @@ class AgentRunner:
         experiment_context: ExperimentRunContext | None = None,
         self_validation: bool = False,
         live_authorization: LiveExecutionAuthorization | None = None,
+        campaign_cost_reservation: (
+            CampaignCostReservationAuthorization | None
+        ) = None,
         _allowed_worker_statuses: set[RunStatus] | None = None,
     ) -> dict[str, Any]:
         task_dir = self._task_dir(task_path)
@@ -251,6 +717,15 @@ class AgentRunner:
             )
         if selected_provider == "openai":
             self._require_live_authorization(manifest, live_authorization)
+            self._require_campaign_cost_reservation(
+                manifest,
+                live_authorization,
+                campaign_cost_reservation,
+            )
+        elif campaign_cost_reservation is not None:
+            raise ContractError(
+                "campaign cost reservation capability is only valid for OpenAI"
+            )
 
         docker_sandbox = self._docker_sandbox(package)
         backend = (
@@ -353,6 +828,12 @@ class AgentRunner:
                         workspace=workspace,
                     )
                 )
+                if selected_provider == "openai":
+                    self._consume_campaign_cost_reservation(
+                        manifest,
+                        live_authorization,
+                        campaign_cost_reservation,
+                    )
                 return self._execute(
                     package,
                     workspace,
@@ -394,6 +875,16 @@ class AgentRunner:
         live_authorization: LiveExecutionAuthorization | None = None,
     ) -> dict[str, Any]:
         manifest = self.state.get_manifest(run_id)
+        if (
+            manifest.model.provider == "openai"
+            and manifest.experiment is not None
+            and manifest.experiment.experiment_id
+            == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+        ):
+            raise ContractError(
+                "D-087 live resume is disabled until request-level billing "
+                "reservations are durable"
+            )
         task_dir = self._find_task(manifest)
         if manifest.model.provider == "mock":
             model = "mock"
@@ -484,6 +975,135 @@ class AgentRunner:
             raise ContractError(
                 "live model execution requires an approved experiment execution capability"
             )
+
+    def _require_campaign_cost_reservation(
+        self,
+        manifest: RunManifest | None,
+        live_authorization: LiveExecutionAuthorization | None,
+        authorization: CampaignCostReservationAuthorization | None,
+    ) -> None:
+        required = _is_d087_paid_manifest(manifest)
+        if not required:
+            if authorization is not None:
+                raise ContractError(
+                    "campaign cost reservation capability is reserved for D-087"
+                )
+            return
+        if (
+            manifest is None
+            or manifest.experiment is None
+            or live_authorization is None
+            or authorization is None
+            or authorization._guard is not _CAMPAIGN_COST_RESERVATION_GUARD
+            or authorization.execution_hash
+            != manifest.experiment.execution_hash
+            or authorization.execution_hash
+            != live_authorization.execution_hash
+            or authorization.campaign_cost_control_hash
+            != manifest.experiment.campaign_cost_control_hash
+            or authorization.schedule_row_id
+            != manifest.experiment.schedule_row_id
+            or authorization.run_id != manifest.run_id
+            or not _valid_sha256_identity(authorization.journal_hash)
+            or not _valid_sha256_identity(
+                authorization.reservation_event_hash
+            )
+        ):
+            raise ContractError(
+                "D-087 live execution requires an exact campaign cost "
+                "reservation capability"
+            )
+        plan = _load_live_execution_plan(live_authorization)
+        expected_journal_path = plan.get("journal_path")
+        cost_control = plan.get("campaign_cost_control")
+        journal_path, journal_root = _d087_journal_identity(
+            expected_journal_path,
+            authorization.journal_path,
+        )
+        if (
+            self.root.resolve(strict=False) != journal_root
+            or self.state.path.resolve(strict=False)
+            != (journal_root / "state.sqlite3").resolve(strict=False)
+            or not isinstance(cost_control, dict)
+        ):
+            raise ContractError(
+                "D-087 runner root and reservation journal root must match"
+            )
+        consumed_rows = self.state.list_d087_reservation_consumptions(
+            authorization.execution_hash
+        )
+        observed_journal_hash = _validate_campaign_reservation_journal(
+            journal_path,
+            cost_control=cost_control,
+            execution_hash=authorization.execution_hash,
+            campaign_cost_control_hash=(
+                authorization.campaign_cost_control_hash
+            ),
+            schedule_row_id=authorization.schedule_row_id,
+            run_id=authorization.run_id,
+            reservation_event_hash=authorization.reservation_event_hash,
+            run_root=journal_root,
+            consumed_rows=consumed_rows,
+        )
+        if observed_journal_hash != authorization.journal_hash:
+            raise ContractError(
+                "D-087 campaign journal bytes changed after capability issuance"
+            )
+        if _campaign_reservation_consumption_path(authorization).exists():
+            raise ContractError("D-087 campaign cost reservation was already consumed")
+        if any(
+            row["schedule_row_id"] == authorization.schedule_row_id
+            for row in consumed_rows
+        ):
+            raise ContractError("D-087 campaign cost reservation was already consumed")
+
+    def _consume_campaign_cost_reservation(
+        self,
+        manifest: RunManifest,
+        live_authorization: LiveExecutionAuthorization | None,
+        authorization: CampaignCostReservationAuthorization | None,
+    ) -> None:
+        if not _is_d087_paid_manifest(manifest):
+            return
+        self._require_campaign_cost_reservation(
+            manifest,
+            live_authorization,
+            authorization,
+        )
+        assert authorization is not None
+        consumption = self.state.record_d087_reservation_consumption(
+            execution_hash=authorization.execution_hash,
+            schedule_row_id=authorization.schedule_row_id,
+            run_id=authorization.run_id,
+            reservation_event_hash=authorization.reservation_event_hash,
+            control_hash=authorization.campaign_cost_control_hash,
+        )
+        marker_path = _campaign_reservation_consumption_path(authorization)
+        marker = {
+            "schema_version": _CAMPAIGN_RESERVATION_CONSUMPTION_SCHEMA,
+            "execution_hash": authorization.execution_hash,
+            "campaign_cost_control_hash": (
+                authorization.campaign_cost_control_hash
+            ),
+            "schedule_row_id": authorization.schedule_row_id,
+            "run_id": authorization.run_id,
+            "journal_path": authorization.journal_path,
+            "journal_hash": authorization.journal_hash,
+            "reservation_event_hash": authorization.reservation_event_hash,
+            "consumed_at": consumption["consumed_at"],
+            "state_consumption_content_hash": consumption["content_hash"],
+        }
+        marker["content_hash"] = sha256_text(canonical_json(marker))
+        marker_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with marker_path.open("x", encoding="utf-8", newline="\n") as stream:
+                stream.write(canonical_json(marker) + "\n")
+                stream.flush()
+                os.fsync(stream.fileno())
+        except FileExistsError as exc:
+            raise ContractError(
+                "D-087 campaign cost reservation was already consumed"
+            ) from exc
 
     @staticmethod
     def _live_plan_unchanged(authorization: LiveExecutionAuthorization) -> bool:

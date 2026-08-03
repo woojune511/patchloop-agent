@@ -1063,6 +1063,36 @@ Portable seal은 `reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot
 provider 전에 차단하는 hard-consumed set에 들어간다. Final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다.
 
 이 architecture는 single-row readiness와 observed Babel success만 보존한다. No-memory baseline, comparison
-denominator, memory admission/index, core와 analysis를 열지 않는다. 다음 architecture gate는 `$20 → $88`
-12-run cap의 별도 decision, pilot run ID를 결속한 새 campaign source commit, fresh preflight/hash와 별도
-사용자 비용 승인이다.
+denominator, memory admission/index, core와 analysis를 열지 않는다. D-086 시점의 다음 architecture 후보는
+`$20 → $88`였지만, 이 forward choice는 D-087의 `$25` accrued-spend architecture가 supersede한다.
+
+## 28. D-087 campaign-local accrued-spend architecture
+
+D-087은 run resource ceiling과 campaign spending authority를 별도 contract로 둔다.
+
+```text
+exact suite + fixed list prices
+  -> 12-run worst-rate disclosure ($87.75)
+  -> campaign cost-control hash ($25 cap, $7.3125 next-run reserve)
+  -> execution plan/hash + RunManifest binding
+  -> fsync RunCostReserved
+  -> one-use paid-boundary capability
+  -> atomic SQLite reservation consumption
+  -> runner.start / provider boundary
+  -> durable qualification/source/result usage reload
+  -> fixed-rate nano-USD RunCostSettled
+  -> journal-chain campaign-cost-qualification-v1
+```
+
+Money comparison은 binary float가 아니라 integer nano-USD를 사용한다. 다음 row의 full reserve를 포함한
+committed amount가 cap 이하일 때만 시작한다. Exact canonical journal path, runtime root와 AgentRunner state root를
+같이 묶고 `BEGIN IMMEDIATE`와 unique constraints로 schedule row를 한 번만 소비한다. Preserved SQLite anchor가
+있으면 marker 삭제, journal reset, alternate root와 과거 settlement 축소·rehash도 다음 paid boundary에서
+거부한다. Missing usage나 interruption은 reserve를 0으로 해제하지 않는다. Request-level provider billing
+ledger는 아직 없으므로 전체 local state rollback까지 방어한다고 주장하지 않고 exact D-087 live resume을
+금지한다.
+
+Cost-control descriptor/hash는 suite/execution identity, manifest context, paid start의 full-plan reconstruction과
+trace qualification에 포함된다. Historical suite에는 optional field를 직렬화하지 않으므로 기존 hash와 artifact
+identity가 바뀌지 않는다. 이 architecture는 cap을 기술적으로 강제할 뿐 12/12 completion, baseline, memory
+admission 또는 core authority를 만들지 않는다.
