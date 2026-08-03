@@ -2,17 +2,34 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
-2026-08-03 D-083은 exact D-081 r3의 public process evidence만으로 condition-neutral comparison-budget
-policy를 offline에서 동결한다. Frozen per-run policy는 model/tool call `null`/`null`, total token
-1,600,000, wall 1,800초, output 25,000, SDK transport retry 0이다. D-081 r3 pyfakefs observed-prefix
-minimum 1,303,223에 20% headroom을 적용한 `1,563,867.6`을 100,000 단위로 올림했다. Completion을
-보장하지 않으며 D-080 historical minimum 1,815,619는 이 exact-source derivation 범위 밖이다.
+2026-08-03 D-084는 D-083에서 동결한 condition-neutral comparison budget을 실제 실행 identity에
+결속하는 offline runtime gate다. `condition-neutral-comparison-runtime-contract-v1`은 model/tool call
+`null`/`null`, total token 1,600,000, wall 1,800초, output 25,000, SDK transport retry 0, generic
+V2/V5 prompt·tool·context와 memory allowance 2,000을 execution plan과 execution hash에 넣는다. 같은
+tuple은 `RunManifest`, runner start/resume와 `condition-neutral-comparison-runtime-evidence-v1`
+`RunStarted` content-addressed artifact에서 다시 검증된다. Budget diagnostic도 exact profile만 허용하고,
+no-memory trace qualification은 approved plan, runtime CAS와 disabled-call observability policy를 독립
+재구성한다.
+
+Core는 네 memory condition에 같은 budget을 전달할 수 있는 plan/manifest/start-resume 구조까지만
+지원한다. Memory index freeze와 memory-condition별 terminal qualification은 아직 구현·검증되지 않아
+core campaign은 닫혀 있다. D-084는 provider call 0, model cost `$0`이며 승인 execution hash, live
+authority, no-memory baseline, comparison denominator, memory admission 또는 core unlock을 만들지 않는다.
+Append-only gate artifact는
+`reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json`이다.
+Final verification은 focused D-084 68/68과 repository-wide 1,304 collected 중 1,297 passed/7
+environment-dependent skipped다. Artifact SHA는
+`sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이다.
+
+Historical D-083은 exact D-081 r3의 public process evidence만으로 frozen policy를 만든 immutable
+predecessor다. D-081 r3 pyfakefs observed-prefix minimum 1,303,223에 20% headroom을 적용한
+`1,563,867.6`을 100,000 단위로 올림했으며 completion을 보장하지 않는다. D-080 historical minimum
+1,815,619는 이 exact-source derivation 범위 밖이다.
 
 Worst-rate reserve는 `$7.3125`/run, `$87.75`/12 run, `$131.625`/18 run, `$702`/96 run이다. 기존
 `$20` 12-run cap과 `$150` project cap은 그대로이므로 source template과 live path는 계속 fail closed다.
-D-083은 `comparison_budget_policy_frozen=true`만 만들고 live execution, comparison denominator,
-no-memory baseline, memory admission과 core는 열지 않는다. Execution-plan runtime evidence, RunManifest와
-qualification support도 다음 gate까지 pending이다. Append-only artifact는
+D-083은 `comparison_budget_policy_frozen=true`만 만들었고 D-084가 그 값을 소급 수정하지 않는다.
+D-083의 append-only artifact는
 `reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`, SHA는
 `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`다. Hidden outcome은
 derivation에 사용하지 않았고 provider call/model cost는 0/$0이다. Final verification은 1,238 tests

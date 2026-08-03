@@ -1001,3 +1001,27 @@ silently lowering the design or fabricating missing results.
   `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`. D-083 implementation adds
   zero provider calls and `$0` model cost. Final verification collected 1,238 tests: 1,231 passed and seven
   environment-dependent tests were skipped.
+
+## D-084 wires the frozen runtime identity, not a comparison result
+
+- D-084 adds `condition-neutral-comparison-runtime-contract-v1` to the execution plan/hash and validates the same
+  exact tuple in `RunManifest` before start. It does not change D-083's 1,600,000-token derivation or claim that
+  the ceiling guarantees completion.
+- `condition-neutral-comparison-runtime-evidence-v1` is stored as a content-addressed artifact referenced by
+  `RunStarted`; start/resume and the no-memory qualifier verify both descriptor and bytes. This proves contract
+  continuity, not model correctness or task success.
+- Budget diagnostics and nullable count limits accept only the exact registered profile. Null counts remain
+  observability-only while token, wall, exact-request, cost, loop, constrained-tool, Docker/network and evaluator
+  guards remain active.
+- The four core conditions have structural plan/manifest/start-resume support with the same resource tuple.
+  Frozen-index identity is not yet bound into the execution hash and per-run evidence, and leak-safe per-condition
+  terminal qualification remains pending. `CORE_MEMORY_RUNTIME_BINDING_PENDING` and the paid-call boundary keep
+  core non-runnable, unqualified and locked.
+- The artifact `reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json` records an
+  offline gate only. It creates no approved execution hash, provider call, model cost, live authority, baseline,
+  comparison denominator, memory admission, core campaign or `analysis_ready` state.
+- Final verification was focused D-084 68/68 and repository-wide 1,304 collected, 1,297 passed with seven
+  environment-dependent skips. Artifact SHA is
+  `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`.
+- D-081 nullable-count calibration, the historical 250k runtime and all D-083 bytes remain immutable and are not
+  reinterpreted under the D-084 contract.

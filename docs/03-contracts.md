@@ -2729,3 +2729,59 @@ Append-only artifact는
 provider call 0, model cost `$0`인 offline contract다.
 D-081/D-082 result, calibration-only status, task outcome과 evidence identity는 수정하지 않는다.
 Final verification은 1,238 collected 중 1,231 passed/7 environment-dependent skipped다.
+
+## 26. D-084 condition-neutral comparison runtime contract
+
+`condition-neutral-comparison-runtime-contract-v1`은 D-083 profile을 execution identity로 승격하되
+execution authority는 부여하지 않는다. Exact selector는 다음 둘 중 하나의 purpose만 허용한다.
+
+- `memory-development-no-memory`: condition은 정확히 `no_memory` 하나다.
+- `core`: ordered condition은 `no_memory`, `raw_trace`, `structured`, `selective_structured`다.
+
+두 purpose 모두 model `gpt-5.4-mini-2026-03-17`, medium/standard/default, SDK retry 0,
+`SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, output 25,000, memory context 2,000과 아래 exact
+budget을 요구한다.
+
+```yaml
+max_model_calls: null
+max_tool_calls: null
+max_total_tokens: 1600000
+wall_clock_timeout_seconds: 1800
+call_guard_policy: model-tool-observability-only-v1
+```
+
+Plan contract의 canonical field set은 purpose, ordered `memory_conditions`, provider/model/mode, retry,
+output, budget, memory allowance, tool/context version, exact system-prompt/tool-schema hash, call-guard policy,
+harness commit과 다음 D-083 descriptor다.
+
+```yaml
+comparison_budget_policy:
+  schema_version: condition-neutral-comparison-budget-freeze-v1
+  profile_id: gpt54mini-v2v5-condition-neutral-1600k-v1
+  path: reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json
+  content_hash: sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88
+```
+
+이 document는 execution hash에 포함된다. Start 직전에는 `RunManifest`에서 같은 document를 재구성해
+approved preflight와 exact 비교한다. Partial null count, 목적·조건·model·retry·output·budget·V2/V5·fault
+또는 public-review sidecar drift는 거부한다. Historical finite-count 200k/250k profile, D-081 2.4M과 D-079
+3M nullable-count profile은 각자의 exact selector로만 유지되며 새 contract로 재해석하지 않는다.
+
+`condition-neutral-comparison-runtime-evidence-v1`은 `RunStarted.runtime_contract_artifact`가 가리키는
+content-addressed JSON이다. 이 trace document는 purpose와 현재 memory condition, model tuple, budget,
+memory allowance, system prompt bytes, tool-schema bytes, V2/V5, call-guard policy와 D-083 descriptor를 가진다.
+Descriptor CAS와 bytes를 모두 검증하고 start/resume에서 expected document와 exact 비교한다.
+
+No-memory qualification은 `comparison_runtime_contract`와 `disabled_call_guard_contract`를 trace check로
+추가한다. 후자는 null count가 counter observability일 뿐 model/tool admission block으로 사용되지 않았는지
+검사한다. Core 네 condition의 plan/manifest/runtime document contract는 구현됐지만 memory index와 각
+condition의 frozen-index identity와 leak-safe terminal qualification contract는 pending이다. Core preflight는
+`CORE_MEMORY_RUNTIME_BINDING_PENDING`을 유지하고 paid-call boundary도 core manifest를 거부한다. 따라서
+structural support를 core campaign qualification 또는 comparison evidence로 표현하지 않는다.
+
+Append-only offline gate artifact는
+`reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json`이다. Provider call/model
+cost는 0/$0이며 승인 execution hash와 live 권한은 없다.
+Final verification은 focused D-084 68/68과 repository-wide 1,304 collected 중 1,297 passed/7
+environment-dependent skipped다. Artifact SHA는
+`sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이다.

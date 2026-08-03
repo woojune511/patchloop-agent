@@ -1,6 +1,7 @@
-# D-083 source-only comparison-budget freeze. Runtime/qualification support,
-# the memory index and a separate cost/scale decision are still pending, so
-# this template does not authorize provider execution.
+# D-084 binds the D-083 comparison budget through the structural core runtime
+# path. Frozen-index identity binding, per-condition terminal qualification and
+# a separate cost/scale decision remain pending, so this template does not
+# authorize provider execution.
 schema_version: experiment-v2
 experiment_id: core-YYYYMMDD
 purpose: core

@@ -1,0 +1,182 @@
+{
+  "schema_version": "condition-neutral-comparison-runtime-gate-v1",
+  "gate_id": "d084-condition-neutral-comparison-runtime-gate",
+  "predecessor": {
+    "schema_version": "condition-neutral-comparison-budget-freeze-v1",
+    "freeze_id": "d083-condition-neutral-comparison-budget-freeze",
+    "path": "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json",
+    "sha256": "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88",
+    "historical_artifact_modified": false
+  },
+  "comparison_profile": {
+    "schema_version": "condition-neutral-comparison-profile-v1",
+    "profile_id": "gpt54mini-v2v5-condition-neutral-1600k-v1",
+    "purposes": [
+      "memory-development-no-memory",
+      "core"
+    ],
+    "memory_conditions": [
+      "no_memory",
+      "raw_trace",
+      "structured",
+      "selective_structured"
+    ],
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "system_prompt_version": "SYSTEM_PROMPT_V3",
+    "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+    "tool_schema_version": "v2",
+    "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+    "context_policy_version": "phase-evidence-v5",
+    "memory_max_context_tokens": 2000,
+    "max_output_tokens": 25000,
+    "budget": {
+      "max_model_calls": null,
+      "max_tool_calls": null,
+      "max_total_tokens": 1600000,
+      "wall_clock_timeout_seconds": 1800
+    },
+    "call_guard_policy": "model-tool-observability-only-v1"
+  },
+  "runtime_contract": {
+    "schema_version": "condition-neutral-comparison-runtime-contract-v1",
+    "comparison_budget_policy": {
+      "schema_version": "condition-neutral-comparison-budget-freeze-v1",
+      "profile_id": "gpt54mini-v2v5-condition-neutral-1600k-v1",
+      "path": "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json",
+      "content_hash": "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
+    },
+    "execution_plan_bound_fields": [
+      "purpose",
+      "memory_conditions",
+      "model_provider",
+      "model_id",
+      "reasoning_effort",
+      "reasoning_mode",
+      "service_tier",
+      "transport_max_retries",
+      "max_output_tokens",
+      "budget",
+      "memory_max_context_tokens",
+      "tool_schema_version",
+      "context_policy_version",
+      "system_prompt_hash",
+      "tool_schema_hash",
+      "call_guard_policy",
+      "comparison_budget_policy",
+      "harness_git_commit"
+    ],
+    "included_in_execution_hash": true,
+    "manifest_reconstructed_before_start": true
+  },
+  "runtime_evidence": {
+    "schema_version": "condition-neutral-comparison-runtime-evidence-v1",
+    "storage_boundary": "RunStarted.runtime_contract_artifact",
+    "content_addressed": true,
+    "descriptor_and_bytes_verified": true,
+    "start_validation": true,
+    "resume_validation": true,
+    "purpose_and_memory_condition_bound": true,
+    "budget_and_call_guard_policy_bound": true
+  },
+  "offline_binding_matrix": {
+    "schema_version": "condition-neutral-comparison-binding-matrix-v1",
+    "source_suite_exact_selector": true,
+    "execution_plan_runtime_contract": true,
+    "execution_hash_binding": true,
+    "run_manifest_exact_profile": true,
+    "pre_start_manifest_reconstruction": true,
+    "run_started_runtime_cas": true,
+    "resume_runtime_cas_validation": true,
+    "budget_diagnostic_exact_profile": true,
+    "no_memory_trace_qualification": true,
+    "core_four_condition_plan_manifest_runtime_structure": true,
+    "core_live_authorization_fail_closed": true,
+    "core_memory_condition_terminal_qualification": false
+  },
+  "qualification_boundary": {
+    "schema_version": "condition-neutral-comparison-qualification-boundary-v1",
+    "no_memory_purpose": "memory-development-no-memory",
+    "no_memory_required_checks": [
+      "approved_execution_plan",
+      "comparison_runtime_contract",
+      "disabled_call_guard_contract",
+      "pricing_start_freshness",
+      "no_memory_boundary"
+    ],
+    "budget_diagnostic_requires_exact_profile": true,
+    "arbitrary_or_partial_null_count_limits_rejected": true,
+    "core_structural_conditions_supported": [
+      "no_memory",
+      "raw_trace",
+      "structured",
+      "selective_structured"
+    ],
+    "core_terminal_qualification_implemented": false,
+    "core_terminal_qualification_blocker": "frozen memory-index identity binding and leak-safe per-condition terminal qualification contract remain pending",
+    "core_preflight_blocker_code": "CORE_MEMORY_RUNTIME_BINDING_PENDING"
+  },
+  "historical_compatibility": {
+    "schema_version": "condition-neutral-comparison-historical-boundary-v1",
+    "d081_nullable_count_profile_reinterpreted": false,
+    "historical_250k_profile_reinterpreted": false,
+    "historical_artifacts_modified": false,
+    "exact_profile_selection_required": true
+  },
+  "authorization_boundary": {
+    "schema_version": "condition-neutral-comparison-runtime-authorization-boundary-v1",
+    "offline_gate_only": true,
+    "provider_execution_authorized": false,
+    "approved_execution_hash_created": false,
+    "live_cost_approval_embedded": false,
+    "source_cost_caps_changed": false,
+    "core_live_authorization_blocked": true,
+    "automatic_execution_authorized": false
+  },
+  "verification": {
+    "schema_version": "condition-neutral-comparison-runtime-verification-v1",
+    "verified_on": "2026-08-03",
+    "focused": {
+      "command": "uv run pytest -q tests/test_d084_manifest_contract.py tests/test_d084_runtime_binding.py tests/test_d084_qualification_binding.py tests/test_d084_runtime_gate_artifact.py tests/test_experiments.py::test_generic_comparison_runtime_gate_excludes_v10_v11_and_binds_runtime_contract tests/test_experiments.py::test_d084_core_runtime_binding_stays_closed_with_a_valid_memory_index",
+      "passed": 68,
+      "failed": 0
+    },
+    "repository_regression": {
+      "command": "uv run pytest -q",
+      "collected": 1304,
+      "passed": 1297,
+      "skipped": 7,
+      "failed": 0,
+      "duration_seconds": 645.5
+    },
+    "static_checks": {
+      "ruff_check": true,
+      "compileall": true,
+      "git_diff_check": true,
+      "json_parse": true
+    },
+    "provider_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "claims_boundary": {
+    "comparison_runtime_gate_implemented": true,
+    "comparison_budget_policy_frozen": true,
+    "condition_neutral_runtime_structure_implemented": true,
+    "no_memory_trace_qualification_supported": true,
+    "core_four_condition_structure_supported": true,
+    "core_memory_condition_terminal_qualification_supported": false,
+    "provider_calls_made": 0,
+    "added_model_cost_usd": 0.0,
+    "live_execution_authorized": false,
+    "no_memory_baseline_result_established": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "core_campaign_unlocked": false,
+    "analysis_ready": false,
+    "historical_artifacts_modified": false
+  }
+}

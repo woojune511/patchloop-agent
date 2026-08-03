@@ -615,6 +615,35 @@ Evidence/issue:
 - Cost: provider call 0, model cost `$0`.
 - Date: 2026-08-03
 
+### D-084 accepted decision — offline condition-neutral comparison runtime binding
+
+- Status: accepted offline runtime gate. D-083 policy bytes는 수정하지 않고 exact tuple을 execution identity에
+  결속한다.
+- Runtime contract: `condition-neutral-comparison-runtime-contract-v1`은 purpose, ordered memory conditions,
+  `gpt-5.4-mini-2026-03-17` medium/standard/default, retry 0, output 25,000,
+  `null/null/1,600,000/1,800`, memory allowance 2,000, `SYSTEM_PROMPT_V3`, tool v2/context
+  `phase-evidence-v5`, prompt/tool hash, `model-tool-observability-only-v1`, D-083 path/SHA와 harness commit을
+  execution plan과 hash에 포함한다.
+- Manifest/start decision: Start 전에 exact `RunManifest`에서 runtime contract를 재구성한다. Partial null이나
+  purpose/condition/model/retry/output/budget/V2/V5/fault/sidecar drift는 fail closed한다. Start는
+  `condition-neutral-comparison-runtime-evidence-v1`을 content-addressed artifact로 저장하고
+  `RunStarted`에 full descriptor를 남기며 resume도 descriptor·bytes·expected document를 다시 검증한다.
+- Qualification decision: Budget diagnostic은 exact registered profile만 허용한다. No-memory qualifier는
+  approved execution plan, `comparison_runtime_contract`, `disabled_call_guard_contract`, pricing freshness와
+  no-memory boundary를 요구한다. D-081 nullable-count와 historical 250k/200k semantics는 소급 변경하지 않는다.
+- Core boundary: Four-condition core는 동일 tuple의 plan/manifest/offline start-resume structure만 구현한다.
+  Frozen-index identity가 execution hash와 per-run evidence에 결속되지 않았고 condition별 leak-safe terminal
+  qualification도 pending이다. 따라서 `CORE_MEMORY_RUNTIME_BINDING_PENDING` preflight blocker와 paid-call
+  거부를 유지하며 core campaign과 aggregate gate는 닫혀 있다.
+- Authority/claims: Provider call 0, model cost `$0`; 승인 execution hash, live execution, no-memory baseline,
+  comparison denominator, memory admission, core 또는 `analysis_ready`를 만들지 않는다. 기존 `$20`/`$150`
+  cap도 바꾸지 않는다.
+- Evidence: `reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json`.
+- Verification: focused D-084 68/68; repository-wide 1,304 collected, 1,297 passed/7 environment-dependent
+  skipped. Artifact SHA
+  `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`.
+- Date: 2026-08-03
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

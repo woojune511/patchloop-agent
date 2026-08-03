@@ -1,5 +1,6 @@
-# D-083 source-only comparison-budget freeze. The runtime/qualification bridge,
-# exact pilot and separate cost decision are still pending, so this template
+# D-084 binds the D-083 comparison budget through the runtime and no-memory
+# qualification path. A qualified pilot, fresh clean preflight, updated cost
+# authorization and exact execution hash are still pending, so this template
 # does not authorize provider execution.
 schema_version: experiment-v2
 experiment_id: dev-no-memory-v5-20260730-r1

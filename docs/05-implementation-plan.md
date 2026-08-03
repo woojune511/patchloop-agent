@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-083 condition-neutral comparison-budget policy frozen offline; runtime support and all
-live authority remain closed**
+현재 milestone: **D-084 condition-neutral comparison runtime gate implemented offline; all live, baseline,
+memory-admission and core authority remain closed**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ live authority remain closed**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-083 offline comparison-budget freeze | null/null/1.6M/1,800초/output25k/retry0 policy만 동결; runtime/live/baseline/memory/core closed |
+| Phase 6 evaluation | D-084 offline comparison runtime gate | D-083 tuple을 plan/hash, RunManifest, RunStarted CAS, start/resume, budget diagnostic과 no-memory qualification에 결속; core terminal qualification과 live/baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -87,6 +87,16 @@ D-083은 exact D-081 r3 pyfakefs observed-prefix minimum 1,303,223에 20% headro
 `$7.3125`/run, `$87.75`/12, `$131.625`/18, `$702`/96이고 기존 `$20`/`$150` cap은 유지된다.
 따라서 runtime/manifest/qualification support와 live execution, baseline, memory admission, core는 다음
 gate까지 fail closed다.
+
+D-084는 그 pending runtime support를 provider 호출 없이 구현한다.
+`condition-neutral-comparison-runtime-contract-v1`을 execution plan/hash에 넣고 exact
+`RunManifest`에서 start 전에 재구성한다. Runner는
+`condition-neutral-comparison-runtime-evidence-v1`을 content-addressed `RunStarted` artifact로 남기며
+resume에서도 descriptor와 bytes를 다시 검증한다. Budget diagnostic은 exact registered profile만 받고,
+no-memory trace qualifier는 approved plan, runtime CAS와 disabled-call observability contract를 독립
+검증한다. Core 네 condition은 동일 tuple의 plan/manifest/start-resume 구조만 지원한다. Memory index와
+condition별 terminal qualification, 기존 cost-cap conflict가 남아 live execution, baseline, denominator,
+memory admission과 core는 계속 닫혀 있다.
 
 ## 1. Sequencing rule
 
@@ -192,7 +202,47 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current offline freeze gate — D-083 condition-neutral comparison-budget policy
+## Current offline runtime gate — D-084 condition-neutral comparison binding
+
+목표: D-083 exact tuple을 source config에서 execution plan/hash, `RunManifest`, durable start/resume evidence,
+budget diagnostic과 independent no-memory qualification까지 동일 identity로 연결한다. Provider 실행이나
+memory/core 결과를 만들지 않는다.
+
+### Ordered work items
+
+1. **완료:** Exact future dev/core tuple만
+   `condition-neutral-comparison-runtime-contract-v1`을 선택하고 purpose, ordered memory conditions,
+   model/mode/retry/output, budget, memory allowance, V2/V5, prompt/tool hash, D-083 descriptor와 harness commit을
+   execution hash에 결속한다.
+2. **완료:** Nullable count의 exact D-084 profile을 `RunManifest`에 허용하되 partial null, purpose, condition,
+   model, retry, output, budget, fault와 public-review sidecar drift를 거부한다. Historical 200k/250k,
+   D-081 2.4M과 D-079 3M profile은 소급 변경하지 않는다.
+3. **완료:** Runner start가 `condition-neutral-comparison-runtime-evidence-v1` bytes와 full CAS descriptor를
+   `RunStarted`에 남기고 resume가 descriptor·bytes·expected document를 재검증하도록 한다.
+4. **완료:** Budget diagnostic과 no-memory trace qualifier가 exact profile, approved plan,
+   `comparison_runtime_contract`, `disabled_call_guard_contract`, pricing freshness와 no-memory boundary를
+   독립 검증하도록 한다.
+5. **완료:** Core 네 memory condition의 plan/manifest/offline start-resume 구조가 같은 budget을 받도록 하되,
+   index identity가 hash-bound되기 전 preflight와 paid-call boundary를 fail closed한다.
+6. **대기:** Frozen memory index와 raw/structured/selective condition별 leak-safe terminal qualification을
+   구현·검증한다. 이 gate 전에는 96-run core를 실행하거나 qualified로 표현하지 않는다.
+7. **완료:** Append-only artifact
+   `reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json`에 offline boundary를
+   기록한다. Provider call/model cost는 0/$0이고 승인 execution hash는 없다.
+   Final verification은 focused D-084 68/68과 repository-wide 1,304 collected 중 1,297 passed/7
+   environment-dependent skipped다. Artifact SHA는
+   `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이다.
+
+### Gate status — offline runtime support implemented; execution gates closed
+
+- D-083 artifact SHA와 exact tuple은 immutable하게 유지된다.
+- No-memory trace qualification support는 구현됐지만 실제 baseline run/result는 아직 없다.
+- Core는 structural support만 있고 frozen-index identity binding과 memory-condition terminal qualification이
+  없다. `CORE_MEMORY_RUNTIME_BINDING_PENDING`과 paid-call 거부를 유지한다.
+- 기존 `$20`/`$150` cap 충돌, fresh clean preflight, exact execution hash와 사용자 비용 승인이 남아 있다.
+- `analysis_ready=false`, comparison denominator, memory admission과 core closure는 유지된다.
+
+## Historical offline freeze gate — D-083 condition-neutral comparison-budget policy
 
 목표: Exact D-081 r3 public process evidence에서 hidden outcome을 사용하지 않고 동일 per-run comparison
 budget policy만 append-only로 동결한다. 이 gate는 실행, baseline admission 또는 memory/core 권한이 아니다.
@@ -210,8 +260,9 @@ budget policy만 append-only로 동결한다. 이 gate는 실행, baseline admis
 5. **완료:** Future dev/core source template과 `ExperimentSuite` selector를 exact frozen tuple로 맞추고,
    기존 `$20`/`$150` cap 때문에 preflight가 fail closed하는지 검증한다. Historical 250k와 D-081 2.4M
    계약은 그대로 보존한다.
-6. **대기:** Execution-plan runtime contract/evidence, RunManifest, budget diagnostic과 qualification support를
-   다음 offline gate에서 구현·검증한다. 그전까지 template은 live-runnable하지 않다.
+6. **후속 완료:** D-084가 execution-plan runtime contract/evidence, RunManifest, budget diagnostic과
+   no-memory qualification support를 별도 offline gate로 구현했다. D-083 자체 bytes와 당시 pending claim은
+   수정하지 않는다.
 7. **완료:** Append-only artifact
    `reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`을
    `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`로 봉인한다.
@@ -224,8 +275,7 @@ budget policy만 append-only로 동결한다. 이 gate는 실행, baseline admis
   유지된다.
 - Final verification은 1,238 collected 중 1,231 passed/7 environment-dependent skipped, focused artifact
   9/9와 experiment contract 245/245다.
-- 다음 단계는 paid run이 아니라 execution-plan runtime evidence/RunManifest/qualification support의 offline
-  gate다.
+- 후속 D-084가 runtime support를 offline에서 닫았지만 paid/live/baseline/memory/core authority는 만들지 않는다.
 
 ## Historical result-seal gate — D-082 D-081 measured workflow readiness
 

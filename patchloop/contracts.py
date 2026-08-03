@@ -1235,6 +1235,16 @@ class RunManifest(StrictModel):
             and self.experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         )
+        future_comparison_purpose = (
+            self.experiment.purpose
+            if self.experiment is not None
+            and self.experiment.purpose
+            in {
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                ExperimentPurpose.CORE,
+            }
+            else None
+        )
         v2v5_live_contract = (
             self.tool_schema_version == "v2"
             and self.context_policy_version == "phase-evidence-v5"
@@ -1246,6 +1256,29 @@ class RunManifest(StrictModel):
             and self.memory.condition == MemoryCondition.NO_MEMORY
             and self.fault.type == "none"
             and self.public_review_contract is None
+        )
+        future_comparison_profile = bool(
+            future_comparison_purpose is not None
+            and self.tool_schema_version == "v2"
+            and self.context_policy_version == "phase-evidence-v5"
+            and self.model.provider == "openai"
+            and self.model.model_id == "gpt-5.4-mini-2026-03-17"
+            and self.model.reasoning_effort == "medium"
+            and self.model.reasoning_mode == "standard"
+            and self.model.service_tier == "default"
+            and self.model.transport_max_retries == 0
+            and self.model.max_output_tokens == 25_000
+            and self.budget.max_model_calls is None
+            and self.budget.max_tool_calls is None
+            and self.budget.max_total_tokens == 1_600_000
+            and self.budget.wall_clock_timeout_seconds == 1_800
+            and self.memory.max_context_tokens == 2_000
+            and self.fault.type == "none"
+            and self.public_review_contract is None
+            and (
+                future_comparison_purpose == ExperimentPurpose.CORE
+                or self.memory.condition == MemoryCondition.NO_MEMORY
+            )
         )
         if generic_baseline_readiness and not v2v5_live_contract:
             raise ValueError(
@@ -1307,7 +1340,9 @@ class RunManifest(StrictModel):
                 "and 1800-second wall ceiling"
             )
         if count_limits_disabled and not (
-            workflow_completion_probe or generic_count_observability
+            workflow_completion_probe
+            or generic_count_observability
+            or future_comparison_profile
         ):
             raise ValueError(
                 "disabled model/tool call limits are reserved for an exact "

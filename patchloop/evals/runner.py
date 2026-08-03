@@ -372,6 +372,23 @@ WORKFLOW_COMPLETION_CALL_GUARD_POLICY = "model-tool-observability-only-v1"
 GENERIC_BASELINE_OBSERVABILITY_CALL_GUARD_POLICY = (
     WORKFLOW_COMPLETION_CALL_GUARD_POLICY
 )
+CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA = (
+    "condition-neutral-comparison-runtime-contract-v1"
+)
+CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY = (
+    WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+)
+CONDITION_NEUTRAL_COMPARISON_BUDGET_POLICY = {
+    "schema_version": "condition-neutral-comparison-budget-freeze-v1",
+    "profile_id": "gpt54mini-v2v5-condition-neutral-1600k-v1",
+    "path": (
+        "reports/live-pilot/artifacts/"
+        "d083-condition-neutral-comparison-budget-freeze.json"
+    ),
+    "content_hash": (
+        "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
+    ),
+}
 QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA = (
     "qualification-gate-check-projection-v1"
 )
@@ -388,6 +405,134 @@ HASH_BOUND_RUNTIME_PURPOSES = HASH_BOUND_CORRECTIVE_PURPOSES | {
     ExperimentPurpose.GENERIC_BASELINE_READINESS,
     ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
 }
+
+
+def _is_frozen_comparison_runtime_profile(
+    suite: Any,
+    *,
+    require_transport: bool = True,
+) -> bool:
+    """Select only the exact D-083 future comparison tuple.
+
+    Purpose alone is intentionally insufficient: historical 200k/250k suites
+    use the same research purposes and must keep their original execution
+    identities and pricing semantics.
+    """
+
+    purpose = getattr(suite, "purpose", None)
+    conditions = getattr(suite, "conditions", None)
+    exact_conditions = bool(
+        (
+            purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+            and conditions == [MemoryCondition.NO_MEMORY]
+        )
+        or (
+            purpose == ExperimentPurpose.CORE
+            and conditions == list(MemoryCondition)
+        )
+    )
+    exact = bool(
+        getattr(suite, "schema_version", None) == "experiment-v2"
+        and purpose
+        in {
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+            ExperimentPurpose.CORE,
+        }
+        and getattr(suite, "model", None) == "openai"
+        and getattr(suite, "model_id", None) == CAMPAIGN_MODEL_ID
+        and getattr(suite, "reasoning_effort", None) == "medium"
+        and getattr(suite, "reasoning_mode", None) == "standard"
+        and getattr(suite, "service_tier", None) == "default"
+        and getattr(suite, "budget", None)
+        == GPT54_MINI_FROZEN_COMPARISON_BUDGET
+        and getattr(suite, "max_output_tokens", None)
+        == CAMPAIGN_MAX_OUTPUT_TOKENS
+        and getattr(suite, "memory_token_budget", None) == 2_000
+        and exact_conditions
+    )
+    return bool(
+        exact
+        and (
+            not require_transport
+            or getattr(suite, "transport_max_retries", None) == 0
+        )
+    )
+
+
+def _has_hash_bound_runtime(suite: Any) -> bool:
+    return bool(
+        getattr(suite, "purpose", None) in HASH_BOUND_RUNTIME_PURPOSES
+        or _is_frozen_comparison_runtime_profile(suite)
+    )
+
+
+def _validated_comparison_budget_policy() -> dict[str, str]:
+    """Re-read and validate the immutable D-083 policy before binding it."""
+
+    descriptor = dict(CONDITION_NEUTRAL_COMPARISON_BUDGET_POLICY)
+    try:
+        policy_path = ensure_within(
+            repository_root(),
+            descriptor["path"],
+        )
+        policy_bytes = policy_path.read_bytes()
+        if sha256_bytes(policy_bytes) != descriptor["content_hash"]:
+            raise ValueError("D-083 policy content hash changed")
+        policy = json.loads(policy_bytes.decode("utf-8"))
+    except (KeyError, OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ContractError(
+            "D-083 comparison budget policy artifact is missing or invalid"
+        ) from exc
+    frozen = policy.get("frozen_budget") if isinstance(policy, dict) else None
+    runtime = (
+        policy.get("model_runtime_tuple") if isinstance(policy, dict) else None
+    )
+    claims = policy.get("claims_boundary") if isinstance(policy, dict) else None
+    if not (
+        policy.get("schema_version") == descriptor["schema_version"]
+        and policy.get("freeze_id")
+        == "d083-condition-neutral-comparison-budget-freeze"
+        and isinstance(frozen, dict)
+        and frozen.get("schema_version")
+        == "condition-neutral-comparison-budget-v1"
+        and frozen.get("profile_id") == descriptor["profile_id"]
+        and frozen.get("max_model_calls") is None
+        and frozen.get("max_tool_calls") is None
+        and type(frozen.get("max_total_tokens")) is int
+        and frozen.get("max_total_tokens") == 1_600_000
+        and type(frozen.get("wall_clock_timeout_seconds")) is int
+        and frozen.get("wall_clock_timeout_seconds") == 1_800
+        and type(frozen.get("max_output_tokens")) is int
+        and frozen.get("max_output_tokens") == 25_000
+        and frozen.get("count_limits_are_observability_only") is True
+        and frozen.get("call_guard_policy")
+        == CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY
+        and frozen.get("condition_neutral") is True
+        and frozen.get("same_budget_for_all_memory_conditions") is True
+        and frozen.get("memory_conditions")
+        == [condition.value for condition in MemoryCondition]
+        and isinstance(runtime, dict)
+        and runtime.get("provider") == "openai"
+        and runtime.get("model_id") == CAMPAIGN_MODEL_ID
+        and runtime.get("reasoning_effort") == "medium"
+        and runtime.get("reasoning_mode") == "standard"
+        and runtime.get("service_tier") == "default"
+        and runtime.get("transport_max_retries") == 0
+        and runtime.get("max_output_tokens") == 25_000
+        and runtime.get("system_prompt_hash")
+        == sha256_text(SYSTEM_PROMPT_V3)
+        and runtime.get("tool_schema_version") == "v2"
+        and runtime.get("tool_schema_hash")
+        == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
+        and runtime.get("context_policy_version") == "phase-evidence-v5"
+        and runtime.get("memory_token_budget") == 2_000
+        and isinstance(claims, dict)
+        and claims.get("comparison_budget_policy_frozen") is True
+    ):
+        raise ContractError(
+            "D-083 comparison budget policy artifact does not match the frozen profile"
+        )
+    return descriptor
 
 
 def _normalized_task_path(value: str) -> str:
@@ -478,6 +623,34 @@ def _experiment_runtime_contract(
 ) -> dict[str, Any] | None:
     """Return the execution-hash-bound runtime identity for an exact live suite."""
 
+    if _is_frozen_comparison_runtime_profile(suite):
+        return {
+            "schema_version": (
+                CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
+            ),
+            "comparison_budget_policy": _validated_comparison_budget_policy(),
+            "purpose": suite.purpose.value,
+            "model_provider": suite.model,
+            "model_id": suite.model_id,
+            "reasoning_effort": suite.reasoning_effort,
+            "reasoning_mode": suite.reasoning_mode,
+            "service_tier": suite.service_tier,
+            "transport_max_retries": suite.transport_max_retries,
+            "max_output_tokens": suite.max_output_tokens,
+            "budget": suite.budget.model_dump(mode="json"),
+            "memory_max_context_tokens": suite.memory_token_budget,
+            "memory_conditions": [
+                condition.value for condition in suite.conditions
+            ],
+            "tool_schema_version": "v2",
+            "context_policy_version": "phase-evidence-v5",
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
+            "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
+            "call_guard_policy": (
+                CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY
+            ),
+            "harness_git_commit": harness_git_commit,
+        }
     if suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
         count_observability = bool(
             suite.experiment_id
@@ -544,7 +717,7 @@ def _pricing_contract(
         else 0.0
     )
     budget_upper_bound = schedule_size * per_run_cost_reserve
-    if suite.purpose in HASH_BOUND_RUNTIME_PURPOSES:
+    if _has_hash_bound_runtime(suite):
         # Keep the approval-facing currency values stable instead of exposing
         # binary floating-point tails such as 12.487499999999999.
         per_run_cost_reserve = round(per_run_cost_reserve, 12)
@@ -567,7 +740,7 @@ def _pricing_contract(
         "per_run_cost_reserve_usd": per_run_cost_reserve,
         "budget_upper_bound_usd": budget_upper_bound,
     }
-    if suite.purpose in HASH_BOUND_RUNTIME_PURPOSES:
+    if _has_hash_bound_runtime(suite):
         payload["start_time_verification"] = _pricing_freshness_evidence(
             suite,
             boundary_at=checked_at,
@@ -850,20 +1023,9 @@ class ExperimentSuite(BaseModel):
                 "workflow completion probe experiment id requires the exact "
                 "workflow completion probe purpose"
             )
-        future_comparison_profile = bool(
-            self.schema_version == "experiment-v2"
-            and self.purpose
-            in {
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
-                ExperimentPurpose.CORE,
-            }
-            and self.model == "openai"
-            and self.model_id == CAMPAIGN_MODEL_ID
-            and self.reasoning_effort == "medium"
-            and self.reasoning_mode == "standard"
-            and self.service_tier == "default"
-            and self.budget == GPT54_MINI_FROZEN_COMPARISON_BUDGET
-            and self.max_output_tokens == CAMPAIGN_MAX_OUTPUT_TOKENS
+        future_comparison_profile = _is_frozen_comparison_runtime_profile(
+            self,
+            require_transport=False,
         )
         if (
             self.purpose
@@ -2211,6 +2373,17 @@ def preflight_suite(
             "memory-development campaign requires a qualified live pilot_run_id",
         )
 
+    if (
+        suite.purpose == ExperimentPurpose.CORE
+        and _is_frozen_comparison_runtime_profile(suite)
+    ):
+        _block(
+            blockers,
+            "CORE_MEMORY_RUNTIME_BINDING_PENDING",
+            "core execution remains closed until the frozen memory index identity "
+            "and per-condition terminal qualification are execution-hash bound",
+        )
+
     if any(condition != MemoryCondition.NO_MEMORY for condition in suite.conditions):
         frozen_index = latest_frozen_index()
         if frozen_index is None:
@@ -2345,6 +2518,42 @@ def _assert_manifest_matches_preflight(
     expected_runtime_contract = preflight.get("runtime_contract")
     actual_runtime_contract: dict[str, Any] | None = None
     if (
+        isinstance(expected_runtime_contract, dict)
+        and expected_runtime_contract.get("schema_version")
+        == CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
+    ):
+        actual_runtime_contract = {
+            "schema_version": (
+                CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
+            ),
+            "comparison_budget_policy": _validated_comparison_budget_policy(),
+            "purpose": (
+                manifest.experiment.purpose.value
+                if manifest.experiment is not None
+                else None
+            ),
+            "model_provider": manifest.model.provider,
+            "model_id": manifest.model.model_id,
+            "reasoning_effort": manifest.model.reasoning_effort,
+            "reasoning_mode": manifest.model.reasoning_mode,
+            "service_tier": manifest.model.service_tier,
+            "transport_max_retries": manifest.model.transport_max_retries,
+            "max_output_tokens": manifest.model.max_output_tokens,
+            "budget": manifest.budget.model_dump(mode="json"),
+            "memory_max_context_tokens": manifest.memory.max_context_tokens,
+            "memory_conditions": [
+                condition.value for condition in suite.conditions
+            ],
+            "tool_schema_version": manifest.tool_schema_version,
+            "context_policy_version": manifest.context_policy_version,
+            "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
+            "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
+            "call_guard_policy": (
+                CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY
+            ),
+            "harness_git_commit": manifest.harness_git_commit,
+        }
+    elif (
         isinstance(expected_runtime_contract, dict)
         and expected_runtime_contract.get("schema_version")
         in {
@@ -2595,6 +2804,21 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(raw_checks, list):
         raw_checks = []
     call_guard_check_id = "disabled_call_guard_contract"
+    comparison_no_memory_observability = bool(
+        payload.get("purpose")
+        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY.value
+        and payload.get("memory_condition") == MemoryCondition.NO_MEMORY.value
+        and payload.get("model_id") == CAMPAIGN_MODEL_ID
+        and payload.get("reasoning_effort") == "medium"
+        and payload.get("reasoning_mode") == "standard"
+        and payload.get("service_tier") == "default"
+        and payload.get("transport_max_retries") == 0
+        and payload.get("max_output_tokens") == CAMPAIGN_MAX_OUTPUT_TOKENS
+        and payload.get("budget")
+        == GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(mode="json")
+        and payload.get("tool_schema_version") == "v2"
+        and payload.get("context_policy_version") == "phase-evidence-v5"
+    )
     if (
         payload.get("purpose")
         == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE.value
@@ -2604,6 +2828,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             and payload.get("experiment_id")
             == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
         )
+        or comparison_no_memory_observability
     ):
         check_id = call_guard_check_id
         summary["gate_checks"] = {

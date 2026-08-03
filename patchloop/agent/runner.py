@@ -98,6 +98,12 @@ _EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
 _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA = "model-generation-block-v1"
 _COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v2"
 _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v3"
+_CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA = (
+    "condition-neutral-comparison-runtime-evidence-v1"
+)
+_CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY = (
+    "model-tool-observability-only-v1"
+)
 _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
     {
         "model_call_budget_exhausted",
@@ -407,6 +413,40 @@ class AgentRunner:
         )
 
     @staticmethod
+    def _is_frozen_comparison_runtime_manifest(
+        manifest: RunManifest,
+    ) -> bool:
+        experiment = manifest.experiment
+        return bool(
+            experiment is not None
+            and experiment.purpose
+            in {
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                ExperimentPurpose.CORE,
+            }
+            and manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v5"
+            and manifest.model.provider == "openai"
+            and manifest.model.model_id == "gpt-5.4-mini-2026-03-17"
+            and manifest.model.reasoning_effort == "medium"
+            and manifest.model.reasoning_mode == "standard"
+            and manifest.model.service_tier == "default"
+            and manifest.model.transport_max_retries == 0
+            and manifest.model.max_output_tokens == 25_000
+            and manifest.budget.max_model_calls is None
+            and manifest.budget.max_tool_calls is None
+            and manifest.budget.max_total_tokens == 1_600_000
+            and manifest.budget.wall_clock_timeout_seconds == 1_800
+            and manifest.memory.max_context_tokens == 2_000
+            and (
+                experiment.purpose == ExperimentPurpose.CORE
+                or manifest.memory.condition == MemoryCondition.NO_MEMORY
+            )
+            and manifest.fault.type == "none"
+            and manifest.public_review_contract is None
+        )
+
+    @staticmethod
     def _require_live_authorization(
         manifest: RunManifest | None,
         authorization: LiveExecutionAuthorization | None,
@@ -487,10 +527,17 @@ class AgentRunner:
             and manifest.experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         )
+        frozen_comparison_no_memory = bool(
+            AgentRunner._is_frozen_comparison_runtime_manifest(manifest)
+            and manifest.experiment is not None
+            and manifest.experiment.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+        )
         if not any(
             (
                 generic_baseline_readiness,
                 workflow_completion_probe,
+                frozen_comparison_no_memory,
                 corrective,
                 saturation,
                 review_evidence,
@@ -829,6 +876,13 @@ class AgentRunner:
                     ),
                 },
             )
+            if generic_runtime_document is not None:
+                self._validate_generic_baseline_runtime_resume_contract(
+                    manifest=manifest,
+                    events=self.state.list_events(manifest.run_id),
+                    system_prompt=system_prompt,
+                    tool_schemas=tool_schemas,
+                )
             if manifest.fault.type in {"context-reset", "test-timeout"}:
                 self.state.append_event(
                     manifest.run_id,
@@ -2563,11 +2617,55 @@ class AgentRunner:
         system_prompt: str,
         tool_schemas: list[dict[str, Any]],
     ) -> dict[str, Any] | None:
-        if manifest.experiment is None or manifest.experiment.purpose not in {
-            ExperimentPurpose.GENERIC_BASELINE_READINESS,
-            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-        }:
+        frozen_comparison = (
+            AgentRunner._is_frozen_comparison_runtime_manifest(manifest)
+        )
+        if manifest.experiment is None or (
+            manifest.experiment.purpose
+            not in {
+                ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+            }
+            and not frozen_comparison
+        ):
             return None
+        if frozen_comparison:
+            # Local import avoids an import cycle while making RunStarted
+            # evidence fail closed if the immutable D-083 policy bytes drift.
+            from patchloop.evals.runner import (
+                _validated_comparison_budget_policy,
+            )
+
+            return {
+                "schema_version": (
+                    _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA
+                ),
+                "comparison_budget_policy": (
+                    _validated_comparison_budget_policy()
+                ),
+                "purpose": manifest.experiment.purpose.value,
+                "model_provider": manifest.model.provider,
+                "model_id": manifest.model.model_id,
+                "reasoning_effort": manifest.model.reasoning_effort,
+                "reasoning_mode": manifest.model.reasoning_mode,
+                "service_tier": manifest.model.service_tier,
+                "transport_max_retries": (
+                    manifest.model.transport_max_retries
+                ),
+                "max_output_tokens": manifest.model.max_output_tokens,
+                "budget": manifest.budget.model_dump(mode="json"),
+                "memory_max_context_tokens": (
+                    manifest.memory.max_context_tokens
+                ),
+                "memory_condition": manifest.memory.condition.value,
+                "system_prompt": system_prompt,
+                "tools": tool_schemas,
+                "tool_schema_version": manifest.tool_schema_version,
+                "context_policy_version": manifest.context_policy_version,
+                "call_guard_policy": (
+                    _CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY
+                ),
+            }
         workflow_completion_probe = bool(
             manifest.experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
@@ -2645,7 +2743,7 @@ class AgentRunner:
             RecoveryError,
         ) as exc:
             raise RecoveryError(
-                "generic baseline runtime contract artifact is invalid during recovery"
+                "runtime contract artifact is invalid during recovery"
             ) from exc
 
     @staticmethod

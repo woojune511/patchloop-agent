@@ -8,12 +8,62 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-from patchloop.contracts import EventType, RunEvent, RunManifest, RunResult
+from patchloop.contracts import (
+    EventType,
+    ExperimentPurpose,
+    MemoryCondition,
+    RunEvent,
+    RunManifest,
+    RunResult,
+)
 from patchloop.state import StateStore
 
 BudgetInput = RunManifest | Mapping[str, Any]
 EventInput = RunEvent | Mapping[str, Any]
 ResultInput = RunResult | Mapping[str, Any] | None
+
+_FROZEN_COMPARISON_PURPOSES = frozenset(
+    {
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+        ExperimentPurpose.CORE,
+    }
+)
+
+
+def _frozen_comparison_profile(
+    manifest: RunManifest,
+    *,
+    limits: Mapping[str, int | None],
+) -> bool:
+    experiment = manifest.experiment
+    condition_valid = bool(
+        experiment is not None
+        and (
+            experiment.purpose == ExperimentPurpose.CORE
+            or manifest.memory.condition == MemoryCondition.NO_MEMORY
+        )
+    )
+    return bool(
+        experiment is not None
+        and experiment.purpose in _FROZEN_COMPARISON_PURPOSES
+        and condition_valid
+        and manifest.model.provider == "openai"
+        and manifest.model.model_id == "gpt-5.4-mini-2026-03-17"
+        and manifest.model.reasoning_effort == "medium"
+        and manifest.model.reasoning_mode == "standard"
+        and manifest.model.service_tier == "default"
+        and manifest.model.transport_max_retries == 0
+        and manifest.model.max_output_tokens == 25_000
+        and manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v5"
+        and manifest.memory.max_context_tokens == 2_000
+        and manifest.fault.type == "none"
+        and manifest.public_review_contract is None
+        and limits["model_calls"] is None
+        and limits["tool_calls"] is None
+        and limits["total_tokens"] == 1_600_000
+        and limits["wall_clock_ms"] == 1_800_000
+    )
 
 
 def _mapping(value: Any, *, label: str) -> Mapping[str, Any]:
@@ -363,7 +413,8 @@ def calculate_budget_pressure(
         except (TypeError, ValueError) as exc:
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
-                "completion probe or D-081 generic readiness observability contract"
+                "completion probe, D-081 generic readiness, or frozen "
+                "condition-neutral comparison observability contract"
             ) from exc
         workflow_completion_probe = bool(
             exact_manifest.experiment is not None
@@ -387,10 +438,19 @@ def calculate_budget_pressure(
             and limits["total_tokens"] == 2_400_000
             and limits["wall_clock_ms"] == 1_800_000
         )
-        if not (workflow_completion_probe or generic_count_observability):
+        frozen_comparison = _frozen_comparison_profile(
+            exact_manifest,
+            limits=limits,
+        )
+        if not (
+            workflow_completion_probe
+            or generic_count_observability
+            or frozen_comparison
+        ):
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
-                "completion probe or D-081 generic readiness observability contract"
+                "completion probe, D-081 generic readiness, or frozen "
+                "condition-neutral comparison observability contract"
             )
     max_output_tokens = _required_nonnegative_int(
         model.get("max_output_tokens"),

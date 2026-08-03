@@ -1417,3 +1417,37 @@ Append-only evidence path는
 `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`다. D-083 protocol
 implementation은 provider call 0, model cost `$0`이고 historical D-081/D-082 artifact를 변경하지 않는다.
 Final verification은 1,238 collected 중 1,231 passed/7 environment-dependent skipped다.
+
+### D-084 offline comparison runtime qualification protocol
+
+D-084의 검증 질문은 “동결된 동일 budget이 source YAML에만 적혀 있는가?”가 아니라 “그 exact tuple이
+plan, manifest, durable start evidence와 qualifier가 보는 동일한 identity인가?”다. Provider call 없이 다음
+순서로 검증한다.
+
+1. Exact dev no-memory와 four-condition core suite에서
+   `condition-neutral-comparison-runtime-contract-v1`을 만들고 execution hash에 포함한다.
+2. Start 직전 `RunManifest`에서 contract를 다시 구성해 approved plan과 비교한다. Purpose, condition order,
+   model/mode/retry/output, budget, memory allowance, prompt/tool hash, V2/V5, D-083 SHA 또는 harness commit
+   drift를 거부한다.
+3. Runner는 `condition-neutral-comparison-runtime-evidence-v1` bytes를 content-addressed artifact로 저장하고
+   `RunStarted` full descriptor를 남긴다. Fresh start와 resume 모두 descriptor·bytes·expected document를
+   검증한다.
+4. Budget diagnostic은 exact registered profile에서만 nullable call counts를 받아들이고 partial null이나
+   arbitrary null profile을 거부한다.
+5. No-memory trace qualification은 `approved_execution_plan`, `comparison_runtime_contract`,
+   `disabled_call_guard_contract`, `pricing_start_freshness`와 `no_memory_boundary`를 요구한다. Runtime CAS,
+   budget, call-guard policy 또는 plan tamper는 qualification을 닫아야 한다.
+
+Core의 네 memory condition은 동일 plan/manifest/runtime tuple을 구성할 수 있는지만 offline에서 확인한다.
+Raw trace, structured와 selective structured condition은 frozen memory index, leakage scan과 condition별
+terminal evidence가 필요하다. Index identity가 plan/hash와 per-run evidence에 결속되기 전까지 preflight는
+`CORE_MEMORY_RUNTIME_BINDING_PENDING`이고 paid-call boundary도 core를 거부하므로 D-084에서 전체
+trace-qualified 또는 campaign-ready로 판정하지 않는다.
+
+이 protocol의 artifact는
+`reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json`이다. Gate가 통과해도
+provider execution, no-memory baseline, denominator, memory admission과 core는 열리지 않는다. 별도 clean
+preflight가 만든 exact execution hash, fresh pricing, cost-cap 해결과 명시적 사용자 승인이 필요하다.
+Final verification은 focused D-084 68/68과 repository-wide 1,304 collected 중 1,297 passed/7
+environment-dependent skipped다. Artifact SHA는
+`sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이다.

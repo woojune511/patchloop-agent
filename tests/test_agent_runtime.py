@@ -4665,7 +4665,7 @@ def test_generic_readiness_resume_rejects_runtime_artifact_tamper_before_model(
     )
     with pytest.raises(
         RecoveryError,
-        match="generic baseline runtime contract artifact",
+        match="runtime contract artifact",
     ):
         runner.resume(manifest.run_id)
     assert model_boundary_reached is False

@@ -67,6 +67,12 @@ _GPT54_MINI_CAMPAIGN_BUDGET = Budget(
     max_model_calls=21,
     max_total_tokens=250_000,
 )
+_GPT54_MINI_FROZEN_COMPARISON_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=1_600_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _GPT54_MINI_COMPLETION_BUDGET = Budget(
     max_model_calls=40,
     max_tool_calls=100,
@@ -145,6 +151,31 @@ _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = (
 _GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA = (
     "generic-baseline-runtime-contract-v2"
 )
+_CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA = (
+    "condition-neutral-comparison-runtime-contract-v1"
+)
+_CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA = (
+    "condition-neutral-comparison-runtime-evidence-v1"
+)
+_CONDITION_NEUTRAL_COMPARISON_PURPOSES = frozenset(
+    {
+        ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+        ExperimentPurpose.CORE,
+    }
+)
+_CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA = (
+    "condition-neutral-comparison-budget-freeze-v1"
+)
+_CONDITION_NEUTRAL_COMPARISON_POLICY_PROFILE_ID = (
+    "gpt54mini-v2v5-condition-neutral-1600k-v1"
+)
+_CONDITION_NEUTRAL_COMPARISON_POLICY_PATH = (
+    "reports/live-pilot/artifacts/"
+    "d083-condition-neutral-comparison-budget-freeze.json"
+)
+_CONDITION_NEUTRAL_COMPARISON_POLICY_HASH = (
+    "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
+)
 _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     "generic-baseline-readiness-v2v5-20260802-r1": (
         _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
@@ -212,6 +243,102 @@ def _workflow_completion_probe_budget_matches(
     return bool(
         experiment_id == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
         and budget == _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+    )
+
+
+def _condition_neutral_comparison_policy_binding() -> dict[str, str]:
+    return {
+        "schema_version": _CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA,
+        "profile_id": _CONDITION_NEUTRAL_COMPARISON_POLICY_PROFILE_ID,
+        "path": _CONDITION_NEUTRAL_COMPARISON_POLICY_PATH,
+        "content_hash": _CONDITION_NEUTRAL_COMPARISON_POLICY_HASH,
+    }
+
+
+def _condition_neutral_comparison_policy_artifact_valid() -> bool:
+    path = repository_root() / _CONDITION_NEUTRAL_COMPARISON_POLICY_PATH
+    try:
+        raw = path.read_bytes()
+        payload = json.loads(raw)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    frozen_budget = payload.get("frozen_budget") if isinstance(payload, dict) else None
+    return bool(
+        sha256_bytes(raw) == _CONDITION_NEUTRAL_COMPARISON_POLICY_HASH
+        and payload.get("schema_version")
+        == _CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA
+        and isinstance(frozen_budget, dict)
+        and frozen_budget.get("profile_id")
+        == _CONDITION_NEUTRAL_COMPARISON_POLICY_PROFILE_ID
+        and frozen_budget.get("max_model_calls") is None
+        and frozen_budget.get("max_tool_calls") is None
+        and frozen_budget.get("max_total_tokens") == 1_600_000
+        and frozen_budget.get("wall_clock_timeout_seconds") == 1_800
+        and frozen_budget.get("max_output_tokens") == 25_000
+        and frozen_budget.get("call_guard_policy")
+        == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+    )
+
+
+def _condition_neutral_comparison_manifest_matches(
+    manifest: RunManifest,
+) -> bool:
+    experiment = manifest.experiment
+    if experiment is None or experiment.purpose not in (
+        _CONDITION_NEUTRAL_COMPARISON_PURPOSES
+    ):
+        return False
+    condition_valid = bool(
+        experiment.purpose == ExperimentPurpose.CORE
+        or manifest.memory.condition == MemoryCondition.NO_MEMORY
+    )
+    return bool(
+        condition_valid
+        and manifest.model.provider == "openai"
+        and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
+        and manifest.model.reasoning_effort == "medium"
+        and manifest.model.reasoning_mode == "standard"
+        and manifest.model.service_tier == "default"
+        and manifest.model.transport_max_retries == 0
+        and manifest.model.max_output_tokens == 25_000
+        and manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v5"
+        and manifest.budget == _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+        and manifest.memory.max_context_tokens == 2_000
+        and manifest.fault.type == "none"
+        and manifest.public_review_contract is None
+    )
+
+
+def _condition_neutral_comparison_suite_matches(suite: Any) -> bool:
+    purpose = getattr(suite, "purpose", None)
+    conditions = getattr(suite, "conditions", None)
+    condition_contract = bool(
+        (
+            purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+            and conditions == [MemoryCondition.NO_MEMORY]
+        )
+        or (
+            purpose == ExperimentPurpose.CORE
+            and isinstance(conditions, list)
+            and conditions == list(MemoryCondition)
+        )
+    )
+    return bool(
+        getattr(suite, "schema_version", None) == "experiment-v2"
+        and purpose in _CONDITION_NEUTRAL_COMPARISON_PURPOSES
+        and condition_contract
+        and getattr(suite, "model", None) == "openai"
+        and getattr(suite, "model_id", None) == _GPT54_MINI_PILOT_MODEL_ID
+        and getattr(suite, "reasoning_effort", None) == "medium"
+        and getattr(suite, "reasoning_mode", None) == "standard"
+        and getattr(suite, "service_tier", None) == "default"
+        and getattr(suite, "transport_max_retries", None) == 0
+        and getattr(suite, "max_output_tokens", None) == 25_000
+        and getattr(suite, "budget", None)
+        == _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+        and getattr(suite, "memory_token_budget", None) == 2_000
+        and getattr(suite, "diagnostic", None) is None
     )
 
 
@@ -537,6 +664,8 @@ def _execution_plan_matches(
         # Keep post-run qualification independent from the plan's own declared
         # suite hash. Re-parse the complete frozen suite, require its canonical
         # payload, and recalculate the hash using the same contract as preflight.
+        from patchloop.agent.model import SYSTEM_PROMPT_V3
+        from patchloop.agent.tools import TOOL_SCHEMAS_V2
         from patchloop.evals.runner import (
             ExperimentSuite,
             _diagnostic_fault,
@@ -609,6 +738,7 @@ def _execution_plan_matches(
                 and parsed_suite.budget
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT
             )
+            or _condition_neutral_comparison_suite_matches(parsed_suite)
         ):
             if (
                 len(tasks) != len(parsed_suite.tasks)
@@ -671,6 +801,63 @@ def _execution_plan_matches(
             and expected_runtime_contract.get("transport_max_retries") == 0
             and expected_runtime_contract.get("call_guard_policy")
             == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        )
+        or (
+            _condition_neutral_comparison_manifest_matches(manifest)
+            and _condition_neutral_comparison_suite_matches(parsed_suite)
+            and isinstance(expected_runtime_contract, dict)
+            and set(expected_runtime_contract)
+            == {
+                "schema_version",
+                "purpose",
+                "memory_conditions",
+                "model_provider",
+                "model_id",
+                "reasoning_effort",
+                "reasoning_mode",
+                "service_tier",
+                "transport_max_retries",
+                "max_output_tokens",
+                "budget",
+                "memory_max_context_tokens",
+                "tool_schema_version",
+                "context_policy_version",
+                "system_prompt_hash",
+                "tool_schema_hash",
+                "call_guard_policy",
+                "comparison_budget_policy",
+                "harness_git_commit",
+            }
+            and expected_runtime_contract.get("schema_version")
+            == _CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
+            and expected_runtime_contract.get("purpose")
+            == parsed_suite.purpose.value
+            and expected_runtime_contract.get("memory_conditions")
+            == [condition.value for condition in parsed_suite.conditions]
+            and expected_runtime_contract.get("model_provider") == "openai"
+            and expected_runtime_contract.get("model_id")
+            == _GPT54_MINI_PILOT_MODEL_ID
+            and expected_runtime_contract.get("reasoning_effort") == "medium"
+            and expected_runtime_contract.get("reasoning_mode") == "standard"
+            and expected_runtime_contract.get("service_tier") == "default"
+            and expected_runtime_contract.get("transport_max_retries") == 0
+            and expected_runtime_contract.get("max_output_tokens") == 25_000
+            and expected_runtime_contract.get("budget")
+            == _GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(mode="json")
+            and expected_runtime_contract.get("memory_max_context_tokens")
+            == 2_000
+            and expected_runtime_contract.get("tool_schema_version") == "v2"
+            and expected_runtime_contract.get("context_policy_version")
+            == "phase-evidence-v5"
+            and expected_runtime_contract.get("system_prompt_hash")
+            == sha256_text(SYSTEM_PROMPT_V3)
+            and expected_runtime_contract.get("tool_schema_hash")
+            == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
+            and expected_runtime_contract.get("call_guard_policy")
+            == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+            and expected_runtime_contract.get("comparison_budget_policy")
+            == _condition_neutral_comparison_policy_binding()
+            and _condition_neutral_comparison_policy_artifact_valid()
         )
         or (
             manifest.tool_schema_version == "v2"
@@ -1102,9 +1289,27 @@ def _generic_baseline_runtime_contract_evidence(
         and manifest.experiment.experiment_id
         == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
     )
+    condition_neutral_comparison = (
+        _condition_neutral_comparison_manifest_matches(manifest)
+    )
+    if condition_neutral_comparison:
+        details.update(
+            {
+                "comparison_budget_policy": (
+                    _condition_neutral_comparison_policy_binding()
+                ),
+                "comparison_budget_policy_artifact_valid": (
+                    _condition_neutral_comparison_policy_artifact_valid()
+                ),
+                "purpose": manifest.experiment.purpose.value,
+                "memory_condition": manifest.memory.condition.value,
+            }
+        )
     expected = {
         "schema_version": (
-            "workflow-completion-runtime-evidence-v1"
+            _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA
+            if condition_neutral_comparison
+            else "workflow-completion-runtime-evidence-v1"
             if workflow_completion_probe
             else "generic-baseline-runtime-evidence-v2"
             if generic_count_observability
@@ -1116,7 +1321,32 @@ def _generic_baseline_runtime_contract_evidence(
         "tool_schema_version": "v2",
         "context_policy_version": "phase-evidence-v5",
     }
-    if workflow_completion_probe or generic_count_observability:
+    if condition_neutral_comparison:
+        expected.update(
+            {
+                "model_id": _GPT54_MINI_PILOT_MODEL_ID,
+                "purpose": manifest.experiment.purpose.value,
+                "memory_condition": manifest.memory.condition.value,
+                "model_provider": "openai",
+                "reasoning_effort": "medium",
+                "reasoning_mode": "standard",
+                "service_tier": "default",
+                "max_output_tokens": 25_000,
+                "budget": (
+                    _GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(
+                        mode="json"
+                    )
+                ),
+                "memory_max_context_tokens": 2_000,
+                "call_guard_policy": (
+                    _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+                ),
+                "comparison_budget_policy": (
+                    _condition_neutral_comparison_policy_binding()
+                ),
+            }
+        )
+    elif workflow_completion_probe or generic_count_observability:
         expected["call_guard_policy"] = (
             _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
         )
@@ -1132,7 +1362,13 @@ def _generic_baseline_runtime_contract_evidence(
         in {
             ExperimentPurpose.GENERIC_BASELINE_READINESS,
             ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+            ExperimentPurpose.CORE,
         }
+        and (
+            not condition_neutral_comparison
+            or _condition_neutral_comparison_policy_artifact_valid()
+        )
         and manifest.tool_schema_version == "v2"
         and manifest.context_policy_version == "phase-evidence-v5"
         and manifest.model.transport_max_retries == 0
@@ -7205,7 +7441,9 @@ def _optional_counter_generation_block_valid(
         "max_total_tokens",
     }
     expected_budget = None
-    if experiment is not None:
+    if _condition_neutral_comparison_manifest_matches(manifest):
+        expected_budget = _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+    elif experiment is not None:
         if (
             experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
@@ -10404,6 +10642,9 @@ def qualify_run(
         return passed
 
     experiment = manifest.experiment
+    condition_neutral_comparison = (
+        _condition_neutral_comparison_manifest_matches(manifest)
+    )
     task_identity = (
         manifest.task_id == package.public.task_id
         and manifest.task_version == package.public.task_version
@@ -10421,6 +10662,7 @@ def qualify_run(
             ExperimentPurpose.GENERIC_BASELINE_READINESS,
             ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
         }
+        or condition_neutral_comparison
     ):
         (
             generic_runtime_ok,
@@ -10434,7 +10676,11 @@ def qualify_run(
             "content_hash"
         )
         add(
-            "generic_runtime_contract",
+            (
+                "comparison_runtime_contract"
+                if condition_neutral_comparison
+                else "generic_runtime_contract"
+            ),
             generic_runtime_ok,
             **generic_runtime_details,
         )
@@ -10448,6 +10694,10 @@ def qualify_run(
                 == ExperimentPurpose.GENERIC_BASELINE_READINESS
                 and experiment.experiment_id
                 == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+            )
+            or (
+                condition_neutral_comparison
+                and manifest.memory.condition == MemoryCondition.NO_MEMORY
             )
         )
     ):
@@ -10525,13 +10775,16 @@ def qualify_run(
             ):
                 admission_tail_failures.append(event.sequence)
         expected_observability_budget = (
-            _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+            _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+            if condition_neutral_comparison
+            else _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
             if experiment.experiment_id
             == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
             else _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
         )
         exact_observability_profile = bool(
-            experiment.experiment_id
+            condition_neutral_comparison
+            or experiment.experiment_id
             in {
                 _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID,
                 _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
@@ -11145,6 +11398,12 @@ def qualify_run(
                 == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT
             )
             or (
+                _condition_neutral_comparison_manifest_matches(manifest)
+                and manifest.budget
+                == _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+                and manifest.model.transport_max_retries == 0
+            )
+            or (
                 (
                     manifest.experiment.purpose
                     in {
@@ -11291,16 +11550,19 @@ def qualify_run(
     )
     if (
         experiment is not None
-        and experiment.purpose
-        in {
-            ExperimentPurpose.GENERIC_BASELINE_READINESS,
-            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
-        }
+        and (
+            experiment.purpose
+            in {
+                ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
+            }
+            or condition_neutral_comparison
+        )
     ):
         from patchloop.evals.runner import (
             ExperimentSuite,
@@ -12309,6 +12571,11 @@ def qualify_run(
             == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
         ):
             trace_check_ids.add("disabled_call_guard_contract")
+    if condition_neutral_comparison:
+        trace_check_ids.add("comparison_runtime_contract")
+        trace_check_ids.add("pricing_start_freshness")
+        if manifest.memory.condition == MemoryCondition.NO_MEMORY:
+            trace_check_ids.add("disabled_call_guard_contract")
     if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
         trace_check_ids.add("self_validation_lifecycle")
     if manifest.tool_schema_version == "v4":
@@ -12436,11 +12703,14 @@ def qualify_run(
     }
     if (
         experiment is not None
-        and experiment.purpose
-        in {
-            ExperimentPurpose.GENERIC_BASELINE_READINESS,
-            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-        }
+        and (
+            experiment.purpose
+            in {
+                ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+            }
+            or condition_neutral_comparison
+        )
     ):
         payload.update(
             {
@@ -12467,11 +12737,14 @@ def qualify_run(
                     else generic_runtime_content_hash
                     if (
                         experiment is not None
-                        and experiment.purpose
-                        in {
-                            ExperimentPurpose.GENERIC_BASELINE_READINESS,
-                            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-                        }
+                        and (
+                            experiment.purpose
+                            in {
+                                ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+                            }
+                            or condition_neutral_comparison
+                        )
                     )
                     else _runtime_contract_content_hash(events)
                 ),

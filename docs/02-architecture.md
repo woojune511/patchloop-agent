@@ -947,3 +947,46 @@ project cap을 D-083이 변경하지 않으므로 어떤 scale도 자동 승인�
 architecture decision의 provider call/model cost는 0/$0이며 historical D-081/D-082 calibration
 artifact는 immutable하다. Final repository-wide verification은 1,238 collected 중 1,231 passed와
 7 environment-dependent skipped다.
+
+## 25. D-084 condition-neutral comparison runtime architecture
+
+D-084는 D-083 policy를 수정하지 않고 exact comparison tuple이 실행 중 다른 값으로 바뀌지 못하게 하는
+offline binding layer를 추가한다.
+
+```text
+source ExperimentSuite
+  -> condition-neutral-comparison-runtime-contract-v1
+  -> execution plan + execution hash
+  -> exact RunManifest reconstruction before start
+  -> RunStarted.runtime_contract_artifact (content-addressed bytes)
+  -> start/resume validation
+  -> condition-neutral-comparison-runtime-evidence-v1 qualification
+```
+
+Plan contract는 purpose, ordered memory conditions, model/provider mode, retry 0, output 25,000,
+`null/null/1,600,000/1,800`, memory allowance 2,000, V2/V5, prompt/tool hashes, call-guard policy,
+harness commit과 D-083 artifact path/SHA를 모두 execution hash에 포함한다. Runner는 이 값을
+`RunManifest`에서 다시 구성해 approved plan과 byte-equivalent하게 비교한 뒤에만 시작한다.
+
+Runner start는 실제 system prompt bytes와 tool-schema bytes를 포함한
+`condition-neutral-comparison-runtime-evidence-v1` 문서를 artifact store에 넣고 full descriptor를
+`RunStarted.runtime_contract_artifact`에 기록한다. Resume는 event가 가리키는 descriptor와 artifact bytes를
+다시 읽어 현재 manifest·prompt·tool에서 만든 expected document와 비교한다. Purpose, memory condition,
+budget, D-083 policy hash 또는 call-guard policy 중 하나라도 바뀌면 start/resume가 fail closed한다.
+
+Budget diagnostic과 no-memory qualifier도 purpose 이름만 보지 않는다. Exact D-083 profile일 때만 nullable
+count limit을 허용하고, plan/manifest/CAS bytes를 독립 재구성한다. No-memory terminal qualification은
+`approved_execution_plan`, `comparison_runtime_contract`, `disabled_call_guard_contract`,
+`pricing_start_freshness`와 `no_memory_boundary`를 요구한다.
+
+Core에 대해서는 네 memory condition이 같은 tuple로 execution plan, `RunManifest`와 offline start/resume
+evidence를 구성할 수 있는 구조만 구현한다. Frozen memory-index identity가 execution hash와 per-run
+manifest/evidence에 아직 결속되지 않았으므로 preflight는 `CORE_MEMORY_RUNTIME_BINDING_PENDING`으로 닫히고
+paid-call boundary도 core를 거부한다. Leak-safe memory-condition별 terminal qualifier도 아직 없으므로
+96-run core execution과 aggregate gate는 닫혀 있다. 이 architecture gate는 provider call
+0, model cost `$0`이며 승인 execution hash, baseline result, denominator, memory admission 또는 core authority를
+만들지 않는다. Evidence는
+`reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json`에 append-only로 기록한다.
+Final verification은 focused D-084 68/68과 repository-wide 1,304 collected 중 1,297 passed/7
+environment-dependent skipped다. Artifact SHA는
+`sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이다.

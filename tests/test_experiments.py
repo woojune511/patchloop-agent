@@ -3437,7 +3437,7 @@ def test_future_comparison_budget_is_condition_neutral() -> None:
         "experiments/core.template.yaml",
     ],
 )
-def test_generic_comparison_source_freeze_excludes_v10_v11_and_runtime_contract(
+def test_generic_comparison_runtime_gate_excludes_v10_v11_and_binds_runtime_contract(
     suite_path: str,
     tmp_path: Path,
     monkeypatch,
@@ -3455,7 +3455,22 @@ def test_generic_comparison_source_freeze_excludes_v10_v11_and_runtime_contract(
 
     assert suite.budget == eval_runner.GPT54_MINI_FROZEN_COMPARISON_BUDGET
     assert suite.transport_max_retries == 0
-    assert "runtime_contract" not in preflight
+    runtime_contract = preflight["runtime_contract"]
+    assert runtime_contract["schema_version"] == (
+        eval_runner.CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
+    )
+    assert runtime_contract["purpose"] == suite.purpose.value
+    assert runtime_contract["budget"] == (
+        eval_runner.GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(mode="json")
+    )
+    assert runtime_contract["memory_conditions"] == [
+        condition.value for condition in suite.conditions
+    ]
+    assert runtime_contract["tool_schema_version"] == "v2"
+    assert runtime_contract["context_policy_version"] == "phase-evidence-v5"
+    assert runtime_contract["comparison_budget_policy"] == (
+        eval_runner.CONDITION_NEUTRAL_COMPARISON_BUDGET_POLICY
+    )
     assert all(
         "public_review_contract" not in row
         and "public_review_contract_path" not in row
@@ -3470,6 +3485,44 @@ def test_generic_comparison_source_freeze_excludes_v10_v11_and_runtime_contract(
         assert "QUALIFIED_PILOT_REQUIRED" in blocker_codes
     else:
         assert "FROZEN_MEMORY_INDEX_MISSING" in blocker_codes
+        assert "CORE_MEMORY_RUNTIME_BINDING_PENDING" in blocker_codes
+
+
+def test_d084_core_runtime_binding_stays_closed_with_a_valid_memory_index(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    payload = yaml.safe_load(
+        Path("experiments/core.template.yaml").read_text(encoding="utf-8")
+    )
+    payload["experiment_id"] = "core-d084-valid-index-still-closed"
+    payload["embedding_revision"] = "d084-test-revision"
+    suite_path = tmp_path / "core-d084-valid-index-still-closed.yaml"
+    suite_path.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    index_path = tmp_path / "memory-index.json"
+    index_path.write_text(
+        json.dumps(
+            {
+                "entries": [{"memory_id": "mem_d084_test"}],
+                "embedding": {
+                    "implementation": "sentence-transformers",
+                    "revision": "d084-test-revision",
+                },
+                "dataset_manifest_hash": payload["dataset_manifest_hash"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(eval_runner, "latest_frozen_index", lambda: index_path)
+
+    preflight = eval_runner.preflight_suite(suite_path)
+    blocker_codes = {row["code"] for row in preflight["blockers"]}
+
+    assert "FROZEN_MEMORY_INDEX_MISSING" not in blocker_codes
+    assert "FROZEN_MEMORY_INDEX_INVALID" not in blocker_codes
+    assert "CORE_MEMORY_RUNTIME_BINDING_PENDING" in blocker_codes
 
 
 @pytest.mark.parametrize(
