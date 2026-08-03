@@ -175,6 +175,12 @@ def test_d085_no_call_preflight_emits_only_invocation_approval_blockers(
     tmp_path: Path,
 ) -> None:
     _ready_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_IDS,
+    )
 
     preflight = eval_runner.preflight_suite(SUITE_PATH)
     suite = eval_runner.load_suite(SUITE_PATH)
@@ -211,6 +217,12 @@ def test_d085_approved_no_call_preflight_keeps_the_same_execution_hash(
     tmp_path: Path,
 ) -> None:
     _ready_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_IDS,
+    )
     unapproved = eval_runner.preflight_suite(SUITE_PATH)
 
     approved = eval_runner.preflight_suite(

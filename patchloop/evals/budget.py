@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    DatasetRole,
     EventType,
     ExperimentPurpose,
     MemoryCondition,
@@ -28,6 +30,50 @@ _FROZEN_COMPARISON_PURPOSES = frozenset(
         ExperimentPurpose.CORE,
     }
 )
+
+_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID = (
+    "babel-strict-grouped-decimal-trailing-zeroes"
+)
+
+
+def _condition_neutral_comparison_pilot_profile(
+    manifest: RunManifest,
+    *,
+    limits: Mapping[str, int | None],
+) -> bool:
+    """Select only the exact consumed D-085 row and runtime tuple."""
+
+    experiment = manifest.experiment
+    return bool(
+        experiment is not None
+        and experiment.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and experiment.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and manifest.task_id
+        == _CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID
+        and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+        and experiment.schedule_seed == 20260723
+        and experiment.schedule_order == 1
+        and experiment.repetition == 1
+        and manifest.model.provider == "openai"
+        and manifest.model.model_id == "gpt-5.4-mini-2026-03-17"
+        and manifest.model.reasoning_effort == "medium"
+        and manifest.model.reasoning_mode == "standard"
+        and manifest.model.service_tier == "default"
+        and manifest.model.transport_max_retries == 0
+        and manifest.model.max_output_tokens == 25_000
+        and manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v5"
+        and manifest.memory.condition == MemoryCondition.NO_MEMORY
+        and manifest.memory.max_context_tokens == 2_000
+        and manifest.fault.type == "none"
+        and manifest.public_review_contract is None
+        and limits["model_calls"] is None
+        and limits["tool_calls"] is None
+        and limits["total_tokens"] == 1_600_000
+        and limits["wall_clock_ms"] == 1_800_000
+    )
 
 
 def _frozen_comparison_profile(
@@ -407,15 +453,42 @@ def calculate_budget_pressure(
     call_limits_disabled = bool(
         limits["model_calls"] is None or limits["tool_calls"] is None
     )
-    if call_limits_disabled:
+    experiment_payload = manifest_payload.get("experiment")
+    claims_condition_neutral_pilot_identity = bool(
+        isinstance(experiment_payload, Mapping)
+        and experiment_payload.get("experiment_id")
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+    )
+    exact_manifest: RunManifest | None = None
+    if call_limits_disabled or claims_condition_neutral_pilot_identity:
         try:
             exact_manifest = RunManifest.model_validate(manifest_payload)
         except (TypeError, ValueError) as exc:
+            if claims_condition_neutral_pilot_identity:
+                raise ValueError(
+                    "the D-085 condition-neutral comparison pilot identity "
+                    "requires its exact development-validation row and runtime "
+                    "tuple"
+                ) from exc
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
                 "completion probe, D-081 generic readiness, or frozen "
                 "condition-neutral comparison observability contract"
             ) from exc
+    condition_neutral_pilot = bool(
+        exact_manifest is not None
+        and _condition_neutral_comparison_pilot_profile(
+            exact_manifest,
+            limits=limits,
+        )
+    )
+    if claims_condition_neutral_pilot_identity and not condition_neutral_pilot:
+        raise ValueError(
+            "the D-085 condition-neutral comparison pilot identity requires "
+            "its exact development-validation row and runtime tuple"
+        )
+    if call_limits_disabled:
+        assert exact_manifest is not None
         workflow_completion_probe = bool(
             exact_manifest.experiment is not None
             and exact_manifest.experiment.purpose.value
@@ -446,6 +519,7 @@ def calculate_budget_pressure(
             workflow_completion_probe
             or generic_count_observability
             or frozen_comparison
+            or condition_neutral_pilot
         ):
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
