@@ -2,30 +2,34 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
-2026-08-03 D-081은 D-075/D-077에서 사용한 Babel, Moto, pyfakefs, Hugging Face Hub의 exact
-four-row panel과 generic V2/V5 agent tuple을 유지한 새 source identity
-`generic-baseline-readiness-v2v5-20260803-r3`를 고정한다. 모든 row는 `no_memory` 1회이며
-`gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
-`phase-evidence-v5`, SDK transport retry 0과 output 25,000을 공유한다. Model/tool call limit은
-`null`로 두어 `model-tool-observability-only-v1` 아래 계속 기록·reconcile하되 admission에는 사용하지
-않는다. Total-token 2,400,000, wall 1,800초와 exact-request, cost, loop, constrained-tool,
-Docker/network/evaluator guard는 유지한다. Public process evidence에서
-`(1,790,707 + 84 × 2,000 + 25,000) × 1.2 = 2,380,448.4`를 100,000-token 단위로 올림해
-2,400,000을 선택했고, `856.559초 × 2 = 1,713.118초`를 300초 단위로 올림해 1,800초를
-선택했다. Runtime/evidence/gate는 새
-`generic-baseline-runtime-contract-v2` / `generic-baseline-runtime-evidence-v2` /
-`generic-baseline-readiness-gate-v2`로 versioning하며 네 row 각각의 exact-one
-`disabled_call_guard_contract` projection을 요구한다. 2026-08-03T01:08:49Z에 확인한 standard
-pricing으로 계산한 reserve는 `(2,400,000 + 25,000) × $4.50/M = $10.9125`/run,
-four-row `$43.65`, cap `$44`다. 현재 D-081 source 단계의 provider call과 model cost는 0이며
-live 승인, execution hash, run/result, measured usage/cost와 gate outcome은 없다. 이 suite는
-calibration-only이고 comparison budget을 동결하거나 no-memory baseline, memory admission, core를 열지
-않는다. 같은 ceiling을 96-run에 기계적으로 적용한 보수적 reserve `$1,047.60`은 원래 `$150`
-project cap과 충돌하므로 readiness 뒤 별도 freeze/cost decision이 필요하다. D-075/D-077/D-079/D-080
-identity와 모든 historical artifact는 immutable하다. Source derivation은
-`reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`에 있다. Final offline
-verification은 repository-wide 1,204 collected 중 1,197 passed/7 environment-dependent skipped였고
-Ruff, Python compileall과 `git diff --check`도 통과했다. Clean no-call preflight와 live 결과는 아직 없다.
+2026-08-03 D-082는 D-081 exact four-row calibration result를 append-only로 봉인한다. Experiment
+`generic-baseline-readiness-v2v5-20260803-r3`는 clean commit
+`b4c79242bb0a94eed50530116205323e78c7d21a`와 승인 execution hash
+`sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`로 정확히 한 번
+실행됐다. D-075/D-077과 같은 Babel, Moto, pyfakefs, Hugging Face Hub, `no_memory` 1회와 generic
+V2/V5 tuple을 유지하고 model/tool call count만 observability-only `null`로 두었다. 2,400,000-token,
+1,800초 및 exact-request, cost, loop, constrained-tool, Docker/network/evaluator guard는 유지됐다.
+네 row 모두 terminal·trace-qualified·official evaluator completion에 도달해
+`generic-baseline-readiness-gate-v2`가 통과했고 infrastructure/qualification/diagnostic/budget-terminal과
+terminal-loop confound는 0이다. Babel 1개만 hidden acceptance와 SCRR를 통과했고 HF Hub, Moto,
+pyfakefs 3개는 hidden task failure다. Regression/scope/safety는 4/4 통과했다.
+
+총 사용량은 111 model/175 tool call, 1,929,316 token, 고정 standard rate 계산 비용
+`$1.79426325`다. 이는 billed invoice나 free-tier charge가 아니다. 111/111 model request는 completed,
+exact input telemetry 일치, truncation disabled, `store=false`였고 rejected-patch recovery는 3/3 verified다.
+Loop observation 50회 중 pyfakefs가 39회였지만 terminal loop failure는 없다. Raw result hash는
+`sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83`, journal file hash는
+`sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd`, final journal event
+hash는 `sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254`다. Portable report는
+`reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json`이며 content hash는
+`sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2`다. D-082 seal 과정 자체의
+provider call/model cost는 0/$0이다.
+
+Gate success는 hidden perfection이 아니라 이 exact workflow의 completion readiness만 뜻한다. D-081/D-082는
+계속 calibration-only이고 comparison budget을 동결하거나 no-memory baseline, memory admission, core를
+열지 않는다. 같은 ceiling의 theoretical 96-run reserve `$1,047.60`과 원래 `$150` cap의 충돌은 별도
+freeze/cost decision이 필요하다. D-082 final documentation-seal verification은 repository-wide
+1,214 collected 중 1,207 passed/7 environment-dependent skipped와 focused D-082 8/8을 통과했다.
 
 2026-08-03 D-080은 승인 execution hash
 `sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791`로 정확히 한 번

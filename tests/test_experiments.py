@@ -318,6 +318,12 @@ def test_d081_generic_readiness_has_exact_observability_contract(
     _ready_live_environment(monkeypatch, tmp_path)
     monkeypatch.setattr(
         eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - {eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID},
+    )
+    monkeypatch.setattr(
+        eval_runner,
         "utc_now",
         lambda: datetime(2026, 8, 3, 2, tzinfo=UTC),
     )
@@ -380,6 +386,12 @@ def test_d081_approved_preflight_binds_each_started_manifest(
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - {eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID},
+    )
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
@@ -541,6 +553,10 @@ def test_generic_readiness_rejects_cross_profile_budget_pairing(
             GENERIC_BASELINE_READINESS_D077_SUITE,
             eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID,
         ),
+        (
+            GENERIC_BASELINE_READINESS_D081_SUITE,
+            eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
+        ),
     ],
 )
 def test_consumed_generic_baseline_readiness_is_immutable(
@@ -553,7 +569,7 @@ def test_consumed_generic_baseline_readiness_is_immutable(
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
-        lambda: datetime(2026, 8, 2, 14, tzinfo=UTC),
+        lambda: datetime(2026, 8, 3, 2, tzinfo=UTC),
     )
 
     preflight = eval_runner.preflight_suite(suite_path)
@@ -561,6 +577,7 @@ def test_consumed_generic_baseline_readiness_is_immutable(
     assert {
         eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
         eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID,
+        eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
     } == eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
     assert (
         experiment_id
@@ -571,6 +588,39 @@ def test_consumed_generic_baseline_readiness_is_immutable(
         "LIVE_COST_NOT_APPROVED",
         "APPROVAL_HASH_MISMATCH",
     }
+
+
+def test_d081_consumed_readiness_is_immutable_without_local_result(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 3, 2, tzinfo=UTC),
+    )
+
+    preflight = eval_runner.preflight_suite(
+        GENERIC_BASELINE_READINESS_D081_SUITE
+    )
+    blocker_codes = {row["code"] for row in preflight["blockers"]}
+
+    assert "HISTORICAL_SUITE_IMMUTABLE" in blocker_codes
+    assert "EXPERIMENT_RESULT_EXISTS" not in blocker_codes
+    assert "EXPERIMENT_JOURNAL_EXISTS" not in blocker_codes
+
+    class ForbiddenRunner:
+        def __init__(self) -> None:
+            pytest.fail("consumed D-081 must be blocked before runner construction")
+
+    monkeypatch.setattr(eval_runner, "AgentRunner", ForbiddenRunner)
+    with pytest.raises(ContractError, match="preflight failed"):
+        eval_runner.evaluate_suite(
+            GENERIC_BASELINE_READINESS_D081_SUITE,
+            approve_live_cost=True,
+            approved_execution_hash=preflight["execution_hash"],
+        )
 
 
 def test_transport_retry_field_preserves_historical_suite_hashes() -> None:

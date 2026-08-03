@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-081 condition-neutral generic V2/V5 four-row readiness offline contract;
-executable verification complete, clean no-call preflight pending; no baseline freeze**
+현재 milestone: **D-082 D-081 four-row measured result sealed; workflow readiness observed,
+calibration-only and no baseline freeze**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ executable verification complete, clean no-call preflight pending; no baseline f
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-081 four-row readiness offline contract | r3 exact tuple과 v2 runtime/evidence/gate verified; provider 0/$0, clean preflight/live outcome pending, comparison/memory/core 제외 |
+| Phase 6 evaluation | D-082 D-081 measured readiness seal | r3 4/4 terminal·qualified·official, gate v2 pass, 1/4 task success; comparison/memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -70,17 +70,15 @@ outcome은 바꾸지 않는다. Final verification은 focused 331 passed, reposi
 passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와 `git diff --check`를 통과했다.
 Provider call은 0이며 추가 model cost는 `$0`이다.
 
-D-081은 D-080 single-row 관찰을 그대로 frozen population budget으로 부르지 않고 public process usage만
-사용해 condition-neutral 후보를 만든다. 새 exact ID
-`generic-baseline-readiness-v2v5-20260803-r3`는 D-075/D-077의 ordered Babel/Moto/pyfakefs/HF Hub,
-generic V2/V5 model/prompt/tool/context, retry 0과 output 25,000을 유지한다. Model/tool call limit은
-`null`로 기록·reconcile만 하고, total token 2,400,000과 wall 1,800초 및 retained guards를 강제한다.
-Runtime/evidence/gate는 각각 v2로 versioning한다. Source reserve는 `$10.9125`/run, four-row `$43.65`,
-cap `$44`다. Executable offline verification은 완료됐고 provider call과 model cost는 0이다. Clean
-preflight, live approval/hash/run/result/gate는 아직 없다. D-081은 calibration-only이고
-baseline/memory/core를 열지 않는다.
-동일 ceiling의 96-run reserve `$1,047.60`과 원래 `$150` cap의 충돌은 readiness 뒤 별도 decision으로
-해결한다. D-075/D-077/D-079/D-080은 immutable하다.
+D-081은 D-080 single-row 관찰을 frozen population budget으로 승격하지 않고 public process usage로
+condition-neutral 후보를 만들었다. D-082에서 clean commit
+`b4c79242bb0a94eed50530116205323e78c7d21a`와 승인 execution hash
+`sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`로 r3를 정확히 한 번
+실행했다. 4/4 terminal·qualified·official evaluator와 gate v2 pass, confound 0을 기록했지만 task success는
+Babel 1/4이고 세 row는 hidden failure다. Regression/scope/safety는 4/4 통과했다. 총 111 model/175 tool,
+1,929,316 token과 계산 비용 `$1.79426325`를 사용했다. D-081/D-082는 calibration-only이고
+baseline/memory/core를 열지 않는다. 동일 ceiling의 96-run reserve `$1,047.60`과 원래 `$150` cap의
+충돌은 별도 decision으로 해결한다. D-075/D-077/D-079/D-080은 immutable하다.
 
 ## 1. Sequencing rule
 
@@ -186,51 +184,43 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current source gate — D-081 condition-neutral generic V2/V5 readiness
+## Current result-seal gate — D-082 D-081 measured workflow readiness
 
-목표: D-075/D-077의 diverse four-row panel과 generic agent tuple을 유지하면서 model/tool call-count
-admission만 제거한 exact r3 source contract를 만든다. Public process evidence로 total-token/wall ceiling을
-사전 산출하고, historical artifact나 hidden outcome을 tuning input으로 사용하지 않는다.
+목표: D-081의 exact r3 execution과 predeclared process gate를 immutable하게 봉인하고 workflow completion과
+hidden correctness를 분리한다. Hidden failure를 agent 구현 실패나 재튜닝 권한으로 해석하지 않는다.
 
 ### Ordered work items
 
-1. **고정:** Exact ID `generic-baseline-readiness-v2v5-20260803-r3`, ordered Babel/Moto/pyfakefs/HF Hub,
-   원 dataset role, `no_memory` repetition 1과 seed `20260723`을 유지한다.
-2. **고정:** `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
-   `phase-evidence-v5`, SDK retry 0, output 25,000, sidecar absent와 fault none을 유지한다.
-3. **구현:** Model/tool call limit은 exact pair `null`이고 `model-tool-observability-only-v1` 아래 counter를
-   admission이 아닌 telemetry로 보존한다. Total token 2,400,000, wall 1,800초와 exact-request,
-   cost, loop, state/idempotency, constrained-tool, Docker/network/evaluator guard를 유지한다.
-4. **구현:** Public derivation을 content-addressed
-   `reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`에 결속한다.
+1. **완료:** Commit `b4c79242bb0a94eed50530116205323e78c7d21a`, execution hash
+   `sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`, exact suite/schedule과
+   four run identity를 고정한다.
+2. **완료:** 4/4 terminal·qualified·official evaluator, exact-one disabled-call projection과 gate v2 pass를
+   보존한다. Infrastructure/qualification/diagnostic/budget-terminal/terminal-loop confound는 0이다.
+3. **완료:** Babel 1/4 success, HF Hub/Moto/pyfakefs hidden failure와 regression/scope/safety 4/4 pass를
+   함께 기록한다. Task success는 gate predicate가 아니다.
+4. **완료:** 111 model/175 tool, 1,929,316 token, 계산 비용 `$1.79426325`, 111/111 completed/exact request,
+   truncation disabled, `store=false`, retry recovery 3/3, loop observation 50(pyfakefs 39)을 기록한다.
+5. **완료:** Raw result/journal/final-event hash를 각각
+   `sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83`,
+   `sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd`,
+   `sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254`로 고정한다.
+6. **완료:** Portable report path는
+   `reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json`이다. Content hash는
+   `sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2`다.
+7. **완료:** D-082 documentation seal은 repository-wide 1,214 collected 중 1,207 passed/7
+   environment-dependent skipped와 focused D-082 8/8을 통과했다. Seal 자체는 provider call 0,
+   model cost `$0`이다.
+8. **후속 결정:** `$1,047.60` theoretical 96-run reserve와 `$150` cap 충돌을 해결하기 전 comparison
+   budget, no-memory baseline, memory admission 또는 core를 열지 않는다.
 
-   ```text
-   (1,790,707 + 84 * 2,000 + 25,000) * 1.2
-   = 2,380,448.4 -> round_up(100,000) = 2,400,000
+### Gate status — measured process gate passed; calibration exclusions remain
 
-   856.559s * 2 = 1,713.118s -> round_up(300s) = 1,800s
-   ```
-
-5. **구현:** `generic-baseline-runtime-contract-v2`,
-   `generic-baseline-runtime-evidence-v2`, `generic-baseline-readiness-gate-v2`를 사용한다. 네 row 모두의
-   exact-one `disabled_call_guard_contract` projection과 terminal-loop failure 0을 gate에 포함한다.
-6. **고정:** 2026-08-03T01:08:49Z pricing에서
-   `(2,400,000 + 25,000) * $4.50/M = $10.9125`/run, four-row `$43.65`, cap `$44`를 사용한다.
-7. **완료:** Repository-wide 1,204 collected 중 1,197 passed/7 environment-dependent skipped,
-   Ruff, Python compileall과 `git diff --check`를 통과했다. Provider call과 model cost는 0이다.
-8. **대기:** Tracked change를 clean commit으로 만든 뒤 provider를 호출하지 않는 preflight에서 exact
-   task/package/image/evaluator/SDK/pricing/runtime/schedule/commit hash를 만든다.
-9. **승인 전 금지:** Exact execution hash와 최대 `$44`에 대한 별도 사용자 승인 전 provider를 호출하지
-   않는다. Source YAML의 false/null approval field는 authority가 아니다.
-10. **후속 결정:** Readiness 결과 뒤 fair comparison budget과 cost plan을 별도로 freeze한다. 같은 ceiling의
-    96-run theoretical reserve `$1,047.60`은 원래 `$150` cap과 충돌하므로 자동 승격하지 않는다.
-
-### Gate status — offline contract verified; clean preflight/live evidence pending
-
-- Provider call 0, model cost `$0`; live approval/hash/run/result/measured usage/gate outcome은 없다.
-- D-081은 calibration-only이고 `analysis_ready=false`, comparison denominator, no-memory baseline,
+- D-081 실행은 정확히 한 번 완료됐고 계산 비용은 `$1.79426325`다. D-082 seal의 추가 provider call과
+  model cost는 0/$0이다. 계산 비용은 billed invoice/free-tier charge 주장이 아니다.
+- D-081/D-082는 calibration-only이고 `analysis_ready=false`, comparison denominator, no-memory baseline,
   memory admission과 core를 열지 않는다.
-- Hidden success/failure는 readiness gate predicate가 아니며 task-specific tuning을 승인하지 않는다.
+- 1/4 task success와 3 hidden failure는 descriptive outcome일 뿐 task-specific tuning이나 automatic rerun을
+  승인하지 않는다.
 - D-075/D-077/D-079/D-080 source, consumed identity, raw/portable artifact, original/derived gate는 immutable하다.
 
 ## Historical result-seal gate — D-080 D-079 live completion and projection correction

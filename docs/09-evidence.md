@@ -2742,11 +2742,13 @@ artifact rewrite and hidden-driven tuning are not authorized. The next decision 
 offline and choose a condition-neutral baseline budget from public completion evidence without treating this
 single 84-call trajectory as the frozen population budget.
 
-## D-081 condition-neutral budget and readiness source evidence boundary
+## D-081 source evidence and D-082 measured-result boundary
 
 D-081 adds source identity `generic-baseline-readiness-v2v5-20260803-r3` and content-addressed derivation
 `reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`. It does not modify or combine the
 consumed D-075/D-077/D-079/D-080 executions, results, original gates or D-080 append-only correction.
+The derivation file SHA is
+`sha256:6f871c13aee71043c20c54c72a93667600462e8369483e9354507a94d0063193`.
 
 The exact panel keeps ordered Babel, Moto, pyfakefs and HF Hub, their original development roles, `no_memory`
 repetition 1, seed `20260723`, dated mini medium/standard/default, `SYSTEM_PROMPT_V3`, tool V2/context V5,
@@ -2780,24 +2782,55 @@ Official standard pricing was recorded at 2026-08-03T01:08:49Z as `$0.75/M` inpu
 `(2,400,000 + 25,000) * $4.50/M = $10.9125` per run, `$43.65` for four rows, cap `$44`.
 These are not measured cost or an invoice.
 
-At this documentation/source stage the evidence ledger is:
+After that source gate, D-081 ran exactly once from clean commit
+`b4c79242bb0a94eed50530116205323e78c7d21a` under approved execution hash
+`sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`. The predeclared
+process gate passed without changing its predicate:
 
 ```text
-provider calls = 0
-model cost = $0
-live approval = absent
-execution hash = absent
-run ID/result = absent
-measured usage/cost = absent
-executable offline tests = 1,197 passed / 7 environment-dependent skipped / 1,204 collected
-ruff / compileall / git diff --check = passed
-clean no-call preflight result = absent
-generic-baseline-readiness-gate-v2 outcome = absent
+terminal runs = 4 / 4
+trace-qualified runs = 4 / 4
+official evaluator completed = 4 / 4
+disabled-call guard projections = exact 1 / 1 on every row
+infrastructure / qualification / diagnostic errors = 0 / 0 / 0
+budget-terminal / terminal-loop failures = 0 / 0
+generic-baseline-readiness-gate-v2 = passed
+task success = 1 / 4, Babel only
+hidden task failure = 3 / 4, HF Hub + Moto + pyfakefs
+regression / scope / safety pass = 4 / 4 each
 comparison budget frozen = false
 no-memory baseline/memory admission/core unlocked = false
 ```
 
-D-081 is calibration-only. Even a later process-gate pass cannot directly promote the same ceiling to 96 core
-runs: `$10.9125 * 96 = $1,047.60`, which conflicts with the original `$150` project cap. A separate
-predeclared budget/scale/freeze decision is required. Hidden outcomes cannot authorize task-specific tuning or
-automatic rerun.
+Measured usage is 111 model calls, 175 tool calls and 1,929,316 tokens. At the frozen standard rates the calculated
+model cost is `$1.79426325`, below the `$44` authorization cap. It is not evidence of the billed invoice or
+free-tier charge. All 111 requests completed; 111/111 exact input counts matched provider usage, truncation was
+disabled and `store=false`. Three natural rejected-patch retry episodes were verified 3/3. The trace contains 50
+loop observations, 39 from pyfakefs, but no terminal loop failure.
+
+The immutable evidence identities are:
+
+```text
+suite semantic hash = sha256:2be237b6b4b9fc0c63be841716f7fa271cd14e97e287041f8667e88eb48e5075
+suite YAML byte SHA = sha256:3d357bac2b5033231c7e0349a99291e842c16792ef753122a9ddb5e7c3f529dc
+schedule semantic hash = sha256:2d6b5487b99474c96d038356fb15a60f5733c6e976f90f270692a1ebf1a63b69
+approved plan semantic hash = sha256:8aecde2488e1823508acdd0c8f4a33a631f011ba6689e5b848091574c522d72e
+execution plan file SHA = sha256:8fbb85715bfa6d53e33317a5328fcff2404c12be4354f3eaad63e20184bc6407
+source derivation SHA = sha256:6f871c13aee71043c20c54c72a93667600462e8369483e9354507a94d0063193
+raw result SHA = sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83
+journal file SHA = sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd
+pre-completion journal hash = sha256:b62f805c783a1a26b95794a6febc999cf629f4175d422add8d29c80c364a0fd4
+final journal event hash = sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254
+portable report path = reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json
+portable report SHA = sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2
+```
+
+D-082 creates the sanitized portable seal without another provider call or model cost: 0 and `$0`. Final
+repository verification collected 1,214 tests and passed 1,207 with seven environment-dependent skips; focused
+D-082 verification passed 8/8.
+
+D-081/D-082 are calibration-only. Process-gate success proves workflow readiness for this exact tuple, not hidden
+perfection, a no-memory performance baseline, memory benefit, recovery under injected faults, held-out/core
+readiness or a population estimate. The 1/4 task success cannot authorize task-specific tuning or automatic rerun.
+The same ceiling across 96 core runs has theoretical reserve `$1,047.60`, conflicting with the original `$150`
+cap, so a separate predeclared budget/scale/freeze decision remains required.

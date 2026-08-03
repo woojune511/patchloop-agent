@@ -520,8 +520,8 @@ Evidence/issue:
 
 ### D-081 accepted decision — condition-neutral generic V2/V5 four-row readiness source contract
 
-- Status: accepted source/offline contract decision; executable verification complete, clean no-call preflight
-  pending. Provider call 0, model cost `$0`, live approval/execution hash/run/result/measured cost/gate outcome 없음.
+- Status: historical accepted source/offline contract decision. D-082 later executed and sealed this exact r3
+  identity; the source decision itself made provider call 0 and cost `$0`.
 - Preserves: D-075/D-077/D-079/D-080 suite, consumed execution identities, raw/portable artifacts, original false
   gates와 append-only correction을 수정·재개·결합하지 않는다. Historical runtime/gate v1 의미도 바꾸지 않는다.
 - Exact identity: purpose `generic-baseline-readiness`, experiment ID
@@ -553,7 +553,39 @@ Evidence/issue:
 - Evidence/issue: Public derivation artifact
   `reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`과 exact source config. Repository-wide
   1,204 collected 중 1,197 passed/7 environment-dependent skipped, Ruff, Python compileall과
-  `git diff --check`가 executable offline evidence다. Clean preflight와 live evidence는 아직 없다.
+  `git diff --check`가 historical source-stage executable offline evidence다. 이후 live evidence는 아래
+  D-082 decision에만 속한다.
+
+### D-082 accepted decision — immutable D-081 measured-result seal
+
+- Status: accepted measured calibration result. Exact source commit
+  `b4c79242bb0a94eed50530116205323e78c7d21a`와 승인 execution hash
+  `sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`로 D-081을 정확히 한 번
+  실행했고 재실행하지 않는다.
+- Process outcome: 4/4 terminal·trace-qualified·official evaluator, exact-one disabled-call projection과
+  `generic-baseline-readiness-gate-v2` pass. Infrastructure/qualification/diagnostic/budget-terminal과
+  terminal-loop confound는 0이다.
+- Task outcome: Babel만 task success/SCRR이고 HF Hub, Moto, pyfakefs는 hidden acceptance failure다.
+  Regression/scope/safety는 4/4 pass다. Hidden perfection은 gate predicate가 아니며 이 1/4를 baseline이나
+  population estimate로 사용하지 않는다.
+- Measured usage: 111 model/175 tool call, 1,929,316 token, fixed standard-rate calculated cost
+  `$1.79426325`. 111/111 request는 completed, exact input telemetry 일치, truncation disabled,
+  `store=false`다. Rejected-patch recovery 3/3이 verified됐고 loop observation 50회 중 pyfakefs가 39회지만
+  terminal loop failure는 0이다. 계산 비용은 billed invoice/free-tier charge 주장이 아니다.
+- Evidence identity: pre-run derivation artifact SHA
+  `sha256:6f871c13aee71043c20c54c72a93667600462e8369483e9354507a94d0063193`; raw result SHA
+  `sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83`; journal file SHA
+  `sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd`; final event hash
+  `sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254`. Portable report
+  `reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json`의 content hash는
+  `sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2`다.
+- Claims boundary: D-081/D-082는 calibration-only다. Comparison denominator, no-memory baseline, memory
+  admission, core 또는 comparison budget freeze를 열지 않는다. `$1,047.60` theoretical 96-run reserve와
+  `$150` cap 충돌은 별도 사전 decision으로 해결한다. Hidden failure에 따른 automatic rerun과
+  task-specific tuning은 승인하지 않는다.
+- Seal cost: provider call 0, model cost `$0`. Final documentation-seal verification은 repository-wide
+  1,214 collected 중 1,207 passed/7 environment-dependent skipped와 focused D-082 8/8을 통과했다.
+- Date: 2026-08-03
 
 ## Deferred ideas
 

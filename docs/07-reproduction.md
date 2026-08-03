@@ -1065,10 +1065,10 @@ environment-dependent skipped다. Ruff, Python compileall, JSON parse와 `git di
 verification의 provider call은 0이고 추가 model cost는 `$0`이다. Hidden assertion,
 private evaluator output 또는 reference patch를 reproduction 절차에서 열거나 portable record에 넣지 않는다.
 
-## D-081 r3 source audit — no live execution or approval yet
+## D-081 r3 source audit and D-082 immutable measured-result inspection
 
-D-081 exact source identity와 public derivation만 inspect한다. D-075/D-077/D-079/D-080 live command를
-재실행하지 않는다.
+D-081 exact source identity와 public derivation, D-082 portable measured report만 inspect한다.
+Consumed D-075/D-077/D-079/D-080/D-081 live command를 재실행하지 않는다.
 
 ```powershell
 Get-Content -Raw -Encoding utf8 `
@@ -1104,7 +1104,7 @@ Runtime/evidence/gate schema는 각각 `generic-baseline-runtime-contract-v2`,
 각각의 `qualification-gate-check-projection-v1` exact-one `disabled_call_guard_contract`를 요구한다.
 Historical generic v1이나 workflow probe v1을 r3 의미로 재해석하지 않는다.
 
-Executable offline validation은 다음 결과로 완료됐다.
+Historical D-081 source-stage offline validation은 다음 결과로 완료됐다.
 
 ```text
 pytest: 1,204 collected; 1,197 passed; 7 environment-dependent skipped
@@ -1115,16 +1115,34 @@ provider calls: 0
 model cost: $0
 ```
 
-Tracked tree를 clean commit으로 만든 경우에만 다음 **no-call** preflight를 고려한다.
+Consumed D-081 suite를 다시 preflight하거나 실행하지 않는다. D-082 portable report와 source derivation을
+읽고 hash를 검증한다.
 
 ```powershell
-uv run --cache-dir .uv-cache --env-file .env patchloop evaluate `
-  --suite experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml `
-  --preflight-only
+$derivation = `
+  "reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json"
+$report = `
+  "reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json"
+
+Get-FileHash -Algorithm SHA256 -LiteralPath $derivation
+Get-FileHash -Algorithm SHA256 -LiteralPath $report
+Get-Content -Raw -Encoding utf8 $report | ConvertFrom-Json | Out-Null
 ```
 
-이 명령에 `--approve-live-cost`나 approved hash를 넣지 않는다. 현재 D-081에는 live approval 또는 execution
-hash가 없고 provider call/model cost는 0이다. Preflight가 나중에 exact clean-state hash를 만들더라도 그
-자체는 authority가 아니다. 사용자가 hash와 최대 `$44`를 별도로 승인하기 전에는 live command를 실행하지
-않는다. D-081은 calibration-only이고 comparison/no-memory/memory/core를 열지 않는다. 96-run theoretical
-reserve `$1,047.60`과 원래 `$150` cap의 충돌은 별도 freeze/cost decision 전까지 unresolved다.
+Expected derivation SHA는
+`sha256:6f871c13aee71043c20c54c72a93667600462e8369483e9354507a94d0063193`, portable report SHA는
+`sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2`다. Report는 source commit
+`b4c79242bb0a94eed50530116205323e78c7d21a`, execution hash
+`sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`, raw result SHA
+`sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83`, journal file SHA
+`sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd`와 final event hash
+`sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254`를 포함해야 한다.
+
+Measured predicate는 4/4 terminal·qualified·official evaluator, confound 0과 gate v2 pass다. Task outcome은
+Babel 1/4 success와 세 hidden failure이며 regression/scope/safety 4/4 pass다. Usage는 111 model/175 tool,
+1,929,316 token, 고정 rate 계산 비용 `$1.79426325`이고 billed invoice/free-tier charge가 아니다.
+111/111 request completed/exact, truncation disabled, `store=false`, recovery 3/3, loop observation
+50(pyfakefs 39)도 함께 확인한다. D-082 seal은 provider call 0/$0이며 final documentation-seal verification은
+repository-wide 1,214 collected 중 1,207 passed/7 environment-dependent skipped와 focused D-082 8/8을
+통과했다. D-081/D-082는 calibration-only이고 comparison/no-memory/memory/core를 열지 않는다.
+96-run theoretical reserve `$1,047.60`과 `$150` cap 충돌은 별도 decision 전까지 unresolved다.

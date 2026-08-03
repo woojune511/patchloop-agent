@@ -12,29 +12,35 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-081 condition-neutral generic V2/V5 four-row readiness offline contract;
-  executable verification complete, clean no-call preflight pending; no baseline freeze`다. Exact experiment ID는
-  `generic-baseline-readiness-v2v5-20260803-r3`이며 D-075/D-077의 Babel, Moto, pyfakefs, HF Hub
-  task와 순서, `no_memory` 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
-  `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0과 output 25,000을
-  유지한다. Model/tool call limit은 `null`이고 `model-tool-observability-only-v1` 아래 counter를
-  기록·reconcile하지만 admission guard로 사용하지 않는다. Total token 2,400,000과 wall 1,800초,
-  exact-request, cost, loop, constrained-tool, Docker/network/evaluator guard는 계속 강제한다. Public
-  process evidence에서 `((1,790,707 + 84 * 2,000 + 25,000) * 1.2) = 2,380,448.4`를
-  100,000-token quantum으로 올림해 2,400,000을 선택했고, `856.559s * 2 = 1,713.118s`를
-  300초 quantum으로 올림해 1,800초를 유지했다. 새 runtime/evidence/gate schema는 각각
-  `generic-baseline-runtime-contract-v2`, `generic-baseline-runtime-evidence-v2`,
-  `generic-baseline-readiness-gate-v2`이며 각 row의 exact-one
-  `disabled_call_guard_contract` projection을 요구한다. Final offline verification은 repository-wide
-  1,204 collected 중 1,197 passed/7 environment-dependent skipped, Ruff, Python compileall과
-  `git diff --check`를 통과했다. 2026-08-03T01:08:49Z 공식 standard pricing
-  `$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output을 사용한 reserve는
-  `(2,400,000 + 25,000) * $4.50/M = $10.9125`/run, four-row `$43.65`, cap `$44`다.
-  이 source stage의 provider call과 model cost는 0이고 live approval/execution hash/run/result/gate
-  outcome은 없다. D-081은 calibration-only이며 comparison denominator, no-memory baseline, memory
-  admission과 core를 열거나 comparison budget을 동결하지 않는다. 같은 ceiling의 96-run 보수적
-  reserve `$1,047.60`은 원래 `$150` project cap과 충돌하므로 readiness 뒤 별도 freeze/cost decision이
-  필요하다. Historical D-075/D-077/D-079/D-080 suite, hash, run, result, gate와 correction은 immutable하다.
+- 현재 milestone은 `D-082 D-081 condition-neutral four-row workflow readiness observed and
+  measured result sealed; calibration-only, no baseline freeze`다. Exact experiment
+  `generic-baseline-readiness-v2v5-20260803-r3`는 clean source commit
+  `b4c79242bb0a94eed50530116205323e78c7d21a`와 승인 execution hash
+  `sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`로 정확히 한 번
+  실행됐다. D-075/D-077과 같은 Babel, Moto, pyfakefs, HF Hub task, `no_memory` 1회,
+  `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
+  `phase-evidence-v5`, SDK transport retry 0, output 25,000을 유지했다. Model/tool call limit은
+  `null`이고 total token 2,400,000과 wall 1,800초 및 exact-request, cost, loop, constrained-tool,
+  Docker/network/evaluator guard는 계속 강제됐다. 네 row 모두 terminal·trace-qualified·official
+  evaluator completion에 도달해 `generic-baseline-readiness-gate-v2`가 통과했고 infrastructure,
+  qualification, diagnostic, budget-terminal과 terminal-loop confound는 모두 0이다. Babel만 SCRR이며
+  HF Hub, Moto, pyfakefs는 hidden acceptance 실패다. 네 row 모두 regression/scope/safety는 통과했다.
+  총 사용량은 111 model/175 tool call, 1,929,316 token이고 공식 고정 rate 계산 비용은
+  `$1.79426325`다. 이는 billed invoice나 free-tier charge 주장이 아니다. 111/111 request는 completed,
+  exact input telemetry 일치, truncation disabled와 `store=false`를 기록했다. Natural rejected-patch
+  recovery는 3/3 verified이고 loop observation은 50회이며 그중 pyfakefs가 39회지만 terminal loop
+  failure는 0이다. Raw result hash는
+  `sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83`, journal file hash는
+  `sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd`, final event hash는
+  `sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254`다. Portable report는
+  `reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json`이고 content hash는
+  `sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2`이다. D-082 seal 자체의
+  provider call과 model cost는 0/$0이다.
+  이 결과는 exact workflow readiness calibration일 뿐 comparison denominator, no-memory baseline,
+  memory admission과 core를 열거나 comparison budget을 동결하지 않는다. Historical
+  D-075/D-077/D-079/D-080 suite, hash, run, result, gate와 correction은 immutable하다. D-082 final
+  documentation-seal verification은 repository-wide 1,214 collected 중 1,207 passed/7
+  environment-dependent skipped와 focused D-082 8/8을 통과했다.
   Historical D-080 milestone은 `D-079 workflow completion observed; original gate projection defect sealed
   with an append-only derived correction; no baseline freeze`다. 승인 execution hash
   `sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791`로 D-079를 정확히

@@ -940,12 +940,13 @@ silently lowering the design or fabricating missing results.
 - Calibration-only, `analysis_ready=false`, no-memory/comparison exclusion, memory-admission closure and core
   closure remain in force despite the derived process-gate pass.
 
-## D-081 is a source budget candidate, not readiness, baseline or core authority
+## D-081/D-082 proves process readiness, not baseline or hidden-case quality
 
-- D-081 preserves the D-075/D-077 four-task order and generic V2/V5 tuple. Its offline implementation passed
-  1,197 of 1,204 collected tests with seven environment-dependent skips, plus Ruff, Python compileall and
-  `git diff --check`; it has not yet produced a clean no-call preflight, live approval, execution hash, run,
-  measured cost or gate outcome. Offline verification is not provider capability.
+- D-081 preserves the D-075/D-077 four-task order and generic V2/V5 tuple. D-082 records one exact invocation at
+  clean commit `b4c79242bb0a94eed50530116205323e78c7d21a` and execution hash
+  `sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`. It reached 4/4
+  terminal·qualified·official evaluator and passed gate v2 with no infrastructure/qualification/diagnostic/
+  budget-terminal or terminal-loop confound.
 - Null model/tool limits mean count observability without count-based admission only for the exact r3 contract.
   They do not make execution unlimited: the 2,400,000-token, 1,800-second, exact-request, cost, loop, sandbox,
   constrained-tool and evaluator boundaries can still terminate a row.
@@ -955,17 +956,28 @@ silently lowering the design or fabricating missing results.
   headroom multiplier do not estimate a completion distribution or prove the ceiling sufficient.
 - `generic-baseline-runtime-contract-v2`, `generic-baseline-runtime-evidence-v2` and
   `generic-baseline-readiness-gate-v2` prevent the nullable-count policy from changing historical v1 semantics.
-  Executable offline evidence now covers the runtime/gate, retained wall-clock termination and tamper rejection,
-  but it does not prove a provider run can complete the panel.
-- The gate is process-only even when executed: 4/4 terminal, qualified, official evaluator and valid exact-one
-  disabled-call projections with zero confounds. Hidden success/SCRR remains outside the predicate and cannot be
-  used for task-specific tuning.
+  The measured run proves this exact provider workflow can complete the panel, not that other tasks, models,
+  budgets, memory conditions or fault/recovery schedules can do so.
+- The gate is process-only: Babel is the sole task success while HF Hub, Moto and pyfakefs fail hidden acceptance.
+  Regression/scope/safety pass 4/4. The descriptive 1/4 must not be reported as a no-memory baseline or population
+  estimate and cannot authorize hidden-driven task-specific tuning.
 - The `$10.9125` per-run and `$43.65` four-row reserve under a `$44` cap use the 2026-08-03 standard price as a
-  worst-rate authorization formula. They are neither expected spend nor an invoice/free-tier claim. Provider
-  calls and model cost at this source stage are 0.
+  worst-rate authorization formula. Measured fixed-rate calculation is `$1.79426325` for 111 model/175 tool calls
+  and 1,929,316 tokens. It is not a billed invoice or free-tier claim. D-082 sealing adds no provider call or model
+  cost.
+- All 111 requests completed with exact input telemetry, truncation disabled and `store=false`; rejected-patch
+  recovery is verified 3/3. Fifty loop observations, including 39 on pyfakefs, did not become a terminal loop
+  failure. These are four-run calibration observations, not rates.
+- Portable evidence is
+  `reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json` with content hash
+  `sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2`. Raw result SHA is
+  `sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83`; journal file/final event hashes are
+  `sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd` and
+  `sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254`.
 - Applying the same reserve to 96 core runs yields a theoretical `$1,047.60`, far above the original `$150`
   project cap. Therefore a readiness pass cannot mechanically freeze this ceiling for the four-condition core;
   scope, budget or campaign design needs a separate predeclared decision without changing conditions unequally.
-- D-081 remains calibration-only and leaves `analysis_ready=false`, comparison denominator, no-memory baseline,
+- D-081/D-082 remain calibration-only and leave `analysis_ready=false`, comparison denominator, no-memory baseline,
   memory admission and core closed. D-075/D-077/D-079/D-080 identities, raw evidence, false gates and append-only
-  correction remain immutable.
+  correction remain immutable. D-082 final documentation-seal verification passed 1,207 of 1,214 collected
+  tests with seven environment-dependent skips and focused D-082 8/8.
