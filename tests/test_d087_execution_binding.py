@@ -202,6 +202,14 @@ def exact_plan_manifest(
         "_condition_neutral_comparison_pilot_admission",
         _synthetic_pilot_admission,
     )
+    # D-088 makes the real campaign identity immutable. This fixture keeps
+    # testing D-087's exact pre-provider capability contract in isolation.
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_CONDITION_NEUTRAL_ACCRUED_CAP_EXPERIMENT_IDS,
+    )
 
     candidate = eval_runner.preflight_suite(SUITE_PATH)
     preflight = eval_runner.preflight_suite(

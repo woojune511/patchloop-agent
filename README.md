@@ -2,6 +2,29 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-088은 승인된 D-087 no-memory 12-run 결과를 immutable portable evidence로 봉인한다.
+Exact execution hash
+`sha256:0dd8ca1d0632398fed25ca28fbce89b97b0bf2137be163ed19a09fbf2d7f470d`는 clean source commit
+`7eee5fa1837d30e6177c46119885035f2b1d976f`에서 정확히 한 번 소비됐다. 12/12 run은 terminal·qualified·
+cost-settled였고 infrastructure/qualification/diagnostic/not-started/terminal-loop error는 0이었다. 다만 AnyIO
+repetition 2가 `1,600,000` per-run token ceiling의 exact-request guard에 걸려 provider call 전에 끝났으므로
+official evaluator는 11/12이고 original readiness gate는 false다. 결과는 1 resolved(PDM repetition 2),
+10 hidden task failure, 1 agent budget failure다. Evaluated 11 run은 regression/scope/safety를 모두 통과했다.
+
+총 사용량은 4,844,335 input + 385,595 output = 5,229,930 token, 340 model/547 tool call이며 계산 비용은
+`$5.36842875`다. `$25` campaign cap의 maximum committed는 `$12.31149825`, 최종 held reserve는 `$0`라
+campaign spend cap은 binding이 아니었다. 실패 confound는 AnyIO 2회차의 per-run token ceiling 한 건이다.
+340/340 provider response는 completed였고 exact token telemetry, truncation disabled, `store=false`,
+previous-response dependency 0을 기록했다. Portable seal은
+`reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json`
+(`sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269`)이다. D-087 ID와 승인 hash는
+hard-consumed이며 재실행하지 않는다. Final verification은 focused 74/74, repository-wide 1,478 collected 중
+1,471 passed/7 environment-dependent skipped이고 Ruff/compileall/JSON/diff checks도 통과했다. 이 1/12 성공은 diagnostic일 뿐 no-memory baseline이나 성능 추정치가
+아니고 comparison denominator, memory admission/index, core와 `analysis_ready`는 계속 닫혀 있다. 다음 단계는
+hidden 결과나 agent 동작을 튜닝하지 않고 별도 budget-only condition-neutral successor를 결정하는 것이다.
+
+Historical D-087 source evidence:
+
 2026-08-04 D-087은 12-run no-memory campaign의 per-run 실행 ceiling과 실제 campaign 지출 cap을
 분리했다. 새 source
 `experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml`은 D-083/D-084의

@@ -101,6 +101,15 @@ def _ready_environment(monkeypatch, tmp_path: Path) -> None:
         "_condition_neutral_comparison_pilot_admission",
         lambda *_args, **_kwargs: _admitted_pilot(),
     )
+    # D-088 hard-consumes the real D-087 identity. These source/runtime tests
+    # deliberately exercise the historical contract with an isolated fake
+    # provider boundary, so remove only that exact post-run guard here.
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - eval_runner.CONSUMED_CONDITION_NEUTRAL_ACCRUED_CAP_EXPERIMENT_IDS,
+    )
     # These tests isolate campaign accounting and use a deliberately minimal
     # synthetic D-085 admission.  The exact execution-plan binding has its own
     # D-087 test module; keep capability issuance focused on the journal here.

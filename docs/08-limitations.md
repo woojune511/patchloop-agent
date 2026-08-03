@@ -1099,3 +1099,20 @@ silently lowering the design or fabricating missing results.
   max-`$25` user approval, campaign execution, baseline sealing, memory admission/index and core remain pending.
 - Final offline verification is focused 68/68 and repository-wide 1,472 collected, 1,465 passed/7 skipped. The
   source artifact SHA is `sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`.
+
+## D-088 seals a failed readiness gate, not a no-memory baseline
+
+- D-087 completed all 12 scheduled rows at process level, but only 11 reached the official evaluator. AnyIO
+  repetition 2 was blocked locally because 21,792 remaining tokens could not reserve the next exact 14,080-token
+  input plus 25,000 output allowance. Provider generation did not start.
+- The `$25` campaign-local cap was not the cause: accrued list-price cost was `$5.36842875`, maximum committed was
+  `$12.31149825`, all 12 reservations settled, held reserve ended at zero, and no reserve-unavailable event occurred.
+- The 1/12 resolved observation is not a success-rate estimate. With one per-run budget confound, D-088 keeps
+  `analysis_ready`, baseline, comparison denominator, memory admission/index and core closed.
+- Ten official hidden failures are preserved as task outcomes but do not authorize task-specific agent tuning.
+  Readiness work should change only the condition-neutral resource policy unless a separate decision explicitly
+  broadens scope.
+- Fixed manifest pricing is reproducible accounting, not the billed invoice or a claim about free-tier treatment.
+  The seal work itself made no provider calls and added `$0` model cost.
+- D-087 is hard-consumed and must not be rerun. A successor needs a new experiment ID, clean source, fresh no-call
+  preflight, new execution hash and separate user cost approval.

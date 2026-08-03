@@ -748,3 +748,15 @@ Evidence/issue:
 - Autonomous harness self-modification
 - LLM-only grading/classification
 - Enterprise dashboard and access control
+
+### D-088 accepted result decision — seal failed readiness without hidden-driven tuning
+
+- D-087의 `$25` campaign cap은 충분했다. Actual list-price accrual `$5.36842875`와 maximum committed
+  `$12.31149825`는 cap 아래였고 12개 row 모두 reserve/settle됐다.
+- Original readiness gate는 false로 유지한다. AnyIO repetition 2가 per-run 1.6M token ceiling에 걸려
+  evaluator가 11/12였기 때문이다.
+- 관찰된 1 resolved, 10 hidden task failure, 1 agent budget failure를 no-memory 성능 baseline이나 memory
+  admission 근거로 사용하지 않는다. Hidden outcome을 근거로 prompt/tool/task를 수정하지 않는다.
+- D-087 ID/hash/result/journal은 immutable하고 재실행하지 않는다. 후속 후보는 condition-neutral budget-only
+  새 experiment로만 다루며 자동 생성·실행하지 않는다.
+- D-088 seal 작업은 provider call 0, added model cost `$0`이다.

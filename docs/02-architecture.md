@@ -1096,3 +1096,22 @@ Cost-control descriptor/hash는 suite/execution identity, manifest context, paid
 trace qualification에 포함된다. Historical suite에는 optional field를 직렬화하지 않으므로 기존 hash와 artifact
 identity가 바뀌지 않는다. 이 architecture는 cap을 기술적으로 강제할 뿐 12/12 completion, baseline, memory
 admission 또는 core authority를 만들지 않는다.
+
+## 29. D-088 measured-result sealing architecture
+
+D-088은 D-087의 live state를 다시 실행하거나 수정하지 않고 portable content-addressed report로 투영한다.
+Raw experiment result, 50-event cost journal, canonical execution plan과 12개 durable qualification은 local
+evidence로 남고, portable report는 public task/run identity, verdict state, token/call usage, qualification hash,
+cost settlement와 trace aggregate만 포함한다. Hidden assertion, private spec, reference/submitted patch body,
+request/response body와 credential은 포함하지 않는다.
+
+관찰된 두 budget boundary는 독립이다. Campaign-local `$25` cap은 actual accrued `$5.36842875`, maximum
+committed `$12.31149825`, 12 reserve/12 settle로 통과했다. 반면 AnyIO repetition 2의 per-run
+1,600,000-token ceiling은 exact next input 14,080과 full output allowance 25,000을 남은 21,792 token에
+수용하지 못해 provider generation 전에 차단됐다. 따라서 architecture가 campaign spend를 안전하게 통제한
+사실과 12/12 evaluator readiness 실패를 동시에 보존한다.
+
+D-087 experiment ID는 source-level immutable set에 추가되어 local raw evidence가 없어도 새 provider
+boundary 전에 거부된다. 이 seal은 12/12 terminal·qualified와 cost integrity를 증명하지만 evaluator는
+11/12이므로 baseline/denominator/memory/core를 열지 않는다. 다음 successor가 있다면 같은 model/prompt/tool/
+context를 유지하는 condition-neutral budget-only 새 source와 별도 approval capability가 필요하다.

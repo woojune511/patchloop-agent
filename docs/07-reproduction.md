@@ -1256,3 +1256,26 @@ repository-wide 결과는 1,472 collected 중 1,465 passed/7 skipped다.
 이 inspection은 candidate execution hash나 비용 승인을 만들지 않는다. 다음 단계에서는 먼저 이 변경을 clean
 commit으로 봉인한 다음, 공식 가격·Docker·SDK·D-086 pilot admission을 다시 확인하는 no-call preflight만
 실행한다. Provider 호출은 그 candidate hash와 최대 `$25`에 대한 별도 사용자 승인이 있을 때만 허용된다.
+
+## Inspect the D-088 measured campaign seal without provider access
+
+Portable report는 다음 경로에 있다.
+
+```text
+reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json
+```
+
+Expected byte SHA는
+`sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269`다. 다음 검증은 provider를
+호출하지 않는다.
+
+```powershell
+Get-FileHash -Algorithm SHA256 reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' tests/test_d088_condition_neutral_campaign_seal.py tests/test_d088_runtime_hardening.py
+```
+
+`.patchloop` raw evidence가 있는 원 execution host에서는 test가 result/journal/plan, 12 qualification, trace,
+fixed-rate cost와 SQLite consumption까지 재검증한다. Raw evidence가 없는 clean machine에서는 portable hash,
+claims boundary, leak-safe schema와 hard-consumed preflight guard를 검증하고 raw-only test는 명시적으로 skip한다.
+D-087 suite를 다시 evaluate하지 않는다. 새 provider 실행은 이 reproduction 범위 밖이며 새 experiment와 별도
+승인이 필요하다.

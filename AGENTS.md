@@ -12,7 +12,38 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-087 exact 12-run no-memory campaign-local list-price-accrual cap source/offline gate
+- 현재 milestone은 `D-088 D-087 measured result sealed; 12/12 terminal and qualified but 11/12 official evaluator,
+  readiness false, no baseline or memory authority`다. Exact D-087 experiment
+  `dev-no-memory-condition-neutral-accrued-cap-20260804-r1`은 clean source commit
+  `7eee5fa1837d30e6177c46119885035f2b1d976f`와 승인 execution hash
+  `sha256:0dd8ca1d0632398fed25ca28fbce89b97b0bf2137be163ed19a09fbf2d7f470d`로 정확히 한 번
+  실행됐다. 12/12 row가 terminal·trace-qualified·cost-settled에 도달했고 infrastructure,
+  qualification, diagnostic, not-started와 terminal-loop confound는 0이다. 그러나 AnyIO repetition 2
+  `run_4613c65b2a254349`가 1,578,208 token 사용 후 남은 21,792 token으로 exact next input 14,080과
+  full output allowance 25,000을 함께 보장하지 못해 provider call 전에 차단됐다. 따라서 official evaluator는
+  11/12이고 original `condition-neutral-no-memory-campaign-readiness-gate-v1`은 false다. 이 한 run은
+  qualified 28/28이며 다른 11 run은 evaluator와 qualification 29/29에 도달했다. Outcome은 1 resolved
+  (PDM repetition 2), 10 hidden task failure, 1 agent budget failure다. Evaluated 11 run은 모두
+  regression/scope/safety를 통과했다. Task success는 readiness predicate가 아니며 관찰된 1/12는
+  diagnostic일 뿐 성능 추정치가 아니다. 총 usage는 4,844,335 input + 385,595 output = 5,229,930 token,
+  340 model/547 tool call, input pre-count 341회와 3,356,560ms다. 340/340 provider response는 completed,
+  exact token telemetry 일치, truncation disabled, `store=false`, previous-response dependency 0이다.
+  공식 고정 rate 재계산 비용은 `$5.36842875`이고 campaign cap `$25`, maximum committed
+  `$12.31149825`, reserve/settle 12/12, held reserve 0, reserve-unavailable 0이므로 campaign spend cap은
+  binding이 아니다. Result SHA는
+  `sha256:f3380aa466d5a2025562bb299e0bfc341135e5b2e77a634c80a87d796f1cbe40`, journal SHA는
+  `sha256:14c6248d83738883486233a2f2516f3b975ef861ae10ba2f78d6d14d4b3f6fcd`, final event SHA는
+  `sha256:253f543528cb472b282dd29fbde9b21a7cdd5eca34f5be9882ab7cdea29f4358`다. Portable seal은
+  `reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json`
+  (`sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269`)이다. D-087 ID는
+  local raw evidence 유무와 무관하게 hard-consumed이고 재실행하지 않는다. D-088 seal 자체의 provider
+  call/model cost는 0/$0이다. Final verification은 focused 74/74, repository-wide 1,478 collected 중
+  1,471 passed/7 environment-dependent skipped이며 Ruff, compileall, JSON parse와 `git diff --check`를
+  통과했다. Readiness가 실패했으므로 no-memory baseline, comparison denominator,
+  memory review/admission/index, core와 `analysis_ready`는 계속 닫혀 있다. 다음 후보는 model/prompt/tool/context나
+  hidden outcome을 조정하지 않는 별도 budget-only condition-neutral successor decision이며 새 ID, clean source,
+  no-call preflight, execution hash와 사용자 비용 승인이 필요하다.
+- Historical D-087 source milestone은 `exact 12-run no-memory campaign-local list-price-accrual cap source/offline gate
   complete; $25 hard cap and full-next-run reservation bound; no clean preflight, approval, provider execution,
   baseline, memory admission/index, or core authority`다. 새 exact source는
   `experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml`이며 historical

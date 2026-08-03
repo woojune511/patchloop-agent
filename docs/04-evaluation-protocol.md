@@ -1537,3 +1537,24 @@ campaign을 fail closed한다. Live resume은 request-level billing ambiguity �
 Source gate 뒤의 live sequence는 반드시 clean commit -> fresh no-call preflight -> candidate execution hash ->
 exact hash와 max `$25` 별도 승인 -> one campaign invocation -> immutable result seal 순서다. Source artifact와
 preflight는 SCRR, success rate 또는 memory effect evidence가 아니다.
+
+### D-088 D-087 measured-result protocol
+
+승인된 D-087 invocation은 exact hash로 한 번만 실행하고 즉시 immutable evidence로 닫는다. Post-run 절차는
+provider를 다시 호출하지 않고 다음을 수행한다.
+
+1. Raw result, plan과 50-event journal의 byte/canonical hash를 검증한다.
+2. 12개 qualification을 durable state에서 `persist=False`로 재계산해 persisted payload와 exact 비교한다.
+3. 340개 `ModelCalled`의 completed status, exact input/total token telemetry, truncation disabled,
+   `store=false`와 previous-response dependency 0을 검증한다. 차단된 generation의 local input pre-count 한 건을
+   포함해 input-token count call은 341회다.
+4. Token usage를 fixed nano-USD rate로 재가격하고 journal 12 reserve/12 settle 및 SQLite 12 one-use
+   consumption과 대조한다.
+5. Private/hidden/reference/submitted-patch/request-response payload를 제외한 portable report를 content-address한다.
+6. Experiment ID를 hard-consumed로 만들고 original gate를 그대로 보존한다.
+
+Readiness predicate에는 task success가 없지만 12/12 official evaluator completion과 budget-terminal 0이 있다.
+실측은 12/12 terminal·qualified, 11/12 evaluator와 budget-terminal 1이므로 false다. 1 resolved, 10 hidden task
+failure와 1 agent budget failure는 진단으로 보존하되 hidden failure로 prompt/tool/task를 튜닝하지 않는다.
+새 실행은 새 budget-only condition-neutral source, clean preflight, execution hash와 별도 사용자 승인 없이는
+허용되지 않는다.

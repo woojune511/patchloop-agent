@@ -2957,3 +2957,34 @@ model cost = $0
 Clean preflight, candidate/approved execution hash, live campaign, no-memory baseline, comparison denominator,
 memory admission/index and core remain closed. A later provider invocation still requires a clean committed source,
 fresh no-call preflight and separate approval of the exact hash with maximum `$25` authority.
+
+## D-088 immutable D-087 measured-result evidence
+
+The exact execution hash
+`sha256:0dd8ca1d0632398fed25ca28fbce89b97b0bf2137be163ed19a09fbf2d7f470d` was consumed once from clean
+commit `7eee5fa1837d30e6177c46119885035f2b1d976f`. The original result records 12/12 terminal and qualified,
+11/12 official evaluator, zero infrastructure/qualification/diagnostic/not-started/terminal-loop confounds, and one
+budget-terminal AnyIO repetition. Outcomes are 1 resolved, 10 task failure and 1 agent failure. The 11 evaluated rows
+all pass regression, scope and safety.
+
+```text
+result SHA = sha256:f3380aa466d5a2025562bb299e0bfc341135e5b2e77a634c80a87d796f1cbe40
+journal SHA = sha256:14c6248d83738883486233a2f2516f3b975ef861ae10ba2f78d6d14d4b3f6fcd
+journal final event = sha256:253f543528cb472b282dd29fbde9b21a7cdd5eca34f5be9882ab7cdea29f4358
+plan semantic hash = sha256:66246391a30be5743c9c0de890249f2b4216dfd9ad61aa3e79b459cc9a82de07
+plan file SHA = sha256:45aabeac18fd6648904a8d18a7c311da5277a4cc4bb5a057d74bd3222d624aaa
+input/output/total token = 4,844,335 / 385,595 / 5,229,930
+model/tool/input-precount = 340 / 547 / 341
+list-price accrued = $5.36842875
+campaign cap / maximum committed / held = $25 / $12.31149825 / $0
+portable report = reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json
+portable report SHA = sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269
+```
+
+All 340 provider responses completed with exact input/total telemetry, truncation disabled, `store=false` and no
+previous-response dependency. The extra input pre-count belongs to the generation blocked before provider start.
+The 50-event journal chain, 12 durable settlements, 12 SQLite one-use consumptions and all persisted qualifications
+reconcile exactly. The original readiness gate remains false and the experiment is hard-consumed. D-088 adds no
+provider call or model cost and does not establish a baseline, denominator, memory admission/index or core authority.
+Final verification passed focused 74/74 and repository-wide 1,471 of 1,478 collected tests with seven
+environment-dependent skips; Ruff, compileall, JSON parsing and `git diff --check` also passed.

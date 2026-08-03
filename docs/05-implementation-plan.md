@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-087 12-run no-memory campaign-local accrued-spend cap source/offline gate; clean preflight,
-approval, provider execution, baseline, memory admission/index와 core authority는 닫힘**
+현재 milestone: **D-088 D-087 measured result seal; 12/12 terminal·qualified, 11/12 official evaluator,
+readiness false이며 baseline, memory admission/index와 core authority는 닫힘**
 
 2026-08-04 구현 스냅샷:
 
@@ -13,7 +13,7 @@ approval, provider execution, baseline, memory admission/index와 core authority
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-087 accrued-spend source gate | 1.6M/run ceiling과 `$25` campaign cap 분리, `$7.3125` full-next-run reserve와 nano-USD journal 결속; no live authority, baseline/memory/core closed |
+| Phase 6 evaluation | D-088 D-087 result sealed | 12/12 terminal·qualified·settled, 11/12 evaluator, 1 per-run token terminal; `$5.36842875 < $25`, baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -1337,3 +1337,20 @@ Artifacts/evidence:
 Known limitations:
 Next unblocked item:
 ```
+
+## Current result seal — D-088 D-087 no-memory readiness attempt
+
+1. **완료:** exact D-087 hash를 clean commit에서 한 번 실행하고 12/12 terminal·qualified·settled를 수집했다.
+2. **완료:** raw result/journal/plan, 12 qualification, 340 provider response와 341 input pre-count를 독립
+   재검증했다.
+3. **완료:** `$5.36842875` accrued, `$12.31149825` maximum committed, 12 reserve/settle와 held 0으로
+   `$25` campaign cap이 non-binding임을 확인했다.
+4. **완료:** AnyIO repetition 2의 1.6M per-run token ceiling 한 건을 exact readiness confound로 분리했다.
+5. **완료:** portable D-088 seal과 local-evidence-independent hard-consumed guard를 구현했다.
+   Final verification은 focused 74/74, repository-wide 1,478 collected 중 1,471 passed/7 skipped이며
+   Ruff, compileall, JSON parse와 `git diff --check`를 통과했다.
+6. **닫힘:** 11/12 official evaluator이므로 no-memory baseline, denominator, memory review/admission/index,
+   core와 analysis는 열지 않는다.
+7. **다음 decision:** 동일 model/prompt/tool/context에서 per-run total-token policy만 바꾸는 별도
+   condition-neutral readiness successor가 필요한지 결정한다. 이 decision 자체는 실행 권한이 아니며 새 ID,
+   clean source, no-call preflight, execution hash와 비용 승인이 필요하다.

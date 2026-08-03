@@ -2921,3 +2921,25 @@ nano-USD 가격을 독립 재계산한다. 표시용 `model_cost_usd`는 이 계
 
 이 contract는 preserved SQLite anchor 아래의 marker 삭제, journal reset, alternate root와 settlement 축소·rehash를
 차단한다. 외부/request-level billing ledger는 아직 구현하지 않았으므로 exact D-087 live resume은 fail closed다.
+
+## 30. D-088 immutable D-087 result contract
+
+Portable schema `condition-neutral-no-memory-campaign-d088-evidence-v1`은 outer
+`schema_version/report_id/semantic_body_hash/semantic_body` exact wrapper를 사용한다. `report_id`는 canonical
+semantic body SHA에서 파생한다. Exact identities는 source commit
+`7eee5fa1837d30e6177c46119885035f2b1d976f`, execution hash
+`sha256:0dd8ca1d0632398fed25ca28fbce89b97b0bf2137be163ed19a09fbf2d7f470d`, plan semantic hash
+`sha256:66246391a30be5743c9c0de890249f2b4216dfd9ad61aa3e79b459cc9a82de07`, plan byte SHA
+`sha256:45aabeac18fd6648904a8d18a7c311da5277a4cc4bb5a057d74bd3222d624aaa`, suite semantic/source SHA와
+cost-control hash를 서로 다른 field로 보존한다.
+
+Original result gate는 수정하거나 재산출하지 않는다. Contract는 12 terminal, 12 qualified, 11 official
+evaluator, budget-terminal run `run_4613c65b2a254349`, task success 1과 gate `false`를 그대로 요구한다.
+Cost qualification은 12 reservation/settlement, accrued 5,368,428,750 nano-USD, maximum committed
+12,311,498,250 nano-USD, held 0과 cap 25,000,000,000 nano-USD를 exact 비교한다. SQLite one-use consumption
+12개는 journal reservation set과 exact match해야 한다.
+
+`CONSUMED_CONDITION_NEUTRAL_ACCRUED_CAP_EXPERIMENT_IDS`는 exact D-087 ID 하나만 포함하고
+`HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS`에만 합쳐진다. Multi-run identity를 single-task set이나 historical
+200k-budget selector set에 넣지 않는다. Portable claims는 no-memory baseline, success-rate estimate,
+comparison denominator, memory admission/index, core, analysis와 automatic rerun을 모두 false로 고정한다.
