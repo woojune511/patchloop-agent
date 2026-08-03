@@ -1451,3 +1451,38 @@ preflight가 만든 exact execution hash, fresh pricing, cost-cap 해결과 명�
 Final verification은 focused D-084 68/68과 repository-wide 1,304 collected 중 1,297 passed/7
 environment-dependent skipped다. Artifact SHA는
 `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이다.
+
+### D-085 exact comparison-pilot source and preflight protocol
+
+D-085는 exact suite `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`로 frozen memory index보다
+먼저 no-memory collection path의 pilot을 닫는다. 다음 순서를 고정한다.
+
+1. Frozen Babel development-validation task 한 개와 D-083/D-084 exact tuple을 source suite로 고정한다.
+2. Suite, manifest, runtime CAS, fresh-start/resume, paid-boundary와 qualifier selector의 near-match drift를
+   offline test로 거부한다.
+3. Process readiness는 1/1 terminal·trace-qualified·official evaluator, exact disabled-call-guard pass와
+   infrastructure/qualification/diagnostic/budget-terminal/terminal-loop 0으로 판정하고 hidden success/SCRR는
+   사용하지 않는다.
+4. Source gate를 commit한 뒤 clean host에서 Docker image digest, SDK, Git commit과 72시간 이내 official
+   pricing을 포함한 no-call preflight를 수행한다.
+5. Preflight hash는 사용자 승인 전까지 candidate일 뿐이다. Exact hash와 최대 `$8`의 별도 승인이 있을 때만
+   한 번 실행한다.
+
+Standard `gpt-5.4-mini` rate는 [OpenAI API pricing](https://developers.openai.com/api/docs/pricing), current
+snapshot은 [GPT-5.4 mini model page](https://developers.openai.com/api/docs/models/gpt-5.4-mini)에서 확인한다.
+Worst-rate authorization reserve는 `(1,600,000 + 25,000) * $4.50/M = $7.3125`이고 source cap은 `$8`이다.
+이는 invoice prediction이나 free-tier 적용 주장이 아니다.
+
+Artifact `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`은 source/offline
+gate만 기록한다. Clean preflight와 live result는 source commit 뒤 별도 evidence이며, pilot이 qualified되기
+전에는 12-run no-memory cap decision, review/index freeze와 core binding을 진행하지 않는다.
+
+Pilot source와 future campaign source는 별도 clean commit으로 봉인한다. Exact
+`dev-no-memory-v5-20260730-r1` consumer는 raw commit equality가 아니라 D-083/D-084 exact semantic tuple,
+qualification/source/approved plan CAS와 네 필수 qualification check를 재검증하며 task success는 사용하지
+않는다. Persisted qualification은 durable state에서 read-only 재계산한 값과 exact 일치해야 한다.
+`condition-neutral-comparison-pilot-admission-v1` canonical hash는 future campaign execution
+plan/hash에 결속되고 start/resume/post-run에서 재검증된다. 이 offline consumer가 있어도 qualified pilot,
+`$88` cap decision, 새 clean preflight/hash와 별도 승인이 없으면 12-run paid execution은 fail closed한다.
+Final offline verification은 focused 153/153, repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
+Artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.

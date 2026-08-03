@@ -43,9 +43,11 @@ from patchloop.agent.tools import (
 )
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Artifact,
     Budget,
     Checkpoint,
+    DatasetRole,
     EventType,
     ExperimentPurpose,
     ExperimentRunContext,
@@ -417,13 +419,29 @@ class AgentRunner:
         manifest: RunManifest,
     ) -> bool:
         experiment = manifest.experiment
-        return bool(
+        comparison_pilot = bool(
             experiment is not None
             and experiment.purpose
-            in {
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
-                ExperimentPurpose.CORE,
-            }
+            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            and experiment.experiment_id
+            == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+            and manifest.task_id
+            == "babel-strict-grouped-decimal-trailing-zeroes"
+            and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+            and experiment.schedule_seed == 20260723
+            and experiment.schedule_order == 1
+            and experiment.repetition == 1
+        )
+        return bool(
+            experiment is not None
+            and (
+                experiment.purpose
+                in {
+                    ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                    ExperimentPurpose.CORE,
+                }
+                or comparison_pilot
+            )
             and manifest.tool_schema_version == "v2"
             and manifest.context_policy_version == "phase-evidence-v5"
             and manifest.model.provider == "openai"
@@ -527,17 +545,16 @@ class AgentRunner:
             and manifest.experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         )
-        frozen_comparison_no_memory = bool(
+        frozen_comparison_live = bool(
             AgentRunner._is_frozen_comparison_runtime_manifest(manifest)
             and manifest.experiment is not None
-            and manifest.experiment.purpose
-            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+            and manifest.experiment.purpose != ExperimentPurpose.CORE
         )
         if not any(
             (
                 generic_baseline_readiness,
                 workflow_completion_probe,
-                frozen_comparison_no_memory,
+                frozen_comparison_live,
                 corrective,
                 saturation,
                 review_evidence,

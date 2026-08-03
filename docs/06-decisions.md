@@ -644,6 +644,35 @@ Evidence/issue:
   `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`.
 - Date: 2026-08-03
 
+### D-085 accepted source decision — exact one-row comparison live-readiness pilot
+
+- Status: accepted source/offline gate; clean host preflight와 provider 실행은 pending이다.
+- Identity: Exact ID `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`, purpose
+  `development-validation-live-pilot`, frozen Babel task, `no_memory`, one repetition만 허용한다.
+- Runtime: D-083/D-084의 mini medium/standard/default, retry 0, `SYSTEM_PROMPT_V3`, tool v2/context V5,
+  output 25,000, memory allowance 2,000과 `null/null/1,600,000/1,800`을 변경 없이 사용한다.
+- Cost: Current official standard rate는 input `$0.75/M`, cached `$0.075/M`, output `$4.50/M`이다.
+  Worst-rate reserve `$7.3125`, source cap `$8`이며 별도 exact-hash 승인이 필요하다. 이는 invoice/free-tier
+  prediction이 아니다.
+- Readiness: 1/1 terminal·trace-qualified·official evaluator, exact disabled-call-guard pass와
+  infrastructure/qualification/diagnostic/budget-terminal/terminal-loop 0을 요구한다. Task success와 SCRR는
+  요구하지 않는다.
+- Future campaign admission: Pilot과 campaign은 별도 clean source commit을 사용한다. Exact
+  `dev-no-memory-v5-20260730-r1` consumer가 qualification/source/approved plan CAS, 네 필수 check와 D-083/D-084
+  semantic exact tuple을 검증하며 persisted qualification을 durable state에서 read-only 재계산한 값과 exact
+  비교하고 task success는 제외한다. 결과의
+  `condition-neutral-comparison-pilot-admission-v1` canonical hash는 future campaign plan/hash와
+  start/resume/post-run qualification에 결속된다. Consumer는 offline 구현됐지만 qualified pilot, cap 변경,
+  새 campaign hash/승인과 paid authority는 pending이다.
+- Sequencing: Qualified pilot 뒤에만 12-run dev cap을 `$20 → $88`로 바꾸는 별도 decision을 검토한다.
+  New no-memory collection 전에는 historical failure를 memory로 승격하거나 index를 freeze하지 않는다.
+- Authority: Source artifact와 suite는 candidate/approved execution hash, provider capability, baseline,
+  denominator, memory admission, core 또는 `analysis_ready`를 만들지 않는다.
+- Evidence: `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`, SHA
+  `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`.
+- Verification: focused 153/153; repository-wide 1,392 collected, 1,385 passed/7 skipped.
+- Date: 2026-08-03
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

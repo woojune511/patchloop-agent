@@ -9,6 +9,7 @@ from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Artifact,
     Budget,
     Checkpoint,
@@ -159,9 +160,16 @@ _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA = (
 )
 _CONDITION_NEUTRAL_COMPARISON_PURPOSES = frozenset(
     {
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
         ExperimentPurpose.CORE,
     }
+)
+_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID = (
+    "babel-strict-grouped-decimal-trailing-zeroes"
+)
+_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_PATH = (
+    "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml"
 )
 _CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA = (
     "condition-neutral-comparison-budget-freeze-v1"
@@ -288,12 +296,28 @@ def _condition_neutral_comparison_manifest_matches(
         _CONDITION_NEUTRAL_COMPARISON_PURPOSES
     ):
         return False
+    comparison_pilot = bool(
+        experiment.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and experiment.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and manifest.task_id == _CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID
+    )
     condition_valid = bool(
         experiment.purpose == ExperimentPurpose.CORE
         or manifest.memory.condition == MemoryCondition.NO_MEMORY
     )
+    purpose_identity_valid = bool(
+        comparison_pilot
+        or experiment.purpose
+        in {
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+            ExperimentPurpose.CORE,
+        }
+    )
     return bool(
-        condition_valid
+        purpose_identity_valid
+        and condition_valid
         and manifest.model.provider == "openai"
         and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
         and manifest.model.reasoning_effort == "medium"
@@ -313,8 +337,27 @@ def _condition_neutral_comparison_manifest_matches(
 def _condition_neutral_comparison_suite_matches(suite: Any) -> bool:
     purpose = getattr(suite, "purpose", None)
     conditions = getattr(suite, "conditions", None)
+    comparison_pilot = bool(
+        purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and getattr(suite, "experiment_id", None)
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and [
+            str(task).replace("\\", "/").removeprefix("./")
+            for task in getattr(suite, "tasks", [])
+        ]
+        == [_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_PATH]
+        and conditions == [MemoryCondition.NO_MEMORY]
+        and getattr(suite, "repetitions", None) == 1
+        and getattr(suite, "estimated_cost_usd", None) == 7.3125
+        and getattr(suite, "cost_limit_usd", None) == 8
+        and getattr(suite, "pilot_run_id", None) is None
+        and getattr(suite, "diagnostic", None) is None
+    )
     condition_contract = bool(
         (
+            comparison_pilot
+        )
+        or (
             purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
             and conditions == [MemoryCondition.NO_MEMORY]
         )
@@ -326,7 +369,14 @@ def _condition_neutral_comparison_suite_matches(suite: Any) -> bool:
     )
     return bool(
         getattr(suite, "schema_version", None) == "experiment-v2"
-        and purpose in _CONDITION_NEUTRAL_COMPARISON_PURPOSES
+        and (
+            comparison_pilot
+            or purpose
+            in {
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                ExperimentPurpose.CORE,
+            }
+        )
         and condition_contract
         and getattr(suite, "model", None) == "openai"
         and getattr(suite, "model_id", None) == _GPT54_MINI_PILOT_MODEL_ID
@@ -624,6 +674,7 @@ def _execution_plan_matches(
     approval = plan.get("approval")
     dataset = plan.get("dataset")
     environment = plan.get("environment")
+    pilot_admission = plan.get("pilot_admission")
     pilot_qualification = plan.get("pilot_qualification")
     schedule = plan.get("schedule")
     suite = plan.get("suite")
@@ -672,6 +723,7 @@ def _execution_plan_matches(
             _execution_hash,
             _experiment_runtime_contract,
             _make_schedule,
+            _pilot_admission_plan_binding_matches,
             _pricing_contract_matches,
             _suite_hash,
             _suite_payload,
@@ -773,8 +825,13 @@ def _execution_plan_matches(
                     ),
                 )
             ),
+            pilot_admission=(
+                pilot_admission
+                if isinstance(pilot_admission, dict)
+                else None
+            ),
         )
-    except (ImportError, KeyError, TypeError, ValueError):
+    except (ContractError, ImportError, KeyError, TypeError, ValueError):
         return False
     expected_runtime_contract = _experiment_runtime_contract(
         parsed_suite,
@@ -936,6 +993,11 @@ def _execution_plan_matches(
             schedule_size=len(schedule),
         )
     )
+    pilot_admission_matches = _pilot_admission_plan_binding_matches(
+        pilot_admission,
+        parsed_suite,
+        campaign_harness_commit=environment["git"].get("commit"),
+    )
     suite_contract_matches = bool(
         canonical_json(suite) == canonical_json(normalized_suite)
         and _suite_hash(parsed_suite) == experiment.suite_hash
@@ -966,6 +1028,7 @@ def _execution_plan_matches(
         and completion_plan_matches
         and runtime_contract_matches
         and pricing_contract_matches
+        and pilot_admission_matches
     )
     if not suite_contract_matches:
         return False
@@ -1358,13 +1421,14 @@ def _generic_baseline_runtime_contract_evidence(
         isinstance(observed, dict)
         and canonical_json(observed) == canonical_json(expected)
         and manifest.experiment is not None
-        and manifest.experiment.purpose
-        in {
-            ExperimentPurpose.GENERIC_BASELINE_READINESS,
-            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
-            ExperimentPurpose.CORE,
-        }
+        and (
+            condition_neutral_comparison
+            or manifest.experiment.purpose
+            in {
+                ExperimentPurpose.GENERIC_BASELINE_READINESS,
+                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+            }
+        )
         and (
             not condition_neutral_comparison
             or _condition_neutral_comparison_policy_artifact_valid()

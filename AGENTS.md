@@ -12,7 +12,34 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-083 condition-neutral comparison-budget policy frozen offline; runtime support and
+- 현재 milestone은 `D-085 exact condition-neutral comparison pilot source/offline gate complete; no clean preflight,
+  approval or provider execution`이다. Exact pilot ID는
+  `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`이고 frozen Babel development-validation task를
+  `no_memory`로 한 번 실행하는 계약만 준비한다. D-083/D-084의 mini medium/standard/default, retry 0,
+  `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, output 25,000, memory allowance 2,000과
+  `null/null/1,600,000/1,800` tuple을 그대로 사용한다. Worst-rate reserve `$7.3125`, source cap `$8`이며
+  task success/SCRR가 아닌 terminal·qualified·official evaluator, exact disabled-call-guard와
+  infrastructure/qualification/diagnostic/budget/terminal-loop confound 0만 readiness predicate다.
+  Source artifact는
+  `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`이다. Clean no-call
+  preflight가 만든 candidate hash와 최대 `$8`의 별도 사용자 승인이 있기 전 provider를 호출하지 않는다.
+  Pilot 결과 전에는 12-run cap을 `$20`에서 `$88`로 바꾸거나 memory review/index/core를 열지 않는다.
+  Pilot과 future campaign은 별도 clean commit을 사용한다. Exact `dev-no-memory-v5-20260730-r1` consumer는
+  raw commit equality 대신 D-083/D-084 semantic tuple과 네 qualification check를 검증하고
+  persisted qualification을 durable state에서 read-only 재계산한 결과와 exact 비교하며
+  `condition-neutral-comparison-pilot-admission-v1` canonical hash를 future campaign plan/hash와
+  start/resume/post-run qualification에 결속한다. Task success는 admission 조건이 아니다. 이 offline
+  consumer는 qualified pilot, cap 변경, 새 campaign hash/승인 또는 paid authority를 만들지 않는다.
+  Final offline verification은 focused 153/153, repository-wide 1,385 passed/7 skipped이고 source artifact SHA는
+  `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
+- D-084 milestone은 `condition-neutral comparison runtime gate implemented offline; all live, baseline,
+  memory-admission and core authority closed`다. D-083 exact tuple을
+  `condition-neutral-comparison-runtime-contract-v1`, `RunManifest`, content-addressed `RunStarted`, start/resume,
+  `condition-neutral-comparison-runtime-evidence-v1`, budget diagnostic과 no-memory qualification에 결속했다.
+  Core 네 condition은 structural support만 있고
+  `CORE_MEMORY_RUNTIME_BINDING_PENDING`으로 계속 닫혀 있다. D-084 artifact SHA는
+  `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이고 provider call/cost는 0/$0이다.
+- Historical D-083 milestone은 `condition-neutral comparison-budget policy frozen offline; runtime support and
   all live authority remain closed`다. D-083은 exact D-081 r3 evidence만 사용해 model/tool call limit
   `null`/`null`, total token 1,600,000, wall 1,800초, output 25,000과 SDK transport retry 0을 future
   comparison의 동일 per-run resource policy로 동결한다. Public observed-prefix minimum은 D-081 r3

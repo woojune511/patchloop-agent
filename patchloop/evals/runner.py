@@ -38,6 +38,7 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS_V6,
 )
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Budget,
     DatasetRole,
     ExperimentPurpose,
@@ -49,7 +50,7 @@ from patchloop.contracts import (
     TaskPackage,
 )
 from patchloop.dataset import require_dataset_role, require_frozen_dataset
-from patchloop.errors import ContractError
+from patchloop.errors import ContractError, RecoveryError
 from patchloop.evals.budget import calculate_budget_pressure
 from patchloop.memory.store import latest_frozen_index
 from patchloop.runtime import build_manifest, repository_root, runtime_root
@@ -144,6 +145,7 @@ SINGLE_TASK_LIVE_EXPERIMENT_IDS = (
     | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
     | CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
     | SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS
+    | {CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID}
 )
 PRICE_FIELDS = (
     "input_price_per_million_usd",
@@ -378,6 +380,28 @@ CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA = (
 CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY = (
     WORKFLOW_COMPLETION_CALL_GUARD_POLICY
 )
+CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_SCHEMA = (
+    "condition-neutral-comparison-pilot-readiness-gate-v1"
+)
+CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_ID = (
+    "d085-condition-neutral-comparison-pilot-readiness"
+)
+CONDITION_NEUTRAL_COMPARISON_CAMPAIGN_EXPERIMENT_ID = (
+    "dev-no-memory-v5-20260730-r1"
+)
+CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA = (
+    "condition-neutral-comparison-pilot-admission-v1"
+)
+CONDITION_NEUTRAL_COMPARISON_PILOT_REQUIRED_CHECKS = (
+    "approved_execution_plan",
+    "comparison_runtime_contract",
+    "disabled_call_guard_contract",
+    "pricing_start_freshness",
+)
+CONDITION_NEUTRAL_COMPARISON_PILOT_RUNTIME_EXCLUSIONS = (
+    "purpose",
+    "harness_git_commit",
+)
 CONDITION_NEUTRAL_COMPARISON_BUDGET_POLICY = {
     "schema_version": "condition-neutral-comparison-budget-freeze-v1",
     "profile_id": "gpt54mini-v2v5-condition-neutral-1600k-v1",
@@ -416,13 +440,34 @@ def _is_frozen_comparison_runtime_profile(
 
     Purpose alone is intentionally insufficient: historical 200k/250k suites
     use the same research purposes and must keep their original execution
-    identities and pricing semantics.
+    identities and pricing semantics. The D-085 pilot is selected by its exact
+    experiment ID and one-row source identity, never purpose-wide.
     """
 
     purpose = getattr(suite, "purpose", None)
     conditions = getattr(suite, "conditions", None)
+    condition_neutral_pilot = bool(
+        purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and getattr(suite, "experiment_id", None)
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and [
+            _normalized_task_path(task)
+            for task in getattr(suite, "tasks", [])
+        ]
+        == [PILOT_TASK]
+        and getattr(suite, "repetitions", None) == 1
+        and getattr(suite, "live_cost_approved", None) is False
+        and getattr(suite, "approved_execution_hash", None) is None
+        and getattr(suite, "pilot_run_id", None) is None
+        and getattr(suite, "estimated_cost_usd", None) == 7.3125
+        and getattr(suite, "cost_limit_usd", None) == 8
+    )
     exact_conditions = bool(
         (
+            condition_neutral_pilot
+            and conditions == [MemoryCondition.NO_MEMORY]
+        )
+        or (
             purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
             and conditions == [MemoryCondition.NO_MEMORY]
         )
@@ -433,11 +478,14 @@ def _is_frozen_comparison_runtime_profile(
     )
     exact = bool(
         getattr(suite, "schema_version", None) == "experiment-v2"
-        and purpose
-        in {
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
-            ExperimentPurpose.CORE,
-        }
+        and (
+            condition_neutral_pilot
+            or purpose
+            in {
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                ExperimentPurpose.CORE,
+            }
+        )
         and getattr(suite, "model", None) == "openai"
         and getattr(suite, "model_id", None) == CAMPAIGN_MODEL_ID
         and getattr(suite, "reasoning_effort", None) == "medium"
@@ -1023,6 +1071,16 @@ class ExperimentSuite(BaseModel):
                 "workflow completion probe experiment id requires the exact "
                 "workflow completion probe purpose"
             )
+        if (
+            self.experiment_id
+            == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+            and self.purpose
+            != ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        ):
+            raise ValueError(
+                "the D-085 condition-neutral pilot experiment id requires the "
+                "development-validation-live-pilot purpose"
+            )
         future_comparison_profile = _is_frozen_comparison_runtime_profile(
             self,
             require_transport=False,
@@ -1196,7 +1254,25 @@ class ExperimentSuite(BaseModel):
                     "development-validation live pilot requires its exact frozen "
                     "task set, no_memory, and one repetition"
                 )
-            if self.experiment_id in HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS:
+            if (
+                self.experiment_id
+                == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+            ):
+                if not future_comparison_profile:
+                    raise ValueError(
+                        "the D-085 condition-neutral pilot requires its exact "
+                        "one-row source identity and D-083/D-084 runtime tuple"
+                    )
+                self._require_live_defaults(
+                    cost_limit=8,
+                    budget=GPT54_MINI_FROZEN_COMPARISON_BUDGET,
+                )
+                if self.estimated_cost_usd != 7.3125:
+                    raise ValueError(
+                        "the D-085 condition-neutral pilot requires "
+                        "estimated_cost_usd=7.3125"
+                    )
+            elif self.experiment_id in HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS:
                 self._require_live_defaults(
                     cost_limit=2,
                     model_id=LEGACY_TERRA_MODEL_ID,
@@ -1770,6 +1846,607 @@ def _pilot_qualification(
     }
 
 
+def _requires_condition_neutral_pilot_admission(
+    suite: ExperimentSuite,
+) -> bool:
+    """Select only the future twelve-row D-083/D-084 no-memory campaign."""
+
+    return bool(
+        suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+        and suite.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_CAMPAIGN_EXPERIMENT_ID
+        and _is_frozen_comparison_runtime_profile(suite)
+    )
+
+
+def _runtime_evidence_document_hash(document: dict[str, Any]) -> str:
+    """Hash JSON exactly as ``ArtifactStore.put_json`` persists it."""
+
+    encoded = json.dumps(
+        document,
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return sha256_bytes(encoded)
+
+
+def _comparison_runtime_semantics(
+    contract: dict[str, Any],
+) -> dict[str, Any]:
+    """Project the condition-neutral tuple while retaining all semantic fields."""
+
+    return {
+        key: value
+        for key, value in contract.items()
+        if key not in CONDITION_NEUTRAL_COMPARISON_PILOT_RUNTIME_EXCLUSIONS
+    }
+
+
+def _is_full_git_commit(value: Any) -> bool:
+    return bool(
+        isinstance(value, str)
+        and len(value) == 40
+        and all(character in "0123456789abcdef" for character in value)
+    )
+
+
+def _pilot_admission_failure(
+    run_id: str | None,
+    reason: str,
+    *,
+    qualification_hash: str | None = None,
+    source_evidence_hash: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "schema_version": CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA,
+        "run_id": run_id,
+        "admitted": False,
+        "descriptor": None,
+        "pilot_admission_hash": None,
+        "qualification_hash": qualification_hash,
+        "source_evidence_hash": source_evidence_hash,
+        "reason": reason,
+    }
+
+
+def _condition_neutral_comparison_pilot_admission(
+    run_id: str | None,
+    suite: ExperimentSuite,
+    *,
+    campaign_harness_commit: str,
+) -> dict[str, Any]:
+    """Qualify the exact D-085 process run for a future twelve-row campaign.
+
+    This is deliberately stricter than the historical pilot gate.  It binds
+    the checked qualification, its source trace, the approved one-row source
+    plan, both harness commits, and the semantic D-083/D-084 runtime tuple.
+    Hidden success is not an admission predicate.
+    """
+
+    if not _requires_condition_neutral_pilot_admission(suite):
+        return _pilot_admission_failure(
+            run_id,
+            "suite is not the condition-neutral twelve-row admission target",
+        )
+    if run_id is None:
+        return _pilot_admission_failure(run_id, "missing pilot_run_id")
+    try:
+        from patchloop.evals.qualification import (
+            _execution_plan_matches,
+            calculate_source_evidence_hash,
+            load_trace_qualification,
+            qualify_run,
+        )
+        from patchloop.state import StateStore
+
+        run_root = runtime_root()
+        qualification = load_trace_qualification(run_id, root=run_root)
+        recomputed_qualification = qualify_run(
+            run_id,
+            task_dir=Path(PILOT_TASK).parent,
+            root=run_root,
+            persist=False,
+        )
+        if canonical_json(qualification) != canonical_json(
+            recomputed_qualification
+        ):
+            raise ContractError(
+                "persisted pilot qualification differs from durable recomputation"
+            )
+        current_source_hash = calculate_source_evidence_hash(
+            run_id,
+            root=run_root,
+        )
+        manifest = StateStore(run_root / "state.sqlite3").get_manifest(run_id)
+        execution_hash = qualification.get("execution_hash")
+        if (
+            not isinstance(execution_hash, str)
+            or not execution_hash.startswith("sha256:")
+            or len(execution_hash) != 71
+        ):
+            raise ContractError("pilot qualification lacks an execution hash")
+        plan_path = (
+            run_root
+            / "experiments"
+            / "plans"
+            / f"{execution_hash.removeprefix('sha256:')}.json"
+        )
+        plan_bytes = plan_path.read_bytes()
+        plan = json.loads(plan_bytes)
+        if not isinstance(plan, dict):
+            raise ContractError("pilot execution plan is not a JSON object")
+        pilot_suite = ExperimentSuite.model_validate(plan.get("suite"))
+    except (
+        ContractError,
+        RecoveryError,
+        FileNotFoundError,
+        OSError,
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+        TypeError,
+        ValueError,
+    ) as exc:
+        return _pilot_admission_failure(run_id, str(exc))
+
+    recorded_source_hash = qualification.get("source_evidence_hash")
+    qualification_hash = qualification.get("qualification_hash")
+    if (
+        not isinstance(recorded_source_hash, str)
+        or not hmac.compare_digest(recorded_source_hash, current_source_hash)
+    ):
+        return _pilot_admission_failure(
+            run_id,
+            "pilot source evidence hash mismatch",
+            qualification_hash=(
+                qualification_hash
+                if isinstance(qualification_hash, str)
+                else None
+            ),
+            source_evidence_hash=(
+                recorded_source_hash
+                if isinstance(recorded_source_hash, str)
+                else None
+            ),
+        )
+
+    experiment = manifest.experiment
+    schedule = plan.get("schedule")
+    tasks = plan.get("tasks")
+    raw_checks = qualification.get("checks")
+    checked_rows = raw_checks if isinstance(raw_checks, list) else []
+    task_row = (
+        tasks[0]
+        if isinstance(tasks, list)
+        and len(tasks) == 1
+        and isinstance(tasks[0], dict)
+        else {}
+    )
+    schedule_row = (
+        schedule[0]
+        if isinstance(schedule, list)
+        and len(schedule) == 1
+        and isinstance(schedule[0], dict)
+        else {}
+    )
+    matching_checks = {
+        check_id: [
+            check
+            for check in checked_rows
+            if isinstance(check, dict) and check.get("check_id") == check_id
+        ]
+        for check_id in CONDITION_NEUTRAL_COMPARISON_PILOT_REQUIRED_CHECKS
+    }
+    required_checks_passed = bool(
+        all(
+            len(checks) == 1 and checks[0].get("passed") is True
+            for checks in matching_checks.values()
+        )
+    )
+    source_identity_valid = bool(
+        experiment is not None
+        and experiment.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and experiment.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+        and experiment.schedule_seed == 20260723
+        and experiment.schedule_order == 1
+        and experiment.repetition == 1
+        and manifest.run_id == run_id
+        and manifest.task_id == PILOT_TASK_ID
+        and manifest.memory.condition == MemoryCondition.NO_MEMORY
+        and manifest.fault.type == "none"
+        and qualification.get("run_id") == run_id
+        and qualification.get("experiment_id")
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and qualification.get("purpose")
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT.value
+        and qualification.get("task_id") == PILOT_TASK_ID
+        and qualification.get("dataset_role")
+        == DatasetRole.DEVELOPMENT_VALIDATION.value
+        and qualification.get("memory_condition")
+        == MemoryCondition.NO_MEMORY.value
+        and qualification.get("fault_type") == "none"
+        and qualification.get("model_provider") == manifest.model.provider
+        and qualification.get("model_id") == manifest.model.model_id
+        and qualification.get("reasoning_effort")
+        == manifest.model.reasoning_effort
+        and qualification.get("reasoning_mode")
+        == manifest.model.reasoning_mode
+        and qualification.get("service_tier")
+        == manifest.model.service_tier
+        and qualification.get("transport_max_retries")
+        == manifest.model.transport_max_retries
+        and qualification.get("max_output_tokens")
+        == manifest.model.max_output_tokens
+        and qualification.get("budget")
+        == manifest.budget.model_dump(mode="json")
+        and qualification.get("tool_schema_version")
+        == manifest.tool_schema_version
+        and qualification.get("context_policy_version")
+        == manifest.context_policy_version
+        and qualification.get("suite_hash") == experiment.suite_hash
+        and qualification.get("execution_hash") == experiment.execution_hash
+        and qualification.get("schedule_row_id")
+        == experiment.schedule_row_id
+        and plan.get("experiment_id")
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and plan.get("purpose")
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT.value
+        and plan.get("suite_hash") == experiment.suite_hash
+        and plan.get("execution_hash") == experiment.execution_hash
+        and plan.get("expected_runs") == 1
+        and isinstance(tasks, list)
+        and len(tasks) == 1
+        and task_row.get("task") == PILOT_TASK
+        and task_row.get("task_id") == PILOT_TASK_ID
+        and task_row.get("dataset_role")
+        == DatasetRole.DEVELOPMENT_VALIDATION.value
+        and isinstance(schedule, list)
+        and len(schedule) == 1
+        and schedule_row.get("order") == 1
+        and schedule_row.get("task") == PILOT_TASK
+        and schedule_row.get("task_id") == PILOT_TASK_ID
+        and schedule_row.get("dataset_role")
+        == DatasetRole.DEVELOPMENT_VALIDATION.value
+        and schedule_row.get("condition") == MemoryCondition.NO_MEMORY.value
+        and schedule_row.get("repetition") == 1
+        and schedule_row.get("schedule_row_id")
+        == experiment.schedule_row_id
+        and pilot_suite.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and pilot_suite.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and pilot_suite.tasks == [PILOT_TASK]
+        and pilot_suite.conditions == [MemoryCondition.NO_MEMORY]
+        and pilot_suite.repetitions == 1
+        and _is_frozen_comparison_runtime_profile(pilot_suite)
+    )
+    process_evidence_valid = bool(
+        qualification.get("schema_version") == "trace-qualification-v2"
+        and qualification.get("qualified") is True
+        and qualification.get("trace_integrity_passed") is True
+        and qualification.get("leakage_scan_passed") is True
+        and qualification.get("evaluation_reached") is True
+        and required_checks_passed
+    )
+    if not source_identity_valid or not process_evidence_valid:
+        return _pilot_admission_failure(
+            run_id,
+            (
+                "pilot source identity is not the exact D-085 row"
+                if not source_identity_valid
+                else "pilot process qualification requirements are not satisfied"
+            ),
+            qualification_hash=(
+                qualification_hash
+                if isinstance(qualification_hash, str)
+                else None
+            ),
+            source_evidence_hash=recorded_source_hash,
+        )
+
+    if not _execution_plan_matches(plan=plan, manifest=manifest):
+        return _pilot_admission_failure(
+            run_id,
+            "pilot approved execution plan does not match its source manifest",
+            qualification_hash=(
+                qualification_hash
+                if isinstance(qualification_hash, str)
+                else None
+            ),
+            source_evidence_hash=recorded_source_hash,
+        )
+
+    pilot_commit = manifest.harness_git_commit
+    plan_git = plan.get("environment", {}).get("git", {})
+    if (
+        not _is_full_git_commit(pilot_commit)
+        or not _is_full_git_commit(campaign_harness_commit)
+        or qualification.get("harness_git_commit") != pilot_commit
+        or plan_git.get("commit") != pilot_commit
+    ):
+        return _pilot_admission_failure(
+            run_id,
+            "pilot qualification, manifest, and execution-plan commits differ",
+            qualification_hash=(
+                qualification_hash
+                if isinstance(qualification_hash, str)
+                else None
+            ),
+            source_evidence_hash=recorded_source_hash,
+        )
+
+    try:
+        pilot_runtime_contract = _experiment_runtime_contract(
+            pilot_suite,
+            harness_git_commit=pilot_commit,
+        )
+        campaign_runtime_contract = _experiment_runtime_contract(
+            suite,
+            harness_git_commit=campaign_harness_commit,
+        )
+        evidence_document = (
+            AgentRunner._generic_baseline_runtime_evidence_document(
+                manifest=manifest,
+                system_prompt=SYSTEM_PROMPT_V3,
+                tool_schemas=TOOL_SCHEMAS_V2,
+            )
+        )
+    except (ContractError, OSError, TypeError, ValueError) as exc:
+        return _pilot_admission_failure(
+            run_id,
+            f"pilot runtime contract reconstruction failed: {exc}",
+            qualification_hash=(
+                qualification_hash
+                if isinstance(qualification_hash, str)
+                else None
+            ),
+            source_evidence_hash=recorded_source_hash,
+        )
+    if (
+        not isinstance(pilot_runtime_contract, dict)
+        or not isinstance(campaign_runtime_contract, dict)
+        or not isinstance(evidence_document, dict)
+        or pilot_runtime_contract.get("schema_version")
+        != CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
+        or campaign_runtime_contract.get("schema_version")
+        != CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
+        or canonical_json(plan.get("runtime_contract"))
+        != canonical_json(pilot_runtime_contract)
+        or qualification.get("runtime_contract_content_hash")
+        != _runtime_evidence_document_hash(evidence_document)
+    ):
+        return _pilot_admission_failure(
+            run_id,
+            "pilot runtime contract or content hash does not match D-085",
+            qualification_hash=(
+                qualification_hash
+                if isinstance(qualification_hash, str)
+                else None
+            ),
+            source_evidence_hash=recorded_source_hash,
+        )
+
+    pilot_semantics = _comparison_runtime_semantics(pilot_runtime_contract)
+    campaign_semantics = _comparison_runtime_semantics(
+        campaign_runtime_contract
+    )
+    if canonical_json(pilot_semantics) != canonical_json(campaign_semantics):
+        return _pilot_admission_failure(
+            run_id,
+            "pilot and campaign condition-neutral runtime semantics differ",
+            qualification_hash=(
+                qualification_hash
+                if isinstance(qualification_hash, str)
+                else None
+            ),
+            source_evidence_hash=recorded_source_hash,
+        )
+
+    assert experiment is not None
+    descriptor = {
+        "schema_version": CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA,
+        "pilot": {
+            "run_id": run_id,
+            "experiment_id": experiment.experiment_id,
+            "purpose": experiment.purpose.value,
+            "task_path": PILOT_TASK,
+            "task_id": manifest.task_id,
+            "dataset_role": experiment.dataset_role.value,
+            "memory_condition": manifest.memory.condition.value,
+            "schedule_seed": experiment.schedule_seed,
+            "schedule_order": experiment.schedule_order,
+            "schedule_row_id": experiment.schedule_row_id,
+            "repetition": experiment.repetition,
+            "suite_hash": experiment.suite_hash,
+            "execution_hash": experiment.execution_hash,
+            "qualification_hash": qualification_hash,
+            "source_evidence_hash": recorded_source_hash,
+            "execution_plan_hash": sha256_bytes(plan_bytes),
+            "runtime_contract_content_hash": qualification.get(
+                "runtime_contract_content_hash"
+            ),
+            "outcome_kind": qualification.get("outcome_kind"),
+            "process_qualification": {
+                "qualified": True,
+                "trace_integrity_passed": True,
+                "leakage_scan_passed": True,
+                "evaluation_reached": True,
+                "required_checks": list(
+                    CONDITION_NEUTRAL_COMPARISON_PILOT_REQUIRED_CHECKS
+                ),
+            },
+        },
+        "campaign": {
+            "experiment_id": suite.experiment_id,
+            "purpose": suite.purpose.value,
+            "expected_runs": len(suite.tasks) * len(suite.conditions) * suite.repetitions,
+            "conditions": [condition.value for condition in suite.conditions],
+            "repetitions": suite.repetitions,
+        },
+        "runtime_binding": {
+            "pilot_harness_git_commit": pilot_commit,
+            "campaign_harness_git_commit": campaign_harness_commit,
+            "pilot_runtime_contract": pilot_runtime_contract,
+            "pilot_runtime_contract_hash": sha256_text(
+                canonical_json(pilot_runtime_contract)
+            ),
+            "campaign_runtime_contract_hash": sha256_text(
+                canonical_json(campaign_runtime_contract)
+            ),
+            "semantic_runtime_contract_hash": sha256_text(
+                canonical_json(pilot_semantics)
+            ),
+            "excluded_comparison_fields": list(
+                CONDITION_NEUTRAL_COMPARISON_PILOT_RUNTIME_EXCLUSIONS
+            ),
+        },
+    }
+    return {
+        "schema_version": CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA,
+        "run_id": run_id,
+        "admitted": True,
+        "descriptor": descriptor,
+        "pilot_admission_hash": sha256_text(canonical_json(descriptor)),
+        "qualification_hash": qualification_hash,
+        "source_evidence_hash": recorded_source_hash,
+        "reason": None,
+    }
+
+
+def _pilot_admission_plan_binding_matches(
+    admission: Any,
+    suite: ExperimentSuite,
+    *,
+    campaign_harness_commit: Any,
+) -> bool:
+    """Validate persisted admission without trusting its declared hashes."""
+
+    required = bool(
+        _requires_condition_neutral_pilot_admission(suite)
+        and suite.pilot_run_id is not None
+    )
+    if not required:
+        return admission is None
+    if not isinstance(admission, dict):
+        return False
+    descriptor = admission.get("descriptor")
+    admission_hash = admission.get("pilot_admission_hash")
+    if not (
+        set(admission)
+        == {
+            "schema_version",
+            "run_id",
+            "admitted",
+            "descriptor",
+            "pilot_admission_hash",
+            "qualification_hash",
+            "source_evidence_hash",
+            "reason",
+        }
+        and admission.get("schema_version")
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA
+        and admission.get("admitted") is True
+        and admission.get("reason") is None
+        and isinstance(descriptor, dict)
+        and isinstance(admission_hash, str)
+        and hmac.compare_digest(
+            admission_hash,
+            sha256_text(canonical_json(descriptor)),
+        )
+        and descriptor.get("schema_version")
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA
+    ):
+        return False
+    pilot = descriptor.get("pilot")
+    campaign = descriptor.get("campaign")
+    runtime = descriptor.get("runtime_binding")
+    if not all(isinstance(item, dict) for item in (pilot, campaign, runtime)):
+        return False
+    assert isinstance(pilot, dict)
+    assert isinstance(campaign, dict)
+    assert isinstance(runtime, dict)
+    pilot_contract = runtime.get("pilot_runtime_contract")
+    try:
+        campaign_contract = _experiment_runtime_contract(
+            suite,
+            harness_git_commit=campaign_harness_commit,
+        )
+    except (ContractError, OSError, TypeError, ValueError):
+        return False
+    if not isinstance(pilot_contract, dict) or not isinstance(
+        campaign_contract, dict
+    ):
+        return False
+    pilot_semantics = _comparison_runtime_semantics(pilot_contract)
+    campaign_semantics = _comparison_runtime_semantics(campaign_contract)
+    process = pilot.get("process_qualification")
+    return bool(
+        admission.get("run_id") == pilot.get("run_id")
+        and admission.get("qualification_hash")
+        == pilot.get("qualification_hash")
+        and admission.get("source_evidence_hash")
+        == pilot.get("source_evidence_hash")
+        and pilot.get("experiment_id")
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and pilot.get("purpose")
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT.value
+        and pilot.get("task_path") == PILOT_TASK
+        and pilot.get("task_id") == PILOT_TASK_ID
+        and pilot.get("dataset_role")
+        == DatasetRole.DEVELOPMENT_VALIDATION.value
+        and pilot.get("memory_condition") == MemoryCondition.NO_MEMORY.value
+        and pilot.get("schedule_seed") == 20260723
+        and pilot.get("schedule_order") == 1
+        and pilot.get("repetition") == 1
+        and isinstance(pilot.get("schedule_row_id"), str)
+        and isinstance(pilot.get("suite_hash"), str)
+        and isinstance(pilot.get("execution_hash"), str)
+        and isinstance(pilot.get("qualification_hash"), str)
+        and isinstance(pilot.get("source_evidence_hash"), str)
+        and isinstance(pilot.get("execution_plan_hash"), str)
+        and isinstance(pilot.get("runtime_contract_content_hash"), str)
+        and isinstance(process, dict)
+        and process
+        == {
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "leakage_scan_passed": True,
+            "evaluation_reached": True,
+            "required_checks": list(
+                CONDITION_NEUTRAL_COMPARISON_PILOT_REQUIRED_CHECKS
+            ),
+        }
+        and campaign
+        == {
+            "experiment_id": suite.experiment_id,
+            "purpose": suite.purpose.value,
+            "expected_runs": len(suite.tasks)
+            * len(suite.conditions)
+            * suite.repetitions,
+            "conditions": [condition.value for condition in suite.conditions],
+            "repetitions": suite.repetitions,
+        }
+        and runtime.get("pilot_harness_git_commit")
+        == pilot_contract.get("harness_git_commit")
+        and _is_full_git_commit(runtime.get("pilot_harness_git_commit"))
+        and runtime.get("campaign_harness_git_commit")
+        == campaign_harness_commit
+        and _is_full_git_commit(runtime.get("campaign_harness_git_commit"))
+        and runtime.get("pilot_runtime_contract_hash")
+        == sha256_text(canonical_json(pilot_contract))
+        and runtime.get("campaign_runtime_contract_hash")
+        == sha256_text(canonical_json(campaign_contract))
+        and runtime.get("semantic_runtime_contract_hash")
+        == sha256_text(canonical_json(pilot_semantics))
+        and runtime.get("excluded_comparison_fields")
+        == list(CONDITION_NEUTRAL_COMPARISON_PILOT_RUNTIME_EXCLUSIONS)
+        and canonical_json(pilot_semantics) == canonical_json(campaign_semantics)
+    )
+
+
 def _suite_hash(suite: ExperimentSuite) -> str:
     return sha256_text(canonical_json(_suite_payload(suite)))
 
@@ -1809,6 +2486,7 @@ def _execution_hash(
     openai_sdk: dict[str, Any],
     pilot_qualification: dict[str, Any],
     runtime_contract: dict[str, Any] | None = None,
+    pilot_admission: dict[str, Any] | None = None,
 ) -> str:
     payload = _suite_payload(suite)
     payload.pop("live_cost_approved", None)
@@ -1828,6 +2506,11 @@ def _execution_hash(
     }
     if runtime_contract is not None:
         execution_payload["runtime_contract"] = runtime_contract
+    if pilot_admission is not None:
+        pilot_admission_hash = pilot_admission.get("pilot_admission_hash")
+        if not isinstance(pilot_admission_hash, str):
+            raise ContractError("pilot admission has no canonical hash")
+        execution_payload["pilot_admission_hash"] = pilot_admission_hash
     return sha256_text(
         canonical_json(execution_payload)
     )
@@ -2192,14 +2875,38 @@ def preflight_suite(
             os.environ.get("OPENAI_BASE_URL") or os.environ.get("OPENAI_API_BASE")
         ),
     }
-    pilot_qualification = (
-        _pilot_qualification(
+    pilot_admission = (
+        _condition_neutral_comparison_pilot_admission(
             suite.pilot_run_id,
             suite,
-            expected_harness_commit=str(git_state.get("commit")),
+            campaign_harness_commit=str(git_state.get("commit")),
         )
-        if suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
-        else {"run_id": None, "qualified": None}
+        if _requires_condition_neutral_pilot_admission(suite)
+        else None
+    )
+    pilot_qualification = (
+        {
+            "run_id": pilot_admission.get("run_id"),
+            "qualified": pilot_admission.get("admitted"),
+            "qualification_hash": pilot_admission.get(
+                "qualification_hash"
+            ),
+            "source_evidence_hash": pilot_admission.get(
+                "source_evidence_hash"
+            ),
+            "reason": pilot_admission.get("reason"),
+        }
+        if pilot_admission is not None
+        else (
+            _pilot_qualification(
+                suite.pilot_run_id,
+                suite,
+                expected_harness_commit=str(git_state.get("commit")),
+            )
+            if suite.purpose
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+            else {"run_id": None, "qualified": None}
+        )
     )
     runtime_contract = _experiment_runtime_contract(
         suite,
@@ -2215,6 +2922,12 @@ def preflight_suite(
         openai_sdk=openai_sdk,
         pilot_qualification=pilot_qualification,
         runtime_contract=runtime_contract,
+        pilot_admission=(
+            pilot_admission
+            if pilot_admission is not None
+            and pilot_admission.get("admitted") is True
+            else None
+        ),
     )
 
     expected_prices = OFFICIAL_PRICES_BY_MODEL.get(suite.model_id)
@@ -2448,6 +3161,11 @@ def preflight_suite(
     }
     if runtime_contract is not None:
         output_payload["runtime_contract"] = runtime_contract
+    if (
+        pilot_admission is not None
+        and pilot_admission.get("admitted") is True
+    ):
+        output_payload["pilot_admission"] = pilot_admission
     return output_payload
 
 
@@ -2805,8 +3523,16 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
         raw_checks = []
     call_guard_check_id = "disabled_call_guard_contract"
     comparison_no_memory_observability = bool(
-        payload.get("purpose")
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY.value
+        (
+            payload.get("purpose")
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY.value
+            or (
+                payload.get("purpose")
+                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT.value
+                and payload.get("experiment_id")
+                == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+            )
+        )
         and payload.get("memory_condition") == MemoryCondition.NO_MEMORY.value
         and payload.get("model_id") == CAMPAIGN_MODEL_ID
         and payload.get("reasoning_effort") == "medium"
@@ -3626,6 +4352,16 @@ def _completion_gate(
         == [WORKFLOW_COMPLETION_PROBE_TASK]
         and suite.transport_max_retries == 0
     )
+    condition_neutral_pilot = bool(
+        suite.purpose
+        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and suite.experiment_id
+        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and _is_frozen_comparison_runtime_profile(suite)
+        and [_normalized_task_path(task) for task in suite.tasks]
+        == [PILOT_TASK]
+        and suite.repetitions == 1
+    )
     budget_pilot = bool(
         suite.purpose
         == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
@@ -3682,6 +4418,7 @@ def _completion_gate(
         (
             generic_baseline_readiness,
             workflow_completion_probe,
+            condition_neutral_pilot,
             completion_panel,
             budget_pilot,
             corrective_pilot,
@@ -3718,6 +4455,7 @@ def _completion_gate(
         else 1
         if (
             workflow_completion_probe
+            or condition_neutral_pilot
             or saturation_pilot
             or review_evidence_pilot
             or coverage_review_pilot
@@ -3728,13 +4466,19 @@ def _completion_gate(
         else 2
     )
     readiness_task_identity_passed = bool(
-        not (generic_baseline_readiness or workflow_completion_probe)
+        not (
+            generic_baseline_readiness
+            or workflow_completion_probe
+            or condition_neutral_pilot
+        )
         or (
             len(rows) == expected_runs
             and {row.get("task_id") for row in rows}
             == (
                 GENERIC_BASELINE_READINESS_TASK_IDS
                 if generic_baseline_readiness
+                else {PILOT_TASK_ID}
+                if condition_neutral_pilot
                 else {WORKFLOW_COMPLETION_PROBE_TASK_ID}
             )
         )
@@ -3760,7 +4504,11 @@ def _completion_gate(
         )
 
     readiness_run_binding_passed = bool(
-        not (generic_baseline_readiness or workflow_completion_probe)
+        not (
+            generic_baseline_readiness
+            or workflow_completion_probe
+            or condition_neutral_pilot
+        )
         or (
             len(rows) == expected_runs
             and all(isinstance(run_id, str) and run_id for run_id in readiness_run_ids)
@@ -3775,7 +4523,11 @@ def _completion_gate(
         )
     )
     readiness_schedule_binding_passed = bool(
-        not (generic_baseline_readiness or workflow_completion_probe)
+        not (
+            generic_baseline_readiness
+            or workflow_completion_probe
+            or condition_neutral_pilot
+        )
         or (
             len(expected_schedule_rows) == expected_runs
             and len(expected_schedule_by_id) == expected_runs
@@ -3807,7 +4559,11 @@ def _completion_gate(
         )
     )
     readiness_execution_binding_passed = bool(
-        not (generic_baseline_readiness or workflow_completion_probe)
+        not (
+            generic_baseline_readiness
+            or workflow_completion_probe
+            or condition_neutral_pilot
+        )
         or (
             valid_sha256_identity(expected_execution_hash)
             and len(rows) == expected_runs
@@ -3819,7 +4575,11 @@ def _completion_gate(
         )
     )
     readiness_row_binding_passed = bool(
-        not (generic_baseline_readiness or workflow_completion_probe)
+        not (
+            generic_baseline_readiness
+            or workflow_completion_probe
+            or condition_neutral_pilot
+        )
         or (
             readiness_run_binding_passed
             and readiness_schedule_binding_passed
@@ -3886,7 +4646,9 @@ def _completion_gate(
         )
 
     call_guard_contract_required = bool(
-        workflow_completion_probe or generic_count_observability
+        workflow_completion_probe
+        or generic_count_observability
+        or condition_neutral_pilot
     )
     call_guard_contract_passed = bool(
         not call_guard_contract_required
@@ -3982,6 +4744,7 @@ def _completion_gate(
     if (
         generic_baseline_readiness
         or workflow_completion_probe
+        or condition_neutral_pilot
         or budget_pilot
         or corrective_pilot
         or saturation_pilot
@@ -3991,7 +4754,9 @@ def _completion_gate(
     ):
         return {
             "schema_version": (
-                "generic-baseline-readiness-gate-v2"
+                CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_SCHEMA
+                if condition_neutral_pilot
+                else "generic-baseline-readiness-gate-v2"
                 if generic_count_observability
                 else "generic-baseline-readiness-gate-v1"
                 if generic_baseline_readiness
@@ -4008,6 +4773,11 @@ def _completion_gate(
                 else "no-memory-corrective-pilot-gate-v1"
                 if corrective_pilot
                 else "no-memory-budget-pilot-gate-v1"
+            ),
+            **(
+                {"gate_id": CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_ID}
+                if condition_neutral_pilot
+                else {}
             ),
             "passed": completion_passed,
             "expected_runs": expected_runs,
@@ -4026,7 +4796,11 @@ def _completion_gate(
                     "schedule_binding_passed": (readiness_schedule_binding_passed),
                     "execution_binding_passed": (readiness_execution_binding_passed),
                 }
-                if generic_baseline_readiness or workflow_completion_probe
+                if (
+                    generic_baseline_readiness
+                    or workflow_completion_probe
+                    or condition_neutral_pilot
+                )
                 else {}
             ),
             **(

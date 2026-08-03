@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-084 condition-neutral comparison runtime gate implemented offline; all live, baseline,
-memory-admission and core authority remain closed**
+현재 milestone: **D-085 exact one-row condition-neutral comparison pilot source gate; clean preflight and all
+provider authority remain closed**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ memory-admission and core authority remain closed**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-084 offline comparison runtime gate | D-083 tuple을 plan/hash, RunManifest, RunStarted CAS, start/resume, budget diagnostic과 no-memory qualification에 결속; core terminal qualification과 live/baseline/memory/core closed |
+| Phase 6 evaluation | D-085 exact comparison pilot source gate | D-083/D-084 tuple의 Babel 1-row pilot selector와 process-readiness predicate를 offline 결속; clean preflight/live/baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -202,7 +202,44 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current offline runtime gate — D-084 condition-neutral comparison binding
+## Current source gate — D-085 exact condition-neutral comparison pilot
+
+목표: 12-run no-memory collection 전에 D-083/D-084 exact tuple의 최소 one-row pilot이 plan/manifest/start-resume/
+qualification/evaluator lifecycle을 exercise할 수 있도록 source contract를 닫는다. Provider는 호출하지 않는다.
+
+### Ordered work items
+
+1. **완료:** Exact ID `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`, frozen Babel task,
+   `no_memory` 1회와 D-083/D-084 tuple만 nullable count를 허용하도록 suite/manifest selector를 고정한다.
+2. **완료:** Execution plan/hash, D-084 runtime contract/evidence, start/resume와 paid boundary를 같은 identity로
+   결속하고 arbitrary/near-match pilot을 거부한다.
+3. **완료:** Trace qualifier가 runtime CAS, disabled-call observability, pricing freshness와 no-memory boundary를
+   독립 검증하도록 한다.
+4. **완료:** `condition-neutral-comparison-pilot-readiness-gate-v1`이 terminal/qualified/official evaluator 1/1,
+   exact disabled-call-guard pass와 budget/terminal-loop를 포함한 process confound 0을 요구하되 task
+   success/SCRR는 요구하지 않도록 한다.
+5. **완료:** Source/offline artifact
+   `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`을 봉인한다.
+6. **대기:** Source commit 뒤 clean Docker host에서 fresh official pricing으로 no-call preflight를 수행한다.
+7. **대기:** Candidate execution hash와 최대 `$8`를 사용자에게 제시한다. 명시 승인 전 provider를 호출하지 않는다.
+8. **대기:** Pilot이 qualified된 뒤에만 12-run `$20 → $88` cap을 별도 결정하고 새 hash/승인을 준비한다.
+9. **완료:** Pilot과 campaign source를 별도 clean commit으로 유지하고 raw commit equality가 아닌 D-083/D-084
+   semantic exact tuple과 qualified readiness를 검증한다. Task success를 제외한 canonical admission hash를
+   future campaign execution plan/hash에 결속하고 persisted qualification을 durable state에서 read-only
+   재계산하는 exact consumer를 구현·검증한다.
+
+### Gate status — source/offline implementation complete; clean preflight and all execution authority closed
+
+- Worst-rate reserve는 `$7.3125`, source cap은 `$8`이지만 아직 승인된 비용이 아니다.
+- Pilot success predicate는 workflow readiness이며 hidden success나 SCRR가 아니다.
+- Clean preflight, candidate/approved hash, provider call/result와 measured cost는 아직 없다.
+- Baseline, denominator, memory review/index, core와 `analysis_ready`는 계속 닫혀 있다.
+- Exact `dev-no-memory-v5-20260730-r1` pilot-admission consumer는 offline 구현됐지만 qualified pilot, cap 변경,
+  새 campaign preflight/hash/승인과 paid execution authority는 없다.
+- Final offline verification은 focused 153/153, repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
+  Artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
+
+## Historical offline runtime gate — D-084 condition-neutral comparison binding
 
 목표: D-083 exact tuple을 source config에서 execution plan/hash, `RunManifest`, durable start/resume evidence,
 budget diagnostic과 independent no-memory qualification까지 동일 identity로 연결한다. Provider 실행이나

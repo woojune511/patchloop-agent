@@ -63,6 +63,11 @@ class ExperimentPurpose(StrEnum):
     CORE = "core"
 
 
+CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID = (
+    "dev-validation-condition-neutral-v2v5-pilot-20260803-r1"
+)
+
+
 class RunOutcomeKind(StrEnum):
     RESOLVED = "resolved"
     TASK_FAILURE = "task_failure"
@@ -1235,6 +1240,20 @@ class RunManifest(StrictModel):
             and self.experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         )
+        condition_neutral_comparison_pilot = bool(
+            self.experiment is not None
+            and self.experiment.purpose
+            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            and self.experiment.experiment_id
+            == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+            and self.task_id
+            == "babel-strict-grouped-decimal-trailing-zeroes"
+            and self.experiment.dataset_role
+            == DatasetRole.DEVELOPMENT_VALIDATION
+            and self.experiment.schedule_seed == 20260723
+            and self.experiment.schedule_order == 1
+            and self.experiment.repetition == 1
+        )
         future_comparison_purpose = (
             self.experiment.purpose
             if self.experiment is not None
@@ -1258,7 +1277,10 @@ class RunManifest(StrictModel):
             and self.public_review_contract is None
         )
         future_comparison_profile = bool(
-            future_comparison_purpose is not None
+            (
+                future_comparison_purpose is not None
+                or condition_neutral_comparison_pilot
+            )
             and self.tool_schema_version == "v2"
             and self.context_policy_version == "phase-evidence-v5"
             and self.model.provider == "openai"

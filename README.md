@@ -2,6 +2,33 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-03 D-085는 D-083/D-084 exact tuple을 실제 campaign 전에 한 번 exercise하기 위한
+single-row no-memory live-readiness pilot을 source/offline에서 고정한다. Exact suite
+`dev-validation-condition-neutral-v2v5-pilot-20260803-r1`은 frozen Babel development-validation task,
+`gpt-5.4-mini-2026-03-17` medium/standard/default, retry 0, `SYSTEM_PROMPT_V3`, tool v2/context
+`phase-evidence-v5`, output 25,000, memory allowance 2,000과 `null/null/1,600,000/1,800` budget을 사용한다.
+보수적 worst-rate reserve는 `$7.3125`, source cap은 `$8`이다. Readiness는 1/1 terminal·trace-qualified·official
+evaluator, exact disabled-call-guard contract와 infrastructure/qualification/diagnostic/budget/terminal-loop
+confound 0을 요구하지만 hidden task success와 SCRR는 요구하지 않는다.
+
+이 source gate 자체는 clean host preflight, candidate 또는 approved execution hash, 사용자 비용 승인,
+provider call과 live result를 만들지 않는다. 이후 clean commit에서 새 가격·Docker image·SDK를 포함한
+no-call preflight를 다시 수행하고, 그 exact hash와 최대 `$8`에 대한 별도 승인을 받아야 한 번 실행할 수
+있다. Artifact는
+`reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`이다. Pilot이
+qualification을 통과하기 전에는 12-run no-memory campaign의 `$20 → $88` cost-cap decision도 내리지 않고,
+baseline, denominator, memory review/index와 core는 계속 닫아 둔다.
+
+Pilot admission과 이후 campaign source는 서로 다른 clean commit으로 다룬다. Exact future consumer
+`dev-no-memory-v5-20260730-r1`은 raw Git commit equality 대신 D-083 policy, model·prompt/tool hash·context·
+retry·output·budget·memory allowance의 semantic exact tuple과 네 qualification check를 검증한다. Pilot task
+success는 admission 조건이 아니다. Persisted qualification은 durable state에서 read-only로 다시 계산한
+결과와 exact 일치해야 한다. 검증 결과의 `condition-neutral-comparison-pilot-admission-v1` canonical
+hash는 future campaign execution plan/hash에 결속되고 start/resume/post-run에서 다시 검사된다. 이 offline
+consumer 구현은 qualified pilot, `$88` cap decision, 새 preflight/hash/승인 또는 campaign 실행 권한을 만들지 않는다.
+Final offline verification은 focused 153/153과 repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
+Source artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
+
 2026-08-03 D-084는 D-083에서 동결한 condition-neutral comparison budget을 실제 실행 identity에
 결속하는 offline runtime gate다. `condition-neutral-comparison-runtime-contract-v1`은 model/tool call
 `null`/`null`, total token 1,600,000, wall 1,800초, output 25,000, SDK transport retry 0, generic

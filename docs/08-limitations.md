@@ -1025,3 +1025,27 @@ silently lowering the design or fabricating missing results.
   `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`.
 - D-081 nullable-count calibration, the historical 250k runtime and all D-083 bytes remain immutable and are not
   reinterpreted under the D-084 contract.
+
+## D-085 defines a pilot source, not a live result or baseline
+
+- D-085 adds exact suite `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`, a one-row Babel
+  development-validation pilot with the D-083/D-084 runtime tuple. It exists to exercise
+  the new comparison wiring before the 12-run collection, not to estimate success rate or memory effect.
+- The process predicate requires one terminal, trace-qualified, official-evaluator run, an exact disabled-call-guard
+  pass, and zero infrastructure, qualification, diagnostic, budget-terminal and terminal-loop confounds. Hidden task
+  success and SCRR are deliberately excluded.
+- The conservative reserve is `$7.3125` and the checked-in source cap is `$8`. Neither is an invoice prediction,
+  free-tier claim or spending approval.
+- The source artifact `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json` does
+  not contain a clean preflight result, candidate/approved execution hash, provider call or measured cost. A clean
+  host preflight and explicit user approval remain mandatory.
+- The 12-run template remains blocked by its missing qualified pilot and `$20 < $87.75` cap. D-085 does not change
+  that cap. Memory review/index freeze and core binding remain closed until new no-memory collection evidence exists.
+- Pilot and campaign source commits are intentionally separate. The exact `dev-no-memory-v5-20260730-r1` consumer
+  compares the D-083 policy and semantic runtime tuple, rechecks qualification/source/approved-plan CAS and four
+  process checks, and requires the persisted qualification to exactly match a read-only durable recomputation. It
+  binds a canonical `condition-neutral-comparison-pilot-admission-v1` hash into the future plan
+  and execution hash without requiring task success. This is offline wiring, not a qualified pilot, cap change,
+  campaign approval or paid-run authority.
+- Final offline verification is focused 153/153 and repository-wide 1,385 passed/7 skipped. The source artifact SHA
+  is `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`.

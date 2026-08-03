@@ -1,0 +1,201 @@
+{
+  "schema_version": "condition-neutral-comparison-pilot-source-gate-v1",
+  "gate_id": "d085-condition-neutral-comparison-pilot-source-gate",
+  "predecessors": [
+    {
+      "gate_id": "d083-condition-neutral-comparison-budget-freeze",
+      "path": "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json",
+      "sha256": "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88",
+      "modified": false
+    },
+    {
+      "gate_id": "d084-condition-neutral-comparison-runtime-gate",
+      "path": "reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json",
+      "sha256": "sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701",
+      "modified": false
+    }
+  ],
+  "pilot_source": {
+    "schema_version": "condition-neutral-comparison-pilot-source-v1",
+    "suite_path": "experiments/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.yaml",
+    "experiment_id": "dev-validation-condition-neutral-v2v5-pilot-20260803-r1",
+    "purpose": "development-validation-live-pilot",
+    "task": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+    "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+    "memory_condition": "no_memory",
+    "repetitions": 1,
+    "model_provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "max_output_tokens": 25000,
+    "budget": {
+      "max_model_calls": null,
+      "max_tool_calls": null,
+      "max_total_tokens": 1600000,
+      "wall_clock_timeout_seconds": 1800
+    },
+    "memory_max_context_tokens": 2000,
+    "system_prompt_version": "SYSTEM_PROMPT_V3",
+    "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+    "tool_schema_version": "v2",
+    "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+    "context_policy_version": "phase-evidence-v5",
+    "call_guard_policy": "model-tool-observability-only-v1"
+  },
+  "pricing": {
+    "schema_version": "condition-neutral-comparison-pilot-pricing-v1",
+    "verified_at": "2026-08-03T06:37:49Z",
+    "source_url": "https://developers.openai.com/api/docs/pricing",
+    "model_page_url": "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+    "current_snapshot": "gpt-5.4-mini-2026-03-17",
+    "input_price_per_million_usd": 0.75,
+    "cached_input_price_per_million_usd": 0.075,
+    "cache_write_input_price_per_million_usd": null,
+    "output_price_per_million_usd": 4.5,
+    "worst_rate_reserve_usd": 7.3125,
+    "source_cost_limit_usd": 8.0,
+    "reserve_is_invoice_prediction": false
+  },
+  "runtime_binding": {
+    "schema_version": "condition-neutral-comparison-pilot-runtime-binding-v1",
+    "runtime_contract_schema": "condition-neutral-comparison-runtime-contract-v1",
+    "runtime_evidence_schema": "condition-neutral-comparison-runtime-evidence-v1",
+    "execution_plan_and_hash_bound": true,
+    "run_manifest_exact_selector": true,
+    "pre_start_manifest_reconstruction": true,
+    "run_started_content_addressed_evidence": true,
+    "fresh_start_validation": true,
+    "resume_validation": true,
+    "paid_boundary_plan_reconstruction": true,
+    "trace_qualification_reconstruction": true,
+    "disabled_call_guard_qualification": true,
+    "pricing_start_freshness_qualification": true
+  },
+  "readiness_predicate": {
+    "schema_version": "condition-neutral-comparison-pilot-readiness-gate-v1",
+    "expected_runs": 1,
+    "terminal_runs_required": 1,
+    "trace_qualified_runs_required": 1,
+    "official_evaluator_runs_required": 1,
+    "infrastructure_errors_allowed": 0,
+    "qualification_errors_allowed": 0,
+    "diagnostic_errors_allowed": 0,
+    "budget_terminal_runs_allowed": 0,
+    "call_guard_contract_passed_required": true,
+    "terminal_loop_failure_runs_allowed": 0,
+    "task_success_required": false,
+    "hidden_acceptance_used_for_readiness": false,
+    "scrr_used_for_readiness": false
+  },
+  "pilot_admission_binding": {
+    "schema_version": "condition-neutral-comparison-pilot-admission-binding-v1",
+    "descriptor_schema": "condition-neutral-comparison-pilot-admission-v1",
+    "future_campaign_experiment_id": "dev-no-memory-v5-20260730-r1",
+    "pilot_and_campaign_source_commits_are_separate": true,
+    "raw_source_commit_equality_required": false,
+    "pilot_and_campaign_commits_require_40_hex_sha": true,
+    "semantic_exact_tuple_match_required": true,
+    "semantic_tuple_fields": [
+      "schema_version",
+      "comparison_budget_policy",
+      "model_provider",
+      "model_id",
+      "reasoning_effort",
+      "reasoning_mode",
+      "service_tier",
+      "transport_max_retries",
+      "system_prompt_hash",
+      "tool_schema_version",
+      "tool_schema_hash",
+      "context_policy_version",
+      "max_output_tokens",
+      "budget",
+      "memory_max_context_tokens",
+      "memory_conditions",
+      "call_guard_policy"
+    ],
+    "qualification_source_and_approved_plan_cas_revalidated": true,
+    "durable_qualification_recomputed_read_only": true,
+    "persisted_and_recomputed_qualification_exact_match_required": true,
+    "required_qualification_checks": [
+      "approved_execution_plan",
+      "comparison_runtime_contract",
+      "disabled_call_guard_contract",
+      "pricing_start_freshness"
+    ],
+    "task_success_required": false,
+    "canonical_admission_hash_required_in_future_campaign_execution_plan": true,
+    "canonical_admission_hash_required_in_future_campaign_execution_hash": true,
+    "start_resume_and_post_run_revalidation": true,
+    "future_campaign_admission_binding_implemented": true,
+    "future_campaign_execution_authorized": false
+  },
+  "sequencing_boundary": {
+    "schema_version": "condition-neutral-comparison-pilot-sequencing-v1",
+    "next_if_live_pilot_qualifies": "separate 12-run no-memory cost-cap and clean-preflight decision",
+    "memory_review_before_new_no_memory_collection": false,
+    "memory_index_freeze_before_new_no_memory_collection": false,
+    "core_memory_binding_remains_pending": true
+  },
+  "authorization_boundary": {
+    "schema_version": "condition-neutral-comparison-pilot-source-authorization-v1",
+    "source_offline_gate_only": true,
+    "clean_host_preflight_performed": false,
+    "candidate_execution_hash_created": false,
+    "approved_execution_hash_created": false,
+    "provider_execution_authorized": false,
+    "live_cost_approved": false,
+    "automatic_execution_authorized": false
+  },
+  "verification": {
+    "schema_version": "condition-neutral-comparison-pilot-source-verification-v1",
+    "verified_on": "2026-08-03",
+    "focused": {
+      "command": "uv run pytest -o addopts='' -q tests/test_d085_condition_neutral_pilot_preflight.py tests/test_d085_manifest_runtime.py tests/test_d085_qualification.py tests/test_d085_source_gate_artifact.py tests/test_d085_pilot_admission.py tests/test_d084_manifest_contract.py tests/test_d084_runtime_binding.py tests/test_d084_qualification_binding.py tests/test_d084_runtime_gate_artifact.py",
+      "passed": 153,
+      "failed": 0,
+      "duration_seconds": 48.42
+    },
+    "repository_regression": {
+      "command": "uv run pytest -o addopts='' -q",
+      "collected": 1392,
+      "passed": 1385,
+      "skipped": 7,
+      "failed": 0,
+      "duration_seconds": 598.3
+    },
+    "security_review": {
+      "self_hashed_qualification_trust_gap_found": true,
+      "durable_read_only_recomputation_added": true,
+      "forged_qualification_rejected": true,
+      "created_run_without_terminal_result_rejected": true,
+      "independent_re_review_passed": true
+    },
+    "static_checks": {
+      "ruff_check": true,
+      "compileall": true,
+      "git_diff_check": true,
+      "json_parse": true
+    },
+    "provider_calls_made": 0,
+    "added_model_cost_usd": 0.0
+  },
+  "claims_boundary": {
+    "pilot_source_contract_implemented": true,
+    "exact_future_campaign_pilot_admission_consumer_implemented": true,
+    "provider_calls_made": 0,
+    "added_model_cost_usd": 0.0,
+    "live_pilot_executed": false,
+    "pilot_readiness_result_observed": false,
+    "no_memory_baseline_result_established": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "memory_index_frozen": false,
+    "core_campaign_unlocked": false,
+    "analysis_ready": false,
+    "historical_artifacts_modified": false
+  }
+}

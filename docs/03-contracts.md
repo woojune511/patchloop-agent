@@ -2785,3 +2785,61 @@ cost는 0/$0이며 승인 execution hash와 live 권한은 없다.
 Final verification은 focused D-084 68/68과 repository-wide 1,304 collected 중 1,297 passed/7
 environment-dependent skipped다. Artifact SHA는
 `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`이다.
+
+## 27. D-085 condition-neutral comparison pilot source contract
+
+Exact pilot selector는 다음 값을 모두 요구한다.
+
+```yaml
+schema_version: experiment-v2
+experiment_id: dev-validation-condition-neutral-v2v5-pilot-20260803-r1
+purpose: development-validation-live-pilot
+tasks:
+  - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+conditions: [no_memory]
+repetitions: 1
+model: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+transport_max_retries: 0
+max_output_tokens: 25000
+budget:
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 1600000
+  wall_clock_timeout_seconds: 1800
+memory_token_budget: 2000
+estimated_cost_usd: 7.3125
+cost_limit_usd: 8
+```
+
+Approval compatibility fields는 false/null이고 pilot ID, task, condition, repetition, model tuple, budget,
+prompt/tool/context, retry, output, memory allowance, pricing 또는 sidecar drift를 거부한다. Arbitrary
+`development-validation-live-pilot`가 nullable count를 사용할 수 없으며 historical pilot은 각자의 기존
+contract로만 해석한다.
+
+Execution plan과 `RunManifest`는 D-084의 `condition-neutral-comparison-runtime-contract-v1`을 사용하고
+`RunStarted`는 `condition-neutral-comparison-runtime-evidence-v1` full CAS를 남긴다. Start/resume, paid-call
+boundary와 qualifier가 동일 document와 D-083 policy SHA를 독립 재구성한다. Terminal qualification은
+`comparison_runtime_contract`, `disabled_call_guard_contract`, `pricing_start_freshness`와 no-memory boundary를
+요구한다.
+
+`condition-neutral-comparison-pilot-readiness-gate-v1`은 terminal/qualified/official evaluator 1개,
+`call_guard_contract_passed_required=true`와 `terminal_loop_failure_runs_allowed=0`을 포함한 모든 process
+confound 0을 요구하고 `task_success_required=false`다. Source artifact는
+`reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`이며 provider call,
+execution hash, live approval, baseline, denominator, memory admission 또는 core authority를 만들지 않는다.
+
+Future campaign admission은 exact consumer `dev-no-memory-v5-20260730-r1`의
+`condition-neutral-comparison-pilot-admission-v1`을 따른다. Pilot과 campaign은 서로 다른 clean source commit을
+사용하므로 raw commit equality는 요구하지 않는다. 대신 D-083 policy, model/provider/reasoning/mode/tier,
+retry, prompt/tool hash, tool/context version, output, budget, memory conditions/allowance와 call-guard policy의
+exact semantic tuple을 검증한다. Qualification/source/approved pilot plan CAS와 네 필수 check도 다시 확인한다.
+Persisted qualification은 `qualify_run(..., persist=false)`의 durable recomputation과 canonical exact
+일치해야 하며 task success는 admission 입력이 아니다. Canonical descriptor hash는 future campaign execution plan/hash에
+포함되고 start/resume/post-run matcher가 재검증한다. Consumer는 offline 구현됐지만 qualified pilot과 별도
+cap·preflight·hash·승인이 없으므로 future campaign 실행 권한은 계속 닫혀 있다.
+Final offline verification은 focused 153/153, repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
+Artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
