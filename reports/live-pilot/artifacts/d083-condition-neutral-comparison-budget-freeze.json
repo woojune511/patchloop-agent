@@ -1,0 +1,203 @@
+{
+  "schema_version": "condition-neutral-comparison-budget-freeze-v1",
+  "freeze_id": "d083-condition-neutral-comparison-budget-freeze",
+  "source_evidence": {
+    "schema_version": "public-process-budget-selection-v2",
+    "evidence_scope": "exact-d081-r3-only",
+    "public_process_only": true,
+    "selection_rule": "maximum observed_prefix_minimum_total_budget across workflow-complete, trace-qualified, official-evaluator-complete D-081 rows",
+    "task_success_used_for_selection": false,
+    "private_evaluator_outcomes_used_for_selection": false,
+    "sources": [
+      {
+        "role": "d082-measured-readiness-report",
+        "path": "reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json",
+        "sha256": "sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2"
+      },
+      {
+        "role": "d081-pre-run-budget-candidate",
+        "path": "reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json",
+        "sha256": "sha256:6f871c13aee71043c20c54c72a93667600462e8369483e9354507a94d0063193"
+      }
+    ]
+  },
+  "eligible_process_rows": [
+    {
+      "order": 1,
+      "task_id": "hf-hub-xet-endpoint-propagation",
+      "dataset_role": "memory-development",
+      "run_id": "run_aa9c911512a547d2",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "observed_prefix_minimum_total_budget": 365277
+    },
+    {
+      "order": 2,
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "dataset_role": "development-validation",
+      "run_id": "run_3995a029dc1f4b19",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "observed_prefix_minimum_total_budget": 114143
+    },
+    {
+      "order": 3,
+      "task_id": "moto-query-scanned-count",
+      "dataset_role": "development-validation",
+      "run_id": "run_f29df61ba1bc455a",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "observed_prefix_minimum_total_budget": 246312
+    },
+    {
+      "order": 4,
+      "task_id": "pyfakefs-makedirs-parent-traversal",
+      "dataset_role": "memory-development",
+      "run_id": "run_741ad42bf680486a",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "observed_prefix_minimum_total_budget": 1303223
+    }
+  ],
+  "derivation": {
+    "schema_version": "condition-neutral-comparison-budget-derivation-v1",
+    "selected_metric": "observed_prefix_minimum_total_budget",
+    "selected_run_id": "run_741ad42bf680486a",
+    "selected_task_id": "pyfakefs-makedirs-parent-traversal",
+    "observed_prefix_minimum_total_budget": 1303223,
+    "headroom_multiplier": 1.2,
+    "unrounded_total_token_budget": 1563867.6,
+    "round_up_mode": "ceiling",
+    "round_up_quantum_tokens": 100000,
+    "rounded_total_token_budget": 1600000,
+    "completion_guaranteed": false
+  },
+  "frozen_budget": {
+    "schema_version": "condition-neutral-comparison-budget-v1",
+    "profile_id": "gpt54mini-v2v5-condition-neutral-1600k-v1",
+    "max_model_calls": null,
+    "max_tool_calls": null,
+    "max_total_tokens": 1600000,
+    "wall_clock_timeout_seconds": 1800,
+    "max_output_tokens": 25000,
+    "count_limits_are_observability_only": true,
+    "call_guard_policy": "model-tool-observability-only-v1",
+    "condition_neutral": true,
+    "same_budget_for_all_memory_conditions": true,
+    "memory_conditions": [
+      "no_memory",
+      "raw_trace",
+      "structured",
+      "selective_structured"
+    ],
+    "retained_guards": [
+      "total-token",
+      "wall-clock",
+      "exact-request",
+      "cost",
+      "loop",
+      "constrained-tool",
+      "docker-network",
+      "evaluator"
+    ]
+  },
+  "model_runtime_tuple": {
+    "schema_version": "condition-neutral-comparison-runtime-tuple-v1",
+    "provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "max_output_tokens": 25000,
+    "system_prompt_version": "SYSTEM_PROMPT_V3",
+    "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+    "tool_schema_version": "v2",
+    "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+    "context_policy_version": "phase-evidence-v5",
+    "memory_token_budget": 2000
+  },
+  "source_contract": {
+    "schema_version": "condition-neutral-comparison-source-contract-v1",
+    "implementation_status": "policy-frozen-runtime-pending",
+    "live_runnable_suite_created": false,
+    "runtime_wiring_complete": false,
+    "provider_execution_authority": false,
+    "templates": [
+      {
+        "purpose": "memory-development-no-memory",
+        "path": "experiments/dev-no-memory-v5.template.yaml",
+        "status": "policy-frozen-runtime-pending"
+      },
+      {
+        "purpose": "core",
+        "path": "experiments/core.template.yaml",
+        "status": "policy-frozen-runtime-pending"
+      }
+    ]
+  },
+  "pricing": {
+    "schema_version": "condition-neutral-comparison-pricing-v1",
+    "verified_at": "2026-08-03T01:08:49Z",
+    "source_url": "https://developers.openai.com/api/docs/pricing",
+    "input_price_per_million_usd": 0.75,
+    "cached_input_price_per_million_usd": 0.075,
+    "output_price_per_million_usd": 4.5,
+    "reserve_rate_per_million_usd": 4.5,
+    "reserve_formula": "(max_total_tokens + max_output_tokens) * reserve_rate_per_million_usd / 1000000",
+    "per_run_cost_reserve_usd": 7.3125,
+    "schedule_reserves": {
+      "no_memory_baseline": {
+        "run_count": 12,
+        "reserve_usd": 87.75,
+        "recommended_approval_cap_usd": 88.0
+      },
+      "maximum_dev_collection": {
+        "run_count": 18,
+        "reserve_usd": 131.625,
+        "recommended_approval_cap_usd": 132.0
+      },
+      "core": {
+        "run_count": 96,
+        "reserve_usd": 702.0,
+        "recommended_approval_cap_usd": 702.0
+      }
+    },
+    "existing_project_cap_usd": 150.0,
+    "core_cap_deficit_usd": 552.0,
+    "core_scale_decision_required": true
+  },
+  "authorization_boundary": {
+    "schema_version": "comparison-budget-authorization-boundary-v1",
+    "source_only_freeze": true,
+    "provider_execution_authorized": false,
+    "execution_hash_created": false,
+    "live_cost_approval_embedded": false,
+    "fresh_pricing_required_at_preflight": true,
+    "maximum_pricing_age_hours": 72,
+    "clean_preflight_required": true,
+    "exact_execution_hash_required": true,
+    "explicit_cost_approval_required": true,
+    "automatic_execution_authorized": false
+  },
+  "claims_boundary": {
+    "comparison_budget_policy_frozen": true,
+    "condition_neutral": true,
+    "completion_guaranteed": false,
+    "calibration_result_reinterpreted": false,
+    "provider_calls_made": 0,
+    "added_model_cost_usd": 0.0,
+    "no_memory_baseline_result_established": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "core_campaign_unlocked": false,
+    "core_cost_cap_conflict_open": true,
+    "historical_artifacts_modified": false,
+    "private_evaluator_outcomes_used_for_selection": false,
+    "prompt_tool_or_context_tuning_authorized": false
+  }
+}

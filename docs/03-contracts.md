@@ -301,6 +301,7 @@ historical/offline evidence를 위한 읽기 호환만 유지하며 새 live 실
 | `memory-development-no-memory-coverage-review-pilot` | D-070 exact HF Hub 한 task, `no_memory`, repetition 1, v5/v10/runtime-v4, 60/100/1.2M/1,800초, output 25k, $6 상한; tuning-only이며 comparison·memory admission 제외, 별도 hash/비용 승인 전 live 실행 금지 |
 | `memory-development-no-memory-coverage-rejection-pilot` | Consumed D-072 exact HF Hub 한 task, `no_memory`, repetition 1, v6/v11/runtime-v5, 60/100/1.2M/1,800초, output 25k, reserve $5.5125/$6 상한; readiness gate pass/recovery inconclusive/hidden task failure인 immutable row이며 재실행·comparison·memory admission 금지 |
 | `generic-baseline-readiness` | D-075 r1과 D-077 r2는 consumed/immutable false gate다. D-081 r3는 같은 ordered four-row generic V2/V5 tuple에서 model/tool count를 observability-only `null`, total token 2.4M, wall 1,800초로 고정했고 D-082에서 exact hash로 한 번 실행되어 4/4 workflow completion과 gate v2 pass를 기록했다. 1/4 task success지만 calibration-only이며 baseline/memory/core 제외 |
+| `comparison-budget-freeze` | D-083은 D-081 r3 public process evidence만으로 null/null/1.6M token/1,800초/output 25k/retry 0 per-run policy를 offline 동결한다. Runtime/manifest/qualification support와 live/baseline/memory/core authority는 없음 |
 | `workflow-completion-probe` | D-079 exact pyfakefs 한 row, `no_memory` repetition 1, generic V2/V5, model/tool call `null`·observability-only, 3M token/7,200초/output 25k, reserve $13.6125/$14 cap; calibration-only이며 clean hash와 별도 승인 전 live 실행 금지 |
 | `core` | frozen held-out 12 task, memory 네 조건, repetition 2, 총 96 run |
 
@@ -2685,3 +2686,46 @@ D-081/D-082는 calibration-only이며 `comparison_denominator_eligible=false`,
 suite, execution identity, raw/portable artifact, original gate와 append-only correction은 immutable하다.
 D-082 final documentation-seal verification은 repository-wide 1,214 collected 중 1,207 passed/7
 environment-dependent skipped와 focused D-082 8/8을 통과했다.
+
+## 25. D-083 condition-neutral comparison-budget freeze contract
+
+D-083은 다음 per-run budget policy만 동결한다.
+
+```yaml
+schema_version: condition-neutral-comparison-budget-freeze-v1
+source_experiment_id: generic-baseline-readiness-v2v5-20260803-r3
+budget:
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 1600000
+  wall_clock_timeout_seconds: 1800
+max_output_tokens: 25000
+transport_max_retries: 0
+claims_boundary:
+  comparison_budget_policy_frozen: true
+  runtime_support_implemented: false
+  manifest_support_implemented: false
+  qualification_support_implemented: false
+  live_execution_authorized: false
+  comparison_denominator_eligible: false
+  no_memory_baseline_unlocked: false
+  memory_admission_unlocked: false
+  core_campaign_unlocked: false
+```
+
+Canonical derivation은 D-081 r3 pyfakefs observed-prefix minimum 1,303,223만 사용한다.
+`1,303,223 * 1.2 = 1,563,867.6`을 100,000 단위로 올림해 1,600,000을 얻는다. Hidden outcome과
+task success는 입력이 아니며 D-080 historical minimum 1,815,619는 exact-source scope 밖이다.
+따라서 frozen ceiling은 completion을 보장하지 않는다.
+
+Worst-rate reserve는 `$7.3125`/run, `$87.75`/12 run, `$131.625`/18 run과 `$702`/96 run이다.
+기존 `$20` 12-run cap과 `$150` project cap은 supersede하지 않는다. Artifact, source template이나
+no-call preflight는 paid authority가 아니며 runtime/manifest/qualification support가 구현·검증되기 전
+모든 source template은 fail closed해야 한다.
+
+Append-only artifact는
+`reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`, SHA는
+`sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`다. D-083은
+provider call 0, model cost `$0`인 offline contract다.
+D-081/D-082 result, calibration-only status, task outcome과 evidence identity는 수정하지 않는다.
+Final verification은 1,238 collected 중 1,231 passed/7 environment-dependent skipped다.

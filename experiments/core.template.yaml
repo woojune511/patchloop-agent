@@ -1,6 +1,6 @@
-# D-074: planning-only, fail-closed template. The 21/50/250k tuple below is
-# stale and unvalidated; do not authorize or execute it until the generic
-# V2/V5 no-memory baseline tuple and memory index are separately frozen.
+# D-083 source-only comparison-budget freeze. Runtime/qualification support,
+# the memory index and a separate cost/scale decision are still pending, so
+# this template does not authorize provider execution.
 schema_version: experiment-v2
 experiment_id: core-YYYYMMDD
 purpose: core
@@ -24,17 +24,18 @@ model_id: gpt-5.4-mini-2026-03-17
 reasoning_effort: medium
 reasoning_mode: standard
 service_tier: default
+transport_max_retries: 0
 max_output_tokens: 25000
 budget:
-  max_model_calls: 21
-  max_tool_calls: 50
-  max_total_tokens: 250000
-  wall_clock_timeout_seconds: 900
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 1600000
+  wall_clock_timeout_seconds: 1800
 seed: 20260723
 # Deprecated config placeholders stay false/null. Paid approval is invocation-only.
 live_cost_approved: false
 approved_execution_hash: null
-estimated_cost_usd: 118.8
+estimated_cost_usd: 702.0
 cost_limit_usd: 150
 pricing_verified_at: 2026-07-29T22:39:42Z
 pricing_source_url: https://developers.openai.com/api/docs/pricing

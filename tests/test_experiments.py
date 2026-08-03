@@ -3295,14 +3295,139 @@ def test_memory_development_budget_pilot_completion_gate_rejects_run_errors(
     assert gate["official_evaluator_runs"] == 3
 
 
-def test_future_comparison_templates_remain_at_250k_pending_calibration() -> None:
+@pytest.mark.parametrize(
+    ("path", "estimated_cost", "cost_limit"),
+    [
+        ("experiments/dev-no-memory-v5.template.yaml", 87.75, 20),
+        ("experiments/core.template.yaml", 702.0, 150),
+    ],
+)
+def test_d083_future_comparison_templates_freeze_the_exact_source_tuple(
+    path: str,
+    estimated_cost: float,
+    cost_limit: float,
+) -> None:
+    payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+
+    assert eval_runner.GPT54_MINI_CAMPAIGN_BUDGET.model_dump(mode="json") == {
+        "max_model_calls": 21,
+        "max_tool_calls": 50,
+        "max_total_tokens": 250_000,
+        "wall_clock_timeout_seconds": 900,
+    }
+    assert eval_runner.CAMPAIGN_BUDGET == (
+        eval_runner.GPT54_MINI_CAMPAIGN_BUDGET
+    )
+    assert payload["model_id"] == "gpt-5.4-mini-2026-03-17"
+    assert payload["reasoning_effort"] == "medium"
+    assert payload["reasoning_mode"] == "standard"
+    assert payload["service_tier"] == "default"
+    assert payload["transport_max_retries"] == 0
+    assert payload["max_output_tokens"] == 25_000
+    assert payload["budget"] == {
+        "max_model_calls": None,
+        "max_tool_calls": None,
+        "max_total_tokens": 1_600_000,
+        "wall_clock_timeout_seconds": 1_800,
+    }
+    assert payload["estimated_cost_usd"] == pytest.approx(estimated_cost)
+    assert payload["cost_limit_usd"] == cost_limit
+    assert payload["live_cost_approved"] is False
+    assert payload["approved_execution_hash"] is None
+
+
+@pytest.mark.parametrize(
+    ("path", "mutation"),
+    [
+        ("experiments/dev-no-memory-v5.template.yaml", "model_calls"),
+        ("experiments/dev-no-memory-v5.template.yaml", "tool_calls"),
+        ("experiments/dev-no-memory-v5.template.yaml", "tokens"),
+        ("experiments/dev-no-memory-v5.template.yaml", "wall"),
+        ("experiments/dev-no-memory-v5.template.yaml", "retry"),
+        ("experiments/core.template.yaml", "model_calls"),
+        ("experiments/core.template.yaml", "tool_calls"),
+        ("experiments/core.template.yaml", "tokens"),
+        ("experiments/core.template.yaml", "wall"),
+        ("experiments/core.template.yaml", "retry"),
+    ],
+)
+def test_d083_future_comparison_profiles_reject_tuple_drift(
+    path: str,
+    mutation: str,
+) -> None:
+    payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    if path.endswith("core.template.yaml"):
+        payload["experiment_id"] = "core-d083-drift"
+        payload["embedding_revision"] = "d083-test-revision"
+    if mutation == "model_calls":
+        payload["budget"]["max_model_calls"] = 1
+    elif mutation == "tool_calls":
+        payload["budget"]["max_tool_calls"] = 1
+    elif mutation == "tokens":
+        payload["budget"]["max_total_tokens"] = 1_599_999
+    elif mutation == "wall":
+        payload["budget"]["wall_clock_timeout_seconds"] = 1_799
+    else:
+        payload.pop("transport_max_retries")
+
+    with pytest.raises(ValidationError):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_d083_does_not_mutate_d081_readiness_budget_or_identity() -> None:
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_D081_SUITE)
+
+    assert suite.experiment_id == (
+        eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+    )
+    assert suite.budget.max_total_tokens == 2_400_000
+    assert suite.budget.max_model_calls is None
+    assert suite.budget.max_tool_calls is None
+    assert (
+        suite.experiment_id
+        in eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
+    )
+
+
+def test_d083_disabled_counts_remain_reserved_for_exact_profiles() -> None:
+    payload = yaml.safe_load(
+        Path("experiments/dev-no-memory-v5.template.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    payload["purpose"] = "development-validation-live-pilot"
+    payload["tasks"] = [eval_runner.PILOT_TASK]
+    payload["repetitions"] = 1
+    payload.pop("pilot_run_id")
+    payload.pop("transport_max_retries")
+
+    with pytest.raises(
+        ValidationError,
+        match="disabled model/tool call limits are reserved",
+    ):
+        ExperimentSuite.model_validate(payload)
+
+
+def test_historical_comparison_budget_constant_remains_250k() -> None:
+    budget = eval_runner.GPT54_MINI_CAMPAIGN_BUDGET
+
+    assert budget.max_model_calls == 21
+    assert budget.max_tool_calls == 50
+    assert budget.max_total_tokens == 250_000
+    assert budget.wall_clock_timeout_seconds == 900
+
+
+def test_future_comparison_budget_is_condition_neutral() -> None:
     for path in (
         "experiments/dev-no-memory-v5.template.yaml",
         "experiments/core.template.yaml",
     ):
         payload = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-        assert payload["budget"]["max_model_calls"] == 21
-        assert payload["budget"]["max_total_tokens"] == 250_000
+        assert payload["budget"] == (
+            eval_runner.GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(
+                mode="json"
+            )
+        )
 
 
 @pytest.mark.parametrize(
@@ -3312,55 +3437,39 @@ def test_future_comparison_templates_remain_at_250k_pending_calibration() -> Non
         "experiments/core.template.yaml",
     ],
 )
-def test_generic_comparison_manifests_exclude_v10_v11_review_contracts(
+def test_generic_comparison_source_freeze_excludes_v10_v11_and_runtime_contract(
     suite_path: str,
     tmp_path: Path,
     monkeypatch,
 ) -> None:
     _ready_live_environment(monkeypatch, tmp_path)
-    monkeypatch.setattr("patchloop.runtime.git_commit", lambda: "a" * 40)
-    monkeypatch.setattr("patchloop.runtime.version", lambda _package: "2.47.0")
     if suite_path == "experiments/core.template.yaml":
         payload = yaml.safe_load(Path(suite_path).read_text(encoding="utf-8"))
-        payload["experiment_id"] = "core-d074-regression"
-        payload["embedding_revision"] = "d074-test-revision"
-        suite_path = tmp_path / "core-d074-regression.yaml"
+        payload["experiment_id"] = "core-d083-source-freeze"
+        payload["embedding_revision"] = "d083-test-revision"
+        suite_path = tmp_path / "core-d083-source-freeze.yaml"
         suite_path.write_text(yaml.safe_dump(payload), encoding="utf-8")
 
     suite = eval_runner.load_suite(suite_path)
     preflight = eval_runner.preflight_suite(suite_path)
-    item = preflight["schedule"][0]
-    package = load_task_package(Path(item["task"]).parent)
-    manifest = build_manifest(
-        package,
-        provider=suite.model,
-        model_id=suite.model_id,
-        memory_condition=MemoryCondition(item["condition"]),
-        budget=suite.budget,
-        max_output_tokens=suite.max_output_tokens,
-        experiment_context=ExperimentRunContext(
-            experiment_id=suite.experiment_id,
-            purpose=suite.purpose,
-            suite_hash=preflight["suite_hash"],
-            execution_hash=preflight["execution_hash"],
-            dataset_manifest_hash=preflight["dataset"]["manifest_hash"],
-            dataset_role=DatasetRole(item["dataset_role"]),
-            schedule_seed=suite.seed,
-            schedule_order=item["order"],
-            schedule_row_id=item["schedule_row_id"],
-            repetition=item["repetition"],
-        ),
-    )
 
+    assert suite.budget == eval_runner.GPT54_MINI_FROZEN_COMPARISON_BUDGET
+    assert suite.transport_max_retries == 0
     assert "runtime_contract" not in preflight
     assert all(
         "public_review_contract" not in row
         and "public_review_contract_path" not in row
         for row in preflight["tasks"]
     )
-    assert manifest.tool_schema_version == "v2"
-    assert manifest.context_policy_version == "phase-evidence-v5"
-    assert manifest.public_review_contract is None
+    blocker_codes = {row["code"] for row in preflight["blockers"]}
+    assert "COST_ESTIMATE_EXCEEDS_LIMIT" in blocker_codes
+    assert "TOKEN_BUDGET_EXCEEDS_COST_LIMIT" in blocker_codes
+    assert "LIVE_COST_NOT_APPROVED" in blocker_codes
+    assert "APPROVAL_HASH_MISMATCH" in blocker_codes
+    if suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
+        assert "QUALIFIED_PILOT_REQUIRED" in blocker_codes
+    else:
+        assert "FROZEN_MEMORY_INDEX_MISSING" in blocker_codes
 
 
 @pytest.mark.parametrize(
@@ -4154,7 +4263,7 @@ def test_v2_development_campaign_has_exact_twelve_run_matrix(
     }
 
 
-def test_v5_development_campaign_reserves_250k_for_all_twelve_runs(
+def test_d083_development_source_freeze_reserves_1_6m_for_all_twelve_runs(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
@@ -4164,15 +4273,24 @@ def test_v5_development_campaign_reserves_250k_for_all_twelve_runs(
     suite = eval_runner.load_suite(suite_path)
     preflight = eval_runner.preflight_suite(suite_path)
 
-    assert suite.budget.max_total_tokens == 250_000
-    assert suite.estimated_cost_usd == pytest.approx(14.85)
+    assert suite.budget == eval_runner.GPT54_MINI_FROZEN_COMPARISON_BUDGET
+    assert suite.transport_max_retries == 0
+    assert suite.estimated_cost_usd == pytest.approx(87.75)
+    assert suite.cost_limit_usd == 20
     assert preflight["expected_runs"] == 12
     assert preflight["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
-        1.2375
+        7.3125
     )
     assert preflight["pricing"]["budget_upper_bound_usd"] == pytest.approx(
-        14.85
+        87.75
     )
+    assert {
+        "COST_ESTIMATE_EXCEEDS_LIMIT",
+        "TOKEN_BUDGET_EXCEEDS_COST_LIMIT",
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+        "QUALIFIED_PILOT_REQUIRED",
+    }.issubset({row["code"] for row in preflight["blockers"]})
 
 
 def test_development_campaign_rejects_stale_pilot_source_evidence(

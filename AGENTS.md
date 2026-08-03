@@ -12,7 +12,24 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-082 D-081 condition-neutral four-row workflow readiness observed and
+- 현재 milestone은 `D-083 condition-neutral comparison-budget policy frozen offline; runtime support and
+  all live authority remain closed`다. D-083은 exact D-081 r3 evidence만 사용해 model/tool call limit
+  `null`/`null`, total token 1,600,000, wall 1,800초, output 25,000과 SDK transport retry 0을 future
+  comparison의 동일 per-run resource policy로 동결한다. Public observed-prefix minimum은 D-081 r3
+  pyfakefs의 1,303,223 token이며 `1,303,223 * 1.2 = 1,563,867.6`을 100,000 단위로 올림했다.
+  이는 completion guarantee가 아니고 D-080 historical minimum 1,815,619는 이 exact-source derivation
+  범위 밖이다. Worst-rate reserve는 `$7.3125`/run, `$87.75`/12 run, `$131.625`/18 run,
+  `$702`/96 run이다. 기존 `$20` 12-run cap과 `$150` project cap은 변경되지 않아 source template은
+  계속 fail closed다. `comparison_budget_policy_frozen=true`만 새로 기록하며 live execution,
+  comparison denominator, no-memory baseline, memory admission과 core는 모두 false/closed다.
+  Execution-plan runtime evidence, RunManifest와 qualification support는 다음 offline gate까지 pending이다.
+  Append-only artifact path는
+  `reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`, SHA는
+  `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`다. Hidden outcome은
+  산식에 사용하지 않았고 D-081/D-082는 immutable calibration-only evidence로 남는다. D-083 구현의
+  provider call과 model cost는 0/$0이다. Final verification은 repository-wide 1,238 collected 중
+  1,231 passed/7 environment-dependent skipped, focused artifact 9/9와 experiment contract 245/245다.
+  Historical D-082 milestone은 `D-081 condition-neutral four-row workflow readiness observed and
   measured result sealed; calibration-only, no baseline freeze`다. Exact experiment
   `generic-baseline-readiness-v2v5-20260803-r3`는 clean source commit
   `b4c79242bb0a94eed50530116205323e78c7d21a`와 승인 execution hash
@@ -126,8 +143,9 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   재실행하지 않는다. 당시 condition-neutral next candidate 50/100/1,200,000/1,800초는 이후 D-077로
   정확히 한 번 실행됐지만 completion하지 못했고 frozen comparison budget도 아니다. D-069~D-073의
   V10/V11 및 exact HF Hub sidecar lane은 계속 `retired diagnostic-only`이고 historical artifact와
-  consumed-ID guard는 append-only로 보존한다. 기존 21/50/250,000/900 template도 계속
-  stale/unvalidated다. Hidden failure는 baseline freeze 전 task-specific tuning trigger가 아니고,
+  consumed-ID guard는 append-only로 보존한다. 당시 21/50/250,000/900 template은
+  stale/unvalidated였고 D-083이 future source template의 budget policy만 supersede했다. Hidden failure는
+  baseline freeze 전 task-specific tuning trigger가 아니고,
   live hard restart는 별도 reliability exercise다.
   D-060은 immutable diagnostic evidence다. HF Hub만 total-token budget에 bind했고 PDM과
   pyfakefs는 budget과 무관한 hidden task failure였다. 후속 corrective lane은

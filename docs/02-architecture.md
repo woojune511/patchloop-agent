@@ -916,3 +916,34 @@ core를 자동으로 열지 않는다. 동일 ceiling의 theoretical 96-run rese
 cap과 충돌하므로 별도 cost/freeze architecture decision이 필요하다. D-075/D-077/D-079/D-080
 artifact와 gate 의미는 immutable하다. D-082 final documentation-seal verification은 repository-wide
 1,214 collected 중 1,207 passed/7 environment-dependent skipped와 focused D-082 8/8을 통과했다.
+
+## 24. D-083 offline comparison-budget policy freeze architecture
+
+D-083은 D-081/D-082 result를 baseline으로 승격하지 않고, exact D-081 r3 public process trace에서
+condition-neutral per-run resource policy만 append-only로 파생한다. Frozen 값은 model/tool call
+`null`/`null`, total token 1,600,000, wall 1,800초, output 25,000과 SDK transport retry 0이다.
+
+```text
+D-081 r3 pyfakefs observed-prefix minimum = 1,303,223 token
+1,303,223 * 1.2                     = 1,563,867.6
+round_up(1,563,867.6, 100,000)      = 1,600,000 token
+```
+
+이 derivation은 exact D-081 r3 scope에만 속하며 hidden acceptance와 task success를 입력으로 사용하지
+않는다. D-080 historical observed-prefix minimum 1,815,619는 다른 source scope이므로 합치거나 후보를
+선택하는 데 쓰지 않는다. 1,600,000 ceiling은 completion guarantee나 population estimate가 아니다.
+
+Architecture boundary는 freeze와 실행을 분리한다. D-083은
+`comparison_budget_policy_frozen=true`만 선언한다. Source-template selector는 exact frozen tuple만
+받도록 구현했지만 execution-plan runtime contract/evidence, RunManifest binding과 independent qualification
+support는 다음 offline gate까지 pending이고, source template은 그 support 없이 fail closed한다.
+Live execution, comparison denominator, no-memory baseline, memory admission과 core는 모두 false/closed다.
+
+Worst-rate authorization reserve는 `(1,600,000 + 25,000) * $4.50/M = $7.3125`/run,
+`$87.75`/12 run, `$131.625`/18 run과 `$702`/96 run이다. 기존 `$20` 12-run cap과 `$150`
+project cap을 D-083이 변경하지 않으므로 어떤 scale도 자동 승인되지 않는다. Append-only artifact path는
+`reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`, SHA는
+`sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`다. 이 offline
+architecture decision의 provider call/model cost는 0/$0이며 historical D-081/D-082 calibration
+artifact는 immutable하다. Final repository-wide verification은 1,238 collected 중 1,231 passed와
+7 environment-dependent skipped다.

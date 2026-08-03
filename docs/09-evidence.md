@@ -2496,9 +2496,10 @@ consistency decision over the existing evidence:
   remain diagnostic-only and are not baseline prerequisites.
 
 The evidence therefore supports stopping the same-task corrective loop. Generic development/core remains
-tool V2/context V5 without the task-specific coverage sidecar. The current `21/50/250,000/900` templates are
-stale and must not be executed as-is. The next evidence-producing step, after a separate configuration
-decision, is one small diverse development readiness panel on the exact intended generic tuple and budget.
+tool V2/context V5 without the task-specific coverage sidecar. At this D-074 decision point, the
+`21/50/250,000/900` templates were stale and could not be executed as-is. The next evidence-producing step,
+after a separate configuration decision, is one small diverse development readiness panel on the exact
+intended generic tuple and budget.
 Its gate separates process readiness from correctness: every row must be terminal, qualified, reach the
 official evaluator and avoid infrastructure/qualification/diagnostic/budget confounds, while hidden/SCRR
 success remains an outcome rather than a prerequisite. Passing that gate permits tuple freeze and a fresh
@@ -2834,3 +2835,49 @@ perfection, a no-memory performance baseline, memory benefit, recovery under inj
 readiness or a population estimate. The 1/4 task success cannot authorize task-specific tuning or automatic rerun.
 The same ceiling across 96 core runs has theoretical reserve `$1,047.60`, conflicting with the original `$150`
 cap, so a separate predeclared budget/scale/freeze decision remains required.
+
+## D-083 offline condition-neutral comparison-budget freeze evidence
+
+D-083 derives a policy from exact D-081 r3 public process evidence without modifying D-081/D-082. The selected
+source value is the pyfakefs observed-prefix minimum 1,303,223. Hidden acceptance, task success and the D-080
+historical minimum 1,815,619 are not selection inputs; D-080 is explicitly outside this evidence scope.
+
+```text
+observed-prefix minimum = 1,303,223
+headroom multiplier = 1.2
+unrounded = 1,563,867.6
+rounding unit = 100,000
+frozen total-token ceiling = 1,600,000
+
+model-call limit = null
+tool-call limit = null
+wall-clock limit = 1,800 seconds
+max output tokens = 25,000
+SDK transport retries = 0
+```
+
+At the frozen worst configured rate, reserve is `$7.3125` per run, `$87.75` for 12 runs, `$131.625` for
+18 runs and `$702` for 96 runs. These are authorization bounds, not measured spend, billed invoice or free-tier
+claims. Existing `$20` and `$150` caps remain unchanged, so source templates stay fail closed.
+
+```text
+artifact path = reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json
+artifact SHA = sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88
+comparison_budget_policy_frozen = true
+runtime_support_implemented = false
+manifest_support_implemented = false
+qualification_support_implemented = false
+live_execution_authorized = false
+comparison_denominator_eligible = false
+no_memory_baseline_unlocked = false
+memory_admission_unlocked = false
+core_campaign_unlocked = false
+analysis_ready = false
+provider calls = 0
+model cost = $0
+```
+
+Until the next offline execution-plan runtime-evidence, RunManifest and qualification gate passes, this evidence is
+a policy decision rather than an executable campaign contract. Historical D-081/D-082 remain immutable
+calibration-only evidence and completion is not guaranteed. Final verification collected 1,238 tests: 1,231 passed,
+seven environment-dependent tests skipped; focused artifact tests passed 9/9 and experiment contract tests 245/245.

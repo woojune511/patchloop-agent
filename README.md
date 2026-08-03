@@ -2,7 +2,23 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
-2026-08-03 D-082는 D-081 exact four-row calibration result를 append-only로 봉인한다. Experiment
+2026-08-03 D-083은 exact D-081 r3의 public process evidence만으로 condition-neutral comparison-budget
+policy를 offline에서 동결한다. Frozen per-run policy는 model/tool call `null`/`null`, total token
+1,600,000, wall 1,800초, output 25,000, SDK transport retry 0이다. D-081 r3 pyfakefs observed-prefix
+minimum 1,303,223에 20% headroom을 적용한 `1,563,867.6`을 100,000 단위로 올림했다. Completion을
+보장하지 않으며 D-080 historical minimum 1,815,619는 이 exact-source derivation 범위 밖이다.
+
+Worst-rate reserve는 `$7.3125`/run, `$87.75`/12 run, `$131.625`/18 run, `$702`/96 run이다. 기존
+`$20` 12-run cap과 `$150` project cap은 그대로이므로 source template과 live path는 계속 fail closed다.
+D-083은 `comparison_budget_policy_frozen=true`만 만들고 live execution, comparison denominator,
+no-memory baseline, memory admission과 core는 열지 않는다. Execution-plan runtime evidence, RunManifest와
+qualification support도 다음 gate까지 pending이다. Append-only artifact는
+`reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`, SHA는
+`sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`다. Hidden outcome은
+derivation에 사용하지 않았고 provider call/model cost는 0/$0이다. Final verification은 1,238 tests
+collected, 1,231 passed와 7 environment-dependent skipped다.
+
+Historical D-082는 D-081 exact four-row calibration result를 append-only로 봉인한다. Experiment
 `generic-baseline-readiness-v2v5-20260803-r3`는 clean commit
 `b4c79242bb0a94eed50530116205323e78c7d21a`와 승인 execution hash
 `sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`로 정확히 한 번

@@ -819,7 +819,8 @@ silently lowering the design or fabricating missing results.
   live row, measured cost, SCRR or readiness outcome; D-076 below records the later invocation separately.
 - The 850,000-token, 40-model-call, 100-tool-call and 1,800-second values are a candidate completion
   ceiling for the readiness panel. They are not a measured requirement and are not the final fair budget
-  for no-memory or the four memory conditions. The old 21/50/250,000/900 templates also remain stale.
+  for no-memory or the four memory conditions. At D-075, the old 21/50/250,000/900 templates also remained
+  stale; D-083 later superseded only their future budget-policy fields.
 - The panel mixes two development-validation and two memory-development tasks. It does not move tasks
   between dataset roles, admit their traces to memory or make its rows eligible for headline/comparison
   reporting. Its purpose is calibration-only.
@@ -981,3 +982,22 @@ silently lowering the design or fabricating missing results.
   memory admission and core closed. D-075/D-077/D-079/D-080 identities, raw evidence, false gates and append-only
   correction remain immutable. D-082 final documentation-seal verification passed 1,207 of 1,214 collected
   tests with seven environment-dependent skips and focused D-082 8/8.
+
+## D-083 freezes a resource policy, not completion or execution authority
+
+- D-083 uses only the exact D-081 r3 pyfakefs observed-prefix minimum of 1,303,223 tokens. Multiplying by 1.2
+  gives 1,563,867.6 and rounding up by 100,000 yields a 1,600,000-token per-run ceiling.
+- The frozen policy is null model calls, null tool calls, 1,600,000 total tokens, 1,800 seconds, 25,000 maximum
+  output tokens and zero SDK transport retries. Null call limits retain counter telemetry and every non-count guard.
+- The ceiling is not a completion guarantee or population estimate. D-080's historical minimum of 1,815,619 is
+  outside the exact D-081 r3 source scope and is neither combined with nor silently substituted into this freeze.
+  Hidden acceptance and task success are not derivation inputs.
+- Worst-rate reserves are `$7.3125` per run, `$87.75` for 12, `$131.625` for 18 and `$702` for 96. Existing
+  `$20` and `$150` caps remain unchanged, so freezing a per-run policy does not approve any campaign scale.
+- Runtime, manifest and qualification support are pending. Templates remain fail closed and D-083 grants no live
+  execution, denominator eligibility, no-memory baseline, memory admission, core campaign or `analysis_ready` state.
+- D-081/D-082 remain immutable calibration-only evidence. The append-only artifact is
+  `reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json` with SHA
+  `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`. D-083 implementation adds
+  zero provider calls and `$0` model cost. Final verification collected 1,238 tests: 1,231 passed and seven
+  environment-dependent tests were skipped.

@@ -1,6 +1,6 @@
-# D-074: planning-only, fail-closed template. The 21/50/250k tuple below is
-# stale and unvalidated; do not authorize or execute it until a new generic
-# V2/V5 readiness panel freezes one exact condition-neutral tuple.
+# D-083 source-only comparison-budget freeze. The runtime/qualification bridge,
+# exact pilot and separate cost decision are still pending, so this template
+# does not authorize provider execution.
 schema_version: experiment-v2
 experiment_id: dev-no-memory-v5-20260730-r1
 purpose: memory-development-no-memory
@@ -19,19 +19,20 @@ model_id: gpt-5.4-mini-2026-03-17
 reasoning_effort: medium
 reasoning_mode: standard
 service_tier: default
+transport_max_retries: 0
 max_output_tokens: 25000
 budget:
-  max_model_calls: 21
-  max_tool_calls: 50
-  max_total_tokens: 250000
-  wall_clock_timeout_seconds: 900
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 1600000
+  wall_clock_timeout_seconds: 1800
 seed: 20260723
 # Bind only a future qualified phase-evidence-v5 pilot. Do not reuse the
 # immutable v4 pilot or either consumed 200k campaign.
 pilot_run_id: null
 live_cost_approved: false
 approved_execution_hash: null
-estimated_cost_usd: 14.85
+estimated_cost_usd: 87.75
 cost_limit_usd: 20
 pricing_verified_at: 2026-07-29T22:39:42Z
 pricing_source_url: https://developers.openai.com/api/docs/pricing

@@ -793,7 +793,9 @@ Get-Content -Raw -Encoding utf8 `
   .patchloop/experiments/dev-no-memory-budget-pilot-20260731-r1.json
 ```
 
-The `21/50/250,000/900` values in the two templates are stale, unvalidated drafts. Do not add
+At the D-074 decision point, the `21/50/250,000/900` values in the two templates were stale, unvalidated
+drafts. D-083 later replaced their future budget-policy fields, but the current templates remain non-runnable
+until execution-plan runtime evidence, RunManifest and qualification support pass. Do not add
 `--approve-live-cost`, compute an approval hash for them or run them as-is. The next reproducible live
 artifact must instead come from a newly checked-in, small diverse development readiness panel whose exact
 generic V2/V5 model/prompt/tool/context/budget tuple matches the intended no-memory baseline. Its process
@@ -1146,3 +1148,37 @@ Babel 1/4 success와 세 hidden failure이며 regression/scope/safety 4/4 pass�
 repository-wide 1,214 collected 중 1,207 passed/7 environment-dependent skipped와 focused D-082 8/8을
 통과했다. D-081/D-082는 calibration-only이고 comparison/no-memory/memory/core를 열지 않는다.
 96-run theoretical reserve `$1,047.60`과 `$150` cap 충돌은 별도 decision 전까지 unresolved다.
+
+## D-083 offline comparison-budget freeze inspection — do not execute
+
+D-083은 provider나 source template을 실행하는 절차가 아니다. Final artifact가 생성된 뒤 다음 path의
+bytes와 SHA만 확인한다.
+
+```powershell
+$freeze = `
+  "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json"
+
+Get-FileHash -Algorithm SHA256 -LiteralPath $freeze
+Get-Content -Raw -Encoding utf8 $freeze | ConvertFrom-Json | Out-Null
+```
+
+Expected SHA는 `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`이다.
+Payload는 exact D-081 r3 source, pyfakefs observed-prefix minimum 1,303,223과 다음 arithmetic을 포함해야 한다.
+
+```text
+1,303,223 * 1.2 = 1,563,867.6
+round_up(1,563,867.6, 100,000) = 1,600,000
+
+budget = null model / null tool / 1,600,000 token / 1,800 seconds
+output = 25,000
+transport retry = 0
+reserve = $7.3125/run, $87.75/12, $131.625/18, $702/96
+```
+
+Hidden outcome은 source arithmetic에 없어야 하고 D-080 historical minimum 1,815,619는
+`outside_scope`여야 한다. `comparison_budget_policy_frozen=true` 외에 live execution, comparison
+denominator, no-memory baseline, memory admission, core와 `analysis_ready`는 모두 false여야 한다. 기존
+`$20`/`$150` cap과 historical D-081/D-082 artifact도 바뀌지 않아야 한다. Runtime/manifest/qualification
+support가 pending인 동안 template preflight나 evaluate를 실행하지 않는다. 이 inspection의 provider call은
+0이고 model cost는 `$0`이다. Sealed source의 final verification은 1,238 collected 중 1,231 passed와
+7 environment-dependent skipped다.

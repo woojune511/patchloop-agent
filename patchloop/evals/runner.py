@@ -176,6 +176,12 @@ GPT54_MINI_CAMPAIGN_BUDGET = Budget(
     max_model_calls=21,
     max_total_tokens=250_000,
 )
+GPT54_MINI_FROZEN_COMPARISON_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=1_600_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_COMPLETION_BUDGET = Budget(
     max_model_calls=40,
     max_tool_calls=100,
@@ -243,6 +249,8 @@ GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     wall_clock_timeout_seconds=7_200,
 )
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
+# Historical and synthetic trace reconstruction continues to use the D-052
+# default. D-083 is selected only by an explicit exact future-suite tuple.
 CAMPAIGN_BUDGET = GPT54_MINI_CAMPAIGN_BUDGET
 CAMPAIGN_MAX_OUTPUT_TOKENS = GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS
 
@@ -842,17 +850,37 @@ class ExperimentSuite(BaseModel):
                 "workflow completion probe experiment id requires the exact "
                 "workflow completion probe purpose"
             )
+        future_comparison_profile = bool(
+            self.schema_version == "experiment-v2"
+            and self.purpose
+            in {
+                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
+                ExperimentPurpose.CORE,
+            }
+            and self.model == "openai"
+            and self.model_id == CAMPAIGN_MODEL_ID
+            and self.reasoning_effort == "medium"
+            and self.reasoning_mode == "standard"
+            and self.service_tier == "default"
+            and self.budget == GPT54_MINI_FROZEN_COMPARISON_BUDGET
+            and self.max_output_tokens == CAMPAIGN_MAX_OUTPUT_TOKENS
+        )
         if (
             self.purpose
             not in {
                 ExperimentPurpose.GENERIC_BASELINE_READINESS,
                 ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
             }
+            and not future_comparison_profile
             and self.transport_max_retries is not None
         ):
             raise ValueError(
                 "transport_max_retries is frozen only for exact generic v2/v5 "
                 "live profiles"
+            )
+        if future_comparison_profile and self.transport_max_retries != 0:
+            raise ValueError(
+                "future comparison profiles require transport_max_retries=0"
             )
         count_limits_disabled = bool(
             self.budget.max_model_calls is None
@@ -887,6 +915,7 @@ class ExperimentSuite(BaseModel):
             and not (
                 self.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
                 or generic_count_observability
+                or future_comparison_profile
             )
         ):
             raise ValueError(
@@ -1117,7 +1146,11 @@ class ExperimentSuite(BaseModel):
                 budget=(
                     GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET
                     if self.experiment_id in CONSUMED_CURRENT_LIVE_EXPERIMENT_IDS
-                    else GPT54_MINI_CAMPAIGN_BUDGET
+                    else (
+                        GPT54_MINI_FROZEN_COMPARISON_BUDGET
+                        if future_comparison_profile
+                        else GPT54_MINI_CAMPAIGN_BUDGET
+                    )
                 ),
             )
         elif (
@@ -1268,7 +1301,14 @@ class ExperimentSuite(BaseModel):
             if self.embedding_revision == "PIN_AT_FREEZE":
                 raise ValueError("core experiment requires a pinned embedding revision")
             if self.schema_version == "experiment-v2":
-                self._require_live_defaults(cost_limit=150)
+                self._require_live_defaults(
+                    cost_limit=150,
+                    budget=(
+                        GPT54_MINI_FROZEN_COMPARISON_BUDGET
+                        if future_comparison_profile
+                        else GPT54_MINI_CAMPAIGN_BUDGET
+                    ),
+                )
         if self.dataset_manifest_hash is None:
             raise ValueError("research campaign requires a frozen dataset manifest hash")
         return self

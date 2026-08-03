@@ -587,6 +587,34 @@ Evidence/issue:
   1,214 collected 중 1,207 passed/7 environment-dependent skipped와 focused D-082 8/8을 통과했다.
 - Date: 2026-08-03
 
+### D-083 accepted decision — offline condition-neutral comparison-budget policy freeze
+
+- Status: accepted offline policy freeze; runtime support and every live/admission gate remain closed.
+- Supersedes: D-081/D-082의 `comparison budget not frozen` 상태만 supersede한다. 두 decision의 source,
+  result, calibration-only status, task outcome, consumed execution identity와 claims boundary는 immutable하다.
+- Evidence scope: exact D-081 r3 public process evidence만 사용한다. Pyfakefs observed-prefix minimum
+  1,303,223에 20% headroom을 적용한 `1,563,867.6`을 100,000 단위로 올림해 1,600,000을 선택한다.
+  Hidden acceptance와 task success는 derivation에 사용하지 않는다. D-080 historical minimum 1,815,619는
+  이 scope 밖이며 completion guarantee가 아니다.
+- Frozen policy: model/tool call limit `null`/`null`, total token 1,600,000, wall 1,800초,
+  max output 25,000과 SDK transport retry 0. Null count는 admission 제거이지 counter/usage observability,
+  exact-request, cost, loop, constrained-tool, Docker/network/evaluator guard 제거가 아니다.
+- Cost boundary: worst-rate reserve는 `$7.3125`/run, `$87.75`/12 run, `$131.625`/18 run과
+  `$702`/96 run이다. 기존 `$20` 12-run cap과 `$150` project cap을 변경하지 않으므로 source template,
+  suite scale과 paid execution은 승인되지 않는다.
+- Implementation boundary: `comparison_budget_policy_frozen=true`만 기록한다. Runtime/manifest/qualification
+  support는 다음 offline gate까지 pending이고, 그전까지 source template은 fail closed다.
+  `live_execution_authorized=false`, `comparison_denominator_eligible=false`,
+  `no_memory_baseline_unlocked=false`, `memory_admission_unlocked=false`,
+  `core_campaign_unlocked=false`, `analysis_ready=false`를 유지한다.
+- Evidence identity: append-only artifact path는
+  `reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`, SHA는
+  `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`다.
+- Verification: repository-wide 1,238 collected 중 1,231 passed/7 environment-dependent skipped, focused
+  artifact 9/9와 experiment contract 245/245.
+- Cost: provider call 0, model cost `$0`.
+- Date: 2026-08-03
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-082 D-081 four-row measured result sealed; workflow readiness observed,
-calibration-only and no baseline freeze**
+현재 milestone: **D-083 condition-neutral comparison-budget policy frozen offline; runtime support and all
+live authority remain closed**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ calibration-only and no baseline freeze**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-082 D-081 measured readiness seal | r3 4/4 terminal·qualified·official, gate v2 pass, 1/4 task success; comparison/memory/core 제외 |
+| Phase 6 evaluation | D-083 offline comparison-budget freeze | null/null/1.6M/1,800초/output25k/retry0 policy만 동결; runtime/live/baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -79,6 +79,14 @@ Babel 1/4이고 세 row는 hidden failure다. Regression/scope/safety는 4/4 통
 1,929,316 token과 계산 비용 `$1.79426325`를 사용했다. D-081/D-082는 calibration-only이고
 baseline/memory/core를 열지 않는다. 동일 ceiling의 96-run reserve `$1,047.60`과 원래 `$150` cap의
 충돌은 별도 decision으로 해결한다. D-075/D-077/D-079/D-080은 immutable하다.
+
+D-083은 exact D-081 r3 pyfakefs observed-prefix minimum 1,303,223에 20% headroom을 적용한
+1,563,867.6을 100,000 단위로 올림해 per-run total token 1,600,000을 동결한다. Model/tool call은
+`null`/`null`, wall은 1,800초, output은 25,000, SDK transport retry는 0이다. Completion guarantee는
+아니며 D-080 historical minimum 1,815,619와 hidden outcome은 derivation scope 밖이다. Reserve는
+`$7.3125`/run, `$87.75`/12, `$131.625`/18, `$702`/96이고 기존 `$20`/`$150` cap은 유지된다.
+따라서 runtime/manifest/qualification support와 live execution, baseline, memory admission, core는 다음
+gate까지 fail closed다.
 
 ## 1. Sequencing rule
 
@@ -184,7 +192,42 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current result-seal gate — D-082 D-081 measured workflow readiness
+## Current offline freeze gate — D-083 condition-neutral comparison-budget policy
+
+목표: Exact D-081 r3 public process evidence에서 hidden outcome을 사용하지 않고 동일 per-run comparison
+budget policy만 append-only로 동결한다. 이 gate는 실행, baseline admission 또는 memory/core 권한이 아니다.
+
+### Ordered work items
+
+1. **완료:** Source scope를 exact D-081 r3로 제한하고 pyfakefs observed-prefix minimum 1,303,223을
+   결속한다. D-080 historical minimum 1,815,619는 scope 밖이다.
+2. **완료:** `1,303,223 * 1.2 = 1,563,867.6`을 100,000 단위로 올림해 1,600,000 total token을
+   선택한다. Frozen pair는 model/tool `null`/`null`, wall 1,800초, output 25,000, retry 0이다.
+3. **완료:** Worst-rate reserve `$7.3125`/run, `$87.75`/12, `$131.625`/18, `$702`/96을 기록하고
+   기존 `$20`/`$150` cap을 변경하지 않는다.
+4. **완료:** `comparison_budget_policy_frozen=true`와 live execution, comparison denominator, no-memory
+   baseline, memory admission, core false를 분리한다. Completion guarantee와 hidden-driven tuning은 없다.
+5. **완료:** Future dev/core source template과 `ExperimentSuite` selector를 exact frozen tuple로 맞추고,
+   기존 `$20`/`$150` cap 때문에 preflight가 fail closed하는지 검증한다. Historical 250k와 D-081 2.4M
+   계약은 그대로 보존한다.
+6. **대기:** Execution-plan runtime contract/evidence, RunManifest, budget diagnostic과 qualification support를
+   다음 offline gate에서 구현·검증한다. 그전까지 template은 live-runnable하지 않다.
+7. **완료:** Append-only artifact
+   `reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json`을
+   `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`로 봉인한다.
+
+### Gate status — policy frozen; execution gates closed
+
+- D-083 implementation은 provider call 0, model cost `$0`이다.
+- D-081/D-082는 immutable calibration-only evidence이고 denominator에 들어가지 않는다.
+- 기존 `$20`/`$150` cost cap, `analysis_ready=false`, no-memory baseline, memory admission과 core closure는
+  유지된다.
+- Final verification은 1,238 collected 중 1,231 passed/7 environment-dependent skipped, focused artifact
+  9/9와 experiment contract 245/245다.
+- 다음 단계는 paid run이 아니라 execution-plan runtime evidence/RunManifest/qualification support의 offline
+  gate다.
+
+## Historical result-seal gate — D-082 D-081 measured workflow readiness
 
 목표: D-081의 exact r3 execution과 predeclared process gate를 immutable하게 봉인하고 workflow completion과
 hidden correctness를 분리한다. Hidden failure를 agent 구현 실패나 재튜닝 권한으로 해석하지 않는다.
