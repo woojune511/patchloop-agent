@@ -1182,3 +1182,36 @@ denominator, no-memory baseline, memory admission, core와 `analysis_ready`는 �
 support가 pending인 동안 template preflight나 evaluate를 실행하지 않는다. 이 inspection의 provider call은
 0이고 model cost는 `$0`이다. Sealed source의 final verification은 1,238 collected 중 1,231 passed와
 7 environment-dependent skipped다.
+
+## Inspect the D-086 measured pilot seal without provider access
+
+Do not rerun the consumed D-085 experiment. Inspect the checked-in sanitized records and local raw evidence only.
+
+```powershell
+$portable = "reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json"
+$correction = "reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json"
+
+Get-FileHash -Algorithm SHA256 $portable
+Get-FileHash -Algorithm SHA256 $correction
+Get-Content -Raw -Encoding UTF8 $portable | ConvertFrom-Json | Out-Null
+Get-Content -Raw -Encoding UTF8 $correction | ConvertFrom-Json | Out-Null
+
+uv run pytest -o addopts='' -q tests/test_d086_condition_neutral_pilot_seal.py
+uv run ruff check .
+git diff --check
+```
+
+Expected portable and correction hashes are `sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464` and
+`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`; final test evidence is `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`. When raw local evidence is
+present, reconciliation must verify result
+`sha256:e0c3c4c67adc8c157a5030c9a93e3fd106d6b7a12f596253ddf10582fe74b80a`, journal
+`sha256:4c114059fad069526d95786c392b7ea36724443b7231b4426bb097ee0c2199c8`, final event
+`sha256:93853c6367459bcae004789a9a2710c6be518078b21041ece0b160d9843e5a8b`, qualification
+`sha256:11bda7b2f31bae453f21c4718fdcb4563a74e173e621fd8035f1ab8aa64f1293` and durable source evidence
+`sha256:41d9b862fe5042b4838c53cd80c3318dc55dc5f0bd892962fecc20caba0b2105`.
+
+The original result's budget-pressure error remains immutable. The correction must derive 1,526,799 token and
+1,749,231ms wall headroom with binding `none` from the exact D-085 identity; it must reject near matches. The
+portable record must contain no provider body, private task/hash, hidden assertion, patch body or reference patch.
+Preflight/evaluate for the consumed D-085 ID must fail before runner construction even when local result/journal is
+absent. These commands make zero provider calls and do not authorize the separate `$88` 12-run decision.

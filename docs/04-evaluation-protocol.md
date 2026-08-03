@@ -1486,3 +1486,33 @@ plan/hash에 결속되고 start/resume/post-run에서 재검증된다. 이 offli
 `$88` cap decision, 새 clean preflight/hash와 별도 승인이 없으면 12-run paid execution은 fail closed한다.
 Final offline verification은 focused 153/153, repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
 Artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
+
+### D-086 measured-result sealing protocol
+
+1. Exact D-085 raw result, four-event journal, plan, manifest, receipt, qualification, state trace와 submitted diff의
+   byte/hash identity를 read-only로 대조한다.
+2. Persisted qualification을 durable state에서 `persist=false`로 재계산해 canonical exact equality와 28/28,
+   네 필수 process check를 확인한다.
+3. Original readiness gate pass와 hidden/regression/scope/safety pass를 그대로 기록한다. Task success는
+   readiness predicate에 사후 추가하지 않는다.
+4. Original `budget_pressure` error는 수정하지 않는다. Exact D-085 ID/purpose/runtime에만 열린 selector로
+   diagnostic을 재산출하고 token/wall headroom 1,526,799/1,749,231ms, binding `none`을 append-only correction에
+   기록한다.
+5. Provider/private/evaluator payload를 제외한 portable seal과 raw-local artifact hash index를 만들고 leak scan,
+   journal chain, result/qualification binding과 correction identity를 검증한다.
+6. Experiment ID를 hard-consumed로 고정해 raw local evidence가 없어도 재실행을 provider 전에 거부한다.
+
+Measured usage는 69,701 input + 3,500 output = 73,201 token, 8 model/9 tool calls, 50,769ms와 공식 고정
+rate 계산 `$0.06802575`다. 이는 invoice/free-tier 적용액이 아니다. Raw result/journal/final-event/qualification
+hash는 각각 `sha256:e0c3c4c67adc8c157a5030c9a93e3fd106d6b7a12f596253ddf10582fe74b80a`,
+`sha256:4c114059fad069526d95786c392b7ea36724443b7231b4426bb097ee0c2199c8`,
+`sha256:93853c6367459bcae004789a9a2710c6be518078b21041ece0b160d9843e5a8b`와
+`sha256:11bda7b2f31bae453f21c4718fdcb4563a74e173e621fd8035f1ab8aa64f1293`다.
+
+Portable/correction paths는
+`reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+(`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`)와
+`reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+(`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`)이고 final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다. Passed pilot은
+12-run 실행 승인이 아니다. 다음 protocol gate는 `$20 → $88` cap decision, 새 campaign source commit,
+fresh preflight/execution hash와 별도 비용 승인이다.

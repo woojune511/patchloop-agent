@@ -644,9 +644,10 @@ Evidence/issue:
   `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`.
 - Date: 2026-08-03
 
-### D-085 accepted source decision — exact one-row comparison live-readiness pilot
+### Historical D-085 accepted source decision — exact one-row comparison live-readiness pilot
 
-- Status: accepted source/offline gate; clean host preflight와 provider 실행은 pending이다.
+- Status: historical source/offline gate; clean preflight와 exact single invocation은 이후 D-086 evidence로
+  별도 봉인됐고 이 source decision 자체는 immutable하다.
 - Identity: Exact ID `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`, purpose
   `development-validation-live-pilot`, frozen Babel task, `no_memory`, one repetition만 허용한다.
 - Runtime: D-083/D-084의 mini medium/standard/default, retry 0, `SYSTEM_PROMPT_V3`, tool v2/context V5,
@@ -662,7 +663,7 @@ Evidence/issue:
   semantic exact tuple을 검증하며 persisted qualification을 durable state에서 read-only 재계산한 값과 exact
   비교하고 task success는 제외한다. 결과의
   `condition-neutral-comparison-pilot-admission-v1` canonical hash는 future campaign plan/hash와
-  start/resume/post-run qualification에 결속된다. Consumer는 offline 구현됐지만 qualified pilot, cap 변경,
+  start/resume/post-run qualification에 결속된다. Consumer와 qualified pilot evidence가 있어도 cap 변경,
   새 campaign hash/승인과 paid authority는 pending이다.
 - Sequencing: Qualified pilot 뒤에만 12-run dev cap을 `$20 → $88`로 바꾸는 별도 decision을 검토한다.
   New no-memory collection 전에는 historical failure를 memory로 승격하거나 index를 freeze하지 않는다.
@@ -671,6 +672,37 @@ Evidence/issue:
 - Evidence: `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`, SHA
   `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`.
 - Verification: focused 153/153; repository-wide 1,392 collected, 1,385 passed/7 skipped.
+- Date: 2026-08-03
+
+### D-086 accepted result decision — seal D-085 readiness and correct budget-pressure projection append-only
+
+- Status: accepted measured-result/correction seal; future campaign authority remains closed.
+- Identity: Source commit `629b9fdd9f69d1522cf565a06ae9679abe3f60a7`, execution hash
+  `sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0`, run
+  `run_c355405d826641b9`를 immutable consumed evidence로 고정한다.
+- Outcome: Original `condition-neutral-comparison-pilot-readiness-gate-v1` passed; terminal/qualified/official
+  evaluator 1/1이고 hidden/regression/scope/safety도 모두 pass다. Qualification은 28/28이다.
+- Usage: 69,701 input + 3,500 output = 73,201 token, 8 model/9 tool call, 50,769ms와 official fixed-rate
+  calculated `$0.06802575`다. Invoice/free-tier charge는 주장하지 않는다.
+- Immutable hashes: Result
+  `sha256:e0c3c4c67adc8c157a5030c9a93e3fd106d6b7a12f596253ddf10582fe74b80a`, journal file
+  `sha256:4c114059fad069526d95786c392b7ea36724443b7231b4426bb097ee0c2199c8`, final event
+  `sha256:93853c6367459bcae004789a9a2710c6be518078b21041ece0b160d9843e5a8b`, qualification
+  `sha256:11bda7b2f31bae453f21c4718fdcb4563a74e173e621fd8035f1ab8aa64f1293`다.
+- Correction: Original result의 `budget-pressure-error-v1`은 exact D-085 purpose가 diagnostic selector에서
+  누락된 projection gap이다. Original result/gate를 바꾸지 않고 exact ID/runtime만 허용한 derived correction이
+  token/wall headroom 1,526,799/1,749,231ms와 binding `none`을 기록한다.
+- Immutability: D-085 experiment ID는 local result/journal 유무와 무관하게 hard-consumed다. Source artifact와
+  D-085 decision도 소급 수정하지 않는다.
+- Claims: Single-row readiness와 observed Babel task success만 established다. No-memory baseline,
+  comparison denominator, memory admission/index, core와 analysis는 false/closed다.
+- Evidence: Portable
+  `reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+  (`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`), correction
+  `reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+  (`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`), verification `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`.
+- Next decision: 12-run cost cap `$20 → $88` 채택 여부를 별도로 결정한다. 채택해도 새 campaign source commit,
+  `pilot_run_id`, fresh pricing/preflight/hash와 별도 사용자 비용 승인이 필요하다.
 - Date: 2026-08-03
 
 ## Deferred ideas

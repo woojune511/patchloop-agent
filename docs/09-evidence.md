@@ -2881,3 +2881,38 @@ Until the next offline execution-plan runtime-evidence, RunManifest and qualific
 a policy decision rather than an executable campaign contract. Historical D-081/D-082 remain immutable
 calibration-only evidence and completion is not guaranteed. Final verification collected 1,238 tests: 1,231 passed,
 seven environment-dependent tests skipped; focused artifact tests passed 9/9 and experiment contract tests 245/245.
+
+## D-086 exact D-085 measured-result and correction seal
+
+```text
+experiment = dev-validation-condition-neutral-v2v5-pilot-20260803-r1
+source commit = 629b9fdd9f69d1522cf565a06ae9679abe3f60a7
+execution hash = sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0
+run = run_c355405d826641b9
+original readiness gate = passed
+official evaluator = reached
+hidden/regression/scope/safety = pass/pass/pass/pass
+qualification = 28/28
+input/output/total tokens = 69,701 / 3,500 / 73,201
+model/tool calls = 8 / 9
+wall clock = 50,769ms
+usage-derived list price = $0.06802575
+result SHA = sha256:e0c3c4c67adc8c157a5030c9a93e3fd106d6b7a12f596253ddf10582fe74b80a
+journal SHA = sha256:4c114059fad069526d95786c392b7ea36724443b7231b4426bb097ee0c2199c8
+final event SHA = sha256:93853c6367459bcae004789a9a2710c6be518078b21041ece0b160d9843e5a8b
+qualification SHA = sha256:11bda7b2f31bae453f21c4718fdcb4563a74e173e621fd8035f1ab8aa64f1293
+source evidence SHA = sha256:41d9b862fe5042b4838c53cd80c3318dc55dc5f0bd892962fecc20caba0b2105
+```
+
+The original result's `budget-pressure-error-v1` is preserved. Exact-ID read-only recomputation derives token
+headroom 1,526,799, wall headroom 1,749,231ms and binding `none`; the correction does not rewrite or replace the
+passed gate. The portable evidence is
+`reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+(`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`) and the correction manifest is
+`reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+(`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`). Final verification is `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`.
+
+D-085 is now hard-consumed. The result is single-row workflow-readiness calibration and one observed task success,
+not a no-memory baseline, comparison denominator, memory admission/index, core result or analysis-ready dataset.
+No provider call or added model cost belongs to the D-086 seal work itself. The next action is a separate decision on
+the `$88` 12-run cap and, only if accepted, a new clean campaign commit/preflight/hash and explicit cost approval.

@@ -1026,7 +1026,7 @@ silently lowering the design or fabricating missing results.
 - D-081 nullable-count calibration, the historical 250k runtime and all D-083 bytes remain immutable and are not
   reinterpreted under the D-084 contract.
 
-## D-085 defines a pilot source, not a live result or baseline
+## Historical D-085 source gate is not a live result or baseline
 
 - D-085 adds exact suite `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`, a one-row Babel
   development-validation pilot with the D-083/D-084 runtime tuple. It exists to exercise
@@ -1037,15 +1037,39 @@ silently lowering the design or fabricating missing results.
 - The conservative reserve is `$7.3125` and the checked-in source cap is `$8`. Neither is an invoice prediction,
   free-tier claim or spending approval.
 - The source artifact `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json` does
-  not contain a clean preflight result, candidate/approved execution hash, provider call or measured cost. A clean
-  host preflight and explicit user approval remain mandatory.
-- The 12-run template remains blocked by its missing qualified pilot and `$20 < $87.75` cap. D-085 does not change
-  that cap. Memory review/index freeze and core binding remain closed until new no-memory collection evidence exists.
+  not contain a clean preflight result, candidate/approved execution hash, provider call or measured cost. D-086
+  records the later approved invocation separately rather than rewriting this source artifact.
+- At D-085 source time the 12-run template was blocked by a missing qualified pilot and `$20 < $87.75` cap. D-086
+  supplies the qualified pilot evidence but does not change that cap. Memory review/index freeze and core binding
+  remain closed until new no-memory collection evidence exists.
 - Pilot and campaign source commits are intentionally separate. The exact `dev-no-memory-v5-20260730-r1` consumer
   compares the D-083 policy and semantic runtime tuple, rechecks qualification/source/approved-plan CAS and four
   process checks, and requires the persisted qualification to exactly match a read-only durable recomputation. It
   binds a canonical `condition-neutral-comparison-pilot-admission-v1` hash into the future plan
-  and execution hash without requiring task success. This is offline wiring, not a qualified pilot, cap change,
-  campaign approval or paid-run authority.
+  and execution hash without requiring task success. This source-stage wiring did not itself create a qualified
+  pilot, cap change, campaign approval or paid-run authority; D-086 changes only the first of those facts.
 - Final offline verification is focused 153/153 and repository-wide 1,385 passed/7 skipped. The source artifact SHA
   is `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`.
+
+## D-086 observes readiness and one success, not a no-memory baseline
+
+- The exact D-085 invocation completed one Babel row and passed terminal, trace qualification, official evaluator and
+  the original process-readiness gate. Hidden/regression/scope/safety also passed. One successful row is not a
+  success-rate estimate, denominator or memory-effect comparison.
+- Usage was 73,201 tokens, 8 model and 9 tool calls, 50,769ms and `$0.06802575` at the fixed documented rates.
+  This is not a billed-invoice or free-tier-treatment claim.
+- The raw result contains `budget-pressure-error-v1` because its read-only diagnostic selector omitted the exact
+  D-085 purpose. The append-only correction records the narrow selector fix and derived headroom; it does not replace
+  the raw result, original passed gate or task outcome.
+- The portable and correction artifacts are
+  `reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+  (`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`) and
+  `reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+  (`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`). Final verification is `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`.
+- Hard-consumed protection prevents another D-085 invocation even if local raw artifacts are absent. This does not
+  make the portable metadata sufficient to recreate the full private evaluator or provider trace on a clean machine.
+- No-memory baseline, comparison denominator, memory admission/review/index, core and `analysis_ready` remain closed.
+  D-085 source evidence stays historical and immutable.
+- The only next gate is a separate `$20 → $88` 12-run cap decision followed, if accepted, by a new clean campaign
+  commit, pilot admission binding, fresh pricing/preflight/hash and separate user cost approval. D-086 itself grants
+  none of that authority.

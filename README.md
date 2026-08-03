@@ -2,6 +2,30 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-03 D-086은 exact D-085 invocation의 measured result와 budget-pressure selector correction을
+append-only로 봉인한다. 승인 hash
+`sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0`는 source commit
+`629b9fdd9f69d1522cf565a06ae9679abe3f60a7`에서 정확히 한 번 소비됐다. Babel
+`run_c355405d826641b9`는 terminal·trace-qualified·official evaluator와 original readiness gate를 통과했고
+hidden/regression/scope/safety도 모두 pass했다. 사용량은 69,701 input + 3,500 output = 73,201 token,
+8 model/9 tool call, 50,769ms, 고정 rate 계산 비용 `$0.06802575`다.
+
+Original result의 `budget_pressure`는 exact D-085 purpose가 read-only budget diagnostic selector에서 누락돼
+`budget-pressure-error-v1`이었다. Original result와 passed gate는 바꾸지 않는다. Narrow exact-selector로
+재산출한 token/wall headroom 1,526,799/1,749,231ms와 binding `none`을 별도 append-only correction에
+기록한다. Portable seal은
+`reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+(`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`), correction은
+`reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+(`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`)이며 final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다. D-085 experiment
+ID는 raw local evidence가 없어도 hard-consumed다.
+
+이 결과는 exact workflow readiness와 한 Babel task success를 관찰한 single-row calibration이다. Invoice나
+free-tier charge, no-memory 성능 baseline, comparison denominator, memory admission/index, core 또는
+`analysis_ready`를 만들지 않는다. 다음 gate는 `$20 → $88` 12-run cap을 별도 결정하고 새 clean campaign
+commit, fresh preflight/hash와 별도 비용 승인을 준비하는 것이다. D-085 source artifact와 decision은 historical
+immutable evidence로 유지한다.
+
 2026-08-03 D-085는 D-083/D-084 exact tuple을 실제 campaign 전에 한 번 exercise하기 위한
 single-row no-memory live-readiness pilot을 source/offline에서 고정한다. Exact suite
 `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`은 frozen Babel development-validation task,

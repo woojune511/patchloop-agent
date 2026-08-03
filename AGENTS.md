@@ -12,7 +12,30 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-085 exact condition-neutral comparison pilot source/offline gate complete; no clean preflight,
+- 현재 milestone은 `D-086 D-085 measured-result and append-only budget-pressure correction sealed; no baseline or
+  campaign authority`다. Exact approved execution hash
+  `sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0`는 clean D-085 source commit
+  `629b9fdd9f69d1522cf565a06ae9679abe3f60a7`에서 정확히 한 번 소비됐다. Babel run
+  `run_c355405d826641b9`는 terminal·trace-qualified·official evaluator와 original
+  `condition-neutral-comparison-pilot-readiness-gate-v1`을 통과했고 hidden/regression/scope/safety도 모두
+  pass했다. 사용량은 69,701 input + 3,500 output = 73,201 token, 8 model/9 tool call, 50,769ms이며 공식
+  고정 rate 계산 비용은 `$0.06802575`다. 이는 invoice/free-tier charge 주장이 아니다. Original result SHA는
+  `sha256:e0c3c4c67adc8c157a5030c9a93e3fd106d6b7a12f596253ddf10582fe74b80a`, journal file SHA는
+  `sha256:4c114059fad069526d95786c392b7ea36724443b7231b4426bb097ee0c2199c8`, final event SHA는
+  `sha256:93853c6367459bcae004789a9a2710c6be518078b21041ece0b160d9843e5a8b`, qualification SHA는
+  `sha256:11bda7b2f31bae453f21c4718fdcb4563a74e173e621fd8035f1ab8aa64f1293`다. Original run의
+  `budget_pressure`만 exact D-085 purpose를 budget diagnostic selector가 빠뜨려 `budget-pressure-error-v1`을
+  기록했다. Original result/gate는 immutable하고, narrow exact-selector correction은 token headroom
+  1,526,799, wall headroom 1,749,231ms와 binding `none`을 append-only로 기록한다. Portable seal은
+  `reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+  (`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`), correction artifact는
+  `reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+  (`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`)이다. D-085 ID는 local result/journal 유무와 무관하게 hard-consumed다.
+  Final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다. 이 single-row result는 workflow readiness와 한 task
+  success만 증명하며 no-memory baseline, comparison denominator, memory admission/index, core와
+  `analysis_ready`는 열지 않는다. 다음 gate는 12-run cap을 `$20 → $88`로 바꿀지 별도로 결정하고 새 campaign
+  source commit·fresh preflight·execution hash·비용 승인을 준비하는 것이다.
+- Historical D-085 source milestone은 `exact condition-neutral comparison pilot source/offline gate complete; no clean preflight,
   approval or provider execution`이다. Exact pilot ID는
   `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`이고 frozen Babel development-validation task를
   `no_memory`로 한 번 실행하는 계약만 준비한다. D-083/D-084의 mini medium/standard/default, retry 0,
@@ -29,7 +52,7 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
   persisted qualification을 durable state에서 read-only 재계산한 결과와 exact 비교하며
   `condition-neutral-comparison-pilot-admission-v1` canonical hash를 future campaign plan/hash와
   start/resume/post-run qualification에 결속한다. Task success는 admission 조건이 아니다. 이 offline
-  consumer는 qualified pilot, cap 변경, 새 campaign hash/승인 또는 paid authority를 만들지 않는다.
+  consumer 자체는 cap 변경, 새 campaign hash/승인 또는 paid authority를 만들지 않는다.
   Final offline verification은 focused 153/153, repository-wide 1,385 passed/7 skipped이고 source artifact SHA는
   `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
 - D-084 milestone은 `condition-neutral comparison runtime gate implemented offline; all live, baseline,

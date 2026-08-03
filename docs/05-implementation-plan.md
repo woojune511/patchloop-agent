@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-085 exact one-row condition-neutral comparison pilot source gate; clean preflight and all
-provider authority remain closed**
+현재 milestone: **D-086 D-085 measured-result and budget-pressure correction seal; baseline and all future
+campaign authority remain closed**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ provider authority remain closed**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-085 exact comparison pilot source gate | D-083/D-084 tuple의 Babel 1-row pilot selector와 process-readiness predicate를 offline 결속; clean preflight/live/baseline/memory/core closed |
+| Phase 6 evaluation | D-086 measured pilot seal | D-085 Babel 1-row는 terminal·qualified·official evaluator와 original readiness gate pass; budget diagnostic selector gap은 append-only corrected; baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -202,7 +202,44 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current source gate — D-085 exact condition-neutral comparison pilot
+## Current result seal — D-086 measured condition-neutral pilot
+
+목표: exact D-085 invocation의 raw result와 passed readiness gate를 append-only로 봉인하고, original
+budget-pressure selector gap을 raw evidence rewrite 없이 좁게 정정한다. Provider 재호출은 없다.
+
+### Ordered work items
+
+1. **완료:** Execution hash `sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0`,
+   commit `629b9fdd9f69d1522cf565a06ae9679abe3f60a7`, run `run_c355405d826641b9`의 exact identity를 고정한다.
+2. **완료:** Original readiness gate의 terminal/qualified/official evaluator 1/1과 error/terminal-loop/budget-terminal
+   0, qualification 28/28과 hidden/regression/scope/safety pass를 raw state에서 재검증한다.
+3. **완료:** Usage 69,701 input + 3,500 output = 73,201 token, 8 model/9 tool call, 50,769ms와 calculated
+   `$0.06802575`를 result/events/rate에서 reconcile한다.
+4. **완료:** Original `budget-pressure-error-v1`을 immutable하게 보존하고, exact D-085 selector만 추가한
+   read-only recomputation으로 token/wall headroom 1,526,799/1,749,231ms와 binding `none`을 append-only
+   correction에 기록한다.
+5. **완료:** D-085 experiment ID를 hard-consumed set에 넣어 local raw result/journal이 없어도 provider 전에
+   재실행을 차단한다.
+6. **진행:** Sanitized portable seal과 correction manifest를 content hash로 봉인한다. Paths/SHA는
+   `reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json` /
+   `sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`,
+   `reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json` /
+   `sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`다.
+7. **진행:** Raw reconciliation, journal chain, durable qualification recomputation, exact selector, immutability,
+   leak scan과 full regression을 닫는다. Final evidence는 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다.
+8. **대기:** D-086 seal 이후에도 별도 decision 전에는 12-run cap을 `$20 → $88`로 변경하지 않는다.
+9. **대기:** Cap을 채택할 때만 `pilot_run_id`, 새 clean campaign source commit, fresh pricing/preflight/hash와
+   별도 사용자 비용 승인을 준비한다.
+
+### Gate status — measured readiness passed; performance and paid campaign authority closed
+
+- D-085 exact workflow는 끝까지 실행됐고 한 Babel task도 성공했다.
+- Single-row result이므로 no-memory baseline이나 success-rate estimate가 아니다.
+- Comparison denominator, memory admission/review/index, core와 `analysis_ready`는 계속 닫혀 있다.
+- Original D-085 source artifact/decision과 raw result/gate는 immutable하다.
+- Actual invoice 또는 free-tier charge는 주장하지 않는다.
+
+## Historical source gate — D-085 exact condition-neutral comparison pilot
 
 목표: 12-run no-memory collection 전에 D-083/D-084 exact tuple의 최소 one-row pilot이 plan/manifest/start-resume/
 qualification/evaluator lifecycle을 exercise할 수 있도록 source contract를 닫는다. Provider는 호출하지 않는다.
@@ -220,21 +257,21 @@ qualification/evaluator lifecycle을 exercise할 수 있도록 source contract�
    success/SCRR는 요구하지 않도록 한다.
 5. **완료:** Source/offline artifact
    `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json`을 봉인한다.
-6. **대기:** Source commit 뒤 clean Docker host에서 fresh official pricing으로 no-call preflight를 수행한다.
-7. **대기:** Candidate execution hash와 최대 `$8`를 사용자에게 제시한다. 명시 승인 전 provider를 호출하지 않는다.
-8. **대기:** Pilot이 qualified된 뒤에만 12-run `$20 → $88` cap을 별도 결정하고 새 hash/승인을 준비한다.
+6. **완료:** Source commit 뒤 clean Docker host에서 fresh official pricing으로 no-call preflight를 수행했다.
+7. **완료:** Candidate execution hash와 최대 `$8`를 별도 승인받아 정확히 한 번 실행했다.
+8. **대기:** Qualified pilot 뒤 12-run `$20 → $88` cap을 별도로 결정하고 새 hash/승인을 준비한다.
 9. **완료:** Pilot과 campaign source를 별도 clean commit으로 유지하고 raw commit equality가 아닌 D-083/D-084
    semantic exact tuple과 qualified readiness를 검증한다. Task success를 제외한 canonical admission hash를
    future campaign execution plan/hash에 결속하고 persisted qualification을 durable state에서 read-only
    재계산하는 exact consumer를 구현·검증한다.
 
-### Gate status — source/offline implementation complete; clean preflight and all execution authority closed
+### Historical gate status — source/offline implementation and single approved invocation consumed
 
-- Worst-rate reserve는 `$7.3125`, source cap은 `$8`이지만 아직 승인된 비용이 아니다.
+- Worst-rate reserve `$7.3125`, source cap `$8`의 exact approval은 D-086이 봉인한 invocation에서 소비됐다.
 - Pilot success predicate는 workflow readiness이며 hidden success나 SCRR가 아니다.
-- Clean preflight, candidate/approved hash, provider call/result와 measured cost는 아직 없다.
+- Historical source artifact 자체에는 preflight/hash/live result를 소급 기록하지 않는다.
 - Baseline, denominator, memory review/index, core와 `analysis_ready`는 계속 닫혀 있다.
-- Exact `dev-no-memory-v5-20260730-r1` pilot-admission consumer는 offline 구현됐지만 qualified pilot, cap 변경,
+- Exact `dev-no-memory-v5-20260730-r1` pilot-admission consumer와 qualified pilot evidence는 존재하지만 cap 변경,
   새 campaign preflight/hash/승인과 paid execution authority는 없다.
 - Final offline verification은 focused 153/153, repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
   Artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.

@@ -1030,3 +1030,39 @@ pilot plan CAS를 확인하고 persisted qualification을 durable state에서 re
 start/resume/post-run matcher가 재검증한다. 이 offline binding 자체는 paid authority를 만들지 않는다.
 Final offline verification은 focused 153/153, repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
 Artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
+
+## 27. D-086 measured pilot seal and budget-pressure correction architecture
+
+D-086은 D-085 source를 변경하거나 provider를 다시 호출하지 않고, exact approved invocation의 raw state를
+sanitized portable evidence로 투영한다. Execution hash
+`sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0`, source commit
+`629b9fdd9f69d1522cf565a06ae9679abe3f60a7`, run `run_c355405d826641b9`와 raw result, journal,
+execution plan, manifest, evaluator receipt, qualification과 submitted diff를 content hash로 결속한다.
+
+```text
+immutable D-085 raw result + journal/state
+  -> read-only qualification recomputation
+  -> exact raw artifact/hash reconciliation
+  -> narrow D-085 budget-pressure recomputation
+  -> append-only correction manifest
+  -> sanitized D-086 portable seal
+  -> hard-consumed experiment guard
+```
+
+Original readiness gate는 이미 terminal/qualified/official evaluator 1/1과 process confound 0으로 pass했다.
+Run은 hidden/regression/scope/safety도 pass했지만 task success는 readiness predicate가 아니다. Original raw
+`budget_pressure`만 `_frozen_comparison_profile`이 memory-development/core purpose만 열고 exact D-085
+`development-validation-live-pilot` ID를 빠뜨려 error envelope을 남겼다. Correction은 exact ID·purpose·runtime
+tuple만 허용해 token headroom 1,526,799, wall headroom 1,749,231ms와 binding `none`을 재산출한다. Original
+result/gate를 rewrite하거나 corrected gate를 만들지 않는다.
+
+Portable seal은 `reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+(`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`), correction manifest는
+`reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+(`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`)이다. D-085 experiment ID는 local evidence가 사라져도 preflight/evaluate가
+provider 전에 차단하는 hard-consumed set에 들어간다. Final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다.
+
+이 architecture는 single-row readiness와 observed Babel success만 보존한다. No-memory baseline, comparison
+denominator, memory admission/index, core와 analysis를 열지 않는다. 다음 architecture gate는 `$20 → $88`
+12-run cap의 별도 decision, pilot run ID를 결속한 새 campaign source commit, fresh preflight/hash와 별도
+사용자 비용 승인이다.

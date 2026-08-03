@@ -2843,3 +2843,47 @@ Persisted qualification은 `qualify_run(..., persist=false)`의 durable recomput
 cap·preflight·hash·승인이 없으므로 future campaign 실행 권한은 계속 닫혀 있다.
 Final offline verification은 focused 153/153, repository-wide 1,392 collected 중 1,385 passed/7 skipped다.
 Artifact SHA는 `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`이다.
+
+## 28. D-086 measured-result and append-only correction contract
+
+D-086 source identity는 다음 exact values다.
+
+```yaml
+experiment_id: dev-validation-condition-neutral-v2v5-pilot-20260803-r1
+execution_hash: sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0
+source_harness_commit: 629b9fdd9f69d1522cf565a06ae9679abe3f60a7
+run_id: run_c355405d826641b9
+result_hash: sha256:e0c3c4c67adc8c157a5030c9a93e3fd106d6b7a12f596253ddf10582fe74b80a
+journal_file_hash: sha256:4c114059fad069526d95786c392b7ea36724443b7231b4426bb097ee0c2199c8
+final_journal_event_hash: sha256:93853c6367459bcae004789a9a2710c6be518078b21041ece0b160d9843e5a8b
+qualification_hash: sha256:11bda7b2f31bae453f21c4718fdcb4563a74e173e621fd8035f1ab8aa64f1293
+source_evidence_hash: sha256:41d9b862fe5042b4838c53cd80c3318dc55dc5f0bd892962fecc20caba0b2105
+```
+
+Original `condition-neutral-comparison-pilot-readiness-gate-v1` payload는 passed이며 immutable하다. Run usage는
+69,701 input, 3,500 output, 73,201 total token, 8 model call, 9 tool call, 50,769ms와 calculated
+`$0.06802575`다. Official evaluator verdict는 hidden/regression/scope/safety 모두 pass다. Qualification은
+28/28이고 persisted payload가 durable `qualify_run(..., persist=false)` recomputation과 canonical exact
+일치해야 한다.
+
+Original result의 `budget-pressure-error-v1`은 runtime failure가 아니라 exact pilot purpose를 허용 목록에서
+빠뜨린 read-only diagnostic selector defect다. `condition-neutral-comparison-pilot-budget-pressure-correction-v1`
+은 exact experiment ID, purpose, run/runtime/source/result hash를 요구하고 token headroom 1,526,799,
+wall headroom 1,749,231ms, model/tool limit `null`, binding `none`을 결속한다. Original result/gate replacement와
+retroactive gate recomputation은 모두 false다. Near-match pilot과 arbitrary development-validation purpose는
+계속 거부한다.
+
+Portable schema `condition-neutral-comparison-pilot-d086-evidence-v1`은 sanitized metadata, original gate,
+run/usage/verdict, qualification projection, safe trace telemetry, correction reference, journal seal과 raw-local
+artifact hashes만 포함한다. Provider body, API key, private spec/hash, hidden assertion, verifier detail, patch body와
+reference patch는 금지한다. Path/SHA는
+`reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json` /
+`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`와
+`reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json` /
+`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`다. Final verification은 `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`이다.
+
+D-085 ID는 hard-consumed라 local result/journal 존재 여부와 무관하게 재실행할 수 없다. Seal은 readiness와
+한 task success를 기록할 뿐 baseline/denominator/memory/core/analysis authority가 아니다. Future campaign의
+canonical pilot-admission hash는 별도 campaign commit을 포함하므로 이 seal이 미리 authoritative hash를 만들지
+않는다. 다음 contract는 `$88` cap, `pilot_run_id`, fresh pricing과 별도 clean campaign hash/승인을 고정하는
+separate source decision이다.

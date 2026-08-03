@@ -1,0 +1,124 @@
+{
+  "schema_version": "condition-neutral-comparison-pilot-budget-pressure-correction-v1",
+  "correction_id": "bpcor_527865fd5b17ae5a4d3049fa0f1044f9462d7fd50f14a3b2f9e9109f4636ed03",
+  "semantic_body_hash": "sha256:527865fd5b17ae5a4d3049fa0f1044f9462d7fd50f14a3b2f9e9109f4636ed03",
+  "semantic_body": {
+    "correction_kind": "append-only-derived-budget-pressure",
+    "experiment_id": "dev-validation-condition-neutral-v2v5-pilot-20260803-r1",
+    "run_id": "run_c355405d826641b9",
+    "source_harness_git_commit": "629b9fdd9f69d1522cf565a06ae9679abe3f60a7",
+    "correction_harness_git_commit": "e186f910f3c9eed81c8ec67b4bfc82bffa9bb785",
+    "execution_hash": "sha256:7163f6c44aa5b7790d35546be37781248d6575eac60986b2610f2e21c35348a0",
+    "schedule_row_id": "sha256:fb3e5cf325c13a4c0398d0573d539e2e268396936f8ed60b1d64aab6ee0011a0",
+    "immutable_sources": {
+      "experiment_result": {
+        "path": ".patchloop/experiments/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json",
+        "sha256": "sha256:e0c3c4c67adc8c157a5030c9a93e3fd106d6b7a12f596253ddf10582fe74b80a"
+      },
+      "qualification_hash": "sha256:11bda7b2f31bae453f21c4718fdcb4563a74e173e621fd8035f1ab8aa64f1293",
+      "source_evidence_hash": "sha256:41d9b862fe5042b4838c53cd80c3318dc55dc5f0bd892962fecc20caba0b2105",
+      "journal_final_event_hash": "sha256:93853c6367459bcae004789a9a2710c6be518078b21041ece0b160d9843e5a8b"
+    },
+    "original_observation": {
+      "schema_version": "budget-pressure-error-v1",
+      "run_id": "run_c355405d826641b9",
+      "error": "disabled model/tool call limits require the exact workflow completion probe, D-081 generic readiness, or frozen condition-neutral comparison observability contract"
+    },
+    "cause": {
+      "category": "post-run-diagnostic-selector-gap",
+      "summary": "The exact D-085 development-validation pilot used the frozen condition-neutral runtime tuple, but the read-only budget-pressure selector admitted the future memory-development/core purposes and omitted this exact pilot purpose.",
+      "runtime_or_evaluator_failure": false,
+      "budget_terminal_observed": false,
+      "qualification_affected": false,
+      "readiness_predicate_affected": false
+    },
+    "derivation": {
+      "schema_version": "budget-pressure-correction-derivation-v1",
+      "method": "Reapply the existing budget-pressure-v1 arithmetic read-only to the immutable exact D-085 manifest, ordered events and terminal result after recognizing the already-qualified D-085 runtime contract.",
+      "inputs": {
+        "configured_total_tokens": 1600000,
+        "configured_wall_clock_ms": 1800000,
+        "configured_model_calls": null,
+        "configured_tool_calls": null,
+        "observed_input_tokens": 69701,
+        "observed_output_tokens": 3500,
+        "observed_model_calls": 8,
+        "observed_tool_calls": 9,
+        "observed_wall_clock_ms": 50769
+      },
+      "arithmetic": {
+        "observed_total_tokens": "69701 + 3500 = 73201",
+        "total_token_headroom": "1600000 - 73201 = 1526799",
+        "wall_clock_headroom_ms": "1800000 - 50769 = 1749231"
+      }
+    },
+    "corrected_budget_pressure": {
+      "schema_version": "budget-pressure-v1",
+      "run_id": "run_c355405d826641b9",
+      "configured_limits": {
+        "model_calls": null,
+        "tool_calls": null,
+        "total_tokens": 1600000,
+        "wall_clock_ms": 1800000
+      },
+      "observed_usage": {
+        "input_tokens": 69701,
+        "output_tokens": 3500,
+        "total_tokens": 73201,
+        "model_calls": 8,
+        "tool_calls": 9,
+        "wall_clock_ms": 50769
+      },
+      "headroom": {
+        "model_calls": null,
+        "tool_calls": null,
+        "total_tokens": 1526799,
+        "wall_clock_ms": 1749231
+      },
+      "binding_dimension": "none",
+      "binding_reason": null,
+      "blocked_tool_count": 0,
+      "blocked_tool_counts_by_reason": {},
+      "blocked_tool_counts_by_tool": {},
+      "token_tail": {
+        "triggered": false,
+        "snapshot_count": 0,
+        "first": null,
+        "maximum": null
+      },
+      "exact_request": {
+        "blocked": false,
+        "sequence": null,
+        "requested_input_tokens": null,
+        "max_output_tokens": 25000,
+        "required_tokens": null,
+        "remaining_tokens": null,
+        "deficit_tokens": 0,
+        "minimum_total_budget_same_prefix": null,
+        "observed_prefix_minimum_total_budget": 98077
+      },
+      "counterfactual_same_prefix_only": true
+    },
+    "correction_boundary": {
+      "original_result_modified": false,
+      "original_journal_modified": false,
+      "original_qualification_modified": false,
+      "original_readiness_gate_replaced": false,
+      "original_readiness_gate_passed": true,
+      "task_outcome_changed": false,
+      "scrr_changed": false,
+      "new_provider_call_made": false,
+      "additional_model_cost_usd": 0.0
+    },
+    "claims_boundary": {
+      "diagnostic_gap_corrected": true,
+      "workflow_readiness_reclassified": false,
+      "no_memory_performance_baseline_established": false,
+      "comparison_denominator_eligible": false,
+      "memory_admission_unlocked": false,
+      "memory_index_frozen": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false
+    }
+  }
+}
