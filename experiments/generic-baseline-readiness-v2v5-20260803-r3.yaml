@@ -1,0 +1,45 @@
+schema_version: experiment-v2
+experiment_id: generic-baseline-readiness-v2v5-20260803-r3
+purpose: generic-baseline-readiness
+tasks:
+  - tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+  - tasks/dev-validation/moto-query-scanned-count/public.yaml
+  - tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml
+  - tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml
+conditions:
+  - no_memory
+repetitions: 1
+model: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+transport_max_retries: 0
+max_output_tokens: 25000
+budget:
+  # D-081 keeps call counts observable but non-binding. Total-token, wall,
+  # exact-request, loop, cost, sandbox, and evaluator guards remain active.
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 2400000
+  wall_clock_timeout_seconds: 1800
+seed: 20260723
+# D-081 reuses the pre-selected four-task panel and generic V2/V5 agent tuple.
+# It is calibration-only; source and preflight do not authorize a provider call
+# or freeze a comparison budget.
+live_cost_approved: false
+approved_execution_hash: null
+pilot_run_id: null
+estimated_cost_usd: 43.65
+cost_limit_usd: 44
+pricing_verified_at: 2026-08-03T01:08:49Z
+pricing_source_url: https://developers.openai.com/api/docs/pricing
+input_price_per_million_usd: 0.75
+cached_input_price_per_million_usd: 0.075
+cache_write_input_price_per_million_usd: null
+output_price_per_million_usd: 4.5
+retrieval_threshold: 0.72
+memory_token_budget: 2000
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+embedding_revision: PIN_AT_FREEZE
+dataset_manifest_hash: sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786

@@ -65,6 +65,9 @@ GENERIC_BASELINE_READINESS_SUITE = (
 GENERIC_BASELINE_READINESS_D077_SUITE = (
     "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
 )
+GENERIC_BASELINE_READINESS_D081_SUITE = (
+    "experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml"
+)
 HISTORICAL_PRIMARY_PILOT_SUITE = (
     "experiments/dev-validation-gpt54mini-campaign-pilot-r1.yaml"
 )
@@ -306,6 +309,201 @@ def test_d077_generic_readiness_is_an_exact_budget_only_successor(
     }
     assert preflight["pricing"]["per_run_cost_reserve_usd"] == 5.5125
     assert preflight["pricing"]["budget_upper_bound_usd"] == 22.05
+
+
+def test_d081_generic_readiness_has_exact_observability_contract(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 3, 2, tzinfo=UTC),
+    )
+
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_D081_SUITE)
+    preflight = eval_runner.preflight_suite(
+        GENERIC_BASELINE_READINESS_D081_SUITE
+    )
+
+    assert suite.experiment_id == (
+        eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+    )
+    assert suite.tasks == eval_runner.GENERIC_BASELINE_READINESS_TASKS
+    assert suite.conditions == [MemoryCondition.NO_MEMORY]
+    assert suite.repetitions == 1
+    assert suite.transport_max_retries == 0
+    assert suite.budget == (
+        eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+    )
+    assert suite.budget.model_dump(mode="json") == {
+        "max_model_calls": None,
+        "max_tool_calls": None,
+        "max_total_tokens": 2_400_000,
+        "wall_clock_timeout_seconds": 1_800,
+    }
+    assert suite.max_output_tokens == 25_000
+    assert suite.estimated_cost_usd == pytest.approx(43.65)
+    assert suite.cost_limit_usd == 44
+    assert (
+        suite.experiment_id
+        not in eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    )
+    assert {row["code"] for row in preflight["blockers"]} == {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    assert preflight["expected_runs"] == 4
+    assert preflight["runtime_contract"] == {
+        "schema_version": "generic-baseline-runtime-contract-v2",
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+        "system_prompt_hash": sha256_text(eval_runner.SYSTEM_PROMPT_V3),
+        "tool_schema_hash": sha256_text(
+            canonical_json(eval_runner.TOOL_SCHEMAS_V2)
+        ),
+        "transport_max_retries": 0,
+        "call_guard_policy": "model-tool-observability-only-v1",
+        "harness_git_commit": "a" * 40,
+    }
+    assert preflight["pricing"]["per_run_cost_reserve_usd"] == pytest.approx(
+        10.9125
+    )
+    assert preflight["pricing"]["budget_upper_bound_usd"] == pytest.approx(
+        43.65
+    )
+
+
+def test_d081_approved_preflight_binds_each_started_manifest(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    _ready_live_environment(monkeypatch, tmp_path)
+    monkeypatch.setattr(
+        eval_runner,
+        "utc_now",
+        lambda: datetime(2026, 8, 3, 2, tzinfo=UTC),
+    )
+    monkeypatch.setattr("patchloop.runtime.git_commit", lambda: "a" * 40)
+    preflight = eval_runner.preflight_suite(
+        GENERIC_BASELINE_READINESS_D081_SUITE
+    )
+    captured = []
+
+    class FakeRunner:
+        def start(self, _task, *, manifest, **_):
+            captured.append(manifest)
+            return {
+                "run_id": manifest.run_id,
+                "outcome_kind": "task_failure",
+                "official": True,
+                "evaluation_status": "completed",
+                "scope_compliant_success": False,
+                "terminal_error": None,
+                "usage": {
+                    "model_cost_usd": 0.1,
+                    "model_calls": 500,
+                    "tool_calls": 1_000,
+                    "input_tokens": 100,
+                    "output_tokens": 20,
+                    "wall_clock_ms": 1_000,
+                },
+            }
+
+    monkeypatch.setattr(eval_runner, "AgentRunner", FakeRunner)
+
+    def qualify_fake(run_id: str, _task: str) -> dict:
+        current = captured[-1]
+        assert current.experiment is not None
+        return {
+            "run_id": run_id,
+            "task_id": current.task_id,
+            "schedule_row_id": current.experiment.schedule_row_id,
+            "execution_hash": current.experiment.execution_hash,
+            "qualified": True,
+            "trace_integrity_passed": True,
+            "evaluation_reached": True,
+            "qualification_hash": "sha256:" + "e" * 64,
+            "purpose": current.experiment.purpose.value,
+            "experiment_id": current.experiment.experiment_id,
+            "gate_checks": {
+                "disabled_call_guard_contract": {
+                    "schema_version": (
+                        "qualification-gate-check-projection-v1"
+                    ),
+                    "check_id": "disabled_call_guard_contract",
+                    "check_count": 1,
+                    "passed": True,
+                }
+            },
+        }
+
+    monkeypatch.setattr(eval_runner, "_qualify_terminal_run", qualify_fake)
+
+    result = eval_runner.evaluate_suite(
+        GENERIC_BASELINE_READINESS_D081_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=preflight["execution_hash"],
+    )
+
+    assert len(captured) == 4
+    assert result["runs"][0]["qualification"].get("gate_checks") == {
+        "disabled_call_guard_contract": {
+            "schema_version": "qualification-gate-check-projection-v1",
+            "check_id": "disabled_call_guard_contract",
+            "check_count": 1,
+            "passed": True,
+        }
+    }
+    assert result["completion_gate"]["passed"] is True, {
+        "gate": result["completion_gate"],
+        "qualification": result["runs"][0]["qualification"],
+    }
+    assert all(
+        manifest.budget
+        == eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+        for manifest in captured
+    )
+    assert all(manifest.budget.max_model_calls is None for manifest in captured)
+    assert all(manifest.budget.max_tool_calls is None for manifest in captured)
+    assert all(
+        manifest.experiment is not None
+        and manifest.experiment.execution_hash == preflight["execution_hash"]
+        for manifest in captured
+    )
+
+
+@pytest.mark.parametrize(
+    ("path", "replacement"),
+    [
+        (("experiment_id",), "generic-baseline-readiness-v2v5-20260802-r2"),
+        (("purpose",), "workflow-completion-probe"),
+        (("budget", "max_model_calls"), 110),
+        (("budget", "max_tool_calls"), 150),
+        (("budget", "max_total_tokens"), 2_399_999),
+        (("budget", "wall_clock_timeout_seconds"), 1_799),
+        (("tasks",), [eval_runner.GENERIC_BASELINE_READINESS_TASKS[0]]),
+        (("model_id",), "gpt-5.4-mini"),
+        (("max_output_tokens",), 24_999),
+    ],
+)
+def test_d081_generic_readiness_rejects_tuple_drift(
+    path: tuple[str, ...],
+    replacement,
+) -> None:
+    payload = yaml.safe_load(
+        Path(GENERIC_BASELINE_READINESS_D081_SUITE).read_text(
+            encoding="utf-8"
+        )
+    )
+    target = payload
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = replacement
+
+    with pytest.raises(ValidationError):
+        ExperimentSuite.model_validate(payload)
 
 
 @pytest.mark.parametrize(
@@ -623,6 +821,115 @@ def test_d077_generic_readiness_gate_keeps_the_same_completion_boundary() -> Non
     assert failed is not None
     assert failed["passed"] is False
     assert failed["budget_terminal_runs"] == 1
+
+
+def test_d081_generic_readiness_gate_requires_each_call_guard_projection() -> None:
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_D081_SUITE)
+    schedule = _readiness_gate_schedule(suite.experiment_id)
+    execution_hash = "sha256:" + ("c" * 64)
+    rows = [
+        _readiness_gate_row(schedule_row, execution_hash)
+        for schedule_row in schedule
+    ]
+    for row in rows:
+        row["qualification"]["gate_checks"] = {
+            "disabled_call_guard_contract": {
+                "schema_version": "qualification-gate-check-projection-v1",
+                "check_id": "disabled_call_guard_contract",
+                "check_count": 1,
+                "passed": True,
+            }
+        }
+
+    gate = eval_runner._completion_gate(
+        suite,
+        rows,
+        expected_execution_hash=execution_hash,
+        expected_schedule=schedule,
+    )
+
+    assert gate is not None
+    assert gate["schema_version"] == "generic-baseline-readiness-gate-v2"
+    assert gate["call_guard_policy"] == "model-tool-observability-only-v1"
+    assert gate["call_guard_contract_passed"] is True
+    assert gate["passed"] is True
+    assert gate["task_successes"] == 0
+    assert gate["comparison_denominator_eligible"] is False
+    assert gate["memory_admission_unlocked"] is False
+
+    rows[0]["qualification"].pop("gate_checks")
+    failed = eval_runner._completion_gate(
+        suite,
+        rows,
+        expected_execution_hash=execution_hash,
+        expected_schedule=schedule,
+    )
+    assert failed is not None
+    assert failed["call_guard_contract_passed"] is False
+    assert failed["passed"] is False
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "wrong_schema",
+        "boolean_count",
+        "duplicate_count",
+        "wrong_check_id",
+        "failed_check",
+        "extra_projection",
+    ],
+)
+def test_d081_generic_readiness_gate_rejects_malformed_call_guard_projection(
+    mutation: str,
+) -> None:
+    suite = eval_runner.load_suite(GENERIC_BASELINE_READINESS_D081_SUITE)
+    schedule = _readiness_gate_schedule(suite.experiment_id)
+    execution_hash = "sha256:" + ("c" * 64)
+    rows = [
+        _readiness_gate_row(schedule_row, execution_hash)
+        for schedule_row in schedule
+    ]
+    for row in rows:
+        row["qualification"]["gate_checks"] = {
+            "disabled_call_guard_contract": {
+                "schema_version": "qualification-gate-check-projection-v1",
+                "check_id": "disabled_call_guard_contract",
+                "check_count": 1,
+                "passed": True,
+            }
+        }
+    projection = rows[0]["qualification"]["gate_checks"][
+        "disabled_call_guard_contract"
+    ]
+    if mutation == "wrong_schema":
+        projection["schema_version"] = "qualification-gate-check-projection-v2"
+    elif mutation == "boolean_count":
+        projection["check_count"] = True
+    elif mutation == "duplicate_count":
+        projection["check_count"] = 2
+    elif mutation == "wrong_check_id":
+        projection["check_id"] = "other"
+    elif mutation == "failed_check":
+        projection["passed"] = False
+    else:
+        rows[0]["qualification"]["gate_checks"]["other"] = {
+            "schema_version": "qualification-gate-check-projection-v1",
+            "check_id": "other",
+            "check_count": 1,
+            "passed": True,
+        }
+
+    gate = eval_runner._completion_gate(
+        suite,
+        rows,
+        expected_execution_hash=execution_hash,
+        expected_schedule=schedule,
+    )
+
+    assert gate is not None
+    assert gate["call_guard_contract_passed"] is False
+    assert gate["passed"] is False
 
 
 @pytest.mark.parametrize(

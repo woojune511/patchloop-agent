@@ -939,3 +939,33 @@ silently lowering the design or fabricating missing results.
   JSON parse and `git diff --check` passed. These checks validate the correction implementation, not task success.
 - Calibration-only, `analysis_ready=false`, no-memory/comparison exclusion, memory-admission closure and core
   closure remain in force despite the derived process-gate pass.
+
+## D-081 is a source budget candidate, not readiness, baseline or core authority
+
+- D-081 preserves the D-075/D-077 four-task order and generic V2/V5 tuple. Its offline implementation passed
+  1,197 of 1,204 collected tests with seven environment-dependent skips, plus Ruff, Python compileall and
+  `git diff --check`; it has not yet produced a clean no-call preflight, live approval, execution hash, run,
+  measured cost or gate outcome. Offline verification is not provider capability.
+- Null model/tool limits mean count observability without count-based admission only for the exact r3 contract.
+  They do not make execution unlimited: the 2,400,000-token, 1,800-second, exact-request, cost, loop, sandbox,
+  constrained-tool and evaluator boundaries can still terminate a row.
+- The token ceiling is a public-process heuristic:
+  `(1,790,707 + 84 * 2,000 + 25,000) * 1.2 = 2,380,448.4`, rounded to 2,400,000.
+  Wall is `856.559s * 2 = 1,713.118s`, rounded to 1,800s. A maximum observed trajectory, memory allowance and
+  headroom multiplier do not estimate a completion distribution or prove the ceiling sufficient.
+- `generic-baseline-runtime-contract-v2`, `generic-baseline-runtime-evidence-v2` and
+  `generic-baseline-readiness-gate-v2` prevent the nullable-count policy from changing historical v1 semantics.
+  Executable offline evidence now covers the runtime/gate, retained wall-clock termination and tamper rejection,
+  but it does not prove a provider run can complete the panel.
+- The gate is process-only even when executed: 4/4 terminal, qualified, official evaluator and valid exact-one
+  disabled-call projections with zero confounds. Hidden success/SCRR remains outside the predicate and cannot be
+  used for task-specific tuning.
+- The `$10.9125` per-run and `$43.65` four-row reserve under a `$44` cap use the 2026-08-03 standard price as a
+  worst-rate authorization formula. They are neither expected spend nor an invoice/free-tier claim. Provider
+  calls and model cost at this source stage are 0.
+- Applying the same reserve to 96 core runs yields a theoretical `$1,047.60`, far above the original `$150`
+  project cap. Therefore a readiness pass cannot mechanically freeze this ceiling for the four-condition core;
+  scope, budget or campaign design needs a separate predeclared decision without changing conditions unequally.
+- D-081 remains calibration-only and leaves `analysis_ready=false`, comparison denominator, no-memory baseline,
+  memory admission and core closed. D-075/D-077/D-079/D-080 identities, raw evidence, false gates and append-only
+  correction remain immutable.

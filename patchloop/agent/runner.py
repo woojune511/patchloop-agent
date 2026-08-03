@@ -2572,10 +2572,18 @@ class AgentRunner:
             manifest.experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         )
+        generic_count_observability = bool(
+            manifest.experiment.purpose
+            == ExperimentPurpose.GENERIC_BASELINE_READINESS
+            and manifest.experiment.experiment_id
+            == "generic-baseline-readiness-v2v5-20260803-r3"
+        )
         document = {
             "schema_version": (
                 "workflow-completion-runtime-evidence-v1"
                 if workflow_completion_probe
+                else "generic-baseline-runtime-evidence-v2"
+                if generic_count_observability
                 else "generic-baseline-runtime-evidence-v1"
             ),
             "transport_max_retries": manifest.model.transport_max_retries,
@@ -2584,7 +2592,7 @@ class AgentRunner:
             "tool_schema_version": manifest.tool_schema_version,
             "context_policy_version": manifest.context_policy_version,
         }
-        if workflow_completion_probe:
+        if workflow_completion_probe or generic_count_observability:
             document["call_guard_policy"] = (
                 "model-tool-observability-only-v1"
             )

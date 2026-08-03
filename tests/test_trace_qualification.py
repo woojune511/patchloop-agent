@@ -1185,10 +1185,17 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
     purpose = manifest.experiment.purpose
     if purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
         return eval_runner.load_suite(
-            "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
-            if manifest.experiment.experiment_id
-            == eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
-            else "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+            {
+                eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID: (
+                    "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
+                ),
+                eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (
+                    "experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml"
+                ),
+            }.get(
+                manifest.experiment.experiment_id,
+                "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml",
+            )
         )
     if (
         purpose
@@ -1623,13 +1630,33 @@ def _terminal_trace(
     )
     generic_suite = (
         eval_runner.load_suite(
-            "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
-            if experiment_id
-            == eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
-            else "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+            {
+                eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID: (
+                    "experiments/generic-baseline-readiness-v2v5-20260802-r2.yaml"
+                ),
+                eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (
+                    "experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml"
+                ),
+            }.get(
+                experiment_id,
+                "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml",
+            )
         )
         if generic_baseline_readiness
         else None
+    )
+    resolved_experiment_id = (
+        experiment_id
+        or (
+            eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+            if generic_baseline_readiness
+            else (
+                "dev-validation-gpt54mini-token-tail-v5-20260730-r1"
+                if purpose
+                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                else "qualification-test"
+            )
+        )
     )
     outcome_label = "agent" if agent_failure else ("resolved" if resolved else "failure")
     run_id = f"run_qualification_{outcome_label}"
@@ -1695,6 +1722,22 @@ def _terminal_trace(
             if self_validation_contract
             else None
         ),
+        experiment_context=(
+            ExperimentRunContext(
+                experiment_id=resolved_experiment_id,
+                purpose=purpose,
+                suite_hash=HASH,
+                execution_hash=HASH,
+                dataset_manifest_hash=dataset_hash,
+                dataset_role=role,
+                schedule_seed=20260723,
+                schedule_order=1,
+                schedule_row_id=HASH,
+                repetition=1,
+            )
+            if generic_baseline_readiness
+            else None
+        ),
     )
     if self_validation_contract:
         manifest.tool_schema_version = "v3"
@@ -1720,19 +1763,7 @@ def _terminal_trace(
         # contract. v3 is opted into explicitly by the retry-context cases.
         manifest.context_policy_version = "phase-evidence-v2"
     manifest.experiment = ExperimentRunContext(
-        experiment_id=(
-            experiment_id
-            or (
-                eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
-                if generic_baseline_readiness
-                else (
-                    "dev-validation-gpt54mini-token-tail-v5-20260730-r1"
-                    if purpose
-                    == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-                    else "qualification-test"
-                )
-            )
-        ),
+        experiment_id=resolved_experiment_id,
         purpose=purpose,
         suite_hash=HASH,
         execution_hash=HASH,
@@ -1765,14 +1796,11 @@ def _terminal_trace(
     artifacts = ArtifactStore(tmp_path / "artifacts")
     runtime_contract = (
         artifacts.put_json(
-            {
-                "schema_version": "generic-baseline-runtime-evidence-v1",
-                "transport_max_retries": 0,
-                "system_prompt": AgentRunner._runtime_contract(manifest)[0],
-                "tools": AgentRunner._runtime_contract(manifest)[1],
-                "tool_schema_version": "v2",
-                "context_policy_version": "phase-evidence-v5",
-            }
+            AgentRunner._generic_baseline_runtime_evidence_document(
+                manifest=manifest,
+                system_prompt=AgentRunner._runtime_contract(manifest)[0],
+                tool_schemas=AgentRunner._runtime_contract(manifest)[1],
+            )
         )
         if generic_baseline_readiness
         else artifacts.put_text("public runtime contract")
@@ -2538,9 +2566,12 @@ def _terminal_trace(
             event.type == EventType.MODEL_CALLED
             for event in state.list_events(run_id)
         )
-        for index in range(
+        filler_model_calls = (
             manifest.budget.max_model_calls - existing_model_calls
-        ):
+            if manifest.budget.max_model_calls is not None
+            else 0
+        )
+        for index in range(filler_model_calls):
             filler_rendered_context = json.dumps(
                 {
                     "public_task": package.public.model_dump(mode="json"),
@@ -4999,6 +5030,81 @@ def test_d077_generic_baseline_readiness_full_row_qualifies(
         eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
         budget,
     )
+
+
+def test_d081_generic_baseline_readiness_full_row_qualifies_with_null_counts(
+    tmp_path: Path,
+) -> None:
+    budget = eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+    experiment_id = (
+        eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+    )
+    run_id, result, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.GENERIC_BASELINE_READINESS,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=False,
+        prompt_telemetry=True,
+        budget=budget,
+        max_output_tokens=25_000,
+        experiment_id=experiment_id,
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=tmp_path,
+        persist=False,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+
+    assert result.official is True
+    assert qualification["qualified"] is True, [
+        check for check in qualification["checks"] if not check["passed"]
+    ]
+    assert checks["approved_execution_plan"]["passed"] is True
+    assert checks["frozen_model_contract"]["passed"] is True
+    assert checks["generic_runtime_contract"]["passed"] is True
+    assert checks["disabled_call_guard_contract"]["passed"] is True
+    assert qualification_module._generic_baseline_readiness_budget_matches(
+        experiment_id,
+        budget,
+    )
+
+
+def test_d081_generic_readiness_rejects_forged_count_budget_block(
+    tmp_path: Path,
+) -> None:
+    run_id, _, _ = _terminal_trace(
+        tmp_path,
+        task_dir=PILOT_TASK,
+        purpose=ExperimentPurpose.GENERIC_BASELINE_READINESS,
+        role=DatasetRole.DEVELOPMENT_VALIDATION,
+        resolved=False,
+        prompt_telemetry=True,
+        budget=eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET,
+        max_output_tokens=25_000,
+        experiment_id=(
+            eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        ),
+        counter_generation_block_reason="model_call_budget_exhausted",
+    )
+
+    qualification = qualify_run(
+        run_id,
+        task_dir=PILOT_TASK,
+        root=tmp_path,
+        persist=False,
+    )
+    checks = {
+        check["check_id"]: check for check in qualification["checks"]
+    }
+
+    assert checks["disabled_call_guard_contract"]["passed"] is False
+    assert qualification["qualified"] is False
 
 
 def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_requests(

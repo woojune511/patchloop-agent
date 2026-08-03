@@ -518,6 +518,43 @@ Evidence/issue:
   `reports/live-pilot/artifacts/d080-workflow-completion-gate-summary-correction.json`; raw local artifacts는
   hash로만 참조하고 provider bodies, private evaluator assertions와 reference patch를 포함하지 않는다.
 
+### D-081 accepted decision — condition-neutral generic V2/V5 four-row readiness source contract
+
+- Status: accepted source/offline contract decision; executable verification complete, clean no-call preflight
+  pending. Provider call 0, model cost `$0`, live approval/execution hash/run/result/measured cost/gate outcome 없음.
+- Preserves: D-075/D-077/D-079/D-080 suite, consumed execution identities, raw/portable artifacts, original false
+  gates와 append-only correction을 수정·재개·결합하지 않는다. Historical runtime/gate v1 의미도 바꾸지 않는다.
+- Exact identity: purpose `generic-baseline-readiness`, experiment ID
+  `generic-baseline-readiness-v2v5-20260803-r3`. Ordered Babel, Moto, pyfakefs, HF Hub task와 원 dataset role,
+  `no_memory` repetition 1, seed `20260723`을 D-075/D-077과 동일하게 유지한다.
+- Fixed tuple: `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
+  `phase-evidence-v5`, SDK transport retry 0, output 25,000, sidecar absent와 fault none을 고정한다.
+- Count-policy decision: model/tool call limit은 exact pair `null`이고
+  `model-tool-observability-only-v1` 아래 durable counter와 usage reconciliation만 유지한다. Total token
+  2,400,000, wall 1,800초, exact-request, cost, loop, state/idempotency, constrained-tool,
+  Docker/network/evaluator guard는 계속 admission boundary다.
+- Public derivation: evaluator-complete process usage만 사용한다.
+  `((1,790,707 + 84 * 2,000 + 25,000) * 1.2) = 2,380,448.4`를 100,000 단위로 올림해
+  2,400,000을 선택한다. Wall은 `856.559s * 2 = 1,713.118s`를 300초 단위로 올림해
+  1,800초를 선택한다. Private evaluator outcome과 task success는 산식에 쓰지 않는다.
+- Version decision: plan/trace/gate는 각각 `generic-baseline-runtime-contract-v2`,
+  `generic-baseline-runtime-evidence-v2`, `generic-baseline-readiness-gate-v2`다. 네 row 모두 exact-one
+  `qualification-gate-check-projection-v1`/`disabled_call_guard_contract`와
+  `call_guard_contract_passed=true`를 요구한다. Task success/SCRR는 gate 조건이 아니다.
+- Cost/approval: 2026-08-03T01:08:49Z official standard pricing에서 conservative reserve는
+  `(2,400,000 + 25,000) * $4.50/M = $10.9125`/run, `$43.65`/four rows, cap `$44`다. Source
+  YAML과 source/preflight artifact는 authority가 아니며 clean preflight가 만든 exact hash와 최대 `$44`의
+  별도 명시적 승인 전 provider call을 금지한다.
+- Claims boundary: D-081은 calibration-only다. Source contract나 향후 gate pass는 comparison budget을
+  자동 freeze하거나 no-memory baseline, memory admission, core를 열지 않는다. 동일 ceiling의 theoretical
+  96-run reserve `$1,047.60`은 original `$150` project cap과 충돌하므로 readiness 뒤 별도 budget/scale
+  decision이 필요하다. Hidden outcome에 따른 task-specific tuning이나 automatic rerun을 승인하지 않는다.
+- Date: 2026-08-03
+- Evidence/issue: Public derivation artifact
+  `reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`과 exact source config. Repository-wide
+  1,204 collected 중 1,197 passed/7 environment-dependent skipped, Ruff, Python compileall과
+  `git diff --check`가 executable offline evidence다. Clean preflight와 live evidence는 아직 없다.
+
 ## Deferred ideas
 
 다음 항목은 아이디어로만 유지하며 v1 work item으로 만들지 않는다.

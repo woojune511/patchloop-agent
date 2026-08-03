@@ -229,6 +229,12 @@ GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=2_400_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     max_model_calls=None,
     max_tool_calls=None,
@@ -256,6 +262,9 @@ GENERIC_BASELINE_READINESS_EXPERIMENT_ID = (
 GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID = (
     "generic-baseline-readiness-v2v5-20260802-r2"
 )
+GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = (
+    "generic-baseline-readiness-v2v5-20260803-r3"
+)
 GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     GENERIC_BASELINE_READINESS_EXPERIMENT_ID: (
         GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
@@ -263,10 +272,14 @@ GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID: (
         GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
     ),
+    GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (
+        GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+    ),
 }
 GENERIC_BASELINE_READINESS_COST_BY_EXPERIMENT_ID = {
     GENERIC_BASELINE_READINESS_EXPERIMENT_ID: (15.75, 16.0),
     GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID: (22.05, 23.0),
+    GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (43.65, 44.0),
 }
 GENERIC_BASELINE_READINESS_TASKS = [
     PILOT_TASK,
@@ -340,10 +353,16 @@ COVERAGE_REJECTION_TOOL_SCHEMA_VERSION = "v6"
 COVERAGE_REJECTION_CONTEXT_POLICY_VERSION = "phase-evidence-v11"
 COVERAGE_REJECTION_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v5"
 GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA = "generic-baseline-runtime-contract-v1"
+GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA = (
+    "generic-baseline-runtime-contract-v2"
+)
 WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA = (
     "workflow-completion-runtime-contract-v1"
 )
 WORKFLOW_COMPLETION_CALL_GUARD_POLICY = "model-tool-observability-only-v1"
+GENERIC_BASELINE_OBSERVABILITY_CALL_GUARD_POLICY = (
+    WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+)
 QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA = (
     "qualification-gate-check-projection-v1"
 )
@@ -451,13 +470,30 @@ def _experiment_runtime_contract(
     """Return the execution-hash-bound runtime identity for an exact live suite."""
 
     if suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
+        count_observability = bool(
+            suite.experiment_id
+            == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        )
         return {
-            "schema_version": GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA,
+            "schema_version": (
+                GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA
+                if count_observability
+                else GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA
+            ),
             "tool_schema_version": "v2",
             "context_policy_version": "phase-evidence-v5",
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
             "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
             "transport_max_retries": suite.transport_max_retries,
+            **(
+                {
+                    "call_guard_policy": (
+                        GENERIC_BASELINE_OBSERVABILITY_CALL_GUARD_POLICY
+                    )
+                }
+                if count_observability
+                else {}
+            ),
             "harness_git_commit": harness_git_commit,
         }
     if suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
@@ -821,6 +857,11 @@ class ExperimentSuite(BaseModel):
             self.budget.max_model_calls is None
             or self.budget.max_tool_calls is None
         )
+        generic_count_observability = bool(
+            self.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+            and self.experiment_id
+            == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        )
         if (
             self.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
             and not (
@@ -832,13 +873,24 @@ class ExperimentSuite(BaseModel):
                 "workflow completion probe requires both model and tool call "
                 "limits to be disabled"
             )
-        if (
-            count_limits_disabled
-            and self.purpose != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        if generic_count_observability and not (
+            self.budget.max_model_calls is None
+            and self.budget.max_tool_calls is None
         ):
             raise ValueError(
-                "disabled model/tool call limits are reserved for the exact "
-                "workflow completion probe"
+                "D-081 generic readiness requires both model and tool call "
+                "limits to be disabled"
+            )
+        if (
+            count_limits_disabled
+            and not (
+                self.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+                or generic_count_observability
+            )
+        ):
+            raise ValueError(
+                "disabled model/tool call limits are reserved for an exact "
+                "registered observability profile"
             )
 
         if self.purpose == ExperimentPurpose.OFFLINE_SMOKE:
@@ -2254,15 +2306,31 @@ def _assert_manifest_matches_preflight(
     if (
         isinstance(expected_runtime_contract, dict)
         and expected_runtime_contract.get("schema_version")
-        == GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA
+        in {
+            GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA,
+            GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA,
+        }
     ):
+        count_observability = bool(
+            expected_runtime_contract.get("schema_version")
+            == GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA
+        )
         actual_runtime_contract = {
-            "schema_version": GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA,
+            "schema_version": expected_runtime_contract.get("schema_version"),
             "tool_schema_version": manifest.tool_schema_version,
             "context_policy_version": manifest.context_policy_version,
             "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V3),
             "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V2)),
             "transport_max_retries": manifest.model.transport_max_retries,
+            **(
+                {
+                    "call_guard_policy": (
+                        GENERIC_BASELINE_OBSERVABILITY_CALL_GUARD_POLICY
+                    )
+                }
+                if count_observability
+                else {}
+            ),
             "harness_git_commit": manifest.harness_git_commit,
         }
     elif (
@@ -2472,6 +2540,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             "evaluation_reached",
             "outcome_kind",
             "purpose",
+            "experiment_id",
             "dataset_role",
             "task_id",
             "execution_hash",
@@ -2484,8 +2553,18 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     raw_checks = payload.get("checks")
     if not isinstance(raw_checks, list):
         raw_checks = []
-    if payload.get("purpose") == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE.value:
-        check_id = "disabled_call_guard_contract"
+    call_guard_check_id = "disabled_call_guard_contract"
+    if (
+        payload.get("purpose")
+        == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE.value
+        or (
+            payload.get("purpose")
+            == ExperimentPurpose.GENERIC_BASELINE_READINESS.value
+            and payload.get("experiment_id")
+            == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        )
+    ):
+        check_id = call_guard_check_id
         summary["gate_checks"] = {
             check_id: _qualification_gate_check_projection(
                 raw_checks,
@@ -3268,6 +3347,11 @@ def _completion_gate(
         == GENERIC_BASELINE_READINESS_TASKS
         and suite.transport_max_retries == 0
     )
+    generic_count_observability = bool(
+        generic_baseline_readiness
+        and suite.experiment_id
+        == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+    )
     workflow_completion_probe = bool(
         suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         and suite.experiment_id == WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
@@ -3535,8 +3619,11 @@ def _completion_gate(
             and projection.get("passed") is True
         )
 
+    call_guard_contract_required = bool(
+        workflow_completion_probe or generic_count_observability
+    )
     call_guard_contract_passed = bool(
-        not workflow_completion_probe
+        not call_guard_contract_required
         or (
             len(rows) == expected_runs
             and all(
@@ -3622,7 +3709,7 @@ def _completion_gate(
         )
         and not budget_terminal_run_ids
         and (
-            not workflow_completion_probe
+            not call_guard_contract_required
             or not terminal_loop_failure_run_ids
         )
     )
@@ -3638,7 +3725,9 @@ def _completion_gate(
     ):
         return {
             "schema_version": (
-                "generic-baseline-readiness-gate-v1"
+                "generic-baseline-readiness-gate-v2"
+                if generic_count_observability
+                else "generic-baseline-readiness-gate-v1"
                 if generic_baseline_readiness
                 else "workflow-completion-probe-gate-v1"
                 if workflow_completion_probe
@@ -3689,7 +3778,7 @@ def _completion_gate(
                         terminal_loop_failure_run_ids
                     ),
                 }
-                if workflow_completion_probe
+                if call_guard_contract_required
                 else {}
             ),
             **(

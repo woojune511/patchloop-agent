@@ -31,16 +31,31 @@ TASK_DIR = Path(eval_runner.WORKFLOW_COMPLETION_PROBE_TASK).parent
 HASH = "sha256:" + "a" * 64
 
 
-def _exact_manifest(run_id: str) -> RunManifest:
+def _exact_manifest(run_id: str, *, d081: bool = False) -> RunManifest:
     package = load_task_package(TASK_DIR)
     assert package.environment is not None
+    budget = (
+        eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+        if d081
+        else eval_runner.GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+    )
+    experiment_id = (
+        eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        if d081
+        else eval_runner.WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+    )
+    purpose = (
+        ExperimentPurpose.GENERIC_BASELINE_READINESS
+        if d081
+        else ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+    )
     return build_manifest(
         package,
         run_id=run_id,
         provider="openai",
         model_id=eval_runner.GPT54_MINI_PILOT_MODEL_ID,
         sandbox_backend="docker",
-        budget=eval_runner.GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET,
+        budget=budget,
         transport_max_retries=0,
         max_output_tokens=25_000,
         input_price_per_million_usd=0.75,
@@ -49,10 +64,8 @@ def _exact_manifest(run_id: str) -> RunManifest:
         agent_image_digest=package.environment.image_digest,
         evaluator_image_digest=package.environment.image_digest,
         experiment_context=ExperimentRunContext(
-            experiment_id=(
-                eval_runner.WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
-            ),
-            purpose=ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+            experiment_id=experiment_id,
+            purpose=purpose,
             suite_hash=HASH,
             execution_hash="sha256:" + "b" * 64,
             dataset_manifest_hash="sha256:" + "c" * 64,
@@ -71,10 +84,11 @@ def _minimal_probe_trace(
     run_id: str,
     runtime_policy: str = eval_runner.WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
     wall_duration_ms: int = 0,
+    d081: bool = False,
 ) -> tuple[AgentRunner, RunManifest, BuiltContext, Any, str]:
     """Create only the evidence needed by the call-guard qualification check."""
 
-    manifest = _exact_manifest(run_id)
+    manifest = _exact_manifest(run_id, d081=d081)
     runner = AgentRunner(root)
     runner.state.create_run(manifest)
     runner.state.claim_run_for_worker(
@@ -323,23 +337,33 @@ def test_disabled_call_guard_contract_rejects_runtime_policy_drift(
 
 
 @pytest.mark.parametrize(
-    ("reason_code", "schema_version"),
+    ("reason_code", "schema_version", "d081"),
     [
-        ("wall_clock_budget_exhausted", "model-generation-block-v3"),
-        ("exact_request_budget_exceeded", "model-generation-block-v1"),
+        ("wall_clock_budget_exhausted", "model-generation-block-v3", False),
+        ("exact_request_budget_exceeded", "model-generation-block-v1", False),
+        ("wall_clock_budget_exhausted", "model-generation-block-v3", True),
     ],
 )
 def test_retained_terminal_budget_blocks_preserve_schema_and_result_binding(
     tmp_path: Path,
     reason_code: str,
     schema_version: str,
+    d081: bool,
 ) -> None:
-    wall_duration_ms = 7_200_000 if reason_code.startswith("wall") else 0
+    wall_duration_ms = (
+        (1_800_000 if d081 else 7_200_000)
+        if reason_code.startswith("wall")
+        else 0
+    )
     runner, manifest, built_context, request_artifact, request_hash = (
         _minimal_probe_trace(
             tmp_path,
-            run_id=f"run_workflow_retained_{schema_version}",
+            run_id=(
+                f"run_{'d081' if d081 else 'workflow'}_retained_"
+                f"{schema_version}"
+            ),
             wall_duration_ms=wall_duration_ms,
+            d081=d081,
         )
     )
     usage = Usage(wall_clock_ms=wall_duration_ms)
@@ -437,3 +461,51 @@ def test_retained_terminal_budget_blocks_preserve_schema_and_result_binding(
         "model_generation_block_binding_valid"
     ] is True
     assert call_guard_check["passed"] is True
+
+
+def test_d081_wall_block_rejects_budget_identity_tamper(
+    tmp_path: Path,
+) -> None:
+    runner, manifest, _, request_artifact, request_hash = _minimal_probe_trace(
+        tmp_path,
+        run_id="run_d081_wall_budget_identity_tamper",
+        wall_duration_ms=1_800_000,
+        d081=True,
+    )
+    runner.state.append_event(
+        manifest.run_id,
+        EventType.MODEL_GENERATION_BLOCKED,
+        actor="budget-guard",
+        payload={
+            "schema_version": "model-generation-block-v3",
+            "reason_code": "wall_clock_budget_exhausted",
+            "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+            "generation_started": False,
+            "request_artifact_id": request_artifact.artifact_id,
+            "request_artifact_path": request_artifact.path,
+            "request_body_hash": request_hash,
+            "requested_input_tokens": None,
+            "remaining_tokens": None,
+            "max_output_tokens": 25_000,
+            "input_token_count_calls": 0,
+            "retry_context_present": False,
+            "retry_candidate_content_hash": None,
+            "model_calls_used": 0,
+            "max_model_calls": None,
+            "tool_calls_used": 0,
+            "max_tool_calls": None,
+            "wall_clock_ms": 1_800_000,
+            "wall_clock_timeout_ms": 1_800_001,
+            "total_tokens_used": 0,
+            "max_total_tokens": 2_400_000,
+            "disabled_budget_dimensions": ["model_calls", "tool_calls"],
+        },
+    )
+
+    prompt_check = _qualification_check(
+        tmp_path,
+        manifest.run_id,
+        "prompt_token_integrity",
+    )
+
+    assert prompt_check["details"]["terminal_generation_block_valid"] is False

@@ -363,9 +363,9 @@ def calculate_budget_pressure(
         except (TypeError, ValueError) as exc:
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
-                "completion probe contract"
+                "completion probe or D-081 generic readiness observability contract"
             ) from exc
-        if not (
+        workflow_completion_probe = bool(
             exact_manifest.experiment is not None
             and exact_manifest.experiment.purpose.value
             == "workflow-completion-probe"
@@ -375,10 +375,22 @@ def calculate_budget_pressure(
             and limits["tool_calls"] is None
             and limits["total_tokens"] == 3_000_000
             and limits["wall_clock_ms"] == 7_200_000
-        ):
+        )
+        generic_count_observability = bool(
+            exact_manifest.experiment is not None
+            and exact_manifest.experiment.purpose.value
+            == "generic-baseline-readiness"
+            and exact_manifest.experiment.experiment_id
+            == "generic-baseline-readiness-v2v5-20260803-r3"
+            and limits["model_calls"] is None
+            and limits["tool_calls"] is None
+            and limits["total_tokens"] == 2_400_000
+            and limits["wall_clock_ms"] == 1_800_000
+        )
+        if not (workflow_completion_probe or generic_count_observability):
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
-                "completion probe contract"
+                "completion probe or D-081 generic readiness observability contract"
             )
     max_output_tokens = _required_nonnegative_int(
         model.get("max_output_tokens"),
@@ -389,8 +401,7 @@ def calculate_budget_pressure(
         and max_output_tokens == 25_000
     ):
         raise ValueError(
-            "workflow completion probe diagnostics require the exact model and "
-            "output allowance"
+            "observability diagnostics require the exact model and output allowance"
         )
     event_payloads = [_mapping(event, label="event") for event in events]
     for event in event_payloads:

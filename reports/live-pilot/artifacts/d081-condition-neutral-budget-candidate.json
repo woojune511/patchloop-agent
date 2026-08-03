@@ -1,0 +1,217 @@
+{
+  "schema_version": "condition-neutral-budget-candidate-v1",
+  "candidate_id": "d081-condition-neutral-budget-candidate",
+  "evidence_scope": {
+    "schema_version": "public-process-evidence-selection-v1",
+    "public_process_only": true,
+    "selection_rule": "use evaluator-complete D-077 rows for Babel, Moto, and HF Hub plus the evaluator-complete D-079 pyfakefs row",
+    "task_success_used_for_selection": false,
+    "private_evaluator_outcomes_used_for_selection": false,
+    "sources": [
+      {
+        "role": "d077-readiness-report",
+        "path": "reports/live-pilot/generic-baseline-readiness-v2v5-20260802-r2.json",
+        "sha256": "sha256:55e2b5c61c23b8e77da975ab31e6f42e5d69bb3479bc85f3438b7856aa4f73f9"
+      },
+      {
+        "role": "d080-workflow-completion-report",
+        "path": "reports/live-pilot/pyfakefs-workflow-completion-probe-v2v5-20260803-r1.json",
+        "sha256": "sha256:c81757368cc298234d029465335a3bd4451914e5c16e1b59baa08e0e048a01d7"
+      }
+    ]
+  },
+  "eligible_process_runs": [
+    {
+      "experiment_id": "generic-baseline-readiness-v2v5-20260802-r2",
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "dataset_role": "development-validation",
+      "run_id": "run_48cfb695d0be4c7d",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "usage": {
+        "model_calls": 6,
+        "tool_calls": 6,
+        "total_tokens": 41410,
+        "wall_clock_ms": 33117
+      }
+    },
+    {
+      "experiment_id": "generic-baseline-readiness-v2v5-20260802-r2",
+      "task_id": "moto-query-scanned-count",
+      "dataset_role": "development-validation",
+      "run_id": "run_4896f998af9644b2",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "usage": {
+        "model_calls": 26,
+        "tool_calls": 33,
+        "total_tokens": 339307,
+        "wall_clock_ms": 231754
+      }
+    },
+    {
+      "experiment_id": "generic-baseline-readiness-v2v5-20260802-r2",
+      "task_id": "hf-hub-xet-endpoint-propagation",
+      "dataset_role": "memory-development",
+      "run_id": "run_d5155046063644ad",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "usage": {
+        "model_calls": 43,
+        "tool_calls": 96,
+        "total_tokens": 804527,
+        "wall_clock_ms": 345212
+      }
+    },
+    {
+      "experiment_id": "pyfakefs-workflow-completion-probe-v2v5-20260803-r1",
+      "task_id": "pyfakefs-makedirs-parent-traversal",
+      "dataset_role": "memory-development",
+      "run_id": "run_606349c2c56342d4",
+      "agent_submission_completed": true,
+      "official_evaluator_completed": true,
+      "trace_qualified": true,
+      "usage": {
+        "model_calls": 84,
+        "tool_calls": 119,
+        "total_tokens": 1790707,
+        "wall_clock_ms": 856559
+      }
+    }
+  ],
+  "derivation": {
+    "schema_version": "condition-neutral-budget-derivation-v1",
+    "maximum_observed_process_usage": {
+      "source_run_id": "run_606349c2c56342d4",
+      "model_calls": 84,
+      "tool_calls": 119,
+      "total_tokens": 1790707,
+      "wall_clock_ms": 856559
+    },
+    "memory_allowance": {
+      "tokens_per_model_call": 2000,
+      "observed_model_calls": 84,
+      "total_tokens": 168000
+    },
+    "next_response_allowance_tokens": 25000,
+    "token_subtotal": 1983707,
+    "token_headroom_multiplier": 1.2,
+    "unrounded_token_budget": 2380448.4,
+    "token_round_up_quantum": 100000,
+    "rounded_token_budget": 2400000,
+    "wall_headroom_multiplier": 2,
+    "unrounded_wall_budget_seconds": 1713.118,
+    "wall_round_up_quantum_seconds": 300,
+    "rounded_wall_budget_seconds": 1800
+  },
+  "candidate_budget": {
+    "schema_version": "condition-neutral-comparison-budget-candidate-v1",
+    "max_model_calls": null,
+    "max_tool_calls": null,
+    "max_total_tokens": 2400000,
+    "wall_clock_timeout_seconds": 1800,
+    "max_output_tokens": 25000,
+    "count_limits_are_observability_only": true,
+    "call_guard_policy": "model-tool-observability-only-v1",
+    "condition_neutral": true,
+    "implementation_status": "source-contract-implemented"
+  },
+  "source_contract": {
+    "schema_version": "condition-neutral-source-contract-binding-v1",
+    "implementation_status": "source-contract-implemented",
+    "experiment_id": "generic-baseline-readiness-v2v5-20260803-r3",
+    "source_config_path": "experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml",
+    "runtime_contract_schema_version": "generic-baseline-runtime-contract-v2",
+    "runtime_evidence_schema_version": "generic-baseline-runtime-evidence-v2",
+    "call_guard_policy": "model-tool-observability-only-v1",
+    "readiness_gate_schema_version": "generic-baseline-readiness-gate-v2",
+    "qualification_projection_schema_version": "qualification-gate-check-projection-v1",
+    "qualification_projection_check_id": "disabled_call_guard_contract"
+  },
+  "pricing": {
+    "schema_version": "condition-neutral-budget-pricing-v1",
+    "verified_at": "2026-08-03T01:08:49Z",
+    "source_url": "https://developers.openai.com/api/docs/pricing",
+    "input_price_per_million_usd": 0.75,
+    "cached_input_price_per_million_usd": 0.075,
+    "output_price_per_million_usd": 4.5,
+    "reserve_rate_per_million_usd": 4.5,
+    "reserve_formula": "(max_total_tokens + max_output_tokens) * reserve_rate_per_million_usd / 1000000",
+    "per_run_cost_reserve_usd": 10.9125,
+    "readiness_run_count": 4,
+    "readiness_panel_reserve_usd": 43.65,
+    "recommended_cost_cap_usd": 44.0
+  },
+  "readiness_panel": {
+    "schema_version": "condition-neutral-readiness-panel-candidate-v1",
+    "purpose": "generic-baseline-readiness",
+    "conditions": [
+      "no_memory"
+    ],
+    "repetitions": 1,
+    "seed": 20260723,
+    "expected_runs": 4,
+    "ordered_tasks": [
+      {
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "dataset_role": "development-validation",
+        "path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+        "public_pattern": "localized decimal parsing"
+      },
+      {
+        "task_id": "moto-query-scanned-count",
+        "dataset_role": "development-validation",
+        "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+        "public_pattern": "query pagination accounting"
+      },
+      {
+        "task_id": "pyfakefs-makedirs-parent-traversal",
+        "dataset_role": "memory-development",
+        "path": "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+        "public_pattern": "filesystem parent traversal"
+      },
+      {
+        "task_id": "hf-hub-xet-endpoint-propagation",
+        "dataset_role": "memory-development",
+        "path": "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+        "public_pattern": "multi-file endpoint propagation"
+      }
+    ],
+    "gate": {
+      "schema_version": "generic-baseline-readiness-gate-v2",
+      "expected_runs": 4,
+      "required_terminal_runs": 4,
+      "required_trace_qualified_runs": 4,
+      "required_official_evaluator_completed_runs": 4,
+      "allowed_infrastructure_errors": 0,
+      "allowed_qualification_errors": 0,
+      "allowed_diagnostic_errors": 0,
+      "allowed_budget_terminal_runs": 0,
+      "call_guard_policy": "model-tool-observability-only-v1",
+      "qualification_projection_schema_version": "qualification-gate-check-projection-v1",
+      "qualification_projection_check_id": "disabled_call_guard_contract",
+      "required_disabled_call_guard_projection_runs": 4,
+      "required_disabled_call_guard_projection_count_per_run": 1,
+      "required_call_guard_contract_passed": true,
+      "required_terminal_loop_failure_runs": 0,
+      "task_success_required": false
+    }
+  },
+  "claims_boundary": {
+    "source_contract_implemented": true,
+    "calibration_only": true,
+    "comparison_budget_frozen": false,
+    "live_execution_approved": false,
+    "provider_calls_made": 0,
+    "model_cost_usd": 0.0,
+    "comparison_denominator_eligible": false,
+    "no_memory_baseline_unlocked": false,
+    "memory_admission_unlocked": false,
+    "core_campaign_unlocked": false,
+    "historical_artifacts_modified": false,
+    "private_evaluator_outcomes_used_for_selection": false
+  }
+}

@@ -1,8 +1,8 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-080 D-079 workflow completion result and append-only gate-summary correction sealed and
-verified; no baseline freeze**
+현재 milestone: **D-081 condition-neutral generic V2/V5 four-row readiness offline contract;
+executable verification complete, clean no-call preflight pending; no baseline freeze**
 
 2026-08-03 구현 스냅샷:
 
@@ -13,7 +13,7 @@ verified; no baseline freeze**
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-080 D-079 live result seal | 1/1 workflow completion, derived process gate pass, hidden task failure; original false gate immutable, comparison/memory/core 제외 |
+| Phase 6 evaluation | D-081 four-row readiness offline contract | r3 exact tuple과 v2 runtime/evidence/gate verified; provider 0/$0, clean preflight/live outcome pending, comparison/memory/core 제외 |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -69,6 +69,18 @@ correction harness commit은 `7e40e27446bcf011f700c219a96983e5670422f4`다. Orig
 outcome은 바꾸지 않는다. Final verification은 focused 331 passed, repository-wide 1,162 collected 중 1,155
 passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와 `git diff --check`를 통과했다.
 Provider call은 0이며 추가 model cost는 `$0`이다.
+
+D-081은 D-080 single-row 관찰을 그대로 frozen population budget으로 부르지 않고 public process usage만
+사용해 condition-neutral 후보를 만든다. 새 exact ID
+`generic-baseline-readiness-v2v5-20260803-r3`는 D-075/D-077의 ordered Babel/Moto/pyfakefs/HF Hub,
+generic V2/V5 model/prompt/tool/context, retry 0과 output 25,000을 유지한다. Model/tool call limit은
+`null`로 기록·reconcile만 하고, total token 2,400,000과 wall 1,800초 및 retained guards를 강제한다.
+Runtime/evidence/gate는 각각 v2로 versioning한다. Source reserve는 `$10.9125`/run, four-row `$43.65`,
+cap `$44`다. Executable offline verification은 완료됐고 provider call과 model cost는 0이다. Clean
+preflight, live approval/hash/run/result/gate는 아직 없다. D-081은 calibration-only이고
+baseline/memory/core를 열지 않는다.
+동일 ceiling의 96-run reserve `$1,047.60`과 원래 `$150` cap의 충돌은 readiness 뒤 별도 decision으로
+해결한다. D-075/D-077/D-079/D-080은 immutable하다.
 
 ## 1. Sequencing rule
 
@@ -174,7 +186,54 @@ qualification, false campaign gate와 task outcome은 변경하지 않는다.
   machine audit를 통과한다.
 - 세 sentinel과 fault schedule이 freeze되고 `include_in_core_metrics=false`다.
 
-## Current result-seal gate — D-080 D-079 live completion and projection correction
+## Current source gate — D-081 condition-neutral generic V2/V5 readiness
+
+목표: D-075/D-077의 diverse four-row panel과 generic agent tuple을 유지하면서 model/tool call-count
+admission만 제거한 exact r3 source contract를 만든다. Public process evidence로 total-token/wall ceiling을
+사전 산출하고, historical artifact나 hidden outcome을 tuning input으로 사용하지 않는다.
+
+### Ordered work items
+
+1. **고정:** Exact ID `generic-baseline-readiness-v2v5-20260803-r3`, ordered Babel/Moto/pyfakefs/HF Hub,
+   원 dataset role, `no_memory` repetition 1과 seed `20260723`을 유지한다.
+2. **고정:** `gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
+   `phase-evidence-v5`, SDK retry 0, output 25,000, sidecar absent와 fault none을 유지한다.
+3. **구현:** Model/tool call limit은 exact pair `null`이고 `model-tool-observability-only-v1` 아래 counter를
+   admission이 아닌 telemetry로 보존한다. Total token 2,400,000, wall 1,800초와 exact-request,
+   cost, loop, state/idempotency, constrained-tool, Docker/network/evaluator guard를 유지한다.
+4. **구현:** Public derivation을 content-addressed
+   `reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`에 결속한다.
+
+   ```text
+   (1,790,707 + 84 * 2,000 + 25,000) * 1.2
+   = 2,380,448.4 -> round_up(100,000) = 2,400,000
+
+   856.559s * 2 = 1,713.118s -> round_up(300s) = 1,800s
+   ```
+
+5. **구현:** `generic-baseline-runtime-contract-v2`,
+   `generic-baseline-runtime-evidence-v2`, `generic-baseline-readiness-gate-v2`를 사용한다. 네 row 모두의
+   exact-one `disabled_call_guard_contract` projection과 terminal-loop failure 0을 gate에 포함한다.
+6. **고정:** 2026-08-03T01:08:49Z pricing에서
+   `(2,400,000 + 25,000) * $4.50/M = $10.9125`/run, four-row `$43.65`, cap `$44`를 사용한다.
+7. **완료:** Repository-wide 1,204 collected 중 1,197 passed/7 environment-dependent skipped,
+   Ruff, Python compileall과 `git diff --check`를 통과했다. Provider call과 model cost는 0이다.
+8. **대기:** Tracked change를 clean commit으로 만든 뒤 provider를 호출하지 않는 preflight에서 exact
+   task/package/image/evaluator/SDK/pricing/runtime/schedule/commit hash를 만든다.
+9. **승인 전 금지:** Exact execution hash와 최대 `$44`에 대한 별도 사용자 승인 전 provider를 호출하지
+   않는다. Source YAML의 false/null approval field는 authority가 아니다.
+10. **후속 결정:** Readiness 결과 뒤 fair comparison budget과 cost plan을 별도로 freeze한다. 같은 ceiling의
+    96-run theoretical reserve `$1,047.60`은 원래 `$150` cap과 충돌하므로 자동 승격하지 않는다.
+
+### Gate status — offline contract verified; clean preflight/live evidence pending
+
+- Provider call 0, model cost `$0`; live approval/hash/run/result/measured usage/gate outcome은 없다.
+- D-081은 calibration-only이고 `analysis_ready=false`, comparison denominator, no-memory baseline,
+  memory admission과 core를 열지 않는다.
+- Hidden success/failure는 readiness gate predicate가 아니며 task-specific tuning을 승인하지 않는다.
+- D-075/D-077/D-079/D-080 source, consumed identity, raw/portable artifact, original/derived gate는 immutable하다.
+
+## Historical result-seal gate — D-080 D-079 live completion and projection correction
 
 목표: D-079의 정확히 한 번 실행된 결과를 재실행하거나 원 artifact를 수정하지 않고 봉인한다. 실제
 workflow completion, hidden task outcome과 gate aggregation defect를 분리하고, 앞으로 같은 exact-one

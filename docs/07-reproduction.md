@@ -1064,3 +1064,67 @@ Final verification evidence는 focused 331 passed, repository-wide 1,162 collect
 environment-dependent skipped다. Ruff, Python compileall, JSON parse와 `git diff --check`도 통과했다. D-080
 verification의 provider call은 0이고 추가 model cost는 `$0`이다. Hidden assertion,
 private evaluator output 또는 reference patch를 reproduction 절차에서 열거나 portable record에 넣지 않는다.
+
+## D-081 r3 source audit — no live execution or approval yet
+
+D-081 exact source identity와 public derivation만 inspect한다. D-075/D-077/D-079/D-080 live command를
+재실행하지 않는다.
+
+```powershell
+Get-Content -Raw -Encoding utf8 `
+  experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml
+
+Get-Content -Raw -Encoding utf8 `
+  reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json
+```
+
+Source에는 D-075/D-077과 같은 ordered Babel, Moto, pyfakefs, HF Hub task, `no_memory` repetition 1,
+dated mini medium/standard/default, prompt V3, tool V2/context V5, SDK retry 0과 output 25,000이 있어야 한다.
+Model/tool limit은 둘 다 YAML `null`, total token은 2,400,000, wall은 1,800초여야 한다. Null counter는
+`model-tool-observability-only-v1` telemetry이며 exact-request, token, wall, cost, loop, sandbox,
+constrained-tool와 evaluator guard를 제거하지 않는다.
+
+Derivation artifact의 arithmetic은 다음 값과 일치해야 한다.
+
+```text
+token subtotal = 1,790,707 + 84 * 2,000 + 25,000 = 1,983,707
+unrounded = 1,983,707 * 1.2 = 2,380,448.4
+rounded token budget = 2,400,000
+
+unrounded wall = 856.559 * 2 = 1,713.118 seconds
+rounded wall budget = 1,800 seconds
+
+per-run reserve = (2,400,000 + 25,000) * $4.50/M = $10.9125
+four-row reserve = $43.65
+suite cap = $44
+```
+
+Runtime/evidence/gate schema는 각각 `generic-baseline-runtime-contract-v2`,
+`generic-baseline-runtime-evidence-v2`, `generic-baseline-readiness-gate-v2`여야 한다. Gate는 네 row
+각각의 `qualification-gate-check-projection-v1` exact-one `disabled_call_guard_contract`를 요구한다.
+Historical generic v1이나 workflow probe v1을 r3 의미로 재해석하지 않는다.
+
+Executable offline validation은 다음 결과로 완료됐다.
+
+```text
+pytest: 1,204 collected; 1,197 passed; 7 environment-dependent skipped
+ruff: passed
+python compileall: passed
+git diff --check: passed
+provider calls: 0
+model cost: $0
+```
+
+Tracked tree를 clean commit으로 만든 경우에만 다음 **no-call** preflight를 고려한다.
+
+```powershell
+uv run --cache-dir .uv-cache --env-file .env patchloop evaluate `
+  --suite experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml `
+  --preflight-only
+```
+
+이 명령에 `--approve-live-cost`나 approved hash를 넣지 않는다. 현재 D-081에는 live approval 또는 execution
+hash가 없고 provider call/model cost는 0이다. Preflight가 나중에 exact clean-state hash를 만들더라도 그
+자체는 authority가 아니다. 사용자가 hash와 최대 `$44`를 별도로 승인하기 전에는 live command를 실행하지
+않는다. D-081은 calibration-only이고 comparison/no-memory/memory/core를 열지 않는다. 96-run theoretical
+reserve `$1,047.60`과 원래 `$150` cap의 충돌은 별도 freeze/cost decision 전까지 unresolved다.

@@ -848,3 +848,55 @@ predicate와 값은 original payload와 동일하다. 대체 여부는 gate payl
 closure도 바꾸지 않는다. Final verification은 focused 331 passed, repository-wide 1,162 collected 중 1,155
 passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와 `git diff --check`를 통과했다.
 Provider call은 0이며 추가 model cost는 `$0`이다.
+
+## 23. D-081 condition-neutral four-row readiness architecture
+
+D-081은 D-080의 single pyfakefs observation을 곧바로 population budget으로 승격하지 않는다. 대신
+D-075/D-077의 ordered Babel, Moto, pyfakefs, Hugging Face Hub panel과 generic V2/V5
+model-facing tuple을 그대로 사용한 새 experiment
+`generic-baseline-readiness-v2v5-20260803-r3`를 만든다. Task role, `no_memory` repetition 1,
+dated mini medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK retry 0,
+output 25,000, sidecar absent와 fault none은 바뀌지 않는다.
+
+Call-count policy만 네 row 모두에서 `model-tool-observability-only-v1`로 통일한다. Model/tool call
+limit은 `null`이지만 `ModelCalled`/`ToolCalled`, monotonic sequence, token/cost와 counter reconciliation은
+계속 필수다. Null은 admission censorship 제거이지 unrestricted execution이 아니다. Exact-request input과
+full response reservation, total-token 2,400,000, wall 1,800초, cost authorization, semantic-loop 및
+submission-rejection control, state/idempotency, constrained tool, Docker/network/evaluator boundary는
+계속 fail closed한다.
+
+Budget derivation은 task success나 private outcome을 쓰지 않고 evaluator까지 완주한 public process
+usage만 사용한다.
+
+```text
+max observed total token                       1,790,707
++ 84 observed model calls * 2,000 memory token   168,000
++ next response allowance                         25,000
+= subtotal                                     1,983,707
+* 1.2 headroom                                 2,380,448.4
+round up by 100,000                            2,400,000
+
+856.559 observed seconds * 2                   1,713.118 seconds
+round up by 300                                1,800 seconds
+```
+
+Historical generic runtime/gate v1의 의미를 넓히지 않는다. D-081 plan은
+`generic-baseline-runtime-contract-v2`, trace mirror는
+`generic-baseline-runtime-evidence-v2`, aggregate gate는
+`generic-baseline-readiness-gate-v2`를 사용한다. 각 row의 terminal qualification summary는
+`qualification-gate-check-projection-v1` 아래 exact-one `disabled_call_guard_contract`를 전달한다.
+Gate consumer는 네 projection 모두에서 exact schema/ID, strict integer count 1과 boolean true를
+요구한다. 이로써 D-080에서 수정한 producer/consumer 경계가 four-row aggregate에서도 빠지지 않도록
+한다.
+
+2026-08-03T01:08:49Z standard pricing을 사용한 authorization reserve는
+`(2,400,000 + 25,000) * $4.50/M = $10.9125`/run, four-row `$43.65`, suite cap `$44`다.
+이는 completion guarantee나 예상 invoice가 아니다. Source 단계에는 provider call, live approval,
+execution hash, run/result, measured cost 또는 gate outcome이 없다. D-081은 calibration-only이고 gate가
+통과해도 comparison tuple, no-memory baseline, memory admission 또는 core를 자동으로 열지 않는다.
+Offline runtime/qualification/gate 구현은 repository-wide 1,204 collected 중 1,197 passed/7
+environment-dependent skipped, Ruff, Python compileall과 `git diff --check`로 검증됐다. 이는 provider
+capability나 live readiness outcome이 아니다.
+동일 ceiling의 theoretical 96-run reserve `$1,047.60`은 원래 `$150` cap과 충돌하므로 readiness 뒤
+별도 cost/freeze architecture decision이 필요하다. D-075/D-077/D-079/D-080 artifact와 gate 의미는
+immutable하다.

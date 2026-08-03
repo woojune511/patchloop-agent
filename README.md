@@ -2,6 +2,31 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-03 D-081은 D-075/D-077에서 사용한 Babel, Moto, pyfakefs, Hugging Face Hub의 exact
+four-row panel과 generic V2/V5 agent tuple을 유지한 새 source identity
+`generic-baseline-readiness-v2v5-20260803-r3`를 고정한다. 모든 row는 `no_memory` 1회이며
+`gpt-5.4-mini-2026-03-17` medium/standard/default, `SYSTEM_PROMPT_V3`, tool v2/context
+`phase-evidence-v5`, SDK transport retry 0과 output 25,000을 공유한다. Model/tool call limit은
+`null`로 두어 `model-tool-observability-only-v1` 아래 계속 기록·reconcile하되 admission에는 사용하지
+않는다. Total-token 2,400,000, wall 1,800초와 exact-request, cost, loop, constrained-tool,
+Docker/network/evaluator guard는 유지한다. Public process evidence에서
+`(1,790,707 + 84 × 2,000 + 25,000) × 1.2 = 2,380,448.4`를 100,000-token 단위로 올림해
+2,400,000을 선택했고, `856.559초 × 2 = 1,713.118초`를 300초 단위로 올림해 1,800초를
+선택했다. Runtime/evidence/gate는 새
+`generic-baseline-runtime-contract-v2` / `generic-baseline-runtime-evidence-v2` /
+`generic-baseline-readiness-gate-v2`로 versioning하며 네 row 각각의 exact-one
+`disabled_call_guard_contract` projection을 요구한다. 2026-08-03T01:08:49Z에 확인한 standard
+pricing으로 계산한 reserve는 `(2,400,000 + 25,000) × $4.50/M = $10.9125`/run,
+four-row `$43.65`, cap `$44`다. 현재 D-081 source 단계의 provider call과 model cost는 0이며
+live 승인, execution hash, run/result, measured usage/cost와 gate outcome은 없다. 이 suite는
+calibration-only이고 comparison budget을 동결하거나 no-memory baseline, memory admission, core를 열지
+않는다. 같은 ceiling을 96-run에 기계적으로 적용한 보수적 reserve `$1,047.60`은 원래 `$150`
+project cap과 충돌하므로 readiness 뒤 별도 freeze/cost decision이 필요하다. D-075/D-077/D-079/D-080
+identity와 모든 historical artifact는 immutable하다. Source derivation은
+`reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`에 있다. Final offline
+verification은 repository-wide 1,204 collected 중 1,197 passed/7 environment-dependent skipped였고
+Ruff, Python compileall과 `git diff --check`도 통과했다. Clean no-call preflight와 live 결과는 아직 없다.
+
 2026-08-03 D-080은 승인 execution hash
 `sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791`로 정확히 한 번
 실행된 D-079 결과를 append-only로 seal한다. Pyfakefs `run_606349c2c56342d4`는 84 model/119 tool

@@ -12,7 +12,30 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-080 D-079 workflow completion observed; original gate projection defect sealed
+- 현재 milestone은 `D-081 condition-neutral generic V2/V5 four-row readiness offline contract;
+  executable verification complete, clean no-call preflight pending; no baseline freeze`다. Exact experiment ID는
+  `generic-baseline-readiness-v2v5-20260803-r3`이며 D-075/D-077의 Babel, Moto, pyfakefs, HF Hub
+  task와 순서, `no_memory` 1회, `gpt-5.4-mini-2026-03-17` medium/standard/default,
+  `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, SDK transport retry 0과 output 25,000을
+  유지한다. Model/tool call limit은 `null`이고 `model-tool-observability-only-v1` 아래 counter를
+  기록·reconcile하지만 admission guard로 사용하지 않는다. Total token 2,400,000과 wall 1,800초,
+  exact-request, cost, loop, constrained-tool, Docker/network/evaluator guard는 계속 강제한다. Public
+  process evidence에서 `((1,790,707 + 84 * 2,000 + 25,000) * 1.2) = 2,380,448.4`를
+  100,000-token quantum으로 올림해 2,400,000을 선택했고, `856.559s * 2 = 1,713.118s`를
+  300초 quantum으로 올림해 1,800초를 유지했다. 새 runtime/evidence/gate schema는 각각
+  `generic-baseline-runtime-contract-v2`, `generic-baseline-runtime-evidence-v2`,
+  `generic-baseline-readiness-gate-v2`이며 각 row의 exact-one
+  `disabled_call_guard_contract` projection을 요구한다. Final offline verification은 repository-wide
+  1,204 collected 중 1,197 passed/7 environment-dependent skipped, Ruff, Python compileall과
+  `git diff --check`를 통과했다. 2026-08-03T01:08:49Z 공식 standard pricing
+  `$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output을 사용한 reserve는
+  `(2,400,000 + 25,000) * $4.50/M = $10.9125`/run, four-row `$43.65`, cap `$44`다.
+  이 source stage의 provider call과 model cost는 0이고 live approval/execution hash/run/result/gate
+  outcome은 없다. D-081은 calibration-only이며 comparison denominator, no-memory baseline, memory
+  admission과 core를 열거나 comparison budget을 동결하지 않는다. 같은 ceiling의 96-run 보수적
+  reserve `$1,047.60`은 원래 `$150` project cap과 충돌하므로 readiness 뒤 별도 freeze/cost decision이
+  필요하다. Historical D-075/D-077/D-079/D-080 suite, hash, run, result, gate와 correction은 immutable하다.
+  Historical D-080 milestone은 `D-079 workflow completion observed; original gate projection defect sealed
   with an append-only derived correction; no baseline freeze`다. 승인 execution hash
   `sha256:70bc29196115cc6b201a30587d6974d3a05607345d447cb3a9144b0920c09791`로 D-079를 정확히
   한 번 실행한 `run_606349c2c56342d4`는 84 model/119 tool call, 1,790,707 token, 856,559ms와

@@ -2741,3 +2741,63 @@ Comparison denominator, no-memory baseline, memory admission and core remain clo
 artifact rewrite and hidden-driven tuning are not authorized. The next decision is to verify the projection fix
 offline and choose a condition-neutral baseline budget from public completion evidence without treating this
 single 84-call trajectory as the frozen population budget.
+
+## D-081 condition-neutral budget and readiness source evidence boundary
+
+D-081 adds source identity `generic-baseline-readiness-v2v5-20260803-r3` and content-addressed derivation
+`reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json`. It does not modify or combine the
+consumed D-075/D-077/D-079/D-080 executions, results, original gates or D-080 append-only correction.
+
+The exact panel keeps ordered Babel, Moto, pyfakefs and HF Hub, their original development roles, `no_memory`
+repetition 1, seed `20260723`, dated mini medium/standard/default, `SYSTEM_PROMPT_V3`, tool V2/context V5,
+SDK retry 0 and output 25,000. Model/tool limits are null under
+`model-tool-observability-only-v1`; telemetry remains required while count-based admission is absent. Retained
+run limits are total token 2,400,000 and wall 1,800 seconds plus the existing exact-request, cost, loop,
+state/idempotency, constrained-tool, Docker/network/evaluator guards.
+
+The derivation artifact selects evaluator-complete public process rows without using task success or private
+outcomes. Its maximum trajectory is D-079 pyfakefs at 1,790,707 token, 84 model calls and 856,559ms.
+
+```text
+1,790,707 + (84 * 2,000) + 25,000 = 1,983,707
+1,983,707 * 1.2 = 2,380,448.4
+round_up(2,380,448.4, 100,000) = 2,400,000
+
+856.559 * 2 = 1,713.118 seconds
+round_up(1,713.118, 300) = 1,800 seconds
+```
+
+The source binding names `generic-baseline-runtime-contract-v2`,
+`generic-baseline-runtime-evidence-v2`, `generic-baseline-readiness-gate-v2`, and exact-one
+`qualification-gate-check-projection-v1` check `disabled_call_guard_contract` for every row. These new names
+preserve historical v1 meaning. Repository-wide offline verification collected 1,204 tests and completed with
+1,197 passed and seven environment-dependent skips. Ruff, Python compileall and `git diff --check` also passed.
+The focused coverage includes an exact D-081 wall-clock block, budget-identity tamper rejection, approved-preflight
+to start-manifest binding and malformed gate projections. No provider request was made by this verification.
+
+Official standard pricing was recorded at 2026-08-03T01:08:49Z as `$0.75/M` input, `$0.075/M` cached input and
+`$4.50/M` output. The conservative source authorization arithmetic is
+`(2,400,000 + 25,000) * $4.50/M = $10.9125` per run, `$43.65` for four rows, cap `$44`.
+These are not measured cost or an invoice.
+
+At this documentation/source stage the evidence ledger is:
+
+```text
+provider calls = 0
+model cost = $0
+live approval = absent
+execution hash = absent
+run ID/result = absent
+measured usage/cost = absent
+executable offline tests = 1,197 passed / 7 environment-dependent skipped / 1,204 collected
+ruff / compileall / git diff --check = passed
+clean no-call preflight result = absent
+generic-baseline-readiness-gate-v2 outcome = absent
+comparison budget frozen = false
+no-memory baseline/memory admission/core unlocked = false
+```
+
+D-081 is calibration-only. Even a later process-gate pass cannot directly promote the same ceiling to 96 core
+runs: `$10.9125 * 96 = $1,047.60`, which conflicts with the original `$150` project cap. A separate
+predeclared budget/scale/freeze decision is required. Hidden outcomes cannot authorize task-specific tuning or
+automatic rerun.

@@ -1263,6 +1263,12 @@ class RunManifest(StrictModel):
             self.budget.max_model_calls is None
             or self.budget.max_tool_calls is None
         )
+        generic_count_observability = bool(
+            generic_baseline_readiness
+            and self.experiment is not None
+            and self.experiment.experiment_id
+            == "generic-baseline-readiness-v2v5-20260803-r3"
+        )
         if workflow_completion_probe and not (
             self.budget.max_model_calls is None
             and self.budget.max_tool_calls is None
@@ -1280,10 +1286,32 @@ class RunManifest(StrictModel):
                 "dated mini model, disabled call limits, 3M token ceiling, and "
                 "7200-second wall ceiling"
             )
-        if count_limits_disabled and not workflow_completion_probe:
+        if generic_count_observability and not (
+            self.budget.max_model_calls is None
+            and self.budget.max_tool_calls is None
+            and self.budget.max_total_tokens == 2_400_000
+            and self.budget.wall_clock_timeout_seconds == 1_800
+            and self.task_id
+            in {
+                "babel-strict-grouped-decimal-trailing-zeroes",
+                "moto-query-scanned-count",
+                "pyfakefs-makedirs-parent-traversal",
+                "hf-hub-xet-endpoint-propagation",
+            }
+            and self.model.model_id == "gpt-5.4-mini-2026-03-17"
+            and self.model.max_output_tokens == 25_000
+        ):
             raise ValueError(
-                "disabled model/tool call limits are reserved for the exact "
-                "workflow completion probe purpose"
+                "D-081 generic readiness requires the exact four-task identity, "
+                "dated mini model, disabled call limits, 2.4M token ceiling, "
+                "and 1800-second wall ceiling"
+            )
+        if count_limits_disabled and not (
+            workflow_completion_probe or generic_count_observability
+        ):
+            raise ValueError(
+                "disabled model/tool call limits are reserved for an exact "
+                "registered observability profile"
             )
         return self
 

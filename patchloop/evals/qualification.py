@@ -121,6 +121,12 @@ _GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET = Budget(
     max_total_tokens=1_200_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=2_400_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     max_model_calls=None,
     max_tool_calls=None,
@@ -133,12 +139,21 @@ _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID = (
 _WORKFLOW_COMPLETION_CALL_GUARD_POLICY = (
     "model-tool-observability-only-v1"
 )
+_GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = (
+    "generic-baseline-readiness-v2v5-20260803-r3"
+)
+_GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA = (
+    "generic-baseline-runtime-contract-v2"
+)
 _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     "generic-baseline-readiness-v2v5-20260802-r1": (
         _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
     ),
     "generic-baseline-readiness-v2v5-20260802-r2": (
         _GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
+    ),
+    _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (
+        _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
     ),
 }
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
@@ -652,6 +667,17 @@ def _execution_plan_matches(
             and manifest.model.transport_max_retries == 0
             and isinstance(expected_runtime_contract, dict)
             and expected_runtime_contract.get("schema_version")
+            == _GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA
+            and expected_runtime_contract.get("transport_max_retries") == 0
+            and expected_runtime_contract.get("call_guard_policy")
+            == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        )
+        or (
+            manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v5"
+            and manifest.model.transport_max_retries == 0
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
             == "workflow-completion-runtime-contract-v1"
             and expected_runtime_contract.get("transport_max_retries") == 0
             and expected_runtime_contract.get("call_guard_policy")
@@ -1069,10 +1095,19 @@ def _generic_baseline_runtime_contract_evidence(
         and manifest.experiment.purpose
         == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
     )
+    generic_count_observability = bool(
+        manifest.experiment is not None
+        and manifest.experiment.purpose
+        == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and manifest.experiment.experiment_id
+        == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+    )
     expected = {
         "schema_version": (
             "workflow-completion-runtime-evidence-v1"
             if workflow_completion_probe
+            else "generic-baseline-runtime-evidence-v2"
+            if generic_count_observability
             else "generic-baseline-runtime-evidence-v1"
         ),
         "transport_max_retries": 0,
@@ -1081,7 +1116,7 @@ def _generic_baseline_runtime_contract_evidence(
         "tool_schema_version": "v2",
         "context_policy_version": "phase-evidence-v5",
     }
-    if workflow_completion_probe:
+    if workflow_completion_probe or generic_count_observability:
         expected["call_guard_policy"] = (
             _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
         )
@@ -7131,7 +7166,7 @@ def _optional_counter_generation_block_valid(
     blocked_event,
     expected_retry_candidate_hash: str | None,
 ) -> bool:
-    """Validate the wall-only block for the exact disabled-call probe."""
+    """Validate a wall-only block for an exact disabled-call profile."""
 
     payload = blocked_event.payload
     usage = _budget_usage_before(events, blocked_event.sequence)
@@ -7169,6 +7204,24 @@ def _optional_counter_generation_block_valid(
         "total_tokens_used",
         "max_total_tokens",
     }
+    expected_budget = None
+    if experiment is not None:
+        if (
+            experiment.purpose
+            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            and experiment.experiment_id
+            == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+        ):
+            expected_budget = _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+        elif (
+            experiment.purpose
+            == ExperimentPurpose.GENERIC_BASELINE_READINESS
+            and experiment.experiment_id
+            == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        ):
+            expected_budget = (
+                _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+            )
     if (
         payload.get("schema_version")
         != _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA
@@ -7180,13 +7233,8 @@ def _optional_counter_generation_block_valid(
             type(payload.get(field)) is not int or payload[field] < 0
             for field in integer_fields
         )
-        or experiment is None
-        or experiment.purpose
-        != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-        or experiment.experiment_id
-        != _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
-        or manifest.budget
-        != _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+        or expected_budget is None
+        or manifest.budget != expected_budget
     ):
         return False
     wall_limit_ms = manifest.budget.wall_clock_timeout_seconds * 1000
@@ -10392,8 +10440,16 @@ def qualify_run(
         )
     if (
         experiment is not None
-        and experiment.purpose
-        == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        and (
+            experiment.purpose
+            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            or (
+                experiment.purpose
+                == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                and experiment.experiment_id
+                == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+            )
+        )
     ):
         forbidden_generation_blocks = [
             event.sequence
@@ -10468,11 +10524,22 @@ def qualify_run(
                 )
             ):
                 admission_tail_failures.append(event.sequence)
-        call_guard_contract_ok = bool(
-            experiment.experiment_id
+        expected_observability_budget = (
+            _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+            if experiment.experiment_id
             == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
-            and manifest.budget
-            == _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+            else _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+        )
+        exact_observability_profile = bool(
+            experiment.experiment_id
+            in {
+                _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID,
+                _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
+            }
+        )
+        call_guard_contract_ok = bool(
+            exact_observability_profile
+            and manifest.budget == expected_observability_budget
             and manifest.budget.max_model_calls is None
             and manifest.budget.max_tool_calls is None
             and generic_runtime_ok
@@ -12235,7 +12302,12 @@ def qualify_run(
     ):
         trace_check_ids.add("generic_runtime_contract")
         trace_check_ids.add("pricing_start_freshness")
-        if experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
+        if (
+            experiment.purpose
+            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            or experiment.experiment_id
+            == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        ):
             trace_check_ids.add("disabled_call_guard_contract")
     if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
         trace_check_ids.add("self_validation_lifecycle")
@@ -12345,6 +12417,9 @@ def qualify_run(
         "evaluation_reached": evaluation_reached,
         "outcome_kind": outcome.value,
         "purpose": experiment.purpose.value if experiment is not None else None,
+        "experiment_id": (
+            experiment.experiment_id if experiment is not None else None
+        ),
         "dataset_role": dataset_entry.role.value if dataset_entry is not None else None,
         "dataset_manifest_hash": dataset_hash,
         "suite_hash": experiment.suite_hash if experiment is not None else None,

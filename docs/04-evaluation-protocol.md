@@ -1334,3 +1334,48 @@ calibration-only exclusion, `analysis_ready=false`, no-memory baseline, memory a
 변경하지 않는다. Final offline verification은 focused 331 passed, repository-wide 1,162 collected 중 1,155
 passed/7 environment-dependent skipped였고 Ruff, Python compileall, JSON parse와 `git diff --check`를 통과했다.
 Provider call은 0이며 추가 model cost는 `$0`이다.
+
+### D-081 condition-neutral four-row readiness source protocol
+
+D-081은 새 exact ID `generic-baseline-readiness-v2v5-20260803-r3`로 D-075/D-077의 Babel,
+Moto, pyfakefs, HF Hub order와 generic V2/V5 tuple을 보존한다. 네 row는 모두 `no_memory` 한 번이며
+model/prompt/tool/context/retry/output, task role/package, sidecar absent와 fault-free policy를 바꾸지 않는다.
+검증 질문은 “call-count admission이 없는 동일한 condition-neutral ceiling에서 네 workflow가 모두
+official evaluator까지 완료되는가”이고 hidden correctness는 별도 outcome이다.
+
+Model/tool limits는 `null`이고 `model-tool-observability-only-v1` 아래 counter와 usage는 계속
+trace-qualified telemetry다. Total token 2,400,000, wall 1,800초, exact-request, cost, loop,
+constrained-tool, Docker/network/evaluator guard는 유지한다. Candidate는 evaluator-complete public process
+rows만 사용해 다음처럼 정했다.
+
+```text
+(1,790,707 max observed token
+ + 84 model calls * 2,000 memory-token allowance
+ + 25,000 next-response allowance)
+ * 1.2 headroom
+= 2,380,448.4 -> round up to 2,400,000
+
+856.559 seconds * 2 = 1,713.118 -> round up to 1,800 seconds
+```
+
+`generic-baseline-readiness-gate-v2`는 4/4 exact identity, terminal, trace-qualified, official evaluator
+completion, zero infrastructure/qualification/diagnostic/budget-terminal과 terminal-loop failure를 요구한다.
+또한 네 row 각각에서 `qualification-gate-check-projection-v1`의 exact-one
+`disabled_call_guard_contract`와 aggregate `call_guard_contract_passed=true`를 요구한다. Task success와
+SCRR는 gate 조건이 아니다. 한 row라도 빠지거나 projection이 malformed/duplicate/missing이면 gate는
+false이며 D-075/D-077/D-079 row를 합쳐 보충하거나 실패 row만 재실행하지 않는다.
+
+Runtime plan/trace schema는 각각 `generic-baseline-runtime-contract-v2`와
+`generic-baseline-runtime-evidence-v2`다. 이는 historical v1 의미를 소급 변경하지 않고 exact r3
+nullable-count policy를 분리한다. Report는 계속 calibration-only이며 ordinary metrics, paired comparison,
+failure-memory admission과 core에서 제외한다.
+
+2026-08-03T01:08:49Z standard pricing으로 계산한 conservative authorization reserve는
+`(2,400,000 + 25,000) * $4.50/M = $10.9125`/run, `$43.65`/four rows, cap `$44`다.
+Source contract 시점의 provider call/model cost는 0이고 live approval, execution hash, run/result,
+measured cost와 readiness outcome은 없다. Executable offline verification은 repository-wide 1,204
+collected 중 1,197 passed/7 environment-dependent skipped, Ruff, Python compileall과 `git diff --check`를
+통과했다. Clean no-call preflight는 아직 없다. Gate가 나중에 통과해도 comparison budget freeze, no-memory baseline, memory
+admission과 core는 별도 decision 전까지 닫혀 있다. 96-run theoretical reserve `$1,047.60`은 원래
+`$150` cap과 충돌하므로 comparison/core 규모·budget을 별도 사전 결정해야 한다. D-075/D-077/D-079/D-080
+evidence는 immutable하다.
