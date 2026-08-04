@@ -1382,3 +1382,25 @@ Get-Content reports/live-pilot/artifacts/d093-readiness-budget-outcome-correctio
 Builder output을 checked-in artifact와 canonical JSON으로 비교하면 exact rebuild가 되어야 한다. Builder는 D-092
 source가 한 바이트라도 달라지면 실패하며 provider SDK, runtime runner, SQLite 또는 evaluator를 import하지 않는다.
 이 절차는 D-092 결과를 수정하거나 successor experiment config/hash/approval을 만들지 않는다.
+
+## Inspect the D-094 high-headroom readiness source gate
+
+다음 검사는 provider나 evaluator를 호출하지 않고 exact source/config/runtime binding만 재현한다.
+
+```powershell
+Get-Content experiments/generic-high-headroom-readiness-v2v5-20260804-r1.yaml -Raw |
+  Out-Null
+Get-Content reports/live-pilot/artifacts/d094-high-headroom-readiness-source-gate.json -Raw |
+  ConvertFrom-Json | Out-Null
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' `
+  tests/test_d094_high_headroom_readiness.py `
+  tests/test_d094_source_gate_artifact.py
+.\.venv\Scripts\python.exe scripts/build_d094_high_headroom_readiness_source_gate.py --compact
+```
+
+Builder output은 checked-in artifact와 canonical JSON으로 exact 일치해야 한다. Artifact semantic body SHA는
+`sha256:ab7be9ad2448d1016b88d451e271330844fc11d8fd4b890f08142618446ff929`, file SHA는
+`sha256:6887936ec141496e35e3a9d3bd6c34cf04cf02d1849bf80208677151a692c6ed`다. 검사는 ordered three-task schedule,
+mini/runtime tuple, 3M/3,600s ceiling, 2026-08-04T14:47:00Z standard pricing, `$40.8375` reserve와 `$41`
+source cap을 확인해야 한다. 이 command는 no-call preflight나 execution hash를 만들지 않는다. 실제 provider 실행은
+그 다음 clean commit의 별도 preflight가 만든 one-use candidate hash와 max-`$41` 사용자 승인이 있어야 한다.

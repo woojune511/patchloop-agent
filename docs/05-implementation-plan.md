@@ -1377,3 +1377,22 @@ Next unblocked item:
 7. **다음 decision:** 동일 model/prompt/tool/context에서 per-run total-token policy만 바꾸는 별도
    condition-neutral readiness successor가 필요한지 결정한다. 이 decision 자체는 실행 권한이 아니며 새 ID,
    clean source, no-call preflight, execution hash와 비용 승인이 필요하다.
+
+## Current source gate — D-094 high-headroom diverse readiness panel
+
+목표: D-093의 candidate를 재현 가능한 exact source contract로 만들되 provider 실행 권한은 계속 닫아 둔다.
+
+1. **완료:** `generic-high-headroom-readiness-v2v5-20260804-r1`에 AnyIO, pyfakefs, HF Hub를 이 순서로 각
+   1회 `no_memory` 배치한다.
+2. **완료:** mini snapshot medium/standard/default, retry 0, prompt V3, tool v2, context v5와
+   `null/null/3M/3,600s`, output 25k tuple을 exact experiment ID에 결속한다.
+3. **완료:** 2026-08-04T14:47:00Z standard pricing으로 `$13.6125`/run, `$40.8375`/suite와 `$41`
+   source cap을 기록한다.
+4. **완료:** readiness를 3/3 terminal·qualified·accepted submission·official evaluator와 telemetry/process
+   integrity로 정의하고 task success, hidden acceptance와 SCRR은 predicate에서 분리한다.
+5. **닫힘:** source/offline 단계에는 preflight, execution hash, user approval, provider/evaluator call, baseline,
+   denominator, memory admission/index와 core authority가 없다.
+6. **다음:** clean source commit에서 no-call preflight를 수행하고, 생성된 exact candidate hash에 대해 최대
+   `$41`의 별도 사용자 승인을 받는다.
+7. **검증:** focused 56/56과 repository-wide two-shard 1,627 collected 중 1,620 passed/7
+   environment-dependent skipped, Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`가 통과했다.

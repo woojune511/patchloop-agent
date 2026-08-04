@@ -11,6 +11,7 @@ from typing import Any
 from patchloop.contracts import (
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     DatasetRole,
     EventType,
     ExperimentPurpose,
@@ -549,12 +550,22 @@ def calculate_budget_pressure(
             exact_manifest.experiment is not None
             and exact_manifest.experiment.purpose.value
             == "generic-baseline-readiness"
-            and exact_manifest.experiment.experiment_id
-            == "generic-baseline-readiness-v2v5-20260803-r3"
             and limits["model_calls"] is None
             and limits["tool_calls"] is None
-            and limits["total_tokens"] == 2_400_000
-            and limits["wall_clock_ms"] == 1_800_000
+            and (
+                (
+                    exact_manifest.experiment.experiment_id
+                    == "generic-baseline-readiness-v2v5-20260803-r3"
+                    and limits["total_tokens"] == 2_400_000
+                    and limits["wall_clock_ms"] == 1_800_000
+                )
+                or (
+                    exact_manifest.experiment.experiment_id
+                    == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+                    and limits["total_tokens"] == 3_000_000
+                    and limits["wall_clock_ms"] == 3_600_000
+                )
+            )
         )
         frozen_comparison = _frozen_comparison_profile(
             exact_manifest,
@@ -568,7 +579,7 @@ def calculate_budget_pressure(
         ):
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
-                "completion probe, D-081 generic readiness, or frozen "
+                "completion probe, registered generic readiness, or frozen "
                 "condition-neutral comparison observability contract"
             )
     max_output_tokens = _required_nonnegative_int(

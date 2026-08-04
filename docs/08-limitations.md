@@ -1190,3 +1190,17 @@ evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별
   memory rule admission/index 또는 core experiment를 자동으로 열지 않는다.
 - Task success, hidden acceptance와 SCRR을 readiness gate에서 제외하는 것은 correctness를 무시한다는 뜻이 아니다.
   Workflow가 끝까지 실행되는지와 최종 patch가 맞는지를 서로 다른 결과 축으로 보고한다.
+
+## D-094 freezes source identity, not completion or performance
+
+- 3M token과 3,600초는 generous finite safety ceiling이지 세 workflow의 completion guarantee가 아니다. 실제 run이
+  다시 resource guard에 걸리면 readiness는 pass가 아니라 budget-confounded로 남는다.
+- Model/tool call limit `null`은 해당 count를 admission guard에서 제외한다는 뜻일 뿐 token, wall, cost, constrained
+  tool, Docker/network, evaluator와 qualification guard를 제거하지 않는다.
+- `$40.8375`는 모든 budgeted token과 추가 output allowance를 최고 standard output rate로 계산한 conservative
+  suite reserve다. Expected spend, invoice, free-tier 적용 여부 또는 project-wide rollback-safe billing ledger가 아니다.
+- Task success, hidden acceptance와 SCRR을 gate에서 제외해도 결과는 계속 기록한다. 이 source panel은 agent를
+  완벽하게 만들거나 hidden failure로 튜닝하기 위한 실험이 아니라 workflow completion readiness calibration이다.
+- Source artifact는 clean preflight, execution hash, user approval, provider/evaluator call이나 result를 포함하지 않는다.
+  통과하더라도 baseline, denominator, memory rule admission/index 또는 core authority를 열지 않는다.
+- Historical suite/run/result는 변경하거나 자동 재실행하지 않는다.

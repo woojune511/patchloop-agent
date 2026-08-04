@@ -72,6 +72,9 @@ CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID = (
 CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID = (
     "anyio-workflow-completion-budget-only-v2v5-20260804-r1"
 )
+GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID = (
+    "generic-high-headroom-readiness-v2v5-20260804-r1"
+)
 
 
 class RunOutcomeKind(StrEnum):
@@ -1370,7 +1373,10 @@ class RunManifest(StrictModel):
             generic_baseline_readiness
             and self.experiment is not None
             and self.experiment.experiment_id
-            == "generic-baseline-readiness-v2v5-20260803-r3"
+            in {
+                "generic-baseline-readiness-v2v5-20260803-r3",
+                GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
+            }
         )
         historical_workflow_completion_probe = bool(
             workflow_completion_probe
@@ -1402,25 +1408,71 @@ class RunManifest(StrictModel):
                 "dated mini model, disabled call limits, and its registered "
                 "token and wall ceilings"
             )
+        generic_observability_profiles = {
+            "generic-baseline-readiness-v2v5-20260803-r3": {
+                "task_ids": {
+                    "babel-strict-grouped-decimal-trailing-zeroes",
+                    "moto-query-scanned-count",
+                    "pyfakefs-makedirs-parent-traversal",
+                    "hf-hub-xet-endpoint-propagation",
+                },
+                "max_total_tokens": 2_400_000,
+                "wall_clock_timeout_seconds": 1_800,
+            },
+            GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID: {
+                "task_ids": {
+                    "anyio-interrupt-runner-cleanup",
+                    "pyfakefs-makedirs-parent-traversal",
+                    "hf-hub-xet-endpoint-propagation",
+                },
+                "max_total_tokens": 3_000_000,
+                "wall_clock_timeout_seconds": 3_600,
+            },
+        }
+        generic_observability_profile = (
+            generic_observability_profiles.get(
+                self.experiment.experiment_id
+            )
+            if self.experiment is not None
+            else None
+        )
+        generic_high_headroom_row_identity = bool(
+            self.experiment is not None
+            and self.experiment.experiment_id
+            == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+            and self.experiment.dataset_role
+            == DatasetRole.MEMORY_DEVELOPMENT
+            and self.experiment.schedule_seed == 20260723
+            and self.experiment.repetition == 1
+            and self.experiment.schedule_order
+            == {
+                "anyio-interrupt-runner-cleanup": 1,
+                "pyfakefs-makedirs-parent-traversal": 2,
+                "hf-hub-xet-endpoint-propagation": 3,
+            }.get(self.task_id)
+            and self.memory.max_context_tokens == 2_000
+        )
         if generic_count_observability and not (
-            self.budget.max_model_calls is None
+            generic_observability_profile is not None
+            and self.budget.max_model_calls is None
             and self.budget.max_tool_calls is None
-            and self.budget.max_total_tokens == 2_400_000
-            and self.budget.wall_clock_timeout_seconds == 1_800
-            and self.task_id
-            in {
-                "babel-strict-grouped-decimal-trailing-zeroes",
-                "moto-query-scanned-count",
-                "pyfakefs-makedirs-parent-traversal",
-                "hf-hub-xet-endpoint-propagation",
-            }
+            and self.budget.max_total_tokens
+            == generic_observability_profile["max_total_tokens"]
+            and self.budget.wall_clock_timeout_seconds
+            == generic_observability_profile["wall_clock_timeout_seconds"]
+            and self.task_id in generic_observability_profile["task_ids"]
             and self.model.model_id == "gpt-5.4-mini-2026-03-17"
             and self.model.max_output_tokens == 25_000
+            and (
+                self.experiment.experiment_id
+                != GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+                or generic_high_headroom_row_identity
+            )
         ):
             raise ValueError(
-                "D-081 generic readiness requires the exact four-task identity, "
-                "dated mini model, disabled call limits, 2.4M token ceiling, "
-                "and 1800-second wall ceiling"
+                "generic count-observability readiness requires its exact task "
+                "identity, dated mini model, disabled call limits, and registered "
+                "token and wall ceilings"
             )
         if count_limits_disabled and not (
             workflow_completion_probe

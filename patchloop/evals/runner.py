@@ -47,6 +47,7 @@ from patchloop.contracts import (
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     Budget,
     DatasetRole,
     ExperimentPurpose,
@@ -272,6 +273,12 @@ GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET = Budget(
     max_total_tokens=2_400_000,
     wall_clock_timeout_seconds=1_800,
 )
+GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=3_000_000,
+    wall_clock_timeout_seconds=3_600,
+)
 GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     max_model_calls=None,
     max_tool_calls=None,
@@ -310,6 +317,12 @@ GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID = (
 GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = (
     "generic-baseline-readiness-v2v5-20260803-r3"
 )
+GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS = frozenset(
+    {
+        GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
+        GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
+    }
+)
 GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     GENERIC_BASELINE_READINESS_EXPERIMENT_ID: (
         GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
@@ -320,11 +333,15 @@ GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (
         GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
     ),
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID: (
+        GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET
+    ),
 }
 GENERIC_BASELINE_READINESS_COST_BY_EXPERIMENT_ID = {
     GENERIC_BASELINE_READINESS_EXPERIMENT_ID: (15.75, 16.0),
     GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID: (22.05, 23.0),
     GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (43.65, 44.0),
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID: (40.8375, 41.0),
 }
 GENERIC_BASELINE_READINESS_TASKS = [
     PILOT_TASK,
@@ -334,6 +351,29 @@ GENERIC_BASELINE_READINESS_TASKS = [
 ]
 GENERIC_BASELINE_READINESS_TASK_IDS = {
     Path(path).parent.name for path in GENERIC_BASELINE_READINESS_TASKS
+}
+GENERIC_HIGH_HEADROOM_READINESS_TASKS = [
+    "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+    "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+    "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+]
+GENERIC_BASELINE_READINESS_TASKS_BY_EXPERIMENT_ID = {
+    experiment_id: GENERIC_BASELINE_READINESS_TASKS
+    for experiment_id in (
+        GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
+        GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID,
+        GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
+    )
+} | {
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID: (
+        GENERIC_HIGH_HEADROOM_READINESS_TASKS
+    )
+}
+GENERIC_BASELINE_READINESS_TASK_IDS_BY_EXPERIMENT_ID = {
+    experiment_id: {Path(path).parent.name for path in tasks}
+    for experiment_id, tasks in (
+        GENERIC_BASELINE_READINESS_TASKS_BY_EXPERIMENT_ID.items()
+    )
 }
 WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID = (
     "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
@@ -438,6 +478,18 @@ COVERAGE_REJECTION_RUNTIME_CONTRACT_SCHEMA = "corrective-runtime-contract-v5"
 GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA = "generic-baseline-runtime-contract-v1"
 GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA = (
     "generic-baseline-runtime-contract-v2"
+)
+GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_CONTRACT_SCHEMA = (
+    "generic-high-headroom-readiness-runtime-contract-v1"
+)
+GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_EVIDENCE_SCHEMA = (
+    "generic-high-headroom-readiness-runtime-evidence-v1"
+)
+GENERIC_HIGH_HEADROOM_READINESS_GATE_SCHEMA = (
+    "generic-high-headroom-readiness-gate-v1"
+)
+GENERIC_HIGH_HEADROOM_READINESS_GATE_ID = (
+    "d094-generic-high-headroom-readiness"
 )
 WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA = (
     "workflow-completion-runtime-contract-v1"
@@ -814,11 +866,17 @@ def _experiment_runtime_contract(
     if suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS:
         count_observability = bool(
             suite.experiment_id
-            == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+            in GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         )
-        return {
+        high_headroom_readiness = bool(
+            suite.experiment_id
+            == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+        )
+        contract = {
             "schema_version": (
-                GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA
+                GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_CONTRACT_SCHEMA
+                if high_headroom_readiness
+                else GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA
                 if count_observability
                 else GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA
             ),
@@ -838,6 +896,24 @@ def _experiment_runtime_contract(
             ),
             "harness_git_commit": harness_git_commit,
         }
+        if high_headroom_readiness:
+            contract.update(
+                {
+                    "purpose": suite.purpose.value,
+                    "model_provider": suite.model,
+                    "model_id": suite.model_id,
+                    "reasoning_effort": suite.reasoning_effort,
+                    "reasoning_mode": suite.reasoning_mode,
+                    "service_tier": suite.service_tier,
+                    "max_output_tokens": suite.max_output_tokens,
+                    "budget": suite.budget.model_dump(mode="json"),
+                    "memory_max_context_tokens": suite.memory_token_budget,
+                    "memory_conditions": [
+                        condition.value for condition in suite.conditions
+                    ],
+                }
+            )
+        return contract
     if suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
         return {
             "schema_version": WORKFLOW_COMPLETION_RUNTIME_CONTRACT_SCHEMA,
@@ -1595,7 +1671,7 @@ class ExperimentSuite(BaseModel):
         generic_count_observability = bool(
             self.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
             and self.experiment_id
-            == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+            in GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         )
         if (
             self.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
@@ -1662,21 +1738,32 @@ class ExperimentSuite(BaseModel):
             expected_cost = GENERIC_BASELINE_READINESS_COST_BY_EXPERIMENT_ID.get(
                 self.experiment_id
             )
+            expected_tasks = (
+                GENERIC_BASELINE_READINESS_TASKS_BY_EXPERIMENT_ID.get(
+                    self.experiment_id
+                )
+            )
             if (
                 expected_budget is None
                 or expected_cost is None
+                or expected_tasks is None
                 or [_normalized_task_path(task) for task in self.tasks]
-                != GENERIC_BASELINE_READINESS_TASKS
+                != expected_tasks
                 or self.conditions != [MemoryCondition.NO_MEMORY]
                 or self.repetitions != 1
                 or self.transport_max_retries != 0
+                or (
+                    self.experiment_id
+                    == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+                    and self.memory_token_budget != 2_000
+                )
                 or self.live_cost_approved is not False
                 or self.approved_execution_hash is not None
                 or self.pilot_run_id is not None
             ):
                 raise ValueError(
                     "generic baseline readiness requires an exact registered id, "
-                    "ordered four-task panel, no_memory, one repetition, "
+                    "its ordered task panel, no_memory, one repetition, "
                     "transport_max_retries=0, and no embedded approval or pilot"
                 )
             assert expected_budget is not None
@@ -3575,12 +3662,16 @@ def preflight_suite(
         )
     if (
         suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
-        and loaded_ids != GENERIC_BASELINE_READINESS_TASK_IDS
+        and loaded_ids
+        != GENERIC_BASELINE_READINESS_TASK_IDS_BY_EXPERIMENT_ID.get(
+            suite.experiment_id,
+            set(),
+        )
     ):
         _block(
             blockers,
             "GENERIC_BASELINE_READINESS_TASK_SET_MISMATCH",
-            "generic baseline readiness must use exactly the frozen four-task panel",
+            "generic baseline readiness must use its exact registered task panel",
         )
     if (
         suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
@@ -4137,11 +4228,19 @@ def _assert_manifest_matches_preflight(
         in {
             GENERIC_BASELINE_RUNTIME_CONTRACT_SCHEMA,
             GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA,
+            GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_CONTRACT_SCHEMA,
         }
     ):
         count_observability = bool(
             expected_runtime_contract.get("schema_version")
-            == GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA
+            in {
+                GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA,
+                GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_CONTRACT_SCHEMA,
+            }
+        )
+        high_headroom_readiness = bool(
+            expected_runtime_contract.get("schema_version")
+            == GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_CONTRACT_SCHEMA
         )
         actual_runtime_contract = {
             "schema_version": expected_runtime_contract.get("schema_version"),
@@ -4161,6 +4260,29 @@ def _assert_manifest_matches_preflight(
             ),
             "harness_git_commit": manifest.harness_git_commit,
         }
+        if high_headroom_readiness:
+            actual_runtime_contract.update(
+                {
+                    "purpose": (
+                        manifest.experiment.purpose.value
+                        if manifest.experiment is not None
+                        else None
+                    ),
+                    "model_provider": manifest.model.provider,
+                    "model_id": manifest.model.model_id,
+                    "reasoning_effort": manifest.model.reasoning_effort,
+                    "reasoning_mode": manifest.model.reasoning_mode,
+                    "service_tier": manifest.model.service_tier,
+                    "max_output_tokens": manifest.model.max_output_tokens,
+                    "budget": manifest.budget.model_dump(mode="json"),
+                    "memory_max_context_tokens": (
+                        manifest.memory.max_context_tokens
+                    ),
+                    "memory_conditions": [
+                        condition.value for condition in suite.conditions
+                    ],
+                }
+            )
     elif (
         isinstance(expected_runtime_contract, dict)
         and expected_runtime_contract.get("schema_version")
@@ -4428,6 +4550,60 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             raw_checks,
             "persisted_result",
         )
+    if (
+        payload.get("experiment_id")
+        == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+    ):
+        readiness_check_ids = (
+            "submission_lifecycle",
+            "prompt_token_integrity",
+            "usage_reconciliation",
+            "persisted_result",
+            "disabled_call_guard_contract",
+        )
+        summary["readiness_checks"] = {
+            check_id: _qualification_gate_check_projection(
+                raw_checks,
+                check_id,
+            )
+            for check_id in readiness_check_ids
+        }
+        call_guard_matches = [
+            check
+            for check in raw_checks
+            if isinstance(check, dict)
+            and check.get("check_id") == "disabled_call_guard_contract"
+        ]
+        call_guard_details = (
+            call_guard_matches[0].get("details")
+            if len(call_guard_matches) == 1
+            and isinstance(call_guard_matches[0].get("details"), dict)
+            else {}
+        )
+        block_sequences = []
+        for field in (
+            "forbidden_generation_block_sequences",
+            "forbidden_tail_block_sequences",
+        ):
+            sequences = call_guard_details.get(field)
+            if isinstance(sequences, list) and all(
+                type(sequence) is int and sequence >= 1
+                for sequence in sequences
+            ):
+                block_sequences.extend(sequences)
+            elif sequences is not None:
+                block_sequences.append(-1)
+        summary["model_or_tool_call_budget_blocks"] = {
+            "schema_version": "call-budget-block-projection-v1",
+            "source_check_count": len(call_guard_matches),
+            "source_check_passed": (
+                call_guard_matches[0].get("passed")
+                if len(call_guard_matches) == 1
+                and type(call_guard_matches[0].get("passed")) is bool
+                else None
+            ),
+            "event_sequences": sorted(set(block_sequences)),
+        }
     call_guard_check_id = "disabled_call_guard_contract"
     comparison_no_memory_observability = bool(
         (
@@ -4459,7 +4635,7 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             payload.get("purpose")
             == ExperimentPurpose.GENERIC_BASELINE_READINESS.value
             and payload.get("experiment_id")
-            == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+            in GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         )
         or comparison_no_memory_observability
     ):
@@ -4875,13 +5051,39 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
-    from patchloop.evals.qualification import qualify_run
+    from patchloop.evals.qualification import (
+        load_trace_qualification,
+        qualify_run,
+    )
 
     task_path = Path(task)
+    run_root = runtime_root()
     payload = qualify_run(
         run_id,
         task_dir=task_path.parent if task_path.is_file() else task_path,
+        root=run_root,
     )
+    if (
+        payload.get("experiment_id")
+        == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+    ):
+        persisted = load_trace_qualification(run_id, root=run_root)
+        recomputed = qualify_run(
+            run_id,
+            task_dir=task_path.parent if task_path.is_file() else task_path,
+            root=run_root,
+            persist=False,
+        )
+        summary = _terminal_qualification_summary(persisted)
+        summary["read_only_recomputation"] = {
+            "schema_version": "qualification-read-only-recomputation-v1",
+            "matched": canonical_json(persisted) == canonical_json(recomputed),
+            "qualification_hash": persisted.get("qualification_hash"),
+            "recomputed_qualification_hash": recomputed.get(
+                "qualification_hash"
+            ),
+        }
+        return summary
     return _terminal_qualification_summary(payload)
 
 
@@ -5225,6 +5427,11 @@ def _completion_gate(
 ) -> dict[str, Any] | None:
     """Separate runtime completion from task success for the high-budget panel."""
 
+    generic_expected_tasks = (
+        GENERIC_BASELINE_READINESS_TASKS_BY_EXPERIMENT_ID.get(
+            suite.experiment_id
+        )
+    )
     completion_panel = bool(
         suite.purpose
         == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
@@ -5242,14 +5449,20 @@ def _completion_gate(
         == GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
             suite.experiment_id
         )
+        and generic_expected_tasks is not None
         and [_normalized_task_path(task) for task in suite.tasks]
-        == GENERIC_BASELINE_READINESS_TASKS
+        == generic_expected_tasks
         and suite.transport_max_retries == 0
     )
     generic_count_observability = bool(
         generic_baseline_readiness
         and suite.experiment_id
-        == GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        in GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
+    )
+    generic_high_headroom_readiness = bool(
+        generic_baseline_readiness
+        and suite.experiment_id
+        == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
     )
     workflow_completion_probe = bool(
         suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
@@ -5367,10 +5580,10 @@ def _completion_gate(
             budget_terminal_run_ids.append(run_id)
 
     expected_runs = (
-        12
+        len(generic_expected_tasks)
+        if generic_baseline_readiness and generic_expected_tasks is not None
+        else 12
         if condition_neutral_campaign
-        else 4
-        if generic_baseline_readiness
         else 1
         if (
             workflow_completion_probe
@@ -5395,7 +5608,9 @@ def _completion_gate(
             len(rows) == expected_runs
             and {row.get("task_id") for row in rows}
             == (
-                GENERIC_BASELINE_READINESS_TASK_IDS
+                GENERIC_BASELINE_READINESS_TASK_IDS_BY_EXPERIMENT_ID[
+                    suite.experiment_id
+                ]
                 if generic_baseline_readiness
                 else MEMORY_DEVELOPMENT_TASK_IDS
                 if condition_neutral_campaign
@@ -5553,6 +5768,29 @@ def _completion_gate(
         for row in rows
     )
 
+    def exact_projected_check_passed(
+        row: dict[str, Any],
+        *,
+        collection: str,
+        expected_check_ids: set[str],
+        check_id: str,
+    ) -> bool:
+        qualification = row.get("qualification") or {}
+        checks = qualification.get(collection)
+        projection = checks.get(check_id) if isinstance(checks, dict) else None
+        return bool(
+            isinstance(projection, dict)
+            and set(checks) == expected_check_ids
+            and set(projection)
+            == {"schema_version", "check_id", "check_count", "passed"}
+            and projection.get("schema_version")
+            == QUALIFICATION_GATE_CHECK_PROJECTION_SCHEMA
+            and projection.get("check_id") == check_id
+            and type(projection.get("check_count")) is int
+            and projection.get("check_count") == 1
+            and projection.get("passed") is True
+        )
+
     def qualification_check_passed(
         row: dict[str, Any],
         check_id: str,
@@ -5594,6 +5832,167 @@ def _completion_gate(
                 )
                 for row in rows
             )
+        )
+    )
+    high_headroom_check_ids = {
+        "submission_lifecycle",
+        "prompt_token_integrity",
+        "usage_reconciliation",
+        "persisted_result",
+        "disabled_call_guard_contract",
+    }
+    accepted_submission_runs = sum(
+        bool(
+            (row.get("result") or {}).get("agent_submission_status")
+            == "completed"
+            and exact_projected_check_passed(
+                row,
+                collection="readiness_checks",
+                expected_check_ids=high_headroom_check_ids,
+                check_id="submission_lifecycle",
+            )
+        )
+        for row in rows
+    )
+    prompt_telemetry_complete_runs = sum(
+        exact_projected_check_passed(
+            row,
+            collection="readiness_checks",
+            expected_check_ids=high_headroom_check_ids,
+            check_id="prompt_token_integrity",
+        )
+        for row in rows
+    )
+    usage_reconciled_runs = sum(
+        exact_projected_check_passed(
+            row,
+            collection="readiness_checks",
+            expected_check_ids=high_headroom_check_ids,
+            check_id="usage_reconciliation",
+        )
+        for row in rows
+    )
+    persisted_result_verified_runs = sum(
+        exact_projected_check_passed(
+            row,
+            collection="readiness_checks",
+            expected_check_ids=high_headroom_check_ids,
+            check_id="persisted_result",
+        )
+        for row in rows
+    )
+    qualification_recomputed_runs = sum(
+        bool(
+            isinstance(
+                (row.get("qualification") or {}).get(
+                    "read_only_recomputation"
+                ),
+                dict,
+            )
+            and (row.get("qualification") or {})[
+                "read_only_recomputation"
+            ].get("schema_version")
+            == "qualification-read-only-recomputation-v1"
+            and set(
+                (row.get("qualification") or {})[
+                    "read_only_recomputation"
+                ]
+            )
+            == {
+                "schema_version",
+                "matched",
+                "qualification_hash",
+                "recomputed_qualification_hash",
+            }
+            and (row.get("qualification") or {})[
+                "read_only_recomputation"
+            ].get("matched")
+            is True
+            and valid_sha256_identity(
+                (row.get("qualification") or {})[
+                    "read_only_recomputation"
+                ].get("qualification_hash")
+            )
+            and valid_sha256_identity(
+                (row.get("qualification") or {})[
+                    "read_only_recomputation"
+                ].get("recomputed_qualification_hash")
+            )
+            and valid_sha256_identity(
+                (row.get("qualification") or {}).get(
+                    "qualification_hash"
+                )
+            )
+            and (row.get("qualification") or {})[
+                "read_only_recomputation"
+            ].get("qualification_hash")
+            == (row.get("qualification") or {})[
+                "read_only_recomputation"
+            ].get("recomputed_qualification_hash")
+            == (row.get("qualification") or {}).get("qualification_hash")
+        )
+        for row in rows
+    )
+    model_or_tool_call_budget_block_sequences = sorted(
+        {
+            sequence
+            for row in rows
+            for sequence in (
+                (
+                    (
+                        (row.get("qualification") or {}).get(
+                            "model_or_tool_call_budget_blocks"
+                        )
+                        or {}
+                    ).get("event_sequences", [])
+                )
+                if isinstance(
+                    (
+                        (row.get("qualification") or {}).get(
+                            "model_or_tool_call_budget_blocks"
+                        )
+                        or {}
+                    ).get("event_sequences", []),
+                    list,
+                )
+                else [-1]
+            )
+            if type(sequence) is int
+        }
+    )
+    clear_call_budget_projection = {
+        "schema_version": "call-budget-block-projection-v1",
+        "source_check_count": 1,
+        "source_check_passed": True,
+        "event_sequences": [],
+    }
+    model_or_tool_call_budget_block_rows = [
+        row
+        for row in rows
+        if (row.get("qualification") or {}).get(
+            "model_or_tool_call_budget_blocks"
+        )
+        != clear_call_budget_projection
+    ]
+    model_or_tool_call_budget_block_run_ids = [
+        row["run_id"]
+        for row in model_or_tool_call_budget_block_rows
+        if isinstance(row.get("run_id"), str)
+    ]
+    call_budget_block_projection_valid = bool(
+        not generic_high_headroom_readiness
+        or not model_or_tool_call_budget_block_rows
+    )
+    high_headroom_evidence_passed = bool(
+        not generic_high_headroom_readiness
+        or (
+            accepted_submission_runs == expected_runs
+            and prompt_telemetry_complete_runs == expected_runs
+            and usage_reconciled_runs == expected_runs
+            and persisted_result_verified_runs == expected_runs
+            and qualification_recomputed_runs == expected_runs
+            and call_budget_block_projection_valid
+            and not model_or_tool_call_budget_block_sequences
         )
     )
     terminal_loop_failure_run_ids = [
@@ -5650,6 +6049,7 @@ def _completion_gate(
         and infrastructure_errors == 0
         and qualification_errors == 0
         and diagnostic_errors == 0
+        and high_headroom_evidence_passed
         and (
             not saturation_pilot
             or diagnostic_passed_runs == expected_runs
@@ -5688,7 +6088,9 @@ def _completion_gate(
     ):
         return {
             "schema_version": (
-                CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_SCHEMA
+                GENERIC_HIGH_HEADROOM_READINESS_GATE_SCHEMA
+                if generic_high_headroom_readiness
+                else CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_SCHEMA
                 if condition_neutral_pilot
                 else "condition-neutral-no-memory-campaign-readiness-gate-v1"
                 if condition_neutral_campaign
@@ -5711,7 +6113,13 @@ def _completion_gate(
                 else "no-memory-budget-pilot-gate-v1"
             ),
             **(
-                {"gate_id": CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_ID}
+                {
+                    "gate_id": GENERIC_HIGH_HEADROOM_READINESS_GATE_ID,
+                    "calibration_only": True,
+                    "high_headroom_readiness": True,
+                }
+                if generic_high_headroom_readiness
+                else {"gate_id": CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_ID}
                 if condition_neutral_pilot
                 else {
                     "gate_id": (
@@ -5740,6 +6148,35 @@ def _completion_gate(
             "infrastructure_errors": infrastructure_errors,
             "qualification_errors": qualification_errors,
             "diagnostic_errors": diagnostic_errors,
+            **(
+                {
+                    "accepted_submission_runs": accepted_submission_runs,
+                    "prompt_telemetry_complete_runs": (
+                        prompt_telemetry_complete_runs
+                    ),
+                    "usage_reconciled_runs": usage_reconciled_runs,
+                    "persisted_result_verified_runs": (
+                        persisted_result_verified_runs
+                    ),
+                    "qualification_recomputed_runs": (
+                        qualification_recomputed_runs
+                    ),
+                    "model_or_tool_call_budget_block_runs": (
+                        len(model_or_tool_call_budget_block_rows)
+                    ),
+                    "model_or_tool_call_budget_block_run_ids": (
+                        model_or_tool_call_budget_block_run_ids
+                    ),
+                    "model_or_tool_call_budget_block_sequences": (
+                        model_or_tool_call_budget_block_sequences
+                    ),
+                    "readiness_evidence_passed": (
+                        high_headroom_evidence_passed
+                    ),
+                }
+                if generic_high_headroom_readiness
+                else {}
+            ),
             **(
                 {
                     "task_identity_passed": readiness_task_identity_passed,

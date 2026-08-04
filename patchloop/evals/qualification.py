@@ -12,6 +12,7 @@ from patchloop.contracts import (
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     Artifact,
     Budget,
     Checkpoint,
@@ -136,6 +137,12 @@ _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET = Budget(
     max_total_tokens=2_400_000,
     wall_clock_timeout_seconds=1_800,
 )
+_GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=3_000_000,
+    wall_clock_timeout_seconds=3_600,
+)
 _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     max_model_calls=None,
     max_tool_calls=None,
@@ -165,8 +172,17 @@ _WORKFLOW_COMPLETION_CALL_GUARD_POLICY = (
 _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = (
     "generic-baseline-readiness-v2v5-20260803-r3"
 )
+_GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS = frozenset(
+    {
+        _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
+        GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
+    }
+)
 _GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA = (
     "generic-baseline-runtime-contract-v2"
+)
+_GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_EVIDENCE_SCHEMA = (
+    "generic-high-headroom-readiness-runtime-evidence-v1"
 )
 _CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA = (
     "condition-neutral-comparison-runtime-contract-v1"
@@ -209,6 +225,9 @@ _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     ),
     _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID: (
         _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+    ),
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID: (
+        _GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET
     ),
 }
 _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS = frozenset(
@@ -889,6 +908,65 @@ def _execution_plan_matches(
             == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
         )
         or (
+            manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v5"
+            and manifest.model.transport_max_retries == 0
+            and manifest.experiment is not None
+            and manifest.experiment.experiment_id
+            == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+            and isinstance(expected_runtime_contract, dict)
+            and set(expected_runtime_contract)
+            == {
+                "schema_version",
+                "purpose",
+                "memory_conditions",
+                "model_provider",
+                "model_id",
+                "reasoning_effort",
+                "reasoning_mode",
+                "service_tier",
+                "transport_max_retries",
+                "max_output_tokens",
+                "budget",
+                "memory_max_context_tokens",
+                "tool_schema_version",
+                "context_policy_version",
+                "system_prompt_hash",
+                "tool_schema_hash",
+                "call_guard_policy",
+                "harness_git_commit",
+            }
+            and expected_runtime_contract.get("schema_version")
+            == "generic-high-headroom-readiness-runtime-contract-v1"
+            and expected_runtime_contract.get("purpose")
+            == ExperimentPurpose.GENERIC_BASELINE_READINESS.value
+            and expected_runtime_contract.get("memory_conditions")
+            == [MemoryCondition.NO_MEMORY.value]
+            and expected_runtime_contract.get("model_provider") == "openai"
+            and expected_runtime_contract.get("model_id")
+            == "gpt-5.4-mini-2026-03-17"
+            and expected_runtime_contract.get("reasoning_effort") == "medium"
+            and expected_runtime_contract.get("reasoning_mode") == "standard"
+            and expected_runtime_contract.get("service_tier") == "default"
+            and expected_runtime_contract.get("transport_max_retries") == 0
+            and expected_runtime_contract.get("max_output_tokens") == 25_000
+            and expected_runtime_contract.get("budget")
+            == _GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET.model_dump(
+                mode="json"
+            )
+            and expected_runtime_contract.get("memory_max_context_tokens")
+            == 2_000
+            and expected_runtime_contract.get("tool_schema_version") == "v2"
+            and expected_runtime_contract.get("context_policy_version")
+            == "phase-evidence-v5"
+            and expected_runtime_contract.get("system_prompt_hash")
+            == sha256_text(SYSTEM_PROMPT_V3)
+            and expected_runtime_contract.get("tool_schema_hash")
+            == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
+            and expected_runtime_contract.get("call_guard_policy")
+            == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        )
+        or (
             _condition_neutral_comparison_manifest_matches(manifest)
             and _condition_neutral_comparison_suite_matches(parsed_suite)
             and isinstance(expected_runtime_contract, dict)
@@ -1388,7 +1466,12 @@ def _generic_baseline_runtime_contract_evidence(
         and manifest.experiment.purpose
         == ExperimentPurpose.GENERIC_BASELINE_READINESS
         and manifest.experiment.experiment_id
-        == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+        in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
+    )
+    generic_high_headroom_readiness = bool(
+        manifest.experiment is not None
+        and manifest.experiment.experiment_id
+        == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
     )
     condition_neutral_comparison = (
         _condition_neutral_comparison_manifest_matches(manifest)
@@ -1412,6 +1495,12 @@ def _generic_baseline_runtime_contract_evidence(
             if condition_neutral_comparison
             else "workflow-completion-runtime-evidence-v1"
             if workflow_completion_probe
+            else _GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_EVIDENCE_SCHEMA
+            if (
+                manifest.experiment is not None
+                and manifest.experiment.experiment_id
+                == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+            )
             else "generic-baseline-runtime-evidence-v2"
             if generic_count_observability
             else "generic-baseline-runtime-evidence-v1"
@@ -1444,6 +1533,28 @@ def _generic_baseline_runtime_contract_evidence(
                 ),
                 "comparison_budget_policy": (
                     _condition_neutral_comparison_policy_binding()
+                ),
+            }
+        )
+    elif generic_high_headroom_readiness:
+        expected.update(
+            {
+                "purpose": manifest.experiment.purpose.value,
+                "model_provider": "openai",
+                "model_id": "gpt-5.4-mini-2026-03-17",
+                "reasoning_effort": "medium",
+                "reasoning_mode": "standard",
+                "service_tier": "default",
+                "max_output_tokens": 25_000,
+                "budget": (
+                    _GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET.model_dump(
+                        mode="json"
+                    )
+                ),
+                "memory_max_context_tokens": 2_000,
+                "memory_condition": MemoryCondition.NO_MEMORY.value,
+                "call_guard_policy": (
+                    _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
                 ),
             }
         )
@@ -7561,10 +7672,10 @@ def _optional_counter_generation_block_valid(
             experiment.purpose
             == ExperimentPurpose.GENERIC_BASELINE_READINESS
             and experiment.experiment_id
-            == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+            in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         ):
-            expected_budget = (
-                _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+            expected_budget = _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
+                experiment.experiment_id
             )
     if (
         payload.get("schema_version")
@@ -10799,7 +10910,7 @@ def qualify_run(
                 experiment.purpose
                 == ExperimentPurpose.GENERIC_BASELINE_READINESS
                 and experiment.experiment_id
-                == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+                in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
             )
             or (
                 condition_neutral_comparison
@@ -10888,14 +10999,16 @@ def qualify_run(
             )
             if experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-            else _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+            else _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
+                experiment.experiment_id
+            )
         )
         exact_observability_profile = bool(
             condition_neutral_comparison
             or experiment.experiment_id
             in (
                 set(_WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID)
-                | {_GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID}
+                | set(_GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS)
             )
         )
         call_guard_contract_ok = bool(
@@ -12728,7 +12841,7 @@ def qualify_run(
             experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
             or experiment.experiment_id
-            == _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+            in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         ):
             trace_check_ids.add("disabled_call_guard_contract")
     if condition_neutral_comparison:

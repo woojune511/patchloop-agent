@@ -45,6 +45,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     Artifact,
     Budget,
     Checkpoint,
@@ -3311,12 +3312,22 @@ class AgentRunner:
             manifest.experiment.purpose
             == ExperimentPurpose.GENERIC_BASELINE_READINESS
             and manifest.experiment.experiment_id
-            == "generic-baseline-readiness-v2v5-20260803-r3"
+            in {
+                "generic-baseline-readiness-v2v5-20260803-r3",
+                GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
+            }
+        )
+        generic_high_headroom_readiness = bool(
+            manifest.experiment.experiment_id
+            == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
         )
         document = {
             "schema_version": (
                 "workflow-completion-runtime-evidence-v1"
                 if workflow_completion_probe
+                else "generic-high-headroom-readiness-runtime-evidence-v1"
+                if manifest.experiment.experiment_id
+                == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
                 else "generic-baseline-runtime-evidence-v2"
                 if generic_count_observability
                 else "generic-baseline-runtime-evidence-v1"
@@ -3330,6 +3341,23 @@ class AgentRunner:
         if workflow_completion_probe or generic_count_observability:
             document["call_guard_policy"] = (
                 "model-tool-observability-only-v1"
+            )
+        if generic_high_headroom_readiness:
+            document.update(
+                {
+                    "purpose": manifest.experiment.purpose.value,
+                    "model_provider": manifest.model.provider,
+                    "model_id": manifest.model.model_id,
+                    "reasoning_effort": manifest.model.reasoning_effort,
+                    "reasoning_mode": manifest.model.reasoning_mode,
+                    "service_tier": manifest.model.service_tier,
+                    "max_output_tokens": manifest.model.max_output_tokens,
+                    "budget": manifest.budget.model_dump(mode="json"),
+                    "memory_max_context_tokens": (
+                        manifest.memory.max_context_tokens
+                    ),
+                    "memory_condition": manifest.memory.condition.value,
+                }
             )
         return document
 

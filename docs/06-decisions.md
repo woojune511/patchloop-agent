@@ -874,3 +874,25 @@ Evidence/issue:
 - Final verification은 focused 32/32, repository-wide sharded 1,571 collected 중 1,564 passed/7
   environment-dependent skipped이며 Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`를 통과했다.
 - Date: 2026-08-04
+
+### D-094 accepted source decision — freeze a diverse high-headroom readiness panel
+
+- Exact suite는 `generic-high-headroom-readiness-v2v5-20260804-r1`이고 AnyIO, pyfakefs, HF Hub를 순서대로
+  각 1회 `no_memory`로 실행하도록 source만 고정한다.
+- Runtime은 `gpt-5.4-mini-2026-03-17` medium/standard/default, SDK retry 0, prompt V3, tool v2,
+  context v5, output 25,000과 `null/null/3,000,000/3,600`이다. 새로운 high-headroom runtime/evidence/gate
+  schema와 exact experiment ID를 함께 결속한다.
+- 2026-08-04T14:47:00Z standard rate `$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output을
+  기록한다. Worst-rate reserve는 `$13.6125`/run과 `$40.8375`/suite이고 source cap은 `$41`이다.
+- Readiness는 3/3 terminal·qualified·accepted submission·official evaluator와 exact telemetry, persisted
+  qualification recomputation, process-confound 0을 요구한다. Task success, hidden acceptance와 SCRR은 요구하지
+  않는다.
+- Artifact 경로는 `reports/live-pilot/artifacts/d094-high-headroom-readiness-source-gate.json`, semantic body SHA는
+  `sha256:ab7be9ad2448d1016b88d451e271330844fc11d8fd4b890f08142618446ff929`, file SHA는
+  `sha256:6887936ec141496e35e3a9d3bd6c34cf04cf02d1849bf80208677151a692c6ed`다. Source 단계는
+  provider/evaluator를 호출하지 않고 execution hash, approval 또는 paid capability를 만들지 않는다.
+- Historical runs와 결과는 immutable하다. Baseline, comparison denominator, memory review/admission/index와 core는
+  닫혀 있으며, 다음 단계는 clean no-call preflight 뒤 exact hash에 대한 max-`$41` 사용자 승인이다.
+- Final verification은 focused 56/56, repository-wide two-shard 1,627 collected 중 1,620 passed/7
+  environment-dependent skipped이며 Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`를 통과했다.
+- Date: 2026-08-04

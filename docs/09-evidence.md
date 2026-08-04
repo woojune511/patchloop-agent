@@ -3169,3 +3169,31 @@ Portable artifact: `reports/live-pilot/artifacts/d093-readiness-budget-outcome-c
 `sha256:df8a35d7818dba3055ee4bb34519bd39abdc97d4d6add178d3d41b0521273941`.
 Final verification passed focused 32/32 and repository-wide sharded 1,564/1,571 tests with seven
 environment-dependent skips; Ruff, compileall, exact rebuild, JSON/hash and `git diff --check` also passed.
+
+## D-094 high-headroom readiness source evidence
+
+D-094 turns the D-093 candidate into exact source identity without running it. Suite
+`generic-high-headroom-readiness-v2v5-20260804-r1` orders AnyIO, pyfakefs and HF Hub once each under `no_memory`.
+It binds `gpt-5.4-mini-2026-03-17` medium/standard/default, SDK retry 0, prompt V3, tool v2, context v5,
+output 25,000 and the per-run `null/null/3,000,000/3,600` resource tuple to new high-headroom runtime contract,
+runtime evidence and completion-gate schemas.
+
+The official standard pricing snapshot was checked at 2026-08-04T14:47:00Z. Using `$4.50/M` as the worst configured
+rate gives `(3,000,000 + 25,000) × $4.50/M = $13.6125` per run and `$40.8375` for three runs; the source cap is
+`$41`. These are conservative authorization arithmetic, not measured usage or an invoice.
+
+The readiness predicate requires all three rows to be terminal, trace-qualified, accepted for submission and evaluated
+by the official evaluator. Persisted qualification must exactly match read-only recomputation; exact input telemetry,
+completed responses and truncation-disabled evidence must be complete; all specified infrastructure, qualification,
+diagnostic, budget, loop and call-budget confounds must be zero. Task success, hidden acceptance and SCRR are excluded
+from this workflow-readiness predicate.
+
+Portable source artifact: `reports/live-pilot/artifacts/d094-high-headroom-readiness-source-gate.json`. Semantic body SHA:
+`sha256:ab7be9ad2448d1016b88d451e271330844fc11d8fd4b890f08142618446ff929`. File SHA:
+`sha256:6887936ec141496e35e3a9d3bd6c34cf04cf02d1849bf80208677151a692c6ed`. The source stage
+made no provider/evaluator calls, generated no execution hash or approval and added `$0` model cost. Historical evidence
+is unchanged, and baseline, denominator, memory admission/index and core authority remain closed. The next permitted
+step is a clean no-call preflight followed by separate user approval of the exact candidate hash up to `$41`.
+Final verification passed focused 56/56 and a repository-wide two-shard total of 1,620 passed plus seven
+environment-dependent skips from 1,627 collected tests. Ruff, compileall, exact artifact rebuild, JSON/hash and
+`git diff --check` also passed.

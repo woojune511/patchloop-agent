@@ -3041,3 +3041,29 @@ Next-gate candidate metadata는 source freeze나 provider authority가 아니다
 Token candidate는 sealed maximum `1,956,109 × 3/2`를 100,000-token quantum으로 올림하고, wall candidate는
 `1,628,695ms × 2`를 초로 변환해 600-second quantum으로 올림한다. 분자·분모·unit conversion·rounding quantum과
 unrounded integer가 모두 artifact에 기록돼야 한다.
+
+## 36. D-094 high-headroom readiness source and runtime contract
+
+Exact experiment ID는 `generic-high-headroom-readiness-v2v5-20260804-r1`이다. Ordered schedule은 AnyIO,
+pyfakefs, HF Hub 각 1회이고 condition은 `no_memory`다. Model tuple은
+`gpt-5.4-mini-2026-03-17`, medium reasoning, standard mode, default service tier, SDK transport retry 0이며
+`SYSTEM_PROMPT_V3`, tool schema v2, context evidence v5를 사용한다. Per-run resource tuple은 model/tool call
+limit `null/null`, total token 3,000,000, wall 3,600초, output allowance 25,000이다.
+
+Exact-ID binding은 다음 schema를 사용한다.
+
+- runtime contract: `generic-high-headroom-readiness-runtime-contract-v1`
+- runtime evidence: `generic-high-headroom-readiness-runtime-evidence-v1`
+- completion gate: `generic-high-headroom-readiness-gate-v1`
+- gate ID: `d094-generic-high-headroom-readiness`
+
+Gate pass에는 3/3 started·terminal·trace-qualified, 3/3 accepted submission, 3/3 official evaluator receipt,
+persisted qualification과 read-only recomputation의 exact match, complete exact-input telemetry, completed response와
+truncation disabled가 모두 필요하다. Infrastructure, qualification, diagnostic, budget-terminal, terminal-loop와
+model/tool-call-budget confound는 모두 0이어야 한다. Task success, hidden acceptance와 SCRR은 이 gate의 입력이
+아니다.
+
+Standard worst-rate reserve는 `(3,000,000 + 25,000) × $4.50/M = $13.6125`/run,
+`$40.8375`/suite이고 source cap은 `$41`이다. `high-headroom-readiness-source-gate-manifest-v1` artifact는 이
+산식과 source bytes를 고정하지만 no-call preflight, execution hash, approval 또는 paid authority를 만들지 않는다.
+Historical run과 결과는 변경하지 않으며 baseline, denominator, memory와 core authority도 열지 않는다.

@@ -10,7 +10,29 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-093 append-only readiness-stage budget outcome correction complete; D-092 replay result and
+- 현재 milestone은 `D-094 exact three-task high-headroom readiness source/offline gate complete; no clean preflight,
+  execution hash, approval, provider execution, baseline, denominator, memory, or core authority`다. Exact suite
+  `generic-high-headroom-readiness-v2v5-20260804-r1`은 frozen memory-development의 AnyIO, pyfakefs, HF Hub를
+  이 순서로 `no_memory` 각 1회 배치한다. Runtime은 `gpt-5.4-mini-2026-03-17`
+  medium/standard/default, SDK transport retry 0, `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`,
+  output 25,000, memory allowance 2,000과 model/tool call `null`, total token 3,000,000, wall 3,600초를 exact
+  experiment ID, execution plan, `RunManifest`, content-addressed `RunStarted`, start/resume, qualification과 budget
+  diagnostic에 결속한다. 새 schema는 `generic-high-headroom-readiness-runtime-contract-v1`,
+  `generic-high-headroom-readiness-runtime-evidence-v1`, `generic-high-headroom-readiness-gate-v1`이다. Readiness는
+  3/3 terminal·qualified·accepted submission·official evaluator, persisted qualification과 read-only recomputation
+  exact match, exact input/completed response/truncation-disabled telemetry와 infrastructure/qualification/diagnostic/
+  budget-terminal/terminal-loop/model-or-tool-call-budget confound 0을 요구한다. Task success, hidden acceptance와
+  SCRR은 gate 조건이 아니다. 2026-08-04T14:47:00Z official standard rate로 worst reserve는 `$13.6125`/run,
+  `$40.8375`/suite이고 source cap은 `$41`이다. Source artifact는
+  `reports/live-pilot/artifacts/d094-high-headroom-readiness-source-gate.json`, semantic body SHA는
+  `sha256:ab7be9ad2448d1016b88d451e271330844fc11d8fd4b890f08142618446ff929`, file SHA는
+  `sha256:6887936ec141496e35e3a9d3bd6c34cf04cf02d1849bf80208677151a692c6ed`다. D-094 자체
+  provider/evaluator call과 added model cost는 0/0/$0이다. Final verification은 focused 56/56,
+  repository-wide two-shard 1,627 collected 중 1,620 passed/7 environment-dependent skipped이며 Ruff,
+  compileall, exact rebuild, JSON/hash와 `git diff --check`가 통과했다. 다음 gate는 이 milestone을 clean commit으로 봉인한 뒤
+  Docker/evaluator/dataset/SDK/pricing을 다시 확인하는 no-call preflight다. 그 preflight가 만든 one-use candidate
+  hash와 최대 `$41`의 별도 사용자 승인 전에는 provider를 호출하지 않는다.
+- Historical D-093 milestone은 `D-093 append-only readiness-stage budget outcome correction complete; D-092 replay result and
   raw outcomes preserved; no runtime, live, baseline, denominator, memory, or core authority`다. D-092가 tested
   repeated-rejection/context-growth policy를 모두 기각하고 current runtime을 유지한 결론은 그대로 유효하다.
   다만 workflow가 official evaluator까지 도달하는지 확인하는 readiness 단계에서 resource ceiling에 걸린 row를

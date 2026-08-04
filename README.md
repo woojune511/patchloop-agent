@@ -2,6 +2,21 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-094는 D-093의 후보를 실제 실행하지 않고 exact 3-task high-headroom readiness source로 고정했다.
+`generic-high-headroom-readiness-v2v5-20260804-r1`은 AnyIO, pyfakefs, HF Hub를 이 순서로 `no_memory` 각 1회
+배치하고 mini medium/standard/default, retry 0, prompt V3, tool v2/context v5, output 25,000과
+`null/null/3,000,000/3,600` resource tuple을 manifest·execution plan·runtime evidence·qualification·completion
+gate에 결속한다. Readiness는 세 run 모두 제출과 official evaluator까지 완주하고 persisted qualification 재계산과
+token/response telemetry가 일치하며 process confound가 0일 때만 통과한다. Task success, hidden acceptance와 SCRR은
+결과로 보고하지만 이 workflow-readiness gate에는 넣지 않는다. Standard worst-rate reserve는 `$13.6125`/run,
+`$40.8375`/suite이고 source cap은 `$41`이다. Artifact는
+`reports/live-pilot/artifacts/d094-high-headroom-readiness-source-gate.json`, semantic body SHA는
+`sha256:ab7be9ad2448d1016b88d451e271330844fc11d8fd4b890f08142618446ff929`, file SHA는
+`sha256:6887936ec141496e35e3a9d3bd6c34cf04cf02d1849bf80208677151a692c6ed`다. 이 단계의 provider/evaluator
+call과 추가 model cost는 0/0/$0이며 execution hash나 실행 승인도 없다. 다음 단계는 clean no-call preflight이고,
+그 결과의 exact one-use hash와 최대 `$41` 사용자 승인이 있기 전에는 실행하지 않는다. Final verification은
+focused 56/56과 repository-wide two-shard 1,627 collected 중 1,620 passed/7 skipped를 통과했다.
+
 2026-08-04 D-093은 D-092의 runtime-policy replay 결과와 모든 historical artifact/run outcome을 보존하면서,
 readiness 단계의 budget-terminal 해석만 append-only로 정정했다. Evaluator 도달 전에 resource ceiling으로 끝난
 두 AnyIO run의 raw `RunResult.outcome_kind=agent_failure`는 바꾸지 않지만, readiness 분석에서는

@@ -1195,3 +1195,22 @@ pending이다.
 다음 high-headroom panel 값은 correction 안의 candidate metadata일 뿐 실행 config가 아니다. 후속 source gate가
 exact task set, runtime tuple, emergency ceiling, fresh pricing과 claims boundary를 새 artifact로 freeze한 뒤 clean
 no-call preflight와 별도 승인을 받아야 provider capability가 열릴 수 있다.
+
+## 35. D-094 high-headroom readiness source architecture
+
+D-094는 candidate를 exact source suite `generic-high-headroom-readiness-v2v5-20260804-r1`로 고정한다. 실행 순서는
+AnyIO, pyfakefs, HF Hub이며 각 task를 `no_memory`로 한 번만 배치한다. ID별 registry가 task 순서와
+`null/null/3,000,000/3,600`, output 25,000 budget을 결정하므로 historical generic-readiness suite와
+near-match가 서로의 profile로 fall through할 수 없다.
+
+Runtime binding은 `generic-high-headroom-readiness-runtime-contract-v1`과
+`generic-high-headroom-readiness-runtime-evidence-v1`을 execution plan, `RunManifest`, content-addressed
+`RunStarted`, start/resume와 read-only qualification에 결속한다. Completion consumer는
+`generic-high-headroom-readiness-gate-v1` / `d094-generic-high-headroom-readiness`로 exact 세 row와 runtime
+evidence를 검증한다.
+
+Source builder는 D-093 correction, D-084 comparison-runtime source, frozen dataset/task packages, exact YAML과
+2026-08-04T14:47:00Z standard pricing snapshot을 content-addressed artifact에 묶는다. 이 단계에는 paid
+capability, execution hash, user approval, provider/evaluator call이나 measured result가 없다. 다음 단계의 clean
+no-call preflight가 source commit과 환경을 다시 묶은 one-use candidate hash를 만든 뒤에만 max-`$41` 승인을
+요청할 수 있다.

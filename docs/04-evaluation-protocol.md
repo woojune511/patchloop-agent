@@ -1627,3 +1627,22 @@ Hidden acceptance와 SCRR은 관측·보고하지만 readiness predicate에는 �
 Historical exact run을 재실행하지 않는다. 별도 successor panel은 새 experiment ID와 frozen source/preflight/hash/
 cost approval을 가져야 하며, 그 결과도 workflow readiness만 판정한다. Comparison row를 failure로 셀지는 네 condition
 모두에 동일한 resource policy를 명시적으로 freeze할 때 별도로 결정한다.
+
+### D-094 high-headroom readiness source and later execution protocol
+
+Source gate에서는 exact YAML, frozen dataset/task identity, D-093/D-084 predecessor bytes, runtime schema와 fresh
+official pricing만 검증한다. Ordered panel은 AnyIO, pyfakefs, HF Hub 각 1회이며 model/prompt/tool/context와
+memory condition은 동일하고 resource ceiling만 exact `null/null/3M/3,600s`, output 25k로 고정한다. Standard
+rate timestamp는 2026-08-04T14:47:00Z이고 conservative authorization reserve는 `$13.6125`/run,
+`$40.8375`/suite, cap은 `$41`이다.
+
+Source commit이 clean해진 다음 별도 no-call preflight가 Docker, evaluator, dataset, SDK, pricing과 commit을 묶어
+one-use candidate execution hash를 만든다. 사용자가 그 exact hash에 max-`$41`을 별도로 승인하기 전에는 provider를
+호출하지 않는다. D-094 source 단계 자체는 preflight, hash, 승인, provider/evaluator call 또는 run/result를
+만들지 않는다.
+
+실행 이후 readiness는 세 row 모두 terminal·qualified·accepted submission·official evaluator에 도달하고 durable
+qualification이 read-only recomputation과 정확히 같을 때만 pass다. Exact-input telemetry completeness, completed
+responses, truncation disabled와 모든 명시된 process confound 0도 요구한다. Hidden acceptance, task success와
+SCRR은 결과로 보고하되 readiness 판정에는 넣지 않는다. Gate 성공도 no-memory baseline이나 memory/core
+collection을 자동 승인하지 않는다.
