@@ -310,6 +310,14 @@ def test_d089_no_call_preflight_needs_only_invocation_approval(
     tmp_path: Path,
 ) -> None:
     _ready_environment(monkeypatch, tmp_path)
+    # Reconstruct the immutable source-stage capability. D-090 separately
+    # verifies that the now-consumed live identity is blocked before execution.
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - {eval_runner.ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID},
+    )
 
     preflight = eval_runner.preflight_suite(SUITE_PATH)
 
@@ -534,7 +542,7 @@ def test_d089_does_not_rewrite_or_reopen_d087_or_d079() -> None:
     assert eval_runner.WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID in (
         eval_runner.CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS
     )
-    assert eval_runner.ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID not in (
+    assert eval_runner.ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID in (
         eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
     )
     assert eval_runner.GPT54_MINI_FROZEN_COMPARISON_BUDGET.max_total_tokens == (

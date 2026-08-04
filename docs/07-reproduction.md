@@ -1280,7 +1280,7 @@ claims boundary, leak-safe schema와 hard-consumed preflight guard를 검증하�
 D-087 suite를 다시 evaluate하지 않는다. 새 provider 실행은 이 reproduction 범위 밖이며 새 experiment와 별도
 승인이 필요하다.
 
-## Inspect and preflight the D-089 AnyIO budget-only probe
+## Inspect the historical D-089 AnyIO source gate
 
 D-089 source와 predecessor seal은 다음처럼 provider 없이 검사한다.
 
@@ -1299,8 +1299,9 @@ Expected immutable SHA는 D-087 suite
 AnyIO 한 task, no-memory 한 번, mini medium/standard/default, retry 0, output 25,000과
 `null/null/2,000,000/1,800`을 가져야 한다. `$9.1125`는 worst-rate reserve이고 `$10`은 approval cap이다.
 
-Source commit이 clean한 뒤에만 다음 no-call preflight를 실행한다. 명령은 `ready=false`와 정확히
-`LIVE_COST_NOT_APPROVED`, `APPROVAL_HASH_MISMATCH` 두 blocker 및 candidate execution hash를 출력해야 한다.
+Source gate 당시에는 clean commit에서 다음 no-call preflight가 `ready=false`, 정확히
+`LIVE_COST_NOT_APPROVED`, `APPROVAL_HASH_MISMATCH` 두 blocker와 candidate execution hash를 출력했다. D-090
+seal 뒤에는 다시 출력된 hash를 새로운 승인 capability로 취급하거나 승인 입력으로 사용하지 않는다.
 
 ```powershell
 uv run --env-file .env patchloop evaluate `
@@ -1309,5 +1310,21 @@ uv run --env-file .env patchloop evaluate `
 ```
 
 `--approve-live-cost`나 `--approved-execution-hash`를 붙이지 않으며 이 명령은 agent/provider를 호출하지 않는다.
-그 candidate hash와 최대 `$10`에 대한 별도 사용자 승인 전에는 live evaluate를 실행하지 않는다. D-087의
-experiment ID, result 또는 run ID를 resume/reuse하지 않는다.
+현재 source에서 실행하면 `HISTORICAL_SUITE_IMMUTABLE`가 반드시 포함되어야 하고, local raw artifact 유무에 따라
+result/journal blocker가 추가될 수 있다. D-089이나 D-087의 experiment ID, result 또는 run ID를 resume/reuse하지
+않는다.
+
+## Inspect the sealed D-090 result without rerunning D-089
+
+```powershell
+Get-Content reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json -Raw |
+  ConvertFrom-Json | Out-Null
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' tests/test_d090_anyio_budget_probe_seal.py
+```
+
+Local raw evidence가 있는 원 실행 host에서는 같은 test가 result bytes/hash, journal chain, durable event count,
+qualification read-only recomputation, token 합계와 model cost까지 비교한다. Raw runtime이 없는 clean machine에서는
+portable contract와 static consumed guard를 검사하고 raw-only test만 skip한다.
+
+`patchloop evaluate`로 D-089을 다시 실행하지 않는다. Seal 뒤 preflight는 local result/journal 유무와 무관하게
+`HISTORICAL_SUITE_IMMUTABLE`를 반환해야 한다. Next-call minimum 2,014,913을 새 실행 budget으로 해석하지 않는다.

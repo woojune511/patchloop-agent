@@ -10,7 +10,26 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-089 AnyIO budget-only readiness probe source/offline gate complete; no clean preflight,
+- 현재 milestone은 `D-090 D-089 measured result sealed; exact one-row workflow remained qualified but stopped at
+  the 2M total-token guard before submission/evaluator; no rerun, baseline, memory, or core authority`다. Exact
+  execution hash `sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3`는 clean source
+  commit `7f3e6debb2a67f4b108c4422fa4cf51ebfea994f`에서 정확히 한 번 소비됐고 run은
+  `run_e444de1bb20a4325`다. Run은 terminal·qualified 27/27이지만 1,737,041 input + 219,068 output =
+  1,956,109 token 뒤 남은 43,891 token으로 exact input 33,804와 output allowance 25,000을 함께 예약하지
+  못했다. Deficit은 14,913이고 same-prefix next-call minimum은 2,014,913이다. 따라서 evaluator/official은
+  0/1, budget-terminal 1이며 readiness gate는 false다. Wall headroom은 171,305ms여서 binding dimension은
+  total token뿐이다. 79/79 response는 completed이고 exact token telemetry, truncation disabled, `store=false`,
+  previous-response dependency 0을 보존했다. 계산 비용은 `$2.28858675`이며 승인 cap `$10` 안이다. Raw result
+  SHA는 `sha256:60dccc5e58e53accba3c2c68d241fc0d79bf1752f0fea8866c30de1594065b55`, journal final hash는
+  `sha256:ea7f5fb5d6e39f80bf5b2c374959ea0bc4e6f9a3fb10affd969cb80528e7042c`다. Portable seal은
+  `reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json`, SHA는
+  `sha256:06006c95454618b7adcea305465fa63611d2043c70aaa3e1df2de9a3f5a192f1`다. D-089 ID는
+  workflow-completion consumed set에 들어가 clean machine에서도 재실행을 차단한다. Seal 자체 provider
+  call/model cost는 0/$0이고 no-memory baseline, comparison denominator, memory review/admission/index와 core는
+  계속 닫혀 있다. Final seal verification은 focused 232/232, repository-wide sharded 1,533 collected 중
+  1,526 passed/7 environment-dependent skipped이며 final D-090 report/plan/manifest retest 4/4, Ruff, compileall,
+  JSON parse와 `git diff --check`를 통과했다.
+- Historical D-089 source milestone은 `AnyIO budget-only readiness probe source/offline gate complete; no clean preflight,
   approval, provider execution, baseline, memory admission/index, or core authority`다. Exact source는
   `experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml`이고 D-087에서 evaluator 전에
   total-token guard로 종료한 AnyIO repetition 2만 새 experiment에서 한 번 다시 관찰한다. D-087

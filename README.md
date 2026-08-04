@@ -2,14 +2,26 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-090은 승인된 D-089 AnyIO 1-run을 immutable evidence로 봉인한다. Exact hash
+`sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3`로 실행한
+`run_e444de1bb20a4325`는 trace qualification 27/27을 통과했지만 evaluator 전에 total-token guard로
+끝났다. 1,956,109 token을 사용하고 43,891이 남았으나 다음 exact input 33,804와 output allowance 25,000에
+58,804가 필요해 14,913이 부족했다. 따라서 terminal/qualified는 1/1, evaluator/official은 0/1,
+budget-terminal은 1이고 readiness gate는 false다. 실제 고정-rate 계산 비용은 `$2.28858675`다. 이는 hidden
+task failure가 아니라 task 결과를 관측하기 전의 process failure다. D-089은 hard-consumed이며 자동 재실행,
+새 budget, baseline, memory admission/index와 core authority는 열리지 않는다. Portable seal은
+`reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json`, SHA는
+`sha256:06006c95454618b7adcea305465fa63611d2043c70aaa3e1df2de9a3f5a192f1`다. Final verification은 focused
+232/232와 repository-wide sharded 1,526 passed/7 skipped를 통과했다.
+
 2026-08-04 D-089는 D-087을 재실행하지 않고, evaluator 전에 budget guard로 끝난 AnyIO row 하나만
 별도 exact `workflow-completion-probe`로 준비한다. Source는
 `experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml`이다. Per-run runtime knob 중
 total-token ceiling만 1.6M에서 2.0M으로 올리고 model/prompt/tool/context/no-memory/output/call-limit/wall
 tuple은 유지한다. Worst-rate authorization reserve는 `$9.1125`, 최대 승인 cap은 `$10`이다. 이 값은
 예상 invoice가 아니다. Readiness는 terminal·qualified·official evaluator와 process confound 0만 보며
-hidden success나 SCRR를 요구하지 않는다. 현재는 source/offline 단계이므로 provider call과 추가 model
-cost는 0/$0이고, clean no-call preflight의 exact hash와 별도 사용자 승인 전에는 실행하지 않는다.
+hidden success나 SCRR를 요구하지 않는다. 이 source 단계 자체의 provider call과 추가 model cost는 0/$0였고,
+이후 exact D-089 invocation은 위 D-090 seal에만 속한다.
 D-087/D-088는 immutable하고 no-memory baseline, comparison denominator, memory admission/index와 core는
 계속 닫혀 있다. Final offline verification은 focused 228/228, repository-wide 1,529 collected 중
 1,522 passed/7 skipped다. Source artifact SHA는

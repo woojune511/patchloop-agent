@@ -779,14 +779,34 @@ Evidence/issue:
 - Readiness는 terminal, trace qualification, official evaluator, exact disabled-call-guard와
   infrastructure/qualification/diagnostic/budget/terminal-loop confound 0을 요구한다. Hidden acceptance,
   task success와 SCRR는 요구하지 않는다. 결과와 무관하게 이 single-row probe는 calibration-only다.
-- D-083 budget freeze, D-087 source/result/journal과 D-088 portable seal은 byte-immutable하다. D-087은
-  hard-consumed이고 D-089는 결과 전이므로 아직 consumed set에 넣지 않는다.
-- 현재 authority는 source/offline뿐이다. Clean commit의 no-call preflight에서 exact candidate hash를 만든 뒤
-  최대 `$10`에 대한 별도 사용자 승인 전에는 provider를 호출하지 않는다. Baseline, comparison denominator,
-  memory review/admission/index와 core는 닫혀 있다.
+- D-083 budget freeze, D-087 source/result/journal과 D-088 portable seal은 byte-immutable하다. Source 결정
+  당시 D-087은 hard-consumed였고 D-089는 결과 전이므로 consumed set에 넣지 않았다.
+- Source 결정 당시 authority는 source/offline뿐이었다. Clean commit의 no-call preflight에서 exact candidate
+  hash를 만든 뒤 최대 `$10`에 대한 별도 사용자 승인 전에는 provider를 호출하지 않았다. 이후 exact invocation과
+  static consumption은 아래 D-090 결정에만 속한다. Baseline, comparison denominator, memory review/admission/index와
+  core는 계속 닫혀 있다.
 - Evidence: `reports/live-pilot/artifacts/d089-anyio-budget-only-readiness-probe-source-gate.json`, SHA
   `sha256:19eca850799e9549eef1d8b383d0c3461aa2b9a2e5471d67fe599cb373ea4555`.
 - Final offline verification: focused `228/228`; repository-wide `1,529` collected, `1,522` passed and `7` skipped;
   Ruff, compileall, JSON parse and `git diff --check` passed.
 - Provider calls/model cost for this decision: `0/$0`.
+- Date: 2026-08-04
+
+### D-090 accepted result decision — seal the failed D-089 readiness probe without rerun
+
+- Exact execution hash `sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3`는
+  source commit `7f3e6debb2a67f4b108c4422fa4cf51ebfea994f`에서 한 번 소비됐다.
+- `run_e444de1bb20a4325`는 terminal·qualified 27/27이지만 evaluator 전에 total-token guard로 끝났다.
+  1,956,109 token 뒤 remaining 43,891, next required 58,804, deficit 14,913이다. Wall headroom은 171,305ms다.
+- Gate는 false다: terminal/qualified 1/1, evaluator/official 0/1, budget-terminal 1, 다른 process confound 0이다.
+  Hidden outcome과 task correctness는 관측되지 않았다.
+- 79 provider response와 121 tool call을 기록했고 fixed-rate cost는 `$2.28858675`다. Seal 작업 자체는 provider
+  call 0과 model cost `$0`이다.
+- Raw result SHA는 `sha256:60dccc5e58e53accba3c2c68d241fc0d79bf1752f0fea8866c30de1594065b55`다.
+  Portable evidence는 `reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json`, SHA
+  `sha256:06006c95454618b7adcea305465fa63611d2043c70aaa3e1df2de9a3f5a192f1`다.
+- D-089 ID를 static consumed set에 추가한다. 자동 rerun, 새 budget/prompt/tool/context, baseline, memory
+  admission/index와 core authority는 열지 않는다.
+- Final verification은 focused 232/232, repository-wide sharded 1,533 collected 중 1,526 passed/7 skipped이며
+  final D-090 report/plan/manifest retest 4/4, Ruff, compileall, JSON parse와 `git diff --check`를 통과했다.
 - Date: 2026-08-04

@@ -1133,5 +1133,17 @@ silently lowering the design or fabricating missing results.
   infrastructure, qualification, diagnostic or terminal-loop confound. Hidden acceptance and SCRR are not required.
 - One completed AnyIO probe remains calibration-only. It cannot establish the no-memory denominator, admit memory
   rules, freeze an index, estimate success rate or unlock core.
-- The source stage makes zero provider calls. A clean no-call preflight, exact candidate hash and separate max-`$10`
-  user approval are still required.
+- The source stage made zero provider calls and, at that gate, still required a clean no-call preflight, exact candidate
+  hash and separate max-`$10` user approval. The later exact invocation belongs only to the D-090 seal below.
+
+## D-090 shows that a larger ceiling is not a completion guarantee
+
+- D-089 2M run은 D-087보다 더 진행됐지만 `IMPLEMENT`에서 다시 exact-request token guard에 걸렸다. 이는
+  2M이 모든 AnyIO trajectory에 충분하지 않음을 보여줄 뿐, 2,014,913이나 2,179,715가 충분한 budget이라는
+  뜻은 아니다.
+- Evaluator가 실행되지 않았으므로 hidden correctness, regression, scope와 safety 결과는 모두 미관측이다.
+  이 run을 task failure, task success 또는 agent quality score로 사용하지 않는다.
+- 22 loop observation, 20 replay와 15 verified rejected-candidate retry가 있었지만 terminal-loop failure는 아니다.
+  동시에 이 repeated-recovery trajectory는 단순 budget 증액보다 별도 workflow 분석이 필요함을 시사한다.
+- One-row calibration은 no-memory performance denominator가 아니고 memory rule admission이나 core experiment를
+  열지 않는다. Exact invocation은 seal 후 hard-consumed이며 자동 재실행하지 않는다.

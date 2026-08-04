@@ -1129,6 +1129,19 @@ pricing과 Docker/SDK identity를 묶는다. Runtime evidence는 기존 content-
 사용하고 qualifier는 exact ID-to-budget registry로 disabled-call guard를 검증한다. Completion gate에는
 `d089-anyio-budget-only-readiness`, `budget_only_probe=true`, `calibration_only=true`가 기록된다.
 
-Source 단계는 provider capability를 만들지 않는다. Clean commit의 no-call preflight가 candidate hash를 만든 뒤
-별도 max-`$10` 승인이 있어야 paid boundary가 열린다. D-087/D-088는 immutable하고 D-089 결과 전에는 D-089를
-consumed set에 넣지 않는다.
+Source 단계에서는 provider capability를 만들지 않았다. 당시 clean commit의 no-call preflight가 candidate
+hash를 만든 뒤 별도 max-`$10` 승인이 있어야 paid boundary가 열렸고, D-089는 결과 전까지 consumed set에
+넣지 않았다. 이후 exact invocation과 static consumption은 아래 D-090 seal에만 속한다.
+
+## 31. D-090 measured-result seal and static consumption
+
+D-090은 D-089 runtime을 수정하거나 raw gate를 대체하지 않는다. Approved plan, raw experiment result,
+journal, durable manifest/result, qualification과 public trace aggregate를 해시로 참조하는 별도 portable
+evidence를 만든다. Portable body는 canonical semantic hash와 `d090_<hash>` ID를 가지며 private test,
+reference patch, request/response body와 credential을 포함하지 않는다.
+
+Exact run은 1,956,109 token과 1,628,695ms 뒤 `model-generation-block-v1`으로 terminal했다. Provider call은
+시작되지 않은 exact-request block이며 total token만 binding이었다. Qualification은 27/27이지만 evaluator가
+없으므로 completion gate는 false다. Seal 뒤 exact ID를 `CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS`에
+추가해 local runtime artifact가 없는 clean machine에서도 `HISTORICAL_SUITE_IMMUTABLE`로 차단한다. 이 static
+consumption은 결과 성공 여부와 무관하게 승인된 한 invocation의 단일 소비를 보존한다.

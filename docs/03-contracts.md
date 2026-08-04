@@ -2958,3 +2958,19 @@ mini medium/standard/default, retry 0, output 25,000, memory allowance 2,000과
 Gate schema는 `workflow-completion-probe-gate-v1`, gate ID는 `d089-anyio-budget-only-readiness`다. Required
 predicate는 terminal, qualified, evaluator reached, official completed, disabled-call guard와 process confound 0이다.
 `task_success_required=false`, hidden/SCRR required=false, comparison/memory authority=false다.
+
+## 32. D-090 AnyIO budget-only result-seal contract
+
+Portable report schema는 `anyio-budget-only-readiness-d090-evidence-v1`이다. Top-level exact keys는
+`schema_version`, `report_id`, `semantic_body_hash`, `semantic_body`이며 report ID는 canonical semantic body
+hash에서 결정된다. Body는 source commit/YAML/source-gate SHA, exact execution/suite/schedule/row/run identity,
+raw result/journal/plan/qualification artifact hash, original gate, terminal usage/budget pressure, public trace
+aggregate, evidence validation과 claims boundary를 결속한다.
+
+Required measured facts는 terminal/qualified `1/1`, evaluator/official `0/1`, budget-terminal `1`, qualification
+27/27, usage `1,737,041 + 219,068 = 1,956,109`, cost `$2.28858675`, exact-request deficit `14,913`이다. Stored
+qualification은 `persist=False` 재계산과 canonical-exact해야 하고 source-evidence hash도 재계산한다. Journal은
+`CampaignStarted -> RunStarted -> RunTerminal -> CampaignCompleted` 네 event와 result hash를 검증한다.
+
+Seal은 D-089 source artifact나 raw result를 수정하지 않는다. Exact experiment ID는 result seal과 함께
+workflow-completion consumed set에 들어가며 provider call 0/$0인 seal 작업은 새 live authority를 만들지 않는다.

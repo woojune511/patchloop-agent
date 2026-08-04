@@ -3012,10 +3012,41 @@ provider calls / model cost = 0 / $0
 ```
 
 The readiness predicate requires terminal, qualified and official evaluator completion plus zero process confounds;
-it does not require hidden acceptance, task success or SCRR. D-089 is not yet executed or consumed. Clean no-call
-preflight, exact candidate hash and separate max-`$10` user approval remain pending. No-memory baseline, comparison
-denominator, memory admission/index and core remain closed.
+it does not require hidden acceptance, task success or SCRR. At the source gate, D-089 was not yet executed or
+consumed; clean no-call preflight, the exact candidate hash and separate max-`$10` user approval were still pending.
+The later exact invocation and static consumption belong only to the D-090 seal below. No-memory baseline,
+comparison denominator, memory admission/index and core remain closed.
 
 Final offline verification passed the 228-test focused D-089/historical contract set and 1,522 of 1,529
 repository-wide tests; the other seven were environment-dependent skips. Ruff, compileall, JSON parsing and
 `git diff --check` passed. This verification made no provider call and added `$0` model cost.
+
+## D-090 sealed D-089 AnyIO budget-only result
+
+The approved execution hash
+`sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3` was consumed exactly once from
+source commit `7f3e6debb2a67f4b108c4422fa4cf51ebfea994f`. Run `run_e444de1bb20a4325` reached a terminal and
+qualified trace but not submission or evaluator. Original readiness is false with one budget-terminal row and zero
+infrastructure, qualification, diagnostic or terminal-loop confounds.
+
+```text
+input / output / total = 1,737,041 / 219,068 / 1,956,109
+model / tool calls = 79 / 121
+wall = 1,628,695 ms
+fixed-rate model cost = $2.28858675
+remaining / next required / deficit = 43,891 / 58,804 / 14,913
+same-prefix next-call minimum = 2,014,913
+qualification = 27/27
+raw result SHA = sha256:60dccc5e58e53accba3c2c68d241fc0d79bf1752f0fea8866c30de1594065b55
+journal final hash = sha256:ea7f5fb5d6e39f80bf5b2c374959ea0bc4e6f9a3fb10affd969cb80528e7042c
+portable report = reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json
+portable SHA = sha256:06006c95454618b7adcea305465fa63611d2043c70aaa3e1df2de9a3f5a192f1
+```
+
+All 79 responses were completed with exact input/total token telemetry, truncation disabled, `store=false` and no
+previous-response dependency. Persisted qualification is canonical-equal to read-only recomputation, source-evidence
+hashes match, and the four-event campaign journal/result hash chain is valid. The seal made no provider call and added
+`$0` model cost. D-089 is hard-consumed; this negative process-readiness result does not establish a baseline, memory
+admission or a new live budget. Final verification passed 232/232 focused tests and a repository-wide two-shard total
+of 1,526 passed plus seven environment-dependent skips from 1,533 collected tests. The final report/plan/manifest
+retest passed 4/4; Ruff, compileall, JSON parsing and `git diff --check` also passed.

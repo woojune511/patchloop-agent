@@ -1572,3 +1572,15 @@ failure와 1 agent budget failure는 진단으로 보존하되 hidden failure로
 
 2M은 same-prefix minimum보다 382,712 token 높지만 stochastic completion guarantee가 아니다. Probe가 다시
 budget에 걸리면 그대로 failed calibration으로 봉인하고 자동 budget escalation이나 재실행을 하지 않는다.
+
+### D-090 D-089 measured-result interpretation
+
+D-089은 1회만 실행하고 original gate를 그대로 판정한다. Gate false의 직접 원인은 qualified trace나 identity
+실패가 아니라 evaluator 전 `exact_request_budget_exceeded`다. Observed prefix에서 next call 최소치는
+2,014,913 token이지만 이는 한 generation admission counterfactual이지 completion budget 추천값이 아니다.
+Token-tail projection이 관측한 exploration-open 최대치는 2,179,715지만 이것도 stochastic completion guarantee가
+아니다. 따라서 이 결과로 budget을 자동 증액하거나 재실행하지 않는다.
+
+Task success, hidden acceptance와 verifier outcome은 관측되지 않았으므로 agent correctness나 task 난이도에 대한
+값으로 코딩하지 않는다. Reported facts는 readiness false, total-token process failure, exact usage/cost,
+qualification 27/27과 no-evaluator boundary다. No-memory baseline과 memory comparison denominator는 계속 닫힌다.

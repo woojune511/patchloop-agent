@@ -1,0 +1,344 @@
+{
+  "schema_version": "anyio-budget-only-readiness-d090-evidence-v1",
+  "report_id": "d090_815881cebc761187636ae2992c5dd4ff95c0c471a0c79d7250373b513a3bc94e",
+  "semantic_body_hash": "sha256:815881cebc761187636ae2992c5dd4ff95c0c471a0c79d7250373b513a3bc94e",
+  "semantic_body": {
+    "milestone": "D-090 immutable D-089 measured-result seal",
+    "evidence_kind": "single-row-budget-only-workflow-readiness-result",
+    "recorded_at": "2026-08-04T06:54:04.054821Z",
+    "sealed_at": "2026-08-04T06:58:53Z",
+    "source_contract": {
+      "harness_git_commit": "7f3e6debb2a67f4b108c4422fa4cf51ebfea994f",
+      "suite": {
+        "path": "experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml",
+        "sha256": "sha256:1b42966bd32e5154832cff8c465e24ebf3db829385cee56ff60906043a313eb6"
+      },
+      "source_gate": {
+        "path": "reports/live-pilot/artifacts/d089-anyio-budget-only-readiness-probe-source-gate.json",
+        "sha256": "sha256:19eca850799e9549eef1d8b383d0c3461aa2b9a2e5471d67fe599cb373ea4555"
+      },
+      "execution_plan": {
+        "path": ".patchloop/experiments/plans/dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3.json",
+        "bytes": 6358,
+        "file_sha256": "sha256:76007bb9501067b8ecbc00009eba22538e795898b2f0d440c6c991101c8a7bf9",
+        "canonical_hash": "sha256:f5decd3e13c08b9cd795fd9276a863d86726f4b35661816967a7485448426809"
+      }
+    },
+    "experiment": {
+      "experiment_id": "anyio-workflow-completion-budget-only-v2v5-20260804-r1",
+      "purpose": "workflow-completion-probe",
+      "execution_hash": "sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3",
+      "suite_hash": "sha256:5ae15a46f47063a63f996f1f80baf619e8d167c894ed94f005bfb99f77b63e74",
+      "schedule_hash": "sha256:1c314438fe1d12b0e42b8835ac8f501e8219e48fc0239e7084657c6b80352baf",
+      "schedule_row_id": "sha256:6fbcf0939dfb02570f6eb8a839293e2ff4a8807889368f0b13749b5158542844",
+      "expected_runs": 1,
+      "completed_runs": 1,
+      "memory_condition": "no_memory",
+      "repetitions": 1,
+      "schedule_seed": 20260723,
+      "approved_maximum_cost_usd": 10.0,
+      "authorization_reserve_usd": 9.1125
+    },
+    "environment": {
+      "evaluator_image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+      "openai_sdk_version": "2.47.0",
+      "model": {
+        "provider": "openai",
+        "model_id": "gpt-5.4-mini-2026-03-17",
+        "reasoning_effort": "medium",
+        "reasoning_mode": "standard",
+        "service_tier": "default",
+        "transport_max_retries": 0,
+        "max_output_tokens": 25000
+      },
+      "runtime_contract": {
+        "schema_version": "workflow-completion-runtime-contract-v1",
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+        "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+        "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+        "call_guard_policy": "model-tool-observability-only-v1"
+      }
+    },
+    "original_probe_result": {
+      "raw_result": {
+        "path": ".patchloop/experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json",
+        "bytes": 13232,
+        "sha256": "sha256:60dccc5e58e53accba3c2c68d241fc0d79bf1752f0fea8866c30de1594065b55"
+      },
+      "completion_gate": {
+        "schema_version": "workflow-completion-probe-gate-v1",
+        "gate_id": "d089-anyio-budget-only-readiness",
+        "budget_only_probe": true,
+        "calibration_only": true,
+        "passed": false,
+        "expected_runs": 1,
+        "terminal_runs": 1,
+        "qualified_runs": 1,
+        "evaluator_reached_runs": 0,
+        "official_evaluator_runs": 0,
+        "infrastructure_errors": 0,
+        "qualification_errors": 0,
+        "diagnostic_errors": 0,
+        "task_identity_passed": true,
+        "row_binding_passed": true,
+        "run_binding_passed": true,
+        "schedule_binding_passed": true,
+        "execution_binding_passed": true,
+        "call_guard_policy": "model-tool-observability-only-v1",
+        "call_guard_contract_passed": true,
+        "terminal_loop_failure_runs": 0,
+        "terminal_loop_failure_run_ids": [],
+        "budget_terminal_runs": 1,
+        "budget_terminal_run_ids": [
+          "run_e444de1bb20a4325"
+        ],
+        "task_successes": 0,
+        "task_success_required": false,
+        "comparison_denominator_eligible": false,
+        "memory_admission_unlocked": false
+      }
+    },
+    "run": {
+      "run_id": "run_e444de1bb20a4325",
+      "task_id": "anyio-interrupt-runner-cleanup",
+      "dataset_role": "memory-development",
+      "attempt_status": "terminal",
+      "outcome_kind": "agent_failure",
+      "agent_submission_status": "failed",
+      "evaluation_status": "not_run",
+      "official": false,
+      "scope_compliant_success": false,
+      "phase_transitions": [
+        "INTAKE->REPRODUCE",
+        "REPRODUCE->PLAN",
+        "PLAN->IMPLEMENT"
+      ],
+      "terminal_phase": "IMPLEMENT",
+      "terminal_error": {
+        "type": "ModelGenerationBudgetError",
+        "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+        "reason_code": "exact_request_budget_exceeded",
+        "generation_started": false,
+        "requested_input_tokens": 33804,
+        "max_output_tokens": 25000,
+        "required_tokens": 58804,
+        "remaining_tokens": 43891,
+        "deficit_tokens": 14913,
+        "minimum_total_budget_same_prefix": 2014913
+      },
+      "usage": {
+        "input_tokens": 1737041,
+        "cached_input_tokens": 0,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 219068,
+        "reasoning_output_tokens": 206655,
+        "total_tokens": 1956109,
+        "model_calls": 79,
+        "input_token_count_calls": 80,
+        "tool_calls": 121,
+        "wall_clock_ms": 1628695,
+        "model_cost_usd": 2.28858675
+      }
+    },
+    "budget_pressure": {
+      "configured_limits": {
+        "max_model_calls": null,
+        "max_tool_calls": null,
+        "max_total_tokens": 2000000,
+        "wall_clock_timeout_seconds": 1800
+      },
+      "headroom": {
+        "total_tokens": 43891,
+        "wall_clock_ms": 171305
+      },
+      "binding_dimension": "total_tokens",
+      "binding_reason": "exact_request_budget_exceeded",
+      "blocked_tool_count": 1,
+      "blocked_tool_reason": "token_tail_reserved",
+      "token_tail": {
+        "triggered": true,
+        "snapshot_count": 6,
+        "first_sequence": 533,
+        "first_minimum_total_budget_to_keep_exploration_open_same_prefix": 2020187,
+        "maximum_sequence": 553,
+        "maximum_total_budget_to_keep_exploration_open_same_prefix": 2179715
+      },
+      "exact_request": {
+        "blocked": true,
+        "sequence": 554,
+        "observed_prefix_minimum_total_budget": 2014913
+      },
+      "counterfactual_same_prefix_only": true
+    },
+    "qualification": {
+      "schema_version": "trace-qualification-v2",
+      "qualification_hash": "sha256:f3342a21bb38b5b3f23f271ca1a9da835fa8944456e8487cf1840e6f04fe924e",
+      "source_evidence_hash": "sha256:3f1dc8c75d89150b28b35737509fdd90f2f14825269cc41fd3cc5335414be0e3",
+      "qualified": true,
+      "trace_integrity_passed": true,
+      "leakage_scan_passed": true,
+      "evaluation_reached": false,
+      "passed_checks": 27,
+      "total_checks": 27,
+      "failure_record_id": "fail_a4d82abc2d685c708217404cc71966e5",
+      "disabled_call_guard_contract": {
+        "schema_version": "qualification-gate-check-projection-v1",
+        "check_id": "disabled_call_guard_contract",
+        "check_count": 1,
+        "passed": true
+      }
+    },
+    "public_trace_diagnostics": {
+      "analysis_basis": "public task, public trace metadata and aggregate terminal evidence only",
+      "hidden_assertions_or_reference_patch_read": false,
+      "events": 556,
+      "checkpoints": 123,
+      "model_telemetry": {
+        "completed_responses": 79,
+        "incomplete_responses": 0,
+        "exact_input_count_matches": 79,
+        "exact_total_count_matches": 79,
+        "truncation_disabled": 79,
+        "store_false": 79,
+        "previous_response_dependency": 0,
+        "maximum_requested_input_tokens": 33357,
+        "maximum_output_tokens": 13682
+      },
+      "tools": {
+        "search_files": 69,
+        "read_file": 30,
+        "apply_patch": 16,
+        "run_check": 6,
+        "succeeded": 86,
+        "failed": 15,
+        "replayed": 20
+      },
+      "loops": {
+        "observed": 22,
+        "duplicate_search": 7,
+        "fully_covered_read": 13,
+        "unclassified": 2,
+        "maximum_no_progress_streak": 5,
+        "terminal_loop_failure": false
+      },
+      "mutations": {
+        "patches_prepared": 1,
+        "patches_applied": 1,
+        "submission_accepted": 0,
+        "rejected_candidate_count": 15,
+        "verified_retry_count": 15,
+        "failed_source_failure_sequences": []
+      }
+    },
+    "journal_seal": {
+      "path": ".patchloop/experiments/journals/anyio-workflow-completion-budget-only-v2v5-20260804-r1.jsonl",
+      "bytes": 2704,
+      "file_sha256": "sha256:b2ed04a3ecab99a851eab2df27528ab4e0a68897ed8438f66ea850c79ef2858a",
+      "event_types": [
+        "CampaignStarted",
+        "RunStarted",
+        "RunTerminal",
+        "CampaignCompleted"
+      ],
+      "sequences": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "hash_chain_valid": true,
+      "last_event_hash_before_completion": "sha256:d1119f7a310beb23821229540e2f535dc866ae65d84944206b52491d117f5d0d",
+      "final_event_hash": "sha256:ea7f5fb5d6e39f80bf5b2c374959ea0bc4e6f9a3fb10affd969cb80528e7042c",
+      "completion_result_hash": "sha256:60dccc5e58e53accba3c2c68d241fc0d79bf1752f0fea8866c30de1594065b55"
+    },
+    "raw_local_artifacts": [
+      {
+        "role": "experiment-result",
+        "path": ".patchloop/experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json",
+        "bytes": 13232,
+        "sha256": "sha256:60dccc5e58e53accba3c2c68d241fc0d79bf1752f0fea8866c30de1594065b55"
+      },
+      {
+        "role": "campaign-journal",
+        "path": ".patchloop/experiments/journals/anyio-workflow-completion-budget-only-v2v5-20260804-r1.jsonl",
+        "bytes": 2704,
+        "sha256": "sha256:b2ed04a3ecab99a851eab2df27528ab4e0a68897ed8438f66ea850c79ef2858a"
+      },
+      {
+        "role": "execution-plan",
+        "path": ".patchloop/experiments/plans/dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3.json",
+        "bytes": 6358,
+        "sha256": "sha256:76007bb9501067b8ecbc00009eba22538e795898b2f0d440c6c991101c8a7bf9"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_e444de1bb20a4325.json",
+        "bytes": 18289,
+        "sha256": "sha256:40b53114fcddbe4a1e4f11f148d864eaf76a06ad607cc33902f34ca48010214b"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_e444de1bb20a4325/manifest.json",
+        "bytes": 2381,
+        "sha256": "sha256:12241b2c6688d517625fc60700f663b4f54036115bb630ef65d6c81ab5a7de39"
+      },
+      {
+        "role": "run-result",
+        "path": ".patchloop/artifacts/runs/run_e444de1bb20a4325/result.json",
+        "bytes": 1860,
+        "sha256": "sha256:a99c6a6bfb296c719ca2d2cfbd51d101b1d01e7e6c09f8f53ee456ead621cdc5"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_e444de1bb20a4325/provenance.json",
+        "bytes": 166,
+        "sha256": "sha256:156b4b598f2cf85fb952307ce6041fac4ccf650f5e38ce454449c2dd05f0aaf2"
+      }
+    ],
+    "evidence_validation": {
+      "persisted_qualification_equals_read_only_recomputation": true,
+      "source_evidence_hash_recomputed": true,
+      "model_event_count_equals_usage": true,
+      "tool_event_count_equals_usage": true,
+      "token_sums_equal_usage": true,
+      "model_cost_recomputed": true,
+      "journal_hash_chain_recomputed": true,
+      "journal_result_hash_recomputed": true,
+      "private_leak_scan_passed": true
+    },
+    "analysis": {
+      "readiness_gate_passed": false,
+      "process_failure": "total-token-budget-terminal-before-submission",
+      "task_outcome_observed": false,
+      "hidden_acceptance_observed": false,
+      "same_prefix_exact_next_call_minimum_is_completion_guarantee": false,
+      "two_million_token_ceiling_sufficient_for_this_trajectory": false,
+      "memory_effect_measured": false,
+      "agent_correctness_inferred": false
+    },
+    "claims_boundary": {
+      "provider_calls_made_by_probe": 79,
+      "actual_list_price_model_cost_usd": 2.28858675,
+      "billed_invoice_amount_claimed": false,
+      "free_tier_charge_claimed": false,
+      "provider_calls_made_by_seal": 0,
+      "added_model_cost_usd_by_seal": 0.0,
+      "no_memory_baseline_established": false,
+      "comparison_denominator_eligible": false,
+      "memory_review_admission_or_index_unlocked": false,
+      "core_campaign_unlocked": false,
+      "automatic_rerun_authorized": false,
+      "hidden_driven_tuning_authorized": false
+    },
+    "next_gate": {
+      "d089_execution_is_immutable": true,
+      "hard_consumption_enforced": true,
+      "new_live_execution_authorized": false,
+      "new_budget_policy_authorized": false,
+      "prompt_tool_context_change_authorized": false,
+      "memory_work_authorized": false,
+      "required_decision": "review the budget-terminal and repeated-recovery trajectory without treating one more same-prefix call as a completion guarantee"
+    }
+  }
+}

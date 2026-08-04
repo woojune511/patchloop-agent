@@ -98,10 +98,14 @@ def test_workflow_completion_probe_suite_loads_exact_contract() -> None:
 
 
 def test_consumed_workflow_completion_probe_is_hard_immutable() -> None:
-    assert len(eval_runner.CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS) == 1
-    assert (
-        eval_runner.WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
-        in eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert frozenset(
+        {
+            eval_runner.WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID,
+            eval_runner.ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
+        }
+    ) == eval_runner.CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS
+    assert eval_runner.CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS <= (
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
     )
 
 
