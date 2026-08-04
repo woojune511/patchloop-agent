@@ -2974,3 +2974,17 @@ qualification은 `persist=False` 재계산과 canonical-exact해야 하고 sourc
 
 Seal은 D-089 source artifact나 raw result를 수정하지 않는다. Exact experiment ID는 result seal과 함께
 workflow-completion consumed set에 들어가며 provider call 0/$0인 seal 작업은 새 live authority를 만들지 않는다.
+
+## 33. D-091 public-trajectory audit contract
+
+Artifact top-level exact keys는 `schema_version`, `audit_id`, `semantic_body_hash`, `semantic_body`다. Canonical body
+hash가 `d091_<hash>` ID를 결정한다. Body schema `anyio-public-trajectory-audit-v1`은 D-088/D-090 file SHA와
+run/qualification/source-evidence identity, public-only access boundary, comparable/different runtime tuple, 두 run의
+phase·token·tool·context·patch·check·tail metrics, bounded counterfactual, non-causal classification, claims와 next
+gate를 결속한다.
+
+Raw evidence가 있는 host에서는 sequence-contiguous events, phase timestamp, 93/79 ModelCalled token 합, 139/121
+ToolCalled 분포, checkpoint 상태, context size, 20/15 rejected retry projection과 마지막 patch/check 이후 tail을
+재계산한다. Clean machine에서는 portable source SHA, arithmetic, strict allowlist와 claims boundary를 검증하고
+raw-only test를 skip한다. Required negative claims는 completion budget, budget causal effect, harness root cause,
+automatic rerun, baseline/memory/core authority가 모두 false인 것이다.

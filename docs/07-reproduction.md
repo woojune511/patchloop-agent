@@ -1328,3 +1328,16 @@ portable contract와 static consumed guard를 검사하고 raw-only test만 skip
 
 `patchloop evaluate`로 D-089을 다시 실행하지 않는다. Seal 뒤 preflight는 local result/journal 유무와 무관하게
 `HISTORICAL_SUITE_IMMUTABLE`를 반환해야 한다. Next-call minimum 2,014,913을 새 실행 budget으로 해석하지 않는다.
+
+## Inspect the D-091 public-trajectory audit
+
+```powershell
+Get-Content reports/live-pilot/artifacts/d091-anyio-public-trajectory-audit.json -Raw |
+  ConvertFrom-Json | Out-Null
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' tests/test_d091_public_trajectory_audit.py
+```
+
+Execution host에서는 test가 D-087/D-089 durable public event metadata로 phase, token, tool, context, patch/check와
+tail을 재집계한다. Raw state가 없는 clean machine에서는 D-088/D-090 portable SHA, arithmetic, strict boundary와
+authority false를 검증하고 raw-only test만 skip한다. 이 절차는 experiment YAML, execution hash, cost approval과
+provider capability를 만들지 않으며 D-087/D-089을 resume/evaluate하지 않는다.

@@ -3050,3 +3050,41 @@ hashes match, and the four-event campaign journal/result hash chain is valid. Th
 admission or a new live budget. Final verification passed 232/232 focused tests and a repository-wide two-shard total
 of 1,526 passed plus seven environment-dependent skips from 1,533 collected tests. The final report/plan/manifest
 retest passed 4/4; Ruff, compileall, JSON parsing and `git diff --check` also passed.
+
+## D-091 offline AnyIO public-trajectory audit
+
+D-091 compares only public process evidence for D-087 AnyIO repetition 2 and the immutable D-089 probe. Both use the
+same task/base, mini medium/standard/default model tuple, output 25,000, null call limits, wall 1,800 seconds, no-memory,
+prompt V3 and tool V2/context V5. The token ceiling is 1.6M versus 2M, while repetition, schedule, execution identity and
+harness commit also differ, so this is not a causal paired budget estimate.
+
+```text
+                         D-087 r2       D-089          D-089 minus D-087
+model / tool calls       93 / 139       79 / 121       -14 / -18
+input / output tokens    1,429,012 /    1,737,041 /    +308,029 /
+                         149,196        219,068        +69,872
+total tokens             1,578,208      1,956,109      +377,901
+wall milliseconds        1,222,996      1,628,695      +405,699
+visible checks pass      0 / 8          0 / 6          0 / 14 combined
+patch applied/rejected   6 / 20         1 / 15
+retry source failures    0              0
+```
+
+D-089's only `PatchApplied` event was sequence 103. It then spent 1,772,530 tokens across 68 model and 96 tool calls with
+no additional `PatchApplied` event and 14 rejected apply candidates. After the last executed failing check at sequence 391 it spent
+another 863,211 tokens, 27 model calls, 32 tool calls and 861,196ms without mutation, check, get_diff or finish. The
+final context was 121,658 characters versus D-087 r2's 46,046 even though both included at most 12 events. Exact
+semantic cause is outside the public metadata boundary.
+
+The direct terminal trigger remains the exact-request token guard, but qualification 28/28 and 27/27 plus verified
+retry rehydration 20/20 and 15/15 separate that trigger from a trace-integrity defect. A different same-task D-087
+repetition reached the evaluator at 534,853 tokens; its task/hidden outcome is not used. The bounded classification is
+`qualified-process-nonconvergence-ending-in-budget-terminal`: no harness defect is confirmed or ruled out, and no
+completion budget or automatic escalation is established.
+
+Artifact: `reports/live-pilot/artifacts/d091-anyio-public-trajectory-audit.json`; semantic body SHA
+`sha256:2a2668a20b0e8fb4234ea3dd738f715089792321b2df3763a0f51df5f00ed51d`; file SHA
+`sha256:74b6b229520d3358e7fbd33faad3b0be532405bbe5711a35c4d064114ba8e9a7`. The audit made zero provider/evaluator
+calls and added `$0` model cost. It creates no experiment, rerun, budget, baseline, memory or core authority. Final
+verification passed focused 238/238 and repository-wide sharded 1,532/1,539 tests, with seven environment-dependent
+skips; Ruff, compileall, JSON/hash and `git diff --check` also passed.

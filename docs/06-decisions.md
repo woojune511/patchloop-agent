@@ -810,3 +810,24 @@ Evidence/issue:
 - Final verification은 focused 232/232, repository-wide sharded 1,533 collected 중 1,526 passed/7 skipped이며
   final D-090 report/plan/manifest retest 4/4, Ruff, compileall, JSON parse와 `git diff --check`를 통과했다.
 - Date: 2026-08-04
+
+### D-091 accepted analysis decision — classify the AnyIO tail without another live run
+
+- D-087 AnyIO r2와 D-089의 public manifest, qualification, event/checkpoint metadata를 read-only 재집계한다.
+  Private assertion, hidden/reference/candidate patch와 request/response/tool artifact body는 분석하지 않는다.
+- D-089은 seq 103 `PatchApplied` event 뒤 1,772,530 token, 68 model/96 tool call 동안 추가 `PatchApplied` event가 0이고 14 patch가
+  rejected됐다. Visible check는 6회 모두 false이며 마지막 check 뒤에도 863,211 token을 사용했다.
+- D-087 r2도 check 0/8이고 budget terminal이지만 여섯 mutation이 있었다. 동일 task r1은 534,853 token에서
+  evaluator에 도달했으므로 D-089을 D-087의 deterministic continuation이나 budget causal effect로 보지 않는다.
+- Qualification과 retry rehydration은 두 run 모두 통과했으므로 confirmed harness defect는 아니다. 동시에
+  harness defect를 ruled out하지 않으며 classification은 `qualified-process-nonconvergence-ending-in-budget-terminal`다.
+- 2.4M과 3M은 관측 prefix의 token threshold만 넘기고 171,305ms wall headroom을 바꾸지 않는다. Completion,
+  evaluator arrival, sufficient budget과 agent correctness는 추정하지 않는다.
+- Artifact는 `reports/live-pilot/artifacts/d091-anyio-public-trajectory-audit.json`, SHA
+  `sha256:74b6b229520d3358e7fbd33faad3b0be532405bbe5711a35c4d064114ba8e9a7`이다. Provider/evaluator call과
+  added model cost는 0/0/$0이다.
+- Final verification은 focused 238/238, repository-wide sharded 1,539 collected 중 1,532 passed/7
+  environment-dependent skipped이며 Ruff, compileall, JSON/hash와 `git diff --check`가 통과했다.
+- 자동 rerun, budget/prompt/tool/context 변경, baseline, comparison denominator, memory admission/index와 core를
+  열지 않는다. 다음 decision은 public cross-task offline evidence만으로 retain/fail-fast/context-ceiling 중 선택한다.
+- Date: 2026-08-04

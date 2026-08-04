@@ -1145,3 +1145,17 @@ Exact run은 1,956,109 token과 1,628,695ms 뒤 `model-generation-block-v1`으�
 없으므로 completion gate는 false다. Seal 뒤 exact ID를 `CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS`에
 추가해 local runtime artifact가 없는 clean machine에서도 `HISTORICAL_SUITE_IMMUTABLE`로 차단한다. 이 static
 consumption은 결과 성공 여부와 무관하게 승인된 한 invocation의 단일 소비를 보존한다.
+
+## 32. D-091 public-trajectory audit boundary
+
+D-091은 runnable experiment나 runtime correction이 아니다. D-088과 D-090 portable report의 SHA, exact run
+identity, qualification/source-evidence hash를 결속하고 local execution host에서 public `RunEvent`, checkpoint,
+manifest metadata만 read-only로 재집계하는 append-only audit다. Context/request/response/tool artifact와 patch
+body는 열지 않고 event payload의 token, duration, phase, tool name/outcome, loop/replay, context size와 mutation
+sequence만 사용한다.
+
+Audit은 direct terminal trigger와 workflow convergence를 분리한다. 두 trace는 qualification과 retry-source
+rehydration을 통과했으므로 trace integrity failure는 관측되지 않았다. 반면 D-089 IMPLEMENT는 추가
+`PatchApplied` event 0, rejected patch 14, failing check 6과 post-check 863,211 token을 남겼다. 이를 qualified
+process non-convergence로 분류하되 harness defect를 ruled out하지 않고 causal budget effect도 주장하지 않는다. Audit artifact는 execution
+plan, authorization, new experiment ID나 consumer capability를 만들지 않는다.

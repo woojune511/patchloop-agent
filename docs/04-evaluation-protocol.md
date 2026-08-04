@@ -1584,3 +1584,17 @@ Token-tail projection이 관측한 exploration-open 최대치는 2,179,715지만
 Task success, hidden acceptance와 verifier outcome은 관측되지 않았으므로 agent correctness나 task 난이도에 대한
 값으로 코딩하지 않는다. Reported facts는 readiness false, total-token process failure, exact usage/cost,
 qualification 27/27과 no-evaluator boundary다. No-memory baseline과 memory comparison denominator는 계속 닫힌다.
+
+### D-091 non-convergence classification rule
+
+Budget terminal을 곧바로 budget root cause로 분류하지 않는다. Public trace가 qualified이고 retry-source failure가
+없더라도 다음 조건을 별도로 본다: visible check pass, last `PatchApplied` event 이후 model/tool/token tail, rejected
+patch, loop/replay, finalization tool과 evaluator arrival. D-089은 마지막 `PatchApplied` event 뒤 68 model/96 tool
+call과 1,772,530 token 동안 추가 `PatchApplied` event가 0이었고 visible check 0/6, finish/evaluator 0이다. 따라서
+deterministic terminal trigger는 budget guard지만 bounded process classification은
+`qualified-process-nonconvergence-ending-in-budget-terminal`이다.
+
+D-087 r2와 D-089은 budget 외에 fresh repetition, schedule, execution identity와 harness commit이 달라 causal
+paired comparison이 아니다. 같은 task D-087 r1이 534,853 token에서 evaluator에 도달한 사실은 process variance
+control로만 사용하며 task/hidden outcome은 사용하지 않는다. 2.4M/3M counterfactual은 관측된 prefix에서 다음
+request를 admit한다는 산술일 뿐, seq 546의 exploration block 이후 path나 completion을 식별하지 못한다.

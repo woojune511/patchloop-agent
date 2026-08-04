@@ -1147,3 +1147,17 @@ silently lowering the design or fabricating missing results.
   동시에 이 repeated-recovery trajectory는 단순 budget 증액보다 별도 workflow 분석이 필요함을 시사한다.
 - One-row calibration은 no-memory performance denominator가 아니고 memory rule admission이나 core experiment를
   열지 않는다. Exact invocation은 seal 후 hard-consumed이며 자동 재실행하지 않는다.
+
+## D-091 remains a bounded non-causal audit
+
+- D-087 r2와 D-089은 동일 task/model/tool/context지만 repetition, schedule, execution identity, harness commit과
+  token ceiling이 다르다. 차이를 budget effect로 인과 추정하지 않는다.
+- ContextBuilt는 두 run 모두 최대 12 event만 포함했고 D-089은 더 적은 eligible event에도 final 121,658 chars를
+  기록했다. Public metadata는 selected content growth를 보여주지만 body를 열지 않았으므로 정확한 semantic 원인은
+  모른다.
+- Qualification과 retry rehydration pass는 관측된 trace contract가 온전하다는 뜻이지 harness defect가 없다는
+  증명은 아니다. 반대로 repeated invalid patch가 곧 harness defect라는 증거도 아니다.
+- 534,853-token same-task control은 process variance만 보여준다. 해당 task outcome, hidden correctness와 memory
+  효과는 D-091 결론에 사용하지 않는다.
+- 2.4M/3M 산술은 observed prefix에만 유효하고 token-tail block 이후 tool path, future latency, submission과
+  evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별도 policy change다.

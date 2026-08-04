@@ -10,7 +10,30 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-090 D-089 measured result sealed; exact one-row workflow remained qualified but stopped at
+- 현재 milestone은 `D-091 offline AnyIO public-trajectory audit complete; qualified runtime, repeated invalid-patch
+  non-convergence and budget terminal separated; no rerun, budget, baseline, memory, or core authority`다. D-087
+  AnyIO repetition 2 `run_4613c65b2a254349`와 D-089 `run_e444de1bb20a4325`의 public task, portable seal,
+  manifest/qualification과 durable event metadata만 비교했다. Private assertion, hidden/reference/candidate patch
+  body와 model/tool artifact body는 분석에 사용하지 않았다. D-087은 93 model/139 tool call, 1,578,208 token,
+  1,222,996ms였고 D-089은 더 적은 79/121 call로 1,956,109 token과 1,628,695ms를 사용했다. D-089은 유일한
+  `PatchApplied` seq 103 뒤 68 model call, 96 tool call과 1,772,530 token을 소비했지만 추가 `PatchApplied` event는 0이며
+  14개 apply candidate가 거부됐다. 마지막 실패 visible check seq 391 뒤에도 863,211 token, 27 model call,
+  32 tool call, 9개 rejected patch와 861,196ms를 사용했고 mutation/check/get_diff/finish는 0이었다. 두 run의
+  visible check는 합계 14/14 실행됐지만 pass는 0이다. Retry rehydration은 D-087 20/20, D-089 15/15이고
+  failed source sequence는 0이며 qualification은 각각 28/28과 27/27이다. 따라서 직접 terminal trigger는
+  total-token guard지만 budget 부족이 completion root cause라는 주장은 성립하지 않는다. 별도 동일 task D-087
+  repetition 1은 534,853 token에서 evaluator에 도달했으므로 process variance도 크다; 그 task/hidden outcome은
+  분석에 사용하지 않았다. Classification은 `qualified-process-nonconvergence-ending-in-budget-terminal`이며
+  harness defect는 관측되지 않았지만 ruled out도 아니다. 2.4M/3M은 관측 prefix의 token threshold만 넘기고
+  171,305ms wall headroom은 그대로이므로 completion guarantee가 아니다. Artifact는
+  `reports/live-pilot/artifacts/d091-anyio-public-trajectory-audit.json`, SHA는
+  `sha256:74b6b229520d3358e7fbd33faad3b0be532405bbe5711a35c4d064114ba8e9a7`이다. D-087/D-089은 immutable하고
+  D-091 자체 provider/evaluator call과 model cost는 0/0/$0이다. 다음 gate는 repeated-invalid-patch와 context
+  growth를 유지·generic fail-fast·generic ceiling 중에서 offline public cross-task evidence로 결정하는 것이며
+  새 live execution과 budget freeze는 열리지 않는다. Final verification은 focused 238/238, repository-wide
+  sharded 1,539 collected 중 1,532 passed/7 environment-dependent skipped이며 Ruff, compileall, JSON/hash와
+  `git diff --check`가 통과했다.
+- Historical D-090 milestone은 `D-089 measured result sealed; exact one-row workflow remained qualified but stopped at
   the 2M total-token guard before submission/evaluator; no rerun, baseline, memory, or core authority`다. Exact
   execution hash `sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3`는 clean source
   commit `7f3e6debb2a67f4b108c4422fa4cf51ebfea994f`에서 정확히 한 번 소비됐고 run은

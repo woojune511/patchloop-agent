@@ -1,0 +1,571 @@
+{
+  "schema_version": "public-trajectory-audit-manifest-v1",
+  "audit_id": "d091_2a2668a20b0e8fb4234ea3dd738f715089792321b2df3763a0f51df5f00ed51d",
+  "semantic_body_hash": "sha256:2a2668a20b0e8fb4234ea3dd738f715089792321b2df3763a0f51df5f00ed51d",
+  "semantic_body": {
+    "schema_version": "anyio-public-trajectory-audit-v1",
+    "milestone": "D-091 offline AnyIO public-trajectory audit",
+    "recorded_at": "2026-08-04T07:50:28Z",
+    "evidence_kind": "bounded-cross-run-process-postmortem",
+    "source_binding": {
+      "d088_campaign_seal": {
+        "path": "reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json",
+        "bytes": 32251,
+        "file_sha256": "sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269",
+        "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+        "execution_hash": "sha256:0dd8ca1d0632398fed25ca28fbce89b97b0bf2137be163ed19a09fbf2d7f470d",
+        "run_id": "run_4613c65b2a254349",
+        "qualification_hash": "sha256:fca0a4eecb242e09f76b0e965257ca1116be16343a270fbdfc52ec75111a73c3",
+        "source_evidence_hash": "sha256:bcb7210bfe42da6766612b750e7fd35e8487d444a34214eb6c919f5bcfd12b83"
+      },
+      "d090_probe_seal": {
+        "path": "reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json",
+        "bytes": 13652,
+        "file_sha256": "sha256:06006c95454618b7adcea305465fa63611d2043c70aaa3e1df2de9a3f5a192f1",
+        "report_id": "d090_815881cebc761187636ae2992c5dd4ff95c0c471a0c79d7250373b513a3bc94e",
+        "semantic_body_hash": "sha256:815881cebc761187636ae2992c5dd4ff95c0c471a0c79d7250373b513a3bc94e",
+        "experiment_id": "anyio-workflow-completion-budget-only-v2v5-20260804-r1",
+        "execution_hash": "sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3",
+        "run_id": "run_e444de1bb20a4325",
+        "qualification_hash": "sha256:f3342a21bb38b5b3f23f271ca1a9da835fa8944456e8487cf1840e6f04fe924e",
+        "source_evidence_hash": "sha256:3f1dc8c75d89150b28b35737509fdd90f2f14825269cc41fd3cc5335414be0e3"
+      },
+      "d087_predecessors": {
+        "suite": {
+          "path": "experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml",
+          "bytes": 2522,
+          "sha256": "sha256:44de6899656c96830d3a0aa3326777848c5d632ef903eccc166839fa1caeaf79"
+        },
+        "source_gate": {
+          "path": "reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json",
+          "bytes": 9675,
+          "sha256": "sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe"
+        }
+      },
+      "d089_predecessors": {
+        "suite": {
+          "path": "experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml",
+          "bytes": 1535,
+          "sha256": "sha256:1b42966bd32e5154832cff8c465e24ebf3db829385cee56ff60906043a313eb6"
+        },
+        "source_gate": {
+          "path": "reports/live-pilot/artifacts/d089-anyio-budget-only-readiness-probe-source-gate.json",
+          "bytes": 8156,
+          "sha256": "sha256:19eca850799e9549eef1d8b383d0c3461aa2b9a2e5471d67fe599cb373ea4555"
+        }
+      },
+      "public_task": {
+        "path": "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+        "task_id": "anyio-interrupt-runner-cleanup",
+        "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+        "public_spec_hash": "sha256:b6d5b8d42a003795ed38256fa9a0e07c94578a6e0996179588a15d42604b86bf"
+      }
+    },
+    "audit_scope": {
+      "public_task_read": true,
+      "portable_public_reports_read": true,
+      "durable_public_event_metadata_read": true,
+      "manifest_and_qualification_metadata_read": true,
+      "private_task_or_hidden_assertions_read_for_analysis": false,
+      "reference_or_candidate_patch_body_read_for_analysis": false,
+      "model_request_or_response_body_read_for_analysis": false,
+      "tool_input_or_output_artifact_body_read_for_analysis": false,
+      "credential_read_or_logged": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0.0
+    },
+    "comparison_contract": {
+      "same": {
+        "task_id": "anyio-interrupt-runner-cleanup",
+        "base_commit": "cb245dba9883516f2ed4c23899de157183a1cb50",
+        "model_id": "gpt-5.4-mini-2026-03-17",
+        "reasoning_effort": "medium",
+        "reasoning_mode": "standard",
+        "service_tier": "default",
+        "transport_max_retries": 0,
+        "max_output_tokens": 25000,
+        "max_model_calls": null,
+        "max_tool_calls": null,
+        "wall_clock_timeout_seconds": 1800,
+        "memory_condition": "no_memory",
+        "memory_max_context_tokens": 2000,
+        "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+        "tool_schema_version": "v2",
+        "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+        "context_policy_version": "phase-evidence-v5",
+        "call_guard_policy": "model-tool-observability-only-v1"
+      },
+      "different": {
+        "d087_total_token_ceiling": 1600000,
+        "d089_total_token_ceiling": 2000000,
+        "d087_repetition": 2,
+        "d089_repetition": 1,
+        "d087_schedule_order": 7,
+        "d089_schedule_order": 1,
+        "d087_harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+        "d089_harness_git_commit": "7f3e6debb2a67f4b108c4422fa4cf51ebfea994f",
+        "experiment_and_execution_identity_equal": false
+      },
+      "paired_randomized_budget_effect_estimate": false,
+      "causal_budget_attribution_allowed": false,
+      "reason": "fresh stochastic trajectories differ in repetition, schedule, execution identity and harness commit; only bounded process observations are compared"
+    },
+    "runs": {
+      "d087_anyio_repetition_2": {
+        "run_id": "run_4613c65b2a254349",
+        "terminal_phase": "IMPLEMENT",
+        "terminal_reason": "exact_request_budget_exceeded",
+        "generation_started_for_blocked_request": false,
+        "trace_qualified": true,
+        "qualification_passed_checks": 28,
+        "qualification_total_checks": 28,
+        "submission_accepted": 0,
+        "evaluator_reached": false,
+        "task_outcome_observed": false,
+        "configured_budget": {
+          "max_total_tokens": 1600000,
+          "wall_clock_timeout_seconds": 1800
+        },
+        "usage": {
+          "input_tokens": 1429012,
+          "output_tokens": 149196,
+          "reasoning_output_tokens": 137975,
+          "total_tokens": 1578208,
+          "model_calls": 93,
+          "input_token_count_calls": 94,
+          "tool_calls": 139,
+          "wall_clock_ms": 1222996,
+          "model_duration_ms": 1110369,
+          "model_cost_usd": 1.743141
+        },
+        "terminal_budget": {
+          "remaining_tokens": 21792,
+          "blocked_requested_input_tokens": 14080,
+          "max_output_tokens": 25000,
+          "required_tokens": 39080,
+          "deficit_tokens": 17288,
+          "same_prefix_next_call_minimum": 1617288,
+          "wall_clock_headroom_ms": 577004
+        },
+        "trace": {
+          "events": 657,
+          "checkpoints": 140,
+          "checkpoint_reproduction_status_unknown": 140,
+          "final_completed_checks": 0,
+          "final_pending_checks": 1,
+          "event_elapsed_ms": 1258654,
+          "phase_transitions": [
+            "INTAKE->REPRODUCE",
+            "REPRODUCE->PLAN",
+            "PLAN->IMPLEMENT"
+          ],
+          "context_builds": 94,
+          "context_characters_minimum": 7728,
+          "context_characters_maximum": 70983,
+          "context_characters_final": 46046,
+          "included_event_count_maximum": 12,
+          "included_event_count_final": 12,
+          "omitted_event_count_final": 455,
+          "provider_state_used_count": 0,
+          "truncated_tool_result_contexts": 1,
+          "observed_input_tokens_minimum": 2704,
+          "observed_input_tokens_maximum": 21724,
+          "observed_input_tokens_final": 13924
+        },
+        "phase_summary": {
+          "REPRODUCE": {
+            "event_count": 163,
+            "trace_elapsed_ms": 133428,
+            "model_calls": 20,
+            "input_tokens": 317611,
+            "output_tokens": 13650,
+            "reasoning_output_tokens": 11902,
+            "model_duration_ms": 122556,
+            "tool_calls": {
+              "search_files": 28,
+              "read_file": 9,
+              "apply_patch": 1,
+              "run_check": 0
+            },
+            "tool_successes": 32,
+            "tool_failures": 0,
+            "loops": 6,
+            "tool_replays": 6,
+            "patches_prepared": 1,
+            "patches_applied": 1
+          },
+          "IMPLEMENT": {
+            "event_count": 492,
+            "trace_elapsed_ms": 1125209,
+            "model_calls": 73,
+            "input_tokens": 1111401,
+            "output_tokens": 135546,
+            "reasoning_output_tokens": 126073,
+            "model_duration_ms": 987813,
+            "tool_calls": {
+              "search_files": 44,
+              "read_file": 24,
+              "apply_patch": 25,
+              "run_check": 8
+            },
+            "tool_successes": 74,
+            "tool_failures": 20,
+            "loops": 10,
+            "tool_replays": 7,
+            "patches_prepared": 22,
+            "patches_applied": 5
+          }
+        },
+        "tool_and_recovery": {
+          "tool_calls": {
+            "search_files": 72,
+            "read_file": 33,
+            "apply_patch": 26,
+            "run_check": 8
+          },
+          "outcomes": {
+            "succeeded": 106,
+            "failed": 20,
+            "replayed": 13
+          },
+          "patches_prepared": 23,
+          "patches_applied": 6,
+          "apply_patch_failures": 20,
+          "apply_patch_policy_violations": 17,
+          "apply_patch_contract_errors": 3,
+          "rejected_candidate_count": 20,
+          "verified_retry_count": 20,
+          "failed_source_failure_sequences": [],
+          "visible_checks_executed": 8,
+          "visible_checks_passed": 0,
+          "get_diff_calls": 0,
+          "finish_task_calls": 0,
+          "loops": {
+            "observed": 16,
+            "fully_covered_read": 9,
+            "duplicate_search": 4,
+            "unclassified": 3,
+            "maximum_no_progress_streak": 4,
+            "terminal_loop_failure": false
+          }
+        },
+        "post_last_applied_patch": {
+          "last_patch_applied_sequence": 637,
+          "elapsed_to_terminal_ms": 159763,
+          "model_calls": 3,
+          "tokens": 60953,
+          "tool_calls": 3,
+          "additional_patches_applied": 0,
+          "rejected_apply_patch_calls": 2
+        },
+        "post_last_executed_check": {
+          "last_check_sequence": 642,
+          "last_check_passed": false,
+          "elapsed_to_terminal_ms": 143459,
+          "model_calls": 2,
+          "tokens": 49224,
+          "tool_calls": 2,
+          "additional_patches_applied": 0,
+          "rejected_apply_patch_calls": 2
+        }
+      },
+      "d089_budget_only_probe": {
+        "run_id": "run_e444de1bb20a4325",
+        "terminal_phase": "IMPLEMENT",
+        "terminal_reason": "exact_request_budget_exceeded",
+        "generation_started_for_blocked_request": false,
+        "trace_qualified": true,
+        "qualification_passed_checks": 27,
+        "qualification_total_checks": 27,
+        "submission_accepted": 0,
+        "evaluator_reached": false,
+        "task_outcome_observed": false,
+        "configured_budget": {
+          "max_total_tokens": 2000000,
+          "wall_clock_timeout_seconds": 1800
+        },
+        "usage": {
+          "input_tokens": 1737041,
+          "output_tokens": 219068,
+          "reasoning_output_tokens": 206655,
+          "total_tokens": 1956109,
+          "model_calls": 79,
+          "input_token_count_calls": 80,
+          "tool_calls": 121,
+          "wall_clock_ms": 1628695,
+          "model_duration_ms": 1550258,
+          "model_cost_usd": 2.28858675
+        },
+        "terminal_budget": {
+          "remaining_tokens": 43891,
+          "blocked_requested_input_tokens": 33804,
+          "max_output_tokens": 25000,
+          "required_tokens": 58804,
+          "deficit_tokens": 14913,
+          "same_prefix_next_call_minimum": 2014913,
+          "wall_clock_headroom_ms": 171305
+        },
+        "trace": {
+          "events": 556,
+          "checkpoints": 123,
+          "checkpoint_reproduction_status_unknown": 123,
+          "final_completed_checks": 0,
+          "final_pending_checks": 1,
+          "event_elapsed_ms": 1664171,
+          "phase_transitions": [
+            "INTAKE->REPRODUCE",
+            "REPRODUCE->PLAN",
+            "PLAN->IMPLEMENT"
+          ],
+          "context_builds": 80,
+          "context_characters_minimum": 7728,
+          "context_characters_maximum": 121658,
+          "context_characters_final": 121658,
+          "included_event_count_maximum": 12,
+          "included_event_count_final": 12,
+          "omitted_event_count_final": 382,
+          "provider_state_used_count": 0,
+          "truncated_tool_result_contexts": 0,
+          "observed_input_tokens_minimum": 2731,
+          "observed_input_tokens_maximum": 33357,
+          "observed_input_tokens_final": 33357
+        },
+        "phase_summary": {
+          "REPRODUCE": {
+            "event_count": 102,
+            "trace_elapsed_ms": 121256,
+            "model_calls": 11,
+            "input_tokens": 170938,
+            "output_tokens": 12641,
+            "reasoning_output_tokens": 11156,
+            "model_duration_ms": 113274,
+            "tool_calls": {
+              "search_files": 16,
+              "read_file": 7,
+              "apply_patch": 2,
+              "run_check": 0
+            },
+            "tool_successes": 22,
+            "tool_failures": 1,
+            "loops": 2,
+            "tool_replays": 2,
+            "patches_prepared": 1,
+            "patches_applied": 1
+          },
+          "IMPLEMENT": {
+            "event_count": 452,
+            "trace_elapsed_ms": 1542896,
+            "model_calls": 68,
+            "input_tokens": 1566103,
+            "output_tokens": 206427,
+            "reasoning_output_tokens": 195499,
+            "model_duration_ms": 1436984,
+            "tool_calls": {
+              "search_files": 53,
+              "read_file": 23,
+              "apply_patch": 14,
+              "run_check": 6
+            },
+            "tool_successes": 64,
+            "tool_failures": 14,
+            "loops": 20,
+            "tool_replays": 18,
+            "patches_prepared": 0,
+            "patches_applied": 0
+          }
+        },
+        "tool_and_recovery": {
+          "tool_calls": {
+            "search_files": 69,
+            "read_file": 30,
+            "apply_patch": 16,
+            "run_check": 6
+          },
+          "outcomes": {
+            "succeeded": 86,
+            "failed": 15,
+            "replayed": 20
+          },
+          "patches_prepared": 1,
+          "patches_applied": 1,
+          "apply_patch_failures": 15,
+          "apply_patch_policy_violations": 0,
+          "apply_patch_contract_errors": 15,
+          "rejected_candidate_count": 15,
+          "verified_retry_count": 15,
+          "failed_source_failure_sequences": [],
+          "visible_checks_executed": 6,
+          "visible_checks_passed": 0,
+          "get_diff_calls": 0,
+          "finish_task_calls": 0,
+          "loops": {
+            "observed": 22,
+            "fully_covered_read": 13,
+            "duplicate_search": 7,
+            "unclassified": 2,
+            "maximum_no_progress_streak": 5,
+            "terminal_loop_failure": false
+          }
+        },
+        "post_last_applied_patch": {
+          "last_patch_applied_sequence": 103,
+          "elapsed_to_terminal_ms": 1542909,
+          "model_calls": 68,
+          "tokens": 1772530,
+          "tool_calls": 96,
+          "additional_patches_applied": 0,
+          "rejected_apply_patch_calls": 14
+        },
+        "post_last_executed_check": {
+          "last_check_sequence": 391,
+          "last_check_passed": false,
+          "elapsed_to_terminal_ms": 861196,
+          "model_calls": 27,
+          "tokens": 863211,
+          "tool_calls": 32,
+          "additional_patches_applied": 0,
+          "rejected_apply_patch_calls": 9
+        }
+      }
+    },
+    "cross_run_comparison": {
+      "same_task_process_control": {
+        "source": "D-087 AnyIO repetition 1 portable process metadata",
+        "run_id": "run_b6038236132749e1",
+        "repetition": 1,
+        "schedule_order": 3,
+        "total_tokens": 534853,
+        "model_calls": 31,
+        "tool_calls": 58,
+        "wall_clock_ms": 241513,
+        "evaluator_reached": true,
+        "official_evaluator_completed": true,
+        "task_or_hidden_outcome_used": false,
+        "bounded_implication": "the same task reached the evaluator below 1.6M in another fresh trajectory, so no single observed ceiling is established as necessary"
+      },
+      "d089_minus_d087": {
+        "input_tokens": 308029,
+        "output_tokens": 69872,
+        "reasoning_output_tokens": 68680,
+        "total_tokens": 377901,
+        "model_calls": -14,
+        "tool_calls": -18,
+        "wall_clock_ms": 405699,
+        "model_duration_ms": 439889,
+        "context_characters_maximum": 50675,
+        "context_characters_final": 75612,
+        "patches_applied": -5,
+        "visible_checks_passed": 0
+      },
+      "average_total_tokens_per_completed_model_call": {
+        "d087": 16969.978,
+        "d089": 24760.873,
+        "d089_relative_increase": 0.459
+      },
+      "post_last_patch_delta_d089_minus_d087": {
+        "tokens": 1711577,
+        "model_calls": 65,
+        "tool_calls": 93,
+        "elapsed_to_terminal_ms": 1383146,
+        "additional_patches_applied": 0
+      },
+      "direct_observations": [
+        "both runs were trace-qualified and ended at the exact-request total-token guard before submission or evaluator",
+        "all 14 executed visible checks across both runs completed but failed",
+        "D-089 used more tokens and wall time with fewer model and tool calls than D-087",
+        "D-089 spent 90.6 percent of its observed tokens after its only applied patch without another PatchApplied event",
+        "verified rejected-patch retry context had zero failed source sequences in both runs",
+        "the same-task D-087 repetition 1 reached the evaluator at 534,853 tokens, showing large process variance without using its task outcome"
+      ]
+    },
+    "bounded_counterfactuals": {
+      "d087_exact_next_call": {
+        "minimum_total_token_ceiling": 1617288,
+        "additional_tokens_over_configured_ceiling": 17288,
+        "completion_guarantee": false
+      },
+      "d089_exact_next_call": {
+        "minimum_total_token_ceiling": 2014913,
+        "additional_tokens_over_configured_ceiling": 14913,
+        "completion_guarantee": false
+      },
+      "d089_same_observed_prefix_at_2400000": {
+        "tokens_remaining_before_blocked_request": 443891,
+        "tokens_remaining_after_full_blocked_request_reservation": 385087,
+        "wall_clock_headroom_at_observed_prefix_ms": 171305,
+        "completion_guarantee": false
+      },
+      "d089_same_observed_prefix_at_3000000": {
+        "tokens_remaining_before_blocked_request": 1043891,
+        "tokens_remaining_after_full_blocked_request_reservation": 985087,
+        "wall_clock_headroom_at_observed_prefix_ms": 171305,
+        "completion_guarantee": false
+      },
+      "token_only_escalation_removes_wall_constraint": false,
+      "future_generation_count_or_submission_time_identifiable": false
+    },
+    "classification": {
+      "schema_version": "qualified-process-nonconvergence-classification-v1",
+      "method": "deterministic public-trace predicates plus bounded non-causal inference",
+      "primary": "qualified-process-nonconvergence-ending-in-budget-terminal",
+      "direct_terminal_trigger": "exact-request total-token admission guard",
+      "trace_or_recovery_integrity_failure_observed": false,
+      "rejected_patch_rehydration_failure_observed": false,
+      "harness_defect_confirmed": false,
+      "harness_defect_ruled_out": false,
+      "process_nonconvergence_observed": true,
+      "task_outcome_observed": false,
+      "budget_shortage_as_completion_root_cause_proven": false,
+      "more_budget_alone_as_completion_remedy_supported": false,
+      "cross_run_budget_effect_identified": false,
+      "evidence": [
+        "both trace qualifications passed and rejected-patch retry source failures were empty",
+        "D-089 had no additional PatchApplied event during 68 post-patch model calls and 96 post-patch tool calls",
+        "D-089 had 14 post-patch contract-error candidates and 20 post-patch loop observations",
+        "neither run passed a visible check, submitted, reached REVIEW, or reached the evaluator",
+        "the two runs are fresh trajectories rather than a paired deterministic replay",
+        "a separate same-task trajectory reached the evaluator below the lower ceiling, so budget necessity is not identified"
+      ]
+    },
+    "claims_boundary": {
+      "source_artifacts_modified": false,
+      "original_gates_replaced": false,
+      "d087_immutable": true,
+      "d089_immutable_and_hard_consumed": true,
+      "provider_calls_made_by_audit": 0,
+      "evaluator_calls_made_by_audit": 0,
+      "added_model_cost_usd": 0.0,
+      "task_outcome_or_hidden_acceptance_observed": false,
+      "agent_correctness_score_established": false,
+      "harness_root_cause_proven": false,
+      "completion_budget_established": false,
+      "automatic_rerun_authorized": false,
+      "new_budget_policy_authorized": false,
+      "prompt_tool_context_change_authorized": false,
+      "task_specific_tuning_authorized": false,
+      "no_memory_baseline_established": false,
+      "comparison_denominator_eligible": false,
+      "memory_review_admission_or_index_unlocked": false,
+      "core_campaign_unlocked": false
+    },
+    "next_gate": {
+      "d091_analysis_complete": true,
+      "new_live_execution_authorized": false,
+      "required_next_action": "offline condition-neutral decision on repeated invalid-patch handling, context growth and finite fail-fast policy",
+      "allowed_evidence": "public cross-task process evidence and offline replay only",
+      "forbidden_inputs": [
+        "hidden acceptance",
+        "private assertions",
+        "reference patch",
+        "task-specific prompt or tool tuning"
+      ],
+      "decision_options": [
+        "retain current policy and count bounded budget terminals as agent failures",
+        "add a generic repeated-invalid-patch fail-fast guard and validate it offline",
+        "add a generic context-growth ceiling and validate it offline"
+      ],
+      "budget_freeze_or_live_probe_after_this_artifact": false
+    }
+  }
+}

@@ -2,6 +2,18 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-091은 D-087/D-089 AnyIO budget-terminal을 public trace만으로 비교한 offline audit다. D-089은
+유일한 patch 적용 뒤 68 model call·96 tool call·1,772,530 token을 더 사용했지만 추가 `PatchApplied` event는 없었고,
+마지막 실패 check 뒤에도 863,211 token과 861초 동안 9개 patch가 거부됐다. 두 run의 visible check pass는
+합계 0/14다. Qualification과 rejected-patch rehydration은 정상이라 직접 종료 원인은 token guard지만,
+budget 부족이 completion의 유일한 root cause라는 증거는 없다. 같은 task의 다른 D-087 repetition은 534,853
+token에서 evaluator에 도달했으므로 fresh trajectory variance도 크다. 따라서 2.4M/3M 증액, 자동 rerun,
+baseline 또는 memory admission은 열지 않는다. Artifact는
+`reports/live-pilot/artifacts/d091-anyio-public-trajectory-audit.json`, SHA는
+`sha256:74b6b229520d3358e7fbd33faad3b0be532405bbe5711a35c4d064114ba8e9a7`이며 audit 자체 provider call/cost는
+0/$0이다. Final verification은 focused 238/238, repository-wide sharded 1,539 collected 중 1,532 passed/7
+environment-dependent skipped이며 Ruff, compileall, JSON/hash와 `git diff --check`가 통과했다.
+
 2026-08-04 D-090은 승인된 D-089 AnyIO 1-run을 immutable evidence로 봉인한다. Exact hash
 `sha256:dafb1182bc77a80a19384406a528997d608dc935201df63e7fdc1ef5aad471c3`로 실행한
 `run_e444de1bb20a4325`는 trace qualification 27/27을 통과했지만 evaluator 전에 total-token guard로

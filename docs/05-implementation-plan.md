@@ -1,15 +1,15 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-090 D-089 measured-result seal; qualified 2M budget-terminal result를 immutable하게 보존하고
-baseline, memory admission/index와 core authority는 계속 닫음**
+현재 milestone: **D-091 AnyIO public-trajectory audit; budget terminal과 qualified process non-convergence를 분리하고
+자동 증액·재실행·baseline·memory/core authority는 계속 닫음**
 
-D-089은 exact hash로 한 번 실행됐다. Run은 27/27 qualified였지만 1,956,109 token 뒤 다음 exact request에
-14,913 token이 부족해 evaluator 전에 terminal했고 gate는 false다. 계산 비용 `$2.28858675`는 `$10` cap
-안이다. D-090은 raw result/journal/qualification/token/cost를 portable seal과 hard-consumed ID로 결속한다.
-다음 단계는 이 budget-terminal과 repeated-recovery trajectory를 검토하는 decision이며 자동 재실행이나
-budget escalation은 아니다. Final verification은 focused 232/232, repository-wide sharded 1,533 collected 중
-1,526 passed/7 skipped다.
+D-091은 D-087 r2와 D-089의 public event metadata를 재집계했다. D-089은 `PatchApplied` seq 103 이후 68 model/96
+tool call과 1,772,530 token을 사용했지만 추가 `PatchApplied` event는 없었고 check pass 0/6, rejected apply 14였다. Retry source
+context와 qualification은 통과했으므로 confirmed harness defect는 아니지만, 더 큰 token ceiling이 completion을
+보장한다는 증거도 아니다. 다음 단계는 cross-task offline evidence로 generic fail-fast/context ceiling의 필요성을
+결정하는 것이며 live budget freeze가 아니다. Final verification은 focused 238/238, repository-wide sharded
+1,539 collected 중 1,532 passed/7 environment-dependent skipped다.
 
 2026-08-04 구현 스냅샷:
 
@@ -20,7 +20,7 @@ budget escalation은 아니다. Final verification은 focused 232/232, repositor
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-090 measured result sealed | D-089 1-row는 terminal·qualified지만 evaluator 전 2M budget-terminal; hard-consumed, baseline/memory/core closed |
+| Phase 6 evaluation | D-091 public trajectory audit complete | qualified runtime과 process non-convergence를 분리; no automatic rerun/budget, baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
