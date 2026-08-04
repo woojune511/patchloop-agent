@@ -1,0 +1,193 @@
+{
+  "schema_version": "readiness-budget-outcome-correction-manifest-v1",
+  "correction_id": "rbocor_3a5790e57252132387b803681339e00032c62f7026a81d9acbd9f4598fc64ccd",
+  "semantic_body_hash": "sha256:3a5790e57252132387b803681339e00032c62f7026a81d9acbd9f4598fc64ccd",
+  "semantic_body": {
+    "schema_version": "readiness-budget-outcome-correction-v1",
+    "milestone": "D-093 readiness-stage budget outcome correction",
+    "recorded_at": "2026-08-04T13:59:37Z",
+    "source_binding": {
+      "d092_policy_decision": {
+        "path": "reports/live-pilot/artifacts/d092-public-policy-replay-decision.json",
+        "bytes": 52901,
+        "file_sha256": "sha256:541b890e2b123a5431060e23dcf4544fce3f7b810cb8cb1a560fbcc245b3fe22",
+        "semantic_body_hash": "sha256:6fde1253a7ba92a2cb60b09f05bc070849c1f868e96cc00870cf03eff62782ec",
+        "decision_id": "d092_6fde1253a7ba92a2cb60b09f05bc070849c1f868e96cc00870cf03eff62782ec",
+        "source_git_commit": "4f830cfa9de465e9640da82ecdd20aea412c914d",
+        "original_selected_decision": "retain-current-policy-and-count-qualified-budget-terminal-as-agent-failure",
+        "original_runtime_policy_action": "retain-current-runtime-policy",
+        "original_budget_terminal_outcome": "agent_failure",
+        "original_outcome_binding_status": "selected-but-denominator-binding-pending",
+        "panel_projection_hash": "sha256:7b68914f16d82465a3e78952f8ab7bc0489372cd3b23bc895fac4c762907c633",
+        "candidate_grid_hash": "sha256:e9d04ca31fd86ffde0972faf71c9ebf4549fe6958febecc9d7dac373e9208070",
+        "replay_projection_hash": "sha256:ca8e547d6559efc8461d8e1c68e0e5a31bf7b2cb7302251550dabb356cc1392e"
+      },
+      "d088_campaign_seal": {
+        "path": "reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json",
+        "bytes": 32251,
+        "file_sha256": "sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269",
+        "semantic_body_hash": "sha256:b8401884eeffde2c26c9346108c578d8cbf2e24fe4ac84435219a6aa8911c3c3",
+        "report_id": "d088_b8401884eeffde2c26c9346108c578d8cbf2e24fe4ac84435219a6aa8911c3c3",
+        "affected_run_projection_hash": "sha256:bd982568bc136c780da191b7d8436016347860a7f6f69c1f55a00bb0a85287ac",
+        "read_mode": "portable-semantic-field-validation"
+      },
+      "d090_anyio_probe_seal": {
+        "path": "reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json",
+        "bytes": 13652,
+        "file_sha256": "sha256:06006c95454618b7adcea305465fa63611d2043c70aaa3e1df2de9a3f5a192f1",
+        "semantic_body_hash": "sha256:815881cebc761187636ae2992c5dd4ff95c0c471a0c79d7250373b513a3bc94e",
+        "report_id": "d090_815881cebc761187636ae2992c5dd4ff95c0c471a0c79d7250373b513a3bc94e",
+        "affected_run_projection_hash": "sha256:179d34455f327947f1c532a24be9b279d056775af16b08cfcfd31e1c480011a4",
+        "read_mode": "portable-semantic-field-validation"
+      }
+    },
+    "cause": {
+      "category": "stage-purpose-outcome-misclassification",
+      "summary": "D-092 correctly rejected the tested early-stop policies but prematurely selected a comparison-style failure disposition while the project is still validating end-to-end readiness.",
+      "readiness_objective": "observe terminal, qualified submission and official evaluator arrival without a binding resource ceiling",
+      "budget_is_target_experimental_factor": false,
+      "runtime_or_trace_defect": false,
+      "policy_replay_error": false,
+      "hidden_or_task_outcome_used": false
+    },
+    "preserved_policy_decision": {
+      "selected": "retain-current-runtime-policy",
+      "admitted_candidate_count": 0,
+      "repeated_rejection_result_preserved": true,
+      "relative_context_result_preserved": true,
+      "absolute_context_sensitivity_preserved": true,
+      "candidate_grid_hash": "sha256:e9d04ca31fd86ffde0972faf71c9ebf4549fe6958febecc9d7dac373e9208070",
+      "replay_projection_hash": "sha256:ca8e547d6559efc8461d8e1c68e0e5a31bf7b2cb7302251550dabb356cc1392e",
+      "d092_artifact_byte_immutable": true
+    },
+    "corrected_readiness_stage_contract": {
+      "schema_version": "workflow-readiness-budget-disposition-v1",
+      "corrected_selected_decision": "retain-current-policy-and-treat-readiness-budget-terminal-as-inconclusive",
+      "evaluation_stage": "workflow-readiness",
+      "evaluation_stage_binding": "explicit-content-addressed-policy",
+      "experiment_purpose_inference_allowed": false,
+      "raw_runtime_outcome_kind_preserved": "agent_failure",
+      "readiness_disposition": "readiness_inconclusive",
+      "readiness_reason": "budget_confounded",
+      "budget_role": "finite-emergency-safety-ceiling-intended-to-be-non-binding",
+      "budget_is_target_experimental_factor": false,
+      "performance_denominator_eligible": false,
+      "automatic_rerun_authorized": false,
+      "historical_exact_run_rerun_allowed": false,
+      "new_successor_readiness_probe_allowed": true,
+      "comparison_disposition": "pending-explicit-resource-policy-freeze",
+      "comparison_analysis_failure_selected": false,
+      "affected_public_runs": [
+        {
+          "run_id": "run_4613c65b2a254349",
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "raw_runtime_outcome_kind_preserved": "agent_failure",
+          "readiness_disposition": "readiness_inconclusive",
+          "readiness_reason": "budget_confounded",
+          "historical_exact_run_rerun_allowed": false
+        },
+        {
+          "run_id": "run_e444de1bb20a4325",
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "raw_runtime_outcome_kind_preserved": "agent_failure",
+          "readiness_disposition": "readiness_inconclusive",
+          "readiness_reason": "budget_confounded",
+          "historical_exact_run_rerun_allowed": false
+        }
+      ],
+      "readiness_completion_gate": {
+        "required_true": [
+          "all_rows_started_and_terminal",
+          "all_rows_trace_qualified",
+          "all_rows_submission_accepted",
+          "all_rows_evaluator_reached",
+          "all_rows_official_evaluator",
+          "persisted_qualification_matches_read_only_recomputation",
+          "exact_input_telemetry_complete",
+          "responses_completed",
+          "truncation_disabled"
+        ],
+        "required_zero": [
+          "infrastructure_errors",
+          "qualification_errors",
+          "diagnostic_errors",
+          "budget_terminal_runs",
+          "terminal_loop_failure_runs",
+          "model_or_tool_call_budget_blocks"
+        ],
+        "task_success_required": false,
+        "hidden_acceptance_required": false,
+        "scrr_required": false
+      }
+    },
+    "correction_boundary": {
+      "superseded_d092_fields": [
+        "decision.selected analytical suffix",
+        "decision.qualified_budget_terminal_outcome as readiness analysis",
+        "decision.outcome_binding_status",
+        "next_gate.budget_terminal_rule"
+      ],
+      "original_d092_artifact_modified": false,
+      "original_d092_decision_string_modified": false,
+      "original_run_result_modified": false,
+      "original_journal_or_qualification_modified": false,
+      "runtime_policy_modified": false,
+      "candidate_grid_or_replay_modified": false,
+      "historical_gate_replaced": false,
+      "comparison_or_baseline_policy_selected": false
+    },
+    "claims_boundary": {
+      "readiness_stage_interpretation_corrected": true,
+      "workflow_readiness_established": false,
+      "budget_sufficiency_established": false,
+      "high_headroom_probe_source_frozen": false,
+      "high_headroom_probe_execution_authorized": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0.0,
+      "comparison_denominator_opened": false,
+      "no_memory_baseline_opened": false,
+      "memory_review_or_admission_or_index_opened": false,
+      "core_experiment_opened": false
+    },
+    "next_gate": {
+      "gate": "high-headroom-diverse-readiness-source-gate",
+      "purpose": "prepare a small no-memory completion panel whose token and wall limits are emergency ceilings rather than evaluated factors",
+      "candidate_tasks": [
+        "anyio-interrupt-runner-cleanup",
+        "pyfakefs-makedirs-parent-traversal",
+        "hf-hub-xet-endpoint-propagation"
+      ],
+      "candidate_resource_derivation": {
+        "source_run_ids": [
+          "run_4613c65b2a254349",
+          "run_e444de1bb20a4325"
+        ],
+        "observed_public_maximum_tokens": 1956109,
+        "token_multiplier_numerator": 3,
+        "token_multiplier_denominator": 2,
+        "token_unrounded_numerator": 5868327,
+        "token_unrounded_denominator": 2,
+        "token_rounding_quantum": 100000,
+        "candidate_max_total_tokens": 3000000,
+        "observed_public_maximum_wall_clock_ms": 1628695,
+        "wall_multiplier_numerator": 2,
+        "wall_multiplier_denominator": 1,
+        "wall_unrounded_milliseconds": 3257390,
+        "wall_unit_conversion_milliseconds_per_second": 1000,
+        "wall_rounding_quantum_seconds": 600,
+        "candidate_wall_clock_timeout_seconds": 3600,
+        "max_model_calls": null,
+        "max_tool_calls": null
+      },
+      "candidate_values_are_source_frozen": false,
+      "clean_source_commit_required": true,
+      "fresh_official_price_check_required": true,
+      "fresh_no_call_preflight_required": true,
+      "new_execution_hash_required": true,
+      "separate_user_cost_approval_required": true,
+      "automatic_successor_execution_authorized": false,
+      "provider_execution_authorized": false
+    }
+  }
+}

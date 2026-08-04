@@ -1176,3 +1176,17 @@ evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별
   manifest, qualification, report aggregation에 아직 결속되지 않았다. 따라서 no-memory baseline, comparison
   denominator, memory admission/index와 core는 계속 닫혀 있다.
 - Retain decision은 현 정책이 최적이라는 뜻도, 다른 사전 정의 cross-task grid가 영구히 기각됐다는 뜻도 아니다.
+
+## D-093 corrects readiness interpretation, not budget sufficiency
+
+- `readiness_inconclusive`는 더 큰 budget이면 agent가 성공한다는 뜻이 아니다. Budget ceiling 때문에 official evaluator
+  outcome을 관측하지 못했으므로 readiness 질문에 답할 수 없다는 뜻이다.
+- Raw `agent_failure`를 보존하므로 runtime 사건과 analytical disposition이 다르다. 두 값을 섞어 task success rate나
+  memory effect를 계산하면 안 된다.
+- 3M token과 3,600초는 D-088/D-090 sealed public maximum에 명시된 multiplier와 rounding quantum을 적용한
+  conservative candidate다. 의도상 non-binding emergency ceiling일 뿐 실제 non-binding 여부는 successor run이
+  끝난 뒤에만 알 수 있다. Completion guarantee, frozen experiment budget, expected spend 또는 유료 실행 승인이 아니다.
+- 세 task panel은 workflow diversity를 확인하기 위한 calibration이다. 성공하더라도 no-memory performance denominator,
+  memory rule admission/index 또는 core experiment를 자동으로 열지 않는다.
+- Task success, hidden acceptance와 SCRR을 readiness gate에서 제외하는 것은 correctness를 무시한다는 뜻이 아니다.
+  Workflow가 끝까지 실행되는지와 최종 patch가 맞는지를 서로 다른 결과 축으로 보고한다.

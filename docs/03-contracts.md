@@ -3015,3 +3015,29 @@ wall suffix ≥20%, leave-one-task-out stability를 함께 통과해야 한다. 
 post-hoc sensitivity라 `admission_scope=false`다. Admitted candidate가 0개이면 exact decision은
 `retain-current-policy-and-count-qualified-budget-terminal-as-agent-failure`다. 이 문자열은 runtime mutation이나
 denominator admission 자체가 아니다.
+
+## 35. D-093 readiness budget outcome correction contract
+
+Portable wrapper의 exact top-level key는 `schema_version`, `correction_id`, `semantic_body_hash`,
+`semantic_body`다. `schema_version=readiness-budget-outcome-correction-manifest-v1`이고 canonical semantic-body
+SHA가 `rbocor_<hash>` correction ID를 결정한다. Body는 source binding, cause, preserved policy decision,
+corrected readiness-stage contract, correction boundary, claims boundary와 next gate를 함께 결속한다.
+
+Source binding은 D-092의 path, bytes, file/body SHA, decision ID, source commit, original decision과 three replay
+hash를 exact 검증한다. D-088/D-090 portable seal도 bytes, file/body SHA, report ID와 affected-run semantic
+projection hash로 결속한다. 따라서 raw outcome과 usage는 D-092의 public block count로 추정하지 않는다.
+Corrected stage contract는 다음을 동시에 만족해야 한다.
+
+- raw `RunResult.outcome_kind=agent_failure`와 historical exact run identity를 보존한다.
+- readiness disposition은 `readiness_inconclusive`, reason은 `budget_confounded`다.
+- automatic rerun과 historical exact-run rerun은 false다.
+- comparison disposition은 `pending-explicit-resource-policy-freeze`이고 denominator eligibility는 false다.
+- readiness completion은 모든 row의 terminal, trace qualification, accepted submission, official evaluator와
+  telemetry completion을 요구하고 budget/infrastructure/qualification/diagnostic/loop/call-budget confound는 0을
+  요구한다. Task success, hidden acceptance와 SCRR은 요구하지 않는다.
+
+Next-gate candidate metadata는 source freeze나 provider authority가 아니다. `candidate_values_are_source_frozen`,
+`automatic_successor_execution_authorized`, `provider_execution_authorized`는 모두 false여야 한다.
+Token candidate는 sealed maximum `1,956,109 × 3/2`를 100,000-token quantum으로 올림하고, wall candidate는
+`1,628,695ms × 2`를 초로 변환해 600-second quantum으로 올림한다. 분자·분모·unit conversion·rounding quantum과
+unrounded integer가 모두 artifact에 기록돼야 한다.

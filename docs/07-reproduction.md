@@ -1364,3 +1364,21 @@ Execution host에서만 immutable SQLite의 18개 durable public event projectio
 Builder는 stdout만 출력하고 SQLite를 `mode=ro&immutable=1`·`query_only`로 연다. Raw state가 없는 clean
 machine에서는 raw-only test가 skip되어야 하며 frozen source bytes/SHA, semantic hash, strict projection, grid
 arithmetic와 authority boundary는 계속 검증된다. 이 절차는 provider/evaluator를 호출하거나 run을 resume하지 않는다.
+
+## Inspect the D-093 readiness-stage correction
+
+Portable correction과 exact D-092 source binding은 raw runtime state 없이 검증할 수 있다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' `
+  tests/test_d093_readiness_budget_correction.py `
+  tests/test_d092_policy_decision.py `
+  tests/test_d092_policy_replay_raw.py
+Get-Content reports/live-pilot/artifacts/d093-readiness-budget-outcome-correction.json -Raw |
+  ConvertFrom-Json | Out-Null
+.\.venv\Scripts\python.exe scripts/build_d093_readiness_budget_correction.py --compact
+```
+
+Builder output을 checked-in artifact와 canonical JSON으로 비교하면 exact rebuild가 되어야 한다. Builder는 D-092
+source가 한 바이트라도 달라지면 실패하며 provider SDK, runtime runner, SQLite 또는 evaluator를 import하지 않는다.
+이 절차는 D-092 결과를 수정하거나 successor experiment config/hash/approval을 만들지 않는다.

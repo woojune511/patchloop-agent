@@ -1610,3 +1610,20 @@ D-092의 generic candidate는 네 gate를 모두 통과하지 못했으므로 ru
 trace-qualified인 budget stop은 향후 condition-neutral denominator에서 원래 task/repetition identity를 유지한
 `agent_failure` row로 남기고, 삭제·재실행·대체하지 않는 outcome rule을 선택했다. 다만 D-092는 이 rule을 four
 memory condition consumer에 아직 결속하지 않았으므로 baseline denominator admission은 계속 닫혀 있다.
+
+### D-093 readiness-stage correction
+
+D-092의 마지막 outcome rule은 comparison 분석을 readiness calibration에 너무 일찍 적용했다. 현재 단계의 질문은
+“이 workflow가 generous finite safety ceiling 아래 submission과 official evaluator까지 끝까지 도달하는가”다.
+따라서 evaluator 전에 budget ceiling으로 끝난 qualified run은 task failure나 usable performance row가 아니라
+`readiness_inconclusive` / `budget_confounded`다. Raw runtime outcome은 감사 가능성을 위해 그대로 보존한다.
+
+Readiness pass는 각 row가 started/terminal/trace-qualified이고 accepted submission과 official evaluator receipt를
+남기며 exact-input telemetry, completed response와 truncation-disabled evidence를 갖는 경우에만 성립한다. 동시에
+infrastructure, qualification, diagnostic, budget terminal, terminal loop와 model/tool call block이 0이어야 한다.
+Hidden acceptance와 SCRR은 관측·보고하지만 readiness predicate에는 넣지 않는다. 이 구분은 agent가 hidden case를
+완벽히 해결할 때까지 readiness를 반복 튜닝하는 것을 막는다.
+
+Historical exact run을 재실행하지 않는다. 별도 successor panel은 새 experiment ID와 frozen source/preflight/hash/
+cost approval을 가져야 하며, 그 결과도 workflow readiness만 판정한다. Comparison row를 failure로 셀지는 네 condition
+모두에 동일한 resource policy를 명시적으로 freeze할 때 별도로 결정한다.

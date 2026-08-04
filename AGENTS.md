@@ -10,7 +10,26 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-092 offline public stall-policy replay complete; retain current runtime policy and classify
+- 현재 milestone은 `D-093 append-only readiness-stage budget outcome correction complete; D-092 replay result and
+  raw outcomes preserved; no runtime, live, baseline, denominator, memory, or core authority`다. D-092가 tested
+  repeated-rejection/context-growth policy를 모두 기각하고 current runtime을 유지한 결론은 그대로 유효하다.
+  다만 workflow가 official evaluator까지 도달하는지 확인하는 readiness 단계에서 resource ceiling에 걸린 row를
+  comparison의 `agent_failure`로 미리 확정한 것은 stage-purpose misclassification이었다. D-093은 D-092 artifact와
+  두 AnyIO `RunResult.outcome_kind=agent_failure`를 byte-for-byte 그대로 보존하면서 analytical disposition만
+  `readiness_inconclusive` / `budget_confounded`로 정정한다. Historical exact run의 자동 재실행은 허용하지 않고,
+  comparison disposition은 explicit content-addressed resource-policy freeze 전까지 pending이다. 다음 gate는
+  AnyIO·pyfakefs·HF Hub의 small diverse high-headroom no-memory completion panel을 준비하는 별도 source gate다.
+  D-088/D-090 portable seal이 두 raw outcome과 공개 usage를 exact hash로 뒷받침한다. 3,000,000 token은
+  `1,956,109 × 1.5`를 100,000 단위로, 3,600초는 `1,628,695ms × 2`를 600초 단위로 올림한 값이다.
+  이 값과 model/tool call limit `null`은 현재 candidate일 뿐 freeze나 실행 승인이 아니며 fresh
+  pricing, clean source, no-call preflight, new execution hash와 별도 비용 승인이 필요하다. Portable correction은
+  `reports/live-pilot/artifacts/d093-readiness-budget-outcome-correction.json`, semantic body SHA는
+  `sha256:3a5790e57252132387b803681339e00032c62f7026a81d9acbd9f4598fc64ccd`, file SHA는
+  `sha256:df8a35d7818dba3055ee4bb34519bd39abdc97d4d6add178d3d41b0521273941`다. D-093 자체
+  provider/evaluator call과 추가 model cost는 0/0/$0이다. Final verification은 focused 32/32,
+  repository-wide sharded 1,571 collected 중 1,564 passed/7 environment-dependent skipped이며 Ruff,
+  compileall, exact rebuild, JSON/hash와 `git diff --check`가 통과했다.
+- Historical D-092 milestone은 `D-092 offline public stall-policy replay complete; retain current runtime policy and classify
   qualified budget terminals as agent failure; no runtime, live, baseline, denominator, memory, or core authority`다.
   Primary panel은 D-081 r3 4개, D-085/D-086 pilot 1개, D-087 12개와 D-089 1개로 구성된 18-run·8-task,
   4,079-event no-memory V2/V5 public trajectory다. Model/prompt/tool/context/memory condition은 같지만 harness

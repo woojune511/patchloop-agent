@@ -3143,3 +3143,29 @@ Portable artifact: `reports/live-pilot/artifacts/d092-public-policy-replay-decis
 cost are 0/0/`$0`. Live execution, baseline denominator, memory admission/index and core authority remain closed.
 Final verification passed focused 20/20 and repository-wide sharded 1,552/1,559 tests with seven
 environment-dependent skips; Ruff, compileall, JSON/hash and `git diff --check` also passed.
+
+## D-093 append-only readiness budget outcome correction
+
+D-093 binds the byte-immutable D-092 artifact (52,901 bytes, file SHA
+`sha256:541b890e2b123a5431060e23dcf4544fce3f7b810cb8cb1a560fbcc245b3fe22`) and preserves its policy grid,
+projection hashes and retain-current-runtime result. Raw outcome and usage claims are independently backed by exact
+D-088 and D-090 portable seals rather than inferred from D-092's public block count. It does not modify either affected
+AnyIO run, whose persisted raw outcome remains `agent_failure`.
+
+The corrected analytical contract is stage-specific: both evaluator-before-budget rows are
+`readiness_inconclusive` with reason `budget_confounded`; neither is eligible for a performance denominator. Readiness
+requires terminal qualification, accepted submission and official evaluator arrival with zero budget or infrastructure
+confounds, while hidden acceptance and SCRR are reported outcomes rather than readiness gates. Comparison disposition
+remains pending an explicit content-addressed resource-policy freeze.
+
+The next-gate section records a three-task high-headroom panel only as a candidate. The token value is
+`ceil_to_100k(1,956,109 × 3/2) = 3,000,000`; the wall value is
+`ceil_to_600s(1,628,695ms × 2 / 1,000) = 3,600s`. The artifact records both exact rational derivations. This does not
+freeze a resource policy, create an experiment config or execution hash, approve spend or call the provider.
+Provider/evaluator calls and added model cost for D-093 are 0/0/`$0`.
+
+Portable artifact: `reports/live-pilot/artifacts/d093-readiness-budget-outcome-correction.json`. Semantic body SHA:
+`sha256:3a5790e57252132387b803681339e00032c62f7026a81d9acbd9f4598fc64ccd`. File SHA:
+`sha256:df8a35d7818dba3055ee4bb34519bd39abdc97d4d6add178d3d41b0521273941`.
+Final verification passed focused 32/32 and repository-wide sharded 1,564/1,571 tests with seven
+environment-dependent skips; Ruff, compileall, exact rebuild, JSON/hash and `git diff --check` also passed.

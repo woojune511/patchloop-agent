@@ -854,3 +854,23 @@ Evidence/issue:
 - Final verification은 focused 20/20, repository-wide sharded 1,559 collected 중 1,552 passed/7
   environment-dependent skipped이며 Ruff, compileall, JSON/hash와 `git diff --check`를 통과했다.
 - Date: 2026-08-04
+
+### D-093 accepted correction — budget-confounded readiness is inconclusive
+
+- D-092가 tested stall-policy candidate를 기각하고 current runtime을 유지한 계산과 결론은 보존한다.
+- D-092 artifact, journal, qualification과 두 AnyIO raw `RunResult.outcome_kind=agent_failure`는 수정하지 않는다.
+- Readiness 단계에서는 evaluator 전 budget terminal을 `readiness_inconclusive` / `budget_confounded`로 해석한다.
+  Comparison failure disposition은 explicit content-addressed resource-policy freeze 전까지 pending이다.
+- Historical exact run의 자동 재실행은 허용하지 않는다. Small diverse high-headroom successor는 별도 source gate,
+  clean no-call preflight, new execution hash와 사용자 비용 승인을 거쳐야 한다.
+- Candidate panel은 AnyIO, pyfakefs, HF Hub 각 1회와 3M token/3,600초/model-tool call `null`이지만 아직 freeze나
+  실행 권한이 아니다. Task success, hidden acceptance와 SCRR은 readiness pass 요건이 아니다.
+- Artifact는 `reports/live-pilot/artifacts/d093-readiness-budget-outcome-correction.json`, semantic body SHA는
+  `sha256:3a5790e57252132387b803681339e00032c62f7026a81d9acbd9f4598fc64ccd`, file SHA는
+  `sha256:df8a35d7818dba3055ee4bb34519bd39abdc97d4d6add178d3d41b0521273941`다. D-088/D-090
+  portable seal이 raw outcome, evaluator boundary와 resource maximum을 exact hash로 뒷받침한다.
+- D-093 provider/evaluator call은 0/0이고 추가 model cost는 `$0`이다. Baseline, denominator, memory
+  review/admission/index와 core authority는 계속 닫혀 있다.
+- Final verification은 focused 32/32, repository-wide sharded 1,571 collected 중 1,564 passed/7
+  environment-dependent skipped이며 Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`를 통과했다.
+- Date: 2026-08-04

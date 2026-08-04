@@ -2,6 +2,20 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-093은 D-092의 runtime-policy replay 결과와 모든 historical artifact/run outcome을 보존하면서,
+readiness 단계의 budget-terminal 해석만 append-only로 정정했다. Evaluator 도달 전에 resource ceiling으로 끝난
+두 AnyIO run의 raw `RunResult.outcome_kind=agent_failure`는 바꾸지 않지만, readiness 분석에서는
+`readiness_inconclusive` / `budget_confounded`다. 이 프로젝트의 현재 목적은 작은 diverse panel이 끝까지
+실행되는지 확인하는 것이므로 task success, hidden acceptance와 SCRR은 readiness gate가 아니며, budget,
+infrastructure, qualification, diagnostic, terminal-loop confound가 없어야 한다. Comparison failure 처리는
+별도의 explicit resource-policy freeze 전까지 pending이다. 다음 단계의 3M-token/3,600-second 3-task panel은 아직
+candidate이며 source freeze, execution hash 또는 유료 실행 권한이 없다. Correction artifact는
+`reports/live-pilot/artifacts/d093-readiness-budget-outcome-correction.json`, file SHA는
+`sha256:df8a35d7818dba3055ee4bb34519bd39abdc97d4d6add178d3d41b0521273941`다. D-088/D-090 portable
+seal이 raw outcome과 resource derivation을 exact hash로 뒷받침한다. D-093 자체 provider/evaluator call과 추가
+model cost는 0/0/$0이다. Final verification은 focused 32/32와 repository-wide sharded 1,564 passed/7 skipped를
+통과했다.
+
 2026-08-04 D-092는 D-081 r3 4개, D-085/D-086 pilot 1개, D-087 12개와 D-089 1개를 합친
 18-run·8-task·4,079-public-event panel에서 repeated-rejection과 context-growth stop policy를 offline replay했다.
 `N=3..10` rejection threshold는 D-089을 잡는 동시에 이후 실제 `PatchApplied`/submission에 도달한 run도
@@ -12,8 +26,9 @@ runtime은 유지하고 terminal·trace-qualified budget stop을 향후 denomina
 gate이며, D-092는 live/baseline/denominator/memory/core authority를 만들지 않는다. Artifact는
 `reports/live-pilot/artifacts/d092-public-policy-replay-decision.json`이고 file SHA는
 `sha256:541b890e2b123a5431060e23dcf4544fce3f7b810cb8cb1a560fbcc245b3fe22`다. Provider/evaluator call과 추가
-model cost는 0/0/$0이다. Final verification은 focused 20/20과 repository-wide sharded 1,552 passed/7 skipped를
-통과했다.
+model cost는 0/0/$0이다. 이 historical outcome 선택은 위 D-093 readiness-stage correction에 의해 supersede되며,
+replay 결과와 원본 artifact는 그대로 보존된다. Final verification은 focused 20/20과 repository-wide sharded
+1,552 passed/7 skipped를 통과했다.
 
 2026-08-04 D-091은 D-087/D-089 AnyIO budget-terminal을 public trace만으로 비교한 offline audit다. D-089은
 유일한 patch 적용 뒤 68 model call·96 tool call·1,772,530 token을 더 사용했지만 추가 `PatchApplied` event는 없었고,

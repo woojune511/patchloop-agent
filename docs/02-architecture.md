@@ -1176,3 +1176,22 @@ Raw adapter `scripts/build_d092_policy_decision.py`는 SQLite를 `mode=ro&immuta
 출력은 runtime policy가 아니라 bounded audit decision이다. D-092가 선택한 `agent_failure` outcome mapping도 아직
 four-condition execution plan, RunManifest, qualification과 report consumer에 결속되지 않았다. 그 결속은 다음
 offline denominator-admission gate이고, 통과하더라도 provider 실행이나 memory/core collection을 자동 승인하지 않는다.
+
+## 34. D-093 append-only readiness correction architecture
+
+D-093은 runtime, report aggregator 또는 historical state를 수정하지 않는다. 별도 builder
+`scripts/build_d093_readiness_budget_correction.py`가 D-092 artifact와 D-088/D-090 portable result seal을 bytes로
+읽고 exact file length, file/body SHA, report/decision ID, selected decision과 budget-terminal semantic fields를
+검증한다. D-092 public projection만으로 raw result를 추정하지 않는다. Source가 한 바이트라도 다르거나 expected
+two-run set, outcome, qualification, evaluator boundary, binding reason 또는 usage type이 달라지면 fail closed한다.
+
+출력은 `readiness-budget-outcome-correction-manifest-v1` append-only wrapper다. 원본 `RunResult`의
+`agent_failure`, journal, qualification, D-092 candidate grid와 replay projection은 모두 immutable하다. Correction은
+workflow-readiness라는 explicit stage에서만 analytical disposition을 `readiness_inconclusive`와
+`budget_confounded`로 바꾼다. Experiment purpose 문자열로 stage를 추론하지 않으며, 향후 comparison의 disposition은
+별도 content-addressed resource-policy freeze가 plan, manifest, qualification과 report consumer에 결속할 때까지
+pending이다.
+
+다음 high-headroom panel 값은 correction 안의 candidate metadata일 뿐 실행 config가 아니다. 후속 source gate가
+exact task set, runtime tuple, emergency ceiling, fresh pricing과 claims boundary를 새 artifact로 freeze한 뒤 clean
+no-call preflight와 별도 승인을 받아야 provider capability가 열릴 수 있다.
