@@ -2,6 +2,19 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-089는 D-087을 재실행하지 않고, evaluator 전에 budget guard로 끝난 AnyIO row 하나만
+별도 exact `workflow-completion-probe`로 준비한다. Source는
+`experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml`이다. Per-run runtime knob 중
+total-token ceiling만 1.6M에서 2.0M으로 올리고 model/prompt/tool/context/no-memory/output/call-limit/wall
+tuple은 유지한다. Worst-rate authorization reserve는 `$9.1125`, 최대 승인 cap은 `$10`이다. 이 값은
+예상 invoice가 아니다. Readiness는 terminal·qualified·official evaluator와 process confound 0만 보며
+hidden success나 SCRR를 요구하지 않는다. 현재는 source/offline 단계이므로 provider call과 추가 model
+cost는 0/$0이고, clean no-call preflight의 exact hash와 별도 사용자 승인 전에는 실행하지 않는다.
+D-087/D-088는 immutable하고 no-memory baseline, comparison denominator, memory admission/index와 core는
+계속 닫혀 있다. Final offline verification은 focused 228/228, repository-wide 1,529 collected 중
+1,522 passed/7 skipped다. Source artifact SHA는
+`sha256:19eca850799e9549eef1d8b383d0c3461aa2b9a2e5471d67fe599cb373ea4555`다.
+
 2026-08-04 D-088은 승인된 D-087 no-memory 12-run 결과를 immutable portable evidence로 봉인한다.
 Exact execution hash
 `sha256:0dd8ca1d0632398fed25ca28fbce89b97b0bf2137be163ed19a09fbf2d7f470d`는 clean source commit

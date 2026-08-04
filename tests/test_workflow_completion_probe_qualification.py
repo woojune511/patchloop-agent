@@ -85,10 +85,15 @@ def _minimal_probe_trace(
     runtime_policy: str = eval_runner.WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
     wall_duration_ms: int = 0,
     d081: bool = False,
+    manifest: RunManifest | None = None,
 ) -> tuple[AgentRunner, RunManifest, BuiltContext, Any, str]:
     """Create only the evidence needed by the call-guard qualification check."""
 
-    manifest = _exact_manifest(run_id, d081=d081)
+    if manifest is None:
+        manifest = _exact_manifest(run_id, d081=d081)
+    else:
+        assert manifest.run_id == run_id
+        assert d081 is False
     runner = AgentRunner(root)
     runner.state.create_run(manifest)
     runner.state.claim_run_for_worker(

@@ -9,6 +9,7 @@ from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Artifact,
@@ -141,9 +142,23 @@ _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     max_total_tokens=3_000_000,
     wall_clock_timeout_seconds=7_200,
 )
+_GPT54_MINI_ANYIO_BUDGET_READINESS_PROBE_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=2_000_000,
+    wall_clock_timeout_seconds=1_800,
+)
 _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID = (
     "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
 )
+_WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID = {
+    _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID: (
+        _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+    ),
+    CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID: (
+        _GPT54_MINI_ANYIO_BUDGET_READINESS_PROBE_BUDGET
+    ),
+}
 _WORKFLOW_COMPLETION_CALL_GUARD_POLICY = (
     "model-tool-observability-only-v1"
 )
@@ -249,10 +264,10 @@ def _workflow_completion_probe_budget_matches(
     experiment_id: str,
     budget: Budget,
 ) -> bool:
-    return bool(
-        experiment_id == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
-        and budget == _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+    expected = _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(
+        experiment_id
     )
+    return expected is not None and budget == expected
 
 
 def _condition_neutral_comparison_policy_binding() -> dict[str, str]:
@@ -7535,9 +7550,13 @@ def _optional_counter_generation_block_valid(
             experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
             and experiment.experiment_id
-            == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+            in _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID
         ):
-            expected_budget = _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+            expected_budget = (
+                _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID[
+                    experiment.experiment_id
+                ]
+            )
         elif (
             experiment.purpose
             == ExperimentPurpose.GENERIC_BASELINE_READINESS
@@ -10864,18 +10883,20 @@ def qualify_run(
         expected_observability_budget = (
             _GPT54_MINI_FROZEN_COMPARISON_BUDGET
             if condition_neutral_comparison
-            else _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
-            if experiment.experiment_id
-            == _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+            else _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(
+                experiment.experiment_id
+            )
+            if experiment.purpose
+            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
             else _GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
         )
         exact_observability_profile = bool(
             condition_neutral_comparison
             or experiment.experiment_id
-            in {
-                _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID,
-                _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
-            }
+            in (
+                set(_WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID)
+                | {_GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID}
+            )
         )
         call_guard_contract_ok = bool(
             exact_observability_profile

@@ -1,8 +1,16 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-088 D-087 measured result seal; 12/12 terminal·qualified, 11/12 official evaluator,
-readiness false이며 baseline, memory admission/index와 core authority는 닫힘**
+현재 milestone: **D-089 AnyIO budget-only readiness probe source/offline gate; clean no-call preflight와
+별도 실행 승인은 아직 없고 baseline, memory admission/index와 core authority는 닫힘**
+
+D-089는 D-087 전체 12-run을 다시 실행하지 않는다. 유일한 process confound였던 AnyIO repetition 2의
+task만 새 exact ID에서 1회 실행하도록 준비한다. Per-run agent/model/runtime knob 중 total-token ceiling만
+1,600,000에서 2,000,000으로 바꾸고 mini medium/standard/default, retry 0, prompt V3, tool V2/context V5,
+no-memory, output 25,000, null model/tool call limit과 wall 1,800초는 유지한다. Source reserve는 `$9.1125`,
+approval cap은 `$10`이다. Gate는 terminal·qualified·official evaluator와 process confound 0을 요구하지만
+hidden success/SCRR는 요구하지 않는다. 다음 executable gate는 clean commit의 no-call preflight다.
+Final offline verification은 focused 228/228, repository-wide 1,529 collected 중 1,522 passed/7 skipped다.
 
 2026-08-04 구현 스냅샷:
 
@@ -13,7 +21,7 @@ readiness false이며 baseline, memory admission/index와 core authority는 닫�
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-088 D-087 result sealed | 12/12 terminal·qualified·settled, 11/12 evaluator, 1 per-run token terminal; `$5.36842875 < $25`, baseline/memory/core closed |
+| Phase 6 evaluation | D-089 budget-only probe source/offline gate complete | D-087은 immutable; AnyIO 1-row 2M-token probe의 clean no-call preflight만 pending, provider 0회, baseline/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와

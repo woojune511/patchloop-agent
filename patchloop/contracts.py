@@ -69,6 +69,9 @@ CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID = (
 CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID = (
     "dev-no-memory-condition-neutral-accrued-cap-20260804-r1"
 )
+CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID = (
+    "anyio-workflow-completion-budget-only-v2v5-20260804-r1"
+)
 
 
 class RunOutcomeKind(StrEnum):
@@ -1260,6 +1263,31 @@ class RunManifest(StrictModel):
             and self.experiment.purpose
             == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         )
+        condition_neutral_budget_readiness_probe = bool(
+            workflow_completion_probe
+            and self.experiment is not None
+            and self.experiment.experiment_id
+            == CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
+            and self.task_id == "anyio-interrupt-runner-cleanup"
+            and self.experiment.dataset_role
+            == DatasetRole.MEMORY_DEVELOPMENT
+            and self.experiment.schedule_seed == 20260723
+            and self.experiment.schedule_order == 1
+            and self.experiment.repetition == 1
+        )
+        claims_condition_neutral_budget_readiness_probe = bool(
+            self.experiment is not None
+            and self.experiment.experiment_id
+            == CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
+        )
+        if (
+            claims_condition_neutral_budget_readiness_probe
+            and not condition_neutral_budget_readiness_probe
+        ):
+            raise ValueError(
+                "the D-089 budget-only readiness identity requires the exact "
+                "workflow-completion AnyIO row"
+            )
         condition_neutral_comparison_pilot = bool(
             self.experiment is not None
             and self.experiment.purpose
@@ -1344,22 +1372,35 @@ class RunManifest(StrictModel):
             and self.experiment.experiment_id
             == "generic-baseline-readiness-v2v5-20260803-r3"
         )
-        if workflow_completion_probe and not (
-            self.budget.max_model_calls is None
-            and self.budget.max_tool_calls is None
-            and self.budget.max_total_tokens == 3_000_000
-            and self.budget.wall_clock_timeout_seconds == 7_200
+        historical_workflow_completion_probe = bool(
+            workflow_completion_probe
             and self.experiment is not None
             and self.experiment.experiment_id
             == "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
             and self.task_id == "pyfakefs-makedirs-parent-traversal"
+            and self.budget.max_total_tokens == 3_000_000
+            and self.budget.wall_clock_timeout_seconds == 7_200
+        )
+        exact_workflow_completion_probe = bool(
+            self.budget.max_model_calls is None
+            and self.budget.max_tool_calls is None
             and self.model.model_id == "gpt-5.4-mini-2026-03-17"
             and self.model.max_output_tokens == 25_000
-        ):
+            and (
+                historical_workflow_completion_probe
+                or (
+                    condition_neutral_budget_readiness_probe
+                    and self.budget.max_total_tokens == 2_000_000
+                    and self.budget.wall_clock_timeout_seconds == 1_800
+                    and self.memory.max_context_tokens == 2_000
+                )
+            )
+        )
+        if workflow_completion_probe and not exact_workflow_completion_probe:
             raise ValueError(
-                "workflow completion probe requires the exact pyfakefs identity, "
-                "dated mini model, disabled call limits, 3M token ceiling, and "
-                "7200-second wall ceiling"
+                "workflow completion probe requires an exact registered task, "
+                "dated mini model, disabled call limits, and its registered "
+                "token and wall ceilings"
             )
         if generic_count_observability and not (
             self.budget.max_model_calls is None

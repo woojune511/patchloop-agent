@@ -10,9 +10,30 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
+- 현재 milestone은 `D-089 AnyIO budget-only readiness probe source/offline gate complete; no clean preflight,
+  approval, provider execution, baseline, memory admission/index, or core authority`다. Exact source는
+  `experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml`이고 D-087에서 evaluator 전에
+  total-token guard로 종료한 AnyIO repetition 2만 새 experiment에서 한 번 다시 관찰한다. D-087
+  `run_4613c65b2a254349`는 1,578,208 token 뒤 남은 21,792 token으로 exact input 14,080과 output
+  allowance 25,000을 함께 예약하지 못했으며 same-prefix minimum은 1,617,288이다. 새 profile은
+  `gpt-5.4-mini-2026-03-17` medium/standard/default, retry 0, `SYSTEM_PROMPT_V3`, tool v2/context
+  `phase-evidence-v5`, no-memory, output 25,000, model/tool call `null`, wall 1,800초를 유지하고 per-run
+  total-token ceiling만 1,600,000에서 2,000,000으로 바꾼다. 새 suite identity, purpose, schedule과 cost
+  fields는 별도이며 “budget-only”는 per-run agent/model/runtime knob 비교에만 적용한다. Worst-rate reserve는
+  `(2,000,000 + 25,000) * $4.50/M = $9.1125`, source cap은 `$10`이다. 이는 예상 invoice나 free-tier
+  charge가 아니다. Readiness는 1/1 terminal·qualified·official evaluator, exact disabled-call guard와
+  infrastructure/qualification/diagnostic/budget/terminal-loop confound 0만 요구하고 task success, hidden
+  acceptance, SCRR는 요구하지 않는다. D-087/D-088와 D-083 budget freeze는 byte-immutable이고 D-087은
+  hard-consumed다. Source artifact는
+  `reports/live-pilot/artifacts/d089-anyio-budget-only-readiness-probe-source-gate.json`이다. Clean source
+  commit에서 fresh no-call preflight가 만든 exact candidate hash와 최대 `$10`의 별도 사용자 승인 전에는
+  provider를 호출하지 않는다. Source 단계의 provider call/model cost는 0/$0이며 no-memory baseline,
+  comparison denominator, memory review/admission/index와 core는 계속 닫혀 있다. Final offline verification은
+  focused 228/228과 repository-wide 1,529 collected 중 1,522 passed/7 skipped이고 source artifact SHA는
+  `sha256:19eca850799e9549eef1d8b383d0c3461aa2b9a2e5471d67fe599cb373ea4555`다.
 - Evaluator, constrained offline agent, state/recovery, memory, experiment/report와 viewer의
   implementation baseline이 존재한다.
-- 현재 milestone은 `D-088 D-087 measured result sealed; 12/12 terminal and qualified but 11/12 official evaluator,
+- Historical D-088 milestone은 `D-087 measured result sealed; 12/12 terminal and qualified but 11/12 official evaluator,
   readiness false, no baseline or memory authority`다. Exact D-087 experiment
   `dev-no-memory-condition-neutral-accrued-cap-20260804-r1`은 clean source commit
   `7eee5fa1837d30e6177c46119885035f2b1d976f`와 승인 execution hash

@@ -1279,3 +1279,35 @@ fixed-rate cost와 SQLite consumption까지 재검증한다. Raw evidence가 없
 claims boundary, leak-safe schema와 hard-consumed preflight guard를 검증하고 raw-only test는 명시적으로 skip한다.
 D-087 suite를 다시 evaluate하지 않는다. 새 provider 실행은 이 reproduction 범위 밖이며 새 experiment와 별도
 승인이 필요하다.
+
+## Inspect and preflight the D-089 AnyIO budget-only probe
+
+D-089 source와 predecessor seal은 다음처럼 provider 없이 검사한다.
+
+```powershell
+Get-FileHash -Algorithm SHA256 experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml
+Get-FileHash -Algorithm SHA256 reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json
+Get-FileHash -Algorithm SHA256 reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json
+Get-Content reports/live-pilot/artifacts/d089-anyio-budget-only-readiness-probe-source-gate.json -Raw | ConvertFrom-Json | Out-Null
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' tests/test_d089_anyio_budget_only_probe.py tests/test_d089_source_gate_artifact.py
+```
+
+Expected immutable SHA는 D-087 suite
+`sha256:44de6899656c96830d3a0aa3326777848c5d632ef903eccc166839fa1caeaf79`, D-088 portable seal
+`sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269`, D-087 source artifact
+`sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`다. D-089 source는
+AnyIO 한 task, no-memory 한 번, mini medium/standard/default, retry 0, output 25,000과
+`null/null/2,000,000/1,800`을 가져야 한다. `$9.1125`는 worst-rate reserve이고 `$10`은 approval cap이다.
+
+Source commit이 clean한 뒤에만 다음 no-call preflight를 실행한다. 명령은 `ready=false`와 정확히
+`LIVE_COST_NOT_APPROVED`, `APPROVAL_HASH_MISMATCH` 두 blocker 및 candidate execution hash를 출력해야 한다.
+
+```powershell
+uv run --env-file .env patchloop evaluate `
+  --suite experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml `
+  --preflight-only
+```
+
+`--approve-live-cost`나 `--approved-execution-hash`를 붙이지 않으며 이 명령은 agent/provider를 호출하지 않는다.
+그 candidate hash와 최대 `$10`에 대한 별도 사용자 승인 전에는 live evaluate를 실행하지 않는다. D-087의
+experiment ID, result 또는 run ID를 resume/reuse하지 않는다.

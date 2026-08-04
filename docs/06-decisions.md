@@ -760,3 +760,33 @@ Evidence/issue:
 - D-087 ID/hash/result/journal은 immutable하고 재실행하지 않는다. 후속 후보는 condition-neutral budget-only
   새 experiment로만 다루며 자동 생성·실행하지 않는다.
 - D-088 seal 작업은 provider call 0, added model cost `$0`이다.
+
+### D-089 accepted source decision — rerun only the budget-confounded AnyIO row
+
+- D-087 전체 12-run이나 immutable run을 재실행·resume하지 않는다. 새 exact experiment
+  `anyio-workflow-completion-budget-only-v2v5-20260804-r1`에서 AnyIO task를 no-memory로 한 번 실행하는
+  source만 준비한다.
+- “Budget-only”의 비교 범위는 per-run agent/model/runtime knob다. Model, reasoning/mode/tier, transport retry,
+  prompt V3, tool V2/context V5, output 25,000, memory allowance 2,000, null model/tool call limit과 wall 1,800초는
+  유지하고 total-token ceiling만 1.6M에서 2.0M으로 바꾼다. Experiment ID, purpose, schedule, repetitions,
+  estimate/cap과 campaign-policy fields는 새 suite identity다.
+- D-087 AnyIO repetition 2는 1,578,208 token을 쓴 뒤 remaining 21,792로 exact input 14,080과 full output
+  allowance 25,000을 함께 예약하지 못했다. Same-prefix minimum 1,617,288 대비 새 ceiling headroom은
+  382,712 token이다. 이는 completion guarantee가 아니다.
+- 공식 standard rate `$0.75/M` input, `$0.075/M` cached input, `$4.50/M` output을 2026-08-04T05:10:38Z에
+  재확인했다. Worst-rate authorization reserve는 `$9.1125`, source cap은 `$10`이다. 관찰 prefix 기반
+  `$1.866201`은 illustrative projection일 뿐 예상 invoice가 아니다.
+- Readiness는 terminal, trace qualification, official evaluator, exact disabled-call-guard와
+  infrastructure/qualification/diagnostic/budget/terminal-loop confound 0을 요구한다. Hidden acceptance,
+  task success와 SCRR는 요구하지 않는다. 결과와 무관하게 이 single-row probe는 calibration-only다.
+- D-083 budget freeze, D-087 source/result/journal과 D-088 portable seal은 byte-immutable하다. D-087은
+  hard-consumed이고 D-089는 결과 전이므로 아직 consumed set에 넣지 않는다.
+- 현재 authority는 source/offline뿐이다. Clean commit의 no-call preflight에서 exact candidate hash를 만든 뒤
+  최대 `$10`에 대한 별도 사용자 승인 전에는 provider를 호출하지 않는다. Baseline, comparison denominator,
+  memory review/admission/index와 core는 닫혀 있다.
+- Evidence: `reports/live-pilot/artifacts/d089-anyio-budget-only-readiness-probe-source-gate.json`, SHA
+  `sha256:19eca850799e9549eef1d8b383d0c3461aa2b9a2e5471d67fe599cb373ea4555`.
+- Final offline verification: focused `228/228`; repository-wide `1,529` collected, `1,522` passed and `7` skipped;
+  Ruff, compileall, JSON parse and `git diff --check` passed.
+- Provider calls/model cost for this decision: `0/$0`.
+- Date: 2026-08-04

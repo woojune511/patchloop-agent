@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     DatasetRole,
     EventType,
@@ -459,8 +460,17 @@ def calculate_budget_pressure(
         and experiment_payload.get("experiment_id")
         == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
     )
+    claims_budget_readiness_probe_identity = bool(
+        isinstance(experiment_payload, Mapping)
+        and experiment_payload.get("experiment_id")
+        == CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
+    )
     exact_manifest: RunManifest | None = None
-    if call_limits_disabled or claims_condition_neutral_pilot_identity:
+    if (
+        call_limits_disabled
+        or claims_condition_neutral_pilot_identity
+        or claims_budget_readiness_probe_identity
+    ):
         try:
             exact_manifest = RunManifest.model_validate(manifest_payload)
         except (TypeError, ValueError) as exc:
@@ -469,6 +479,11 @@ def calculate_budget_pressure(
                     "the D-085 condition-neutral comparison pilot identity "
                     "requires its exact development-validation row and runtime "
                     "tuple"
+                ) from exc
+            if claims_budget_readiness_probe_identity:
+                raise ValueError(
+                    "the D-089 budget-only readiness identity requires its "
+                    "exact AnyIO workflow-completion row and runtime tuple"
                 ) from exc
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
@@ -487,18 +502,48 @@ def calculate_budget_pressure(
             "the D-085 condition-neutral comparison pilot identity requires "
             "its exact development-validation row and runtime tuple"
         )
+    if claims_budget_readiness_probe_identity and (
+        exact_manifest is None
+        or exact_manifest.experiment is None
+        or exact_manifest.experiment.purpose
+        != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        or exact_manifest.task_id != "anyio-interrupt-runner-cleanup"
+        or limits
+        != {
+            "model_calls": None,
+            "tool_calls": None,
+            "total_tokens": 2_000_000,
+            "wall_clock_ms": 1_800_000,
+        }
+    ):
+        raise ValueError(
+            "the D-089 budget-only readiness identity requires its exact "
+            "AnyIO workflow-completion row and runtime tuple"
+        )
     if call_limits_disabled:
         assert exact_manifest is not None
         workflow_completion_probe = bool(
             exact_manifest.experiment is not None
             and exact_manifest.experiment.purpose.value
             == "workflow-completion-probe"
-            and exact_manifest.experiment.experiment_id
-            == "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
             and limits["model_calls"] is None
             and limits["tool_calls"] is None
-            and limits["total_tokens"] == 3_000_000
-            and limits["wall_clock_ms"] == 7_200_000
+            and (
+                (
+                    exact_manifest.experiment.experiment_id
+                    == "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
+                    and limits["total_tokens"] == 3_000_000
+                    and limits["wall_clock_ms"] == 7_200_000
+                )
+                or (
+                    exact_manifest.experiment.experiment_id
+                    == CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
+                    and exact_manifest.task_id
+                    == "anyio-interrupt-runner-cleanup"
+                    and limits["total_tokens"] == 2_000_000
+                    and limits["wall_clock_ms"] == 1_800_000
+                )
+            )
         )
         generic_count_observability = bool(
             exact_manifest.experiment is not None

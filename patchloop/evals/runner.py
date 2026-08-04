@@ -44,6 +44,7 @@ from patchloop.agent.tools import (
     TOOL_SCHEMAS_V6,
 )
 from patchloop.contracts import (
+    CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     Budget,
@@ -274,6 +275,12 @@ GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET = Budget(
     max_total_tokens=3_000_000,
     wall_clock_timeout_seconds=7_200,
 )
+GPT54_MINI_ANYIO_BUDGET_READINESS_PROBE_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=2_000_000,
+    wall_clock_timeout_seconds=1_800,
+)
 GPT54_MINI_D037_CORRECTIVE_MAX_OUTPUT_TOKENS = 25_000
 # Historical and synthetic trace reconstruction continues to use the D-052
 # default. D-083 is selected only by an explicit exact future-suite tuple.
@@ -336,6 +343,44 @@ WORKFLOW_COMPLETION_PROBE_TASK_ID = Path(
 ).parent.name
 WORKFLOW_COMPLETION_PROBE_ESTIMATED_COST_USD = 13.6125
 WORKFLOW_COMPLETION_PROBE_COST_LIMIT_USD = 14.0
+ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID = (
+    CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
+)
+ANYIO_BUDGET_READINESS_PROBE_TASK = (
+    "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml"
+)
+ANYIO_BUDGET_READINESS_PROBE_TASK_ID = Path(
+    ANYIO_BUDGET_READINESS_PROBE_TASK
+).parent.name
+ANYIO_BUDGET_READINESS_PROBE_ESTIMATED_COST_USD = 9.1125
+ANYIO_BUDGET_READINESS_PROBE_COST_LIMIT_USD = 10.0
+ANYIO_BUDGET_READINESS_PROBE_GATE_ID = (
+    "d089-anyio-budget-only-readiness"
+)
+WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID = {
+    WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID: (
+        GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+    ),
+    ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID: (
+        GPT54_MINI_ANYIO_BUDGET_READINESS_PROBE_BUDGET
+    ),
+}
+WORKFLOW_COMPLETION_PROBE_TASK_BY_EXPERIMENT_ID = {
+    WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID: WORKFLOW_COMPLETION_PROBE_TASK,
+    ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID: (
+        ANYIO_BUDGET_READINESS_PROBE_TASK
+    ),
+}
+WORKFLOW_COMPLETION_PROBE_COST_BY_EXPERIMENT_ID = {
+    WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID: (
+        WORKFLOW_COMPLETION_PROBE_ESTIMATED_COST_USD,
+        WORKFLOW_COMPLETION_PROBE_COST_LIMIT_USD,
+    ),
+    ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID: (
+        ANYIO_BUDGET_READINESS_PROBE_ESTIMATED_COST_USD,
+        ANYIO_BUDGET_READINESS_PROBE_COST_LIMIT_USD,
+    ),
+}
 MEMORY_DEVELOPMENT_TASKS = {
     "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
     "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
@@ -1466,7 +1511,8 @@ class ExperimentSuite(BaseModel):
                 "baseline readiness purpose"
             )
         if (
-            self.experiment_id == WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+            self.experiment_id
+            in WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID
             and self.purpose != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         ):
             raise ValueError(
@@ -1643,33 +1689,55 @@ class ExperimentSuite(BaseModel):
                     f"estimated_cost_usd={estimated_cost:g} for its exact id"
                 )
         elif self.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
+            expected_budget = (
+                WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(
+                    self.experiment_id
+                )
+            )
+            expected_task = (
+                WORKFLOW_COMPLETION_PROBE_TASK_BY_EXPERIMENT_ID.get(
+                    self.experiment_id
+                )
+            )
+            expected_cost = (
+                WORKFLOW_COMPLETION_PROBE_COST_BY_EXPERIMENT_ID.get(
+                    self.experiment_id
+                )
+            )
             if (
-                self.experiment_id != WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
+                expected_budget is None
+                or expected_task is None
+                or expected_cost is None
                 or [_normalized_task_path(task) for task in self.tasks]
-                != [WORKFLOW_COMPLETION_PROBE_TASK]
+                != [expected_task]
                 or self.conditions != [MemoryCondition.NO_MEMORY]
                 or self.repetitions != 1
                 or self.transport_max_retries != 0
                 or self.live_cost_approved is not False
                 or self.approved_execution_hash is not None
                 or self.pilot_run_id is not None
+                or (
+                    self.experiment_id
+                    == ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID
+                    and self.memory_token_budget != 2_000
+                )
             ):
                 raise ValueError(
                     "workflow completion probe requires its exact registered id, "
-                    "single pyfakefs task, no_memory, one repetition, "
+                    "single registered task, no_memory, one repetition, "
                     "transport_max_retries=0, and no embedded approval or pilot"
                 )
+            assert expected_budget is not None
+            assert expected_cost is not None
+            estimated_cost, cost_limit = expected_cost
             self._require_live_defaults(
-                cost_limit=WORKFLOW_COMPLETION_PROBE_COST_LIMIT_USD,
-                budget=GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET,
+                cost_limit=cost_limit,
+                budget=expected_budget,
             )
-            if (
-                self.estimated_cost_usd
-                != WORKFLOW_COMPLETION_PROBE_ESTIMATED_COST_USD
-            ):
+            if self.estimated_cost_usd != estimated_cost:
                 raise ValueError(
                     "workflow completion probe requires "
-                    "estimated_cost_usd=13.6125"
+                    f"estimated_cost_usd={estimated_cost:g} for its exact id"
                 )
         elif self.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT:
             normalized_tasks = {
@@ -3513,12 +3581,20 @@ def preflight_suite(
         )
     if (
         suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-        and loaded_ids != {WORKFLOW_COMPLETION_PROBE_TASK_ID}
+        and loaded_ids
+        != {
+            Path(
+                WORKFLOW_COMPLETION_PROBE_TASK_BY_EXPERIMENT_ID.get(
+                    suite.experiment_id,
+                    "",
+                )
+            ).parent.name
+        }
     ):
         _block(
             blockers,
             "WORKFLOW_COMPLETION_PROBE_TASK_MISMATCH",
-            "workflow completion probe must use exactly the frozen pyfakefs task",
+            "workflow completion probe must use its exact registered task",
         )
     expected_live_pilot_ids = (
         COMPLETION_PANEL_TASK_IDS
@@ -5174,10 +5250,18 @@ def _completion_gate(
     )
     workflow_completion_probe = bool(
         suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-        and suite.experiment_id == WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID
-        and suite.budget == GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
+        and suite.experiment_id
+        in WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID
+        and suite.budget
+        == WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(
+            suite.experiment_id
+        )
         and [_normalized_task_path(task) for task in suite.tasks]
-        == [WORKFLOW_COMPLETION_PROBE_TASK]
+        == [
+            WORKFLOW_COMPLETION_PROBE_TASK_BY_EXPERIMENT_ID.get(
+                suite.experiment_id
+            )
+        ]
         and suite.transport_max_retries == 0
     )
     condition_neutral_pilot = bool(
@@ -5314,7 +5398,13 @@ def _completion_gate(
                 if condition_neutral_campaign
                 else {PILOT_TASK_ID}
                 if condition_neutral_pilot
-                else {WORKFLOW_COMPLETION_PROBE_TASK_ID}
+                else {
+                    Path(
+                        WORKFLOW_COMPLETION_PROBE_TASK_BY_EXPERIMENT_ID[
+                            suite.experiment_id
+                        ]
+                    ).parent.name
+                }
             )
         )
     )
@@ -5626,6 +5716,16 @@ def _completion_gate(
                     )
                 }
                 if condition_neutral_campaign
+                else {
+                    "gate_id": ANYIO_BUDGET_READINESS_PROBE_GATE_ID,
+                    "budget_only_probe": True,
+                    "calibration_only": True,
+                }
+                if (
+                    workflow_completion_probe
+                    and suite.experiment_id
+                    == ANYIO_BUDGET_READINESS_PROBE_EXPERIMENT_ID
+                )
                 else {}
             ),
             "passed": completion_passed,

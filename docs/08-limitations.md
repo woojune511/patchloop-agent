@@ -1116,3 +1116,22 @@ silently lowering the design or fabricating missing results.
   The seal work itself made no provider calls and added `$0` model cost.
 - D-087 is hard-consumed and must not be rerun. A successor needs a new experiment ID, clean source, fresh no-call
   preflight, new execution hash and separate user cost approval.
+
+## D-089 isolates one budget confound; it does not tune or validate the agent
+
+- D-089 selects only the AnyIO row that failed before evaluator admission. The selection uses the public process
+  failure (`exact_request_budget_exceeded`), not the hidden outcome. It does not rerun the other 11 rows.
+- “Budget-only” is scoped to per-run agent/model/runtime knobs. The new experiment necessarily has a new ID, purpose,
+  one-row schedule, repetition count and cost authority. Among the comparable runtime knobs, only total-token ceiling
+  changes from 1.6M to 2.0M.
+- Same-prefix arithmetic gives a 1,617,288-token minimum and 382,712-token headroom under 2M. A stochastic rerun can
+  take a different trajectory, so this is not a completion guarantee and does not establish a generally sufficient
+  budget.
+- The `$9.1125` reserve assumes every budgeted token plus one output allowance is charged at the highest configured
+  `$4.50/M` rate. It is deliberately conservative and is neither expected spend nor invoice/free-tier evidence.
+- Passing means only that the exact workflow reaches terminal qualification and official evaluator without a budget,
+  infrastructure, qualification, diagnostic or terminal-loop confound. Hidden acceptance and SCRR are not required.
+- One completed AnyIO probe remains calibration-only. It cannot establish the no-memory denominator, admit memory
+  rules, freeze an index, estimate success rate or unlock core.
+- The source stage makes zero provider calls. A clean no-call preflight, exact candidate hash and separate max-`$10`
+  user approval are still required.

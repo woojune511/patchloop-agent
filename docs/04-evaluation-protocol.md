@@ -1558,3 +1558,17 @@ Readiness predicate에는 task success가 없지만 12/12 official evaluator com
 failure와 1 agent budget failure는 진단으로 보존하되 hidden failure로 prompt/tool/task를 튜닝하지 않는다.
 새 실행은 새 budget-only condition-neutral source, clean preflight, execution hash와 별도 사용자 승인 없이는
 허용되지 않는다.
+
+### D-089 AnyIO budget-only readiness protocol
+
+1. D-088 portable seal에서 evaluator 미도달 budget-terminal row가 정확히 AnyIO repetition 2 하나인지 확인한다.
+2. D-087 suite/result/source artifact SHA를 다시 검증하고 수정하지 않는다.
+3. 새 exact one-row source에서 per-run runtime tuple 중 total-token ceiling만 1.6M -> 2.0M인지 검증한다.
+4. Clean commit에서 no-call preflight를 실행해 fresh pricing, Docker, SDK, task/package와 execution hash를 확인한다.
+5. Candidate hash와 최대 `$10`에 대한 별도 승인 전에는 provider를 호출하지 않는다.
+6. 실행 후 terminal·qualified·official evaluator와 budget/infrastructure/qualification/diagnostic/loop confound를
+   판정한다. Hidden success는 결과로 보존하지만 readiness predicate에는 넣지 않는다.
+7. 결과를 새 immutable seal로 닫기 전에는 baseline, memory admission/index 또는 core를 열지 않는다.
+
+2M은 same-prefix minimum보다 382,712 token 높지만 stochastic completion guarantee가 아니다. Probe가 다시
+budget에 걸리면 그대로 failed calibration으로 봉인하고 자동 budget escalation이나 재실행을 하지 않는다.

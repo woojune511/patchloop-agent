@@ -2988,3 +2988,34 @@ reconcile exactly. The original readiness gate remains false and the experiment 
 provider call or model cost and does not establish a baseline, denominator, memory admission/index or core authority.
 Final verification passed focused 74/74 and repository-wide 1,471 of 1,478 collected tests with seven
 environment-dependent skips; Ruff, compileall, JSON parsing and `git diff --check` also passed.
+
+## D-089 AnyIO budget-only readiness source evidence
+
+D-089 binds the exact D-087 process-confounded row without changing D-087/D-088 bytes. The failed run
+`run_4613c65b2a254349` used 1,578,208 tokens and had 21,792 left; the next exact 14,080-token input plus 25,000
+output allowance required 39,080, leaving a 17,288 deficit. The probe therefore uses a new one-row experiment and
+raises only the comparable per-run total-token knob from 1.6M to 2.0M.
+
+```text
+experiment = anyio-workflow-completion-budget-only-v2v5-20260804-r1
+task = anyio-interrupt-runner-cleanup
+condition / repetitions = no_memory / 1
+model = gpt-5.4-mini-2026-03-17 medium standard default
+prompt / tool / context = SYSTEM_PROMPT_V3 / v2 / phase-evidence-v5
+budget = null model calls / null tool calls / 2,000,000 tokens / 1,800 seconds
+max output = 25,000
+same-prefix minimum / headroom = 1,617,288 / 382,712 tokens
+worst-rate reserve / source cap = $9.1125 / $10
+source artifact = reports/live-pilot/artifacts/d089-anyio-budget-only-readiness-probe-source-gate.json
+source artifact SHA = sha256:19eca850799e9549eef1d8b383d0c3461aa2b9a2e5471d67fe599cb373ea4555
+provider calls / model cost = 0 / $0
+```
+
+The readiness predicate requires terminal, qualified and official evaluator completion plus zero process confounds;
+it does not require hidden acceptance, task success or SCRR. D-089 is not yet executed or consumed. Clean no-call
+preflight, exact candidate hash and separate max-`$10` user approval remain pending. No-memory baseline, comparison
+denominator, memory admission/index and core remain closed.
+
+Final offline verification passed the 228-test focused D-089/historical contract set and 1,522 of 1,529
+repository-wide tests; the other seven were environment-dependent skips. Ruff, compileall, JSON parsing and
+`git diff --check` passed. This verification made no provider call and added `$0` model cost.

@@ -1,0 +1,199 @@
+{
+  "schema_version": "anyio-budget-only-readiness-probe-source-gate-v1",
+  "gate_id": "d089-anyio-budget-only-readiness-probe-source-gate",
+  "predecessors": [
+    {
+      "kind": "immutable-d087-suite",
+      "path": "experiments/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.yaml",
+      "sha256": "sha256:44de6899656c96830d3a0aa3326777848c5d632ef903eccc166839fa1caeaf79",
+      "modified": false
+    },
+    {
+      "kind": "immutable-d087-source-gate",
+      "path": "reports/live-pilot/artifacts/d087-condition-neutral-comparison-accrued-spend-cap-source-gate.json",
+      "sha256": "sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe",
+      "modified": false
+    },
+    {
+      "kind": "immutable-d088-portable-result-seal",
+      "path": "reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json",
+      "sha256": "sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269",
+      "modified": false
+    },
+    {
+      "kind": "immutable-d083-comparison-budget-freeze",
+      "path": "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json",
+      "sha256": "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88",
+      "modified": false
+    }
+  ],
+  "source_failure": {
+    "schema_version": "d087-budget-confounded-row-v1",
+    "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+    "task_id": "anyio-interrupt-runner-cleanup",
+    "repetition": 2,
+    "schedule_order": 7,
+    "schedule_row_id": "sha256:06f7fda0ec0bd735c4ce26c1dbe1446a08904ff9c019e439db2a85284473688b",
+    "run_id": "run_4613c65b2a254349",
+    "outcome_kind": "agent_failure",
+    "terminal_error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+    "terminal_reason_code": "exact_request_budget_exceeded",
+    "generation_started": false,
+    "evaluator_reached": false,
+    "trace_qualified": true,
+    "input_tokens": 1429012,
+    "output_tokens": 149196,
+    "total_tokens": 1578208,
+    "model_calls": 93,
+    "tool_calls": 139,
+    "wall_clock_ms": 1222996,
+    "observed_list_price_cost_usd": 1.743141,
+    "next_requested_input_tokens": 14080,
+    "next_max_output_tokens": 25000,
+    "next_required_tokens": 39080,
+    "remaining_tokens": 21792,
+    "deficit_tokens": 17288,
+    "same_prefix_minimum_tokens": 1617288
+  },
+  "probe_source": {
+    "schema_version": "anyio-budget-only-readiness-probe-source-v1",
+    "suite_path": "experiments/anyio-workflow-completion-budget-only-v2v5-20260804-r1.yaml",
+    "suite_sha256": "sha256:1b42966bd32e5154832cff8c465e24ebf3db829385cee56ff60906043a313eb6",
+    "experiment_id": "anyio-workflow-completion-budget-only-v2v5-20260804-r1",
+    "purpose": "workflow-completion-probe",
+    "task": "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+    "task_id": "anyio-interrupt-runner-cleanup",
+    "memory_condition": "no_memory",
+    "repetitions": 1,
+    "model_provider": "openai",
+    "model_id": "gpt-5.4-mini-2026-03-17",
+    "reasoning_effort": "medium",
+    "reasoning_mode": "standard",
+    "service_tier": "default",
+    "transport_max_retries": 0,
+    "max_output_tokens": 25000,
+    "budget": {
+      "max_model_calls": null,
+      "max_tool_calls": null,
+      "max_total_tokens": 2000000,
+      "wall_clock_timeout_seconds": 1800
+    },
+    "memory_max_context_tokens": 2000,
+    "system_prompt_version": "SYSTEM_PROMPT_V3",
+    "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+    "tool_schema_version": "v2",
+    "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+    "context_policy_version": "phase-evidence-v5",
+    "call_guard_policy": "model-tool-observability-only-v1"
+  },
+  "budget_only_delta": {
+    "schema_version": "condition-neutral-budget-only-delta-v1",
+    "comparison_scope": "per-run-agent-model-runtime-knobs",
+    "per_run_runtime_changed_fields": [
+      "budget.max_total_tokens"
+    ],
+    "new_suite_identity_fields": [
+      "experiment_id",
+      "purpose",
+      "task_schedule",
+      "repetitions",
+      "estimated_cost_usd",
+      "cost_limit_usd",
+      "pricing_verified_at",
+      "pilot_run_id",
+      "campaign_cost_policy"
+    ],
+    "previous_max_total_tokens": 1600000,
+    "probe_max_total_tokens": 2000000,
+    "absolute_headroom_over_same_prefix_minimum_tokens": 382712,
+    "relative_headroom_over_same_prefix_minimum": 0.23663812505874032,
+    "unchanged_model": true,
+    "unchanged_prompt": true,
+    "unchanged_tool_schema": true,
+    "unchanged_context_policy": true,
+    "unchanged_memory_condition": true,
+    "unchanged_max_output_tokens": true,
+    "unchanged_call_limit_policy": true,
+    "unchanged_wall_clock_timeout": true,
+    "completion_guaranteed": false
+  },
+  "pricing": {
+    "schema_version": "anyio-budget-only-readiness-pricing-v1",
+    "verified_at": "2026-08-04T05:10:38Z",
+    "source_url": "https://developers.openai.com/api/docs/pricing",
+    "input_price_per_million_usd": 0.75,
+    "cached_input_price_per_million_usd": 0.075,
+    "cache_write_input_price_per_million_usd": null,
+    "output_price_per_million_usd": 4.5,
+    "reserve_formula": "(max_total_tokens + max_output_tokens) * max_configured_rate / 1000000",
+    "worst_rate_reserve_usd": 9.1125,
+    "source_cost_limit_usd": 10.0,
+    "same_prefix_one_full_call_increment_usd": 0.12306,
+    "same_prefix_one_full_call_projection_usd": 1.866201,
+    "projection_is_expected_cost": false,
+    "reserve_is_invoice_prediction": false,
+    "free_tier_charge_claimed": false
+  },
+  "readiness_predicate": {
+    "schema_version": "workflow-completion-probe-gate-v1",
+    "gate_id": "d089-anyio-budget-only-readiness",
+    "budget_only_probe": true,
+    "calibration_only": true,
+    "expected_runs": 1,
+    "terminal_runs_required": 1,
+    "qualified_runs_required": 1,
+    "official_evaluator_runs_required": 1,
+    "infrastructure_errors_required": 0,
+    "qualification_errors_required": 0,
+    "diagnostic_errors_required": 0,
+    "budget_terminal_runs_required": 0,
+    "terminal_loop_failure_runs_required": 0,
+    "disabled_call_guard_contract_required": true,
+    "task_success_required": false,
+    "hidden_acceptance_required": false,
+    "scrr_required": false
+  },
+  "authorization_boundary": {
+    "clean_source_commit_required": true,
+    "clean_no_call_preflight_performed": false,
+    "candidate_execution_hash": null,
+    "separate_user_approval_required": true,
+    "maximum_future_approval_cap_usd": 10.0,
+    "provider_execution_authorized": false,
+    "original_d087_resume_authorized": false,
+    "automatic_rerun_authorized": false
+  },
+  "claims_boundary": {
+    "provider_calls_made": 0,
+    "added_model_cost_usd": 0.0,
+    "probe_executed": false,
+    "probe_result_observed": false,
+    "no_memory_baseline_result_established": false,
+    "comparison_denominator_eligible": false,
+    "memory_admission_unlocked": false,
+    "memory_index_build_authorized": false,
+    "core_campaign_unlocked": false,
+    "hidden_driven_tuning_authorized": false
+  },
+  "verification": {
+    "status": "passed",
+    "focused": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q -o addopts='' tests/test_d089_anyio_budget_only_probe.py tests/test_d089_source_gate_artifact.py tests/test_workflow_completion_probe.py tests/test_workflow_completion_probe_qualification.py tests/test_d085_condition_neutral_pilot_preflight.py tests/test_d085_manifest_runtime.py tests/test_d085_qualification.py tests/test_d086_runtime_hardening.py tests/test_d087_campaign_cost_policy.py tests/test_d087_execution_binding.py tests/test_d087_source_gate_artifact.py tests/test_d088_condition_neutral_campaign_seal.py tests/test_d088_runtime_hardening.py",
+      "passed": 228,
+      "failed": 0
+    },
+    "repository_wide": {
+      "command": ".venv\\Scripts\\python.exe -m pytest -q -o addopts=''",
+      "collected": 1529,
+      "passed": 1522,
+      "skipped": 7,
+      "failed": 0
+    },
+    "ruff": true,
+    "compileall": true,
+    "json_parse": true,
+    "git_diff_check": true,
+    "provider_calls": 0,
+    "added_model_cost_usd": 0.0
+  }
+}

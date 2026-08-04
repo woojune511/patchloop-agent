@@ -1115,3 +1115,20 @@ D-087 experiment ID는 source-level immutable set에 추가되어 local raw evid
 boundary 전에 거부된다. 이 seal은 12/12 terminal·qualified와 cost integrity를 증명하지만 evaluator는
 11/12이므로 baseline/denominator/memory/core를 열지 않는다. 다음 successor가 있다면 같은 model/prompt/tool/
 context를 유지하는 condition-neutral budget-only 새 source와 별도 approval capability가 필요하다.
+
+## 30. D-089 one-row budget-confound isolation
+
+D-089는 frozen comparison budget을 수정하지 않고 기존 `workflow-completion-probe` registry에 두 번째 exact
+profile을 추가한다. Registry는 experiment ID마다 task, budget과 cost tuple을 결정하므로 historical pyfakefs
+3M/7,200초 profile과 새 AnyIO 2M/1,800초 profile이 서로 대체될 수 없다. `RunManifest`는 D-089 ID를 주장하는
+near-match가 D-087의 1.6M comparison selector로 fall through하지 못하게 exact purpose/task/role/order/repetition,
+V2/V5 runtime, no-memory와 memory allowance 2,000을 검증한다.
+
+Execution plan/hash와 manifest reconstruction이 exact one-row schedule, model, prompt/tool/context, 2M budget,
+pricing과 Docker/SDK identity를 묶는다. Runtime evidence는 기존 content-addressed workflow-completion contract를
+사용하고 qualifier는 exact ID-to-budget registry로 disabled-call guard를 검증한다. Completion gate에는
+`d089-anyio-budget-only-readiness`, `budget_only_probe=true`, `calibration_only=true`가 기록된다.
+
+Source 단계는 provider capability를 만들지 않는다. Clean commit의 no-call preflight가 candidate hash를 만든 뒤
+별도 max-`$10` 승인이 있어야 paid boundary가 열린다. D-087/D-088는 immutable하고 D-089 결과 전에는 D-089를
+consumed set에 넣지 않는다.

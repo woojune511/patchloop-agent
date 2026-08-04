@@ -2943,3 +2943,18 @@ Cost qualification은 12 reservation/settlement, accrued 5,368,428,750 nano-USD,
 `HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS`에만 합쳐진다. Multi-run identity를 single-task set이나 historical
 200k-budget selector set에 넣지 않는다. Portable claims는 no-memory baseline, success-rate estimate,
 comparison denominator, memory admission/index, core, analysis와 automatic rerun을 모두 false로 고정한다.
+
+## 31. D-089 AnyIO budget-only readiness contract
+
+Exact experiment ID는 `anyio-workflow-completion-budget-only-v2v5-20260804-r1`이고 purpose는
+`workflow-completion-probe`다. Registered tuple은 AnyIO memory-development task 한 개, no-memory 1회,
+mini medium/standard/default, retry 0, output 25,000, memory allowance 2,000과
+`null/null/2,000,000/1,800`이다. Source estimate/reserve는 `$9.1125`, hard approval cap은 `$10`이다.
+
+“Budget-only”는 D-087 failed row와 비교 가능한 per-run agent/model/runtime fields에만 적용한다. Source artifact는
+새 suite identity fields를 별도로 열거하고 runtime changed fields를 정확히 `budget.max_total_tokens` 하나로
+제한한다. D-087 suite/result/source artifact의 byte SHA와 failed run/schedule row/deficit evidence를 결속한다.
+
+Gate schema는 `workflow-completion-probe-gate-v1`, gate ID는 `d089-anyio-budget-only-readiness`다. Required
+predicate는 terminal, qualified, evaluator reached, official completed, disabled-call guard와 process confound 0이다.
+`task_success_required=false`, hidden/SCRR required=false, comparison/memory authority=false다.
