@@ -3088,3 +3088,58 @@ Artifact: `reports/live-pilot/artifacts/d091-anyio-public-trajectory-audit.json`
 calls and added `$0` model cost. It creates no experiment, rerun, budget, baseline, memory or core authority. Final
 verification passed focused 238/238 and repository-wide sharded 1,532/1,539 tests, with seven environment-dependent
 skips; Ruff, compileall, JSON/hash and `git diff --check` also passed.
+
+## D-092 offline public stall-policy replay
+
+D-092 uses four sealed sources without opening model/tool bodies: D-081 r3 four-run readiness, the D-085/D-086
+condition-neutral pilot, the D-087/D-088 twelve-run campaign and the D-089/D-090 AnyIO probe. The resulting primary
+panel has 18 trace-qualified runs, eight task IDs and 4,079 public events. D-091 is bound as the AnyIO trajectory
+interpretation predecessor. Source reports are read only as bytes for content-address verification; raw replay selects
+only durable `manifest_json` and `event_json` in immutable query-only SQLite mode.
+
+The repeated-rejection grid produced:
+
+| N | triggered runs | false stops | safe task count | admitted |
+| ---: | ---: | ---: | ---: | --- |
+| 3 | 4 | 3 | 1 | false |
+| 4 | 3 | 2 | 1 | false |
+| 5 | 3 | 2 | 1 | false |
+| 6 | 2 | 1 | 1 | false |
+| 7 | 2 | 1 | 1 | false |
+| 8 | 2 | 1 | 1 | false |
+| 9 | 2 | 1 | 1 | false |
+| 10 | 2 | 1 | 1 | false |
+
+The relative-context grid produced:
+
+| multiplier | completed calls | triggered runs | false stops | safe task count | admitted |
+| ---: | ---: | ---: | ---: | ---: | --- |
+| 2 | 8 | 14 | 14 | 0 | false |
+| 2 | 16 | 7 | 6 | 1 | false |
+| 2 | 32 | 2 | 1 | 1 | false |
+| 4 | 8 | 14 | 14 | 0 | false |
+| 4 | 16 | 6 | 5 | 1 | false |
+| 4 | 32 | 2 | 1 | 1 | false |
+| 8 | 8 | 12 | 12 | 0 | false |
+| 8 | 16 | 5 | 5 | 0 | false |
+| 8 | 32 | 1 | 1 | 0 | false |
+
+Absolute context is sensitivity-only and cannot be admitted:
+
+| characters | triggered runs | false stops | observed safe suffix tokens | safe task count |
+| ---: | ---: | ---: | ---: | ---: |
+| 80,000 | 4 | 3 | 1,202,919 | 1 |
+| 85,000 | 3 | 2 | 863,211 | 1 |
+| 90,000 | 1 | 0 | 824,161 | 1 |
+
+No candidate passed zero false stop, three-task coverage, 20% token-or-wall observed suffix and leave-one-task-out
+stability together. The selected decision is
+`retain-current-policy-and-count-qualified-budget-terminal-as-agent-failure`. The artifact does not add a runtime
+guard and does not yet bind that outcome rule into a comparison denominator.
+
+Portable artifact: `reports/live-pilot/artifacts/d092-public-policy-replay-decision.json`. Semantic body SHA:
+`sha256:6fde1253a7ba92a2cb60b09f05bc070849c1f868e96cc00870cf03eff62782ec`. File SHA:
+`sha256:541b890e2b123a5431060e23dcf4544fce3f7b810cb8cb1a560fbcc245b3fe22`. Provider/evaluator calls and added model
+cost are 0/0/`$0`. Live execution, baseline denominator, memory admission/index and core authority remain closed.
+Final verification passed focused 20/20 and repository-wide sharded 1,552/1,559 tests with seven
+environment-dependent skips; Ruff, compileall, JSON/hash and `git diff --check` also passed.

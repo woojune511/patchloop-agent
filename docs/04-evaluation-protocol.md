@@ -1598,3 +1598,15 @@ D-087 r2와 D-089은 budget 외에 fresh repetition, schedule, execution identit
 paired comparison이 아니다. 같은 task D-087 r1이 534,853 token에서 evaluator에 도달한 사실은 process variance
 control로만 사용하며 task/hidden outcome은 사용하지 않는다. 2.4M/3M counterfactual은 관측된 prefix에서 다음
 request를 admit한다는 산술일 뿐, seq 546의 exploration block 이후 path나 completion을 식별하지 못한다.
+
+### D-092 policy admission and denominator outcome rule
+
+Candidate trigger 뒤 public progress marker가 하나라도 있으면 task correctness와 무관하게 `false_stop=true`다.
+`false_stop=false`는 해당 observed trace에서 later progress를 보지 못했다는 뜻일 뿐 future safety proof가 아니다.
+Trigger 이후 model token/call, tool call과 wall time은 observed suffix이며 실제 guard를 실행해 얻은 causal saving이
+아니다.
+
+D-092의 generic candidate는 네 gate를 모두 통과하지 못했으므로 runtime을 바꾸지 않는다. Terminal이며
+trace-qualified인 budget stop은 향후 condition-neutral denominator에서 원래 task/repetition identity를 유지한
+`agent_failure` row로 남기고, 삭제·재실행·대체하지 않는 outcome rule을 선택했다. 다만 D-092는 이 rule을 four
+memory condition consumer에 아직 결속하지 않았으므로 baseline denominator admission은 계속 닫혀 있다.

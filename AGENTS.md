@@ -10,7 +10,29 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-091 offline AnyIO public-trajectory audit complete; qualified runtime, repeated invalid-patch
+- 현재 milestone은 `D-092 offline public stall-policy replay complete; retain current runtime policy and classify
+  qualified budget terminals as agent failure; no runtime, live, baseline, denominator, memory, or core authority`다.
+  Primary panel은 D-081 r3 4개, D-085/D-086 pilot 1개, D-087 12개와 D-089 1개로 구성된 18-run·8-task,
+  4,079-event no-memory V2/V5 public trajectory다. Model/prompt/tool/context/memory condition은 같지만 harness
+  commit과 total-token ceiling은 다르므로 process-policy replay일 뿐 causal performance comparison이나 baseline
+  denominator가 아니다. Simulator는 durable `manifest_json`과 public `event_json`만 SQLite
+  `mode=ro&immutable=1`·`query_only`로 읽고 private assertion, hidden/reference/candidate patch, result JSON,
+  qualification detail과 model/tool artifact body를 읽지 않는다. Repeated-rejection `N=3..10`은 모두 D-089을
+  intercept하는 구간에서 later public progress가 있는 run도 잘랐고, relative-context
+  `{2,4,8} × {8,16,32 calls}` 역시 모든 candidate에 false stop이 있거나 cross-task/leave-one-task-out
+  generality가 없었다. 90,000-character absolute ceiling만 D-089 하나에서 false stop 0이지만 post-hoc
+  single-task sensitivity이고 admission scope 밖이다. 따라서 exact decision은
+  `retain-current-policy-and-count-qualified-budget-terminal-as-agent-failure`다. 이는 runtime guard를 추가하거나
+  historical outcome을 바꾸지 않으며, selected outcome rule의 four-condition plan·RunManifest·qualification·report
+  binding은 다음 offline denominator-admission gate로 남는다. Portable artifact는
+  `reports/live-pilot/artifacts/d092-public-policy-replay-decision.json`, semantic body SHA는
+  `sha256:6fde1253a7ba92a2cb60b09f05bc070849c1f868e96cc00870cf03eff62782ec`, file SHA는
+  `sha256:541b890e2b123a5431060e23dcf4544fce3f7b810cb8cb1a560fbcc245b3fe22`다. D-092 자체 provider/evaluator
+  call과 추가 model cost는 0/0/$0이며 live execution, comparison denominator, no-memory baseline, memory
+  review/admission/index와 core는 계속 닫혀 있다. Final verification은 focused 20/20, repository-wide sharded
+  1,559 collected 중 1,552 passed/7 environment-dependent skipped이며 Ruff, compileall, JSON/hash와
+  `git diff --check`가 통과했다.
+- Historical D-091 milestone은 `D-091 offline AnyIO public-trajectory audit complete; qualified runtime, repeated invalid-patch
   non-convergence and budget terminal separated; no rerun, budget, baseline, memory, or core authority`다. D-087
   AnyIO repetition 2 `run_4613c65b2a254349`와 D-089 `run_e444de1bb20a4325`의 public task, portable seal,
   manifest/qualification과 durable event metadata만 비교했다. Private assertion, hidden/reference/candidate patch

@@ -1,0 +1,1332 @@
+{
+  "schema_version": "public-cross-task-policy-decision-manifest-v1",
+  "decision_id": "d092_6fde1253a7ba92a2cb60b09f05bc070849c1f868e96cc00870cf03eff62782ec",
+  "semantic_body_hash": "sha256:6fde1253a7ba92a2cb60b09f05bc070849c1f868e96cc00870cf03eff62782ec",
+  "semantic_body": {
+    "schema_version": "public-cross-task-policy-decision-v1",
+    "milestone": "D-092 offline public stall-policy replay",
+    "recorded_at": "2026-08-04T10:30:30Z",
+    "evidence_kind": "bounded-public-metadata-counterfactual-replay",
+    "source_binding": {
+      "d082_four_run_readiness_seal": {
+        "path": "reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json",
+        "bytes": 27641,
+        "file_sha256": "sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2",
+        "experiment_ids": [
+          "generic-baseline-readiness-v2v5-20260803-r3"
+        ],
+        "read_mode": "bytes-for-content-address-only"
+      },
+      "d086_condition_neutral_pilot_seal": {
+        "path": "reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json",
+        "bytes": 17403,
+        "file_sha256": "sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464",
+        "experiment_ids": [
+          "dev-validation-condition-neutral-v2v5-pilot-20260803-r1"
+        ],
+        "read_mode": "bytes-for-content-address-only"
+      },
+      "d088_twelve_run_campaign_seal": {
+        "path": "reports/live-pilot/dev-no-memory-condition-neutral-accrued-cap-20260804-r1.json",
+        "bytes": 32251,
+        "file_sha256": "sha256:2e24bfb0d98c2a7b2b0d8b5bf80c238ae048d782ce43c1cf08a2c10a6c6b5269",
+        "experiment_ids": [
+          "dev-no-memory-condition-neutral-accrued-cap-20260804-r1"
+        ],
+        "read_mode": "bytes-for-content-address-only"
+      },
+      "d090_anyio_probe_seal": {
+        "path": "reports/live-pilot/anyio-workflow-completion-budget-only-v2v5-20260804-r1.json",
+        "bytes": 13652,
+        "file_sha256": "sha256:06006c95454618b7adcea305465fa63611d2043c70aaa3e1df2de9a3f5a192f1",
+        "experiment_ids": [
+          "anyio-workflow-completion-budget-only-v2v5-20260804-r1"
+        ],
+        "read_mode": "bytes-for-content-address-only"
+      },
+      "d091_anyio_public_trajectory_audit": {
+        "path": "reports/live-pilot/artifacts/d091-anyio-public-trajectory-audit.json",
+        "bytes": 23039,
+        "file_sha256": "sha256:74b6b229520d3358e7fbd33faad3b0be532405bbe5711a35c4d064114ba8e9a7",
+        "experiment_ids": [
+          "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "anyio-workflow-completion-budget-only-v2v5-20260804-r1"
+        ],
+        "read_mode": "bytes-for-content-address-only"
+      }
+    },
+    "audit_scope": {
+      "durable_manifest_metadata_read": true,
+      "durable_public_event_metadata_read": true,
+      "portable_report_bytes_hashed_without_semantic_outcome_read": true,
+      "result_json_read": false,
+      "qualification_detail_read": false,
+      "private_task_or_hidden_assertion_read": false,
+      "reference_or_candidate_patch_body_read": false,
+      "model_request_or_response_body_read": false,
+      "tool_input_or_output_artifact_body_read": false,
+      "credential_read_or_logged": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0.0
+    },
+    "panel_contract": {
+      "run_count": 18,
+      "task_count": 8,
+      "task_ids": [
+        "anyio-interrupt-runner-cleanup",
+        "babel-strict-grouped-decimal-trailing-zeroes",
+        "hf-hub-xet-endpoint-propagation",
+        "loguru-invalid-format-feedback",
+        "moto-query-scanned-count",
+        "pdm-ignore-active-venv-resolution",
+        "pyfakefs-makedirs-parent-traversal",
+        "tox-cross-section-empty-substitution"
+      ],
+      "public_event_count": 4079,
+      "experiment_run_counts": {
+        "generic-baseline-readiness-v2v5-20260803-r3": 4,
+        "dev-validation-condition-neutral-v2v5-pilot-20260803-r1": 1,
+        "dev-no-memory-condition-neutral-accrued-cap-20260804-r1": 12,
+        "anyio-workflow-completion-budget-only-v2v5-20260804-r1": 1
+      },
+      "sealed_qualification_claim": "18/18 trace-qualified",
+      "qualification_recomputed_in_d092": false,
+      "common_model_tuple": {
+        "provider": "openai",
+        "model_id": "gpt-5.4-mini-2026-03-17",
+        "reasoning_effort": "medium",
+        "reasoning_mode": "standard",
+        "service_tier": "default",
+        "max_output_tokens": 25000,
+        "transport_max_retries": 0
+      },
+      "common_runtime_tuple": {
+        "memory_condition": "no_memory",
+        "memory_max_context_tokens": 2000,
+        "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+        "tool_schema_version": "v2",
+        "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+        "context_policy_version": "phase-evidence-v5",
+        "max_model_calls": null,
+        "max_tool_calls": null,
+        "wall_clock_timeout_seconds": 1800
+      },
+      "varying_noncausal_fields": {
+        "harness_git_commits": [
+          "629b9fdd9f69d1522cf565a06ae9679abe3f60a7",
+          "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "7f3e6debb2a67f4b108c4422fa4cf51ebfea994f",
+          "b4c79242bb0a94eed50530116205323e78c7d21a"
+        ],
+        "max_total_token_ceilings": [
+          1600000,
+          2000000,
+          2400000
+        ],
+        "interpretation": "bounded process-policy replay only; not a causal performance comparison or denominator"
+      },
+      "excluded_primary_strata": {
+        "d075_d077_call_limited_runs": "different model-call admission ceilings",
+        "d079_extended_wall_run": "different 7200-second wall ceiling"
+      }
+    },
+    "progress_contract": {
+      "progress_markers": [
+        "forward PhaseChanged",
+        "PatchApplied",
+        "first passing run_check per check_id and worktree_diff_hash",
+        "SubmissionAttempted",
+        "SubmissionAccepted"
+      ],
+      "false_stop_rule": "any later public progress marker after the candidate trigger",
+      "false_stop_false_interpretation": "no later progress observed in this trace; not a future safety proof",
+      "observed_suffix_interpretation": "observed post-trigger resource suffix; not causal savings",
+      "rejection_fingerprint": {
+        "included": [
+          "tool",
+          "status",
+          "error_code",
+          "error_details.stage",
+          "error_details.reason",
+          "correlated ToolCalled.worktree_diff_hash"
+        ],
+        "excluded": [
+          "patch_or_input_or_candidate_hash",
+          "normalized_call_hash",
+          "error_message_or_guidance",
+          "artifact_id_or_path_or_body",
+          "action_or_correlation_id",
+          "event_sequence"
+        ],
+        "correlation_use": "join validation only; correlation ID is not emitted or hashed"
+      }
+    },
+    "candidate_grid": {
+      "repeated_rejection_thresholds": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "relative_context_growth": {
+        "multipliers": [
+          2,
+          4,
+          8
+        ],
+        "minimum_completed_model_calls_since_progress": [
+          8,
+          16,
+          32
+        ]
+      },
+      "absolute_context_sensitivity_characters": [
+        80000,
+        85000,
+        90000
+      ],
+      "admission_gates": {
+        "zero_false_stops": true,
+        "minimum_safe_intercept_task_count": 3,
+        "minimum_observed_suffix_token_or_wall_fraction_ppm": 200000,
+        "leave_one_task_out_retains_all_gates": true
+      },
+      "absolute_context_is_admission_candidate": false
+    },
+    "replay_projection": {
+      "panel_projection_hash": "sha256:7b68914f16d82465a3e78952f8ab7bc0489372cd3b23bc895fac4c762907c633",
+      "runs": [
+        {
+          "run_id": "run_aa9c911512a547d2",
+          "task_id": "hf-hub-xet-endpoint-propagation",
+          "experiment_id": "generic-baseline-readiness-v2v5-20260803-r3",
+          "repetition": 1,
+          "schedule_order": 1,
+          "harness_git_commit": "b4c79242bb0a94eed50530116205323e78c7d21a",
+          "max_total_tokens": 2400000,
+          "event_count": 193,
+          "model_calls": 20,
+          "model_tokens": 340383,
+          "tool_calls": 43,
+          "apply_rejection_count": 0,
+          "context_observation_count": 20,
+          "maximum_context_characters": 76021,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:d3d16d7810e0eef7cdbaf6857001edaaf8f48664d6934550ca65e2711b8925af"
+        },
+        {
+          "run_id": "run_3995a029dc1f4b19",
+          "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+          "experiment_id": "generic-baseline-readiness-v2v5-20260803-r3",
+          "repetition": 1,
+          "schedule_order": 2,
+          "harness_git_commit": "b4c79242bb0a94eed50530116205323e78c7d21a",
+          "max_total_tokens": 2400000,
+          "event_count": 67,
+          "model_calls": 10,
+          "model_tokens": 89230,
+          "tool_calls": 11,
+          "apply_rejection_count": 0,
+          "context_observation_count": 10,
+          "maximum_context_characters": 40248,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:24c4dc054be79dab049951dae3b85a4b87fb5b929d09163b8bfe894712150567"
+        },
+        {
+          "run_id": "run_f29df61ba1bc455a",
+          "task_id": "moto-query-scanned-count",
+          "experiment_id": "generic-baseline-readiness-v2v5-20260803-r3",
+          "repetition": 1,
+          "schedule_order": 3,
+          "harness_git_commit": "b4c79242bb0a94eed50530116205323e78c7d21a",
+          "max_total_tokens": 2400000,
+          "event_count": 116,
+          "model_calls": 18,
+          "model_tokens": 221418,
+          "tool_calls": 21,
+          "apply_rejection_count": 2,
+          "context_observation_count": 18,
+          "maximum_context_characters": 54861,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:ec2b51a3197582bdf0bd319380c35959ed406dbf922a32e7181bfbff0c904939"
+        },
+        {
+          "run_id": "run_741ad42bf680486a",
+          "task_id": "pyfakefs-makedirs-parent-traversal",
+          "experiment_id": "generic-baseline-readiness-v2v5-20260803-r3",
+          "repetition": 1,
+          "schedule_order": 4,
+          "harness_git_commit": "b4c79242bb0a94eed50530116205323e78c7d21a",
+          "max_total_tokens": 2400000,
+          "event_count": 480,
+          "model_calls": 63,
+          "model_tokens": 1278285,
+          "tool_calls": 100,
+          "apply_rejection_count": 1,
+          "context_observation_count": 63,
+          "maximum_context_characters": 89464,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:5563b1c89764c909dd6f0c40ffd118d590593c1b684f11137a78bde77a59257a"
+        },
+        {
+          "run_id": "run_c355405d826641b9",
+          "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+          "experiment_id": "dev-validation-condition-neutral-v2v5-pilot-20260803-r1",
+          "repetition": 1,
+          "schedule_order": 1,
+          "harness_git_commit": "629b9fdd9f69d1522cf565a06ae9679abe3f60a7",
+          "max_total_tokens": 1600000,
+          "event_count": 57,
+          "model_calls": 8,
+          "model_tokens": 73201,
+          "tool_calls": 9,
+          "apply_rejection_count": 0,
+          "context_observation_count": 8,
+          "maximum_context_characters": 38619,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:ce3eada2bbd4188cb3e4fc6e3e6dd4fd38c01366758020117a2e08cdc17a4fa3"
+        },
+        {
+          "run_id": "run_eece333f601040b1",
+          "task_id": "pyfakefs-makedirs-parent-traversal",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 1,
+          "schedule_order": 1,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 211,
+          "model_calls": 28,
+          "model_tokens": 447612,
+          "tool_calls": 43,
+          "apply_rejection_count": 0,
+          "context_observation_count": 28,
+          "maximum_context_characters": 72549,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:62a51c5a7ce90e916513106a902d8b823c88ed52d27dea9dfd3cee3bf1bc28f4"
+        },
+        {
+          "run_id": "run_28c86262518b4bba",
+          "task_id": "pyfakefs-makedirs-parent-traversal",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 2,
+          "schedule_order": 2,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 239,
+          "model_calls": 35,
+          "model_tokens": 570089,
+          "tool_calls": 48,
+          "apply_rejection_count": 1,
+          "context_observation_count": 35,
+          "maximum_context_characters": 72515,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:48175373a0700aa70d445b5f79c54b6a8bffd18b7556c0215f9904c0cdc58556"
+        },
+        {
+          "run_id": "run_b6038236132749e1",
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 1,
+          "schedule_order": 3,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 263,
+          "model_calls": 31,
+          "model_tokens": 534853,
+          "tool_calls": 58,
+          "apply_rejection_count": 1,
+          "context_observation_count": 31,
+          "maximum_context_characters": 86585,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:5ee9d127814de4ef1c609e387758c33143148d81734031f51bf9505fb2724cdf"
+        },
+        {
+          "run_id": "run_697fc8ab4ab04890",
+          "task_id": "hf-hub-xet-endpoint-propagation",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 1,
+          "schedule_order": 4,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 123,
+          "model_calls": 14,
+          "model_tokens": 212079,
+          "tool_calls": 25,
+          "apply_rejection_count": 0,
+          "context_observation_count": 14,
+          "maximum_context_characters": 81966,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:bb5ccaa2a3535bb43b99336825b737d5cb41b2f55df8815f079b9db4f1c96ffe"
+        },
+        {
+          "run_id": "run_277e06953fc14232",
+          "task_id": "pdm-ignore-active-venv-resolution",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 1,
+          "schedule_order": 5,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 92,
+          "model_calls": 11,
+          "model_tokens": 105086,
+          "tool_calls": 18,
+          "apply_rejection_count": 0,
+          "context_observation_count": 11,
+          "maximum_context_characters": 48736,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:1038322ed59246d0a9b0a27a3181acb8bdb53f306b12d75014467f8e2c83d91b"
+        },
+        {
+          "run_id": "run_c6683ae9a038435c",
+          "task_id": "hf-hub-xet-endpoint-propagation",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 2,
+          "schedule_order": 6,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 357,
+          "model_calls": 42,
+          "model_tokens": 774650,
+          "tool_calls": 79,
+          "apply_rejection_count": 6,
+          "context_observation_count": 42,
+          "maximum_context_characters": 75788,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 3,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:83b3ae519f48bbfbcdd56d15c7a9d20a88b078525241a7ec540713a2c9eb02d1"
+        },
+        {
+          "run_id": "run_4613c65b2a254349",
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 2,
+          "schedule_order": 7,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 657,
+          "model_calls": 93,
+          "model_tokens": 1578208,
+          "tool_calls": 139,
+          "apply_rejection_count": 20,
+          "context_observation_count": 94,
+          "maximum_context_characters": 70983,
+          "progress_marker_counts": {
+            "forward_phase": 3,
+            "patch_applied": 6,
+            "visible_check_passed": 0,
+            "submission_attempted": 0,
+            "submission_accepted": 0
+          },
+          "model_generation_blocked_count": 1,
+          "terminal_event_type": "RunFailed",
+          "public_event_projection_hash": "sha256:47f3685897c050aac5d8e2c7456dcde939140d81b49f43742dd01091d44e1b8d"
+        },
+        {
+          "run_id": "run_725807ab880a4719",
+          "task_id": "loguru-invalid-format-feedback",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 1,
+          "schedule_order": 8,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 98,
+          "model_calls": 14,
+          "model_tokens": 138267,
+          "tool_calls": 17,
+          "apply_rejection_count": 3,
+          "context_observation_count": 14,
+          "maximum_context_characters": 48140,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 2,
+            "visible_check_passed": 3,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:b0e743ee1d581b193110d734aaeee91c0ce4fe9e25742ba776565aa93f0855d2"
+        },
+        {
+          "run_id": "run_c04aa62b587d415e",
+          "task_id": "loguru-invalid-format-feedback",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 2,
+          "schedule_order": 9,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 100,
+          "model_calls": 15,
+          "model_tokens": 165826,
+          "tool_calls": 18,
+          "apply_rejection_count": 5,
+          "context_observation_count": 15,
+          "maximum_context_characters": 44338,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 3,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:aad61f74502d9e34b93692fea349cdcb6940ad77ef6b3869e481d51859e5df78"
+        },
+        {
+          "run_id": "run_d17e180d1e344650",
+          "task_id": "tox-cross-section-empty-substitution",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 2,
+          "schedule_order": 10,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 172,
+          "model_calls": 19,
+          "model_tokens": 249569,
+          "tool_calls": 39,
+          "apply_rejection_count": 2,
+          "context_observation_count": 19,
+          "maximum_context_characters": 72667,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:574002af0d7bf3d4aa09d1115ffc9f6e97fb4636b4dabfbd9917195dfd71cb77"
+        },
+        {
+          "run_id": "run_d5c54d65ab6b4a60",
+          "task_id": "tox-cross-section-empty-substitution",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 1,
+          "schedule_order": 11,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 105,
+          "model_calls": 12,
+          "model_tokens": 122472,
+          "tool_calls": 22,
+          "apply_rejection_count": 0,
+          "context_observation_count": 12,
+          "maximum_context_characters": 75952,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 1,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:d9dca8f3839afa5eb84c819137ae545908aa6ece0adfd245ed4d882bf8adafa7"
+        },
+        {
+          "run_id": "run_c0e186e798024698",
+          "task_id": "pdm-ignore-active-venv-resolution",
+          "experiment_id": "dev-no-memory-condition-neutral-accrued-cap-20260804-r1",
+          "repetition": 2,
+          "schedule_order": 12,
+          "harness_git_commit": "7eee5fa1837d30e6177c46119885035f2b1d976f",
+          "max_total_tokens": 1600000,
+          "event_count": 193,
+          "model_calls": 26,
+          "model_tokens": 331219,
+          "tool_calls": 41,
+          "apply_rejection_count": 1,
+          "context_observation_count": 26,
+          "maximum_context_characters": 69115,
+          "progress_marker_counts": {
+            "forward_phase": 6,
+            "patch_applied": 3,
+            "visible_check_passed": 1,
+            "submission_attempted": 1,
+            "submission_accepted": 1
+          },
+          "model_generation_blocked_count": 0,
+          "terminal_event_type": "RunCompleted",
+          "public_event_projection_hash": "sha256:f02046217ae0129101f1cd66d88185aeb1cb0ac8d7498f88015ded5f074b8cc1"
+        },
+        {
+          "run_id": "run_e444de1bb20a4325",
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "experiment_id": "anyio-workflow-completion-budget-only-v2v5-20260804-r1",
+          "repetition": 1,
+          "schedule_order": 1,
+          "harness_git_commit": "7f3e6debb2a67f4b108c4422fa4cf51ebfea994f",
+          "max_total_tokens": 2000000,
+          "event_count": 556,
+          "model_calls": 79,
+          "model_tokens": 1956109,
+          "tool_calls": 121,
+          "apply_rejection_count": 15,
+          "context_observation_count": 80,
+          "maximum_context_characters": 121658,
+          "progress_marker_counts": {
+            "forward_phase": 3,
+            "patch_applied": 1,
+            "visible_check_passed": 0,
+            "submission_attempted": 0,
+            "submission_accepted": 0
+          },
+          "model_generation_blocked_count": 1,
+          "terminal_event_type": "RunFailed",
+          "public_event_projection_hash": "sha256:6b9bb897ebb2bc0b7da810ad71f4ec18762b679032ac63fbcf3feae56e146ebe"
+        }
+      ],
+      "repeated_rejection": [
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n3",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 4,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349",
+              "run_c04aa62b587d415e",
+              "run_c6683ae9a038435c"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 1275520,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 652070,
+            "observed_suffix_wall_clock_ms": 1153472,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 693121,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n4",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 3,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349",
+              "run_c04aa62b587d415e"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 1065663,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 544787,
+            "observed_suffix_wall_clock_ms": 981920,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 590035,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n5",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 3,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349",
+              "run_c04aa62b587d415e"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 1037993,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 530641,
+            "observed_suffix_wall_clock_ms": 955770,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 574321,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n6",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 2,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 659989,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 337398,
+            "observed_suffix_wall_clock_ms": 581779,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 349590,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n7",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 2,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 600892,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 307187,
+            "observed_suffix_wall_clock_ms": 530022,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 318490,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n8",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 2,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 424661,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 217094,
+            "observed_suffix_wall_clock_ms": 372080,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 223582,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n9",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 2,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 391467,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 200125,
+            "observed_suffix_wall_clock_ms": 339986,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 204297,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "repeated-rejection-n10",
+            "policy_kind": "repeated_rejection",
+            "panel_run_count": 18,
+            "triggered_run_count": 2,
+            "false_stop_run_ids": [
+              "run_4613c65b2a254349"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 204314,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 104449,
+            "observed_suffix_wall_clock_ms": 182572,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 109707,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": false,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        }
+      ],
+      "relative_context_growth": [
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x2-calls8",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 14,
+            "false_stop_run_ids": [
+              "run_28c86262518b4bba",
+              "run_4613c65b2a254349",
+              "run_697fc8ab4ab04890",
+              "run_741ad42bf680486a",
+              "run_aa9c911512a547d2",
+              "run_b6038236132749e1",
+              "run_c04aa62b587d415e",
+              "run_c0e186e798024698",
+              "run_c6683ae9a038435c",
+              "run_d17e180d1e344650",
+              "run_d5c54d65ab6b4a60",
+              "run_e444de1bb20a4325",
+              "run_eece333f601040b1",
+              "run_f29df61ba1bc455a"
+            ],
+            "safe_intercept_run_ids": [],
+            "affected_task_ids": [],
+            "observed_suffix_model_tokens": 0,
+            "safe_intercept_total_model_tokens": 0,
+            "observed_suffix_token_fraction_ppm": 0,
+            "observed_suffix_wall_clock_ms": 0,
+            "safe_intercept_total_wall_clock_ms": 0,
+            "observed_suffix_wall_fraction_ppm": 0,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": false,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x2-calls16",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 7,
+            "false_stop_run_ids": [
+              "run_28c86262518b4bba",
+              "run_4613c65b2a254349",
+              "run_741ad42bf680486a",
+              "run_b6038236132749e1",
+              "run_c6683ae9a038435c",
+              "run_eece333f601040b1"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 1497163,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 765378,
+            "observed_suffix_wall_clock_ms": 1362777,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 818892,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x2-calls32",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 2,
+            "false_stop_run_ids": [
+              "run_741ad42bf680486a"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 1097503,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 561064,
+            "observed_suffix_wall_clock_ms": 1048525,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 630058,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x4-calls8",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 14,
+            "false_stop_run_ids": [
+              "run_28c86262518b4bba",
+              "run_4613c65b2a254349",
+              "run_697fc8ab4ab04890",
+              "run_741ad42bf680486a",
+              "run_aa9c911512a547d2",
+              "run_b6038236132749e1",
+              "run_c04aa62b587d415e",
+              "run_c0e186e798024698",
+              "run_c6683ae9a038435c",
+              "run_d17e180d1e344650",
+              "run_d5c54d65ab6b4a60",
+              "run_e444de1bb20a4325",
+              "run_eece333f601040b1",
+              "run_f29df61ba1bc455a"
+            ],
+            "safe_intercept_run_ids": [],
+            "affected_task_ids": [],
+            "observed_suffix_model_tokens": 0,
+            "safe_intercept_total_model_tokens": 0,
+            "observed_suffix_token_fraction_ppm": 0,
+            "observed_suffix_wall_clock_ms": 0,
+            "safe_intercept_total_wall_clock_ms": 0,
+            "observed_suffix_wall_fraction_ppm": 0,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": false,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x4-calls16",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 6,
+            "false_stop_run_ids": [
+              "run_28c86262518b4bba",
+              "run_4613c65b2a254349",
+              "run_741ad42bf680486a",
+              "run_b6038236132749e1",
+              "run_eece333f601040b1"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 863211,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 441289,
+            "observed_suffix_wall_clock_ms": 861000,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 517374,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x4-calls32",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 2,
+            "false_stop_run_ids": [
+              "run_741ad42bf680486a"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 863211,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 441289,
+            "observed_suffix_wall_clock_ms": 861000,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 517374,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x8-calls8",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 12,
+            "false_stop_run_ids": [
+              "run_28c86262518b4bba",
+              "run_4613c65b2a254349",
+              "run_697fc8ab4ab04890",
+              "run_741ad42bf680486a",
+              "run_aa9c911512a547d2",
+              "run_b6038236132749e1",
+              "run_c0e186e798024698",
+              "run_c6683ae9a038435c",
+              "run_d17e180d1e344650",
+              "run_d5c54d65ab6b4a60",
+              "run_e444de1bb20a4325",
+              "run_eece333f601040b1"
+            ],
+            "safe_intercept_run_ids": [],
+            "affected_task_ids": [],
+            "observed_suffix_model_tokens": 0,
+            "safe_intercept_total_model_tokens": 0,
+            "observed_suffix_token_fraction_ppm": 0,
+            "observed_suffix_wall_clock_ms": 0,
+            "safe_intercept_total_wall_clock_ms": 0,
+            "observed_suffix_wall_fraction_ppm": 0,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": false,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x8-calls16",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 5,
+            "false_stop_run_ids": [
+              "run_28c86262518b4bba",
+              "run_4613c65b2a254349",
+              "run_741ad42bf680486a",
+              "run_b6038236132749e1",
+              "run_eece333f601040b1"
+            ],
+            "safe_intercept_run_ids": [],
+            "affected_task_ids": [],
+            "observed_suffix_model_tokens": 0,
+            "safe_intercept_total_model_tokens": 0,
+            "observed_suffix_token_fraction_ppm": 0,
+            "observed_suffix_wall_clock_ms": 0,
+            "safe_intercept_total_wall_clock_ms": 0,
+            "observed_suffix_wall_fraction_ppm": 0,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": false,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "relative-context-x8-calls32",
+            "policy_kind": "relative_context_growth",
+            "panel_run_count": 18,
+            "triggered_run_count": 1,
+            "false_stop_run_ids": [
+              "run_741ad42bf680486a"
+            ],
+            "safe_intercept_run_ids": [],
+            "affected_task_ids": [],
+            "observed_suffix_model_tokens": 0,
+            "safe_intercept_total_model_tokens": 0,
+            "observed_suffix_token_fraction_ppm": 0,
+            "observed_suffix_wall_clock_ms": 0,
+            "safe_intercept_total_wall_clock_ms": 0,
+            "observed_suffix_wall_fraction_ppm": 0,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": false,
+            "leave_one_task_out_passed": false,
+            "admission_scope": true,
+            "admitted": false
+          }
+        }
+      ],
+      "absolute_context_sensitivity": [
+        {
+          "evaluation": {
+            "policy_id": "absolute-context-80000",
+            "policy_kind": "absolute_context_ceiling_sensitivity",
+            "panel_run_count": 18,
+            "triggered_run_count": 4,
+            "false_stop_run_ids": [
+              "run_697fc8ab4ab04890",
+              "run_741ad42bf680486a",
+              "run_b6038236132749e1"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 1202919,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 614954,
+            "observed_suffix_wall_clock_ms": 1120123,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 673081,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": false,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "absolute-context-85000",
+            "policy_kind": "absolute_context_ceiling_sensitivity",
+            "panel_run_count": 18,
+            "triggered_run_count": 3,
+            "false_stop_run_ids": [
+              "run_741ad42bf680486a",
+              "run_b6038236132749e1"
+            ],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 863211,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 441289,
+            "observed_suffix_wall_clock_ms": 861000,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 517374,
+            "zero_false_stops_passed": false,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": false,
+            "admitted": false
+          }
+        },
+        {
+          "evaluation": {
+            "policy_id": "absolute-context-90000",
+            "policy_kind": "absolute_context_ceiling_sensitivity",
+            "panel_run_count": 18,
+            "triggered_run_count": 1,
+            "false_stop_run_ids": [],
+            "safe_intercept_run_ids": [
+              "run_e444de1bb20a4325"
+            ],
+            "affected_task_ids": [
+              "anyio-interrupt-runner-cleanup"
+            ],
+            "observed_suffix_model_tokens": 824161,
+            "safe_intercept_total_model_tokens": 1956109,
+            "observed_suffix_token_fraction_ppm": 421326,
+            "observed_suffix_wall_clock_ms": 779060,
+            "safe_intercept_total_wall_clock_ms": 1664171,
+            "observed_suffix_wall_fraction_ppm": 468136,
+            "zero_false_stops_passed": true,
+            "minimum_task_coverage_passed": false,
+            "minimum_savings_passed": true,
+            "leave_one_task_out_passed": false,
+            "admission_scope": false,
+            "admitted": false
+          }
+        }
+      ]
+    },
+    "decision": {
+      "selected": "retain-current-policy-and-count-qualified-budget-terminal-as-agent-failure",
+      "admitted_candidate_count": 0,
+      "runtime_policy_action": "retain-current-runtime-policy",
+      "qualified_budget_terminal_outcome": "agent_failure",
+      "outcome_binding_status": "selected-but-denominator-binding-pending",
+      "repeated_rejection_result": "not-admitted: every tested threshold that intercepted D-089 also false-stopped later public progress",
+      "relative_context_result": "not-admitted: every tested candidate had a false stop or lacked cross-task generality and leave-one-task-out stability",
+      "absolute_context_result": "sensitivity-only: 90000 characters safely intercepted only the observed D-089 AnyIO run and is post-hoc single-task evidence"
+    },
+    "claims_boundary": {
+      "runtime_guard_added_or_changed": false,
+      "historical_run_or_gate_reinterpreted": false,
+      "live_execution_authorized": false,
+      "paid_authority_created": false,
+      "comparison_denominator_opened": false,
+      "no_memory_baseline_opened": false,
+      "memory_review_or_admission_or_index_opened": false,
+      "core_experiment_opened": false,
+      "hidden_correctness_used_for_policy_selection": false,
+      "memory_effect_claimed": false,
+      "current_policy_optimality_claimed": false
+    },
+    "next_gate": {
+      "gate": "condition-neutral-denominator-admission-binding",
+      "required_binding": [
+        "exact four-condition execution plan",
+        "RunManifest",
+        "trace qualification",
+        "report aggregation",
+        "original task and repetition identity"
+      ],
+      "budget_terminal_rule": "a terminal trace-qualified budget stop remains an agent_failure row and is never dropped, rerun, or replaced",
+      "provider_execution_authorized_by_next_offline_gate": false,
+      "memory_or_core_collection_opened_by_next_offline_gate": false
+    }
+  }
+}

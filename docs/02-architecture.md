@@ -1159,3 +1159,20 @@ rehydration을 통과했으므로 trace integrity failure는 관측되지 않았
 `PatchApplied` event 0, rejected patch 14, failing check 6과 post-check 863,211 token을 남겼다. 이를 qualified
 process non-convergence로 분류하되 harness defect를 ruled out하지 않고 causal budget effect도 주장하지 않는다. Audit artifact는 execution
 plan, authorization, new experiment ID나 consumer capability를 만들지 않는다.
+
+## 33. D-092 public policy-replay architecture
+
+D-092는 runtime agent loop에 새 branch를 넣지 않는다. `patchloop/evals/policy_replay.py`는 immutable
+`Sequence[RunEvent]`와 `task_id`를 받아 public process projection, progress marker, rejected-apply fingerprint,
+context-growth epoch와 observed suffix만 계산하는 pure offline component다. Artifact body, patch, model/tool body를
+읽거나 state를 쓰지 않는다.
+
+Raw adapter `scripts/build_d092_policy_decision.py`는 SQLite를 `mode=ro&immutable=1`과 `PRAGMA query_only=ON`으로
+열고 `runs.manifest_json`과 `events.event_json`만 선택한다. Portable predecessor는 semantic outcome을 다시 읽지
+않고 bytes/SHA identity만 확인한다. Apply rejection의 `worktree_diff_hash`는 failure payload가 아니라 동일
+`correlation_id`의 선행 `ToolCalled(apply_patch)` public CAS에서 복원한다. Correlation ID는 join validation에만
+쓰며 projection/fingerprint에는 내보내지 않는다. Missing, duplicate 또는 failure 이후 call은 fail closed다.
+
+출력은 runtime policy가 아니라 bounded audit decision이다. D-092가 선택한 `agent_failure` outcome mapping도 아직
+four-condition execution plan, RunManifest, qualification과 report consumer에 결속되지 않았다. 그 결속은 다음
+offline denominator-admission gate이고, 통과하더라도 provider 실행이나 memory/core collection을 자동 승인하지 않는다.

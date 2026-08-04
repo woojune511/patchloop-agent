@@ -1,8 +1,16 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-091 AnyIO public-trajectory audit; budget terminal과 qualified process non-convergence를 분리하고
-자동 증액·재실행·baseline·memory/core authority는 계속 닫음**
+현재 milestone: **D-092 public stall-policy replay; runtime policy는 유지하고 terminal·trace-qualified budget stop을
+향후 denominator의 agent failure로 선택하되 offline binding 전까지 baseline·memory/core authority는 계속 닫음**
+
+D-092는 D-081 r3, D-085/D-086, D-087, D-089에서 18-run·8-task·4,079개의 public event를 replay했다.
+Repeated-rejection `N=3..10`과 relative-context `{2,4,8} × {8,16,32 calls}` 후보 중 zero false stop,
+3-task coverage, token 또는 wall suffix 20%와 leave-one-task-out를 모두 통과한 후보는 0개다. Absolute 90k
+ceiling은 D-089 한 task만 잡는 post-hoc sensitivity이므로 admission 대상이 아니다. 다음 단계는 새 guard나 paid
+rerun이 아니라 selected outcome rule을 exact four-condition execution plan, RunManifest, trace qualification과
+report aggregation에 결속하는 offline denominator-admission gate다. Final verification은 focused 20/20과
+repository-wide sharded 1,559 collected 중 1,552 passed/7 environment-dependent skipped를 통과했다.
 
 D-091은 D-087 r2와 D-089의 public event metadata를 재집계했다. D-089은 `PatchApplied` seq 103 이후 68 model/96
 tool call과 1,772,530 token을 사용했지만 추가 `PatchApplied` event는 없었고 check pass 0/6, rejected apply 14였다. Retry source
@@ -20,7 +28,7 @@ context와 qualification은 통과했으므로 confirmed harness defect는 아�
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-091 public trajectory audit complete | qualified runtime과 process non-convergence를 분리; no automatic rerun/budget, baseline/memory/core closed |
+| Phase 6 evaluation | D-092 public stall-policy replay complete | retain current runtime; qualified budget terminal → `agent_failure` rule selected; denominator binding pending |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와

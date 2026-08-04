@@ -2,6 +2,19 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-092는 D-081 r3 4개, D-085/D-086 pilot 1개, D-087 12개와 D-089 1개를 합친
+18-run·8-task·4,079-public-event panel에서 repeated-rejection과 context-growth stop policy를 offline replay했다.
+`N=3..10` rejection threshold는 D-089을 잡는 동시에 이후 실제 `PatchApplied`/submission에 도달한 run도
+false stop했고, relative-context 9개 candidate도 generic safety·cross-task coverage·leave-one-task-out gate를
+통과하지 못했다. Absolute 90k character ceiling은 D-089 AnyIO 한 run만 잡는 post-hoc sensitivity다. 따라서
+runtime은 유지하고 terminal·trace-qualified budget stop을 향후 denominator에서 삭제·재실행하지 않는
+`agent_failure` row로 취급하기로 선택했다. 이 rule의 exact four-condition consumer binding은 아직 다음 offline
+gate이며, D-092는 live/baseline/denominator/memory/core authority를 만들지 않는다. Artifact는
+`reports/live-pilot/artifacts/d092-public-policy-replay-decision.json`이고 file SHA는
+`sha256:541b890e2b123a5431060e23dcf4544fce3f7b810cb8cb1a560fbcc245b3fe22`다. Provider/evaluator call과 추가
+model cost는 0/0/$0이다. Final verification은 focused 20/20과 repository-wide sharded 1,552 passed/7 skipped를
+통과했다.
+
 2026-08-04 D-091은 D-087/D-089 AnyIO budget-terminal을 public trace만으로 비교한 offline audit다. D-089은
 유일한 patch 적용 뒤 68 model call·96 tool call·1,772,530 token을 더 사용했지만 추가 `PatchApplied` event는 없었고,
 마지막 실패 check 뒤에도 863,211 token과 861초 동안 9개 patch가 거부됐다. 두 run의 visible check pass는

@@ -2988,3 +2988,30 @@ ToolCalled 분포, checkpoint 상태, context size, 20/15 rejected retry project
 재계산한다. Clean machine에서는 portable source SHA, arithmetic, strict allowlist와 claims boundary를 검증하고
 raw-only test를 skip한다. Required negative claims는 completion budget, budget causal effect, harness root cause,
 automatic rerun, baseline/memory/core authority가 모두 false인 것이다.
+
+## 34. D-092 public stall-policy replay contract
+
+Portable wrapper는 `public-cross-task-policy-decision-manifest-v1`이며 exact top-level key는
+`schema_version`, `decision_id`, `semantic_body_hash`, `semantic_body`다. Canonical semantic body SHA가
+`d092_<hash>` ID를 결정한다. Primary panel은 D-081 r3 4개 + D-085/D-086 pilot 1개 + D-087 12개 + D-089
+1개, 즉 18 runs·8 tasks·4,079 public events다. D-075/D-077 call-limited runs와 D-079 7,200-second run은
+다른 admission/resource stratum이므로 primary에서 제외한다.
+
+Progress marker는 다음 exact allowlist다.
+
+- forward `PhaseChanged`
+- `PatchApplied`
+- 같은 `(check_id, worktree_diff_hash)`의 첫 `run_check passed=true`
+- `SubmissionAttempted`
+- `SubmissionAccepted`
+
+Rejected-apply fingerprint는 `tool`, rejected status, `error_code`, `error_details.stage`,
+`error_details.reason`과 correlated public `worktree_diff_hash`만 canonical hash한다. Patch/input/candidate hash,
+`normalized_call_hash`, message/guidance, artifact identity/path/body, action/correlation ID와 sequence는 제외한다.
+
+Predeclared admission grid는 repeated-rejection `N=3..10`과 relative-context multiplier `{2,4,8}` × completed
+model-call count `{8,16,32}`다. 모든 candidate는 zero false stop, safe-intercept task ≥3, observed token 또는
+wall suffix ≥20%, leave-one-task-out stability를 함께 통과해야 한다. Absolute context `{80k,85k,90k}`는
+post-hoc sensitivity라 `admission_scope=false`다. Admitted candidate가 0개이면 exact decision은
+`retain-current-policy-and-count-qualified-budget-terminal-as-agent-failure`다. 이 문자열은 runtime mutation이나
+denominator admission 자체가 아니다.

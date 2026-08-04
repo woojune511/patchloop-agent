@@ -1160,4 +1160,19 @@ silently lowering the design or fabricating missing results.
 - 534,853-token same-task control은 process variance만 보여준다. 해당 task outcome, hidden correctness와 memory
   효과는 D-091 결론에 사용하지 않는다.
 - 2.4M/3M 산술은 observed prefix에만 유효하고 token-tail block 이후 tool path, future latency, submission과
-  evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별도 policy change다.
+evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별도 policy change다.
+
+## D-092 does not validate a runtime guard or open the denominator
+
+- D-092는 observed trajectory를 replay한 counterfactual audit이지 candidate guard를 실제 runtime에서 실행한
+  experiment가 아니다. `false_stop=false`도 future safety를 보장하지 않는다.
+- 90k absolute context sensitivity는 D-089 AnyIO 한 run에만 반응하고 D-089을 본 뒤 포함한 post-hoc threshold다.
+  Generic context ceiling 근거가 아니다.
+- 18개 run은 서로 다른 harness commit과 1.6M/2.0M/2.4M total-token ceiling을 가진 readiness/calibration
+  source다. Task success rate나 model performance sample로 합치지 않는다.
+- Public process metadata만 사용했으므로 hidden correctness, private/reference patch와 memory effect는 policy 선택에
+  사용하지 않았다.
+- Qualified budget terminal을 `agent_failure`로 남기는 outcome rule은 선택됐지만 네 memory condition의 plan,
+  manifest, qualification, report aggregation에 아직 결속되지 않았다. 따라서 no-memory baseline, comparison
+  denominator, memory admission/index와 core는 계속 닫혀 있다.
+- Retain decision은 현 정책이 최적이라는 뜻도, 다른 사전 정의 cross-task grid가 영구히 기각됐다는 뜻도 아니다.

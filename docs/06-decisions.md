@@ -831,3 +831,26 @@ Evidence/issue:
 - 자동 rerun, budget/prompt/tool/context 변경, baseline, comparison denominator, memory admission/index와 core를
   열지 않는다. 다음 decision은 public cross-task offline evidence만으로 retain/fail-fast/context-ceiling 중 선택한다.
 - Date: 2026-08-04
+
+### D-092 accepted policy decision — retain current policy and count qualified budget terminals as agent failure
+
+- D-081 r3 4개, D-085/D-086 pilot 1개, D-087 12개와 D-089 1개, 총 18-run·8-task·4,079-event panel을
+  public manifest/event metadata만으로 offline replay한다. Harness commit과 total-token ceiling이 다르므로
+  performance comparison이나 denominator로 재해석하지 않는다.
+- Repeated-rejection `N=3..10`은 각각 4/3/3/2/2/2/2/2 run을 trigger했고 false stop은
+  3/2/2/1/1/1/1/1개다. D-089을 잡는 모든 tested threshold가 later public progress가 있는 AnyIO run도 자른다.
+- Relative-context `{2,4,8} × {8,16,32 calls}` 9개 candidate도 모두 false stop이 있고 safe generic
+  3-task/leave-one-task-out coverage를 만들지 못한다.
+- Absolute 90k character sensitivity는 D-089 하나에서 false stop 0과 824,161 observed suffix token을 보이지만
+  post-hoc single-task evidence이고 admission scope 밖이다.
+- 따라서 exact selection은 `retain-current-policy-and-count-qualified-budget-terminal-as-agent-failure`다.
+  이는 현재 정책의 최적성이나 future guard 불필요성을 증명하지 않는다.
+- Qualified budget terminal outcome을 `agent_failure`로 선택했지만 exact four-condition denominator consumer
+  binding은 다음 offline gate다. Live execution, baseline denominator, memory admission/index와 core는 열지 않는다.
+- Artifact는 `reports/live-pilot/artifacts/d092-public-policy-replay-decision.json`, semantic body SHA는
+  `sha256:6fde1253a7ba92a2cb60b09f05bc070849c1f868e96cc00870cf03eff62782ec`, file SHA는
+  `sha256:541b890e2b123a5431060e23dcf4544fce3f7b810cb8cb1a560fbcc245b3fe22`다.
+- D-092 provider/evaluator call은 0/0이고 추가 model cost는 `$0`이다.
+- Final verification은 focused 20/20, repository-wide sharded 1,559 collected 중 1,552 passed/7
+  environment-dependent skipped이며 Ruff, compileall, JSON/hash와 `git diff --check`를 통과했다.
+- Date: 2026-08-04

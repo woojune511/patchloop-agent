@@ -1341,3 +1341,26 @@ Execution host에서는 test가 D-087/D-089 durable public event metadata로 pha
 tail을 재집계한다. Raw state가 없는 clean machine에서는 D-088/D-090 portable SHA, arithmetic, strict boundary와
 authority false를 검증하고 raw-only test만 skip한다. 이 절차는 experiment YAML, execution hash, cost approval과
 provider capability를 만들지 않으며 D-087/D-089을 resume/evaluate하지 않는다.
+
+## Inspect the D-092 public stall-policy replay
+
+Portable contract와 pure simulator는 raw state 없이 검증할 수 있다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' tests/test_policy_replay.py tests/test_d092_policy_decision.py
+Get-Content reports/live-pilot/artifacts/d092-public-policy-replay-decision.json -Raw | ConvertFrom-Json | Out-Null
+```
+
+Execution host에서만 immutable SQLite의 18개 durable public event projection을 재계산한다.
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' tests/test_d092_policy_replay_raw.py
+.\.venv\Scripts\python.exe scripts/build_d092_policy_decision.py `
+  --state .patchloop/state.sqlite3 `
+  --recorded-at 2026-08-04T10:30:30Z `
+  --compact
+```
+
+Builder는 stdout만 출력하고 SQLite를 `mode=ro&immutable=1`·`query_only`로 연다. Raw state가 없는 clean
+machine에서는 raw-only test가 skip되어야 하며 frozen source bytes/SHA, semantic hash, strict projection, grid
+arithmetic와 authority boundary는 계속 검증된다. 이 절차는 provider/evaluator를 호출하거나 run을 resume하지 않는다.
