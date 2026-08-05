@@ -10,7 +10,35 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-097 exact condition-neutral 3M no-memory successor source, runtime-v2 binding and
+- 현재 milestone은 `D-098 D-097 measured no-memory baseline result sealed; exact development denominator and
+  memory review eligibility observed, while admission, index, core and comparative analysis remain closed`다.
+  Exact experiment `dev-no-memory-condition-neutral-3000k-20260805-r1`은 source commit
+  `67fa85e47c5cf39c0ee03ad69d9d31f9fdd11ac3`과 승인 execution hash
+  `sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4`로 정확히 한 번
+  실행됐다. 12/12 row가 terminal·qualified·cost-settled이고 final
+  `condition-neutral-no-memory-baseline-admission-gate-v2`가 통과했다. Terminal branch는 11 official evaluator와
+  1 canonical pre-provider total-token budget block으로 exact-one이며 결과는 2 resolved, 9 task failure,
+  1 agent failure다. Exact development SCRR는 2/12이고 PDM만 2/2 성공했다. 이는 held-out 성능이나 memory
+  효과가 아니다. 총 사용량은 10,492,742 input + 881,967 output = 11,374,709 token, 613 model/964 tool call,
+  7,258,662ms이며 usage-derived standard list-price 계산은 `$11.838408`이다. Invoice/free-tier charge 주장이
+  아니다. 613/613 issued response는 completed이고 exact input telemetry, truncation disabled, `store=false`,
+  previous-response dependency 0을 확인했다. AnyIO r1은 2,964,853 token 뒤 다음 exact request에 26,231 token이
+  부족해 provider call 전에 차단됐으며 memory candidate가 아니다. Official task failure 9개만
+  `memory_review_eligible` candidate이고 success 2개와 budget terminal은 제외된다. Portable append-only seal은
+  `reports/live-pilot/dev-no-memory-condition-neutral-3000k-20260805-r1.json`, semantic body SHA는
+  `sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf`, 117,209-byte file SHA는
+  `sha256:ad87fa8c540552da62d964a430c29b032097b5cabbe78f0102c23cf36330b2dc`다. Raw result/journal/qualification은
+  수정하지 않았고 exact experiment ID는 hard-consumed다. `comparison_denominator_eligible=true`와
+  `memory_review_eligible=true`만 열렸으며 `memory_admission_unlocked=false`, memory index/core/comparative
+  analysis는 닫혀 있다. D-098 seal 자체 provider/evaluator call과 added model cost는 0/0/`$0`이다. 다음 gate는
+  9개 public-evidence candidate의 review·semantic dedup·leak scan이며 자동 rule admission이나 index build가 아니다.
+  Builder는 copied SQLite/WAL snapshot에서 qualification/source evidence를 재계산하고 원본 DB/WAL/SHM의
+  byte·mtime fingerprint 불변을 검증한다. Canonical `sealed_at`과 budget manifest/result/provenance exact binding도
+  fail closed한다. Final verification은 D-096~D-098 focused 106/106, related seal/experiment/qualification 438/438,
+  Ruff, compileall, exact 117,209-byte rebuild와 `git diff --check` pass다. Repository-wide 1,743 collected 중
+  1,735 passed/7 environment-dependent skipped이고 기존 D-092 WAL/SHM order-dependent invariant 1건만 full-order에서
+  실패했으며 동일 test는 fresh isolated process에서 1/1 통과했다. 이를 D-098 pass나 수정으로 합산하지 않는다.
+- Historical D-097 milestone은 `D-097 exact condition-neutral 3M no-memory successor source, runtime-v2 binding and
   campaign-scoped full-schedule reserve implemented offline; clean preflight, execution hash, approval, live result,
   memory and core authority remain closed`다. Exact suite는
   `dev-no-memory-condition-neutral-3000k-20260805-r1`이며 file identity는 2,741 bytes,

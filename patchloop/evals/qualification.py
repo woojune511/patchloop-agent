@@ -10887,6 +10887,7 @@ def calculate_source_evidence_hash(
     *,
     root: str | Path | None = None,
     require_valid_plan: bool = True,
+    state_path: str | Path | None = None,
 ) -> str:
     """Hash the current durable sources behind a trace qualification.
 
@@ -10895,7 +10896,7 @@ def calculate_source_evidence_hash(
     """
 
     run_root = _runtime_root(root)
-    state = StateStore(run_root / "state.sqlite3")
+    state = StateStore(state_path or run_root / "state.sqlite3")
     try:
         manifest = state.get_manifest(run_id)
         events = state.list_events(run_id)
@@ -11099,17 +11100,22 @@ def qualify_run(
     dataset_manifest_path: str | Path | None = None,
     root: str | Path | None = None,
     persist: bool = True,
+    state_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Qualify one terminal run and optionally persist its immutable artifact.
 
     ``persist=False`` is the read-only recomputation path used by append-only
     postmortem corrections. It still validates an existing qualification's
     task, dataset, and source-evidence bindings, but never replaces or creates
-    the canonical qualification artifact.
+    the canonical qualification artifact. An alternate ``state_path`` is only
+    valid on that non-persisting path so a copied database cannot be mixed into
+    a newly written canonical qualification.
     """
 
     run_root = _runtime_root(root)
-    state = StateStore(run_root / "state.sqlite3")
+    if state_path is not None and persist:
+        raise ContractError("alternate qualification state_path requires persist=False")
+    state = StateStore(state_path or run_root / "state.sqlite3")
     try:
         manifest = state.get_manifest(run_id)
     except RecoveryError as exc:
@@ -11151,6 +11157,7 @@ def qualify_run(
             run_id,
             root=run_root,
             require_valid_plan=False,
+            state_path=state_path,
         )
         if existing["source_evidence_hash"] != current_source_hash:
             raise ContractError(
@@ -13314,6 +13321,7 @@ def qualify_run(
         run_id,
         root=run_root,
         require_valid_plan=False,
+        state_path=state_path,
     )
     payload: dict[str, Any] = {
         "schema_version": (

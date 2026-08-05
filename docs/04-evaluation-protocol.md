@@ -1769,3 +1769,27 @@ run은 1,728 collected, 1,720 passed/7 skipped/1 order-dependent D-092 WAL/SHM f
 1/1 pass다. 이를 monolithic 1,721/7로 보고하지 않는다. Clean no-call preflight,
 hash와 사용자 승인이 끝나기 전 no-memory result, denominator, memory review/admission/index, core와 analysis는
 모두 닫혀 있다. Canonical blocker는 `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.
+
+### D-098 measured no-memory baseline result and review-eligibility protocol
+
+승인된 execution hash `sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4`의
+exact campaign은 12/12 terminal·qualified·cost-settled로 끝났고 final
+`condition-neutral-no-memory-baseline-admission-gate-v2`가 통과했다. 11개 row는 accepted submission과 completed
+official evaluator receipt를 가진다. AnyIO repetition 1 한 row는 2,964,853 token 뒤 다음 exact request에
+26,231 token이 부족해 provider call 전에 차단된 canonical budget terminal이다. Issued 613 response는 모두
+completed이고 truncation disabled, `store=false`, previous-response dependency 0이다.
+
+Primary no-memory denominator outcome은 resolved 2, official task failure 9, agent budget failure 1이며 exact
+development SCRR는 2/12다. Evaluated 11개 중 hidden acceptance는 2/11이고 regression/scope/safety는 11/11
+통과했다. 이 값은 development baseline의 기술 통계이며 held-out 성능, memory 효과 또는 일반 agent 성능으로
+해석하지 않는다. Task-first 결과도 PDM 2/2, 다른 다섯 task 0/2로 별도 기록한다.
+
+Memory review queue는 9개 official task failure만 포함한다. Generic hidden failure label은 oracle outcome으로만
+사용하고 rule causal claim은 public task, agent-visible events/artifact CAS, visible checks와 submitted diff로만
+작성한다. Success 2개와 budget terminal은 source가 아니다. Review queue open은 admission이 아니며
+review·semantic dedup·leak scan, group-level decision과 proposal-consuming builder 전에는 index를 build/freeze하지
+않는다. Core나 다른 memory condition 실행도 계속 닫혀 있다.
+
+D-098 portable seal은 raw result/journal/qualification을 수정하지 않고 exact experiment ID를 hard-consumed한다.
+Seal 작성 과정은 provider/evaluator를 호출하지 않았고 추가 model cost는 `$0`이다. Usage-derived standard
+list-price `$11.838408`은 invoice/free-tier treatment 주장이 아니다.

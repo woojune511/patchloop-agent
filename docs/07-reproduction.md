@@ -1527,3 +1527,34 @@ completion gate가 먼저 pass했는지 확인한다. Pass했을 때
 campaign-level `memory_review_eligible=true`여야 하고, 실제 review candidate pool은 official-evaluator task failure
 row로만 제한되어야 한다. Budget/infrastructure row는 후보가 아니며, 별도 review/dedup/leak gate 전에는 결과가
 있더라도 `memory_admission_unlocked=false`여야 한다.
+
+## D-098 portable baseline seal verification
+
+D-098 seal은 API key, Docker execution이나 evaluator call 없이 기존 local D-097 evidence를 read-only로 검증한다.
+
+```powershell
+.\.venv\Scripts\python.exe scripts\build_d098_condition_neutral_baseline_seal.py `
+  --output .patchloop\reproduction\d098-rebuilt.json
+
+$expected = Get-Content -Raw -Encoding UTF8 `
+  reports\live-pilot\dev-no-memory-condition-neutral-3000k-20260805-r1.json
+$actual = Get-Content -Raw -Encoding UTF8 .patchloop\reproduction\d098-rebuilt.json
+if ($expected -ne $actual) { throw "D-098 portable seal mismatch" }
+
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' `
+  tests\test_d098_condition_neutral_baseline_seal.py `
+  tests\test_d098_runtime_hardening.py
+```
+
+Raw local evidence가 없는 clean machine에서는 tracked portable report의 outer key, semantic body hash, source
+artifact binding, claims boundary와 leak-safe projection test만 검증하고 raw reconciliation test는 skip될 수 있다.
+Raw evidence가 있는 source machine에서는 result/journal/plan/12 qualification과 SQLite trace projection을 다시
+읽어 byte-for-byte 같은 report를 생성해야 한다. Builder는 원본 SQLite/WAL/SHM fingerprint를 고정하고 copied
+database/WAL snapshot에서 qualification을 `persist=False`로 재계산한 뒤 원본 fingerprint의 exact 불변을 확인한다.
+Original result, journal, run artifact와 qualification을 수정하지 않는다. Non-canonical `sealed_at`, durable state와
+다른 manifest/result artifact 또는 budget provenance drift는 fail closed한다.
+
+확인할 핵심 값은 12/12 denominator completion, 2 resolved/9 task failure/1 budget agent failure,
+11,374,709 token, 613 completed provider calls, 1 pre-provider generation block, `$11.838408` list-price 계산과
+9 review candidate다. 이 명령은 memory rule을 승인하거나 index를 만들지 않는다. Exact experiment ID는
+hard-consumed되어 preflight가 `HISTORICAL_SUITE_IMMUTABLE`로 provider 전에 차단해야 한다.

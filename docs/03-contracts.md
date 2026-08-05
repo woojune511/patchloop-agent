@@ -3273,3 +3273,38 @@ Portable source wrapper는
 `sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다. Wrapper의 source-only
 authorization fields는 clean preflight/hash/approval/provider/evaluator/result/memory/core를 모두 false로 둔다.
 Canonical blocker는 `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.
+
+## 40. D-098 measured no-memory baseline seal contract
+
+Outer wrapper는 exact key `schema_version`, `report_id`, `semantic_body_hash`, `semantic_body`만 가진다.
+`schema_version=condition-neutral-no-memory-baseline-d098-evidence-v1`이고 canonical semantic body SHA가
+`d098_<hash>` report ID를 결정한다. Portable path는
+`reports/live-pilot/dev-no-memory-condition-neutral-3000k-20260805-r1.json`이다.
+
+Source binding은 D-097 source commit, suite/D-096/D-097 file identity, approved execution plan file와 canonical hash,
+execution/suite/runtime schedule/cost-control hash를 exact 검증한다. D-096 pre-shuffle admission hash,
+D-097 source expanded-order hash와 live runtime schedule hash는 서로 다른 field이며 대체할 수 없다. Raw result는
+190,558 bytes와 `sha256:becb176561f5940073469d530a8db0fdb8d19f292bdf2d4c670a79c7aa19f99a`,
+journal은 58,203 bytes와 `sha256:9cf4001098a601e97e01c30238aba427350cc96cbb472a7b757dd8dce8744f98`에
+결속된다. Final event sequence 39는 result hash, plan/execution/cost binding과 penultimate/final event hash를
+정확히 보존해야 한다.
+
+각 run은 `official_evaluator` 또는 `canonical_pre_provider_budget` terminal branch 중 exact-one이다. Official
+branch는 receipt와 submitted patch hash가 존재하고 qualification 29/29가 통과해야 한다. Budget branch는
+receipt/submitted patch가 없어야 하고 qualification 28/28, `generation_started=false`, exact-request total-token
+block을 요구한다. Persisted qualification과 `persist=False` recomputation은 12/12 exact match해야 한다.
+
+원본 `state.sqlite3`, `-wal`, `-shm`은 build 전후 byte·mtime fingerprint가 exact 같아야 한다. StateStore 기반
+재계산은 copied database/WAL snapshot에서만 수행한다. 모든 row의 manifest/result artifact는 snapshot의 durable
+document 및 campaign result row와 canonical exact 일치해야 하며, budget provenance는 evaluator 미도달,
+`agent_failure`, exact budget error type/code 네 필드와 정확히 같아야 한다. `sealed_at`은 D-098 canonical 값 외의
+caller-provided 문자열을 거부한다.
+
+`memory-review-candidate-set-v1`은 official `task_failure`와 `memory_candidate_eligible=true`의 교집합만 포함한다.
+D-098에서는 9개 candidate, 2 resolved exclusion과 budget run `run_7ecb4b2489c34982` exclusion을 기록한다.
+`rules_created=0`, review/dedup/leak-scan false와 `memory_admission_unlocked=false`가 seal의 고정 경계다. Failure
+record가 10개라는 사실만으로 budget failure를 후보로 넣을 수 없다.
+
+Seal semantic body SHA는 `sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf`,
+117,209-byte file SHA는 `sha256:ad87fa8c540552da62d964a430c29b032097b5cabbe78f0102c23cf36330b2dc`다.
+D-098 자체 provider/evaluator call과 added model cost는 0/0/`$0`이다.

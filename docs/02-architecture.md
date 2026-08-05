@@ -1339,3 +1339,25 @@ core consumer는 모두 닫혀 있다. Canonical blocker는
 `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다. Portable artifact의 semantic body SHA는
 `sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, 21,029-byte file SHA는
 `sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다.
+
+## 32. D-098 measured baseline seal boundary
+
+D-098은 D-097 runtime을 변경하지 않는 read-only evidence projection이다. Builder는 exact suite와 D-096/D-097
+source artifact, approved execution plan, persisted 190,558-byte result, 39-event journal, 12개 run의 manifest/result/
+provenance/qualification 및 official 11개 evaluator receipt와 submitted-patch hash를 재검증한다. Builder는 원본
+SQLite/WAL/SHM의 byte·mtime fingerprint를 먼저 고정하고 database와 WAL을 disposable snapshot으로 복사한다.
+StateStore가 필요한 qualification/source-evidence 재계산은 snapshot에서만 수행하고, direct event/checkpoint/
+worker-claim projection은 그 snapshot을 `mode=ro`와 `query_only`로 읽는다. 종료 뒤 원본 bundle fingerprint가
+exact 일치해야 한다. Raw state, journal, qualification과 submitted patch는 수정하지 않는다.
+
+Portable output은 row identity, terminal branch, generic verdict, usage, qualification/source-evidence hash, safe budget
+pressure와 aggregate telemetry만 포함한다. Private spec, hidden assertion/output, reference patch, submitted diff body,
+model/tool body, credential과 host absolute path는 포함하지 않는다. `614 input pre-count = 613 completed provider
+calls + 1 pre-provider ModelGenerationBlocked` 관계를 별도로 검증해 budget row를 incomplete provider response로
+오해하지 않는다.
+
+Seal은 `comparison_denominator_eligible=true`와 `memory_review_eligible=true`를 기록하지만 memory candidate를
+official-evaluator task failure 9개로 제한한다. Resolved 2개와 canonical AnyIO budget terminal은 제외한다.
+`memory_admission_unlocked=false`, index/core/analysis closed 상태를 유지하며 per-row atomic SQLite consumption,
+duplicate paid-call prevention과 live resume을 주장하지 않는다. Exact experiment ID는 hard-consumed되어 runner
+construction 전에 차단된다.

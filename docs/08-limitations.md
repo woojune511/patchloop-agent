@@ -1290,3 +1290,22 @@ evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별
 - Clean no-call preflight가 exact candidate hash를 만들고 사용자가 max-`$164`와 `$150` campaign exception을
   별도로 승인하기 전에는 live run/result, memory review/admission/index, core와 analysis를 열 수 없다. Blocker는
   `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.
+
+## D-098 result boundary
+
+- D-097 live execution은 완료됐고 D-098은 exact development no-memory denominator를 봉인했다. SCRR 2/12는 이
+  여섯 memory-development task와 두 repetition에만 적용된다. Held-out 12 task, 다른 memory condition, stress,
+  recovery 또는 일반 coding-agent 성능으로 외삽하지 않는다.
+- AnyIO repetition 1은 provider incomplete response가 아니라 next exact request를 보내기 전 local total-token guard에
+  걸렸다. 3M보다 큰 budget이면 성공했을 것이라고 주장하지 않는다. 이 row는 denominator의 measured
+  `agent_failure`이지만 failure memory source가 아니다.
+- `$11.838408`은 manifest에 고정된 standard rate와 durable usage로 계산한 값이다. 실제 invoice, free daily usage,
+  discount, cached billing 또는 account charge를 확인한 값이 아니다.
+- `memory_review_eligible=true`는 9개 public trace를 review queue에 넣을 수 있다는 뜻이다. Rule admission,
+  embedding/index build, retrieval freeze와 core campaign은 아직 완료되지 않았다.
+- 현재 v1 review validator는 proposal을 read-only로 검증하지만 failure별 review/index builder는 semantic group을
+  직접 소비하지 않는다. Group-level append-only decision과 proposal-consuming builder 없이 9개 failure를
+  승인하면 dedup된 rule 대신 generic entry가 중복 생성될 수 있으므로 index build를 진행하지 않는다.
+- D-098 portable report에는 hidden pass/fail oracle label은 포함되지만 hidden check ID, assertion/output와 evaluator
+  evidence payload는 포함되지 않는다. Causal memory rule은 generic hidden label만으로 특정하지 않는다.
+- Exact experiment ID는 hard-consumed되며 automatic rerun, hidden-driven tuning과 live resume은 승인되지 않는다.

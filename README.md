@@ -2,6 +2,24 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-05 D-098은 승인된 D-097 no-memory campaign의 measured result를 append-only portable evidence로
+봉인했다. Exact source commit은 `67fa85e47c5cf39c0ee03ad69d9d31f9fdd11ac3`, consumed execution hash는
+`sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4`다. 12/12 row가
+terminal·qualified·cost-settled이고 final baseline-admission gate가 통과했다. 결과는 2 resolved, 9 official
+task failure, 1 canonical pre-provider token-budget agent failure이며 exact development SCRR는 2/12다. 총 사용량은
+11,374,709 token, 613 model/964 tool call이고 usage-derived standard list-price 계산은 `$11.838408`이다. 이는
+invoice/free-tier charge 주장이 아니다. 613/613 provider response는 completed였고 prompt pre-count와 usage가
+일치했으며 truncation disabled, `store=false`, previous-response dependency 0이었다.
+
+Official task failure 9개만 review candidate다. PDM success 두 row와 AnyIO budget terminal은 제외한다.
+`comparison_denominator_eligible=true`, `memory_review_eligible=true`지만 review/dedup/leak gate 전에는
+`memory_admission_unlocked=false`이며 index, core와 cross-condition analysis도 닫혀 있다. Portable seal은
+[`reports/live-pilot/dev-no-memory-condition-neutral-3000k-20260805-r1.json`](reports/live-pilot/dev-no-memory-condition-neutral-3000k-20260805-r1.json)이고
+semantic body SHA는 `sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf`,
+117,209-byte file SHA는 `sha256:ad87fa8c540552da62d964a430c29b032097b5cabbe78f0102c23cf36330b2dc`다.
+D-098 seal 과정은 provider/evaluator를 호출하지 않았고 추가 model cost는 `$0`이다. Exact experiment ID는
+hard-consumed되어 재실행하지 않는다. 다음 gate는 9개 public-evidence trace의 review·semantic dedup·leak scan이다.
+
 2026-08-05 D-097은 D-096이 허용한 source authoring 범위 안에서 exact no-memory successor
 `dev-no-memory-condition-neutral-3000k-20260805-r1`을 만들고 runtime-v2와 non-censoring cost contract를
 offline으로 결속했다. Suite file은 2,741 bytes,

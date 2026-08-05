@@ -1,0 +1,2942 @@
+{
+  "schema_version": "condition-neutral-no-memory-baseline-d098-evidence-v1",
+  "report_id": "d098_e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf",
+  "semantic_body_hash": "sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf",
+  "semantic_body": {
+    "milestone": "D-098",
+    "evidence_kind": "measured-condition-neutral-no-memory-baseline-result-seal",
+    "recorded_at": "2026-08-05T06:04:34.400794+00:00",
+    "sealed_at": "2026-08-05T06:58:06Z",
+    "source_contract": {
+      "harness_git_commit": "67fa85e47c5cf39c0ee03ad69d9d31f9fdd11ac3",
+      "suite": {
+        "path": "experiments/dev-no-memory-condition-neutral-3000k-20260805-r1.yaml",
+        "bytes": 2741,
+        "sha256": "sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0"
+      },
+      "d096_policy_and_admission": {
+        "path": "reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json",
+        "bytes": 19031,
+        "sha256": "sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d",
+        "semantic_body_hash": "sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d"
+      },
+      "d097_source_gate": {
+        "path": "reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json",
+        "bytes": 21029,
+        "sha256": "sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777",
+        "semantic_body_hash": "sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b"
+      },
+      "execution_plan": {
+        "path": ".patchloop/experiments/plans/1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4.json",
+        "bytes": 25769,
+        "sha256": "sha256:bd2eccea42111df462f27cfdcc5a346e53deec57ebc57da9f552d433675c93f5",
+        "canonical_hash": "sha256:36b22999f9633a156cc5d7dd5cff87bbe44eb2485b09b47419e5f39c49b25529"
+      },
+      "schedule_identities": {
+        "pre_shuffle_admission_schedule_hash": "sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b",
+        "source_expanded_order_hash": "sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba",
+        "runtime_schedule_hash": "sha256:2ecbf257117481bfa31d62454221af243cc541470a91abeefdcae1f0912a552d",
+        "meanings_are_distinct": true
+      }
+    },
+    "experiment": {
+      "experiment_id": "dev-no-memory-condition-neutral-3000k-20260805-r1",
+      "purpose": "memory-development-no-memory",
+      "execution_hash": "sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4",
+      "suite_hash": "sha256:e32000918e96e6773986e99d5aa9dc29a9a91fc4f0a89f5e63adde69f78267ed",
+      "schedule_hash": "sha256:2ecbf257117481bfa31d62454221af243cc541470a91abeefdcae1f0912a552d",
+      "schedule_seed": 20260723,
+      "expected_runs": 12,
+      "completed_runs": 12,
+      "conditions": [
+        "no_memory"
+      ],
+      "repetitions": 2,
+      "approved_maximum_cost_usd": 164.0,
+      "campaign_scoped_project_cap_exception_used": true,
+      "one_use_execution_hash_consumed": true
+    },
+    "environment": {
+      "dataset": {
+        "dataset_id": "patchloop-benchmark-v1",
+        "manifest_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786"
+      },
+      "runtime_contract": {
+        "schema_version": "condition-neutral-comparison-runtime-contract-v2",
+        "comparison_resource_policy": {
+          "schema_version": "condition-neutral-comparison-resource-policy-v2",
+          "profile_id": "gpt54mini-v2v5-condition-neutral-3000k-v1",
+          "path": "reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json",
+          "content_hash": "sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d",
+          "semantic_body_hash": "sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d"
+        },
+        "baseline_admission": {
+          "schema_version": "no-memory-baseline-admission-contract-v1",
+          "admission_id": "memory-development-no-memory-12-row-v1",
+          "schedule_content_hash": "sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b",
+          "evidence_path": "reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json",
+          "evidence_content_hash": "sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d",
+          "evidence_semantic_body_hash": "sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d"
+        },
+        "purpose": "memory-development-no-memory",
+        "model_provider": "openai",
+        "model_id": "gpt-5.4-mini-2026-03-17",
+        "reasoning_effort": "medium",
+        "reasoning_mode": "standard",
+        "service_tier": "default",
+        "transport_max_retries": 0,
+        "max_output_tokens": 25000,
+        "budget": {
+          "max_model_calls": null,
+          "max_tool_calls": null,
+          "max_total_tokens": 3000000,
+          "wall_clock_timeout_seconds": 3600
+        },
+        "memory_max_context_tokens": 2000,
+        "memory_conditions": [
+          "no_memory"
+        ],
+        "tool_schema_version": "v2",
+        "context_policy_version": "phase-evidence-v5",
+        "system_prompt_hash": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+        "tool_schema_hash": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+        "call_guard_policy": "model-tool-observability-only-v1",
+        "harness_git_commit": "67fa85e47c5cf39c0ee03ad69d9d31f9fdd11ac3"
+      },
+      "openai_sdk": {
+        "installed": true,
+        "version": "2.47.0"
+      },
+      "docker_images": [
+        {
+          "image": "docker.io/swerebenchv2/huggingface-huggingface-hub@sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f",
+          "identity": "sha256:c698facf4c9a9e636b8dc114aa9bda6a17ee5f89fe3efd43f39a6543540e891f",
+          "ready": true
+        },
+        {
+          "image": "docker.io/swerebenchv2/pdm-project-pdm@sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+          "identity": "sha256:a822ad3888e56650c18e9506f8d7882c145ed83d47d518e541e3e44406a929a0",
+          "ready": true
+        },
+        {
+          "image": "docker.io/swerebenchv2/pytest-dev-pyfakefs@sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c",
+          "identity": "sha256:6de3b39018eec22728567f44dfbdc3cbd31322c384f6ee3d7f328ef38165d57c",
+          "ready": true
+        },
+        {
+          "image": "swerebench/sweb.eval.x86_64.agronholm_1776_anyio-1121@sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+          "identity": "sha256:063bb968109c70a3fe617d9d30287a3a43d549eb1091b27a030a9af2a74c2320",
+          "ready": true
+        },
+        {
+          "image": "swerebench/sweb.eval.x86_64.delgan_1776_loguru-1451@sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db",
+          "identity": "sha256:181bd51aa34ebe84d749819dfbe9a2d3d215ff8f6406d897d790f876bc5f36db",
+          "ready": true
+        },
+        {
+          "image": "swerebench/sweb.eval.x86_64.tox-dev_1776_tox-3810@sha256:ffd1129e4be4692becf5011c874858918864d586267002a2917195726542de57",
+          "identity": "sha256:ffd1129e4be4692becf5011c874858918864d586267002a2917195726542de57",
+          "ready": true
+        }
+      ],
+      "credential_value_embedded": false,
+      "custom_openai_base_url_used": false
+    },
+    "original_campaign_result": {
+      "raw_result": {
+        "path": ".patchloop/experiments/dev-no-memory-condition-neutral-3000k-20260805-r1.json",
+        "bytes": 190558,
+        "sha256": "sha256:becb176561f5940073469d530a8db0fdb8d19f292bdf2d4c670a79c7aa19f99a"
+      },
+      "completion_gate": {
+        "schema_version": "condition-neutral-no-memory-baseline-admission-gate-v2",
+        "gate_id": "d097-condition-neutral-no-memory-baseline-admission",
+        "passed": true,
+        "expected_runs": 12,
+        "terminal_runs": 12,
+        "qualified_runs": 12,
+        "cost_settled_runs": 12,
+        "not_started_runs": 0,
+        "infrastructure_errors": 0,
+        "qualification_errors": 0,
+        "diagnostic_errors": 0,
+        "official_evaluator_runs": 11,
+        "official_evaluator_run_ids": [
+          "run_575da4ead3334551",
+          "run_74364afdc3d94f9c",
+          "run_5ffc2e1c58784e17",
+          "run_3fe55fd3847d4a4d",
+          "run_88f96fae3d2442e6",
+          "run_3dc602aab8964d77",
+          "run_59aac91defac456b",
+          "run_cc179262fa664600",
+          "run_ac3ae1a7009a4e8b",
+          "run_d5c2e22b485a4578",
+          "run_92bf10d2a6b14601"
+        ],
+        "budget_terminal_runs": 1,
+        "budget_terminal_run_ids": [
+          "run_7ecb4b2489c34982"
+        ],
+        "terminal_branch_intersection_runs": 0,
+        "terminal_branch_intersection_run_ids": [],
+        "unclassified_terminal_runs": 0,
+        "unclassified_terminal_run_ids": [],
+        "terminal_branches_mutually_exclusive_and_exhaustive": true,
+        "schedule_binding_passed": true,
+        "execution_binding_passed": true,
+        "cost_settlement_passed": true,
+        "campaign_cost_censored_runs": 0,
+        "task_successes": 2,
+        "task_success_required": false,
+        "comparison_denominator_eligible": true,
+        "memory_review_eligible": true,
+        "memory_admission_unlocked": false,
+        "memory_index_frozen": false,
+        "core_campaign_unlocked": false
+      },
+      "infrastructure_errors": 0,
+      "qualification_errors": 0,
+      "diagnostic_errors": 0,
+      "not_started_runs": 0,
+      "halt_reason": null
+    },
+    "baseline_admission": {
+      "schema_version": "development-no-memory-baseline-result-v1",
+      "passed": true,
+      "denominator_rows": 12,
+      "official_evaluator_rows": 11,
+      "canonical_budget_terminal_rows": 1,
+      "terminal_branches_mutually_exclusive_and_exhaustive": true,
+      "comparison_denominator_eligible": true,
+      "memory_review_eligible": true,
+      "memory_admission_unlocked": false
+    },
+    "campaign_cost": {
+      "cost_control_hash": "sha256:fc5cd14ddea7dd348094c8e71f16eea9f6e92de16ffdb738e61a0d6f417acff5",
+      "qualification": {
+        "schema_version": "campaign-full-schedule-cost-qualification-v1",
+        "passed": true,
+        "fully_settled": true,
+        "campaign_cost_control_hash": "sha256:fc5cd14ddea7dd348094c8e71f16eea9f6e92de16ffdb738e61a0d6f417acff5",
+        "schedule_hash": "sha256:2ecbf257117481bfa31d62454221af243cc541470a91abeefdcae1f0912a552d",
+        "full_schedule_reserved": true,
+        "reserved_runs": 12,
+        "settled_runs": 12,
+        "not_started_runs": 0,
+        "accrued_cost_nanos": 11838408000,
+        "full_schedule_reserve_nanos": 163350000000,
+        "hard_cap_nanos": 164000000000,
+        "cost_censoring_events": 0,
+        "live_resume_supported": false
+      },
+      "full_schedule_reserve_usd": 163.35,
+      "hard_cap_usd": 164.0,
+      "actual_usage_derived_standard_list_price_usd": 11.838408,
+      "actual_invoice_claimed": false,
+      "free_tier_treatment_claimed": false
+    },
+    "aggregate_usage": {
+      "input_tokens": 10492742,
+      "cached_input_tokens": 0,
+      "cache_write_input_tokens": 0,
+      "output_tokens": 881967,
+      "reasoning_output_tokens": 805212,
+      "total_tokens": 11374709,
+      "model_calls": 613,
+      "input_token_count_calls": 614,
+      "tool_calls": 964,
+      "wall_clock_ms": 7258662,
+      "model_cost_nanos": 11838408000,
+      "model_cost_usd": 11.838408
+    },
+    "aggregate_trace": {
+      "event_count": 4536,
+      "checkpoint_count": 978,
+      "worker_claim_count": 12,
+      "reclaimed_worker_claim_count": 0,
+      "completed_model_responses": 613,
+      "input_token_precount_calls": 614,
+      "pre_provider_generation_blocks": 1,
+      "exact_input_token_matches": 613,
+      "exact_total_token_matches": 613,
+      "truncation_disabled_responses": 613,
+      "store_false_responses": 613,
+      "previous_response_dependency_count": 0,
+      "submission_accepted_count": 11,
+      "run_completed_count": 11,
+      "run_failed_count": 1,
+      "memory_retrieval_count": 0
+    },
+    "runs": [
+      {
+        "order": 1,
+        "schedule_row_id": "sha256:d5ce291316628bee502d0061f21f6d921c399eb320edb02df584e7b6cc37a565",
+        "task_id": "pyfakefs-makedirs-parent-traversal",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 1,
+        "run_id": "run_575da4ead3334551",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 1425560,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 140023,
+          "reasoning_output_tokens": 134336,
+          "model_cost_usd": 1.6992735,
+          "model_calls": 74,
+          "input_token_count_calls": 74,
+          "tool_calls": 108,
+          "wall_clock_ms": 1075089,
+          "total_tokens": 1565583,
+          "model_cost_nanos": 1699273500
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_0f5c0cd58af05907ba3285e4e7ef069e",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:c6225d67717c40beeeae98f7221c3b1bdbd90fdce699ba87cf5431f9eaced4f9",
+          "source_evidence_hash": "sha256:acd0ee8e676f589c6f5e7badfb0d4b31173a77a4eea4ccc978fa2825668a7fe0",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 1425560,
+            "output_tokens": 140023,
+            "model_calls": 74,
+            "tool_calls": 108,
+            "wall_clock_ms": 1075089,
+            "total_tokens": 1565583
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 1434417,
+            "wall_clock_ms": 2524911
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 525,
+          "checkpoint_count": 109,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 74,
+          "input_token_precount_calls": 74,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 74,
+          "exact_total_token_matches": 74,
+          "truncation_disabled_responses": 74,
+          "store_false_responses": 74,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_575da4ead3334551/manifest.json",
+            "bytes": 2492,
+            "sha256": "sha256:f93070d02e2bcec20343946f403da2d1ae9b283107317c7da3952eb96a81bd38",
+            "run_id": "run_575da4ead3334551"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_575da4ead3334551/result.json",
+            "bytes": 4968,
+            "sha256": "sha256:cdcb0a6ab5b1c1cf833065c8583fa2d9381fb32a3c6430ceb74af10ee1641445",
+            "run_id": "run_575da4ead3334551"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_575da4ead3334551/provenance.json",
+            "bytes": 1398,
+            "sha256": "sha256:e684854d408a3d9ad7af9366bd6b5bd1cd2327e6ad35a88b16e089cba7cc3cb9",
+            "run_id": "run_575da4ead3334551"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_575da4ead3334551.json",
+            "bytes": 19307,
+            "sha256": "sha256:7f5676d75ae7f3b277e001165474e257f1980999a4285dda27e26e467a47bacb",
+            "run_id": "run_575da4ead3334551"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_575da4ead3334551/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:f9d14d1f2c2dcf30ec4a9b444cba4e44298808f089d3637d7694ae9448d62c46",
+            "run_id": "run_575da4ead3334551"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_575da4ead3334551/submitted.patch",
+            "bytes": 1580,
+            "sha256": "sha256:d0f9a3b3046b12c991d47f40331931886762e369b7b25004bbff67b491b085ed",
+            "run_id": "run_575da4ead3334551"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_0f5c0cd58af05907ba3285e4e7ef069e.json",
+            "bytes": 604,
+            "sha256": "sha256:711a5cd943af21965e90a6fee8adb33415b4cadfb650f0fbfca77a7355d41e3e",
+            "run_id": "run_575da4ead3334551"
+          }
+        ]
+      },
+      {
+        "order": 2,
+        "schedule_row_id": "sha256:ec802fb3011df82b13edf79c72991d9420a0dc2323ab763f1447bf3479c2726f",
+        "task_id": "pyfakefs-makedirs-parent-traversal",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 2,
+        "run_id": "run_74364afdc3d94f9c",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 284106,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 31117,
+          "reasoning_output_tokens": 28978,
+          "model_cost_usd": 0.353106,
+          "model_calls": 22,
+          "input_token_count_calls": 22,
+          "tool_calls": 35,
+          "wall_clock_ms": 243729,
+          "total_tokens": 315223,
+          "model_cost_nanos": 353106000
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_6b7b036074a2590d97db1afdfe90a89d",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:a3ed13200c5c8fa55e5d57df3b920a9a5e220be58c5ff37c9df3e6aac66350e1",
+          "source_evidence_hash": "sha256:ae481c0cfb38ee331045ffe7c20efc99f68117746233aead083353b18eac6c4e",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 284106,
+            "output_tokens": 31117,
+            "model_calls": 22,
+            "tool_calls": 35,
+            "wall_clock_ms": 243729,
+            "total_tokens": 315223
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2684777,
+            "wall_clock_ms": 3356271
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 170,
+          "checkpoint_count": 36,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 22,
+          "input_token_precount_calls": 22,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 22,
+          "exact_total_token_matches": 22,
+          "truncation_disabled_responses": 22,
+          "store_false_responses": 22,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/manifest.json",
+            "bytes": 2492,
+            "sha256": "sha256:50ed4f5d46701c6b06e21c1627f1a15f38b285a8255d99e87b438ea969ed7038",
+            "run_id": "run_74364afdc3d94f9c"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/result.json",
+            "bytes": 4962,
+            "sha256": "sha256:1d2ca4468f3b13192ecae2d207f903a966656dc1dff57d4c17cf7b89c8eb4f85",
+            "run_id": "run_74364afdc3d94f9c"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/provenance.json",
+            "bytes": 1398,
+            "sha256": "sha256:c29fb1e4a248172612decb80df98e4a5e40a6008037a1089bb10d9d1aba8e646",
+            "run_id": "run_74364afdc3d94f9c"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_74364afdc3d94f9c.json",
+            "bytes": 14624,
+            "sha256": "sha256:c4548c5d88b095e2775111fb9bb3942c6d53b53c2f2195b28070882ade5d7b5b",
+            "run_id": "run_74364afdc3d94f9c"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:30143df7778e0efdd3c3d218eeb4c6cb54027ed94db58bd372b9ba6acaceebf2",
+            "run_id": "run_74364afdc3d94f9c"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_74364afdc3d94f9c/submitted.patch",
+            "bytes": 900,
+            "sha256": "sha256:47a3ab3a7972bb77271333bdb88b2ad4168144fe48203db764541433b0766acc",
+            "run_id": "run_74364afdc3d94f9c"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_6b7b036074a2590d97db1afdfe90a89d.json",
+            "bytes": 604,
+            "sha256": "sha256:128d2c6ef84e556dbdeb97883a6356ff7987e30575f93f2c40601f51f06b0948",
+            "run_id": "run_74364afdc3d94f9c"
+          }
+        ]
+      },
+      {
+        "order": 3,
+        "schedule_row_id": "sha256:f152119f764915ff96d006cebf430f2cbd4e743b8031f685874d24a09a434a1a",
+        "task_id": "anyio-interrupt-runner-cleanup",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 1,
+        "run_id": "run_7ecb4b2489c34982",
+        "terminal_branch": "canonical_pre_provider_budget",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "failed",
+          "evaluation_status": "not_run",
+          "official": false,
+          "outcome_kind": "agent_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "not_run",
+            "regression_tests": "not_run",
+            "scope_policy": "not_run",
+            "safety_policy": "not_run"
+          },
+          "terminal_error": {
+            "type": "ModelGenerationBudgetError",
+            "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
+            "reason_code": "exact_request_budget_exceeded",
+            "generation_started": false
+          }
+        },
+        "usage": {
+          "input_tokens": 2712198,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 252655,
+          "reasoning_output_tokens": 239197,
+          "model_cost_usd": 3.171096,
+          "model_calls": 151,
+          "input_token_count_calls": 152,
+          "tool_calls": 227,
+          "wall_clock_ms": 2050390,
+          "total_tokens": 2964853,
+          "model_cost_nanos": 3171096000
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": false,
+          "memory_candidate_eligible": false,
+          "failure_record_id": "fail_a6c95103358f5167bc7d204bbefd49a3",
+          "passed_checks": 28,
+          "total_checks": 28,
+          "qualification_hash": "sha256:aafe57df6404ad4e5e3adf018474ee079743b14165400c34d33133900fb4d1e0",
+          "source_evidence_hash": "sha256:5e2cff3d608fda02158701b190072344db1195975f7e91636cc8f280b7dfce5a",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 2712198,
+            "output_tokens": 252655,
+            "model_calls": 151,
+            "tool_calls": 227,
+            "wall_clock_ms": 2050390,
+            "total_tokens": 2964853
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 35147,
+            "wall_clock_ms": 1549610
+          },
+          "binding_dimension": "total_tokens",
+          "binding_reason": "exact_request_budget_exceeded",
+          "blocked_tool_count": 2,
+          "token_tail_triggered": true,
+          "exact_request": {
+            "blocked": true,
+            "sequence": 1058,
+            "requested_input_tokens": 36378,
+            "max_output_tokens": 25000,
+            "required_tokens": 61378,
+            "remaining_tokens": 35147,
+            "deficit_tokens": 26231,
+            "minimum_total_budget_same_prefix": 3026231
+          }
+        },
+        "trace": {
+          "event_count": 1060,
+          "checkpoint_count": 230,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 151,
+          "input_token_precount_calls": 152,
+          "pre_provider_generation_blocks": 1,
+          "exact_input_token_matches": 151,
+          "exact_total_token_matches": 151,
+          "truncation_disabled_responses": 151,
+          "store_false_responses": 151,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 0,
+          "run_completed_count": 0,
+          "run_failed_count": 1,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_7ecb4b2489c34982/manifest.json",
+            "bytes": 2488,
+            "sha256": "sha256:e5feb8bd0bbbe6d78e51d30528904574c1a5e125ed9f3d9d8b606fdbbc9efa3a",
+            "run_id": "run_7ecb4b2489c34982"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_7ecb4b2489c34982/result.json",
+            "bytes": 1792,
+            "sha256": "sha256:6c24ea822b94f1d39e04ed62e741011bd31ea10cb81f5a6ef02efe0bd86418eb",
+            "run_id": "run_7ecb4b2489c34982"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_7ecb4b2489c34982/provenance.json",
+            "bytes": 166,
+            "sha256": "sha256:156b4b598f2cf85fb952307ce6041fac4ccf650f5e38ce454449c2dd05f0aaf2",
+            "run_id": "run_7ecb4b2489c34982"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_7ecb4b2489c34982.json",
+            "bytes": 25930,
+            "sha256": "sha256:59ca7875d9f5177a87840003d5507a6584dd22b22ca4bbf1ca3d6ea0d5db1d55",
+            "run_id": "run_7ecb4b2489c34982"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_a6c95103358f5167bc7d204bbefd49a3.json",
+            "bytes": 455,
+            "sha256": "sha256:ac0d4af998741fe68c8783294f74476107d6f6d453a33ffe6a4381e4048da5df",
+            "run_id": "run_7ecb4b2489c34982"
+          }
+        ]
+      },
+      {
+        "order": 4,
+        "schedule_row_id": "sha256:aa2df8cbcf3c1571a0b3bdc1d062b4ca646bf03102f3a1ca89fdc81d34723014",
+        "task_id": "hf-hub-xet-endpoint-propagation",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 1,
+        "run_id": "run_5ffc2e1c58784e17",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 185054,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 7623,
+          "reasoning_output_tokens": 5695,
+          "model_cost_usd": 0.173094,
+          "model_calls": 13,
+          "input_token_count_calls": 13,
+          "tool_calls": 23,
+          "wall_clock_ms": 75211,
+          "total_tokens": 192677,
+          "model_cost_nanos": 173094000
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_2cf07eaf03315e54908197f76180394b",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:2848e86058015149098f1a87e27000674b3d72c94d738cde85256cc4c7116c1f",
+          "source_evidence_hash": "sha256:751958d0cf90ca0fb8c00ba4beb3e33e238fec6482188bab475ced5e1e52dae5",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 185054,
+            "output_tokens": 7623,
+            "model_calls": 13,
+            "tool_calls": 23,
+            "wall_clock_ms": 75211,
+            "total_tokens": 192677
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2807323,
+            "wall_clock_ms": 3524789
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 112,
+          "checkpoint_count": 24,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 13,
+          "input_token_precount_calls": 13,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 13,
+          "exact_total_token_matches": 13,
+          "truncation_disabled_responses": 13,
+          "store_false_responses": 13,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/manifest.json",
+            "bytes": 2489,
+            "sha256": "sha256:3746eb32695c0758edece47a9cdc128288632907b48418731bdaaf17fdd94780",
+            "run_id": "run_5ffc2e1c58784e17"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/result.json",
+            "bytes": 5018,
+            "sha256": "sha256:1f961e10f678b581094ae26bf8bf5666f03953cfe30496acc7266b854a76c667",
+            "run_id": "run_5ffc2e1c58784e17"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/provenance.json",
+            "bytes": 1398,
+            "sha256": "sha256:03b5e8e801d7fe1d14b0e60bf2a5d35fa1f7d791d3d9a94936922aaf33219887",
+            "run_id": "run_5ffc2e1c58784e17"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_5ffc2e1c58784e17.json",
+            "bytes": 13617,
+            "sha256": "sha256:236e0b12098de3277bf20239e6e264af4324cc4707c3c6698dd135a28a4f94fe",
+            "run_id": "run_5ffc2e1c58784e17"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:e9fd80fa59b91b11cb871c3950ca8506bb994889549a4a14fff14a86c7a58b11",
+            "run_id": "run_5ffc2e1c58784e17"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_5ffc2e1c58784e17/submitted.patch",
+            "bytes": 3482,
+            "sha256": "sha256:b6361b034aafcdd1c176901dd8a01a90d7a6d81a456eb13ec3ec11f46d8a46fc",
+            "run_id": "run_5ffc2e1c58784e17"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_2cf07eaf03315e54908197f76180394b.json",
+            "bytes": 604,
+            "sha256": "sha256:838c048e75241625d9140e4169c9bf1fc487555d55fd9f2c6450035a5d2026dd",
+            "run_id": "run_5ffc2e1c58784e17"
+          }
+        ]
+      },
+      {
+        "order": 5,
+        "schedule_row_id": "sha256:41004d4409267cf73fbc39610df92902541f5c86d0fd7c606ffbe43781fc8ab1",
+        "task_id": "pdm-ignore-active-venv-resolution",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 1,
+        "run_id": "run_3fe55fd3847d4a4d",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "resolved",
+          "scope_compliant_success": true,
+          "verdicts": {
+            "hidden_tests": "pass",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 187631,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 13603,
+          "reasoning_output_tokens": 11068,
+          "model_cost_usd": 0.20193675,
+          "model_calls": 16,
+          "input_token_count_calls": 16,
+          "tool_calls": 22,
+          "wall_clock_ms": 176967,
+          "total_tokens": 201234,
+          "model_cost_nanos": 201936750
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": false,
+          "failure_record_id": null,
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:73361fb3555cfe5fc1990c8386ffb1ae48ab52ad7789440649a5f9f4867464ed",
+          "source_evidence_hash": "sha256:6f51d9bea7f0585827885e375ea7a36b43008d3990950b39fdbe3d02b0be6b60",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 187631,
+            "output_tokens": 13603,
+            "model_calls": 16,
+            "tool_calls": 22,
+            "wall_clock_ms": 176967,
+            "total_tokens": 201234
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2798766,
+            "wall_clock_ms": 3423033
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 113,
+          "checkpoint_count": 23,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 16,
+          "input_token_precount_calls": 16,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 16,
+          "exact_total_token_matches": 16,
+          "truncation_disabled_responses": 16,
+          "store_false_responses": 16,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/manifest.json",
+            "bytes": 2491,
+            "sha256": "sha256:c1c00856187d1f7f624b0d5de28d3f39eb4d08d8a3c0a11d7a9bd421b09ee6f8",
+            "run_id": "run_3fe55fd3847d4a4d"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/result.json",
+            "bytes": 4968,
+            "sha256": "sha256:fe2cd921d0c884dbe94fc6f879211021b2b763c544511b1ace634ceed397c696",
+            "run_id": "run_3fe55fd3847d4a4d"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/provenance.json",
+            "bytes": 1397,
+            "sha256": "sha256:459cb26c5446340947f7f60ffa1195d50e7d8fb7f4529a30f932bc18ed319b94",
+            "run_id": "run_3fe55fd3847d4a4d"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_3fe55fd3847d4a4d.json",
+            "bytes": 13996,
+            "sha256": "sha256:1d46a699f599954ca529c02ba3571fbe810338440ceaef12bc9f362963173c33",
+            "run_id": "run_3fe55fd3847d4a4d"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/evaluation-receipt.json",
+            "bytes": 600,
+            "sha256": "sha256:63c130152dc39ec22342259035fcab621e176e647b6b7cbeb6d458498cdde81d",
+            "run_id": "run_3fe55fd3847d4a4d"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_3fe55fd3847d4a4d/submitted.patch",
+            "bytes": 2065,
+            "sha256": "sha256:d9fc4a19cf6025f77ccd32699fdfe248754313189e971a1e41b8973c0938b8e0",
+            "run_id": "run_3fe55fd3847d4a4d"
+          }
+        ]
+      },
+      {
+        "order": 6,
+        "schedule_row_id": "sha256:039de0d03c8249c8ce04b12b219ef09d28390f02e6d1ee18fcbb88865e38b586",
+        "task_id": "hf-hub-xet-endpoint-propagation",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 2,
+        "run_id": "run_88f96fae3d2442e6",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 1980765,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 166724,
+          "reasoning_output_tokens": 142415,
+          "model_cost_usd": 2.23583175,
+          "model_calls": 95,
+          "input_token_count_calls": 95,
+          "tool_calls": 155,
+          "wall_clock_ms": 1221579,
+          "total_tokens": 2147489,
+          "model_cost_nanos": 2235831750
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_8edc6a7fd4f3506f92a149698e55da6e",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:08e26791a9bff7d0f4a4c2ec141c1a06c7fd5c378f805080dabda98f7fb20416",
+          "source_evidence_hash": "sha256:6da69c9dfb2b0e0280df1e7824e6186bad1d9d70b09fcd505ba07cb1ab7a3677",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 1980765,
+            "output_tokens": 166724,
+            "model_calls": 95,
+            "tool_calls": 155,
+            "wall_clock_ms": 1221579,
+            "total_tokens": 2147489
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 852511,
+            "wall_clock_ms": 2378421
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 720,
+          "checkpoint_count": 156,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 95,
+          "input_token_precount_calls": 95,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 95,
+          "exact_total_token_matches": 95,
+          "truncation_disabled_responses": 95,
+          "store_false_responses": 95,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/manifest.json",
+            "bytes": 2489,
+            "sha256": "sha256:5092bc034b63dc132af94613ff96f3a873006065730f9f121b9d76ca89c78710",
+            "run_id": "run_88f96fae3d2442e6"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/result.json",
+            "bytes": 5071,
+            "sha256": "sha256:e99860a57c179ae91f655ed6d70c949554185af8b06a938a5b03211bfeabd7ab",
+            "run_id": "run_88f96fae3d2442e6"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/provenance.json",
+            "bytes": 1398,
+            "sha256": "sha256:09b0a3a83ea8640babe3aab855fe4648538ca8c67873797b6a6a10627803cd39",
+            "run_id": "run_88f96fae3d2442e6"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_88f96fae3d2442e6.json",
+            "bytes": 23252,
+            "sha256": "sha256:ee3433e0851bacb1f681a0b2a335abbb652f5fcb8c93b65bae5f534f1256dcac",
+            "run_id": "run_88f96fae3d2442e6"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:19b53c6fd5082e05697c0c283aeb0875a694f14374df954f569d9f9b200c45ed",
+            "run_id": "run_88f96fae3d2442e6"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_88f96fae3d2442e6/submitted.patch",
+            "bytes": 2615,
+            "sha256": "sha256:8b349877164f44217e9bf8fac09cdf39c67d5ff41d1a3aa3be91f94e0d336432",
+            "run_id": "run_88f96fae3d2442e6"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_8edc6a7fd4f3506f92a149698e55da6e.json",
+            "bytes": 604,
+            "sha256": "sha256:5ca9796db0e6d4c6caacf623d84f7f3660cbb8eafff1a83b65fedc4d70df15a6",
+            "run_id": "run_88f96fae3d2442e6"
+          }
+        ]
+      },
+      {
+        "order": 7,
+        "schedule_row_id": "sha256:f8599bc087ddcc4e3d73ba2ce74d5f196e8284344b8cc745520679b96c1b4e25",
+        "task_id": "anyio-interrupt-runner-cleanup",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 2,
+        "run_id": "run_3dc602aab8964d77",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 2705216,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 202453,
+          "reasoning_output_tokens": 188055,
+          "model_cost_usd": 2.9399505,
+          "model_calls": 153,
+          "input_token_count_calls": 153,
+          "tool_calls": 241,
+          "wall_clock_ms": 1721206,
+          "total_tokens": 2907669,
+          "model_cost_nanos": 2939950500
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_dac1b9595479551688a9613db9462927",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:fdaeef171c661c9293d9cc2ebcf894d22418201a8d9375bb3aec78cd8b85c42e",
+          "source_evidence_hash": "sha256:166daaf570d88ab91ba965f85902a735e05d10df83ab09aeb80776a8bb3d3fb6",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 2705216,
+            "output_tokens": 202453,
+            "model_calls": 153,
+            "tool_calls": 241,
+            "wall_clock_ms": 1721206,
+            "total_tokens": 2907669
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 92331,
+            "wall_clock_ms": 1878794
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": true,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 1111,
+          "checkpoint_count": 242,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 153,
+          "input_token_precount_calls": 153,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 153,
+          "exact_total_token_matches": 153,
+          "truncation_disabled_responses": 153,
+          "store_false_responses": 153,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/manifest.json",
+            "bytes": 2488,
+            "sha256": "sha256:c734b9801a9ee1978ff1aa8eff270f3ca51d0b9ee9b6251c47fe668928c48ede",
+            "run_id": "run_3dc602aab8964d77"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/result.json",
+            "bytes": 4990,
+            "sha256": "sha256:bd910b9a69173e6435b3a2ef2bf714d03df7055f60b6c88f2d31450c748e6f4b",
+            "run_id": "run_3dc602aab8964d77"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/provenance.json",
+            "bytes": 1397,
+            "sha256": "sha256:395058535a04596db221969cb929cb5bf3de32e670133522e62b7d90eb1130ce",
+            "run_id": "run_3dc602aab8964d77"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_3dc602aab8964d77.json",
+            "bytes": 26418,
+            "sha256": "sha256:b7fad72d27833429963c59535d25d3ccc690f604ffe9f4e14b48d11f4397da11",
+            "run_id": "run_3dc602aab8964d77"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/evaluation-receipt.json",
+            "bytes": 600,
+            "sha256": "sha256:34093473e60c9fbfb76de37c8172052e9b4430b606d9eb182738d2d94da4ed6c",
+            "run_id": "run_3dc602aab8964d77"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_3dc602aab8964d77/submitted.patch",
+            "bytes": 3788,
+            "sha256": "sha256:37be7c96b1874b76915fd3005459dc9271107e77961863294c417414c50d2636",
+            "run_id": "run_3dc602aab8964d77"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_dac1b9595479551688a9613db9462927.json",
+            "bytes": 604,
+            "sha256": "sha256:e5f97aeed09f9dfa69189b2fa2dcee12518f309233de2adaec38d9905413ac11",
+            "run_id": "run_3dc602aab8964d77"
+          }
+        ]
+      },
+      {
+        "order": 8,
+        "schedule_row_id": "sha256:b7d476545ef2ae7a1e97998b68182519d54412e6f57355f2456c6d497419fc50",
+        "task_id": "loguru-invalid-format-feedback",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 1,
+        "run_id": "run_59aac91defac456b",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 121738,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 7680,
+          "reasoning_output_tokens": 6274,
+          "model_cost_usd": 0.1258635,
+          "model_calls": 11,
+          "input_token_count_calls": 11,
+          "tool_calls": 18,
+          "wall_clock_ms": 70156,
+          "total_tokens": 129418,
+          "model_cost_nanos": 125863500
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_19d13b555e5f5e21b89c0dde9e593ec8",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:10809a50bb68367fa7832c8435d2adf967b258d9316646e1581804a6ed8d3ab0",
+          "source_evidence_hash": "sha256:3a982898fa9ff2b127f6cddfafedf5f352f7fca24d71057cc3ee2fa489c473d4",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 121738,
+            "output_tokens": 7680,
+            "model_calls": 11,
+            "tool_calls": 18,
+            "wall_clock_ms": 70156,
+            "total_tokens": 129418
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2870582,
+            "wall_clock_ms": 3529844
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 92,
+          "checkpoint_count": 19,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 11,
+          "input_token_precount_calls": 11,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 11,
+          "exact_total_token_matches": 11,
+          "truncation_disabled_responses": 11,
+          "store_false_responses": 11,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_59aac91defac456b/manifest.json",
+            "bytes": 2488,
+            "sha256": "sha256:c47ee2bffd20384a4b9d2c670eca9bd4be958bdea48e9e813ab4b976b8502f31",
+            "run_id": "run_59aac91defac456b"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_59aac91defac456b/result.json",
+            "bytes": 7394,
+            "sha256": "sha256:fad4a7569801f37a3e63809f9b518fd65a87bd7c4ab0fefcfac3c3472bf275e9",
+            "run_id": "run_59aac91defac456b"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_59aac91defac456b/provenance.json",
+            "bytes": 2327,
+            "sha256": "sha256:9af93cace102b83c2db49d18631d88c5192a7992a94613e649aca8f8bdaf027e",
+            "run_id": "run_59aac91defac456b"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_59aac91defac456b.json",
+            "bytes": 13533,
+            "sha256": "sha256:09dd1b1744bab045ef28e977dd9fd1d6e52d10256f95c473a3a4d6970bb74909",
+            "run_id": "run_59aac91defac456b"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_59aac91defac456b/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:3c51b442f7cd0c7a1afdbe3305d614ad25a0ab0436d9c9a37988e0b83c72f562",
+            "run_id": "run_59aac91defac456b"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_59aac91defac456b/submitted.patch",
+            "bytes": 3795,
+            "sha256": "sha256:ec0db776e58ce2bfe0d855b104735809b08367486b9e152fd778e632b74a1570",
+            "run_id": "run_59aac91defac456b"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_19d13b555e5f5e21b89c0dde9e593ec8.json",
+            "bytes": 604,
+            "sha256": "sha256:58084373e77d8b032689d78d1a7cffcac45922e2ab923af1d19ba1aea7a9c105",
+            "run_id": "run_59aac91defac456b"
+          }
+        ]
+      },
+      {
+        "order": 9,
+        "schedule_row_id": "sha256:1da1b58a8b47afbc5cbfe429cdb7396731c56b07d49207c0f7d1c891d1710b90",
+        "task_id": "loguru-invalid-format-feedback",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 2,
+        "run_id": "run_cc179262fa664600",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 227935,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 21230,
+          "reasoning_output_tokens": 18355,
+          "model_cost_usd": 0.26648625,
+          "model_calls": 20,
+          "input_token_count_calls": 20,
+          "tool_calls": 31,
+          "wall_clock_ms": 186791,
+          "total_tokens": 249165,
+          "model_cost_nanos": 266486250
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_bcf0bf2e95765d42b925742d955da82e",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:3244d4ca8614c682b8b4eea7a127720b1d8b91b29965efcfc9166cb1fc308442",
+          "source_evidence_hash": "sha256:2af2b357f4a405b4ba83469a5919fc2c95bcfa5130fbad473227e0f118cc06fe",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 227935,
+            "output_tokens": 21230,
+            "model_calls": 20,
+            "tool_calls": 31,
+            "wall_clock_ms": 186791,
+            "total_tokens": 249165
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2750835,
+            "wall_clock_ms": 3413209
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 155,
+          "checkpoint_count": 32,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 20,
+          "input_token_precount_calls": 20,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 20,
+          "exact_total_token_matches": 20,
+          "truncation_disabled_responses": 20,
+          "store_false_responses": 20,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_cc179262fa664600/manifest.json",
+            "bytes": 2488,
+            "sha256": "sha256:c819ebd51549374a11078e42f040d8cf8be29b40481051bec5a7762ca5a54708",
+            "run_id": "run_cc179262fa664600"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_cc179262fa664600/result.json",
+            "bytes": 7398,
+            "sha256": "sha256:5c5caca31aa249e03e703440f6399d805c776f040f048716b29c7f1bb0483774",
+            "run_id": "run_cc179262fa664600"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_cc179262fa664600/provenance.json",
+            "bytes": 2327,
+            "sha256": "sha256:8cf7197e862770b40dcf805bec5ac7b06060007e7ecf2601f03827cda807e933",
+            "run_id": "run_cc179262fa664600"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_cc179262fa664600.json",
+            "bytes": 14533,
+            "sha256": "sha256:7f53070bcd1076c7e2007c44525915c4e72d4446d808e4d8050a63e0030d693c",
+            "run_id": "run_cc179262fa664600"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_cc179262fa664600/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:56efb4ab72a77ba906e2a7782ecab82703ede0dce32de20b470fd4563d5b8fb8",
+            "run_id": "run_cc179262fa664600"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_cc179262fa664600/submitted.patch",
+            "bytes": 3622,
+            "sha256": "sha256:e873433015a0d7cecb5ccdffb3483982a5b7cc527983f6c7bc1894297f26d0ff",
+            "run_id": "run_cc179262fa664600"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_bcf0bf2e95765d42b925742d955da82e.json",
+            "bytes": 604,
+            "sha256": "sha256:a3a36537b3467eef519f5327d743dfbd63d702541ee5b5e8cfe0919ef0f003f7",
+            "run_id": "run_cc179262fa664600"
+          }
+        ]
+      },
+      {
+        "order": 10,
+        "schedule_row_id": "sha256:4c9a501bce529f0643d59125d820efb3d677a262a2a6442384f4b1b6b1ab7320",
+        "task_id": "tox-cross-section-empty-substitution",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 2,
+        "run_id": "run_ac3ae1a7009a4e8b",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 271294,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 7408,
+          "reasoning_output_tokens": 5452,
+          "model_cost_usd": 0.2368065,
+          "model_calls": 21,
+          "input_token_count_calls": 21,
+          "tool_calls": 49,
+          "wall_clock_ms": 103503,
+          "total_tokens": 278702,
+          "model_cost_nanos": 236806500
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_f90fa668a6945abe98ef6dd5e4761a97",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:a87d7158577228836d2492f27b7603d00ed09ec969a60e5c5ac643f8aaab51a2",
+          "source_evidence_hash": "sha256:146fdaad7722d86caa68d558a30aa284f6c10029303251ba9be6f908f4266171",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 271294,
+            "output_tokens": 7408,
+            "model_calls": 21,
+            "tool_calls": 49,
+            "wall_clock_ms": 103503,
+            "total_tokens": 278702
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2721298,
+            "wall_clock_ms": 3496497
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 207,
+          "checkpoint_count": 50,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 21,
+          "input_token_precount_calls": 21,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 21,
+          "exact_total_token_matches": 21,
+          "truncation_disabled_responses": 21,
+          "store_false_responses": 21,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/manifest.json",
+            "bytes": 2495,
+            "sha256": "sha256:9463563e7083db1cbc05d403c7d9f09b2a4daa075203d48df732909a64b2c780",
+            "run_id": "run_ac3ae1a7009a4e8b"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/result.json",
+            "bytes": 4985,
+            "sha256": "sha256:02b676351030704f80c0d8e83913ce1e60f5e1ab03e6718bb694dc20ff100a40",
+            "run_id": "run_ac3ae1a7009a4e8b"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/provenance.json",
+            "bytes": 1397,
+            "sha256": "sha256:cb0bea33bbea2fef8fed0f65d51197743c34f653d9db6701ae8fb6f3f57b22b9",
+            "run_id": "run_ac3ae1a7009a4e8b"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_ac3ae1a7009a4e8b.json",
+            "bytes": 14323,
+            "sha256": "sha256:dea236119d0590f0554a039a53c17a01fb394881b914a77a3e8db6af0cb97166",
+            "run_id": "run_ac3ae1a7009a4e8b"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:ed83df69117d6d19a6a8aa1be5c9360068c5fb8cd7b4536bec3edfcfb80374b7",
+            "run_id": "run_ac3ae1a7009a4e8b"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_ac3ae1a7009a4e8b/submitted.patch",
+            "bytes": 1021,
+            "sha256": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "run_id": "run_ac3ae1a7009a4e8b"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_f90fa668a6945abe98ef6dd5e4761a97.json",
+            "bytes": 604,
+            "sha256": "sha256:fe572c2ff40196fd740925f7ff2565577a22b47cdf73691e39689b7d508ebc12",
+            "run_id": "run_ac3ae1a7009a4e8b"
+          }
+        ]
+      },
+      {
+        "order": 11,
+        "schedule_row_id": "sha256:44ad1d739e418edf0d2044bf2419d04f4e5272a51c082bf135e50440d3f99ba8",
+        "task_id": "tox-cross-section-empty-substitution",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 1,
+        "run_id": "run_d5c2e22b485a4578",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "task_failure",
+          "scope_compliant_success": false,
+          "verdicts": {
+            "hidden_tests": "fail",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 126424,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 4765,
+          "reasoning_output_tokens": 3654,
+          "model_cost_usd": 0.1162605,
+          "model_calls": 12,
+          "input_token_count_calls": 12,
+          "tool_calls": 25,
+          "wall_clock_ms": 54428,
+          "total_tokens": 131189,
+          "model_cost_nanos": 116260500
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": true,
+          "failure_record_id": "fail_ab3918ee4a3c5f34bc9d04a8f0970c00",
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:a525b04a69c2e4fb2048166f290c09bfdf1ca1b1ff210b6856ab777b1c6960e3",
+          "source_evidence_hash": "sha256:50cef2993b57bc74304055d9c19dc3537227cb3ea2315d31c3a7012fb0554ef1",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 126424,
+            "output_tokens": 4765,
+            "model_calls": 12,
+            "tool_calls": 25,
+            "wall_clock_ms": 54428,
+            "total_tokens": 131189
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2868811,
+            "wall_clock_ms": 3545572
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 114,
+          "checkpoint_count": 26,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 12,
+          "input_token_precount_calls": 12,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 12,
+          "exact_total_token_matches": 12,
+          "truncation_disabled_responses": 12,
+          "store_false_responses": 12,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/manifest.json",
+            "bytes": 2495,
+            "sha256": "sha256:f6da464a67401baa482883128b7e133e913943d1a9c195c5333d16e99e66c7f6",
+            "run_id": "run_d5c2e22b485a4578"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/result.json",
+            "bytes": 4984,
+            "sha256": "sha256:c68b5cdf6828c5699ed61323b22e507df15a95491ac728f5fee48855c5eebefd",
+            "run_id": "run_d5c2e22b485a4578"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/provenance.json",
+            "bytes": 1397,
+            "sha256": "sha256:fc0f63c3ce9544c18cd238d16b271c6bb687e8e5a63a14b778892d553b6ffec7",
+            "run_id": "run_d5c2e22b485a4578"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_d5c2e22b485a4578.json",
+            "bytes": 13546,
+            "sha256": "sha256:c2ac675b9f088a303e57208912db3cb0164f67d21151fcd179ff7b4c79fdfff5",
+            "run_id": "run_d5c2e22b485a4578"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/evaluation-receipt.json",
+            "bytes": 599,
+            "sha256": "sha256:93c45a3a25a55d7ec4801b1920ecdb641e46cb060043c0c5b03793123ffcd0c0",
+            "run_id": "run_d5c2e22b485a4578"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_d5c2e22b485a4578/submitted.patch",
+            "bytes": 1021,
+            "sha256": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "run_id": "run_d5c2e22b485a4578"
+          },
+          {
+            "role": "failure-record",
+            "path": ".patchloop/failures/dev-train/fail_ab3918ee4a3c5f34bc9d04a8f0970c00.json",
+            "bytes": 604,
+            "sha256": "sha256:d11ae39444ef99c4d190e6d7d94e0f871a23f314cea930921305e0fdbcddce3f",
+            "run_id": "run_d5c2e22b485a4578"
+          }
+        ]
+      },
+      {
+        "order": 12,
+        "schedule_row_id": "sha256:625fa778034436724c8cf5b4677ffc7812d1652661c81ae97dd77bd035e8cb5c",
+        "task_id": "pdm-ignore-active-venv-resolution",
+        "dataset_role": "memory-development",
+        "condition": "no_memory",
+        "repetition": 2,
+        "run_id": "run_92bf10d2a6b14601",
+        "terminal_branch": "official_evaluator",
+        "result": {
+          "attempt_status": "terminal",
+          "agent_submission_status": "completed",
+          "evaluation_status": "completed",
+          "official": true,
+          "outcome_kind": "resolved",
+          "scope_compliant_success": true,
+          "verdicts": {
+            "hidden_tests": "pass",
+            "regression_tests": "pass",
+            "scope_policy": "pass",
+            "safety_policy": "pass"
+          },
+          "terminal_error": null
+        },
+        "usage": {
+          "input_tokens": 264821,
+          "cached_input_tokens": 0,
+          "cache_write_input_tokens": 0,
+          "output_tokens": 26686,
+          "reasoning_output_tokens": 21733,
+          "model_cost_usd": 0.31870275,
+          "model_calls": 25,
+          "input_token_count_calls": 25,
+          "tool_calls": 30,
+          "wall_clock_ms": 279613,
+          "total_tokens": 291507,
+          "model_cost_nanos": 318702750
+        },
+        "qualification": {
+          "qualified": true,
+          "trace_integrity_passed": true,
+          "leakage_scan_passed": true,
+          "evaluation_reached": true,
+          "memory_candidate_eligible": false,
+          "failure_record_id": null,
+          "passed_checks": 29,
+          "total_checks": 29,
+          "qualification_hash": "sha256:0ce4616e46e2bc588f8214d6f58927fd875e9fb591110b544bd91ac00711fcfb",
+          "source_evidence_hash": "sha256:a9929c8613c37af752a60f80568c37bdd9c51bf96df6f073dd3cb06c4bba9c54",
+          "read_only_recomputation_matched": true
+        },
+        "budget_pressure": {
+          "configured_limits": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 3000000,
+            "wall_clock_ms": 3600000
+          },
+          "observed_usage": {
+            "input_tokens": 264821,
+            "output_tokens": 26686,
+            "model_calls": 25,
+            "tool_calls": 30,
+            "wall_clock_ms": 279613,
+            "total_tokens": 291507
+          },
+          "headroom": {
+            "model_calls": null,
+            "tool_calls": null,
+            "total_tokens": 2708493,
+            "wall_clock_ms": 3320387
+          },
+          "binding_dimension": "none",
+          "binding_reason": null,
+          "blocked_tool_count": 0,
+          "token_tail_triggered": false,
+          "exact_request": {
+            "blocked": false,
+            "sequence": null,
+            "requested_input_tokens": null,
+            "max_output_tokens": 25000,
+            "required_tokens": null,
+            "remaining_tokens": null,
+            "deficit_tokens": 0,
+            "minimum_total_budget_same_prefix": null
+          }
+        },
+        "trace": {
+          "event_count": 157,
+          "checkpoint_count": 31,
+          "worker_claim_count": 1,
+          "reclaimed_worker_claim_count": 0,
+          "completed_model_responses": 25,
+          "input_token_precount_calls": 25,
+          "pre_provider_generation_blocks": 0,
+          "exact_input_token_matches": 25,
+          "exact_total_token_matches": 25,
+          "truncation_disabled_responses": 25,
+          "store_false_responses": 25,
+          "previous_response_dependency_count": 0,
+          "submission_accepted_count": 1,
+          "run_completed_count": 1,
+          "run_failed_count": 0,
+          "memory_retrieval_count": 0
+        },
+        "raw_artifacts": [
+          {
+            "role": "manifest",
+            "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/manifest.json",
+            "bytes": 2492,
+            "sha256": "sha256:dd9cbb42eeb5c30f69029c6a7fc660f2090996e8d2da1ae4a08ef73fff78a4d4",
+            "run_id": "run_92bf10d2a6b14601"
+          },
+          {
+            "role": "result",
+            "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/result.json",
+            "bytes": 4969,
+            "sha256": "sha256:02e715421c8ed9fb0b821f6fe12e8a6d4f5e114f8f1dc47b0ed1944e999ab7d5",
+            "run_id": "run_92bf10d2a6b14601"
+          },
+          {
+            "role": "provenance",
+            "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/provenance.json",
+            "bytes": 1397,
+            "sha256": "sha256:80db8e1ea1ddde15ab462f87da6758ab03a1384447fb18ae579e8a9fea83f721",
+            "run_id": "run_92bf10d2a6b14601"
+          },
+          {
+            "role": "qualification",
+            "path": ".patchloop/qualifications/run_92bf10d2a6b14601.json",
+            "bytes": 15279,
+            "sha256": "sha256:004ed34d8c83d67550d6246cfa5eb7e160e77b2855d90c0fb978f8e69d45c3b9",
+            "run_id": "run_92bf10d2a6b14601"
+          },
+          {
+            "role": "evaluation-receipt",
+            "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/evaluation-receipt.json",
+            "bytes": 600,
+            "sha256": "sha256:fa8d60016fb8bd65fb15353beb41ae3dd1fe1ddaf9695509d222cb5ee03ac81e",
+            "run_id": "run_92bf10d2a6b14601"
+          },
+          {
+            "role": "submitted-patch",
+            "path": ".patchloop/runs/run_92bf10d2a6b14601/submitted.patch",
+            "bytes": 2944,
+            "sha256": "sha256:074c1702115278894da3fa9492e9da13a06ae0746ddafcc616f24cbb919253fb",
+            "run_id": "run_92bf10d2a6b14601"
+          }
+        ]
+      }
+    ],
+    "memory_review_candidates": {
+      "schema_version": "memory-review-candidate-set-v1",
+      "eligibility_basis": "official-evaluator-task-failure-only",
+      "candidate_count": 9,
+      "candidates": [
+        {
+          "run_id": "run_575da4ead3334551",
+          "task_id": "pyfakefs-makedirs-parent-traversal",
+          "repetition": 1,
+          "failure_record_id": "fail_0f5c0cd58af05907ba3285e4e7ef069e",
+          "qualification_hash": "sha256:c6225d67717c40beeeae98f7221c3b1bdbd90fdce699ba87cf5431f9eaced4f9",
+          "source_evidence_hash": "sha256:acd0ee8e676f589c6f5e7badfb0d4b31173a77a4eea4ccc978fa2825668a7fe0"
+        },
+        {
+          "run_id": "run_74364afdc3d94f9c",
+          "task_id": "pyfakefs-makedirs-parent-traversal",
+          "repetition": 2,
+          "failure_record_id": "fail_6b7b036074a2590d97db1afdfe90a89d",
+          "qualification_hash": "sha256:a3ed13200c5c8fa55e5d57df3b920a9a5e220be58c5ff37c9df3e6aac66350e1",
+          "source_evidence_hash": "sha256:ae481c0cfb38ee331045ffe7c20efc99f68117746233aead083353b18eac6c4e"
+        },
+        {
+          "run_id": "run_5ffc2e1c58784e17",
+          "task_id": "hf-hub-xet-endpoint-propagation",
+          "repetition": 1,
+          "failure_record_id": "fail_2cf07eaf03315e54908197f76180394b",
+          "qualification_hash": "sha256:2848e86058015149098f1a87e27000674b3d72c94d738cde85256cc4c7116c1f",
+          "source_evidence_hash": "sha256:751958d0cf90ca0fb8c00ba4beb3e33e238fec6482188bab475ced5e1e52dae5"
+        },
+        {
+          "run_id": "run_88f96fae3d2442e6",
+          "task_id": "hf-hub-xet-endpoint-propagation",
+          "repetition": 2,
+          "failure_record_id": "fail_8edc6a7fd4f3506f92a149698e55da6e",
+          "qualification_hash": "sha256:08e26791a9bff7d0f4a4c2ec141c1a06c7fd5c378f805080dabda98f7fb20416",
+          "source_evidence_hash": "sha256:6da69c9dfb2b0e0280df1e7824e6186bad1d9d70b09fcd505ba07cb1ab7a3677"
+        },
+        {
+          "run_id": "run_3dc602aab8964d77",
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "repetition": 2,
+          "failure_record_id": "fail_dac1b9595479551688a9613db9462927",
+          "qualification_hash": "sha256:fdaeef171c661c9293d9cc2ebcf894d22418201a8d9375bb3aec78cd8b85c42e",
+          "source_evidence_hash": "sha256:166daaf570d88ab91ba965f85902a735e05d10df83ab09aeb80776a8bb3d3fb6"
+        },
+        {
+          "run_id": "run_59aac91defac456b",
+          "task_id": "loguru-invalid-format-feedback",
+          "repetition": 1,
+          "failure_record_id": "fail_19d13b555e5f5e21b89c0dde9e593ec8",
+          "qualification_hash": "sha256:10809a50bb68367fa7832c8435d2adf967b258d9316646e1581804a6ed8d3ab0",
+          "source_evidence_hash": "sha256:3a982898fa9ff2b127f6cddfafedf5f352f7fca24d71057cc3ee2fa489c473d4"
+        },
+        {
+          "run_id": "run_cc179262fa664600",
+          "task_id": "loguru-invalid-format-feedback",
+          "repetition": 2,
+          "failure_record_id": "fail_bcf0bf2e95765d42b925742d955da82e",
+          "qualification_hash": "sha256:3244d4ca8614c682b8b4eea7a127720b1d8b91b29965efcfc9166cb1fc308442",
+          "source_evidence_hash": "sha256:2af2b357f4a405b4ba83469a5919fc2c95bcfa5130fbad473227e0f118cc06fe"
+        },
+        {
+          "run_id": "run_ac3ae1a7009a4e8b",
+          "task_id": "tox-cross-section-empty-substitution",
+          "repetition": 2,
+          "failure_record_id": "fail_f90fa668a6945abe98ef6dd5e4761a97",
+          "qualification_hash": "sha256:a87d7158577228836d2492f27b7603d00ed09ec969a60e5c5ac643f8aaab51a2",
+          "source_evidence_hash": "sha256:146fdaad7722d86caa68d558a30aa284f6c10029303251ba9be6f908f4266171"
+        },
+        {
+          "run_id": "run_d5c2e22b485a4578",
+          "task_id": "tox-cross-section-empty-substitution",
+          "repetition": 1,
+          "failure_record_id": "fail_ab3918ee4a3c5f34bc9d04a8f0970c00",
+          "qualification_hash": "sha256:a525b04a69c2e4fb2048166f290c09bfdf1ca1b1ff210b6856ab777b1c6960e3",
+          "source_evidence_hash": "sha256:50cef2993b57bc74304055d9c19dc3537227cb3ea2315d31c3a7012fb0554ef1"
+        }
+      ],
+      "excluded_resolved_count": 2,
+      "excluded_budget_run_ids": [
+        "run_7ecb4b2489c34982"
+      ],
+      "rules_created": 0,
+      "review_completed": false,
+      "dedup_completed": false,
+      "leak_scan_completed": false,
+      "memory_admission_unlocked": false
+    },
+    "journal_seal": {
+      "path": ".patchloop/experiments/journals/dev-no-memory-condition-neutral-3000k-20260805-r1.jsonl",
+      "bytes": 58203,
+      "file_sha256": "sha256:9cf4001098a601e97e01c30238aba427350cc96cbb472a7b757dd8dce8744f98",
+      "event_count": 39,
+      "event_type_counts": {
+        "CampaignCompleted": 1,
+        "CampaignStarted": 1,
+        "FullScheduleCostReserved": 1,
+        "RunCostSettled": 12,
+        "RunStarted": 12,
+        "RunTerminal": 12
+      },
+      "last_event_hash_before_completion": "sha256:cd92011a4eb99ac84091b241f72e964b05ba98b2e9df15c8cad9bb8ecdc21111",
+      "final_event_hash": "sha256:990f129d88dd59ee136db032cd01029b516c65659dcc1362f9b6470d15db6b40",
+      "result_hash": "sha256:becb176561f5940073469d530a8db0fdb8d19f292bdf2d4c670a79c7aa19f99a"
+    },
+    "raw_local_artifacts": [
+      {
+        "role": "raw-result",
+        "path": ".patchloop/experiments/dev-no-memory-condition-neutral-3000k-20260805-r1.json",
+        "bytes": 190558,
+        "sha256": "sha256:becb176561f5940073469d530a8db0fdb8d19f292bdf2d4c670a79c7aa19f99a"
+      },
+      {
+        "role": "campaign-journal",
+        "path": ".patchloop/experiments/journals/dev-no-memory-condition-neutral-3000k-20260805-r1.jsonl",
+        "bytes": 58203,
+        "sha256": "sha256:9cf4001098a601e97e01c30238aba427350cc96cbb472a7b757dd8dce8744f98"
+      },
+      {
+        "role": "execution-plan",
+        "path": ".patchloop/experiments/plans/1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4.json",
+        "bytes": 25769,
+        "sha256": "sha256:bd2eccea42111df462f27cfdcc5a346e53deec57ebc57da9f552d433675c93f5"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_575da4ead3334551/manifest.json",
+        "bytes": 2492,
+        "sha256": "sha256:f93070d02e2bcec20343946f403da2d1ae9b283107317c7da3952eb96a81bd38",
+        "run_id": "run_575da4ead3334551"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_575da4ead3334551/result.json",
+        "bytes": 4968,
+        "sha256": "sha256:cdcb0a6ab5b1c1cf833065c8583fa2d9381fb32a3c6430ceb74af10ee1641445",
+        "run_id": "run_575da4ead3334551"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_575da4ead3334551/provenance.json",
+        "bytes": 1398,
+        "sha256": "sha256:e684854d408a3d9ad7af9366bd6b5bd1cd2327e6ad35a88b16e089cba7cc3cb9",
+        "run_id": "run_575da4ead3334551"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_575da4ead3334551.json",
+        "bytes": 19307,
+        "sha256": "sha256:7f5676d75ae7f3b277e001165474e257f1980999a4285dda27e26e467a47bacb",
+        "run_id": "run_575da4ead3334551"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_575da4ead3334551/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:f9d14d1f2c2dcf30ec4a9b444cba4e44298808f089d3637d7694ae9448d62c46",
+        "run_id": "run_575da4ead3334551"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_575da4ead3334551/submitted.patch",
+        "bytes": 1580,
+        "sha256": "sha256:d0f9a3b3046b12c991d47f40331931886762e369b7b25004bbff67b491b085ed",
+        "run_id": "run_575da4ead3334551"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_0f5c0cd58af05907ba3285e4e7ef069e.json",
+        "bytes": 604,
+        "sha256": "sha256:711a5cd943af21965e90a6fee8adb33415b4cadfb650f0fbfca77a7355d41e3e",
+        "run_id": "run_575da4ead3334551"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/manifest.json",
+        "bytes": 2492,
+        "sha256": "sha256:50ed4f5d46701c6b06e21c1627f1a15f38b285a8255d99e87b438ea969ed7038",
+        "run_id": "run_74364afdc3d94f9c"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/result.json",
+        "bytes": 4962,
+        "sha256": "sha256:1d2ca4468f3b13192ecae2d207f903a966656dc1dff57d4c17cf7b89c8eb4f85",
+        "run_id": "run_74364afdc3d94f9c"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/provenance.json",
+        "bytes": 1398,
+        "sha256": "sha256:c29fb1e4a248172612decb80df98e4a5e40a6008037a1089bb10d9d1aba8e646",
+        "run_id": "run_74364afdc3d94f9c"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_74364afdc3d94f9c.json",
+        "bytes": 14624,
+        "sha256": "sha256:c4548c5d88b095e2775111fb9bb3942c6d53b53c2f2195b28070882ade5d7b5b",
+        "run_id": "run_74364afdc3d94f9c"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_74364afdc3d94f9c/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:30143df7778e0efdd3c3d218eeb4c6cb54027ed94db58bd372b9ba6acaceebf2",
+        "run_id": "run_74364afdc3d94f9c"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_74364afdc3d94f9c/submitted.patch",
+        "bytes": 900,
+        "sha256": "sha256:47a3ab3a7972bb77271333bdb88b2ad4168144fe48203db764541433b0766acc",
+        "run_id": "run_74364afdc3d94f9c"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_6b7b036074a2590d97db1afdfe90a89d.json",
+        "bytes": 604,
+        "sha256": "sha256:128d2c6ef84e556dbdeb97883a6356ff7987e30575f93f2c40601f51f06b0948",
+        "run_id": "run_74364afdc3d94f9c"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_7ecb4b2489c34982/manifest.json",
+        "bytes": 2488,
+        "sha256": "sha256:e5feb8bd0bbbe6d78e51d30528904574c1a5e125ed9f3d9d8b606fdbbc9efa3a",
+        "run_id": "run_7ecb4b2489c34982"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_7ecb4b2489c34982/result.json",
+        "bytes": 1792,
+        "sha256": "sha256:6c24ea822b94f1d39e04ed62e741011bd31ea10cb81f5a6ef02efe0bd86418eb",
+        "run_id": "run_7ecb4b2489c34982"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_7ecb4b2489c34982/provenance.json",
+        "bytes": 166,
+        "sha256": "sha256:156b4b598f2cf85fb952307ce6041fac4ccf650f5e38ce454449c2dd05f0aaf2",
+        "run_id": "run_7ecb4b2489c34982"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_7ecb4b2489c34982.json",
+        "bytes": 25930,
+        "sha256": "sha256:59ca7875d9f5177a87840003d5507a6584dd22b22ca4bbf1ca3d6ea0d5db1d55",
+        "run_id": "run_7ecb4b2489c34982"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_a6c95103358f5167bc7d204bbefd49a3.json",
+        "bytes": 455,
+        "sha256": "sha256:ac0d4af998741fe68c8783294f74476107d6f6d453a33ffe6a4381e4048da5df",
+        "run_id": "run_7ecb4b2489c34982"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/manifest.json",
+        "bytes": 2489,
+        "sha256": "sha256:3746eb32695c0758edece47a9cdc128288632907b48418731bdaaf17fdd94780",
+        "run_id": "run_5ffc2e1c58784e17"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/result.json",
+        "bytes": 5018,
+        "sha256": "sha256:1f961e10f678b581094ae26bf8bf5666f03953cfe30496acc7266b854a76c667",
+        "run_id": "run_5ffc2e1c58784e17"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/provenance.json",
+        "bytes": 1398,
+        "sha256": "sha256:03b5e8e801d7fe1d14b0e60bf2a5d35fa1f7d791d3d9a94936922aaf33219887",
+        "run_id": "run_5ffc2e1c58784e17"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_5ffc2e1c58784e17.json",
+        "bytes": 13617,
+        "sha256": "sha256:236e0b12098de3277bf20239e6e264af4324cc4707c3c6698dd135a28a4f94fe",
+        "run_id": "run_5ffc2e1c58784e17"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_5ffc2e1c58784e17/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:e9fd80fa59b91b11cb871c3950ca8506bb994889549a4a14fff14a86c7a58b11",
+        "run_id": "run_5ffc2e1c58784e17"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_5ffc2e1c58784e17/submitted.patch",
+        "bytes": 3482,
+        "sha256": "sha256:b6361b034aafcdd1c176901dd8a01a90d7a6d81a456eb13ec3ec11f46d8a46fc",
+        "run_id": "run_5ffc2e1c58784e17"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_2cf07eaf03315e54908197f76180394b.json",
+        "bytes": 604,
+        "sha256": "sha256:838c048e75241625d9140e4169c9bf1fc487555d55fd9f2c6450035a5d2026dd",
+        "run_id": "run_5ffc2e1c58784e17"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/manifest.json",
+        "bytes": 2491,
+        "sha256": "sha256:c1c00856187d1f7f624b0d5de28d3f39eb4d08d8a3c0a11d7a9bd421b09ee6f8",
+        "run_id": "run_3fe55fd3847d4a4d"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/result.json",
+        "bytes": 4968,
+        "sha256": "sha256:fe2cd921d0c884dbe94fc6f879211021b2b763c544511b1ace634ceed397c696",
+        "run_id": "run_3fe55fd3847d4a4d"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/provenance.json",
+        "bytes": 1397,
+        "sha256": "sha256:459cb26c5446340947f7f60ffa1195d50e7d8fb7f4529a30f932bc18ed319b94",
+        "run_id": "run_3fe55fd3847d4a4d"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_3fe55fd3847d4a4d.json",
+        "bytes": 13996,
+        "sha256": "sha256:1d46a699f599954ca529c02ba3571fbe810338440ceaef12bc9f362963173c33",
+        "run_id": "run_3fe55fd3847d4a4d"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_3fe55fd3847d4a4d/evaluation-receipt.json",
+        "bytes": 600,
+        "sha256": "sha256:63c130152dc39ec22342259035fcab621e176e647b6b7cbeb6d458498cdde81d",
+        "run_id": "run_3fe55fd3847d4a4d"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_3fe55fd3847d4a4d/submitted.patch",
+        "bytes": 2065,
+        "sha256": "sha256:d9fc4a19cf6025f77ccd32699fdfe248754313189e971a1e41b8973c0938b8e0",
+        "run_id": "run_3fe55fd3847d4a4d"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/manifest.json",
+        "bytes": 2489,
+        "sha256": "sha256:5092bc034b63dc132af94613ff96f3a873006065730f9f121b9d76ca89c78710",
+        "run_id": "run_88f96fae3d2442e6"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/result.json",
+        "bytes": 5071,
+        "sha256": "sha256:e99860a57c179ae91f655ed6d70c949554185af8b06a938a5b03211bfeabd7ab",
+        "run_id": "run_88f96fae3d2442e6"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/provenance.json",
+        "bytes": 1398,
+        "sha256": "sha256:09b0a3a83ea8640babe3aab855fe4648538ca8c67873797b6a6a10627803cd39",
+        "run_id": "run_88f96fae3d2442e6"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_88f96fae3d2442e6.json",
+        "bytes": 23252,
+        "sha256": "sha256:ee3433e0851bacb1f681a0b2a335abbb652f5fcb8c93b65bae5f534f1256dcac",
+        "run_id": "run_88f96fae3d2442e6"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_88f96fae3d2442e6/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:19b53c6fd5082e05697c0c283aeb0875a694f14374df954f569d9f9b200c45ed",
+        "run_id": "run_88f96fae3d2442e6"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_88f96fae3d2442e6/submitted.patch",
+        "bytes": 2615,
+        "sha256": "sha256:8b349877164f44217e9bf8fac09cdf39c67d5ff41d1a3aa3be91f94e0d336432",
+        "run_id": "run_88f96fae3d2442e6"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_8edc6a7fd4f3506f92a149698e55da6e.json",
+        "bytes": 604,
+        "sha256": "sha256:5ca9796db0e6d4c6caacf623d84f7f3660cbb8eafff1a83b65fedc4d70df15a6",
+        "run_id": "run_88f96fae3d2442e6"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/manifest.json",
+        "bytes": 2488,
+        "sha256": "sha256:c734b9801a9ee1978ff1aa8eff270f3ca51d0b9ee9b6251c47fe668928c48ede",
+        "run_id": "run_3dc602aab8964d77"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/result.json",
+        "bytes": 4990,
+        "sha256": "sha256:bd910b9a69173e6435b3a2ef2bf714d03df7055f60b6c88f2d31450c748e6f4b",
+        "run_id": "run_3dc602aab8964d77"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/provenance.json",
+        "bytes": 1397,
+        "sha256": "sha256:395058535a04596db221969cb929cb5bf3de32e670133522e62b7d90eb1130ce",
+        "run_id": "run_3dc602aab8964d77"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_3dc602aab8964d77.json",
+        "bytes": 26418,
+        "sha256": "sha256:b7fad72d27833429963c59535d25d3ccc690f604ffe9f4e14b48d11f4397da11",
+        "run_id": "run_3dc602aab8964d77"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_3dc602aab8964d77/evaluation-receipt.json",
+        "bytes": 600,
+        "sha256": "sha256:34093473e60c9fbfb76de37c8172052e9b4430b606d9eb182738d2d94da4ed6c",
+        "run_id": "run_3dc602aab8964d77"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_3dc602aab8964d77/submitted.patch",
+        "bytes": 3788,
+        "sha256": "sha256:37be7c96b1874b76915fd3005459dc9271107e77961863294c417414c50d2636",
+        "run_id": "run_3dc602aab8964d77"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_dac1b9595479551688a9613db9462927.json",
+        "bytes": 604,
+        "sha256": "sha256:e5f97aeed09f9dfa69189b2fa2dcee12518f309233de2adaec38d9905413ac11",
+        "run_id": "run_3dc602aab8964d77"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_59aac91defac456b/manifest.json",
+        "bytes": 2488,
+        "sha256": "sha256:c47ee2bffd20384a4b9d2c670eca9bd4be958bdea48e9e813ab4b976b8502f31",
+        "run_id": "run_59aac91defac456b"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_59aac91defac456b/result.json",
+        "bytes": 7394,
+        "sha256": "sha256:fad4a7569801f37a3e63809f9b518fd65a87bd7c4ab0fefcfac3c3472bf275e9",
+        "run_id": "run_59aac91defac456b"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_59aac91defac456b/provenance.json",
+        "bytes": 2327,
+        "sha256": "sha256:9af93cace102b83c2db49d18631d88c5192a7992a94613e649aca8f8bdaf027e",
+        "run_id": "run_59aac91defac456b"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_59aac91defac456b.json",
+        "bytes": 13533,
+        "sha256": "sha256:09dd1b1744bab045ef28e977dd9fd1d6e52d10256f95c473a3a4d6970bb74909",
+        "run_id": "run_59aac91defac456b"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_59aac91defac456b/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:3c51b442f7cd0c7a1afdbe3305d614ad25a0ab0436d9c9a37988e0b83c72f562",
+        "run_id": "run_59aac91defac456b"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_59aac91defac456b/submitted.patch",
+        "bytes": 3795,
+        "sha256": "sha256:ec0db776e58ce2bfe0d855b104735809b08367486b9e152fd778e632b74a1570",
+        "run_id": "run_59aac91defac456b"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_19d13b555e5f5e21b89c0dde9e593ec8.json",
+        "bytes": 604,
+        "sha256": "sha256:58084373e77d8b032689d78d1a7cffcac45922e2ab923af1d19ba1aea7a9c105",
+        "run_id": "run_59aac91defac456b"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_cc179262fa664600/manifest.json",
+        "bytes": 2488,
+        "sha256": "sha256:c819ebd51549374a11078e42f040d8cf8be29b40481051bec5a7762ca5a54708",
+        "run_id": "run_cc179262fa664600"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_cc179262fa664600/result.json",
+        "bytes": 7398,
+        "sha256": "sha256:5c5caca31aa249e03e703440f6399d805c776f040f048716b29c7f1bb0483774",
+        "run_id": "run_cc179262fa664600"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_cc179262fa664600/provenance.json",
+        "bytes": 2327,
+        "sha256": "sha256:8cf7197e862770b40dcf805bec5ac7b06060007e7ecf2601f03827cda807e933",
+        "run_id": "run_cc179262fa664600"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_cc179262fa664600.json",
+        "bytes": 14533,
+        "sha256": "sha256:7f53070bcd1076c7e2007c44525915c4e72d4446d808e4d8050a63e0030d693c",
+        "run_id": "run_cc179262fa664600"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_cc179262fa664600/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:56efb4ab72a77ba906e2a7782ecab82703ede0dce32de20b470fd4563d5b8fb8",
+        "run_id": "run_cc179262fa664600"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_cc179262fa664600/submitted.patch",
+        "bytes": 3622,
+        "sha256": "sha256:e873433015a0d7cecb5ccdffb3483982a5b7cc527983f6c7bc1894297f26d0ff",
+        "run_id": "run_cc179262fa664600"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_bcf0bf2e95765d42b925742d955da82e.json",
+        "bytes": 604,
+        "sha256": "sha256:a3a36537b3467eef519f5327d743dfbd63d702541ee5b5e8cfe0919ef0f003f7",
+        "run_id": "run_cc179262fa664600"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/manifest.json",
+        "bytes": 2495,
+        "sha256": "sha256:9463563e7083db1cbc05d403c7d9f09b2a4daa075203d48df732909a64b2c780",
+        "run_id": "run_ac3ae1a7009a4e8b"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/result.json",
+        "bytes": 4985,
+        "sha256": "sha256:02b676351030704f80c0d8e83913ce1e60f5e1ab03e6718bb694dc20ff100a40",
+        "run_id": "run_ac3ae1a7009a4e8b"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/provenance.json",
+        "bytes": 1397,
+        "sha256": "sha256:cb0bea33bbea2fef8fed0f65d51197743c34f653d9db6701ae8fb6f3f57b22b9",
+        "run_id": "run_ac3ae1a7009a4e8b"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_ac3ae1a7009a4e8b.json",
+        "bytes": 14323,
+        "sha256": "sha256:dea236119d0590f0554a039a53c17a01fb394881b914a77a3e8db6af0cb97166",
+        "run_id": "run_ac3ae1a7009a4e8b"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_ac3ae1a7009a4e8b/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:ed83df69117d6d19a6a8aa1be5c9360068c5fb8cd7b4536bec3edfcfb80374b7",
+        "run_id": "run_ac3ae1a7009a4e8b"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_ac3ae1a7009a4e8b/submitted.patch",
+        "bytes": 1021,
+        "sha256": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+        "run_id": "run_ac3ae1a7009a4e8b"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_f90fa668a6945abe98ef6dd5e4761a97.json",
+        "bytes": 604,
+        "sha256": "sha256:fe572c2ff40196fd740925f7ff2565577a22b47cdf73691e39689b7d508ebc12",
+        "run_id": "run_ac3ae1a7009a4e8b"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/manifest.json",
+        "bytes": 2495,
+        "sha256": "sha256:f6da464a67401baa482883128b7e133e913943d1a9c195c5333d16e99e66c7f6",
+        "run_id": "run_d5c2e22b485a4578"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/result.json",
+        "bytes": 4984,
+        "sha256": "sha256:c68b5cdf6828c5699ed61323b22e507df15a95491ac728f5fee48855c5eebefd",
+        "run_id": "run_d5c2e22b485a4578"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/provenance.json",
+        "bytes": 1397,
+        "sha256": "sha256:fc0f63c3ce9544c18cd238d16b271c6bb687e8e5a63a14b778892d553b6ffec7",
+        "run_id": "run_d5c2e22b485a4578"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_d5c2e22b485a4578.json",
+        "bytes": 13546,
+        "sha256": "sha256:c2ac675b9f088a303e57208912db3cb0164f67d21151fcd179ff7b4c79fdfff5",
+        "run_id": "run_d5c2e22b485a4578"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_d5c2e22b485a4578/evaluation-receipt.json",
+        "bytes": 599,
+        "sha256": "sha256:93c45a3a25a55d7ec4801b1920ecdb641e46cb060043c0c5b03793123ffcd0c0",
+        "run_id": "run_d5c2e22b485a4578"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_d5c2e22b485a4578/submitted.patch",
+        "bytes": 1021,
+        "sha256": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+        "run_id": "run_d5c2e22b485a4578"
+      },
+      {
+        "role": "failure-record",
+        "path": ".patchloop/failures/dev-train/fail_ab3918ee4a3c5f34bc9d04a8f0970c00.json",
+        "bytes": 604,
+        "sha256": "sha256:d11ae39444ef99c4d190e6d7d94e0f871a23f314cea930921305e0fdbcddce3f",
+        "run_id": "run_d5c2e22b485a4578"
+      },
+      {
+        "role": "manifest",
+        "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/manifest.json",
+        "bytes": 2492,
+        "sha256": "sha256:dd9cbb42eeb5c30f69029c6a7fc660f2090996e8d2da1ae4a08ef73fff78a4d4",
+        "run_id": "run_92bf10d2a6b14601"
+      },
+      {
+        "role": "result",
+        "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/result.json",
+        "bytes": 4969,
+        "sha256": "sha256:02e715421c8ed9fb0b821f6fe12e8a6d4f5e114f8f1dc47b0ed1944e999ab7d5",
+        "run_id": "run_92bf10d2a6b14601"
+      },
+      {
+        "role": "provenance",
+        "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/provenance.json",
+        "bytes": 1397,
+        "sha256": "sha256:80db8e1ea1ddde15ab462f87da6758ab03a1384447fb18ae579e8a9fea83f721",
+        "run_id": "run_92bf10d2a6b14601"
+      },
+      {
+        "role": "qualification",
+        "path": ".patchloop/qualifications/run_92bf10d2a6b14601.json",
+        "bytes": 15279,
+        "sha256": "sha256:004ed34d8c83d67550d6246cfa5eb7e160e77b2855d90c0fb978f8e69d45c3b9",
+        "run_id": "run_92bf10d2a6b14601"
+      },
+      {
+        "role": "evaluation-receipt",
+        "path": ".patchloop/artifacts/runs/run_92bf10d2a6b14601/evaluation-receipt.json",
+        "bytes": 600,
+        "sha256": "sha256:fa8d60016fb8bd65fb15353beb41ae3dd1fe1ddaf9695509d222cb5ee03ac81e",
+        "run_id": "run_92bf10d2a6b14601"
+      },
+      {
+        "role": "submitted-patch",
+        "path": ".patchloop/runs/run_92bf10d2a6b14601/submitted.patch",
+        "bytes": 2944,
+        "sha256": "sha256:074c1702115278894da3fa9492e9da13a06ae0746ddafcc616f24cbb919253fb",
+        "run_id": "run_92bf10d2a6b14601"
+      }
+    ],
+    "portable_contract": {
+      "self_contained_without_local_runtime_artifacts": true,
+      "private_spec_embedded": false,
+      "hidden_assertion_embedded": false,
+      "reference_patch_embedded": false,
+      "submitted_patch_body_embedded": false,
+      "model_or_tool_body_embedded": false,
+      "api_key_or_authorization_embedded": false,
+      "raw_artifact_paths_are_non_authoritative_pointers": true,
+      "semantic_body_is_content_addressed": true
+    },
+    "evidence_validation": {
+      "raw_result_exact_hash_verified": true,
+      "journal_hash_chain_verified": true,
+      "journal_runtime_reconciliation_verified": true,
+      "execution_plan_exact_hash_verified": true,
+      "completion_gate_read_only_recomputed": true,
+      "qualification_files_verified": 12,
+      "qualification_checks_passed": 347,
+      "read_only_recomputation_matches": 12,
+      "official_receipts_and_submitted_patch_hashes_verified": 11,
+      "budget_receipt_and_submitted_patch_absence_verified": true,
+      "prompt_usage_reconciliation_passed": true,
+      "input_precount_relation": "614=613-completed-provider-calls+1-pre-provider-block",
+      "leak_safe_projection_only": true
+    },
+    "analysis": {
+      "exact_development_baseline_scrr": {
+        "successes": 2,
+        "attempts": 12,
+        "rate": 0.16666666666666666
+      },
+      "official_evaluator_hidden_acceptance": {
+        "successes": 2,
+        "attempts": 11,
+        "rate": 0.18181818181818182,
+        "diagnostic_only": true
+      },
+      "task_first_results": [
+        {
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "attempts": 2,
+          "successes": 0,
+          "success_rate": 0.0
+        },
+        {
+          "task_id": "hf-hub-xet-endpoint-propagation",
+          "attempts": 2,
+          "successes": 0,
+          "success_rate": 0.0
+        },
+        {
+          "task_id": "loguru-invalid-format-feedback",
+          "attempts": 2,
+          "successes": 0,
+          "success_rate": 0.0
+        },
+        {
+          "task_id": "pdm-ignore-active-venv-resolution",
+          "attempts": 2,
+          "successes": 2,
+          "success_rate": 1.0
+        },
+        {
+          "task_id": "pyfakefs-makedirs-parent-traversal",
+          "attempts": 2,
+          "successes": 0,
+          "success_rate": 0.0
+        },
+        {
+          "task_id": "tox-cross-section-empty-substitution",
+          "attempts": 2,
+          "successes": 0,
+          "success_rate": 0.0
+        }
+      ],
+      "task_first_mean_success_rate": 0.16666666666666666,
+      "outcome_counts": {
+        "agent_failure": 1,
+        "resolved": 2,
+        "task_failure": 9
+      },
+      "memory_effect_estimated": false,
+      "held_out_performance_estimated": false,
+      "confidence_interval_computed": false,
+      "interpretation": "exact-development-no-memory-baseline-only"
+    },
+    "claims_boundary": {
+      "live_provider_execution_observed": true,
+      "provider_model_calls_observed": 613,
+      "official_evaluator_runs_observed": 11,
+      "development_no_memory_baseline_result_established": true,
+      "development_baseline_denominator_complete": true,
+      "comparison_denominator_eligible": true,
+      "memory_review_eligible": true,
+      "memory_admission_unlocked": false,
+      "memory_index_frozen": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "held_out_or_cross_condition_effect_estimated": false,
+      "automatic_rerun_authorized": false,
+      "hidden_driven_tuning_authorized": false,
+      "per_row_atomic_sqlite_consumption_claimed": false,
+      "duplicate_paid_call_prevention_claimed": false,
+      "live_resume_supported": false,
+      "actual_invoice_or_free_tier_treatment_claimed": false,
+      "original_result_journal_run_or_qualification_modified": false,
+      "seal_provider_calls": 0,
+      "seal_evaluator_calls": 0,
+      "seal_added_model_cost_usd": 0.0
+    },
+    "next_gate": {
+      "decision_required": "public-evidence-memory-review-dedup-and-leak-scan",
+      "current_experiment_hard_consumed": true,
+      "current_execution_hash_reusable": false,
+      "automatic_successor_authorized": false,
+      "memory_review_candidate_count": 9,
+      "memory_rule_admission_completed": false,
+      "memory_index_build_authorized": false,
+      "core_campaign_unlocked": false,
+      "new_live_execution_authorized": false
+    }
+  }
+}

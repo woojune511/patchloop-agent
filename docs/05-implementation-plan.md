@@ -1,10 +1,18 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-097 exact 3M no-memory successor와 runtime-v2/full-schedule cost source contract를
-offline으로 구현했으며 clean preflight/hash/approval/live/result/memory/core authority는 닫음**
+현재 milestone: **D-098 exact D-097 measured no-memory baseline result를 portable seal로 고정했고
+development denominator와 memory review eligibility만 열었으며 admission/index/core/analysis는 닫음**
 
-D-097은 `dev-no-memory-condition-neutral-3000k-20260805-r1`에 frozen memory-development 6개 task를 source
+D-098은 source commit `67fa85e47c5cf39c0ee03ad69d9d31f9fdd11ac3`과 consumed execution hash
+`sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4`의 12-row 결과를
+read-only로 재검증한다. 12/12 terminal·qualified·cost-settled, 11 official evaluator와 1 canonical pre-provider
+budget terminal, 2 resolved/9 task failure/1 agent failure를 그대로 봉인한다. Exact development SCRR 2/12는
+baseline 관찰값이지 held-out 또는 memory 효과가 아니다. Official task failure 9개만 review queue에 들어가고
+budget terminal과 success는 제외된다. `memory_review_eligible=true`지만 `memory_admission_unlocked=false`다.
+다음 gate는 public evidence review·semantic dedup·leak scan이고 index/core를 자동으로 열지 않는다.
+
+Historical D-097은 `dev-no-memory-condition-neutral-3000k-20260805-r1`에 frozen memory-development 6개 task를 source
 order대로 `no_memory` 각 2회 배치한다. D-096 source identity와 deterministic expanded schedule은 서로 다른
 hash로 고정한다. Exact D-096 tuple은 runtime contract/evidence v2와 plan/manifest/start/resume/qualification에
 결속하고, historical D-083/D-084 v1은 그대로 보존한다. Full-schedule policy는 첫 provider call 전에 하나의
@@ -39,7 +47,7 @@ context와 qualification은 통과했으므로 confirmed harness defect는 아�
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-097 exact no-memory source/runtime-v2 gate | 3M/3,600s/null-call 6-task × 2 suite와 full-schedule `$164` prospective cap; clean preflight/hash/approval/live/result/memory/core closed |
+| Phase 6 evaluation | D-098 exact no-memory baseline result sealed | 12/12 denominator complete, SCRR 2/12, review candidates 9; admission/index/core/comparative analysis closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -1508,3 +1516,23 @@ Next unblocked item:
    exact test는 즉시 isolated 1/1로 통과했다. 이를 monolithic 1,721/7로 보고하지 않는다. Ruff, compileall, exact
    rebuild와 `git diff --check`도 통과했다. D-097 source 단계의 provider/evaluator call과 added model cost는
    0/0/`$0`이다.
+
+## Current measured baseline seal — D-098 exact D-097 result
+
+1. **완료:** Exact source commit과 one-use execution hash의 raw result, 39-event journal, plan, 12 persisted
+   qualification과 per-run artifact hash를 read-only로 재검증한다. Original runtime artifact는 수정하지 않는다.
+2. **완료:** Baseline-admission gate는 12/12 terminal·qualified·cost-settled, 11 official branch와 1 canonical
+   pre-provider budget branch exact-one으로 통과했다. Infrastructure/qualification/diagnostic/cost-censor error는 0이다.
+3. **측정:** Outcome은 2 resolved, 9 task failure, 1 agent failure다. SCRR 2/12와 task-first mean 1/6은 exact
+   development baseline 관찰값이며 held-out·memory effect·CI가 아니다.
+4. **측정:** 10,492,742 input + 881,967 output token, 613 model/964 tool call, 7,258,662ms와 usage-derived
+   standard list-price `$11.838408`을 기록했다. 613/613 response는 completed이고 input telemetry가 일치했다.
+5. **완료:** Official task failure 9개만 `memory-review-candidate-set-v1`에 넣고 resolved 2개와 AnyIO budget
+   terminal을 제외한다. Failure record 10개를 candidate 10개로 오해하지 않는다.
+6. **닫힘:** Candidate rule 0, review/dedup/leak scan false, `memory_admission_unlocked=false`, index/core/analysis
+   closed다. Exact experiment ID/hash는 hard-consumed하며 자동 재실행하지 않는다.
+7. **산출물:** Portable seal semantic body SHA는
+   `sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf`, 117,209-byte file SHA는
+   `sha256:ad87fa8c540552da62d964a430c29b032097b5cabbe78f0102c23cf36330b2dc`다.
+8. **다음 gate:** 9개 source를 public evidence만으로 review하고 semantic group으로 dedup한 뒤 leak scan을
+   통과한 proposal을 만든다. Proposal validation은 human approval이나 memory index build가 아니다.

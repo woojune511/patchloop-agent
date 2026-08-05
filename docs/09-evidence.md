@@ -2,6 +2,50 @@
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
+## D-098 exact no-memory baseline — measured result sealed
+
+Exact experiment `dev-no-memory-condition-neutral-3000k-20260805-r1`은 source commit
+`67fa85e47c5cf39c0ee03ad69d9d31f9fdd11ac3`과 approved execution hash
+`sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4`로 정확히 한 번 실행됐다.
+Raw result는 190,558 bytes,
+`sha256:becb176561f5940073469d530a8db0fdb8d19f292bdf2d4c670a79c7aa19f99a`; 39-event journal은
+58,203 bytes, `sha256:9cf4001098a601e97e01c30238aba427350cc96cbb472a7b757dd8dce8744f98`다. Final event
+hash는 `sha256:990f129d88dd59ee136db032cd01029b516c65659dcc1362f9b6470d15db6b40`이고 result hash,
+execution-plan hash, cost-control hash와 final cost qualification을 결속한다.
+
+Final admission gate는 pass다. 12/12 row가 terminal·qualified·cost-settled이고 infrastructure, qualification,
+diagnostic, not-started와 cost-censor count는 0이다. 11개 row가 official evaluator에 도달했으며 한 AnyIO row는
+2,964,853 token 뒤 다음 exact request에 필요한 61,378 token 중 35,147만 남아 26,231 token 부족으로 provider
+call 전에 끝났다. Terminal branch는 mutually exclusive/exhaustive exact-one이다.
+
+Outcome은 PDM 2 resolved, pyfakefs/HF Hub/Loguru/tox 각 2와 AnyIO r2의 task failure 9, AnyIO r1 agent
+failure 1이다. Primary exact development SCRR는 2/12 = 16.67%이고 task-first mean은 1/6 = 16.67%다.
+Evaluator-only hidden pass는 2/11 = 18.18%이며 diagnostic으로만 기록한다. Evaluated 11개 row는 모두
+regression/scope/safety를 통과했다.
+
+Aggregate usage는 10,492,742 input + 881,967 output = 11,374,709 token, reasoning-output subset 805,212,
+613 model/964 tool call과 7,258,662ms다. 613/613 issued response는 completed이고 requested input과 provider usage가
+일치했으며 truncation disabled, `store=false`, previous-response dependency 0이다. Input pre-count 614는
+613 provider call과 budget 차단 전 pre-count 1개의 합이다. Usage-derived standard list-price는 `$11.838408`이며
+invoice/free-tier treatment 주장이 아니다.
+
+Official task failure 9개만 memory-review candidate다. PDM success 2개와 budget terminal은 제외한다. 따라서
+`comparison_denominator_eligible=true`, `memory_review_eligible=true`지만
+`memory_admission_unlocked=false`, memory index/core/cross-condition analysis closed다. Portable seal은
+[`dev-no-memory-condition-neutral-3000k-20260805-r1.json`](../reports/live-pilot/dev-no-memory-condition-neutral-3000k-20260805-r1.json),
+semantic body SHA `sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf`,
+117,209-byte file SHA `sha256:ad87fa8c540552da62d964a430c29b032097b5cabbe78f0102c23cf36330b2dc`다.
+D-098 builder는 raw result/journal/qualification을 수정하지 않았고 provider/evaluator call 0/0, added model cost
+`$0`이다. Exact experiment ID는 hard-consumed한다.
+
+Final verification은 D-096~D-098 focused 106/106, related seal/experiment/trace-qualification 438/438, Ruff,
+compileall, `git diff --check`와 exact 117,209-byte rebuild가 통과했다. Repository-wide collection은 1,743개다.
+Full-order 실행은 1,735 passed/7 environment-dependent skipped와 기존 D-092 WAL/SHM sidecar invariant 1 failure를
+기록했다. 그 exact D-092 test는 fresh isolated process에서 1/1 통과했으며, 이 isolated pass를 full-suite pass 수에
+합치거나 D-098이 D-092를 고쳤다고 주장하지 않는다. D-098 자체 builder는 copied database/WAL snapshot에서
+StateStore 재계산을 수행하고 원본 SQLite/WAL/SHM byte·mtime fingerprint 불변, canonical `sealed_at`, 모든 row의
+manifest/result durable equality와 budget provenance exact binding을 focused test로 강제한다.
+
 ## D-060 three-task no-memory budget pilot — live diagnostic complete
 
 The checked-in

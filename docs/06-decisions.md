@@ -1011,3 +1011,23 @@ Evidence/issue:
   Live result, baseline denominator, memory review/admission/index, core와 analysis는 계속 닫혀 있고 blocker는
   `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.
 - Date: 2026-08-05
+
+### D-098 accepted result decision — seal the exact development baseline and open review only
+
+- D-097 source commit `67fa85e47c5cf39c0ee03ad69d9d31f9fdd11ac3`과 approved execution hash
+  `sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4`로 생성된 result를
+  exact development no-memory baseline으로 봉인한다. ID/hash/run/result는 immutable하며 재실행하지 않는다.
+- 12/12 terminal·qualified·cost-settled와 final gate pass가 denominator completion을 결정한다. Task success는
+  predicate가 아니고 observed outcome 2 resolved, 9 task failure, 1 canonical budget agent failure를 그대로 남긴다.
+- SCRR 2/12와 task-first 1/6은 development baseline 기술 통계다. Held-out 성능, memory improvement, CI 또는
+  일반적인 agent 능력을 주장하지 않는다.
+- Memory review source는 official evaluator `task_failure`이면서 qualification의
+  `memory_candidate_eligible=true`인 9개 row뿐이다. PDM success 2개와 AnyIO budget terminal은 제외한다.
+- Review queue를 여는 것과 rule/index admission을 분리한다. Public-evidence review, semantic dedup, leak scan,
+  group-level approval과 proposal-consuming builder 전에는 `memory_admission_unlocked=false`다.
+- Portable artifact는 `reports/live-pilot/dev-no-memory-condition-neutral-3000k-20260805-r1.json`이다. Semantic
+  body SHA는 `sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf`, 117,209-byte
+  file SHA는 `sha256:ad87fa8c540552da62d964a430c29b032097b5cabbe78f0102c23cf36330b2dc`다.
+- Usage-derived standard list-price는 `$11.838408`이며 actual invoice/free-tier treatment 주장이 아니다. D-098
+  seal 과정의 provider/evaluator call과 added model cost는 0/0/`$0`이다.
+- Date: 2026-08-05

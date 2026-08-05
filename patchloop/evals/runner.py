@@ -154,6 +154,9 @@ CONSUMED_CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_IDS = frozenset(
 CONSUMED_CONDITION_NEUTRAL_ACCRUED_CAP_EXPERIMENT_IDS = frozenset(
     {CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID}
 )
+CONSUMED_CONDITION_NEUTRAL_BASELINE_EXPERIMENT_IDS = frozenset(
+    {CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID}
+)
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
     | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
@@ -170,6 +173,7 @@ HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     | CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS
     | CONSUMED_CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_IDS
     | CONSUMED_CONDITION_NEUTRAL_ACCRUED_CAP_EXPERIMENT_IDS
+    | CONSUMED_CONDITION_NEUTRAL_BASELINE_EXPERIMENT_IDS
 )
 SINGLE_TASK_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
@@ -1527,6 +1531,8 @@ def _load_d097_durable_usage_evidence(
     run_id: str,
     schedule_row_id: str,
     run_root: Path,
+    *,
+    state_path: Path | None = None,
 ) -> dict[str, Any]:
     """Reload D-097 usage from qualification- and result-bound state."""
 
@@ -1552,6 +1558,7 @@ def _load_d097_durable_usage_evidence(
     source_evidence_hash = calculate_source_evidence_hash(
         run_id,
         root=run_root,
+        state_path=state_path,
     )
     if qualification.get("source_evidence_hash") != source_evidence_hash:
         raise ContractError("D-097 durable source evidence changed after qualification")
