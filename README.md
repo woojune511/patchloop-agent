@@ -2,6 +2,22 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-04 D-095는 승인된 D-094 high-headroom panel의 measured result를 append-only evidence로 봉인했다.
+Exact experiment `generic-high-headroom-readiness-v2v5-20260804-r1`의 AnyIO, pyfakefs, HF Hub 세 row는
+모두 terminal·trace-qualified·accepted submission·official evaluator에 도달했고 process confound가 0이어서
+workflow-readiness gate를 3/3 통과했다. 그러나 세 row 모두 hidden acceptance가 실패해 task success와
+SCRR은 0/3이며, regression/scope/safety policy는 3/3 통과했다. 총 사용량은 1,005,857 token과
+63 model/119 tool call, 고정 list-price 계산 비용은 `$0.9374115`다. Portable seal은
+`reports/live-pilot/generic-high-headroom-readiness-v2v5-20260804-r1.json`, semantic body SHA는
+`sha256:79fe3312222896beec28070b5a77e36ffc7854a00c983a70f90cbe37ac2bb99f`, file SHA는
+`sha256:62ef705c992fcdb3e6e6b648e8376c4d5fdbff2534bd5b0a37158b99b4b3f95e`다. Exact experiment ID는
+hard-consumed되어 재실행하지 않는다. 이는 workflow calibration이지 no-memory baseline이나 performance estimate가
+아니며 comparison denominator, resource-policy sufficiency, memory admission/index와 core 권한을 열지 않는다.
+D-095 seal 자체의 provider/evaluator call과 추가 model cost는 0/0/`$0`이다.
+Final verification은 focused/relevant 303/303과 repository-wide split 1,637 collected 중 1,630 passed/7
+environment-dependent skipped를 통과했다. D-092 WAL/SHM order-sensitive invariant는 isolated process에서
+통과했으며 Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`도 통과했다.
+
 2026-08-04 D-094는 D-093의 후보를 실제 실행하지 않고 exact 3-task high-headroom readiness source로 고정했다.
 `generic-high-headroom-readiness-v2v5-20260804-r1`은 AnyIO, pyfakefs, HF Hub를 이 순서로 `no_memory` 각 1회
 배치하고 mini medium/standard/default, retry 0, prompt V3, tool v2/context v5, output 25,000과

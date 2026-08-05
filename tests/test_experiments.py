@@ -578,6 +578,7 @@ def test_consumed_generic_baseline_readiness_is_immutable(
         eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID,
         eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID,
         eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
+        eval_runner.GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     } == eval_runner.CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS
     assert (
         experiment_id

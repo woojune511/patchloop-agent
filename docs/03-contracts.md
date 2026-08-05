@@ -3067,3 +3067,29 @@ Standard worst-rate reserve는 `(3,000,000 + 25,000) × $4.50/M = $13.6125`/run,
 `$40.8375`/suite이고 source cap은 `$41`이다. `high-headroom-readiness-source-gate-manifest-v1` artifact는 이
 산식과 source bytes를 고정하지만 no-call preflight, execution hash, approval 또는 paid authority를 만들지 않는다.
 Historical run과 결과는 변경하지 않으며 baseline, denominator, memory와 core authority도 열지 않는다.
+
+## 37. D-095 high-headroom readiness result-seal contract
+
+Portable report schema `generic-high-headroom-readiness-d095-evidence-v1`은 exact
+`schema_version/report_id/semantic_body_hash/semantic_body` wrapper를 사용하고, canonical semantic body hash가
+`d095_<hash>` report ID를 결정한다. Body는 D-094 source commit/YAML/source artifact, exact execution hash,
+suite/schedule/plan identity, raw result, journal, 세 run과 qualification, telemetry aggregate 및 claims boundary를
+결속한다. Portable projection에는 private assertion, solution patch나 model/tool body를 넣지 않는다.
+
+Required measured facts는 terminal·qualified·accepted submission·official evaluator `3/3`, persisted
+qualification read-only match `3/3`, qualification check `84/84`, infrastructure/qualification/diagnostic/
+budget-terminal/terminal-loop/model-or-tool-call-budget confound 0이다. 세 run은 모두 `task_failure`이며
+hidden `fail`, regression/scope/safety `pass`라 task success와 SCRR은 `0/3`이다. Aggregate usage는
+957,052 input + 48,805 output = 1,005,857 token, 63 model call, 119 tool call과 fixed-manifest
+list-price `$0.9374115`다.
+
+Raw result SHA는 `sha256:1b0c7d7452b70d6221c40b284646e50286f8f12b1d125d54bf66c1d89a0cf2b2`,
+journal file/final-event SHA는 각각
+`sha256:d5164b3d34bf0ec392d879b62aa0624f001499b0cb89f10c24145ef0aa26905b`와
+`sha256:fbaa048e3ed89e33de868a7794aa8c7d30b1af915c486e51b174f9630a1083a3`이어야 한다. Report의
+claims boundary는 calibration-only와 readiness pass를 true로 두되 no-memory performance baseline,
+success-rate estimate, comparison denominator/resource freeze, memory review/admission/index, core와 analysis를
+false로 고정한다. Seal 자체 provider/evaluator call과 added model cost는 0/0/`$0`이고 exact ID는
+hard-consumed다. `one_use_execution_hash_consumed=true`는 sealed 8-event journal에서 exact campaign invocation이
+하나임을 검증하고 current source의 static consumed guard를 더한 D-095 사실이다. 이를 generic durable spend
+reservation ledger나 다른 hash의 소비 증거로 해석하지 않는다.

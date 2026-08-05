@@ -5109,7 +5109,17 @@ def test_d081_generic_readiness_rejects_forged_count_budget_block(
 
 def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_requests(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    historical_suite = eval_runner.load_suite(
+        "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml"
+    )
+    assert historical_suite.pricing_verified_at is not None
+    monkeypatch.setattr(
+        "patchloop.state.store.utc_now",
+        lambda: historical_suite.pricing_verified_at,
+    )
+
     def build_row(root: Path) -> tuple[str, RunResult]:
         run_id, result, _ = _terminal_trace(
             root,

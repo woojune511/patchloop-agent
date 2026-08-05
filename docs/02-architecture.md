@@ -1214,3 +1214,21 @@ Source builder는 D-093 correction, D-084 comparison-runtime source, frozen data
 capability, execution hash, user approval, provider/evaluator call이나 measured result가 없다. 다음 단계의 clean
 no-call preflight가 source commit과 환경을 다시 묶은 one-use candidate hash를 만든 뒤에만 max-`$41` 승인을
 요청할 수 있다.
+
+## 36. D-095 measured-result seal and static consumption
+
+D-095는 D-094 source나 live result를 수정하지 않고 승인된 한 invocation을 leak-safe portable report로
+투영한다. Report는 source commit/YAML/source-gate, execution plan, raw result, 8-event journal, 세 run의
+qualification과 public trace aggregate를 content hash로 결속한다. Private spec, hidden assertion, reference 또는
+submitted patch body, model/tool body와 credential은 포함하지 않는다.
+
+Exact execution hash `sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75`는
+source commit `82fbb33f20cabb57a151db871782345c6cafa3f0`에서 한 번 소비됐다. AnyIO, pyfakefs와 HF Hub
+세 row는 모두 terminal·trace-qualified·accepted submission·official evaluator에 도달했고 budget 또는 다른
+process confound가 없어 readiness gate가 통과했다. 세 patch는 모두 hidden acceptance에 실패했지만
+regression/scope/safety는 통과했다. 따라서 architecture-level 결론은 exact-tuple workflow readiness와
+task correctness 0/3을 분리해 보존한다.
+
+Seal 뒤 exact experiment ID는 static consumed set을 통해 local raw artifact가 없는 clean machine에서도
+`HISTORICAL_SUITE_IMMUTABLE`로 차단한다. 이 결과는 calibration-only이며 no-memory baseline, comparison
+denominator, memory review/admission/index, core campaign 또는 automatic rerun capability를 만들지 않는다.

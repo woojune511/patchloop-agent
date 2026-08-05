@@ -10,7 +10,31 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-094 exact three-task high-headroom readiness source/offline gate complete; no clean preflight,
+- 현재 milestone은 `D-095 D-094 measured result sealed; exact three-row workflow readiness passed,
+  task success/SCRR 0/3, and no baseline, denominator, memory, or core authority`다. Exact experiment
+  `generic-high-headroom-readiness-v2v5-20260804-r1`은 source commit
+  `82fbb33f20cabb57a151db871782345c6cafa3f0`과 승인 execution hash
+  `sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75`로 정확히 한 번
+  실행됐다. AnyIO, pyfakefs, HF Hub 세 row 모두 terminal·trace-qualified·accepted submission·official
+  evaluator에 도달했고 infrastructure/qualification/diagnostic/budget/terminal-loop confound는 0이므로
+  `generic-high-headroom-readiness-gate-v1`은 3/3 통과했다. 세 row 모두 regression/scope/safety는
+  통과했지만 hidden acceptance가 실패해 task success와 SCRR은 0/3이다. 총 사용량은 63 model/119 tool
+  call, 957,052 input + 48,805 output = 1,005,857 token, 계산상 고정 list-price 비용은
+  `$0.9374115`다. 이는 billed invoice나 free-tier charge 주장이 아니다. Portable append-only seal은
+  `reports/live-pilot/generic-high-headroom-readiness-v2v5-20260804-r1.json`, semantic body SHA는
+  `sha256:79fe3312222896beec28070b5a77e36ffc7854a00c983a70f90cbe37ac2bb99f`, file SHA는
+  `sha256:62ef705c992fcdb3e6e6b648e8376c4d5fdbff2534bd5b0a37158b99b4b3f95e`다. Raw result,
+  journal, qualification과 evaluator result는 수정하지 않았고 exact experiment ID는 static hard-consumed라
+  재실행하지 않는다. 이 결과는 workflow-completion calibration일 뿐 no-memory performance baseline,
+  comparison denominator, resource-policy sufficiency, memory review/admission/index 또는 core campaign을
+  열지 않으며 hidden-driven tuning이나 자동 재실행도 승인하지 않는다. D-095 seal 자체 provider/evaluator
+  call과 추가 model cost는 0/0/`$0`이다. Final verification은 focused/relevant 303/303과 repository-wide
+  split 1,637 collected 중 1,630 passed/7 environment-dependent skipped를 통과했다. Single-process full run은
+  실패 없이 79%에서 10분 orchestration timeout에 도달했다. File shard 1은 644 passed/1 skipped, file shard
+  2는 D-092 WAL/SHM order-sensitive invariant 한 건 외 985 passed/6 skipped였고 그 invariant는 같은 current
+  tree의 isolated process에서 통과했다. Historical pricing fixture는 fixed-time으로 만들어 shard 안에서
+  통과했다. Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`도 통과했다.
+- Historical D-094 milestone은 `D-094 exact three-task high-headroom readiness source/offline gate complete; no clean preflight,
   execution hash, approval, provider execution, baseline, denominator, memory, or core authority`다. Exact suite
   `generic-high-headroom-readiness-v2v5-20260804-r1`은 frozen memory-development의 AnyIO, pyfakefs, HF Hub를
   이 순서로 `no_memory` 각 1회 배치한다. Runtime은 `gpt-5.4-mini-2026-03-17`

@@ -896,3 +896,30 @@ Evidence/issue:
 - Final verification은 focused 56/56, repository-wide two-shard 1,627 collected 중 1,620 passed/7
   environment-dependent skipped이며 Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`를 통과했다.
 - Date: 2026-08-04
+
+### D-095 accepted result decision — seal passed workflow readiness without promoting performance
+
+- Clean D-094 source commit `82fbb33f20cabb57a151db871782345c6cafa3f0`에서 approved execution hash
+  `sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75`를 한 번 소비했다.
+- AnyIO `run_9fd10f7feeee4df5`, pyfakefs `run_7449597e84b94446`, HF Hub
+  `run_9566c0367bd24f52`는 모두 terminal·qualified 28/28·accepted submission·official evaluator에 도달했다.
+  Persisted qualification과 read-only recomputation도 3/3 일치했다.
+- Original readiness gate는 passed다. Infrastructure/qualification/diagnostic/budget-terminal/terminal-loop와
+  model-or-tool-call budget confound는 모두 0이고 63/63 response의 exact token telemetry, completed status,
+  truncation disabled와 `store=false`가 확인됐다.
+- Correctness outcome은 별도 보존한다. 세 run 모두 hidden fail, regression/scope/safety pass인 `task_failure`이며
+  task success와 SCRR은 0/3이다. 이를 readiness gate를 뒤집거나 hidden-driven tuning의 권한으로 사용하지 않는다.
+- Aggregate usage는 957,052 input + 48,805 output = 1,005,857 token, 63 model/119 tool call,
+  fixed-manifest list-price `$0.9374115`다. 이는 invoice나 free-tier 적용액 주장이 아니다.
+- Raw result SHA는 `sha256:1b0c7d7452b70d6221c40b284646e50286f8f12b1d125d54bf66c1d89a0cf2b2`,
+  journal file/final-event SHA는 `sha256:d5164b3d34bf0ec392d879b62aa0624f001499b0cb89f10c24145ef0aa26905b` /
+  `sha256:fbaa048e3ed89e33de868a7794aa8c7d30b1af915c486e51b174f9630a1083a3`다. Portable evidence는
+  `reports/live-pilot/generic-high-headroom-readiness-v2v5-20260804-r1.json`에 둔다.
+- Exact experiment는 hard-consumed이며 자동 rerun하지 않는다. D-095 sealing 자체 provider/evaluator call과 added
+  model cost는 0/0/`$0`이다.
+- 이 three-task one-repetition 결과는 calibration-only다. No-memory baseline, success-rate estimate, comparison
+  denominator/resource-policy freeze, memory review/admission/index, core와 analysis는 계속 닫혀 있다.
+- Final verification은 focused/relevant 303/303, repository-wide split 1,637 collected 중 1,630 passed/7
+  environment-dependent skipped를 통과했다. File shard의 D-092 WAL/SHM order-sensitive invariant는 isolated
+  process에서 통과했다. Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`도 통과했다.
+- Date: 2026-08-05

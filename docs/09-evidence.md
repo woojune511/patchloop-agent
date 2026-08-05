@@ -3192,8 +3192,60 @@ Portable source artifact: `reports/live-pilot/artifacts/d094-high-headroom-readi
 `sha256:ab7be9ad2448d1016b88d451e271330844fc11d8fd4b890f08142618446ff929`. File SHA:
 `sha256:6887936ec141496e35e3a9d3bd6c34cf04cf02d1849bf80208677151a692c6ed`. The source stage
 made no provider/evaluator calls, generated no execution hash or approval and added `$0` model cost. Historical evidence
-is unchanged, and baseline, denominator, memory admission/index and core authority remain closed. The next permitted
-step is a clean no-call preflight followed by separate user approval of the exact candidate hash up to `$41`.
+is unchanged, and baseline, denominator, memory admission/index and core authority remain closed. At that source gate,
+the next permitted step was a clean no-call preflight followed by separate user approval of the exact candidate hash up
+to `$41`; the later invocation belongs only to the D-095 seal below.
 Final verification passed focused 56/56 and a repository-wide two-shard total of 1,620 passed plus seven
 environment-dependent skips from 1,627 collected tests. Ruff, compileall, exact artifact rebuild, JSON/hash and
+`git diff --check` also passed.
+
+## D-095 sealed D-094 high-headroom readiness result
+
+The approved execution hash
+`sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75` was consumed exactly once from
+clean source commit `82fbb33f20cabb57a151db871782345c6cafa3f0`. The original
+`generic-high-headroom-readiness-gate-v1` passed with 3/3 terminal, trace-qualified, accepted submission and official
+evaluator rows. Persisted qualification matched read-only recomputation for all three runs; infrastructure,
+qualification, diagnostic, budget-terminal, terminal-loop and model/tool-call-budget confounds were zero.
+
+```text
+task / run                                      result         model/tool  total tokens  list-price cost
+AnyIO / run_9fd10f7feeee4df5                   hidden fail     22 / 41       342,504      $0.328668
+pyfakefs / run_7449597e84b94446                hidden fail     17 / 23       230,665      $0.2314425
+HF Hub / run_9566c0367bd24f52                  hidden fail     24 / 55       432,688      $0.377301
+
+input / output / total                         957,052 / 48,805 / 1,005,857
+model / input-precount / tool calls            63 / 63 / 119
+reasoning output / summed run wall             43,265 / 446,060 ms
+fixed-manifest list-price model cost           $0.9374115
+qualification                                  28/28 per run; 84/84 aggregate
+raw result SHA                                 sha256:1b0c7d7452b70d6221c40b284646e50286f8f12b1d125d54bf66c1d89a0cf2b2
+journal file SHA                               sha256:d5164b3d34bf0ec392d879b62aa0624f001499b0cb89f10c24145ef0aa26905b
+journal final event SHA                        sha256:fbaa048e3ed89e33de868a7794aa8c7d30b1af915c486e51b174f9630a1083a3
+portable report                                reports/live-pilot/generic-high-headroom-readiness-v2v5-20260804-r1.json
+portable semantic body SHA                     sha256:79fe3312222896beec28070b5a77e36ffc7854a00c983a70f90cbe37ac2bb99f
+portable file SHA                              sha256:62ef705c992fcdb3e6e6b648e8376c4d5fdbff2534bd5b0a37158b99b4b3f95e
+```
+
+All 63 model responses were completed with exact input and total-token telemetry, truncation disabled, `store=false`
+and no previous-response dependency. The portable seal verifies the exact raw result, execution plan, 8-event journal
+hash chain, run/evaluator receipts, three qualification files and a leak-safe public projection. It embeds no hidden
+assertion, private spec, reference/submitted patch, model/tool body, credential or approval secret.
+
+Correctness remains a separate measured outcome: all three patches pass regression/scope/safety but fail hidden
+acceptance, so task success and SCRR are 0/3. The passed readiness gate therefore establishes only exact-tuple workflow
+completion for this selected one-repetition calibration panel. It does not estimate a no-memory success rate, admit a
+comparison denominator, freeze a generally sufficient 3M resource policy, authorize memory review/admission/index or
+unlock core/analysis. Fixed-rate `$0.9374115` is reproducible list-price accounting, not an invoice or free-tier claim.
+
+D-095 sealing itself made no provider/evaluator calls and added `$0` model cost. The exact experiment is hard-consumed;
+automatic rerun, hash reuse, hidden-driven tuning and new live execution remain unauthorized. The next decision is a
+separate offline condition-neutral resource-policy and baseline-admission gate.
+
+Final verification passed 303/303 focused/relevant tests and a repository-wide split total of 1,630 passed plus seven
+environment-dependent skips from 1,637 collected tests. The single-process run reached 79% without a failure before
+its 10-minute orchestration timeout. File shard 1 completed with 644 passed/one skipped. File shard 2 completed 985
+passed/six skipped and exposed only the known D-092 WAL/SHM order-sensitive invariant; that exact invariant passed in
+an isolated process on the same current tree. The formerly wall-clock-sensitive historical pricing fixture was pinned
+to its fixture verification time and passed inside shard 2. Ruff, compileall, exact byte rebuild, JSON/hash and
 `git diff --check` also passed.

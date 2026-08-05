@@ -138,6 +138,7 @@ CONSUMED_GENERIC_BASELINE_READINESS_EXPERIMENT_IDS = frozenset(
         "generic-baseline-readiness-v2v5-20260802-r1",
         "generic-baseline-readiness-v2v5-20260802-r2",
         "generic-baseline-readiness-v2v5-20260803-r3",
+        GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     }
 )
 CONSUMED_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_IDS = frozenset(

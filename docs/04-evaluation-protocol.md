@@ -1646,3 +1646,20 @@ qualification이 read-only recomputation과 정확히 같을 때만 pass다. Exa
 responses, truncation disabled와 모든 명시된 process confound 0도 요구한다. Hidden acceptance, task success와
 SCRR은 결과로 보고하되 readiness 판정에는 넣지 않는다. Gate 성공도 no-memory baseline이나 memory/core
 collection을 자동 승인하지 않는다.
+
+### D-095 D-094 measured-result interpretation
+
+Approved D-094 invocation은 exact hash로 한 번만 실행하고 original result와
+`generic-high-headroom-readiness-gate-v1`을 그대로 판정한다. 세 row 모두 terminal·qualified·accepted
+submission·official evaluator에 도달했고 persisted qualification 재계산, 63/63 completed response와 exact
+input/total-token match, truncation disabled, `store=false`, previous-response dependency 0을 확인했다. Budget과
+다른 process confound가 없어 workflow-readiness disposition은 `passed`다.
+
+Correctness는 별도 축이다. AnyIO, pyfakefs, HF Hub 모두 hidden acceptance가 실패했으므로 outcome은 세 건의
+`task_failure`, SCRR은 0/3이다. Regression/scope/safety는 3/3 통과했다. 이 0/3을 숨기지 않되 readiness를
+hidden perfection으로 재정의하거나 task-specific prompt/tool tuning과 자동 rerun의 근거로 사용하지 않는다.
+
+사용량 기반 `$0.9374115`는 frozen standard rate로 계산한 reproducible list-price accounting이며 invoice나
+free-tier 적용액이 아니다. Post-run seal은 provider/evaluator를 다시 호출하지 않는다. 이 small selected panel은
+calibration-only이므로 no-memory 성능 baseline, success-rate estimate, comparison denominator/resource freeze,
+memory review/admission/index와 core는 별도 condition-neutral admission decision 전까지 닫힌다.

@@ -1383,7 +1383,7 @@ Builder output을 checked-in artifact와 canonical JSON으로 비교하면 exact
 source가 한 바이트라도 달라지면 실패하며 provider SDK, runtime runner, SQLite 또는 evaluator를 import하지 않는다.
 이 절차는 D-092 결과를 수정하거나 successor experiment config/hash/approval을 만들지 않는다.
 
-## Inspect the D-094 high-headroom readiness source gate
+## Inspect the historical D-094 high-headroom readiness source gate
 
 다음 검사는 provider나 evaluator를 호출하지 않고 exact source/config/runtime binding만 재현한다.
 
@@ -1403,4 +1403,31 @@ Builder output은 checked-in artifact와 canonical JSON으로 exact 일치해야
 `sha256:6887936ec141496e35e3a9d3bd6c34cf04cf02d1849bf80208677151a692c6ed`다. 검사는 ordered three-task schedule,
 mini/runtime tuple, 3M/3,600s ceiling, 2026-08-04T14:47:00Z standard pricing, `$40.8375` reserve와 `$41`
 source cap을 확인해야 한다. 이 command는 no-call preflight나 execution hash를 만들지 않는다. 실제 provider 실행은
-그 다음 clean commit의 별도 preflight가 만든 one-use candidate hash와 max-`$41` 사용자 승인이 있어야 한다.
+그 뒤 clean commit의 별도 preflight가 만든 one-use candidate hash와 max-`$41` 사용자 승인으로 정확히 한 번
+수행됐으며, 그 invocation과 결과는 아래 D-095 seal에만 속한다.
+
+## Inspect the sealed D-095 result without rerunning D-094
+
+Portable report와 focused seal contract는 provider 없이 검사한다.
+
+```powershell
+Get-Content reports/live-pilot/generic-high-headroom-readiness-v2v5-20260804-r1.json -Raw |
+  ConvertFrom-Json | Out-Null
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' `
+  tests/test_d095_high_headroom_readiness_seal.py `
+  tests/test_d095_runtime_hardening.py
+```
+
+Original execution host에서는 같은 test가 raw result SHA, 8-event journal chain, execution plan, 세 run의
+manifest/result/evaluator receipt, qualification 84/84와 read-only recomputation, 63 response token telemetry와
+fixed-rate cost를 재검증한다. Raw runtime이 없는 clean machine에서는 portable wrapper/hash, leak-safe claims와
+static consumed guard를 검증하고 raw-only 검사는 명시적으로 skip한다. Execution host에서 artifact를 다시 만들 때만
+다음을 사용하며 출력은 checked-in portable JSON과 canonical-exact해야 한다.
+
+```powershell
+.\.venv\Scripts\python.exe scripts/build_d095_high_headroom_readiness_seal.py --compact
+```
+
+`patchloop evaluate`로 D-094를 다시 실행하거나 세 run ID를 resume하지 않는다. Seal 뒤의 no-call preflight는 local
+result/journal 유무와 무관하게 `HISTORICAL_SUITE_IMMUTABLE`를 포함해야 한다. 3M ceiling과 관측된 0/3 SCRR을
+각각 일반적인 충분 budget이나 no-memory performance estimate로 해석하지 않는다.

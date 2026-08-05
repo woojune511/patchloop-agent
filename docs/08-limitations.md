@@ -1204,3 +1204,24 @@ evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별
 - Source artifact는 clean preflight, execution hash, user approval, provider/evaluator call이나 result를 포함하지 않는다.
   통과하더라도 baseline, denominator, memory rule admission/index 또는 core authority를 열지 않는다.
 - Historical suite/run/result는 변경하거나 자동 재실행하지 않는다.
+
+## D-095 passes workflow readiness, not task correctness or a baseline
+
+- 세 run은 exact D-094 process gate를 통과했다. 이는 이 model/prompt/tool/context와 관측된 세 trajectory에서
+  submission·qualification·official evaluator까지 workflow가 완주했다는 뜻이다. 3M token 또는 3,600초가 다른
+  task와 stochastic trajectory에도 일반적으로 충분하다는 뜻은 아니다.
+- Task correctness는 0/3이다. AnyIO, pyfakefs와 HF Hub patch는 모두 regression/scope/safety를 통과했지만 hidden
+  acceptance에 실패했다. Readiness predicate가 task success를 요구하지 않는다는 이유로 이 결과를 누락하거나
+  성공으로 바꾸지 않는다.
+- 반대로 hidden 0/3은 harness/readiness 실패도 아니다. Exact telemetry, durable qualification recomputation,
+  evaluator receipt와 process-confound 0이 각각 독립적으로 통과했다. Hidden outcome을 보고 prompt/tool/task를
+  수정하거나 same suite를 자동 재실행하지 않는다.
+- 세 memory-development task를 condition당 한 번 실행한 selected calibration panel이므로 0/3을 no-memory success
+  rate나 comparison denominator로 사용하지 않는다. Memory review/admission/index, core와 `analysis_ready`는 계속
+  닫혀 있다.
+- `$0.9374115`는 frozen standard rate에 따른 reproducible list-price 계산이다. 실제 invoice, free-tier 적용액이나
+  organization/project-wide cost를 주장하지 않는다. Seal 작업 자체는 provider/evaluator call 0/0과 added model
+  cost `$0`이다.
+- Exact experiment와 execution hash는 hard-consumed이며 재사용하지 않는다. 이 one-use 표시는 sealed journal의
+  exact campaign 1회와 static source guard를 뜻하며 generic durable spend ledger를 뜻하지 않는다. 다음 단계는
+  별도 offline condition-neutral resource-policy/baseline-admission decision이고 새 live execution 권한이 아니다.

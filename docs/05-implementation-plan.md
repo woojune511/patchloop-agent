@@ -1,17 +1,17 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-093 readiness-stage correction; runtime policy와 raw outcome은 보존하고 budget-confounded
-readiness row는 inconclusive로 분류하며 comparison policy freeze 전까지 baseline·memory/core authority를 닫음**
+현재 milestone: **D-095 D-094 measured-result seal; exact high-headroom workflow readiness 3/3 pass와
+hidden task failure 3/3을 분리해 보존하며 baseline·denominator·memory/core authority를 닫음**
 
-D-093은 D-092의 replay calculation이나 retain-current-runtime 결론을 바꾸지 않는다. Readiness의 목적은
-condition-neutral workflow가 submission·official evaluator까지 도달하는지 보는 것이므로 evaluator 전 budget stop은
-task/agent performance 실패가 아니라 `readiness_inconclusive` / `budget_confounded`다. Raw persisted outcome과
-historical gate는 immutable하다. 다음 단계는 AnyIO·pyfakefs·HF Hub의 small diverse high-headroom completion panel을
-위한 source/offline gate이며, 3M token·3,600초·unlimited model/tool call은 아직 candidate다. Source freeze와 clean
-no-call preflight, fresh price, new execution hash와 별도 사용자 비용 승인 전에는 provider를 호출하지 않는다.
-Final verification은 focused 32/32와 repository-wide sharded 1,571 collected 중 1,564 passed/7
-environment-dependent skipped를 통과했다.
+Approved execution hash `sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75`는
+clean D-094 source commit `82fbb33f20cabb57a151db871782345c6cafa3f0`에서 한 번 소비됐다. AnyIO,
+pyfakefs와 HF Hub는 모두 terminal·qualified·accepted submission·official evaluator에 도달했고 budget/
+infrastructure/qualification/diagnostic confound가 없어 readiness gate는 통과했다. 세 patch는
+regression/scope/safety를 통과했지만 hidden acceptance에 실패해 task success와 SCRR은 0/3이다. Aggregate는
+1,005,857 token, 63 model/119 tool call과 fixed-rate `$0.9374115`다. D-095는 이 결과를 immutable portable
+seal과 hard-consumed ID로 결속하며, no-memory baseline, comparison denominator/resource freeze, memory
+review/admission/index와 core는 별도 decision 전까지 열지 않는다.
 
 Historical D-092는 D-081 r3, D-085/D-086, D-087, D-089에서 18-run·8-task·4,079개의 public event를 replay했다.
 Repeated-rejection `N=3..10`과 relative-context `{2,4,8} × {8,16,32 calls}` 후보 중 zero false stop,
@@ -36,7 +36,7 @@ context와 qualification은 통과했으므로 confirmed harness defect는 아�
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-093 readiness-stage correction complete | retain current runtime/raw result; budget-confounded readiness → inconclusive; high-headroom source gate next |
+| Phase 6 evaluation | D-095 measured high-headroom readiness sealed | 3/3 workflow readiness, 0/3 hidden/SCRR; calibration-only, hard-consumed, baseline/denominator/memory/core closed |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -1361,7 +1361,7 @@ Known limitations:
 Next unblocked item:
 ```
 
-## Current result seal — D-088 D-087 no-memory readiness attempt
+## Historical result seal — D-088 D-087 no-memory readiness attempt
 
 1. **완료:** exact D-087 hash를 clean commit에서 한 번 실행하고 12/12 terminal·qualified·settled를 수집했다.
 2. **완료:** raw result/journal/plan, 12 qualification, 340 provider response와 341 input pre-count를 독립
@@ -1378,7 +1378,7 @@ Next unblocked item:
    condition-neutral readiness successor가 필요한지 결정한다. 이 decision 자체는 실행 권한이 아니며 새 ID,
    clean source, no-call preflight, execution hash와 비용 승인이 필요하다.
 
-## Current source gate — D-094 high-headroom diverse readiness panel
+## Historical source gate — D-094 high-headroom diverse readiness panel
 
 목표: D-093의 candidate를 재현 가능한 exact source contract로 만들되 provider 실행 권한은 계속 닫아 둔다.
 
@@ -1392,7 +1392,32 @@ Next unblocked item:
    integrity로 정의하고 task success, hidden acceptance와 SCRR은 predicate에서 분리한다.
 5. **닫힘:** source/offline 단계에는 preflight, execution hash, user approval, provider/evaluator call, baseline,
    denominator, memory admission/index와 core authority가 없다.
-6. **다음:** clean source commit에서 no-call preflight를 수행하고, 생성된 exact candidate hash에 대해 최대
-   `$41`의 별도 사용자 승인을 받는다.
+6. **후속 완료:** clean source commit의 no-call preflight와 max-`$41` exact-hash 승인은 D-095에서 한 번
+   소비된 live invocation에만 속한다.
 7. **검증:** focused 56/56과 repository-wide two-shard 1,627 collected 중 1,620 passed/7
    environment-dependent skipped, Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`가 통과했다.
+
+## Current result seal — D-095 D-094 measured high-headroom readiness
+
+1. **완료:** source commit `82fbb33f20cabb57a151db871782345c6cafa3f0`에서 approved execution hash
+   `sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75`를 정확히 한 번
+   소비했다.
+2. **완료:** AnyIO `run_9fd10f7feeee4df5`, pyfakefs `run_7449597e84b94446`, HF Hub
+   `run_9566c0367bd24f52`가 모두 terminal·trace-qualified·accepted submission·official evaluator에 도달했다.
+3. **완료:** Persisted qualification 3개와 read-only recomputation, 84/84 qualification check, 63/63
+   completed/exact-token/truncation-disabled/`store=false` response와 previous-response dependency 0을 확인했다.
+4. **완료:** Budget, infrastructure, qualification, diagnostic, terminal-loop와 call-budget confound 0으로 exact
+   workflow-readiness gate가 통과했다.
+5. **관측:** 세 run은 모두 hidden fail, regression/scope/safety pass인 `task_failure`다. Task success와 SCRR은
+   0/3이며 readiness predicate와 분리해 보존한다.
+6. **봉인:** Raw result와 8-event journal, execution plan, 세 qualification과 public trace aggregate를 leak-safe
+   portable report에 content-address하고 experiment ID를 hard-consumed로 만든다. Seal 자체 provider/evaluator
+   call과 added model cost는 0/0/`$0`이다.
+7. **닫힘:** 이 selected one-repetition panel은 calibration-only다. No-memory baseline, success-rate estimate,
+   comparison denominator/resource freeze, memory review/admission/index, core, analysis와 hidden-driven tuning은
+   열지 않는다.
+8. **다음 decision:** 별도 offline gate에서 condition-neutral resource policy와 baseline admission을 결정한다.
+   D-094 hash/run을 재사용하거나 자동 successor를 실행하지 않는다.
+9. **검증:** focused/relevant 303/303과 repository-wide split 1,637 collected 중 1,630 passed/7
+   environment-dependent skipped가 통과했다. File shard의 유일한 D-092 WAL/SHM order-sensitive invariant는
+   isolated process에서 통과했다. Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`도 통과했다.

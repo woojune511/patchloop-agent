@@ -86,6 +86,15 @@ def _ready_environment(
     monkeypatch.setattr(eval_runner, "runtime_root", lambda: tmp_path / "runtime")
 
 
+def _reopen_immutable_source_stage(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        eval_runner,
+        "HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS",
+        eval_runner.HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+        - {GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID},
+    )
+
+
 def _exact_manifest() -> RunManifest:
     package = load_task_package(Path(EXPECTED_TASKS[0]).parent)
     return build_manifest(
@@ -359,6 +368,7 @@ def test_d094_no_call_preflight_binds_three_run_full_reserve(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    _reopen_immutable_source_stage(monkeypatch)
     _ready_environment(monkeypatch, tmp_path)
 
     preflight = eval_runner.preflight_suite(SUITE_PATH)
@@ -393,6 +403,7 @@ def test_d094_manifest_and_qualification_match_approved_preflight(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
+    _reopen_immutable_source_stage(monkeypatch)
     _ready_environment(monkeypatch, tmp_path)
     monkeypatch.setattr(runtime_module, "git_commit", lambda: "a" * 40)
     unapproved = eval_runner.preflight_suite(SUITE_PATH)
