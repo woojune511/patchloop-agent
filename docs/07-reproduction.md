@@ -1431,3 +1431,40 @@ static consumed guard를 검증하고 raw-only 검사는 명시적으로 skip한
 `patchloop evaluate`로 D-094를 다시 실행하거나 세 run ID를 resume하지 않는다. Seal 뒤의 no-call preflight는 local
 result/journal 유무와 무관하게 `HISTORICAL_SUITE_IMMUTABLE`를 포함해야 한다. 3M ceiling과 관측된 0/3 SCRR을
 각각 일반적인 충분 budget이나 no-memory performance estimate로 해석하지 않는다.
+
+## Inspect the D-096 resource-policy and baseline-admission decision
+
+D-096은 offline source decision이다. 다음 명령은 provider/evaluator를 호출하거나 experiment suite, execution hash,
+approval capability를 만들지 않는다.
+
+```powershell
+Get-Content reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json -Raw |
+  ConvertFrom-Json | Out-Null
+Get-FileHash reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json `
+  -Algorithm SHA256
+.\.venv\Scripts\python.exe scripts/build_d096_resource_policy_baseline_admission.py --compact
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' `
+  tests/test_d096_resource_policy_baseline_admission.py
+```
+
+Builder stdout의 compact JSON을 parse한 payload는 checked-in artifact와 exact semantic equality여야 한다. Focused test는 D-095와 D-083/D-084,
+D-094 pricing source, dataset manifest, 여섯 `public.yaml`과 historical schedule carrier의 source bytes/SHA를
+검증하고, 한 source라도 바뀌면 fail closed해야 한다. 각 task file SHA는 manifest `public_spec_hash`와 일치해야
+한다. 또한 다음을 확인한다.
+
+- Future tuple이 mini medium/standard/default, retry 0, prompt V3, tool v2, context v5, output 25k,
+  memory allowance 2k와 `null/null/3M/3,600s`인지
+- Frozen memory-development task 6개 × repetition 2, seed `20260723`, expected row 12와 ordered schedule hash가
+  exact한지
+- Task success와 hidden acceptance가 campaign admission predicate가 아니며, official-evaluator task failure만
+  leak-safe review 후보가 되는지
+- Official branch와 canonical pre-call token/wall budget branch가 disjoint·exhaustive exact-one인지, budget branch의
+  actor/CAS/no-provider-after와 submission/evaluator 부재가 강제되는지, issued response가 모두 `completed`인지
+- D-083/D-084 v1이 historical로 보존되고 runtime v2와 새 12-row suite가 아직 미구현인지
+- D-094 pricing block에서 `$13.6125`/run을 직접 재도출하는지, 12-run reserve `$163.35`와 current project cap `$150`의 conflict가
+  `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 닫혀 있는지
+- Provider/evaluator call과 added model cost가 0/0/`$0`이고 live/result/memory/core/analysis authority가 false인지
+
+이 검사를 통과해도 live run을 시작하지 않는다. 다음에는 별도 change에서 runtime v2와 exact successor suite,
+non-censoring campaign cost policy를 구현한 뒤 clean no-call preflight, fresh pricing, 새 experiment ID/hash와
+사용자 비용 승인을 받아야 한다.

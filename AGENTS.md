@@ -10,7 +10,36 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-095 D-094 measured result sealed; exact three-row workflow readiness passed,
+- 현재 milestone은 `D-096 prospective condition-neutral resource policy and exact no-memory baseline admission
+  contract frozen offline; runtime v2, successor suite, live result, memory and core authority remain closed`다.
+  Future comparison의 exact profile은 `gpt54mini-v2v5-condition-neutral-3000k-v1`이며 모든 memory condition에
+  `gpt-5.4-mini-2026-03-17` medium/standard/default, SDK transport retry 0, `SYSTEM_PROMPT_V3`, tool v2,
+  context `phase-evidence-v5`, output 25,000, memory allowance 2,000과 model/tool call `null`, total token
+  3,000,000, wall 3,600초를 동일하게 적용한다. 이 budget은 비교 target이 아닌 finite safety ceiling이며
+  completion guarantee가 아니다. D-083/D-084의 1.6M/runtime-v1 계약은 historical run에 그대로 유효하고
+  수정되지 않는다. 새 `condition-neutral-comparison-runtime-contract-v2`와 runtime evidence v2는 이름만
+  prospectively 선택됐으며 아직 execution plan, `RunManifest`, start/resume와 qualification에 구현되지 않았다.
+  No-memory admission은 frozen memory-development의 Loguru, AnyIO, tox, HF Hub, PDM, pyfakefs 여섯 task를
+  각 2회, `no_memory`, seed `20260723`으로 실행하는 exact 12-row schedule
+  `memory-development-no-memory-12-row-v1`만 고정한다. Historical 1.6M template은 schedule carrier일 뿐이며
+  새 3M successor suite가 필요하다. Builder는 D-094 source artifact의 exact pricing block에서 rate와 reserve를
+  재도출하고, 여섯 `public.yaml` 각각의 bytes/file SHA가 frozen dataset manifest의 `public_spec_hash`와 일치하는지
+  검증한다. Official-evaluator row와 canonical pre-call total-token/wall budget-terminal row는 disjoint·exhaustive
+  terminal class이며, issued response는 모두 `completed`여야 한다. Task success와 hidden outcome은 admission 또는 policy 선택 조건이 아니고,
+  D-087/D-095도 소급 baseline row로 승격하지 않는다. D-096이 연 것은 comparison policy freeze,
+  baseline-admission contract와 future source authoring뿐이다. New suite, live execution/result, completed
+  denominator, memory review/admission/index, core와 analysis는 계속 닫혀 있다. Worst-rate reserve는
+  `$13.6125`/run, `$163.35`/12 run인데 기존 project cap `$150`보다 `$13.35` 크므로 campaign cost policy와
+  cap conflict가 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 남는다. Artifact는
+  `reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json`, semantic body SHA는
+  `sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d`, file SHA는
+  `sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d`, size는 19,031 bytes다.
+  D-096 provider/evaluator call과 added model cost는 0/0/`$0`이다. Focused 26/26과 관련 계약 178/178이
+  통과했다. Repository-wide 1,663건 중 1,656건은 통과하고 7건은 environment-dependent skip이며, shard에서
+  순서 의존으로 실패한 D-092 WAL/SHM invariant 1건은 독립 프로세스에서 통과했다. Parsed exact rebuild와
+  `git diff --check`도 통과했다. 다음 gate는 runtime v2 binding, 새 exact
+  12-row suite, non-censoring cost policy/cap resolution과 clean no-call preflight를 구현하는 별도 source gate다.
+- Historical D-095 milestone은 `D-095 D-094 measured result sealed; exact three-row workflow readiness passed,
   task success/SCRR 0/3, and no baseline, denominator, memory, or core authority`다. Exact experiment
   `generic-high-headroom-readiness-v2v5-20260804-r1`은 source commit
   `82fbb33f20cabb57a151db871782345c6cafa3f0`과 승인 execution hash

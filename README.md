@@ -2,6 +2,32 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-05 D-096은 D-093의 public candidate와 D-095의 exact readiness pass만 사용해 future comparison의
+condition-neutral resource policy를 offline에서 동결했다. Exact profile
+`gpt54mini-v2v5-condition-neutral-3000k-v1`은 `gpt-5.4-mini-2026-03-17` medium/standard/default,
+retry 0, prompt V3, tool v2/context v5, output 25,000, memory allowance 2,000과
+`null/null/3,000,000/3,600`을 No Memory, Raw Trace, Structured, Selective Structured 네 조건에 동일하게
+적용한다. 이는 비교 target이 아닌 finite safety ceiling이며 일반적인 completion guarantee가 아니다.
+
+동시에 frozen memory-development의 Loguru, AnyIO, tox, HF Hub, PDM, pyfakefs 여섯 task를 각 2회,
+`no_memory`, seed `20260723`으로 실행하는 exact 12-row admission contract만 고정했다. Task success와 hidden
+outcome은 admission 조건이 아니며 D-087/D-095를 소급 baseline으로 사용하지 않는다. D-083/D-084의 1.6M
+runtime-v1 계약은 historical evidence로 보존되고, 새 runtime v2 binding과 3M successor suite는 아직 없다.
+Builder는 D-094 artifact의 exact pricing block에서 reserve를 다시 계산하고 여섯 `public.yaml` bytes/file SHA를
+dataset manifest의 `public_spec_hash`와 대조한다. Admission terminal row는 accepted submission과 completed official
+evaluator receipt가 있는 branch 또는 canonical pre-call token/wall budget-terminal branch 중 정확히 하나여야 하며,
+issued provider response는 모두 `completed`여야 한다.
+D-096이 연 것은 policy/admission/source authoring뿐이다. Live execution/result, baseline denominator, memory
+review/admission/index, core와 analysis는 닫혀 있다. Worst-rate 12-run reserve `$163.35`가 current project cap
+`$150`을 초과하므로 `NO_MEMORY_AUTHORIZATION_CAP_PENDING` blocker도 남는다. Artifact는
+`reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json`, semantic body SHA는
+`sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d`, file SHA는
+`sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d`이고 19,031 bytes다. 이 offline
+decision의 provider/evaluator call과 added model cost는 0/0/`$0`이다. Focused 26/26과 관련 계약 178/178이
+통과했다. Repository-wide 1,663건 중 1,656건은 통과하고 7건은 environment-dependent skip이며, shard에서
+순서 의존으로 실패한 D-092 WAL/SHM invariant 1건은 독립 프로세스에서 통과했다. Parsed exact rebuild와
+`git diff --check`도 통과했다.
+
 2026-08-04 D-095는 승인된 D-094 high-headroom panel의 measured result를 append-only evidence로 봉인했다.
 Exact experiment `generic-high-headroom-readiness-v2v5-20260804-r1`의 AnyIO, pyfakefs, HF Hub 세 row는
 모두 terminal·trace-qualified·accepted submission·official evaluator에 도달했고 process confound가 0이어서

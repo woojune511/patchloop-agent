@@ -923,3 +923,46 @@ Evidence/issue:
   environment-dependent skipped를 통과했다. File shard의 D-092 WAL/SHM order-sensitive invariant는 isolated
   process에서 통과했다. Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`도 통과했다.
 - Date: 2026-08-05
+
+### D-096 accepted offline decision — freeze the future resource policy and admit exact no-memory source authoring
+
+- D-095가 workflow-readiness 3/3을 process-confound 없이 통과했으므로, public process evidence만 사용해
+  future comparison의 condition-neutral resource policy를 고정한다. D-095의 hidden 0/3이나 task success는 이
+  policy 선택 근거로 사용하지 않는다.
+- 선택한 prospective tuple은 `gpt-5.4-mini-2026-03-17` medium/standard/default, SDK transport retry 0,
+  `SYSTEM_PROMPT_V3`, tool schema v2, context `phase-evidence-v5`, max output 25,000, memory allowance 2,000과
+  model/tool call `null`, total token 3,000,000, wall 3,600초다. 네 memory condition은 이 tuple을 공유한다.
+- D-083 `condition-neutral-comparison-resource-policy-v1`과 D-084 runtime contract/evidence v1은 historical로
+  그대로 보존한다. Future consumer는 runtime contract/evidence v2를 사용해야 하지만 D-096 시점에는 아직
+  구현되지 않았고, historical manifest/result/qualification을 다시 쓰지 않는다.
+- Exact admission은 frozen memory-development의
+  `loguru-invalid-format-feedback`, `anyio-interrupt-runner-cleanup`,
+  `tox-cross-section-empty-substitution`, `hf-hub-xet-endpoint-propagation`,
+  `pdm-ignore-active-venv-resolution`, `pyfakefs-makedirs-parent-traversal`을 이 순서로 `no_memory` 각 2회,
+  seed `20260723`에 실행하는 12-row contract다. Historical 1.6M template은 task/order carrier일 뿐 새 campaign
+  runtime source가 아니다. 여섯 `public.yaml` 각각의 exact bytes/file SHA는 frozen dataset manifest row의
+  `public_spec_hash`와 일치해야 한다.
+- Admission은 12/12 terminal·qualified·cost-settled와 exact persisted/recomputed qualification, runtime/no-memory
+  binding과 complete telemetry를 요구한다. Not-started, infrastructure, qualification, diagnostic,
+  duplicate/replacement, unknown-terminal, model/tool-call-budget-block count는 0이고 issued response는 모두
+  `completed`여야 한다. Official branch는 accepted submission,
+  completed official receipt와 `resolved|task_failure`; budget branch는 actor/CAS/pre-call/no-provider-after evidence를
+  가진 canonical total-token/wall `ModelGenerationBlocked`, `agent_failure`, submission/evaluator 부재를 요구한다.
+  두 branch는 disjoint·exhaustive exact-one이다. Task success와 hidden acceptance는 admission predicate가 아니다.
+  Qualified budget terminal은 `agent_failure`로 포함하되 자동 rerun하거나 memory candidate로 삼지 않는다.
+- Memory candidate는 official evaluator가 완료된 task failure이면서 qualification과 leakage scan을 통과해야 한다.
+  Candidate는 자동 rule admission이 아니며 collection 뒤 agent 또는 maintainer review와 deduplication을 거친다.
+- Worst-rate reserve는 `$13.6125`/run, `$163.35`/12 run이다. 현재 project cap `$150`를 `$13.35` 초과하므로
+  campaign cost policy와 authorization은 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 닫는다. 최소 정수
+  non-censoring cap은 `$164`지만 이 산식 자체가 cap 변경이나 비용 승인은 아니다. Pricing은 exact-bound D-094
+  source artifact의 pricing block에서 직접 읽고 standard-rate formula로 재도출한다.
+- 이 decision이 여는 것은 resource-policy freeze, exact baseline-admission contract와 future no-memory source
+  authoring뿐이다. New suite/runtime v2, preflight, execution hash, live run, baseline result, denominator, memory
+  review/admission/index, core와 analysis는 계속 닫혀 있다. D-087/D-095도 소급 baseline이 아니다.
+- Portable artifact는 `reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json`이다.
+  Semantic body SHA는 `sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d`,
+  19,031-byte file SHA는 `sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d`다.
+  D-096 자체 provider/evaluator call과 added model cost는 0/0/`$0`이며 focused 26/26, 관련 계약 178/178,
+  repository-wide 1,656 pass/7 environment-dependent skip이 확인됐다. Shard 순서에 민감한 D-092 WAL/SHM
+  invariant 1건은 독립 프로세스에서 통과했다. Parsed exact rebuild와 `git diff --check`도 통과했다.
+- Date: 2026-08-05

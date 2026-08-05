@@ -3093,3 +3093,56 @@ false로 고정한다. Seal 자체 provider/evaluator call과 added model cost�
 hard-consumed다. `one_use_execution_hash_consumed=true`는 sealed 8-event journal에서 exact campaign invocation이
 하나임을 검증하고 current source의 static consumed guard를 더한 D-095 사실이다. 이를 generic durable spend
 reservation ledger나 다른 hash의 소비 증거로 해석하지 않는다.
+
+## 38. D-096 condition-neutral resource-policy and baseline-admission contract
+
+Portable wrapper schema는 `condition-neutral-resource-policy-baseline-admission-d096-evidence-v1`이며 exact
+`schema_version/decision_id/semantic_body_hash/semantic_body` key set을 사용한다. Canonical body SHA
+`sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d`가 decision ID를 결정한다.
+Checked-in file은 19,031 bytes이고 SHA는
+`sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d`다.
+
+`condition-neutral-comparison-resource-policy-v2`의 exact profile은 다음을 모두 결속한다.
+
+- `gpt-5.4-mini-2026-03-17`, medium reasoning, standard mode, default tier, transport retry 0
+- `SYSTEM_PROMPT_V3`와 exact prompt hash, tool schema v2와 exact tool hash, `phase-evidence-v5`
+- max output 25,000, memory allowance 2,000
+- model/tool call `null/null`, total token 3,000,000, wall 3,600초
+- No Memory, Raw Trace, Structured, Selective Structured에 동일한 policy
+- total-token, wall, exact-request, cost, loop, constrained-tool, Docker/network와 evaluator guard 유지
+
+Profile은 prospective-only이고 budget role은 `finite-non-target-safety-ceiling`이다. Completion guarantee는 false다.
+D-083/D-084의 profile/runtime v1은 historical contract로 보존하며 D-096은 새 runtime contract/evidence v2의
+이름만 선택한다. `new_runtime_binding_implemented=false`이므로 v2를 현재 plan/manifest/qualification이 지원한다고
+주장할 수 없다. D-087/D-095 결과와 qualification도 변경하거나 소급 admission하지 않는다.
+
+Pricing은 builder 상수가 아니라 exact-bound D-094 source artifact의 `pricing` projection에서 가져온다. Snapshot,
+standard-default rate, max total/output token을 함께 검증하고
+`(3,000,000 + 25,000) × $4.50/M = $13.6125`/run을 재도출해야 한다. D-094 bytes/file SHA, pricing schema와
+source URL/verification timestamp가 drift하면 D-096 rebuild는 fail closed한다.
+
+`no-memory-baseline-admission-contract-v1`은 admission ID `memory-development-no-memory-12-row-v1`, frozen
+dataset hash, Loguru/AnyIO/tox/HF Hub/PDM/pyfakefs 순서, `no_memory` 2회, seed `20260723`, expected row 12와
+schedule hash `sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`를 exact
+고정한다. 각 admitted task는 `public.yaml` path, exact byte length와 file SHA를 소유하고 그 SHA가 frozen dataset
+manifest row의 `public_spec_hash`와 정확히 같아야 한다. Aggregate manifest identity만 맞거나 task file 하나가
+drift한 경우도 거부한다.
+
+Campaign은 12 terminal·qualified·cost-settled, not-started/error/duplicate/unknown/call-budget block 0,
+qualification recomputation·runtime policy·no-memory boundary·telemetry pass와 cost censoring 0을 요구한다. 모든
+issued response status는 `completed`여야 한다. Terminal row는 다음 두 class 중 정확히 하나여야 하며 두 class는
+disjoint·exhaustive다.
+
+- Official evaluator class: `SubmissionAccepted`가 존재하고 official evaluator receipt가 completed이며 outcome은
+  `resolved` 또는 `task_failure`다. Budget terminal evidence나 provider-after-terminal call이 없어야 한다.
+- Frozen-policy budget class: canonical `ModelGenerationBlocked`가 total-token 또는 wall dimension, runtime actor와
+  expected CAS를 기록하고 provider 호출 전 발생해야 한다. 그 뒤 provider response가 없어야 하며 outcome은
+  `agent_failure`, accepted submission과 evaluator receipt는 모두 없어야 한다.
+
+Task success와 hidden acceptance는 admission 조건이 아니다. Official evaluator `task_failure`만 qualification/
+leakage scan 뒤 memory candidate가 될 수 있고 budget/infrastructure failure와 automatic rule admission은 금지한다.
+
+Worst-rate reserve는 `$13.6125`/run, `$163.35`/12, `$245.025`/18, `$1,306.80`/96이다. Existing project cap
+`$150`과 12-run deficit `$13.35`를 기록하고 blocker를 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 고정한다.
+Campaign cost policy, project cap change, runtime v2, successor suite, preflight, hash와 live approval은 모두 false다.
+이 contract가 true로 여는 것은 resource-policy freeze, baseline-admission freeze와 future no-memory source authoring뿐이다.

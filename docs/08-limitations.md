@@ -1225,3 +1225,34 @@ evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별
 - Exact experiment와 execution hash는 hard-consumed이며 재사용하지 않는다. 이 one-use 표시는 sealed journal의
   exact campaign 1회와 static source guard를 뜻하며 generic durable spend ledger를 뜻하지 않는다. 다음 단계는
   별도 offline condition-neutral resource-policy/baseline-admission decision이고 새 live execution 권한이 아니다.
+
+## D-096 freezes a prospective contract, not a measured baseline
+
+- D-096의 3M token/3,600초/null-call policy는 future comparison을 위한 finite safety ceiling이다. D-095 세
+  trajectory에서 workflow readiness가 확인됐다는 사실만으로 12-row campaign이나 모든 stochastic trajectory의
+  completion을 보장하지 않는다.
+- Resource policy를 선택했다고 runtime v2가 구현된 것은 아니다. D-096 시점에는 새 execution plan,
+  `RunManifest`, `RunStarted`, start/resume, qualification binding과 exact successor suite가 없으므로 provider
+  실행도 baseline result도 없다.
+- D-083/D-084 v1은 historical run을 설명하는 유효한 contract로 남는다. Future v2를 선택한 이유로 historical
+  manifest, qualification, result를 재해석하거나 D-087/D-095를 소급 baseline denominator에 넣지 않는다.
+- Task success와 hidden acceptance가 campaign admission predicate가 아니라는 것은 correctness를 무시한다는 뜻이
+  아니다. Workflow/process-confound 판정과 task correctness를 분리해 기록하고, official-evaluator task failure만
+  별도의 leak-safe memory-candidate review 대상으로 삼는다.
+- Qualified budget terminal은 frozen-policy campaign row의 `agent_failure`로 포함될 수 있지만 자동 rerun하거나
+  failure-memory rule로 전환하지 않는다. Infrastructure·qualification failure와 evaluator 미도달 budget trace는
+  memory candidate가 아니다. Admission 가능한 budget terminal은 canonical pre-call token/wall block,
+  actor/CAS/no-provider-after와 submission/evaluator 부재를 모두 증명해야 하며 임의 terminal label은 허용되지 않는다.
+- Official row와 budget-terminal row는 disjoint·exhaustive exact-one이다. Accepted submission이나 evaluator receipt가
+  budget branch에 섞이거나, official branch의 receipt가 미완료이면 admission할 수 없다. Issued response 하나라도
+  `completed`가 아니면 전체 campaign completion gate가 닫힌다.
+- Memory candidate도 memory rule admission이 아니다. Private test, hidden assertion, reference/submitted patch가
+  유입되지 않는 leakage scan과 agent 또는 maintainer review, deduplication 뒤에만 별도 admission decision을 할 수 있다.
+- Worst-rate `$163.35`/12 run은 conservative authorization reserve이며 expected invoice나 free-tier 적용액이 아니다.
+  현재 project cap `$150`보다 크므로 D-096은 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 live authority를 열지
+  않는다. 최소 정수 `$164` 산식도 cap 변경이나 사용자 승인을 대신하지 않는다. Rate는 D-094 artifact의 frozen
+  pricing snapshot을 재현한 값이며 다음 live source gate에서는 fresh pricing 확인이 여전히 필요하다.
+- Aggregate dataset hash만으로 task identity를 충분하다고 보지 않는다. 여섯 `public.yaml`의 exact bytes/file SHA와
+  manifest `public_spec_hash`를 함께 묶지만, 이 integrity check도 task quality나 hidden correctness를 보장하지 않는다.
+- Artifact와 builder test가 통과해도 no-call preflight, execution hash, approval, provider/evaluator call,
+  comparison denominator, memory review/admission/index, core와 analysis를 자동으로 열지 않는다.

@@ -1232,3 +1232,37 @@ task correctness 0/3을 분리해 보존한다.
 Seal 뒤 exact experiment ID는 static consumed set을 통해 local raw artifact가 없는 clean machine에서도
 `HISTORICAL_SUITE_IMMUTABLE`로 차단한다. 이 결과는 calibration-only이며 no-memory baseline, comparison
 denominator, memory review/admission/index, core campaign 또는 automatic rerun capability를 만들지 않는다.
+
+## 37. D-096 prospective policy and baseline-admission architecture
+
+D-096은 runtime branch나 runnable suite가 아니라 content-addressed offline decision이다. Builder는 D-095
+readiness seal, D-093 correction, D-083 budget freeze, D-084 runtime gate, frozen dataset manifest와 historical
+baseline template의 exact bytes/SHA를 먼저 검증한다. 어느 source든 drift하면 policy나 schedule을 재구성하지 않고
+fail closed한다. D-094 source artifact도 direct pricing source로 exact-bind하고 그 pricing block에서 model snapshot,
+standard rates와 `(3,000,000 + 25,000) × $4.50/M = $13.6125` reserve를 재도출한다. 이 decision 과정은
+provider/evaluator를 호출하거나 execution hash를 만들지 않는다.
+
+새 profile `gpt54mini-v2v5-condition-neutral-3000k-v1`은 future comparison에만 prospectively 적용된다.
+Model/prompt/tool/context/retry/output/memory allowance를 그대로 두고 model/tool call `null`, 3M total token,
+3,600초 wall을 네 memory condition에 같은 finite non-target safety ceiling으로 배정한다. D-083/D-084의
+`gpt54mini-v2v5-condition-neutral-1600k-v1`과 runtime contract/evidence v1은 historical execution을 위해
+immutable하게 남는다. Runtime v2 이름은 선택됐지만 execution plan, `RunManifest`, start/resume와 qualification
+binding은 아직 구현되지 않았다.
+
+No-memory source admission은 frozen memory-development 여섯 task를 두 번씩 실행하는 exact 12-row schedule만
+연다. Historical 1.6M template에서 task/order/repetition/seed만 schedule carrier로 읽고, runnable successor는 새
+3M suite와 새 experiment ID를 가져야 한다. D-087/D-095 row를 소급 denominator로 바꾸지 않으며 task success나
+hidden outcome도 policy/admission 선택에 사용하지 않는다. Dataset identity는 aggregate manifest hash에만 의존하지
+않는다. Builder가 각 task `public.yaml`의 exact bytes/file SHA를 계산하고 manifest row의 `public_spec_hash`와
+일치시켜 task-local drift와 manifest-only spoof를 함께 차단한다.
+
+Terminal admission projection은 두 branch를 exact-one으로 모델링한다. Official branch는 accepted submission,
+official evaluator receipt와 completed `resolved` 또는 `task_failure` outcome을 요구한다. Budget branch는 actor/CAS와
+pre-call/no-provider-after evidence가 있는 canonical `ModelGenerationBlocked` total-token 또는 wall terminal,
+`agent_failure`, accepted submission/evaluator 부재를 요구한다. 두 branch는 disjoint하고 함께 exhaustive해야 하며,
+실제로 발행된 provider response는 예외 없이 `completed`여야 한다.
+
+Architecture authority는 future source authoring에서 멈춘다. 12-run worst-rate reserve `$163.35`가 기존 `$150`
+project cap을 초과해 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`이며 non-censoring campaign cost policy도 선택되지
+않았다. 따라서 runtime v2, suite, clean preflight, execution hash, live result, memory와 core consumer는 모두 다음
+gate까지 fail closed다.

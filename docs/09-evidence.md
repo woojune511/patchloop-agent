@@ -3249,3 +3249,82 @@ passed/six skipped and exposed only the known D-092 WAL/SHM order-sensitive inva
 an isolated process on the same current tree. The formerly wall-clock-sensitive historical pricing fixture was pinned
 to its fixture verification time and passed inside shard 2. Ruff, compileall, exact byte rebuild, JSON/hash and
 `git diff --check` also passed.
+
+## D-096 condition-neutral resource-policy and baseline-admission evidence
+
+D-096 is an offline, public-process-evidence decision. It uses the passed D-095 workflow-readiness prerequisite but does
+not use the three hidden failures or any task-success outcome to choose the future resource policy. It freezes
+`condition-neutral-comparison-resource-policy-v2` prospectively with profile
+`gpt54mini-v2v5-condition-neutral-3000k-v1`: `gpt-5.4-mini-2026-03-17` medium/standard/default, SDK transport retry 0,
+`SYSTEM_PROMPT_V3`, tool schema v2, context `phase-evidence-v5`, max output 25,000, memory allowance 2,000, and
+model/tool calls `null`, total tokens 3,000,000 and wall 3,600 seconds per run. No Memory, Raw Trace, Structured Memory
+and Selective Structured Memory must use this exact tuple. Existing token, wall, exact-request, cost, loop,
+constrained-tool, Docker-network and evaluator guards remain active.
+
+The historical D-083 v1 policy and D-084 v1 runtime contract/evidence remain byte- and meaning-preserved for historical
+runs. D-096 selects `condition-neutral-comparison-runtime-contract-v2` and
+`condition-neutral-comparison-runtime-evidence-v2` for a future consumer but does not implement either schema or a new
+suite. It does not rewrite historical manifests, qualifications or results, and neither D-087 nor D-095 is admitted
+retroactively as a no-memory baseline.
+
+The exact `no-memory-baseline-admission-contract-v1` schedule is:
+
+```text
+1  loguru-invalid-format-feedback          no_memory  repetition 1, 2
+2  anyio-interrupt-runner-cleanup          no_memory  repetition 1, 2
+3  tox-cross-section-empty-substitution    no_memory  repetition 1, 2
+4  hf-hub-xet-endpoint-propagation         no_memory  repetition 1, 2
+5  pdm-ignore-active-venv-resolution       no_memory  repetition 1, 2
+6  pyfakefs-makedirs-parent-traversal       no_memory  repetition 1, 2
+
+seed                                            20260723
+expected rows                                   12
+ordered schedule SHA                           sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b
+```
+
+All six tasks are frozen memory-development admissions. The historical 1.6M template is used only as an exact task,
+order and repetition carrier; a new 3M successor source is required. Each task entry binds its `public.yaml` path,
+exact byte length and file SHA, while the normalized `PublicTask` semantic SHA must equal the frozen dataset manifest
+row's `public_spec_hash`. This prevents an aggregate-manifest-only match from hiding task-local drift. Campaign
+admission requires 12/12 terminal, trace-qualified and cost-settled rows, exact persisted-versus-read-only-recomputed
+qualification, exact plan/manifest/runtime and no-memory binding, complete response telemetry, `store=false`, truncation
+disabled and zero not-started, infrastructure, qualification, diagnostic, duplicate-or-replacement, unknown-terminal
+and model/tool-call-budget-block counts. Task success and hidden acceptance remain reported outcomes, not campaign-
+admission predicates. Every issued provider response must have status `completed`.
+
+Terminal projection is exact-one, disjoint and exhaustive. An official row contains `SubmissionAccepted`, a completed
+official evaluator receipt and outcome `resolved` or `task_failure`, with no budget terminal. A budget row contains a
+canonical pre-call `ModelGenerationBlocked` on total-token or wall-clock dimension with runtime actor and expected CAS,
+no provider response after the terminal, outcome `agent_failure`, and no accepted submission or evaluator receipt.
+Mixed, missing or alternate terminal shapes are rejected.
+
+An official-evaluator-completed task failure may become a memory candidate only after trace qualification and a
+leakage scan. A qualified frozen-policy budget terminal is retained as `agent_failure`, is not automatically rerun and
+is not a memory candidate. Infrastructure and qualification failures are also ineligible. Candidate status never
+admits a rule automatically; agent or maintainer review and deduplication remain separate post-collection steps.
+
+At the frozen standard rates, conservative worst-rate reserve is `$13.6125` per run, `$163.35` for 12 runs,
+`$245.025` for 18 runs and `$1,306.80` for 96 runs. The current project cap is `$150`, so the 12-row source is short by
+`$13.35`; the smallest whole-dollar non-censoring cap is `$164`. D-096 therefore records
+`NO_MEMORY_AUTHORIZATION_CAP_PENDING`, does not change the cap and makes no invoice or free-tier claim.
+The rate is not an unbound builder literal: D-096 exact-binds the D-094 source artifact and directly projects its pricing
+schema, model snapshot, standard-default rates, verification timestamp and URLs, then re-derives
+`(3,000,000 + 25,000) × $4.50/M = $13.6125` per run.
+
+Portable artifact: `reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json`.
+Semantic body SHA is `sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d`;
+the 19,031-byte file SHA is `sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d`,
+and the decision ID is `d096_2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d`.
+The builder exact-binds D-095, D-094 pricing, D-083, D-084, the frozen dataset manifest, all six public task specs and
+the historical schedule carrier, and fails closed on source drift. D-096 makes 0 provider calls, 0 evaluator calls and
+adds `$0` model cost. It opens only the
+resource-policy freeze, baseline-admission contract and future no-memory source authoring. Runtime v2, a new suite,
+clean no-call preflight, execution hash, cost approval, live execution, baseline result, comparison denominator,
+memory review/admission/index, core and analysis remain closed.
+
+Final verification passed the focused D-096 contract suite 26/26 and the related D-083 through D-096 contract set
+178/178. The repository-wide two-shard run collected 1,663 unique tests. Shard one passed 644 with one
+environment-dependent skip; shard two passed 1,011 with six environment-dependent skips and only the known D-092
+WAL/SHM order-sensitive invariant failure. That exact invariant passed in a fresh isolated process, so the checkout's
+unique outcome is 1,656 pass and 7 environment-dependent skips. Parsed builder-to-artifact equality, direct 19,031-byte
+file hash verification and `git diff --check` also passed.

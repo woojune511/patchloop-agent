@@ -1663,3 +1663,34 @@ hidden perfection으로 재정의하거나 task-specific prompt/tool tuning과 �
 free-tier 적용액이 아니다. Post-run seal은 provider/evaluator를 다시 호출하지 않는다. 이 small selected panel은
 calibration-only이므로 no-memory 성능 baseline, success-rate estimate, comparison denominator/resource freeze,
 memory review/admission/index와 core는 별도 condition-neutral admission decision 전까지 닫힌다.
+
+### D-096 prospective comparison and no-memory admission protocol
+
+Policy selection에는 D-093의 public resource derivation과 D-095의 readiness/process-confound 결과만 사용한다.
+D-095의 0/3 hidden acceptance나 task success는 선택 입력이 아니다. 3M/3,600초 policy는 budget을 비교 변수로
+삼지 않기 위한 동일한 finite allocation이며 일반적인 task completion 보장이 아니다. 네 memory condition은 향후
+같은 model, prompt, tool, context, retry, output, memory allowance와 resource ceiling을 사용해야 한다. Pricing은
+D-094 source artifact의 exact-bound pricing block에서 직접 읽고 rate와 worst-reserve formula를 재계산한다.
+
+No-memory baseline source는 frozen memory-development 여섯 task를 각 2회, seed `20260723`으로 구성한 exact
+12-row successor여야 한다. D-087 historical result나 D-095 calibration row를 가져와 채우거나 교체하지 않는다.
+각 task `public.yaml` bytes/file SHA를 frozen manifest row의 `public_spec_hash`와 먼저 대조하고 하나라도 drift하면
+source admission을 중단한다. Task success/hidden pass는 source admission 요건이 아니지만 campaign completion은
+exact 12 terminal·qualified·cost-settled row, process error와 cost censoring 0 및 durable qualification/telemetry/
+runtime-policy reconciliation을 요구한다. Issued response status는 전부 `completed`여야 한다.
+
+각 terminal row는 다음 branch 중 exact-one이어야 한다.
+
+1. Official evaluator branch: accepted submission, completed official receipt, `resolved|task_failure`, budget terminal 0.
+2. Budget branch: canonical pre-call `ModelGenerationBlocked` with `total_tokens|wall_clock`, runtime actor와 expected
+   CAS, provider-after-terminal 0, `agent_failure`, accepted submission/evaluator receipt 0.
+
+따라서 frozen-policy budget terminal은 denominator에 `agent_failure`로 남고 자동 재실행하지 않으며 memory
+candidate가 될 수 없다. Memory candidate는 official-evaluator `task_failure`, qualified trace와 leakage pass 뒤에도
+자동 admission하지 않고 별도 maintainer/agent review를 거친다.
+
+D-096은 source-authoring permission만 연다. Historical D-083/D-084 v1을 수정하지 않고 새 runtime v2 binding과
+3M suite를 별도 구현해야 한다. 또한 12-run worst-case `$163.35`가 project cap `$150`을 넘으므로
+`NO_MEMORY_AUTHORIZATION_CAP_PENDING`을 해소하는 non-censoring cost policy가 필요하다. 이 두 조건과 fresh
+pricing, clean no-call preflight, 새 execution hash 및 별도 user approval 전에는 provider/evaluator를 호출하지
+않는다. No-memory result, denominator, memory review/index와 core analysis는 계속 닫힌다.

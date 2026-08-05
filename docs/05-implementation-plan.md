@@ -1,17 +1,19 @@
 # Implementation Plan
 
 상태: **Implementation baseline active**  
-현재 milestone: **D-095 D-094 measured-result seal; exact high-headroom workflow readiness 3/3 pass와
-hidden task failure 3/3을 분리해 보존하며 baseline·denominator·memory/core authority를 닫음**
+현재 milestone: **D-096 future condition-neutral resource policy와 exact no-memory baseline admission contract를
+offline으로 동결했으며 source authoring만 열고 live/result/memory/core authority는 닫음**
 
-Approved execution hash `sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75`는
-clean D-094 source commit `82fbb33f20cabb57a151db871782345c6cafa3f0`에서 한 번 소비됐다. AnyIO,
-pyfakefs와 HF Hub는 모두 terminal·qualified·accepted submission·official evaluator에 도달했고 budget/
-infrastructure/qualification/diagnostic confound가 없어 readiness gate는 통과했다. 세 patch는
-regression/scope/safety를 통과했지만 hidden acceptance에 실패해 task success와 SCRR은 0/3이다. Aggregate는
-1,005,857 token, 63 model/119 tool call과 fixed-rate `$0.9374115`다. D-095는 이 결과를 immutable portable
-seal과 hard-consumed ID로 결속하며, no-memory baseline, comparison denominator/resource freeze, memory
-review/admission/index와 core는 별도 decision 전까지 열지 않는다.
+D-096은 향후 네 memory condition에 공통으로 사용할 exact policy를
+`gpt-5.4-mini-2026-03-17` medium/standard/default, SDK retry 0, `SYSTEM_PROMPT_V3`, tool v2,
+context `phase-evidence-v5`, output 25,000, memory allowance 2,000과 per-run
+`null/null/3,000,000 token/3,600s`로 선택했다. Frozen memory-development의 Loguru, AnyIO, tox, HF Hub,
+PDM, pyfakefs를 이 순서로 `no_memory` 각 2회, seed `20260723`에 배치하는 12-row admission contract도
+고정했다. Task success와 hidden acceptance는 campaign admission predicate가 아니지만 결과와 memory-candidate
+eligibility에는 계속 기록한다. D-083/D-084 v1과 D-087/D-095 결과는 historical로 보존하며, runtime v2와 새
+suite는 아직 구현되지 않았다. 12-run worst-rate reserve `$163.35`가 현재 project cap `$150`를 넘으므로
+`NO_MEMORY_AUTHORIZATION_CAP_PENDING` 상태이고 provider/evaluator call, baseline result, denominator, memory
+review/admission/index, core와 analysis는 열리지 않았다.
 
 Historical D-092는 D-081 r3, D-085/D-086, D-087, D-089에서 18-run·8-task·4,079개의 public event를 replay했다.
 Repeated-rejection `N=3..10`과 relative-context `{2,4,8} × {8,16,32 calls}` 후보 중 zero false stop,
@@ -27,7 +29,7 @@ context와 qualification은 통과했으므로 confirmed harness defect는 아�
 결정하는 것이며 live budget freeze가 아니다. Final verification은 focused 238/238, repository-wide sharded
 1,539 collected 중 1,532 passed/7 environment-dependent skipped다.
 
-2026-08-04 구현 스냅샷:
+2026-08-05 구현 스냅샷:
 
 | 영역 | 상태 | 현재 evidence |
 | --- | --- | --- |
@@ -36,7 +38,7 @@ context와 qualification은 통과했으므로 confirmed harness defect는 아�
 | Phase 3 state machine | generic V2/V5 baseline 유지; historical V1-V11 보존 | V10/V11과 exact HF sidecar는 retired diagnostic-only; generic dev/core에 promotion·copy·expansion 없음 |
 | Phase 4 recovery | done (offline hard-kill) | OS lock/atomic claim, postimage-write 중단 reconciliation, fresh interpreter resume와 9개 submission boundary에서 duplicate mutation/lifecycle 0 |
 | Phase 5 memory | maintainer-assisted proposal validated, admission intentionally deferred | V4 campaign의 task failure 3개를 두 semantic group으로 hash-bound review; tox repetition은 candidate 1개로 dedup, loguru causal rule은 hold; automatic agent self-review, human admission과 index freeze는 no-memory completion 뒤까지 보류 |
-| Phase 6 evaluation | D-095 measured high-headroom readiness sealed | 3/3 workflow readiness, 0/3 hidden/SCRR; calibration-only, hard-consumed, baseline/denominator/memory/core closed |
+| Phase 6 evaluation | D-096 resource policy and no-memory admission frozen offline | future 3M/3,600s/null-call policy와 exact 6-task × 2 schedule; runtime v2/suite/live/result/memory/core closed, cap blocker active |
 | Phase 7 viewer/GitHub | viewer implemented, external GitHub gate pending | Lifecycle critical-path route test 통과, 실제 Draft PR 미실행 |
 
 Calibration fixture gate는 5/5로 완료됐다. 세 smoke task와
@@ -1397,7 +1399,7 @@ Next unblocked item:
 7. **검증:** focused 56/56과 repository-wide two-shard 1,627 collected 중 1,620 passed/7
    environment-dependent skipped, Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`가 통과했다.
 
-## Current result seal — D-095 D-094 measured high-headroom readiness
+## Historical result seal — D-095 D-094 measured high-headroom readiness
 
 1. **완료:** source commit `82fbb33f20cabb57a151db871782345c6cafa3f0`에서 approved execution hash
    `sha256:ae54b9cc14e3bcb80cbead61a003012cec4dbd0e8a205917b3cefdeaf0c11d75`를 정확히 한 번
@@ -1421,3 +1423,36 @@ Next unblocked item:
 9. **검증:** focused/relevant 303/303과 repository-wide split 1,637 collected 중 1,630 passed/7
    environment-dependent skipped가 통과했다. File shard의 유일한 D-092 WAL/SHM order-sensitive invariant는
    isolated process에서 통과했다. Ruff, compileall, exact rebuild, JSON/hash와 `git diff --check`도 통과했다.
+
+## Current offline gate — D-096 condition-neutral resource policy and no-memory admission
+
+1. **완료:** future comparison policy를 mini medium/standard/default, retry 0, prompt V3, tool v2,
+   context v5, output 25k, memory allowance 2k와 `null/null/3M/3,600s`로 exact freeze했다. 네 memory
+   condition에 동일하게 적용하는 prospective policy이며 finite safety ceiling이지 completion guarantee가 아니다.
+2. **완료:** frozen memory-development 6개 task를 Loguru, AnyIO, tox, HF Hub, PDM, pyfakefs 순서로
+   `no_memory` 각 2회 배치하고 seed `20260723`, expected row 12를 admission contract로 고정했다. 각
+   `public.yaml` exact bytes/file SHA는 frozen manifest의 `public_spec_hash`와 일치해야 한다.
+3. **완료:** Campaign admission은 12/12 terminal·qualified·cost-settled, persisted qualification read-only exact
+   match, exact runtime/no-memory binding과 complete telemetry를 요구한다. Not-started, infrastructure,
+   qualification, diagnostic, duplicate/replacement, unknown-terminal, model/tool-call-budget-block count는 0이어야
+   하고 issued response는 전부 `completed`여야 한다. Terminal은
+   accepted submission + completed official evaluator의 `resolved|task_failure` branch 또는 actor/CAS/pre-call/
+   no-provider-after가 확인된 canonical token/wall budget `agent_failure` branch 중 exact-one이어야 한다. Task
+   success와 hidden acceptance는 이 predicate가 아니며, official-evaluator task failure만 후속 leak-safe review
+   대상 memory candidate가 될 수 있다.
+4. **보존:** D-083/D-084 v1 runtime contract/evidence와 historical result는 수정하지 않는다. D-096이 선택한
+   runtime contract/evidence v2는 아직 구현되지 않았고 D-087/D-095를 소급 baseline으로 admission하지 않는다.
+5. **비용 blocker:** Conservative reserve는 `$13.6125`/run, `$163.35`/12 run이다. 현재 project cap `$150`보다
+   `$13.35` 크므로 최소 정수 cap `$164` 이상의 별도 non-censoring cost policy가 정해지기 전
+   `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 fail closed한다. Rate와 reserve는 exact-bound D-094 pricing
+   artifact block에서 직접 읽어 공식 formula로 재도출한다.
+6. **열림:** Resource-policy freeze, baseline-admission contract와 future no-memory source authoring만 열린다.
+7. **닫힘:** New suite/runtime binding, no-call preflight, execution hash, 사용자 비용 승인, provider/evaluator call,
+   baseline result, comparison denominator, memory review/admission/index, core와 analysis는 모두 닫혀 있다.
+8. **다음 gate:** Runtime v2를 execution plan·RunManifest·content-addressed start/resume·qualification에 결속하고
+   새 exact 12-row successor suite와 non-censoring campaign cost policy를 작성한다. 그 뒤 clean no-call preflight,
+   fresh pricing, 새 experiment ID/hash와 별도 사용자 승인이 필요하다.
+9. **검증:** Focused D-096 contract 26/26과 관련 D-083~D-096 contract 178/178이 통과했다. Repository-wide
+   1,663건은 1,656 pass/7 environment-dependent skip이며, shard 순서에 민감한 D-092 WAL/SHM invariant 1건은
+   독립 프로세스에서 통과했다. Parsed exact artifact rebuild, 19,031-byte file SHA
+   `sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d`와 `git diff --check`도 통과했다.
