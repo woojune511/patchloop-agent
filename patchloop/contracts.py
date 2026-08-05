@@ -75,6 +75,7 @@ CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID = (
 GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID = (
     "generic-high-headroom-readiness-v2v5-20260804-r1"
 )
+CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID = "dev-no-memory-condition-neutral-3000k-20260805-r1"
 
 
 class RunOutcomeKind(StrEnum):
@@ -503,7 +504,11 @@ class ExperimentRunContext(StrictModel):
     repetition: int = Field(ge=1)
 
     @model_validator(mode="after")
-    def bind_accrued_cap_context(self) -> ExperimentRunContext:
+    def bind_campaign_cost_context(self) -> ExperimentRunContext:
+        if self.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID:
+            if self.campaign_cost_control_hash is None:
+                raise ValueError("the D-097 campaign requires campaign_cost_control_hash")
+            return self
         requires_cost_control = (
             self.experiment_id
             == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
@@ -1353,6 +1358,56 @@ class RunManifest(StrictModel):
                 or self.memory.condition == MemoryCondition.NO_MEMORY
             )
         )
+        prospective_no_memory_v2_order = {
+            ("pyfakefs-makedirs-parent-traversal", 1): 1,
+            ("pyfakefs-makedirs-parent-traversal", 2): 2,
+            ("anyio-interrupt-runner-cleanup", 1): 3,
+            ("hf-hub-xet-endpoint-propagation", 1): 4,
+            ("pdm-ignore-active-venv-resolution", 1): 5,
+            ("hf-hub-xet-endpoint-propagation", 2): 6,
+            ("anyio-interrupt-runner-cleanup", 2): 7,
+            ("loguru-invalid-format-feedback", 1): 8,
+            ("loguru-invalid-format-feedback", 2): 9,
+            ("tox-cross-section-empty-substitution", 2): 10,
+            ("tox-cross-section-empty-substitution", 1): 11,
+            ("pdm-ignore-active-venv-resolution", 2): 12,
+        }
+        prospective_no_memory_v2 = bool(
+            self.experiment is not None
+            and self.experiment.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+            and self.experiment.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+            and self.experiment.dataset_role == DatasetRole.MEMORY_DEVELOPMENT
+            and self.experiment.schedule_seed == 20260723
+            and self.experiment.repetition in {1, 2}
+            and self.experiment.schedule_order
+            == prospective_no_memory_v2_order.get((self.task_id, self.experiment.repetition))
+            and self.tool_schema_version == "v2"
+            and self.context_policy_version == "phase-evidence-v5"
+            and self.model.provider == "openai"
+            and self.model.model_id == "gpt-5.4-mini-2026-03-17"
+            and self.model.reasoning_effort == "medium"
+            and self.model.reasoning_mode == "standard"
+            and self.model.service_tier == "default"
+            and self.model.transport_max_retries == 0
+            and self.model.max_output_tokens == 25_000
+            and self.budget.max_model_calls is None
+            and self.budget.max_tool_calls is None
+            and self.budget.max_total_tokens == 3_000_000
+            and self.budget.wall_clock_timeout_seconds == 3_600
+            and self.memory.condition == MemoryCondition.NO_MEMORY
+            and self.memory.max_context_tokens == 2_000
+            and self.fault.type == "none"
+            and self.public_review_contract is None
+        )
+        claims_prospective_no_memory_v2 = bool(
+            self.experiment is not None
+            and self.experiment.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+        )
+        if claims_prospective_no_memory_v2 and not prospective_no_memory_v2:
+            raise ValueError(
+                "the D-097 no-memory identity requires its exact frozen row and "
+                "condition-neutral 3M/3600 runtime tuple"
+            )
         if generic_baseline_readiness and not v2v5_live_contract:
             raise ValueError(
                 "generic baseline readiness requires OpenAI, the exact v2/v5 "
@@ -1478,6 +1533,7 @@ class RunManifest(StrictModel):
             workflow_completion_probe
             or generic_count_observability
             or future_comparison_profile
+            or prospective_no_memory_v2
         ):
             raise ValueError(
                 "disabled model/tool call limits are reserved for an exact "

@@ -3146,3 +3146,130 @@ Worst-rate reserve는 `$13.6125`/run, `$163.35`/12, `$245.025`/18, `$1,306.80`/9
 `$150`과 12-run deficit `$13.35`를 기록하고 blocker를 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 고정한다.
 Campaign cost policy, project cap change, runtime v2, successor suite, preflight, hash와 live approval은 모두 false다.
 이 contract가 true로 여는 것은 resource-policy freeze, baseline-admission freeze와 future no-memory source authoring뿐이다.
+
+## 39. D-097 exact runtime-v2 no-memory source contract
+
+Exact suite identity는 다음 tuple의 논리곱이다.
+
+```text
+experiment_id = dev-no-memory-condition-neutral-3000k-20260805-r1
+suite_bytes = 2741
+suite_file_sha256 = sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0
+purpose = memory-development-no-memory
+tasks = [
+  loguru-invalid-format-feedback,
+  anyio-interrupt-runner-cleanup,
+  tox-cross-section-empty-substitution,
+  hf-hub-xet-endpoint-propagation,
+  pdm-ignore-active-venv-resolution,
+  pyfakefs-makedirs-parent-traversal,
+]  # exact public-path order
+conditions = [no_memory]
+repetitions = 2
+seed = 20260723
+model/runtime = gpt-5.4-mini-2026-03-17, medium/standard/default, retry 0
+prompt/tool/context = SYSTEM_PROMPT_V3 / v2 / phase-evidence-v5
+max_output_tokens = 25000
+memory_max_context_tokens = 2000
+budget = null/null/3000000/3600
+live_cost_approved = false
+approved_execution_hash = null
+pilot_run_id = null
+```
+
+D-096 `schedule_identity.content_hash`
+`sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`는 위의 ordered source
+tasks, condition, repetitions, seed와 row count를 hash한 값이다. Seed shuffle 뒤의 12개
+`{order, condition, task_id, repetition}` projection은 별도
+`sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`다. Execution
+preflight는 더 많은 task/environment/schedule-row 필드를 포함한 자신의 schedule hash를 다시 만들므로 이 세
+identity를 서로 대체하면 안 된다.
+
+Expanded schedule의 exact row projection은 다음과 같다.
+
+```text
+01  pyfakefs-makedirs-parent-traversal       repetition 1
+02  pyfakefs-makedirs-parent-traversal       repetition 2
+03  anyio-interrupt-runner-cleanup           repetition 1
+04  hf-hub-xet-endpoint-propagation          repetition 1
+05  pdm-ignore-active-venv-resolution        repetition 1
+06  hf-hub-xet-endpoint-propagation          repetition 2
+07  anyio-interrupt-runner-cleanup           repetition 2
+08  loguru-invalid-format-feedback           repetition 1
+09  loguru-invalid-format-feedback           repetition 2
+10  tox-cross-section-empty-substitution     repetition 2
+11  tox-cross-section-empty-substitution     repetition 1
+12  pdm-ignore-active-venv-resolution        repetition 2
+```
+
+`condition-neutral-comparison-runtime-contract-v2`는 exact D-097 selector에서만 생성된다. Contract는
+D-096 resource-policy descriptor와 no-memory admission descriptor, purpose/model/retry/output/budget,
+memory allowance/conditions, prompt/tool hash, context/call-guard와 harness commit을 포함한다. Execution hash,
+persisted plan과 paid-boundary reconstruction이 같은 object를 사용해야 한다. `RunManifest`는 exact randomized
+task/repetition order, dataset role, no-memory condition과 cost-control hash를 요구한다.
+`condition-neutral-comparison-runtime-evidence-v2`는 prompt와 tool body까지 content-addressed artifact에 넣고
+runner의 유일한 `RunStarted` event가 descriptor/path/id를 결속한다. Fresh start와 resume는 artifact bytes와
+manifest에서 재구성한 expected document가 canonical-exact한지 확인해야 한다. Qualification은 같은 CAS를
+read-only로 다시 읽고 persisted result와 exact 비교한다.
+
+Cost contract `campaign-list-price-full-schedule-reserve-v1`의 fixed fields는 다음과 같다.
+
+```text
+accounting_scope = campaign-local
+scheduled_run_count = 12
+per_run_worst_rate_reserve_usd = 13.6125
+full_schedule_worst_rate_reserve_usd = 163.35
+hard_cap_usd = 164.0
+hard_cap_slack_usd = 0.65
+reservation_mode = row-bound-full-schedule-up-front
+initial_reservation_boundary = before-first-provider-call
+cost_censoring_allowed = false
+not_started_due_to_cost_allowed = false
+settlement_basis = durable-token-derived-standard-list-price
+live_resume_policy = disabled
+completion_guaranteed = false
+```
+
+Nano-USD 값은 각각 13,612,500,000 / 163,350,000,000 / 164,000,000,000이다. Cost-control content hash는
+execution hash와 `ExperimentRunContext.campaign_cost_control_hash`, paid boundary와 qualification에 모두
+일치해야 한다. `row-bound-full-schedule-up-front`는 row별 SQLite capability를 뜻하지 않는다. 첫 provider call 전
+하나의 fsync된 `FullScheduleCostReserved`가 exact 12-row schedule과 row별 allocation 전체를 결속하고, 같은
+plan/CAS/journal을 각 row 전에 다시 검증하며, 각 terminal row에 deterministic settlement를 기록한다. D-097은
+per-row atomic SQLite consumption을 구현하거나 주장하지 않고 `live_resume_policy=disabled`를 유지한다. D-097
+cost journal은 duplicate paid-call prevention을 주장하지 않으며, 기존 one-use execution hash가 authorization을
+한 번의 sequential campaign invocation으로 제한할 뿐이다. `$164`는
+prospective campaign source cap이고 invocation approval이 아니며, historical project cap `$150`은 그대로다.
+별도 사용자가 exact preflight hash와 `$150` 예외를 승인하기 전에는 cost capability가 없다.
+
+Final journal reconciliation은 terminal settlement 12개 뒤 optional `CampaignCompleted` seal을 허용하고, seal이
+있으면 execution hash, execution-plan hash, cost-control hash, cost qualification, completed row 수와 persisted
+result file hash를 exact 재검증한다. Foreign binding이나 duplicate terminal event는 journal을 일관되게 rehash해도
+거부한다. 이 contract는 evidence integrity이며 duplicate provider charge prevention으로 해석하지 않는다.
+
+`no-memory-baseline-source-completion-v1`은 source predicate이고 runtime consumer output은
+`condition-neutral-no-memory-baseline-admission-gate-v2`다. Runtime gate는 12/12 terminal, trace-qualified,
+cost-settled, exact row/plan/
+manifest/runtime/policy/admission/cost binding과 complete prompt/usage telemetry를 요구한다. Not-started,
+infrastructure, qualification, diagnostic, duplicate/replacement, unknown terminal, model/tool-call budget block과
+cost-censored row는 모두 0이다. 허용 terminal class는 아래 둘뿐이다.
+
+- Official evaluator class: accepted submission 1, completed official receipt, outcome `resolved|task_failure`,
+  terminal budget block 0.
+- Frozen-policy budget class: canonical pre-call total-token 또는 wall-clock block 1, actor/request CAS 및
+  no-provider-after, outcome `agent_failure`, accepted submission/evaluator receipt 0.
+
+두 class는 mutually exclusive/exhaustive exact-one이다. 둘 다 denominator row지만 budget/infrastructure
+failure는 memory candidate가 아니고 automatic rerun하지 않는다. Task success, hidden acceptance와 SCRR는
+completion predicate가 아니다. Future 12-row completion gate가 pass하면 campaign-level
+`memory_review_eligible=true`다. Actual review candidate는 official-evaluator task failure row로만 제한되고
+budget/infrastructure failure는 제외된다. `memory_review_eligible`은 rule admission이 아니며 별도
+review/dedup/leak gate가 통과하기 전 `memory_admission_unlocked=false`를 유지한다. Source-only wrapper에서는 두
+상태 모두 false/closed다.
+
+Portable source wrapper는
+`condition-neutral-baseline-source-gate-d097-evidence-v1`이며 artifact는
+`reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json`이다. Semantic body SHA는
+`sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, 21,029-byte file SHA는
+`sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다. Wrapper의 source-only
+authorization fields는 clean preflight/hash/approval/provider/evaluator/result/memory/core를 모두 false로 둔다.
+Canonical blocker는 `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.

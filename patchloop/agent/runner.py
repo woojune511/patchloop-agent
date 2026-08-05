@@ -45,6 +45,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
     GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     Artifact,
     Budget,
@@ -112,6 +113,27 @@ _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA = "model-generation-block-v3"
 _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA = (
     "condition-neutral-comparison-runtime-evidence-v1"
 )
+_CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2 = (
+    "condition-neutral-comparison-runtime-evidence-v2"
+)
+_CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA = (
+    "campaign-full-schedule-cost-control-evidence-v1"
+)
+_CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA = "campaign-list-price-full-schedule-reserve-v1"
+_CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
+    ("pyfakefs-makedirs-parent-traversal", 1): 1,
+    ("pyfakefs-makedirs-parent-traversal", 2): 2,
+    ("anyio-interrupt-runner-cleanup", 1): 3,
+    ("hf-hub-xet-endpoint-propagation", 1): 4,
+    ("pdm-ignore-active-venv-resolution", 1): 5,
+    ("hf-hub-xet-endpoint-propagation", 2): 6,
+    ("anyio-interrupt-runner-cleanup", 2): 7,
+    ("loguru-invalid-format-feedback", 1): 8,
+    ("loguru-invalid-format-feedback", 2): 9,
+    ("tox-cross-section-empty-substitution", 2): 10,
+    ("tox-cross-section-empty-substitution", 1): 11,
+    ("pdm-ignore-active-venv-resolution", 2): 12,
+}
 _CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY = (
     "model-tool-observability-only-v1"
 )
@@ -880,12 +902,20 @@ class AgentRunner:
             manifest.model.provider == "openai"
             and manifest.experiment is not None
             and manifest.experiment.experiment_id
-            == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+            in {
+                CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
+                CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
+            }
         ):
-            raise ContractError(
-                "D-087 live resume is disabled until request-level billing "
-                "reservations are durable"
-            )
+            if (
+                manifest.experiment.experiment_id
+                == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+            ):
+                raise ContractError(
+                    "D-087 live resume is disabled until request-level billing "
+                    "reservations are durable"
+                )
+            raise ContractError("D-097 live resume is disabled by its frozen policy")
         task_dir = self._find_task(manifest)
         if manifest.model.provider == "mock":
             model = "mock"
@@ -957,6 +987,40 @@ class AgentRunner:
         )
 
     @staticmethod
+    def _is_condition_neutral_runtime_v2_manifest(
+        manifest: RunManifest,
+    ) -> bool:
+        experiment = manifest.experiment
+        return bool(
+            experiment is not None
+            and experiment.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+            and experiment.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+            and experiment.dataset_role == DatasetRole.MEMORY_DEVELOPMENT
+            and experiment.schedule_seed == 20260723
+            and experiment.repetition in {1, 2}
+            and experiment.schedule_order
+            == _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER.get((manifest.task_id, experiment.repetition))
+            and _valid_sha256_identity(experiment.campaign_cost_control_hash)
+            and manifest.tool_schema_version == "v2"
+            and manifest.context_policy_version == "phase-evidence-v5"
+            and manifest.model.provider == "openai"
+            and manifest.model.model_id == "gpt-5.4-mini-2026-03-17"
+            and manifest.model.reasoning_effort == "medium"
+            and manifest.model.reasoning_mode == "standard"
+            and manifest.model.service_tier == "default"
+            and manifest.model.transport_max_retries == 0
+            and manifest.model.max_output_tokens == 25_000
+            and manifest.budget.max_model_calls is None
+            and manifest.budget.max_tool_calls is None
+            and manifest.budget.max_total_tokens == 3_000_000
+            and manifest.budget.wall_clock_timeout_seconds == 3_600
+            and manifest.memory.condition == MemoryCondition.NO_MEMORY
+            and manifest.memory.max_context_tokens == 2_000
+            and manifest.fault.type == "none"
+            and manifest.public_review_contract is None
+        )
+
+    @staticmethod
     def _require_live_authorization(
         manifest: RunManifest | None,
         authorization: LiveExecutionAuthorization | None,
@@ -976,6 +1040,156 @@ class AgentRunner:
             raise ContractError(
                 "live model execution requires an approved experiment execution capability"
             )
+        if AgentRunner._is_condition_neutral_runtime_v2_manifest(manifest):
+            AgentRunner._require_full_schedule_reservation(
+                manifest,
+                authorization,
+            )
+
+    @staticmethod
+    def _require_full_schedule_reservation(
+        manifest: RunManifest,
+        authorization: LiveExecutionAuthorization,
+    ) -> None:
+        """Require the D-097 up-front reserve journal before every paid row."""
+
+        assert manifest.experiment is not None
+        plan = _load_live_execution_plan(authorization)
+        cost_control = plan.get("campaign_cost_control")
+        descriptor = cost_control.get("descriptor") if isinstance(cost_control, dict) else None
+        control_hash = cost_control.get("content_hash") if isinstance(cost_control, dict) else None
+        schedule_row_ids = (
+            descriptor.get("schedule_row_ids") if isinstance(descriptor, dict) else None
+        )
+        journal_path_raw = plan.get("journal_path")
+        if not (
+            isinstance(cost_control, dict)
+            and cost_control.get("schema_version")
+            == _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
+            and isinstance(descriptor, dict)
+            and descriptor.get("schema_version")
+            == _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
+            and descriptor.get("experiment_id") == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+            and _valid_sha256_identity(control_hash)
+            and sha256_text(canonical_json(descriptor)) == control_hash
+            and control_hash == manifest.experiment.campaign_cost_control_hash
+            and isinstance(schedule_row_ids, list)
+            and len(schedule_row_ids) == 12
+            and manifest.experiment.schedule_row_id in schedule_row_ids
+            and isinstance(journal_path_raw, str)
+        ):
+            raise ContractError("D-097 approved full-schedule cost control is invalid")
+        journal_path = Path(journal_path_raw)
+        expected_name = f"{CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID}.jsonl"
+        if not (
+            journal_path.is_absolute()
+            and str(journal_path.resolve(strict=False)) == journal_path_raw
+            and journal_path.name == expected_name
+            and journal_path.parent.name == "journals"
+            and journal_path.parent.parent.name == "experiments"
+        ):
+            raise ContractError("D-097 approved campaign journal path is invalid")
+        try:
+            raw = journal_path.read_bytes()
+            if not raw.endswith(b"\n"):
+                raise ValueError("journal is not newline terminated")
+            events = [json.loads(line) for line in raw.decode("utf-8").splitlines()]
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+            raise ContractError("D-097 full-schedule reservation journal is invalid") from exc
+        previous_hash: str | None = None
+        for sequence, event in enumerate(events, start=1):
+            if not isinstance(event, dict):
+                raise ContractError("D-097 campaign journal event is invalid")
+            recorded_hash = event.get("event_hash")
+            body = {key: value for key, value in event.items() if key != "event_hash"}
+            if not (
+                event.get("schema_version") == _CAMPAIGN_JOURNAL_EVENT_SCHEMA
+                and event.get("sequence") == sequence
+                and event.get("previous_event_hash") == previous_hash
+                and _valid_sha256_identity(recorded_hash)
+                and sha256_text(canonical_json(body)) == recorded_hash
+            ):
+                raise ContractError("D-097 campaign journal hash chain is invalid")
+            previous_hash = recorded_hash
+            if event.get("event_type") == "CostReserveUnavailable":
+                raise ContractError("D-097 forbids cost-censoring journal events")
+        if len(events) < 2:
+            raise ContractError("D-097 full-schedule reservation is missing")
+        started = events[0].get("payload")
+        reserved = events[1].get("payload")
+        policy = descriptor.get("policy")
+        expected_plan_content_hash = sha256_text(canonical_json(plan))
+        if not (
+            events[0].get("event_type") == "CampaignStarted"
+            and isinstance(started, dict)
+            and started.get("execution_hash") == authorization.execution_hash
+            and started.get("execution_plan_hash") == expected_plan_content_hash
+            and started.get("schedule_hash") == descriptor.get("schedule_hash")
+            and started.get("campaign_cost_control_hash") == control_hash
+            and events[1].get("event_type") == "FullScheduleCostReserved"
+            and isinstance(reserved, dict)
+            and reserved.get("experiment_id") == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+            and reserved.get("execution_hash") == authorization.execution_hash
+            and reserved.get("execution_plan_hash") == expected_plan_content_hash
+            and reserved.get("campaign_cost_control_hash") == control_hash
+            and reserved.get("schedule_hash") == descriptor.get("schedule_hash")
+            and reserved.get("schedule_row_ids") == schedule_row_ids
+            and isinstance(policy, dict)
+            and reserved.get("full_schedule_reserve_nanos")
+            == policy.get("full_schedule_reserve_nanos")
+            and reserved.get("hard_cap_nanos") == policy.get("hard_cap_nanos")
+            and reserved.get("cost_censoring_allowed") is False
+        ):
+            raise ContractError("D-097 full-schedule reserve does not match the plan")
+        current = events[-1]
+        current_payload = current.get("payload")
+        approved_schedule = plan.get("schedule")
+        if not (
+            isinstance(approved_schedule, list)
+            and len(approved_schedule) == 12
+            and all(isinstance(row, dict) for row in approved_schedule)
+            and [row.get("schedule_row_id") for row in approved_schedule] == schedule_row_ids
+            and sha256_text(canonical_json(approved_schedule)) == descriptor.get("schedule_hash")
+        ):
+            raise ContractError("D-097 approved schedule does not match its reserve")
+        expected_order = schedule_row_ids.index(manifest.experiment.schedule_row_id) + 1
+        expected_row = approved_schedule[expected_order - 1]
+        prior_starts = [
+            event
+            for event in events[:-1]
+            if event.get("event_type") == "RunStarted"
+            and isinstance(event.get("payload"), dict)
+            and event["payload"].get("schedule_row_id") == manifest.experiment.schedule_row_id
+        ]
+        if not (
+            current.get("event_type") == "RunStarted"
+            and isinstance(current_payload, dict)
+            and not prior_starts
+            and expected_order == manifest.experiment.schedule_order
+            and current_payload.get("order") == expected_order
+            and current_payload.get("schedule_row_id") == manifest.experiment.schedule_row_id
+            and current_payload.get("task_id") == manifest.task_id
+            and current_payload.get("dataset_role") == DatasetRole.MEMORY_DEVELOPMENT.value
+            and current_payload.get("condition") == MemoryCondition.NO_MEMORY.value
+            and current_payload.get("repetition") == manifest.experiment.repetition
+            and current_payload.get("run_id") == manifest.run_id
+            and all(
+                current_payload.get(field) == expected_row.get(field)
+                for field in (
+                    "order",
+                    "schedule_row_id",
+                    "task_id",
+                    "split",
+                    "dataset_role",
+                    "condition",
+                    "repetition",
+                )
+            )
+            and current_payload.get("execution_hash") == authorization.execution_hash
+            and current_payload.get("execution_plan_hash") == expected_plan_content_hash
+            and current_payload.get("campaign_cost_control_hash") == control_hash
+        ):
+            raise ContractError("D-097 current paid row is not uniquely bound to the journal")
 
     def _require_campaign_cost_reservation(
         self,
@@ -1171,11 +1385,15 @@ class AgentRunner:
             and manifest.experiment is not None
             and manifest.experiment.purpose != ExperimentPurpose.CORE
         )
+        condition_neutral_v2_live = bool(
+            AgentRunner._is_condition_neutral_runtime_v2_manifest(manifest)
+        )
         if not any(
             (
                 generic_baseline_readiness,
                 workflow_completion_probe,
                 frozen_comparison_live,
+                condition_neutral_v2_live,
                 corrective,
                 saturation,
                 review_evidence,
@@ -3258,6 +3476,7 @@ class AgentRunner:
         frozen_comparison = (
             AgentRunner._is_frozen_comparison_runtime_manifest(manifest)
         )
+        condition_neutral_v2 = AgentRunner._is_condition_neutral_runtime_v2_manifest(manifest)
         if manifest.experiment is None or (
             manifest.experiment.purpose
             not in {
@@ -3265,8 +3484,44 @@ class AgentRunner:
                 ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
             }
             and not frozen_comparison
+            and not condition_neutral_v2
         ):
             return None
+        if condition_neutral_v2:
+            from patchloop.evals.runner import (
+                _validated_comparison_resource_policy_v2,
+                _validated_no_memory_admission_v1,
+            )
+
+            return {
+                "schema_version": (_CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2),
+                "comparison_resource_policy": (_validated_comparison_resource_policy_v2()),
+                "baseline_admission": _validated_no_memory_admission_v1(),
+                "experiment_id": manifest.experiment.experiment_id,
+                "purpose": manifest.experiment.purpose.value,
+                "suite_hash": manifest.experiment.suite_hash,
+                "execution_hash": manifest.experiment.execution_hash,
+                "campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash),
+                "schedule_seed": manifest.experiment.schedule_seed,
+                "schedule_order": manifest.experiment.schedule_order,
+                "schedule_row_id": manifest.experiment.schedule_row_id,
+                "repetition": manifest.experiment.repetition,
+                "model_provider": manifest.model.provider,
+                "model_id": manifest.model.model_id,
+                "reasoning_effort": manifest.model.reasoning_effort,
+                "reasoning_mode": manifest.model.reasoning_mode,
+                "service_tier": manifest.model.service_tier,
+                "transport_max_retries": manifest.model.transport_max_retries,
+                "max_output_tokens": manifest.model.max_output_tokens,
+                "budget": manifest.budget.model_dump(mode="json"),
+                "memory_max_context_tokens": manifest.memory.max_context_tokens,
+                "memory_condition": manifest.memory.condition.value,
+                "system_prompt": system_prompt,
+                "tools": tool_schemas,
+                "tool_schema_version": manifest.tool_schema_version,
+                "context_policy_version": manifest.context_policy_version,
+                "call_guard_policy": (_CONDITION_NEUTRAL_COMPARISON_CALL_GUARD_POLICY),
+            }
         if frozen_comparison:
             # Local import avoids an import cycle while making RunStarted
             # evidence fail closed if the immutable D-083 policy bytes drift.

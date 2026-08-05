@@ -11,6 +11,7 @@ from typing import Any
 from patchloop.contracts import (
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
     GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     DatasetRole,
     EventType,
@@ -36,6 +37,20 @@ _FROZEN_COMPARISON_PURPOSES = frozenset(
 _CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID = (
     "babel-strict-grouped-decimal-trailing-zeroes"
 )
+_CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
+    ("pyfakefs-makedirs-parent-traversal", 1): 1,
+    ("pyfakefs-makedirs-parent-traversal", 2): 2,
+    ("anyio-interrupt-runner-cleanup", 1): 3,
+    ("hf-hub-xet-endpoint-propagation", 1): 4,
+    ("pdm-ignore-active-venv-resolution", 1): 5,
+    ("hf-hub-xet-endpoint-propagation", 2): 6,
+    ("anyio-interrupt-runner-cleanup", 2): 7,
+    ("loguru-invalid-format-feedback", 1): 8,
+    ("loguru-invalid-format-feedback", 2): 9,
+    ("tox-cross-section-empty-substitution", 2): 10,
+    ("tox-cross-section-empty-substitution", 1): 11,
+    ("pdm-ignore-active-venv-resolution", 2): 12,
+}
 
 
 def _condition_neutral_comparison_pilot_profile(
@@ -111,6 +126,50 @@ def _frozen_comparison_profile(
         and limits["tool_calls"] is None
         and limits["total_tokens"] == 1_600_000
         and limits["wall_clock_ms"] == 1_800_000
+    )
+
+
+def _condition_neutral_runtime_v2_profile(
+    manifest: RunManifest,
+    *,
+    limits: Mapping[str, int | None],
+) -> bool:
+    """Select only the exact D-097 row and 3M/3600 resource tuple."""
+
+    experiment = manifest.experiment
+    return bool(
+        experiment is not None
+        and experiment.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+        and experiment.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+        and experiment.dataset_role == DatasetRole.MEMORY_DEVELOPMENT
+        and experiment.schedule_seed == 20260723
+        and experiment.repetition in {1, 2}
+        and experiment.schedule_order
+        == _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER.get((manifest.task_id, experiment.repetition))
+        and isinstance(experiment.campaign_cost_control_hash, str)
+        and len(experiment.campaign_cost_control_hash) == 71
+        and experiment.campaign_cost_control_hash.startswith("sha256:")
+        and all(
+            character in "0123456789abcdef"
+            for character in experiment.campaign_cost_control_hash[7:]
+        )
+        and manifest.model.provider == "openai"
+        and manifest.model.model_id == "gpt-5.4-mini-2026-03-17"
+        and manifest.model.reasoning_effort == "medium"
+        and manifest.model.reasoning_mode == "standard"
+        and manifest.model.service_tier == "default"
+        and manifest.model.transport_max_retries == 0
+        and manifest.model.max_output_tokens == 25_000
+        and manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v5"
+        and manifest.memory.condition == MemoryCondition.NO_MEMORY
+        and manifest.memory.max_context_tokens == 2_000
+        and manifest.fault.type == "none"
+        and manifest.public_review_contract is None
+        and limits["model_calls"] is None
+        and limits["tool_calls"] is None
+        and limits["total_tokens"] == 3_000_000
+        and limits["wall_clock_ms"] == 3_600_000
     )
 
 
@@ -466,11 +525,16 @@ def calculate_budget_pressure(
         and experiment_payload.get("experiment_id")
         == CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
     )
+    claims_condition_neutral_v2_identity = bool(
+        isinstance(experiment_payload, Mapping)
+        and experiment_payload.get("experiment_id") == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+    )
     exact_manifest: RunManifest | None = None
     if (
         call_limits_disabled
         or claims_condition_neutral_pilot_identity
         or claims_budget_readiness_probe_identity
+        or claims_condition_neutral_v2_identity
     ):
         try:
             exact_manifest = RunManifest.model_validate(manifest_payload)
@@ -486,6 +550,11 @@ def calculate_budget_pressure(
                     "the D-089 budget-only readiness identity requires its "
                     "exact AnyIO workflow-completion row and runtime tuple"
                 ) from exc
+            if claims_condition_neutral_v2_identity:
+                raise ValueError(
+                    "the D-097 no-memory identity requires its exact frozen "
+                    "row and condition-neutral 3M/3600 runtime tuple"
+                ) from exc
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
                 "completion probe, D-081 generic readiness, or frozen "
@@ -498,10 +567,22 @@ def calculate_budget_pressure(
             limits=limits,
         )
     )
+    condition_neutral_v2 = bool(
+        exact_manifest is not None
+        and _condition_neutral_runtime_v2_profile(
+            exact_manifest,
+            limits=limits,
+        )
+    )
     if claims_condition_neutral_pilot_identity and not condition_neutral_pilot:
         raise ValueError(
             "the D-085 condition-neutral comparison pilot identity requires "
             "its exact development-validation row and runtime tuple"
+        )
+    if claims_condition_neutral_v2_identity and not condition_neutral_v2:
+        raise ValueError(
+            "the D-097 no-memory identity requires its exact frozen row and "
+            "condition-neutral 3M/3600 runtime tuple"
         )
     if claims_budget_readiness_probe_identity and (
         exact_manifest is None
@@ -576,6 +657,7 @@ def calculate_budget_pressure(
             or generic_count_observability
             or frozen_comparison
             or condition_neutral_pilot
+            or condition_neutral_v2
         ):
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "

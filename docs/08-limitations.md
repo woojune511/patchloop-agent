@@ -1256,3 +1256,37 @@ evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별
   manifest `public_spec_hash`를 함께 묶지만, 이 integrity check도 task quality나 hidden correctness를 보장하지 않는다.
 - Artifact와 builder test가 통과해도 no-call preflight, execution hash, approval, provider/evaluator call,
   comparison denominator, memory review/admission/index, core와 analysis를 자동으로 열지 않는다.
+
+## D-097 implements source/runtime wiring, not a live baseline
+
+- Exact successor suite `dev-no-memory-condition-neutral-3000k-20260805-r1` (2,741 bytes,
+  `sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`)와 runtime-v2 binding이
+  source/code에 존재해도 clean preflight, approved execution hash와
+  provider result가 없으므로 no-memory baseline이나 completed denominator는 아직 없다. Historical D-087/D-095
+  row를 D-097 row로 소급 대체하지 않는다. Exact schema는
+  `condition-neutral-comparison-runtime-contract-v2` / `condition-neutral-comparison-runtime-evidence-v2`이며
+  runtime-v1 fallback을 허용하지 않는다.
+- Source-focused suite는 suite/task/environment identity, D-096 binding, cost와 authority boundary를 검증한다.
+  Source artifact의 `runtime_v2_implementation_verified_by_artifact=false`가 의미하듯 이 검사만으로 actual
+  start/resume, durable usage settlement 또는 post-run qualification이 live trajectory에서 동작했다고 주장할 수
+  없다. Final focused/runtime/repository count는 전체 회귀가 끝날 때까지 pending이다.
+- `$164`는 하나의 fsync된 `FullScheduleCostReserved` event가 결속하는 exact 12-row worst-rate reserve
+  `$163.35`를 비용 때문에 중간 censor하지 않기 위한 prospective campaign-local source cap이다. Historical
+  project cap `$150`을 변경하지 않았고 사용자가 cap exception이나 invoice 지출을 승인한 것도 아니다.
+  Free-tier 적용액이나 실제 invoice도 이 산식에서 알 수 없다.
+- Runner는 동일 plan/CAS/journal을 각 row 전에 재검증하고 terminal row마다 deterministic settlement를 기록한다.
+  그러나 D-097에는 per-row atomic SQLite capability/consumption이 없고 live resume은 disabled다. Cost journal은
+  duplicate paid-call prevention을 주장하지 않으며 기존 one-use execution hash가 authorization을 단일 sequential
+  campaign invocation으로 제한할 뿐이다. Whole local state rollback 방어나 외부/request-level billing ledger를
+  구현했다고도 주장하지 않는다. Final `CampaignCompleted`/result revalidation과 rehashed foreign/duplicate event
+  rejection은 사후 evidence integrity이며 provider-side idempotency가 아니다.
+- Official-evaluator `task_failure`와 canonical frozen-policy budget `agent_failure`를 모두 terminal denominator
+  branch로 허용하는 runtime output `condition-neutral-no-memory-baseline-admission-gate-v2`는 task correctness를
+  완화하는 것이 아니다. Task success, hidden acceptance와 SCRR는
+  별도 결과로 그대로 보고한다. Budget branch는 memory candidate나 automatic rerun 권한이 아니다. Future
+  denominator gate가 통과하면 campaign-level `memory_review_eligible=true`지만 review candidate pool은 official
+  task failure로만 제한된다. 이는 review stage가 열렸다는 뜻일 뿐이다. 별도 review/dedup/leak gate 전
+  `memory_admission_unlocked=false`이며 memory index를 만들 수 없다.
+- Clean no-call preflight가 exact candidate hash를 만들고 사용자가 max-`$164`와 `$150` campaign exception을
+  별도로 승인하기 전에는 live run/result, memory review/admission/index, core와 analysis를 열 수 없다. Blocker는
+  `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.

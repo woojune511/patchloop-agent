@@ -1,4 +1,4 @@
-# Implementation evidence — through 2026-07-31
+# Implementation evidence — through 2026-08-05
 
 This is a local implementation checkpoint, not the planned core experiment result.
 
@@ -3328,3 +3328,67 @@ environment-dependent skip; shard two passed 1,011 with six environment-dependen
 WAL/SHM order-sensitive invariant failure. That exact invariant passed in a fresh isolated process, so the checkout's
 unique outcome is 1,656 pass and 7 environment-dependent skips. Parsed builder-to-artifact equality, direct 19,031-byte
 file hash verification and `git diff --check` also passed.
+
+## D-097 exact no-memory successor and runtime-v2 source evidence
+
+D-097 implements the source that D-096 permitted without promoting any historical run. The exact suite is
+`experiments/dev-no-memory-condition-neutral-3000k-20260805-r1.yaml`, experiment ID
+`dev-no-memory-condition-neutral-3000k-20260805-r1`, 2,741 bytes with file SHA
+`sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`. Its source order is Loguru, AnyIO, tox, HF Hub, PDM and
+pyfakefs, each with condition `no_memory`, two repetitions and seed `20260723`. The D-096 pre-shuffle source identity
+is `sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`. The separately derived
+expanded-schedule hash is `sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`;
+its row order is `pyfakefs-makedirs-parent-traversal` r1/r2, `anyio-interrupt-runner-cleanup` r1,
+`hf-hub-xet-endpoint-propagation` r1, `pdm-ignore-active-venv-resolution` r1,
+`hf-hub-xet-endpoint-propagation` r2, `anyio-interrupt-runner-cleanup` r2,
+`loguru-invalid-format-feedback` r1/r2, `tox-cross-section-empty-substitution` r2/r1 and
+`pdm-ignore-active-venv-resolution` r2. Neither hash substitutes for the future preflight execution-schedule hash.
+
+The exact runtime remains `gpt-5.4-mini-2026-03-17` medium/standard/default, transport retry 0,
+`SYSTEM_PROMPT_V3`, tool v2, context `phase-evidence-v5`, max output 25,000, memory allowance 2,000 and
+`null/null/3,000,000/3,600`. The new `condition-neutral-comparison-runtime-contract-v2` and
+`condition-neutral-comparison-runtime-evidence-v2` bind the D-096 resource-policy/admission CAS to the execution
+plan/hash, `RunManifest`, content-addressed `RunStarted`, fresh start/resume and qualification. The exact D-097 ID is
+the only v2 selector. Historical D-083/D-084 runtime-v1 contracts, manifests, qualifications and results remain
+unchanged.
+
+The selected cost policy is `campaign-list-price-full-schedule-reserve-v1`. Before the first provider call, one fsynced
+`FullScheduleCostReserved` event binds the exact 12-row schedule, `$13.6125` per row and `$163.35` total under a
+prospective campaign-scoped source cap of `$164`. The same plan/CAS/journal is revalidated before every row and each
+terminal row receives a deterministic usage-derived settlement. D-097 does not implement per-row atomic SQLite
+capability consumption; live resume is disabled, and its cost journal makes no duplicate paid-call prevention claim.
+The existing one-use execution hash only limits authorization to one sequential campaign invocation. The cap is not a user approval, does not change the
+historical project cap `$150`, is not an expected invoice or free-tier claim and does not guarantee completion. Source
+completion is projected as `condition-neutral-no-memory-baseline-admission-gate-v2` and requires 12 terminal,
+qualified and cost-settled rows partitioned exact-one between completed
+official-evaluator `resolved|task_failure` and canonical pre-call token/wall budget `agent_failure`. Task success, hidden
+acceptance and SCRR remain reported results rather than source completion gates. Budget and infrastructure failures are
+not memory candidates. Only after a future 12-row denominator completion gate passes may an official-evaluator task
+failure enter the review candidate pool; the campaign-level result then sets `memory_review_eligible=true`. That flag
+does not admit a rule: `memory_admission_unlocked=false` remains mandatory until a separate review, deduplication and
+leakage gate passes.
+
+Offline runtime tests also exercise reconciliation before and after the final `CampaignCompleted` seal. The final seal
+rebinds execution, plan, cost-control, embedded cost qualification and persisted result bytes/hash. A consistently
+rehashed foreign binding or duplicate terminal event is rejected. This is post-run evidence integrity, not provider-side
+idempotency or proof that duplicate paid calls cannot occur.
+
+Portable artifact: `reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json`. Its schema is
+`condition-neutral-baseline-source-gate-d097-evidence-v1`; semantic body SHA is
+`sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, and the 21,029-byte file SHA is
+`sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`. The source-focused contract suite
+verifies source identity, cost arithmetic and authority boundaries; the artifact intentionally keeps
+`runtime_v2_implementation_verified_by_artifact=false`; the artifact therefore does not prove the runtime by itself.
+Separate executable evidence passed D-097 focused 65/65 and the D-084 through D-097 related set 354/354. The
+repository-wide single run collected 1,728 tests and ended with 1,720 passed, seven skipped and one order-dependent
+D-092 WAL/SHM assertion failure after 655.4 seconds; that exact test immediately passed 1/1 in isolation. These are
+reported as separate observations rather than being combined into a monolithic 1,721/1,728 claim. Ruff, compileall,
+exact artifact rebuild and `git diff --check` also passed.
+
+D-097 source authoring made zero provider calls, zero evaluator calls and added `$0` model cost. The artifact records
+`campaign_scoped_cap_exception_user_approved=false`, `clean_no_call_preflight_performed=false`, null candidate and
+approved hashes, every live/result/denominator/memory/core/analysis authority false, and blocker
+`NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`. The next gate is a clean
+no-call preflight that revalidates the committed source, dataset/task/environment, Docker/evaluator, SDK and fresh
+official pricing. Only a subsequent separate user approval of that exact candidate hash, maximum `$164` and the
+campaign-scoped `$150` exception may authorize one live invocation.

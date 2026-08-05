@@ -10,7 +10,57 @@ Repo Maintainer와 Draft PR은 데모다. 평가 harness와 실제 실험 결과
 
 ## Current state
 
-- 현재 milestone은 `D-096 prospective condition-neutral resource policy and exact no-memory baseline admission
+- 현재 milestone은 `D-097 exact condition-neutral 3M no-memory successor source, runtime-v2 binding and
+  campaign-scoped full-schedule reserve implemented offline; clean preflight, execution hash, approval, live result,
+  memory and core authority remain closed`다. Exact suite는
+  `dev-no-memory-condition-neutral-3000k-20260805-r1`이며 file identity는 2,741 bytes,
+  `sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`다. Frozen memory-development의 Loguru, AnyIO, tox,
+  HF Hub, PDM, pyfakefs를 이 source order로 `no_memory` 각 2회, seed `20260723`에 배치한다. D-096의
+  source-identity hash `sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`는
+  pre-shuffle task/condition/repetition/seed contract이고, 실제 deterministic expanded order의 별도 hash는
+  `sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`다. 두 hash를
+  같은 의미로 사용하지 않는다. Runtime tuple은 exact D-096 profile
+  `gpt54mini-v2v5-condition-neutral-3000k-v1`: `gpt-5.4-mini-2026-03-17`
+  medium/standard/default, retry 0, `SYSTEM_PROMPT_V3`, tool v2/context `phase-evidence-v5`, output 25,000,
+  memory allowance 2,000과 `null/null/3,000,000/3,600`이다. 새
+  `condition-neutral-comparison-runtime-contract-v2`와 `condition-neutral-comparison-runtime-evidence-v2`는
+  exact successor ID에만 선택되고 execution plan/hash, `RunManifest`, content-addressed `RunStarted`,
+  fresh start/resume와 qualification에서 D-096 resource-policy/admission CAS를 재검증한다. D-083/D-084의
+  1.6M runtime-v1과 모든 historical suite/result/qualification은 수정하거나 v2로 재해석하지 않는다.
+  Campaign cost policy는 `campaign-list-price-full-schedule-reserve-v1`이다. 첫 provider call 전에 하나의 fsync된
+  `FullScheduleCostReserved` event가 12-row schedule과 row별 `$13.6125`, full reserve `$163.35`를 결속하고,
+  같은 plan/CAS/journal을 각 row 전에 다시 검증하며 terminal row마다 deterministic settlement를 기록한다.
+  Prospective campaign-scoped source cap은 `$164`다. 이는 per-row atomic SQLite capability/consumption,
+  historical project cap `$150` 변경, 사용자 예외 승인 또는 expected invoice/free-tier claim이 아니다. Live resume은
+  disabled다. D-097 cost journal 자체는 duplicate paid-call prevention을 주장하지 않으며, 기존 one-use execution
+  hash가 authorization을 단일 sequential campaign invocation으로 제한할 뿐이다. Post-run reconciliation은
+  `CampaignCompleted`와 persisted result를 다시 결속하고 rehashed foreign/duplicate terminal event를 거부하지만,
+  이는 evidence-integrity 검증이지 이미 발생한 paid call 방지 주장이 아니다. Exact clean-commit preflight
+  hash와 최대 `$164`, `$150` 예외에 대한
+  별도 사용자 승인이 여전히 필요하며 blocker는
+  `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다. Baseline terminal은 completed official evaluator의
+  `resolved|task_failure` branch 또는 canonical pre-call total-token/wall budget `agent_failure` branch 중
+  exact-one이어야 하며 runtime completion output은
+  `condition-neutral-no-memory-baseline-admission-gate-v2`다. 두 branch 모두 denominator row지만
+  budget/infrastructure failure는 memory candidate가
+  아니고 task success·hidden acceptance·SCRR는 source completion predicate가 아니다. Future 12-row denominator
+  gate가 통과하면 campaign-level `memory_review_eligible=true`가 된다. Review candidate pool은 그중
+  official-evaluator task failure로만 제한되고 budget/infrastructure failure는 제외된다. 이 상태도 automatic
+  admission이 아니며 별도 review/dedup/leak gate 전에는 `memory_admission_unlocked=false`다. 현재 source 단계에서는
+  두 값 모두 false/closed다. Source artifact는
+  `reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json`이며 semantic body SHA는
+  `sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, file SHA는
+  `sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`, size는 21,029 bytes다.
+  Builder 자체는 runtime verifier가 아니며 별도 executable test가 source/runtime/qualification/final-seal wiring을
+  검증한다. D-097 focused 65/65와 D-084~D-097 관련 회귀 354/354가 통과했다. Repository-wide single run은
+  1,728 collected 중 1,720 passed/7 skipped/1 failed로 655.4초에 끝났다. 유일한 failure는 pre-existing/order-dependent
+  `tests/test_d092_policy_replay_raw.py::test_d092_raw_public_replay_exactly_rebuilds_portable_manifest`의 WAL/SHM
+  before/after invariant였고 exact test는 즉시 isolated 1/1로 통과했다. 따라서 이를 monolithic 1,721 pass/7 skip으로
+  보고하지 않는다. Ruff, compileall, exact source rebuild와 `git diff --check`도 통과했다.
+  Source 단계의 provider/evaluator call과 added model cost는 0/0/`$0`이다. Clean no-call preflight,
+  candidate/approved execution hash, live run/result, completed denominator, memory review/admission/index, core와
+  analysis는 모두 닫혀 있고 자동 실행하지 않는다.
+- Historical D-096 milestone은 `D-096 prospective condition-neutral resource policy and exact no-memory baseline admission
   contract frozen offline; runtime v2, successor suite, live result, memory and core authority remain closed`다.
   Future comparison의 exact profile은 `gpt54mini-v2v5-condition-neutral-3000k-v1`이며 모든 memory condition에
   `gpt-5.4-mini-2026-03-17` medium/standard/default, SDK transport retry 0, `SYSTEM_PROMPT_V3`, tool v2,

@@ -1468,3 +1468,62 @@ D-094 pricing source, dataset manifest, 여섯 `public.yaml`과 historical sched
 이 검사를 통과해도 live run을 시작하지 않는다. 다음에는 별도 change에서 runtime v2와 exact successor suite,
 non-censoring campaign cost policy를 구현한 뒤 clean no-call preflight, fresh pricing, 새 experiment ID/hash와
 사용자 비용 승인을 받아야 한다.
+
+## Inspect the D-097 exact no-memory source gate without provider access
+
+D-097 source와 portable evidence는 provider/evaluator 없이 재현할 수 있다.
+
+```powershell
+Get-Content experiments/dev-no-memory-condition-neutral-3000k-20260805-r1.yaml -Raw | Out-Null
+Get-Content reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json -Raw |
+  ConvertFrom-Json | Out-Null
+Get-FileHash reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json `
+  -Algorithm SHA256
+.\.venv\Scripts\python.exe scripts/build_d097_condition_neutral_baseline_source_gate.py --compact
+.\.venv\Scripts\python.exe -m pytest -q -o addopts='' `
+  tests/test_d097_condition_neutral_baseline_source_gate.py `
+  tests/test_d097_runtime_v2.py `
+  tests/test_d097_runtime_independent_review.py
+```
+
+Builder의 compact JSON은 checked-in artifact와 canonical semantic equality여야 한다. Expected semantic body SHA는
+`sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, 21,029-byte file SHA는
+`sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다. Suite file identity는
+2,741 bytes, `sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`다. Final focused/runtime/
+repository test count는 전체 회귀가 끝날 때까지 pending이다. 이 검사는 runtime implementation을 artifact만으로
+self-attest하지 않는다.
+
+다음 identity를 서로 구분해 확인한다.
+
+- D-096 pre-shuffle source identity:
+  `sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`
+- Seed `20260723` expanded schedule identity:
+  `sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`
+- Expanded order: pyfakefs r1/r2, AnyIO r1, HF Hub r1, PDM r1, HF Hub r2, AnyIO r2,
+  Loguru r1/r2, tox r2/r1, PDM r2
+- Runtime schemas: `condition-neutral-comparison-runtime-contract-v2` and
+  `condition-neutral-comparison-runtime-evidence-v2`
+
+Artifact의 `live_cost_approved`, clean-preflight/hash/provider/evaluator/result/memory/core authority는 false이고
+blocker는 `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`여야 한다.
+`$164`는 prospective source cap이지 실행 승인이 아니다. 현재 checkout에서 `patchloop evaluate`를 호출하거나
+approval flag/hash를 추가하지 않는다. 다음 단계는 이 source를 clean commit으로 만든 뒤 수행하는 별도 no-call
+preflight다. 그 preflight가 Docker/evaluator, frozen dataset/task/environment, SDK, fresh official pricing과 commit을
+묶어 one-use candidate hash를 만든 후에도, 사용자가 exact hash와 최대 `$164`, historical `$150` cap에 대한
+campaign-scoped exception을 별도로 승인하기 전에는 paid invocation을 시작하지 않는다.
+
+Future live inspection에서 기대할 cost boundary는 row별 SQLite consumption이 아니다. 첫 provider call 전 단 하나의
+fsync된 `FullScheduleCostReserved`가 exact 12-row schedule 전체를 결속하고, runner가 동일 plan/CAS/journal을 각
+row 전에 다시 검증하며, terminal row마다 deterministic settlement를 기록해야 한다. Live resume은 disabled다.
+D-097 cost journal이 duplicate paid-call prevention을 구현했다고 기록하지 않는다. 기존 one-use execution hash가
+authorization을 한 번의 sequential campaign invocation으로 제한하는 범위만 재현한다.
+
+Final seal이 존재하는 future result에서는 `CampaignCompleted`의 execution/plan/cost-control/qualification/result
+binding과 persisted result file hash를 다시 대조한다. Rehashed foreign binding이나 duplicate terminal event가
+거부되는지는 evidence-integrity 검사이고, 이미 발생한 provider call의 중복 과금을 막았다는 증거로 쓰지 않는다.
+
+Future result의 `condition-neutral-no-memory-baseline-admission-gate-v2`를 검사할 때는 12-row denominator
+completion gate가 먼저 pass했는지 확인한다. Pass했을 때
+campaign-level `memory_review_eligible=true`여야 하고, 실제 review candidate pool은 official-evaluator task failure
+row로만 제한되어야 한다. Budget/infrastructure row는 후보가 아니며, 별도 review/dedup/leak gate 전에는 결과가
+있더라도 `memory_admission_unlocked=false`여야 한다.

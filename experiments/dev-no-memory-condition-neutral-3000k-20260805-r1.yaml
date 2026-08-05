@@ -1,0 +1,69 @@
+# D-097 exact successor to the immutable D-087 campaign. This source binds
+# D-096's prospective 3M/3600 condition-neutral profile and records the full
+# 12-row worst-rate reserve before any provider call. The plan-bound journal is
+# revalidated before each row; this does not claim D-087-style per-row SQLite
+# one-use consumption. It is offline-only and embeds no live execution authority.
+schema_version: experiment-v2
+experiment_id: dev-no-memory-condition-neutral-3000k-20260805-r1
+purpose: memory-development-no-memory
+tasks:
+  - tasks/dev-train/loguru-invalid-format-feedback/public.yaml
+  - tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml
+  - tasks/dev-train/tox-cross-section-empty-substitution/public.yaml
+  - tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml
+  - tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml
+  - tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml
+conditions:
+  - no_memory
+repetitions: 2
+model: openai
+model_id: gpt-5.4-mini-2026-03-17
+reasoning_effort: medium
+reasoning_mode: standard
+service_tier: default
+transport_max_retries: 0
+max_output_tokens: 25000
+budget:
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 3000000
+  wall_clock_timeout_seconds: 3600
+seed: 20260723
+pilot_run_id: null
+live_cost_approved: false
+approved_execution_hash: null
+campaign_cost_policy:
+  schema_version: campaign-list-price-full-schedule-reserve-v1
+  accounting_scope: campaign-local
+  accounting_basis: usage-derived-standard-list-price
+  scheduled_run_count: 12
+  per_run_worst_rate_reserve_usd: 13.6125
+  full_schedule_worst_rate_reserve_usd: 163.35
+  hard_cap_usd: 164.0
+  hard_cap_slack_usd: 0.65
+  money_scale: nano-usd
+  per_run_reserve_nanos: 13612500000
+  full_schedule_reserve_nanos: 163350000000
+  hard_cap_nanos: 164000000000
+  reservation_mode: row-bound-full-schedule-up-front
+  initial_reservation_boundary: before-first-provider-call
+  row_reserve_count: 12
+  cost_censoring_allowed: false
+  not_started_due_to_cost_allowed: false
+  settlement_basis: durable-token-derived-standard-list-price
+  live_resume_policy: disabled
+  completion_guaranteed: false
+  invoice_or_free_tier_claimed: false
+estimated_cost_usd: 163.35
+cost_limit_usd: 164.0
+pricing_verified_at: "2026-08-05T02:24:14Z"
+pricing_source_url: https://developers.openai.com/api/docs/pricing
+input_price_per_million_usd: 0.75
+cached_input_price_per_million_usd: 0.075
+cache_write_input_price_per_million_usd: null
+output_price_per_million_usd: 4.5
+retrieval_threshold: 0.72
+memory_token_budget: 2000
+embedding_model: sentence-transformers/all-MiniLM-L6-v2
+embedding_revision: PIN_AT_FREEZE
+dataset_manifest_hash: sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786

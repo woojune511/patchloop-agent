@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -12,6 +13,7 @@ from patchloop.contracts import (
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
+    CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
     GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     Artifact,
     Budget,
@@ -76,6 +78,12 @@ _GPT54_MINI_FROZEN_COMPARISON_BUDGET = Budget(
     max_tool_calls=None,
     max_total_tokens=1_600_000,
     wall_clock_timeout_seconds=1_800,
+)
+_GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET = Budget(
+    max_model_calls=None,
+    max_tool_calls=None,
+    max_total_tokens=3_000_000,
+    wall_clock_timeout_seconds=3_600,
 )
 _GPT54_MINI_COMPLETION_BUDGET = Budget(
     max_model_calls=40,
@@ -190,6 +198,12 @@ _CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA = (
 _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA = (
     "condition-neutral-comparison-runtime-evidence-v1"
 )
+_CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA_V2 = (
+    "condition-neutral-comparison-runtime-contract-v2"
+)
+_CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2 = (
+    "condition-neutral-comparison-runtime-evidence-v2"
+)
 _CONDITION_NEUTRAL_COMPARISON_PURPOSES = frozenset(
     {
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
@@ -216,6 +230,46 @@ _CONDITION_NEUTRAL_COMPARISON_POLICY_PATH = (
 _CONDITION_NEUTRAL_COMPARISON_POLICY_HASH = (
     "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
 )
+_CONDITION_NEUTRAL_RESOURCE_POLICY_V2_PROFILE_ID = "gpt54mini-v2v5-condition-neutral-3000k-v1"
+_CONDITION_NEUTRAL_RESOURCE_POLICY_V2_PATH = (
+    "reports/live-pilot/artifacts/d096-condition-neutral-resource-policy-baseline-admission.json"
+)
+_CONDITION_NEUTRAL_RESOURCE_POLICY_V2_FILE_HASH = (
+    "sha256:5c032cff1045a39d1d8d9757205a920b1cd1cfd948c7c4e3e5b526ae6744661d"
+)
+_CONDITION_NEUTRAL_RESOURCE_POLICY_V2_SEMANTIC_HASH = (
+    "sha256:2e9360d92db5224d181fe8f18254da3850f324b33b24f3833633589085e3b75d"
+)
+_CONDITION_NEUTRAL_NO_MEMORY_ADMISSION_ID = "memory-development-no-memory-12-row-v1"
+_CONDITION_NEUTRAL_NO_MEMORY_SCHEDULE_HASH = (
+    "sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b"
+)
+_CONDITION_NEUTRAL_NO_MEMORY_TASKS_ORDERED = [
+    "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
+    "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+    "tasks/dev-train/tox-cross-section-empty-substitution/public.yaml",
+    "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+    "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml",
+    "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+]
+_CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
+    ("pyfakefs-makedirs-parent-traversal", 1): 1,
+    ("pyfakefs-makedirs-parent-traversal", 2): 2,
+    ("anyio-interrupt-runner-cleanup", 1): 3,
+    ("hf-hub-xet-endpoint-propagation", 1): 4,
+    ("pdm-ignore-active-venv-resolution", 1): 5,
+    ("hf-hub-xet-endpoint-propagation", 2): 6,
+    ("anyio-interrupt-runner-cleanup", 2): 7,
+    ("loguru-invalid-format-feedback", 1): 8,
+    ("loguru-invalid-format-feedback", 2): 9,
+    ("tox-cross-section-empty-substitution", 2): 10,
+    ("tox-cross-section-empty-substitution", 1): 11,
+    ("pdm-ignore-active-venv-resolution", 2): 12,
+}
+_CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA = (
+    "campaign-full-schedule-cost-control-evidence-v1"
+)
+_CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA = "campaign-list-price-full-schedule-reserve-v1"
 _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
     "generic-baseline-readiness-v2v5-20260802-r1": (
         _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
@@ -321,6 +375,188 @@ def _condition_neutral_comparison_policy_artifact_valid() -> bool:
         and frozen_budget.get("call_guard_policy")
         == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
     )
+
+
+def _condition_neutral_resource_policy_v2_binding() -> dict[str, str]:
+    return {
+        "schema_version": "condition-neutral-comparison-resource-policy-v2",
+        "profile_id": _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_PROFILE_ID,
+        "path": _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_PATH,
+        "content_hash": _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_FILE_HASH,
+        "semantic_body_hash": _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_SEMANTIC_HASH,
+    }
+
+
+def _condition_neutral_no_memory_admission_binding() -> dict[str, str]:
+    return {
+        "schema_version": "no-memory-baseline-admission-contract-v1",
+        "admission_id": _CONDITION_NEUTRAL_NO_MEMORY_ADMISSION_ID,
+        "schedule_content_hash": _CONDITION_NEUTRAL_NO_MEMORY_SCHEDULE_HASH,
+        "evidence_path": _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_PATH,
+        "evidence_content_hash": _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_FILE_HASH,
+        "evidence_semantic_body_hash": (_CONDITION_NEUTRAL_RESOURCE_POLICY_V2_SEMANTIC_HASH),
+    }
+
+
+def _condition_neutral_resource_policy_v2_artifact_valid() -> bool:
+    from patchloop.agent.model import SYSTEM_PROMPT_V3
+    from patchloop.agent.tools import TOOL_SCHEMAS_V2
+
+    path = repository_root() / _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_PATH
+    try:
+        raw = path.read_bytes()
+        payload = json.loads(raw)
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return False
+    body = payload.get("semantic_body") if isinstance(payload, dict) else None
+    policy = body.get("selected_resource_policy") if isinstance(body, dict) else None
+    admission = body.get("no_memory_baseline_admission") if isinstance(body, dict) else None
+    schedule = admission.get("schedule_identity") if isinstance(admission, dict) else None
+    boundary = body.get("prospective_supersession_boundary") if isinstance(body, dict) else None
+    claims = body.get("claims_boundary") if isinstance(body, dict) else None
+    return bool(
+        sha256_bytes(raw) == _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_FILE_HASH
+        and payload.get("schema_version")
+        == "condition-neutral-resource-policy-baseline-admission-d096-evidence-v1"
+        and payload.get("semantic_body_hash") == _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_SEMANTIC_HASH
+        and isinstance(body, dict)
+        and sha256_text(canonical_json(body)) == _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_SEMANTIC_HASH
+        and isinstance(policy, dict)
+        and policy.get("schema_version") == "condition-neutral-comparison-resource-policy-v2"
+        and policy.get("profile_id") == _CONDITION_NEUTRAL_RESOURCE_POLICY_V2_PROFILE_ID
+        and policy.get("prospective_only") is True
+        and policy.get("provider") == "openai"
+        and policy.get("model_id") == _GPT54_MINI_PILOT_MODEL_ID
+        and policy.get("reasoning_effort") == "medium"
+        and policy.get("reasoning_mode") == "standard"
+        and policy.get("service_tier") == "default"
+        and policy.get("transport_max_retries") == 0
+        and policy.get("system_prompt_hash") == sha256_text(SYSTEM_PROMPT_V3)
+        and policy.get("tool_schema_version") == "v2"
+        and policy.get("tool_schema_hash") == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
+        and policy.get("context_policy_version") == "phase-evidence-v5"
+        and policy.get("max_output_tokens") == 25_000
+        and policy.get("memory_max_context_tokens") == 2_000
+        and policy.get("budget") == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json")
+        and policy.get("call_guard_policy") == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        and policy.get("condition_neutral") is True
+        and policy.get("same_budget_for_all_memory_conditions") is True
+        and policy.get("memory_conditions") == [condition.value for condition in MemoryCondition]
+        and isinstance(admission, dict)
+        and admission.get("schema_version") == "no-memory-baseline-admission-contract-v1"
+        and admission.get("admission_id") == _CONDITION_NEUTRAL_NO_MEMORY_ADMISSION_ID
+        and isinstance(schedule, dict)
+        and schedule.get("tasks") == _CONDITION_NEUTRAL_NO_MEMORY_TASKS_ORDERED
+        and schedule.get("condition") == MemoryCondition.NO_MEMORY.value
+        and schedule.get("repetitions") == 2
+        and schedule.get("seed") == 20260723
+        and schedule.get("expected_rows") == 12
+        and schedule.get("content_hash") == _CONDITION_NEUTRAL_NO_MEMORY_SCHEDULE_HASH
+        and isinstance(boundary, dict)
+        and boundary.get("new_runtime_contract_schema")
+        == _CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA_V2
+        and boundary.get("new_runtime_evidence_schema")
+        == _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2
+        and boundary.get("d083_d084_historical_contracts_modified") is False
+        and isinstance(claims, dict)
+        and claims.get("comparison_resource_policy_frozen") is True
+        and claims.get("baseline_admission_contract_frozen") is True
+    )
+
+
+def _condition_neutral_runtime_v2_manifest_matches(manifest: RunManifest) -> bool:
+    experiment = manifest.experiment
+    return bool(
+        experiment is not None
+        and experiment.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+        and experiment.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+        and experiment.dataset_role == DatasetRole.MEMORY_DEVELOPMENT
+        and experiment.schedule_seed == 20260723
+        and experiment.repetition in {1, 2}
+        and experiment.schedule_order
+        == _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER.get((manifest.task_id, experiment.repetition))
+        and isinstance(experiment.campaign_cost_control_hash, str)
+        and re.fullmatch(
+            r"sha256:[0-9a-f]{64}",
+            experiment.campaign_cost_control_hash,
+        )
+        is not None
+        and manifest.model.provider == "openai"
+        and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
+        and manifest.model.reasoning_effort == "medium"
+        and manifest.model.reasoning_mode == "standard"
+        and manifest.model.service_tier == "default"
+        and manifest.model.transport_max_retries == 0
+        and manifest.model.max_output_tokens == 25_000
+        and manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v5"
+        and manifest.budget == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+        and manifest.memory.condition == MemoryCondition.NO_MEMORY
+        and manifest.memory.max_context_tokens == 2_000
+        and manifest.fault.type == "none"
+        and manifest.public_review_contract is None
+    )
+
+
+def _condition_neutral_runtime_v2_suite_matches(suite: Any) -> bool:
+    policy = getattr(suite, "campaign_cost_policy", None)
+    policy_payload = policy.model_dump(mode="json") if hasattr(policy, "model_dump") else policy
+    return bool(
+        getattr(suite, "schema_version", None) == "experiment-v2"
+        and getattr(suite, "experiment_id", None) == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+        and getattr(suite, "purpose", None) == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
+        and [
+            str(task).replace("\\", "/").removeprefix("./") for task in getattr(suite, "tasks", [])
+        ]
+        == _CONDITION_NEUTRAL_NO_MEMORY_TASKS_ORDERED
+        and getattr(suite, "conditions", None) == [MemoryCondition.NO_MEMORY]
+        and getattr(suite, "repetitions", None) == 2
+        and getattr(suite, "seed", None) == 20260723
+        and getattr(suite, "model", None) == "openai"
+        and getattr(suite, "model_id", None) == _GPT54_MINI_PILOT_MODEL_ID
+        and getattr(suite, "reasoning_effort", None) == "medium"
+        and getattr(suite, "reasoning_mode", None) == "standard"
+        and getattr(suite, "service_tier", None) == "default"
+        and getattr(suite, "transport_max_retries", None) == 0
+        and getattr(suite, "max_output_tokens", None) == 25_000
+        and getattr(suite, "budget", None) == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+        and getattr(suite, "memory_token_budget", None) == 2_000
+        and getattr(suite, "pilot_run_id", None) is None
+        and getattr(suite, "diagnostic", None) is None
+        and getattr(suite, "estimated_cost_usd", None) == 163.35
+        and getattr(suite, "cost_limit_usd", None) == 164.0
+        and isinstance(policy_payload, dict)
+        and policy_payload.get("schema_version")
+        == _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
+        and policy_payload.get("scheduled_run_count") == 12
+        and policy_payload.get("per_run_worst_rate_reserve_usd") == 13.6125
+        and policy_payload.get("full_schedule_worst_rate_reserve_usd") == 163.35
+        and policy_payload.get("hard_cap_usd") == 164.0
+        and policy_payload.get("cost_censoring_allowed") is False
+        and policy_payload.get("not_started_due_to_cost_allowed") is False
+    )
+
+
+def _condition_neutral_baseline_admission_plan_binding(
+    suite: Any,
+) -> dict[str, Any] | None:
+    if not _condition_neutral_runtime_v2_suite_matches(suite):
+        return None
+    descriptor = {
+        **_condition_neutral_no_memory_admission_binding(),
+        "experiment_id": suite.experiment_id,
+        "purpose": suite.purpose.value,
+        "tasks": list(_CONDITION_NEUTRAL_NO_MEMORY_TASKS_ORDERED),
+        "condition": MemoryCondition.NO_MEMORY.value,
+        "repetitions": 2,
+        "seed": 20260723,
+        "expected_rows": 12,
+    }
+    return {
+        "schema_version": "no-memory-baseline-admission-evidence-v1",
+        "descriptor": descriptor,
+        "content_hash": sha256_text(canonical_json(descriptor)),
+    }
 
 
 def _condition_neutral_comparison_manifest_matches(
@@ -456,6 +692,7 @@ def _purpose_dataset_roles(purpose: ExperimentPurpose) -> set[DatasetRole]:
             DatasetRole.CORE_CROSS_REPO,
         }
     return set()
+
 
 _TERMINAL_EVENTS = {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
 _AGENT_VISIBLE_ARTIFACT_EVENTS = {
@@ -707,6 +944,7 @@ def _execution_plan_matches(
     if experiment is None or plan is None:
         return False
     approval = plan.get("approval")
+    baseline_admission = plan.get("baseline_admission")
     campaign_cost_control = plan.get("campaign_cost_control")
     dataset = plan.get("dataset")
     environment = plan.get("environment")
@@ -773,67 +1011,62 @@ def _execution_plan_matches(
             campaign_cost_control,
             pricing,
             schedule_size=len(schedule),
+            schedule_hash=schedule_hash,
+            schedule_row_ids=[
+                row.get("schedule_row_id") for row in schedule if isinstance(row, dict)
+            ],
         )
         completion_plan_matches = True
         if (
             (
-                parsed_suite.purpose
-                == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                parsed_suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
                 and _generic_baseline_readiness_budget_matches(
                     parsed_suite.experiment_id,
                     parsed_suite.budget,
                 )
             )
             or (
-                parsed_suite.purpose
-                == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+                parsed_suite.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
                 and _workflow_completion_probe_budget_matches(
                     parsed_suite.experiment_id,
                     parsed_suite.budget,
                 )
             )
             or (
-                parsed_suite.purpose
-                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                parsed_suite.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
                 and parsed_suite.budget == _GPT54_MINI_COMPLETION_BUDGET
             )
             or (
-                parsed_suite.purpose
-                == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
-                and parsed_suite.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
+                parsed_suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+                and parsed_suite.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
             )
             or (
                 parsed_suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-                and parsed_suite.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
+                and parsed_suite.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
             )
             or (
                 parsed_suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
-                and parsed_suite.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
+                and parsed_suite.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
             )
             or (
                 parsed_suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
-                and parsed_suite.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
+                and parsed_suite.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
             )
             or (
                 parsed_suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
-                and parsed_suite.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT
+                and parsed_suite.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT
             )
             or (
                 parsed_suite.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
-                and parsed_suite.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT
+                and parsed_suite.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT
             )
             or _condition_neutral_comparison_suite_matches(parsed_suite)
+            or _condition_neutral_runtime_v2_suite_matches(parsed_suite)
         ):
             if (
                 len(tasks) != len(parsed_suite.tasks)
@@ -863,20 +1096,15 @@ def _execution_plan_matches(
             runtime_contract=(
                 _experiment_runtime_contract(
                     parsed_suite,
-                    harness_git_commit=environment["git"].get(
-                        "commit"
-                    ),
+                    harness_git_commit=environment["git"].get("commit"),
                 )
             ),
-            pilot_admission=(
-                pilot_admission
-                if isinstance(pilot_admission, dict)
-                else None
+            pilot_admission=(pilot_admission if isinstance(pilot_admission, dict) else None),
+            baseline_admission=(
+                baseline_admission if isinstance(baseline_admission, dict) else None
             ),
             campaign_cost_control=(
-                campaign_cost_control
-                if isinstance(campaign_cost_control, dict)
-                else None
+                campaign_cost_control if isinstance(campaign_cost_control, dict) else None
             ),
         )
     except (ContractError, ImportError, KeyError, TypeError, ValueError):
@@ -912,8 +1140,7 @@ def _execution_plan_matches(
             and manifest.context_policy_version == "phase-evidence-v5"
             and manifest.model.transport_max_retries == 0
             and manifest.experiment is not None
-            and manifest.experiment.experiment_id
-            == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+            and manifest.experiment.experiment_id == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
             and isinstance(expected_runtime_contract, dict)
             and set(expected_runtime_contract)
             == {
@@ -943,24 +1170,74 @@ def _execution_plan_matches(
             and expected_runtime_contract.get("memory_conditions")
             == [MemoryCondition.NO_MEMORY.value]
             and expected_runtime_contract.get("model_provider") == "openai"
-            and expected_runtime_contract.get("model_id")
-            == "gpt-5.4-mini-2026-03-17"
+            and expected_runtime_contract.get("model_id") == "gpt-5.4-mini-2026-03-17"
             and expected_runtime_contract.get("reasoning_effort") == "medium"
             and expected_runtime_contract.get("reasoning_mode") == "standard"
             and expected_runtime_contract.get("service_tier") == "default"
             and expected_runtime_contract.get("transport_max_retries") == 0
             and expected_runtime_contract.get("max_output_tokens") == 25_000
             and expected_runtime_contract.get("budget")
-            == _GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET.model_dump(
-                mode="json"
-            )
-            and expected_runtime_contract.get("memory_max_context_tokens")
-            == 2_000
+            == _GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET.model_dump(mode="json")
+            and expected_runtime_contract.get("memory_max_context_tokens") == 2_000
             and expected_runtime_contract.get("tool_schema_version") == "v2"
-            and expected_runtime_contract.get("context_policy_version")
-            == "phase-evidence-v5"
-            and expected_runtime_contract.get("system_prompt_hash")
-            == sha256_text(SYSTEM_PROMPT_V3)
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v5"
+            and expected_runtime_contract.get("system_prompt_hash") == sha256_text(SYSTEM_PROMPT_V3)
+            and expected_runtime_contract.get("tool_schema_hash")
+            == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
+            and expected_runtime_contract.get("call_guard_policy")
+            == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        )
+        or (
+            _condition_neutral_runtime_v2_manifest_matches(manifest)
+            and _condition_neutral_runtime_v2_suite_matches(parsed_suite)
+            and isinstance(expected_runtime_contract, dict)
+            and set(expected_runtime_contract)
+            == {
+                "schema_version",
+                "comparison_resource_policy",
+                "baseline_admission",
+                "purpose",
+                "memory_conditions",
+                "model_provider",
+                "model_id",
+                "reasoning_effort",
+                "reasoning_mode",
+                "service_tier",
+                "transport_max_retries",
+                "max_output_tokens",
+                "budget",
+                "memory_max_context_tokens",
+                "tool_schema_version",
+                "context_policy_version",
+                "system_prompt_hash",
+                "tool_schema_hash",
+                "call_guard_policy",
+                "harness_git_commit",
+            }
+            and expected_runtime_contract.get("schema_version")
+            == _CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA_V2
+            and expected_runtime_contract.get("comparison_resource_policy")
+            == _condition_neutral_resource_policy_v2_binding()
+            and expected_runtime_contract.get("baseline_admission")
+            == _condition_neutral_no_memory_admission_binding()
+            and _condition_neutral_resource_policy_v2_artifact_valid()
+            and expected_runtime_contract.get("purpose")
+            == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY.value
+            and expected_runtime_contract.get("memory_conditions")
+            == [MemoryCondition.NO_MEMORY.value]
+            and expected_runtime_contract.get("model_provider") == "openai"
+            and expected_runtime_contract.get("model_id") == _GPT54_MINI_PILOT_MODEL_ID
+            and expected_runtime_contract.get("reasoning_effort") == "medium"
+            and expected_runtime_contract.get("reasoning_mode") == "standard"
+            and expected_runtime_contract.get("service_tier") == "default"
+            and expected_runtime_contract.get("transport_max_retries") == 0
+            and expected_runtime_contract.get("max_output_tokens") == 25_000
+            and expected_runtime_contract.get("budget")
+            == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json")
+            and expected_runtime_contract.get("memory_max_context_tokens") == 2_000
+            and expected_runtime_contract.get("tool_schema_version") == "v2"
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v5"
+            and expected_runtime_contract.get("system_prompt_hash") == sha256_text(SYSTEM_PROMPT_V3)
             and expected_runtime_contract.get("tool_schema_hash")
             == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
             and expected_runtime_contract.get("call_guard_policy")
@@ -994,13 +1271,11 @@ def _execution_plan_matches(
             }
             and expected_runtime_contract.get("schema_version")
             == _CONDITION_NEUTRAL_COMPARISON_RUNTIME_CONTRACT_SCHEMA
-            and expected_runtime_contract.get("purpose")
-            == parsed_suite.purpose.value
+            and expected_runtime_contract.get("purpose") == parsed_suite.purpose.value
             and expected_runtime_contract.get("memory_conditions")
             == [condition.value for condition in parsed_suite.conditions]
             and expected_runtime_contract.get("model_provider") == "openai"
-            and expected_runtime_contract.get("model_id")
-            == _GPT54_MINI_PILOT_MODEL_ID
+            and expected_runtime_contract.get("model_id") == _GPT54_MINI_PILOT_MODEL_ID
             and expected_runtime_contract.get("reasoning_effort") == "medium"
             and expected_runtime_contract.get("reasoning_mode") == "standard"
             and expected_runtime_contract.get("service_tier") == "default"
@@ -1008,13 +1283,10 @@ def _execution_plan_matches(
             and expected_runtime_contract.get("max_output_tokens") == 25_000
             and expected_runtime_contract.get("budget")
             == _GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(mode="json")
-            and expected_runtime_contract.get("memory_max_context_tokens")
-            == 2_000
+            and expected_runtime_contract.get("memory_max_context_tokens") == 2_000
             and expected_runtime_contract.get("tool_schema_version") == "v2"
-            and expected_runtime_contract.get("context_policy_version")
-            == "phase-evidence-v5"
-            and expected_runtime_contract.get("system_prompt_hash")
-            == sha256_text(SYSTEM_PROMPT_V3)
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v5"
+            and expected_runtime_contract.get("system_prompt_hash") == sha256_text(SYSTEM_PROMPT_V3)
             and expected_runtime_contract.get("tool_schema_hash")
             == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
             and expected_runtime_contract.get("call_guard_policy")
@@ -1038,46 +1310,36 @@ def _execution_plan_matches(
             manifest.tool_schema_version == "v4"
             and manifest.context_policy_version == "phase-evidence-v7"
             and isinstance(expected_runtime_contract, dict)
-            and expected_runtime_contract.get("schema_version")
-            == "corrective-runtime-contract-v1"
-            and expected_runtime_contract.get("context_policy_version")
-            == "phase-evidence-v7"
+            and expected_runtime_contract.get("schema_version") == "corrective-runtime-contract-v1"
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v7"
         )
         or (
             manifest.tool_schema_version == "v4"
             and manifest.context_policy_version == "phase-evidence-v8"
             and isinstance(expected_runtime_contract, dict)
-            and expected_runtime_contract.get("schema_version")
-            == "corrective-runtime-contract-v2"
-            and expected_runtime_contract.get("context_policy_version")
-            == "phase-evidence-v8"
+            and expected_runtime_contract.get("schema_version") == "corrective-runtime-contract-v2"
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v8"
         )
         or (
             manifest.tool_schema_version == "v4"
             and manifest.context_policy_version == "phase-evidence-v9"
             and isinstance(expected_runtime_contract, dict)
-            and expected_runtime_contract.get("schema_version")
-            == "corrective-runtime-contract-v3"
-            and expected_runtime_contract.get("context_policy_version")
-            == "phase-evidence-v9"
+            and expected_runtime_contract.get("schema_version") == "corrective-runtime-contract-v3"
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v9"
         )
         or (
             manifest.tool_schema_version == "v5"
             and manifest.context_policy_version == "phase-evidence-v10"
             and isinstance(expected_runtime_contract, dict)
-            and expected_runtime_contract.get("schema_version")
-            == "corrective-runtime-contract-v4"
-            and expected_runtime_contract.get("context_policy_version")
-            == "phase-evidence-v10"
+            and expected_runtime_contract.get("schema_version") == "corrective-runtime-contract-v4"
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v10"
         )
         or (
             manifest.tool_schema_version == "v6"
             and manifest.context_policy_version == "phase-evidence-v11"
             and isinstance(expected_runtime_contract, dict)
-            and expected_runtime_contract.get("schema_version")
-            == "corrective-runtime-contract-v5"
-            and expected_runtime_contract.get("context_policy_version")
-            == "phase-evidence-v11"
+            and expected_runtime_contract.get("schema_version") == "corrective-runtime-contract-v5"
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v11"
         )
     )
     runtime_contract_matches = bool(
@@ -1105,6 +1367,14 @@ def _execution_plan_matches(
         parsed_suite,
         campaign_harness_commit=environment["git"].get("commit"),
     )
+    expected_baseline_admission = _condition_neutral_baseline_admission_plan_binding(parsed_suite)
+    baseline_admission_matches = bool(
+        (
+            expected_baseline_admission is not None
+            and canonical_json(baseline_admission) == canonical_json(expected_baseline_admission)
+        )
+        or (expected_baseline_admission is None and baseline_admission is None)
+    )
     suite_contract_matches = bool(
         canonical_json(suite) == canonical_json(normalized_suite)
         and _suite_hash(parsed_suite) == experiment.suite_hash
@@ -1114,22 +1384,18 @@ def _execution_plan_matches(
         and parsed_suite.reasoning_effort == manifest.model.reasoning_effort
         and parsed_suite.reasoning_mode == manifest.model.reasoning_mode
         and parsed_suite.service_tier == manifest.model.service_tier
-        and parsed_suite.transport_max_retries
-        == manifest.model.transport_max_retries
+        and parsed_suite.transport_max_retries == manifest.model.transport_max_retries
         and parsed_suite.max_output_tokens == manifest.model.max_output_tokens
-        and parsed_suite.input_price_per_million_usd
-        == manifest.model.input_price_per_million_usd
+        and parsed_suite.input_price_per_million_usd == manifest.model.input_price_per_million_usd
         and parsed_suite.cached_input_price_per_million_usd
         == manifest.model.cached_input_price_per_million_usd
         and parsed_suite.cache_write_input_price_per_million_usd
         == manifest.model.cache_write_input_price_per_million_usd
-        and parsed_suite.output_price_per_million_usd
-        == manifest.model.output_price_per_million_usd
+        and parsed_suite.output_price_per_million_usd == manifest.model.output_price_per_million_usd
         and parsed_suite.budget == manifest.budget
         and parsed_suite.memory_token_budget == manifest.memory.max_context_tokens
         and parsed_suite.seed == experiment.schedule_seed
-        and parsed_suite.dataset_manifest_hash
-        == experiment.dataset_manifest_hash
+        and parsed_suite.dataset_manifest_hash == experiment.dataset_manifest_hash
         and manifest.memory.condition in parsed_suite.conditions
         and _diagnostic_fault(parsed_suite) == manifest.fault
         and campaign_cost_control_matches
@@ -1145,6 +1411,7 @@ def _execution_plan_matches(
         and runtime_contract_matches
         and pricing_contract_matches
         and pilot_admission_matches
+        and baseline_admission_matches
     )
     if not suite_contract_matches:
         return False
@@ -1476,6 +1743,19 @@ def _generic_baseline_runtime_contract_evidence(
     condition_neutral_comparison = (
         _condition_neutral_comparison_manifest_matches(manifest)
     )
+    condition_neutral_v2 = _condition_neutral_runtime_v2_manifest_matches(manifest)
+    if condition_neutral_v2:
+        details.update(
+            {
+                "comparison_resource_policy": (_condition_neutral_resource_policy_v2_binding()),
+                "comparison_resource_policy_artifact_valid": (
+                    _condition_neutral_resource_policy_v2_artifact_valid()
+                ),
+                "baseline_admission": (_condition_neutral_no_memory_admission_binding()),
+                "purpose": manifest.experiment.purpose.value,
+                "memory_condition": manifest.memory.condition.value,
+            }
+        )
     if condition_neutral_comparison:
         details.update(
             {
@@ -1491,7 +1771,9 @@ def _generic_baseline_runtime_contract_evidence(
         )
     expected = {
         "schema_version": (
-            _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA
+            _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2
+            if condition_neutral_v2
+            else _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA
             if condition_neutral_comparison
             else "workflow-completion-runtime-evidence-v1"
             if workflow_completion_probe
@@ -1511,7 +1793,33 @@ def _generic_baseline_runtime_contract_evidence(
         "tool_schema_version": "v2",
         "context_policy_version": "phase-evidence-v5",
     }
-    if condition_neutral_comparison:
+    if condition_neutral_v2:
+        expected.update(
+            {
+                "comparison_resource_policy": (_condition_neutral_resource_policy_v2_binding()),
+                "baseline_admission": (_condition_neutral_no_memory_admission_binding()),
+                "experiment_id": manifest.experiment.experiment_id,
+                "purpose": manifest.experiment.purpose.value,
+                "suite_hash": manifest.experiment.suite_hash,
+                "execution_hash": manifest.experiment.execution_hash,
+                "campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash),
+                "schedule_seed": manifest.experiment.schedule_seed,
+                "schedule_order": manifest.experiment.schedule_order,
+                "schedule_row_id": manifest.experiment.schedule_row_id,
+                "repetition": manifest.experiment.repetition,
+                "model_provider": "openai",
+                "model_id": _GPT54_MINI_PILOT_MODEL_ID,
+                "reasoning_effort": "medium",
+                "reasoning_mode": "standard",
+                "service_tier": "default",
+                "max_output_tokens": 25_000,
+                "budget": (_GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json")),
+                "memory_max_context_tokens": 2_000,
+                "memory_condition": MemoryCondition.NO_MEMORY.value,
+                "call_guard_policy": (_WORKFLOW_COMPLETION_CALL_GUARD_POLICY),
+            }
+        )
+    elif condition_neutral_comparison:
         expected.update(
             {
                 "model_id": _GPT54_MINI_PILOT_MODEL_ID,
@@ -1572,6 +1880,7 @@ def _generic_baseline_runtime_contract_evidence(
         and manifest.experiment is not None
         and (
             condition_neutral_comparison
+            or condition_neutral_v2
             or manifest.experiment.purpose
             in {
                 ExperimentPurpose.GENERIC_BASELINE_READINESS,
@@ -1582,6 +1891,7 @@ def _generic_baseline_runtime_contract_evidence(
             not condition_neutral_comparison
             or _condition_neutral_comparison_policy_artifact_valid()
         )
+        and (not condition_neutral_v2 or _condition_neutral_resource_policy_v2_artifact_valid())
         and manifest.tool_schema_version == "v2"
         and manifest.context_policy_version == "phase-evidence-v5"
         and manifest.model.transport_max_retries == 0
@@ -5260,6 +5570,7 @@ def _v10_coverage_terminal_evidence(
         "review_rejection_details": rejection_details,
     }
 
+
 def _v4_no_progress_streak(events: list[Any]) -> int:
     from patchloop.agent.investigation import (
         INVESTIGATION_LOOP_SCHEMA,
@@ -7654,7 +7965,9 @@ def _optional_counter_generation_block_valid(
         "max_total_tokens",
     }
     expected_budget = None
-    if _condition_neutral_comparison_manifest_matches(manifest):
+    if _condition_neutral_runtime_v2_manifest_matches(manifest):
+        expected_budget = _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+    elif _condition_neutral_comparison_manifest_matches(manifest):
         expected_budget = _GPT54_MINI_FROZEN_COMPARISON_BUDGET
     elif experiment is not None:
         if (
@@ -10862,6 +11175,8 @@ def qualify_run(
     condition_neutral_comparison = (
         _condition_neutral_comparison_manifest_matches(manifest)
     )
+    condition_neutral_v2 = _condition_neutral_runtime_v2_manifest_matches(manifest)
+    condition_neutral_any = condition_neutral_comparison or condition_neutral_v2
     task_identity = (
         manifest.task_id == package.public.task_id
         and manifest.task_version == package.public.task_version
@@ -10879,7 +11194,7 @@ def qualify_run(
             ExperimentPurpose.GENERIC_BASELINE_READINESS,
             ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
         }
-        or condition_neutral_comparison
+        or condition_neutral_any
     ):
         (
             generic_runtime_ok,
@@ -10895,28 +11210,19 @@ def qualify_run(
         add(
             (
                 "comparison_runtime_contract"
-                if condition_neutral_comparison
+                if condition_neutral_any
                 else "generic_runtime_contract"
             ),
             generic_runtime_ok,
             **generic_runtime_details,
         )
-    if (
-        experiment is not None
-        and (
-            experiment.purpose
-            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-            or (
-                experiment.purpose
-                == ExperimentPurpose.GENERIC_BASELINE_READINESS
-                and experiment.experiment_id
-                in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
-            )
-            or (
-                condition_neutral_comparison
-                and manifest.memory.condition == MemoryCondition.NO_MEMORY
-            )
+    if experiment is not None and (
+        experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        or (
+            experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+            and experiment.experiment_id in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         )
+        or (condition_neutral_any and manifest.memory.condition == MemoryCondition.NO_MEMORY)
     ):
         forbidden_generation_blocks = [
             event.sequence
@@ -10992,19 +11298,16 @@ def qualify_run(
             ):
                 admission_tail_failures.append(event.sequence)
         expected_observability_budget = (
-            _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+            _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+            if condition_neutral_v2
+            else _GPT54_MINI_FROZEN_COMPARISON_BUDGET
             if condition_neutral_comparison
-            else _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(
-                experiment.experiment_id
-            )
-            if experiment.purpose
-            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-            else _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
-                experiment.experiment_id
-            )
+            else _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(experiment.experiment_id)
+            if experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            else _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(experiment.experiment_id)
         )
         exact_observability_profile = bool(
-            condition_neutral_comparison
+            condition_neutral_any
             or experiment.experiment_id
             in (
                 set(_WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID)
@@ -11542,20 +11845,15 @@ def qualify_run(
         and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
         and (
             (
-                manifest.experiment.experiment_id
-                in _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
-                and manifest.budget
-                == _GPT54_MINI_D037_TAIL_RESERVE_BUDGET
+                manifest.experiment.experiment_id in _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
+                and manifest.budget == _GPT54_MINI_D037_TAIL_RESERVE_BUDGET
             )
             or (
-                manifest.experiment.experiment_id
-                in _HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS
-                and manifest.budget
-                == _GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET
+                manifest.experiment.experiment_id in _HISTORICAL_MINI_200K_CAMPAIGN_EXPERIMENT_IDS
+                and manifest.budget == _GPT54_MINI_HISTORICAL_200K_CAMPAIGN_BUDGET
             )
             or (
-                manifest.experiment.purpose
-                == ExperimentPurpose.GENERIC_BASELINE_READINESS
+                manifest.experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
                 and _generic_baseline_readiness_budget_matches(
                     manifest.experiment.experiment_id,
                     manifest.budget,
@@ -11563,8 +11861,7 @@ def qualify_run(
                 and manifest.model.transport_max_retries == 0
             )
             or (
-                manifest.experiment.purpose
-                == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+                manifest.experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
                 and _workflow_completion_probe_budget_matches(
                     manifest.experiment.experiment_id,
                     manifest.budget,
@@ -11572,8 +11869,7 @@ def qualify_run(
                 and manifest.model.transport_max_retries == 0
             )
             or (
-                manifest.experiment.purpose
-                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                manifest.experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
                 and manifest.experiment.experiment_id
                 not in (
                     _HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
@@ -11585,43 +11881,41 @@ def qualify_run(
             or (
                 manifest.experiment.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
-                and manifest.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
+                and manifest.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_BUDGET_PILOT
             )
             or (
                 manifest.experiment.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-                and manifest.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
+                and manifest.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_CORRECTIVE_PILOT
             )
             or (
                 manifest.experiment.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
-                and manifest.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
+                and manifest.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_SATURATION_PILOT
             )
             or (
                 manifest.experiment.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT
-                and manifest.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
+                and manifest.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_REVIEW_EVIDENCE_PILOT
             )
             or (
                 manifest.experiment.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT
-                and manifest.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT
+                and manifest.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REVIEW_PILOT
             )
             or (
                 manifest.experiment.purpose
                 == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT
-                and manifest.budget
-                == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT
+                and manifest.budget == _GPT54_MINI_MEMORY_DEVELOPMENT_COVERAGE_REJECTION_PILOT
             )
             or (
                 _condition_neutral_comparison_manifest_matches(manifest)
-                and manifest.budget
-                == _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+                and manifest.budget == _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+                and manifest.model.transport_max_retries == 0
+            )
+            or (
+                _condition_neutral_runtime_v2_manifest_matches(manifest)
+                and manifest.budget == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
                 and manifest.model.transport_max_retries == 0
             )
             or (
@@ -11631,8 +11925,7 @@ def qualify_run(
                         ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY,
                         ExperimentPurpose.CORE,
                     }
-                    or manifest.experiment.experiment_id
-                    in _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS
+                    or manifest.experiment.experiment_id in _SUPERSEDED_250K_LIVE_EXPERIMENT_IDS
                 )
                 and manifest.budget == _GPT54_MINI_CAMPAIGN_BUDGET
             )
@@ -11821,21 +12114,79 @@ def qualify_run(
             ),
             live_resume_supported=False,
         )
-    if (
+    full_schedule_cost_campaign = bool(
         experiment is not None
-        and (
-            experiment.purpose
-            in {
-                ExperimentPurpose.GENERIC_BASELINE_READINESS,
-                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
-            }
-            or condition_neutral_comparison
+        and experiment.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+    )
+    if full_schedule_cost_campaign:
+        cost_control = (
+            execution_plan.get("campaign_cost_control")
+            if execution_plan is not None
+            else None
         )
+        descriptor = (
+            cost_control.get("descriptor")
+            if isinstance(cost_control, dict)
+            else None
+        )
+        control_hash = (
+            cost_control.get("content_hash")
+            if isinstance(cost_control, dict)
+            else None
+        )
+        policy = descriptor.get("policy") if isinstance(descriptor, dict) else None
+        schedule_row_ids = (
+            descriptor.get("schedule_row_ids") if isinstance(descriptor, dict) else None
+        )
+        add(
+            "campaign_full_schedule_cost_contract",
+            bool(
+                execution_plan_ok
+                and isinstance(descriptor, dict)
+                and cost_control.get("schema_version")
+                == _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
+                and descriptor.get("schema_version")
+                == _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
+                and isinstance(control_hash, str)
+                and sha256_text(canonical_json(descriptor)) == control_hash
+                and experiment.campaign_cost_control_hash == control_hash
+                and descriptor.get("schedule_hash") == execution_plan.get("schedule_hash")
+                and isinstance(schedule_row_ids, list)
+                and len(schedule_row_ids) == 12
+                and experiment.schedule_row_id in schedule_row_ids
+                and isinstance(policy, dict)
+                and policy.get("per_run_reserve_nanos") == 13_612_500_000
+                and policy.get("full_schedule_reserve_nanos") == 163_350_000_000
+                and policy.get("hard_cap_nanos") == 164_000_000_000
+                and policy.get("cost_censoring_allowed") is False
+                and policy.get("not_started_due_to_cost_allowed") is False
+                and descriptor.get("full_schedule_reservation_required") is True
+                and descriptor.get("row_bound_reservations") is True
+                and descriptor.get("deterministic_settlement_required") is True
+                and descriptor.get("row_cost_censoring_allowed") is False
+            ),
+            campaign_cost_control_hash=control_hash,
+            manifest_cost_control_hash=experiment.campaign_cost_control_hash,
+            schedule_hash=(
+                descriptor.get("schedule_hash") if isinstance(descriptor, dict) else None
+            ),
+            schedule_row_count=(
+                len(schedule_row_ids) if isinstance(schedule_row_ids, list) else None
+            ),
+            live_resume_supported=False,
+        )
+    if experiment is not None and (
+        experiment.purpose
+        in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REVIEW_PILOT,
+            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
+        }
+        or condition_neutral_any
     ):
         from patchloop.evals.runner import (
             ExperimentSuite,
@@ -12844,13 +13195,15 @@ def qualify_run(
             in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         ):
             trace_check_ids.add("disabled_call_guard_contract")
-    if condition_neutral_comparison:
+    if condition_neutral_any:
         trace_check_ids.add("comparison_runtime_contract")
         trace_check_ids.add("pricing_start_freshness")
         if manifest.memory.condition == MemoryCondition.NO_MEMORY:
             trace_check_ids.add("disabled_call_guard_contract")
     if accrued_cap_campaign:
         trace_check_ids.add("campaign_spend_cap_contract")
+    if full_schedule_cost_campaign:
+        trace_check_ids.add("campaign_full_schedule_cost_contract")
     if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
         trace_check_ids.add("self_validation_lifecycle")
     if manifest.tool_schema_version == "v4":
@@ -12931,7 +13284,7 @@ def qualify_run(
         check["passed"] for check in checks if check["check_id"] in trace_check_ids
     )
     qualified = all(check["passed"] for check in checks)
-    memory_candidate_eligible = bool(
+    historical_memory_candidate_eligible = bool(
         qualified
         and trace_integrity
         and leakage_ok
@@ -12940,6 +13293,22 @@ def qualify_run(
         and experiment is not None
         and experiment.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
         and outcome in {RunOutcomeKind.TASK_FAILURE, RunOutcomeKind.AGENT_FAILURE}
+    )
+    memory_candidate_eligible = bool(
+        (
+            condition_neutral_v2
+            and qualified
+            and trace_integrity
+            and leakage_ok
+            and dataset_entry is not None
+            and dataset_entry.role == DatasetRole.MEMORY_DEVELOPMENT
+            and evaluation_reached
+            and result is not None
+            and result.official
+            and result.evaluation_status == "completed"
+            and outcome == RunOutcomeKind.TASK_FAILURE
+        )
+        or (not condition_neutral_v2 and historical_memory_candidate_eligible)
     )
     source_evidence_hash = calculate_source_evidence_hash(
         run_id,
@@ -12976,16 +13345,13 @@ def qualify_run(
         "source_evidence_hash": source_evidence_hash,
         "checks": checks,
     }
-    if (
-        experiment is not None
-        and (
-            experiment.purpose
-            in {
-                ExperimentPurpose.GENERIC_BASELINE_READINESS,
-                ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-            }
-            or condition_neutral_comparison
-        )
+    if experiment is not None and (
+        experiment.purpose
+        in {
+            ExperimentPurpose.GENERIC_BASELINE_READINESS,
+            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+        }
+        or condition_neutral_any
     ):
         payload.update(
             {
@@ -13018,7 +13384,7 @@ def qualify_run(
                                 ExperimentPurpose.GENERIC_BASELINE_READINESS,
                                 ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
                             }
-                            or condition_neutral_comparison
+                            or condition_neutral_any
                         )
                     )
                     else _runtime_contract_content_hash(events)

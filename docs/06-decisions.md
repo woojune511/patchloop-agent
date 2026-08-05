@@ -966,3 +966,48 @@ Evidence/issue:
   repository-wide 1,656 pass/7 environment-dependent skip이 확인됐다. Shard 순서에 민감한 D-092 WAL/SHM
   invariant 1건은 독립 프로세스에서 통과했다. Parsed exact rebuild와 `git diff --check`도 통과했다.
 - Date: 2026-08-05
+
+### D-097 accepted source decision — bind the exact no-memory successor without authorizing execution
+
+- D-096의 future source-authoring permission을 exact suite
+  `dev-no-memory-condition-neutral-3000k-20260805-r1`로 구현한다. Source order는 Loguru, AnyIO, tox,
+  HF Hub, PDM, pyfakefs이고 `no_memory` 각 2회, seed `20260723`이다. Suite file은 2,741 bytes,
+  `sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`다.
+- D-096 source identity
+  `sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`와 seed shuffle 뒤
+  expanded schedule hash `sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`를
+  별도 identity로 보존한다. Source identity, expanded schedule과 future preflight execution schedule hash는
+  서로 대체하지 않는다.
+- Exact D-096 model/prompt/tool/context/resource tuple을
+  `condition-neutral-comparison-runtime-contract-v2`와
+  `condition-neutral-comparison-runtime-evidence-v2`에 결속한다. Exact successor ID만 v2 selector에 들어가며
+  D-083/D-084의 1.6M runtime-v1과 historical manifest/result/qualification은 수정하거나 재해석하지 않는다.
+- `campaign-list-price-full-schedule-reserve-v1`을 선택한다. 첫 provider call 전에 하나의 fsync된
+  `FullScheduleCostReserved` event가 exact 12-row schedule, row별 `$13.6125`와 full reserve `$163.35`를 함께
+  결속한다. 같은 plan/CAS/journal은 각 row 전에 재검증되고 terminal row마다 deterministic settlement가
+  기록된다. Prospective campaign-scoped source cap은 `$164`다. D-097에는 per-row atomic SQLite consumption이
+  없고 live resume은 disabled다. Cost journal은 duplicate paid-call prevention을 주장하지 않으며 기존 one-use
+  execution hash가 authorization을 단일 sequential invocation으로 제한할 뿐이다. 이는 historical project cap
+  `$150` 변경, campaign exception 승인,
+  expected invoice/free-tier claim 또는 completion guarantee가 아니다.
+- Post-run journal reconciliation은 `CampaignCompleted`와 persisted result hash를 exact 재검증하고 foreign binding
+  또는 duplicate terminal event를 rehash한 경우에도 거부한다. 이 사후 evidence-integrity 검증을 provider-side
+  idempotency나 duplicate paid-call prevention으로 확대하지 않는다.
+- Source completion은 official evaluator가 완료된 `resolved|task_failure` 또는 canonical pre-call token/wall
+  budget `agent_failure` 중 exact-one terminal branch를 요구한다. Runtime output schema는
+  `condition-neutral-no-memory-baseline-admission-gate-v2`다. Task success, hidden acceptance와 SCRR는 gate가
+  아니다. Budget/infrastructure failure는 memory candidate가 아니며 automatic rerun하지 않는다. Future 12-row
+  denominator gate가 통과하면 campaign-level `memory_review_eligible=true`가 되고 review candidate pool은
+  official task failure로만 제한된다. 별도 review/dedup/leak gate 전에는 `memory_admission_unlocked=false`이고
+  candidate를 rule로 자동 승격하지 않는다.
+- Portable artifact는 `reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json`이다.
+  Semantic body SHA는 `sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`,
+  21,029-byte file SHA는 `sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다.
+  Source artifact는 runtime implementation을 스스로 검증하지 않으며 final focused/runtime/repository count는
+  전체 회귀가 끝날 때까지 pending이다.
+- D-097 source 단계는 provider/evaluator call 0/0, added model cost `$0`이다. Clean committed source에서 Docker,
+  evaluator, dataset/task/environment, SDK와 fresh pricing을 다시 묶는 no-call preflight가 candidate hash를 만든 뒤,
+  사용자가 그 exact hash와 max-`$164`, `$150` campaign exception을 별도로 승인하기 전에는 실행하지 않는다.
+  Live result, baseline denominator, memory review/admission/index, core와 analysis는 계속 닫혀 있고 blocker는
+  `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.
+- Date: 2026-08-05

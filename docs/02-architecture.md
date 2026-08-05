@@ -1266,3 +1266,76 @@ Architecture authority는 future source authoring에서 멈춘다. 12-run worst-
 project cap을 초과해 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`이며 non-censoring campaign cost policy도 선택되지
 않았다. 따라서 runtime v2, suite, clean preflight, execution hash, live result, memory와 core consumer는 모두 다음
 gate까지 fail closed다.
+
+## 38. D-097 exact no-memory successor and runtime-v2 source architecture
+
+D-097은 D-096의 source-authoring permission을 exact runnable source contract로 좁힌다. 새 suite
+`dev-no-memory-condition-neutral-3000k-20260805-r1`만 prospective v2 selector에 들어간다. Suite file은
+2,741 bytes, `sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`다. 입력 task 순서는
+Loguru, AnyIO, tox, HF Hub, PDM, pyfakefs이고 `no_memory` × repetition 2, seed `20260723`이다. D-096의
+`sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`는 shuffle 전
+source identity다. Runner가 seed shuffle을 적용한 expanded order는 pyfakefs r1/r2, AnyIO r1, HF Hub r1,
+PDM r1, HF Hub r2, AnyIO r2, Loguru r1/r2, tox r2/r1, PDM r2이며 별도 hash
+`sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`를 갖는다.
+
+Runtime binding chain은 다음과 같다.
+
+```text
+D-096 policy/admission artifact CAS
+  + exact D-097 suite, dataset, public task and environment identity
+  + campaign full-schedule cost-control hash
+  -> condition-neutral-comparison-runtime-contract-v2
+  -> preflight execution payload and execution hash
+  -> per-row RunManifest
+  -> content-addressed RunStarted runtime-evidence-v2
+  -> fresh-start/resume validation
+  -> persisted qualification plus read-only recomputation
+```
+
+Exact runtime tuple은 mini dated snapshot medium/standard/default, transport retry 0, prompt V3, tool v2/context
+v5, output 25,000, memory allowance 2,000과 `null/null/3,000,000/3,600`이다. V2 contract는 D-096 resource
+policy와 no-memory admission descriptor를 byte/CAS로 다시 읽는다. Exact experiment ID, row identity 또는 tuple
+중 하나라도 다르면 v2 branch가 아니다. D-083/D-084의 1.6M runtime-v1 branch와 historical manifest,
+qualification 및 result는 별도 code path에 남는다. Core와 non-no-memory condition은 이 source architecture로
+live-admit하지 않는다.
+
+Cost architecture는 D-087의 `$25` rolling/censoring policy나 per-row atomic SQLite capability를 재사용하지 않는다.
+`campaign-list-price-full-schedule-reserve-v1`은 첫 provider call 전에 하나의 `FullScheduleCostReserved` event를
+append하고 fsync한다. 이 event가 exact 12-row schedule, row마다 13,612,500,000 nano-USD와 full reserve
+163,350,000,000 nano-USD (`$163.35`)를 한 번에 결속한다. Prospective campaign-scoped source cap은
+164,000,000,000 nano-USD (`$164`)다. Runner는 같은 plan/CAS/journal을 각 row 전에 다시 검증하고 terminal row마다
+durable usage에서 deterministic settlement를 기록한다. 앞 row의 낮은 settlement는 뒤 row allocation을 바꾸지
+못하며 초기 전체 reservation이 실패하면 paid row를 하나도 시작하지 않는다.
+
+D-097에는 row마다 one-use capability를 발급하거나 SQLite에서 원자 소비하는 경계가 없다. Live resume도 disabled다.
+D-097 cost journal 자체는 duplicate paid-call prevention을 주장하지 않고, 기존 one-use execution hash가
+authorization을 한 번의 sequential campaign invocation으로 제한할 뿐이다. Whole-local-state rollback이나
+external/request-level billing ledger까지 막는다고도 주장하지 않는다.
+
+Post-run reconciliation은 마지막 `CampaignCompleted`의 execution/plan/cost-control/qualification/result hash를
+persisted result bytes와 다시 대조한다. Foreign binding 또는 duplicate terminal event를 hash chain까지 다시 만든
+경우에도 거부한다. 이는 sealed evidence의 사후 integrity 보장이고 provider-side idempotency나 duplicate paid-call
+prevention은 아니다.
+
+Post-run source predicate는 exact 12 terminal/qualified/cost-settled row와 두 terminal branch의 exact-one
+partition을 요구한다. Official branch는 accepted submission과 completed official evaluator receipt를 가진
+`resolved|task_failure`다. Budget branch는 provider 호출 전 발생한 canonical total-token 또는 wall-clock
+`ModelGenerationBlocked`, `agent_failure`, submission/evaluator 부재와 no-provider-after evidence를 요구한다.
+Runtime projection schema는 `condition-neutral-no-memory-baseline-admission-gate-v2`다.
+Task success와 hidden acceptance는 이 architecture의 completion edge가 아니다. Future denominator completion
+gate가 전체로 통과하면 campaign output은 `memory_review_eligible=true`다. 실제 review candidate pool은
+official-evaluator task failure row로만 제한되고 budget와 infrastructure failure는 제외된다. 이 flag는 rule
+admission이 아니며 별도 review/dedup/leak gate 전에는 `memory_admission_unlocked=false`다.
+
+Source artifact는 runtime implementation을 스스로 증명하는 executable verifier가 아니다. Artifact가
+`runtime_v2_implementation_verified_by_artifact=false`를 유지하는 이유다. Source-focused suite는 identity,
+cost와 authority boundary를 검증하고 runtime wiring은 별도 executable tests가 닫는다. D-097 focused 65/65와
+D-084~D-097 관련 회귀 354/354가 통과했다. Repository-wide single run은 1,728 collected 중
+1,720 passed/7 skipped/1 order-dependent D-092 WAL/SHM failure였고 exact test는 isolated 1/1로 통과했다. 이 둘을
+monolithic clean pass로 합치지 않는다. Clean source commit
+뒤의 no-call preflight가 Docker/evaluator, SDK, fresh pricing과 commit을 실행 hash에 묶기 전에는 candidate
+capability도 없다. `$164`는 사용자 승인이나 historical `$150` project cap 변경이 아니며 live result, memory와
+core consumer는 모두 닫혀 있다. Canonical blocker는
+`NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다. Portable artifact의 semantic body SHA는
+`sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, 21,029-byte file SHA는
+`sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다.

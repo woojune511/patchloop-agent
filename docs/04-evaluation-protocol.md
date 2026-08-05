@@ -1694,3 +1694,78 @@ D-096은 source-authoring permission만 연다. Historical D-083/D-084 v1을 수
 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`을 해소하는 non-censoring cost policy가 필요하다. 이 두 조건과 fresh
 pricing, clean no-call preflight, 새 execution hash 및 별도 user approval 전에는 provider/evaluator를 호출하지
 않는다. No-memory result, denominator, memory review/index와 core analysis는 계속 닫힌다.
+
+### D-097 exact no-memory runtime-v2 source and future execution protocol
+
+D-097은 source gate, clean preflight, paid invocation을 하나의 단계로 합치지 않는다.
+
+1. **Offline source gate:** Exact suite
+   `dev-no-memory-condition-neutral-3000k-20260805-r1`, D-096 policy/admission CAS, six public/environment
+   identities, runtime contract/evidence v2와 full-schedule cost policy를 고정한다. Suite file identity는
+   2,741 bytes, `sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`다. Provider/evaluator call,
+   candidate execution hash와 run/result는 0이다.
+2. **Future clean no-call preflight:** Source change를 clean commit으로 만든 뒤 exact dataset/task/environment,
+   Docker/evaluator digest, SDK, official pricing freshness와 harness commit을 재검증한다. 이 단계가 execution
+   payload와 candidate hash를 만들지만 provider/evaluator는 호출하지 않는다. D-096 source-identity hash
+   `sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`와 runner-expanded
+   schedule hash `sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`는 별도
+   field로 검증한다.
+3. **Separate approval and one invocation:** 사용자가 candidate hash, maximum `$164`와 historical project cap
+   `$150`에 대한 campaign-scoped exception을 명시적으로 승인한 invocation만 plan을 persist하고 paid boundary를
+   넘을 수 있다. Approval flag/hash는 source YAML이나 source artifact에 미리 넣지 않는다.
+
+Source suite는 Loguru, AnyIO, tox, HF Hub, PDM, pyfakefs를 exact input order로 `no_memory` 각 2회 사용한다.
+Seed `20260723` shuffle 뒤 row order는 pyfakefs r1/r2, AnyIO r1, HF Hub r1, PDM r1, HF Hub r2,
+AnyIO r2, Loguru r1/r2, tox r2/r1, PDM r2다. Preflight는 12개 unique row ID와 task/repetition/order/dataset
+role을 execution hash에 포함한다. Missing, duplicate, replacement와 reordered source는 fail closed한다.
+
+Runtime verification은 plan/manifest tuple 일치에서 끝나지 않는다. Runner는 provider boundary 전에 D-096
+artifact와 cost-control hash를 다시 읽고, `RunStarted`에 runtime-evidence-v2 CAS를 단 한 번 기록한다. Resume는
+같은 bytes를 재구성하지 못하면 model call 전에 실패한다. Terminal qualification은 persisted qualification을
+다시 load하고 `persist=false` read-only recomputation과 hash까지 exact 비교한다. Model/tool call count `null`은
+0이 아니라 observability-only이며 token, wall, exact-request, cost, loop, constrained-tool, Docker/network와
+evaluator guard는 유지한다.
+
+Exact runtime schema 이름은 `condition-neutral-comparison-runtime-contract-v2`와
+`condition-neutral-comparison-runtime-evidence-v2`다. Historical runtime-v1 schema로 fallback하거나 두 schema를
+서로 대신하지 않는다.
+
+Campaign cost는 첫 provider call 전에 하나의 fsync된 `FullScheduleCostReserved` event로 exact 12-row schedule,
+row별 `$13.6125` allocation과 `$163.35` full reserve를 한 번에 결속해야 한다. Hard cap은 `$164`다. Initial
+reservation이 실패하면 paid row를 하나도 시작하지 않는다. Runner는 같은 plan/CAS/journal을 각 row 전에 다시
+검증하고 terminal row마다 durable usage의 deterministic settlement를 기록한다. 앞 row의 낮은 settlement가 뒤
+row allocation을 바꾸지 못하고 unknown request outcome은 해당 row의 full reserve를 유지한다. 이는 per-row
+atomic SQLite capability가 아니다. Live resume은 disabled다. D-097 cost journal은 duplicate paid-call prevention을
+주장하지 않으며, 기존 one-use execution hash가 authorization을 단일 sequential campaign invocation으로 제한할
+뿐이다. 이 boundary는 task completion guarantee나 expected
+invoice/free-tier 계산이 아니다.
+
+12개 settlement 뒤 `CampaignCompleted`가 기록되면 post-run qualifier는 final result bytes/hash, execution/plan/
+cost-control binding과 embedded cost qualification을 다시 읽는다. Foreign binding이나 duplicate terminal event는
+hash chain을 다시 만든 경우에도 fail closed한다. 이 검사는 sealed result integrity이고 paid call idempotency를
+소급 만들어 내지 않는다.
+
+Post-run admission output schema는 `condition-neutral-no-memory-baseline-admission-gate-v2`이며 task success를
+요구하지 않는다. 각 row는 다음 중 exact-one이어야 한다.
+
+1. Official branch: terminal·qualified, accepted submission, completed official evaluator receipt, outcome
+   `resolved|task_failure`, persisted/recomputed qualification match.
+2. Budget branch: terminal·qualified, canonical pre-provider total-token 또는 wall-clock block, `agent_failure`,
+   no provider-after, no accepted submission, no evaluator receipt.
+
+전체 12 row는 cost-settled이고 issued response는 모두 `completed`, exact token telemetry, truncation disabled와
+`store=false`여야 한다. Infrastructure/qualification/diagnostic error, cost `not_started`, model/tool-call block,
+unknown/mixed terminal은 admission을 닫는다. Qualified budget terminal은 denominator `agent_failure`지만 rerun이나
+memory candidate가 아니다. Future 12-row denominator gate가 통과하면 campaign-level
+`memory_review_eligible=true`가 된다. Review candidate pool은 official task failure로만 제한된다. 이 값은
+automatic rule admission이 아니고, 별도 review/dedup/leak gate가 통과하기 전
+`memory_admission_unlocked=false`다.
+
+Source-focused suite는 builder/identity/cost/authority contract만 검증한다. Artifact semantic body SHA는
+`sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, 21,029-byte file SHA는
+`sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다. Runtime executable test와
+qualification/final-seal test를 포함한 D-097 focused 65/65와 D-084~D-097 관련 354/354가 통과했다. Full repository
+run은 1,728 collected, 1,720 passed/7 skipped/1 order-dependent D-092 WAL/SHM failure였으며 exact isolated retest는
+1/1 pass다. 이를 monolithic 1,721/7로 보고하지 않는다. Clean no-call preflight,
+hash와 사용자 승인이 끝나기 전 no-memory result, denominator, memory review/admission/index, core와 analysis는
+모두 닫혀 있다. Canonical blocker는 `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.

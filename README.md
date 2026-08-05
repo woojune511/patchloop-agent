@@ -2,6 +2,50 @@
 
 > Trace-Driven Coding Agent Reliability Harness
 
+2026-08-05 D-097은 D-096이 허용한 source authoring 범위 안에서 exact no-memory successor
+`dev-no-memory-condition-neutral-3000k-20260805-r1`을 만들고 runtime-v2와 non-censoring cost contract를
+offline으로 결속했다. Suite file은 2,741 bytes,
+`sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`다. Source task 순서는
+Loguru, AnyIO, tox, HF Hub, PDM, pyfakefs이고 각 2회
+`no_memory`, seed `20260723`으로 정확히 12개 row를 만든다. Source identity hash
+`sha256:e399114a6ea516821a30104a612f7222c0caf3f88def7b5d7472d15f7cc4c27b`는 shuffle 전
+task/condition/repetition/seed 계약이며, deterministic expanded schedule hash
+`sha256:dff4f38db99bcbc878e917a6c76e10a6c244701d2a8eb5ea4b43daf427a305ba`와 구분한다.
+
+Exact runtime은 `gpt-5.4-mini-2026-03-17` medium/standard/default, retry 0, prompt V3, tool v2/context v5,
+output 25,000, memory allowance 2,000과 `null/null/3,000,000/3,600`이다.
+`condition-neutral-comparison-runtime-contract-v2`와 runtime evidence v2는 D-096 policy/admission CAS와 함께
+execution plan/hash, `RunManifest`, `RunStarted`, start/resume와 qualification에 결속된다. Historical
+D-083/D-084 1.6M runtime-v1과 과거 result는 그대로 남으며 새 profile로 재해석하지 않는다.
+
+새 `campaign-list-price-full-schedule-reserve-v1`은 첫 provider 호출 전에 하나의 fsync된
+`FullScheduleCostReserved` event로 exact 12-row schedule과 `$13.6125`/row, `$163.35` full reserve를 결속한다.
+같은 plan/CAS/journal을 각 row 전에 재검증하고 terminal row마다 deterministic settlement를 남긴다. Prospective
+campaign-scoped source cap은 `$164`다. 이는 per-row atomic SQLite consumption, 기존 project cap `$150` 변경,
+사용자 예외 승인 또는 예상 invoice/free-tier claim이 아니다. Live resume은 disabled다. D-097 cost journal은
+중복 paid-call 방지를 주장하지 않으며 기존 one-use execution hash가 authorization을 단일 sequential campaign
+invocation으로 제한할 뿐이다. Official-evaluator
+`resolved|task_failure`와 canonical pre-call token/wall budget `agent_failure`가
+허용된 두 terminal branch다. Runtime completion output schema는
+`condition-neutral-no-memory-baseline-admission-gate-v2`이고 task success, hidden acceptance와 SCRR는 source
+completion gate가 아니다. Future
+12-row denominator가 통과하면 campaign-level `memory_review_eligible=true`가 되지만 review candidate는 official
+task failure로만 제한된다. 별도 review/dedup/leak gate 전 `memory_admission_unlocked=false`는 유지되고, 현재
+source 단계에서는 둘 다 false다.
+
+D-097은 source와 runtime contract만 준비했다. Artifact는
+`reports/live-pilot/artifacts/d097-condition-neutral-baseline-source-gate.json`이고 semantic body SHA는
+`sha256:05d952065136a45914e2fb3c44edcbb553732c9f33484c5412b9135062c6481b`, 21,029-byte file SHA는
+`sha256:21ed073ad1fbe1985e7a46cabebbfdc836baa303c4434e0777152c1d2d88a777`다. Artifact와 source test는
+runtime implementation을 스스로 증명하지 않는다. 별도 executable D-097 65/65와 D-084~D-097 관련 354/354는
+통과했다. Repository-wide single run은 1,728 collected 중 1,720 passed/7 skipped/1 order-dependent D-092 WAL/SHM
+failure로 655.4초에 끝났고, 그 exact test는 즉시 isolated 1/1로 통과했다. 이를 monolithic 1,721/7로 합치지
+않는다. Ruff, compileall, exact rebuild와 `git diff --check`도 통과했다. 아직 clean no-call preflight,
+candidate execution hash, 최대 `$164`와 `$150` 예외에 대한 별도 사용자 승인, provider/evaluator 실행,
+baseline result, denominator, memory review/admission/index, core 또는 analysis는 없다. Source 단계의
+provider/evaluator call과 added model cost는 0/0/`$0`이고 현재 blocker는
+`NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.
+
 2026-08-05 D-096은 D-093의 public candidate와 D-095의 exact readiness pass만 사용해 future comparison의
 condition-neutral resource policy를 offline에서 동결했다. Exact profile
 `gpt54mini-v2v5-condition-neutral-3000k-v1`은 `gpt-5.4-mini-2026-03-17` medium/standard/default,
