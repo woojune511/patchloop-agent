@@ -40,23 +40,16 @@ counts zero.
 `--validate-sealed-historical` validates the exact D-122 predecessor bytes without replaying changed current
 implementation as historical evidence.
 
-## Validate D-123 historical cost/completion seal
+## Validate D-123 through D-125 historical sources
 
 ```powershell
 uv run python scripts/build_d123_ac_cost_completion_qualification.py --validate-sealed-historical
-```
-
-This validates exact D-123 bytes without promoting its historical runtime emitter integration to current
-source evidence. Its validator correctly handled formed unavailable evidence; D-124 corrects the prospective
-emitter path.
-
-## Validate D-124 historical correction
-
-```powershell
 uv run python scripts/build_d124_ac_settlement_reconciliation_correction.py --validate-sealed-historical
+uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --validate-sealed-historical
 ```
 
-This validates exact D-124 bytes without replaying current implementation as historical evidence.
+These validate exact historical bytes without promoting them to current source evidence. D-124 corrects
+D-123 prospectively; D-125 remains local/mock only.
 
 ## Validate current D-126 blocked preflight
 
@@ -69,14 +62,14 @@ The tests use mocked Git/pricing/Docker/SDK observations. `--validate-post-commi
 evidence-commit topology; it does not repeat the public pricing GET or Docker commands. Do not invoke
 `--run-preflight` to refresh observations without separate exact authority.
 
-## Validate D-125 historical finalization source
+## Validate D-127 pre-external source
 
 ```powershell
-uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --validate-sealed-historical
+uv run pytest -q tests/test_d127_docker_remediation.py tests/test_d127_pricing_capture.py tests/test_d127_d126_successor_no_call_preflight.py
 ```
 
-This validates exact D-125 bytes without replaying later source as historical evidence. Its local/mock
-process and durability limits remain.
+This mocked path creates no downstream evidence or external call. After source/receipt commit, `--check-static`
+remains local; it has not run and the API key is absent. Do not use `--run-external-preflight` before admission.
 
 ## Validate current memory contracts
 
@@ -126,10 +119,10 @@ historical snapshot hashes, the single D-121 prose owner and the closed four-run
 There is no supported live A/C command. Although the exact suite is an `ExperimentSuite` source, a future live
 command must appear only after:
 
-1. separate approval resolving every D-126 blocker, closing pricing-provenance replayability and repeating the
-   no-call preflight only;
-2. after a ready successor, separate exact-gate approval for execution-hash and candidate creation;
-3. separate approval of the exact candidate triple, execution hash and $55 cap.
+1. commit the exact D-127 receipt/source identity and pass static admission;
+2. complete only the approved blocker-remediation, replayable-pricing and repeated no-call preflight scope;
+3. after a ready successor, obtain separate exact-gate approval for execution-hash and candidate creation;
+4. obtain separate approval of the exact candidate triple, execution hash and $55 cap.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that
 sequence.

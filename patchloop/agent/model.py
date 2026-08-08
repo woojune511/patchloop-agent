@@ -7,11 +7,32 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
+import httpx
 from openai import OpenAI
 
 from patchloop.contracts import ModelConfig
 from patchloop.errors import ContractError
 from patchloop.util import sha256_bytes
+
+OFFICIAL_API_BASE_URL = "https://api.openai.com/v1"
+
+
+def create_openai_client(config: ModelConfig) -> OpenAI:
+    """Build the production client without inheriting ambient proxy settings."""
+
+    http_client = httpx.Client(trust_env=False)
+    constructor_kwargs: dict[str, Any] = {
+        "base_url": OFFICIAL_API_BASE_URL,
+        "http_client": http_client,
+    }
+    if config.transport_max_retries is not None:
+        constructor_kwargs["max_retries"] = config.transport_max_retries
+    try:
+        return OpenAI(**constructor_kwargs)
+    except BaseException:
+        http_client.close()
+        raise
+
 
 SYSTEM_PROMPT_V1 = (
     "You are a constrained coding agent. Use only supplied tools. "
@@ -807,11 +828,9 @@ class OpenAIResponsesAdapter:
                     "match the run contract"
                 )
             self.client = client
-        elif config.transport_max_retries is None:
-            # Historical manifests intentionally retain the SDK default.
-            self.client = OpenAI()
         else:
-            self.client = OpenAI(max_retries=config.transport_max_retries)
+            # Historical manifests intentionally retain the SDK retry default.
+            self.client = create_openai_client(config)
 
     def request_payload(
         self,

@@ -799,3 +799,17 @@ def test_clean_source_observation_binds_exact_git_commit_tree_and_rejects_dirty(
     )
     with pytest.raises(d126.D126PreflightError, match="clean Git worktree"):
         d126._git_observation(REPOSITORY)
+
+
+def test_production_d126_sealed_historical_bytes_validate_without_current_source_replay() -> None:
+    result = d126.validate_d126_preflight_gate(
+        repository=REPOSITORY,
+        mode="sealed-historical",
+    )
+
+    assert result["status"] == d126.BLOCKED_STATUS
+    assert result["gate_id"] == d126.SEALED_HISTORICAL_GATE_ID
+    assert result["semantic_body_hash"] == d126.SEALED_HISTORICAL_BODY_SHA256
+    assert result["file_bytes"] == d126.SEALED_HISTORICAL_FILE_BYTES
+    assert result["file_sha256"] == d126.SEALED_HISTORICAL_FILE_SHA256
+    assert result["environment_ready_for_execution_hash"] is False

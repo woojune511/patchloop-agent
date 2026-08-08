@@ -19,8 +19,9 @@ readiness panel with an exact, checked-in suite:
 `experiments/ac-structured-pilot-v2.plan.yaml` preserves the design boundary. Fixed-bundle delivery,
 condition-aware qualification, full-schedule cost reservation/settlement source and the complete-matrix
 completion-gate source are implemented. D-125 is the historical local/mock finalization source predecessor.
-D-126 sealed clean-source, pricing and no-call environment observations, but five blockers keep it BLOCKED
-before execution-hash or candidate creation.
+D-126 remains the latest sealed gate. D-127 successor source implements the production-client correction,
+replayable pricing capture and exact-identity Docker/no-call orchestration. Its append-only approval receipt
+exists; static source admission and downstream evidence remain pending.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -43,13 +44,12 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
   2/12 were scope-compliant successes. This is development evidence, not a held-out performance claim.
 - D-110 froze the approved three-entry memory index.
 - D-112/D-115 showed that the current selective scorer cannot be repaired by threshold/weight changes alone.
-- D-124/D-125 are historical settlement/finalization predecessors; their local/mock limits remain.
-- D-126 binds source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing and
-  a no-call observation. Docker used 12 read-only commands, including 6 daemon reads and zero workloads;
-  the SDK probe made zero network calls.
+- D-124/D-125 are historical local/mock predecessors. D-126 sealed clean source, fresh pricing and bounded
+  no-call observation, but not readiness.
 - D-121 remains a deferred historical no-start isolation lane.
 - D-126 has no executed reservation, result, candidate or execution hash. Provider, evaluator, agent,
   retrieval and injection counts and cost are zero; every A/C outcome remains unmeasured.
+- D-127 is pre-external: receipt recorded, static pending, API key absent and production calls zero.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -59,8 +59,6 @@ Machine-readable evidence is indexed in `docs/09-evidence.md`.
 uv sync --extra dev
 uv run pytest -q tests/test_d126_clean_source_pricing_no_call_preflight.py
 uv run python scripts/build_d126_clean_source_pricing_no_call_preflight.py --validate-post-commit
-uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --validate-sealed-historical
-uv run python scripts/build_d124_ac_settlement_reconciliation_correction.py --validate-sealed-historical
 uv run pytest -q tests/test_documentation_structure.py
 git diff --check
 ```
@@ -77,27 +75,17 @@ uv run patchloop experiment run --help
 uv run patchloop report --help
 ```
 
-CLI availability does not imply authorization. The next approval may only resolve all five D-126 blockers,
-close the non-replayable pricing-provenance gap and repeat an exact no-call preflight. A ready successor still
-requires separate exact-gate approval before hash/candidate preparation and later live approval.
+CLI availability does not imply readiness. The approved D-127 scope stops at blocker remediation, official
+pricing capture and a repeated no-call preflight. It currently stops before external activity because the
+receipt exists, but static is pending and `OPENAI_API_KEY` is absent. A ready successor still requires
+separate exact-gate approval before hash/candidate preparation and later live approval.
 
 ## Documentation
 
-- `docs/00-index.md` — authority and navigation
-- `docs/current-status.md` — current checkpoint and next gate
-- `docs/01-project-spec.md` — product scope
-- `docs/02-architecture.md` — runtime architecture
-- `docs/03-contracts.md` — contract map
-- `docs/04-evaluation-protocol.md` — current evaluation design
-- `docs/05-implementation-plan.md` — remaining sequence
-- `docs/06-decisions.md` — effective decisions
-- `docs/07-reproduction.md` — supported validation commands
-- `docs/08-limitations.md` — unsupported claims
-- `docs/09-evidence.md` — machine evidence index
-- `docs/archive/` — historical narrative snapshots
+Use `docs/00-index.md` for active authority/navigation. Historical narratives live under `docs/archive/`.
 
 ## One-line description
 
 PatchLoop is a constrained, recoverable coding agent with a leakage-aware evaluation and failure-memory
 pipeline whose exact four-run no-memory versus fixed-structured-memory runtime-finalization source path is
-offline-qualified, no-call-preflight observed and BLOCKED before candidate creation and live authority.
+offline-qualified, whose D-126 preflight is sealed blocked, and whose D-127 successor remains pre-external.

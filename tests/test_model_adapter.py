@@ -166,11 +166,20 @@ def test_openai_adapter_binds_zero_transport_retries_without_changing_legacy(
     monkeypatch,
 ) -> None:
     constructor_kwargs: list[dict] = []
+    transport_kwargs: list[dict] = []
+    transports: list[SimpleNamespace] = []
+
+    def fake_http_client(**kwargs):
+        transport_kwargs.append(kwargs)
+        transport = SimpleNamespace(close=lambda: None)
+        transports.append(transport)
+        return transport
 
     def fake_openai(**kwargs):
         constructor_kwargs.append(kwargs)
         return SimpleNamespace(responses=FakeResponses())
 
+    monkeypatch.setattr("patchloop.agent.model.httpx.Client", fake_http_client)
     monkeypatch.setattr("patchloop.agent.model.OpenAI", fake_openai)
     legacy = ModelConfig(
         provider="openai",
@@ -185,7 +194,18 @@ def test_openai_adapter_binds_zero_transport_retries_without_changing_legacy(
     OpenAIResponsesAdapter(legacy)
     OpenAIResponsesAdapter(readiness)
 
-    assert constructor_kwargs == [{}, {"max_retries": 0}]
+    assert transport_kwargs == [{"trust_env": False}, {"trust_env": False}]
+    assert constructor_kwargs == [
+        {
+            "base_url": "https://api.openai.com/v1",
+            "http_client": transports[0],
+        },
+        {
+            "base_url": "https://api.openai.com/v1",
+            "http_client": transports[1],
+            "max_retries": 0,
+        },
+    ]
     assert "transport_max_retries" not in legacy.model_dump(mode="json")
     assert readiness.model_dump(mode="json")["transport_max_retries"] == 0
     with pytest.raises(ValueError):
@@ -200,6 +220,46 @@ def test_openai_adapter_binds_zero_transport_retries_without_changing_legacy(
             model_id="gpt-5.4-mini-2026-03-17",
             transport_max_retries=False,
         )
+
+
+def test_openai_adapter_closes_transport_when_client_construction_fails(
+    monkeypatch,
+) -> None:
+    transport = SimpleNamespace(closed=False)
+
+    def close() -> None:
+        transport.closed = True
+
+    transport.close = close
+    monkeypatch.setattr(
+        "patchloop.agent.model.httpx.Client",
+        lambda **kwargs: (
+            transport
+            if kwargs == {"trust_env": False}
+            else pytest.fail("unexpected transport configuration")
+        ),
+    )
+
+    def fail_openai(**kwargs):
+        assert kwargs == {
+            "base_url": "https://api.openai.com/v1",
+            "http_client": transport,
+            "max_retries": 0,
+        }
+        raise RuntimeError("synthetic constructor failure")
+
+    monkeypatch.setattr("patchloop.agent.model.OpenAI", fail_openai)
+
+    with pytest.raises(RuntimeError, match="synthetic constructor failure"):
+        OpenAIResponsesAdapter(
+            ModelConfig(
+                provider="openai",
+                model_id="gpt-5.4-mini-2026-03-17",
+                transport_max_retries=0,
+            )
+        )
+
+    assert transport.closed is True
 
 
 def test_openai_adapter_rejects_injected_client_retry_drift() -> None:

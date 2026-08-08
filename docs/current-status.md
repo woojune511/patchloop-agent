@@ -12,25 +12,31 @@ The latest sealed checkpoint is D-126 clean-source/pricing/no-call preflight evi
   their exact body/file/byte triples are indexed in `docs/09-evidence.md`.
 - Status: `D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED`.
 
-D-126 seals source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22` and one unauthenticated
-official-doc GET observed within 72 hours. The dated model is `gpt-5.4-mini-2026-03-17`; text-token list
-prices are $0.75 input, $0.075 cached input and $4.50 output per 1M tokens. The conservative planning values
-remain $13.6125 per row, $54.45 for four rows and a proposed, unapproved $55 cap.
-
-Those facts/math were correct and fresh at capture, but raw official response bytes were not retained, so the
-validator cannot independently rebind the recorded body SHA/bytes/ETag. A successor must close this pricing
-provenance replayability gap before hash/candidate gating.
-
-The no-call environment observation issued 12 Docker commands across stable before/after snapshots: six
-configuration reads, six read-only daemon/image inspections and zero workload or mutating calls. The local
-SDK construction probe used OpenAI 2.47.0 matching the lock, the official endpoint and zero network calls.
-Execution-hash readiness is false because exactly five blockers remain:
+D-126 binds source `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, dated gpt-5.4-mini prices
+($0.75/$0.075/$4.50 per 1M input/cached/output tokens) and unapproved $13.6125 row/$54.45 schedule/$55 cap
+math. Raw official bytes were not retained. Its 12 Docker reads included six daemon/image inspections and zero
+workloads; the locked-SDK construction probe made zero network calls. Five blockers keep readiness false:
 
 - `docker-cli-observed-identity-awaits-separate-exact-approval`
 - `docker-local-daemon-and-exact-images-readiness-failed`
 - `openai-api-key-presence-missing`
 - `production-openai-client-official-base-url-not-explicit`
 - `production-openai-client-trust-env-not-disabled`
+
+## D-127 approval receipt — no downstream evidence
+
+- ID `d127approval_3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
+  body `sha256:3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
+  file `sha256:ddea365e3a51c8283bde58bd349222288a45e8ea8bdb3d211ead0bb001df81f4`; 3,914 bytes.
+- Status: `D127_D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_RECORDED`.
+
+Source now fixes the official OpenAI base URL and `trust_env=False`, and implements bounded replayable pricing,
+exact-identity Docker/read-only preflight and attempt-first append-only orchestration. The receipt is append-only,
+but static and downstream artifacts are absent, so D-126 remains latest sealed. Static has
+not run and `OPENAI_API_KEY` is absent; daemon launch fails closed while container auto-restart is unverified.
+D-127 production Docker/network/provider/
+evaluator/agent activity, injection/retrieval, cost, run, hash and candidate are zero or absent.
+Dedicated D-127 tests pass 55/55; the broader node-disjoint selection passed 231 with 6 skipped (not additive).
 
 ## Current priority: four-run A/C readiness
 
@@ -39,19 +45,10 @@ The project now defers the full four-condition campaign and starts with a smalle
 > Can the exact approved structured bundle be injected through the complete agent workflow without
 > leakage or runtime ambiguity, while keeping every non-memory input identical to no-memory?
 
-The design plan is `experiments/ac-structured-pilot-v2.plan.yaml`; the exact suite is
-`experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml`:
-
-- Tasks: Moto #7208 and Babel #1042 development-validation fixtures
-- Conditions: A `no_memory`, C `structured`
-- Repetitions: one
-- Rows: four, counterbalanced as Moto A→C and Babel C→A
-- C payload: all three approved D-105 model-facing rules in frozen D-110 `group_provenance` order
-- C selection: no query embedding, similarity, rerank or threshold
-- Runtime tuple: dated gpt-5.4-mini, medium/standard/default, tool v2, phase-evidence-v5,
-  3,000,000 total tokens and 3,600 seconds
-- Suite ID: `dev-validation-ac-fixed-bundle-readiness-20260808-r2`
-- Exact order: Moto A, Moto C, Babel C, Babel A
+Plan `experiments/ac-structured-pilot-v2.plan.yaml` and suite
+`experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml` fix Moto/Babel × A/C once, ordered
+Moto A, Moto C, Babel C, Babel A. C is the exact three-rule D-110 bundle without selection; all rows share the
+dated model, medium/standard/default, tool v2, phase-evidence-v5 and 3M-token/3,600-second ceiling.
 
 This is a runtime/readiness panel, not a held-out efficacy experiment. It cannot establish general memory
 benefit, statistical significance, negative-transfer rate, individual-rule efficacy or retrieval quality.
@@ -66,14 +63,17 @@ benefit, statistical significance, negative-transfer rate, individual-rule effic
 - D-124/D-125 are sealed-historical settlement/finalization predecessors with local/mock limits.
 - D-126 seals the clean tracked source identity, fresh official pricing and bounded no-call environment
   observations. It completed the approved observations but did not establish environment readiness.
+- D-127 implements successor source and records approval; no production path ran.
 
 Qualification excludes cross-store/global/cross-clone protection, whole-root rollback, noncooperative path
 swap, actual kill and torn-write/power-loss durability. The plan and suite keep all live authority false.
 
 ## What is not ready
 
-- Resolution of all five D-126 environment blockers and pricing-provenance replayability under separate approval
-- A repeated, separately authorized no-call preflight after those corrections
+- Static admission binding the committed D-127 snapshot and receipt
+- A passing static prerequisite check; `OPENAI_API_KEY` is currently missing
+- Safe Docker daemon/image readiness without any unauthorized incidental container start
+- Replayable official pricing evidence and the repeated no-call preflight
 - Exact runner execution hash and one-use execution-authorization candidate under a later approval
 - Separate approval repeating the exact candidate triple, execution hash and $55 cap
 - Any live A/C result
@@ -88,6 +88,7 @@ D-121 successor execution and applicability-classifier calls remain closed.
 
 D-126 provider/evaluator calls, agent runs, retrievals, injections and cost are zero. Its only public network
 activity was the official pricing GET; its Docker activity was read-only observation with zero workloads.
+D-127 production calls and downstream attempt/remediation/pricing/preflight/gate artifacts are zero.
 Runtime memory injection remains unauthorized.
 
 ## Historical/deferred D-121 lane
@@ -97,7 +98,9 @@ remains deferred; its run was never authorized and is not a fixed-bundle prerequ
 
 ## Next gate
 
-A separate approval may resolve all five recorded blockers, close pricing-provenance replayability and repeat
-the exact no-call preflight only. It must not create an execution hash, candidate or live run. If a successor
-preflight is ready, another separate exact-gate approval is required before hash/candidate preparation, followed by exact
-candidate-triple/execution-hash/$55-cap approval before any live execution.
+First commit the D-127 source and recorded approval receipt, then pass the static prerequisites. The approved
+external successor may proceed only through Docker remediation, replayable official pricing capture and the
+repeated no-call preflight; a down daemon with unverified container auto-restart state remains blocking rather
+than being started. Even a ready D-127 gate cannot create an execution hash, candidate or live run. Those need
+a later exact-gate approval, followed by exact candidate-triple/execution-hash/$55-cap approval before live
+execution.

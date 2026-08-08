@@ -10,8 +10,9 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Resolve the five D-126 blockers under separate approval and repeat the no-call preflight while keeping
-execution-hash, candidate and every live path closed.
+Commit the approved D-127 successor source and receipt, pass its static prerequisites, then perform only its
+bounded Docker/pricing/read-only no-call phases while keeping execution-hash, candidate and every live agent
+path closed.
 
 ## Completed foundation
 
@@ -20,7 +21,7 @@ execution-hash, candidate and every live path closed.
 - `fixed-d110-bundle-v1` binds exact D-105/D-110 inputs, renders A null and C three entries on every request,
   and exposes no retrieval, provenance, vector or raw-trace content.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
-- D-122 through D-125 are historical predecessors; D-126 is the current blocked no-call preflight gate.
+- D-122 through D-125 are historical predecessors; D-126 is the latest sealed blocked no-call preflight gate.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -33,19 +34,22 @@ Status: implemented in D-123, corrected/finalization-qualified by historical D-1
   exact row and validates resolved/SCRR/four-verdict consistency.
 - Missing, duplicate, retried, replaced, unsettled or schedule-mismatched rows remain inconclusive.
 
-D-125 qualifies repository-local at-most-once row consumption and mocked process-fault finalization recovery.
-It does not establish cross-store/global/cross-clone exclusion, noncooperative-swap protection, actual-kill
-recovery or torn-write/power-loss durability. Gate tests passed 23/23 and D-124+D-125 passed 37/37. Row
-attestation 147 and finalization union 136 overlap and are not added. No live action or cost occurred.
+D-125 qualifies repository-local consumption and mocked finalization only, not global/cross-clone,
+actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-126 observations complete; environment blocked; no candidate or execution hash exists.
+Status: D-126 sealed blocked; D-127 source/receipt present, static pending; no candidate
+or execution hash.
 
 D-126 sealed source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing,
 12 read-only Docker commands with zero workloads and an SDK no-call probe. Five exact Docker/credential/client
-blockers and a pricing-provenance replayability gap remain. A separate approval may resolve them and repeat
+blockers and a pricing-provenance replayability gap remain. The bounded D-127 scope may resolve them and repeat
 the no-call preflight only; the blocked D-126 artifacts are not rewritten.
+
+D-127 source and append-only receipt exist, but static admission is pending;
+`OPENAI_API_KEY` is absent. External scope ends at exact remediation, bounded pricing and read-only preflight;
+daemon launch fails closed while container auto-restart is unverified.
 
 ## Work item 7 — execution hash and candidate
 

@@ -1,0 +1,74 @@
+{
+  "schema_version": "d126-successor-blocker-remediation-no-call-approval-receipt-d127-v1",
+  "artifact_id": "d127approval_3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21",
+  "semantic_body_hash": "sha256:3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21",
+  "semantic_body": {
+    "milestone": "D-127",
+    "evidence_kind": "exact-d126-successor-blocker-remediation-no-call-user-approval-receipt",
+    "recorded_at": "2026-08-08T20:08:40.722363Z",
+    "status": "D127_D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_RECORDED",
+    "predecessor_binding": {
+      "path": "reports/live-pilot/artifacts/d126-ac-clean-source-pricing-no-call-preflight-gate.json",
+      "gate_id": "d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d",
+      "semantic_body_hash": "sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d",
+      "file_bytes": 3078,
+      "file_sha256": "sha256:e08e8f7aad8f425c7069290a98ac04a5c471bc8c948e1a08121c962b5ba18696",
+      "status": "D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED",
+      "artifact_mutated": false
+    },
+    "approval": {
+      "statement_code": "D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_KO_20260809_V1",
+      "approved_scope": [
+        "set-production-openai-client-official-base-url-and-trust-env-false",
+        "retain-replayable-bounded-official-pricing-evidence",
+        "modify-related-source-tests-docs-and-create-local-git-commit",
+        "use-exact-approved-docker-cli-identity",
+        "start-docker-desktop-linux-daemon",
+        "pull-or-load-only-the-two-exact-approved-images-if-missing",
+        "run-read-only-docker-sdk-credential-presence-and-endpoint-preflight",
+        "read-official-pricing-and-create-append-only-successor-evidence"
+      ],
+      "explicitly_not_authorized": [
+        "provider-evaluator-or-agent-execution",
+        "runtime-memory-injection-or-retrieval",
+        "container-create-start-run-or-exec",
+        "execution-hash-or-execution-candidate-creation",
+        "cost-reservation-or-spend",
+        "four-row-ac-execution"
+      ],
+      "approved_docker_cli": {
+        "version": "29.6.2",
+        "file_bytes": 43095472,
+        "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70"
+      },
+      "approved_exact_image_refs": [
+        "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+        "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+      ],
+      "approval_is_self_attested": true,
+      "approval_is_authenticated_or_signed": false
+    },
+    "authority": {
+      "production_client_remediation_authorized": true,
+      "pricing_evidence_remediation_and_lookup_authorized": true,
+      "local_source_test_doc_commit_authorized": true,
+      "docker_desktop_linux_daemon_start_authorized": true,
+      "exact_missing_image_pull_or_load_authorized": true,
+      "read_only_no_call_preflight_authorized": true,
+      "provider_evaluator_agent_execution_authorized": false,
+      "runtime_memory_or_retrieval_authorized": false,
+      "container_workload_authorized": false,
+      "execution_hash_or_candidate_authorized": false,
+      "cost_reservation_or_spend_authorized": false
+    },
+    "evidence_boundary": {
+      "receipt_does_not_prove_static_or_external_readiness": true,
+      "receipt_does_not_authorize_execution": true,
+      "receipt_creation_does_not_start_external_remediation_or_preflight": true,
+      "external_path_requires_a_separate_explicit_cli_mode_after_static_checks": true,
+      "daemon_start_approval_does_not_override_no_container_start_scope": true,
+      "daemon_down_with_unverified_restart_state_is_deliberately_blocking": true,
+      "receipt_output_is_append_only_new_or_exact-idempotent": true
+    }
+  }
+}

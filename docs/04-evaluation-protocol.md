@@ -99,6 +99,10 @@ source commit, fresh official pricing and bounded no-call observations, but five
 readiness false. Pricing facts/math were fresh and correct, but raw official bytes were not retained for
 independent provenance replay. No reservation, result, candidate or execution hash exists.
 
+D-127 client/pricing/Docker/no-call source and receipt exist. Static admission is pending;
+missing API key and unverified daemon auto-restart block admission. No production path ran, and the four rows
+do not change.
+
 ## 7. Run-completion gate
 
 The D-125-qualified completion source makes the four-row matrix analyzable only if every row:

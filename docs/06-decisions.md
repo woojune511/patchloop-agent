@@ -42,17 +42,18 @@ delivery with retrieval quality.
 
 ### 2026-08-09 — D-125 source and D-126 no-call preflight remain non-executable
 
-- R2 binds an up-front four-row reserve, usage-derived settlement and exact complete-matrix gate.
-- D-124 is preserved as the settlement-reconciliation predecessor.
-- D-125 qualifies repository-local at-most-once row consumption and mocked fault-boundary finalization
-  recovery; it does not claim cross-store/global/cross-clone, actual-kill or power-loss guarantees.
-- D-126 consumed that narrow approval and sealed source commit
-  `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, official pricing and no-call observations only.
-- Twelve Docker commands included six read-only daemon/image calls and no workload; the SDK probe made no
-  network call. Five blockers keep environment readiness false; retained pricing evidence cannot independently
-  replay the official body digest/size/ETag because raw response bytes were not preserved.
-- The next approval may only resolve those issues and repeat the no-call preflight. Execution-hash/candidate
-  creation and later $55 live approval remain separate gates.
+- R2 binds full-schedule reserve/settlement/completion; D-124/D-125 remain historical local/mock predecessors.
+- D-126 sealed clean source, official pricing and bounded no-call observation only. Five blockers and missing
+  raw pricing bytes keep readiness false.
+- D-127 approval is limited to resolving those issues and repeating the no-call preflight. Execution-hash/
+  candidate creation and later $55 live approval remain separate gates.
+
+### 2026-08-09 — D-127 remains pre-external
+
+- Fix official client routing, retain bounded replayable pricing and limit Docker to exact remediation; never
+  authorize container create/start/run/exec.
+- Append-only approval receipt exists; static and downstream evidence are pending. Missing API
+  key and unverified auto-restart block admission; D-127 production calls remain zero.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 

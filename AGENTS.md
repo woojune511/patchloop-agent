@@ -23,6 +23,9 @@ pipeline은 이를 검증하고 개선하기 위한 지원 계층이다.
   execution-hash readiness는 false다. Raw official response bytes는 보존되지 않았다.
 - Docker 관찰은 12개 command, 6개 read-only daemon call, workload/mutating call 0이다. SDK probe는
   local no-call이며 network call 0이다. Provider/evaluator/agent/retrieval/injection과 cost도 모두 0이다.
+- D-127 append-only approval receipt `d127approval_3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`이
+  생성됐지만 static source admission은 없다. API key가 없고 auto-restart가 불명확한 daemon
+  기동은 fail closed한다. D-127 production Docker/network call과 downstream artifact는 0이다.
 - D-124와 D-125는 sealed-historical predecessor다. D-125가 qualified한 repository-local consumption과
   mocked finalization recovery의 cross-store/global, actual-kill, power-loss 한계는 그대로다.
 - 실제 reservation, result, execution hash와 candidate는 없다. Runtime memory injection, paid execution,

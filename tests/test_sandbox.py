@@ -10,7 +10,8 @@ from pathlib import Path
 import pytest
 
 from patchloop.contracts import RegisteredCheck
-from patchloop.sandbox import DockerSandbox, LocalSandbox
+from patchloop.sandbox import DockerImageIdentityProjection, DockerSandbox, LocalSandbox
+from patchloop.sandbox import runner as sandbox_runner
 from patchloop.sandbox.runner import PROBE_IMAGE
 
 _IMAGE_ID = f"sha256:{'a' * 64}"
@@ -206,6 +207,152 @@ def test_docker_identity_probe_handles_timeout(monkeypatch) -> None:
     monkeypatch.setattr(subprocess, "run", timeout)
 
     assert DockerSandbox().image_identity() is None
+
+
+def test_digest_pinned_image_identity_uses_repo_digest_and_preserves_config_id(
+    monkeypatch,
+) -> None:
+    docker = "C:\\tools\\docker.exe"
+    requested_digest = f"sha256:{'c' * 64}"
+    image = f"docker.io/example/project@{requested_digest}"
+    printed_repo_digest = f"example/project@{requested_digest}"
+    calls: list[tuple[list[str], bytes, int, int]] = []
+    monkeypatch.setattr(DockerSandbox, "cli_path", staticmethod(lambda: docker))
+
+    def inspect(
+        command: list[str],
+        *,
+        input_bytes: bytes,
+        timeout_seconds: int,
+        output_limit_bytes: int,
+    ) -> tuple[int, bool, bytes, bytes, int]:
+        calls.append(
+            (list(command), input_bytes, timeout_seconds, output_limit_bytes)
+        )
+        stdout = (
+            json.dumps(
+                {
+                    "Id": _IMAGE_ID,
+                    "RepoDigests": [printed_repo_digest],
+                },
+                separators=(",", ":"),
+            )
+            + "\n"
+        ).encode()
+        return 0, False, stdout, b"", len(stdout)
+
+    monkeypatch.setattr(sandbox_runner, "_run_with_bounded_pipes", inspect)
+    sandbox = DockerSandbox(image)
+
+    projection = sandbox.image_identity_projection()
+
+    assert isinstance(projection, DockerImageIdentityProjection)
+    assert projection.requested_repo_digest == image
+    assert projection.requested_digest == requested_digest
+    assert projection.config_id == _IMAGE_ID
+    assert projection.repo_digests == (printed_repo_digest,)
+    assert projection.matched_repo_digest == printed_repo_digest
+    assert projection.verified_identity == requested_digest
+    assert sandbox.image_identity() == requested_digest
+    assert calls == [
+        (
+            [
+                docker,
+                "image",
+                "inspect",
+                image,
+                "--format",
+                sandbox_runner._DOCKER_IMAGE_INSPECT_FORMAT,
+            ],
+            b"",
+            10,
+            sandbox_runner._DOCKER_IMAGE_INSPECT_OUTPUT_LIMIT_BYTES,
+        ),
+        (
+            [
+                docker,
+                "image",
+                "inspect",
+                image,
+                "--format",
+                sandbox_runner._DOCKER_IMAGE_INSPECT_FORMAT,
+            ],
+            b"",
+            10,
+            sandbox_runner._DOCKER_IMAGE_INSPECT_OUTPUT_LIMIT_BYTES,
+        ),
+    ]
+
+
+def test_digest_pinned_image_identity_fails_when_requested_repo_digest_is_absent(
+    monkeypatch,
+) -> None:
+    requested_digest = f"sha256:{'c' * 64}"
+    image = f"docker.io/example/project@{requested_digest}"
+    other_repo_digest = f"example/project@{_OTHER_IMAGE_ID}"
+    monkeypatch.setattr(
+        DockerSandbox,
+        "cli_path",
+        staticmethod(lambda: "C:\\tools\\docker.exe"),
+    )
+
+    def inspect(*_args, **_kwargs):
+        stdout = json.dumps(
+            {"Id": _IMAGE_ID, "RepoDigests": [other_repo_digest]},
+            separators=(",", ":"),
+        ).encode()
+        return 0, False, stdout, b"", len(stdout)
+
+    monkeypatch.setattr(sandbox_runner, "_run_with_bounded_pipes", inspect)
+    sandbox = DockerSandbox(image)
+
+    projection = sandbox.image_identity_projection()
+
+    assert projection is not None
+    assert projection.config_id == _IMAGE_ID
+    assert projection.matched_repo_digest is None
+    assert projection.verified_identity is None
+    assert sandbox.image_identity() is None
+
+
+@pytest.mark.parametrize(
+    ("result", "image"),
+    [
+        ((0, False, b"{}", b"", 2), f"example.invalid/task@sha256:{'c' * 64}"),
+        (
+            (
+                0,
+                False,
+                b"{}",
+                b"",
+                sandbox_runner._DOCKER_IMAGE_INSPECT_OUTPUT_LIMIT_BYTES + 1,
+            ),
+            f"example.invalid/task@sha256:{'c' * 64}",
+        ),
+        ((0, False, b"{}", b"", 2), "example.invalid/task@not-a-digest"),
+    ],
+)
+def test_digest_pinned_image_projection_rejects_malformed_or_unbounded_output(
+    monkeypatch,
+    result,
+    image,
+) -> None:
+    calls = 0
+    monkeypatch.setattr(
+        DockerSandbox,
+        "cli_path",
+        staticmethod(lambda: "C:\\tools\\docker.exe"),
+    )
+
+    def inspect(*_args, **_kwargs):
+        nonlocal calls
+        calls += 1
+        return result
+
+    monkeypatch.setattr(sandbox_runner, "_run_with_bounded_pipes", inspect)
+
+    assert DockerSandbox(image).image_identity_projection() is None
+    assert calls == (0 if image.endswith("@not-a-digest") else 1)
 
 
 def test_probe_image_identity_ignores_task_evaluator_image(

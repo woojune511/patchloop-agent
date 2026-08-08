@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -38,7 +39,13 @@ _PROXY_ENVIRONMENT_KEYS = (
     "no_proxy",
 )
 _DOCKER_IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
+_DOCKER_REPO_DIGEST = re.compile(r"[^\x00-\x20\x7f]+@sha256:[0-9a-f]{64}")
 _DOCKER_CONTAINER_ID = re.compile(r"[0-9a-f]{12,64}")
+_DOCKER_IMAGE_INSPECT_FORMAT = (
+    '{"Id":{{json .Id}},"RepoDigests":{{json .RepoDigests}}}'
+)
+_DOCKER_IMAGE_INSPECT_OUTPUT_LIMIT_BYTES = 64 * 1024
+_DOCKER_IMAGE_INSPECT_MAX_REPO_DIGESTS = 128
 _PROBE_RUNTIME_GUARD = """\
 import sys as _patchloop_sys
 
@@ -150,6 +157,29 @@ class SandboxResult:
     @property
     def passed(self) -> bool:
         return not self.timed_out and self.exit_code == 0
+
+
+@dataclass(frozen=True)
+class DockerImageIdentityProjection:
+    """Bounded local identity for one digest-pinned repository reference.
+
+    Docker's ``.Id`` is the image configuration digest.  A reference such as
+    ``repository@sha256:...`` instead names a repository/manifest digest.  They
+    are intentionally kept separate so callers cannot accept a valid image only
+    when those unrelated digest namespaces happen to have the same text.
+    """
+
+    requested_repo_digest: str
+    requested_digest: str
+    config_id: str
+    repo_digests: tuple[str, ...]
+    matched_repo_digest: str | None
+
+    @property
+    def verified_identity(self) -> str | None:
+        """Return the manifest-bound digest only after RepoDigests membership."""
+
+        return self.requested_digest if self.matched_repo_digest is not None else None
 
 
 class Sandbox(Protocol):
@@ -276,7 +306,97 @@ def _run_with_bounded_pipes(
     )
 
 
+def _requested_repo_digest(image: str) -> tuple[str, str] | None:
+    if "@" not in image:
+        return None
+    repository, digest = image.rsplit("@", 1)
+    if not repository or _DOCKER_IMAGE_ID.fullmatch(digest) is None:
+        return None
+    return image, digest
+
+
+def _repo_digest_aliases(requested: str) -> frozenset[str]:
+    """Return only Docker Hub's two equivalent printed RepoDigest spellings."""
+
+    aliases = {requested}
+    if requested.startswith("docker.io/"):
+        aliases.add(requested.removeprefix("docker.io/"))
+    return frozenset(aliases)
+
+
+def _docker_repo_digest_projection(
+    docker: str,
+    image: str,
+) -> DockerImageIdentityProjection | None:
+    requested = _requested_repo_digest(image)
+    if requested is None:
+        return None
+    requested_repo_digest, requested_digest = requested
+    command = [
+        docker,
+        "image",
+        "inspect",
+        image,
+        "--format",
+        _DOCKER_IMAGE_INSPECT_FORMAT,
+    ]
+    try:
+        exit_code, timed_out, stdout, stderr, original_bytes = _run_with_bounded_pipes(
+            command,
+            input_bytes=b"",
+            timeout_seconds=10,
+            output_limit_bytes=_DOCKER_IMAGE_INSPECT_OUTPUT_LIMIT_BYTES,
+        )
+    except (OSError, RuntimeError, subprocess.SubprocessError):
+        return None
+    if (
+        timed_out
+        or exit_code != 0
+        or stderr
+        or original_bytes > _DOCKER_IMAGE_INSPECT_OUTPUT_LIMIT_BYTES
+    ):
+        return None
+    try:
+        payload = json.loads(stdout.decode("utf-8").rstrip("\r\n"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or tuple(payload) != ("Id", "RepoDigests"):
+        return None
+    config_id = payload["Id"]
+    repo_digests = payload["RepoDigests"]
+    if not isinstance(config_id, str) or _DOCKER_IMAGE_ID.fullmatch(config_id) is None:
+        return None
+    if (
+        not isinstance(repo_digests, list)
+        or len(repo_digests) > _DOCKER_IMAGE_INSPECT_MAX_REPO_DIGESTS
+        or not all(
+            isinstance(item, str)
+            and len(item.encode("utf-8")) <= 512
+            and _DOCKER_REPO_DIGEST.fullmatch(item) is not None
+            for item in repo_digests
+        )
+    ):
+        return None
+    if len(repo_digests) != len(set(repo_digests)):
+        return None
+    normalized = tuple(sorted(repo_digests))
+    aliases = _repo_digest_aliases(requested_repo_digest)
+    matches = [item for item in normalized if item in aliases]
+    if len(matches) > 1:
+        return None
+    return DockerImageIdentityProjection(
+        requested_repo_digest=requested_repo_digest,
+        requested_digest=requested_digest,
+        config_id=config_id,
+        repo_digests=normalized,
+        matched_repo_digest=matches[0] if matches else None,
+    )
+
+
 def _docker_image_identity(docker: str, image: str) -> str | None:
+    if "@" in image:
+        projection = _docker_repo_digest_projection(docker, image)
+        return projection.verified_identity if projection is not None else None
     try:
         result = subprocess.run(
             [docker, "image", "inspect", image, "--format", "{{.Id}}"],
@@ -569,6 +689,14 @@ class DockerSandbox:
         if not docker:
             return None
         return _docker_image_identity(docker, self.image)
+
+    def image_identity_projection(self) -> DockerImageIdentityProjection | None:
+        """Return separate manifest/config identities for a digest-pinned image."""
+
+        docker = self.cli_path()
+        if not docker:
+            return None
+        return _docker_repo_digest_projection(docker, self.image)
 
     def probe_image_identity(self) -> str | None:
         """Return the strict local content identity of the dedicated probe image."""

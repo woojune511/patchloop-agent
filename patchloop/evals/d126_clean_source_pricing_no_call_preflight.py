@@ -58,6 +58,37 @@ GATE_PATH = Path(
     "reports/live-pilot/artifacts/d126-ac-clean-source-pricing-no-call-preflight-gate.json"
 )
 
+SEALED_HISTORICAL_RECEIPT_ID = (
+    "d126approval_596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0"
+)
+SEALED_HISTORICAL_RECEIPT_BODY_SHA256 = (
+    "sha256:596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0"
+)
+SEALED_HISTORICAL_RECEIPT_FILE_SHA256 = (
+    "sha256:9e40c0da866d44af000127a09faab66aebd7afa7a1c981eb5b83a7976e179abe"
+)
+SEALED_HISTORICAL_RECEIPT_FILE_BYTES = 2_672
+SEALED_HISTORICAL_PREFLIGHT_ID = (
+    "d126preflight_c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04"
+)
+SEALED_HISTORICAL_PREFLIGHT_BODY_SHA256 = (
+    "sha256:c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04"
+)
+SEALED_HISTORICAL_PREFLIGHT_FILE_SHA256 = (
+    "sha256:0238f5fa1c62f0160d340cc14b9613b20fc805c54ddb059d02e4464625227a1a"
+)
+SEALED_HISTORICAL_PREFLIGHT_FILE_BYTES = 20_814
+SEALED_HISTORICAL_GATE_ID = (
+    "d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d"
+)
+SEALED_HISTORICAL_BODY_SHA256 = (
+    "sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d"
+)
+SEALED_HISTORICAL_FILE_SHA256 = (
+    "sha256:e08e8f7aad8f425c7069290a98ac04a5c471bc8c948e1a08121c962b5ba18696"
+)
+SEALED_HISTORICAL_FILE_BYTES = 3_078
+
 OFFICIAL_MODEL_PAGE_URL = "https://developers.openai.com/api/docs/models/gpt-5.4-mini.md"
 OFFICIAL_PRICING_PAGE_URL = "https://developers.openai.com/api/docs/pricing"
 OFFICIAL_API_BASE_URL = "https://api.openai.com/v1"
@@ -1675,6 +1706,68 @@ def _validate_gate(root: Path) -> dict[str, Any]:
     return payload
 
 
+def _validate_sealed_historical(root: Path) -> dict[str, Any]:
+    expected = (
+        (
+            RECEIPT_PATH,
+            RECEIPT_SCHEMA,
+            "d126approval_",
+            SEALED_HISTORICAL_RECEIPT_ID,
+            SEALED_HISTORICAL_RECEIPT_BODY_SHA256,
+            SEALED_HISTORICAL_RECEIPT_FILE_BYTES,
+            SEALED_HISTORICAL_RECEIPT_FILE_SHA256,
+        ),
+        (
+            PREFLIGHT_PATH,
+            PREFLIGHT_SCHEMA,
+            "d126preflight_",
+            SEALED_HISTORICAL_PREFLIGHT_ID,
+            SEALED_HISTORICAL_PREFLIGHT_BODY_SHA256,
+            SEALED_HISTORICAL_PREFLIGHT_FILE_BYTES,
+            SEALED_HISTORICAL_PREFLIGHT_FILE_SHA256,
+        ),
+        (
+            GATE_PATH,
+            GATE_SCHEMA,
+            "d126_",
+            SEALED_HISTORICAL_GATE_ID,
+            SEALED_HISTORICAL_BODY_SHA256,
+            SEALED_HISTORICAL_FILE_BYTES,
+            SEALED_HISTORICAL_FILE_SHA256,
+        ),
+    )
+    payloads: list[dict[str, Any]] = []
+    for relative, schema, prefix, artifact_id, body_sha, file_bytes, file_sha in expected:
+        raw = _stable_read(root, relative)
+        _require(len(raw) == file_bytes, "D-126 sealed historical file bytes differ")
+        _require(sha256_bytes(raw) == file_sha, "D-126 sealed historical file SHA differs")
+        payload = _load_envelope(root, relative, schema=schema, prefix=prefix)
+        _require(payload["artifact_id"] == artifact_id, "D-126 sealed historical ID differs")
+        _require(
+            payload["semantic_body_hash"] == body_sha,
+            "D-126 sealed historical body SHA differs",
+        )
+        payloads.append(payload)
+    gate = payloads[-1]
+    body = gate["semantic_body"]
+    _require(body.get("status") == BLOCKED_STATUS, "D-126 sealed historical status differs")
+    return {
+        "status": body["status"],
+        "gate_id": gate["artifact_id"],
+        "semantic_body_hash": gate["semantic_body_hash"],
+        "file_bytes": SEALED_HISTORICAL_FILE_BYTES,
+        "file_sha256": SEALED_HISTORICAL_FILE_SHA256,
+        "source_commit": payloads[1]["semantic_body"]["source_commit_observation"]["commit"],
+        "environment_ready_for_execution_hash": False,
+        "observed_blockers": body["qualification"]["observed_blockers"],
+        "execution_hash_created": False,
+        "execution_candidate_created": False,
+        "provider_calls_made": 0,
+        "docker_workload_calls_made": 0,
+        "post_commit": None,
+    }
+
+
 def run_d126_preflight(
     *,
     repository: str | Path | None = None,
@@ -1773,9 +1866,11 @@ def _post_commit_state(root: Path, source: dict[str, Any]) -> dict[str, Any]:
 def validate_d126_preflight_gate(
     *,
     repository: str | Path | None = None,
-    mode: Literal["current-source", "post-evidence-commit"] = "current-source",
+    mode: Literal["current-source", "post-evidence-commit", "sealed-historical"] = "current-source",
 ) -> dict[str, Any]:
     root = _repo_root(repository)
+    if mode == "sealed-historical":
+        return _validate_sealed_historical(root)
     gate = _validate_gate(root)
     preflight = _validate_preflight(root)
     body = gate["semantic_body"]
@@ -1833,6 +1928,10 @@ __all__ = [
     "PREFLIGHT_PATH",
     "READY_STATUS",
     "RECEIPT_PATH",
+    "SEALED_HISTORICAL_BODY_SHA256",
+    "SEALED_HISTORICAL_FILE_BYTES",
+    "SEALED_HISTORICAL_FILE_SHA256",
+    "SEALED_HISTORICAL_GATE_ID",
     "create_d126_approval_receipt",
     "run_d126_preflight",
     "validate_d126_preflight_gate",

@@ -46,6 +46,7 @@ estimate and not a percentage of engineering completion.
 - D-126 sealed a clean tracked source commit, fresh pricing and bounded no-call observations, but five
   environment blockers remain. Candidate/hash, paid approval and every live result are absent; the proposed
   `$55` hard cap is neither approved nor used.
+- D-127 source/approval receipt do not establish that D-126 blockers are resolved.
 
 ## Isolation and external controls
 
@@ -65,6 +66,8 @@ estimate and not a percentage of engineering completion.
   readiness, workload execution, noncooperative path-swap resistance or bounded streaming capture.
 - The SDK no-call probe proves local construction only. It found no API key and did not establish explicit
   production `base_url` or `trust_env=False` behavior.
+- D-127 lacks static/downstream observation and API key. Daemon launch stays disabled while
+  container auto-restart is unverified because it could violate the closed container-start boundary.
 - Archive prose can contain stale future tense. Current authority comes from source/artifacts and
   `docs/current-status.md`.
 

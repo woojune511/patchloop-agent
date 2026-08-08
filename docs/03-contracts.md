@@ -154,5 +154,9 @@ D-126 consumes only clean-source/pricing/no-call scope, binding commit
 and an SDK construction probe with zero network calls.
 
 D-126 has five environment blockers plus a provenance gap: no raw official bytes independently rebind its
-recorded digest/size/ETag. It creates no hash/candidate/live authority or cost. The next approval is limited to
-closing those issues and repeating the no-call preflight.
+recorded digest/size/ETag. It creates no hash/candidate/live authority or cost.
+
+D-127 requires committed receipt/clean identity, the official URL with `trust_env=False`, bounded
+replayable pricing, exact-image Docker scope and attempt-first append-only phases. Missing API key or unverified
+daemon auto-restart state fails closed. Only its append-only receipt exists; static/downstream artifacts are
+pending, and container work, hash/candidate/live authority remain forbidden.
