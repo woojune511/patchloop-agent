@@ -3,17 +3,30 @@
 This document links to canonical machine artifacts. It does not duplicate the full historical narrative,
 which is preserved at `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-127 approval receipt — no downstream evidence
+## D-127 terminal blocked Docker remediation
 
 - Receipt `reports/live-pilot/artifacts/d127-d126-successor-blocker-remediation-no-call-preflight-approval-receipt.json`:
   ID `d127approval_3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
   body `sha256:3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
   file `sha256:ddea365e3a51c8283bde58bd349222288a45e8ea8bdb3d211ead0bb001df81f4`; 3,914 bytes.
 - Status: `D127_D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_RECORDED`.
+- Attempt `reports/live-pilot/artifacts/d127-docker-remediation-attempt-intent.json`:
+  ID `d127dockerremediationattempt_2ebabbf2b9d1ace5c3dc552e8f7c2e2ad8c4f3699c5978e718e973b8112369aa`;
+  body `sha256:2ebabbf2b9d1ace5c3dc552e8f7c2e2ad8c4f3699c5978e718e973b8112369aa`;
+  file `sha256:2a1d5b01f5cf9a18e1e51db473c35e2003b9c875f2f8f7449d25d55df33328c2`; 4,246 bytes.
+- Terminal `reports/live-pilot/artifacts/d127-exact-docker-remediation-observation.json`:
+  ID `d127remediation_139037ff65b70cc08e24a69d2d6fd47fe04b7cc27bec8e97ebe9a7009179857f`;
+  body `sha256:139037ff65b70cc08e24a69d2d6fd47fe04b7cc27bec8e97ebe9a7009179857f`;
+  file `sha256:dc6639db851fb414325473eebf7e9b8ddd9fe15f54a3b0946b0bd82f99a530d3`; 10,139 bytes.
+- Terminal status: `D127_EXACT_DOCKER_REMEDIATION_OBSERVED_BLOCKED`; source
+  `cec335f345a56d544614fe0c9ec3e75cba78bf17`.
 
-The receipt is append-only. Static stopped on the missing key and created no attempt, remediation, pricing,
-preflight or gate artifact. Unverified daemon auto-restart also blocks admission. Production calls, cost, run,
-hash and candidate are zero or absent; D-126 remains the latest sealed checkpoint.
+Static passed after an exact-key ephemeral loader imported only `OPENAI_API_KEY` from the local `.env`; the
+value was not exposed or recorded. The terminal records six bounded read-only Docker CLI calls and blocker
+`preexisting-container-auto-restart-state-unverified`. Desktop start, pulls/image-store mutation,
+container/workload, pricing GET, preflight, gate, provider/evaluator/agent, memory, hash/candidate and cost are
+zero or absent. The terminal is exact-idempotent for this receipt, so a changed environment requires a
+separately approved successor. D-126 remains the latest sealed checkpoint.
 
 ## D-126 clean-source/pricing/no-call preflight
 
@@ -41,7 +54,7 @@ zero network calls. The five blockers are
 `production-openai-client-trust-env-not-disabled`.
 
 D-126 provider/evaluator/agent/retrieval/injection and cost are zero; hash/candidate flags are false. D-127
-records the limited successor scope without modifying these sealed artifacts.
+records the limited successor receipt and blocked remediation without modifying these sealed artifacts.
 
 ## Historical A/C source predecessors
 

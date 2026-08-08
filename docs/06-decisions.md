@@ -48,12 +48,16 @@ delivery with retrieval quality.
 - D-127 approval is limited to resolving those issues and repeating the no-call preflight. Execution-hash/
   candidate creation and later $55 live approval remain separate gates.
 
-### 2026-08-09 — D-127 remains pre-external
+### 2026-08-09 — D-127 remediation is terminal blocked
 
 - Fix official client routing, retain bounded replayable pricing and limit Docker to exact remediation; never
   authorize container create/start/run/exec.
-- Append-only approval receipt exists. Static stopped on the missing key before external activity;
-  unverified auto-restart also blocks admission, and D-127 production calls remain zero.
+- Static passed through an exact-key ephemeral `.env` loader without exposing the value. Six bounded read-only
+  Docker CLI calls then established blocker `preexisting-container-auto-restart-state-unverified`; Desktop
+  start, image mutation, container/workload and every later phase remained zero.
+- The append-only blocked terminal is idempotent for this receipt. Manual safe Desktop start or expanded
+  incidental-start authority does not reopen it; any renewed remediation/pricing/preflight path requires a
+  separately approved successor.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 
@@ -79,6 +83,7 @@ delivery with retrieval quality.
 | D-124 | Historical settlement-reconciliation correction; validate sealed-historical. |
 | D-125 | Historical local/mock runtime-finalization source; candidate and live authority remained blocked. |
 | D-126 | Clean source/pricing/no-call observations sealed; five blockers and all live authority remain closed. |
+| D-127 | Static passed, but Docker remediation terminally blocked before Desktop start or later phases. |
 
 ## Superseded sequencing
 

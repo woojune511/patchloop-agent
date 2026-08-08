@@ -62,14 +62,17 @@ The tests use mocked Git/pricing/Docker/SDK observations. `--validate-post-commi
 evidence-commit topology; it does not repeat the public pricing GET or Docker commands. Do not invoke
 `--run-preflight` to refresh observations without separate exact authority.
 
-## Validate D-127 pre-external source
+## Validate D-127 source and blocked-phase contracts
 
 ```powershell
 uv run pytest -q tests/test_d127_docker_remediation.py tests/test_d127_pricing_capture.py tests/test_d127_d126_successor_no_call_preflight.py
 ```
 
-This mocked path creates no downstream evidence or external call. `--check-static` remained local and stopped
-on the absent API key. Do not use `--run-external-preflight` before admission.
+This mocked path creates no downstream evidence or external call. In the recorded production path, an
+exact-key ephemeral `.env` loader passed static without exposing the value, then Docker remediation recorded
+six bounded read-only CLI calls and terminally blocked before Desktop start or mutation. Do not use
+`--run-external-preflight`: the existing receipt is terminal/idempotent blocked, and renewed work requires a
+separate exact successor approval.
 
 ## Validate current memory contracts
 
@@ -119,8 +122,9 @@ historical snapshot hashes, the single D-121 prose owner and the closed four-run
 There is no supported live A/C command. Although the exact suite is an `ExperimentSuite` source, a future live
 command must appear only after:
 
-1. commit the exact D-127 receipt/source identity and pass static admission;
-2. complete only the approved blocker-remediation, replayable-pricing and repeated no-call preflight scope;
+1. preserve the current D-127 terminal blocked remediation evidence;
+2. manually establish safe Docker Desktop state or explicitly expand incidental-start authority, then obtain
+   a separate exact successor approval and complete its bounded remediation/pricing/no-call scope;
 3. after a ready successor, obtain separate exact-gate approval for execution-hash and candidate creation;
 4. obtain separate approval of the exact candidate triple, execution hash and $55 cap.
 

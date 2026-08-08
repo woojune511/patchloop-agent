@@ -10,9 +10,10 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Commit the approved D-127 successor source and receipt, pass its static prerequisites, then perform only its
-bounded Docker/pricing/read-only no-call phases while keeping execution-hash, candidate and every live agent
-path closed.
+Preserve the terminal blocked D-127 Docker-remediation evidence. Before any later successor, the user must
+either start Docker Desktop while safely accounting for restart-policy containers or explicitly expand the
+incidental-start authority, then issue a separate exact approval. Keep pricing/preflight, execution-hash,
+candidate and every live agent path closed meanwhile.
 
 ## Completed foundation
 
@@ -39,17 +40,20 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-126 sealed blocked; D-127 source/receipt present, static key-blocked; no candidate
-or execution hash.
+Status: D-126 sealed blocked; D-127 source/receipt and terminal blocked Docker observation present; no pricing,
+preflight, gate, candidate or execution hash.
 
 D-126 sealed source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing,
 12 read-only Docker commands with zero workloads and an SDK no-call probe. Five exact Docker/credential/client
 blockers and a pricing-provenance replayability gap remain. The bounded D-127 scope may resolve them and repeat
 the no-call preflight only; the blocked D-126 artifacts are not rewritten.
 
-D-127 source and append-only receipt exist, but static stopped before external activity because
-`OPENAI_API_KEY` is absent. External scope ends at exact remediation, bounded pricing and read-only preflight;
-daemon launch fails closed while container auto-restart is unverified.
+D-127 static passed with an exact-key ephemeral `.env` loader and no key-value exposure. Its Docker phase made
+six bounded read-only CLI calls, then recorded terminal blocker
+`preexisting-container-auto-restart-state-unverified`; Desktop start, image mutation and container/workload
+counts remained zero. Pricing capture, repeated preflight and gate were not opened. Because the receipt now has
+an idempotent blocked terminal, it cannot be retried after environment changes without a separate successor
+approval.
 
 ## Work item 7 — execution hash and candidate
 

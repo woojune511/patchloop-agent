@@ -7,73 +7,55 @@ The latest sealed checkpoint is D-126 clean-source/pricing/no-call preflight evi
 - Gate ID `d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`;
   body `sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`;
   file `sha256:e08e8f7aad8f425c7069290a98ac04a5c471bc8c948e1a08121c962b5ba18696`; 3,078 bytes.
-- Bound receipt ID `d126approval_596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0`
-  and preflight ID `d126preflight_c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04`;
-  their exact body/file/byte triples are indexed in `docs/09-evidence.md`.
 - Status: `D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED`.
 
-D-126 binds source `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, dated gpt-5.4-mini prices
-($0.75/$0.075/$4.50 per 1M input/cached/output tokens) and unapproved $13.6125 row/$54.45 schedule/$55 cap
-math. Raw official bytes were not retained. Its 12 Docker reads included six daemon/image inspections and zero
-workloads; the locked-SDK construction probe made zero network calls. Five blockers keep readiness false:
+D-126 bound source `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh prices, 12 read-only Docker
+commands and a zero-network SDK probe, but retained five environment blockers and no raw pricing bytes.
+Receipt/preflight triples and blocker details are in `docs/09-evidence.md`.
 
-- `docker-cli-observed-identity-awaits-separate-exact-approval`
-- `docker-local-daemon-and-exact-images-readiness-failed`
-- `openai-api-key-presence-missing`
-- `production-openai-client-official-base-url-not-explicit`
-- `production-openai-client-trust-env-not-disabled`
+## D-127 Docker remediation observation — terminal blocked
 
-## D-127 approval receipt — no downstream evidence
+- Receipt `d127approval_3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
+  status `D127_D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_RECORDED`.
 
-- ID `d127approval_3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
-  body `sha256:3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
-  file `sha256:ddea365e3a51c8283bde58bd349222288a45e8ea8bdb3d211ead0bb001df81f4`; 3,914 bytes.
-- Status: `D127_D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_RECORDED`.
+Static admission passed for source `cec335f345a56d544614fe0c9ec3e75cba78bf17` after an exact-key ephemeral
+loader placed only `OPENAI_API_KEY` from local `.env` into the child environment without printing or recording
+the value. Attempt `d127dockerremediationattempt_2ebabbf2b9d1ace5c3dc552e8f7c2e2ad8c4f3699c5978e718e973b8112369aa`
+and terminal `d127remediation_139037ff65b70cc08e24a69d2d6fd47fe04b7cc27bec8e97ebe9a7009179857f`
+are append-only. Exact body/file/byte triples are indexed in `docs/09-evidence.md`.
 
-Source now fixes the official OpenAI base URL and `trust_env=False`, and implements bounded replayable pricing,
-exact-identity Docker/read-only preflight and attempt-first append-only orchestration. The receipt is append-only,
-but static and downstream artifacts are absent, so D-126 remains latest sealed. Static stopped on missing
-`OPENAI_API_KEY` before external activity; daemon launch fails closed while container auto-restart is unverified.
-D-127 production Docker/network/provider/
-evaluator/agent activity, injection/retrieval, cost, run, hash and candidate are zero or absent.
-Dedicated D-127 tests pass 55/55; the broader node-disjoint selection passed 231 with 6 skipped (not additive).
+- Status `D127_EXACT_DOCKER_REMEDIATION_OBSERVED_BLOCKED`; blocker
+  `preexisting-container-auto-restart-state-unverified`.
+
+It records six bounded read-only Docker CLI calls; Desktop start, image mutation, container/workload and every
+later phase are zero. The exact-idempotent terminal returns the same blocker instead of opening pricing.
+D-126 therefore remains the latest sealed gate.
 
 ## Current priority: four-run A/C readiness
 
-The project now defers the full four-condition campaign and starts with a smaller readiness question:
+The full four-condition campaign is deferred. The immediate question is:
 
 > Can the exact approved structured bundle be injected through the complete agent workflow without
 > leakage or runtime ambiguity, while keeping every non-memory input identical to no-memory?
 
-Plan `experiments/ac-structured-pilot-v2.plan.yaml` and suite
-`experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml` fix Moto/Babel × A/C once, ordered
-Moto A, Moto C, Babel C, Babel A. C is the exact three-rule D-110 bundle without selection; all rows share the
-dated model, medium/standard/default, tool v2, phase-evidence-v5 and 3M-token/3,600-second ceiling.
-
-This is a runtime/readiness panel, not a held-out efficacy experiment. It cannot establish general memory
-benefit, statistical significance, negative-transfer rate, individual-rule efficacy or retrieval quality.
+The checked-in plan/suite fix Moto A, Moto C, Babel C, Babel A once. C uses the exact D-110 three-rule bundle;
+model, prompt, tools, policy and ceilings otherwise match. This is readiness, not held-out efficacy.
 
 ## What is implemented and qualified offline
 
-- D-098 seals the baseline; D-105/D-110 seal three rules/index; D-108 measured a +702-token bundle delta.
-- `fixed-d110-bundle-v1` renders A null and C the exact 3,528-byte bundle without retrieval. Exact
-  manifest/request/CAS/context/consumer provenance is replay-validated.
-- R2 requires an up-front four-row reserve, durable usage settlement and a bijective qualified/evaluated
-  four-row completion matrix; missing or unsettled rows are inconclusive.
-- D-124/D-125 are sealed-historical settlement/finalization predecessors with local/mock limits.
-- D-126 seals the clean tracked source identity, fresh official pricing and bounded no-call environment
-  observations. It completed the approved observations but did not establish environment readiness.
-- D-127 implements successor source and records approval; no production path ran.
+- D-098 baseline, D-105/D-110 rules/index and fixed A-null/C-3,528-byte delivery are sealed/qualified offline.
+- R2 requires full-schedule reserve, durable settlement and one complete qualified/evaluated four-row matrix.
+- D-124/D-125 retain local/mock limits; D-126 observed but did not establish environment readiness.
+- D-127 terminally blocked during Docker remediation; pricing and no-call phases did not run.
 
 Qualification excludes cross-store/global/cross-clone protection, whole-root rollback, noncooperative path
 swap, actual kill and torn-write/power-loss durability. The plan and suite keep all live authority false.
 
 ## What is not ready
 
-- Static admission binding the committed D-127 snapshot and receipt
-- A passing static prerequisite check; `OPENAI_API_KEY` is currently missing
 - Safe Docker daemon/image readiness without any unauthorized incidental container start
 - Replayable official pricing evidence and the repeated no-call preflight
+- A separately approved successor after the current D-127 receipt's terminal blocked observation
 - Exact runner execution hash and one-use execution-authorization candidate under a later approval
 - Separate approval repeating the exact candidate triple, execution hash and $55 cap
 - Any live A/C result
@@ -83,13 +65,9 @@ unauthorized for fixed-bundle C.
 
 ## Closed lanes
 
-Provider/evaluator execution, runtime injection/retrieval, score-policy mutation, raw trace, held-out/core,
-D-121 successor execution and applicability-classifier calls remain closed.
-
-D-126 provider/evaluator calls, agent runs, retrievals, injections and cost are zero. Its only public network
-activity was the official pricing GET; its Docker activity was read-only observation with zero workloads.
-D-127 production calls and downstream attempt/remediation/pricing/preflight/gate artifacts are zero.
-Runtime memory injection remains unauthorized.
+Provider/evaluator/agent, runtime memory, score-policy, raw-trace, held-out/core, D-121 successor and classifier
+lanes remain closed. D-127 only added six read-only Docker CLI calls and two artifacts; all mutation, workload,
+pricing/preflight/gate/live-call and cost counts remain zero.
 
 ## Historical/deferred D-121 lane
 
@@ -98,9 +76,10 @@ remains deferred; its run was never authorized and is not a fixed-bundle prerequ
 
 ## Next gate
 
-First commit the D-127 source and recorded approval receipt, then pass the static prerequisites. The approved
-external successor may proceed only through Docker remediation, replayable official pricing capture and the
-repeated no-call preflight; a down daemon with unverified container auto-restart state remains blocking rather
-than being started. Even a ready D-127 gate cannot create an execution hash, candidate or live run. Those need
+The user must first either start Docker Desktop manually while safely accounting for any restart-policy
+containers, or explicitly expand authority to cover incidental pre-existing-container starts. Because this
+D-127 receipt already has an append-only terminal blocked observation, changed Desktop state does not authorize
+retry: a separate exact successor approval is required before any new Docker remediation, pricing capture or
+repeated preflight. Even a later ready gate cannot create an execution hash, candidate or live run. Those need
 a later exact-gate approval, followed by exact candidate-triple/execution-hash/$55-cap approval before live
 execution.

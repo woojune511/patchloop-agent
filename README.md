@@ -1,55 +1,41 @@
 # PatchLoop
 
-PatchLoop is a recoverable single coding agent and evaluation harness for studying whether structured
-failure memory improves scope-compliant software repair. It keeps agent execution, hidden evaluation,
-durable recovery state and cross-run memory evidence separate so that reliability work is not mislabeled
-as memory-driven improvement.
+PatchLoop is a recoverable single coding agent and evaluation harness for scope-compliant software repair.
+Agent, hidden evaluator, recovery state and cross-run memory evidence remain separate.
 
 ## Current direction
 
-The full A/B/C/D, 96-run campaign is deferred. The immediate target is a four-run development-validation
-readiness panel with an exact, checked-in suite:
+The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 
 - A: no cross-run memory
 - C: the exact three-entry structured bundle
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-`experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml` fixes the four rows, while
-`experiments/ac-structured-pilot-v2.plan.yaml` preserves the design boundary. Fixed-bundle delivery,
-condition-aware qualification, full-schedule cost reservation/settlement source and the complete-matrix
-completion-gate source are implemented. D-125 is the historical local/mock finalization source predecessor.
-D-126 remains the latest sealed gate. D-127 successor source implements the production-client correction,
-replayable pricing capture and exact-identity Docker/no-call orchestration. Its append-only approval receipt
-exists; static stopped on the missing API key before external activity, and downstream evidence is absent.
+The exact suite and plan live under `experiments/`. Delivery, qualification and R2 cost/completion source are
+offline-qualified. D-126 is the latest sealed gate. D-127 static passed without key exposure, then Docker
+remediation terminally blocked after six read-only CLI calls and before Desktop start, mutation or later phases.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
 ## Implemented product path
 
 - Agent phases: INTAKE → REPRODUCE → PLAN → IMPLEMENT → VERIFY → REVIEW → DONE
-- Constrained tools for literal search, bounded reads, tracked-file patching, registered checks, diff review
-  and submission
-- Stateless provider turns rebuilt from durable public state
-- Append-only events, checkpoints, CAS artifacts and workspace/diff reconciliation
-- Rejected-patch recovery and exact token/cost accounting
+- Constrained search/read/patch/check/diff/submission tools; no unrestricted agent shell
+- Stateless provider turns plus append-only events, checkpoints, CAS and workspace reconciliation
+- Rejected-patch recovery and token/cost accounting
 - Separate hidden evaluator for acceptance, regression, scope and safety
-- Audited dataset registry with calibration, development, validation and held-out roles
-- Human-reviewed structured memory sources, deterministic rendering and a frozen three-entry index
-- Exact A-null/C-D110 manifests, request/CAS/context replay evidence and condition-aware trace qualification
+- Audited dataset roles and a frozen, human-reviewed three-entry memory index
+- Exact A-null/C-D110 delivery with replay and condition-aware trace qualification
 
 ## Evidence boundary
 
-- D-098 completed the 12-row no-memory development baseline; 11 rows reached the official evaluator and
-  2/12 were scope-compliant successes. This is development evidence, not a held-out performance claim.
-- D-110 froze the approved three-entry memory index.
-- D-112/D-115 showed that the current selective scorer cannot be repaired by threshold/weight changes alone.
-- D-124/D-125 are historical local/mock predecessors. D-126 sealed clean source, fresh pricing and bounded
-  no-call observation, but not readiness.
-- D-121 remains a deferred historical no-start isolation lane.
-- D-126 has no executed reservation, result, candidate or execution hash. Provider, evaluator, agent,
-  retrieval and injection counts and cost are zero; every A/C outcome remains unmeasured.
-- D-127 is pre-external: receipt recorded; static stopped on the absent key; production calls remain zero.
+- D-098 is a development baseline (12 terminal, 11 evaluated, 2 scope-compliant), not held-out evidence.
+- D-110 froze three entries; D-112/D-115 left selective scoring unready.
+- D-124/D-125 are historical local/mock predecessors; D-121 is deferred.
+- D-126 sealed observations, not readiness; no reservation, result, candidate, hash or A/C outcome exists.
+- D-127 recorded a terminal blocked Docker-remediation observation: six bounded read-only Docker CLI calls,
+  no Desktop start, pull/image-store mutation or container/workload, and no pricing/preflight/gate or live call.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -67,25 +53,15 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 ## CLI surface
 
-```powershell
-uv run patchloop --help
-uv run patchloop agent run --help
-uv run patchloop experiment preflight --help
-uv run patchloop experiment run --help
-uv run patchloop report --help
-```
+Use `uv run patchloop --help` to discover the CLI.
 
 CLI availability does not imply readiness. The approved D-127 scope stops at blocker remediation, official
-pricing capture and a repeated no-call preflight. It currently stops before external activity because the
-receipt exists, but static stopped because `OPENAI_API_KEY` is absent. A ready successor still requires
-separate exact-gate approval before hash/candidate preparation and later live approval.
+pricing capture and a repeated no-call preflight. The current receipt is terminal/idempotent blocked after
+read-only Docker observation, so it cannot be retried after Desktop state changes. A user must first start
+Docker Desktop while safely accounting for existing restart-policy containers, or explicitly expand the
+incidental-start authority; either route then needs a separate successor approval. A later ready successor
+still needs separate exact-gate approval before hash/candidate preparation and live approval.
 
 ## Documentation
 
 Use `docs/00-index.md` for active authority/navigation. Historical narratives live under `docs/archive/`.
-
-## One-line description
-
-PatchLoop is a constrained, recoverable coding agent with a leakage-aware evaluation and failure-memory
-pipeline whose exact four-run no-memory versus fixed-structured-memory runtime-finalization source path is
-offline-qualified, whose D-126 preflight is sealed blocked, and whose D-127 successor remains pre-external.
