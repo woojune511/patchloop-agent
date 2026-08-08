@@ -1,0 +1,226 @@
+{
+  "schema_version": "d119-cleanup-correction-authorization-candidate-d120-v1",
+  "candidate_id": "d120cleanupcandidate_86d95b4b3cf0b49a20724b136075bfa9da281fce4dc6b20b6063a07bfcdd9b82",
+  "semantic_body_hash": "sha256:86d95b4b3cf0b49a20724b136075bfa9da281fce4dc6b20b6063a07bfcdd9b82",
+  "semantic_body": {
+    "milestone": "D-120",
+    "evidence_kind": "d119-cleanup-correction-authorization-candidate",
+    "recorded_at": "2026-08-07T13:32:20.788129Z",
+    "preflight": {
+      "path": "reports/memory-development/d120-d119-partial-failure-preflight.json",
+      "preflight_id": "d120preflight_cc3496328cf64c924c762d47a7f4926d23322991c29064e68ae6d376a8339310",
+      "semantic_body_hash": "sha256:cc3496328cf64c924c762d47a7f4926d23322991c29064e68ae6d376a8339310",
+      "file_bytes": 21101,
+      "file_sha256": "sha256:6ec5ff207fdf24cb8baab733b9db096ece3d1fe1ba0ba5c6c644ac6c20ccd5ea"
+    },
+    "candidate_status": "awaiting-exact-user-approval",
+    "failure_status": "PARTIAL_CONSUMED_FAILED",
+    "probe_outcome": "UNSEALED_UNKNOWN",
+    "proposed_action": {
+      "action": "implement-test-and-prepare-d121-execution-authorization-candidate",
+      "unchanged_d119_execution_tuple": {
+        "authorized_action_hash": "sha256:be673eec0b6cf5cde23db0f19c050d82867a1a4a497a28124f61ca47e24278c2",
+        "docker_cli_file_bytes": 43095472,
+        "docker_cli_file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+        "immutable_image_id": "sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac",
+        "dockerfile_sha256": "sha256:f310b88e8a2769b83202c3fb7a5cb776142c70a6d45935b648db258d3bc2d944",
+        "probe_runner_sha256": "sha256:ed07d48a2e2129645aa0ae4765d0f248750125eb685bf55767a21db636e15509",
+        "profile_hash": "sha256:82511cd9e7e25be999955e260f009204703ef5dcdbc2340897d821c4f52cf6a5",
+        "source_fingerprint": "sha256:912c8ad78849f7f674756ab9d4084ed92e3c8a535bc04a6b89a7a14f7170a53f",
+        "ordered_sources": [
+          {
+            "source_id": "swe-bench-dev-f5351",
+            "path": ".patchloop/external-evidence/d118/swe-bench-f5351/data/dev-00000-of-00001.parquet",
+            "file_bytes": 1382594,
+            "file_sha256": "sha256:d758d54540aa4140d0274ed0cc93b8288aa6f323c3c603e2557e7666a47fc41b",
+            "probe_source_sha256": "sha256:76dac3eec570730dc9fa9b1ce1cc4344b42971ffc4339b22caf4a569c65bd2bc"
+          },
+          {
+            "source_id": "swe-gym-train-26a6",
+            "path": ".patchloop/external-evidence/d118/swe-gym-26a6/data/train-00000-of-00001.parquet",
+            "file_bytes": 43644473,
+            "file_sha256": "sha256:60569cea74bb281f7a5579467436a2bc1932c6e0c5f2f7fa0d084392abd9ad97",
+            "probe_source_sha256": "sha256:39e64b76b26d8c53e2e128a1ef5c6e09354ca009d1b45157dc9cd0028a493dc7"
+          }
+        ]
+      },
+      "execution_tuple_reverification_required_before_any_later_run": true,
+      "unchanged_probe_image_profile_source_tuple": true,
+      "planned_behavioral_changes": [
+        "fresh-d121-container-label-and-name-namespace",
+        "cleanup-no-row-presentation-normalization",
+        "exact-id-and-label-wide-residual-inventories",
+        "primary-probe-outcome-preserved-before-cleanup-validation",
+        "expanded-cleanup-and-session-journal-events"
+      ],
+      "relationship_to_d119": {
+        "fresh_successor_run_planned": true,
+        "d119_retry": false,
+        "d119_resume": false,
+        "d119_repair": false,
+        "d119_partial_artifacts_and_implementation_immutable": true
+      },
+      "new_paths": [
+        "patchloop/memory/d121_hash_only_isolation_successor.py",
+        "scripts/run_d121_hash_only_isolation_successor.py",
+        "tests/test_d121_hash_only_isolation_successor.py",
+        "reports/memory-development/d121-isolation-successor-preparation-approval-receipt.json",
+        "reports/memory-development/d121-isolation-successor-readiness-preflight.json",
+        "reports/memory-development/d121-isolation-successor-execution-authorization-candidate.json",
+        "reports/memory-development/d121-isolation-successor-authorization-source-gate.json"
+      ],
+      "mutation_whitelist": [
+        "patchloop/memory/d121_hash_only_isolation_successor.py",
+        "scripts/run_d121_hash_only_isolation_successor.py",
+        "tests/test_d121_hash_only_isolation_successor.py",
+        "reports/memory-development/d121-isolation-successor-preparation-approval-receipt.json",
+        "reports/memory-development/d121-isolation-successor-readiness-preflight.json",
+        "reports/memory-development/d121-isolation-successor-execution-authorization-candidate.json",
+        "reports/memory-development/d121-isolation-successor-authorization-source-gate.json"
+      ],
+      "prospective_run_output_paths_not_authorized": [
+        "reports/memory-development/d121-isolation-successor-execution-approval-receipt.json",
+        "reports/memory-development/d121-isolation-successor-execution.jsonl",
+        "reports/memory-development/d121-isolation-successor-evidence.json",
+        "reports/memory-development/d121-isolation-successor-completion-gate.json"
+      ],
+      "container_namespace": {
+        "label": "io.patchloop.managed=d121-isolation-successor",
+        "name_prefix": "patchloop-d121-",
+        "disjoint_from_d119_and_d120": true,
+        "disjointness_validated_by": "d120-declared-path-contract"
+      },
+      "d120_approval_authorizes": {
+        "d121_new_only_implementation": true,
+        "offline_tests": true,
+        "no_start_exact_docker_readiness_preflight": true,
+        "execution_authorization_candidate_preparation": true
+      },
+      "d120_approval_does_not_authorize": {
+        "docker_container_start": true,
+        "opaque_source_read": true,
+        "d121_successor_execution": true
+      },
+      "prospective_execution_contract": {
+        "fresh_run_count": 1,
+        "session_count": 2,
+        "both_exact_d119_sources_rerun": true,
+        "automatic_retry_count": 0,
+        "failure_remains_consumed": true
+      },
+      "cleanup_observation_contract": {
+        "primary_probe_outcome_captured_before_cleanup": true,
+        "cleanup_outcome_captured_without_masking_primary": true,
+        "required_events_in_order": [
+          "ProbeResultValidated",
+          "ContainerRemovalVerified",
+          "IsolationSessionCompleted"
+        ],
+        "exact_id_rm_return_code": 0,
+        "exact_id_rm_argv": [
+          "<exact-pinned-docker-cli>",
+          "rm",
+          "--force",
+          "<exact-container-id>"
+        ],
+        "post_remove_inspect_return_code": "nonzero",
+        "post_remove_inspect_argv": [
+          "<exact-pinned-docker-cli>",
+          "inspect",
+          "<exact-container-id>"
+        ],
+        "accepted_no_row_stdout_exact_bytes": [
+          {
+            "presentation": "empty-bytes",
+            "hex": ""
+          },
+          {
+            "presentation": "empty-json-array",
+            "hex": "5b5d"
+          },
+          {
+            "presentation": "empty-json-array-lf",
+            "hex": "5b5d0a"
+          },
+          {
+            "presentation": "empty-json-array-crlf",
+            "hex": "5b5d0d0a"
+          }
+        ],
+        "arbitrary_stdout_forbidden": true,
+        "exact_id_inventory_argv": [
+          "<exact-pinned-docker-cli>",
+          "ps",
+          "--all",
+          "--quiet",
+          "--no-trunc",
+          "--filter",
+          "id=<exact-container-id>"
+        ],
+        "successor_label_inventory_argv": [
+          "<exact-pinned-docker-cli>",
+          "ps",
+          "--all",
+          "--quiet",
+          "--no-trunc",
+          "--filter",
+          "label=io.patchloop.managed=d121-isolation-successor"
+        ],
+        "observation_order_before_validation": [
+          "remove-by-exact-id",
+          "inspect-by-exact-id",
+          "exact-id-inventory",
+          "successor-label-inventory"
+        ],
+        "exact_id_inventory_must_be_empty": true,
+        "successor_label_inventory_must_be_empty": true,
+        "both_inventories_execute_even_if_presentation_validation_fails": true,
+        "raw_stderr_persisted": false,
+        "bounded_stderr_size_and_sha_persisted": true
+      },
+      "success_boundary": {
+        "hash_only_isolation_profile_verified_may_become_true": true,
+        "trusted_cutoff_anchor_verified_remains_false": true,
+        "record_projection_isolation_verified_remains_false": true,
+        "independence_remains_false": true,
+        "retrieval_agent_and_core_remain_closed": true
+      }
+    },
+    "proposed_action_hash": "sha256:88195baf93289f3d4613a2d33e6bf16b271fb65d6cf6384a2fdbc8fff20512c4",
+    "approval_contract": {
+      "exact_candidate_id_required": true,
+      "exact_semantic_body_sha_required": true,
+      "exact_file_sha_required": true,
+      "d120_approval_authorizes_only_d121_implementation_test_readiness_and_candidate": true,
+      "d121_execution_requires_separate_exact_candidate_approval": true,
+      "approval_does_not_authorize_d119_mutation_or_retry": true
+    },
+    "authority": {
+      "partial_failure_sealed": true,
+      "cleanup_failure_diagnosis_recorded": true,
+      "root_cause_source_consistent_and_self_attested": true,
+      "root_cause_portably_proved": false,
+      "cleanup_correction_candidate_ready": true,
+      "exact_candidate_user_approval_received": false,
+      "d119_mutation_authorized": false,
+      "d119_retry_resume_or_repair_authorized": false,
+      "successor_implementation_authorized": false,
+      "successor_execution_authorization_candidate_preparation_authorized": false,
+      "fresh_successor_run_authorized": false,
+      "successor_run_count": 0,
+      "opaque_source_read_count": 0,
+      "record_container_parse_count": 0,
+      "record_field_read_count": 0,
+      "pool_selection_acquisition_or_freeze_authorized": false,
+      "issue_labeling_or_review_authorized": false,
+      "matcher_classifier_or_calibration_authorized": false,
+      "score_policy_or_index_mutation_authorized": false,
+      "retrieval_or_runtime_injection_authorized": false,
+      "agent_provider_evaluator_or_core_authorized": false,
+      "docker_or_network_call_count_during_candidate_build_self_attested": 0,
+      "subprocess_or_socket_instrumented_during_materialization": false,
+      "focused_test_forbidden_boundary_guards_defined": true,
+      "added_model_cost_usd": 0
+    }
+  }
+}

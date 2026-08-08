@@ -1,0 +1,106 @@
+{
+  "schema_version": "memory-group-human-approval-receipt-d101-v1",
+  "receipt_id": "d101receipt_23c8ff9b5f8b91820d03a25242abaa02f1ec2af0357bd9b26c227882cf8f5f7a",
+  "semantic_body_hash": "sha256:23c8ff9b5f8b91820d03a25242abaa02f1ec2af0357bd9b26c227882cf8f5f7a",
+  "semantic_body": {
+    "milestone": "D-101",
+    "evidence_kind": "self-attested-exact-candidate-approval",
+    "recorded_at": "2026-08-06T02:58:44.1516120Z",
+    "candidate": {
+      "path": "reports/memory-development/d102-maintainer-assisted-admission-candidate.json",
+      "schema_version": "memory-group-admission-candidate-d101-v1",
+      "document_id": "d101candidate_97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d",
+      "semantic_body_hash": "sha256:97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d",
+      "file_bytes": 31148,
+      "file_sha256": "sha256:9620e99961010bc4c942728f1948cb50b3f067025b8d5a02ba579dd3a1b4e457"
+    },
+    "approved_candidate_hash": "sha256:97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d",
+    "journal": {
+      "schema_version": "memory-group-review-journal-d100-v1",
+      "file_bytes": 7829,
+      "file_sha256": "sha256:5c46e6b6a49e436794c1b118f96a9d05caa48a4cd4199e9791ec2ec4499327e3",
+      "record_count": 5,
+      "correction_count": 0,
+      "decided_group_count": 5,
+      "head_decision_hash": "sha256:4192b503768093e2134b7651da4922fcd9d5c2a064e0150a7f523adc952ac469"
+    },
+    "decision_set_hash": "sha256:8538507148f5d5d5305730c5994b4f7040bd6af682fff0bcd1e5f05f92a09808",
+    "effective_decisions": [
+      {
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "semantic_group_fingerprint": "sha256:2680ffacfdfe654288f9c9d9bfc399c2b07d2d0b52ee06b2201ebb6e72d2a45f",
+        "group_disposition": "candidate",
+        "decision": "approve",
+        "decision_hash": "sha256:9933f0f079ca2d40ebdbc1e2257e794b36ca05045d186c02785c1c00df92bfa3",
+        "decision_sequence": 1,
+        "event_kind": "DecisionRecorded",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation",
+        "rationale_sha256": "sha256:2e24aac1e3be67c043411909041fa64e6a3368fa817a5306efa5a133408b9919",
+        "proposed_rule_hash": "sha256:913b11118e2db81c48497eaf1ec14e25ebb557f0e64cb8097bd2422d89ca0e64"
+      },
+      {
+        "semantic_group_id": "request-context-propagation-gap",
+        "semantic_group_fingerprint": "sha256:195b37a651d16037d49d389c3ec30c9cdaa658239cb66e108cb25ed5464d6471",
+        "group_disposition": "candidate",
+        "decision": "approve",
+        "decision_hash": "sha256:5943da335c469334e9fee94da46d26ffe7cea6a732c19c3dc97e3f4da718127d",
+        "decision_sequence": 2,
+        "event_kind": "DecisionRecorded",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation",
+        "rationale_sha256": "sha256:9bcca42d665c6dc60ea131242ecb756a1eb1fa67bca8d7e50d1928693a6abb07",
+        "proposed_rule_hash": "sha256:6c2ba21aea2a2de3dd9cb25209d8d3a6709dd939e3f82eea8b0906677794a046"
+      },
+      {
+        "semantic_group_id": "interrupt-lifecycle-unresolved",
+        "semantic_group_fingerprint": "sha256:bfd05d53347d867efccc0fa091408a2c36dc57695ae5ff99d16b76fefdbb1244",
+        "group_disposition": "hold",
+        "decision": "continue_hold",
+        "decision_hash": "sha256:bf5ea8618dc2b1868c89713bc4fdb8730264cc6be9612d5919f42e1f9382ae38",
+        "decision_sequence": 3,
+        "event_kind": "DecisionRecorded",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation",
+        "rationale_sha256": "sha256:5b53369adbe4ee8812502f74db9a2699ce1294daecf96e908d2b8de7bc32167d",
+        "proposed_rule_hash": null
+      },
+      {
+        "semantic_group_id": "diagnostic-contract-unresolved",
+        "semantic_group_fingerprint": "sha256:b8238774a1399211fc7eb8d2452894e901f8b8291969641704a38c969a07fe8c",
+        "group_disposition": "hold",
+        "decision": "continue_hold",
+        "decision_hash": "sha256:567bc94630404712732ee7437cfafdc6fba5d77cc70ff7f0c7e00343320800ae",
+        "decision_sequence": 4,
+        "event_kind": "DecisionRecorded",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation",
+        "rationale_sha256": "sha256:4285439f8c0975b96ca8de0c6d556bead9c5158e8b4b5651832bcfc50f7e1008",
+        "proposed_rule_hash": null
+      },
+      {
+        "semantic_group_id": "exception-origin-state-conflation",
+        "semantic_group_fingerprint": "sha256:e70e64a6af47eac96d9fe70943d6ea869a84757da4475edd5b972fb0654561fb",
+        "group_disposition": "candidate",
+        "decision": "approve",
+        "decision_hash": "sha256:4192b503768093e2134b7651da4922fcd9d5c2a064e0150a7f523adc952ac469",
+        "decision_sequence": 5,
+        "event_kind": "DecisionRecorded",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation",
+        "rationale_sha256": "sha256:d65c6aa1f9bc45770144042441ed09bdd5dcb3298ed6f925274930f223d87d65",
+        "proposed_rule_hash": "sha256:330e5a73bc8f9815b6a2cec4d2c9bf3b3ba589e2addd2ec96d72288089710b6f"
+      }
+    ],
+    "approval_action_id": "d103-exact-candidate-approval-1",
+    "approver_kind": "human",
+    "approver_label": "chat-maintainer-self-attested",
+    "approval_reference": "user-message:d103-exact-candidate-approval",
+    "rationale": "사용자가 후보 ID와 내용 SHA, 파일 SHA를 정확히 다시 입력해 이 후보 묶음의 승인을 확인했다. 이 승인은 메모리 원본 작성만 열며 검색 목록 생성이나 본 실험 시작을 승인하지 않는다.",
+    "approval_statement_code": "EXPLICITLY_APPROVE_EXACT_D101_CANDIDATE",
+    "approval_statement": "EXPLICITLY_APPROVE_EXACT_D101_CANDIDATE d101candidate_97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d sha256:97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d sha256:9620e99961010bc4c942728f1948cb50b3f067025b8d5a02ba579dd3a1b4e457",
+    "explicit_approval_receipt_recorded": true,
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false
+  }
+}

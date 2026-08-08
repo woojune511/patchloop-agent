@@ -10,6 +10,8 @@ from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
+    AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
@@ -42,6 +44,12 @@ from patchloop.evals.coverage_rejection import (
 )
 from patchloop.evals.coverage_rejection import (
     _v11_latest_worker_claim as _v11_latest_worker_claim,
+)
+from patchloop.memory.fixed_bundle import (
+    D110_INDEX_CONTENT_HASH,
+    D110_INDEX_VERSION,
+    FIXED_BUNDLE_POLICY_VERSION,
+    validate_fixed_memory_request_artifact,
 )
 from patchloop.runtime import calculate_model_cost, repository_root, runtime_root
 from patchloop.sandbox.runner import probe_execution_policy
@@ -163,32 +171,22 @@ _GPT54_MINI_ANYIO_BUDGET_READINESS_PROBE_BUDGET = Budget(
     max_total_tokens=2_000_000,
     wall_clock_timeout_seconds=1_800,
 )
-_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID = (
-    "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
-)
+_WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID = "pyfakefs-workflow-completion-probe-v2v5-20260803-r1"
 _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID = {
-    _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID: (
-        _GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET
-    ),
+    _WORKFLOW_COMPLETION_PROBE_EXPERIMENT_ID: (_GPT54_MINI_WORKFLOW_COMPLETION_PROBE_BUDGET),
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID: (
         _GPT54_MINI_ANYIO_BUDGET_READINESS_PROBE_BUDGET
     ),
 }
-_WORKFLOW_COMPLETION_CALL_GUARD_POLICY = (
-    "model-tool-observability-only-v1"
-)
-_GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = (
-    "generic-baseline-readiness-v2v5-20260803-r3"
-)
+_WORKFLOW_COMPLETION_CALL_GUARD_POLICY = "model-tool-observability-only-v1"
+_GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID = "generic-baseline-readiness-v2v5-20260803-r3"
 _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS = frozenset(
     {
         _GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID,
         GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
     }
 )
-_GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA = (
-    "generic-baseline-runtime-contract-v2"
-)
+_GENERIC_BASELINE_OBSERVABILITY_RUNTIME_CONTRACT_SCHEMA = "generic-baseline-runtime-contract-v2"
 _GENERIC_HIGH_HEADROOM_READINESS_RUNTIME_EVIDENCE_SCHEMA = (
     "generic-high-headroom-readiness-runtime-evidence-v1"
 )
@@ -211,21 +209,14 @@ _CONDITION_NEUTRAL_COMPARISON_PURPOSES = frozenset(
         ExperimentPurpose.CORE,
     }
 )
-_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID = (
-    "babel-strict-grouped-decimal-trailing-zeroes"
-)
+_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID = "babel-strict-grouped-decimal-trailing-zeroes"
 _CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_PATH = (
     "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml"
 )
-_CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA = (
-    "condition-neutral-comparison-budget-freeze-v1"
-)
-_CONDITION_NEUTRAL_COMPARISON_POLICY_PROFILE_ID = (
-    "gpt54mini-v2v5-condition-neutral-1600k-v1"
-)
+_CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA = "condition-neutral-comparison-budget-freeze-v1"
+_CONDITION_NEUTRAL_COMPARISON_POLICY_PROFILE_ID = "gpt54mini-v2v5-condition-neutral-1600k-v1"
 _CONDITION_NEUTRAL_COMPARISON_POLICY_PATH = (
-    "reports/live-pilot/artifacts/"
-    "d083-condition-neutral-comparison-budget-freeze.json"
+    "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json"
 )
 _CONDITION_NEUTRAL_COMPARISON_POLICY_HASH = (
     "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
@@ -266,14 +257,22 @@ _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
     ("tox-cross-section-empty-substitution", 1): 11,
     ("pdm-ignore-active-venv-resolution", 2): 12,
 }
+_AC_FIXED_BUNDLE_TASKS_ORDERED = [
+    "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+    "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+]
+_AC_FIXED_BUNDLE_ROW_ORDER = {
+    ("moto-query-scanned-count", MemoryCondition.NO_MEMORY): 1,
+    ("moto-query-scanned-count", MemoryCondition.STRUCTURED): 2,
+    ("babel-strict-grouped-decimal-trailing-zeroes", MemoryCondition.STRUCTURED): 3,
+    ("babel-strict-grouped-decimal-trailing-zeroes", MemoryCondition.NO_MEMORY): 4,
+}
 _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA = (
     "campaign-full-schedule-cost-control-evidence-v1"
 )
 _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA = "campaign-list-price-full-schedule-reserve-v1"
 _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID = {
-    "generic-baseline-readiness-v2v5-20260802-r1": (
-        _GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET
-    ),
+    "generic-baseline-readiness-v2v5-20260802-r1": (_GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET),
     "generic-baseline-readiness-v2v5-20260802-r2": (
         _GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
     ),
@@ -309,6 +308,7 @@ _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
     }
 )
 _CAMPAIGN_PURPOSES = {
+    ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
     ExperimentPurpose.GENERIC_BASELINE_READINESS,
     ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
     ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
@@ -327,9 +327,7 @@ def _generic_baseline_readiness_budget_matches(
     experiment_id: str,
     budget: Budget,
 ) -> bool:
-    expected = _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
-        experiment_id
-    )
+    expected = _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(experiment_id)
     return expected is not None and budget == expected
 
 
@@ -337,9 +335,7 @@ def _workflow_completion_probe_budget_matches(
     experiment_id: str,
     budget: Budget,
 ) -> bool:
-    expected = _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(
-        experiment_id
-    )
+    expected = _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(experiment_id)
     return expected is not None and budget == expected
 
 
@@ -362,18 +358,15 @@ def _condition_neutral_comparison_policy_artifact_valid() -> bool:
     frozen_budget = payload.get("frozen_budget") if isinstance(payload, dict) else None
     return bool(
         sha256_bytes(raw) == _CONDITION_NEUTRAL_COMPARISON_POLICY_HASH
-        and payload.get("schema_version")
-        == _CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA
+        and payload.get("schema_version") == _CONDITION_NEUTRAL_COMPARISON_POLICY_SCHEMA
         and isinstance(frozen_budget, dict)
-        and frozen_budget.get("profile_id")
-        == _CONDITION_NEUTRAL_COMPARISON_POLICY_PROFILE_ID
+        and frozen_budget.get("profile_id") == _CONDITION_NEUTRAL_COMPARISON_POLICY_PROFILE_ID
         and frozen_budget.get("max_model_calls") is None
         and frozen_budget.get("max_tool_calls") is None
         and frozen_budget.get("max_total_tokens") == 1_600_000
         and frozen_budget.get("wall_clock_timeout_seconds") == 1_800
         and frozen_budget.get("max_output_tokens") == 25_000
-        and frozen_budget.get("call_guard_policy")
-        == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        and frozen_budget.get("call_guard_policy") == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
     )
 
 
@@ -498,6 +491,45 @@ def _condition_neutral_runtime_v2_manifest_matches(manifest: RunManifest) -> boo
     )
 
 
+def _ac_fixed_bundle_readiness_manifest_matches(manifest: RunManifest) -> bool:
+    """Match one row of the exact four-row A/C development profile."""
+
+    experiment = manifest.experiment
+    condition = manifest.memory.condition
+    expected_order = _AC_FIXED_BUNDLE_ROW_ORDER.get((manifest.task_id, condition))
+    expected_index = (
+        (None, None)
+        if condition == MemoryCondition.NO_MEMORY
+        else (D110_INDEX_VERSION, D110_INDEX_CONTENT_HASH)
+    )
+    return bool(
+        experiment is not None
+        and experiment.experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+        and experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
+        and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+        and experiment.schedule_seed == 20260723
+        and experiment.repetition == 1
+        and expected_order is not None
+        and experiment.schedule_order == expected_order
+        and manifest.model.provider == "openai"
+        and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
+        and manifest.model.reasoning_effort == "medium"
+        and manifest.model.reasoning_mode == "standard"
+        and manifest.model.service_tier == "default"
+        and manifest.model.transport_max_retries == 0
+        and manifest.model.max_output_tokens == 25_000
+        and manifest.tool_schema_version == "v2"
+        and manifest.context_policy_version == "phase-evidence-v5"
+        and manifest.budget == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+        and condition in {MemoryCondition.NO_MEMORY, MemoryCondition.STRUCTURED}
+        and manifest.memory_policy_version == FIXED_BUNDLE_POLICY_VERSION
+        and manifest.memory.max_context_tokens == 2_000
+        and (manifest.memory.index_version, manifest.memory.index_hash) == expected_index
+        and manifest.fault.type == "none"
+        and manifest.public_review_contract is None
+    )
+
+
 def _condition_neutral_runtime_v2_suite_matches(suite: Any) -> bool:
     policy = getattr(suite, "campaign_cost_policy", None)
     policy_payload = policy.model_dump(mode="json") if hasattr(policy, "model_dump") else policy
@@ -563,15 +595,11 @@ def _condition_neutral_comparison_manifest_matches(
     manifest: RunManifest,
 ) -> bool:
     experiment = manifest.experiment
-    if experiment is None or experiment.purpose not in (
-        _CONDITION_NEUTRAL_COMPARISON_PURPOSES
-    ):
+    if experiment is None or experiment.purpose not in (_CONDITION_NEUTRAL_COMPARISON_PURPOSES):
         return False
     comparison_pilot = bool(
-        experiment.purpose
-        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-        and experiment.experiment_id
-        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and experiment.experiment_id == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
         and manifest.task_id == _CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID
     )
     condition_valid = bool(
@@ -613,8 +641,7 @@ def _condition_neutral_comparison_suite_matches(suite: Any) -> bool:
         and getattr(suite, "experiment_id", None)
         == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
         and [
-            str(task).replace("\\", "/").removeprefix("./")
-            for task in getattr(suite, "tasks", [])
+            str(task).replace("\\", "/").removeprefix("./") for task in getattr(suite, "tasks", [])
         ]
         == [_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_PATH]
         and conditions == [MemoryCondition.NO_MEMORY]
@@ -625,9 +652,7 @@ def _condition_neutral_comparison_suite_matches(suite: Any) -> bool:
         and getattr(suite, "diagnostic", None) is None
     )
     condition_contract = bool(
-        (
-            comparison_pilot
-        )
+        (comparison_pilot)
         or (
             purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY
             and conditions == [MemoryCondition.NO_MEMORY]
@@ -656,8 +681,7 @@ def _condition_neutral_comparison_suite_matches(suite: Any) -> bool:
         and getattr(suite, "service_tier", None) == "default"
         and getattr(suite, "transport_max_retries", None) == 0
         and getattr(suite, "max_output_tokens", None) == 25_000
-        and getattr(suite, "budget", None)
-        == _GPT54_MINI_FROZEN_COMPARISON_BUDGET
+        and getattr(suite, "budget", None) == _GPT54_MINI_FROZEN_COMPARISON_BUDGET
         and getattr(suite, "memory_token_budget", None) == 2_000
         and getattr(suite, "diagnostic", None) is None
     )
@@ -672,6 +696,7 @@ def _purpose_dataset_roles(purpose: ExperimentPurpose) -> set[DatasetRole]:
     if purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE:
         return {DatasetRole.MEMORY_DEVELOPMENT}
     if purpose in {
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
     }:
@@ -771,10 +796,8 @@ def _normalized_qualification_semantics(
         ):
             details = check["details"]
             if (
-                details.get("model_generation_block_binding_required")
-                is False
-                and details.get("model_generation_block_binding_valid")
-                is True
+                details.get("model_generation_block_binding_required") is False
+                and details.get("model_generation_block_binding_valid") is True
             ):
                 details.pop(
                     "model_generation_block_binding_required",
@@ -997,6 +1020,7 @@ def _execution_plan_matches(
             _diagnostic_fault,
             _execution_hash,
             _experiment_runtime_contract,
+            _is_ac_fixed_bundle_readiness_profile,
             _make_schedule,
             _pilot_admission_plan_binding_matches,
             _pricing_contract_matches,
@@ -1067,6 +1091,7 @@ def _execution_plan_matches(
             )
             or _condition_neutral_comparison_suite_matches(parsed_suite)
             or _condition_neutral_runtime_v2_suite_matches(parsed_suite)
+            or _is_ac_fixed_bundle_readiness_profile(parsed_suite)
         ):
             if (
                 len(tasks) != len(parsed_suite.tasks)
@@ -1186,6 +1211,29 @@ def _execution_plan_matches(
             == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
             and expected_runtime_contract.get("call_guard_policy")
             == _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
+        )
+        or (
+            _ac_fixed_bundle_readiness_manifest_matches(manifest)
+            and _is_ac_fixed_bundle_readiness_profile(parsed_suite)
+            and isinstance(expected_runtime_contract, dict)
+            and expected_runtime_contract.get("schema_version")
+            == "ac-fixed-bundle-readiness-runtime-contract-v1"
+            and expected_runtime_contract.get("experiment_id")
+            == manifest.experiment.experiment_id
+            and expected_runtime_contract.get("memory_policy_version")
+            == FIXED_BUNDLE_POLICY_VERSION
+            and expected_runtime_contract.get("memory_conditions")
+            == [
+                MemoryCondition.NO_MEMORY.value,
+                MemoryCondition.STRUCTURED.value,
+            ]
+            and expected_runtime_contract.get("budget")
+            == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json")
+            and expected_runtime_contract.get("tool_schema_version") == "v2"
+            and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v5"
+            and expected_runtime_contract.get("system_prompt_hash") == sha256_text(SYSTEM_PROMPT_V3)
+            and expected_runtime_contract.get("tool_schema_hash")
+            == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
         )
         or (
             _condition_neutral_runtime_v2_manifest_matches(manifest)
@@ -1346,11 +1394,9 @@ def _execution_plan_matches(
         (
             hash_bound_runtime
             and isinstance(runtime_contract, dict)
-            and canonical_json(runtime_contract)
-            == canonical_json(expected_runtime_contract)
+            and canonical_json(runtime_contract) == canonical_json(expected_runtime_contract)
             and runtime_pair_matches
-            and manifest.harness_git_commit
-            == expected_runtime_contract["harness_git_commit"]
+            and manifest.harness_git_commit == expected_runtime_contract["harness_git_commit"]
         )
         or (not hash_bound_runtime and runtime_contract is None)
     )
@@ -1394,6 +1440,23 @@ def _execution_plan_matches(
         and parsed_suite.output_price_per_million_usd == manifest.model.output_price_per_million_usd
         and parsed_suite.budget == manifest.budget
         and parsed_suite.memory_token_budget == manifest.memory.max_context_tokens
+        and (
+            not _is_ac_fixed_bundle_readiness_profile(parsed_suite)
+            or (
+                parsed_suite.memory_policy_version
+                == manifest.memory_policy_version
+                == FIXED_BUNDLE_POLICY_VERSION
+                and (
+                    manifest.memory.index_version,
+                    manifest.memory.index_hash,
+                )
+                == (
+                    (None, None)
+                    if manifest.memory.condition == MemoryCondition.NO_MEMORY
+                    else (D110_INDEX_VERSION, D110_INDEX_CONTENT_HASH)
+                )
+            )
+        )
         and parsed_suite.seed == experiment.schedule_seed
         and parsed_suite.dataset_manifest_hash == experiment.dataset_manifest_hash
         and manifest.memory.condition in parsed_suite.conditions
@@ -1484,15 +1547,9 @@ def _artifact_evidence(
     integrity = True
     evidence: list[dict[str, Any]] = []
     missing_identities: list[str] = []
-    selected_event_types = (
-        _AGENT_VISIBLE_ARTIFACT_EVENTS
-        if event_types is None
-        else event_types
-    )
+    selected_event_types = _AGENT_VISIBLE_ARTIFACT_EVENTS if event_types is None else event_types
     required_types = (
-        _REQUIRED_ARTIFACT_EVENTS
-        if required_event_types is None
-        else required_event_types
+        _REQUIRED_ARTIFACT_EVENTS if required_event_types is None else required_event_types
     )
     for event in events:
         if event.type not in selected_event_types:
@@ -1679,14 +1736,10 @@ def _generic_baseline_runtime_contract_evidence(
     from patchloop.agent.model import SYSTEM_PROMPT_V3
     from patchloop.agent.tools import TOOL_SCHEMAS_V2
 
-    candidates = [
-        event for event in events if event.type == EventType.RUN_STARTED
-    ]
+    candidates = [event for event in events if event.type == EventType.RUN_STARTED]
     details: dict[str, Any] = {
         "run_started_count": len(candidates),
-        "event_sequence": (
-            candidates[0].sequence if len(candidates) == 1 else None
-        ),
+        "event_sequence": (candidates[0].sequence if len(candidates) == 1 else None),
         "event_identity_valid": False,
         "descriptor_binding_valid": False,
         "cas_integrity_valid": False,
@@ -1715,35 +1768,37 @@ def _generic_baseline_runtime_contract_evidence(
     )
     descriptor_binding_valid = bool(
         isinstance(raw_artifact, dict)
-        and event.payload.get("artifact_id")
-        == raw_artifact.get("artifact_id")
+        and event.payload.get("artifact_id") == raw_artifact.get("artifact_id")
         and event.payload.get("artifact_path") == raw_artifact.get("path")
-        and raw_artifact.get("media_type")
-        == "application/json; charset=utf-8"
+        and raw_artifact.get("media_type") == "application/json; charset=utf-8"
     )
     details["event_identity_valid"] = event_identity_valid
     details["descriptor_binding_valid"] = descriptor_binding_valid
     workflow_completion_probe = bool(
         manifest.experiment is not None
-        and manifest.experiment.purpose
-        == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        and manifest.experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
     )
     generic_count_observability = bool(
         manifest.experiment is not None
-        and manifest.experiment.purpose
-        == ExperimentPurpose.GENERIC_BASELINE_READINESS
+        and manifest.experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
         and manifest.experiment.experiment_id
         in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
     )
     generic_high_headroom_readiness = bool(
         manifest.experiment is not None
-        and manifest.experiment.experiment_id
-        == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+        and manifest.experiment.experiment_id == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
     )
-    condition_neutral_comparison = (
-        _condition_neutral_comparison_manifest_matches(manifest)
-    )
+    condition_neutral_comparison = _condition_neutral_comparison_manifest_matches(manifest)
     condition_neutral_v2 = _condition_neutral_runtime_v2_manifest_matches(manifest)
+    ac_fixed_bundle = _ac_fixed_bundle_readiness_manifest_matches(manifest)
+    if ac_fixed_bundle:
+        details.update(
+            {
+                "purpose": manifest.experiment.purpose.value,
+                "memory_condition": manifest.memory.condition.value,
+                "memory_policy_version": manifest.memory_policy_version,
+            }
+        )
     if condition_neutral_v2:
         details.update(
             {
@@ -1759,9 +1814,7 @@ def _generic_baseline_runtime_contract_evidence(
     if condition_neutral_comparison:
         details.update(
             {
-                "comparison_budget_policy": (
-                    _condition_neutral_comparison_policy_binding()
-                ),
+                "comparison_budget_policy": (_condition_neutral_comparison_policy_binding()),
                 "comparison_budget_policy_artifact_valid": (
                     _condition_neutral_comparison_policy_artifact_valid()
                 ),
@@ -1771,7 +1824,9 @@ def _generic_baseline_runtime_contract_evidence(
         )
     expected = {
         "schema_version": (
-            _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2
+            "ac-fixed-bundle-runtime-evidence-v1"
+            if ac_fixed_bundle
+            else _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA_V2
             if condition_neutral_v2
             else _CONDITION_NEUTRAL_COMPARISON_RUNTIME_EVIDENCE_SCHEMA
             if condition_neutral_comparison
@@ -1793,7 +1848,50 @@ def _generic_baseline_runtime_contract_evidence(
         "tool_schema_version": "v2",
         "context_policy_version": "phase-evidence-v5",
     }
-    if condition_neutral_v2:
+    if ac_fixed_bundle:
+        from patchloop.evals.runner import (
+            AC_FIXED_BUNDLE_COST_POLICY,
+            _ac_fixed_bundle_descriptor,
+        )
+
+        expected.update(
+            {
+                "experiment_id": manifest.experiment.experiment_id,
+                "purpose": manifest.experiment.purpose.value,
+                "suite_hash": manifest.experiment.suite_hash,
+                "execution_hash": manifest.experiment.execution_hash,
+                **(
+                    {
+                        "campaign_cost_control_hash": (
+                            manifest.experiment.campaign_cost_control_hash
+                        )
+                    }
+                    if manifest.experiment.experiment_id
+                    == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+                    else {}
+                ),
+                "schedule_seed": manifest.experiment.schedule_seed,
+                "schedule_order": manifest.experiment.schedule_order,
+                "schedule_row_id": manifest.experiment.schedule_row_id,
+                "repetition": manifest.experiment.repetition,
+                "model_provider": "openai",
+                "model_id": _GPT54_MINI_PILOT_MODEL_ID,
+                "reasoning_effort": "medium",
+                "reasoning_mode": "standard",
+                "service_tier": "default",
+                "max_output_tokens": 25_000,
+                "budget": _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json"),
+                "memory_max_context_tokens": 2_000,
+                "memory_condition": manifest.memory.condition.value,
+                "memory_policy_version": FIXED_BUNDLE_POLICY_VERSION,
+                "memory_index_version": manifest.memory.index_version,
+                "memory_index_hash": manifest.memory.index_hash,
+                "fixed_bundle": _ac_fixed_bundle_descriptor(),
+                "full_schedule_cost_policy": AC_FIXED_BUNDLE_COST_POLICY,
+                "call_guard_policy": _WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
+            }
+        )
+    elif condition_neutral_v2:
         expected.update(
             {
                 "comparison_resource_policy": (_condition_neutral_resource_policy_v2_binding()),
@@ -1830,18 +1928,10 @@ def _generic_baseline_runtime_contract_evidence(
                 "reasoning_mode": "standard",
                 "service_tier": "default",
                 "max_output_tokens": 25_000,
-                "budget": (
-                    _GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(
-                        mode="json"
-                    )
-                ),
+                "budget": (_GPT54_MINI_FROZEN_COMPARISON_BUDGET.model_dump(mode="json")),
                 "memory_max_context_tokens": 2_000,
-                "call_guard_policy": (
-                    _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
-                ),
-                "comparison_budget_policy": (
-                    _condition_neutral_comparison_policy_binding()
-                ),
+                "call_guard_policy": (_WORKFLOW_COMPLETION_CALL_GUARD_POLICY),
+                "comparison_budget_policy": (_condition_neutral_comparison_policy_binding()),
             }
         )
     elif generic_high_headroom_readiness:
@@ -1855,21 +1945,15 @@ def _generic_baseline_runtime_contract_evidence(
                 "service_tier": "default",
                 "max_output_tokens": 25_000,
                 "budget": (
-                    _GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET.model_dump(
-                        mode="json"
-                    )
+                    _GPT54_MINI_GENERIC_HIGH_HEADROOM_READINESS_BUDGET.model_dump(mode="json")
                 ),
                 "memory_max_context_tokens": 2_000,
                 "memory_condition": MemoryCondition.NO_MEMORY.value,
-                "call_guard_policy": (
-                    _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
-                ),
+                "call_guard_policy": (_WORKFLOW_COMPLETION_CALL_GUARD_POLICY),
             }
         )
     elif workflow_completion_probe or generic_count_observability:
-        expected["call_guard_policy"] = (
-            _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
-        )
+        expected["call_guard_policy"] = _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
     try:
         observed = json.loads(content) if content is not None else None
     except (TypeError, UnicodeDecodeError, json.JSONDecodeError):
@@ -1881,6 +1965,7 @@ def _generic_baseline_runtime_contract_evidence(
         and (
             condition_neutral_comparison
             or condition_neutral_v2
+            or ac_fixed_bundle
             or manifest.experiment.purpose
             in {
                 ExperimentPurpose.GENERIC_BASELINE_READINESS,
@@ -1900,21 +1985,16 @@ def _generic_baseline_runtime_contract_evidence(
     details["semantic_contract_valid"] = semantic_valid
     details["system_prompt_hash"] = (
         sha256_text(observed["system_prompt"])
-        if isinstance(observed, dict)
-        and isinstance(observed.get("system_prompt"), str)
+        if isinstance(observed, dict) and isinstance(observed.get("system_prompt"), str)
         else None
     )
     details["tool_schema_hash"] = (
         sha256_text(canonical_json(observed["tools"]))
-        if isinstance(observed, dict)
-        and isinstance(observed.get("tools"), list)
+        if isinstance(observed, dict) and isinstance(observed.get("tools"), list)
         else None
     )
     return bool(
-        event_identity_valid
-        and descriptor_binding_valid
-        and cas_valid
-        and semantic_valid
+        event_identity_valid and descriptor_binding_valid and cas_valid and semantic_valid
     ), details
 
 
@@ -1938,14 +2018,10 @@ def _corrective_runtime_contract_evidence(
         TOOL_SCHEMAS_V6,
     )
 
-    candidates = [
-        event for event in events if event.type == EventType.RUN_STARTED
-    ]
+    candidates = [event for event in events if event.type == EventType.RUN_STARTED]
     details: dict[str, Any] = {
         "run_started_count": len(candidates),
-        "event_sequence": (
-            candidates[0].sequence if len(candidates) == 1 else None
-        ),
+        "event_sequence": (candidates[0].sequence if len(candidates) == 1 else None),
         "event_identity_valid": False,
         "descriptor_binding_valid": False,
         "cas_integrity_valid": False,
@@ -1972,11 +2048,9 @@ def _corrective_runtime_contract_evidence(
     )
     descriptor_binding_valid = bool(
         isinstance(raw_artifact, dict)
-        and event.payload.get("artifact_id")
-        == raw_artifact.get("artifact_id")
+        and event.payload.get("artifact_id") == raw_artifact.get("artifact_id")
         and event.payload.get("artifact_path") == raw_artifact.get("path")
-        and raw_artifact.get("media_type")
-        == "application/json; charset=utf-8"
+        and raw_artifact.get("media_type") == "application/json; charset=utf-8"
     )
     details["event_identity_valid"] = event_identity_valid
     details["descriptor_binding_valid"] = descriptor_binding_valid
@@ -2051,10 +2125,7 @@ def _corrective_runtime_contract_evidence(
     )
     details["semantic_contract_valid"] = semantic_valid
     return bool(
-        event_identity_valid
-        and descriptor_binding_valid
-        and cas_valid
-        and semantic_valid
+        event_identity_valid and descriptor_binding_valid and cas_valid and semantic_valid
     ), details
 
 
@@ -2074,15 +2145,9 @@ def _self_validation_nested_artifact_evidence(
     missing: list[str] = []
     for event in events:
         tool = event.payload.get("tool")
-        if (
-            event.type == EventType.TOOL_CALLED
-            and tool == "run_probe"
-        ):
+        if event.type == EventType.TOOL_CALLED and tool == "run_probe":
             role, field = "probe-source", "source_artifact"
-        elif (
-            event.type == EventType.TOOL_SUCCEEDED
-            and tool == "review_task"
-        ):
+        elif event.type == EventType.TOOL_SUCCEEDED and tool == "review_task":
             role, field = "task-review", "review_artifact"
         else:
             continue
@@ -2102,14 +2167,9 @@ def _self_validation_nested_artifact_evidence(
             texts.append(content.decode("utf-8"))
         except UnicodeDecodeError:
             integrity = False
-    lower_markers = {
-        token.lower() for token in private_tokens if token
-    }
+    lower_markers = {token.lower() for token in private_tokens if token}
     matches = sum(
-        1
-        for text in texts
-        for marker in lower_markers
-        if marker and marker in text.lower()
+        1 for text in texts for marker in lower_markers if marker and marker in text.lower()
     )
     return integrity, scanned, matches, evidence, sorted(missing)
 
@@ -2129,10 +2189,7 @@ def _patch_source_snapshot_artifact_evidence(
     evidence: list[dict[str, Any]] = []
     missing: list[str] = []
     for event in events:
-        if (
-            event.type != EventType.TOOL_CALLED
-            or event.payload.get("tool") != "apply_patch"
-        ):
+        if event.type != EventType.TOOL_CALLED or event.payload.get("tool") != "apply_patch":
             continue
         valid, item, content = _nested_cas_artifact_evidence(
             artifact_root=artifact_root,
@@ -2149,18 +2206,12 @@ def _patch_source_snapshot_artifact_evidence(
                 payload = None
         patch_artifact = event.payload.get("patch_artifact")
         expected_candidate_hash = (
-            patch_artifact.get("content_hash")
-            if isinstance(patch_artifact, dict)
-            else None
+            patch_artifact.get("content_hash") if isinstance(patch_artifact, dict) else None
         )
         payload_hash = (
             sha256_text(
                 canonical_json(
-                    {
-                        key: value
-                        for key, value in payload.items()
-                        if key != "content_hash"
-                    }
+                    {key: value for key, value in payload.items() if key != "content_hash"}
                 )
             )
             if isinstance(payload, dict)
@@ -2170,11 +2221,9 @@ def _patch_source_snapshot_artifact_evidence(
             valid
             and isinstance(payload, dict)
             and payload.get("schema_version") == "patch-source-snapshot-v1"
-            and payload.get("candidate_content_hash")
-            == expected_candidate_hash
+            and payload.get("candidate_content_hash") == expected_candidate_hash
             and payload.get("input_hash") == event.payload.get("input_hash")
-            and payload.get("worktree_diff_hash")
-            == event.payload.get("worktree_diff_hash")
+            and payload.get("worktree_diff_hash") == event.payload.get("worktree_diff_hash")
             and payload.get("content_hash") == payload_hash
             and isinstance(payload.get("entries"), list)
             and isinstance(payload.get("unavailable"), list)
@@ -2189,10 +2238,7 @@ def _patch_source_snapshot_artifact_evidence(
         texts.append(content.decode("utf-8"))
     lower_markers = {token.lower() for token in private_tokens if token}
     matches = sum(
-        1
-        for text in texts
-        for marker in lower_markers
-        if marker and marker in text.lower()
+        1 for text in texts for marker in lower_markers if marker and marker in text.lower()
     )
     return integrity, scanned, matches, evidence, sorted(missing)
 
@@ -2211,11 +2257,7 @@ def _v4_admission_nested_artifact_evidence(
     matches = 0
     evidence: list[dict[str, Any]] = []
     missing: list[str] = []
-    lower_markers = {
-        token.lower()
-        for token in private_tokens
-        if token
-    }
+    lower_markers = {token.lower() for token in private_tokens if token}
 
     def add_artifact(
         *,
@@ -2235,9 +2277,7 @@ def _v4_admission_nested_artifact_evidence(
         evidence.append(item)
         if not valid or content is None:
             integrity = False
-            missing.append(
-                f"{EventType.TOOL_ADMISSION_BLOCKED.value}:{role}"
-            )
+            missing.append(f"{EventType.TOOL_ADMISSION_BLOCKED.value}:{role}")
             return None
         scanned += 1
         try:
@@ -2247,11 +2287,7 @@ def _v4_admission_nested_artifact_evidence(
                 integrity = False
                 return content
             text = content.decode("utf-8", errors="ignore")
-        matches += sum(
-            1
-            for marker in lower_markers
-            if marker and marker in text.lower()
-        )
+        matches += sum(1 for marker in lower_markers if marker and marker in text.lower())
         return content
 
     for event in events:
@@ -2261,16 +2297,12 @@ def _v4_admission_nested_artifact_evidence(
             event=event,
             role=(
                 "turn-barrier-input"
-                if event.payload.get("policy_version")
-                == "turn-mutation-barrier-v1"
+                if event.payload.get("policy_version") == "turn-mutation-barrier-v1"
                 else "investigation-admission-input"
             ),
             descriptor=event.payload.get("input_artifact"),
         )
-        if (
-            event.payload.get("policy_version")
-            == "turn-mutation-barrier-v1"
-        ):
+        if event.payload.get("policy_version") == "turn-mutation-barrier-v1":
             add_artifact(
                 event=event,
                 role="turn-barrier-result",
@@ -2289,8 +2321,7 @@ def _v4_admission_nested_artifact_evidence(
         except (UnicodeDecodeError, json.JSONDecodeError):
             integrity = False
             missing.append(
-                f"{EventType.TOOL_ADMISSION_BLOCKED.value}:"
-                "investigation-admission-preflight-json"
+                f"{EventType.TOOL_ADMISSION_BLOCKED.value}:investigation-admission-preflight-json"
             )
             continue
         if not isinstance(preflight, dict):
@@ -2737,10 +2768,7 @@ def _request_evidence_payload(
         calculated_request_hash = sha256_text(canonical_json(request_body))
         provider_valid = bool(
             expected_provider is None
-            or (
-                isinstance(provider, str)
-                and provider == expected_provider
-            )
+            or (isinstance(provider, str) and provider == expected_provider)
         )
         rendered_context = _request_context(
             request_body,
@@ -2767,6 +2795,141 @@ def _request_evidence_payload(
         return False, None
 
 
+def _fixed_memory_delivery_evidence(
+    *,
+    root: Path,
+    manifest: RunManifest,
+    events: list[Any],
+) -> tuple[bool, dict[str, Any]]:
+    """Replay every request in one exact A/C row without exposing memory text."""
+
+    context_events = [event for event in events if event.type == EventType.CONTEXT_BUILT]
+    consumer_types = {EventType.MODEL_CALLED, EventType.MODEL_GENERATION_BLOCKED}
+    consumers = [event for event in events if event.type in consumer_types]
+    failures: list[int] = []
+    evidence_hashes: list[str] = []
+    entry_counts: list[int] = []
+    normalized_equalities: list[bool] = []
+    matched_consumer_sequences: list[int] = []
+    expected_condition = manifest.memory.condition.value
+    for context_event in context_events:
+        valid, artifact = _request_evidence_payload(
+            context_event,
+            artifact_root=root / "artifacts",
+            expected_provider=manifest.model.provider,
+        )
+        if not valid or artifact is None:
+            failures.append(context_event.sequence)
+            continue
+        try:
+            replayed = validate_fixed_memory_request_artifact(
+                artifact,
+                context_event_payload=context_event.payload,
+            )
+        except (ContractError, TypeError, ValueError):
+            failures.append(context_event.sequence)
+            continue
+        matching_consumers = [
+            event
+            for event in consumers
+            if event.sequence > context_event.sequence
+            and event.payload.get("request_artifact_id") == context_event.payload.get("artifact_id")
+            and event.payload.get("request_artifact_path")
+            == context_event.payload.get("artifact_path")
+            and event.payload.get("request_body_hash")
+            == context_event.payload.get("request_body_hash")
+        ]
+        try:
+            request_artifact_hash = sha256_bytes(
+                Path(str(context_event.payload.get("artifact_path"))).read_bytes()
+            )
+        except (OSError, TypeError, ValueError):
+            failures.append(context_event.sequence)
+            continue
+        provenance_valid = bool(
+            context_event.actor == "context-builder"
+            and context_event.payload.get("artifact_role") == "model-request-evidence"
+            and context_event.payload.get("provider_state_used") is False
+            and artifact.get("provider") == "openai"
+            and artifact.get("endpoint") == "/v1/responses"
+            and "worker_claim" not in artifact
+            and _request_runtime_contract_valid(artifact.get("request_body"), manifest)
+            and len(matching_consumers) == 1
+            and matching_consumers[0].actor
+            == (
+                "model-adapter"
+                if matching_consumers[0].type == EventType.MODEL_CALLED
+                else "budget-guard"
+            )
+            and matching_consumers[0].payload.get("request_artifact_hash") == request_artifact_hash
+        )
+        delivery = replayed.delivery
+        request_hash = replayed.request_body_sha256
+        normalized_hash = replayed.normalized_no_memory_request_body_sha256
+        condition_valid = bool(
+            delivery.condition == expected_condition
+            and (
+                (
+                    manifest.memory.condition == MemoryCondition.NO_MEMORY
+                    and delivery.entry_count == 0
+                    and delivery.bundle_sha256 is None
+                    and request_hash == normalized_hash
+                )
+                or (
+                    manifest.memory.condition == MemoryCondition.STRUCTURED
+                    and delivery.entry_count == 3
+                    and delivery.bundle_sha256 is not None
+                    and request_hash != normalized_hash
+                )
+            )
+        )
+        if not provenance_valid or not condition_valid:
+            failures.append(context_event.sequence)
+            continue
+        evidence_hashes.append(replayed.delivery_evidence_sha256)
+        entry_counts.append(delivery.entry_count)
+        normalized_equalities.append(request_hash == normalized_hash)
+        matched_consumer_sequences.append(matching_consumers[0].sequence)
+
+    no_retrieval = all(event.type != EventType.MEMORY_RETRIEVED for event in events)
+    expected_index = (
+        (None, None)
+        if manifest.memory.condition == MemoryCondition.NO_MEMORY
+        else (D110_INDEX_VERSION, D110_INDEX_CONTENT_HASH)
+    )
+    passed = bool(
+        _ac_fixed_bundle_readiness_manifest_matches(manifest)
+        and context_events
+        and len(context_events) == len(consumers)
+        and not failures
+        and len(evidence_hashes) == len(context_events)
+        and len(set(evidence_hashes)) == 1
+        and len(set(matched_consumer_sequences)) == len(consumers)
+        and set(matched_consumer_sequences) == {event.sequence for event in consumers}
+        and no_retrieval
+        and manifest.memory_policy_version == FIXED_BUNDLE_POLICY_VERSION
+        and (manifest.memory.index_version, manifest.memory.index_hash) == expected_index
+    )
+    return passed, {
+        "policy_version": manifest.memory_policy_version,
+        "condition": expected_condition,
+        "context_request_count": len(context_events),
+        "consumer_count": len(consumers),
+        "replayed_request_count": len(evidence_hashes),
+        "failed_context_sequences": failures,
+        "delivery_evidence_sha256": (
+            evidence_hashes[0] if evidence_hashes and len(set(evidence_hashes)) == 1 else None
+        ),
+        "entry_counts": entry_counts,
+        "normalized_request_equalities": normalized_equalities,
+        "matched_consumer_sequences": matched_consumer_sequences,
+        "retrieval_event_count": sum(event.type == EventType.MEMORY_RETRIEVED for event in events),
+        "index_version": manifest.memory.index_version,
+        "index_hash": manifest.memory.index_hash,
+        "memory_text_persisted_in_summary": False,
+    }
+
+
 def _v4_investigation_context_evidence(
     *,
     root: Path,
@@ -2782,10 +2945,7 @@ def _v4_investigation_context_evidence(
 
     artifact_root = root / "artifacts"
     artifact_store = ArtifactStore(artifact_root)
-    checkpoints_by_id = {
-        checkpoint.checkpoint_id: checkpoint
-        for checkpoint in checkpoints
-    }
+    checkpoints_by_id = {checkpoint.checkpoint_id: checkpoint for checkpoint in checkpoints}
     failed_sequences: list[int] = []
     verified_hashes: list[str] = []
     policy_version = manifest.context_policy_version
@@ -2829,38 +2989,26 @@ def _v4_investigation_context_evidence(
                 raise RecoveryError("model request evidence is invalid")
             rendered = _request_context(
                 request_evidence["request_body"],
-                allow_direct_context=(
-                    manifest.model.provider in {"mock", "replay"}
-                ),
+                allow_direct_context=(manifest.model.provider in {"mock", "replay"}),
             )
             context_build = request_evidence.get("context_build")
             if (
                 not isinstance(rendered, str)
                 or not isinstance(context_build, dict)
-                or context_build.get("schema_version")
-                != evidence_schema
+                or context_build.get("schema_version") != evidence_schema
             ):
                 raise RecoveryError("v4 context build evidence is invalid")
             recorded_ledger = context_build.get("investigation_ledger")
             if not isinstance(recorded_ledger, dict):
                 raise RecoveryError("v4 context lacks investigation evidence")
-            source_through = recorded_ledger.get(
-                "source_through_sequence"
-            )
+            source_through = recorded_ledger.get("source_through_sequence")
             if type(source_through) is not int or source_through < 0:
-                raise RecoveryError(
-                    "v4 investigation source sequence is invalid"
-                )
+                raise RecoveryError("v4 investigation source sequence is invalid")
             if source_through != context_event.sequence - 1:
                 raise RecoveryError(
-                    "v4 investigation source sequence is not the exact "
-                    "ContextBuilt prefix"
+                    "v4 investigation source sequence is not the exact ContextBuilt prefix"
                 )
-            source_events = [
-                event
-                for event in events
-                if event.sequence <= source_through
-            ]
+            source_events = [event for event in events if event.sequence <= source_through]
             checkpoint_events = [
                 event
                 for event in source_events
@@ -2872,14 +3020,10 @@ def _v4_investigation_context_evidence(
             ]
             checkpoint = None
             if checkpoint_events:
-                checkpoint_id = checkpoint_events[-1].payload[
-                    "checkpoint_id"
-                ]
+                checkpoint_id = checkpoint_events[-1].payload["checkpoint_id"]
                 checkpoint = checkpoints_by_id.get(checkpoint_id)
                 if checkpoint is None:
-                    raise RecoveryError(
-                        "v4 context checkpoint is unavailable"
-                    )
+                    raise RecoveryError("v4 context checkpoint is unavailable")
             parsed_context = json.loads(rendered)
             if not isinstance(parsed_context, dict):
                 raise RecoveryError("v4 rendered context is not an object")
@@ -2901,32 +3045,20 @@ def _v4_investigation_context_evidence(
                 public_review_contract=manifest.public_review_contract,
                 model_provider=manifest.model.provider,
             )
-            ledger_evidence = rebuilt.evidence[
-                "investigation_ledger"
-            ]
+            ledger_evidence = rebuilt.evidence["investigation_ledger"]
             if (
                 rebuilt.rendered != rendered
                 or rebuilt.evidence != context_build
-                or context_event.payload.get(
-                    "investigation_ledger_hash"
-                )
+                or context_event.payload.get("investigation_ledger_hash")
                 != ledger_evidence["content_hash"]
-                or context_event.payload.get(
-                    "investigation_source_through_sequence"
-                )
+                or context_event.payload.get("investigation_source_through_sequence")
                 != ledger_evidence["source_through_sequence"]
-                or context_event.payload.get(
-                    "investigation_no_progress_streak"
-                )
+                or context_event.payload.get("investigation_no_progress_streak")
                 != ledger_evidence["no_progress_streak"]
-                or context_event.payload.get(
-                    "investigation_exploration_admitted"
-                )
+                or context_event.payload.get("investigation_exploration_admitted")
                 != ledger_evidence["exploration_admitted"]
             ):
-                raise RecoveryError(
-                    "v4 investigation context failed recomputation"
-                )
+                raise RecoveryError("v4 investigation context failed recomputation")
             if policy_version in {
                 "phase-evidence-v5",
                 "phase-evidence-v6",
@@ -2942,49 +3074,33 @@ def _v4_investigation_context_evidence(
                     manifest=manifest,
                     projection_stage="pre_generation",
                 )
-                rendered_ledger = parsed_context.get(
-                    "investigation_ledger"
-                )
+                rendered_ledger = parsed_context.get("investigation_ledger")
                 if (
                     not isinstance(rendered_ledger, dict)
-                    or rendered_ledger.get("tail_policy")
-                    != expected_tail
+                    or rendered_ledger.get("tail_policy") != expected_tail
                 ):
                     raise RecoveryError(
-                        "v5 investigation token tail failed independent "
-                        "recomputation"
+                        "v5 investigation token tail failed independent recomputation"
                     )
                 v5_mirrors = {
-                    "investigation_tail_block_reasons": ledger_evidence[
-                        "tail_block_reasons"
-                    ],
-                    "investigation_tail_remaining_tokens": ledger_evidence[
-                        "tail_remaining_tokens"
-                    ],
+                    "investigation_tail_block_reasons": ledger_evidence["tail_block_reasons"],
+                    "investigation_tail_remaining_tokens": ledger_evidence["tail_remaining_tokens"],
                     "investigation_tail_observation_count": ledger_evidence[
                         "tail_observation_count"
                     ],
                     "investigation_tail_max_observed_input_tokens": (
-                        ledger_evidence[
-                            "tail_max_observed_input_tokens"
-                        ]
+                        ledger_evidence["tail_max_observed_input_tokens"]
                     ),
                     "investigation_tail_max_positive_growth": (
                         ledger_evidence["tail_max_positive_growth"]
                     ),
                     "investigation_tail_projected_next_input_tokens": (
-                        ledger_evidence[
-                            "tail_projected_next_input_tokens"
-                        ]
+                        ledger_evidence["tail_projected_next_input_tokens"]
                     ),
                     "investigation_tail_projected_model_turns": (
-                        ledger_evidence[
-                            "tail_projected_model_turns"
-                        ]
+                        ledger_evidence["tail_projected_model_turns"]
                     ),
-                    "investigation_tail_reserved_tokens": ledger_evidence[
-                        "tail_reserved_tokens"
-                    ],
+                    "investigation_tail_reserved_tokens": ledger_evidence["tail_reserved_tokens"],
                     "investigation_tail_max_output_tokens": ledger_evidence[
                         "tail_max_output_tokens"
                     ],
@@ -2993,9 +3109,7 @@ def _v4_investigation_context_evidence(
                     context_event.payload.get(field) != expected
                     for field, expected in v5_mirrors.items()
                 ):
-                    raise RecoveryError(
-                        "v5 investigation tail mirrors failed recomputation"
-                    )
+                    raise RecoveryError("v5 investigation tail mirrors failed recomputation")
             verified_hashes.append(ledger_evidence["content_hash"])
         except (
             KeyError,
@@ -3011,9 +3125,7 @@ def _v4_investigation_context_evidence(
         not failed_sequences,
         {
             "context_count": len(context_events),
-            "verified_context_count": (
-                len(context_events) - len(failed_sequences)
-            ),
+            "verified_context_count": (len(context_events) - len(failed_sequences)),
             "failed_context_sequences": failed_sequences,
             "ledger_hashes": verified_hashes,
         },
@@ -3029,15 +3141,9 @@ def _v9_truncate_review_json_strings(value: Any, limit: int) -> Any:
         marker = "\n...[field truncated for model context]"
         return value[: max(0, limit - len(marker))] + marker
     if isinstance(value, list):
-        return [
-            _v9_truncate_review_json_strings(item, limit)
-            for item in value
-        ]
+        return [_v9_truncate_review_json_strings(item, limit) for item in value]
     if isinstance(value, dict):
-        return {
-            key: _v9_truncate_review_json_strings(item, limit)
-            for key, item in value.items()
-        }
+        return {key: _v9_truncate_review_json_strings(item, limit) for key, item in value.items()}
     return value
 
 
@@ -3054,20 +3160,20 @@ def _v9_semantic_review_tool_result(raw: str) -> tuple[Any, bool]:
             parsed,
             per_string_limit,
         )
-        if len(
-            json.dumps(truncated, ensure_ascii=False, default=str)
-        ) <= _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT:
+        if (
+            len(json.dumps(truncated, ensure_ascii=False, default=str))
+            <= _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT
+        ):
             return truncated, True
         per_string_limit //= 2
     truncated = _v9_truncate_review_json_strings(parsed, 256)
-    if len(
-        json.dumps(truncated, ensure_ascii=False, default=str)
-    ) <= _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT:
+    if (
+        len(json.dumps(truncated, ensure_ascii=False, default=str))
+        <= _V9_REVIEW_TOOL_RESULT_CHARACTER_LIMIT
+    ):
         return truncated, True
     top_level_keys = (
-        [str(key)[:120] for key in list(parsed)[:20]]
-        if isinstance(parsed, dict)
-        else []
+        [str(key)[:120] for key in list(parsed)[:20]] if isinstance(parsed, dict) else []
     )
     return {
         "truncated": True,
@@ -3090,20 +3196,14 @@ def _v9_recompute_review_anchor(
     if event.type != EventType.TOOL_SUCCEEDED:
         raise RecoveryError("v9 review anchor is not ToolSucceeded")
     try:
-        descriptor = Artifact.model_validate(
-            event.payload.get("result_artifact")
-        )
+        descriptor = Artifact.model_validate(event.payload.get("result_artifact"))
     except ValueError as exc:
-        raise RecoveryError(
-            "v9 review anchor lacks a valid result artifact"
-        ) from exc
+        raise RecoveryError("v9 review anchor lacks a valid result artifact") from exc
     if (
         event.payload.get("artifact_id") != descriptor.artifact_id
         or event.payload.get("artifact_path") != descriptor.path
     ):
-        raise RecoveryError(
-            "v9 review anchor conflicts with its CAS descriptor"
-        )
+        raise RecoveryError("v9 review anchor conflicts with its CAS descriptor")
     raw = artifact_store.read_bytes(descriptor).decode(
         "utf-8",
         errors="strict",
@@ -3111,9 +3211,7 @@ def _v9_recompute_review_anchor(
     rendered_result, truncated = _v9_semantic_review_tool_result(raw)
     payload = dict(event.payload)
     payload["tool_result"] = rendered_result
-    included_characters = len(
-        json.dumps(rendered_result, ensure_ascii=False, default=str)
-    )
+    included_characters = len(json.dumps(rendered_result, ensure_ascii=False, default=str))
     return (
         {
             "sequence": event.sequence,
@@ -3148,15 +3246,10 @@ def _v10_recompute_review_anchor(
     tool = event.payload.get("tool")
     if tool not in {"run_check", "read_file"}:
         return rendered, evidence
-    if (
-        event.actor != "tool-gateway"
-        or event.payload.get("status") != "succeeded"
-    ):
+    if event.actor != "tool-gateway" or event.payload.get("status") != "succeeded":
         raise RecoveryError("v10 review anchor has an invalid tool identity")
     descriptor = Artifact.model_validate(event.payload.get("result_artifact"))
-    document = json.loads(
-        artifact_store.read_bytes(descriptor).decode("utf-8", errors="strict")
-    )
+    document = json.loads(artifact_store.read_bytes(descriptor).decode("utf-8", errors="strict"))
     tool_result = rendered.get("payload", {}).get("tool_result")
     if not isinstance(document, dict) or not isinstance(tool_result, dict):
         raise RecoveryError("v10 review anchor result is not an object")
@@ -3166,9 +3259,7 @@ def _v10_recompute_review_anchor(
         or document.get("worktree_diff_hash") != event_diff_hash
         or tool_result.get("worktree_diff_hash") != event_diff_hash
     ):
-        raise RecoveryError(
-            "v10 review anchor conflicts with its current-diff result"
-        )
+        raise RecoveryError("v10 review anchor conflicts with its current-diff result")
 
     rendered_truncated = evidence.get("truncated") is True
     if tool == "run_check":
@@ -3195,39 +3286,27 @@ def _v10_recompute_review_anchor(
             )
             or (document["passed"] is True and document["timed_out"] is True)
         ):
-            raise RecoveryError(
-                "v10 run_check anchor conflicts with its result document"
-            )
+            raise RecoveryError("v10 run_check anchor conflicts with its result document")
         evidence["truncated"] = bool(
-            rendered_truncated
-            or document["timed_out"]
-            or document["truncated"]
+            rendered_truncated or document["timed_out"] or document["truncated"]
         )
         return rendered, evidence
 
     if (
         not isinstance(document.get("path"), str)
         or not isinstance(document.get("content"), str)
-        or (
-            "truncated" in document
-            and type(document.get("truncated")) is not bool
-        )
+        or ("truncated" in document and type(document.get("truncated")) is not bool)
         or (
             not rendered_truncated
             and (
                 tool_result.get("path") != document.get("path")
                 or tool_result.get("content") != document.get("content")
-                or tool_result.get("worktree_diff_hash")
-                != document.get("worktree_diff_hash")
+                or tool_result.get("worktree_diff_hash") != document.get("worktree_diff_hash")
             )
         )
     ):
-        raise RecoveryError(
-            "v10 read_file anchor conflicts with its result document"
-        )
-    evidence["truncated"] = bool(
-        rendered_truncated or document.get("truncated") is True
-    )
+        raise RecoveryError("v10 read_file anchor conflicts with its result document")
+    evidence["truncated"] = bool(rendered_truncated or document.get("truncated") is True)
     return rendered, evidence
 
 
@@ -3269,14 +3348,11 @@ def _v9_review_evidence_context_contract(
             context_build = request_evidence.get("context_build")
             visible = parsed.get("review_evidence")
             build = (
-                context_build.get("review_evidence")
-                if isinstance(context_build, dict)
-                else None
+                context_build.get("review_evidence") if isinstance(context_build, dict) else None
             )
             if (
                 not isinstance(context_build, dict)
-                or context_build.get("schema_version")
-                != "context-build-evidence-v9"
+                or context_build.get("schema_version") != "context-build-evidence-v9"
                 or not isinstance(visible, dict)
                 or not isinstance(build, dict)
                 or visible.get("schema_version") != REVIEW_EVIDENCE_SCHEMA
@@ -3292,11 +3368,7 @@ def _v9_review_evidence_context_contract(
             )
             if not isinstance(diff_hash, str):
                 raise RecoveryError("v9 review evidence has no diff identity")
-            source_events = [
-                event
-                for event in events
-                if event.sequence < context_event.sequence
-            ]
+            source_events = [event for event in events if event.sequence < context_event.sequence]
             readiness = diff_bound_evidence(
                 package.public,
                 source_events,
@@ -3312,24 +3384,14 @@ def _v9_review_evidence_context_contract(
                 and readiness.review_event_sequence is not None
             )
             requested_check_sequences = (
-                list(readiness.current_diff_check_event_sequences)
-                if active
-                else []
+                list(readiness.current_diff_check_event_sequences) if active else []
             )
-            requested_diff_sequence = (
-                readiness.review_event_sequence if active else None
-            )
+            requested_diff_sequence = readiness.review_event_sequence if active else None
             requested_sequences = [
                 *requested_check_sequences,
-                *(
-                    [requested_diff_sequence]
-                    if requested_diff_sequence is not None
-                    else []
-                ),
+                *([requested_diff_sequence] if requested_diff_sequence is not None else []),
             ]
-            events_by_sequence = {
-                event.sequence: event for event in source_events
-            }
+            events_by_sequence = {event.sequence: event for event in source_events}
             expected_pinned_results: list[dict[str, Any]] = []
             expected_pinned_tool_results: list[dict[str, Any]] = []
             complete_sequences: list[int] = []
@@ -3337,37 +3399,24 @@ def _v9_review_evidence_context_contract(
             for sequence in requested_sequences:
                 source_event = events_by_sequence.get(sequence)
                 if source_event is None:
-                    raise RecoveryError(
-                        "v9 review anchor durable event is unavailable"
-                    )
-                rendered_anchor, tool_anchor = (
-                    _v9_recompute_review_anchor(
-                        source_event,
-                        artifact_store=artifact_store,
-                    )
+                    raise RecoveryError("v9 review anchor durable event is unavailable")
+                rendered_anchor, tool_anchor = _v9_recompute_review_anchor(
+                    source_event,
+                    artifact_store=artifact_store,
                 )
                 if tool_anchor.get("worktree_diff_hash") != diff_hash:
-                    raise RecoveryError(
-                        "v9 review anchor is not bound to the current diff"
-                    )
+                    raise RecoveryError("v9 review anchor is not bound to the current diff")
                 expected_pinned_results.append(rendered_anchor)
                 expected_pinned_tool_results.append(tool_anchor)
-                if (
-                    tool_anchor["available"] is True
-                    and tool_anchor["truncated"] is False
-                ):
+                if tool_anchor["available"] is True and tool_anchor["truncated"] is False:
                     complete_sequences.append(sequence)
                 else:
                     incomplete_sequences.append(sequence)
             check_sequences = [
-                sequence
-                for sequence in requested_check_sequences
-                if sequence in complete_sequences
+                sequence for sequence in requested_check_sequences if sequence in complete_sequences
             ]
             diff_sequence = (
-                requested_diff_sequence
-                if requested_diff_sequence in complete_sequences
-                else None
+                requested_diff_sequence if requested_diff_sequence in complete_sequences else None
             )
             citable = [
                 *check_sequences,
@@ -3391,76 +3440,57 @@ def _v9_review_evidence_context_contract(
                 *visible_fields,
                 "pinned_tool_results",
             }:
-                raise RecoveryError(
-                    "v9 review evidence has unknown or missing fields"
-                )
+                raise RecoveryError("v9 review evidence has unknown or missing fields")
             if any(
-                canonical_json(visible.get(key))
-                != canonical_json(value)
+                canonical_json(visible.get(key)) != canonical_json(value)
                 for key, value in visible_fields.items()
             ):
                 raise RecoveryError("v9 visible review anchors failed recomputation")
             if any(
-                canonical_json(build.get(key))
-                != canonical_json(value)
+                canonical_json(build.get(key)) != canonical_json(value)
                 for key, value in visible_fields.items()
             ):
                 raise RecoveryError("v9 review build anchors failed recomputation")
             mirror_fields = {
                 "review_evidence_pinning_active": active,
                 "review_evidence_worktree_diff_hash": diff_hash,
-                "review_evidence_mutation_event_sequence": (
-                    readiness.mutation_event_sequence
-                ),
-                "review_evidence_passing_check_event_sequences": (
-                    check_sequences
-                ),
+                "review_evidence_mutation_event_sequence": (readiness.mutation_event_sequence),
+                "review_evidence_passing_check_event_sequences": (check_sequences),
                 "review_evidence_source_get_diff_sequence": diff_sequence,
                 "review_evidence_citable_event_sequences": citable,
-                "review_evidence_incomplete_event_sequences": (
-                    incomplete_sequences
-                ),
+                "review_evidence_incomplete_event_sequences": (incomplete_sequences),
             }
             if any(
-                canonical_json(context_event.payload.get(key))
-                != canonical_json(value)
+                canonical_json(context_event.payload.get(key)) != canonical_json(value)
                 for key, value in mirror_fields.items()
             ):
                 raise RecoveryError("v9 review evidence mirrors are invalid")
             pinned_results = visible.get("pinned_results")
             pinned_tool_results = build.get("pinned_tool_results")
-            if (
-                canonical_json(pinned_results)
-                != canonical_json(expected_pinned_results)
-                or canonical_json(pinned_tool_results)
-                != canonical_json(expected_pinned_tool_results)
+            if canonical_json(pinned_results) != canonical_json(
+                expected_pinned_results
+            ) or canonical_json(pinned_tool_results) != canonical_json(
+                expected_pinned_tool_results
             ):
-                raise RecoveryError(
-                    "v9 pinned review results failed CAS recomputation"
-                )
+                raise RecoveryError("v9 pinned review results failed CAS recomputation")
             recent_events = parsed.get("recent_events")
             recent_sequences = (
                 [
                     item.get("sequence")
                     for item in recent_events
-                    if isinstance(item, dict)
-                    and type(item.get("sequence")) is int
+                    if isinstance(item, dict) and type(item.get("sequence")) is int
                 ]
                 if isinstance(recent_events, list)
                 else []
             )
-            pinned_sequences = [
-                item["sequence"] for item in expected_pinned_results
-            ]
+            pinned_sequences = [item["sequence"] for item in expected_pinned_results]
             if (
                 not isinstance(recent_events, list)
                 or len(recent_sequences) != len(recent_events)
                 or len(pinned_sequences) != len(set(pinned_sequences))
                 or set(pinned_sequences).intersection(recent_sequences)
             ):
-                raise RecoveryError(
-                    "v9 review anchors are duplicated in recent events"
-                )
+                raise RecoveryError("v9 review anchors are duplicated in recent events")
             if visible.get("citation_rule") != (
                 "review_task may cite only citable_event_sequences; "
                 "investigation_ledger source_call_sequence values are not "
@@ -3468,13 +3498,9 @@ def _v9_review_evidence_context_contract(
             ):
                 raise RecoveryError("v9 review citation rule is invalid")
             presented = context_build.get("tool_results")
-            if (
-                not isinstance(presented, list)
-                or not all(
-                    isinstance(item, dict)
-                    and type(item.get("event_sequence")) is int
-                    for item in presented
-                )
+            if not isinstance(presented, list) or not all(
+                isinstance(item, dict) and type(item.get("event_sequence")) is int
+                for item in presented
             ):
                 raise RecoveryError("v9 review tool results are invalid")
             for expected in expected_pinned_tool_results:
@@ -3483,15 +3509,11 @@ def _v9_review_evidence_context_contract(
                     for item in presented
                     if isinstance(item, dict)
                     and type(item.get("event_sequence")) is int
-                    and item.get("event_sequence")
-                    == expected["event_sequence"]
-                    and canonical_json(item)
-                    == canonical_json(expected)
+                    and item.get("event_sequence") == expected["event_sequence"]
+                    and canonical_json(item) == canonical_json(expected)
                 ]
                 if len(matches) != 1:
-                    raise RecoveryError(
-                        "v9 review anchor presentation failed CAS recomputation"
-                    )
+                    raise RecoveryError("v9 review anchor presentation failed CAS recomputation")
             if active:
                 active_sequences.append(context_event.sequence)
                 verified_anchor_sequences.extend(citable)
@@ -3505,9 +3527,7 @@ def _v9_review_evidence_context_contract(
             json.JSONDecodeError,
         ) as exc:
             failed_sequences.append(context_event.sequence)
-            failure_reasons.append(
-                {"sequence": context_event.sequence, "reason": str(exc)}
-            )
+            failure_reasons.append({"sequence": context_event.sequence, "reason": str(exc)})
     return bool(context_events) and not failed_sequences, {
         "context_count": len(context_events),
         "verified_context_count": len(context_events) - len(failed_sequences),
@@ -3524,11 +3544,7 @@ def _v9_review_rejection_terminal_contract(
     """Verify the three-rejection stop and mutation-epoch reset contract."""
 
     mutations = sorted(
-        (
-            event
-            for event in events
-            if event.type == EventType.PATCH_APPLIED
-        ),
+        (event for event in events if event.type == EventType.PATCH_APPLIED),
         key=lambda event: event.sequence,
     )
     terminal_rejection_sequences: list[int] = []
@@ -3537,18 +3553,13 @@ def _v9_review_rejection_terminal_contract(
     forbidden_after_terminal: dict[int, list[int]] = {}
     for index, mutation in enumerate(mutations):
         next_mutation_sequence = (
-            mutations[index + 1].sequence
-            if index + 1 < len(mutations)
-            else None
+            mutations[index + 1].sequence if index + 1 < len(mutations) else None
         )
         epoch_failures = [
             event
             for event in events
             if event.sequence > mutation.sequence
-            and (
-                next_mutation_sequence is None
-                or event.sequence < next_mutation_sequence
-            )
+            and (next_mutation_sequence is None or event.sequence < next_mutation_sequence)
             and event.type == EventType.TOOL_FAILED
             and event.payload.get("tool") == "review_task"
         ]
@@ -3557,8 +3568,7 @@ def _v9_review_rejection_terminal_contract(
             previous_failures = [
                 event
                 for event in events
-                if previous_mutation.sequence < event.sequence
-                < mutation.sequence
+                if previous_mutation.sequence < event.sequence < mutation.sequence
                 and event.type == EventType.TOOL_FAILED
                 and event.payload.get("tool") == "review_task"
             ]
@@ -3597,15 +3607,12 @@ def _v9_review_rejection_terminal_contract(
         run_failed_after = [
             event
             for event in events
-            if event.sequence > third.sequence
-            and event.type == EventType.RUN_FAILED
+            if event.sequence > third.sequence and event.type == EventType.RUN_FAILED
         ]
         terminal_failure_bound = bool(
             len(run_failed_after) == 1
-            and run_failed_after[0].payload.get("error_type")
-            == "SubmissionProtocolError"
-            and run_failed_after[0].payload.get("error_code")
-            == "SUBMISSION_PROTOCOL_ERROR"
+            and run_failed_after[0].payload.get("error_type") == "SubmissionProtocolError"
+            and run_failed_after[0].payload.get("error_code") == "SUBMISSION_PROTOCOL_ERROR"
             and run_failed_after[0].payload.get("message")
             == "structured review evidence was rejected three times"
         )
@@ -3613,8 +3620,7 @@ def _v9_review_rejection_terminal_contract(
             not later_forbidden
             and terminal_failure_bound
             and not any(
-                event.sequence > third.sequence
-                and event.type == EventType.RUN_COMPLETED
+                event.sequence > third.sequence and event.type == EventType.RUN_COMPLETED
                 for event in events
             )
         )
@@ -3626,12 +3632,9 @@ def _v9_review_rejection_terminal_contract(
         "terminal_rejection_count": len(terminal_rejection_sequences),
         "terminal_rejection_sequences": terminal_rejection_sequences,
         "verified_terminal_rejection_count": (
-            len(terminal_rejection_sequences)
-            - len(failed_terminal_rejection_sequences)
+            len(terminal_rejection_sequences) - len(failed_terminal_rejection_sequences)
         ),
-        "failed_terminal_rejection_sequences": (
-            failed_terminal_rejection_sequences
-        ),
+        "failed_terminal_rejection_sequences": (failed_terminal_rejection_sequences),
         "forbidden_after_terminal_sequences": forbidden_after_terminal,
         "reset_mutation_sequences": reset_mutation_sequences,
     }
@@ -3645,9 +3648,7 @@ def _v10_base_provenance_source_evidence(
 ) -> dict[str, Any]:
     """Bind the V10 nested provenance descriptor and exact CAS bytes."""
 
-    started = [
-        event for event in events if event.type == EventType.RUN_STARTED
-    ]
+    started = [event for event in events if event.type == EventType.RUN_STARTED]
     details: dict[str, Any] = {
         "run_started_count": len(started),
         "event_sequence": None,
@@ -3660,9 +3661,7 @@ def _v10_base_provenance_source_evidence(
         return details
     event = started[0]
     details["event_sequence"] = event.sequence
-    raw_descriptor = event.payload.get(
-        "public_review_base_provenance_artifact"
-    )
+    raw_descriptor = event.payload.get("public_review_base_provenance_artifact")
     cas_valid, cas_item, content = _nested_cas_artifact_evidence(
         artifact_root=(root / "artifacts").resolve(),
         event_id=event.event_id,
@@ -3674,17 +3673,14 @@ def _v10_base_provenance_source_evidence(
         descriptor = Artifact.model_validate(raw_descriptor)
         details["descriptor"] = descriptor.model_dump(mode="json")
         document = (
-            json.loads(content.decode("utf-8", errors="strict"))
-            if content is not None
-            else None
+            json.loads(content.decode("utf-8", errors="strict")) if content is not None else None
         )
         details["json_object_valid"] = isinstance(document, dict)
         details["event_identity_valid"] = bool(
             event.actor == "runner"
             and event.run_id == manifest.run_id
             and event.payload.get("task_id") == manifest.task_id
-            and descriptor.media_type
-            == "application/json; charset=utf-8"
+            and descriptor.media_type == "application/json; charset=utf-8"
             and cas_valid
         )
     except (UnicodeDecodeError, ValueError, RecoveryError):
@@ -3711,10 +3707,7 @@ def _v10_public_coverage_contract_evidence(
     requirement_ids: list[str] = []
     contract_valid = False
     if contract is not None:
-        requirement_ids = [
-            requirement.requirement_id
-            for requirement in contract.requirements
-        ]
+        requirement_ids = [requirement.requirement_id for requirement in contract.requirements]
         target_ids = [
             target.coverage_target_id
             for requirement in contract.requirements
@@ -3733,10 +3726,7 @@ def _v10_public_coverage_contract_evidence(
         manifest.tool_schema_version == "v5"
         and manifest.context_policy_version == "phase-evidence-v10"
         and (
-            (
-                manifest.model.provider == "mock"
-                and manifest.experiment is None
-            )
+            (manifest.model.provider == "mock" and manifest.experiment is None)
             or (
                 manifest.model.provider == "openai"
                 and manifest.experiment is not None
@@ -3749,10 +3739,7 @@ def _v10_public_coverage_contract_evidence(
         manifest.tool_schema_version == "v6"
         and manifest.context_policy_version == "phase-evidence-v11"
         and (
-            (
-                manifest.model.provider == "mock"
-                and manifest.experiment is None
-            )
+            (manifest.model.provider == "mock" and manifest.experiment is None)
             or (
                 manifest.model.provider == "openai"
                 and manifest.experiment is not None
@@ -3762,9 +3749,7 @@ def _v10_public_coverage_contract_evidence(
         )
     )
     exact_selector = v10_selector or v11_selector
-    started = [
-        event for event in events if event.type == EventType.RUN_STARTED
-    ]
+    started = [event for event in events if event.type == EventType.RUN_STARTED]
     base_provenance_valid = False
     base_provenance_event_sequence: int | None = None
     base_provenance_descriptor: dict[str, Any] | None = None
@@ -3773,9 +3758,7 @@ def _v10_public_coverage_contract_evidence(
     if len(started) == 1 and contract is not None:
         event = started[0]
         base_provenance_event_sequence = event.sequence
-        raw_descriptor = event.payload.get(
-            "public_review_base_provenance_artifact"
-        )
+        raw_descriptor = event.payload.get("public_review_base_provenance_artifact")
         cas_valid, cas_item, content = _nested_cas_artifact_evidence(
             artifact_root=(root / "artifacts").resolve(),
             event_id=event.event_id,
@@ -3791,21 +3774,18 @@ def _v10_public_coverage_contract_evidence(
                 if content is not None
                 else None
             )
-            base_provenance_document = (
-                validate_public_review_base_provenance_document(
-                    document,
-                    contract=contract,
-                    repository_url=package.public.repository.url,
-                    base_commit=package.public.repository.base_commit,
-                )
+            base_provenance_document = validate_public_review_base_provenance_document(
+                document,
+                contract=contract,
+                repository_url=package.public.repository.url,
+                base_commit=package.public.repository.base_commit,
             )
             base_provenance_valid = bool(
                 cas_valid
                 and event.actor == "runner"
                 and event.run_id == manifest.run_id
                 and event.payload.get("task_id") == manifest.task_id
-                and descriptor.media_type
-                == "application/json; charset=utf-8"
+                and descriptor.media_type == "application/json; charset=utf-8"
             )
         except (
             UnicodeDecodeError,
@@ -3824,27 +3804,18 @@ def _v10_public_coverage_contract_evidence(
         and len(requirement_ids) == len(set(requirement_ids))
         and bool(target_ids)
         and len(target_ids) == len(set(target_ids))
-        and all(
-            requirement.coverage_targets
-            for requirement in contract.requirements
-        )
+        and all(requirement.coverage_targets for requirement in contract.requirements)
     )
     return passed, {
         "selector_valid": exact_selector,
         "contract_declared": contract is not None,
-        "contract_schema_version": (
-            contract.schema_version if contract is not None else None
-        ),
-        "contract_content_hash": (
-            contract.content_hash if contract is not None else None
-        ),
+        "contract_schema_version": (contract.schema_version if contract is not None else None),
+        "contract_content_hash": (contract.content_hash if contract is not None else None),
         "requirement_ids": requirement_ids,
         "coverage_target_ids": target_ids,
         "coverage_target_count": len(target_ids),
         "base_provenance_valid": base_provenance_valid,
-        "base_provenance_event_sequence": (
-            base_provenance_event_sequence
-        ),
+        "base_provenance_event_sequence": (base_provenance_event_sequence),
         "base_provenance_descriptor": base_provenance_descriptor,
         "base_provenance_cas": base_provenance_cas,
         "base_provenance_document": base_provenance_document,
@@ -3875,9 +3846,7 @@ def _v10_review_evidence_context_contract(
             "context_count": len(context_events),
             "verified_context_count": 0,
             "active_context_sequences": [],
-            "failed_context_sequences": [
-                event.sequence for event in context_events
-            ],
+            "failed_context_sequences": [event.sequence for event in context_events],
             "failure_reasons": [
                 {
                     "sequence": event.sequence,
@@ -3887,9 +3856,7 @@ def _v10_review_evidence_context_contract(
             ],
         }
     ordered_targets = [
-        target
-        for requirement in contract.requirements
-        for target in requirement.coverage_targets
+        target for requirement in contract.requirements for target in requirement.coverage_targets
     ]
     target_ids = [target.coverage_target_id for target in ordered_targets]
     artifact_root = root / "artifacts"
@@ -3913,29 +3880,19 @@ def _v10_review_evidence_context_contract(
             )
             parsed = json.loads(rendered) if rendered is not None else None
             context_build = request_evidence.get("context_build")
-            visible = (
-                parsed.get("review_evidence")
-                if isinstance(parsed, dict)
-                else None
-            )
+            visible = parsed.get("review_evidence") if isinstance(parsed, dict) else None
             build = (
-                context_build.get("review_evidence")
-                if isinstance(context_build, dict)
-                else None
+                context_build.get("review_evidence") if isinstance(context_build, dict) else None
             )
             if (
                 not isinstance(parsed, dict)
                 or not isinstance(context_build, dict)
-                or context_build.get("schema_version")
-                != expected_context_schema
+                or context_build.get("schema_version") != expected_context_schema
                 or not isinstance(visible, dict)
                 or not isinstance(build, dict)
-                or visible.get("schema_version")
-                != REVIEW_EVIDENCE_V2_SCHEMA
-                or build.get("schema_version")
-                != REVIEW_EVIDENCE_V2_SCHEMA
-                or parsed.get("public_review_contract")
-                != contract.model_dump(mode="json")
+                or visible.get("schema_version") != REVIEW_EVIDENCE_V2_SCHEMA
+                or build.get("schema_version") != REVIEW_EVIDENCE_V2_SCHEMA
+                or parsed.get("public_review_contract") != contract.model_dump(mode="json")
             ):
                 raise RecoveryError("v10 review evidence envelope is invalid")
             checkpoint = parsed.get("checkpoint")
@@ -3947,11 +3904,7 @@ def _v10_review_evidence_context_contract(
             )
             if not isinstance(diff_hash, str):
                 raise RecoveryError("v10 review evidence has no diff identity")
-            source_events = [
-                event
-                for event in events
-                if event.sequence < context_event.sequence
-            ]
+            source_events = [event for event in events if event.sequence < context_event.sequence]
             readiness = diff_bound_evidence(
                 package.public,
                 source_events,
@@ -3967,9 +3920,7 @@ def _v10_review_evidence_context_contract(
                 and not readiness.pending_checks
                 and readiness.review_event_sequence is not None
             )
-            events_by_sequence = {
-                event.sequence: event for event in source_events
-            }
+            events_by_sequence = {event.sequence: event for event in source_events}
             rendered_by_sequence: dict[
                 int,
                 tuple[dict[str, Any], dict[str, Any]],
@@ -3991,22 +3942,15 @@ def _v10_review_evidence_context_contract(
                     source_event,
                     artifact_store=artifact_store,
                 )
-                if (
-                    tool_anchor.get("worktree_diff_hash")
-                    != expected_diff_hash
-                ):
-                    raise RecoveryError(
-                        "v10 review anchor is not bound to the current diff"
-                    )
+                if tool_anchor.get("worktree_diff_hash") != expected_diff_hash:
+                    raise RecoveryError("v10 review anchor is not bound to the current diff")
                 cache[source_event.sequence] = (
                     rendered_anchor,
                     tool_anchor,
                 )
                 return rendered_anchor, tool_anchor
 
-            target_mapping: dict[str, list[int]] = {
-                target_id: [] for target_id in target_ids
-            }
+            target_mapping: dict[str, list[int]] = {target_id: [] for target_id in target_ids}
             if active:
                 mutation_sequence = readiness.mutation_event_sequence
                 if type(mutation_sequence) is not int:
@@ -4029,20 +3973,15 @@ def _v10_review_evidence_context_contract(
                             {
                                 event.sequence
                                 for event in passing_events
-                                if event.payload.get("check_id")
-                                in target.check_ids
+                                if event.payload.get("check_id") in target.check_ids
                             }
                         )
                         continue
                     for candidate in inspection_candidates:
                         rendered_anchor, _ = render_anchor(candidate)
-                        tool_result = rendered_anchor["payload"].get(
-                            "tool_result"
-                        )
+                        tool_result = rendered_anchor["payload"].get("tool_result")
                         content = (
-                            tool_result.get("content")
-                            if isinstance(tool_result, dict)
-                            else None
+                            tool_result.get("content") if isinstance(tool_result, dict) else None
                         )
                         if (
                             isinstance(tool_result, dict)
@@ -4050,9 +3989,7 @@ def _v10_review_evidence_context_contract(
                             and isinstance(content, str)
                             and target.anchor in content
                         ):
-                            target_mapping[target.coverage_target_id] = [
-                                candidate.sequence
-                            ]
+                            target_mapping[target.coverage_target_id] = [candidate.sequence]
                             break
 
             requested_sequences: list[int] = []
@@ -4065,10 +4002,7 @@ def _v10_review_evidence_context_contract(
                     if sequence not in requested_sequences:
                         requested_sequences.append(sequence)
                 source_sequence = readiness.review_event_sequence
-                if (
-                    type(source_sequence) is int
-                    and source_sequence not in requested_sequences
-                ):
+                if type(source_sequence) is int and source_sequence not in requested_sequences:
                     requested_sequences.append(source_sequence)
 
             expected_pinned_results: list[dict[str, Any]] = []
@@ -4078,26 +4012,17 @@ def _v10_review_evidence_context_contract(
             for sequence in requested_sequences:
                 source_event = events_by_sequence.get(sequence)
                 if source_event is None:
-                    raise RecoveryError(
-                        "v10 review anchor durable event is unavailable"
-                    )
+                    raise RecoveryError("v10 review anchor durable event is unavailable")
                 rendered_anchor, tool_anchor = render_anchor(source_event)
                 expected_pinned_results.append(rendered_anchor)
                 expected_pinned_tool_results.append(tool_anchor)
-                if (
-                    tool_anchor.get("available") is True
-                    and tool_anchor.get("truncated") is False
-                ):
+                if tool_anchor.get("available") is True and tool_anchor.get("truncated") is False:
                     complete_sequences.append(sequence)
                 else:
                     incomplete_sequences.append(sequence)
             complete_set = set(complete_sequences)
             target_mapping = {
-                target_id: [
-                    sequence
-                    for sequence in sequences
-                    if sequence in complete_set
-                ]
+                target_id: [sequence for sequence in sequences if sequence in complete_set]
                 for target_id, sequences in target_mapping.items()
             }
             passing_sequences = [
@@ -4118,10 +4043,7 @@ def _v10_review_evidence_context_contract(
             for sequence in passing_sequences:
                 if sequence not in citable:
                     citable.append(sequence)
-            if (
-                source_get_diff_sequence is not None
-                and source_get_diff_sequence not in citable
-            ):
+            if source_get_diff_sequence is not None and source_get_diff_sequence not in citable:
                 citable.append(source_get_diff_sequence)
             visible_fields = {
                 "schema_version": REVIEW_EVIDENCE_V2_SCHEMA,
@@ -4142,23 +4064,18 @@ def _v10_review_evidence_context_contract(
                 *visible_fields,
                 "pinned_tool_results",
             }:
-                raise RecoveryError(
-                    "v10 review evidence has unknown or missing fields"
-                )
+                raise RecoveryError("v10 review evidence has unknown or missing fields")
             if any(
                 canonical_json(visible.get(key)) != canonical_json(value)
                 or canonical_json(build.get(key)) != canonical_json(value)
                 for key, value in visible_fields.items()
             ):
-                raise RecoveryError(
-                    "v10 target evidence failed prefix recomputation"
-                )
-            if visible.get("pinned_results") != expected_pinned_results or build.get(
-                "pinned_tool_results"
-            ) != expected_pinned_tool_results:
-                raise RecoveryError(
-                    "v10 pinned target evidence failed CAS recomputation"
-                )
+                raise RecoveryError("v10 target evidence failed prefix recomputation")
+            if (
+                visible.get("pinned_results") != expected_pinned_results
+                or build.get("pinned_tool_results") != expected_pinned_tool_results
+            ):
+                raise RecoveryError("v10 pinned target evidence failed CAS recomputation")
             expected_rule = (
                 "review_task may cite only citable_event_sequences and must "
                 "resolve every public coverage target; investigation_ledger "
@@ -4169,34 +4086,22 @@ def _v10_review_evidence_context_contract(
             event_mirrors = {
                 "review_evidence_pinning_active": active,
                 "review_evidence_worktree_diff_hash": diff_hash,
-                "review_evidence_mutation_event_sequence": (
-                    readiness.mutation_event_sequence
-                ),
-                "review_evidence_coverage_target_event_sequences": (
-                    target_mapping
-                ),
-                "review_evidence_passing_check_event_sequences": (
-                    passing_sequences
-                ),
-                "review_evidence_source_get_diff_sequence": (
-                    source_get_diff_sequence
-                ),
+                "review_evidence_mutation_event_sequence": (readiness.mutation_event_sequence),
+                "review_evidence_coverage_target_event_sequences": (target_mapping),
+                "review_evidence_passing_check_event_sequences": (passing_sequences),
+                "review_evidence_source_get_diff_sequence": (source_get_diff_sequence),
                 "review_evidence_citable_event_sequences": citable,
-                "review_evidence_incomplete_event_sequences": (
-                    incomplete_sequences
-                ),
+                "review_evidence_incomplete_event_sequences": (incomplete_sequences),
             }
             if any(
-                canonical_json(context_event.payload.get(key))
-                != canonical_json(value)
+                canonical_json(context_event.payload.get(key)) != canonical_json(value)
                 for key, value in event_mirrors.items()
             ):
                 raise RecoveryError("v10 ContextBuilt mirrors are invalid")
             phase_contract = parsed.get("phase_contract")
             if (
                 not isinstance(phase_contract, dict)
-                or phase_contract.get("schema_version")
-                != "phase-contract-v4"
+                or phase_contract.get("schema_version") != "phase-contract-v4"
                 or phase_contract.get("task_review_coverage_complete")
                 != readiness.task_review_coverage_complete
                 or phase_contract.get("unresolved_coverage_target_ids")
@@ -4210,18 +4115,14 @@ def _v10_review_evidence_context_contract(
                 and all(isinstance(item, dict) for item in recent_events)
                 else None
             )
-            pinned_sequences = [
-                item["sequence"] for item in expected_pinned_results
-            ]
+            pinned_sequences = [item["sequence"] for item in expected_pinned_results]
             if (
                 recent_sequences is None
                 or any(type(sequence) is not int for sequence in recent_sequences)
                 or len(pinned_sequences) != len(set(pinned_sequences))
                 or set(pinned_sequences).intersection(recent_sequences)
             ):
-                raise RecoveryError(
-                    "v10 review anchors are duplicated in recent events"
-                )
+                raise RecoveryError("v10 review anchors are duplicated in recent events")
             presented = context_build.get("tool_results")
             if not isinstance(presented, list):
                 raise RecoveryError("v10 presented tool results are invalid")
@@ -4230,20 +4131,15 @@ def _v10_review_evidence_context_contract(
                     item
                     for item in presented
                     if isinstance(item, dict)
-                    and item.get("event_sequence")
-                    == expected["event_sequence"]
+                    and item.get("event_sequence") == expected["event_sequence"]
                     and canonical_json(item) == canonical_json(expected)
                 ]
                 if len(matches) != 1:
-                    raise RecoveryError(
-                        "v10 target presentation failed CAS recomputation"
-                    )
+                    raise RecoveryError("v10 target presentation failed CAS recomputation")
             if active:
                 active_sequences.append(context_event.sequence)
                 verified_target_sequences.extend(
-                    sequence
-                    for sequences in target_mapping.values()
-                    for sequence in sequences
+                    sequence for sequences in target_mapping.values() for sequence in sequences
                 )
         except (
             KeyError,
@@ -4255,9 +4151,7 @@ def _v10_review_evidence_context_contract(
             json.JSONDecodeError,
         ) as exc:
             failed_sequences.append(context_event.sequence)
-            failure_reasons.append(
-                {"sequence": context_event.sequence, "reason": str(exc)}
-            )
+            failure_reasons.append({"sequence": context_event.sequence, "reason": str(exc)})
     return bool(context_events) and not failed_sequences, {
         "context_count": len(context_events),
         "verified_context_count": len(context_events) - len(failed_sequences),
@@ -4330,11 +4224,7 @@ def _v10_validate_review_supporting_rows(
         sequence = row.get("event_sequence")
         declared_outcome = row.get("outcome")
         notes = row.get("notes")
-        source = (
-            events_by_sequence.get(sequence)
-            if type(sequence) is int
-            else None
-        )
+        source = events_by_sequence.get(sequence) if type(sequence) is int else None
         if (
             kind not in expected_tools
             or type(sequence) is not int
@@ -4362,17 +4252,11 @@ def _v10_validate_review_supporting_rows(
                 source_evidence.get("available") is not True
                 or source_evidence.get("truncated") is not False
             ):
-                raise RecoveryError(
-                    "v10 targeted validation result is incomplete"
-                )
+                raise RecoveryError("v10 targeted validation result is incomplete")
         if source.payload.get("timed_out") is True:
             actual_outcome = "inconclusive"
         elif kind in {"probe", "registered_check"}:
-            actual_outcome = (
-                "passed"
-                if source.payload.get("passed") is True
-                else "failed"
-            )
+            actual_outcome = "passed" if source.payload.get("passed") is True else "failed"
         else:
             actual_outcome = "passed"
         if declared_outcome != actual_outcome:
@@ -4392,10 +4276,8 @@ def _v10_validate_review_supporting_rows(
         raise RecoveryError("v10 review has no passing targeted validation")
     if (
         review_document.get("targeted_validation") != normalized_validation
-        or result_document.get("targeted_validation_count")
-        != len(normalized_validation)
-        or outcome.payload.get("targeted_validation_count")
-        != len(normalized_validation)
+        or result_document.get("targeted_validation_count") != len(normalized_validation)
+        or outcome.payload.get("targeted_validation_count") != len(normalized_validation)
     ):
         raise RecoveryError("v10 targeted validation artifact is invalid")
 
@@ -4421,8 +4303,7 @@ def _v10_validate_review_supporting_rows(
             or len(requirement_ids) > 20
             or len(requirement_ids) != len(set(requirement_ids))
             or any(
-                not isinstance(requirement_id, str)
-                or requirement_id not in authoritative_ids
+                not isinstance(requirement_id, str) or requirement_id not in authoritative_ids
                 for requirement_id in requirement_ids
             )
             or not isinstance(risk, str)
@@ -4487,14 +4368,8 @@ def _v10_coverage_decision_evidence(
         }
     requirements = list(contract.requirements)
     requirement_ids = [item.requirement_id for item in requirements]
-    requirement_by_id = {
-        item.requirement_id: item for item in requirements
-    }
-    targets = [
-        target
-        for requirement in requirements
-        for target in requirement.coverage_targets
-    ]
+    requirement_by_id = {item.requirement_id: item for item in requirements}
+    targets = [target for requirement in requirements for target in requirement.coverage_targets]
     target_ids = [target.coverage_target_id for target in targets]
     target_by_id = {target.coverage_target_id: target for target in targets}
     target_parent = {
@@ -4502,16 +4377,13 @@ def _v10_coverage_decision_evidence(
         for requirement in requirements
         for target in requirement.coverage_targets
     }
-    allow_reordered_input = (
-        manifest.context_policy_version == "phase-evidence-v11"
-    )
+    allow_reordered_input = manifest.context_policy_version == "phase-evidence-v11"
     artifact_root = (root / "artifacts").resolve()
     artifact_store = ArtifactStore(artifact_root)
     calls = [
         event
         for event in events
-        if event.type == EventType.TOOL_CALLED
-        and event.payload.get("tool") == "review_task"
+        if event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "review_task"
     ]
     outcomes = [
         event
@@ -4528,8 +4400,7 @@ def _v10_coverage_decision_evidence(
             matching_outcomes = [
                 event
                 for event in outcomes
-                if event.correlation_id == call.correlation_id
-                and event.sequence > call.sequence
+                if event.correlation_id == call.correlation_id and event.sequence > call.sequence
             ]
             if (
                 call.actor != "agent"
@@ -4539,33 +4410,23 @@ def _v10_coverage_decision_evidence(
             ):
                 raise RecoveryError("v10 review action lifecycle is ambiguous")
             outcome = matching_outcomes[0]
-            input_valid, input_item, input_bytes = (
-                _nested_cas_artifact_evidence(
-                    artifact_root=artifact_root,
-                    event_id=call.event_id,
-                    role="review-task-input",
-                    raw_artifact=call.payload.get("input_artifact"),
-                )
+            input_valid, input_item, input_bytes = _nested_cas_artifact_evidence(
+                artifact_root=artifact_root,
+                event_id=call.event_id,
+                role="review-task-input",
+                raw_artifact=call.payload.get("input_artifact"),
             )
             if not input_valid or input_bytes is None:
                 raise RecoveryError("v10 review input CAS is invalid")
             input_document = json.loads(input_bytes.decode("utf-8"))
-            arguments = (
-                input_document.get("input")
-                if isinstance(input_document, dict)
-                else None
-            )
+            arguments = input_document.get("input") if isinstance(input_document, dict) else None
             execution_context = (
                 input_document.get("execution_context")
                 if isinstance(input_document, dict)
                 else None
             )
             expected_input_hash = (
-                sha256_text(
-                    canonical_json(
-                        {"tool": "review_task", "input": arguments}
-                    )
-                )
+                sha256_text(canonical_json({"tool": "review_task", "input": arguments}))
                 if isinstance(arguments, dict)
                 else None
             )
@@ -4581,8 +4442,7 @@ def _v10_coverage_decision_evidence(
                         }
                     )
                 )
-                if isinstance(arguments, dict)
-                and isinstance(diff_hash, str)
+                if isinstance(arguments, dict) and isinstance(diff_hash, str)
                 else None
             )
             expected_execution_context_keys = {
@@ -4592,14 +4452,11 @@ def _v10_coverage_decision_evidence(
                 "review_evidence",
             }
             if manifest.context_policy_version == "phase-evidence-v11":
-                expected_execution_context_keys.add(
-                    "coverage_rejection_feedback"
-                )
+                expected_execution_context_keys.add("coverage_rejection_feedback")
             if (
                 call.actor != "agent"
                 or not isinstance(input_document, dict)
-                or set(input_document)
-                != {"tool", "input", "execution_context"}
+                or set(input_document) != {"tool", "input", "execution_context"}
                 or input_document.get("tool") != "review_task"
                 or not isinstance(arguments, dict)
                 or set(arguments)
@@ -4610,25 +4467,19 @@ def _v10_coverage_decision_evidence(
                     "residual_risks",
                 }
                 or not isinstance(execution_context, dict)
-                or set(execution_context)
-                != expected_execution_context_keys
+                or set(execution_context) != expected_execution_context_keys
                 or execution_context.get("phase") != "REVIEW"
-                or call.payload.get("artifact_id")
-                != input_item.get("artifact_id")
-                or call.payload.get("artifact_path")
-                != input_item.get("declared_path")
+                or call.payload.get("artifact_id") != input_item.get("artifact_id")
+                or call.payload.get("artifact_path") != input_item.get("declared_path")
                 or call.payload.get("input_hash") != expected_input_hash
-                or call.payload.get("normalized_call_hash")
-                != expected_normalized_hash
+                or call.payload.get("normalized_call_hash") != expected_normalized_hash
                 or call.payload.get("execution") != "dispatched"
                 or call.payload.get("request_artifact_id")
                 != execution_context.get("request_artifact_id")
                 or call.payload.get("request_phase") != "REVIEW"
             ):
                 raise RecoveryError("v10 review input binding is invalid")
-            request_artifact_id = execution_context[
-                "request_artifact_id"
-            ]
+            request_artifact_id = execution_context["request_artifact_id"]
             matching_contexts = [
                 event
                 for event in context_events
@@ -4649,16 +4500,13 @@ def _v10_coverage_decision_evidence(
                 else None
             )
             review_evidence = (
-                context_build.get("review_evidence")
-                if isinstance(context_build, dict)
-                else None
+                context_build.get("review_evidence") if isinstance(context_build, dict) else None
             )
             model_calls = [
                 event
                 for event in events
                 if event.type == EventType.MODEL_CALLED
-                and event.payload.get("request_artifact_id")
-                == request_artifact_id
+                and event.payload.get("request_artifact_id") == request_artifact_id
                 and context_event.sequence < event.sequence < call.sequence
             ]
             if (
@@ -4669,13 +4517,10 @@ def _v10_coverage_decision_evidence(
                     manifest,
                 )
                 or not isinstance(context_build, dict)
-                or context_build.get("schema_version")
-                != expected_context_schema
+                or context_build.get("schema_version") != expected_context_schema
                 or not isinstance(review_evidence, dict)
-                or review_evidence.get("schema_version")
-                != "review-evidence-v2"
-                or execution_context.get("review_evidence")
-                != review_evidence
+                or review_evidence.get("schema_version") != "review-evidence-v2"
+                or execution_context.get("review_evidence") != review_evidence
                 or execution_context.get("presented_tool_results")
                 != context_build.get("tool_results")
                 or set(
@@ -4688,21 +4533,17 @@ def _v10_coverage_decision_evidence(
                 or len(model_calls) != 1
             ):
                 raise RecoveryError("v10 review context binding is invalid")
-            result_valid, result_item, result_bytes = (
-                _nested_cas_artifact_evidence(
-                    artifact_root=artifact_root,
-                    event_id=outcome.event_id,
-                    role="review-task-result",
-                    raw_artifact=outcome.payload.get("result_artifact"),
-                )
+            result_valid, result_item, result_bytes = _nested_cas_artifact_evidence(
+                artifact_root=artifact_root,
+                event_id=outcome.event_id,
+                role="review-task-result",
+                raw_artifact=outcome.payload.get("result_artifact"),
             )
             if (
                 not result_valid
                 or result_bytes is None
-                or outcome.payload.get("artifact_id")
-                != result_item.get("artifact_id")
-                or outcome.payload.get("artifact_path")
-                != result_item.get("declared_path")
+                or outcome.payload.get("artifact_id") != result_item.get("artifact_id")
+                or outcome.payload.get("artifact_path") != result_item.get("declared_path")
             ):
                 raise RecoveryError("v10 review result CAS is invalid")
             result_document = json.loads(result_bytes.decode("utf-8"))
@@ -4714,13 +4555,11 @@ def _v10_coverage_decision_evidence(
                 raise RecoveryError("v10 accepted review actor is invalid")
             if not isinstance(result_document, dict):
                 raise RecoveryError("v10 review result is not an object")
-            review_valid, review_item, review_bytes = (
-                _nested_cas_artifact_evidence(
-                    artifact_root=artifact_root,
-                    event_id=outcome.event_id,
-                    role="task-review",
-                    raw_artifact=outcome.payload.get("review_artifact"),
-                )
+            review_valid, review_item, review_bytes = _nested_cas_artifact_evidence(
+                artifact_root=artifact_root,
+                event_id=outcome.event_id,
+                role="task-review",
+                raw_artifact=outcome.payload.get("review_artifact"),
             )
             if not review_valid or review_bytes is None:
                 raise RecoveryError("v10 task review CAS is invalid")
@@ -4728,55 +4567,33 @@ def _v10_coverage_decision_evidence(
             review_descriptor = outcome.payload.get("review_artifact")
             if (
                 not isinstance(review_document, dict)
-                or result_document.get("schema_version")
-                != "task-review-result-v3"
-                or result_document.get("review_schema_version")
-                != "task-review-v3"
+                or result_document.get("schema_version") != "task-review-result-v3"
+                or result_document.get("review_schema_version") != "task-review-v3"
                 or result_document.get("review") != review_document
-                or result_document.get("review_artifact")
-                != review_descriptor
+                or result_document.get("review_artifact") != review_descriptor
                 or result_document.get("review_content_hash")
                 != review_item.get("actual_content_hash")
                 or outcome.payload.get("review_content_hash")
                 != review_item.get("actual_content_hash")
-                or review_document.get("schema_version")
-                != "task-review-v3"
+                or review_document.get("schema_version") != "task-review-v3"
                 or review_document.get("run_id") != manifest.run_id
-                or review_document.get("request_artifact_id")
-                != request_artifact_id
+                or review_document.get("request_artifact_id") != request_artifact_id
                 or review_document.get("worktree_diff_hash") != diff_hash
-                or review_document.get("public_review_contract_hash")
-                != contract.content_hash
-                or review_document.get(
-                    "public_review_contract_schema_version"
-                )
+                or review_document.get("public_review_contract_hash") != contract.content_hash
+                or review_document.get("public_review_contract_schema_version")
                 != "public-review-contract-v2"
-                or review_document.get("authoritative_requirement_ids")
-                != requirement_ids
-                or review_document.get("deterministic_correctness_claimed")
-                is not False
+                or review_document.get("authoritative_requirement_ids") != requirement_ids
+                or review_document.get("deterministic_correctness_claimed") is not False
             ):
                 raise RecoveryError("v10 review document binding is invalid")
-            mutation_sequence = review_document.get(
-                "mutation_event_sequence"
-            )
-            source_sequence = review_document.get(
-                "source_get_diff_sequence"
-            )
+            mutation_sequence = review_document.get("mutation_event_sequence")
+            source_sequence = review_document.get("source_get_diff_sequence")
             mutation = next(
-                (
-                    event
-                    for event in events
-                    if event.sequence == mutation_sequence
-                ),
+                (event for event in events if event.sequence == mutation_sequence),
                 None,
             )
             source_diff = next(
-                (
-                    event
-                    for event in events
-                    if event.sequence == source_sequence
-                ),
+                (event for event in events if event.sequence == source_sequence),
                 None,
             )
             if (
@@ -4789,10 +4606,8 @@ def _v10_coverage_decision_evidence(
                 or source_diff.type != EventType.TOOL_SUCCEEDED
                 or source_diff.payload.get("tool") != "get_diff"
                 or source_diff.payload.get("worktree_diff_hash") != diff_hash
-                or review_evidence.get("mutation_event_sequence")
-                != mutation_sequence
-                or review_evidence.get("source_get_diff_sequence")
-                != source_sequence
+                or review_evidence.get("mutation_event_sequence") != mutation_sequence
+                or review_evidence.get("source_get_diff_sequence") != source_sequence
                 or not mutation_sequence < source_sequence < call.sequence
                 or any(
                     event.type == EventType.PATCH_APPLIED
@@ -4815,18 +4630,13 @@ def _v10_coverage_decision_evidence(
                 else []
             )
             input_target_ids = (
-                [
-                    item.get("coverage_target_id")
-                    for item in input_targets
-                    if isinstance(item, dict)
-                ]
+                [item.get("coverage_target_id") for item in input_targets if isinstance(item, dict)]
                 if isinstance(input_targets, list)
                 else []
             )
             input_order_valid = (
                 len(input_requirement_ids) == len(requirement_ids)
-                and len(set(input_requirement_ids))
-                == len(input_requirement_ids)
+                and len(set(input_requirement_ids)) == len(input_requirement_ids)
                 and set(input_requirement_ids) == set(requirement_ids)
                 and len(input_target_ids) == len(target_ids)
                 and len(set(input_target_ids)) == len(input_target_ids)
@@ -4858,13 +4668,8 @@ def _v10_coverage_decision_evidence(
                 != target_ids
             ):
                 raise RecoveryError("v10 review row order is invalid")
-            target_evidence = review_evidence[
-                "coverage_target_event_sequences"
-            ]
-            input_targets_by_id = {
-                item["coverage_target_id"]: item
-                for item in input_targets
-            }
+            target_evidence = review_evidence["coverage_target_event_sequences"]
+            input_targets_by_id = {item["coverage_target_id"]: item for item in input_targets}
             status_by_target: dict[str, str] = {}
             normalized_review_targets: list[dict[str, Any]] = []
             for review_row in review_targets:
@@ -4876,27 +4681,18 @@ def _v10_coverage_decision_evidence(
                 advertised = target_evidence.get(target_id)
                 if (
                     target is None
-                    or status
-                    not in {"verified", "partially_verified", "unverified"}
+                    or status not in {"verified", "partially_verified", "unverified"}
                     or not isinstance(sequences, list)
                     or any(type(sequence) is not int for sequence in sequences)
                     or not isinstance(advertised, list)
-                    or (
-                        status == "verified"
-                        and (not advertised or sequences != advertised)
-                    )
+                    or (status == "verified" and (not advertised or sequences != advertised))
                     or (
                         status == "partially_verified"
-                        and (
-                            not sequences
-                            or not set(sequences).issubset(advertised)
-                        )
+                        and (not sequences or not set(sequences).issubset(advertised))
                     )
                     or (status == "unverified" and sequences)
                 ):
-                    raise RecoveryError(
-                        "v10 target status or evidence is invalid"
-                    )
+                    raise RecoveryError("v10 target status or evidence is invalid")
                 normalized_row = {
                     **input_row,
                     "requirement_id": target_parent[target_id],
@@ -4906,10 +4702,7 @@ def _v10_coverage_decision_evidence(
                     raise RecoveryError("v10 target artifact row is invalid")
                 status_by_target[target_id] = status
                 normalized_review_targets.append(normalized_row)
-            input_requirements_by_id = {
-                item["requirement_id"]: item
-                for item in input_requirements
-            }
+            input_requirements_by_id = {item["requirement_id"]: item for item in input_requirements}
             normalized_review_requirements: list[dict[str, Any]] = []
             for review_row in review_requirements:
                 requirement_id = review_row.get("requirement_id")
@@ -4917,23 +4710,14 @@ def _v10_coverage_decision_evidence(
                 requirement = requirement_by_id.get(requirement_id)
                 if requirement is None:
                     raise RecoveryError("v10 requirement row is unknown")
-                child_ids = [
-                    target.coverage_target_id
-                    for target in requirement.coverage_targets
-                ]
-                child_statuses = [
-                    status_by_target[target_id]
-                    for target_id in child_ids
-                ]
+                child_ids = [target.coverage_target_id for target in requirement.coverage_targets]
+                child_statuses = [status_by_target[target_id] for target_id in child_ids]
                 expected_status = (
                     "verified"
                     if all(status == "verified" for status in child_statuses)
                     else (
                         "unverified"
-                        if all(
-                            status == "unverified"
-                            for status in child_statuses
-                        )
+                        if all(status == "unverified" for status in child_statuses)
                         else "partially_verified"
                     )
                 )
@@ -4954,13 +4738,10 @@ def _v10_coverage_decision_evidence(
                 }
                 if (
                     input_row.get("status") != expected_status
-                    or input_row.get("evidence_event_sequences")
-                    != expected_sequences
+                    or input_row.get("evidence_event_sequences") != expected_sequences
                     or review_row != expected_row
                 ):
-                    raise RecoveryError(
-                        "v10 requirement roll-up is invalid"
-                    )
+                    raise RecoveryError("v10 requirement roll-up is invalid")
                 normalized_review_requirements.append(expected_row)
             _v10_validate_review_supporting_rows(
                 artifact_store=artifact_store,
@@ -4982,14 +4763,10 @@ def _v10_coverage_decision_evidence(
                 },
             )
             verified_target_ids = [
-                target_id
-                for target_id in target_ids
-                if status_by_target[target_id] == "verified"
+                target_id for target_id in target_ids if status_by_target[target_id] == "verified"
             ]
             unresolved_target_ids = [
-                target_id
-                for target_id in target_ids
-                if status_by_target[target_id] != "verified"
+                target_id for target_id in target_ids if status_by_target[target_id] != "verified"
             ]
             coverage_complete = not unresolved_target_ids
             expected_coverage = {
@@ -5002,33 +4779,20 @@ def _v10_coverage_decision_evidence(
                 "deterministic_correctness_claimed": False,
             }
             if (
-                review_document.get("public_review_coverage")
-                != expected_coverage
-                or result_document.get("public_review_coverage")
-                != expected_coverage
-                or result_document.get("coverage_target_count")
-                != len(target_ids)
-                or result_document.get("coverage_complete")
-                is not coverage_complete
-                or result_document.get("verified_coverage_target_ids")
-                != verified_target_ids
-                or result_document.get("unresolved_coverage_target_ids")
-                != unresolved_target_ids
-                or outcome.payload.get("coverage_target_count")
-                != len(target_ids)
-                or outcome.payload.get("coverage_complete")
-                is not coverage_complete
-                or outcome.payload.get("verified_coverage_target_ids")
-                != verified_target_ids
-                or outcome.payload.get("unresolved_coverage_target_ids")
-                != unresolved_target_ids
-                or outcome.payload.get("request_artifact_id")
-                != request_artifact_id
+                review_document.get("public_review_coverage") != expected_coverage
+                or result_document.get("public_review_coverage") != expected_coverage
+                or result_document.get("coverage_target_count") != len(target_ids)
+                or result_document.get("coverage_complete") is not coverage_complete
+                or result_document.get("verified_coverage_target_ids") != verified_target_ids
+                or result_document.get("unresolved_coverage_target_ids") != unresolved_target_ids
+                or outcome.payload.get("coverage_target_count") != len(target_ids)
+                or outcome.payload.get("coverage_complete") is not coverage_complete
+                or outcome.payload.get("verified_coverage_target_ids") != verified_target_ids
+                or outcome.payload.get("unresolved_coverage_target_ids") != unresolved_target_ids
+                or outcome.payload.get("request_artifact_id") != request_artifact_id
                 or outcome.payload.get("worktree_diff_hash") != diff_hash
-                or outcome.payload.get("mutation_event_sequence")
-                != mutation_sequence
-                or outcome.payload.get("source_get_diff_sequence")
-                != source_sequence
+                or outcome.payload.get("mutation_event_sequence") != mutation_sequence
+                or outcome.payload.get("source_get_diff_sequence") != source_sequence
             ):
                 raise RecoveryError("v10 coverage decision is invalid")
             verified_reviews.append(outcome.sequence)
@@ -5044,9 +4808,7 @@ def _v10_coverage_decision_evidence(
             json.JSONDecodeError,
         ) as exc:
             failed_calls.append(call.sequence)
-            failure_reasons.append(
-                {"sequence": call.sequence, "reason": str(exc)}
-            )
+            failure_reasons.append({"sequence": call.sequence, "reason": str(exc)})
     called_correlations = {call.correlation_id for call in calls}
     orphan_outcomes = [
         outcome.sequence
@@ -5054,10 +4816,7 @@ def _v10_coverage_decision_evidence(
         if outcome.correlation_id not in called_correlations
     ]
     passed = bool(
-        context_ok
-        and coverage_complete_reviews
-        and not failed_calls
-        and not orphan_outcomes
+        context_ok and coverage_complete_reviews and not failed_calls and not orphan_outcomes
     )
     return passed, {
         "context_contract_valid": context_ok,
@@ -5085,25 +4844,18 @@ def _v10_coverage_submission_evidence(
     """Bind accepted finish provenance to one coverage-complete V10 review."""
 
     artifact_root = (root / "artifacts").resolve()
-    accepted_events = [
-        event
-        for event in events
-        if event.type == EventType.SUBMISSION_ACCEPTED
-    ]
+    accepted_events = [event for event in events if event.type == EventType.SUBMISSION_ACCEPTED]
     finish_calls = [
         event
         for event in events
-        if event.type == EventType.TOOL_CALLED
-        and event.payload.get("tool") == "finish_task"
+        if event.type == EventType.TOOL_CALLED and event.payload.get("tool") == "finish_task"
     ]
     failed_accepted_sequences: list[int] = []
     failure_reasons: list[dict[str, Any]] = []
     for accepted in accepted_events:
         try:
             correlated = [
-                event
-                for event in events
-                if event.correlation_id == accepted.correlation_id
+                event for event in events if event.correlation_id == accepted.correlation_id
             ]
             calls = [
                 event
@@ -5111,15 +4863,9 @@ def _v10_coverage_submission_evidence(
                 if event.type == EventType.TOOL_CALLED
                 and event.payload.get("tool") == "finish_task"
             ]
-            reviews = [
-                event
-                for event in correlated
-                if event.type == EventType.REVIEW_RECORDED
-            ]
+            reviews = [event for event in correlated if event.type == EventType.REVIEW_RECORDED]
             attempts = [
-                event
-                for event in correlated
-                if event.type == EventType.SUBMISSION_ATTEMPTED
+                event for event in correlated if event.type == EventType.SUBMISSION_ATTEMPTED
             ]
             outcomes = [
                 event
@@ -5127,21 +4873,14 @@ def _v10_coverage_submission_evidence(
                 if event.type == EventType.TOOL_SUCCEEDED
                 and event.payload.get("tool") == "finish_task"
             ]
-            if not all(
-                len(items) == 1
-                for items in (calls, reviews, attempts, outcomes)
-            ):
+            if not all(len(items) == 1 for items in (calls, reviews, attempts, outcomes)):
                 raise RecoveryError("v10 accepted finish lifecycle is ambiguous")
             call = calls[0]
             recorded = reviews[0]
             attempt = attempts[0]
             finish_outcome = outcomes[0]
             recovery_result = call.payload.get("recovery_result")
-            output = (
-                recovery_result.get("output")
-                if isinstance(recovery_result, dict)
-                else None
-            )
+            output = recovery_result.get("output") if isinstance(recovery_result, dict) else None
             if (
                 not isinstance(recovery_result, dict)
                 or recovery_result.get("action_id") != call.correlation_id
@@ -5152,21 +4891,15 @@ def _v10_coverage_submission_evidence(
                 raise RecoveryError("v10 finish decision is not durable")
             review_sequence = output.get("source_task_review_sequence")
             source_review = next(
-                (
-                    event
-                    for event in events
-                    if event.sequence == review_sequence
-                ),
+                (event for event in events if event.sequence == review_sequence),
                 None,
             )
             raw_review_artifact = output.get("task_review_artifact")
-            review_valid, review_item, review_bytes = (
-                _nested_cas_artifact_evidence(
-                    artifact_root=artifact_root,
-                    event_id=call.event_id,
-                    role="accepted-task-review",
-                    raw_artifact=raw_review_artifact,
-                )
+            review_valid, review_item, review_bytes = _nested_cas_artifact_evidence(
+                artifact_root=artifact_root,
+                event_id=call.event_id,
+                role="accepted-task-review",
+                raw_artifact=raw_review_artifact,
             )
             review_document = (
                 json.loads(review_bytes.decode("utf-8"))
@@ -5196,21 +4929,13 @@ def _v10_coverage_submission_evidence(
                         request_evidence.get("request_body"),
                         allow_direct_context=True,
                     )
-                    parsed_context = (
-                        json.loads(rendered)
-                        if isinstance(rendered, str)
-                        else None
-                    )
+                    parsed_context = json.loads(rendered) if isinstance(rendered, str) else None
                     context_build = request_evidence.get("context_build")
             presented_results = (
-                context_build.get("tool_results")
-                if isinstance(context_build, dict)
-                else None
+                context_build.get("tool_results") if isinstance(context_build, dict) else None
             )
             phase_contract = (
-                parsed_context.get("phase_contract")
-                if isinstance(parsed_context, dict)
-                else None
+                parsed_context.get("phase_contract") if isinstance(parsed_context, dict) else None
             )
             review_presented = bool(
                 isinstance(presented_results, list)
@@ -5226,9 +4951,7 @@ def _v10_coverage_submission_evidence(
             common_provenance = {
                 "source_task_review_sequence": review_sequence,
                 "task_review_artifact": raw_review_artifact,
-                "task_review_content_hash": review_item.get(
-                    "actual_content_hash"
-                ),
+                "task_review_content_hash": review_item.get("actual_content_hash"),
             }
             if (
                 type(review_sequence) is not int
@@ -5236,57 +4959,41 @@ def _v10_coverage_submission_evidence(
                 or source_review.type != EventType.TOOL_SUCCEEDED
                 or source_review.payload.get("tool") != "review_task"
                 or source_review.payload.get("coverage_complete") is not True
-                or source_review.payload.get("review_artifact")
-                != raw_review_artifact
+                or source_review.payload.get("review_artifact") != raw_review_artifact
                 or source_review.payload.get("review_content_hash")
                 != review_item.get("actual_content_hash")
                 or not isinstance(review_document, dict)
-                or review_document.get("schema_version")
-                != "task-review-v3"
+                or review_document.get("schema_version") != "task-review-v3"
                 or review_document.get("run_id") != manifest.run_id
                 or review_document.get("worktree_diff_hash") != diff_hash
-                or review_document.get("source_get_diff_sequence")
-                != source_diff_sequence
-                or review_document.get("public_review_coverage", {}).get(
-                    "coverage_complete"
-                )
+                or review_document.get("source_get_diff_sequence") != source_diff_sequence
+                or review_document.get("public_review_coverage", {}).get("coverage_complete")
                 is not True
-                or output.get("task_review_content_hash")
-                != review_item.get("actual_content_hash")
+                or output.get("task_review_content_hash") != review_item.get("actual_content_hash")
                 or not request_valid
                 or not review_presented
                 or not isinstance(phase_contract, dict)
-                or phase_contract.get("schema_version")
-                != "phase-contract-v4"
-                or phase_contract.get("task_review_coverage_complete")
-                is not True
+                or phase_contract.get("schema_version") != "phase-contract-v4"
+                or phase_contract.get("task_review_coverage_complete") is not True
                 or phase_contract.get("unresolved_coverage_target_ids") != []
                 or recorded.payload.get("worktree_diff_hash") != diff_hash
-                or recorded.payload.get("source_get_diff_sequence")
-                != source_diff_sequence
-                or recorded.payload.get("request_artifact_id")
-                != request_artifact_id
+                or recorded.payload.get("source_get_diff_sequence") != source_diff_sequence
+                or recorded.payload.get("request_artifact_id") != request_artifact_id
                 or any(
-                    recorded.payload.get(key) != value
-                    for key, value in common_provenance.items()
+                    recorded.payload.get(key) != value for key, value in common_provenance.items()
                 )
-                or attempt.payload.get("attempt_number")
-                != accepted.payload.get("attempt_number")
+                or attempt.payload.get("attempt_number") != accepted.payload.get("attempt_number")
                 or attempt.payload.get("worktree_diff_hash") != diff_hash
-                or finish_outcome.payload.get("worktree_diff_hash")
-                != diff_hash
+                or finish_outcome.payload.get("worktree_diff_hash") != diff_hash
                 or any(
                     finish_outcome.payload.get(key) != value
                     for key, value in common_provenance.items()
                 )
                 or accepted.payload.get("worktree_diff_hash") != diff_hash
-                or accepted.payload.get("accepted_for")
-                != "deterministic_evaluation"
-                or accepted.payload.get("evaluation_success_claimed")
-                is not False
+                or accepted.payload.get("accepted_for") != "deterministic_evaluation"
+                or accepted.payload.get("evaluation_success_claimed") is not False
                 or any(
-                    accepted.payload.get(key) != value
-                    for key, value in common_provenance.items()
+                    accepted.payload.get(key) != value for key, value in common_provenance.items()
                 )
                 or not (
                     source_review.sequence
@@ -5297,9 +5004,7 @@ def _v10_coverage_submission_evidence(
                     < accepted.sequence
                 )
             ):
-                raise RecoveryError(
-                    "v10 accepted submission provenance is invalid"
-                )
+                raise RecoveryError("v10 accepted submission provenance is invalid")
         except (
             KeyError,
             OSError,
@@ -5310,16 +5015,10 @@ def _v10_coverage_submission_evidence(
             json.JSONDecodeError,
         ) as exc:
             failed_accepted_sequences.append(accepted.sequence)
-            failure_reasons.append(
-                {"sequence": accepted.sequence, "reason": str(exc)}
-            )
-    evaluation_completed = bool(
-        result is not None and result.evaluation_status == "completed"
-    )
+            failure_reasons.append({"sequence": accepted.sequence, "reason": str(exc)})
+    evaluation_completed = bool(result is not None and result.evaluation_status == "completed")
     cardinality_valid = bool(
-        evaluation_completed
-        and len(accepted_events) == 1
-        and bool(finish_calls)
+        evaluation_completed and len(accepted_events) == 1 and bool(finish_calls)
     )
     return bool(cardinality_valid and not failed_accepted_sequences), {
         "finish_call_count": len(finish_calls),
@@ -5368,21 +5067,13 @@ def _v10_coverage_recovery_evidence(
         valid = bool(
             actual
             and actual[0] == EventType.TOOL_CALLED
-            and len(
-                [
-                    event
-                    for event in correlated
-                    if event.type == EventType.TOOL_CALLED
-                ]
-            )
-            == 1
+            and len([event for event in correlated if event.type == EventType.TOOL_CALLED]) == 1
         )
         if call.payload.get("tool") == "review_task":
             valid = bool(
                 valid
                 and len(actual) == 2
-                and actual[1]
-                in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+                and actual[1] in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
             )
         else:
             recovery_result = call.payload.get("recovery_result")
@@ -5390,10 +5081,7 @@ def _v10_coverage_recovery_evidence(
                 isinstance(recovery_result, dict)
                 and recovery_result.get("status") == "succeeded"
                 and isinstance(recovery_result.get("output"), dict)
-                and recovery_result["output"].get(
-                    "accepted_for_evaluation"
-                )
-                is True
+                and recovery_result["output"].get("accepted_for_evaluation") is True
             )
             expected = (
                 [
@@ -5432,24 +5120,17 @@ def _v10_coverage_recovery_evidence(
         }
         and event.correlation_id not in relevant_correlations
     ]
-    review_call_count = sum(
-        call.payload.get("tool") == "review_task" for call in calls
-    )
+    review_call_count = sum(call.payload.get("tool") == "review_task" for call in calls)
     accepted_finish_count = sum(
         call.payload.get("tool") == "finish_task"
         and isinstance(call.payload.get("recovery_result"), dict)
         and call.payload["recovery_result"].get("status") == "succeeded"
         and isinstance(call.payload["recovery_result"].get("output"), dict)
-        and call.payload["recovery_result"]["output"].get(
-            "accepted_for_evaluation"
-        )
-        is True
+        and call.payload["recovery_result"]["output"].get("accepted_for_evaluation") is True
         for call in calls
     )
     nonvacuous = bool(review_call_count and accepted_finish_count == 1)
-    return bool(
-        nonvacuous and not failed_sequences and not orphan_sequences
-    ), {
+    return bool(nonvacuous and not failed_sequences and not orphan_sequences), {
         "action_count": len(calls),
         "review_call_count": review_call_count,
         "accepted_finish_count": accepted_finish_count,
@@ -5471,13 +5152,10 @@ def _v10_coverage_terminal_evidence(
     review_events = [
         event
         for event in events
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "review_task"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "review_task"
     ]
     incomplete_reviews = [
-        event
-        for event in review_events
-        if event.payload.get("coverage_complete") is False
+        event for event in review_events if event.payload.get("coverage_complete") is False
     ]
     complete_reviews = [
         event
@@ -5485,11 +5163,7 @@ def _v10_coverage_terminal_evidence(
         if event.payload.get("coverage_complete") is True
         and event.payload.get("unresolved_coverage_target_ids") == []
     ]
-    accepted = [
-        event
-        for event in events
-        if event.type == EventType.SUBMISSION_ACCEPTED
-    ]
+    accepted = [event for event in events if event.type == EventType.SUBMISSION_ACCEPTED]
     failed_incomplete: list[int] = []
     for review in incomplete_reviews:
         next_review_or_terminal = next(
@@ -5516,15 +5190,13 @@ def _v10_coverage_terminal_evidence(
             and event.payload.get("to") == "IMPLEMENT"
         ]
         referenced_by_acceptance = any(
-            event.payload.get("source_task_review_sequence")
-            == review.sequence
+            event.payload.get("source_task_review_sequence") == review.sequence
             for event in accepted
         )
         if len(corrective_transitions) != 1 or referenced_by_acceptance:
             failed_incomplete.append(review.sequence)
     accepted_review_sequences = {
-        event.payload.get("source_task_review_sequence")
-        for event in accepted
+        event.payload.get("source_task_review_sequence") for event in accepted
     }
     accepted_sources_valid = all(
         type(sequence) is int
@@ -5536,15 +5208,9 @@ def _v10_coverage_terminal_evidence(
         )
         for sequence in accepted_review_sequences
     )
-    evaluation_completed = bool(
-        result is not None and result.evaluation_status == "completed"
-    )
-    terminal_events = [
-        event for event in events if event.type in _TERMINAL_EVENTS
-    ]
-    rejection_ok, rejection_details = (
-        _v9_review_rejection_terminal_contract(events)
-    )
+    evaluation_completed = bool(result is not None and result.evaluation_status == "completed")
+    terminal_events = [event for event in events if event.type in _TERMINAL_EVENTS]
+    rejection_ok, rejection_details = _v9_review_rejection_terminal_contract(events)
     terminal_valid = bool(
         len(terminal_events) == 1
         and evaluation_completed
@@ -5556,12 +5222,8 @@ def _v10_coverage_terminal_evidence(
     )
     return terminal_valid, {
         "review_count": len(review_events),
-        "incomplete_review_sequences": [
-            event.sequence for event in incomplete_reviews
-        ],
-        "coverage_complete_review_sequences": [
-            event.sequence for event in complete_reviews
-        ],
+        "incomplete_review_sequences": [event.sequence for event in incomplete_reviews],
+        "coverage_complete_review_sequences": [event.sequence for event in complete_reviews],
         "failed_incomplete_review_sequences": failed_incomplete,
         "accepted_submission_count": len(accepted),
         "accepted_review_sources_valid": accepted_sources_valid,
@@ -5584,28 +5246,22 @@ def _v4_no_progress_streak(events: list[Any]) -> int:
             continue
         if (
             event.type == EventType.LOOP_DETECTED
-            and event.payload.get("schema_version")
-            == INVESTIGATION_LOOP_SCHEMA
+            and event.payload.get("schema_version") == INVESTIGATION_LOOP_SCHEMA
         ):
             streak += 1
-        elif (
-            event.type == EventType.TOOL_SUCCEEDED
-            and event.payload.get("tool")
-            in {"read_file", "search_files"}
-        ):
+        elif event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") in {
+            "read_file",
+            "search_files",
+        }:
             novelty = event.payload.get("novelty")
-            if (
-                isinstance(novelty, dict)
-                and novelty.get("classification") == "seen_only"
-            ):
+            if isinstance(novelty, dict) and novelty.get("classification") == "seen_only":
                 streak += 1
             else:
                 streak = 0
-        elif (
-            event.type == EventType.TOOL_SUCCEEDED
-            and event.payload.get("tool")
-            not in {"read_file", "search_files"}
-        ):
+        elif event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") not in {
+            "read_file",
+            "search_files",
+        }:
             streak = 0
     return streak
 
@@ -5636,15 +5292,9 @@ def _v5_expected_tail_policy(
         corrective_tool_calls = 1
         corrective_model_calls = 4
     else:
-        raise RecoveryError(
-            "invalid v5 token-tail context policy version"
-        )
+        raise RecoveryError("invalid v5 token-tail context policy version")
     reserve = {
-        "tool_calls": (
-            4
-            + 2 * len(task.visible_checks)
-            + corrective_tool_calls
-        ),
+        "tool_calls": (4 + 2 * len(task.visible_checks) + corrective_tool_calls),
         "model_calls": corrective_model_calls,
         "feedback_model_calls": 1,
     }
@@ -5662,13 +5312,9 @@ def _v5_expected_tail_policy(
         actual_input = event.payload.get("input_tokens")
         actual_output = event.payload.get("output_tokens")
         if type(actual_input) is not int or actual_input < 0:
-            raise RecoveryError(
-                "v5 token tail source has invalid input token usage"
-            )
+            raise RecoveryError("v5 token tail source has invalid input token usage")
         if type(actual_output) is not int or actual_output < 0:
-            raise RecoveryError(
-                "v5 token tail source has invalid output token usage"
-            )
+            raise RecoveryError("v5 token tail source has invalid output token usage")
         total_tokens_used += actual_input + actual_output
         if type(requested) is int and requested >= 0:
             input_tokens = requested
@@ -5677,9 +5323,7 @@ def _v5_expected_tail_policy(
             input_tokens = actual_input
             source = "input_tokens_fallback"
         else:
-            raise RecoveryError(
-                "v5 token tail source has invalid requested input tokens"
-            )
+            raise RecoveryError("v5 token tail source has invalid requested input tokens")
         observations.append(
             {
                 "event_sequence": event.sequence,
@@ -5702,29 +5346,20 @@ def _v5_expected_tail_policy(
             if current > previous
         ]
     )
-    projected_next_input = (
-        max_observed + max_positive_growth
-        if max_observed is not None
-        else None
-    )
+    projected_next_input = max_observed + max_positive_growth if max_observed is not None else None
     projected_model_turns = (
         reserve["model_calls"]
         + reserve["feedback_model_calls"]
         + (1 if projection_stage == "pre_generation" else 0)
     )
     reserved_tokens = (
-        manifest.model.max_output_tokens
-        + projected_next_input * projected_model_turns
+        manifest.model.max_output_tokens + projected_next_input * projected_model_turns
         if projected_next_input is not None
         else manifest.model.max_output_tokens
     )
-    remaining_tokens = (
-        manifest.budget.max_total_tokens - total_tokens_used
-    )
+    remaining_tokens = manifest.budget.max_total_tokens - total_tokens_used
     token_blocked = bool(
-        max_observed is not None
-        and max_observed > 0
-        and remaining_tokens <= reserved_tokens
+        max_observed is not None and max_observed > 0 and remaining_tokens <= reserved_tokens
     )
     remaining_model_calls = (
         manifest.budget.max_model_calls - model_calls_used
@@ -5738,22 +5373,15 @@ def _v5_expected_tail_policy(
     )
     remaining_after_next = (
         max(0, remaining_model_calls - 1)
-        if (
-            projection_stage == "pre_generation"
-            and remaining_model_calls is not None
-        )
+        if (projection_stage == "pre_generation" and remaining_model_calls is not None)
         else remaining_model_calls
     )
     reasons = []
-    if (
-        remaining_tool_calls is not None
-        and remaining_tool_calls <= reserve["tool_calls"]
-    ):
+    if remaining_tool_calls is not None and remaining_tool_calls <= reserve["tool_calls"]:
         reasons.append("tool_tail_reserved")
     if (
         remaining_after_next is not None
-        and remaining_after_next
-        <= reserve["model_calls"] + reserve["feedback_model_calls"]
+        and remaining_after_next <= reserve["model_calls"] + reserve["feedback_model_calls"]
     ):
         reasons.append("model_tail_reserved")
     if token_blocked:
@@ -5805,20 +5433,13 @@ def _v8_expected_read_search_policy(
     """
 
     mutation_epoch_sequence = max(
-        (
-            event.sequence
-            for event in events
-            if event.type == EventType.PATCH_APPLIED
-        ),
+        (event.sequence for event in events if event.type == EventType.PATCH_APPLIED),
         default=None,
     )
     semantic_replay_count = sum(
         event.type == EventType.TOOL_REPLAYED
         and event.payload.get("semantic_replay") is True
-        and (
-            mutation_epoch_sequence is None
-            or event.sequence > mutation_epoch_sequence
-        )
+        and (mutation_epoch_sequence is None or event.sequence > mutation_epoch_sequence)
         for event in events
     )
     raw_tail_reasons = tail_policy.get("block_reasons")
@@ -5835,9 +5456,7 @@ def _v8_expected_read_search_policy(
         "admitted": not reason_codes,
         "reason_codes": reason_codes,
         "semantic_replay_count": semantic_replay_count,
-        "semantic_replay_threshold": (
-            _V8_EVIDENCE_SATURATION_THRESHOLD
-        ),
+        "semantic_replay_threshold": (_V8_EVIDENCE_SATURATION_THRESHOLD),
         "mutation_epoch_sequence": mutation_epoch_sequence,
     }
 
@@ -5881,34 +5500,24 @@ def _v8_expected_phase_contract(
                 EventType.TOOL_REPLAYED,
             }
             or item.get("tool") != source.payload.get("tool")
-            or item.get("worktree_diff_hash")
-            != source.payload.get("worktree_diff_hash")
+            or item.get("worktree_diff_hash") != source.payload.get("worktree_diff_hash")
             or item.get("artifact_id") != source.payload.get("artifact_id")
         ):
-            raise RecoveryError(
-                "v8 presented tool result is not durable-prefix bound"
-            )
+            raise RecoveryError("v8 presented tool result is not durable-prefix bound")
 
     phase = checkpoint.phase if checkpoint is not None else Phase.INTAKE
     worktree_diff_hash = (
-        checkpoint.worktree_diff_hash
-        if checkpoint is not None
-        else _EMPTY_DIFF_HASH
+        checkpoint.worktree_diff_hash if checkpoint is not None else _EMPTY_DIFF_HASH
     )
     latest_mutation = next(
-        (
-            event
-            for event in reversed(events)
-            if event.type == EventType.PATCH_APPLIED
-        ),
+        (event for event in reversed(events) if event.type == EventType.PATCH_APPLIED),
         None,
     )
     mutation_epoch = latest_mutation.sequence if latest_mutation else 0
     mutation_present = bool(
         latest_mutation is not None
         and worktree_diff_hash != _EMPTY_DIFF_HASH
-        and latest_mutation.payload.get("worktree_diff_hash")
-        == worktree_diff_hash
+        and latest_mutation.payload.get("worktree_diff_hash") == worktree_diff_hash
     )
     required_checks = tuple(check.id for check in task.visible_checks)
     latest_checks: dict[str, Any] = {}
@@ -5918,15 +5527,11 @@ def _v8_expected_phase_contract(
         if (
             event.sequence <= mutation_epoch
             or event.type != EventType.TOOL_SUCCEEDED
-            or event.payload.get("worktree_diff_hash")
-            != worktree_diff_hash
+            or event.payload.get("worktree_diff_hash") != worktree_diff_hash
         ):
             continue
         tool = event.payload.get("tool")
-        if (
-            tool == "run_check"
-            and event.payload.get("check_id") in required_checks
-        ):
+        if tool == "run_check" and event.payload.get("check_id") in required_checks:
             latest_checks[str(event.payload["check_id"])] = event
         elif tool == "get_diff":
             review_candidates.append(event)
@@ -5936,36 +5541,25 @@ def _v8_expected_phase_contract(
     completed_checks = tuple(
         check_id
         for check_id in required_checks
-        if (
-            check_id in latest_checks
-            and latest_checks[check_id].payload.get("passed") is True
-        )
+        if (check_id in latest_checks and latest_checks[check_id].payload.get("passed") is True)
     )
     pending_checks = tuple(
-        check_id
-        for check_id in required_checks
-        if check_id not in completed_checks
+        check_id for check_id in required_checks if check_id not in completed_checks
     )
     latest_check_sequence = (
-        max(event.sequence for event in latest_checks.values())
-        if latest_checks
-        else None
+        max(event.sequence for event in latest_checks.values()) if latest_checks else None
     )
     review_event = next(
         (
             event
             for event in reversed(review_candidates)
             if not pending_checks
-            and (
-                latest_check_sequence is None
-                or event.sequence > latest_check_sequence
-            )
+            and (latest_check_sequence is None or event.sequence > latest_check_sequence)
         ),
         None,
     )
     review_presented = bool(
-        review_event is not None
-        and review_event.sequence in presented_sequences
+        review_event is not None and review_event.sequence in presented_sequences
     )
     task_review_event = next(
         (
@@ -5974,15 +5568,12 @@ def _v8_expected_phase_contract(
             if (
                 review_event is not None
                 and event.sequence > review_event.sequence
-                and event.payload.get("source_get_diff_sequence")
-                == review_event.sequence
+                and event.payload.get("source_get_diff_sequence") == review_event.sequence
                 and not any(
                     later.sequence > event.sequence
                     and later.type == EventType.TOOL_SUCCEEDED
-                    and later.payload.get("tool")
-                    in {"run_probe", "run_check", "get_diff"}
-                    and later.payload.get("worktree_diff_hash")
-                    == worktree_diff_hash
+                    and later.payload.get("tool") in {"run_probe", "run_check", "get_diff"}
+                    and later.payload.get("worktree_diff_hash") == worktree_diff_hash
                     for later in events
                 )
             )
@@ -5990,28 +5581,25 @@ def _v8_expected_phase_contract(
         None,
     )
     task_review_presented = bool(
-        task_review_event is not None
-        and task_review_event.sequence in presented_sequences
+        task_review_event is not None and task_review_event.sequence in presented_sequences
     )
     task_review_coverage_complete = (
         task_review_event.payload.get("coverage_complete") is True
         if task_review_event is not None
         else None
     )
-    unresolved_coverage_target_ids = (
-        [
-            value
-            for value in (
-                task_review_event.payload.get(
-                    "unresolved_coverage_target_ids",
-                    [],
-                )
-                if task_review_event is not None
-                else []
+    unresolved_coverage_target_ids = [
+        value
+        for value in (
+            task_review_event.payload.get(
+                "unresolved_coverage_target_ids",
+                [],
             )
-            if isinstance(value, str)
-        ]
-    )
+            if task_review_event is not None
+            else []
+        )
+        if isinstance(value, str)
+    ]
     optional_probe = ("run_probe",) if task.probe_profiles else ()
     if not mutation_present:
         allowed = (
@@ -6059,9 +5647,7 @@ def _v8_expected_phase_contract(
         allowed = ("finish_task", "apply_patch")
 
     tail_reasons = [
-        reason
-        for reason in read_search_policy["reason_codes"]
-        if reason != "evidence_saturated"
+        reason for reason in read_search_policy["reason_codes"] if reason != "evidence_saturated"
     ]
     if tail_reasons:
         blocked_actions = {"read_file", "search_files", "run_probe"}
@@ -6069,9 +5655,7 @@ def _v8_expected_phase_contract(
         blocked_actions = {"read_file", "search_files"}
     else:
         blocked_actions = set()
-    filtered_allowed = [
-        action for action in allowed if action not in blocked_actions
-    ]
+    filtered_allowed = [action for action in allowed if action not in blocked_actions]
     result = {
         "current_phase": phase.value,
         "allowed_next_actions": filtered_allowed,
@@ -6081,24 +5665,16 @@ def _v8_expected_phase_contract(
             latest_mutation.sequence if latest_mutation is not None else None
         ),
         "mutation_present": mutation_present,
-        "review_event_sequence": (
-            review_event.sequence if review_event is not None else None
-        ),
+        "review_event_sequence": (review_event.sequence if review_event is not None else None),
         "task_review_event_sequence": (
-            task_review_event.sequence
-            if task_review_event is not None
-            else None
+            task_review_event.sequence if task_review_event is not None else None
         ),
     }
     if coverage_review_required:
         result.update(
             {
-                "task_review_coverage_complete": (
-                    task_review_coverage_complete
-                ),
-                "unresolved_coverage_target_ids": (
-                    unresolved_coverage_target_ids
-                ),
+                "task_review_coverage_complete": (task_review_coverage_complete),
+                "unresolved_coverage_target_ids": (unresolved_coverage_target_ids),
             }
         )
     return result
@@ -6128,9 +5704,7 @@ def _v8_saturation_context_evidence(
     saturated_sequences: list[int] = []
     policy_hashes: list[str] = []
     policies_by_context_sequence: dict[int, dict[str, Any]] = {}
-    checkpoints_by_id = {
-        checkpoint.checkpoint_id: checkpoint for checkpoint in checkpoints
-    }
+    checkpoints_by_id = {checkpoint.checkpoint_id: checkpoint for checkpoint in checkpoints}
     for context_event in context_events:
         try:
             request_valid, request_evidence = _request_evidence_payload(
@@ -6142,40 +5716,28 @@ def _v8_saturation_context_evidence(
                 raise RecoveryError("v8 model request evidence is invalid")
             rendered = _request_context(
                 request_evidence["request_body"],
-                allow_direct_context=(
-                    manifest.model.provider in {"mock", "replay"}
-                ),
+                allow_direct_context=(manifest.model.provider in {"mock", "replay"}),
             )
             context_build = request_evidence.get("context_build")
             if (
                 expected_context_build_schema is None
                 or not isinstance(rendered, str)
                 or not isinstance(context_build, dict)
-                or context_build.get("schema_version")
-                != expected_context_build_schema
+                or context_build.get("schema_version") != expected_context_build_schema
             ):
                 raise RecoveryError("v8 context build evidence is invalid")
             parsed_context = json.loads(rendered)
             if not isinstance(parsed_context, dict):
                 raise RecoveryError("v8 rendered context is not an object")
             phase_contract = parsed_context.get("phase_contract")
-            if (
-                not isinstance(phase_contract, dict)
-                or phase_contract.get("schema_version")
-                != (
-                    "phase-contract-v4"
-                    if manifest.context_policy_version
-                    in {"phase-evidence-v10", "phase-evidence-v11"}
-                    else "phase-contract-v3"
-                )
+            if not isinstance(phase_contract, dict) or phase_contract.get("schema_version") != (
+                "phase-contract-v4"
+                if manifest.context_policy_version in {"phase-evidence-v10", "phase-evidence-v11"}
+                else "phase-contract-v3"
             ):
                 raise RecoveryError("v8 phase contract is invalid")
 
-            source_events = [
-                event
-                for event in events
-                if event.sequence < context_event.sequence
-            ]
+            source_events = [event for event in events if event.sequence < context_event.sequence]
             expected_tail = _v5_expected_tail_policy(
                 task=package.public,
                 events=source_events,
@@ -6194,13 +5756,9 @@ def _v8_saturation_context_evidence(
             ]
             checkpoint = None
             if checkpoint_events:
-                checkpoint = checkpoints_by_id.get(
-                    checkpoint_events[-1].payload["checkpoint_id"]
-                )
+                checkpoint = checkpoints_by_id.get(checkpoint_events[-1].payload["checkpoint_id"])
                 if checkpoint is None:
-                    raise RecoveryError(
-                        "v8 context checkpoint is unavailable"
-                    )
+                    raise RecoveryError("v8 context checkpoint is unavailable")
             expected_phase = _v8_expected_phase_contract(
                 task=package.public,
                 events=source_events,
@@ -6208,21 +5766,16 @@ def _v8_saturation_context_evidence(
                 presented_tool_results=context_build.get("tool_results"),
                 read_search_policy=expected_policy,
                 coverage_review_required=(
-                    manifest.context_policy_version
-                    in {"phase-evidence-v10", "phase-evidence-v11"}
+                    manifest.context_policy_version in {"phase-evidence-v10", "phase-evidence-v11"}
                 ),
             )
-            allowed_next_actions = phase_contract.get(
-                "allowed_next_actions"
-            )
+            allowed_next_actions = phase_contract.get("allowed_next_actions")
             if not isinstance(allowed_next_actions, list) or not all(
                 isinstance(action, str) for action in allowed_next_actions
             ):
                 raise RecoveryError("v8 allowed actions are invalid")
             if allowed_next_actions != expected_phase["allowed_next_actions"]:
-                raise RecoveryError(
-                    "v8 allowed actions failed independent recomputation"
-                )
+                raise RecoveryError("v8 allowed actions failed independent recomputation")
             phase_mirrors = {
                 key: expected_phase[key]
                 for key in (
@@ -6250,31 +5803,18 @@ def _v8_saturation_context_evidence(
                     }
                 )
             if any(
-                phase_contract.get(field) != expected
-                for field, expected in phase_mirrors.items()
+                phase_contract.get(field) != expected for field, expected in phase_mirrors.items()
             ):
-                raise RecoveryError(
-                    "v8 phase readiness failed independent recomputation"
-                )
+                raise RecoveryError("v8 phase readiness failed independent recomputation")
             if phase_contract.get("read_search_policy") != expected_policy:
-                raise RecoveryError(
-                    "v8 rendered read/search policy failed recomputation"
-                )
+                raise RecoveryError("v8 rendered read/search policy failed recomputation")
             if context_build.get("read_search_policy") != expected_policy:
-                raise RecoveryError(
-                    "v8 read/search evidence mirror failed recomputation"
-                )
+                raise RecoveryError("v8 read/search evidence mirror failed recomputation")
 
             event_mirrors = {
-                "investigation_read_search_admitted": expected_policy[
-                    "admitted"
-                ],
-                "investigation_read_search_reason_codes": expected_policy[
-                    "reason_codes"
-                ],
-                "investigation_semantic_replay_count": expected_policy[
-                    "semantic_replay_count"
-                ],
+                "investigation_read_search_admitted": expected_policy["admitted"],
+                "investigation_read_search_reason_codes": expected_policy["reason_codes"],
+                "investigation_semantic_replay_count": expected_policy["semantic_replay_count"],
                 "investigation_semantic_replay_threshold": (
                     expected_policy["semantic_replay_threshold"]
                 ),
@@ -6283,21 +5823,16 @@ def _v8_saturation_context_evidence(
                 ),
             }
             if any(
-                field not in context_event.payload
-                or context_event.payload.get(field) != expected
+                field not in context_event.payload or context_event.payload.get(field) != expected
                 for field, expected in event_mirrors.items()
             ):
-                raise RecoveryError(
-                    "v8 ContextBuilt read/search mirrors failed recomputation"
-                )
+                raise RecoveryError("v8 ContextBuilt read/search mirrors failed recomputation")
 
             verified_sequences.append(context_event.sequence)
             policies_by_context_sequence[context_event.sequence] = expected_policy
             if "evidence_saturated" in expected_policy["reason_codes"]:
                 saturated_sequences.append(context_event.sequence)
-            policy_hashes.append(
-                sha256_text(canonical_json(expected_policy))
-            )
+            policy_hashes.append(sha256_text(canonical_json(expected_policy)))
         except (
             KeyError,
             OSError,
@@ -6310,11 +5845,7 @@ def _v8_saturation_context_evidence(
             failed_sequences.append(context_event.sequence)
             failed_reasons[context_event.sequence] = str(exc)
     applied_events = sorted(
-        (
-            event
-            for event in events
-            if event.type == EventType.PATCH_APPLIED
-        ),
+        (event for event in events if event.type == EventType.PATCH_APPLIED),
         key=lambda event: event.sequence,
     )
     post_saturation_patch_sequences: list[int] = []
@@ -6323,18 +5854,12 @@ def _v8_saturation_context_evidence(
     failed_reset_context_sequences: list[int] = []
     for patch_event in applied_events:
         prior_patch_sequence = max(
-            (
-                event.sequence
-                for event in applied_events
-                if event.sequence < patch_event.sequence
-            ),
+            (event.sequence for event in applied_events if event.sequence < patch_event.sequence),
             default=None,
         )
         active_epoch_saturation = any(
             sequence < patch_event.sequence
-            and policies_by_context_sequence[sequence].get(
-                "mutation_epoch_sequence"
-            )
+            and policies_by_context_sequence[sequence].get("mutation_epoch_sequence")
             == prior_patch_sequence
             for sequence in saturated_sequences
         )
@@ -6342,24 +5867,15 @@ def _v8_saturation_context_evidence(
             continue
         post_saturation_patch_sequences.append(patch_event.sequence)
         next_context = next(
-            (
-                event
-                for event in context_events
-                if event.sequence > patch_event.sequence
-            ),
+            (event for event in context_events if event.sequence > patch_event.sequence),
             None,
         )
         next_patch_sequence = min(
-            (
-                event.sequence
-                for event in applied_events
-                if event.sequence > patch_event.sequence
-            ),
+            (event.sequence for event in applied_events if event.sequence > patch_event.sequence),
             default=None,
         )
         if next_context is None or (
-            next_patch_sequence is not None
-            and next_patch_sequence < next_context.sequence
+            next_patch_sequence is not None and next_patch_sequence < next_context.sequence
         ):
             continue
         reset_opportunity_sequences.append(patch_event.sequence)
@@ -6367,10 +5883,8 @@ def _v8_saturation_context_evidence(
         reset_valid = bool(
             isinstance(policy, dict)
             and policy.get("semantic_replay_count") == 0
-            and policy.get("mutation_epoch_sequence")
-            == patch_event.sequence
-            and "evidence_saturated"
-            not in policy.get("reason_codes", [])
+            and policy.get("mutation_epoch_sequence") == patch_event.sequence
+            and "evidence_saturated" not in policy.get("reason_codes", [])
         )
         if reset_valid:
             reset_context_sequences.append(next_context.sequence)
@@ -6484,18 +5998,13 @@ def _v4_investigation_lifecycle_evidence(
         for event in events
         if event.type == EventType.LOOP_DETECTED
         and (
-            event.payload.get("schema_version")
-            == INVESTIGATION_LOOP_SCHEMA
-            or event.payload.get("enforcement")
-            == "semantic-cache-replay"
-            or event.payload.get("reason_code")
-            in {"duplicate_search", "fully_covered_read"}
+            event.payload.get("schema_version") == INVESTIGATION_LOOP_SCHEMA
+            or event.payload.get("enforcement") == "semantic-cache-replay"
+            or event.payload.get("reason_code") in {"duplicate_search", "fully_covered_read"}
             or (
                 by_sequence.get(event.sequence + 1) is not None
-                and by_sequence[event.sequence + 1].type
-                == EventType.TOOL_REPLAYED
-                and by_sequence[event.sequence + 1].correlation_id
-                == event.correlation_id
+                and by_sequence[event.sequence + 1].type == EventType.TOOL_REPLAYED
+                and by_sequence[event.sequence + 1].correlation_id == event.correlation_id
             )
         )
     ]
@@ -6506,15 +6015,12 @@ def _v4_investigation_lifecycle_evidence(
         and (
             event.payload.get("schema_version") == TOOL_REPLAY_SCHEMA
             or event.payload.get("semantic_replay") is True
-            or event.payload.get("replay_kind")
-            == "semantic-investigation"
+            or event.payload.get("replay_kind") == "semantic-investigation"
             or event.actor == "semantic-cache"
             or (
                 by_sequence.get(event.sequence - 1) is not None
-                and by_sequence[event.sequence - 1].type
-                == EventType.LOOP_DETECTED
-                and by_sequence[event.sequence - 1].correlation_id
-                == event.correlation_id
+                and by_sequence[event.sequence - 1].type == EventType.LOOP_DETECTED
+                and by_sequence[event.sequence - 1].correlation_id == event.correlation_id
             )
         )
     ]
@@ -6548,11 +6054,7 @@ def _v4_investigation_lifecycle_evidence(
             role="investigation-replay-input",
             descriptor=input_descriptor,
         )
-        arguments = (
-            input_payload.get("input")
-            if isinstance(input_payload, dict)
-            else None
-        )
+        arguments = input_payload.get("input") if isinstance(input_payload, dict) else None
         worktree_diff_hash = call.payload.get("worktree_diff_hash")
         input_hash = call.payload.get("input_hash")
         normalized_call_hash = call.payload.get("normalized_call_hash")
@@ -6564,10 +6066,8 @@ def _v4_investigation_lifecycle_evidence(
             and isinstance(input_payload, dict)
             and input_payload.get("tool") == tool
             and isinstance(arguments, dict)
-            and call.payload.get("artifact_id")
-            == input_item.get("artifact_id")
-            and call.payload.get("artifact_path")
-            == input_item.get("declared_path")
+            and call.payload.get("artifact_id") == input_item.get("artifact_id")
+            and call.payload.get("artifact_path") == input_item.get("declared_path")
             and isinstance(worktree_diff_hash, str)
             and isinstance(input_hash, str)
             and isinstance(normalized_call_hash, str)
@@ -6575,9 +6075,7 @@ def _v4_investigation_lifecycle_evidence(
         if not replay_ok:
             failed_replay_sequences.append(replay.sequence)
             continue
-        expected_input_hash = sha256_text(
-            canonical_json({"tool": tool, "input": arguments})
-        )
+        expected_input_hash = sha256_text(canonical_json({"tool": tool, "input": arguments}))
         expected_normalized_hash = sha256_text(
             canonical_json(
                 {
@@ -6588,22 +6086,13 @@ def _v4_investigation_lifecycle_evidence(
                 }
             )
         )
-        prefix = [
-            event for event in events if event.sequence < call.sequence
-        ]
-        checkpoint_events = [
-            event
-            for event in prefix
-            if event.type == EventType.CHECKPOINT_SAVED
-        ]
+        prefix = [event for event in events if event.sequence < call.sequence]
+        checkpoint_events = [event for event in prefix if event.type == EventType.CHECKPOINT_SAVED]
         replay_ok = bool(
             input_hash == expected_input_hash
             and normalized_call_hash == expected_normalized_hash
             and checkpoint_events
-            and checkpoint_events[-1].payload.get(
-                "worktree_diff_hash"
-            )
-            == worktree_diff_hash
+            and checkpoint_events[-1].payload.get("worktree_diff_hash") == worktree_diff_hash
         )
         try:
             records = load_inspection_records(
@@ -6623,8 +6112,7 @@ def _v4_investigation_lifecycle_evidence(
                 record
                 for record in records
                 if record.tool == tool
-                and record.normalized_call_hash
-                == normalized_call_hash
+                and record.normalized_call_hash == normalized_call_hash
                 and record.result["truncated"] is False
             ]
             if exact:
@@ -6655,12 +6143,8 @@ def _v4_investigation_lifecycle_evidence(
         if replay_output is None or reason_code is None:
             replay_ok = False
 
-        source_call_sequences = [
-            source.call_sequence for source in sources
-        ]
-        source_outcome_sequences = [
-            source.outcome_sequence for source in sources
-        ]
+        source_call_sequences = [source.call_sequence for source in sources]
+        source_outcome_sequences = [source.outcome_sequence for source in sources]
         expected_result = {
             **(replay_output or {}),
             "novelty": {
@@ -6683,10 +6167,8 @@ def _v4_investigation_lifecycle_evidence(
             replay_ok
             and result_valid
             and result_payload == expected_result
-            and replay.payload.get("artifact_id")
-            == result_item.get("artifact_id")
-            and replay.payload.get("artifact_path")
-            == result_item.get("declared_path")
+            and replay.payload.get("artifact_id") == result_item.get("artifact_id")
+            and replay.payload.get("artifact_path") == result_item.get("declared_path")
         )
 
         new_streak = _v4_no_progress_streak(prefix) + 1
@@ -6701,9 +6183,7 @@ def _v4_investigation_lifecycle_evidence(
             "mutation_epoch_sequence": mutation_epoch(prefix),
             "worktree_diff_hash": worktree_diff_hash,
             "no_progress_streak": new_streak,
-            "strategy_change_required": (
-                new_streak >= NO_PROGRESS_STRATEGY_THRESHOLD
-            ),
+            "strategy_change_required": (new_streak >= NO_PROGRESS_STRATEGY_THRESHOLD),
             "occurrences": new_streak + 1,
             "enforcement": "semantic-cache-replay",
         }
@@ -6718,9 +6198,7 @@ def _v4_investigation_lifecycle_evidence(
             "reason_code": reason_code,
             "input_hash": input_hash,
             "normalized_call_hash": normalized_call_hash,
-            "source_action_ids": [
-                source.action_id for source in sources
-            ],
+            "source_action_ids": [source.action_id for source in sources],
             "source_call_sequences": source_call_sequences,
             "source_outcome_sequences": source_outcome_sequences,
             "mutation_epoch_sequence": mutation_epoch(prefix),
@@ -6745,8 +6223,7 @@ def _v4_investigation_lifecycle_evidence(
         event
         for event in events
         if event.type == EventType.TOOL_ADMISSION_BLOCKED
-        and event.payload.get("policy_version")
-        != "turn-mutation-barrier-v1"
+        and event.payload.get("policy_version") != "turn-mutation-barrier-v1"
     ]
     reserve = (
         _v5_expected_tail_policy(
@@ -6768,20 +6245,12 @@ def _v4_investigation_lifecycle_evidence(
         )
     )
     for admission in admission_events:
-        prefix = [
-            event
-            for event in events
-            if event.sequence < admission.sequence
-        ]
+        prefix = [event for event in events if event.sequence < admission.sequence]
         action_id = admission.correlation_id
         payload = admission.payload
         tool = payload.get("tool")
-        model_calls_used = sum(
-            event.type == EventType.MODEL_CALLED for event in prefix
-        )
-        tool_calls_used = sum(
-            event.type == EventType.TOOL_CALLED for event in prefix
-        )
+        model_calls_used = sum(event.type == EventType.MODEL_CALLED for event in prefix)
+        tool_calls_used = sum(event.type == EventType.TOOL_CALLED for event in prefix)
         remaining_model_calls = (
             manifest.budget.max_model_calls - model_calls_used
             if manifest.budget.max_model_calls is not None
@@ -6808,21 +6277,15 @@ def _v4_investigation_lifecycle_evidence(
                 manifest=manifest,
                 projection_stage="post_generation",
             )
-            reason_codes = list(
-                calculated_tail_policy["block_reasons"]
-            )
+            reason_codes = list(calculated_tail_policy["block_reasons"])
         else:
             reason_codes = []
-            if (
-                remaining_tool_calls is not None
-                and remaining_tool_calls <= reserve["tool_calls"]
-            ):
+            if remaining_tool_calls is not None and remaining_tool_calls <= reserve["tool_calls"]:
                 reason_codes.append("tool_tail_reserved")
             if (
                 remaining_model_calls is not None
                 and remaining_model_calls
-                <= reserve["model_calls"]
-                + reserve["feedback_model_calls"]
+                <= reserve["model_calls"] + reserve["feedback_model_calls"]
             ):
                 reason_codes.append("model_tail_reserved")
         epoch = mutation_epoch(prefix)
@@ -6872,20 +6335,13 @@ def _v4_investigation_lifecycle_evidence(
             role="investigation-admission-preflight",
             descriptor=payload.get("preflight_artifact"),
         )
-        arguments = (
-            input_payload.get("input")
-            if isinstance(input_payload, dict)
-            else None
-        )
+        arguments = input_payload.get("input") if isinstance(input_payload, dict) else None
         input_hash = payload.get("input_hash")
         normalized_call_hash = payload.get("normalized_call_hash")
         worktree_diff_hash = payload.get("worktree_diff_hash")
         expected_input_hash = (
-            sha256_text(
-                canonical_json({"tool": tool, "input": arguments})
-            )
-            if tool in {"read_file", "search_files"}
-            and isinstance(arguments, dict)
+            sha256_text(canonical_json({"tool": tool, "input": arguments}))
+            if tool in {"read_file", "search_files"} and isinstance(arguments, dict)
             else None
         )
         expected_normalized_hash = (
@@ -6899,8 +6355,7 @@ def _v4_investigation_lifecycle_evidence(
                     }
                 )
             )
-            if expected_input_hash is not None
-            and isinstance(worktree_diff_hash, str)
+            if expected_input_hash is not None and isinstance(worktree_diff_hash, str)
             else None
         )
         admission_request_valid = False
@@ -6914,9 +6369,7 @@ def _v4_investigation_lifecycle_evidence(
             )
             admission_request_valid = True
             expected_preflight: dict[str, Any] = {
-                "schema_version": (
-                    INSPECTION_ADMISSION_PREFLIGHT_SCHEMA
-                ),
+                "schema_version": (INSPECTION_ADMISSION_PREFLIGHT_SCHEMA),
                 "policy_version": expected_policy_version,
                 "tool": tool,
                 "worktree_diff_hash": worktree_diff_hash,
@@ -6928,9 +6381,7 @@ def _v4_investigation_lifecycle_evidence(
                     else None
                 )
                 if not isinstance(resolved_path, str):
-                    raise ContractError(
-                        "read admission preflight lacks a resolved path"
-                    )
+                    raise ContractError("read admission preflight lacks a resolved path")
                 safe_relative_path(
                     resolved_path,
                     field_name="resolved_relative_path",
@@ -6960,8 +6411,7 @@ def _v4_investigation_lifecycle_evidence(
                 preflight_evidence_valid = bool(
                     target_valid
                     and target_content is not None
-                    and target_item.get("artifact_id")
-                    == target_descriptor.get("artifact_id")
+                    and target_item.get("artifact_id") == target_descriptor.get("artifact_id")
                 )
             else:
                 expected_preflight.update(
@@ -6978,9 +6428,7 @@ def _v4_investigation_lifecycle_evidence(
                 preflight_evidence_valid
                 and preflight_valid
                 and preflight_payload == expected_preflight
-                and payload.get("preflight_artifact", {}).get(
-                    "artifact_id"
-                )
+                and payload.get("preflight_artifact", {}).get("artifact_id")
                 == preflight_item.get("artifact_id")
             )
         except (AttributeError, ContractError, TypeError):
@@ -7014,9 +6462,7 @@ def _v4_investigation_lifecycle_evidence(
         if evidence_saturated:
             error_details.update(
                 {
-                    "evidence_saturation_policy_version": (
-                        "evidence-saturation-v1"
-                    ),
+                    "evidence_saturation_policy_version": ("evidence-saturation-v1"),
                     "semantic_replay_count": semantic_replay_count,
                     "semantic_replay_threshold": saturation_threshold,
                     "mutation_epoch_sequence": epoch,
@@ -7030,9 +6476,7 @@ def _v4_investigation_lifecycle_evidence(
             "error_details": error_details,
             "admission_blocked": True,
             "worktree_diff_hash": worktree_diff_hash,
-            "preflight_artifact": payload.get(
-                "preflight_artifact"
-            ),
+            "preflight_artifact": payload.get("preflight_artifact"),
         }
         expected_event = {
             "schema_version": expected_admission_schema,
@@ -7050,9 +6494,7 @@ def _v4_investigation_lifecycle_evidence(
             "tool_calls_used": tool_calls_used,
             "max_tool_calls": manifest.budget.max_tool_calls,
             "input_artifact": payload.get("input_artifact"),
-            "preflight_artifact": payload.get(
-                "preflight_artifact"
-            ),
+            "preflight_artifact": payload.get("preflight_artifact"),
             "result_artifact": payload.get("result_artifact"),
             "artifact_id": result_item.get("artifact_id"),
             "artifact_path": result_item.get("declared_path"),
@@ -7061,46 +6503,29 @@ def _v4_investigation_lifecycle_evidence(
             "error_details": error_details,
         }
         if calculated_tail_policy is not None:
-            token_projection = calculated_tail_policy[
-                "token_projection"
-            ]
+            token_projection = calculated_tail_policy["token_projection"]
             expected_event.update(
                 {
                     "tail_policy": calculated_tail_policy,
-                    "tokens_used": token_projection[
-                        "total_tokens_used"
-                    ],
-                    "remaining_tokens": token_projection[
-                        "remaining_tokens"
-                    ],
-                    "max_total_tokens": (
-                        manifest.budget.max_total_tokens
-                    ),
-                    "max_output_tokens": (
-                        manifest.model.max_output_tokens
-                    ),
+                    "tokens_used": token_projection["total_tokens_used"],
+                    "remaining_tokens": token_projection["remaining_tokens"],
+                    "max_total_tokens": (manifest.budget.max_total_tokens),
+                    "max_output_tokens": (manifest.model.max_output_tokens),
                 }
             )
         if evidence_saturated:
             expected_event.update(
                 {
-                    "evidence_saturation_policy_version": (
-                        "evidence-saturation-v1"
-                    ),
+                    "evidence_saturation_policy_version": ("evidence-saturation-v1"),
                     "semantic_replay_count": semantic_replay_count,
                     "semantic_replay_threshold": saturation_threshold,
                 }
             )
-        checkpoint_events = [
-            event
-            for event in prefix
-            if event.type == EventType.CHECKPOINT_SAVED
-        ]
+        checkpoint_events = [event for event in prefix if event.type == EventType.CHECKPOINT_SAVED]
         correlated_calls = [
             event
             for event in events
-            if event.type == EventType.TOOL_CALLED
-            and event.correlation_id == action_id
+            if event.type == EventType.TOOL_CALLED and event.correlation_id == action_id
         ]
         admission_ok = bool(
             isinstance(action_id, str)
@@ -7117,15 +6542,10 @@ def _v4_investigation_lifecycle_evidence(
             and input_hash == expected_input_hash
             and normalized_call_hash == expected_normalized_hash
             and checkpoint_events
-            and checkpoint_events[-1].payload.get(
-                "worktree_diff_hash"
-            )
-            == worktree_diff_hash
+            and checkpoint_events[-1].payload.get("worktree_diff_hash") == worktree_diff_hash
             and result_payload == expected_result
-            and payload.get("artifact_id")
-            == result_item.get("artifact_id")
-            and payload.get("artifact_path")
-            == result_item.get("declared_path")
+            and payload.get("artifact_id") == result_item.get("artifact_id")
+            and payload.get("artifact_path") == result_item.get("declared_path")
             and payload == expected_event
             and not correlated_calls
             and input_item.get("artifact_id")
@@ -7140,8 +6560,7 @@ def _v4_investigation_lifecycle_evidence(
         loop.sequence
         for loop in semantic_loops
         if not any(
-            replay.sequence == loop.sequence + 1
-            and replay.correlation_id == loop.correlation_id
+            replay.sequence == loop.sequence + 1 and replay.correlation_id == loop.correlation_id
             for replay in semantic_replays
         )
     ]
@@ -7151,8 +6570,7 @@ def _v4_investigation_lifecycle_evidence(
         if (
             event.payload.get("schema_version") != TOOL_REPLAY_SCHEMA
             or event.payload.get("semantic_replay") is not True
-            or event.payload.get("replay_kind")
-            != "semantic-investigation"
+            or event.payload.get("replay_kind") != "semantic-investigation"
             or event.actor != "semantic-cache"
         )
     ]
@@ -7161,19 +6579,11 @@ def _v4_investigation_lifecycle_evidence(
     passed = not failed_replay_sequences and not failed_admission_sequences
     return passed, {
         "semantic_replay_count": len(semantic_replays),
-        "verified_semantic_replay_count": len(
-            verified_replay_sequences
-        ),
-        "failed_semantic_replay_sequences": sorted(
-            set(failed_replay_sequences)
-        ),
+        "verified_semantic_replay_count": len(verified_replay_sequences),
+        "failed_semantic_replay_sequences": sorted(set(failed_replay_sequences)),
         "admission_block_count": len(admission_events),
-        "verified_admission_block_count": len(
-            verified_admission_sequences
-        ),
-        "failed_admission_block_sequences": sorted(
-            set(failed_admission_sequences)
-        ),
+        "verified_admission_block_count": len(verified_admission_sequences),
+        "failed_admission_block_sequences": sorted(set(failed_admission_sequences)),
     }
 
 
@@ -7190,8 +6600,7 @@ def _v7_turn_mutation_barrier_evidence(
         event
         for event in events
         if event.type == EventType.TOOL_ADMISSION_BLOCKED
-        and event.payload.get("policy_version")
-        == "turn-mutation-barrier-v1"
+        and event.payload.get("policy_version") == "turn-mutation-barrier-v1"
     ]
     failed_sequences: list[int] = []
     verified_sequences: list[int] = []
@@ -7238,8 +6647,7 @@ def _v7_turn_mutation_barrier_evidence(
             model_artifact_valid = bool(
                 len(parts) == 4
                 and parts[0:2] == ("objects", "sha256")
-                and sha256_bytes(model_content)
-                == f"sha256:{parts[2]}{parts[3]}"
+                and sha256_bytes(model_content) == f"sha256:{parts[2]}{parts[3]}"
             )
         except (
             KeyError,
@@ -7255,11 +6663,7 @@ def _v7_turn_mutation_barrier_evidence(
             model_artifact_valid = False
         source_index = payload.get("source_call_index")
         blocked_index = payload.get("blocked_call_index")
-        tool_calls = (
-            model_payload.get("tool_calls")
-            if isinstance(model_payload, dict)
-            else None
-        )
+        tool_calls = model_payload.get("tool_calls") if isinstance(model_payload, dict) else None
         source_declared = (
             tool_calls[source_index - 1]
             if isinstance(tool_calls, list)
@@ -7330,8 +6734,7 @@ def _v7_turn_mutation_barrier_evidence(
             and blocked_declared.get("name") == payload.get("tool")
             and blocked_declared.get("action_id") == event.correlation_id
             and blocked_index > source_index
-            and payload.get("source_result_status")
-            == source_outcomes[0].payload.get("status")
+            and payload.get("source_result_status") == source_outcomes[0].payload.get("status")
             and input_valid
             and input_payload
             == {
@@ -7341,10 +6744,8 @@ def _v7_turn_mutation_barrier_evidence(
             and payload.get("input_hash") == expected_input_hash
             and result_valid
             and result_payload == expected_result
-            and payload.get("artifact_id")
-            == result_item.get("artifact_id")
-            and payload.get("artifact_path")
-            == result_item.get("declared_path")
+            and payload.get("artifact_id") == result_item.get("artifact_id")
+            and payload.get("artifact_path") == result_item.get("declared_path")
             and input_item.get("artifact_id")
             == payload.get("input_artifact", {}).get("artifact_id")
             and not correlated_dispatches
@@ -7358,9 +6759,7 @@ def _v7_turn_mutation_barrier_evidence(
         if model_event.type != EventType.MODEL_CALLED:
             continue
         try:
-            model_path = Path(
-                str(model_event.payload["artifact_path"])
-            ).resolve()
+            model_path = Path(str(model_event.payload["artifact_path"])).resolve()
             relative = model_path.relative_to(artifact_root)
             parts = relative.parts
             content = model_path.read_bytes()
@@ -7369,8 +6768,7 @@ def _v7_turn_mutation_barrier_evidence(
             if (
                 len(parts) != 4
                 or parts[0:2] != ("objects", "sha256")
-                or sha256_bytes(content)
-                != f"sha256:{parts[2]}{parts[3]}"
+                or sha256_bytes(content) != f"sha256:{parts[2]}{parts[3]}"
                 or not isinstance(calls, list)
             ):
                 continue
@@ -7378,8 +6776,7 @@ def _v7_turn_mutation_barrier_evidence(
                 (
                     index
                     for index, call in enumerate(calls, 1)
-                    if isinstance(call, dict)
-                    and call.get("name") == "apply_patch"
+                    if isinstance(call, dict) and call.get("name") == "apply_patch"
                 ),
                 None,
             )
@@ -7387,13 +6784,10 @@ def _v7_turn_mutation_barrier_evidence(
                 continue
             source_call = calls[first_apply - 1]
             source_action_id = (
-                source_call.get("action_id")
-                if isinstance(source_call, dict)
-                else None
+                source_call.get("action_id") if isinstance(source_call, dict) else None
             )
             source_completed = any(
-                event.type
-                in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
+                event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
                 and event.correlation_id == source_action_id
                 and event.payload.get("tool") == "apply_patch"
                 for event in events
@@ -7463,24 +6857,19 @@ def _request_runtime_contract_valid(
         TOOL_SCHEMAS_V6,
     )
 
-    if (
-        manifest.tool_schema_version == "v1"
-        and manifest.context_policy_version == "v1"
-    ):
+    if manifest.tool_schema_version == "v1" and manifest.context_policy_version == "v1":
         system_prompt = SYSTEM_PROMPT_V1
         tools = TOOL_SCHEMAS_V1
-    elif (
-        manifest.tool_schema_version == "v2"
-        and manifest.context_policy_version
-        in {"phase-evidence-v2", "phase-evidence-v3"}
-    ):
+    elif manifest.tool_schema_version == "v2" and manifest.context_policy_version in {
+        "phase-evidence-v2",
+        "phase-evidence-v3",
+    }:
         system_prompt = SYSTEM_PROMPT_V2
         tools = TOOL_SCHEMAS_V2
-    elif (
-        manifest.tool_schema_version == "v2"
-        and manifest.context_policy_version
-        in {"phase-evidence-v4", "phase-evidence-v5"}
-    ):
+    elif manifest.tool_schema_version == "v2" and manifest.context_policy_version in {
+        "phase-evidence-v4",
+        "phase-evidence-v5",
+    }:
         system_prompt = SYSTEM_PROMPT_V3
         tools = TOOL_SCHEMAS_V2
     elif (
@@ -7489,11 +6878,10 @@ def _request_runtime_contract_valid(
     ):
         system_prompt = SYSTEM_PROMPT_V4
         tools = TOOL_SCHEMAS_V3
-    elif (
-        manifest.tool_schema_version == "v4"
-        and manifest.context_policy_version
-        in {"phase-evidence-v7", "phase-evidence-v8"}
-    ):
+    elif manifest.tool_schema_version == "v4" and manifest.context_policy_version in {
+        "phase-evidence-v7",
+        "phase-evidence-v8",
+    }:
         system_prompt = SYSTEM_PROMPT_V5
         tools = TOOL_SCHEMAS_V4
     elif (
@@ -7520,10 +6908,8 @@ def _request_runtime_contract_valid(
     if manifest.model.provider in {"mock", "replay"}:
         return bool(
             isinstance(request_body, dict)
-            and set(request_body)
-            == {"model", "system_prompt", "context", "tools"}
-            and request_body.get("model")
-            == manifest.model.model_id
+            and set(request_body) == {"model", "system_prompt", "context", "tools"}
+            and request_body.get("model") == manifest.model.model_id
             and request_body.get("system_prompt") == system_prompt
             and isinstance(request_body.get("context"), str)
             and request_body.get("tools") == tools
@@ -7565,10 +6951,8 @@ def _request_runtime_contract_valid(
         and request_body.get("tools") == tools
         and request_body.get("store") is False
         and request_body.get("reasoning") == reasoning
-        and request_body.get("service_tier")
-        == manifest.model.service_tier
-        and request_body.get("max_output_tokens")
-        == manifest.model.max_output_tokens
+        and request_body.get("service_tier") == manifest.model.service_tier
+        and request_body.get("max_output_tokens") == manifest.model.max_output_tokens
         and request_body.get("truncation") == "disabled"
     )
 
@@ -7606,25 +6990,24 @@ def _generation_block_common_valid(
     )
     rendered_payload = None
     retry_build_evidence = None
+    request_artifact_hash = None
     if request_valid and request_evidence is not None:
         try:
+            request_artifact_hash = sha256_bytes(
+                Path(str(context_event.payload["artifact_path"])).read_bytes()
+            )
             request_body = request_evidence["request_body"]
             rendered_context = _request_context(
                 request_body,
-                allow_direct_context=(
-                    request_evidence.get("provider")
-                    in {"mock", "replay"}
-                ),
+                allow_direct_context=(request_evidence.get("provider") in {"mock", "replay"}),
             )
             rendered_payload = json.loads(str(rendered_context))
-        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError):
             request_body = None
             rendered_payload = None
         context_build = request_evidence.get("context_build")
         if isinstance(context_build, dict):
-            retry_build_evidence = context_build.get(
-                "rejected_mutation_retry"
-            )
+            retry_build_evidence = context_build.get("rejected_mutation_retry")
     else:
         request_body = None
 
@@ -7646,9 +7029,7 @@ def _generation_block_common_valid(
             else None
         )
         rendered_candidate = (
-            rendered_retry.get("candidate")
-            if isinstance(rendered_retry, dict)
-            else None
+            rendered_retry.get("candidate") if isinstance(rendered_retry, dict) else None
         )
         build_candidate = (
             retry_build_evidence.get("candidate")
@@ -7657,23 +7038,18 @@ def _generation_block_common_valid(
         )
         retry_mode_valid = bool(
             payload.get("retry_context_present") is True
-            and payload.get("retry_candidate_content_hash")
-            == expected_retry_candidate_hash
+            and payload.get("retry_candidate_content_hash") == expected_retry_candidate_hash
             and isinstance(rendered_candidate, dict)
-            and rendered_candidate.get("content_hash")
-            == expected_retry_candidate_hash
+            and rendered_candidate.get("content_hash") == expected_retry_candidate_hash
             and isinstance(retry_build_evidence, dict)
             and retry_build_evidence.get("included") is True
             and retry_build_evidence.get("truncated") is False
             and isinstance(build_candidate, dict)
-            and build_candidate.get("content_hash")
-            == expected_retry_candidate_hash
+            and build_candidate.get("content_hash") == expected_retry_candidate_hash
         )
 
     max_output = blocked_event.payload.get("max_output_tokens")
-    trailing_events = [
-        event for event in events if event.sequence > blocked_event.sequence
-    ]
+    trailing_events = [event for event in events if event.sequence > blocked_event.sequence]
     return bool(
         request_valid
         and _request_runtime_contract_valid(request_body, manifest)
@@ -7686,6 +7062,14 @@ def _generation_block_common_valid(
         == context_event.payload.get("artifact_id")
         and blocked_event.payload.get("request_artifact_path")
         == context_event.payload.get("artifact_path")
+        and (
+            (
+                blocked_event.payload.get("schema_version") is None
+                and "request_artifact_hash" not in blocked_event.payload
+            )
+            or blocked_event.payload.get("request_artifact_hash")
+            == request_artifact_hash
+        )
         and blocked_event.payload.get("request_body_hash")
         == context_event.payload.get("request_body_hash")
         and type(max_output) is int
@@ -7718,20 +7102,32 @@ def _exact_request_generation_block_valid(
     legacy_retry_block = bool(
         schema_version is None and isinstance(expected_retry_candidate_hash, str)
     )
-    if (
-        schema_version != _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA
-        and not legacy_retry_block
-    ):
+    if schema_version != _EXACT_REQUEST_GENERATION_BLOCK_SCHEMA and not legacy_retry_block:
+        return False
+    expected_fields = {
+        "schema_version",
+        "reason_code",
+        "error_code",
+        "generation_started",
+        "request_artifact_id",
+        "request_artifact_path",
+        "request_artifact_hash",
+        "request_body_hash",
+        "requested_input_tokens",
+        "remaining_tokens",
+        "max_output_tokens",
+        "input_token_count_calls",
+        "retry_context_present",
+        "retry_candidate_content_hash",
+    }
+    if not legacy_retry_block and set(payload) != expected_fields:
         return False
 
     requested = payload.get("requested_input_tokens")
     remaining = payload.get("remaining_tokens")
     preceding_token_usage = 0
     for event in events:
-        if (
-            event.type != EventType.MODEL_CALLED
-            or event.sequence >= blocked_event.sequence
-        ):
+        if event.type != EventType.MODEL_CALLED or event.sequence >= blocked_event.sequence:
             continue
         input_tokens = event.payload.get("input_tokens")
         output_tokens = event.payload.get("output_tokens")
@@ -7743,9 +7139,7 @@ def _exact_request_generation_block_valid(
         ):
             return False
         preceding_token_usage += input_tokens + output_tokens
-    expected_remaining = (
-        manifest.budget.max_total_tokens - preceding_token_usage
-    )
+    expected_remaining = manifest.budget.max_total_tokens - preceding_token_usage
     return bool(
         _generation_block_common_valid(
             root=root,
@@ -7818,10 +7212,7 @@ def _counter_generation_block_valid(
     payload = blocked_event.payload
     reason_code = payload.get("reason_code")
     usage = _budget_usage_before(events, blocked_event.sequence)
-    if (
-        manifest.budget.max_model_calls is None
-        or manifest.budget.max_tool_calls is None
-    ):
+    if manifest.budget.max_model_calls is None or manifest.budget.max_tool_calls is None:
         return False
     if (
         payload.get("schema_version") != _COUNTER_GENERATION_BLOCK_SCHEMA
@@ -7837,6 +7228,7 @@ def _counter_generation_block_valid(
         "generation_started",
         "request_artifact_id",
         "request_artifact_path",
+        "request_artifact_hash",
         "request_body_hash",
         "requested_input_tokens",
         "remaining_tokens",
@@ -7866,10 +7258,7 @@ def _counter_generation_block_valid(
         "total_tokens_used",
         "max_total_tokens",
     }
-    if any(
-        type(payload.get(field)) is not int or payload[field] < 0
-        for field in integer_fields
-    ):
+    if any(type(payload.get(field)) is not int or payload[field] < 0 for field in integer_fields):
         return False
 
     model_calls = usage["model_calls"]
@@ -7884,9 +7273,7 @@ def _counter_generation_block_valid(
         reason_valid = model_calls < model_limit and tool_calls == tool_limit
     else:
         reason_valid = bool(
-            model_calls < model_limit
-            and tool_calls < tool_limit
-            and wall_clock_ms >= wall_limit_ms
+            model_calls < model_limit and tool_calls < tool_limit and wall_clock_ms >= wall_limit_ms
         )
 
     return bool(
@@ -7911,8 +7298,7 @@ def _counter_generation_block_valid(
         and payload.get("wall_clock_ms") == wall_clock_ms
         and payload.get("wall_clock_timeout_ms") == wall_limit_ms
         and payload.get("total_tokens_used") == usage["total_tokens"]
-        and payload.get("max_total_tokens")
-        == manifest.budget.max_total_tokens
+        and payload.get("max_total_tokens") == manifest.budget.max_total_tokens
         and usage["total_tokens"] <= manifest.budget.max_total_tokens
     )
 
@@ -7938,6 +7324,7 @@ def _optional_counter_generation_block_valid(
         "generation_started",
         "request_artifact_id",
         "request_artifact_path",
+        "request_artifact_hash",
         "request_body_hash",
         "requested_input_tokens",
         "remaining_tokens",
@@ -7971,35 +7358,27 @@ def _optional_counter_generation_block_valid(
         expected_budget = _GPT54_MINI_FROZEN_COMPARISON_BUDGET
     elif experiment is not None:
         if (
-            experiment.purpose
-            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-            and experiment.experiment_id
-            in _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID
+            experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            and experiment.experiment_id in _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID
         ):
-            expected_budget = (
-                _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID[
-                    experiment.experiment_id
-                ]
-            )
+            expected_budget = _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID[
+                experiment.experiment_id
+            ]
         elif (
-            experiment.purpose
-            == ExperimentPurpose.GENERIC_BASELINE_READINESS
-            and experiment.experiment_id
-            in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
+            experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
+            and experiment.experiment_id in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         ):
             expected_budget = _GENERIC_BASELINE_READINESS_BUDGET_BY_EXPERIMENT_ID.get(
                 experiment.experiment_id
             )
     if (
-        payload.get("schema_version")
-        != _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA
+        payload.get("schema_version") != _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA
         or payload.get("reason_code") != "wall_clock_budget_exhausted"
         or blocked_event.actor != "budget-guard"
         or usage is None
         or set(payload) != expected_fields
         or any(
-            type(payload.get(field)) is not int or payload[field] < 0
-            for field in integer_fields
+            type(payload.get(field)) is not int or payload[field] < 0 for field in integer_fields
         )
         or expected_budget is None
         or manifest.budget != expected_budget
@@ -8015,8 +7394,7 @@ def _optional_counter_generation_block_valid(
             blocked_event=blocked_event,
             expected_retry_candidate_hash=expected_retry_candidate_hash,
         )
-        and payload.get("disabled_budget_dimensions")
-        == ["model_calls", "tool_calls"]
+        and payload.get("disabled_budget_dimensions") == ["model_calls", "tool_calls"]
         and payload.get("max_model_calls") is None
         and payload.get("max_tool_calls") is None
         and payload.get("requested_input_tokens") is None
@@ -8028,8 +7406,7 @@ def _optional_counter_generation_block_valid(
         and usage["wall_clock_ms"] >= wall_limit_ms
         and payload.get("wall_clock_timeout_ms") == wall_limit_ms
         and payload.get("total_tokens_used") == usage["total_tokens"]
-        and payload.get("max_total_tokens")
-        == manifest.budget.max_total_tokens
+        and payload.get("max_total_tokens") == manifest.budget.max_total_tokens
         and usage["total_tokens"] <= manifest.budget.max_total_tokens
     )
 
@@ -8045,10 +7422,7 @@ def _model_generation_block_valid(
 ) -> bool:
     """Dispatch validation without reinterpreting historical unversioned blocks."""
 
-    if (
-        blocked_event.payload.get("schema_version")
-        == _COUNTER_GENERATION_BLOCK_SCHEMA
-    ):
+    if blocked_event.payload.get("schema_version") == _COUNTER_GENERATION_BLOCK_SCHEMA:
         return _counter_generation_block_valid(
             root=root,
             manifest=manifest,
@@ -8057,10 +7431,7 @@ def _model_generation_block_valid(
             blocked_event=blocked_event,
             expected_retry_candidate_hash=expected_retry_candidate_hash,
         )
-    if (
-        blocked_event.payload.get("schema_version")
-        == _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA
-    ):
+    if blocked_event.payload.get("schema_version") == _OPTIONAL_COUNTER_GENERATION_BLOCK_SCHEMA:
         return _optional_counter_generation_block_valid(
             root=root,
             manifest=manifest,
@@ -8259,10 +7630,7 @@ def _rejected_patch_retry_context_evidence(
         if request_valid and request_evidence is not None:
             rendered_context = _request_context(
                 request_evidence["request_body"],
-                allow_direct_context=(
-                    request_evidence.get("provider")
-                    in {"mock", "replay"}
-                ),
+                allow_direct_context=(request_evidence.get("provider") in {"mock", "replay"}),
             )
             try:
                 rendered_payload = json.loads(str(rendered_context))
@@ -8355,10 +7723,7 @@ def _rejected_patch_retry_context_evidence(
                 if later_valid and later_request is not None:
                     later_rendered = _request_context(
                         later_request["request_body"],
-                        allow_direct_context=(
-                            later_request.get("provider")
-                            in {"mock", "replay"}
-                        ),
+                        allow_direct_context=(later_request.get("provider") in {"mock", "replay"}),
                     )
                     try:
                         later_payload = json.loads(str(later_rendered))
@@ -8434,9 +7799,7 @@ def _v7_rejected_patch_retry_context_evidence(
         if event.type in {EventType.TOOL_SUCCEEDED, EventType.TOOL_FAILED}
         and event.payload.get("tool") == "apply_patch"
     ]
-    contexts = [
-        event for event in events if event.type == EventType.CONTEXT_BUILT
-    ]
+    contexts = [event for event in events if event.type == EventType.CONTEXT_BUILT]
     artifact_root = (root / "artifacts").resolve()
     failed_sequences: list[int] = []
     verified_sequences: list[int] = []
@@ -8479,32 +7842,19 @@ def _v7_rejected_patch_retry_context_evidence(
             and event.sequence < failure.sequence
         ]
         call = calls[0] if len(calls) == 1 else None
-        patch_artifact = (
-            call.payload.get("patch_artifact")
-            if call is not None
-            else None
-        )
+        patch_artifact = call.payload.get("patch_artifact") if call is not None else None
         candidate_hash = (
-            patch_artifact.get("content_hash")
-            if isinstance(patch_artifact, dict)
-            else None
+            patch_artifact.get("content_hash") if isinstance(patch_artifact, dict) else None
         )
         resolution = next(
-            (
-                event
-                for event in apply_outcomes
-                if event.sequence > failure.sequence
-            ),
+            (event for event in apply_outcomes if event.sequence > failure.sequence),
             None,
         )
         interval_contexts = [
             context
             for context in contexts
             if context.sequence > failure.sequence
-            and (
-                resolution is None
-                or context.sequence < resolution.sequence
-            )
+            and (resolution is None or context.sequence < resolution.sequence)
         ]
         episode_ok = bool(
             isinstance(action_id, str)
@@ -8515,51 +7865,35 @@ def _v7_rejected_patch_retry_context_evidence(
         )
         for context in interval_contexts:
             valid, retry = rendered_retry(context)
-            source_snapshot = (
-                retry.get("source_snapshot")
-                if isinstance(retry, dict)
-                else None
-            )
+            source_snapshot = retry.get("source_snapshot") if isinstance(retry, dict) else None
             episode_ok = bool(
                 episode_ok
                 and valid
                 and isinstance(retry, dict)
-                and retry.get("schema_version")
-                == "rejected-mutation-retry-v2"
+                and retry.get("schema_version") == "rejected-mutation-retry-v2"
                 and retry.get("action_id") == action_id
                 and retry.get("source_call_sequence") == call.sequence
-                and retry.get("source_failure_sequence")
-                == failure.sequence
-                and retry.get("candidate", {}).get("content_hash")
-                == candidate_hash
+                and retry.get("source_failure_sequence") == failure.sequence
+                and retry.get("candidate", {}).get("content_hash") == candidate_hash
                 and retry.get("persistence")
                 == {
                     "state": "pending",
                     "resolution": "next_apply_patch_outcome",
                 }
                 and isinstance(source_snapshot, dict)
-                and source_snapshot.get("schema_version")
-                == "patch-source-snapshot-v1"
-                and source_snapshot.get("candidate_content_hash")
-                == candidate_hash
+                and source_snapshot.get("schema_version") == "patch-source-snapshot-v1"
+                and source_snapshot.get("candidate_content_hash") == candidate_hash
             )
         if resolution is not None and resolution.type == EventType.TOOL_SUCCEEDED:
             next_failure = next(
-                (
-                    event
-                    for event in failures
-                    if event.sequence > resolution.sequence
-                ),
+                (event for event in failures if event.sequence > resolution.sequence),
                 None,
             )
             cleared_contexts = [
                 context
                 for context in contexts
                 if context.sequence > resolution.sequence
-                and (
-                    next_failure is None
-                    or context.sequence < next_failure.sequence
-                )
+                and (next_failure is None or context.sequence < next_failure.sequence)
             ]
             for context in cleared_contexts:
                 request_valid, request_evidence = _request_evidence_payload(
@@ -8570,9 +7904,7 @@ def _v7_rejected_patch_retry_context_evidence(
                 rendered = (
                     _request_context(
                         request_evidence.get("request_body"),
-                        allow_direct_context=(
-                            manifest.model.provider in {"mock", "replay"}
-                        ),
+                        allow_direct_context=(manifest.model.provider in {"mock", "replay"}),
                     )
                     if request_valid and request_evidence is not None
                     else None
@@ -8589,9 +7921,7 @@ def _v7_rejected_patch_retry_context_evidence(
         if episode_ok:
             verified_sequences.append(failure.sequence)
             verified_hashes.append(candidate_hash)
-            persisted_context_counts[str(failure.sequence)] = len(
-                interval_contexts
-            )
+            persisted_context_counts[str(failure.sequence)] = len(interval_contexts)
         else:
             failed_sequences.append(failure.sequence)
 
@@ -8601,8 +7931,7 @@ def _v7_rejected_patch_retry_context_evidence(
         "retry_episode_count": len(failures),
         "verified_retry_count": len(verified_sequences),
         "model_generation_blocked_count": sum(
-            event.type == EventType.MODEL_GENERATION_BLOCKED
-            for event in events
+            event.type == EventType.MODEL_GENERATION_BLOCKED for event in events
         ),
         "verified_source_failure_sequences": sorted(verified_sequences),
         "failed_source_failure_sequences": sorted(failed_sequences),
@@ -8623,18 +7952,13 @@ def _controlled_rejection_evidence(
         for event in events
         if (
             event.type == EventType.TOOL_FAILED
-            and event.payload.get("error_code")
-            == "CONTROLLED_DIAGNOSTIC_REJECTION"
+            and event.payload.get("error_code") == "CONTROLLED_DIAGNOSTIC_REJECTION"
         )
     ]
     verified_sequences: list[int] = []
     failed_sequences: list[int] = []
     patch_applied_sequences: list[int] = []
-    all_prepared = [
-        event
-        for event in events
-        if event.type == EventType.PATCH_PREPARED
-    ]
+    all_prepared = [event for event in events if event.type == EventType.PATCH_PREPARED]
 
     for index, failure in enumerate(failures):
         action_id = failure.correlation_id
@@ -8652,22 +7976,14 @@ def _controlled_rejection_evidence(
         prepared = [
             event
             for event in all_prepared
-            if (
-                event.correlation_id == action_id
-                and event.sequence < failure.sequence
-            )
+            if (event.correlation_id == action_id and event.sequence < failure.sequence)
         ]
         applied = [
             event
             for event in events
-            if (
-                event.type == EventType.PATCH_APPLIED
-                and event.correlation_id == action_id
-            )
+            if (event.type == EventType.PATCH_APPLIED and event.correlation_id == action_id)
         ]
-        patch_applied_sequences.extend(
-            event.sequence for event in applied
-        )
+        patch_applied_sequences.extend(event.sequence for event in applied)
         call = calls[0] if len(calls) == 1 else None
         intent = prepared[0] if len(prepared) == 1 else None
         details = failure.payload.get("error_details")
@@ -8675,9 +7991,7 @@ def _controlled_rejection_evidence(
         if call is not None and intent is not None:
             patch_artifact = call.payload.get("patch_artifact")
             candidate_hash = (
-                patch_artifact.get("content_hash")
-                if isinstance(patch_artifact, dict)
-                else None
+                patch_artifact.get("content_hash") if isinstance(patch_artifact, dict) else None
             )
             expected_details = {
                 "schema_version": "controlled-rejection-v1",
@@ -8687,27 +8001,17 @@ def _controlled_rejection_evidence(
                     "Review the rehydrated candidate and rejection evidence, "
                     "then retry with a new action_id."
                 ),
-                "fault_type": (
-                    "controlled-reject-first-prepared-patch"
-                ),
+                "fault_type": ("controlled-reject-first-prepared-patch"),
                 "trigger": "first-preflight-valid-apply-patch",
                 "trigger_after": 1,
                 "source_call_sequence": call.sequence,
                 "source_prepared_sequence": intent.sequence,
                 "candidate_content_hash": candidate_hash,
                 "input_hash": call.payload.get("input_hash"),
-                "prepared_intent_content_hash": intent.payload.get(
-                    "content_hash"
-                ),
-                "baseline_worktree_diff_hash": intent.payload.get(
-                    "baseline_worktree_diff_hash"
-                ),
-                "expected_worktree_diff_hash": intent.payload.get(
-                    "expected_worktree_diff_hash"
-                ),
-                "observed_worktree_diff_hash": intent.payload.get(
-                    "baseline_worktree_diff_hash"
-                ),
+                "prepared_intent_content_hash": intent.payload.get("content_hash"),
+                "baseline_worktree_diff_hash": intent.payload.get("baseline_worktree_diff_hash"),
+                "expected_worktree_diff_hash": intent.payload.get("expected_worktree_diff_hash"),
+                "observed_worktree_diff_hash": intent.payload.get("baseline_worktree_diff_hash"),
                 "worktree_mutated": False,
             }
         episode_ok = bool(
@@ -8720,16 +8024,14 @@ def _controlled_rejection_evidence(
             and call is not None
             and intent is not None
             and intent.actor == "tool-gateway"
-            and intent.payload.get("schema_version")
-            == "patch-mutation-intent-v1"
+            and intent.payload.get("schema_version") == "patch-mutation-intent-v1"
             and call.sequence < intent.sequence < failure.sequence
             and failure.sequence == intent.sequence + 1
             and all_prepared
             and intent.sequence == all_prepared[0].sequence
             and expected_details is not None
             and all(
-                isinstance(expected_details.get(field), str)
-                and expected_details[field]
+                isinstance(expected_details.get(field), str) and expected_details[field]
                 for field in (
                     "candidate_content_hash",
                     "input_hash",
@@ -8748,14 +8050,12 @@ def _controlled_rejection_evidence(
             failed_sequences.append(failure.sequence)
 
     passed = bool(
-        manifest.fault.type
-        == "controlled-reject-first-prepared-patch"
+        manifest.fault.type == "controlled-reject-first-prepared-patch"
         and manifest.fault.trigger_after == 1
         and manifest.experiment is not None
         and manifest.experiment.purpose
         == ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
-        and EventType.FAULT_INJECTED
-        not in {event.type for event in events}
+        and EventType.FAULT_INJECTED not in {event.type for event in events}
         and len(failures) == 1
         and len(verified_sequences) == 1
         and not failed_sequences
@@ -8763,18 +8063,10 @@ def _controlled_rejection_evidence(
     )
     return passed, {
         "controlled_rejection_count": len(failures),
-        "verified_controlled_rejection_count": len(
-            verified_sequences
-        ),
-        "controlled_source_failure_sequences": sorted(
-            verified_sequences
-        ),
-        "failed_controlled_source_failure_sequences": sorted(
-            failed_sequences
-        ),
-        "controlled_patch_applied_sequences": sorted(
-            patch_applied_sequences
-        ),
+        "verified_controlled_rejection_count": len(verified_sequences),
+        "controlled_source_failure_sequences": sorted(verified_sequences),
+        "failed_controlled_source_failure_sequences": sorted(failed_sequences),
+        "controlled_patch_applied_sequences": sorted(patch_applied_sequences),
     }
 
 
@@ -8795,7 +8087,7 @@ def _complete_get_diff_in_request(
         request_valid, request_evidence = _request_evidence_payload(
             context_event,
             artifact_root=(
-            artifact_root
+                artifact_root
                 if context_policy_version
                 in {
                     "phase-evidence-v9",
@@ -8811,10 +8103,7 @@ def _complete_get_diff_in_request(
         request_body = request_evidence["request_body"]
         rendered_context = _request_context(
             request_body,
-            allow_direct_context=(
-                request_evidence.get("provider")
-                in {"mock", "replay"}
-            ),
+            allow_direct_context=(request_evidence.get("provider") in {"mock", "replay"}),
         )
         if not request_valid or rendered_context is None:
             return request_valid, False
@@ -8832,23 +8121,17 @@ def _complete_get_diff_in_request(
         }:
             if artifact_root is None:
                 return request_valid, False
-            expected_rendered_event, expected_tool_result = (
-                _v9_recompute_review_anchor(
-                    source_event,
-                    artifact_store=ArtifactStore(artifact_root),
-                )
+            expected_rendered_event, expected_tool_result = _v9_recompute_review_anchor(
+                source_event,
+                artifact_store=ArtifactStore(artifact_root),
             )
-            source_artifact = expected_rendered_event["payload"][
-                "tool_result"
-            ]
+            source_artifact = expected_rendered_event["payload"]["tool_result"]
             if not isinstance(source_artifact, dict):
                 return request_valid, False
             review_evidence = rendered_payload.get("review_evidence")
             context_build = request_evidence.get("context_build")
             build_review_evidence = (
-                context_build.get("review_evidence")
-                if isinstance(context_build, dict)
-                else None
+                context_build.get("review_evidence") if isinstance(context_build, dict) else None
             )
             if (
                 not isinstance(review_evidence, dict)
@@ -8867,32 +8150,26 @@ def _complete_get_diff_in_request(
             ):
                 return request_valid, False
             pinned_results = review_evidence.get("pinned_results")
-            pinned_tool_results = build_review_evidence.get(
-                "pinned_tool_results"
-            )
+            pinned_tool_results = build_review_evidence.get("pinned_tool_results")
             presented_results = context_build.get("tool_results")
             if (
                 not isinstance(pinned_results, list)
                 or not isinstance(pinned_tool_results, list)
                 or not isinstance(presented_results, list)
                 or not all(
-                    isinstance(item, dict)
-                    and type(item.get("sequence")) is int
+                    isinstance(item, dict) and type(item.get("sequence")) is int
                     for item in pinned_results
                 )
                 or not all(
-                    isinstance(item, dict)
-                    and type(item.get("event_sequence")) is int
+                    isinstance(item, dict) and type(item.get("event_sequence")) is int
                     for item in pinned_tool_results
                 )
                 or not all(
-                    isinstance(item, dict)
-                    and type(item.get("event_sequence")) is int
+                    isinstance(item, dict) and type(item.get("event_sequence")) is int
                     for item in presented_results
                 )
                 or not all(
-                    isinstance(item, dict)
-                    and type(item.get("sequence")) is int
+                    isinstance(item, dict) and type(item.get("sequence")) is int
                     for item in recent_events
                 )
             ):
@@ -8900,14 +8177,10 @@ def _complete_get_diff_in_request(
 
             source_sequence = source_event.sequence
             recent_source = [
-                item
-                for item in recent_events
-                if item.get("sequence") == source_sequence
+                item for item in recent_events if item.get("sequence") == source_sequence
             ]
             pinned_source = [
-                item
-                for item in pinned_results
-                if item.get("sequence") == source_sequence
+                item for item in pinned_results if item.get("sequence") == source_sequence
             ]
             pinned_tool_source = [
                 item
@@ -8915,106 +8188,60 @@ def _complete_get_diff_in_request(
                 if item.get("event_sequence") == source_sequence
             ]
             presented_source = [
-                item
-                for item in presented_results
-                if item.get("event_sequence") == source_sequence
+                item for item in presented_results if item.get("event_sequence") == source_sequence
             ]
-            citable_sequences = review_evidence.get(
-                "citable_event_sequences"
-            )
-            incomplete_sequences = review_evidence.get(
-                "incomplete_event_sequences"
-            )
-            build_citable_sequences = build_review_evidence.get(
-                "citable_event_sequences"
-            )
-            build_incomplete_sequences = build_review_evidence.get(
-                "incomplete_event_sequences"
-            )
+            citable_sequences = review_evidence.get("citable_event_sequences")
+            incomplete_sequences = review_evidence.get("incomplete_event_sequences")
+            build_citable_sequences = build_review_evidence.get("citable_event_sequences")
+            build_incomplete_sequences = build_review_evidence.get("incomplete_event_sequences")
             complete_source = bool(
                 review_evidence.get("schema_version")
                 == (
                     "review-evidence-v2"
-                    if context_policy_version
-                    in {"phase-evidence-v10", "phase-evidence-v11"}
+                    if context_policy_version in {"phase-evidence-v10", "phase-evidence-v11"}
                     else "review-evidence-v1"
                 )
                 and review_evidence.get("pinning_active") is True
-                and review_evidence.get("worktree_diff_hash")
-                == accepted_diff
-                and type(
-                    review_evidence.get("source_get_diff_sequence")
-                )
-                is int
-                and review_evidence["source_get_diff_sequence"]
-                == source_sequence
+                and review_evidence.get("worktree_diff_hash") == accepted_diff
+                and type(review_evidence.get("source_get_diff_sequence")) is int
+                and review_evidence["source_get_diff_sequence"] == source_sequence
                 and isinstance(citable_sequences, list)
-                and all(
-                    type(sequence) is int
-                    for sequence in citable_sequences
-                )
+                and all(type(sequence) is int for sequence in citable_sequences)
                 and citable_sequences.count(source_sequence) == 1
                 and isinstance(incomplete_sequences, list)
-                and all(
-                    type(sequence) is int
-                    for sequence in incomplete_sequences
-                )
+                and all(type(sequence) is int for sequence in incomplete_sequences)
                 and source_sequence not in incomplete_sequences
                 and build_review_evidence.get("schema_version")
                 == (
                     "review-evidence-v2"
-                    if context_policy_version
-                    in {"phase-evidence-v10", "phase-evidence-v11"}
+                    if context_policy_version in {"phase-evidence-v10", "phase-evidence-v11"}
                     else "review-evidence-v1"
                 )
                 and build_review_evidence.get("pinning_active") is True
-                and build_review_evidence.get("worktree_diff_hash")
-                == accepted_diff
-                and type(
-                    build_review_evidence.get(
-                        "source_get_diff_sequence"
-                    )
-                )
-                is int
-                and build_review_evidence[
-                    "source_get_diff_sequence"
-                ]
-                == source_sequence
+                and build_review_evidence.get("worktree_diff_hash") == accepted_diff
+                and type(build_review_evidence.get("source_get_diff_sequence")) is int
+                and build_review_evidence["source_get_diff_sequence"] == source_sequence
                 and isinstance(build_citable_sequences, list)
-                and all(
-                    type(sequence) is int
-                    for sequence in build_citable_sequences
-                )
-                and build_citable_sequences.count(source_sequence)
-                == 1
+                and all(type(sequence) is int for sequence in build_citable_sequences)
+                and build_citable_sequences.count(source_sequence) == 1
                 and isinstance(build_incomplete_sequences, list)
-                and all(
-                    type(sequence) is int
-                    for sequence in build_incomplete_sequences
-                )
-                and source_sequence
-                not in build_incomplete_sequences
+                and all(type(sequence) is int for sequence in build_incomplete_sequences)
+                and source_sequence not in build_incomplete_sequences
                 and not recent_source
                 and len(pinned_source) == 1
-                and canonical_json(pinned_source[0])
-                == canonical_json(expected_rendered_event)
+                and canonical_json(pinned_source[0]) == canonical_json(expected_rendered_event)
                 and len(pinned_tool_source) == 1
-                and canonical_json(pinned_tool_source[0])
-                == canonical_json(expected_tool_result)
+                and canonical_json(pinned_tool_source[0]) == canonical_json(expected_tool_result)
                 and len(presented_source) == 1
-                and canonical_json(presented_source[0])
-                == canonical_json(expected_tool_result)
+                and canonical_json(presented_source[0]) == canonical_json(expected_tool_result)
                 and expected_tool_result.get("tool") == "get_diff"
-                and expected_tool_result.get("worktree_diff_hash")
-                == accepted_diff
+                and expected_tool_result.get("worktree_diff_hash") == accepted_diff
                 and expected_tool_result.get("available") is True
                 and expected_tool_result.get("truncated") is False
                 and source_artifact.get("patch_hash") == accepted_diff
-                and source_artifact.get("worktree_diff_hash")
-                == accepted_diff
+                and source_artifact.get("worktree_diff_hash") == accepted_diff
                 and isinstance(source_artifact.get("patch"), str)
-                and sha256_text(source_artifact["patch"])
-                == accepted_diff
+                and sha256_text(source_artifact["patch"]) == accepted_diff
             )
             return request_valid, complete_source
         source_artifact = json.loads(
@@ -9216,28 +8443,20 @@ def _self_validation_lifecycle_evidence(
     review_contract = manifest.public_review_contract
     authoritative_requirements = {
         item.requirement_id: item.source_excerpt
-        for item in (
-            review_contract.requirements
-            if review_contract is not None
-            else []
-        )
+        for item in (review_contract.requirements if review_contract is not None else [])
     }
     events_by_sequence = {event.sequence: event for event in events}
-    special_tools = (
-        {"run_probe"}
-        if coverage_v10
-        else {"run_probe", "review_task"}
-    )
+    special_tools = {"run_probe"} if coverage_v10 else {"run_probe", "review_task"}
     calls = [
         event
         for event in events
-        if event.type == EventType.TOOL_CALLED
-        and event.payload.get("tool") in special_tools
+        if event.type == EventType.TOOL_CALLED and event.payload.get("tool") in special_tools
     ]
     outcomes = [
         event
         for event in events
-        if event.type in {
+        if event.type
+        in {
             EventType.TOOL_SUCCEEDED,
             EventType.TOOL_FAILED,
         }
@@ -9247,14 +8466,8 @@ def _self_validation_lifecycle_evidence(
     verified_probe_sequences: list[int] = []
     verified_review_sequences: list[int] = []
     review_artifacts: dict[int, dict[str, Any]] = {}
-    probe_profiles = {
-        profile.id: profile
-        for profile in package.public.probe_profiles
-    }
-    probe_observed = any(
-        event.payload.get("tool") == "run_probe"
-        for event in [*calls, *outcomes]
-    )
+    probe_profiles = {profile.id: profile for profile in package.public.probe_profiles}
+    probe_observed = any(event.payload.get("tool") == "run_probe" for event in [*calls, *outcomes])
     probe_manifest_binding_valid = bool(
         not probe_observed
         or (
@@ -9351,10 +8564,7 @@ def _self_validation_lifecycle_evidence(
                 or len(sequences) > 20
                 or any(type(sequence) is not int for sequence in sequences)
                 or len(sequences) != len(set(sequences))
-                or (
-                    item.get("status") != "unverified"
-                    and not sequences
-                )
+                or (item.get("status") != "unverified" and not sequences)
                 or not isinstance(notes, str)
                 or not notes.strip()
                 or len(notes) > 2000
@@ -9383,8 +8593,7 @@ def _self_validation_lifecycle_evidence(
                 }
                 or type(sequence) is not int
                 or sequence in seen_targeted_sequences
-                or item.get("outcome")
-                not in {"passed", "failed", "inconclusive"}
+                or item.get("outcome") not in {"passed", "failed", "inconclusive"}
                 or not isinstance(notes, str)
                 or not notes.strip()
                 or len(notes) > 2000
@@ -9397,12 +8606,8 @@ def _self_validation_lifecycle_evidence(
             and isinstance(item.get("requirement_ids"), list)
             and bool(item["requirement_ids"])
             and len(item["requirement_ids"]) <= 20
-            and all(
-                isinstance(requirement_id, str)
-                for requirement_id in item["requirement_ids"]
-            )
-            and len(item["requirement_ids"])
-            == len(set(item["requirement_ids"]))
+            and all(isinstance(requirement_id, str) for requirement_id in item["requirement_ids"])
+            and len(item["requirement_ids"]) == len(set(item["requirement_ids"]))
             and all(
                 requirement_id in authoritative_requirements
                 for requirement_id in item["requirement_ids"]
@@ -9426,11 +8631,7 @@ def _self_validation_lifecycle_evidence(
             and event.payload.get("tool") == tool
             and event.sequence > call.sequence
         ]
-        outcome = (
-            matching_outcomes[0]
-            if len(matching_outcomes) == 1
-            else None
-        )
+        outcome = matching_outcomes[0] if len(matching_outcomes) == 1 else None
         call_ok = bool(
             call.actor == "agent"
             and isinstance(action_id, str)
@@ -9442,26 +8643,16 @@ def _self_validation_lifecycle_evidence(
             role=f"{tool}-input",
             descriptor=call.payload.get("input_artifact"),
         )
-        arguments = (
-            input_payload.get("input")
-            if isinstance(input_payload, dict)
-            else None
-        )
+        arguments = input_payload.get("input") if isinstance(input_payload, dict) else None
         expected_input_keys = (
-            {"tool", "input", "execution_context"}
-            if tool == "review_task"
-            else {"tool", "input"}
+            {"tool", "input", "execution_context"} if tool == "review_task" else {"tool", "input"}
         )
         input_hash = (
-            sha256_text(
-                canonical_json({"tool": tool, "input": arguments})
-            )
+            sha256_text(canonical_json({"tool": tool, "input": arguments}))
             if isinstance(arguments, dict)
             else None
         )
-        worktree_diff_hash = call.payload.get(
-            "worktree_diff_hash"
-        )
+        worktree_diff_hash = call.payload.get("worktree_diff_hash")
         normalized_call_hash = (
             sha256_text(
                 canonical_json(
@@ -9473,10 +8664,7 @@ def _self_validation_lifecycle_evidence(
                     }
                 )
             )
-            if (
-                isinstance(arguments, dict)
-                and isinstance(worktree_diff_hash, str)
-            )
+            if (isinstance(arguments, dict) and isinstance(worktree_diff_hash, str))
             else None
         )
         call_ok = bool(
@@ -9486,13 +8674,10 @@ def _self_validation_lifecycle_evidence(
             and set(input_payload) == expected_input_keys
             and input_payload.get("tool") == tool
             and isinstance(arguments, dict)
-            and call.payload.get("artifact_id")
-            == input_item.get("artifact_id")
-            and call.payload.get("artifact_path")
-            == input_item.get("declared_path")
+            and call.payload.get("artifact_id") == input_item.get("artifact_id")
+            and call.payload.get("artifact_path") == input_item.get("declared_path")
             and call.payload.get("input_hash") == input_hash
-            and call.payload.get("normalized_call_hash")
-            == normalized_call_hash
+            and call.payload.get("normalized_call_hash") == normalized_call_hash
         )
         probe_source_valid = True
         probe_source_item: dict[str, Any] = {}
@@ -9501,11 +8686,7 @@ def _self_validation_lifecycle_evidence(
         if tool == "run_probe":
             source = arguments.get("source")
             probe_id = arguments.get("probe_id")
-            probe_profile = (
-                probe_profiles.get(probe_id)
-                if isinstance(probe_id, str)
-                else None
-            )
+            probe_profile = probe_profiles.get(probe_id) if isinstance(probe_id, str) else None
             if isinstance(source, str):
                 (
                     probe_source_valid,
@@ -9515,56 +8696,36 @@ def _self_validation_lifecycle_evidence(
                     artifact_root=artifact_root,
                     event_id=call.event_id,
                     role="probe-source",
-                    raw_artifact=call.payload.get(
-                        "source_artifact"
-                    ),
+                    raw_artifact=call.payload.get("source_artifact"),
                 )
                 probe_source_valid = bool(
                     probe_source_valid
-                    and probe_source_bytes
-                    == source.encode("utf-8")
+                    and probe_source_bytes == source.encode("utf-8")
                     and call.payload.get("source_hash")
-                    == probe_source_item.get(
-                        "actual_content_hash"
-                    )
-                    and call.payload.get("probe_id")
-                    == probe_id
-                    and call.payload.get(
-                        "probe_policy_version"
-                    )
-                    == "ephemeral-python-probe-v2"
+                    == probe_source_item.get("actual_content_hash")
+                    and call.payload.get("probe_id") == probe_id
+                    and call.payload.get("probe_policy_version") == "ephemeral-python-probe-v2"
                 )
             else:
                 probe_source_valid = bool(
                     call.payload.get("source_artifact") is None
                     and call.payload.get("source_hash") is None
                     and call.payload.get("probe_id") is None
-                    and call.payload.get(
-                        "probe_policy_version"
-                    )
-                    is None
+                    and call.payload.get("probe_policy_version") is None
                 )
-            call_ok = bool(
-                call_ok and probe_source_valid
-            )
+            call_ok = bool(call_ok and probe_source_valid)
         result_valid, result_payload, result_item = nested_json(
             outcome if outcome is not None else call,
             role=f"{tool}-result",
-            descriptor=(
-                outcome.payload.get("result_artifact")
-                if outcome is not None
-                else None
-            ),
+            descriptor=(outcome.payload.get("result_artifact") if outcome is not None else None),
         )
         call_ok = bool(
             call_ok
             and outcome is not None
             and result_valid
             and isinstance(result_payload, dict)
-            and outcome.payload.get("artifact_id")
-            == result_item.get("artifact_id")
-            and outcome.payload.get("artifact_path")
-            == result_item.get("declared_path")
+            and outcome.payload.get("artifact_id") == result_item.get("artifact_id")
+            and outcome.payload.get("artifact_path") == result_item.get("declared_path")
         )
         if not call_ok or outcome is None or input_payload is None:
             failed_call_sequences.append(call.sequence)
@@ -9572,9 +8733,7 @@ def _self_validation_lifecycle_evidence(
         if outcome.type == EventType.TOOL_FAILED:
             v9_failed_review_ok = True
             if review_v9 and tool == "review_task":
-                execution_context = input_payload.get(
-                    "execution_context"
-                )
+                execution_context = input_payload.get("execution_context")
                 request_artifact_id = (
                     execution_context.get("request_artifact_id")
                     if isinstance(execution_context, dict)
@@ -9584,24 +8743,17 @@ def _self_validation_lifecycle_evidence(
                     event
                     for event in events
                     if event.type == EventType.CONTEXT_BUILT
-                    and event.payload.get("artifact_id")
-                    == request_artifact_id
+                    and event.payload.get("artifact_id") == request_artifact_id
                     and event.sequence < call.sequence
                 ]
-                context_event = (
-                    matching_contexts[0]
-                    if len(matching_contexts) == 1
-                    else None
-                )
+                context_event = matching_contexts[0] if len(matching_contexts) == 1 else None
                 request_valid = False
                 request_evidence = None
                 if context_event is not None:
-                    request_valid, request_evidence = (
-                        _request_evidence_payload(
-                            context_event,
-                            artifact_root=artifact_root,
-                            expected_provider=manifest.model.provider,
-                        )
+                    request_valid, request_evidence = _request_evidence_payload(
+                        context_event,
+                        artifact_root=artifact_root,
+                        expected_provider=manifest.model.provider,
                     )
                 context_build = (
                     request_evidence.get("context_build")
@@ -9622,12 +8774,9 @@ def _self_validation_lifecycle_evidence(
                     event
                     for event in events
                     if event.type == EventType.MODEL_CALLED
-                    and event.payload.get("request_artifact_id")
-                    == request_artifact_id
+                    and event.payload.get("request_artifact_id") == request_artifact_id
                     and context_event is not None
-                    and context_event.sequence
-                    < event.sequence
-                    < call.sequence
+                    and context_event.sequence < event.sequence < call.sequence
                 ]
                 request_binding_ok = bool(
                     isinstance(execution_context, dict)
@@ -9640,15 +8789,13 @@ def _self_validation_lifecycle_evidence(
                     }
                     and execution_context.get("phase") == "REVIEW"
                     and isinstance(request_artifact_id, str)
-                    and call.payload.get("request_artifact_id")
-                    == request_artifact_id
+                    and call.payload.get("request_artifact_id") == request_artifact_id
                     and call.payload.get("request_phase") == "REVIEW"
                     and request_valid
                     and isinstance(context_build, dict)
                     and context_build.get("tool_results") == presented
                     and isinstance(request_review_evidence, dict)
-                    and execution_context.get("review_evidence")
-                    == request_review_evidence
+                    and execution_context.get("review_evidence") == request_review_evidence
                     and _request_runtime_contract_valid(
                         request_evidence.get("request_body"),
                         manifest,
@@ -9657,91 +8804,65 @@ def _self_validation_lifecycle_evidence(
                 )
                 rejection_details = result_payload.get("error_details")
                 expected_citable = (
-                    request_review_evidence.get(
-                        "citable_event_sequences"
-                    )
+                    request_review_evidence.get("citable_event_sequences")
                     if isinstance(request_review_evidence, dict)
                     else None
                 )
                 expected_passing = (
-                    request_review_evidence.get(
-                        "passing_check_event_sequences"
-                    )
+                    request_review_evidence.get("passing_check_event_sequences")
                     if isinstance(request_review_evidence, dict)
                     else None
                 )
                 expected_diff = (
-                    request_review_evidence.get(
-                        "source_get_diff_sequence"
-                    )
+                    request_review_evidence.get("source_get_diff_sequence")
                     if isinstance(request_review_evidence, dict)
                     else None
                 )
                 expected_mutation = (
-                    request_review_evidence.get(
-                        "mutation_event_sequence"
-                    )
+                    request_review_evidence.get("mutation_event_sequence")
                     if isinstance(request_review_evidence, dict)
                     else None
                 )
-                current_diff_hash = call.payload.get(
-                    "worktree_diff_hash"
-                )
+                current_diff_hash = call.payload.get("worktree_diff_hash")
                 mutation_event = (
                     events_by_sequence.get(expected_mutation)
                     if type(expected_mutation) is int
                     else None
                 )
                 diff_event = (
-                    events_by_sequence.get(expected_diff)
-                    if type(expected_diff) is int
-                    else None
+                    events_by_sequence.get(expected_diff) if type(expected_diff) is int else None
                 )
                 epoch_binding_ok = bool(
                     isinstance(current_diff_hash, str)
                     and isinstance(request_review_evidence, dict)
-                    and request_review_evidence.get("pinning_active")
-                    is True
-                    and request_review_evidence.get(
-                        "worktree_diff_hash"
-                    )
-                    == current_diff_hash
+                    and request_review_evidence.get("pinning_active") is True
+                    and request_review_evidence.get("worktree_diff_hash") == current_diff_hash
                     and mutation_event is not None
                     and mutation_event.type == EventType.PATCH_APPLIED
-                    and mutation_event.payload.get("worktree_diff_hash")
-                    == current_diff_hash
+                    and mutation_event.payload.get("worktree_diff_hash") == current_diff_hash
                     and diff_event is not None
                     and diff_event.type == EventType.TOOL_SUCCEEDED
                     and diff_event.payload.get("tool") == "get_diff"
-                    and diff_event.payload.get("worktree_diff_hash")
-                    == current_diff_hash
+                    and diff_event.payload.get("worktree_diff_hash") == current_diff_hash
                     and context_event is not None
-                    and mutation_event.sequence < diff_event.sequence
-                    < context_event.sequence < call.sequence
+                    and mutation_event.sequence
+                    < diff_event.sequence
+                    < context_event.sequence
+                    < call.sequence
                     and not any(
                         event.type == EventType.PATCH_APPLIED
-                        and mutation_event.sequence
-                        < event.sequence
-                        < call.sequence
+                        and mutation_event.sequence < event.sequence < call.sequence
                         for event in events
                     )
                 )
                 raw_requirements = (
-                    arguments.get("requirements")
-                    if isinstance(arguments, dict)
-                    else None
+                    arguments.get("requirements") if isinstance(arguments, dict) else None
                 )
                 raw_targeted_validation = (
-                    arguments.get("targeted_validation")
-                    if isinstance(arguments, dict)
-                    else None
+                    arguments.get("targeted_validation") if isinstance(arguments, dict) else None
                 )
                 citation_sequences: set[int] = set()
-                for requirement in (
-                    raw_requirements
-                    if isinstance(raw_requirements, list)
-                    else []
-                ):
+                for requirement in raw_requirements if isinstance(raw_requirements, list) else []:
                     raw_sequences = (
                         requirement.get("evidence_event_sequences")
                         if isinstance(requirement, dict)
@@ -9749,22 +8870,15 @@ def _self_validation_lifecycle_evidence(
                     )
                     citation_sequences.update(
                         sequence
-                        for sequence in (
-                            raw_sequences
-                            if isinstance(raw_sequences, list)
-                            else []
-                        )
+                        for sequence in (raw_sequences if isinstance(raw_sequences, list) else [])
                         if type(sequence) is int
                     )
                 citation_sequences.update(
                     item["event_sequence"]
                     for item in (
-                        raw_targeted_validation
-                        if isinstance(raw_targeted_validation, list)
-                        else []
+                        raw_targeted_validation if isinstance(raw_targeted_validation, list) else []
                     )
-                    if isinstance(item, dict)
-                    and type(item.get("event_sequence")) is int
+                    if isinstance(item, dict) and type(item.get("event_sequence")) is int
                 )
                 sequence_failure_reasons = {
                     "invalid_event_sequence",
@@ -9776,9 +8890,7 @@ def _self_validation_lifecycle_evidence(
                     "evidence_not_citable",
                 }
                 reason = (
-                    rejection_details.get("reason")
-                    if isinstance(rejection_details, dict)
-                    else None
+                    rejection_details.get("reason") if isinstance(rejection_details, dict) else None
                 )
                 expected_detail_keys = {
                     "schema_version",
@@ -9787,77 +8899,49 @@ def _self_validation_lifecycle_evidence(
                     "citable_event_sequences",
                     "passing_validation_event_sequences",
                     "source_get_diff_sequence",
-                    *(
-                        {"invalid_event_sequence"}
-                        if reason in sequence_failure_reasons
-                        else set()
-                    ),
+                    *({"invalid_event_sequence"} if reason in sequence_failure_reasons else set()),
                 }
                 rejection_binding_ok = bool(
                     v9_failed_review_input_shape_valid(arguments)
                     and isinstance(rejection_details, dict)
                     and set(rejection_details) == expected_detail_keys
-                    and rejection_details.get("schema_version")
-                    == "review-citation-error-v1"
+                    and rejection_details.get("schema_version") == "review-citation-error-v1"
                     and rejection_details.get("stage") == "review"
                     and reason
                     in {
                         *sequence_failure_reasons,
                         "targeted_validation_missing",
                     }
-                    and rejection_details.get(
-                        "citable_event_sequences"
-                    )
+                    and rejection_details.get("citable_event_sequences")
                     == (
                         sorted(expected_citable)
                         if isinstance(expected_citable, list)
-                        and all(
-                            type(sequence) is int
-                            for sequence in expected_citable
-                        )
+                        and all(type(sequence) is int for sequence in expected_citable)
                         else None
                     )
-                    and rejection_details.get(
-                        "passing_validation_event_sequences"
-                    )
+                    and rejection_details.get("passing_validation_event_sequences")
                     == (
                         sorted(expected_passing)
                         if isinstance(expected_passing, list)
-                        and all(
-                            type(sequence) is int
-                            for sequence in expected_passing
-                        )
+                        and all(type(sequence) is int for sequence in expected_passing)
                         else None
                     )
-                    and rejection_details.get(
-                        "source_get_diff_sequence"
-                    )
-                    == expected_diff
+                    and rejection_details.get("source_get_diff_sequence") == expected_diff
                     and (
                         reason == "targeted_validation_missing"
-                        or rejection_details.get(
-                            "invalid_event_sequence"
-                        )
-                        in citation_sequences
+                        or rejection_details.get("invalid_event_sequence") in citation_sequences
                     )
                 )
                 v9_failed_review_ok = bool(
-                    request_binding_ok
-                    and epoch_binding_ok
-                    and rejection_binding_ok
+                    request_binding_ok and epoch_binding_ok and rejection_binding_ok
                 )
             failure_ok = bool(
                 result_payload.get("tool") == tool
-                and result_payload.get("status")
-                == outcome.payload.get("status")
-                and outcome.payload.get("status")
-                in {"rejected", "failed"}
-                and result_payload.get("error_code")
-                == outcome.payload.get("error_code")
-                and result_payload.get("error_message")
-                == outcome.payload.get("error_message")
-                and result_payload.get("error_details")
-                == outcome.payload.get("error_details")
+                and result_payload.get("status") == outcome.payload.get("status")
+                and outcome.payload.get("status") in {"rejected", "failed"}
+                and result_payload.get("error_code") == outcome.payload.get("error_code")
+                and result_payload.get("error_message") == outcome.payload.get("error_message")
+                and result_payload.get("error_details") == outcome.payload.get("error_details")
                 and v9_failed_review_ok
             )
             if not failure_ok:
@@ -9890,71 +8974,42 @@ def _self_validation_lifecycle_evidence(
                 and isinstance(source, str)
                 and isinstance(probe_id, str)
                 and probe_profile is not None
-                and result_payload.get("schema_version")
-                == "ephemeral-python-probe-result-v2"
-                and result_payload.get("probe_policy_version")
-                == "ephemeral-python-probe-v2"
+                and result_payload.get("schema_version") == "ephemeral-python-probe-result-v2"
+                and result_payload.get("probe_policy_version") == "ephemeral-python-probe-v2"
                 and result_payload.get("authoritative") is False
-                and result_payload.get("probe_id")
-                == probe_profile.id
-                and result_payload.get("probe_runtime")
-                == probe_profile.runtime
-                and result_payload.get("timeout_seconds")
-                == probe_profile.timeout_seconds
-                and result_payload.get("output_limit_bytes")
-                == probe_profile.output_limit_bytes
-                and result_payload.get("source_limit_bytes")
-                == probe_profile.source_limit_bytes
+                and result_payload.get("probe_id") == probe_profile.id
+                and result_payload.get("probe_runtime") == probe_profile.runtime
+                and result_payload.get("timeout_seconds") == probe_profile.timeout_seconds
+                and result_payload.get("output_limit_bytes") == probe_profile.output_limit_bytes
+                and result_payload.get("source_limit_bytes") == probe_profile.source_limit_bytes
                 and result_payload.get("source_artifact")
                 == call.payload.get("source_artifact")
                 == outcome.payload.get("source_artifact")
                 and result_payload.get("source_hash")
                 == call.payload.get("source_hash")
                 == outcome.payload.get("source_hash")
-                == probe_source_item.get(
-                    "actual_content_hash"
-                )
+                == probe_source_item.get("actual_content_hash")
                 and result_payload.get("execution_policy")
                 == outcome.payload.get("execution_policy")
                 == expected_execution_policy
-                and result_payload.get("command")
-                == ["python", "-I", "<ephemeral-probe>"]
-                and result_payload.get("worktree_diff_hash")
-                == worktree_diff_hash
-                and outcome.payload.get("probe_id")
-                == probe_profile.id
-                and outcome.payload.get("probe_runtime")
-                == probe_profile.runtime
-                and outcome.payload.get("timeout_seconds")
-                == probe_profile.timeout_seconds
-                and outcome.payload.get("output_limit_bytes")
-                == probe_profile.output_limit_bytes
-                and outcome.payload.get("source_limit_bytes")
-                == probe_profile.source_limit_bytes
+                and result_payload.get("command") == ["python", "-I", "<ephemeral-probe>"]
+                and result_payload.get("worktree_diff_hash") == worktree_diff_hash
+                and outcome.payload.get("probe_id") == probe_profile.id
+                and outcome.payload.get("probe_runtime") == probe_profile.runtime
+                and outcome.payload.get("timeout_seconds") == probe_profile.timeout_seconds
+                and outcome.payload.get("output_limit_bytes") == probe_profile.output_limit_bytes
+                and outcome.payload.get("source_limit_bytes") == probe_profile.source_limit_bytes
                 and (
-                    (
-                        type(probe_exit_code) is int
-                        and probe_timed_out is False
-                    )
-                    or (
-                        probe_exit_code is None
-                        and probe_timed_out is True
-                    )
+                    (type(probe_exit_code) is int and probe_timed_out is False)
+                    or (probe_exit_code is None and probe_timed_out is True)
                 )
-                and passed
-                is (
-                    not probe_timed_out
-                    and probe_exit_code == 0
-                )
+                and passed is (not probe_timed_out and probe_exit_code == 0)
                 and outcome.payload.get("probe_policy_version")
                 == result_payload.get("probe_policy_version")
-                and outcome.payload.get("worktree_diff_hash")
-                == worktree_diff_hash
+                and outcome.payload.get("worktree_diff_hash") == worktree_diff_hash
                 and outcome.payload.get("passed") == passed
-                and outcome.payload.get("timed_out")
-                == probe_timed_out
-                and outcome.payload.get("exit_code")
-                == probe_exit_code
+                and outcome.payload.get("timed_out") == probe_timed_out
+                and outcome.payload.get("exit_code") == probe_exit_code
             )
             if probe_ok:
                 verified_probe_sequences.append(outcome.sequence)
@@ -9962,9 +9017,7 @@ def _self_validation_lifecycle_evidence(
                 failed_call_sequences.append(call.sequence)
             continue
 
-        execution_context = input_payload.get(
-            "execution_context"
-        )
+        execution_context = input_payload.get("execution_context")
         expected_execution_context_keys = {
             "request_artifact_id",
             "phase",
@@ -9985,38 +9038,28 @@ def _self_validation_lifecycle_evidence(
             event
             for event in events
             if event.type == EventType.CONTEXT_BUILT
-            and event.payload.get("artifact_id")
-            == request_artifact_id
+            and event.payload.get("artifact_id") == request_artifact_id
             and event.sequence < call.sequence
         ]
-        context_event = (
-            matching_contexts[0]
-            if len(matching_contexts) == 1
-            else None
-        )
+        context_event = matching_contexts[0] if len(matching_contexts) == 1 else None
         request_valid = False
         request_evidence = None
         if context_event is not None:
-            request_valid, request_evidence = (
-                _request_evidence_payload(
-                    context_event,
-                    artifact_root=artifact_root,
-                    expected_provider=manifest.model.provider,
-                )
+            request_valid, request_evidence = _request_evidence_payload(
+                context_event,
+                artifact_root=artifact_root,
+                expected_provider=manifest.model.provider,
             )
         matching_model_calls = [
             event
             for event in events
             if event.type == EventType.MODEL_CALLED
-            and event.payload.get("request_artifact_id")
-            == request_artifact_id
+            and event.payload.get("request_artifact_id") == request_artifact_id
             and context_event is not None
             and context_event.sequence < event.sequence < call.sequence
         ]
         request_context_build = (
-            request_evidence.get("context_build")
-            if isinstance(request_evidence, dict)
-            else None
+            request_evidence.get("context_build") if isinstance(request_evidence, dict) else None
         )
         request_review_evidence = (
             request_context_build.get("review_evidence")
@@ -10034,9 +9077,7 @@ def _self_validation_lifecycle_evidence(
             else None
         )
         v9_passing_check_sequences = (
-            request_review_evidence.get(
-                "passing_check_event_sequences"
-            )
+            request_review_evidence.get("passing_check_event_sequences")
             if isinstance(request_review_evidence, dict)
             else None
         )
@@ -10047,19 +9088,13 @@ def _self_validation_lifecycle_evidence(
         )
         v9_citable_sequence_set = {
             sequence
-            for sequence in (
-                v9_citable_sequences
-                if isinstance(v9_citable_sequences, list)
-                else []
-            )
+            for sequence in (v9_citable_sequences if isinstance(v9_citable_sequences, list) else [])
             if type(sequence) is int
         }
         v9_passing_check_sequence_set = {
             sequence
             for sequence in (
-                v9_passing_check_sequences
-                if isinstance(v9_passing_check_sequences, list)
-                else []
+                v9_passing_check_sequences if isinstance(v9_passing_check_sequences, list) else []
             )
             if type(sequence) is int
         }
@@ -10067,29 +9102,18 @@ def _self_validation_lifecycle_evidence(
             not review_v9
             or (
                 isinstance(request_review_evidence, dict)
-                and execution_review_evidence
-                == request_review_evidence
+                and execution_review_evidence == request_review_evidence
                 and isinstance(v9_citable_sequences, list)
-                and all(
-                    type(sequence) is int
-                    for sequence in v9_citable_sequences
-                )
-                and len(v9_citable_sequences)
-                == len(set(v9_citable_sequences))
+                and all(type(sequence) is int for sequence in v9_citable_sequences)
+                and len(v9_citable_sequences) == len(set(v9_citable_sequences))
                 and isinstance(v9_passing_check_sequences, list)
-                and all(
-                    type(sequence) is int
-                    for sequence in v9_passing_check_sequences
-                )
-                and set(v9_passing_check_sequences).issubset(
-                    v9_citable_sequence_set
-                )
+                and all(type(sequence) is int for sequence in v9_passing_check_sequences)
+                and set(v9_passing_check_sequences).issubset(v9_citable_sequence_set)
                 and (
                     v9_source_get_diff_sequence is None
                     or (
                         type(v9_source_get_diff_sequence) is int
-                        and v9_source_get_diff_sequence
-                        in v9_citable_sequence_set
+                        and v9_source_get_diff_sequence in v9_citable_sequence_set
                     )
                 )
             )
@@ -10099,8 +9123,7 @@ def _self_validation_lifecycle_evidence(
             and set(execution_context) == expected_execution_context_keys
             and execution_context.get("phase") == "REVIEW"
             and isinstance(request_artifact_id, str)
-            and call.payload.get("request_artifact_id")
-            == request_artifact_id
+            and call.payload.get("request_artifact_id") == request_artifact_id
             and call.payload.get("request_phase") == "REVIEW"
             and request_valid
             and isinstance(request_evidence, dict)
@@ -10118,44 +9141,29 @@ def _self_validation_lifecycle_evidence(
             role="task-review",
             descriptor=outcome.payload.get("review_artifact"),
         )
-        mutation_sequence = result_payload.get(
-            "mutation_event_sequence"
-        )
-        source_get_diff_sequence = result_payload.get(
-            "source_get_diff_sequence"
-        )
+        mutation_sequence = result_payload.get("mutation_event_sequence")
+        source_get_diff_sequence = result_payload.get("source_get_diff_sequence")
         mutation = (
-            events_by_sequence.get(mutation_sequence)
-            if type(mutation_sequence) is int
-            else None
+            events_by_sequence.get(mutation_sequence) if type(mutation_sequence) is int else None
         )
         source_get_diff = (
             events_by_sequence.get(source_get_diff_sequence)
             if type(source_get_diff_sequence) is int
             else None
         )
-        presented_sequences = complete_presented_sequences(
-            presented
-        )
+        presented_sequences = complete_presented_sequences(presented)
         binding_ok = bool(
             review_valid
             and isinstance(review_payload, dict)
             and mutation is not None
             and mutation.type == EventType.PATCH_APPLIED
-            and mutation.payload.get("worktree_diff_hash")
-            == worktree_diff_hash
+            and mutation.payload.get("worktree_diff_hash") == worktree_diff_hash
             and source_get_diff is not None
             and source_get_diff.type == EventType.TOOL_SUCCEEDED
             and source_get_diff.payload.get("tool") == "get_diff"
-            and source_get_diff.payload.get("worktree_diff_hash")
-            == worktree_diff_hash
-            and (
-                not review_v9
-                or source_get_diff.sequence
-                == v9_source_get_diff_sequence
-            )
-            and mutation.sequence < source_get_diff.sequence
-            < call.sequence < outcome.sequence
+            and source_get_diff.payload.get("worktree_diff_hash") == worktree_diff_hash
+            and (not review_v9 or source_get_diff.sequence == v9_source_get_diff_sequence)
+            and mutation.sequence < source_get_diff.sequence < call.sequence < outcome.sequence
             and source_get_diff.sequence in presented_sequences
             and not any(
                 event.type == EventType.PATCH_APPLIED
@@ -10169,24 +9177,17 @@ def _self_validation_lifecycle_evidence(
             if (
                 mutation is not None
                 and source_get_diff is not None
-                and mutation.sequence < event.sequence
-                < source_get_diff.sequence
+                and mutation.sequence < event.sequence < source_get_diff.sequence
                 and event.type == EventType.TOOL_SUCCEEDED
                 and event.payload.get("tool") == "run_check"
                 and event.payload.get("passed") is True
-                and event.payload.get("worktree_diff_hash")
-                == worktree_diff_hash
+                and event.payload.get("worktree_diff_hash") == worktree_diff_hash
             )
         }
-        checks_ok = all(
-            check.id in current_checks
-            for check in package.public.visible_checks
-        )
+        checks_ok = all(check.id in current_checks for check in package.public.visible_checks)
 
         requirements = arguments.get("requirements")
-        targeted_validation = arguments.get(
-            "targeted_validation"
-        )
+        targeted_validation = arguments.get("targeted_validation")
         residual_risks = arguments.get("residual_risks")
         review_shape_ok = bool(
             isinstance(requirements, list)
@@ -10225,10 +9226,7 @@ def _self_validation_lifecycle_evidence(
                         "notes",
                     }
                 )
-                if (
-                    not isinstance(item, dict)
-                    or set(item) != expected_requirement_keys
-                ):
+                if not isinstance(item, dict) or set(item) != expected_requirement_keys:
                     review_shape_ok = False
                     continue
                 requirement_id = item.get("requirement_id")
@@ -10238,9 +9236,7 @@ def _self_validation_lifecycle_evidence(
                     else item.get("requirement")
                 )
                 status = item.get("status")
-                sequences = item.get(
-                    "evidence_event_sequences"
-                )
+                sequences = item.get("evidence_event_sequences")
                 notes = item.get("notes")
                 item_ok = bool(
                     isinstance(requirement, str)
@@ -10255,10 +9251,7 @@ def _self_validation_lifecycle_evidence(
                     and isinstance(sequences, list)
                     and len(sequences) <= 20
                     and len(sequences) == len(set(sequences))
-                    and (
-                        status == "unverified"
-                        or bool(sequences)
-                    )
+                    and (status == "unverified" or bool(sequences))
                     and isinstance(notes, str)
                     and notes.strip()
                     and len(notes) <= 2000
@@ -10270,45 +9263,26 @@ def _self_validation_lifecycle_evidence(
                         and requirement_id in authoritative_requirements
                         and requirement_id not in observed_requirement_ids
                     )
-                for sequence in (
-                    sequences
-                    if isinstance(sequences, list)
-                    else []
-                ):
-                    cited = (
-                        events_by_sequence.get(sequence)
-                        if type(sequence) is int
-                        else None
-                    )
+                for sequence in sequences if isinstance(sequences, list) else []:
+                    cited = events_by_sequence.get(sequence) if type(sequence) is int else None
                     item_ok = bool(
                         item_ok
                         and mutation is not None
                         and type(sequence) is int
                         and sequence > mutation.sequence
                         and sequence in presented_sequences
-                        and (
-                            not review_v9
-                            or sequence in v9_citable_sequence_set
-                        )
+                        and (not review_v9 or sequence in v9_citable_sequence_set)
                         and cited is not None
-                        and cited.type
-                        == EventType.TOOL_SUCCEEDED
-                        and cited.payload.get(
-                            "worktree_diff_hash"
-                        )
-                        == worktree_diff_hash
+                        and cited.type == EventType.TOOL_SUCCEEDED
+                        and cited.payload.get("worktree_diff_hash") == worktree_diff_hash
                     )
-                review_shape_ok = bool(
-                    review_shape_ok and item_ok
-                )
+                review_shape_ok = bool(review_shape_ok and item_ok)
                 if item_ok:
                     normalized_requirement = {
-                            "status": status,
-                            "evidence_event_sequences": list(
-                                sequences
-                            ),
-                            "notes": notes.strip(),
-                        }
+                        "status": status,
+                        "evidence_event_sequences": list(sequences),
+                        "notes": notes.strip(),
+                    }
                     if review_v2:
                         observed_requirement_ids.append(requirement_id)
                         normalized_requirement.update(
@@ -10318,13 +9292,9 @@ def _self_validation_lifecycle_evidence(
                             }
                         )
                     else:
-                        normalized_requirement["requirement"] = (
-                            requirement.strip()
-                        )
+                        normalized_requirement["requirement"] = requirement.strip()
                     normalized_requirements.append(normalized_requirement)
-        if review_v2 and set(observed_requirement_ids) != set(
-            authoritative_requirements
-        ):
+        if review_v2 and set(observed_requirement_ids) != set(authoritative_requirements):
             review_shape_ok = False
 
         normalized_validation: list[dict[str, Any]] = []
@@ -10341,36 +9311,26 @@ def _self_validation_lifecycle_evidence(
         }
         if isinstance(targeted_validation, list):
             for item in targeted_validation:
-                if (
-                    not isinstance(item, dict)
-                    or set(item)
-                    != {
-                        "kind",
-                        "event_sequence",
-                        "outcome",
-                        "notes",
-                    }
-                ):
+                if not isinstance(item, dict) or set(item) != {
+                    "kind",
+                    "event_sequence",
+                    "outcome",
+                    "notes",
+                }:
                     review_shape_ok = False
                     continue
                 kind = item.get("kind")
                 sequence = item.get("event_sequence")
                 declared_outcome = item.get("outcome")
                 notes = item.get("notes")
-                cited = (
-                    events_by_sequence.get(sequence)
-                    if type(sequence) is int
-                    else None
-                )
+                cited = events_by_sequence.get(sequence) if type(sequence) is int else None
                 actual_outcome = None
                 if cited is not None:
                     if cited.payload.get("timed_out") is True:
                         actual_outcome = "inconclusive"
                     elif kind in {"probe", "registered_check"}:
                         actual_outcome = (
-                            "passed"
-                            if cited.payload.get("passed") is True
-                            else "failed"
+                            "passed" if cited.payload.get("passed") is True else "failed"
                         )
                     else:
                         actual_outcome = "passed"
@@ -10378,8 +9338,7 @@ def _self_validation_lifecycle_evidence(
                     kind in expected_tools
                     and type(sequence) is int
                     and sequence not in seen_validation_sequences
-                    and declared_outcome
-                    in {"passed", "failed", "inconclusive"}
+                    and declared_outcome in {"passed", "failed", "inconclusive"}
                     and isinstance(notes, str)
                     and notes.strip()
                     and len(notes) <= 2000
@@ -10392,36 +9351,26 @@ def _self_validation_lifecycle_evidence(
                             sequence in v9_citable_sequence_set
                             and (
                                 (
-                                    kind
-                                    in {"probe", "registered_check"}
-                                    and sequence
-                                    in v9_passing_check_sequence_set
+                                    kind in {"probe", "registered_check"}
+                                    and sequence in v9_passing_check_sequence_set
                                 )
                                 or (
                                     kind == "repository_evidence"
-                                    and sequence
-                                    == v9_source_get_diff_sequence
+                                    and sequence == v9_source_get_diff_sequence
                                 )
                             )
                         )
                     )
                     and cited is not None
                     and cited.type == EventType.TOOL_SUCCEEDED
-                    and cited.payload.get("tool")
-                    in expected_tools.get(str(kind), set())
-                    and cited.payload.get("worktree_diff_hash")
-                    == worktree_diff_hash
+                    and cited.payload.get("tool") in expected_tools.get(str(kind), set())
+                    and cited.payload.get("worktree_diff_hash") == worktree_diff_hash
                     and declared_outcome == actual_outcome
                 )
-                review_shape_ok = bool(
-                    review_shape_ok and item_ok
-                )
+                review_shape_ok = bool(review_shape_ok and item_ok)
                 if item_ok:
                     seen_validation_sequences.add(sequence)
-                    if (
-                        kind in {"probe", "registered_check"}
-                        and actual_outcome == "passed"
-                    ):
+                    if kind in {"probe", "registered_check"} and actual_outcome == "passed":
                         passing_targeted_validation = True
                     normalized_validation.append(
                         {
@@ -10439,13 +9388,11 @@ def _self_validation_lifecycle_evidence(
                 if review_v2:
                     item_ok = bool(
                         isinstance(item, dict)
-                        and set(item)
-                        == {"requirement_ids", "risk", "mitigation"}
+                        and set(item) == {"requirement_ids", "risk", "mitigation"}
                         and isinstance(item.get("requirement_ids"), list)
                         and bool(item["requirement_ids"])
                         and len(item["requirement_ids"]) <= 20
-                        and len(set(item["requirement_ids"]))
-                        == len(item["requirement_ids"])
+                        and len(set(item["requirement_ids"])) == len(item["requirement_ids"])
                         and all(
                             isinstance(requirement_id, str)
                             and requirement_id in authoritative_requirements
@@ -10462,24 +9409,16 @@ def _self_validation_lifecycle_evidence(
                         risk_requirement_ids.update(item["requirement_ids"])
                         normalized_residual_risks.append(
                             {
-                                "requirement_ids": list(
-                                    item["requirement_ids"]
-                                ),
+                                "requirement_ids": list(item["requirement_ids"]),
                                 "risk": item["risk"].strip(),
                                 "mitigation": item["mitigation"].strip(),
                             }
                         )
                 else:
-                    item_ok = bool(
-                        isinstance(item, str)
-                        and item.strip()
-                        and len(item) <= 1000
-                    )
+                    item_ok = bool(isinstance(item, str) and item.strip() and len(item) <= 1000)
                     if item_ok:
                         normalized_residual_risks.append(item.strip())
-                residual_risks_ok = bool(
-                    residual_risks_ok and item_ok
-                )
+                residual_risks_ok = bool(residual_risks_ok and item_ok)
         if review_v2:
             nonverified_ids = {
                 item["requirement_id"]
@@ -10492,33 +9431,23 @@ def _self_validation_lifecycle_evidence(
                 and nonverified_ids.issubset(risk_requirement_ids)
             )
         expected_review = {
-            "schema_version": (
-                "task-review-v2" if review_v2 else "task-review-v1"
-            ),
+            "schema_version": ("task-review-v2" if review_v2 else "task-review-v1"),
             "run_id": manifest.run_id,
             "request_artifact_id": request_artifact_id,
             "worktree_diff_hash": worktree_diff_hash,
             "mutation_event_sequence": mutation_sequence,
-            "source_get_diff_sequence": (
-                source_get_diff_sequence
-            ),
+            "source_get_diff_sequence": (source_get_diff_sequence),
             "requirements": normalized_requirements,
             "targeted_validation": normalized_validation,
-            "residual_risks": (
-                normalized_residual_risks if residual_risks_ok else []
-            ),
+            "residual_risks": (normalized_residual_risks if residual_risks_ok else []),
             "deterministic_correctness_claimed": False,
         }
         if review_v2 and review_contract is not None:
             expected_review.update(
                 {
                     "public_review_contract_hash": review_contract.content_hash,
-                    "public_review_contract_schema_version": (
-                        review_contract.schema_version
-                    ),
-                    "authoritative_requirement_ids": list(
-                        authoritative_requirements
-                    ),
+                    "public_review_contract_schema_version": (review_contract.schema_version),
+                    "authoritative_requirement_ids": list(authoritative_requirements),
                 }
             )
         review_result_ok = bool(
@@ -10530,76 +9459,41 @@ def _self_validation_lifecycle_evidence(
             and passing_targeted_validation
             and review_payload == expected_review
             and result_payload.get("schema_version")
-            == (
-                "task-review-result-v2"
-                if review_v2
-                else "task-review-result-v1"
-            )
-            and result_payload.get("review_schema_version")
-            == expected_review["schema_version"]
-            and result_payload.get("review_artifact")
-            == outcome.payload.get("review_artifact")
-            and result_payload.get("review_content_hash")
-            == review_item.get("actual_content_hash")
+            == ("task-review-result-v2" if review_v2 else "task-review-result-v1")
+            and result_payload.get("review_schema_version") == expected_review["schema_version"]
+            and result_payload.get("review_artifact") == outcome.payload.get("review_artifact")
+            and result_payload.get("review_content_hash") == review_item.get("actual_content_hash")
             and result_payload.get("review") == expected_review
-            and result_payload.get("request_artifact_id")
-            == request_artifact_id
-            and result_payload.get("worktree_diff_hash")
-            == worktree_diff_hash
-            and result_payload.get("mutation_event_sequence")
-            == mutation_sequence
-            and result_payload.get("source_get_diff_sequence")
-            == source_get_diff_sequence
-            and result_payload.get("requirement_count")
-            == len(normalized_requirements)
-            and result_payload.get("targeted_validation_count")
-            == len(normalized_validation)
-            and result_payload.get("residual_risk_count")
-            == len(residual_risks or [])
+            and result_payload.get("request_artifact_id") == request_artifact_id
+            and result_payload.get("worktree_diff_hash") == worktree_diff_hash
+            and result_payload.get("mutation_event_sequence") == mutation_sequence
+            and result_payload.get("source_get_diff_sequence") == source_get_diff_sequence
+            and result_payload.get("requirement_count") == len(normalized_requirements)
+            and result_payload.get("targeted_validation_count") == len(normalized_validation)
+            and result_payload.get("residual_risk_count") == len(residual_risks or [])
             and result_payload.get("self_attestation") is True
-            and result_payload.get(
-                "deterministic_correctness_claimed"
-            )
-            is False
+            and result_payload.get("deterministic_correctness_claimed") is False
             and (
                 not review_v2
-                or result_payload.get("public_review_contract_hash")
-                == review_contract.content_hash
+                or result_payload.get("public_review_contract_hash") == review_contract.content_hash
             )
-            and outcome.payload.get("review_content_hash")
-            == review_item.get("actual_content_hash")
-            and outcome.payload.get("requirement_count")
-            == len(normalized_requirements)
-            and outcome.payload.get("targeted_validation_count")
-            == len(normalized_validation)
-            and outcome.payload.get("residual_risk_count")
-            == len(residual_risks or [])
-            and outcome.payload.get("request_artifact_id")
-            == request_artifact_id
-            and outcome.payload.get("worktree_diff_hash")
-            == worktree_diff_hash
-            and outcome.payload.get("mutation_event_sequence")
-            == mutation_sequence
-            and outcome.payload.get("source_get_diff_sequence")
-            == source_get_diff_sequence
+            and outcome.payload.get("review_content_hash") == review_item.get("actual_content_hash")
+            and outcome.payload.get("requirement_count") == len(normalized_requirements)
+            and outcome.payload.get("targeted_validation_count") == len(normalized_validation)
+            and outcome.payload.get("residual_risk_count") == len(residual_risks or [])
+            and outcome.payload.get("request_artifact_id") == request_artifact_id
+            and outcome.payload.get("worktree_diff_hash") == worktree_diff_hash
+            and outcome.payload.get("mutation_event_sequence") == mutation_sequence
+            and outcome.payload.get("source_get_diff_sequence") == source_get_diff_sequence
             and outcome.payload.get("self_attestation") is True
-            and outcome.payload.get(
-                "deterministic_correctness_claimed"
-            )
-            is False
+            and outcome.payload.get("deterministic_correctness_claimed") is False
         )
         if review_result_ok:
             verified_review_sequences.append(outcome.sequence)
             review_artifacts[outcome.sequence] = {
-                "descriptor": outcome.payload.get(
-                    "review_artifact"
-                ),
-                "content_hash": review_item.get(
-                    "actual_content_hash"
-                ),
-                "source_get_diff_sequence": (
-                    source_get_diff_sequence
-                ),
+                "descriptor": outcome.payload.get("review_artifact"),
+                "content_hash": review_item.get("actual_content_hash"),
+                "source_get_diff_sequence": (source_get_diff_sequence),
                 "worktree_diff_hash": worktree_diff_hash,
                 "review": expected_review,
             }
@@ -10611,47 +9505,32 @@ def _self_validation_lifecycle_evidence(
         for event in outcomes
         if not any(
             call.correlation_id == event.correlation_id
-            and call.payload.get("tool")
-            == event.payload.get("tool")
+            and call.payload.get("tool") == event.payload.get("tool")
             and call.sequence < event.sequence
             for call in calls
         )
     ]
     failed_call_sequences.extend(orphan_outcomes)
 
-    evaluation_completed = bool(
-        result is not None
-        and result.evaluation_status == "completed"
-    )
+    evaluation_completed = bool(result is not None and result.evaluation_status == "completed")
     review_body_presented = False
     post_review_validation_sequences: list[int] = []
     final_binding_ok = bool(coverage_v10 or not evaluation_completed)
     if evaluation_completed and not coverage_v10:
-        acceptances = [
-            event
-            for event in events
-            if event.type == EventType.SUBMISSION_ACCEPTED
-        ]
-        reviews = [
-            event
-            for event in events
-            if event.type == EventType.REVIEW_RECORDED
-        ]
+        acceptances = [event for event in events if event.type == EventType.SUBMISSION_ACCEPTED]
+        reviews = [event for event in events if event.type == EventType.REVIEW_RECORDED]
         accepted = acceptances[0] if len(acceptances) == 1 else None
         final_review = (
             reviews[0]
             if (
                 accepted is not None
                 and len(reviews) == 1
-                and reviews[0].correlation_id
-                == accepted.correlation_id
+                and reviews[0].correlation_id == accepted.correlation_id
             )
             else None
         )
         source_review_sequence = (
-            final_review.payload.get(
-                "source_task_review_sequence"
-            )
+            final_review.payload.get("source_task_review_sequence")
             if final_review is not None
             else None
         )
@@ -10665,36 +9544,26 @@ def _self_validation_lifecycle_evidence(
             for event in events
             if final_review is not None
             and event.type == EventType.CONTEXT_BUILT
-            and event.payload.get("artifact_id")
-            == final_review.payload.get("request_artifact_id")
+            and event.payload.get("artifact_id") == final_review.payload.get("request_artifact_id")
             and event.sequence < final_review.sequence
         ]
-        finish_context = (
-            finish_contexts[0]
-            if len(finish_contexts) == 1
-            else None
-        )
+        finish_context = finish_contexts[0] if len(finish_contexts) == 1 else None
         finish_request_valid = False
         finish_request = None
         if finish_context is not None:
-            finish_request_valid, finish_request = (
-                _request_evidence_payload(
-                    finish_context,
-                    artifact_root=artifact_root,
-                    expected_provider=manifest.model.provider,
-                )
+            finish_request_valid, finish_request = _request_evidence_payload(
+                finish_context,
+                artifact_root=artifact_root,
+                expected_provider=manifest.model.provider,
             )
         finish_presented = (
-            finish_request.get("context_build", {}).get(
-                "tool_results"
-            )
+            finish_request.get("context_build", {}).get("tool_results")
             if isinstance(finish_request, dict)
             else None
         )
         review_presented = bool(
             type(source_review_sequence) is int
-            and source_review_sequence
-            in complete_presented_sequences(finish_presented)
+            and source_review_sequence in complete_presented_sequences(finish_presented)
         )
         review_body_presented = False
         if (
@@ -10704,9 +9573,7 @@ def _self_validation_lifecycle_evidence(
         ):
             rendered_context = _request_context(
                 finish_request.get("request_body"),
-                allow_direct_context=(
-                    manifest.model.provider in {"mock", "replay"}
-                ),
+                allow_direct_context=(manifest.model.provider in {"mock", "replay"}),
             )
             try:
                 rendered_payload = json.loads(rendered_context or "")
@@ -10721,16 +9588,10 @@ def _self_validation_lifecycle_evidence(
                 matching_rendered_reviews = [
                     item
                     for item in recent_events
-                    if (
-                        isinstance(item, dict)
-                        and item.get("sequence")
-                        == source_review_sequence
-                    )
+                    if (isinstance(item, dict) and item.get("sequence") == source_review_sequence)
                 ]
                 rendered_review_result = (
-                    matching_rendered_reviews[0]["payload"].get(
-                        "tool_result"
-                    )
+                    matching_rendered_reviews[0]["payload"].get("tool_result")
                     if (
                         len(matching_rendered_reviews) == 1
                         and isinstance(
@@ -10742,8 +9603,7 @@ def _self_validation_lifecycle_evidence(
                 )
                 review_body_presented = bool(
                     isinstance(rendered_review_result, dict)
-                    and rendered_review_result.get("review")
-                    == review_evidence["review"]
+                    and rendered_review_result.get("review") == review_evidence["review"]
                 )
         post_review_validation_sequences = [
             event.sequence
@@ -10751,14 +9611,11 @@ def _self_validation_lifecycle_evidence(
             if (
                 type(source_review_sequence) is int
                 and accepted is not None
-                and source_review_sequence < event.sequence
-                < accepted.sequence
+                and source_review_sequence < event.sequence < accepted.sequence
                 and event.type == EventType.TOOL_SUCCEEDED
-                and event.payload.get("tool")
-                in {"run_probe", "run_check", "get_diff"}
+                and event.payload.get("tool") in {"run_probe", "run_check", "get_diff"}
                 and review_evidence is not None
-                and event.payload.get("worktree_diff_hash")
-                == review_evidence["worktree_diff_hash"]
+                and event.payload.get("worktree_diff_hash") == review_evidence["worktree_diff_hash"]
             )
         ]
         final_binding_ok = bool(
@@ -10768,22 +9625,14 @@ def _self_validation_lifecycle_evidence(
             and review_evidence["worktree_diff_hash"]
             == accepted.payload.get("worktree_diff_hash")
             == final_review.payload.get("worktree_diff_hash")
-            and final_review.payload.get(
-                "source_get_diff_sequence"
-            )
+            and final_review.payload.get("source_get_diff_sequence")
             == review_evidence["source_get_diff_sequence"]
-            and final_review.payload.get("task_review_artifact")
-            == review_evidence["descriptor"]
-            and accepted.payload.get("task_review_artifact")
-            == review_evidence["descriptor"]
-            and final_review.payload.get(
-                "task_review_content_hash"
-            )
+            and final_review.payload.get("task_review_artifact") == review_evidence["descriptor"]
+            and accepted.payload.get("task_review_artifact") == review_evidence["descriptor"]
+            and final_review.payload.get("task_review_content_hash")
             == review_evidence["content_hash"]
-            and accepted.payload.get("task_review_content_hash")
-            == review_evidence["content_hash"]
-            and final_review.payload.get("complete_tool_result")
-            is True
+            and accepted.payload.get("task_review_content_hash") == review_evidence["content_hash"]
+            and final_review.payload.get("complete_tool_result") is True
             and finish_request_valid
             and isinstance(finish_request, dict)
             and _request_runtime_contract_valid(
@@ -10832,30 +9681,16 @@ def _self_validation_lifecycle_evidence(
         and final_binding_ok
     )
     return passed, {
-        "probe_call_count": sum(
-            call.payload.get("tool") == "run_probe"
-            for call in calls
-        ),
+        "probe_call_count": sum(call.payload.get("tool") == "run_probe" for call in calls),
         "verified_probe_count": len(verified_probe_sequences),
-        "review_call_count": sum(
-            call.payload.get("tool") == "review_task"
-            for call in calls
-        ),
+        "review_call_count": sum(call.payload.get("tool") == "review_task" for call in calls),
         "verified_review_count": len(verified_review_sequences),
-        "failed_call_sequences": sorted(
-            set(failed_call_sequences)
-        ),
+        "failed_call_sequences": sorted(set(failed_call_sequences)),
         "evaluation_completed": evaluation_completed,
         "final_submission_binding_valid": final_binding_ok,
-        "review_body_presented": (
-            review_body_presented if evaluation_completed else False
-        ),
-        "probe_manifest_binding_valid": (
-            probe_manifest_binding_valid
-        ),
-        "post_review_validation_sequences": (
-            post_review_validation_sequences
-        ),
+        "review_body_presented": (review_body_presented if evaluation_completed else False),
+        "probe_manifest_binding_valid": (probe_manifest_binding_valid),
+        "post_review_validation_sequences": (post_review_validation_sequences),
     }
 
 
@@ -11000,9 +9835,7 @@ def calculate_source_evidence_hash(
         )
         snapshot["schema_version"] = _SOURCE_EVIDENCE_SCHEMA_VERSION_V4
         snapshot["investigation_artifacts"] = investigation_artifacts
-        snapshot[
-            "investigation_admission_nested_artifacts"
-        ] = admission_input_artifacts
+        snapshot["investigation_admission_nested_artifacts"] = admission_input_artifacts
     elif manifest.context_policy_version in {
         "phase-evidence-v5",
         "phase-evidence-v6",
@@ -11046,9 +9879,7 @@ def calculate_source_evidence_hash(
             "phase-evidence-v11": _SOURCE_EVIDENCE_SCHEMA_VERSION_V11,
         }[manifest.context_policy_version]
         snapshot["investigation_artifacts"] = investigation_artifacts
-        snapshot[
-            "investigation_admission_nested_artifacts"
-        ] = admission_input_artifacts
+        snapshot["investigation_admission_nested_artifacts"] = admission_input_artifacts
         if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
             (
                 _,
@@ -11061,9 +9892,7 @@ def calculate_source_evidence_hash(
                 events=events,
                 private_tokens=set(),
             )
-            snapshot[
-                "self_validation_nested_artifacts"
-            ] = self_validation_artifacts
+            snapshot["self_validation_nested_artifacts"] = self_validation_artifacts
         if manifest.tool_schema_version in {"v4", "v5", "v6"}:
             (
                 _,
@@ -11076,19 +9905,15 @@ def calculate_source_evidence_hash(
                 events=events,
                 private_tokens=set(),
             )
-            snapshot[
-                "patch_source_snapshot_artifacts"
-            ] = patch_source_artifacts
+            snapshot["patch_source_snapshot_artifacts"] = patch_source_artifacts
         if manifest.context_policy_version in {
             "phase-evidence-v10",
             "phase-evidence-v11",
         }:
-            snapshot["public_review_base_provenance"] = (
-                _v10_base_provenance_source_evidence(
-                    root=run_root,
-                    manifest=manifest,
-                    events=events,
-                )
+            snapshot["public_review_base_provenance"] = _v10_base_provenance_source_evidence(
+                root=run_root,
+                manifest=manifest,
+                events=events,
             )
     return sha256_text(canonical_json(snapshot))
 
@@ -11128,10 +9953,7 @@ def qualify_run(
     path = qualification_path(run_id, root=run_root)
     if path.is_file():
         existing = load_trace_qualification(run_id, root=run_root)
-        existing_is_legacy = (
-            existing["schema_version"]
-            == LEGACY_QUALIFICATION_SCHEMA_VERSION
-        )
+        existing_is_legacy = existing["schema_version"] == LEGACY_QUALIFICATION_SCHEMA_VERSION
         task_identity = (
             manifest.task_id == package.public.task_id
             and manifest.task_version == package.public.task_version
@@ -11144,9 +9966,7 @@ def qualify_run(
                 if existing_is_legacy
                 else "trace qualification task identity mismatch"
             )
-        _, current_dataset_hash, _ = load_dataset_manifest(
-            dataset_manifest_path
-        )
+        _, current_dataset_hash, _ = load_dataset_manifest(dataset_manifest_path)
         if existing.get("dataset_manifest_hash") != current_dataset_hash:
             raise ContractError(
                 "legacy trace qualification dataset manifest changed"
@@ -11167,9 +9987,7 @@ def qualify_run(
             )
         if existing_is_legacy:
             if manifest.tool_schema_version != "v1":
-                raise ContractError(
-                    "legacy trace qualification does not match the run contract"
-                )
+                raise ContractError("legacy trace qualification does not match the run contract")
             return existing
 
     checks: list[dict[str, Any]] = []
@@ -11179,11 +9997,10 @@ def qualify_run(
         return passed
 
     experiment = manifest.experiment
-    condition_neutral_comparison = (
-        _condition_neutral_comparison_manifest_matches(manifest)
-    )
+    condition_neutral_comparison = _condition_neutral_comparison_manifest_matches(manifest)
     condition_neutral_v2 = _condition_neutral_runtime_v2_manifest_matches(manifest)
     condition_neutral_any = condition_neutral_comparison or condition_neutral_v2
+    ac_fixed_bundle = _ac_fixed_bundle_readiness_manifest_matches(manifest)
     task_identity = (
         manifest.task_id == package.public.task_id
         and manifest.task_version == package.public.task_version
@@ -11202,6 +10019,7 @@ def qualify_run(
             ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
         }
         or condition_neutral_any
+        or ac_fixed_bundle
     ):
         (
             generic_runtime_ok,
@@ -11211,12 +10029,12 @@ def qualify_run(
             manifest=manifest,
             events=events,
         )
-        generic_runtime_content_hash = generic_runtime_details.get(
-            "content_hash"
-        )
+        generic_runtime_content_hash = generic_runtime_details.get("content_hash")
         add(
             (
-                "comparison_runtime_contract"
+                "ac_fixed_runtime_contract"
+                if ac_fixed_bundle
+                else "comparison_runtime_contract"
                 if condition_neutral_any
                 else "generic_runtime_contract"
             ),
@@ -11230,6 +10048,7 @@ def qualify_run(
             and experiment.experiment_id in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         )
         or (condition_neutral_any and manifest.memory.condition == MemoryCondition.NO_MEMORY)
+        or ac_fixed_bundle
     ):
         forbidden_generation_blocks = [
             event.sequence
@@ -11278,14 +10097,10 @@ def qualify_run(
                 continue
             error_details = event.payload.get("error_details")
             tail_policy = (
-                error_details.get("tail_policy")
-                if isinstance(error_details, dict)
-                else None
+                error_details.get("tail_policy") if isinstance(error_details, dict) else None
             )
             remaining_budget = (
-                tail_policy.get("remaining_budget")
-                if isinstance(tail_policy, dict)
-                else None
+                tail_policy.get("remaining_budget") if isinstance(tail_policy, dict) else None
             )
             if (
                 event.payload.get("max_model_calls") is not None
@@ -11297,8 +10112,7 @@ def qualify_run(
                     isinstance(remaining_budget, dict)
                     and (
                         remaining_budget.get("model_calls") is not None
-                        or remaining_budget.get("model_calls_after_next_generation")
-                        is not None
+                        or remaining_budget.get("model_calls_after_next_generation") is not None
                         or remaining_budget.get("tool_calls") is not None
                     )
                 )
@@ -11306,7 +10120,7 @@ def qualify_run(
                 admission_tail_failures.append(event.sequence)
         expected_observability_budget = (
             _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
-            if condition_neutral_v2
+            if condition_neutral_v2 or ac_fixed_bundle
             else _GPT54_MINI_FROZEN_COMPARISON_BUDGET
             if condition_neutral_comparison
             else _WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID.get(experiment.experiment_id)
@@ -11315,6 +10129,7 @@ def qualify_run(
         )
         exact_observability_profile = bool(
             condition_neutral_any
+            or ac_fixed_bundle
             or experiment.experiment_id
             in (
                 set(_WORKFLOW_COMPLETION_PROBE_BUDGET_BY_EXPERIMENT_ID)
@@ -11327,9 +10142,7 @@ def qualify_run(
             and manifest.budget.max_model_calls is None
             and manifest.budget.max_tool_calls is None
             and generic_runtime_ok
-            and any(
-                event.type == EventType.CONTEXT_BUILT for event in events
-            )
+            and any(event.type == EventType.CONTEXT_BUILT for event in events)
             and not forbidden_generation_blocks
             and not forbidden_tail_blocks
             and not context_tail_failures
@@ -11341,9 +10154,7 @@ def qualify_run(
             policy_version=_WORKFLOW_COMPLETION_CALL_GUARD_POLICY,
             model_call_limit=manifest.budget.max_model_calls,
             tool_call_limit=manifest.budget.max_tool_calls,
-            forbidden_generation_block_sequences=(
-                forbidden_generation_blocks
-            ),
+            forbidden_generation_block_sequences=(forbidden_generation_blocks),
             forbidden_tail_block_sequences=forbidden_tail_blocks,
             runtime_contract_valid=generic_runtime_ok,
             context_tail_failure_sequences=context_tail_failures,
@@ -11373,9 +10184,7 @@ def qualify_run(
                 review_contract_valid,
                 declared=review_contract is not None,
                 content_hash=(
-                    review_contract.content_hash
-                    if review_contract is not None
-                    else None
+                    review_contract.content_hash if review_contract is not None else None
                 ),
             )
         else:
@@ -11401,9 +10210,7 @@ def qualify_run(
             manifest=manifest,
             events=events,
         )
-        corrective_runtime_content_hash = (
-            corrective_runtime_details.get("content_hash")
-        )
+        corrective_runtime_content_hash = corrective_runtime_details.get("content_hash")
         add(
             "corrective_runtime_contract",
             corrective_runtime_ok,
@@ -11689,9 +10496,7 @@ def qualify_run(
                     context_event=context_event,
                     source_event=source_event,
                     accepted_diff=accepted_diff,
-                    context_policy_version=(
-                        manifest.context_policy_version
-                    ),
+                    context_policy_version=(manifest.context_policy_version),
                     artifact_root=run_root / "artifacts",
                     expected_provider=(
                         manifest.model.provider
@@ -11822,17 +10627,29 @@ def qualify_run(
             **self_validation_lifecycle_details,
         )
 
-    no_memory = manifest.memory.condition == MemoryCondition.NO_MEMORY
-    no_retrieval = EventType.MEMORY_RETRIEVED not in event_types
-    no_index = manifest.memory.index_version is None and manifest.memory.index_hash is None
-    no_memory_ok = no_memory and no_retrieval and no_index
-    add(
-        "no_memory_boundary",
-        no_memory_ok,
-        condition=manifest.memory.condition.value,
-        retrieval_event_count=sum(event.type == EventType.MEMORY_RETRIEVED for event in events),
-        index_declared=not no_index,
-    )
+    if ac_fixed_bundle:
+        fixed_delivery_ok, fixed_delivery_details = _fixed_memory_delivery_evidence(
+            root=run_root,
+            manifest=manifest,
+            events=events,
+        )
+        add(
+            "fixed_memory_delivery_integrity",
+            fixed_delivery_ok,
+            **fixed_delivery_details,
+        )
+    else:
+        no_memory = manifest.memory.condition == MemoryCondition.NO_MEMORY
+        no_retrieval = EventType.MEMORY_RETRIEVED not in event_types
+        no_index = manifest.memory.index_version is None and manifest.memory.index_hash is None
+        no_memory_ok = no_memory and no_retrieval and no_index
+        add(
+            "no_memory_boundary",
+            no_memory_ok,
+            condition=manifest.memory.condition.value,
+            retrieval_event_count=sum(event.type == EventType.MEMORY_RETRIEVED for event in events),
+            index_declared=not no_index,
+        )
 
     provider_ok = manifest.model.provider == "openai"
     add("live_openai_provider", provider_ok, provider=manifest.model.provider)
@@ -11926,6 +10743,11 @@ def qualify_run(
                 and manifest.model.transport_max_retries == 0
             )
             or (
+                _ac_fixed_bundle_readiness_manifest_matches(manifest)
+                and manifest.budget == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+                and manifest.model.transport_max_retries == 0
+            )
+            or (
                 (
                     manifest.experiment.purpose
                     in {
@@ -11940,10 +10762,7 @@ def qualify_run(
         and manifest.model.max_output_tokens == 25_000
     )
     mini_budget_and_output_contract = (
-        (
-            manifest.budget == _GPT54_MINI_PILOT_BUDGET
-            and manifest.model.max_output_tokens == 4096
-        )
+        (manifest.budget == _GPT54_MINI_PILOT_BUDGET and manifest.model.max_output_tokens == 4096)
         or (
             manifest.budget == _GPT54_MINI_D037_CORRECTIVE_BUDGET
             and manifest.model.max_output_tokens == 25_000
@@ -11961,9 +10780,7 @@ def qualify_run(
         and mini_budget_and_output_contract
     )
     model_contract_ok = common_model_contract and (
-        legacy_terra_model_contract
-        or mini_campaign_contract
-        or mini_pilot_contract
+        legacy_terra_model_contract or mini_campaign_contract or mini_pilot_contract
     )
     model_contract_details = {
         "model_id": manifest.model.model_id,
@@ -11975,23 +10792,15 @@ def qualify_run(
     if manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID:
         model_contract_details["max_total_tokens"] = manifest.budget.max_total_tokens
     if manifest.model.transport_max_retries is not None:
-        model_contract_details["transport_max_retries"] = (
-            manifest.model.transport_max_retries
-        )
+        model_contract_details["transport_max_retries"] = manifest.model.transport_max_retries
     add(
         "frozen_model_contract",
         model_contract_ok,
         **model_contract_details,
     )
-    controlled_rejection_mode = (
-        manifest.fault.type
-        == "controlled-reject-first-prepared-patch"
-    )
+    controlled_rejection_mode = manifest.fault.type == "controlled-reject-first-prepared-patch"
     if not controlled_rejection_mode:
-        fault_ok = (
-            manifest.fault.type == "none"
-            and EventType.FAULT_INJECTED not in event_types
-        )
+        fault_ok = manifest.fault.type == "none" and EventType.FAULT_INJECTED not in event_types
         add("fault_free", fault_ok, fault=manifest.fault.type)
 
     try:
@@ -12071,25 +10880,14 @@ def qualify_run(
     )
     accrued_cap_campaign = bool(
         experiment is not None
-        and experiment.experiment_id
-        == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+        and experiment.experiment_id == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
     )
     if accrued_cap_campaign:
         cost_control = (
-            execution_plan.get("campaign_cost_control")
-            if execution_plan is not None
-            else None
+            execution_plan.get("campaign_cost_control") if execution_plan is not None else None
         )
-        descriptor = (
-            cost_control.get("descriptor")
-            if isinstance(cost_control, dict)
-            else None
-        )
-        control_hash = (
-            cost_control.get("content_hash")
-            if isinstance(cost_control, dict)
-            else None
-        )
+        descriptor = cost_control.get("descriptor") if isinstance(cost_control, dict) else None
+        control_hash = cost_control.get("content_hash") if isinstance(cost_control, dict) else None
         add(
             "campaign_spend_cap_contract",
             bool(
@@ -12100,71 +10898,76 @@ def qualify_run(
                 and experiment.campaign_cost_control_hash == control_hash
                 and descriptor.get("hard_cap_nanos") == 25_000_000_000
                 and descriptor.get("per_run_reserve_nanos") == 7_312_500_000
-                and descriptor.get("schedule_upper_bound_nanos")
-                == 87_750_000_000
+                and descriptor.get("schedule_upper_bound_nanos") == 87_750_000_000
                 and descriptor.get("full_schedule_reserved") is False
                 and descriptor.get("schedule_completion_guaranteed") is False
             ),
             campaign_cost_control_hash=control_hash,
-            manifest_cost_control_hash=(
-                experiment.campaign_cost_control_hash
-            ),
+            manifest_cost_control_hash=(experiment.campaign_cost_control_hash),
             hard_cap_nanos=(
-                descriptor.get("hard_cap_nanos")
-                if isinstance(descriptor, dict)
-                else None
+                descriptor.get("hard_cap_nanos") if isinstance(descriptor, dict) else None
             ),
             per_run_reserve_nanos=(
-                descriptor.get("per_run_reserve_nanos")
-                if isinstance(descriptor, dict)
-                else None
+                descriptor.get("per_run_reserve_nanos") if isinstance(descriptor, dict) else None
             ),
             live_resume_supported=False,
         )
     full_schedule_cost_campaign = bool(
         experiment is not None
-        and experiment.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+        and experiment.experiment_id
+        in {
+            CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
+            AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        }
     )
     if full_schedule_cost_campaign:
         cost_control = (
-            execution_plan.get("campaign_cost_control")
-            if execution_plan is not None
-            else None
+            execution_plan.get("campaign_cost_control") if execution_plan is not None else None
         )
-        descriptor = (
-            cost_control.get("descriptor")
-            if isinstance(cost_control, dict)
-            else None
-        )
-        control_hash = (
-            cost_control.get("content_hash")
-            if isinstance(cost_control, dict)
-            else None
-        )
+        descriptor = cost_control.get("descriptor") if isinstance(cost_control, dict) else None
+        control_hash = cost_control.get("content_hash") if isinstance(cost_control, dict) else None
         policy = descriptor.get("policy") if isinstance(descriptor, dict) else None
         schedule_row_ids = (
             descriptor.get("schedule_row_ids") if isinstance(descriptor, dict) else None
         )
+        ac_cost_campaign = bool(
+            experiment is not None
+            and experiment.experiment_id
+            == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+        )
+        expected_control_schema = (
+            "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"
+            if ac_cost_campaign
+            else _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
+        )
+        expected_policy_schema = (
+            "ac-fixed-bundle-full-schedule-reserve-v1"
+            if ac_cost_campaign
+            else _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
+        )
+        expected_count = 4 if ac_cost_campaign else 12
+        expected_full_reserve = 54_450_000_000 if ac_cost_campaign else 163_350_000_000
+        expected_hard_cap = 55_000_000_000 if ac_cost_campaign else 164_000_000_000
         add(
             "campaign_full_schedule_cost_contract",
             bool(
                 execution_plan_ok
                 and isinstance(descriptor, dict)
                 and cost_control.get("schema_version")
-                == _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_CONTROL_SCHEMA
+                == expected_control_schema
                 and descriptor.get("schema_version")
-                == _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
+                == expected_policy_schema
                 and isinstance(control_hash, str)
                 and sha256_text(canonical_json(descriptor)) == control_hash
                 and experiment.campaign_cost_control_hash == control_hash
                 and descriptor.get("schedule_hash") == execution_plan.get("schedule_hash")
                 and isinstance(schedule_row_ids, list)
-                and len(schedule_row_ids) == 12
+                and len(schedule_row_ids) == expected_count
                 and experiment.schedule_row_id in schedule_row_ids
                 and isinstance(policy, dict)
                 and policy.get("per_run_reserve_nanos") == 13_612_500_000
-                and policy.get("full_schedule_reserve_nanos") == 163_350_000_000
-                and policy.get("hard_cap_nanos") == 164_000_000_000
+                and policy.get("full_schedule_reserve_nanos") == expected_full_reserve
+                and policy.get("hard_cap_nanos") == expected_hard_cap
                 and policy.get("cost_censoring_allowed") is False
                 and policy.get("not_started_due_to_cost_allowed") is False
                 and descriptor.get("full_schedule_reservation_required") is True
@@ -12194,6 +10997,7 @@ def qualify_run(
             ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_COVERAGE_REJECTION_PILOT,
         }
         or condition_neutral_any
+        or ac_fixed_bundle
     ):
         from patchloop.evals.runner import (
             ExperimentSuite,
@@ -12212,11 +11016,7 @@ def qualify_run(
             "official_rates_match": False,
         }
         pricing_suite_valid = False
-        run_started = [
-            event
-            for event in events
-            if event.type == EventType.RUN_STARTED
-        ]
+        run_started = [event for event in events if event.type == EventType.RUN_STARTED]
         if (
             execution_plan_ok
             and execution_plan is not None
@@ -12225,9 +11025,7 @@ def qualify_run(
             and run_started[0].actor == "runner"
         ):
             try:
-                pricing_suite = ExperimentSuite.model_validate(
-                    execution_plan["suite"]
-                )
+                pricing_suite = ExperimentSuite.model_validate(execution_plan["suite"])
                 pricing_freshness = _pricing_freshness_evidence(
                     pricing_suite,
                     boundary_at=run_started[0].timestamp,
@@ -12237,10 +11035,7 @@ def qualify_run(
                 pricing_suite_valid = False
         add(
             "pricing_start_freshness",
-            bool(
-                pricing_suite_valid
-                and _pricing_freshness_passed(pricing_freshness)
-            ),
+            bool(pricing_suite_valid and _pricing_freshness_passed(pricing_freshness)),
             run_started_count=len(run_started),
             **pricing_freshness,
         )
@@ -12308,14 +11103,10 @@ def qualify_run(
                 EventType.TOOL_ADMISSION_BLOCKED,
             },
         )
-        artifact_integrity = bool(
-            artifact_integrity and investigation_artifact_integrity
-        )
+        artifact_integrity = bool(artifact_integrity and investigation_artifact_integrity)
         artifact_count += investigation_artifact_count
         leak_matches += investigation_leak_matches
-        missing_artifact_identities.extend(
-            investigation_missing_identities
-        )
+        missing_artifact_identities.extend(investigation_missing_identities)
         (
             admission_input_integrity,
             admission_input_count,
@@ -12327,9 +11118,7 @@ def qualify_run(
             events=events,
             private_tokens=private_tokens,
         )
-        artifact_integrity = bool(
-            artifact_integrity and admission_input_integrity
-        )
+        artifact_integrity = bool(artifact_integrity and admission_input_integrity)
         investigation_artifact_count += admission_input_count
         artifact_count += admission_input_count
         leak_matches += admission_input_leak_matches
@@ -12382,15 +11171,10 @@ def qualify_run(
             events=events,
             private_tokens=private_tokens,
         )
-        artifact_integrity = bool(
-            artifact_integrity
-            and self_validation_artifact_integrity
-        )
+        artifact_integrity = bool(artifact_integrity and self_validation_artifact_integrity)
         artifact_count += self_validation_artifact_count
         leak_matches += self_validation_leak_matches
-        missing_artifact_identities.extend(
-            self_validation_missing
-        )
+        missing_artifact_identities.extend(self_validation_missing)
     if manifest.tool_schema_version in {"v4", "v5", "v6"}:
         (
             patch_source_integrity,
@@ -12403,9 +11187,7 @@ def qualify_run(
             events=events,
             private_tokens=private_tokens,
         )
-        artifact_integrity = bool(
-            artifact_integrity and patch_source_integrity
-        )
+        artifact_integrity = bool(artifact_integrity and patch_source_integrity)
         artifact_count += patch_source_snapshot_artifact_count
         leak_matches += patch_source_leak_matches
         missing_artifact_identities.extend(patch_source_missing)
@@ -12420,13 +11202,11 @@ def qualify_run(
         ):
             artifact_details["patch_intent_artifact_count"] = patch_intent_artifact_count
     if manifest.tool_schema_version in {"v3", "v4", "v5", "v6"}:
-        artifact_details[
-            "self_validation_nested_artifact_count"
-        ] = self_validation_artifact_count
+        artifact_details["self_validation_nested_artifact_count"] = self_validation_artifact_count
     if manifest.tool_schema_version in {"v4", "v5", "v6"}:
-        artifact_details[
-            "patch_source_snapshot_artifact_count"
-        ] = patch_source_snapshot_artifact_count
+        artifact_details["patch_source_snapshot_artifact_count"] = (
+            patch_source_snapshot_artifact_count
+        )
     if manifest.context_policy_version in {
         "phase-evidence-v4",
         "phase-evidence-v5",
@@ -12437,9 +11217,7 @@ def qualify_run(
         "phase-evidence-v10",
         "phase-evidence-v11",
     }:
-        artifact_details[
-            "investigation_artifact_count"
-        ] = investigation_artifact_count
+        artifact_details["investigation_artifact_count"] = investigation_artifact_count
     add(
         "agent_visible_artifacts",
         artifact_integrity,
@@ -12477,12 +11255,8 @@ def qualify_run(
                 manifest=manifest,
                 events=events,
             )
-            rejected_patch_retry_context_details.update(
-                controlled_rejection_details
-            )
-            checks[-1]["details"].update(
-                controlled_rejection_details
-            )
+            rejected_patch_retry_context_details.update(controlled_rejection_details)
+            checks[-1]["details"].update(controlled_rejection_details)
             add(
                 "controlled_diagnostic_boundary",
                 controlled_rejection_ok,
@@ -12742,44 +11516,28 @@ def qualify_run(
         blocked_event = generation_blocked_events[0]
         blocked_context = context_events[-1]
         candidate_hash = blocked_event.payload.get("retry_candidate_content_hash")
-        retry_context_present = blocked_event.payload.get(
-            "retry_context_present"
-        )
+        retry_context_present = blocked_event.payload.get("retry_context_present")
         expected_retry_candidate_hash = (
             candidate_hash
             if retry_context_present is True and isinstance(candidate_hash, str)
             else None
         )
         retry_mode_shape_valid = bool(
-            (
-                retry_context_present is True
-                and isinstance(candidate_hash, str)
-            )
-            or (
-                retry_context_present is False
-                and candidate_hash is None
-            )
+            (retry_context_present is True and isinstance(candidate_hash, str))
+            or (retry_context_present is False and candidate_hash is None)
         )
         retry_source_binding_valid = bool(
             retry_context_present is not True
             or (
                 rejected_patch_retry_context_ok
-                and rejected_patch_retry_context_details.get(
-                    "retry_episode_count"
-                )
-                >= 1
-                and rejected_patch_retry_context_details.get(
-                    "model_generation_blocked_count"
-                )
-                == 1
+                and rejected_patch_retry_context_details.get("retry_episode_count") >= 1
+                and rejected_patch_retry_context_details.get("model_generation_blocked_count") == 1
                 and candidate_hash
                 in rejected_patch_retry_context_details.get(
                     "verified_candidate_content_hashes",
                     [],
                 )
-                and not rejected_patch_retry_context_details.get(
-                    "failed_source_failure_sequences"
-                )
+                and not rejected_patch_retry_context_details.get("failed_source_failure_sequences")
             )
         )
         terminal_generation_block_ok = bool(
@@ -12791,31 +11549,26 @@ def qualify_run(
                 events=events,
                 context_event=blocked_context,
                 blocked_event=blocked_event,
-                expected_retry_candidate_hash=(
-                    expected_retry_candidate_hash
-                ),
+                expected_retry_candidate_hash=(expected_retry_candidate_hash),
             )
             and not any(event.sequence > blocked_context.sequence for event in model_events)
             and all(event.sequence < blocked_event.sequence for event in context_events[:-1])
         )
         if terminal_generation_block_ok:
             terminal_generation_block_kind = (
-                "rejected_patch_retry"
-                if retry_context_present is True
-                else "generic"
+                "rejected_patch_retry" if retry_context_present is True else "generic"
             )
     model_telemetry_declared = any(
         event.payload.get("prompt_telemetry_version") is not None for event in model_events
     )
     terminal_block_telemetry_declared = terminal_generation_block_ok
-    telemetry_declared = bool(
-        model_telemetry_declared or terminal_block_telemetry_declared
-    )
+    telemetry_declared = bool(model_telemetry_declared or terminal_block_telemetry_declared)
     telemetry_contract_required = bool(
         experiment is not None
         and (
             experiment.purpose
             in {
+                ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
                 ExperimentPurpose.GENERIC_BASELINE_READINESS,
                 ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
                 ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT,
@@ -12829,8 +11582,7 @@ def qualify_run(
                 ExperimentPurpose.CORE,
             }
             or (
-                experiment.purpose
-                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+                experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
                 and manifest.model.model_id == _GPT54_MINI_PILOT_MODEL_ID
             )
         )
@@ -12844,10 +11596,7 @@ def qualify_run(
         )
         prompt_telemetry_ok = bool(
             len(matched_context_events) == len(model_events)
-            and (
-                not generation_blocked_events
-                or terminal_generation_block_ok
-            )
+            and (not generation_blocked_events or terminal_generation_block_ok)
         )
         for index, model_event in enumerate(model_events):
             payload = model_event.payload
@@ -12855,13 +11604,13 @@ def qualify_run(
                 matched_context_events[index] if index < len(matched_context_events) else None
             )
             generic_request_runtime_ok = True
-            if (
-                experiment is not None
-                and experiment.purpose
+            if experiment is not None and (
+                experiment.purpose
                 in {
                     ExperimentPurpose.GENERIC_BASELINE_READINESS,
                     ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
                 }
+                or ac_fixed_bundle
             ):
                 request_evidence_ok, request_evidence = (
                     _request_evidence_payload(
@@ -12936,17 +11685,15 @@ def qualify_run(
             }
         )
         if versioned_generation_block_declared:
-            prompt_telemetry_details[
-                "terminal_generation_block_kind"
-            ] = terminal_generation_block_kind
-            prompt_telemetry_details[
-                "terminal_generation_block_schema_version"
-            ] = generation_blocked_events[0].payload.get(
-                "schema_version"
+            prompt_telemetry_details["terminal_generation_block_kind"] = (
+                terminal_generation_block_kind
             )
-            prompt_telemetry_details[
-                "terminal_generation_block_reason"
-            ] = generation_blocked_events[0].payload.get("reason_code")
+            prompt_telemetry_details["terminal_generation_block_schema_version"] = (
+                generation_blocked_events[0].payload.get("schema_version")
+            )
+            prompt_telemetry_details["terminal_generation_block_reason"] = (
+                generation_blocked_events[0].payload.get("reason_code")
+            )
     add(
         "prompt_token_integrity",
         prompt_telemetry_ok,
@@ -13020,6 +11767,7 @@ def qualify_run(
     add("persisted_result", persisted_result_ok, artifact_present=persisted_result is not None)
 
     pilot_purposes = {
+        ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
         ExperimentPurpose.GENERIC_BASELINE_READINESS,
         ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
         ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT,
@@ -13060,19 +11808,15 @@ def qualify_run(
             in {RunOutcomeKind.AGENT_FAILURE, RunOutcomeKind.INFRASTRUCTURE_ERROR}
         )
     generation_block_contract_declared = any(
-        "schema_version" in event.payload
-        for event in generation_blocked_events
+        "schema_version" in event.payload for event in generation_blocked_events
     )
     generation_block_terminal_binding_required = bool(
-        terminal_generation_block_ok
-        or generation_block_contract_declared
+        terminal_generation_block_ok or generation_block_contract_declared
     )
     generation_block_terminal_binding_ok = True
     if generation_block_terminal_binding_required:
         blocked_event = (
-            generation_blocked_events[0]
-            if len(generation_blocked_events) == 1
-            else None
+            generation_blocked_events[0] if len(generation_blocked_events) == 1 else None
         )
         terminal_event = terminals[0] if len(terminals) == 1 else None
         terminal_error = (
@@ -13080,11 +11824,7 @@ def qualify_run(
             if result is not None and isinstance(result.terminal_error, dict)
             else None
         )
-        expected_details = (
-            blocked_event.payload
-            if blocked_event is not None
-            else None
-        )
+        expected_details = blocked_event.payload if blocked_event is not None else None
         generation_block_terminal_binding_ok = bool(
             terminal_generation_block_ok
             and blocked_event is not None
@@ -13097,13 +11837,10 @@ def qualify_run(
             and terminal_error.get("code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
             and terminal_error.get("details") == expected_details
             and isinstance(terminal_error.get("message"), str)
-            and terminal_event.payload.get("error_type")
-            == "ModelGenerationBudgetError"
-            and terminal_event.payload.get("error_code")
-            == "MODEL_GENERATION_BUDGET_EXCEEDED"
+            and terminal_event.payload.get("error_type") == "ModelGenerationBudgetError"
+            and terminal_event.payload.get("error_code") == "MODEL_GENERATION_BUDGET_EXCEEDED"
             and terminal_event.payload.get("error_details") == expected_details
-            and terminal_event.payload.get("message")
-            == terminal_error.get("message")
+            and terminal_event.payload.get("message") == terminal_error.get("message")
         )
         evaluation_ok = evaluation_ok and generation_block_terminal_binding_ok
     terminal_result_details: dict[str, Any] = {
@@ -13118,9 +11855,7 @@ def qualify_run(
                 "model_generation_block_binding_required": (
                     generation_block_terminal_binding_required
                 ),
-                "model_generation_block_binding_valid": (
-                    generation_block_terminal_binding_ok
-                ),
+                "model_generation_block_binding_valid": (generation_block_terminal_binding_ok),
             }
         )
     add(
@@ -13171,7 +11906,6 @@ def qualify_run(
         "contiguous_events",
         "single_terminal_event",
         "required_trace_evidence",
-        "no_memory_boundary",
         "approved_execution_plan",
         "agent_visible_artifacts",
         "verifier_evidence_artifacts",
@@ -13182,30 +11916,31 @@ def qualify_run(
         "terminal_result_integrity",
         "failure_record_linkage",
     }
+    trace_check_ids.add(
+        "fixed_memory_delivery_integrity" if ac_fixed_bundle else "no_memory_boundary"
+    )
+    if ac_fixed_bundle:
+        trace_check_ids.add("ac_fixed_runtime_contract")
     if structured_lifecycle_contract:
         trace_check_ids.add("submission_lifecycle")
         trace_check_ids.add("worker_claim_provenance")
-    if (
-        experiment is not None
-        and experiment.purpose
-        in {
-            ExperimentPurpose.GENERIC_BASELINE_READINESS,
-            ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
-        }
-    ):
+    if experiment is not None and experiment.purpose in {
+        ExperimentPurpose.GENERIC_BASELINE_READINESS,
+        ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
+    }:
         trace_check_ids.add("generic_runtime_contract")
         trace_check_ids.add("pricing_start_freshness")
         if (
-            experiment.purpose
-            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
-            or experiment.experiment_id
-            in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
+            experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            or experiment.experiment_id in _GENERIC_BASELINE_COUNT_OBSERVABILITY_EXPERIMENT_IDS
         ):
             trace_check_ids.add("disabled_call_guard_contract")
-    if condition_neutral_any:
-        trace_check_ids.add("comparison_runtime_contract")
+    if condition_neutral_any or ac_fixed_bundle:
+        trace_check_ids.add(
+            "ac_fixed_runtime_contract" if ac_fixed_bundle else "comparison_runtime_contract"
+        )
         trace_check_ids.add("pricing_start_freshness")
-        if manifest.memory.condition == MemoryCondition.NO_MEMORY:
+        if manifest.memory.condition == MemoryCondition.NO_MEMORY or ac_fixed_bundle:
             trace_check_ids.add("disabled_call_guard_contract")
     if accrued_cap_campaign:
         trace_check_ids.add("campaign_spend_cap_contract")
@@ -13336,9 +12071,7 @@ def qualify_run(
         "evaluation_reached": evaluation_reached,
         "outcome_kind": outcome.value,
         "purpose": experiment.purpose.value if experiment is not None else None,
-        "experiment_id": (
-            experiment.experiment_id if experiment is not None else None
-        ),
+        "experiment_id": (experiment.experiment_id if experiment is not None else None),
         "dataset_role": dataset_entry.role.value if dataset_entry is not None else None,
         "dataset_manifest_hash": dataset_hash,
         "suite_hash": experiment.suite_hash if experiment is not None else None,
@@ -13360,6 +12093,7 @@ def qualify_run(
             ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
         }
         or condition_neutral_any
+        or ac_fixed_bundle
     ):
         payload.update(
             {
@@ -13393,6 +12127,7 @@ def qualify_run(
                                 ExperimentPurpose.WORKFLOW_COMPLETION_PROBE,
                             }
                             or condition_neutral_any
+                            or ac_fixed_bundle
                         )
                     )
                     else _runtime_contract_content_hash(events)
@@ -13410,9 +12145,8 @@ def qualify_run(
     encoded = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
     if path.exists():
         existing = load_trace_qualification(run_id, root=run_root)
-        if (
-            _normalized_qualification_semantics(existing)
-            != _normalized_qualification_semantics(payload)
+        if _normalized_qualification_semantics(existing) != _normalized_qualification_semantics(
+            payload
         ):
             raise ContractError(f"trace qualification is immutable: {run_id}")
         return existing

@@ -1,0 +1,68 @@
+diff --git a/src/huggingface_hub/file_download.py b/src/huggingface_hub/file_download.py
+index 98748fd..d8beed7 100644
+--- a/src/huggingface_hub/file_download.py
++++ b/src/huggingface_hub/file_download.py
+@@ -1471,7 +1471,7 @@ def get_hf_file_metadata(
+         size=_int_or_none(
+             r.headers.get(constants.HUGGINGFACE_HEADER_X_LINKED_SIZE) or r.headers.get("Content-Length")
+         ),
+-        xet_file_data=parse_xet_file_data_from_response(r),  # type: ignore
++        xet_file_data=parse_xet_file_data_from_response(r, endpoint=endpoint),  # type: ignore
+     )
+ 
+ 
+diff --git a/src/huggingface_hub/hf_api.py b/src/huggingface_hub/hf_api.py
+index e53fcfb..8d5ce6c 100644
+--- a/src/huggingface_hub/hf_api.py
++++ b/src/huggingface_hub/hf_api.py
+@@ -2992,7 +2992,7 @@ class HfApi:
+         try:
+             if token is None:
+                 token = self.token
+-            get_hf_file_metadata(url, token=token)
++            get_hf_file_metadata(url, token=token, endpoint=self.endpoint)
+             return True
+         except GatedRepoError:  # raise specifically on gated repo
+             raise
+@@ -5387,6 +5387,7 @@ class HfApi:
+         return get_hf_file_metadata(
+             url=url,
+             token=token,
++            endpoint=self.endpoint,
+             proxies=proxies,
+             timeout=timeout,
+             library_name=self.library_name,
+diff --git a/src/huggingface_hub/utils/_xet.py b/src/huggingface_hub/utils/_xet.py
+index e80b0e8..7ad4f2e 100644
+--- a/src/huggingface_hub/utils/_xet.py
++++ b/src/huggingface_hub/utils/_xet.py
+@@ -5,6 +5,7 @@ from typing import Dict, Optional
+ import requests
+ 
+ from .. import constants
++from ._http import fix_hf_endpoint_in_url
+ from . import get_session, hf_raise_for_status, validate_hf_hub_args
+ 
+ 
+@@ -26,7 +27,10 @@ class XetConnectionInfo:
+     endpoint: str
+ 
+ 
+-def parse_xet_file_data_from_response(response: requests.Response) -> Optional[XetFileData]:
++def parse_xet_file_data_from_response(
++    response: requests.Response,
++    endpoint: Optional[str] = None,
++) -> Optional[XetFileData]:
+     """
+     Parse XET file metadata from an HTTP response.
+ 
+@@ -50,6 +54,9 @@ def parse_xet_file_data_from_response(response: requests.Response) -> Optional[X
+             refresh_route = response.links[constants.HUGGINGFACE_HEADER_LINK_XET_AUTH_KEY]["url"]
+         else:
+             refresh_route = response.headers[constants.HUGGINGFACE_HEADER_X_XET_REFRESH_ROUTE]
++
++        if endpoint is not None:
++            refresh_route = fix_hf_endpoint_in_url(refresh_route, endpoint)
+     except KeyError:
+         return None
+ 

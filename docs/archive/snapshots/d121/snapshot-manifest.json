@@ -1,0 +1,20 @@
+{
+  "schema_version": "documentation-snapshot-manifest-v1",
+  "snapshot_id": "pre-ac-pilot-active-docs-d121-20260808",
+  "recorded_date": "2026-08-08",
+  "source_head": "5bf8c38509ecdc6954ca84aa44fb8b80b1333ab4",
+  "source_worktree_dirty": true,
+  "current_authority": false,
+  "files": [
+    {"original_path": "AGENTS.md", "snapshot_path": "AGENTS.full.md", "file_bytes": 164904, "file_sha256": "sha256:b24bb6f06f2b782cc14c5eb850f2b0e02ad807d1b73cca5697ebab7c995a961c"},
+    {"original_path": "README.md", "snapshot_path": "README.full.md", "file_bytes": 173047, "file_sha256": "sha256:e765ce5703ab5a67ed8928ec33df93ec2fc58dbfb4e85193c2e40cd7dbca2fe2"},
+    {"original_path": "docs/02-architecture.md", "snapshot_path": "02-architecture.full.md", "file_bytes": 133438, "file_sha256": "sha256:a2b73164237699d4dac50ffd3596f8768e0a4f3749984310fb220e19b751dca4"},
+    {"original_path": "docs/03-contracts.md", "snapshot_path": "03-contracts.full.md", "file_bytes": 265417, "file_sha256": "sha256:2fcad2fc7a1483fa4c9db9ca3b73c1151efc5dfe0369e14f2a96c8f272373e85"},
+    {"original_path": "docs/04-evaluation-protocol.md", "snapshot_path": "04-evaluation-protocol.full.md", "file_bytes": 192243, "file_sha256": "sha256:905ee438ee55f537ebe9c56394c9072ea8fff8df73c0f94c45d4258ad65b489f"},
+    {"original_path": "docs/05-implementation-plan.md", "snapshot_path": "05-implementation-plan.full.md", "file_bytes": 197280, "file_sha256": "sha256:c74cdc86572fbe643a154aa4cddd14bf5c3a91a4b84066555e049b4c9b91e7a2"},
+    {"original_path": "docs/06-decisions.md", "snapshot_path": "06-decisions.full.md", "file_bytes": 209689, "file_sha256": "sha256:10ac093da7cabd7b6a0835fd961fa5954106915a0b81fe144db619d37ebcd2ea"},
+    {"original_path": "docs/07-reproduction.md", "snapshot_path": "07-reproduction.full.md", "file_bytes": 126690, "file_sha256": "sha256:1c000ca504703fbf91d16aa998ee6d7710b290bc8a3a2fa952fd06d3813acbef"},
+    {"original_path": "docs/08-limitations.md", "snapshot_path": "08-limitations.full.md", "file_bytes": 152724, "file_sha256": "sha256:bd0011af1642807d3e4e4b13150b6835767d9b67bec8511f176b778f7dd6eaa6"},
+    {"original_path": "docs/09-evidence.md", "snapshot_path": "09-evidence.full.md", "file_bytes": 318615, "file_sha256": "sha256:110040477ad7e5be5fe62eb35a5bf3d31f5709535213e29bd52a7e8d19d5a1f1"}
+  ]
+}

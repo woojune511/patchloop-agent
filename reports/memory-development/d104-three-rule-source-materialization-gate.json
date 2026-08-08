@@ -1,0 +1,231 @@
+{
+  "schema_version": "unindexed-memory-source-materialization-gate-d104-v1",
+  "gate_id": "d104_61e44eb5609c05c97b84602bbaa4eb7bff84dd33af227cef18592aa2b6a32c11",
+  "semantic_body_hash": "sha256:61e44eb5609c05c97b84602bbaa4eb7bff84dd33af227cef18592aa2b6a32c11",
+  "semantic_body": {
+    "milestone": "D-104",
+    "evidence_kind": "three-rule-unindexed-source-materialization-gate",
+    "recorded_at": "2026-08-06T04:00:00Z",
+    "d103_gate": {
+      "path": "reports/memory-development/d103-exact-candidate-admission-gate.json",
+      "schema_version": "exact-candidate-admission-gate-d103-v1",
+      "gate_id": "d103_4a542cd571ffc0b94b6f95e106fd2371425dd66f82cfa6091cc602905036fb1f",
+      "semantic_body_hash": "sha256:4a542cd571ffc0b94b6f95e106fd2371425dd66f82cfa6091cc602905036fb1f",
+      "file_bytes": 5315,
+      "file_sha256": "sha256:4602a579d7c11dd300e2f9bede38e8a6d7bf21c78a8fbfc255550b7d86f3d354"
+    },
+    "admission_seal": {
+      "path": "reports/memory-development/d103-maintainer-assisted-admission-seal.json",
+      "schema_version": "memory-group-admission-seal-d101-v1",
+      "seal_id": "d101seal_3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "semantic_body_hash": "sha256:3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "file_bytes": 19357,
+      "file_sha256": "sha256:af1e6ea8811445f26d542f34500d1a7b3919392bef00c98b71f4c26ded236e8e"
+    },
+    "source_collection_id": "d104collection_4017131c10c127f47b8ea68ff2d8c3c3265c2f6cb11c1b175dd52c23882bd399",
+    "source_set_hash": "sha256:1168c8c9cfcaa3671f42391436bfff713c90f01baec468e5ef2509ddb95dbad2",
+    "entries": [
+      {
+        "order": 1,
+        "path": "reports/memory-development/sources/d104/memgrp_649483b80292fea26e4009ebdb72df31.json",
+        "source_id": "d104src_770793305341d62f095021fe2c9c354c2524090a921a23778a824181c098fa0a",
+        "semantic_body_hash": "sha256:770793305341d62f095021fe2c9c354c2524090a921a23778a824181c098fa0a",
+        "file_bytes": 5188,
+        "file_sha256": "sha256:8a139248e3e53e3a563366c6a2f9ad213a6a164831bd3cef2a3e5b6cb37008e8",
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "semantic_group_fingerprint": "sha256:2680ffacfdfe654288f9c9d9bfc399c2b07d2d0b52ee06b2201ebb6e72d2a45f",
+        "decision_hash": "sha256:9933f0f079ca2d40ebdbc1e2257e794b36ca05045d186c02785c1c00df92bfa3",
+        "template_hash": "sha256:844290fa8eab2ff0d2c0541f224c17cb61ced74c27f7861b04ee4bdfae081060",
+        "proposed_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+        "target_schema": "memory-entry-v1",
+        "source_run_ids": [
+          "run_575da4ead3334551",
+          "run_74364afdc3d94f9c"
+        ],
+        "source_failure_ids": [
+          "fail_0f5c0cd58af05907ba3285e4e7ef069e",
+          "fail_6b7b036074a2590d97db1afdfe90a89d"
+        ],
+        "evidence_ref_ids": [
+          "sha256:e88411ed437cc4eab00cb833dd69f53d413141a5e96098f06ed5daa590e5956a",
+          "sha256:2be93502afd53f406b3edcdbf11b432d11a2da71d149e55abc70833559d2d283",
+          "sha256:da1ee21661b05abf240975e701bfbbc753f2c87c173b96884310a04a1af5f5d8",
+          "sha256:117f2c8f2710ad627c3bddf2f2679f019cc369c02f674c13187130ba04251452",
+          "sha256:000b74e3ad564945d56023b8e559011304468e7666210b6358cf975b7e631eb6",
+          "sha256:b5662f234446f7c068969e3a841957b10a74a57217537a9bc6b227c8d3124e33",
+          "sha256:d5edb8714a4fde01514c16eae45052f44eb4ddec423b641580b64a3eaa00ca0e",
+          "sha256:3d3bde4504e4e132457447df5525df595f9603ac37a94fc363713acae92dc522",
+          "sha256:6f21b835281730df4d90b463c73c2b1e72f17e05e6c14e5d10380403900ccd79",
+          "sha256:77bca24764bfb3c0b99be60ca57d300fdf40c0a2f4e6cf33f6cb38f8abe924aa",
+          "sha256:daed2d1be00fbd82b2c87f03745dbff77341c8a8f7f278c9188a72370887b60c",
+          "sha256:5b2b508eb5fce69de298e290465399e37f716293d8c2bcf567a68dc6a970a90a",
+          "sha256:fe8947887eec06a498032c02d3204b9544c60f67dad7998e2e24bb6f8b920e9a",
+          "sha256:a1323bc9b573cdb1e7d8d4c5833d96f781864e35a15c56234c1daee00f7b4661"
+        ],
+        "dedup_confidence": 0.74,
+        "validation_count": 0
+      },
+      {
+        "order": 2,
+        "path": "reports/memory-development/sources/d104/memgrp_b421547d481faabf9be3511217258de5.json",
+        "source_id": "d104src_28a04e4a26cd25fc4fe55e3c5baf0aeb8c63fbc964c8a8c77c51b250b10efbda",
+        "semantic_body_hash": "sha256:28a04e4a26cd25fc4fe55e3c5baf0aeb8c63fbc964c8a8c77c51b250b10efbda",
+        "file_bytes": 5333,
+        "file_sha256": "sha256:87b1b751634d8c34ef125042e472807828a7820064f25e413a51d0755b5b51da",
+        "semantic_group_id": "request-context-propagation-gap",
+        "semantic_group_fingerprint": "sha256:195b37a651d16037d49d389c3ec30c9cdaa658239cb66e108cb25ed5464d6471",
+        "decision_hash": "sha256:5943da335c469334e9fee94da46d26ffe7cea6a732c19c3dc97e3f4da718127d",
+        "template_hash": "sha256:91e444444d313e92b857fdbf871802da9fdc57fc50a71ec0ba5c462626432593",
+        "proposed_memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+        "target_schema": "memory-entry-v1",
+        "source_run_ids": [
+          "run_5ffc2e1c58784e17",
+          "run_88f96fae3d2442e6"
+        ],
+        "source_failure_ids": [
+          "fail_2cf07eaf03315e54908197f76180394b",
+          "fail_8edc6a7fd4f3506f92a149698e55da6e"
+        ],
+        "evidence_ref_ids": [
+          "sha256:6322c19e2f3d76953e8b240aad23be23f822fdc45ef25cb449109f34d8eadd96",
+          "sha256:f3752e7396c1982e804aab6165e447ec5c2ae891b8aac050fcdc106fe77d7838",
+          "sha256:9499217f1dbaa114be0c8bffce70bbf442f29a871b62e8973af7c078024429b7",
+          "sha256:e00cc3c337e8b6fb1c1538d5ae8be2badd4bee78cb29aa83a5e28e481efe1d4f",
+          "sha256:02b64adb4ea16b185c717049d7353ab60bb1543bde3488694491069bca344c0f",
+          "sha256:d2b073a113b517277a5ee9dfeab88b3ea5b153518d532df7f338a8b73e11985e",
+          "sha256:c8414725f6c310048e2ef931f0ff8586db0e3f380cda0225d258f76b5d95b356",
+          "sha256:2dd08cfa73d50737c6a750fc6f32fb3c9c057bde614dc950ee12d60f54b1dd99",
+          "sha256:7a3c7e0d82b406dabd02baebe174f5c41c4ed3e2267fc8b10c3a4aaa301b2a33",
+          "sha256:9e7731417d937ef6386560d200ad84a5aeb07acc17e1ee22d711a34456def2cd",
+          "sha256:1fbfaff7722d8b07556f1b3b91e69185dec4fc71be60bc684c7459931e80c6f0",
+          "sha256:8fd4908ce5d978ee9cd57ac4b5db48685a71d42483f960a067928302852b7960",
+          "sha256:98d9c8c0a13077b67edf3b0c6ef12e19f7e4df1cbbffe6b855d37b51f70e4d2a",
+          "sha256:0b2bbb84a0a4cb823aa61962902d4d0823e05865510d82dbda7c69fc33047bc0",
+          "sha256:846b360ea570eda0efc9bf9a3f3a5f85c221794a7741ff83d3228a59e7bb3c96",
+          "sha256:3ed1b7aaec1dd87661562c929730d11e59f1da37009bb19472d8fec142d8a197"
+        ],
+        "dedup_confidence": 0.94,
+        "validation_count": 0
+      },
+      {
+        "order": 3,
+        "path": "reports/memory-development/sources/d104/memgrp_5a23f463cba43bf3ba395f67cf976047.json",
+        "source_id": "d104src_3590f0f35053a37af10b6078e984feee950fe5cb50a88956b19d1451e5118ba8",
+        "semantic_body_hash": "sha256:3590f0f35053a37af10b6078e984feee950fe5cb50a88956b19d1451e5118ba8",
+        "file_bytes": 5416,
+        "file_sha256": "sha256:d5b22f7c2ca75a271cf60cd52eb9089f2fd54bec99f5c9a75d09c311e0311505",
+        "semantic_group_id": "exception-origin-state-conflation",
+        "semantic_group_fingerprint": "sha256:e70e64a6af47eac96d9fe70943d6ea869a84757da4475edd5b972fb0654561fb",
+        "decision_hash": "sha256:4192b503768093e2134b7651da4922fcd9d5c2a064e0150a7f523adc952ac469",
+        "template_hash": "sha256:5a8e661e092e50e72bf8aa6456e9a5996fcd94503dcf4275a0be60579762ce8a",
+        "proposed_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+        "target_schema": "memory-entry-v1",
+        "source_run_ids": [
+          "run_ac3ae1a7009a4e8b",
+          "run_d5c2e22b485a4578"
+        ],
+        "source_failure_ids": [
+          "fail_f90fa668a6945abe98ef6dd5e4761a97",
+          "fail_ab3918ee4a3c5f34bc9d04a8f0970c00"
+        ],
+        "evidence_ref_ids": [
+          "sha256:90277ac5d5e83bbe45385ffeb37a6057c15d2b1fd3df839094710e6d7af0b43d",
+          "sha256:abd60751fdc78deb222f60abdeb76cf858f24065e06e3dcf228e2ff925e8aca0",
+          "sha256:f11990f8b4762844a5777a2c034fb8513dff434d4ce311d7dc562ad6f8b5b201",
+          "sha256:4922d909fd3ce225d197d2b507782a1302d693c924765e7a874eee3ac90bf68f",
+          "sha256:4c2d22864fca7205faaa60d2574dba8cc23651c0ef4dae0e984a5735b6b9f293",
+          "sha256:9b408f21fe54ce0e49775ad20f06bce44faab2d4972535c510c4a4cb4b092ee1",
+          "sha256:483b8a54c94e9febcf32a48ef2ea60ac89452a2b6237ea7d03ebedcf4522a29e",
+          "sha256:aa225f0c1c3aa5d0893164cfc15568b064b4a2c4cf4615fd1b1351ba599219df",
+          "sha256:5506486fc0e67ef21e7de08ec1fb65e4c00195a81d93aad8d1ecdc0505992384",
+          "sha256:8a4558f889d629d455729fae4b78e556e0197c4bcb7a3f6c674be66d927ceee5",
+          "sha256:b23bd90e820701a264994d46b8822fd21a98f85ed846a9dcd3e7f92be8ad43a6",
+          "sha256:127fddaa2b889fec52264e1abfee2062983a53f96fafd54cf9173d0fa49c92c3",
+          "sha256:8336ce50de3e7e86b169de79973e7fb758436cc903b01d622e46f883afb4abf4",
+          "sha256:82d7423fbbd2fb93b89a2c1d023ac22e490464ac329eebf6045de0d84c702210",
+          "sha256:75e225198f2e8f8804af34e5779d906daa5d93c9aff50581858c499b64bcd3a2",
+          "sha256:fb9bd242fb9645328e6abbe562b6d113c96385e4e2c9ec2a51994a61ec33f11e",
+          "sha256:e3a738c25ba4e6ba3e6a8d71eafeb3f87b7ba9e3f2ace97f9ebac127062923c0"
+        ],
+        "dedup_confidence": 1.0,
+        "validation_count": 0
+      }
+    ],
+    "held_group_ids": [
+      "interrupt-lifecycle-unresolved",
+      "diagnostic-contract-unresolved"
+    ],
+    "materialized_rule_source_count": 3,
+    "actual_memory_entry_count": 0,
+    "schema_validation": "pass",
+    "provenance_validation": "pass",
+    "leak_scan": "pass",
+    "source_projection_policy": "d103-seal-admitted-template-exact-v1",
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d104_unindexed_sources.py",
+        "file_bytes": 30665,
+        "file_sha256": "sha256:f2e980cb7eea86480d47adc59df8bb0622b5fc10b96a11baec9030d9473b6a7f"
+      },
+      {
+        "path": "scripts/build_d104_unindexed_sources.py",
+        "file_bytes": 1486,
+        "file_sha256": "sha256:e5e01247bd6c5644e5e77488358a6be69646886c45af80ea54554abe6610dd2e"
+      },
+      {
+        "path": "tests/test_d104_unindexed_sources.py",
+        "file_bytes": 10769,
+        "file_sha256": "sha256:e870cbb3e001ac3c542b837583bf537b2061ceafdf73d53a1c501c5223bbc50a"
+      }
+    ],
+    "evidence_boundary": {
+      "portable_validation_mode": true,
+      "semantic_authoring_source": "exact-d103-seal-admitted-templates-only",
+      "inherited_public_submitted_patch_integrity_revalidated": true,
+      "public_patch_text_copied_into_sources": false,
+      "new_rule_semantics_authored_from_patch_text": false,
+      "raw_sqlite_or_event_bodies_read": false,
+      "raw_trace_or_search_read_artifact_bodies_read": false,
+      "private_task_or_hidden_test_bodies_read": false,
+      "reference_solution_patch_read": false,
+      "evaluator_payload_bodies_read": false,
+      "provider_request_or_response_bodies_read": false
+    },
+    "authority": {
+      "d103_exact_admission_revalidated": true,
+      "admitted_rule_count": 3,
+      "materialized_rule_source_count": 3,
+      "admitted_source_set_complete": true,
+      "held_group_count": 2,
+      "held_group_materialized_count": 0,
+      "full_five_group_review_finalized": false,
+      "source_schema_validated": true,
+      "source_provenance_validated": true,
+      "source_leak_scan_passed": true,
+      "source_validation_count": 0,
+      "memory_admission_unlocked": true,
+      "memory_index_source_authoring_unlocked": true,
+      "actual_memory_entry_count": 0,
+      "render_policy_frozen": false,
+      "rendered_memory_count": 0,
+      "embedding_count": 0,
+      "d104_created_index_count": 0,
+      "legacy_failure_memory_builder_connected": false,
+      "historical_index_state_inspected": false,
+      "historical_index_state_modified": false,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "retrieval_ready": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false,
+      "exact_hidden_cause_established": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "deterministic-model-facing-renderer-token-budget-and-pinned-embedding-index-build-authorization"
+  }
+}

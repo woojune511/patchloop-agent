@@ -1,0 +1,132 @@
+# Planning artifact only. The PatchLoop experiment runner does not accept this
+# schema and this file carries no provider, retrieval, or execution authority.
+schema_version: ac-structured-pilot-plan-v1
+plan_id: ac-structured-dev-validation-readiness-20260808-v1
+status: offline-suite-and-qualification-implemented-live-closed
+purpose: qualify-fixed-structured-memory-before-heldout-comparison
+
+design:
+  conditions: [no_memory, structured]
+  repetitions: 1
+  expected_runs: 4
+  task_count: 2
+  pairing: task-level-fresh-workspace-pairs
+  schedule_seed: 20260723
+  schedule:
+    - {order: 1, task_id: moto-query-scanned-count, condition: no_memory}
+    - {order: 2, task_id: moto-query-scanned-count, condition: structured}
+    - {order: 3, task_id: babel-strict-grouped-decimal-trailing-zeroes, condition: structured}
+    - {order: 4, task_id: babel-strict-grouped-decimal-trailing-zeroes, condition: no_memory}
+
+tasks:
+  - path: tasks/dev-validation/moto-query-scanned-count/public.yaml
+    dataset_role: development-validation
+  - path: tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml
+    dataset_role: development-validation
+
+selection_contract:
+  selection_basis: complete-frozen-development-validation-panel
+  source_task_reuse_allowed: false
+  heldout_task_consumed: false
+  heldout_issue_text_inspected_for_this_selection: false
+  hidden_or_private_evidence_inspected: false
+  outcome_based_task_selection_allowed: false
+  replacement_after_outcome_allowed: false
+
+fixed_runtime_tuple:
+  model: openai
+  model_id: gpt-5.4-mini-2026-03-17
+  reasoning_effort: medium
+  reasoning_mode: standard
+  service_tier: default
+  transport_max_retries: 0
+  max_output_tokens: 25000
+  max_model_calls: null
+  max_tool_calls: null
+  max_total_tokens: 3000000
+  wall_clock_timeout_seconds: 3600
+  tool_schema_version: v2
+  context_policy_version: phase-evidence-v5
+  system_prompt_version: SYSTEM_PROMPT_V3
+  system_prompt_sha256: sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b
+  memory_policy_version: fixed-d110-bundle-v1
+
+structured_condition:
+  mode: fixed-approved-three-entry-bundle
+  delivery_cadence: every-model-request
+  query_embedding_or_similarity_used: false
+  threshold_or_reranking_used: false
+  entry_count: 3
+  order_contract: frozen-d110-group-provenance-order
+  ordered_entries:
+    - order: 1
+      memory_id: memgrp_649483b80292fea26e4009ebdb72df31
+      semantic_group_id: platform-emulation-matrix-gap
+      render_file_sha256: sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c
+    - order: 2
+      memory_id: memgrp_b421547d481faabf9be3511217258de5
+      semantic_group_id: request-context-propagation-gap
+      render_file_sha256: sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a
+    - order: 3
+      memory_id: memgrp_5a23f463cba43bf3ba395f67cf976047
+      semantic_group_id: exception-origin-state-conflation
+      render_file_sha256: sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7
+  render_contract:
+    separator: "\n\n---\n\n"
+    trailing_newline: true
+    bundle_bytes: 3528
+    bundle_sha256: sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf
+  token_budget: 2000
+  observed_provider_input_delta_tokens: 702
+  observed_delta_source: reports/memory-development/d108-provider-token-count-completion-gate.json
+  frozen_index:
+    path: reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json
+    index_version: idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064
+    file_sha256: sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0
+    freeze_gate_id: d110_bc1cae7a2ebc5d6531d203ef4d7101762d7366c9e77814c3a4c772d353f0a736
+    freeze_gate_file_sha256: sha256:79578db09955dab2a22b015ba5210baec28e7d30b9cac818b1f2c6d6eac782cd
+    marker_path: reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN
+    marker_content_hash: sha256:3a99e6c190672d1676bc4d13604de989899de9ddac85d282cc90c4d56f426c56
+    marker_file_sha256: sha256:cdfe40b734135a30f66e34ff24469940063a7231a1fe0783420ee2ff816d9561
+
+analysis_contract:
+  primary_outputs:
+    - per-task-scope-compliant-success-pair
+    - evaluation-reached-and-trace-qualified
+    - directional-success-flip
+    - directional-negative-transfer-flip
+  secondary_outputs: [input_tokens, output_tokens, tool_calls, duration_seconds, model_cost_usd]
+  confidence_interval_claim_allowed: false
+  statistical_significance_claim_allowed: false
+  portfolio_headline_allowed: false
+  full_four_condition_conclusion_allowed: false
+  heldout_memory_effect_claim_allowed: false
+  cross_repository_generalization_claim_allowed: false
+  diagnostic_only: true
+
+execution_boundary:
+  runtime_fixed_bundle_injection_implemented: true
+  runtime_fixed_bundle_mock_path_verified: true
+  fixed_request_artifact_replay_validator_implemented: true
+  runtime_fixed_bundle_injection_qualified: false
+  experiment_suite_exact_policy_binding_implemented: true
+  structured_trace_qualifier_implemented: true
+  offline_source_qualification_ready_for_materialization: true
+  exact_four_row_cost_reservation_implemented: false
+  exact_four_row_completion_gate_implemented: false
+  execution_authorization_candidate_prepared: false
+  retrieval_experiment_authorized: false
+  runtime_memory_injection_authorized: false
+  provider_execution_authorized: false
+  evaluator_execution_authorized: false
+  live_cost_approved: false
+  approved_execution_hash: null
+  automatic_retry_allowed: false
+  full_four_condition_campaign_deferred: true
+  heldout_ac_comparison_deferred: true
+  d121_successor_execution_required_for_this_pilot: false
+  d121_successor_execution_deferred: true
+
+next_gate:
+  action: implement-four-row-cost-and-completion-gates-then-prepare-clean-no-call-execution-candidate
+  requires_separate_exact_execution_approval_after_qualification: true

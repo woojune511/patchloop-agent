@@ -24,7 +24,7 @@ from patchloop.evals import runner as eval_runner
 from patchloop.evals.runner import ExperimentSuite
 from patchloop.runtime import build_manifest, git_commit
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json, sha256_text
+from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
 DEV_TEMPLATE = Path("experiments/dev-no-memory-v5.template.yaml")
 CORE_TEMPLATE = Path("experiments/core.template.yaml")
@@ -288,7 +288,10 @@ def test_d084_paid_boundary_routes_exact_profile_through_plan_verifier(
         "_execution_plan_matches",
         plan_matches,
     )
-    authorization = SimpleNamespace(plan_path=str(plan_path))
+    authorization = SimpleNamespace(
+        plan_path=str(plan_path),
+        plan_hash=sha256_bytes(plan_path.read_bytes()),
+    )
 
     assert AgentRunner._live_plan_matches_manifest(manifest, authorization)
     assert calls == [

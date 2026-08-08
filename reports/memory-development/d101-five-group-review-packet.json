@@ -1,0 +1,332 @@
+{
+  "schema_version": "memory-group-review-packet-d101-v1",
+  "packet_id": "d101packet_bd78712747b1718ed8c9c4f67324bd8f11f564c76c041d3108843b2da0224947",
+  "semantic_body_hash": "sha256:bd78712747b1718ed8c9c4f67324bd8f11f564c76c041d3108843b2da0224947",
+  "semantic_body": {
+    "milestone": "D-101",
+    "evidence_kind": "human-readable-five-group-review-packet",
+    "recorded_at": "2026-08-06T01:00:00Z",
+    "proposal": {
+      "schema_version": "memory-public-review-proposal-d099-v1",
+      "proposal_id": "d099_63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+      "semantic_body_hash": "sha256:63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+      "file_bytes": 77942,
+      "file_sha256": "sha256:24e34b02a66fc132d333bb51614a10786d38bc188b5550432a5f21f435f21493"
+    },
+    "d100_source_gate": {
+      "path": "reports/memory-development/d100-group-review-projector-source-gate.json",
+      "schema_version": "memory-group-review-projector-source-gate-d100-v1",
+      "gate_id": "d100_5ac180b32fef27d5937c1447e39f01bafda65ce6b5a3eef1992a7da45cab9b2b",
+      "semantic_body_hash": "sha256:5ac180b32fef27d5937c1447e39f01bafda65ce6b5a3eef1992a7da45cab9b2b",
+      "file_bytes": 5048,
+      "file_sha256": "sha256:866bad69dad24dd908339330f27a24a388e64b453e6dc403363836292ea24e47"
+    },
+    "groups": [
+      {
+        "order": 1,
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "semantic_group_fingerprint": "sha256:2680ffacfdfe654288f9c9d9bfc399c2b07d2d0b52ee06b2201ebb6e72d2a45f",
+        "disposition": "candidate",
+        "relation": "semantic-cluster",
+        "merge_rationale": "Both repetitions address the same public traversal contract and leave different portions of its platform and path-type matrix under-validated.",
+        "dedup_confidence": 0.74,
+        "sources": [
+          {
+            "task_id": "pyfakefs-makedirs-parent-traversal",
+            "run_id": "run_575da4ead3334551",
+            "failure_record_id": "fail_0f5c0cd58af05907ba3285e4e7ef069e",
+            "repetition": 1,
+            "causal_confidence": 0.72,
+            "public_assessment": "The submitted change preserves a final directory outcome but does not demonstrate the complete public traversal matrix across intermediate and leaf components, path types, creation modes, and platform modes."
+          },
+          {
+            "task_id": "pyfakefs-makedirs-parent-traversal",
+            "run_id": "run_74364afdc3d94f9c",
+            "failure_record_id": "fail_6b7b036074a2590d97db1afdfe90a89d",
+            "repetition": 2,
+            "causal_confidence": 0.76,
+            "public_assessment": "The submitted change narrows traversal handling but leaves the public string and bytes path variants coupled to platform-specific component handling without complete matrix evidence."
+          }
+        ],
+        "evidence_ref_count": 14,
+        "proposed_rule": {
+          "failure_class": "PLATFORM_EMULATION_MATRIX_GAP",
+          "phase": "IMPLEMENT",
+          "description": "An emulation fix validates a final outcome without preserving the observable intermediate semantics across the public platform matrix.",
+          "preconditions": [
+            "The task emulates platform behavior with observable intermediate and leaf effects.",
+            "The public contract names more than one path type, platform mode, or error branch."
+          ],
+          "diagnostic_evidence": [
+            "Enumerate intermediate and leaf effects separately before changing normalization.",
+            "Build a public matrix for platform mode, path type, creation mode, existing state, and error state."
+          ],
+          "recommended_actions": [
+            "Implement the smallest change that preserves every matrix cell named by the public contract.",
+            "Run the registered regression and add targeted public reasoning evidence for uncovered cells."
+          ],
+          "do_not_apply_when": [
+            "The public contract has no observable intermediate behavior.",
+            "All named platform and path-type branches intentionally share identical semantics."
+          ],
+          "applicable_languages": [
+            "python"
+          ],
+          "confidence": 0.74,
+          "admission_decision": "not_made"
+        },
+        "proposed_rule_hash": "sha256:913b11118e2db81c48497eaf1ec14e25ebb557f0e64cb8097bd2422d89ca0e64",
+        "unresolved_reason": null,
+        "next_review_actions": [],
+        "allowed_decisions": [
+          "approve",
+          "reject",
+          "continue_hold"
+        ],
+        "decision_status": "not_made",
+        "no_preselected_or_recommended_decision": true,
+        "exact_hidden_cause_established": false,
+        "memory_benefit_established": false
+      },
+      {
+        "order": 2,
+        "semantic_group_id": "request-context-propagation-gap",
+        "semantic_group_fingerprint": "sha256:195b37a651d16037d49d389c3ec30c9cdaa658239cb66e108cb25ed5464d6471",
+        "disposition": "candidate",
+        "relation": "semantic-cluster",
+        "merge_rationale": "Both repetitions modify endpoint-aware metadata behavior but do not show complete coverage of every public call-graph edge and route ownership case.",
+        "dedup_confidence": 0.94,
+        "sources": [
+          {
+            "task_id": "hf-hub-xet-endpoint-propagation",
+            "run_id": "run_5ffc2e1c58784e17",
+            "failure_record_id": "fail_2cf07eaf03315e54908197f76180394b",
+            "repetition": 1,
+            "causal_confidence": 0.86,
+            "public_assessment": "The submitted change adds request endpoint context at one metadata path without public evidence that every caller and every relative, default, foreign-origin, and implicit-endpoint branch preserves that context."
+          },
+          {
+            "task_id": "hf-hub-xet-endpoint-propagation",
+            "run_id": "run_88f96fae3d2442e6",
+            "failure_record_id": "fail_8edc6a7fd4f3506f92a149698e55da6e",
+            "repetition": 2,
+            "causal_confidence": 0.88,
+            "public_assessment": "The submitted change propagates endpoint context through more public callers, but the trace does not establish complete call-graph and route-ownership coverage required by the public contract."
+          }
+        ],
+        "evidence_ref_count": 16,
+        "proposed_rule": {
+          "failure_class": "CONTEXT_PROPAGATION_GAP",
+          "phase": "IMPLEMENT",
+          "description": "Request-scoped context is added at a leaf while one or more public callers or ownership branches still use an implicit default.",
+          "preconditions": [
+            "Behavior depends on context selected by a caller rather than a process-wide default.",
+            "The public contract requires preservation through multiple access paths."
+          ],
+          "diagnostic_evidence": [
+            "Enumerate every caller-to-leaf edge that can create or transform the affected value.",
+            "Separate relative, default-origin, foreign-origin, custom, and implicit-default cases."
+          ],
+          "recommended_actions": [
+            "Thread the context explicitly through every required edge without rewriting foreign ownership.",
+            "Verify every public route class and each caller that omits explicit context."
+          ],
+          "do_not_apply_when": [
+            "The value is intentionally process-global and the public contract confirms that policy.",
+            "Only one construction path exists and no caller-specific context can vary."
+          ],
+          "applicable_languages": [
+            "python"
+          ],
+          "confidence": 0.88,
+          "admission_decision": "not_made"
+        },
+        "proposed_rule_hash": "sha256:6c2ba21aea2a2de3dd9cb25209d8d3a6709dd939e3f82eea8b0906677794a046",
+        "unresolved_reason": null,
+        "next_review_actions": [],
+        "allowed_decisions": [
+          "approve",
+          "reject",
+          "continue_hold"
+        ],
+        "decision_status": "not_made",
+        "no_preselected_or_recommended_decision": true,
+        "exact_hidden_cause_established": false,
+        "memory_benefit_established": false
+      },
+      {
+        "order": 3,
+        "semantic_group_id": "interrupt-lifecycle-unresolved",
+        "semantic_group_fingerprint": "sha256:bfd05d53347d867efccc0fa091408a2c36dc57695ae5ff99d16b76fefdbb1244",
+        "disposition": "hold",
+        "relation": "single",
+        "merge_rationale": "Only one eligible completed submission exists, so no cross-run semantic deduplication evidence is available for a reusable lifecycle rule.",
+        "dedup_confidence": 1.0,
+        "sources": [
+          {
+            "task_id": "anyio-interrupt-runner-cleanup",
+            "run_id": "run_3dc602aab8964d77",
+            "failure_record_id": "fail_dac1b9595479551688a9613db9462927",
+            "repetition": 2,
+            "causal_confidence": 0.58,
+            "public_assessment": "The submitted change alters cancellation handling and runner ownership, but one observation is insufficient to promote a general lifecycle rule covering propagation, non-resumption, and exactly-once cleanup."
+          }
+        ],
+        "evidence_ref_count": 8,
+        "proposed_rule": null,
+        "proposed_rule_hash": null,
+        "unresolved_reason": "Public code suggests cancellation-consumption and owner-task cleanup risk, but one run does not establish a general rule across resume, propagation, and exactly-once cleanup states.",
+        "next_review_actions": [
+          "Review the public lifecycle as an explicit owner, worker, future, and fixture state machine.",
+          "Seek independent public evidence for interrupt propagation, non-resumption, and cleanup cardinality."
+        ],
+        "allowed_decisions": [
+          "reject",
+          "continue_hold"
+        ],
+        "decision_status": "not_made",
+        "no_preselected_or_recommended_decision": true,
+        "exact_hidden_cause_established": false,
+        "memory_benefit_established": false
+      },
+      {
+        "order": 4,
+        "semantic_group_id": "diagnostic-contract-unresolved",
+        "semantic_group_fingerprint": "sha256:b8238774a1399211fc7eb8d2452894e901f8b8291969641704a38c969a07fe8c",
+        "disposition": "hold",
+        "relation": "semantic-cluster",
+        "merge_rationale": "Both repetitions introduce a similar secondary diagnostic-formatting risk, but the broader reusable boundary across all public formatter modes remains unresolved.",
+        "dedup_confidence": 0.96,
+        "sources": [
+          {
+            "task_id": "loguru-invalid-format-feedback",
+            "run_id": "run_59aac91defac456b",
+            "failure_record_id": "fail_19d13b555e5f5e21b89c0dde9e593ec8",
+            "repetition": 1,
+            "causal_confidence": 0.82,
+            "public_assessment": "The submitted diagnostic path can itself be interpreted as formatting syntax, while the public contract also spans static, dynamic, colored, catch, and patcher-provided record paths; a general rule remains pending."
+          },
+          {
+            "task_id": "loguru-invalid-format-feedback",
+            "run_id": "run_cc179262fa664600",
+            "failure_record_id": "fail_bcf0bf2e95765d42b925742d955da82e",
+            "repetition": 2,
+            "causal_confidence": 0.86,
+            "public_assessment": "The second submitted diagnostic follows the same public formatting boundary and repeats the risk that explanatory placeholder syntax creates a secondary error instead of useful feedback."
+          }
+        ],
+        "evidence_ref_count": 19,
+        "proposed_rule": null,
+        "proposed_rule_hash": null,
+        "unresolved_reason": "The repeated patch defect is concrete, while the correct general memory rule for static, dynamic, colored, catch, and custom-record paths still needs review.",
+        "next_review_actions": [
+          "Separate primary formatting failure from construction of the diagnostic message.",
+          "Review every public formatter mode and both catch behaviors before proposing a general rule."
+        ],
+        "allowed_decisions": [
+          "reject",
+          "continue_hold"
+        ],
+        "decision_status": "not_made",
+        "no_preselected_or_recommended_decision": true,
+        "exact_hidden_cause_established": false,
+        "memory_benefit_established": false
+      },
+      {
+        "order": 5,
+        "semantic_group_id": "exception-origin-state-conflation",
+        "semantic_group_fingerprint": "sha256:e70e64a6af47eac96d9fe70943d6ea869a84757da4475edd5b972fb0654561fb",
+        "disposition": "candidate",
+        "relation": "exact-duplicate",
+        "merge_rationale": "Both repetitions submitted the same patch bytes and share the same public lookup-versus-transformation exception boundary.",
+        "dedup_confidence": 1.0,
+        "sources": [
+          {
+            "task_id": "tox-cross-section-empty-substitution",
+            "run_id": "run_ac3ae1a7009a4e8b",
+            "failure_record_id": "fail_f90fa668a6945abe98ef6dd5e4761a97",
+            "repetition": 2,
+            "causal_confidence": 0.92,
+            "public_assessment": "The submitted change handles lookup absence and post-lookup transformation inside one exception boundary, conflating a missing source with an existing value that resolves to an empty state."
+          },
+          {
+            "task_id": "tox-cross-section-empty-substitution",
+            "run_id": "run_d5c2e22b485a4578",
+            "failure_record_id": "fail_ab3918ee4a3c5f34bc9d04a8f0970c00",
+            "repetition": 1,
+            "causal_confidence": 0.92,
+            "public_assessment": "The byte-identical submitted change repeats the same public exception-origin conflation between absent lookup state and an empty transformed value."
+          }
+        ],
+        "evidence_ref_count": 17,
+        "proposed_rule": {
+          "failure_class": "SEMANTIC_STATE_CONFLATION",
+          "phase": "IMPLEMENT",
+          "description": "One exception boundary treats source lookup failure and later value transformation failure as the same semantic state.",
+          "preconditions": [
+            "The public contract distinguishes a missing source from an existing empty or transformed value.",
+            "Lookup and transformation can raise the same exception type for different reasons."
+          ],
+          "diagnostic_evidence": [
+            "Trace lookup, filtering, substitution, defaulting, and caller fallback as separate stages.",
+            "Exercise missing, existing-empty, matching, defaulted, caller-context, and fallback cases."
+          ],
+          "recommended_actions": [
+            "Narrow exception handling to the operation whose absence semantics it represents.",
+            "Preserve the distinct empty and default states through later transformations."
+          ],
+          "do_not_apply_when": [
+            "The public API intentionally defines lookup and transformation failure as identical.",
+            "The operations cannot produce distinguishable semantic states."
+          ],
+          "applicable_languages": [
+            "python"
+          ],
+          "confidence": 0.92,
+          "admission_decision": "not_made"
+        },
+        "proposed_rule_hash": "sha256:330e5a73bc8f9815b6a2cec4d2c9bf3b3ba589e2addd2ec96d72288089710b6f",
+        "unresolved_reason": null,
+        "next_review_actions": [],
+        "allowed_decisions": [
+          "approve",
+          "reject",
+          "continue_hold"
+        ],
+        "decision_status": "not_made",
+        "no_preselected_or_recommended_decision": true,
+        "exact_hidden_cause_established": false,
+        "memory_benefit_established": false
+      }
+    ],
+    "warnings": [
+      "Public evidence supports a review hypothesis only; it does not establish the exact hidden acceptance cause.",
+      "This packet does not establish an agent architecture defect or a harness defect.",
+      "This packet does not establish that memory will improve performance or avoid negative transfer.",
+      "No decision is preselected or recommended. Packet generation, validation, or a generic implementation request to proceed is not approval.",
+      "Candidate approval admits only the exact normalized proposed rule bound by its rule hash; hold groups cannot be approved.",
+      "Reviewer labels and approval receipts are self-attested; identity authentication and cryptographic signature verification are absent.",
+      "Do not edit this checked-in packet to record choices; provide all decisions separately so its exact byte identity remains valid."
+    ],
+    "leak_scan_passed": true,
+    "authority": {
+      "review_packet_only": true,
+      "production_human_decision_records": 0,
+      "admission_candidate_created": false,
+      "approval_receipt_present": false,
+      "admission_seal_created": false,
+      "admitted_memory_rule_count": 0,
+      "memory_admission_unlocked": false,
+      "memory_index_source_authoring_unlocked": false,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "explicit-five-group-decisions-in-d100-journal"
+  }
+}

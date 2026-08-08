@@ -57,6 +57,7 @@ def build_manifest(
     provider: str = "mock",
     model_id: str = "mock-v1",
     memory_condition: MemoryCondition = MemoryCondition.NO_MEMORY,
+    memory_policy_version: str = "v1",
     sandbox_backend: str = "local",
     fault: FaultSpec | None = None,
     budget: Budget | None = None,
@@ -110,21 +111,15 @@ def build_manifest(
         )
     if self_validation and provider == "openai":
         raise ContractError(
-            "self-validation v3/v6 is offline-only and unavailable "
-            "for the OpenAI provider"
+            "self-validation v3/v6 is offline-only and unavailable for the OpenAI provider"
         )
     if self_validation and provider == "replay":
-        raise ContractError(
-            "self-validation v3/v6 is unavailable for historical replay runs"
-        )
+        raise ContractError("self-validation v3/v6 is unavailable for historical replay runs")
     if corrective_validation and provider == "replay":
-        raise ContractError(
-            "corrective validation v4/v7 is unavailable for historical replay runs"
-        )
+        raise ContractError("corrective validation v4/v7 is unavailable for historical replay runs")
     if saturation_context_validation and provider != "mock":
         raise ContractError(
-            "saturation-context validation v4/v8 is offline-only and requires "
-            "the mock provider"
+            "saturation-context validation v4/v8 is offline-only and requires the mock provider"
         )
     if saturation_context_validation and experiment_context is not None:
         raise ContractError(
@@ -132,17 +127,13 @@ def build_manifest(
         )
     if review_evidence_validation and provider != "mock":
         raise ContractError(
-            "review-evidence validation v4/v9 is offline-only and requires "
-            "the mock provider"
+            "review-evidence validation v4/v9 is offline-only and requires the mock provider"
         )
     if review_evidence_validation and experiment_context is not None:
-        raise ContractError(
-            "review-evidence validation v4/v9 cannot declare an experiment context"
-        )
+        raise ContractError("review-evidence validation v4/v9 cannot declare an experiment context")
     if coverage_review_validation and provider != "mock":
         raise ContractError(
-            "coverage-review validation v5/v10 is offline-only and requires "
-            "the mock provider"
+            "coverage-review validation v5/v10 is offline-only and requires the mock provider"
         )
     if coverage_review_validation and experiment_context is not None:
         raise ContractError(
@@ -150,13 +141,11 @@ def build_manifest(
         )
     if coverage_rejection_validation and provider != "mock":
         raise ContractError(
-            "coverage-rejection validation v6/v11 is offline-only and requires "
-            "the mock provider"
+            "coverage-rejection validation v6/v11 is offline-only and requires the mock provider"
         )
     if coverage_rejection_validation and experiment_context is not None:
         raise ContractError(
-            "coverage-rejection validation v6/v11 cannot declare an experiment "
-            "context"
+            "coverage-rejection validation v6/v11 cannot declare an experiment context"
         )
     if coverage_rejection_live_pilot and (
         provider != "openai"
@@ -239,7 +228,14 @@ def build_manifest(
         except PackageNotFoundError:
             sdk_version = "not-installed"
     memory_config = MemoryConfig(condition=memory_condition)
-    if memory_condition != MemoryCondition.NO_MEMORY:
+    if memory_policy_version == "fixed-d110-bundle-v1":
+        from patchloop.memory.fixed_bundle import fixed_bundle_manifest_binding
+
+        (
+            memory_config.index_version,
+            memory_config.index_hash,
+        ) = fixed_bundle_manifest_binding(memory_condition)
+    elif memory_condition != MemoryCondition.NO_MEMORY:
         frozen = sorted(runtime_root().glob("memory/indexes/*/FROZEN"))
         if frozen:
             marker = frozen[-1]
@@ -289,6 +285,7 @@ def build_manifest(
             if self_validation
             else "phase-evidence-v5"
         ),
+        memory_policy_version=memory_policy_version,
         model=ModelConfig(
             provider=provider,
             model_id=model_id,
@@ -301,9 +298,7 @@ def build_manifest(
             max_output_tokens=max_output_tokens,
             input_price_per_million_usd=input_price_per_million_usd,
             cached_input_price_per_million_usd=cached_input_price_per_million_usd,
-            cache_write_input_price_per_million_usd=(
-                cache_write_input_price_per_million_usd
-            ),
+            cache_write_input_price_per_million_usd=(cache_write_input_price_per_million_usd),
             output_price_per_million_usd=output_price_per_million_usd,
         ),
         budget=budget or Budget(),
@@ -322,10 +317,7 @@ def build_manifest(
 def calculate_model_cost(usage: Usage, config: ModelConfig) -> float:
     """Calculate direct token cost without double-counting cache reads or writes."""
 
-    if (
-        config.input_price_per_million_usd is None
-        or config.output_price_per_million_usd is None
-    ):
+    if config.input_price_per_million_usd is None or config.output_price_per_million_usd is None:
         return 0.0
     cached_tokens = min(usage.cached_input_tokens, usage.input_tokens)
     cache_write_tokens = min(

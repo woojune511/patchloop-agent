@@ -34,9 +34,7 @@ from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_text, utc_now
 
 TASK = Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
-REVIEW = Path(
-    "experiments/review-contracts/hf-hub-xet-endpoint-propagation.yaml"
-)
+REVIEW = Path("experiments/review-contracts/hf-hub-xet-endpoint-propagation.yaml")
 
 
 def _manifest(*, experiment: bool = False):
@@ -49,9 +47,7 @@ def _manifest(*, experiment: bool = False):
     context = (
         ExperimentRunContext(
             experiment_id="corrective-provenance-test",
-            purpose=(
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
-            ),
+            purpose=(ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT),
             suite_hash="sha256:" + ("a" * 64),
             execution_hash="sha256:" + ("b" * 64),
             dataset_manifest_hash="sha256:" + ("c" * 64),
@@ -82,9 +78,7 @@ def _saturation_manifest(*, experiment: bool = False):
     context = (
         ExperimentRunContext(
             experiment_id="saturation-provenance-test",
-            purpose=(
-                ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
-            ),
+            purpose=(ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT),
             suite_hash="sha256:" + ("e" * 64),
             execution_hash="sha256:" + ("f" * 64),
             dataset_manifest_hash="sha256:" + ("1" * 64),
@@ -100,11 +94,7 @@ def _saturation_manifest(*, experiment: bool = False):
         package,
         run_id="run_saturation_provenance",
         provider="openai" if experiment else "mock",
-        model_id=(
-            "gpt-5.4-mini-2026-03-17"
-            if experiment
-            else "mock-v1"
-        ),
+        model_id=("gpt-5.4-mini-2026-03-17" if experiment else "mock-v1"),
         saturation_context_validation=not experiment,
         saturation_live_pilot=experiment,
         public_review_contract=contract,
@@ -237,9 +227,7 @@ def test_corrective_runtime_semantics_reject_event_identity_drift(
     if field == "actor":
         event = event.model_copy(update={"actor": value})
     else:
-        event = event.model_copy(
-            update={"payload": {**event.payload, field: value}}
-        )
+        event = event.model_copy(update={"payload": {**event.payload, field: value}})
 
     passed, _ = _corrective_runtime_contract_evidence(
         root=tmp_path,
@@ -256,16 +244,22 @@ def test_corrective_runtime_semantics_reject_missing_and_duplicate_start(
     manifest = _manifest()
     event = _runtime_event(tmp_path, manifest)
 
-    assert _corrective_runtime_contract_evidence(
-        root=tmp_path,
-        manifest=manifest,
-        events=[],
-    )[0] is False
-    assert _corrective_runtime_contract_evidence(
-        root=tmp_path,
-        manifest=manifest,
-        events=[event, event.model_copy(update={"event_id": "evt_duplicate"})],
-    )[0] is False
+    assert (
+        _corrective_runtime_contract_evidence(
+            root=tmp_path,
+            manifest=manifest,
+            events=[],
+        )[0]
+        is False
+    )
+    assert (
+        _corrective_runtime_contract_evidence(
+            root=tmp_path,
+            manifest=manifest,
+            events=[event, event.model_copy(update={"event_id": "evt_duplicate"})],
+        )[0]
+        is False
+    )
 
 
 @pytest.mark.parametrize(
@@ -318,9 +312,7 @@ def test_corrective_manifest_rejects_runtime_version_downgrade() -> None:
 
 
 def test_pricing_freshness_uses_immutable_boundary_inclusively() -> None:
-    suite = load_suite(
-        "experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml"
-    )
+    suite = load_suite("experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml")
     assert suite.pricing_verified_at is not None
     verified_at = suite.pricing_verified_at
 
@@ -346,20 +338,21 @@ def test_pricing_freshness_uses_immutable_boundary_inclusively() -> None:
 
 
 def test_corrective_pricing_metadata_and_reserves_are_recomputed() -> None:
-    suite = load_suite(
-        "experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml"
-    )
+    suite = load_suite("experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml")
     assert suite.pricing_verified_at is not None
     pricing = _pricing_contract(
         suite,
         schedule_size=3,
         checked_at=suite.pricing_verified_at + timedelta(hours=1),
     )
-    assert _pricing_contract_matches(
-        suite,
-        pricing,
-        schedule_size=3,
-    ) is True
+    assert (
+        _pricing_contract_matches(
+            suite,
+            pricing,
+            schedule_size=3,
+        )
+        is True
+    )
     assert pricing["per_run_cost_reserve_usd"] == 4.1625
     assert pricing["budget_upper_bound_usd"] == 12.4875
 
@@ -370,17 +363,18 @@ def test_corrective_pricing_metadata_and_reserves_are_recomputed() -> None:
         ("budget_upper_bound_usd", 0.03),
     ):
         tampered = {**pricing, field: value}
-        assert _pricing_contract_matches(
-            suite,
-            tampered,
-            schedule_size=3,
-        ) is False
+        assert (
+            _pricing_contract_matches(
+                suite,
+                tampered,
+                schedule_size=3,
+            )
+            is False
+        )
 
 
 def test_corrective_runtime_block_changes_execution_hash() -> None:
-    suite = load_suite(
-        "experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml"
-    )
+    suite = load_suite("experiments/dev-no-memory-corrective-pilot-20260731-r1.yaml")
     runtime_contract = _corrective_runtime_contract(
         suite,
         harness_git_commit="a" * 40,
@@ -405,11 +399,14 @@ def test_corrective_runtime_block_changes_execution_hash() -> None:
         "context_policy_version": "phase-evidence-v6",
     }
 
-    assert _execution_hash(
-        suite,
-        runtime_contract=changed,
-        **arguments,
-    ) != approved_hash
+    assert (
+        _execution_hash(
+            suite,
+            runtime_contract=changed,
+            **arguments,
+        )
+        != approved_hash
+    )
 
 
 @pytest.mark.parametrize("saturation", [False, True])
@@ -417,36 +414,32 @@ def test_agent_boundary_rejects_runtime_only_plan(
     tmp_path: Path,
     saturation: bool,
 ) -> None:
-    manifest = (
-        _saturation_manifest(experiment=True)
-        if saturation
-        else _manifest(experiment=True)
-    )
+    manifest = _saturation_manifest(experiment=True) if saturation else _manifest(experiment=True)
     runtime_contract = {
         "schema_version": (
-            "corrective-runtime-contract-v2"
-            if saturation
-            else "corrective-runtime-contract-v1"
+            "corrective-runtime-contract-v2" if saturation else "corrective-runtime-contract-v1"
         ),
         "tool_schema_version": "v4",
-        "context_policy_version": (
-            "phase-evidence-v8"
-            if saturation
-            else "phase-evidence-v7"
-        ),
+        "context_policy_version": ("phase-evidence-v8" if saturation else "phase-evidence-v7"),
         "system_prompt_hash": sha256_text(SYSTEM_PROMPT_V5),
         "tool_schema_hash": sha256_text(canonical_json(TOOL_SCHEMAS_V4)),
         "harness_git_commit": manifest.harness_git_commit,
     }
     plan_path = tmp_path / "plan.json"
-    plan_path.write_text("{}", encoding="utf-8")
-    authorization = type("Authorization", (), {"plan_path": str(plan_path)})()
-
-    plan_path.write_text(
-        canonical_json({"runtime_contract": runtime_contract}),
-        encoding="utf-8",
+    plan_text = canonical_json({"runtime_contract": runtime_contract})
+    plan_path.write_text(plan_text, encoding="utf-8")
+    authorization = type(
+        "Authorization",
+        (),
+        {
+            "plan_path": str(plan_path),
+            "plan_hash": sha256_text(plan_text),
+        },
+    )()
+    assert (
+        AgentRunner._live_plan_matches_manifest(
+            manifest,
+            authorization,
+        )
+        is False
     )
-    assert AgentRunner._live_plan_matches_manifest(
-        manifest,
-        authorization,
-    ) is False

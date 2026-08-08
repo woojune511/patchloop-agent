@@ -2240,7 +2240,10 @@ def test_coverage_review_approved_plan_binds_v10_runtime_and_sidecar(
         preflight=approved,
         item={**task_row, **item},
     )
-    authorization = SimpleNamespace(plan_path=plan["path"])
+    authorization = SimpleNamespace(
+        plan_path=plan["path"],
+        plan_hash=sha256_bytes(Path(plan["path"]).read_bytes()),
+    )
     assert AgentRunner._live_plan_matches_manifest(manifest, authorization) is True
     plan_payload = json.loads(Path(plan["path"]).read_text(encoding="utf-8"))
     assert trace_qualification._execution_plan_matches(
@@ -2439,7 +2442,10 @@ def test_coverage_rejection_approved_plan_binds_v11_runtime_and_sidecar(
         preflight=approved,
         item={**task_row, **item},
     )
-    authorization = SimpleNamespace(plan_path=plan["path"])
+    authorization = SimpleNamespace(
+        plan_path=plan["path"],
+        plan_hash=sha256_bytes(Path(plan["path"]).read_bytes()),
+    )
     assert AgentRunner._live_plan_matches_manifest(manifest, authorization) is True
     plan_payload = json.loads(Path(plan["path"]).read_text(encoding="utf-8"))
     assert trace_qualification._execution_plan_matches(
@@ -2537,7 +2543,10 @@ def test_saturation_approved_plan_binds_paid_boundary_and_qualification_inputs(
         preflight=approved,
         item={**task_row, **item},
     )
-    authorization = SimpleNamespace(plan_path=plan["path"])
+    authorization = SimpleNamespace(
+        plan_path=plan["path"],
+        plan_hash=sha256_bytes(Path(plan["path"]).read_bytes()),
+    )
     assert AgentRunner._live_plan_matches_manifest(
         manifest,
         authorization,
@@ -3485,7 +3494,15 @@ def test_generic_comparison_runtime_gate_excludes_v10_v11_and_binds_runtime_cont
     if suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY:
         assert "QUALIFIED_PILOT_REQUIRED" in blocker_codes
     else:
-        assert "FROZEN_MEMORY_INDEX_MISSING" in blocker_codes
+        expected_index_blocker = (
+            "FROZEN_MEMORY_INDEX_MISSING"
+            if eval_runner.latest_frozen_index() is None
+            else "FROZEN_MEMORY_INDEX_INVALID"
+        )
+        assert blocker_codes & {
+            "FROZEN_MEMORY_INDEX_MISSING",
+            "FROZEN_MEMORY_INDEX_INVALID",
+        } == {expected_index_blocker}
         assert "CORE_MEMORY_RUNTIME_BINDING_PENDING" in blocker_codes
 
 
@@ -4557,14 +4574,6 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         tmp_path,
         "future-primary-persistence",
     )
-    byte_writes: dict[Path, bytes] = {}
-    original_write_bytes = Path.write_bytes
-
-    def record_write_bytes(path: Path, content: bytes) -> int:
-        byte_writes[path] = content
-        return original_write_bytes(path, content)
-
-    monkeypatch.setattr(Path, "write_bytes", record_write_bytes)
     preflight = eval_runner.preflight_suite(suite_path)
     captured = []
 
@@ -4666,10 +4675,8 @@ def test_approved_pilot_persists_plan_manifest_and_qualification(
         "CampaignCompleted",
     ]
     assert journal_rows[1]["payload"]["run_id"] == result["runs"][0]["run_id"]
-    temporary_result_path = Path(result["path"]).with_suffix(".json.tmp")
-    assert byte_writes[temporary_result_path] == Path(result["path"]).read_bytes()
     assert journal_rows[-1]["payload"]["result_hash"] == sha256_bytes(
-        byte_writes[temporary_result_path]
+        Path(result["path"]).read_bytes()
     )
     previous_hash = None
     for sequence, row in enumerate(journal_rows, start=1):

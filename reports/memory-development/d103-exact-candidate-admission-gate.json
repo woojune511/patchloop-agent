@@ -1,0 +1,108 @@
+{
+  "schema_version": "exact-candidate-admission-gate-d103-v1",
+  "gate_id": "d103_4a542cd571ffc0b94b6f95e106fd2371425dd66f82cfa6091cc602905036fb1f",
+  "semantic_body_hash": "sha256:4a542cd571ffc0b94b6f95e106fd2371425dd66f82cfa6091cc602905036fb1f",
+  "semantic_body": {
+    "milestone": "D-103",
+    "evidence_kind": "exact-candidate-approval-and-admission-seal-gate",
+    "recorded_at": "2026-08-06T03:00:00Z",
+    "d102_gate": {
+      "path": "reports/memory-development/d102-maintainer-assisted-decision-candidate-gate.json",
+      "semantic_body_hash": "sha256:27e6b50c156e2c590e4225302534c5fedca67596eae2c831d03d3a4810c11732",
+      "file_bytes": 5453,
+      "file_sha256": "sha256:e8ff1cdecdb7b107593f43f0b68b564abab34668558a0bb367296e16fbcca373"
+    },
+    "candidate": {
+      "candidate_id": "d101candidate_97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d",
+      "semantic_body_hash": "sha256:97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d",
+      "file_bytes": 31148,
+      "file_sha256": "sha256:9620e99961010bc4c942728f1948cb50b3f067025b8d5a02ba579dd3a1b4e457"
+    },
+    "approval_receipt": {
+      "path": "reports/memory-development/d103-exact-candidate-approval-receipt.json",
+      "receipt_id": "d101receipt_23c8ff9b5f8b91820d03a25242abaa02f1ec2af0357bd9b26c227882cf8f5f7a",
+      "semantic_body_hash": "sha256:23c8ff9b5f8b91820d03a25242abaa02f1ec2af0357bd9b26c227882cf8f5f7a",
+      "file_bytes": 6245,
+      "file_sha256": "sha256:dad12cf181fee8e113d9da703795eb8ccb4a16be6014218ea923a919d0695031",
+      "approval_action_id": "d103-exact-candidate-approval-1",
+      "approver_kind": "human",
+      "approver_label": "chat-maintainer-self-attested",
+      "approval_reference": "user-message:d103-exact-candidate-approval",
+      "rationale_sha256": "sha256:45bb5e03fb1592baa68381646b9549eeb46c030a9a6e28e8006a03386dae016d",
+      "approval_statement": "EXPLICITLY_APPROVE_EXACT_D101_CANDIDATE d101candidate_97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d sha256:97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d sha256:9620e99961010bc4c942728f1948cb50b3f067025b8d5a02ba579dd3a1b4e457",
+      "self_attested": true,
+      "reviewer_identity_authenticated": false,
+      "cryptographic_signature_verified": false
+    },
+    "admission_seal": {
+      "path": "reports/memory-development/d103-maintainer-assisted-admission-seal.json",
+      "seal_id": "d101seal_3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "semantic_body_hash": "sha256:3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "file_bytes": 19357,
+      "file_sha256": "sha256:af1e6ea8811445f26d542f34500d1a7b3919392bef00c98b71f4c26ded236e8e"
+    },
+    "admitted_groups": [
+      {
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "proposed_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+        "template_hash": "sha256:844290fa8eab2ff0d2c0541f224c17cb61ced74c27f7861b04ee4bdfae081060"
+      },
+      {
+        "semantic_group_id": "request-context-propagation-gap",
+        "proposed_memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+        "template_hash": "sha256:91e444444d313e92b857fdbf871802da9fdc57fc50a71ec0ba5c462626432593"
+      },
+      {
+        "semantic_group_id": "exception-origin-state-conflation",
+        "proposed_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+        "template_hash": "sha256:5a8e661e092e50e72bf8aa6456e9a5996fcd94503dcf4275a0be60579762ce8a"
+      }
+    ],
+    "held_groups": [
+      "interrupt-lifecycle-unresolved",
+      "diagnostic-contract-unresolved"
+    ],
+    "source_files": [
+      {
+        "path": "patchloop/memory/d103_exact_candidate_admission.py",
+        "file_bytes": 17254,
+        "file_sha256": "sha256:2af149e7fa7133129165d3f1714d2819035e772f0241dbf39f17b6aa2f0f76d9"
+      },
+      {
+        "path": "scripts/build_d103_exact_candidate_admission_gate.py",
+        "file_bytes": 1565,
+        "file_sha256": "sha256:0c415d4aec6210fa32de577404541ffa8b7586f9f9421fb071455646faa734d8"
+      },
+      {
+        "path": "tests/test_d103_exact_candidate_admission.py",
+        "file_bytes": 3161,
+        "file_sha256": "sha256:4e07299d995b7c7949c1791e0f3ff80b1350c22bad81d1c7e225fbce1bd01b0f"
+      }
+    ],
+    "authority": {
+      "exact_candidate_approved": true,
+      "approval_receipt_present": true,
+      "approval_receipt_self_attested": true,
+      "reviewer_identity_authenticated": false,
+      "cryptographic_signature_verified": false,
+      "admission_seal_created": true,
+      "admission_snapshot_sealed": true,
+      "decision_coverage_complete": true,
+      "open_hold_group_count": 2,
+      "full_five_group_review_finalized": false,
+      "admitted_memory_rule_count": 3,
+      "memory_entry_source_materialized_count": 0,
+      "memory_admission_unlocked": true,
+      "memory_index_source_authoring_unlocked": true,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "exact-three-rule-source-materialization-leak-scan-and-validation"
+  }
+}

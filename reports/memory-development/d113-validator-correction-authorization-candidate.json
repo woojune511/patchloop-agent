@@ -1,0 +1,124 @@
+{
+  "schema_version": "validator-correction-authorization-candidate-d113-v1",
+  "candidate_id": "d113validatorcandidate_373257ce1e2c904482a2aeb4649495baf737a11b3c958ef8420b66640a7f3732",
+  "semantic_body_hash": "sha256:373257ce1e2c904482a2aeb4649495baf737a11b3c958ef8420b66640a7f3732",
+  "semantic_body": {
+    "milestone": "D-113",
+    "evidence_kind": "validator-correction-authorization-candidate",
+    "recorded_at": "2026-08-07T02:22:31Z",
+    "preflight": {
+      "path": "reports/memory-development/d113-d112-validator-correction-preflight.json",
+      "file_bytes": 8270,
+      "file_sha256": "sha256:f2053137c80a9429251651201f61df942d9e448d0ddf2dab0faf2366bcfbf505",
+      "preflight_id": "d113preflight_13b1f266a3f84121bf160dedbc459581a6243247261d991a3bb81aefd6dd2375",
+      "semantic_body_hash": "sha256:13b1f266a3f84121bf160dedbc459581a6243247261d991a3bb81aefd6dd2375"
+    },
+    "candidate_status": "awaiting-exact-user-approval",
+    "proposed_action": {
+      "schema_version": "append-only-d112-validator-correction-d113-v1",
+      "action_kind": "append-only-d112-validator-correction",
+      "future_milestone": "D-114",
+      "future_paths": [
+        "patchloop/memory/d114_d112_validator_correction.py",
+        "scripts/build_d114_d112_validator_correction.py",
+        "tests/test_d114_d112_validator_correction.py",
+        "reports/memory-development/d114-d112-validator-correction-receipt.json",
+        "reports/memory-development/d114-d112-validator-correction-gate.json"
+      ],
+      "new_files_only": true,
+      "d112_bound_files_may_be_modified": false,
+      "existing_artifact_or_index_mutation_allowlist": [],
+      "d112_execution_replay_allowed": false,
+      "d112_one_use_capability_recreated": false,
+      "correction_evidence_materializations": 1,
+      "read_only_validator_reruns_allowed": true,
+      "automatic_retry_after_partial_materialization_allowed": false,
+      "required_corrections": {
+        "receipt_and_gate_exact_root_key_sets": true,
+        "receipt_and_gate_exact_semantic_body_key_sets": true,
+        "receipt_expected_payload_full_equality": true,
+        "rehashed_unknown_field_rejected": true,
+        "rehashed_unchecked_claim_field_rejected": true,
+        "paired_receipt_gate_rehash_rejected": true,
+        "approval_execution_completion_chronology_enforced": true,
+        "current_input_and_sealed_historical_modes_separated": true,
+        "portable_mode_avoids_local_model_snapshot": true,
+        "portable_mode_avoids_exact_installed_dependency_requirement": true,
+        "portable_score_replay_uses_checked_in_frozen_index_gate_vectors_and_public_specs": true,
+        "repository_local_one_use_claim_named_accurately": true,
+        "network_claim_limited_to_source_path_and_self_attestation": true
+      },
+      "required_tests": {
+        "exact_d112_artifacts_pass": true,
+        "unknown_root_body_and_claim_fields_fail": true,
+        "each_unchecked_receipt_field_flip_fails": true,
+        "approval_after_execution_fails": true,
+        "execution_after_completion_fails": true,
+        "paired_receipt_gate_rehash_fails": true,
+        "portable_mode_forbids_snapshot_and_dependency_rehydration": true,
+        "portable_mode_forbids_model_load_and_encode": true,
+        "retrieval_provider_evaluator_and_agent_calls_remain_zero": true,
+        "d112_and_index_bytes_unchanged": true
+      },
+      "claim_limits": {
+        "human_reviewer_identity_authenticated": false,
+        "cryptographic_signature_verified": false,
+        "global_one_use_proved": false,
+        "cross_clone_exclusion_proved": false,
+        "os_socket_block_proved": false,
+        "clean_clone_portability_already_validated": false,
+        "d112_scores_or_ranking_corrected": false,
+        "memory_effect_established": false,
+        "negative_transfer_established": false
+      },
+      "closed_runtime_boundaries": {
+        "score_weights_or_threshold_change_allowed": false,
+        "ranking_policy_change_allowed": false,
+        "memory_entry_change_allowed": false,
+        "index_or_marker_change_allowed": false,
+        "retrieval_execution_allowed": false,
+        "runtime_memory_injection_allowed": false,
+        "agent_run_allowed": false,
+        "model_load_or_encode_allowed": false,
+        "provider_call_allowed": false,
+        "evaluator_call_allowed": false,
+        "network_access_allowed": false,
+        "core_campaign_allowed": false,
+        "analysis_campaign_allowed": false
+      }
+    },
+    "proposed_action_hash": "sha256:b086f8066aff043b27a816e1cd77d4ca176a8adc0f75895c362f93efb9641e5d",
+    "protected_d112_paths": [
+      "reports/memory-development/d112-retrieval-readiness-probe-receipt.json",
+      "reports/memory-development/d112-retrieval-readiness-completion-gate.json",
+      "patchloop/memory/d112_retrieval_readiness_probe.py",
+      "scripts/run_d112_retrieval_readiness_probe.py",
+      "tests/test_d112_retrieval_readiness_probe.py"
+    ],
+    "approval_contract": {
+      "separate_user_message_required": true,
+      "exact_candidate_id_required": true,
+      "exact_semantic_body_hash_required": true,
+      "exact_file_sha256_required": true,
+      "generic_continue_message_is_approval": false,
+      "approval_receipt_created_by_d113": false,
+      "approval_is_self_attested_not_authenticated": true
+    },
+    "authority": {
+      "validator_correction_candidate_ready": true,
+      "exact_candidate_user_approval_received": false,
+      "validator_correction_authorized": false,
+      "validator_correction_implemented": false,
+      "d112_artifacts_rewritten": false,
+      "score_policy_correction_authorized": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    }
+  }
+}

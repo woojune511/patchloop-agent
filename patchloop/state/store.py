@@ -29,6 +29,9 @@ from patchloop.util import canonical_json, sha256_text, utc_now
 _D087_RESERVATION_CONSUMPTION_SCHEMA = (
     "d087-campaign-reservation-consumption-v1"
 )
+_AC_ROW_START_CONSUMPTION_SCHEMA = (
+    "ac-fixed-bundle-row-start-consumption-v1"
+)
 
 
 def _sha256_identity(value: str) -> bool:
@@ -105,6 +108,20 @@ class StateStore:
                     content_hash TEXT NOT NULL,
                     PRIMARY KEY (execution_hash, schedule_row_id),
                     UNIQUE (execution_hash, reservation_event_hash),
+                    FOREIGN KEY (run_id) REFERENCES runs(run_id)
+                );
+                CREATE TABLE IF NOT EXISTS ac_row_start_consumptions (
+                    execution_hash TEXT NOT NULL,
+                    schedule_row_id TEXT NOT NULL,
+                    run_id TEXT NOT NULL,
+                    row_started_event_hash TEXT NOT NULL,
+                    journal_prefix_file_sha256 TEXT NOT NULL,
+                    control_hash TEXT NOT NULL,
+                    consumed_at TEXT NOT NULL,
+                    content_hash TEXT NOT NULL,
+                    PRIMARY KEY (execution_hash, schedule_row_id),
+                    UNIQUE (execution_hash, run_id),
+                    UNIQUE (execution_hash, row_started_event_hash),
                     FOREIGN KEY (run_id) REFERENCES runs(run_id)
                 );
                 """
@@ -230,6 +247,138 @@ class StateStore:
                 raise RecoveryError(
                     "D-087 reservation consumption state is invalid"
                 )
+            output.append({**descriptor, "content_hash": content_hash})
+        return output
+
+    def record_ac_row_start_consumption(
+        self,
+        *,
+        execution_hash: str,
+        schedule_row_id: str,
+        run_id: str,
+        row_started_event_hash: str,
+        journal_prefix_file_sha256: str,
+        control_hash: str,
+    ) -> dict[str, str]:
+        """Atomically consume one exact A/C full-schedule row start."""
+
+        identities = (
+            execution_hash,
+            schedule_row_id,
+            row_started_event_hash,
+            journal_prefix_file_sha256,
+            control_hash,
+        )
+        if (
+            not all(isinstance(value, str) and _sha256_identity(value) for value in identities)
+            or not isinstance(run_id, str)
+            or not run_id
+        ):
+            raise ContractError("invalid A/C row-start consumption identity")
+        descriptor = {
+            "schema_version": _AC_ROW_START_CONSUMPTION_SCHEMA,
+            "execution_hash": execution_hash,
+            "schedule_row_id": schedule_row_id,
+            "run_id": run_id,
+            "row_started_event_hash": row_started_event_hash,
+            "journal_prefix_file_sha256": journal_prefix_file_sha256,
+            "control_hash": control_hash,
+            "consumed_at": utc_now().isoformat(),
+        }
+        row = {
+            **descriptor,
+            "content_hash": sha256_text(canonical_json(descriptor)),
+        }
+        try:
+            with self._lock, self._connect() as connection:
+                connection.execute("BEGIN IMMEDIATE")
+                connection.execute(
+                    "INSERT INTO ac_row_start_consumptions("
+                    "execution_hash, schedule_row_id, run_id, "
+                    "row_started_event_hash, journal_prefix_file_sha256, "
+                    "control_hash, consumed_at, content_hash) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        execution_hash,
+                        schedule_row_id,
+                        run_id,
+                        row_started_event_hash,
+                        journal_prefix_file_sha256,
+                        control_hash,
+                        descriptor["consumed_at"],
+                        row["content_hash"],
+                    ),
+                )
+                connection.commit()
+        except sqlite3.IntegrityError as exc:
+            existing = self.list_ac_row_start_consumptions(execution_hash)
+            if any(
+                item["schedule_row_id"] == schedule_row_id
+                or item["run_id"] == run_id
+                or item["row_started_event_hash"] == row_started_event_hash
+                for item in existing
+            ):
+                raise ContractError("A/C row start was already consumed") from exc
+            raise RecoveryError(
+                "A/C row-start consumption could not be persisted"
+            ) from exc
+        return row
+
+    def list_ac_row_start_consumptions(
+        self,
+        execution_hash: str,
+    ) -> list[dict[str, str]]:
+        """Return hash-checked A/C row-start claims for one execution."""
+
+        if not isinstance(execution_hash, str) or not _sha256_identity(execution_hash):
+            raise ContractError("invalid A/C execution hash")
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT execution_hash, schedule_row_id, run_id, "
+                "row_started_event_hash, journal_prefix_file_sha256, "
+                "control_hash, consumed_at, content_hash "
+                "FROM ac_row_start_consumptions "
+                "WHERE execution_hash = ? ORDER BY schedule_row_id",
+                (execution_hash,),
+            ).fetchall()
+        output: list[dict[str, str]] = []
+        for stored in rows:
+            descriptor = {
+                "schema_version": _AC_ROW_START_CONSUMPTION_SCHEMA,
+                "execution_hash": stored["execution_hash"],
+                "schedule_row_id": stored["schedule_row_id"],
+                "run_id": stored["run_id"],
+                "row_started_event_hash": stored[
+                    "row_started_event_hash"
+                ],
+                "journal_prefix_file_sha256": stored[
+                    "journal_prefix_file_sha256"
+                ],
+                "control_hash": stored["control_hash"],
+                "consumed_at": stored["consumed_at"],
+            }
+            content_hash = stored["content_hash"]
+            identities = (
+                descriptor["execution_hash"],
+                descriptor["schedule_row_id"],
+                descriptor["row_started_event_hash"],
+                descriptor["journal_prefix_file_sha256"],
+                descriptor["control_hash"],
+                content_hash,
+            )
+            if not (
+                all(
+                    isinstance(value, str) and _sha256_identity(value)
+                    for value in identities
+                )
+                and descriptor["execution_hash"] == execution_hash
+                and isinstance(descriptor["run_id"], str)
+                and bool(descriptor["run_id"])
+                and isinstance(descriptor["consumed_at"], str)
+                and bool(descriptor["consumed_at"])
+                and sha256_text(canonical_json(descriptor)) == content_hash
+            ):
+                raise RecoveryError("A/C row-start consumption state is invalid")
             output.append({**descriptor, "content_hash": content_hash})
         return output
 

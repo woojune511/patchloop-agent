@@ -5,20 +5,12 @@ import json
 from pathlib import Path
 from typing import Any
 
-GATE_PATH = Path(
-    "reports/live-pilot/artifacts/"
-    "d084-condition-neutral-comparison-runtime-gate.json"
-)
+GATE_PATH = Path("reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json")
 D083_PATH = Path(
-    "reports/live-pilot/artifacts/"
-    "d083-condition-neutral-comparison-budget-freeze.json"
+    "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json"
 )
-D083_SHA256 = (
-    "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
-)
-D084_SHA256 = (
-    "sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701"
-)
+D083_SHA256 = "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
+D084_SHA256 = "sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -31,25 +23,17 @@ def _sha256_file(path: Path) -> str:
 
 def _walk_keys(value: object) -> set[str]:
     if isinstance(value, dict):
-        return set(value) | {
-            nested for child in value.values() for nested in _walk_keys(child)
-        }
+        return set(value) | {nested for child in value.values() for nested in _walk_keys(child)}
     if isinstance(value, list):
-        return {
-            nested for child in value for nested in _walk_keys(child)
-        }
+        return {nested for child in value for nested in _walk_keys(child)}
     return set()
 
 
 def test_d084_gate_binds_the_exact_d083_profile() -> None:
     payload = _load_json(GATE_PATH)
 
-    assert payload["schema_version"] == (
-        "condition-neutral-comparison-runtime-gate-v1"
-    )
-    assert payload["gate_id"] == (
-        "d084-condition-neutral-comparison-runtime-gate"
-    )
+    assert payload["schema_version"] == ("condition-neutral-comparison-runtime-gate-v1")
+    assert payload["gate_id"] == ("d084-condition-neutral-comparison-runtime-gate")
     predecessor = payload["predecessor"]
     assert predecessor == {
         "schema_version": "condition-neutral-comparison-budget-freeze-v1",
@@ -61,9 +45,7 @@ def test_d084_gate_binds_the_exact_d083_profile() -> None:
     assert _sha256_file(D083_PATH) == D083_SHA256
 
     profile = payload["comparison_profile"]
-    assert profile["profile_id"] == (
-        "gpt54mini-v2v5-condition-neutral-1600k-v1"
-    )
+    assert profile["profile_id"] == ("gpt54mini-v2v5-condition-neutral-1600k-v1")
     assert profile["transport_max_retries"] == 0
     assert profile["max_output_tokens"] == 25_000
     assert profile["memory_max_context_tokens"] == 2_000
@@ -73,9 +55,7 @@ def test_d084_gate_binds_the_exact_d083_profile() -> None:
         "max_total_tokens": 1_600_000,
         "wall_clock_timeout_seconds": 1_800,
     }
-    assert profile["call_guard_policy"] == (
-        "model-tool-observability-only-v1"
-    )
+    assert profile["call_guard_policy"] == ("model-tool-observability-only-v1")
 
 
 def test_d084_gate_seals_the_plan_manifest_start_resume_chain() -> None:
@@ -84,9 +64,7 @@ def test_d084_gate_seals_the_plan_manifest_start_resume_chain() -> None:
     evidence = payload["runtime_evidence"]
     matrix = payload["offline_binding_matrix"]
 
-    assert runtime["schema_version"] == (
-        "condition-neutral-comparison-runtime-contract-v1"
-    )
+    assert runtime["schema_version"] == ("condition-neutral-comparison-runtime-contract-v1")
     assert runtime["comparison_budget_policy"]["content_hash"] == D083_SHA256
     assert runtime["included_in_execution_hash"] is True
     assert runtime["manifest_reconstructed_before_start"] is True
@@ -159,9 +137,7 @@ def test_d084_gate_keeps_core_terminal_qualification_closed() -> None:
         "selective_structured",
     ]
     assert boundary["core_terminal_qualification_implemented"] is False
-    assert boundary["core_preflight_blocker_code"] == (
-        "CORE_MEMORY_RUNTIME_BINDING_PENDING"
-    )
+    assert boundary["core_preflight_blocker_code"] == ("CORE_MEMORY_RUNTIME_BINDING_PENDING")
     assert claims["no_memory_trace_qualification_supported"] is True
     assert claims["core_four_condition_structure_supported"] is True
     assert claims["core_memory_condition_terminal_qualification_supported"] is False
@@ -272,13 +248,13 @@ def test_d084_gate_contains_no_private_or_provider_payload() -> None:
 def test_d084_gate_identity_and_closed_core_boundary_are_documented() -> None:
     artifact_path = GATE_PATH.as_posix()
     for path in (
-        Path("README.md"),
-        Path("docs/02-architecture.md"),
-        Path("docs/03-contracts.md"),
-        Path("docs/04-evaluation-protocol.md"),
-        Path("docs/05-implementation-plan.md"),
-        Path("docs/06-decisions.md"),
-        Path("docs/08-limitations.md"),
+        Path("docs/archive/snapshots/d121/README.full.md"),
+        Path("docs/archive/snapshots/d121/02-architecture.full.md"),
+        Path("docs/archive/snapshots/d121/03-contracts.full.md"),
+        Path("docs/archive/snapshots/d121/04-evaluation-protocol.full.md"),
+        Path("docs/archive/snapshots/d121/05-implementation-plan.full.md"),
+        Path("docs/archive/snapshots/d121/06-decisions.full.md"),
+        Path("docs/archive/snapshots/d121/08-limitations.full.md"),
     ):
         text = path.read_text(encoding="utf-8")
         assert artifact_path in text
@@ -286,6 +262,8 @@ def test_d084_gate_identity_and_closed_core_boundary_are_documented() -> None:
         assert "condition-neutral-comparison-runtime-evidence-v1" in text
         assert D084_SHA256 in text
 
-    limitations = Path("docs/08-limitations.md").read_text(encoding="utf-8")
+    limitations = Path("docs/archive/snapshots/d121/08-limitations.full.md").read_text(
+        encoding="utf-8"
+    )
     assert "terminal qualification remains pending" in limitations
     assert "keep core non-runnable" in " ".join(limitations.split())

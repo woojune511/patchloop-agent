@@ -1,0 +1,117 @@
+{
+  "schema_version": "memory-group-review-projector-source-gate-d100-v1",
+  "gate_id": "d100_5ac180b32fef27d5937c1447e39f01bafda65ce6b5a3eef1992a7da45cab9b2b",
+  "semantic_body_hash": "sha256:5ac180b32fef27d5937c1447e39f01bafda65ce6b5a3eef1992a7da45cab9b2b",
+  "semantic_body": {
+    "milestone": "D-100",
+    "evidence_kind": "group-review-projector-offline-source-gate",
+    "recorded_at": "2026-08-05T13:05:00Z",
+    "proposal": {
+      "schema_version": "memory-public-review-proposal-d099-v1",
+      "proposal_id": "d099_63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+      "semantic_body_hash": "sha256:63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+      "file_bytes": 77942,
+      "file_sha256": "sha256:24e34b02a66fc132d333bb51614a10786d38bc188b5550432a5f21f435f21493"
+    },
+    "group_bindings": [
+      {
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "semantic_group_fingerprint": "sha256:2680ffacfdfe654288f9c9d9bfc399c2b07d2d0b52ee06b2201ebb6e72d2a45f",
+        "disposition": "candidate",
+        "proposed_rule_hash": "sha256:913b11118e2db81c48497eaf1ec14e25ebb557f0e64cb8097bd2422d89ca0e64"
+      },
+      {
+        "semantic_group_id": "request-context-propagation-gap",
+        "semantic_group_fingerprint": "sha256:195b37a651d16037d49d389c3ec30c9cdaa658239cb66e108cb25ed5464d6471",
+        "disposition": "candidate",
+        "proposed_rule_hash": "sha256:6c2ba21aea2a2de3dd9cb25209d8d3a6709dd939e3f82eea8b0906677794a046"
+      },
+      {
+        "semantic_group_id": "interrupt-lifecycle-unresolved",
+        "semantic_group_fingerprint": "sha256:bfd05d53347d867efccc0fa091408a2c36dc57695ae5ff99d16b76fefdbb1244",
+        "disposition": "hold",
+        "proposed_rule_hash": null
+      },
+      {
+        "semantic_group_id": "diagnostic-contract-unresolved",
+        "semantic_group_fingerprint": "sha256:b8238774a1399211fc7eb8d2452894e901f8b8291969641704a38c969a07fe8c",
+        "disposition": "hold",
+        "proposed_rule_hash": null
+      },
+      {
+        "semantic_group_id": "exception-origin-state-conflation",
+        "semantic_group_fingerprint": "sha256:e70e64a6af47eac96d9fe70943d6ea869a84757da4475edd5b972fb0654561fb",
+        "disposition": "candidate",
+        "proposed_rule_hash": "sha256:330e5a73bc8f9815b6a2cec4d2c9bf3b3ba589e2addd2ec96d72288089710b6f"
+      }
+    ],
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d100_group_admission.py",
+        "bytes": 36775,
+        "sha256": "sha256:d1d15b2c1758d9520c35d008128baa5f1857eff392adf2a0a3ef907d9582c964"
+      },
+      {
+        "path": "patchloop/contracts.py",
+        "bytes": 94181,
+        "sha256": "sha256:087df148993478fbc9c00043790c970d29f27fb584c7cb73fe164b76c59072b0"
+      },
+      {
+        "path": "patchloop/cli.py",
+        "bytes": 20903,
+        "sha256": "sha256:3f7b2e32a7fadd4b3490de4653ee1c9b643858cc866b1255841b3db4e78e2434"
+      },
+      {
+        "path": "tests/test_d100_group_admission.py",
+        "bytes": 27813,
+        "sha256": "sha256:917d9e48f9e7f81eb6395771a3206b04584b8f2a3cdd98e34618291c5f4b5f03"
+      }
+    ],
+    "commands": [
+      "patchloop memory d100-status",
+      "patchloop memory validate-d100-source-gate",
+      "patchloop memory record-d100-decision",
+      "patchloop memory validate-d100-decisions",
+      "patchloop memory preview-d100-entries"
+    ],
+    "mechanism": {
+      "decision_schema": "memory-group-review-decision-d100-v1",
+      "journal_schema": "memory-group-review-journal-d100-v1",
+      "preview_schema": "memory-entry-preview-d100-v1",
+      "target_entry_schema": "memory-entry-v1",
+      "semantic_group_count": 5,
+      "tail_cas_required": true,
+      "action_idempotency_required": true,
+      "correction_binds_effective_group_head": true,
+      "append_flush_and_fsync": true,
+      "canonical_rows_required": true,
+      "snapshot_consistency_required": true,
+      "malformed_or_hash_inconsistent_chain_fails_closed": true,
+      "external_head_anchor_supported": true,
+      "external_head_anchor_required_for_suffix_rewrite_detection": true,
+      "reviewer_provenance_self_attested": true,
+      "one_approved_group_per_template": true,
+      "preview_has_no_index_version_or_embedding": true,
+      "legacy_failure_builder_connected": false
+    },
+    "authority": {
+      "mechanism_source_gate_only": true,
+      "production_human_decision_records": 0,
+      "group_review_completed": false,
+      "admission_seal_created": false,
+      "admitted_memory_rule_count": 0,
+      "preview_entry_count": 0,
+      "memory_admission_unlocked": false,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "historical_memory_artifacts_modified": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "explicit-human-group-decisions-and-portable-admission-seal"
+  }
+}

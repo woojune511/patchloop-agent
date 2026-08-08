@@ -1,0 +1,54 @@
+{
+  "schema_version": "ac-clean-pricing-no-call-preflight-approval-receipt-d126-v1",
+  "artifact_id": "d126approval_596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0",
+  "semantic_body_hash": "sha256:596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0",
+  "semantic_body": {
+    "milestone": "D-126",
+    "evidence_kind": "exact-d125-next-gate-user-approval-receipt",
+    "recorded_at": "2026-08-08T17:56:15.365634Z",
+    "status": "D126_D125_NEXT_GATE_APPROVAL_RECORDED",
+    "predecessor_binding": {
+      "path": "reports/live-pilot/artifacts/d125-ac-runtime-finalization-offline-source-gate.json",
+      "gate_id": "d125_ed9c892a598ce4543591bf3b9135a1cbe3752589fdc447b05867d59e07d45539",
+      "semantic_body_hash": "sha256:ed9c892a598ce4543591bf3b9135a1cbe3752589fdc447b05867d59e07d45539",
+      "file_bytes": 13820,
+      "file_sha256": "sha256:9bc5f6e618f31312dc5026a807eabf478e47c05893cca72c71328378b593856e",
+      "status": "D125_AC_RUNTIME_FINALIZATION_SOURCE_QUALIFIED_EXECUTION_CANDIDATE_BLOCKED",
+      "artifact_mutated": false
+    },
+    "approval": {
+      "statement_code": "D125_NEXT_GATE_APPROVAL_KO_20260809_V1",
+      "approved_scope": [
+        "seal-clean-committed-source-identity-and-create-required-local-git-commit",
+        "read-current-official-openai-pricing-and-create-within-72-hour-evidence",
+        "run-read-only-no-call-docker-sdk-credential-presence-and-endpoint-preflight"
+      ],
+      "explicitly_not_authorized": [
+        "provider-evaluator-or-agent-execution",
+        "runtime-memory-injection-or-retrieval",
+        "docker-workload-container-create-start-run-exec-or-mutation",
+        "execution-hash-creation",
+        "execution-authorization-candidate-creation",
+        "cost-reservation-spend-or-four-row-ac-execution"
+      ],
+      "approval_is_self_attested": true,
+      "approval_is_authenticated_or_signed": false
+    },
+    "authority": {
+      "clean_source_commit_authorized": true,
+      "official_openai_pricing_lookup_authorized": true,
+      "read_only_no_call_environment_preflight_authorized": true,
+      "execution_hash_creation_authorized": false,
+      "execution_candidate_creation_authorized": false,
+      "provider_evaluator_agent_execution_authorized": false,
+      "runtime_memory_or_retrieval_authorized": false,
+      "docker_workload_or_mutation_authorized": false,
+      "cost_reservation_or_spend_authorized": false
+    },
+    "evidence_boundary": {
+      "receipt_must_precede_production_pricing_and_environment_observations": true,
+      "receipt_does_not_prove_environment_readiness": true,
+      "receipt_does_not_authorize_execution": true
+    }
+  }
+}

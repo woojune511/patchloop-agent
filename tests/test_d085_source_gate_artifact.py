@@ -19,26 +19,15 @@ from patchloop.evals.runner import (
 from patchloop.util import canonical_json, sha256_text
 
 GATE_PATH = Path(
-    "reports/live-pilot/artifacts/"
-    "d085-condition-neutral-comparison-pilot-source-gate.json"
+    "reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json"
 )
 D083_PATH = Path(
-    "reports/live-pilot/artifacts/"
-    "d083-condition-neutral-comparison-budget-freeze.json"
+    "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json"
 )
-D084_PATH = Path(
-    "reports/live-pilot/artifacts/"
-    "d084-condition-neutral-comparison-runtime-gate.json"
-)
-D083_SHA256 = (
-    "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
-)
-D084_SHA256 = (
-    "sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701"
-)
-D085_SHA256 = (
-    "sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2"
-)
+D084_PATH = Path("reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json")
+D083_SHA256 = "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
+D084_SHA256 = "sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701"
+D085_SHA256 = "sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -51,25 +40,17 @@ def _sha256_file(path: Path) -> str:
 
 def _walk_keys(value: object) -> set[str]:
     if isinstance(value, dict):
-        return set(value) | {
-            nested for child in value.values() for nested in _walk_keys(child)
-        }
+        return set(value) | {nested for child in value.values() for nested in _walk_keys(child)}
     if isinstance(value, list):
-        return {
-            nested for child in value for nested in _walk_keys(child)
-        }
+        return {nested for child in value for nested in _walk_keys(child)}
     return set()
 
 
 def test_d085_source_gate_preserves_d083_and_d084_predecessors() -> None:
     payload = _load_json(GATE_PATH)
 
-    assert payload["schema_version"] == (
-        "condition-neutral-comparison-pilot-source-gate-v1"
-    )
-    assert payload["gate_id"] == (
-        "d085-condition-neutral-comparison-pilot-source-gate"
-    )
+    assert payload["schema_version"] == ("condition-neutral-comparison-pilot-source-gate-v1")
+    assert payload["gate_id"] == ("d085-condition-neutral-comparison-pilot-source-gate")
     assert payload["predecessors"] == [
         {
             "gate_id": "d083-condition-neutral-comparison-budget-freeze",
@@ -99,9 +80,7 @@ def test_d085_source_gate_matches_the_checked_in_exact_pilot() -> None:
     suite_path = Path(source["suite_path"])
     suite = yaml.safe_load(suite_path.read_text(encoding="utf-8"))
 
-    assert source["experiment_id"] == (
-        "dev-validation-condition-neutral-v2v5-pilot-20260803-r1"
-    )
+    assert source["experiment_id"] == ("dev-validation-condition-neutral-v2v5-pilot-20260803-r1")
     assert suite["experiment_id"] == source["experiment_id"]
     assert suite["purpose"] == source["purpose"]
     assert suite["tasks"] == [source["task"]]
@@ -117,20 +96,20 @@ def test_d085_source_gate_matches_the_checked_in_exact_pilot() -> None:
         "max_output_tokens",
     ):
         assert suite[field] == source[field]
-    assert suite["budget"] == source["budget"] == {
-        "max_model_calls": None,
-        "max_tool_calls": None,
-        "max_total_tokens": 1_600_000,
-        "wall_clock_timeout_seconds": 1_800,
-    }
-    assert suite["memory_token_budget"] == (
-        source["memory_max_context_tokens"]
-    ) == 2_000
+    assert (
+        suite["budget"]
+        == source["budget"]
+        == {
+            "max_model_calls": None,
+            "max_tool_calls": None,
+            "max_total_tokens": 1_600_000,
+            "wall_clock_timeout_seconds": 1_800,
+        }
+    )
+    assert suite["memory_token_budget"] == (source["memory_max_context_tokens"]) == 2_000
     assert suite["estimated_cost_usd"] == 7.3125
     assert suite["cost_limit_usd"] == 8
-    assert suite["pricing_verified_at"].isoformat().replace(
-        "+00:00", "Z"
-    ) == pricing["verified_at"]
+    assert suite["pricing_verified_at"].isoformat().replace("+00:00", "Z") == pricing["verified_at"]
     assert suite["pricing_source_url"] == pricing["source_url"]
     assert suite["model_id"] == pricing["current_snapshot"]
     for field in (
@@ -145,9 +124,7 @@ def test_d085_source_gate_matches_the_checked_in_exact_pilot() -> None:
     assert source["system_prompt_version"] == "SYSTEM_PROMPT_V3"
     assert source["system_prompt_hash"] == sha256_text(SYSTEM_PROMPT_V3)
     assert source["tool_schema_version"] == "v2"
-    assert source["tool_schema_hash"] == sha256_text(
-        canonical_json(TOOL_SCHEMAS_V2)
-    )
+    assert source["tool_schema_hash"] == sha256_text(canonical_json(TOOL_SCHEMAS_V2))
     assert suite["live_cost_approved"] is False
     assert suite["approved_execution_hash"] is None
     assert suite.get("pilot_run_id") is None
@@ -162,9 +139,7 @@ def test_d085_source_gate_records_current_pricing_without_spend_authority() -> N
         "schema_version": "condition-neutral-comparison-pilot-pricing-v1",
         "verified_at": "2026-08-03T06:37:49Z",
         "source_url": "https://developers.openai.com/api/docs/pricing",
-        "model_page_url": (
-            "https://developers.openai.com/api/docs/models/gpt-5.4-mini"
-        ),
+        "model_page_url": ("https://developers.openai.com/api/docs/models/gpt-5.4-mini"),
         "current_snapshot": "gpt-5.4-mini-2026-03-17",
         "input_price_per_million_usd": 0.75,
         "cached_input_price_per_million_usd": 0.075,
@@ -175,9 +150,7 @@ def test_d085_source_gate_records_current_pricing_without_spend_authority() -> N
         "reserve_is_invoice_prediction": False,
     }
     assert authorization == {
-        "schema_version": (
-            "condition-neutral-comparison-pilot-source-authorization-v1"
-        ),
+        "schema_version": ("condition-neutral-comparison-pilot-source-authorization-v1"),
         "source_offline_gate_only": True,
         "clean_host_preflight_performed": False,
         "candidate_execution_hash_created": False,
@@ -217,9 +190,7 @@ def test_d085_readiness_is_process_only_and_keeps_research_gates_closed() -> Non
         )
     )
     assert predicate == {
-        "schema_version": (
-            "condition-neutral-comparison-pilot-readiness-gate-v1"
-        ),
+        "schema_version": ("condition-neutral-comparison-pilot-readiness-gate-v1"),
         "expected_runs": 1,
         "terminal_runs_required": 1,
         "trace_qualified_runs_required": 1,
@@ -234,9 +205,7 @@ def test_d085_readiness_is_process_only_and_keeps_research_gates_closed() -> Non
         "hidden_acceptance_used_for_readiness": False,
         "scrr_used_for_readiness": False,
     }
-    assert predicate["schema_version"] == (
-        CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_SCHEMA
-    )
+    assert predicate["schema_version"] == (CONDITION_NEUTRAL_COMPARISON_PILOT_GATE_SCHEMA)
     assert sequencing["memory_review_before_new_no_memory_collection"] is False
     assert sequencing["memory_index_freeze_before_new_no_memory_collection"] is False
     assert sequencing["core_memory_binding_remains_pending"] is True
@@ -258,9 +227,7 @@ def test_d085_future_campaign_admission_is_semantic_and_hash_bound() -> None:
     admission = payload["pilot_admission_binding"]
 
     assert admission == {
-        "schema_version": (
-            "condition-neutral-comparison-pilot-admission-binding-v1"
-        ),
+        "schema_version": ("condition-neutral-comparison-pilot-admission-binding-v1"),
         "descriptor_schema": "condition-neutral-comparison-pilot-admission-v1",
         "future_campaign_experiment_id": "dev-no-memory-v5-20260730-r1",
         "pilot_and_campaign_source_commits_are_separate": True,
@@ -296,19 +263,13 @@ def test_d085_future_campaign_admission_is_semantic_and_hash_bound() -> None:
             "pricing_start_freshness",
         ],
         "task_success_required": False,
-        "canonical_admission_hash_required_in_future_campaign_execution_plan": (
-            True
-        ),
-        "canonical_admission_hash_required_in_future_campaign_execution_hash": (
-            True
-        ),
+        "canonical_admission_hash_required_in_future_campaign_execution_plan": (True),
+        "canonical_admission_hash_required_in_future_campaign_execution_hash": (True),
         "start_resume_and_post_run_revalidation": True,
         "future_campaign_admission_binding_implemented": True,
         "future_campaign_execution_authorized": False,
     }
-    assert admission["descriptor_schema"] == (
-        CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA
-    )
+    assert admission["descriptor_schema"] == (CONDITION_NEUTRAL_COMPARISON_PILOT_ADMISSION_SCHEMA)
     assert admission["future_campaign_experiment_id"] == (
         CONDITION_NEUTRAL_COMPARISON_CAMPAIGN_EXPERIMENT_ID
     )
@@ -393,14 +354,14 @@ def test_d085_source_gate_contains_no_secret_private_or_provider_payload() -> No
 def test_d085_source_identity_and_authority_boundary_are_documented() -> None:
     artifact_path = GATE_PATH.as_posix()
     for path in (
-        Path("README.md"),
-        Path("AGENTS.md"),
-        Path("docs/02-architecture.md"),
-        Path("docs/03-contracts.md"),
-        Path("docs/04-evaluation-protocol.md"),
-        Path("docs/05-implementation-plan.md"),
-        Path("docs/06-decisions.md"),
-        Path("docs/08-limitations.md"),
+        Path("docs/archive/snapshots/d121/README.full.md"),
+        Path("docs/archive/snapshots/d121/AGENTS.full.md"),
+        Path("docs/archive/snapshots/d121/02-architecture.full.md"),
+        Path("docs/archive/snapshots/d121/03-contracts.full.md"),
+        Path("docs/archive/snapshots/d121/04-evaluation-protocol.full.md"),
+        Path("docs/archive/snapshots/d121/05-implementation-plan.full.md"),
+        Path("docs/archive/snapshots/d121/06-decisions.full.md"),
+        Path("docs/archive/snapshots/d121/08-limitations.full.md"),
     ):
         text = path.read_text(encoding="utf-8")
         assert artifact_path in text
@@ -409,6 +370,8 @@ def test_d085_source_identity_and_authority_boundary_are_documented() -> None:
         assert "condition-neutral-comparison-runtime-evidence-v1" in text
         assert D085_SHA256 in text
 
-    limitations = Path("docs/08-limitations.md").read_text(encoding="utf-8")
+    limitations = Path("docs/archive/snapshots/d121/08-limitations.full.md").read_text(
+        encoding="utf-8"
+    )
     assert "not a live result or baseline" in limitations
     assert "$20 < $87.75" in limitations

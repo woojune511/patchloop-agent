@@ -1,0 +1,273 @@
+{
+  "schema_version": "frozen-index-retrieval-readiness-preflight-d111-v1",
+  "preflight_id": "d111preflight_ee48af2da2ab34bb252f11842fe34c734229ad193776fc97bdd34dc3849003f9",
+  "semantic_body_hash": "sha256:ee48af2da2ab34bb252f11842fe34c734229ad193776fc97bdd34dc3849003f9",
+  "semantic_body": {
+    "milestone": "D-111",
+    "evidence_kind": "frozen-index-retrieval-readiness-gap-preflight",
+    "recorded_at": "2026-08-07T00:00:00Z",
+    "d110_completion_gate": {
+      "path": "reports/memory-development/d110-index-freeze-completion-gate.json",
+      "file_bytes": 7754,
+      "file_sha256": "sha256:79578db09955dab2a22b015ba5210baec28e7d30b9cac818b1f2c6d6eac782cd",
+      "gate_id": "d110_bc1cae7a2ebc5d6531d203ef4d7101762d7366c9e77814c3a4c772d353f0a736",
+      "semantic_body_hash": "sha256:bc1cae7a2ebc5d6531d203ef4d7101762d7366c9e77814c3a4c772d353f0a736"
+    },
+    "portable_frozen_index": {
+      "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+      "file_bytes": 55687,
+      "file_sha256": "sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0",
+      "index_id": "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064",
+      "content_hash": "sha256:3a99e6c190672d1676bc4d13604de989899de9ddac85d282cc90c4d56f426c56",
+      "frozen": true,
+      "frozen_at": "2026-08-06T13:54:43.725943Z"
+    },
+    "portable_frozen_marker": {
+      "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN",
+      "file_bytes": 72,
+      "file_sha256": "sha256:cdfe40b734135a30f66e34ff24469940063a7231a1fe0783420ee2ff816d9561"
+    },
+    "portable_d106_unfrozen_index": {
+      "path": "reports/memory-development/artifacts/d106/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064.json",
+      "file_bytes": 55644,
+      "file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a",
+      "unchanged_by_d111": true
+    },
+    "memory_material": {
+      "memory_ids": [
+        "memgrp_649483b80292fea26e4009ebdb72df31",
+        "memgrp_b421547d481faabf9be3511217258de5",
+        "memgrp_5a23f463cba43bf3ba395f67cf976047"
+      ],
+      "semantic_group_ids": [
+        "platform-emulation-matrix-gap",
+        "request-context-propagation-gap",
+        "exception-origin-state-conflation"
+      ],
+      "held_group_ids": [
+        "interrupt-lifecycle-unresolved",
+        "diagnostic-contract-unresolved"
+      ],
+      "model": "sentence-transformers/all-MiniLM-L6-v2",
+      "model_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "snapshot_manifest_hash": "sha256:e497d8dad53f09ddc8b9fcc9b81e3ff778e002e120ab4254c72993d8611959cb",
+      "vector_set_hash": "sha256:5f4cf40d0512092ed68fdfa05a1d0ad9b0d2ad7a2f3fd6f6ca078adfcac2fc81",
+      "render_set_hash": "sha256:7b72fc94642d996fad5a0b199719c56bfecc8a8fc1bbe42b2060aa18e21d2667",
+      "full_bundle_bytes": 3528,
+      "full_bundle_sha256": "sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf"
+    },
+    "public_probe_plan": [
+      {
+        "probe_id": "moto-implement-positive-hypothesis",
+        "task_id": "moto-query-scanned-count",
+        "task_version": 1,
+        "split": "dev-validation",
+        "public_task": {
+          "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+          "file_bytes": 2839,
+          "file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7",
+          "public_spec_hash": "sha256:15b4c9f378d48ae8eadbfad1a375d367fc973c230abf0996c617282ca0df8ea7"
+        },
+        "phase": "IMPLEMENT",
+        "runtime_query_sha256": "sha256:8ad844e48f313b1b86bbc17a14492797e512fec47a5842b834e4302cf7b74f5e",
+        "query_phase_sha256": "sha256:bd143addcb62ae16038b4eb2c8edbec1b15653f6003a999a7e667fc38e95bc17",
+        "hypothesis_kind": "semantic-positive-not-acceptance-criterion",
+        "hypothesized_group_id": "platform-emulation-matrix-gap",
+        "hypothesis_is_acceptance_criterion": false,
+        "public_spec_only_read": true,
+        "private_hidden_reference_or_bad_patch_read": false
+      },
+      {
+        "probe_id": "babel-implement-no-match-control",
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "task_version": 1,
+        "split": "dev-validation",
+        "public_task": {
+          "path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+          "file_bytes": 2023,
+          "file_sha256": "sha256:d65e09fe70bb0449c85e663d0eeb695fe52bc7fb34619debbbe81a0b16ab2aca",
+          "public_spec_hash": "sha256:dd7151171da2a60e2c772fafe7eb53840c335145206016bdc5a4f8f7486cc5cf"
+        },
+        "phase": "IMPLEMENT",
+        "runtime_query_sha256": "sha256:d400778dbaf3d084d52d7b8c82dfc0dfcbe989dbb241b68e26d38abf42f6f48b",
+        "query_phase_sha256": "sha256:133c56d6b2c92d416ddf2f3e36d45bf6b7c062f7d676911c3e6ee3e358b3d7fb",
+        "hypothesis_kind": "no-match-negative-transfer-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "public_spec_only_read": true,
+        "private_hidden_reference_or_bad_patch_read": false
+      },
+      {
+        "probe_id": "moto-reproduce-phase-control",
+        "task_id": "moto-query-scanned-count",
+        "task_version": 1,
+        "split": "dev-validation",
+        "public_task": {
+          "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+          "file_bytes": 2839,
+          "file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7",
+          "public_spec_hash": "sha256:15b4c9f378d48ae8eadbfad1a375d367fc973c230abf0996c617282ca0df8ea7"
+        },
+        "phase": "REPRODUCE",
+        "runtime_query_sha256": "sha256:8ad844e48f313b1b86bbc17a14492797e512fec47a5842b834e4302cf7b74f5e",
+        "query_phase_sha256": "sha256:5e8cae5fa2c4dc1949c5a2a33a6483ca39d790c4389cdd7c6470d78f65e4a0e5",
+        "hypothesis_kind": "phase-sensitivity-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "public_spec_only_read": true,
+        "private_hidden_reference_or_bad_patch_read": false
+      }
+    ],
+    "legacy_retriever_audit": {
+      "implementation": {
+        "path": "patchloop/memory/retrieval.py",
+        "file_bytes": 6638,
+        "file_sha256": "sha256:da4dde2e20b2ee9c946754726d242a3962ba42d4a945603740b1c9bbae970b72",
+        "d110_bound_file": true,
+        "modified_by_d111": false
+      },
+      "inline_frozen_index_authority_guard_present": true,
+      "current_inline_retrieval_authority": false,
+      "guard_fails_before_query_embedding": true,
+      "locked_local_snapshot_enforced_by_query_encoder": false,
+      "d105_exact_model_facing_text_used_by_structured_renderer": false,
+      "legacy_and_d105_render_comparison": [
+        {
+          "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+          "legacy_renderer_bytes": 743,
+          "legacy_renderer_sha256": "sha256:ee8e85b77d476fa886e7729b524497010048d94645376ea800ab98f4eb2e630d",
+          "d105_exact_renderer_bytes": 1191,
+          "d105_exact_renderer_sha256": "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c",
+          "byte_identical": false
+        },
+        {
+          "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+          "legacy_renderer_bytes": 726,
+          "legacy_renderer_sha256": "sha256:5053b3008af92ae2f0ebedccc3b9de7d1e40d37ddacb8178d745948d9ac02d04",
+          "d105_exact_renderer_bytes": 1164,
+          "d105_exact_renderer_sha256": "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a",
+          "byte_identical": false
+        },
+        {
+          "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+          "legacy_renderer_bytes": 713,
+          "legacy_renderer_sha256": "sha256:bdfeedc1f1900a12f2b3b61bd06d49b2434ac25fa78df10e5d082516d0cb510e",
+          "d105_exact_renderer_bytes": 1161,
+          "d105_exact_renderer_sha256": "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7",
+          "byte_identical": false
+        }
+      ],
+      "raw_trace_uses_mutable_local_state_store": true,
+      "raw_trace_portable_contract_ready": false,
+      "token_budget_uses_character_divide_by_four_estimate": true,
+      "d108_exact_full_bundle_provider_delta_tokens": 702,
+      "d108_maximum_memory_delta_tokens": 2000,
+      "class_match_matrix": [
+        {
+          "probe_id": "moto-implement-positive-hypothesis",
+          "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+          "failure_class_token": "platform_emulation_matrix_gap",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "moto-implement-positive-hypothesis",
+          "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+          "failure_class_token": "context_propagation_gap",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "moto-implement-positive-hypothesis",
+          "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+          "failure_class_token": "semantic_state_conflation",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "babel-implement-no-match-control",
+          "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+          "failure_class_token": "platform_emulation_matrix_gap",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "babel-implement-no-match-control",
+          "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+          "failure_class_token": "context_propagation_gap",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "babel-implement-no-match-control",
+          "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+          "failure_class_token": "semantic_state_conflation",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "moto-reproduce-phase-control",
+          "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+          "failure_class_token": "platform_emulation_matrix_gap",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "moto-reproduce-phase-control",
+          "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+          "failure_class_token": "context_propagation_gap",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        },
+        {
+          "probe_id": "moto-reproduce-phase-control",
+          "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+          "failure_class_token": "semantic_state_conflation",
+          "exact_failure_class_token_present_in_public_query": false,
+          "observed_current_class_match": 0.0
+        }
+      ],
+      "entry_validation_counts": {
+        "memgrp_649483b80292fea26e4009ebdb72df31": 0,
+        "memgrp_b421547d481faabf9be3511217258de5": 0,
+        "memgrp_5a23f463cba43bf3ba395f67cf976047": 0
+      },
+      "score_weights": {
+        "semantic": 0.35,
+        "failure_class": 0.25,
+        "phase": 0.15,
+        "language": 0.15,
+        "validation": 0.1
+      },
+      "selective_threshold": 0.72,
+      "perfect_semantic_implement_python_upper_bound": 0.65,
+      "perfect_semantic_reproduce_python_upper_bound": 0.5,
+      "natural_public_query_can_reach_selective_threshold": false,
+      "synthetic_internal_label_injection_used": false,
+      "legacy_retriever_ready": false
+    },
+    "readiness_assessment": {
+      "frozen_index_integrity_ready": true,
+      "structured_probe_candidate_ready": true,
+      "legacy_runtime_retrieval_ready": false,
+      "selective_scoring_non_degenerate": false,
+      "raw_trace_ready": false,
+      "four_condition_retrieval_ready": false,
+      "retrieval_experiment_ready": false,
+      "core_campaign_ready": false
+    },
+    "evidence_boundary": {
+      "retrieval_function_called": false,
+      "query_embedding_encoded": false,
+      "embedding_model_loaded": false,
+      "network_accessed": false,
+      "runtime_memory_injected": false,
+      "agent_run_started": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "index_or_marker_mutations": 0,
+      "private_hidden_reference_or_bad_patch_read": false,
+      "added_model_cost_usd": 0
+    }
+  }
+}

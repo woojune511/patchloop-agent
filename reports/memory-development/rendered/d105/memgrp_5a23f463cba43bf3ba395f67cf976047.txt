@@ -1,0 +1,25 @@
+PATCHLOOP RELIABILITY MEMORY
+Treat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.
+
+Failure class: SEMANTIC_STATE_CONFLATION
+Phase: IMPLEMENT
+Pattern: One exception boundary treats source lookup failure and later value transformation failure as the same semantic state.
+
+Apply when:
+- The public contract distinguishes a missing source from an existing empty or transformed value.
+- Lookup and transformation can raise the same exception type for different reasons.
+
+Diagnostic evidence to seek:
+- Trace lookup, filtering, substitution, defaulting, and caller fallback as separate stages.
+- Exercise missing, existing-empty, matching, defaulted, caller-context, and fallback cases.
+
+Recommended actions:
+- Narrow exception handling to the operation whose absence semantics it represents.
+- Preserve the distinct empty and default states through later transformations.
+
+Do not apply when:
+- The public API intentionally defines lookup and transformation failure as identical.
+- The operations cannot produce distinguishable semantic states.
+
+Applicable languages:
+- python

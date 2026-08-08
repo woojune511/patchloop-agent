@@ -1,0 +1,59 @@
+{
+  "schema_version": "memory-index-freeze-approval-receipt-d110-v1",
+  "receipt_id": "d110approval_cb0ab444a4c453fbf496e509891013163825c8b5c362204c43d37c7452d49e7b",
+  "semantic_body_hash": "sha256:cb0ab444a4c453fbf496e509891013163825c8b5c362204c43d37c7452d49e7b",
+  "semantic_body": {
+    "milestone": "D-110",
+    "evidence_kind": "self-attested-exact-d109-index-freeze-approval",
+    "recorded_at": "2026-08-06T12:42:48Z",
+    "d109_source_gate": {
+      "path": "reports/memory-development/d109-index-freeze-authorization-source-gate.json",
+      "file_bytes": 3485,
+      "file_sha256": "sha256:0953687473bd25f48ad52bdc78c577d6a4daa4947b019fcd65809e7548c4f949",
+      "schema_version": "index-freeze-authorization-source-gate-d109-v1",
+      "gate_id": "d109_e37e716aceb0a322820eada8b83d8a309e06052f6060c986f6025c61b7d999ef",
+      "semantic_body_hash": "sha256:e37e716aceb0a322820eada8b83d8a309e06052f6060c986f6025c61b7d999ef"
+    },
+    "d109_candidate": {
+      "path": "reports/memory-development/d109-index-freeze-authorization-candidate.json",
+      "schema_version": "memory-index-freeze-authorization-candidate-d109-v1",
+      "candidate_id": "d109freezecandidate_480d2aa8657fd143397fcfc71f252b8a8e3c0988d3950b5671089cf6dc8b8d46",
+      "semantic_body_hash": "sha256:480d2aa8657fd143397fcfc71f252b8a8e3c0988d3950b5671089cf6dc8b8d46",
+      "file_bytes": 5910,
+      "file_sha256": "sha256:ae8a8c6e58b058720943bae9088da2cf242168a70f654006557dd84c84d4e580"
+    },
+    "approval_action_id": "d110-exact-d109-index-freeze-approval-1",
+    "approver_kind": "human",
+    "approver_label": "chat-maintainer-self-attested",
+    "approval_reference": "user-message:d109-exact-index-freeze-approval",
+    "approval_reference_mode": "explicit-same-message-exact-candidate-triple",
+    "approval_statement_code": "approve-exact-d109-index-freeze-once-without-retrieval-runtime-injection-or-core",
+    "approval_statement": "Approve one exact index freeze for the repeated D-109 candidate ID, semantic body SHA, and file SHA. Do not authorize retrieval, runtime memory injection, or the core campaign.",
+    "authorized_scope": {
+      "index_id": "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064",
+      "runtime_index_path": ".patchloop/memory/indexes/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+      "freeze_execution_count": 1,
+      "action_schema_version": "exact-group-index-freeze-action-d109-v1",
+      "allowed_existing_json_mutations": [
+        "/frozen: false -> true",
+        "/frozen_at: absent -> approval-bound execution UTC timestamp",
+        "/authority/index_freeze_authorized: false -> true",
+        "/authority/memory_index_frozen: false -> true",
+        "/content_hash: recompute after the four allowed semantic changes"
+      ],
+      "marker_path": ".patchloop/memory/indexes/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN",
+      "marker_content_rule": "post_freeze_content_hash + LF",
+      "marker_written_after_index": true,
+      "automatic_retry_authorized": false,
+      "provider_calls_authorized": 0,
+      "evaluator_calls_authorized": 0,
+      "retrieval_authorized": false,
+      "runtime_memory_injection_authorized": false,
+      "core_campaign_authorized": false,
+      "analysis_authorized": false
+    },
+    "explicit_approval_receipt_recorded": true,
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false
+  }
+}

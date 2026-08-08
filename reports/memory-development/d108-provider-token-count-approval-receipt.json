@@ -1,0 +1,50 @@
+{
+  "schema_version": "provider-token-count-approval-receipt-d108-v1",
+  "receipt_id": "d108approval_dbe0873a16902f36a5094e963360f77d414973e29dec5fca5bab7a17c1ff3af3",
+  "semantic_body_hash": "sha256:dbe0873a16902f36a5094e963360f77d414973e29dec5fca5bab7a17c1ff3af3",
+  "semantic_body": {
+    "milestone": "D-108",
+    "evidence_kind": "self-attested-exact-d107-two-count-call-approval",
+    "recorded_at": "2026-08-06T10:09:39.7619586Z",
+    "d107_gate": {
+      "path": "reports/memory-development/d107-portable-index-token-count-source-gate.json",
+      "schema_version": "portable-index-token-count-source-gate-d107-v1",
+      "gate_id": "d107_4bc473796fd4564bb4d4cc9bf975ea9e41addb4fda620135e6ae4d6a21e645d4",
+      "semantic_body_hash": "sha256:4bc473796fd4564bb4d4cc9bf975ea9e41addb4fda620135e6ae4d6a21e645d4",
+      "file_bytes": 4175,
+      "file_sha256": "sha256:b3e24975062e379ec94c77187570b392026bacdcc855adedb00943467aaf09f2"
+    },
+    "token_count_plan": {
+      "path": "reports/memory-development/d107-provider-token-count-plan.json",
+      "schema_version": "provider-memory-token-count-plan-d107-v1",
+      "plan_id": "d107plan_7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+      "semantic_body_hash": "sha256:7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+      "file_bytes": 10143,
+      "file_sha256": "sha256:2a3d817d14d500863d56d5446010866a6feb2361eb684c3575400020bc31a085"
+    },
+    "approval_action_id": "d108-exact-d107-two-provider-input-token-count-calls-1",
+    "approver_kind": "human",
+    "approver_label": "chat-maintainer-self-attested",
+    "approval_reference": "user-message:d107-exact-two-provider-input-token-count-calls",
+    "approval_reference_mode": "immediate-preceding-exact-gate-reference",
+    "approval_statement_code": "EXPLICITLY_APPROVE_D107_EXACT_TWO_INPUT_TOKEN_COUNT_CALLS",
+    "approval_statement": "EXPLICITLY_APPROVE_D107_EXACT_TWO_INPUT_TOKEN_COUNT_CALLS d107_4bc473796fd4564bb4d4cc9bf975ea9e41addb4fda620135e6ae4d6a21e645d4 sha256:4bc473796fd4564bb4d4cc9bf975ea9e41addb4fda620135e6ae4d6a21e645d4 sha256:b3e24975062e379ec94c77187570b392026bacdcc855adedb00943467aaf09f2",
+    "authorized_scope": {
+      "provider_input_token_count_calls": 2,
+      "call_order": [
+        "baseline",
+        "with_memory"
+      ],
+      "provider_generation_calls": 0,
+      "sdk_transport_max_retries": 0,
+      "automatic_retry_authorized": false,
+      "index_freeze_authorized": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_authorized": false,
+      "core_campaign_authorized": false
+    },
+    "explicit_approval_receipt_recorded": true,
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false
+  }
+}

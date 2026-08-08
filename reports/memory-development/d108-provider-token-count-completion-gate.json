@@ -1,0 +1,98 @@
+{
+  "schema_version": "provider-token-count-completion-gate-d108-v1",
+  "gate_id": "d108_c663c745d43fc31bdee5309825059827899872c13368d7e3709e8730ee0a0f86",
+  "semantic_body_hash": "sha256:c663c745d43fc31bdee5309825059827899872c13368d7e3709e8730ee0a0f86",
+  "semantic_body": {
+    "milestone": "D-108",
+    "evidence_kind": "exact-two-provider-input-token-count-completion-gate",
+    "recorded_at": "2026-08-06T10:21:59.535463Z",
+    "d107_gate": {
+      "path": "reports/memory-development/d107-portable-index-token-count-source-gate.json",
+      "schema_version": "portable-index-token-count-source-gate-d107-v1",
+      "gate_id": "d107_4bc473796fd4564bb4d4cc9bf975ea9e41addb4fda620135e6ae4d6a21e645d4",
+      "semantic_body_hash": "sha256:4bc473796fd4564bb4d4cc9bf975ea9e41addb4fda620135e6ae4d6a21e645d4",
+      "file_bytes": 4175,
+      "file_sha256": "sha256:b3e24975062e379ec94c77187570b392026bacdcc855adedb00943467aaf09f2"
+    },
+    "approval_receipt": {
+      "path": "reports/memory-development/d108-provider-token-count-approval-receipt.json",
+      "file_bytes": 2768,
+      "file_sha256": "sha256:20442ff99a50fe6b79b7f155559816e98b3cf79523fb55e17627480de95f7b31",
+      "schema_version": "provider-token-count-approval-receipt-d108-v1",
+      "receipt_id": "d108approval_dbe0873a16902f36a5094e963360f77d414973e29dec5fca5bab7a17c1ff3af3",
+      "semantic_body_hash": "sha256:dbe0873a16902f36a5094e963360f77d414973e29dec5fca5bab7a17c1ff3af3",
+      "self_attested": true,
+      "reviewer_identity_authenticated": false,
+      "cryptographic_signature_verified": false
+    },
+    "token_count_plan": {
+      "path": "reports/memory-development/d107-provider-token-count-plan.json",
+      "schema_version": "provider-memory-token-count-plan-d107-v1",
+      "plan_id": "d107plan_7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+      "semantic_body_hash": "sha256:7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+      "file_bytes": 10143,
+      "file_sha256": "sha256:2a3d817d14d500863d56d5446010866a6feb2361eb684c3575400020bc31a085"
+    },
+    "execution_journal": {
+      "path": "reports/memory-development/d108-provider-token-count-execution.jsonl",
+      "schema_version": "provider-token-count-execution-event-d108-v1",
+      "event_count": 6,
+      "head": "sha256:84905f7a334ec349a2c979e6cfb68c9c67a23dda9219f1fc8036f9d2e78f5eaf",
+      "file_bytes": 6124,
+      "file_sha256": "sha256:01f96bc62f4a1f1d692328e2e7e71e8456a2976b772a70cf0bd66ab1b07227cd"
+    },
+    "provider_receipt": {
+      "path": "reports/memory-development/d108-provider-token-count-receipt.json",
+      "file_bytes": 1800,
+      "file_sha256": "sha256:43ce5dc5260a9f67e05f695a68a7dbf840ef3743f7ba7858583e9e74fb07d474",
+      "schema_version": "provider-memory-token-count-receipt-d107-v1",
+      "receipt_id": "d107countreceipt_80447f354d982620b1c849a32abcd276c40428721c8948f6aef5671a11176946",
+      "semantic_body_hash": "sha256:80447f354d982620b1c849a32abcd276c40428721c8948f6aef5671a11176946"
+    },
+    "observed_counts": {
+      "baseline_input_tokens": 2193,
+      "with_memory_input_tokens": 2895,
+      "memory_delta_tokens": 702,
+      "maximum_memory_delta_tokens": 2000
+    },
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d108_provider_token_count_execution.py",
+        "file_bytes": 47195,
+        "file_sha256": "sha256:6a7c3d82ce0098a3b98b76383feff7394121dd797268b62b7a77c14c003f9811"
+      },
+      {
+        "path": "scripts/run_d108_provider_token_counts.py",
+        "file_bytes": 1976,
+        "file_sha256": "sha256:fe399cd309b3e288fd90003656bebf898df36ab3c9024f8c4c65156c3ac6aca2"
+      },
+      {
+        "path": "tests/test_d108_provider_token_count_execution.py",
+        "file_bytes": 9683,
+        "file_sha256": "sha256:b16f82d204365bd6452b2cd76c1ecb7534ce29d67e8fc6f1f8b10428923e5e97"
+      }
+    ],
+    "authority": {
+      "provider_input_token_count_calls_authorized": true,
+      "provider_input_token_count_calls_made": 2,
+      "provider_generation_calls_authorized": false,
+      "provider_generation_calls_made": 0,
+      "sdk_transport_max_retries": 0,
+      "automatic_retry_used": false,
+      "provider_exact_budget_validated": true,
+      "index_freeze_authorization_candidate_ready": true,
+      "index_freeze_authorized": false,
+      "memory_index_frozen": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false,
+      "evaluator_calls_made": 0,
+      "billing_or_free_tier_claim": null
+    },
+    "next_gate": "explicit-d108-exact-index-freeze-authorization"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "schema_version": "memory-index-build-approval-receipt-d106-v1",
+  "receipt_id": "d106receipt_28da7f1882e9cae0811959a70bea3db26ed2067fbe956114efaa8abf8762027a",
+  "semantic_body_hash": "sha256:28da7f1882e9cae0811959a70bea3db26ed2067fbe956114efaa8abf8762027a",
+  "semantic_body": {
+    "milestone": "D-106",
+    "evidence_kind": "self-attested-exact-d105-index-build-approval",
+    "recorded_at": "2026-08-06T07:23:15.8755387Z",
+    "d105_gate": {
+      "path": "reports/memory-development/d105-renderer-embedding-index-authorization-gate.json",
+      "file_bytes": 12368,
+      "file_sha256": "sha256:db6303f3de834b3c36493f2863dcc5be3ca697490d18df15c86a18e7ee7b17eb",
+      "schema_version": "memory-render-index-authorization-source-gate-d105-v1",
+      "gate_id": "d105_0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70",
+      "semantic_body_hash": "sha256:0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70",
+      "dependency_lock_file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+    },
+    "approval_action_id": "d106-exact-d105-index-build-approval-1",
+    "approver_kind": "human",
+    "approver_label": "chat-maintainer-self-attested",
+    "approval_reference": "user-message:d105-locked-embedding-and-unfrozen-index-approval",
+    "approval_reference_mode": "immediate-preceding-exact-gate-reference",
+    "approval_statement_code": "EXPLICITLY_APPROVE_D105_LOCKED_EMBEDDING_AND_ONE_UNFROZEN_GROUP_INDEX",
+    "approval_statement": "EXPLICITLY_APPROVE_D105_LOCKED_EMBEDDING_AND_ONE_UNFROZEN_GROUP_INDEX d105_0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70 sha256:0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70 sha256:db6303f3de834b3c36493f2863dcc5be3ca697490d18df15c86a18e7ee7b17eb",
+    "authorized_scope": {
+      "pinned_snapshot_download": true,
+      "locked_snapshot_preflight": true,
+      "group_aware_builder_implementation": true,
+      "admitted_semantic_group_count": 3,
+      "actual_unfrozen_index_count": 1,
+      "index_freeze_authorized": false,
+      "retrieval_experiment_authorized": false,
+      "core_campaign_authorized": false
+    },
+    "explicit_approval_receipt_recorded": true,
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false
+  }
+}

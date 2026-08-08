@@ -1,0 +1,180 @@
+{
+  "schema_version": "locked-group-index-completion-gate-d106-v1",
+  "gate_id": "d106_fc2eeb0800e72d4aa0f7331110baf46caaa848879306454a4e0e6476e8fbe9a8",
+  "semantic_body_hash": "sha256:fc2eeb0800e72d4aa0f7331110baf46caaa848879306454a4e0e6476e8fbe9a8",
+  "semantic_body": {
+    "milestone": "D-106",
+    "evidence_kind": "locked-snapshot-group-aware-unfrozen-index-completion-gate",
+    "recorded_at": "2026-08-06T07:40:00Z",
+    "d105_gate": {
+      "path": "reports/memory-development/d105-renderer-embedding-index-authorization-gate.json",
+      "file_bytes": 12368,
+      "file_sha256": "sha256:db6303f3de834b3c36493f2863dcc5be3ca697490d18df15c86a18e7ee7b17eb",
+      "schema_version": "memory-render-index-authorization-source-gate-d105-v1",
+      "gate_id": "d105_0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70",
+      "semantic_body_hash": "sha256:0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70",
+      "dependency_lock_file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+    },
+    "approval_receipt": {
+      "path": "reports/memory-development/d106-exact-index-build-approval-receipt.json",
+      "schema_version": "memory-index-build-approval-receipt-d106-v1",
+      "receipt_id": "d106receipt_28da7f1882e9cae0811959a70bea3db26ed2067fbe956114efaa8abf8762027a",
+      "semantic_body_hash": "sha256:28da7f1882e9cae0811959a70bea3db26ed2067fbe956114efaa8abf8762027a",
+      "file_bytes": 2321,
+      "file_sha256": "sha256:e71ece9cbdb8662389233e3f6acdc6bc051e0a15a29cef8d604c14ad2c7fa97b",
+      "self_attested": true,
+      "reviewer_identity_authenticated": false,
+      "cryptographic_signature_verified": false
+    },
+    "embedding_preflight": {
+      "path": "reports/memory-development/d106-locked-embedding-snapshot-preflight.json",
+      "schema_version": "locked-embedding-snapshot-preflight-d106-v1",
+      "preflight_id": "d106preflight_11779604716a48bc714f4d759c01c035a5c4c7cfe7d0c3bdd2f2191a1f4e3b2a",
+      "semantic_body_hash": "sha256:11779604716a48bc714f4d759c01c035a5c4c7cfe7d0c3bdd2f2191a1f4e3b2a",
+      "file_bytes": 9351,
+      "file_sha256": "sha256:4a1b8e56dd986d8e793dca554b778e837cf182723cbb46ea8fb17863955d4ca4",
+      "snapshot_manifest_hash": "sha256:e497d8dad53f09ddc8b9fcc9b81e3ff778e002e120ab4254c72993d8611959cb",
+      "vector_set_hash": "sha256:5f4cf40d0512092ed68fdfa05a1d0ad9b0d2ad7a2f3fd6f6ca078adfcac2fc81",
+      "vector_checks": [
+        {
+          "order": 1,
+          "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+          "semantic_group_id": "platform-emulation-matrix-gap",
+          "render_file_sha256": "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c",
+          "untruncated_token_count": 218,
+          "dimension": 384,
+          "dtype": "float32",
+          "l2_norm": 0.999999997923,
+          "float32_sha256": "sha256:c93ca76160a801729645630bc2be263d99c2194faaa47a46f1d0ab46d8e98b54"
+        },
+        {
+          "order": 2,
+          "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+          "semantic_group_id": "request-context-propagation-gap",
+          "render_file_sha256": "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a",
+          "untruncated_token_count": 220,
+          "dimension": 384,
+          "dtype": "float32",
+          "l2_norm": 1.000000023858,
+          "float32_sha256": "sha256:0d3f651bd461d07eec081a8d81db9a5f3d2992717deef6c01dcc9c25045fe96b"
+        },
+        {
+          "order": 3,
+          "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+          "semantic_group_id": "exception-origin-state-conflation",
+          "render_file_sha256": "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7",
+          "untruncated_token_count": 207,
+          "dimension": 384,
+          "dtype": "float32",
+          "l2_norm": 1.000000076434,
+          "float32_sha256": "sha256:78bea347124fd92db295c9bdb78db30590d819782c0db894d4f44d4a98575768"
+        }
+      ]
+    },
+    "source_collection_id": "d104collection_4017131c10c127f47b8ea68ff2d8c3c3265c2f6cb11c1b175dd52c23882bd399",
+    "source_set_hash": "sha256:1168c8c9cfcaa3671f42391436bfff713c90f01baec468e5ef2509ddb95dbad2",
+    "render_set_hash": "sha256:7b72fc94642d996fad5a0b199719c56bfecc8a8fc1bbe42b2060aa18e21d2667",
+    "dataset": {
+      "dataset_id": "patchloop-benchmark-v1",
+      "dataset_manifest_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786",
+      "manifest_path": "data/dataset-manifest.yaml"
+    },
+    "index": {
+      "path": "reports/memory-development/artifacts/d106/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064.json",
+      "file_bytes": 55644,
+      "file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a",
+      "index_id": "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064",
+      "entries": 3,
+      "embeddings": 3,
+      "content_hash": "sha256:86dbd991fa411bc43a8ec65927630fe8ad3365a1a41d9a6eafdeb036d9aab3fd",
+      "frozen": false,
+      "retrieval_ready": false,
+      "schema_version": "memory-index-v1",
+      "builder_schema_version": "group-aware-memory-index-builder-d106-v1",
+      "portable_copy_is_reproduction_evidence": true,
+      "runtime_path": ".patchloop/memory/indexes/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+      "runtime_copy_materialized_during_build": true,
+      "runtime_copy_required_for_portable_validation": false,
+      "frozen_marker_created": false
+    },
+    "held_group_ids": [
+      "interrupt-lifecycle-unresolved",
+      "diagnostic-contract-unresolved"
+    ],
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d106_locked_group_index.py",
+        "file_bytes": 65087,
+        "file_sha256": "sha256:adceb3e1d74cab1613f2d6b030c9d3880d6ea399c77bd2920a7e370212c98c66"
+      },
+      {
+        "path": "scripts/build_d106_locked_group_index.py",
+        "file_bytes": 1589,
+        "file_sha256": "sha256:493963c352d413d8b41724cdd5a500c15e9ae72eacef35c4e48b4482708d0a5e"
+      },
+      {
+        "path": "tests/test_d106_locked_group_index.py",
+        "file_bytes": 10408,
+        "file_sha256": "sha256:d40a7122e567d3337f2982e03bcfe0ba898fc8d7b28e53bc8be5628ece029e44"
+      },
+      {
+        "path": "tests/test_memory.py",
+        "file_bytes": 15096,
+        "file_sha256": "sha256:be090a115488f1052edfc6d248d734ea03402c8c65fee2caada816f5d74f1c08"
+      },
+      {
+        "path": "patchloop/memory/store.py",
+        "file_bytes": 14926,
+        "file_sha256": "sha256:6d7ec27d4414d07ade3b92fe20e1b6806158bb6ef0dfcd8c9cd464b51a494eee"
+      },
+      {
+        "path": "patchloop/memory/retrieval.py",
+        "file_bytes": 6638,
+        "file_sha256": "sha256:da4dde2e20b2ee9c946754726d242a3962ba42d4a945603740b1c9bbae970b72"
+      }
+    ],
+    "evidence_boundary": {
+      "embedding_input": "exact-d105-render-bytes",
+      "legacy_failure_builder_called": false,
+      "legacy_entry_embedding_text_called": false,
+      "snapshot_payload_checked_into_repository": false,
+      "snapshot_manifest_and_hashes_checked_in": true,
+      "offline_library_mode_verified": true,
+      "operating_system_network_block_verified": false,
+      "provider_exact_token_budget_validated": false,
+      "provider_request_or_response_bodies_read": false,
+      "private_or_evaluator_bodies_read": false,
+      "historical_index_state_modified": false
+    },
+    "authority": {
+      "d105_exact_gate_approved": true,
+      "approval_receipt_present": true,
+      "approval_receipt_self_attested": true,
+      "reviewer_identity_authenticated": false,
+      "cryptographic_signature_verified": false,
+      "embedding_snapshot_verified": true,
+      "group_aware_builder_implemented": true,
+      "admitted_semantic_group_count": 3,
+      "held_group_count": 2,
+      "actual_memory_entry_count": 3,
+      "embedding_count": 3,
+      "d106_created_index_count": 1,
+      "memory_index_build_authorized": true,
+      "memory_index_built": true,
+      "memory_index_frozen": false,
+      "index_freeze_authorized": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "provider_exact_budget_validated": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "provider-exact-token-delta-index-validation-and-explicit-freeze-authorization"
+  }
+}

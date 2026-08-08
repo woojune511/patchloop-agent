@@ -1,0 +1,79 @@
+# D-123 successor plan. This file carries no live execution authority.
+schema_version: ac-structured-pilot-plan-v2
+plan_id: ac-structured-dev-validation-readiness-20260808-v2
+status: offline-cost-and-completion-source-qualification
+predecessor_plan: experiments/ac-structured-pilot.plan.yaml
+suite: experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml
+
+matrix:
+  conditions: [no_memory, structured]
+  repetitions: 1
+  expected_runs: 4
+  schedule:
+    - {order: 1, task_id: moto-query-scanned-count, condition: no_memory}
+    - {order: 2, task_id: moto-query-scanned-count, condition: structured}
+    - {order: 3, task_id: babel-strict-grouped-decimal-trailing-zeroes, condition: structured}
+    - {order: 4, task_id: babel-strict-grouped-decimal-trailing-zeroes, condition: no_memory}
+  replacement_or_retry_allowed: false
+
+runtime:
+  model_id: gpt-5.4-mini-2026-03-17
+  reasoning_effort: medium
+  reasoning_mode: standard
+  service_tier: default
+  transport_max_retries: 0
+  max_output_tokens: 25000
+  max_total_tokens: 3000000
+  wall_clock_timeout_seconds: 3600
+  tool_schema_version: v2
+  context_policy_version: phase-evidence-v5
+  memory_policy_version: fixed-d110-bundle-v1
+  fixed_bundle_bytes: 3528
+  fixed_bundle_sha256: sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf
+
+cost:
+  schema_version: ac-fixed-bundle-full-schedule-reserve-v1
+  per_run_reserve_nanos: 13612500000
+  full_schedule_reserve_nanos: 54450000000
+  hard_cap_nanos: 55000000000
+  hard_cap_slack_nanos: 550000000
+  reserve_before_first_provider_call: true
+  row_bound_settlement_required: true
+  cost_censoring_allowed: false
+  not_started_due_to_cost_allowed: false
+  automatic_retry_or_replacement_allowed: false
+  live_resume_policy: disabled
+
+completion:
+  schema_version: ac-fixed-bundle-readiness-complete-matrix-gate-v1
+  official_evaluator_required_runs: 4
+  accepted_outcomes: [resolved, task_failure]
+  budget_terminal_allowed: false
+  infrastructure_error_allowed: false
+  qualification_error_allowed: false
+  diagnostic_error_allowed: false
+  task_success_required: false
+  readiness_analysis_only: true
+  memory_benefit_claim_allowed: false
+
+authority:
+  offline_implementation_and_tests_authorized: true
+  source_gate_materialization_authorized: true
+  fresh_pricing_lookup_authorized: false
+  docker_or_sdk_preflight_authorized: false
+  exact_execution_hash_authorized: false
+  execution_candidate_authorized: false
+  provider_or_evaluator_execution_authorized: false
+  runtime_memory_injection_authorized: false
+  retrieval_or_core_authorized: false
+
+next_gate:
+  action: separately-authorize-resolve-all-runtime-finalization-and-clean-no-call-preflight
+  required_before_candidate:
+    - atomic-row-start-one-use-consumption-qualified
+    - final-result-and-campaign-completed-crash-collision-recovery-qualified
+    - clean-committed-source-identity-sealed
+    - official-pricing-refreshed-within-72-hours
+    - no-call-docker-sdk-credential-and-endpoint-preflight-completed
+    - exact-runner-execution-hash-created
+  execution_candidate_requires_later_exact_approval: true

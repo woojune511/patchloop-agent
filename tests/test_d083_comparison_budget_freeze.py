@@ -14,26 +14,13 @@ from patchloop.evals.qualification import _private_leak_tokens
 from patchloop.task_loader import load_task_package
 
 FREEZE_PATH = Path(
-    "reports/live-pilot/artifacts/"
-    "d083-condition-neutral-comparison-budget-freeze.json"
+    "reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json"
 )
-D082_PATH = Path(
-    "reports/live-pilot/"
-    "generic-baseline-readiness-v2v5-20260803-r3.json"
-)
-D081_PATH = Path(
-    "reports/live-pilot/artifacts/"
-    "d081-condition-neutral-budget-candidate.json"
-)
-D082_SHA256 = (
-    "sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2"
-)
-D081_SHA256 = (
-    "sha256:6f871c13aee71043c20c54c72a93667600462e8369483e9354507a94d0063193"
-)
-D083_SHA256 = (
-    "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
-)
+D082_PATH = Path("reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json")
+D081_PATH = Path("reports/live-pilot/artifacts/d081-condition-neutral-budget-candidate.json")
+D082_SHA256 = "sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2"
+D081_SHA256 = "sha256:6f871c13aee71043c20c54c72a93667600462e8369483e9354507a94d0063193"
+D083_SHA256 = "sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88"
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -46,20 +33,14 @@ def _sha256_file(path: Path) -> str:
 
 def _walk_keys(value: object) -> set[str]:
     if isinstance(value, dict):
-        return set(value) | {
-            nested for child in value.values() for nested in _walk_keys(child)
-        }
+        return set(value) | {nested for child in value.values() for nested in _walk_keys(child)}
     if isinstance(value, list):
-        return {
-            nested for child in value for nested in _walk_keys(child)
-        }
+        return {nested for child in value for nested in _walk_keys(child)}
     return set()
 
 
 def _eligible_rows(source: dict[str, Any]) -> list[dict[str, Any]]:
-    qualifications = {
-        item["run_id"]: item for item in source["qualifications"]
-    }
+    qualifications = {item["run_id"]: item for item in source["qualifications"]}
     rows: list[dict[str, Any]] = []
     for run in source["runs"]:
         qualification = qualifications[run["run_id"]]
@@ -79,9 +60,9 @@ def _eligible_rows(source: dict[str, Any]) -> list[dict[str, Any]]:
                 "agent_submission_completed": True,
                 "official_evaluator_completed": True,
                 "trace_qualified": True,
-                "observed_prefix_minimum_total_budget": run[
-                    "budget_pressure"
-                ]["observed_prefix_minimum_total_budget"],
+                "observed_prefix_minimum_total_budget": run["budget_pressure"][
+                    "observed_prefix_minimum_total_budget"
+                ],
             }
         )
     return rows
@@ -90,12 +71,12 @@ def _eligible_rows(source: dict[str, Any]) -> list[dict[str, Any]]:
 def test_d083_freeze_bytes_and_documented_identity_are_sealed() -> None:
     assert _sha256_file(FREEZE_PATH) == D083_SHA256
     for path in (
-        Path("AGENTS.md"),
-        Path("README.md"),
-        Path("docs/03-contracts.md"),
-        Path("docs/06-decisions.md"),
-        Path("docs/07-reproduction.md"),
-        Path("docs/09-evidence.md"),
+        Path("docs/archive/snapshots/d121/AGENTS.full.md"),
+        Path("docs/archive/snapshots/d121/README.full.md"),
+        Path("docs/archive/snapshots/d121/03-contracts.full.md"),
+        Path("docs/archive/snapshots/d121/06-decisions.full.md"),
+        Path("docs/archive/snapshots/d121/07-reproduction.full.md"),
+        Path("docs/archive/snapshots/d121/09-evidence.full.md"),
     ):
         assert D083_SHA256 in path.read_text(encoding="utf-8")
 
@@ -116,12 +97,8 @@ def test_d083_freeze_has_strict_source_only_contract() -> None:
         "authorization_boundary",
         "claims_boundary",
     }
-    assert payload["schema_version"] == (
-        "condition-neutral-comparison-budget-freeze-v1"
-    )
-    assert payload["freeze_id"] == (
-        "d083-condition-neutral-comparison-budget-freeze"
-    )
+    assert payload["schema_version"] == ("condition-neutral-comparison-budget-freeze-v1")
+    assert payload["freeze_id"] == ("d083-condition-neutral-comparison-budget-freeze")
 
     source = payload["source_evidence"]
     assert set(source) == {
@@ -228,9 +205,7 @@ def test_d083_freeze_has_strict_source_only_contract() -> None:
 
 def test_d083_freeze_recomputes_source_hashes_and_public_row_selection() -> None:
     payload = _load_json(FREEZE_PATH)
-    sources = {
-        item["role"]: item for item in payload["source_evidence"]["sources"]
-    }
+    sources = {item["role"]: item for item in payload["source_evidence"]["sources"]}
 
     assert set(sources) == {
         "d082-measured-readiness-report",
@@ -274,8 +249,9 @@ def test_d083_freeze_recomputes_token_derivation_exactly() -> None:
     )
     assert selected["run_id"] == derivation["selected_run_id"]
     assert selected["task_id"] == derivation["selected_task_id"]
-    assert selected["observed_prefix_minimum_total_budget"] == (
-        derivation["observed_prefix_minimum_total_budget"]
+    assert (
+        selected["observed_prefix_minimum_total_budget"]
+        == (derivation["observed_prefix_minimum_total_budget"])
     )
     assert derivation["observed_prefix_minimum_total_budget"] == 1_303_223
 
@@ -286,17 +262,12 @@ def test_d083_freeze_recomputes_token_derivation_exactly() -> None:
     assert unrounded == Decimal(str(derivation["unrounded_total_token_budget"]))
 
     quantum = Decimal(str(derivation["round_up_quantum_tokens"]))
-    rounded = (
-        (unrounded / quantum).to_integral_value(rounding=ROUND_CEILING)
-        * quantum
-    )
+    rounded = (unrounded / quantum).to_integral_value(rounding=ROUND_CEILING) * quantum
     assert rounded == Decimal("1600000")
     assert int(rounded) == derivation["rounded_total_token_budget"]
     assert int(rounded) == budget["max_total_tokens"]
     assert all(
-        row["observed_prefix_minimum_total_budget"]
-        <= budget["max_total_tokens"]
-        for row in rows
+        row["observed_prefix_minimum_total_budget"] <= budget["max_total_tokens"] for row in rows
     )
     assert derivation["completion_guaranteed"] is False
 
@@ -315,13 +286,11 @@ def test_d083_freeze_binds_exact_model_runtime_and_pending_templates() -> None:
         "max_output_tokens": 25_000,
         "system_prompt_version": "SYSTEM_PROMPT_V3",
         "system_prompt_hash": (
-            "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc"
-            "994e72708d8a733b"
+            "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b"
         ),
         "tool_schema_version": "v2",
         "tool_schema_hash": (
-            "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246"
-            "c5b91eccf0827"
+            "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827"
         ),
         "context_policy_version": "phase-evidence-v5",
         "memory_token_budget": 2_000,
@@ -339,12 +308,8 @@ def test_d083_freeze_binds_exact_model_runtime_and_pending_templates() -> None:
         "provider_execution_authority",
         "templates",
     }
-    assert source_contract["schema_version"] == (
-        "condition-neutral-comparison-source-contract-v1"
-    )
-    assert source_contract["implementation_status"] == (
-        "policy-frozen-runtime-pending"
-    )
+    assert source_contract["schema_version"] == ("condition-neutral-comparison-source-contract-v1")
+    assert source_contract["implementation_status"] == ("policy-frozen-runtime-pending")
     assert source_contract["live_runnable_suite_created"] is False
     assert source_contract["runtime_wiring_complete"] is False
     assert source_contract["provider_execution_authority"] is False
@@ -435,9 +400,7 @@ def test_d083_freeze_recomputes_pricing_and_scale_boundaries() -> None:
         assert row["recommended_approval_cap_usd"] == cap
         assert cap == float(math.ceil(reserve))
 
-    core_reserve = Decimal(
-        str(pricing["schedule_reserves"]["core"]["reserve_usd"])
-    )
+    core_reserve = Decimal(str(pricing["schedule_reserves"]["core"]["reserve_usd"]))
     existing_cap = Decimal(str(pricing["existing_project_cap_usd"]))
     assert core_reserve - existing_cap == Decimal("552.0")
     assert pricing["core_cap_deficit_usd"] == 552.0
@@ -534,9 +497,7 @@ def test_d083_freeze_excludes_private_or_provider_payloads() -> None:
     for task_path in task_paths:
         package = load_task_package(task_path)
         leaked.extend(
-            token
-            for token in _private_leak_tokens(package, api_key=None)
-            if token in checked_text
+            token for token in _private_leak_tokens(package, api_key=None) if token in checked_text
         )
     assert sorted(set(leaked)) == []
 

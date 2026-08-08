@@ -1,0 +1,1691 @@
+# Current limitations
+
+This file separates implemented behavior from the remaining 12-week campaign work.
+
+## Implemented and measured locally
+
+- D-110에서 exact D-109 candidate에 대한 self-attested 사용자 승인을 기록하고, 그 candidate가 허용한 freeze를
+  정확히 한 번 실행했다. Runtime frozen index와 portable D-110 copy는 55,687 bytes/file SHA
+  `sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0`로 같고, marker는
+  post-freeze content hash와 LF 한 바이트로만 구성된다. Historical D-106 portable unfrozen index는
+  `sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a`로 unchanged다.
+  다만 이것은 freeze 완료 증거일 뿐 retrieval readiness, runtime memory injection, memory 성능 또는 core campaign
+  증거가 아니다. Direct retrieval은 embedding 전에 later explicit authorization error로 거부된다.
+- Historical D-109은 exact runtime unfrozen copy와 portable index equality를 관찰하고 content-addressed freeze
+  authorization candidate를 만든 pre-freeze checkpoint다. 그 당시의 `frozen=false`와 marker 부재는 D-110 이후
+  current runtime 상태를 뜻하지 않는다.
+- Five audited `mini-data-utils` calibration fixtures with independent snapshot hashes
+- Reviewed reference and known-bad evaluator paths for every calibration fixture
+- Official Linux Docker evaluator smoke: three references accepted, 14 known-bad patches rejected
+- Docker network denial, non-root UID, read-only workspace and host-secret non-forwarding checks
+- Official Docker-evaluated offline agent smoke: three tasks under both mock and content-hashed replay,
+  six of six runs accepted with complete persisted usage and trace evidence
+- Duration-minute boundary and CSV EOF-finalization fixture references accepted, with four known-bad
+  patches rejected per task by the pinned Docker evaluator
+- First SWE-rebench-derived research task admitted: Loguru #1451, with an immutable official image,
+  three reference passes, 20 upstream regressions, one base hidden failure and five known-bad rejections
+- Second research task admitted: AnyIO #1121, with three hardened-reference passes, 20/20 hidden
+  stability runs, 32 P2P regressions, one base hidden failure and five known-bad rejections. Its
+  independent oracle rejects a source-equivalent normalization of the original benchmark fix because a
+  later upstream incident exposed an expected-outcome lifecycle regression.
+- Third research task admitted: tox #3810, with three reference passes, 29 P2P regressions, six
+  independent hidden checks, one base hidden failure and five known-bad rejections. Its oracle preserves
+  both cross-section empty-substitution and earlier same-section fallback semantics.
+- Fourth research task admitted: Hugging Face Hub #3180, with three reference passes, 15 P2P
+  regressions, eight independent hidden checks, one base hidden failure and six known-bad rejections.
+  Its oracle binds imports to submitted source and limits the allowed public API change to the exact
+  endpoint-aware signature delta.
+- Fifth research task admitted: PDM #2781, with three normalized production-reference passes,
+  36 base-checkout regressions, ten independent hidden checks, one base hidden failure, six semantic
+  known-bad rejections and one scope/test-tampering rejection. The benchmark declares 37 P2P nodes
+  because one passing parameter exists only in its test patch.
+- Sixth research task admitted: pyfakefs #991, with three normalized production-reference passes,
+  all 517 declared P2P regressions, 12 independent hidden checks and one base hidden failure. Seven
+  semantic partial fixes and one scope/test-tampering patch were rejected. The task is medium, not
+  hard; its strength is a clean network-disabled evaluator boundary and broad regression surface.
+- Seventh research task admitted: Moto #7208 as development-validation only, with three normalized
+  production-reference passes, 182 selected regressions, nine independent hidden checks and one base
+  hidden failure. Six semantic partial fixes and one scope/test-tampering patch were rejected. Nine
+  endpoint tests outside the benchmark P2P declaration are explicitly deselected; all 173 logical
+  P2P nodes expand to 179 network-independent passing cases.
+- Eighth research task admitted: Babel #1042 as development-validation only, with three exact
+  production-reference passes, all 132 upstream number tests, 16 independent hidden checks and one
+  base hidden failure. Seven semantic partial fixes and one scope/test-tampering patch were rejected.
+  The task is medium, not hard. Its pinned-image CLDR overlay is explicit and submitted-source binding
+  prevents evaluation against the image's baked production module.
+- Ninth research task admitted: SQLGlot #7187 as the first core-cross-repo held-out task, with three
+  exact production-reference passes, all 39 upstream DuckDB tests, 21 independent hidden checks and
+  one base hidden failure. Seven semantic partial implementations and one scope/test-tampering patch
+  were rejected. Its hardened oracle covers both NULL modifiers across five value-window functions
+  and a representative BigQuery modifier-chain negative-transfer guard. This is deterministic
+  evaluator admission evidence, not a live-model core result.
+- Tenth research task admitted: PDM #3759 as the first core-same-repo held-out task, with three
+  hardened-reference passes, 63 network-independent upstream regressions, 11 independent hidden checks
+  and one base hidden failure. The exact benchmark production patch and eight other semantic partials
+  were rejected, as was one scope/test-tampering edit. One declared P2P node that attempts an external
+  install is explicitly deselected. This is deterministic evaluator admission evidence, not a
+  live-model core result.
+- Eleventh research task admitted: AnyIO #1134 as the second core-same-repo held-out task, with
+  three exact-production-reference passes, all 36 upstream process regressions, 11 independent
+  hidden checks and one base hidden failure. Nine semantic partial implementations were rejected,
+  as was one scope/test-tampering edit. Its worker bootstrap lineage is distinct from the AnyIO
+  #1121 development task. This is deterministic evaluator admission evidence, not a live-model
+  core result.
+- Twelfth research task admitted: Param #1117 as the second core-cross-repo held-out task, with
+  three exact-production-reference passes, all 94 upstream reactive regressions, ten independent
+  hidden checks and one base hidden failure. Eight semantic partial implementations and one
+  scope/test-tampering edit were rejected. Its digest-pinned evaluator image is
+  `sha256:c10bc0ad51b00c59ed8fa4366ee722c38e83dfaa620a7cc229f78489ccbaf010`.
+  This is deterministic evaluator admission evidence, not a live-model core result.
+- Thirteenth research task admitted: Hugging Face Hub #4056 as the third core-same-repo held-out
+  task, with three exact-production-reference passes, 17 base-resident upstream regressions,
+  15 independent hidden cases and one base hidden failure. Nine semantic partial implementations
+  and one scope/test-tampering edit were rejected. Two of the benchmark's 19 declared P2P nodes
+  exist only in the excluded benchmark test patch, so the executed and declared counts are
+  reported separately. An adversarial pre-gate review found and closed a combined-partial oracle
+  escape before admission. This is deterministic evaluator evidence, not a live-model core result.
+- Fourteenth research task admitted: MTPLX #21 as the third core-cross-repo held-out task, with
+  three hardened-reference passes, 55 base-resident OpenAI bridge regressions, 21 independent
+  hidden cases and one base hidden failure. Nine semantic implementations, including the exact
+  upstream accepted source patch, were rejected, as was one scope/test-tampering edit. The hardened
+  oracle requires an exact `<tool_call>` delimiter, preserves lookalike tags as content and rejects
+  non-whitespace residue beside or between streamed calls. This is deterministic evaluator admission
+  evidence, not a live-model core result.
+- Fifteenth research task admitted: FuseSoC #776 as the fourth core-cross-repo held-out task, with
+  three exact-production-reference passes, 12 selected base-resident regressions, ten independent
+  hidden cases and one base/no-op hidden failure. Eight semantic partial implementations were
+  rejected by hidden acceptance, and one forbidden test edit was rejected by hidden, scope and
+  test-tampering checks. The visible suite collects 14 tests but explicitly deselects one
+  network-dependent export test and one lockfile test incompatible with the read-only submitted
+  filesystem. This is deterministic evaluator admission evidence, not a live-model core result.
+- Sixteenth research task admitted: tox #3846 with follow-up #3851 as the fourth core-same-repo
+  held-out task, with three hardened-reference passes, 101 selected visible regressions and
+  17 independent hidden cases across eight test functions. Base/no-op and ten semantic partials,
+  including each accepted PR in isolation, were rejected; one forbidden test edit was rejected by
+  hidden, scope and test-tampering checks. The visible surface is 99 passing cases plus two explicitly
+  re-included healthy siblings out of 110 declared P2P nodes. This is deterministic evaluator
+  admission evidence, not a live-model core result.
+- Seventeenth research task admitted: Dagster #33605 as the fifth core-cross-repo held-out task,
+  with three exact-production-reference passes, all 28 base-resident visible regressions and nine
+  independently authored hidden tests. Base/no-op and all eight semantic partials were rejected;
+  one forbidden test edit was rejected by hidden, scope and test-tampering checks. The
+  `task-private-v2` content hash binds the hidden oracle, and both visible tests and the hidden
+  oracle remain on read-only mounts while submitted production source is copied to a fresh
+  writable import root. All 13 official cases made zero model/API calls. This is deterministic
+  evaluator admission evidence, not live-model agent performance or a core campaign result.
+- Eighteenth research task admitted: Kubeflow Pipelines #13112 as the sixth core-cross-repo
+  held-out task, with three exact-production-reference passes, all 277 base-resident visible tests,
+  15 subtests and 11 independently authored hidden tests. Base/no-op and all eight semantic partials
+  were rejected; one forbidden test edit was rejected by hidden, scope and test-tampering checks.
+  The frozen benchmark declares 278 P2P nodes because its test patch adds one preservation P2P case;
+  the base-resident declared P2P surface is therefore exactly 277. The `task-private-v2` content
+  hash binds the hidden oracle, and both visible tests and the hidden oracle remain on read-only
+  mounts while submitted production source is copied to a fresh writable import root. All 13
+  official cases ran from clean staging commit
+  `5e7b019e60b4d76f67e48bafe6fd1a3b309fe313` and made zero model/API calls. This is deterministic
+  evaluator admission evidence, not live-model agent performance or a core campaign result.
+- Nineteenth research task admitted: Loguru #1297 as the fifth core-same-repo held-out task, with
+  three exact-production-reference passes, all 43 base-resident visible tests and 11 independently
+  authored hidden cases across five test functions. An implementation-independent
+  `utcfromtimestamp()` solution also passed. Base/no-op and all nine semantic partials were rejected;
+  one forbidden test edit was rejected by hidden, scope and test-tampering checks. Three
+  deterministic, internally consistent fallback profiles cover positive, negative and
+  date-rollover-derived offsets so a fixed derived-looking offset or zone cannot satisfy the oracle.
+  All 15 official cases ran from clean staging commit
+  `8c5084eee3a44a44e207345950a9ffb45b23e4b1` and made zero model/API calls. This is
+  deterministic evaluator admission evidence, not live-model agent performance or a core campaign
+  result.
+- Twentieth research task admitted: pyfakefs #1269 as the sixth core-same-repo held-out task, with
+  three exact-production-reference passes over 431 visible passes, 161 skips and 29 independently
+  authored hidden cases per run. An implementation-independent dynamic capability interface also
+  passed. Base/no-op, all nine semantic partials and one forbidden test edit were rejected; the
+  forbidden edit also failed scope and test-tampering checks. All 15 official cases ran from clean
+  staging commit `b50b4314aa7fd209737db46f15b38aee056bbd80` and made zero model/API
+  calls. This completes the 20-task research role target but is deterministic evaluator evidence,
+  not live-model agent performance or a core campaign result.
+- Cooperative checkpoint fault recovery plus real subprocess kill/fresh-interpreter reclaim after
+  a single-file smoke patch's only atomic postimage replacement and before outcome persistence,
+  with active-owner exclusion and duplicate-mutation assertions
+- One-run offline experiment and raw-derived report
+- Unit/integration/recovery/viewer route tests
+- Frozen 25-package dataset manifest with 5/5 calibration, 20/20 research roles, three selected
+  stress sentinels and a deterministically expanded 30-run schedule. `patchloop dataset audit`
+  reports `complete=true` with no freeze blockers.
+- One paid Babel #1042 development-validation pilot,
+  `run_c6f13dd9a1a1472d`, executed through the approved Responses API path and preserved a stable
+  run ID, 113 events, 23 checkpoints, usage and terminal failure. It cost `$0.34025875` for
+  73,730 input, 73,670 cache-write input and 7,326 output tokens across 20 model and 22 tool calls.
+  It did not submit a patch or reach the evaluator and is not a qualified or successful pilot.
+- A zero-model-call counterfactual diagnostic converted the first rejected model candidate's
+  envelope to raw Git diff without changing its code edit. Patch
+  `sha256:4c49b6edd0603f2e56c04c18e83fdecb3a6a5868ab40bffca198504951b01606`
+  passed every official Docker verdict in evaluator run `run_4299e6b326de4c1c`. This isolates the
+  tool-contract failure but is not counted as an agent submission, pilot success or repetition.
+- A second paid Babel #1042 pilot, `run_de8f2a2846044c01`, cost `$0.328036875` for
+  74,868 input, 74,811 cache-write input and 6,274 output tokens across 19 model and 22 tool calls.
+  Its 111 events, 23 checkpoints, zero-match leakage scan and usage integrity produced a
+  `qualified=true` trace artifact, but no patch was submitted and the evaluator was not reached.
+  r2 pilot acceptance therefore remains false. All nine model patch candidates declared 7/7 hunk
+  lines while containing 6/6; eight executed mutations failed before evaluation.
+- A third separately approved Babel #1042 pilot, `run_3cb86f8d70094a11`, cost `$0.16056875`
+  for 43,963 input, 43,930 cache-write input and 1,547 output tokens across 11 model and 13 tool
+  calls. Its one submitted patch changed one line in `babel/numbers.py`; the official hidden,
+  regression, scope and safety verdicts all passed. Its 72 events, 15 checkpoints, zero private
+  matches and reconciled usage produced a qualified, accepted trace.
+- A separate model-candidate pilot, `run_d4fea5e7198b4abc`, used
+  `gpt-5.4-mini-2026-03-17`, medium effort and the strict 90,000-token budget. It cost
+  `$0.07745325` for 66,287 input and 6,164 output tokens across 16 model and 25 tool calls.
+  Prompt-token integrity, leakage, usage and trace qualification passed, but
+  `evaluation_reached=false`: legacy text `DONE` attempted an invalid `VERIFY → DONE`
+  transition after the required final-review order was lost. It is an immutable agent failure,
+  not accepted-pilot or model-quality evidence.
+- Its separately approved v2 corrective retry, `run_4a9737ec91964dca`, cost `$0.07796475`
+  for 58,695 input and 7,543 output tokens across 10 model and 13 tool calls. All ten request
+  pre-counts matched provider usage; responses were completed with truncation disabled. The run
+  followed current-diff check, complete diff review, `finish_task`, evaluator receipt and
+  `trace-qualification-v2`, but hidden acceptance failed while regression, scope and safety
+  passed. It is an immutable qualified task failure, not an accepted pilot. Its stateless retry
+  also retained the first rejected patch's hash/error without restoring its body, so D-037
+  was not satisfied by that run. The v3 repair and hash-bound diagnostic consumer are offline-tested.
+- The separately approved D-037 r3 `run_e90f7c52aa134182` cost `$0.06849375` for
+  54,851 input and 6,079 output tokens across 8 model and 12 search/read tool calls. All eight
+  input pre-counts matched provider usage, but event 55 used the full 4,096-token response
+  allowance, including 3,989 reasoning tokens, and returned
+  `incomplete/max_output_tokens`. It made no mutation, rejected patch, submission or evaluator
+  run. Qualification passed 21/22 checks and failed only `prompt_token_integrity`; the D-037
+  feature had zero retry episodes, so the diagnostic failed `qualification_not_passed`. This is
+  immutable provider-path failure evidence, not prompt truncation, total run-budget exhaustion,
+  D-037 validation/falsification or model task-quality evidence.
+- The separately approved D-037 r4 `run_826c1c7fb3d242c2` cost `$0.096159` for
+  84,082 input and 7,355 output tokens across 13 model and 16 tool calls. All 13 generations
+  completed with exact input-count matches and truncation disabled. One patch was applied, one
+  visible check passed and the run reached REVIEW, but the next exact request needed
+  8,583 input + 25,000 response allowance with only 28,563 total tokens remaining. The local
+  guard stopped before provider generation, submission or evaluation. Qualification passed 21/22;
+  the failed `prompt_token_integrity` result is a retry-specific terminal-block contract mismatch,
+  not token mismatch. Rejected candidate and retry episode counts were zero, so r4 removes r3's
+  per-call output-ceiling confounder but still does not validate or falsify D-037.
+- The separately approved r5 `run_0ad8676d42614fbf` executed D-041's strict 25,000/200,000
+  profile once. All 18 generations completed, all exact input counts matched provider usage,
+  and the run used 121,366 input plus 9,913 output tokens for `$0.135633`. Its one-file,
+  one-line replacement passed official hidden, regression, scope and safety evaluation, and
+  `trace-qualification-v2` passed 23/23. No mutation was rejected, so rejected candidate,
+  retry episode and verified retry counts are all zero. The D-037 diagnostic is therefore
+  terminal `inconclusive/retry_episode_not_observed`: this is task-success and trace-integrity
+  evidence, not D-037 validation or falsification. It will not be rerun automatically.
+
+## Implemented gates with remaining external campaign work
+
+- OpenAI Responses adapter is contract-tested with a fake client and has two Terra failure traces,
+  one accepted historical Terra live pilot, four mini model-candidate failure traces and one
+  official mini task success with an inconclusive D-037 diagnostic, plus one controlled mini
+  diagnostic pass.
+  The accepted
+  pilot is one development-validation task, not a development/core campaign result.
+- `experiment-v2` now distinguishes offline smoke, development-validation live pilot,
+  memory-development no-memory campaign and core purpose. Historical single-task pilots retain
+  their original Babel-only and $2 contracts. Consumed D-054 instead fixed Babel+Moto to
+  `no_memory` × 1 each, a 600,000-token diagnostic ceiling and a $6 suite cap. The six-task
+  development and core templates remain unexecuted pending drafts and are not authorized.
+  Historical D-045 fixed then-future primary runs to `gpt-5.4-mini-2026-03-17`,
+  25,000 per-call output, 21 model calls and 200,000 run-total tokens. D-052 supersedes only
+  future suite budgets with the same model/mode and `21/50/250,000/900`; it does not reinterpret
+  consumed 200,000-token evidence. All historical Terra
+  pilot IDs, the consumed mini diagnostic suites and primary r1 remain readable but
+  preflight-blocked. Primary r1 has now run once and is terminal immutable evidence, not an
+  accepted pilot or completed experiment.
+- Primary r1 `run_6993722014bf4e3b` used 20 model calls and 30 tool calls, with 131,266 input and
+  12,038 output tokens for a calculated `$0.1526205`. All 20 responses completed, input pre-counts
+  matched provider usage and truncation was disabled. It applied a one-line patch, passed the
+  registered check, read the complete final diff and entered `REVIEW`, then hit
+  `model_call_budget_exhausted` before `finish_task`; evaluator status is `not_run`.
+  Qualification is 21/22 solely because that deterministic call-budget terminal block is not a
+  versioned valid ending. A separate no-model Docker postmortem found that the exact final patch
+  passes hidden/regression/scope/safety, but this does not retroactively submit or resolve the run.
+- D-047 completed the offline successor contract. Exact-token reservation keeps
+  `model-generation-block-v1`; next-generation model/tool/wall counter exhaustion uses strict
+  `model-generation-block-v2` with durable counter/duration recomputation, reason priority,
+  budget-guard actor, request/terminal/result binding and tamper rejection. Future
+  primary/development/core conditions share the same total 21-call cap; it is not a privileged
+  `finish_task` reserve. Corrective primary r2 `run_afd5080a77a34995` ran once and passed the
+  official evaluator and qualification 23/23. The following first 12-run campaign completed but
+  reached the evaluator 0/12, so both consumed suites are immutable and the campaign is diagnostic
+  rather than a no-memory performance baseline.
+- The terminal `dev-validation-gpt54mini-d037-r3.yaml` suite bound
+  `experiment-diagnostic-v1` to its consumed execution hash. Its post-run consumer separates generic
+  qualification from a `passed`, `inconclusive` or `failed` retry exercise, requires evaluator
+  arrival for pass, and stores only sanitized counts/sequences. R3 validated the consumer's
+  failure path but did not exercise a rejected-patch retry.
+- A no-call preflight checks frozen dataset identity/role, canonical task package path,
+  public/private spec hash, digest-pinned environment and observed Docker identity, clean Git
+  commit, OpenAI SDK and API-key presence without the value, absence of a custom base URL,
+  primary mini snapshot/medium/standard/default settings, 72-hour official pricing and budget reserve. Paid
+  authorization is invocation-only and bound to its execution hash. A live capability is issued
+  only after the approved plan is durably persisted. All twelve paid-pilot host preflights reached
+  `ready=true`; the v4 pilot and later v4 development campaign each consumed their own distinct
+  clean execution hash and approval once. Both are now immutable.
+- The campaign journal is append-only and hash-chained. The first `CampaignStarted`
+  exclusive-creates ownership, and each stable-ID `RunStarted` is fsynced before the corresponding
+  model-call scope. A concurrent loser stops before authorization, while a hard crash leaves a guard
+  that blocks automatic schedule replay. All twelve paid pilots and both completed 12-run
+  campaigns produced completed hash-chained journals. Automatic resume from an interrupted journal
+  is not implemented.
+- Paid execution uses the approved plan's normalized suite snapshot rather than reloading the
+  source path. Task package and run-manifest task/model/budget/environment identities are checked
+  against the plan before `RunStarted`; replacement tests stop before the model runner.
+- Legacy `trace-qualification-v1` remains byte-stable for old runs. New
+  `trace-qualification-v2` additionally checks approved-plan binding, required content-addressed artifact
+  references, event/checkpoint/result integrity, usage reconciliation, public/private leakage and
+  pilot tool-loop evidence. Its `source_evidence_hash` binds plan, manifest, events, checkpoints,
+  result and agent-visible artifact inventory and is recalculated at development-campaign
+  preflight and review/index admission. Only
+  qualified memory-development failures are eligible for append-only human review; classifier
+  output omits hidden check IDs. The first live qualification artifact is immutable and
+  `qualified=false`: evaluation was not reached, and its original leakage scan also counted 41
+  publicly disclosed marker occurrences. A forensic rescan found zero API-key, reference-hash,
+  `private.yaml` or `reference.patch` matches; the scanner contract was corrected without rewriting
+  the historical artifact. The second artifact is `qualified=true`, but the pilot acceptance
+  consumer separately rejects it because `evaluation_reached=false`. The third artifact is
+  `qualified=true`, has `evaluation_reached=true`, and its official hidden/regression/scope/safety
+  verdicts all pass. It is historical v1 evidence and cannot unlock the corrected v2 campaign.
+- Cache usage enforces `cached + cache-write <= input`, and a malformed billed function-call
+  response preserves usage/cost before terminating as agent failure. These are contract-tested
+  paths, not paid-provider evidence.
+- Reports mark incomplete, qualification-failed or required-trace-exercise-excluded matrices
+  `analysis_ready=false`, keep
+  available-case rows only as diagnostics and suppress headline, paired comparison/CI and flip
+  results. The one-row accepted pilot is not a memory-comparison matrix.
+- Failed started attempts retain run ID, usage including cached/cache-write tokens, calculated cost
+  and terminal outcome. Historical Terra r1 and r2 exercised this path; historical Terra r3
+  `run_3cb86f8d70094a11` exercised the resolved official-success path.
+- Agent-visible patch application now recounts only hunk line totals and leaves the raw input/hash,
+  body, context, path and deterministic policies unchanged. Policy rollback must restore the exact
+  pre-call diff and zero-untracked state; rollback failure terminates as recovery error. New-file,
+  rename/copy, binary and metadata-only patches remain unsupported, while the evaluator stays
+  strict. Historical Terra r3 `run_3cb86f8d70094a11` reached evaluation through this corrected
+  path; this remains one pilot, not a campaign-level reliability result.
+- v2 patch mutation now writes raw patch and pre/post image intent CAS before touching the target,
+  performs all-target preflight followed by atomic postimage replace/delete, atomically closes
+  action outcome plus `PatchApplied`, and includes nested recovery artifacts in source evidence.
+  Unit tests cover pre, post, multi-file mixed/partial, unknown, tampered and policy-rejected
+  states. A local subprocess E2E kills the owning process after a single-file smoke patch's only
+  atomic postimage replacement but before outcome persistence; a fresh interpreter reclaims stale
+  `RUNNING`, avoids a second apply and reaches evaluator success.
+- Evaluator manifest/result/provenance, submitted patch and verifier evidence use atomic/CAS-backed
+  writes. A hash-bound receipt permits evaluator reuse after a crash before terminal commit, while
+  terminal failure/result/status/event are committed together. This is local integrity and recovery
+  evidence, not protection against an attacker able to rewrite the database and every artifact.
+- New non-replay runs use tool schema v2 with context policy `phase-evidence-v5`. The inherited submission contract binds latest visible-check success and
+  final diff review to the exact current worktree hash, exposes a structured `finish_task`, delays
+  phase transitions until tool success and makes two premature submissions recoverable. It also
+  records review/submission lifecycle, structured patch-error stages, advisory repeat signals and
+  current-diff checkpoint state. V4 additionally reconstructs a bounded investigation ledger from
+  verified read/search CAS, semantic-replays exact or fully covered inspections without filesystem
+  dispatch before the corrective tail, and closes all otherwise valid read/search admission at
+  that tail, including requests that would have been semantic replays. Mini model-candidate
+  r2 validated the final check/review/submission/evaluator
+  path live, but its rejected-patch retry request omitted the candidate body and its submitted
+  patch failed hidden acceptance. D-037 now restores exact rejected candidate/reason bytes on the
+  first next request and qualifies them against CAS; this repair has offline evidence and one
+  controlled provider exercise, but no natural-rejection rate evidence. The accepted v4 pilot
+  later exercised one natural rejected-patch retry and verified 10/10 investigation ledgers, but
+  semantic replay and tail admission block were each observed zero times. Those two branches
+  therefore remain offline-only evidence, and one successful pilot is not a no-memory baseline,
+  memory-benefit result or core reliability estimate.
+  D-052 V5 retains those V4 semantics and adds a durable token projection:
+  `requested_input_tokens` first, actual input only when requested is `None`, maximum observed
+  input plus maximum positive consecutive growth, and pre/post-generation 5/4 projected turns.
+  `remaining_tokens <= reserved_tokens` closes only read/search before `ToolCalled` with
+  `token_tail_reserved`; apply/check/diff/finish remain available. This is a nominal cutoff, not a
+  completion guarantee, and the strict exact-request + full 25,000 response guard remains.
+  V5 uses `investigation-policy-v2`, `investigation-ledger-v2`,
+  `investigation-tail-policy-v2`, `context-build-evidence-v5`,
+  `tool-admission-blocked-v2` and `trace-source-evidence-v5` while retaining
+  `trace-qualification-v2`. It is offline evidence only; no provider call has exercised it.
+  Existing v1-v4 traces and replays are not rewritten.
+- D-056 implements an opt-in
+  `tool_schema_version=v3` / `phase-evidence-v6` self-validation path. D-057 narrows its
+  `run_probe`: only a `task-public-v2` registered bounded profile may accept ephemeral Python
+  source outside the target repository. Execution uses a dedicated repository-free image rather
+  than the task evaluator/SWE-bench image, binds its exact image ID and sanitized policy, and
+  applies a read-only checkout/root, masked Git metadata, no network/proxy/host secret/private
+  mount, non-root execution and a container-side timeout. It is optional, non-authoritative and
+  cannot replace a registered check or require a new test file. Its `review_task` is a hash-bound,
+  same-diff self-attestation
+  over public requirements and request-visible check/probe/diff evidence; it is not an LLM grader,
+  hidden-test predictor or success verdict. The separate deterministic evaluator remains the only
+  source of hidden/regression/scope/safety outcome, and same-run hidden feedback remains prohibited.
+  The canonical review body, not only its receipt, must be present in the finish request; later
+  same-diff validation invalidates it. Non-Docker unit/integration, lifecycle/recovery,
+  source-evidence/policy/leak qualification and v1-v5 historical compatibility tests pass.
+  On 2026-07-31 the clean image was rebuilt from current source and all three real-container
+  isolation E2E tests passed; the full suite completed with 702 passed and two Windows
+  symlink-capability skips. Offline mock run `run_36f90bda91b94d42` reached the official evaluator,
+  passed hidden/regression/scope/safety and verified one same-diff review with zero probe calls
+  because its historical v1 task has no registered profile. D-059 then added an infrastructure-only
+  `task-public-v2` fixture outside the frozen dataset. Final mock run `run_7e3c5af2ce8d498a`
+  selected its registered profile, executed a real clean-image probe, recorded `probe-ok`, cited
+  that event in the same-diff review and passed the separate official evaluator plus the dedicated
+  lifecycle check. The D-059 checkpoint suite was 706 passed with two Windows
+  symlink-capability skips.
+  The run's overall campaign qualification is intentionally false (19/26): it is mock/non-campaign
+  evidence and does not establish live-provider provenance or a leak-safe campaign trace. No live
+  provider call or campaign has used v3/v6, and OpenAI start/resume currently fail closed. The clean
+  image intentionally lacks task-specific dependencies, so some probes may fail to import a project
+  until a separately audited dependency image contract exists. Historical runs are not requalified
+  under D-056~D-059. D-061 closes a later pre-commit security audit finding: current code
+  prechecks the mutable tag but creates from the manifest-bound immutable image ID and verifies the
+  container's actual image before start. AST/audit checks are explicitly defense-in-depth because
+  Python reflection can bypass them; the hard child-process boundary is a trusted-parent-installed
+  seccomp filter plus PID limit 2. Current image
+  `sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac`
+  passed host Docker E2E 5/5, including audit-hook-free subinterpreter process-spawn and
+  trusted-parent signal denial. This is offline/Docker boundary evidence, not evidence that
+  self-validation improves task success. The resulting full suite is 724 passed
+  with five Docker-environment and two Windows symlink-capability skips.
+- v2 `finish_task` now freezes exact submitted bytes in CAS before acceptance, binds that artifact
+  through `SubmissionAccepted`, evaluator input and `RunResult`, and reconciles nine tested crash
+  boundaries without duplicate lifecycle or DONE transition. Mini r2 exercised the normal live
+  path; crash-boundary recovery remains offline evidence.
+- The no-memory development preflight rejects a pilot unless qualification v2 records the exact
+  task set, model, budget, harness commit, tool/context versions and runtime-contract hash required
+  by that experiment generation. D-054's two-task 600,000-token completion panel is a runtime
+  diagnostic, not an accepted memory-development pilot and not evidence that a 250,000-token
+  comparison budget is sufficient.
+  The experiments consumed under the 21/200,000 contract
+  `dev-validation-gpt54mini-campaign-20260730-r2`,
+  `dev-no-memory-20260728`, `dev-validation-gpt54mini-investigation-v4-20260730-r1` and
+  `dev-no-memory-v4-20260730-r1` are immutable; the v5 preflight cannot upgrade or rebind them.
+  Historical model-candidate mini r2 validated much of the corrected v2 lifecycle at lower
+  list-price exposure, but it could not populate the primary `pilot_run_id` and exposed the D-037
+  retry-context gap. Corrective primary r2 later populated the consumed campaign, which finished
+  12/12 without evaluator arrival. The v4 campaign was bound to qualified pilot
+  `run_d7207fbb06184dd3` and later completed 12/12 with evaluator arrival 3/12 but SCRR 0/12.
+  Offline context and investigation hardening plus the suite-specific machine gate are complete;
+  terminal mini r3 failed on its per-call output ceiling before exercising the retry. Corrective r4
+  bound `max_output_tokens=25,000` and `max_total_tokens=120,000` under a new diagnostic profile
+  and then ran once. All responses completed, but the REVIEW request was blocked by total-budget
+  reservation before submission or evaluation. The historical r4 trace has an unversioned generic
+  block and therefore remains 21/22 even when all completed token telemetry matches.
+  D-041 fixed the r5 contract at strict 25,000/200,000 and versioned newly emitted exact-request
+  generic terminal blocks as `model-generation-block-v1`; the old r4 result remains 21/22. R5
+  then passed official task evaluation and trace qualification but had zero retry episodes, so
+  the D-037 diagnostic is inconclusive. D-043 then introduced a separately versioned controlled
+  r6 diagnostic: it rejects the first preflight-valid prepared patch before mutation and requires
+  exact next-request recovery plus evaluator arrival. The single approved r6 provider run passed
+  that gate, official task evaluation and trace qualification. This proves the harness branch for
+  one controlled intervention, not natural model-error recovery frequency, recovery rate, memory
+  benefit or primary campaign quality. The fault-free primary r1 then exposed the call-budget
+  lifecycle above. D-047 and D-048 offline contracts are now frozen. Corrective primary r2 and the
+  fresh context-v4 pilot both ran and passed. The separate 12-run v4 no-memory campaign then ran
+  once with its own clean hash and approval. It produced nine exact-request budget failures and
+  three hidden task failures. D-052 subsequently completed the token-aware-tail contract offline,
+  but made no provider call. A hash-bound, leak-scanned maintainer-assisted review proposal now
+  separates one tox candidate group from one unresolved Loguru hold group. It is not automatic
+  PatchLoop-agent self-review evidence. Human approval and group-aware index admission remain open
+  and are intentionally deferred. D-054 superseded the unexecuted 250k single pilot with a
+  two-task, 600k no-memory completion panel. The separately approved provider campaign passed
+  official evaluation, qualification and completion/headroom 2/2 for `$0.15682575`. It is
+  immutable two-task calibration evidence, not a no-memory baseline or memory-effect result.
+- D-060's earlier pre-execution state is superseded by its consumed live evidence. Approved hash
+  `sha256:61a7208bd6ee1a45b08511407d0c8c0658976685245a11d422077efdf9bdef4f` ran exactly once:
+  all three rows were terminal and qualified, HF Hub stopped before evaluation on an exact-request
+  token budget, and PDM/pyfakefs reached the official evaluator and failed hidden acceptance. Thus the
+  original 3/3 completion gate is false, but only the HF row is budget-confounded. The two hidden task
+  failures are not budget evidence. This run does not establish SCRR, a final comparison budget, memory
+  benefit or permission to build the memory index, and its suite/hash/run IDs are not rerun.
+- `model-generation-block-v2` covers admission to the next provider generation. A model response
+  whose measured duration itself crosses the wall limit and a later call inside the same
+  multi-tool response that encounters the tool cap still terminate through the older
+  post-consumption/mid-batch `ContractError` path. Those paths need a separately versioned
+  post-consumption contract before they can be claimed as v2 terminal evidence.
+- The 600,000-token completion ceiling is cumulative across stateless turns; it is not a
+  single-request context size. PatchLoop counts each exact request and disables provider
+  truncation, but it does not yet enforce the model page's 272,000-token max-input limit with a
+  separate local terminal schema. D-054's maximum exact request was 11,832 tokens for Babel and
+  16,927 for Moto, so this boundary was not exercised. An oversized future request could still be
+  rejected by the provider and would fail its gate rather than count as a completed baseline.
+- The official `patchloop evaluate` CLI recomputes the full preflight and execution hash before
+  issuing live capability. The lower-level host-trusted
+  `issue_live_execution_authorization()` helper does not independently reconstruct the entire
+  suite/task/environment/schedule plan. Direct Python callers are therefore outside the paid CLI
+  enforcement claim until that internal API is hardened.
+- Memory build/retrieval/freeze contracts exist; a real reviewed index still requires append-only
+  review bound to the structured proposal, group-aware builder deduplication and an exact embedding
+  revision. Proposal validation is read-only and does not close this gate. The first 12-run traces
+  remain diagnostic:
+  evaluator arrival was 0/12 while repeated and already-covered inspections were also observed.
+  That co-occurrence motivated D-048 but does not prove causality. The v4 campaign exercised
+  semantic replay 26 times and reached the evaluator on 3/12 rows, but the tail admission block was
+  never exercised and nine rows hit strict exact-request budget exhaustion. Its 0/12 SCRR is
+  therefore not a usable no-memory performance baseline. The three task failures now form one tox
+  candidate group and one Loguru hold group; the nine budget-confounded failures are excluded.
+  The hold explicitly means public evidence did not identify a defensible causal rule. Calibration
+  traces are not eligible. The V5 budget and token-aware admission contract do not prove that a
+  future run will finish or that the next 12-run collection will be a usable baseline. The D-054
+  600k ceiling completed 2/2, but it remains a two-task diagnostic rather than a frozen comparison
+  budget or performance baseline. It did not exercise the token-tail admission block or semantic
+  replay. Even 2/2 SCRR cannot establish a population success rate.
+- The checked-in proposal binds the portable campaign report and submitted patches, but full
+  `memory validate-review` also reopens the ignored local failure, qualification, event and state
+  artifacts. A clean checkout without that exported runtime evidence cannot reproduce the full
+  source-evidence validation yet.
+- GitHub adapters exist; no Issue was imported and no Draft PR was created in this session.
+- HTMX is pinned from a CDN; fully offline viewer packaging would require vendoring the BSD asset.
+- Digest-pinned external SWE-rebench evaluator images currently inherit the image's configured user.
+  The AnyIO #1134, Param #1117, Hugging Face Hub #4056, MTPLX #21, FuseSoC #776, tox #3846,
+  Dagster #33605, Kubeflow Pipelines #13112, Loguru #1297 and pyfakefs #1269 images have no
+  configured `User` and
+  therefore ran
+  as Docker's default root user.
+  Network denial, a read-only root filesystem and a read-only submitted workspace were enforced,
+  but uniform non-root execution for arbitrary external images is not yet implemented. The native
+  PatchLoop image's non-root isolation smoke does not prove this property for external images.
+- Historical evaluator results expose only an opaque `submitted_patch_artifact_id`. New v2
+  lifecycle evidence carries the complete public CAS artifact metadata and qualification verifies
+  its bytes, diff hash, evaluator input and result ID. A global standalone ID catalog remains
+  unimplemented for legacy artifacts.
+- Tracked admission reports bind each raw `manifest.json`, `result.json` and `provenance.json` by
+  SHA-256, but those per-run files currently remain under the ignored local `.patchloop/artifacts`
+  store. A clean checkout can validate the report and rerun the deterministic gate, but cannot rehash
+  the original raw run files until a portable evidence bundle is exported. This limitation applies
+  to the existing admission-report family and must be closed before claiming clean-checkout raw
+  evidence inspection.
+- The checked-in live-pilot evidence records likewise bind the local plans, journals, trace
+  qualifications and model candidates by SHA-256 but do not bundle all ignored raw bytes. A clean
+  checkout can inspect the normalized claims boundaries and rehash the portable candidate patches,
+  but cannot independently rehash the complete original runs until a secret-scrubbed portable
+  evidence export exists.
+- The historical Terra r3 journal for `run_3cb86f8d70094a11` is internally hash-chain valid, but
+  its `CampaignCompleted.result_hash` hashes the LF result serialization while Windows persisted
+  the experiment file with CRLF bytes. The qualification remains valid because its source evidence
+  separately hashes the raw persisted run result. The original bytes are preserved and the runner
+  now writes the exact UTF-8 bytes it hashes; this correction applies to future campaigns, not
+  retroactively to that run.
+- The historical Terra r3 usage wall clock is not reconstructible by simply summing model/tool event
+  durations. Internal orchestration and evaluator setup contribute additional time, while
+  `RunCompleted.duration_ms` covers a different evaluator-wrapper interval. Token/call/cost
+  reconciliation is exact; wall-clock component attribution needs a clearer timing schema.
+- `RunManifest.harness_git_commit` records the harness `HEAD` but not a full dirty-tree hash.
+  The new live-suite preflight rejects a dirty worktree before execution; older admission gates used
+  manually verified clean staging commits and are not retroactively covered by that enforcement.
+
+## D-052 offline future contract completed; valid baseline/core still pending
+
+- The v5 pilot, development and core templates exist, but no D-052 provider call has been made.
+  `experiments/dev-no-memory-v5.template.yaml` still has `pilot_run_id: null`, and
+  `experiments/core.template.yaml` still requires the embedding revision to be frozen. Neither a
+  usable no-memory baseline nor a core result follows from the offline contract.
+- The calibration fixture set is complete at 5/5, but it is excluded from memory, core metrics and
+  portfolio performance headlines.
+- The dataset manifest contains 25 packages: five calibration fixtures and 20 admitted research tasks.
+  All research role targets are filled: memory-development 6/6, development-validation 2/2,
+  same-repo core 6/6 and cross-repo core 6/6. It is frozen at
+  `sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786`;
+  the machine audit reports `research_ready=true`, `stress_ready=true` and `complete=true`.
+- The Terminal-Bench-inspired stress contract selects FuseSoC #776, AnyIO #1134 and pyfakefs #1269
+  from public task structure only. Its 30-run schedule is frozen at
+  `sha256:d5a3d90f8429f24b6940d4a5cb1b78a35fa34d3fe3df9937ad6c57daba23f468`
+  and remains excluded from core metrics. None of those 30 runs has been executed.
+- The frozen schedule is a preregistered contract, not proof that the stress runtime is complete.
+  The after-model-call-10 context-reset trigger, the `persistent_state=off` arm and a stress
+  matrix runner/report are not implemented.
+- The CLI `worker-kill-after-patch` injector still cooperatively suspends after a durable patch
+  checkpoint; the actual process termination is currently exercised by the isolated subprocess
+  E2E rather than a production stress supervisor.
+- Offline mock/replay resume accepts a free-lock stale `RUNNING` run, but direct OpenAI resume and
+  interrupted paid campaign journal resume remain intentionally blocked. The OS lock/SQLite claim
+  implementation is local-filesystem oriented and has not been validated as a distributed lease.
+- The existing timeout injector synthesizes one timeout on the first registered visible check.
+  It does not yet reproduce a real environment hang or specifically target a full-suite check.
+- The six `python-tabulate` rows remain candidate inventory in `data/oss-candidate-ledger.csv`; none is
+  an admitted research task.
+- No Terminal-Bench original or constrained coding adaptation has passed PatchLoop admission. Any future
+  original benchmark run is external acceptance evidence, not a core result.
+- No 96-run OpenAI campaign, campaign-level cost comparison, negative-transfer review or live-model cross-repo
+  result exists.
+- Three capped Terra Babel live pilots were executed. r1 and r2 failed acceptance; r3
+  `run_3cb86f8d70094a11` passed official SCRR and trace qualification. Their cumulative cost is
+  `$0.828864375`. All three use the legacy v1 runtime. Their 2026-07-28 configured rates were
+  $2.50/M input, $0.25/M cached input, $3.125/M cache-write input and $15/M output, and only the
+  `gpt-5.6-terra` alias was recorded. D-045 preserves these facts but supersedes Terra for future
+  runs; the completed tool-v2/context-v4 pilot uses the dated mini primary contract.
+- The exact request artifact, input-token-count reconciliation and explicit
+  `truncation=disabled` telemetry in D-031 were implemented after r1-r3. Those immutable Terra
+  traces do not contain the new fields. Mini run `run_d4fea5e7198b4abc` exercised and passed the
+  `prompt-token-integrity-v1` qualification branch but did not reach evaluation.
+- Three historical one-run mini suites pinned `gpt-5.4-mini-2026-03-17`, medium effort,
+  4,096 per-call / 90,000 total tokens and a $2 cap. Terminal r1 failed the submission lifecycle
+  before evaluation and did not change the then-current Terra memory-development or core comparison
+  contract. D-045 later changed only future primary runs. Terminal r2 reached evaluation and
+  qualified but failed task acceptance and exposed a
+  rejected-patch continuity gap. Terminal r3 then failed on
+  `incomplete/max_output_tokens` before mutation or evaluation. None of the three exact
+  experiments may be rerun. A fourth terminal suite r4 pinned 25,000/120,000 under profile v2 and
+  consumed its own clean execution hash once. It raised the static response allowance rather than
+  automatically retrying an incomplete response. All 13 generations completed, but the next
+  REVIEW turn was locally blocked because exact input plus the full 25,000 allowance exceeded the
+  remaining total budget. Exact provider retry would require a separately versioned
+  original-request/logical-turn/crash-recovery contract. D-041 fixes the next diagnostic at
+  profile v3, strict 25,000/200,000 and `model-generation-block-v1` without changing runtime
+  reservation semantics. R4 removes the observed output-ceiling confounder but produced no
+  rejected mutation or diagnostic pass. Evaluator arrival with zero retry episodes remains
+  `inconclusive`; r4 did not reach the evaluator and is `failed`. R5 reached the evaluator,
+  passed the task and generic qualification, and produced exactly this zero-episode inconclusive
+  result. It has no synthetic rejection or automatic retry, so the result is terminal rather than
+  a reason to spend again.
+  The controlled r6 result validates one deliberate retry branch but does not satisfy the
+  fault-free primary mini pilot purpose. Including terminal primary r1, the historical seven mini
+  runs' calculated list-price total was `$0.77412075`. Corrective primary r2 and v4 pilot
+  `run_d7207fbb06184dd3` bring twelve paid pilots to `$1.740790125`; adding the first 12-run
+  campaign gives 24 paid run attempts and `$3.133982625`. The v4 12-run campaign adds
+  `$1.84756425`, for 36 paid run attempts and `$4.981546875`. D-054 adds two completed attempts and
+  `$0.15682575`, bringing the D-055 point-in-time usage-derived list-price total to `$5.138372625`. These are estimates,
+  not verified invoice charges.
+- At frozen repository rates, D-054 reserved `$2.8125` per completion run and `$5.625` for the
+  two-run panel, but measured only `$0.15682575`. D-052's `$14.85` development and `$118.80` core
+  figures remain unfrozen
+  drafts and are not current paid authorizations. None of these values is measured spend or an
+  invoice forecast. The project-wide `$150` cap is not machine-enforced; the runner enforces
+  suite-specific `cost_limit_usd`, so an operator must check the global total separately before
+  every approval.
+- PatchLoop preflights this function-tool run at official list prices. The account UI reports
+  possible complimentary shared-traffic usage, but applicability to this exact function-tool
+  invocation and invoice treatment has not been verified. `model_cost_usd` is therefore a
+  deterministic list-price estimate, not invoice evidence; any incentive must be checked
+  separately in the Usage and Costs dashboards.
+- The six scripted offline runs validate harness plumbing, not model capability or memory effectiveness.
+  No portfolio performance claim about a live model should be made from them.
+
+These are deliberate hard gates. The repository rejects an incomplete core experiment manifest instead of
+silently lowering the design or fabricating missing results.
+
+## D-062 corrective campaign was consumed but is not a baseline
+
+- Execution hash
+  `sha256:464a6eca2597698ca35caa4d7c97173f1af792daec042c36d81b5b8189ae4031` was consumed exactly
+  once for `dev-no-memory-corrective-pilot-20260731-r1`. It is not reusable authorization.
+- Only HF Hub `run_0ccfc8fd359a4785` ran. Original trace qualification failed closed and the campaign
+  recorded `QualificationFailureHalt`; PDM and pyfakefs were not started. The original campaign gate
+  remains false.
+- The HF run used 875,908 tokens over 33 completed provider responses and recorded `$0.8408853` in
+  deterministic list-price cost before an exact-request budget block. It produced no `PatchPrepared`,
+  `PatchApplied` or evaluator result, so it has no SCRR observation.
+- The trace exposed a live v7 policy gap: six-replay saturation blocked 30 read/search actions at the
+  gateway, but the model-visible context continued advertising those actions until token tail. Seven
+  subsequent raw-diff candidates all failed patch preview. Increasing the ceiling alone does not
+  isolate either behavior.
+- Original experiment result, campaign journal and original qualification artifacts are immutable.
+  Independent analysis identified v5-vs-v6/v7 nominal-reserve drift in the qualifier. Append-only
+  correction `qcor_8b6ff812...4870b6` validates corrected trace integrity, but it does not alter the
+  canonical qualification, original false campaign gate or failed task outcome.
+- This tuning purpose remains excluded from comparison, memory admission and core. One incomplete row
+  and two not-started rows are not a no-memory performance denominator and cannot justify a final
+  all-condition budget.
+- D-062 must not be rerun or continued. D-063 completed the offline versioned
+  `phase-evidence-v8` saturation-context fix, and D-064 consumed its exact single-task live contract
+  once. The live policy diagnostic passed, but task completion did not; neither result is a no-memory
+  performance denominator.
+
+## Phase-evidence-v8 does not establish model improvement
+
+- V8 changes only the model-visible admission contract for a gateway policy that already existed. It
+  does not improve patch parsing, increase the budget or add cross-run memory.
+- The generic V8 selector remains limited to mock runs without experiment context. D-064 adds one exact
+  exception for the separately versioned HF Hub saturation pilot purpose, runtime contract and suite;
+  it does not relax the generic selector or authorize a provider call.
+- The V8 qualifier independently recomputes saturation, mutation epoch, tail reasons and resulting
+  action filtering. Generic tool-result presentation still relies on the existing exact context rebuild
+  plus CAS validation; V8 is not a fully independent second implementation of every phase-readiness rule.
+- D-064 execution hash `sha256:dcade27f...b85c` was consumed exactly once. The qualified trace exercised
+  saturation at sequence 101, a later patch at sequence 106 and reset at sequence 110, so the V8 policy
+  diagnostic passed. The suite and hash are immutable and must not be rerun or reused.
+- The same run was rejected by `review_task` 14 times and exhausted 40 model calls before submission or
+  evaluator arrival. It retained 240,627 tokens, 36 tool calls and 1,479,781 ms of headroom; therefore
+  this is a review-evidence/model-call failure, not evidence that the 900,000-token ceiling was too low.
+- One tuning task with completion gate false is not a no-memory baseline and cannot support task
+  correctness, SCRR, a memory-effect claim or core-performance claim. Memory admission remains closed.
+
+## Phase-evidence-v9 live arrival and corrected trace integrity are not performance improvements
+
+- D-066 implements a versioned presentation correction, not a model-quality change. Pinning current-diff
+  passing checks and the final diff prevents recent-event eviction, but it cannot guarantee that the
+  model cites them correctly, produces a valid patch, passes hidden acceptance or reaches the evaluator.
+- The three-review-rejection guard bounds one active mutation epoch; it deliberately converts a fourth
+  would-be generation into a structured terminal failure. It is not an automatic retry policy and a new
+  successful patch resets the epoch count.
+- `review-citation-error-v1` exposes only public exact sequence metadata. It does not reveal hidden tests,
+  reference patches or evaluator feedback and must not be described as an oracle hint.
+- V9 qualification independently rebuilds review anchors and checks request/source CAS, exact integer
+  sequences and pinned presentation, but generic phase-readiness and deterministic task grading retain
+  their existing contracts. Corrected trace qualification means evidence integrity, not task correctness.
+- D-066 focused validation completed with 504 collected, 502 passed/2 skipped, and repository-wide
+  regression completed with 879 collected, 872 passed/7 environment-dependent skipped. This closes
+  the offline implementation gate only; it is still not V9 live evidence.
+- D-067 consumed one approved execution hash. The run used 344,754/1,200,000 tokens, 21/60 model calls,
+  36/100 tool calls and `$0.2880024`; no budget dimension bound. This does not recommend the larger ceiling
+  for a 12-task baseline or 96-run core campaign and does not support another budget increase.
+- The run reached the official evaluator and passed regression/scope/safety, but hidden acceptance failed.
+  It remains `task_failure`, SCRR=false, comparison-ineligible and memory-ineligible. Evaluator arrival is
+  not correctness.
+- Original qualification 32/33 and the original false campaign gate remain immutable. D-068 correction
+  `qcor_51b725...3c032` records corrected trace qualification 33/33 in a separate artifact. It does not
+  rewrite the original result, remove the hidden failure or turn the run into a baseline or memory source.
+- The checked-in D-067 YAML retains false/null authorization fields and the consumed execution hash is not
+  reusable. No rerun is planned; the next evidence gap is leak-safe, public-evidence-only analysis of the
+  hidden-acceptance task failure and requirement coverage.
+
+## Phase-evidence-v10 public coverage completion is not correctness
+
+- D-069 adds an offline process-coverage gate. A maintainer must explicitly decompose each public
+  requirement into `coverage_targets`; PatchLoop does not infer an exhaustive target set from words such
+  as `all`, `every` or `each`. A missing or poorly chosen target therefore remains an authoring risk.
+- A `current_diff_inspection` target proves only that a complete same-diff `read_file` result after the
+  latest patch contained the declared public path and anchor. It does not prove that the function was
+  changed correctly, that every caller was found or that the inspected branch executed. V10 now proves
+  that the anchor already existed in the Git public base via `public-review-base-provenance-v1`, which
+  blocks reference-patch-only anchor leakage, but a maintainer must still audit the target description
+  and the semantic sufficiency of the chosen base anchor.
+- A `passing_validation` target proves only that an advertised visible registered check passed on the
+  current diff. One check may be deliberately mapped to more than one declared behavior target, but this
+  mapping is public contract metadata, not independent path coverage or hidden-oracle evidence.
+- Tool v5 records every target and rolls requirement status up from those rows. A valid partial review is
+  retained as inspectable evidence and sends the phase from REVIEW back to IMPLEMENT. Submission remains
+  blocked until the exact authoritative target list is verified in a current-diff `task-review-v3`.
+  This is a lifecycle invariant, not an LLM semantic grade.
+- Generic V10 remains mock/no-experiment only. D-070 added one exact OpenAI exception and consumed its
+  approved execution hash once. `run_6cc69fc1170c4a44` used 667,553 tokens and `$0.671307` with no
+  binding budget dimension, but stopped before evaluator arrival after three unrelated coverage-evidence
+  citations. The valid partial review covered 7/8 declared targets; it did not complete the required
+  positive V10 lifecycle. This is a live diagnostic row, not a baseline, memory admission or core result.
+- The exact unsubmitted D-070 diff separately failed hidden acceptance in zero-model postmortem
+  `run_c07bb2e439a74380` while regression/scope/safety passed. That derived evaluation does not rewrite the
+  live run's `evaluation_status=not_run`, false gate or qualification. Neither the process failure nor the
+  hidden task failure supports a budget increase or live rerun.
+- V10's citation validator correctly rejected the unrelated sequence, but its error artifact returned an
+  empty details object and did not identify the offending target or authoritative allowed sequences. D-071
+  closes this recovery-feedback gap only in a new offline v6/v11 path; the immutable D-070 request, error,
+  qualification and false gate are not rewritten. The original context did contain the empty authoritative
+  map, so the trace is still not evidence that completion was impossible or that the V10 validator was wrong.
+- D-067 remains an immutable hidden-acceptance task failure and D-068 remains its append-only trace
+  qualification correction. The V2 HF Hub review sidecar and V10 tests do not rerun either artifact,
+  change SCRR, repair the submitted patch or prove why hidden acceptance failed.
+- Historical V1-V9 manifests, tool/context rendering and source evidence retain their original semantics.
+  V10 qualification can establish target-evidence, corrective-transition, submission and recovery
+  integrity only; it cannot establish hidden correctness or cross-run memory benefit.
+- D-069's offline implementation gate completed with 971 collected, 964 passed/7 environment-dependent
+  skipped, Ruff and `git diff --check`; no provider call was made. This closes implementation integrity,
+  not a live model, baseline, SCRR or memory-effect claim.
+
+## Phase-evidence-v11 recovery feedback remains offline evidence
+
+- D-071 adds exact tool v6/context v11 rather than changing V10. Structured
+  `coverage-citation-error-v1` identifies the public target, parent requirement, submitted/allowed/invalid
+  sequences and required path+anchor or visible-check IDs. It does not contain hidden assertions,
+  reference patch content or evaluator feedback.
+- `coverage-rejection-feedback-v1` is rebuilt from the durable rejected-review input/result CAS and
+  request-bound coverage mapping. The source rejection is fully rebuilt before clearing; it remains
+  visible across a fresh-runner resume until a complete review that received that exact feedback, or a
+  complete review whose arguments and public citations independently rebuild, or a
+  `ToolCalled`/`PatchPrepared` intent/success/`PatchApplied`-bound new mutation, clears it. A valid
+  partial review or orphan/self-consistent-forged success cannot clear it;
+  the active source failure is omitted from the bounded recent-event list so two competing model-visible
+  authorities are not created.
+- V11 additionally binds the rejected input to one actual prior model-request CAS and mirrors the
+  active `worker-claim-evidence-v1` in that request artifact and `ContextBuilt`, including the first
+  context after feedback clears. Repeating only stale
+  target sequences is rejected until target-matching fresh public evidence is present.
+- Source/recovery/review/mutation calls also have to appear exactly in the corresponding `ModelCalled`
+  response CAS. The first rejection must cross a durable fresh-worker reclaim; a second stale retry may
+  be rejected and recover on that same worker, with later requests bound to the newest unresolved
+  feedback. Any model/tool event between the first durable rejection and fresh request fails the restart
+  contract. Multi-check validation citations, including batched calls, are all provenance-checked.
+- The focused E2E kills the worker immediately after the durable structured rejection, resumes the same
+  run, obtains the exact public anchor, refreshes the diff, completes review and submission, reaches the
+  separate local evaluator and keeps one `PatchPrepared`/`PatchApplied`. Dedicated qualification and
+  tamper assertions reject changed feedback/result/request CAS, worker claim or mirror drift, missing
+  source/recovery calls, malformed source coverage rows, forged source/refreshed diff evidence, forged
+  clearing feedback/build/review mirrors, missing patch intent, cleared-request claim drift, orphan
+  review/mutation and duplicate mutation.
+- These are deterministic mock/local recovery scenarios. Generic V11 is intentionally
+  mock/no-experiment only; no OpenAI/provider call, live execution hash, cost approval or model cost was
+  created. Repository-wide regression totals are reported only from the final separate validation below.
+- Final repository-wide validation collected 999 tests and completed with 992 passed plus seven
+  environment-dependent skips in 525.1 seconds. Ruff, Python compileall and `git diff --check` passed.
+- An offline evaluator pass on the calibration fixture does not measure live model recovery, HF Hub task
+  correctness, SCRR, a no-memory baseline, memory admission or cross-run memory benefit. D-070 remains an
+  immutable failed live diagnostic and is not eligible for rerun, comparison, memory or core use.
+
+## D-072 live-readiness pass is not recovery or task-success evidence
+
+- D-072 extracts the large V11 context and qualification helpers into dedicated modules without changing
+  the D-071 tool/context/schema contract. This is maintainability work, not evidence of better model
+  behavior. Historical V10/V11 artifacts are not regenerated or reinterpreted because of the move.
+- `memory-development-no-memory-coverage-rejection-pilot` is one exact OpenAI exception; generic V11
+  remains mock/no-experiment only. The checked-in suite fixes one HF Hub/no-memory row,
+  60 model/100 tool/1,200,000 token/1,800 seconds, output 25,000 and reserve `$5.5125`/cap `$6`.
+  These maxima do not predict actual usage, task success or recovery occurrence.
+- A natural run with zero structured coverage rejection may pass trace qualification while the recovery
+  diagnostic is `inconclusive/rejection_not_observed`. Such a row does not validate recovery. When one or
+  more rejections occur, every observed public source/recovery/clearing CAS must verify; a failed sequence
+  makes the readiness gate fail.
+- The exact live branch deliberately does not require a worker restart. D-071's mock E2E proves the
+  deterministic restart contract, but live provider hard kill, stale-run reclaim and fresh-worker recovery
+  remain a separate fault exercise requiring their own suite, execution hash, approval and evidence.
+- The source suite still records `live_cost_approved=false`, `approved_execution_hash=null` and
+  `pilot_run_id=null`; those fields mean the YAML alone cannot authorize a call. A separate clean-host
+  preflight and user approval bound execution hash
+  `sha256:12fb0fb8a02ffe464555bd23125fae18deb6e52e6b6448a482243c036cce080d`, which was consumed
+  exactly once. The offline synthetic hash tests are not evidence for that call.
+- `run_e2132144a8774b05` passed the readiness campaign gate and qualification 36/36 and reached the
+  official evaluator, but structured coverage rejection count was 0. Its recovery status is therefore
+  `inconclusive/rejection_not_observed`, not passed. The run cannot establish a natural rejection-recovery
+  rate or live hard-restart behavior.
+- Rejected-patch retry 17/17 is a different mutation-preview recovery mechanism. Saturated context count
+  17 and one post-saturation `PatchApplied` are investigation-policy evidence. Neither metric converts the
+  zero coverage-citation rejection into coverage recovery evidence.
+- The official evaluator reported hidden fail and regression/scope/safety pass, so outcome is
+  `task_failure` and SCRR=false. Readiness does not require task success; campaign-gate pass must not be
+  reported as benchmark success.
+- Usage was 797,862 input + 64,465 output = 862,327 token, 35 model call, 57 tool call, 369,385ms and
+  calculated cost `$0.841833`. No budget dimension bound, but one non-binding run does not establish a safe
+  completion budget for other tasks.
+- D-070 remains immutable. D-073 puts the consumed D-072 experiment ID in the source-level immutable set
+  and binds its approved hash/run to portable evidence without
+  changing raw result, journal, qualification or gate. The suite/hash/run cannot be rerun and remains
+  excluded from comparison and memory admission; it does not open a no-memory baseline, the memory index
+  or the 96-run core campaign. D-073 itself made no provider call and incurred no additional model cost.
+- D-072's 1,022 collected, 1,015 passed/7 environment-dependent skipped repository verification and
+  322 collected, 321 passed/1 environment-dependent skipped focused verification use in-memory Responses
+  doubles. They validate offline request/trace contracts only and are not live-model recovery evidence.
+- D-073's post-run source seal collected 375 focused tests (374 passed/1 environment-dependent skipped)
+  and 1,025 repository tests (1,018 passed/7 environment-dependent skipped). These counts validate the
+  immutable guard and portable evidence, not a second provider execution or hidden-task correctness.
+
+## D-074 baseline-readiness boundary remains open
+
+- D-069~D-072/V10/V11 are now retired as diagnostic-only paths. Their immutable evidence remains useful
+  for public review and recovery contracts, but none is a prerequisite for the generic no-memory baseline.
+  The historical D-067 note that named hidden-failure requirement analysis as the next evidence gap is not
+  the current sequencing rule.
+- Generic memory-development/core still uses tool V2/context V5 and must not load the HF-specific V10/V11
+  review sidecar. Promoting V10/V11 to a generic runtime would require a separate cross-task contract and is
+  not implied by D-072 readiness.
+- The checked-in `21 model / 50 tool / 250,000 token / 900 seconds` templates are stale and unvalidated.
+  D-055 showed two-task V2/V5 completion at a higher ceiling; D-060 showed one resource-heavy budget
+  confound; the later one-task ceilings do not freeze a population budget. Running the current templates
+  as-is would reintroduce the confound the calibration sequence was intended to remove.
+- The next gate is only: choose an exact generic tuple and fair budget, run one small diverse development
+  readiness panel on that exact tuple with terminal/qualified/evaluator completion and no
+  infrastructure/qualification/diagnostic/budget confound, then freeze and collect no-memory. Task success
+  is not required for the panel, and hidden task failures do not justify another same-task correction loop.
+- Live provider hard kill, stale-run reclaim and fresh-worker recovery remain unmeasured. They belong to a
+  separately approved reliability experiment and do not block the fault-free no-memory baseline.
+
+## D-075 offline readiness contract was not itself live readiness
+
+- D-075 checked in an exact four-task generic V2/V5 suite and validated its schema, runtime binding,
+  qualification and gate logic offline. That implementation evidence alone produced no provider request,
+  live row, measured cost, SCRR or readiness outcome; D-076 below records the later invocation separately.
+- The 850,000-token, 40-model-call, 100-tool-call and 1,800-second values are a candidate completion
+  ceiling for the readiness panel. They are not a measured requirement and are not the final fair budget
+  for no-memory or the four memory conditions. At D-075, the old 21/50/250,000/900 templates also remained
+  stale; D-083 later superseded only their future budget-policy fields.
+- The panel mixes two development-validation and two memory-development tasks. It does not move tasks
+  between dataset roles, admit their traces to memory or make its rows eligible for headline/comparison
+  reporting. Its purpose is calibration-only.
+- `transport_max_retries=0` removes hidden SDK request retransmission for this new suite; it does not
+  disable PatchLoop's trace-visible rejected-action retry, idempotent recovery or resume. Historical
+  manifests omit the field and retain their original client behavior and hashes.
+- A gate pass would only show that all four exact rows terminated, qualified and completed the official
+  evaluator without infrastructure, qualification, diagnostic or budget confounds. Hidden failures may
+  coexist with a pass, and they must not trigger another same-task prompt/tool/sidecar correction loop.
+- The checked-in `$15.75` reserve and `$16` cap are authorization bounds, not expected or observed spend.
+  The source suite has no approval hash. A clean no-call preflight and explicit user approval were required
+  outside the source file; D-076 records that the resulting authority was consumed exactly once.
+- Even after a live gate pass, comparison-budget freeze and no-memory baseline collection require a
+  separate decision. If that decision changes budget, runtime code or harness commit, a second exact readiness
+  panel is required; D-075 cannot qualify the changed tuple. Live hard restart remains an independent
+  reliability evidence gap.
+
+## D-076 seals a failed readiness panel, not a baseline
+
+- The exact D-075 hash was approved and consumed once. All four rows terminated and qualified with zero
+  infrastructure, qualification or diagnostic errors, but only Babel and Moto reached the official evaluator.
+  HF Hub bound on total-token exact-request admission and pyfakefs bound on the 40-model-call limit.
+  Consequently the original readiness gate is false, even though two tasks achieved SCRR.
+- The descriptive 2/4 SCRR is calibration-only. It is excluded from ordinary report metrics, comparison,
+  memory admission and core, and must not be presented as a no-memory baseline estimate.
+- The panel used 1,708,824 token and calculated `$1.76403675` at the recorded rates. This is measured
+  usage-derived list-price cost, not the `$15.75` conservative authorization reserve or an invoice claim.
+- Increasing the candidate to 50 model calls and 1,200,000 total tokens is supported by observed public budget
+  headroom, but it remains a heuristic ceiling rather than a completion guarantee. It cannot be applied to
+  D-075 retroactively. A changed tuple needs a new four-row panel, hash and approval before baseline freeze.
+- Hidden outcomes do not justify task-specific tuning. Live hard restart/reclaim also remains a separate
+  unmeasured reliability exercise.
+
+## D-077 is a budget-only readiness candidate, not a completion or baseline claim
+
+- D-077 uses a new r2 experiment identity. It does not amend, resume or combine D-075's consumed execution,
+  false gate or two successful rows. Partial reuse would destroy the four-row same-tuple readiness denominator.
+- The 50-model-call and 1,200,000-token ceilings are condition-neutral heuristics derived from D-075's public
+  budget terminals. They are not a completion guarantee, measured requirement or frozen comparison budget.
+  Tool 100, wall 1,800 seconds and per-call output 25,000 are unchanged.
+- A budget-only interpretation is valid only while task/order/package, model, prompt, tool V2/context V5,
+  retry 0, image/evaluator, sidecar and fault policy remain fixed. Any other change needs a separately named tuple
+  and readiness panel rather than being attributed to budget headroom.
+- The `$5.5125` per-run, `$22.05` four-row reserve and `$23` cap use the official rate rechecked at
+  2026-08-02T13:11:37Z. They are authorization bounds, not expected spend, free-tier eligibility or invoice
+  evidence. No measured D-077 cost exists before a separately approved invocation.
+- Source config, offline tests and no-call preflight do not authorize provider traffic. At the source-contract
+  stage there is no execution hash, user approval, run, SCRR or gate outcome. A clean exact hash and explicit
+  maximum-`$23` approval are required before one invocation.
+- Even a four-row readiness pass would only remove the observed process confound for this exact tuple. It would
+  not prove task quality or memory benefit and would not by itself start no-memory, admit memory or open core.
+  Hidden failures must not trigger task-specific tuning, and live restart/reclaim remains a separate limitation.
+
+## D-078 seals a second failed readiness panel; model-call completion remains open
+
+- D-077 was executed exactly once and all four rows terminated with qualified traces, but only three reached the
+  official evaluator. Pyfakefs exhausted 50 model calls before submission. Therefore the original readiness gate
+  remains false even though infrastructure, qualification and diagnostic errors were zero.
+- D-077's HF row did not reproduce the prior total-token terminal and reached the evaluator with 395,473 tokens
+  remaining. This stochastic comparison does not establish that the larger token ceiling caused the changed
+  trajectory. Pyfakefs still had 387,160 tokens, 16 tool calls and 1,100,745ms remaining, so the only observed
+  D-077 binding dimension is model-call admission rather than token, tool or wall-clock pressure.
+- HF Hub and Babel hidden failures are task outcomes, not evidence that PatchLoop's agent loop is unimplemented and
+  not permission to tune prompts or tools against hidden behavior. Moto's success likewise does not make the panel
+  a baseline.
+- The descriptive 1/4 SCRR is available-case calibration evidence only. `analysis_ready=false`, ordinary metrics
+  are empty, and comparison, no-memory baseline, failure-memory admission and core remain closed.
+- The `$2.1782655` usage-derived cost is not an invoice claim. D-078 seals the result and consumed ID but does not
+  choose a larger model-call budget, authorize another run or decide whether the four-row all-evaluator gate should
+  be retained unchanged. That requires a separate retrospective decision using public process evidence only.
+
+## D-079 is a single workflow-completion probe, not a new baseline budget
+
+- D-079 observes one pyfakefs trajectory. Even if it reaches the evaluator, one stochastic row does not estimate
+  generic completion probability, justify a population budget or show that 50 model calls was globally too small.
+- Model/tool call limits are intentionally `null` only for this calibration identity. That makes their counters
+  observability-only; it does not remove the 3,000,000-token, 7,200-second, exact-request, cost, loop, sandbox,
+  constrained-tool or evaluator boundaries. Those retained guards can still end the run before evaluation.
+- Removing call-count admission does not guarantee completion. Semantic replay, repeated timeout, submission
+  rejection, total-token, wall, provider or infrastructure failure can remain terminal outcomes and must be
+  reported rather than tuned away.
+- The `$13.6125` reserve and `$14` cap are authorization bounds derived for the checked-in ceiling, not observed
+  spend, an invoice, a completion guarantee or proof of free-tier eligibility. Fresh pricing still has to pass the
+  clean no-call preflight.
+- The probe is calibration-only and deliberately uses a budget/call policy that is not the frozen four-condition
+  comparison budget. Its trace cannot enter the no-memory denominator or failure-memory index, and it cannot open
+  core. Hidden success or failure must not trigger task-specific prompt/tool/context changes.
+- At the source/offline stage there is no provider request, execution hash authority, approved spend, run/result,
+  measured usage/cost or gate outcome. A later invocation, if explicitly approved, must be sealed separately and
+  must not rewrite D-078 or imply automatic reruns.
+
+## D-080 corrects evidence aggregation, not agent correctness or efficiency
+
+- The D-079 workflow did reach the official evaluator, but the submitted patch hidden-failed. Correcting the
+  call-guard projection cannot turn that task outcome into success or SCRR and must not be used to tune against
+  hidden behavior.
+- The original gate remains false in the immutable experiment result. The derived true gate is an append-only
+  interpretation bound to the full qualification and explicitly does not replace or retroactively rewrite the
+  original artifact.
+- The sanitized `gate_checks` projection closes this exact producer/consumer mismatch. It does not prove that all
+  future qualification-summary fields are complete; every newly consumed predicate still needs an explicit,
+  versioned, exact-one fail-closed projection.
+- The hardened correction ID `gcor_6552d8277d70fba7f296b0aee837a8f497be8384cce7fea4521cb39de1e19861`
+  and matching semantic body hash bind the source, correction harness commit
+  `7e40e27446bcf011f700c219a96983e5670422f4`, cause, both exact gate payloads and claims boundary. This binding
+  prevents partial reinterpretation; it does not make the corrected gate a replacement for the original.
+- `qualification-gate-check-projection-v1` accepts only the exact outer/inner key sets and strict integer
+  `check_count=1`; booleans, floats, strings and extra fields fail closed. This validates the named projection,
+  not arbitrary future summary schemas.
+- One 84-model/119-tool trajectory does not establish a generic budget. Most calls occurred in REPRODUCE and 41
+  repeated investigations were semantically replayed, so the observation mixes task/model stochasticity with an
+  exploration-control efficiency issue.
+- Model/tool count admission was intentionally absent, but token, wall, exact-request, loop, cost and sandbox
+  boundaries remained. Completion in this row does not show that those retained guards can never bind elsewhere.
+- D-080 adds no provider call and no model cost. Final verification completed with 331 focused tests passed;
+  repository-wide 1,162 collected, 1,155 passed and 7 environment-dependent skipped; Ruff, Python compileall,
+  JSON parse and `git diff --check` passed. These checks validate the correction implementation, not task success.
+- Calibration-only, `analysis_ready=false`, no-memory/comparison exclusion, memory-admission closure and core
+  closure remain in force despite the derived process-gate pass.
+
+## D-081/D-082 proves process readiness, not baseline or hidden-case quality
+
+- D-081 preserves the D-075/D-077 four-task order and generic V2/V5 tuple. D-082 records one exact invocation at
+  clean commit `b4c79242bb0a94eed50530116205323e78c7d21a` and execution hash
+  `sha256:446b60568795c585856468064fa1aa11a9d85a8e8806e6c71b3b19ab1aa12579`. It reached 4/4
+  terminal·qualified·official evaluator and passed gate v2 with no infrastructure/qualification/diagnostic/
+  budget-terminal or terminal-loop confound.
+- Null model/tool limits mean count observability without count-based admission only for the exact r3 contract.
+  They do not make execution unlimited: the 2,400,000-token, 1,800-second, exact-request, cost, loop, sandbox,
+  constrained-tool and evaluator boundaries can still terminate a row.
+- The token ceiling is a public-process heuristic:
+  `(1,790,707 + 84 * 2,000 + 25,000) * 1.2 = 2,380,448.4`, rounded to 2,400,000.
+  Wall is `856.559s * 2 = 1,713.118s`, rounded to 1,800s. A maximum observed trajectory, memory allowance and
+  headroom multiplier do not estimate a completion distribution or prove the ceiling sufficient.
+- `generic-baseline-runtime-contract-v2`, `generic-baseline-runtime-evidence-v2` and
+  `generic-baseline-readiness-gate-v2` prevent the nullable-count policy from changing historical v1 semantics.
+  The measured run proves this exact provider workflow can complete the panel, not that other tasks, models,
+  budgets, memory conditions or fault/recovery schedules can do so.
+- The gate is process-only: Babel is the sole task success while HF Hub, Moto and pyfakefs fail hidden acceptance.
+  Regression/scope/safety pass 4/4. The descriptive 1/4 must not be reported as a no-memory baseline or population
+  estimate and cannot authorize hidden-driven task-specific tuning.
+- The `$10.9125` per-run and `$43.65` four-row reserve under a `$44` cap use the 2026-08-03 standard price as a
+  worst-rate authorization formula. Measured fixed-rate calculation is `$1.79426325` for 111 model/175 tool calls
+  and 1,929,316 tokens. It is not a billed invoice or free-tier claim. D-082 sealing adds no provider call or model
+  cost.
+- All 111 requests completed with exact input telemetry, truncation disabled and `store=false`; rejected-patch
+  recovery is verified 3/3. Fifty loop observations, including 39 on pyfakefs, did not become a terminal loop
+  failure. These are four-run calibration observations, not rates.
+- Portable evidence is
+  `reports/live-pilot/generic-baseline-readiness-v2v5-20260803-r3.json` with content hash
+  `sha256:2a8f650e73e01aed9d629290627999232ec6aebd1769d2179bc22f084ddbede2`. Raw result SHA is
+  `sha256:f8a2cd25916290ae02e46b484519cc01dedbe50097326085524a88bb9b324f83`; journal file/final event hashes are
+  `sha256:52626ba6d7e61bc293ce327f4bf190e3b4118b20a2efe4d9de09d8186ce6afdd` and
+  `sha256:f5537479c3c1e8c150f9cbfec5238d99c882eff537006773af8d9ddf9f78c254`.
+- Applying the same reserve to 96 core runs yields a theoretical `$1,047.60`, far above the original `$150`
+  project cap. Therefore a readiness pass cannot mechanically freeze this ceiling for the four-condition core;
+  scope, budget or campaign design needs a separate predeclared decision without changing conditions unequally.
+- D-081/D-082 remain calibration-only and leave `analysis_ready=false`, comparison denominator, no-memory baseline,
+  memory admission and core closed. D-075/D-077/D-079/D-080 identities, raw evidence, false gates and append-only
+  correction remain immutable. D-082 final documentation-seal verification passed 1,207 of 1,214 collected
+  tests with seven environment-dependent skips and focused D-082 8/8.
+
+## D-083 freezes a resource policy, not completion or execution authority
+
+- D-083 uses only the exact D-081 r3 pyfakefs observed-prefix minimum of 1,303,223 tokens. Multiplying by 1.2
+  gives 1,563,867.6 and rounding up by 100,000 yields a 1,600,000-token per-run ceiling.
+- The frozen policy is null model calls, null tool calls, 1,600,000 total tokens, 1,800 seconds, 25,000 maximum
+  output tokens and zero SDK transport retries. Null call limits retain counter telemetry and every non-count guard.
+- The ceiling is not a completion guarantee or population estimate. D-080's historical minimum of 1,815,619 is
+  outside the exact D-081 r3 source scope and is neither combined with nor silently substituted into this freeze.
+  Hidden acceptance and task success are not derivation inputs.
+- Worst-rate reserves are `$7.3125` per run, `$87.75` for 12, `$131.625` for 18 and `$702` for 96. Existing
+  `$20` and `$150` caps remain unchanged, so freezing a per-run policy does not approve any campaign scale.
+- Runtime, manifest and qualification support are pending. Templates remain fail closed and D-083 grants no live
+  execution, denominator eligibility, no-memory baseline, memory admission, core campaign or `analysis_ready` state.
+- D-081/D-082 remain immutable calibration-only evidence. The append-only artifact is
+  `reports/live-pilot/artifacts/d083-condition-neutral-comparison-budget-freeze.json` with SHA
+  `sha256:e01c5f0107592e1c29c1ec8264f32bf05c979a718c353c37acb0d87fafd2cb88`. D-083 implementation adds
+  zero provider calls and `$0` model cost. Final verification collected 1,238 tests: 1,231 passed and seven
+  environment-dependent tests were skipped.
+
+## D-084 wires the frozen runtime identity, not a comparison result
+
+- D-084 adds `condition-neutral-comparison-runtime-contract-v1` to the execution plan/hash and validates the same
+  exact tuple in `RunManifest` before start. It does not change D-083's 1,600,000-token derivation or claim that
+  the ceiling guarantees completion.
+- `condition-neutral-comparison-runtime-evidence-v1` is stored as a content-addressed artifact referenced by
+  `RunStarted`; start/resume and the no-memory qualifier verify both descriptor and bytes. This proves contract
+  continuity, not model correctness or task success.
+- Budget diagnostics and nullable count limits accept only the exact registered profile. Null counts remain
+  observability-only while token, wall, exact-request, cost, loop, constrained-tool, Docker/network and evaluator
+  guards remain active.
+- The four core conditions have structural plan/manifest/start-resume support with the same resource tuple.
+  Frozen-index identity is not yet bound into the execution hash and per-run evidence, and leak-safe per-condition
+  terminal qualification remains pending. `CORE_MEMORY_RUNTIME_BINDING_PENDING` and the paid-call boundary keep
+  core non-runnable, unqualified and locked.
+- The artifact `reports/live-pilot/artifacts/d084-condition-neutral-comparison-runtime-gate.json` records an
+  offline gate only. It creates no approved execution hash, provider call, model cost, live authority, baseline,
+  comparison denominator, memory admission, core campaign or `analysis_ready` state.
+- Final verification was focused D-084 68/68 and repository-wide 1,304 collected, 1,297 passed with seven
+  environment-dependent skips. Artifact SHA is
+  `sha256:e7fb7b7e7e9dad3e6b31fb781f09151b940bf226bdd5876e5e75e472ff24b701`.
+- D-081 nullable-count calibration, the historical 250k runtime and all D-083 bytes remain immutable and are not
+  reinterpreted under the D-084 contract.
+
+## Historical D-085 source gate is not a live result or baseline
+
+- D-085 adds exact suite `dev-validation-condition-neutral-v2v5-pilot-20260803-r1`, a one-row Babel
+  development-validation pilot with the D-083/D-084 runtime tuple. It exists to exercise
+  the new comparison wiring before the 12-run collection, not to estimate success rate or memory effect.
+- The process predicate requires one terminal, trace-qualified, official-evaluator run, an exact disabled-call-guard
+  pass, and zero infrastructure, qualification, diagnostic, budget-terminal and terminal-loop confounds. Hidden task
+  success and SCRR are deliberately excluded.
+- The conservative reserve is `$7.3125` and the checked-in source cap is `$8`. Neither is an invoice prediction,
+  free-tier claim or spending approval.
+- The source artifact `reports/live-pilot/artifacts/d085-condition-neutral-comparison-pilot-source-gate.json` does
+  not contain a clean preflight result, candidate/approved execution hash, provider call or measured cost. D-086
+  records the later approved invocation separately rather than rewriting this source artifact.
+- At D-085 source time the 12-run template was blocked by a missing qualified pilot and `$20 < $87.75` cap. D-086
+  supplies the qualified pilot evidence but does not change that cap. Memory review/index freeze and core binding
+  remain closed until new no-memory collection evidence exists.
+- Pilot and campaign source commits are intentionally separate. The exact `dev-no-memory-v5-20260730-r1` consumer
+  compares the D-083 policy and semantic runtime tuple, rechecks qualification/source/approved-plan CAS and four
+  process checks, and requires the persisted qualification to exactly match a read-only durable recomputation. It
+  binds a canonical `condition-neutral-comparison-pilot-admission-v1` hash into the future plan
+  and execution hash without requiring task success. This source-stage wiring did not itself create a qualified
+  pilot, cap change, campaign approval or paid-run authority; D-086 changes only the first of those facts.
+- Final offline verification is focused 153/153 and repository-wide 1,385 passed/7 skipped. The source artifact SHA
+  is `sha256:8b60cb2e62a6259db29527a600712e95b36390a1c07da9fb66e6f1d7d16f51d2`.
+
+## D-086 observes readiness and one success, not a no-memory baseline
+
+- The exact D-085 invocation completed one Babel row and passed terminal, trace qualification, official evaluator and
+  the original process-readiness gate. Hidden/regression/scope/safety also passed. One successful row is not a
+  success-rate estimate, denominator or memory-effect comparison.
+- Usage was 73,201 tokens, 8 model and 9 tool calls, 50,769ms and `$0.06802575` at the fixed documented rates.
+  This is not a billed-invoice or free-tier-treatment claim.
+- The raw result contains `budget-pressure-error-v1` because its read-only diagnostic selector omitted the exact
+  D-085 purpose. The append-only correction records the narrow selector fix and derived headroom; it does not replace
+  the raw result, original passed gate or task outcome.
+- The portable and correction artifacts are
+  `reports/live-pilot/dev-validation-condition-neutral-v2v5-pilot-20260803-r1.json`
+  (`sha256:520ae8408c4e090a2c66a0ed3b2c5c29738762eec1b4f7d87b9452e551635464`) and
+  `reports/live-pilot/artifacts/d086-condition-neutral-comparison-pilot-budget-pressure-correction.json`
+  (`sha256:bd42c50b7da2400eea8e340358e92ff2605a9fde8d866d3fdff1c9695b95aeb4`). Final verification is `focused 64/64; repository-wide 1,416 collected, 1,409 passed/7 skipped; Ruff/compileall/JSON/git-diff checks passed; seal provider calls/model cost 0/$0`.
+- Hard-consumed protection prevents another D-085 invocation even if local raw artifacts are absent. This does not
+  make the portable metadata sufficient to recreate the full private evaluator or provider trace on a clean machine.
+- No-memory baseline, comparison denominator, memory admission/review/index, core and `analysis_ready` remain closed.
+  D-085 source evidence stays historical and immutable.
+- At D-086 time, the next candidate was a separate `$20 → $88` 12-run cap decision. D-087 now supersedes that
+  forward choice with its `$25` accrued-spend source; D-086 itself still grants no campaign authority.
+
+## D-087 caps campaign-local accrued list-price cost, not completion
+
+- D-087 supersedes the forward `$20 → $88` choice with a new exact source and `$25` campaign-local hard cap. It does
+  not rewrite the historical `$20` template or D-083~D-086 evidence.
+- The `$25` value is derived from D-081 r3 public process usage: `$5.38278975` 12-run mean projection,
+  `$14.36724` max-run envelope, plus one `$7.3125` full-run reserve, rounded from `$21.67974` to the next `$5`.
+  Hidden outcomes and task success are not used in this choice.
+- `$87.75` remains the worst-rate theoretical upper bound for all 12 run ceilings. It is disclosed rather than
+  reserved up front. Therefore `$25` cannot guarantee that all 12 runs will complete.
+- A row starts only if `accrued + $7.3125 <= $25`. Exact nano-USD comparison admits equality. If a full reserve is
+  unavailable, current and remaining rows are `not_started`, the completion gate is false, and the campaign cannot be
+  used as a no-memory baseline or comparison denominator.
+- Actual settlement is recomputed from terminal token usage at the fixed manifest rates; the result's displayed cost
+  is not trusted for cap admission. Missing or malformed usage leaves the full reservation held and fails closed.
+- The append-only journal makes row-level reserve/settle evidence durable, but D-087 intentionally disables live
+  resume. Supporting paid resume safely requires a request-level reservation/settlement ledger for the interval where
+  the provider may have billed a response before `ModelCalled` becomes durable.
+- A local SQLite one-use consumption anchor rejects marker deletion, journal reset, alternate runner roots and
+  rehashed lower settlements while that anchor is preserved. It is not an external billing ledger and does not claim
+  protection if an operator rolls back or deletes the entire local database and journal together.
+- `$25` is not a billed invoice, free-tier treatment, organization/project-wide spending limit, or prediction of
+  future provider charges. It applies only to this exact campaign under the fixed documented list-price manifest.
+- This source gate made zero provider calls and added `$0` model cost. Clean preflight, new execution hash, separate
+  max-`$25` user approval, campaign execution, baseline sealing, memory admission/index and core remain pending.
+- Final offline verification is focused 68/68 and repository-wide 1,472 collected, 1,465 passed/7 skipped. The
+  source artifact SHA is `sha256:5f038999b65930a0f155d5eb00a530ac06b6e359de0bdac12fff22398aaa7efe`.
+
+## D-088 seals a failed readiness gate, not a no-memory baseline
+
+- D-087 completed all 12 scheduled rows at process level, but only 11 reached the official evaluator. AnyIO
+  repetition 2 was blocked locally because 21,792 remaining tokens could not reserve the next exact 14,080-token
+  input plus 25,000 output allowance. Provider generation did not start.
+- The `$25` campaign-local cap was not the cause: accrued list-price cost was `$5.36842875`, maximum committed was
+  `$12.31149825`, all 12 reservations settled, held reserve ended at zero, and no reserve-unavailable event occurred.
+- The 1/12 resolved observation is not a success-rate estimate. With one per-run budget confound, D-088 keeps
+  `analysis_ready`, baseline, comparison denominator, memory admission/index and core closed.
+- Ten official hidden failures are preserved as task outcomes but do not authorize task-specific agent tuning.
+  Readiness work should change only the condition-neutral resource policy unless a separate decision explicitly
+  broadens scope.
+- Fixed manifest pricing is reproducible accounting, not the billed invoice or a claim about free-tier treatment.
+  The seal work itself made no provider calls and added `$0` model cost.
+- D-087 is hard-consumed and must not be rerun. A successor needs a new experiment ID, clean source, fresh no-call
+  preflight, new execution hash and separate user cost approval.
+
+## D-089 isolates one budget confound; it does not tune or validate the agent
+
+- D-089 selects only the AnyIO row that failed before evaluator admission. The selection uses the public process
+  failure (`exact_request_budget_exceeded`), not the hidden outcome. It does not rerun the other 11 rows.
+- “Budget-only” is scoped to per-run agent/model/runtime knobs. The new experiment necessarily has a new ID, purpose,
+  one-row schedule, repetition count and cost authority. Among the comparable runtime knobs, only total-token ceiling
+  changes from 1.6M to 2.0M.
+- Same-prefix arithmetic gives a 1,617,288-token minimum and 382,712-token headroom under 2M. A stochastic rerun can
+  take a different trajectory, so this is not a completion guarantee and does not establish a generally sufficient
+  budget.
+- The `$9.1125` reserve assumes every budgeted token plus one output allowance is charged at the highest configured
+  `$4.50/M` rate. It is deliberately conservative and is neither expected spend nor invoice/free-tier evidence.
+- Passing means only that the exact workflow reaches terminal qualification and official evaluator without a budget,
+  infrastructure, qualification, diagnostic or terminal-loop confound. Hidden acceptance and SCRR are not required.
+- One completed AnyIO probe remains calibration-only. It cannot establish the no-memory denominator, admit memory
+  rules, freeze an index, estimate success rate or unlock core.
+- The source stage made zero provider calls and, at that gate, still required a clean no-call preflight, exact candidate
+  hash and separate max-`$10` user approval. The later exact invocation belongs only to the D-090 seal below.
+
+## D-090 shows that a larger ceiling is not a completion guarantee
+
+- D-089 2M run은 D-087보다 더 진행됐지만 `IMPLEMENT`에서 다시 exact-request token guard에 걸렸다. 이는
+  2M이 모든 AnyIO trajectory에 충분하지 않음을 보여줄 뿐, 2,014,913이나 2,179,715가 충분한 budget이라는
+  뜻은 아니다.
+- Evaluator가 실행되지 않았으므로 hidden correctness, regression, scope와 safety 결과는 모두 미관측이다.
+  이 run을 task failure, task success 또는 agent quality score로 사용하지 않는다.
+- 22 loop observation, 20 replay와 15 verified rejected-candidate retry가 있었지만 terminal-loop failure는 아니다.
+  동시에 이 repeated-recovery trajectory는 단순 budget 증액보다 별도 workflow 분석이 필요함을 시사한다.
+- One-row calibration은 no-memory performance denominator가 아니고 memory rule admission이나 core experiment를
+  열지 않는다. Exact invocation은 seal 후 hard-consumed이며 자동 재실행하지 않는다.
+
+## D-091 remains a bounded non-causal audit
+
+- D-087 r2와 D-089은 동일 task/model/tool/context지만 repetition, schedule, execution identity, harness commit과
+  token ceiling이 다르다. 차이를 budget effect로 인과 추정하지 않는다.
+- ContextBuilt는 두 run 모두 최대 12 event만 포함했고 D-089은 더 적은 eligible event에도 final 121,658 chars를
+  기록했다. Public metadata는 selected content growth를 보여주지만 body를 열지 않았으므로 정확한 semantic 원인은
+  모른다.
+- Qualification과 retry rehydration pass는 관측된 trace contract가 온전하다는 뜻이지 harness defect가 없다는
+  증명은 아니다. 반대로 repeated invalid patch가 곧 harness defect라는 증거도 아니다.
+- 534,853-token same-task control은 process variance만 보여준다. 해당 task outcome, hidden correctness와 memory
+  효과는 D-091 결론에 사용하지 않는다.
+- 2.4M/3M 산술은 observed prefix에만 유효하고 token-tail block 이후 tool path, future latency, submission과
+evaluator arrival를 예측하지 않는다. Wall을 함께 늘리는 것도 별도 policy change다.
+
+## D-092 does not validate a runtime guard or open the denominator
+
+- D-092는 observed trajectory를 replay한 counterfactual audit이지 candidate guard를 실제 runtime에서 실행한
+  experiment가 아니다. `false_stop=false`도 future safety를 보장하지 않는다.
+- 90k absolute context sensitivity는 D-089 AnyIO 한 run에만 반응하고 D-089을 본 뒤 포함한 post-hoc threshold다.
+  Generic context ceiling 근거가 아니다.
+- 18개 run은 서로 다른 harness commit과 1.6M/2.0M/2.4M total-token ceiling을 가진 readiness/calibration
+  source다. Task success rate나 model performance sample로 합치지 않는다.
+- Public process metadata만 사용했으므로 hidden correctness, private/reference patch와 memory effect는 policy 선택에
+  사용하지 않았다.
+- Qualified budget terminal을 `agent_failure`로 남기는 outcome rule은 선택됐지만 네 memory condition의 plan,
+  manifest, qualification, report aggregation에 아직 결속되지 않았다. 따라서 no-memory baseline, comparison
+  denominator, memory admission/index와 core는 계속 닫혀 있다.
+- Retain decision은 현 정책이 최적이라는 뜻도, 다른 사전 정의 cross-task grid가 영구히 기각됐다는 뜻도 아니다.
+
+## D-093 corrects readiness interpretation, not budget sufficiency
+
+- `readiness_inconclusive`는 더 큰 budget이면 agent가 성공한다는 뜻이 아니다. Budget ceiling 때문에 official evaluator
+  outcome을 관측하지 못했으므로 readiness 질문에 답할 수 없다는 뜻이다.
+- Raw `agent_failure`를 보존하므로 runtime 사건과 analytical disposition이 다르다. 두 값을 섞어 task success rate나
+  memory effect를 계산하면 안 된다.
+- 3M token과 3,600초는 D-088/D-090 sealed public maximum에 명시된 multiplier와 rounding quantum을 적용한
+  conservative candidate다. 의도상 non-binding emergency ceiling일 뿐 실제 non-binding 여부는 successor run이
+  끝난 뒤에만 알 수 있다. Completion guarantee, frozen experiment budget, expected spend 또는 유료 실행 승인이 아니다.
+- 세 task panel은 workflow diversity를 확인하기 위한 calibration이다. 성공하더라도 no-memory performance denominator,
+  memory rule admission/index 또는 core experiment를 자동으로 열지 않는다.
+- Task success, hidden acceptance와 SCRR을 readiness gate에서 제외하는 것은 correctness를 무시한다는 뜻이 아니다.
+  Workflow가 끝까지 실행되는지와 최종 patch가 맞는지를 서로 다른 결과 축으로 보고한다.
+
+## D-094 freezes source identity, not completion or performance
+
+- 3M token과 3,600초는 generous finite safety ceiling이지 세 workflow의 completion guarantee가 아니다. 실제 run이
+  다시 resource guard에 걸리면 readiness는 pass가 아니라 budget-confounded로 남는다.
+- Model/tool call limit `null`은 해당 count를 admission guard에서 제외한다는 뜻일 뿐 token, wall, cost, constrained
+  tool, Docker/network, evaluator와 qualification guard를 제거하지 않는다.
+- `$40.8375`는 모든 budgeted token과 추가 output allowance를 최고 standard output rate로 계산한 conservative
+  suite reserve다. Expected spend, invoice, free-tier 적용 여부 또는 project-wide rollback-safe billing ledger가 아니다.
+- Task success, hidden acceptance와 SCRR을 gate에서 제외해도 결과는 계속 기록한다. 이 source panel은 agent를
+  완벽하게 만들거나 hidden failure로 튜닝하기 위한 실험이 아니라 workflow completion readiness calibration이다.
+- Source artifact는 clean preflight, execution hash, user approval, provider/evaluator call이나 result를 포함하지 않는다.
+  통과하더라도 baseline, denominator, memory rule admission/index 또는 core authority를 열지 않는다.
+- Historical suite/run/result는 변경하거나 자동 재실행하지 않는다.
+
+## D-095 passes workflow readiness, not task correctness or a baseline
+
+- 세 run은 exact D-094 process gate를 통과했다. 이는 이 model/prompt/tool/context와 관측된 세 trajectory에서
+  submission·qualification·official evaluator까지 workflow가 완주했다는 뜻이다. 3M token 또는 3,600초가 다른
+  task와 stochastic trajectory에도 일반적으로 충분하다는 뜻은 아니다.
+- Task correctness는 0/3이다. AnyIO, pyfakefs와 HF Hub patch는 모두 regression/scope/safety를 통과했지만 hidden
+  acceptance에 실패했다. Readiness predicate가 task success를 요구하지 않는다는 이유로 이 결과를 누락하거나
+  성공으로 바꾸지 않는다.
+- 반대로 hidden 0/3은 harness/readiness 실패도 아니다. Exact telemetry, durable qualification recomputation,
+  evaluator receipt와 process-confound 0이 각각 독립적으로 통과했다. Hidden outcome을 보고 prompt/tool/task를
+  수정하거나 same suite를 자동 재실행하지 않는다.
+- 세 memory-development task를 condition당 한 번 실행한 selected calibration panel이므로 0/3을 no-memory success
+  rate나 comparison denominator로 사용하지 않는다. Memory review/admission/index, core와 `analysis_ready`는 계속
+  닫혀 있다.
+- `$0.9374115`는 frozen standard rate에 따른 reproducible list-price 계산이다. 실제 invoice, free-tier 적용액이나
+  organization/project-wide cost를 주장하지 않는다. Seal 작업 자체는 provider/evaluator call 0/0과 added model
+  cost `$0`이다.
+- Exact experiment와 execution hash는 hard-consumed이며 재사용하지 않는다. 이 one-use 표시는 sealed journal의
+  exact campaign 1회와 static source guard를 뜻하며 generic durable spend ledger를 뜻하지 않는다. 다음 단계는
+  별도 offline condition-neutral resource-policy/baseline-admission decision이고 새 live execution 권한이 아니다.
+
+## D-096 freezes a prospective contract, not a measured baseline
+
+- D-096의 3M token/3,600초/null-call policy는 future comparison을 위한 finite safety ceiling이다. D-095 세
+  trajectory에서 workflow readiness가 확인됐다는 사실만으로 12-row campaign이나 모든 stochastic trajectory의
+  completion을 보장하지 않는다.
+- Resource policy를 선택했다고 runtime v2가 구현된 것은 아니다. D-096 시점에는 새 execution plan,
+  `RunManifest`, `RunStarted`, start/resume, qualification binding과 exact successor suite가 없으므로 provider
+  실행도 baseline result도 없다.
+- D-083/D-084 v1은 historical run을 설명하는 유효한 contract로 남는다. Future v2를 선택한 이유로 historical
+  manifest, qualification, result를 재해석하거나 D-087/D-095를 소급 baseline denominator에 넣지 않는다.
+- Task success와 hidden acceptance가 campaign admission predicate가 아니라는 것은 correctness를 무시한다는 뜻이
+  아니다. Workflow/process-confound 판정과 task correctness를 분리해 기록하고, official-evaluator task failure만
+  별도의 leak-safe memory-candidate review 대상으로 삼는다.
+- Qualified budget terminal은 frozen-policy campaign row의 `agent_failure`로 포함될 수 있지만 자동 rerun하거나
+  failure-memory rule로 전환하지 않는다. Infrastructure·qualification failure와 evaluator 미도달 budget trace는
+  memory candidate가 아니다. Admission 가능한 budget terminal은 canonical pre-call token/wall block,
+  actor/CAS/no-provider-after와 submission/evaluator 부재를 모두 증명해야 하며 임의 terminal label은 허용되지 않는다.
+- Official row와 budget-terminal row는 disjoint·exhaustive exact-one이다. Accepted submission이나 evaluator receipt가
+  budget branch에 섞이거나, official branch의 receipt가 미완료이면 admission할 수 없다. Issued response 하나라도
+  `completed`가 아니면 전체 campaign completion gate가 닫힌다.
+- Memory candidate도 memory rule admission이 아니다. Private test, hidden assertion, reference/submitted patch가
+  유입되지 않는 leakage scan과 agent 또는 maintainer review, deduplication 뒤에만 별도 admission decision을 할 수 있다.
+- Worst-rate `$163.35`/12 run은 conservative authorization reserve이며 expected invoice나 free-tier 적용액이 아니다.
+  현재 project cap `$150`보다 크므로 D-096은 `NO_MEMORY_AUTHORIZATION_CAP_PENDING`으로 live authority를 열지
+  않는다. 최소 정수 `$164` 산식도 cap 변경이나 사용자 승인을 대신하지 않는다. Rate는 D-094 artifact의 frozen
+  pricing snapshot을 재현한 값이며 다음 live source gate에서는 fresh pricing 확인이 여전히 필요하다.
+- Aggregate dataset hash만으로 task identity를 충분하다고 보지 않는다. 여섯 `public.yaml`의 exact bytes/file SHA와
+  manifest `public_spec_hash`를 함께 묶지만, 이 integrity check도 task quality나 hidden correctness를 보장하지 않는다.
+- Artifact와 builder test가 통과해도 no-call preflight, execution hash, approval, provider/evaluator call,
+  comparison denominator, memory review/admission/index, core와 analysis를 자동으로 열지 않는다.
+
+## D-097 implements source/runtime wiring, not a live baseline
+
+- Exact successor suite `dev-no-memory-condition-neutral-3000k-20260805-r1` (2,741 bytes,
+  `sha256:7b3c217388e86a2760694e98031b7ac974c8c450075e3433ee977e35b344abb0`)와 runtime-v2 binding이
+  source/code에 존재해도 clean preflight, approved execution hash와
+  provider result가 없으므로 no-memory baseline이나 completed denominator는 아직 없다. Historical D-087/D-095
+  row를 D-097 row로 소급 대체하지 않는다. Exact schema는
+  `condition-neutral-comparison-runtime-contract-v2` / `condition-neutral-comparison-runtime-evidence-v2`이며
+  runtime-v1 fallback을 허용하지 않는다.
+- Source-focused suite는 suite/task/environment identity, D-096 binding, cost와 authority boundary를 검증한다.
+  Source artifact의 `runtime_v2_implementation_verified_by_artifact=false`가 의미하듯 이 검사만으로 actual
+  start/resume, durable usage settlement 또는 post-run qualification이 live trajectory에서 동작했다고 주장할 수
+  없다. Final focused/runtime/repository count는 전체 회귀가 끝날 때까지 pending이다.
+- `$164`는 하나의 fsync된 `FullScheduleCostReserved` event가 결속하는 exact 12-row worst-rate reserve
+  `$163.35`를 비용 때문에 중간 censor하지 않기 위한 prospective campaign-local source cap이다. Historical
+  project cap `$150`을 변경하지 않았고 사용자가 cap exception이나 invoice 지출을 승인한 것도 아니다.
+  Free-tier 적용액이나 실제 invoice도 이 산식에서 알 수 없다.
+- Runner는 동일 plan/CAS/journal을 각 row 전에 재검증하고 terminal row마다 deterministic settlement를 기록한다.
+  그러나 D-097에는 per-row atomic SQLite capability/consumption이 없고 live resume은 disabled다. Cost journal은
+  duplicate paid-call prevention을 주장하지 않으며 기존 one-use execution hash가 authorization을 단일 sequential
+  campaign invocation으로 제한할 뿐이다. Whole local state rollback 방어나 외부/request-level billing ledger를
+  구현했다고도 주장하지 않는다. Final `CampaignCompleted`/result revalidation과 rehashed foreign/duplicate event
+  rejection은 사후 evidence integrity이며 provider-side idempotency가 아니다.
+- Official-evaluator `task_failure`와 canonical frozen-policy budget `agent_failure`를 모두 terminal denominator
+  branch로 허용하는 runtime output `condition-neutral-no-memory-baseline-admission-gate-v2`는 task correctness를
+  완화하는 것이 아니다. Task success, hidden acceptance와 SCRR는
+  별도 결과로 그대로 보고한다. Budget branch는 memory candidate나 automatic rerun 권한이 아니다. Future
+  denominator gate가 통과하면 campaign-level `memory_review_eligible=true`지만 review candidate pool은 official
+  task failure로만 제한된다. 이는 review stage가 열렸다는 뜻일 뿐이다. 별도 review/dedup/leak gate 전
+  `memory_admission_unlocked=false`이며 memory index를 만들 수 없다.
+- Clean no-call preflight가 exact candidate hash를 만들고 사용자가 max-`$164`와 `$150` campaign exception을
+  별도로 승인하기 전에는 live run/result, memory review/admission/index, core와 analysis를 열 수 없다. Blocker는
+  `NO_MEMORY_CLEAN_PREFLIGHT_AND_164_USD_APPROVAL_PENDING`이다.
+
+## D-098 result boundary
+
+- D-097 live execution은 완료됐고 D-098은 exact development no-memory denominator를 봉인했다. SCRR 2/12는 이
+  여섯 memory-development task와 두 repetition에만 적용된다. Held-out 12 task, 다른 memory condition, stress,
+  recovery 또는 일반 coding-agent 성능으로 외삽하지 않는다.
+- AnyIO repetition 1은 provider incomplete response가 아니라 next exact request를 보내기 전 local total-token guard에
+  걸렸다. 3M보다 큰 budget이면 성공했을 것이라고 주장하지 않는다. 이 row는 denominator의 measured
+  `agent_failure`이지만 failure memory source가 아니다.
+- `$11.838408`은 manifest에 고정된 standard rate와 durable usage로 계산한 값이다. 실제 invoice, free daily usage,
+  discount, cached billing 또는 account charge를 확인한 값이 아니다.
+- `memory_review_eligible=true`는 9개 public trace를 review queue에 넣을 수 있다는 뜻이다. Rule admission,
+  embedding/index build, retrieval freeze와 core campaign은 아직 완료되지 않았다.
+- 현재 v1 review validator는 proposal을 read-only로 검증하지만 failure별 review/index builder는 semantic group을
+  직접 소비하지 않는다. Group-level append-only decision과 proposal-consuming builder 없이 9개 failure를
+  승인하면 dedup된 rule 대신 generic entry가 중복 생성될 수 있으므로 index build를 진행하지 않는다.
+- D-098 portable report에는 hidden pass/fail oracle label은 포함되지만 hidden check ID, assertion/output와 evaluator
+  evidence payload는 포함되지 않는다. Causal memory rule은 generic hidden label만으로 특정하지 않는다.
+- Exact experiment ID는 hard-consumed되며 automatic rerun, hidden-driven tuning과 live resume은 승인되지 않는다.
+
+## D-099 review-proposal boundary
+
+- D-099이 직접 관측한 사실은 9개 qualified run이 submitted patch와 official task-failure outcome을 가졌다는 것,
+  그리고 public patch/trace를 5개 reusable-pattern 후보군으로 정리할 수 있다는 것이다. Acceptance의 exact private
+  cause, target agent architecture defect, harness defect, 일반 coding-agent weakness 또는 memory 개선은 확정하지 않는다.
+- Candidate 3 group은 proposed rule이지 admitted MemoryEntry가 아니다. Hold 2 group도 결함이 없다는 뜻이 아니다.
+  AnyIO는 단일 eligible run이라 lifecycle rule의 일반화가 부족하고, Loguru는 반복된 secondary diagnostic defect가
+  public code에 보이지만 broader formatter rule boundary가 아직 미확정이다.
+- Qualification/source-evidence/failure-record hash는 opaque integrity binding이다. 그 body를 causal evidence로
+  해석하지 않으며 evaluator payload, acceptance assertion/output, reference patch와 provider body를 열지 않는다.
+- Portable validator는 source-time raw audit을 다시 수행했다고 주장하지 않는다. `.patchloop` 없는 machine에서는
+  tracked D-098 seal, manifest/public spec, submitted patch copy, proposal algebra/hash/leak scan만 다시 검증한다.
+  Raw audit는 explicit mode에서만 가능하고 raw 부재 시 fail closed한다.
+- 기존 `memory review/build/freeze` CLI는 여전히 별도 operator command로 존재한다. D-099이 보장하는 것은 validator가
+  이를 호출하지 않았고 proposal이 supported builder input이 아니라는 점이다. Global index construction을 기술적으로
+  불가능하게 만들었다고 주장하지 않는다.
+- 기존 failure별 builder는 semantic group을 모르므로 D-099 source를 개별 승인하면 최대 9개의 중복 entry가 생길 수
+  있다. Group-aware consumer 전에는 review history를 쓰거나 index를 만들지 않는다.
+- Proposal의 `d099_review_history_written`, `d099_memory_index_built`와 `d099_memory_index_frozen`은 D-099 범위의
+  상태다. 기존 historical unfrozen memory artifact의 부재를 주장하지 않고, 이를 새 proposal의 결과로 재해석하거나
+  수정하지 않는다.
+- D-099 자체 provider/evaluator call과 added model cost는 0/0/`$0`이다.
+
+## D-100 mechanism boundary
+
+- D-100은 review mechanism을 구현했을 뿐 actual human decision을 수집하지 않았다. Candidate disposition이나
+  사용자의 일반적인 진행 요청은 group approve/reject/continue-hold 결정이 아니다.
+- JSONL writer는 lock, tail CAS, flush/fsync와 post-append reread를 사용하지만 transactional database 수준의
+  power-loss atomicity를 주장하지 않는다. Partial tail은 다음 validation에서 fail closed한다.
+- Reviewer kind/label은 `human|maintainer_assisted|synthetic` self-attestation이며 identity authentication 또는
+  signature evidence가 아니다. Future admission seal에 explicit user approval receipt를 별도로 결속해야 한다.
+- Preview template은 실제 MemoryEntry가 아니다. Index version, embedding, frozen flag와 retrieval authority가 없고
+  admitted rule count는 계속 0이다.
+- Synthetic tests에서 candidate 3개를 approve한 preview는 implementation 검증용일 뿐 production approval이나
+  memory content selection 결과가 아니다.
+- Existing `memory review/build/freeze` operator CLI를 globally 제거하거나 exact D-099 failure에 대한 우회를
+  기술적으로 금지하지 않았다. D-100 path가 legacy builder를 호출하지 않는 좁은 claim만 한다.
+- Group-aware raw-trace rendering은 아직 결정하지 않았다. 한 group의 여러 source trace를 그대로 이어 붙이면 2,000
+  token budget을 왜곡할 수 있으므로 index freeze 전에 별도 deterministic selection/truncation 계약이 필요하다.
+- D-100은 memory improvement, negative transfer, held-out SCRR, exact hidden cause, agent architecture defect 또는
+  harness defect에 대한 새 evidence가 아니다.
+- Standalone hash chain은 partial tail, noncanonical row와 hash-inconsistent edit는 거부하지만 valid whole-row suffix
+  deletion이나 전체 history를 다시 hash한 rewrite는 외부 anchor 없이 감지할 수 없다. Optional expected head/count는
+  이를 검증할 수 있고 future admission seal이 exact head/count와 journal file SHA를 신뢰 anchor로 보존해야 한다.
+- Source gate 자체 provider/evaluator call과 added model cost는 0/0/`$0`이다.
+- Historical D-077 positive qualification test는 wall-clock 시간이 pricing fixture의 72-hour freshness window를
+  지나면 실패할 수 있었다. Test clock을 historical start instant로 고정해 determinism을 복구했지만 production
+  qualifier, suite, pricing timestamp와 historical artifact는 바꾸지 않았고 D-100 runtime 개선으로 주장하지 않는다.
+
+## D-101 한글 검토 문서와 승인 절차의 한계
+
+- 사용자용 Markdown은 validated D-099 public-evidence proposal을 쉬운 한국어로 재표현한다. 내부 ID/hash와 영문
+  상태명은 읽기 흐름을 위해 본문에서 숨기지만, machine JSON은 변경하지 않고 검증 근거를 그대로 보존한다.
+- 사용자는 1~5번 문제 유형별로 허용된 `기억에 추가|사용하지 않음|나중에 결정`과 이유만 답한다. 이 한글 표현은
+  기존 machine decision 값을 보여 주기 위한 이름일 뿐 새로운 결정 종류를 추가하지 않는다. D-101 packet을
+  만들던 시점의 production decision은 0이었다.
+- 이 문서는 D-101이 raw provider/tool body,
+  private evaluator assertion 또는 reference patch를 독립적으로 다시 분석했다는 뜻이 아니다.
+- Group assessment와 proposed rule은 causal hypothesis다. Exact hidden cause, agent architecture defect, harness
+  defect, memory benefit 또는 negative-transfer avoidance를 증명하지 않는다.
+- Journal reviewer label과 approval receipt는 self-attested다. 실제 사람의 identity, CLI 실행 주체 또는
+  cryptographic signature를 인증하지 않는다.
+- Candidate의 external head/count/file SHA는 caller가 제공한 anchor를 검증한다. Journal, candidate, receipt와
+  seal을 모두 다시 만들 수 있는 공격자까지 로컬 hash만으로 탐지할 수 없다. 강한 rollback 방어에는 externally
+  pinned file SHA, signed commit/tag 또는 transparency log가 필요하다.
+- 일부 group을 approve하고 다른 group을 `continue_hold`로 남긴 seal은 approved source authoring만 열 수 있다.
+  이를 five-group review finalized라고 부르지 않는다. Index build/freeze와 core는 계속 닫힌다.
+- D-101은 legacy memory builder를 전역으로 비활성화하지 않는다. 현재 D-101 path가 그 builder에 연결되지 않았다는
+  좁은 claim만 한다.
+- 관련 회귀에서 D-081 historical pricing freshness test가 실제 시간의 72-hour 경계를 넘어 실패했다. Test clock을
+  해당 suite의 pricing timestamp로 고정해 determinism만 복구했다. Production qualifier, suite, pricing timestamp와
+  historical artifact는 변경하지 않았고 이를 D-101 product/runtime fix로 주장하지 않는다.
+
+## D-102 선택 기록과 candidate의 한계
+
+- D-102 journal의 `maintainer_assisted`는 시스템이 기존 공개 근거에서 이유를 연결하고 사용자가 권장 선택을
+  확인했다는 self-attestation이다. 사용자가 다섯 technical rationale를 직접 작성했다거나 reviewer identity가
+  인증됐다는 증거가 아니다.
+- `approve` 3개는 memory에 넣을 수 있는 candidate rule을 선택했을 뿐 실제 `MemoryEntry` admission이 아니다.
+  Candidate 안 preview 3개에는 index version, embedding, freeze state와 retrieval authority가 없다.
+- `continue_hold` 2개가 남아 있으므로 five-group review는 finalized가 아니다. 이후 candidate receipt와 seal이
+  생기더라도 이 두 항목을 승인 또는 거부한 것으로 바꾸지 않는다.
+- Current candidate는 approval receipt와 seal이 없으며 admitted rule count는 0이다. Memory source authoring,
+  index build/freeze, core campaign과 comparative analysis는 계속 닫혀 있다.
+- Journal head/count/file SHA와 candidate ID/body/file SHA는 exact local bytes를 식별하지만 reviewer identity를
+  인증하거나 journal·candidate·gate를 함께 다시 쓰는 공격을 막는 transparency log가 아니다.
+- 사용자의 group 선택은 그 뒤에 생성된 candidate snapshot 승인이 아니다. Candidate의 exact ID/body SHA/file
+  SHA를 별도 메시지에서 다시 확인하기 전에는 receipt나 seal을 만들 수 없다.
+- D-102는 provider/evaluator를 호출하지 않았고 added model cost는 `$0`이다. 이 단계는 memory benefit,
+  negative transfer, hidden acceptance, exact hidden cause, agent architecture defect 또는 held-out performance를
+  측정하지 않았다.
+- D-099 proposal, D-100 source gate와 D-101 packet/source gate는 변경하지 않았다. 그 artifact의 zero-decision
+  authority는 각 source snapshot의 historical claim이며 D-102의 별도 append-only journal 존재를 부정하지 않는다.
+
+## D-103 exact 승인과 admission seal의 한계
+
+- Receipt는 사용자가 exact candidate ID/body/file SHA를 다시 입력했다는 자기확인 기록이다. 계정 신원 인증,
+  독립 reviewer 확인 또는 암호학적 서명이 아니다.
+- Seal은 candidate, receipt와 현재 journal bytes가 정확히 일치함을 검증하지만 외부 transparency log나 제3자
+  timestamp service가 아니다. 저장소 전체를 통제하는 공격자가 모든 파일과 hash를 함께 다시 쓰는 경우까지
+  독립적으로 방지한다고 주장하지 않는다.
+- `admitted_memory_rule_count=3`은 세 template를 source로 작성할 수 있다는 뜻이다. 실제 `MemoryEntry` 파일,
+  embedding, index version 또는 frozen index가 이미 만들어졌다는 뜻이 아니다. D-103 checkpoint의 unindexed
+  source record count는 0이었다.
+- 두 그룹은 계속 hold이므로 five-group review는 finalized가 아니다. Seal은 hold를 암묵적으로 approve/reject하지
+  않는다.
+- Source authoring unlock은 index build/freeze, retrieval, core campaign 또는 comparative analysis 권한으로
+  이어지지 않는다. 각각 별도 executable gate가 필요하다.
+- D-103은 새 model/evaluator run을 하지 않았고 memory benefit, negative transfer, hidden acceptance, held-out
+  SCRR 또는 exact hidden cause에 관한 새 성능 evidence를 만들지 않았다.
+
+## D-104 unindexed source materialization의 한계
+
+- D-104 source는 `memory-entry-v1`을 목표로 하는 승인된 template wrapper이지 runtime `MemoryEntry`가 아니다.
+  `index_version`이 없으므로 현재 retrieval path에 직접 넣을 수 없다.
+- Proposed memory ID는 future index builder가 실제 `memory_id`로 승격할 후보다. D-104는 그 승격이나 실제 index
+  identity를 정하지 않는다.
+- `validation_count=0`과 proposal confidence/dedup confidence는 memory 효과 측정값이 아니다. 성공률 개선이나
+  negative transfer가 검증됐다고 해석하지 않는다.
+- Source materialization은 model-facing renderer, raw-trace selection/truncation, 2,000-token fit, embedding revision,
+  retrieval threshold/no-match를 결정하지 않는다.
+- Historical empty/unfrozen index가 local runtime에 존재할 수 있다. D-104는 전역적으로 “index가 없다”고 주장하지
+  않고 D-104-created index count 0, historical index not inspected/not modified만 주장한다.
+- Existing legacy CLI는 별도로 수동 호출할 수 있다. D-104가 증명하는 것은 자신의 path가 legacy per-failure
+  builder/freezer를 import하거나 호출하지 않았다는 범위다.
+- Read-only source validator는 저장소 밖에 복사한 exact source set도 검증할 수 있다. Production materializer와
+  gate builder만 repository containment와 canonical source directory를 요구하므로, 외부 복사본의 validation
+  성공은 authoritative gate 생성 권한이 아니다.
+- Repository와 source 경로의 안정적으로 존재하는 symlink/junction 구성요소는 모두 거부하고 쓰기 직전에 다시
+  검사한다. 다만 최종 검사와 `open("xb")` 사이에 악의적인 local process가 디렉터리를 교체하는 handle-level
+  TOCTOU threat까지 방어한다고 주장하지 않는다.
+- D-099 inherited portable validation은 tracked public submitted patch copy의 integrity를 읽어 재검증한다. 따라서
+  patch body를 전혀 읽지 않았다는 주장은 하지 않는다. 다만 patch/raw trace를 source에 복사하거나 patch body에서
+  새 rule을 작성하지 않았다.
+- Exact hash binding은 external transparency log, reviewer identity 또는 cryptographic timestamp가 아니다.
+
+## D-105 deterministic render와 index 후보의 한계
+
+- D-105의 text 세 개는 structured memory source를 model에 보여 주기 위한 deterministic rendering이다. 실제
+  runtime `MemoryEntry`가 아니고 `index_version`, embedding vector 또는 frozen index를 갖지 않는다.
+- Exact predecessor rebuild는 inherited validator에서 public submitted patch bytes를 integrity/leak scan용으로 읽는다.
+  또한 package initialization은 legacy retrieval/store module을 간접 import한다. D-105가 주장하는 좁은 경계는
+  patch를 render/새 rule 의미에 사용하지 않았고 legacy API와 historical index를 호출·검사·수정하지 않았다는 것이다.
+- ASCII/LF/NFKC-required 규칙은 같은 source에서 같은 bytes를 만들기 위한 local serialization contract다. 서로
+  다른 platform, filesystem 또는 library에서 future embedding vector가 bit-identical하다는 증거가 아니다.
+- Model text에서 provenance를 제외한 것은 token과 leakage surface를 줄이기 위한 설계다. 출처 자체를 삭제한 것은
+  아니며 source/gate의 out-of-band provenance가 계속 필요하다. Gate 없이 text만 복사하면 출처 결속을 검증할 수
+  없다.
+- `whole_entry_only=true`는 entry 중간을 잘라 의미를 훼손하지 않는다는 뜻이다. 어떤 entry를 어떤 task에 넣을지,
+  retrieval score/threshold/no-match가 올바른지는 아직 구현하거나 측정하지 않았다.
+- 2,000-token policy는 maximum provider full-request input-token delta의 정의만 고정했다. D-105는 provider를 호출하지
+  않았고 before/after request hash나 count receipt가 없으므로 세 text가 실제 request에서 2,000 token 안에 든다고
+  검증하지 않았다.
+- Local `chars/4` 추정치는 사용하지 않는다. Standalone tokenizer count도 OpenAI full-request delta와 같다고
+  주장하지 않는다. Future provider receipt는 memory envelope 외의 request bytes/shape가 같다는 결속이 필요하다.
+- `all-MiniLM-L6-v2`의 full commit을 candidate에 고정한 것은 mutable alias를 피하기 위한 준비다. Upstream API
+  observation은 서명, 공급망 검증 또는 local snapshot proof가 아니다. Model snapshot은 download/import하지 않았고
+  snapshot file hash, offline reload, expected 384-dimension float32 normalized vector도 검증하지 않았다.
+- `uv.lock` package version과 file hash 결속은 dependency 계획을 재현 가능하게 만든다. 실제 현재 environment가
+  그 extra를 설치했고 model이 offline으로 동작한다는 증거는 아니다.
+- `index_build_authorization_candidate=true`는 승인할 exact candidate가 있다는 뜻이다. 사용자 승인 receipt나
+  actual authorization이 아니며 `memory_index_build_authorized=false`를 뒤집지 않는다.
+- Group-aware builder는 계획뿐이고 구현되지 않았다. Existing legacy failure별 builder는 D-104 group provenance와
+  hold rejection 계약을 만족한다고 검증되지 않았으므로 D-105 candidate에 사용할 수 없다.
+- D-105-created actual MemoryEntry, embedding과 index count는 모두 0이다. Historical index를 inspect하거나
+  수정하지 않았으므로 저장소 밖 또는 local state에 historical index가 전혀 없다고 주장하지 않는다.
+- Raw Trace memory condition의 trace selection, redaction, renderer와 token policy는 D-105 범위가 아니다. 따라서
+  No Memory/Raw Trace/Structured/Selective Structured 네 condition 전체가 실행 준비됐다고 말할 수 없다.
+- D-105는 provider/evaluator call 0/0, added model cost `$0`인 offline gate다. Memory improvement, negative transfer,
+  retrieval quality, hidden acceptance, held-out SCRR와 core result를 측정하지 않았다.
+- Exact file/hash binding은 external transparency log, signed artifact, reviewer identity 인증이나 cryptographic
+  timestamp가 아니다.
+
+## Historical D-106 locked snapshot과 unfrozen index의 한계
+
+- Approval receipt는 사용자가 직전 메시지의 exact D-105 ID/body/file SHA를 참조해 승인했다는 self-attestation이다.
+  Reviewer identity 인증이나 cryptographic signature가 아니다.
+- Snapshot file 10개와 upstream Git/LFS identity를 검증했지만 Hugging Face 자체의 공급망 서명이나 외부
+  transparency log를 검증한 것은 아니다.
+- Fresh load는 `local_files_only`, `HF_HUB_OFFLINE`, `TRANSFORMERS_OFFLINE`을 사용했다. OS 방화벽이나 container로
+  socket을 차단하지 않았으므로 network-isolated execution이라고 주장하지 않는다.
+- 두 fresh load의 vector bytes가 current Windows/CPU/runtime에서 일치했다. 다른 CPU, OS, BLAS, Torch build에서도
+  bit-identical하다고 보장하지 않는다.
+- 218/220/207 tokenizer count는 MiniLM indexing input이 256-token limit 안에 든다는 증거다. OpenAI Responses full
+  request에서 memory가 추가하는 token delta가 2,000 이하라는 provider evidence가 아니다.
+- Index는 D-105 exact render를 별도 `model_facing_text` map에 보존한다. 기존 structured retrieval은 legacy
+  `entry_embedding_text()`를 사용하므로 아직 이 index와 연결하지 않았다.
+- `frozen=false`이고 `FROZEN` marker가 없다. Explicit-path retrieval과 legacy freeze에는 fail-closed guard를
+  추가했지만 future retrieval wiring과 freeze seal은 별도 gate가 필요하다.
+- 세 entry는 development failure에서 검토한 일반 규칙이다. Index 생성 자체는 retrieval quality, memory benefit,
+  negative transfer, hidden acceptance 또는 held-out SCRR를 측정하지 않는다.
+- Raw Trace condition의 source selection/redaction/token policy는 이번 D-106 범위가 아니다.
+
+## Historical D-108 provider token-count 완료 evidence의 한계
+
+- 2,193/2,895/702는 D-107에 고정한 Moto initial public context, model, prompt, tools와 exact D-105 bundle 한 쌍의
+  측정값이다. 다른 task, phase, checkpoint, 긴 trace, model snapshot 또는 memory 선택 결과에 자동으로 일반화되지 않는다.
+- Delta 702가 2,000 이하라는 결과는 이 exact full-request pair의 memory budget 선행 조건만 통과시킨다. Retrieval
+  relevance, 성능 개선, negative transfer, hidden acceptance와 SCRR를 측정한 결과가 아니다.
+- 실행한 endpoint는 Responses input-token count이고 generation call은 0이다. 따라서 model output, response usage와
+  pre-count 일치, truncation, reasoning 품질 또는 coding-agent workflow를 새로 검증하지 않았다.
+- Approval receipt는 사용자의 exact gate 참조를 기록한 self-attestation이다. Reviewer identity나 cryptographic
+  signature를 인증하지 않는다. Provider request ID도 외부 transparency log나 response signature가 아니다.
+- SDK transport retry는 0이고 두 completed event의 `retries_taken`도 0이다. Timeout은 OpenAI SDK 2.47.0 기본값인
+  connect 5초, read/write/pool 600초를 사용했다. 다른 timeout 정책을 시험한 결과가 아니다.
+- API key가 host environment에 존재했지만 값은 portable artifact에 저장하지 않았다. Secret scan 통과는 host process,
+  shell history, provider 또는 운영체제의 전체 secret handling을 감사했다는 뜻이 아니다.
+- Custom base URL과 organization/project override가 없음을 실행 claim에 기록했다. 공식 endpoint를 사용했다는 사실만으로
+  invoice나 free-tier 적용액을 알 수 없으므로 billing claim은 `null`이다.
+- One-use live capability는 exact 두 count call로 이미 소비됐다. 같은 script를 다시 실행하거나 실패하지 않은 call을
+  반복할 권한은 없으며 read-only completion validator만 재사용한다.
+- `index_freeze_authorization_candidate_ready=true`는 별도 승인을 요청할 수 있는 선행 증거가 갖춰졌다는 뜻이다.
+  `index_freeze_authorized=false`를 뒤집지 않으며 actual freeze, retrieval/runtime injection, retrieval 실험, core와
+  analysis는 모두 닫혀 있다.
+
+## Historical D-107 portable 검증과 token-count 계획의 한계
+
+- Portable validator는 checked-in D-106 gate, index와 현재 D-106 implementation binding을 재검증한다. Ignored
+  `.patchloop` runtime copy가 없어도 통과한다는 뜻이지, 모든 외부 환경에서 index가 자동으로 재생성된다는 뜻은 아니다.
+- Stored vector로 rebuild한 bytes가 같은 것은 checked-in vector와 index serialization의 정합성 증거다. Embedding
+  snapshot을 다시 실행하거나 다른 host에서 vector bit-determinism을 재검증한 것은 아니다.
+- Token-count request pair는 frozen manifest의 첫 admitted development-validation task인 Moto의 빈 event/checkpoint
+  초기 context 하나에 고정돼 있다. 다른 task, phase, checkpoint와 긴 trace의 token 수를 측정한 결과가 아니다.
+- 두 context의 유일한 semantic diff가 `/selected_memory`이고 slot normalization 뒤 request가 같다는 것은 local
+  request-construction 증거다. OpenAI provider가 실제로 같은 tokenization 결과를 반환했다는 증거가 아니다.
+- D-107은 provider client나 API key를 읽지 않았고 input-token count call도 하지 않았다. Baseline count,
+  with-memory count와 delta는 모두 `null`이며 provider receipt가 없다. 따라서 3,528-byte bundle이 2,000 OpenAI input
+  token 이내라는 결론을 아직 내릴 수 없다.
+- Official token-count documentation의 URL과 관찰 시점을 기록했지만 문서 snapshot, signature 또는 향후 API 호환성을
+  검증한 것은 아니다.
+- Future plan은 `POST /v1/responses/input_tokens` 두 call만 허용하는 후보 계약이다. Exact D-107 gate에 대한 별도
+  사용자 승인 전에는 authorization이 아니며, generation call과 automatic retry는 포함하지 않는다.
+- 첫 번째나 두 번째 future count call이 실패하면 delta를 계산하지 않는다는 계획만 고정했다. 실패한 call의 재시도나
+  partial receipt 처리 권한은 부여하지 않았다.
+- Freeze authorization의 선행 조건을 정의했을 뿐 candidate ready, freeze authorization과 actual freeze는 false다.
+  Retrieval/runtime injection, retrieval 실험, core, analysis, memory effect와 negative transfer도 모두 미검증이다.
+- Provider/evaluator call과 added model cost 0/0/`$0`은 D-107 offline 작업 자체에만 해당한다. Future count endpoint의
+  invoice 또는 free-tier 적용 여부를 주장하지 않는다.
+
+## D-110 exact freeze의 한계
+
+- Approval receipt는 사용자가 exact D-109 candidate ID/body/file SHA를 같은 메시지에서 다시 제시했다는
+  self-attestation이다. Reviewer identity를 인증하거나 cryptographic signature를 검증한 결과가 아니다.
+- Executor는 같은 D-110 구현을 따르는 process끼리 cooperative lock으로 조정하고, lock 안에서 exact live pre-bytes를
+  다시 검사한다. 임의의 외부 writer를 배제하는 filesystem-wide CAS나 hostile-process safety를 주장하지 않는다.
+- Index는 staged file을 fsync한 뒤 same-filesystem `os.replace`로 commit하고, 그 다음 marker를 exclusive binary
+  create/fsync한다. 따라서 순서는 보장하지만 index와 marker 두 파일 전체가 하나의 global atomic transaction인 것은
+  아니다. 중간 crash로 partial/ambiguous state가 생기면 fail closed하며 자동 retry나 rollback을 하지 않는다.
+- `FROZEN` marker는 post-freeze content hash와 LF 한 바이트라는 좁은 serialization contract다. Marker 존재만으로
+  retrieval authorization, index 의미의 정확성이나 memory 성능을 증명하지 않는다.
+- Ignored `.patchloop` runtime index는 freeze를 실행한 workspace의 현재 local state다. Checked-in D-110 portable
+  index와 marker는 그 실행 결과의 historical snapshot이다. Clean clone은 portable evidence를 검증할 수 있지만
+  원 workspace의 runtime state가 여전히 존재하거나 외부에서 바뀌지 않았다고 주장할 수 없다.
+- D-106 portable index는 의도적으로 55,644-byte unfrozen pre-state로 보존된다. D-110 portable 55,687-byte frozen
+  copy와 역할이 다르므로 둘의 byte mismatch는 corruption이 아니다. Runtime current state를 검증할 때는 D-110
+  portable copy와 비교하고, D-109 pre-state를 검증할 때만 D-106 portable copy를 사용한다.
+- Freeze one-use capability는 이미 소비됐다. `--execute`를 다시 호출해 성공을 재현하려 해서는 안 되며, read-only
+  completion validator와 portable artifact를 사용한다.
+- Frozen index의 `retrieval_ready`와 `retrieval_experiment_authorized`는 false다. Direct retrieval은 query embedding
+  전에 `D-106 group-aware index retrieval requires a later explicit authorization gate`로 거부된다. Runtime memory
+  injection count는 0이고 core/analysis, memory effect와 negative transfer도 false/미검증이다.
+- 다음 단계는 별도 retrieval-readiness authorization candidate를 준비하는 것뿐이다. Candidate 작성이나 검증은
+  retrieval 실행, runtime injection 또는 core campaign 승인이 아니다.
+
+## D-111 retrieval-readiness authorization candidate의 한계
+
+- D-111은 frozen index와 공개 development-validation query 세 개를 읽어 preflight와 authorization candidate를
+  만든 오프라인 단계다. Retrieval function과 query embedding을 실행하지 않았고 runtime memory injection,
+  provider/evaluator call, agent run과 index/marker mutation도 모두 0이다.
+- 현재 selective scorer에서 frozen entry 세 개의 `validation_count`는 모두 0이고 자연스러운 공개 query는
+  failure-class component를 얻지 못한다. Semantic score가 완벽하고 IMPLEMENT phase와 Python language가 모두
+  일치해도 상한은 `0.35 + 0.15 + 0.15 = 0.65`로 threshold `0.72`보다 낮다. 따라서 현 상태의 no-match는
+  memory가 무관하다는 증거가 아니라 selective scoring이 구조적으로 퇴화한 결과일 수 있다.
+- 기존 structured retrieval은 D-105 exact `model_facing_text`가 아니라 legacy renderer를 사용한다. 세 entry 모두
+  byte 수와 SHA가 D-105 render와 다르므로 D-108에서 검증한 exact 3,528-byte bundle과 702-token delta evidence를
+  현재 runtime output에 그대로 적용할 수 없다.
+- 기존 query encoder는 D-106에서 검증한 pinned snapshot의 local-only load를 강제하지 않는다. Candidate는 future
+  diagnostic에 exact model revision, snapshot manifest, `local_files_only`와 network 금지를 요구하지만 이를 아직
+  실행해 확인하지 않았다.
+- Raw Trace는 mutable local state store를 읽는 legacy 경로만 있고 portable source selection, redaction와 exact token
+  contract가 준비되지 않았다. 따라서 Raw Trace condition은 실행 준비 상태가 아니다.
+- No Memory, Raw Trace, Structured, Selective Structured 네 condition 전체를 공정하게 비교할 retrieval path가 아직
+  준비되지 않았고 core campaign도 열리지 않았다. D-111은 memory benefit, negative transfer, hidden acceptance나
+  held-out SCRR evidence가 아니다.
+- Candidate ID/body/file SHA는 proposed one-use read-only scoring diagnostic의 범위를 식별할 뿐 승인 receipt나 실행
+  권한이 아니다. 다음 단계는 이 exact 세 값을 사용자가 별도 메시지에서 다시 제시하는 승인이다. 승인 전에는
+  retrieval/embedding, runtime injection, provider/evaluator 또는 core를 실행하지 않는다.
+
+## D-112 local scoring diagnostic의 한계
+
+- 세 public development-validation query와 승인된 memory entry 세 개만 사용한 diagnostic이다. Task success,
+  hidden acceptance, SCRR, memory benefit 또는 negative transfer를 측정하지 않았다.
+- 세 probe가 모두 no-match이고 Moto positive hypothesis top-group이 빗나갔지만, 이를 memory가 agent를 해친다는
+  증거로 볼 수 없다. Agent run이나 runtime memory injection 자체를 하지 않았다.
+- Query encoder는 pinned local snapshot을 사용했으나 OS-level socket 차단을 검증하지 않았다. Evidence는
+  `local_files_only=True`와 library offline environment까지다.
+- D-106은 같은 host의 두 fresh load에서 vector byte equality를 확인했지만 cross-host bit determinism은 증명하지
+  않았다. D-112 gate의 float32 vector는 이 host 실행의 portable result다.
+- Probe receipt가 one-use claim이므로 claim 뒤 crash나 failure에는 자동 retry가 없다. 별도 append-only journal이
+  없고 success는 completion gate 존재와 strict validation으로만 구분한다.
+- One-use는 동일 repository receipt path의 cooperative exclusive-create일 뿐이다. Authenticated signature, global
+  authorization ledger 또는 receipt 생성 전 복제된 checkout의 병렬 실행을 막지 않는다.
+- Receipt validator는 exact expected payload 전체와 unknown-field set을 strict equality로 rebuild하지 않는다. Fully
+  rehashed receipt+gate의 unknown field와 일부 unchecked claim/provenance field를 거부하지 못할 수 있다. Actual file
+  SHA는 문서의 외부 identity와 일치하지만 generic tamper-proof claim은 하지 않는다.
+- Actual approval/claim/completion timestamp 순서는 정상이나 validator가 chronology invariant를 강제하지 않는다.
+- `--skip-current-input-verification`도 현재 `_input_state()`를 호출해 local snapshot과 locked dependencies를 요구한다.
+  따라서 current validator는 clean-machine portable mode가 아니다. 실행-bound code를 사후 변경하지 않고 별도
+  successor correction이 필요하다.
+- Python API는 injected loader/encoder를 받을 수 있고 gate의 network-call 0은 default CLI source path에 대한
+  self-attested evidence다. OS socket instrumentation이나 independent network monitor proof가 아니다.
+- Current scorer의 class/validation component가 자연 public query에서 0이고 모든 entry phase가 IMPLEMENT인 구조는
+  그대로다. Threshold를 낮추거나 synthetic label을 query에 넣어 결과를 개선하지 않았다.
+- Raw Trace renderer, four-condition 공통 retrieval path, exact runtime token accounting과 memory injection은 여전히
+  준비되지 않았다. `retrieval_ready=false`이고 core campaign도 닫혀 있다.
+- Focused 11/11과 related 13/13만 실행했다. Repository-wide full suite와 D-106~D-110 전체 회귀는 통과했다고
+  주장하지 않는다.
+
+## D-113 validator-correction authorization candidate의 한계
+
+- D-113은 보정 구현이 아니라 승인 후보다. D-112 validator의 다섯 gap을 source hash와 구조 근거에 결속했지만
+  아직 strict successor validator를 만들지 않았다.
+- Exact D-112 receipt/gate SHA를 고정했으므로 현재 checked-in bytes의 무결성은 확인한다. 이것이 기존 D-112
+  validator 자체가 임의의 fully rehashed payload를 막는다는 뜻은 아니다.
+- Future portable mode는 목표만 정의됐다. Local 91MB snapshot과 exact dependency 없이 clean clone에서 실제
+  통과한 증거는 아직 없다.
+- D-113의 AST audit는 exact D-112 source bytes에 대한 deterministic observation이다. 일반적인 Python validator
+  보안 분석기나 arbitrary version에 대한 증명이 아니다.
+- One-use의 global ledger, authenticated identity, cross-clone exclusion과 OS socket instrumentation은 구현 범위
+  밖이다. D-114도 이 부재를 정확히 표시해야지 존재한다고 꾸며서는 안 된다.
+- Focused 18/18만 통과했다. D-111~D-113 연속 회귀는 5분 timeout으로 불완전하며 repository-wide suite도 이번
+  checkpoint에서 실행하지 않았다.
+- Exact candidate triple의 별도 승인 전에는 correction implementation, score-policy decision, retrieval,
+  runtime injection, agent run, core와 analysis를 시작하지 않는다.
+
+## Current D-121 preparation의 한계
+
+- D-121 readiness는 synthetic non-opaque sentinel로 Docker configuration을 구현한 증거다. 8 commands/create 1회와
+  start/run/exec/probe 0회, opaque source access/read 0회, residual 0개를 기록했지만 actual hash-only source session을
+  실행하지 않았다.
+- 따라서 `docker_configuration_realization_verified=true`만 성립한다. `hash_only_isolation_profile_verified`,
+  `technical_isolation_verified`, `trusted_cutoff_anchor_verified`, `record_projection_isolation_verified`, `independent`는
+  모두 false다. Docker child environment가 local named pipe를 강제했지만 OS socket instrumentation도 검증하지 않았다.
+- Actual successor run은 승인되지 않았고 count 0이다. Candidate가 있다는 사실은 source read, probe result, trusted
+  cutoff, record projection 또는 independence evidence가 아니다.
+- D-121 47/47와 D-119+D-121 82/82는 contract/tamper 및 historical binding 검사다. D-120 suite의 7 failures는 D-121
+  output path가 아직 없어야 한다는 historical future-path-absence assertion이 preparation 이후 더는 성립하지 않는 예상
+  결과다. D-120을 고치거나 D-121 product regression으로 분류하지 않는다.
+- 다음 exact candidate triple 승인은 fresh two-session hash-only run 1회만 허용한다. D-119 retry/resume/repair,
+  matcher/classifier/calibration, retrieval/runtime injection, agent/provider/evaluator와 core campaign은 계속 닫혀 있다.
+
+## Historical: D-119 partial failure와 D-120 candidate의 한계
+
+- D-119 journal은 첫 isolation session의 시작과 generic `D119QualificationError`까지만 봉인했다. Probe 결과와
+  cleanup 상세는 journal evidence가 아니므로 첫 source hash가 성공했다고 해석하지 않는다.
+- D-119 receipt와 journal claim은 이미 소비됐다. 실패 artifact를 삭제·수정하거나 같은 실행을 retry/resume/repair할
+  권한은 없으며, 후속 검증은 새 D-121 run과 새 승인으로만 수행한다.
+- Cleanup-output 원인 분석은 exact D-119 source와 operator observation에 일치하지만 raw 실패 command transcript와
+  stdout이 남아 있지 않아 portable proof가 아니다. 별도의 synthetic current-CLI 관찰도 원래 journal evidence로
+  승격하지 않는다.
+- D-120 materialization과 validation은 Docker, network, opaque source read와 record parse를 하지 않는다. Zero-call
+  표시는 source-path audit와 focused test guard에 근거한 self-attestation이지 OS-level socket monitor 증거가 아니다.
+- Public anchor 조사 중 web parser가 public example 하나를 의도보다 많이 반환한 incidental overreturn이 있었다.
+  해당 내용은 source 선택이나 verdict에 쓰지 않았고 D-119 artifact에 raw issue/gold example을 저장하지 않았지만,
+  이를 근거로 prohibited-content exposure가 0이었다고 주장하지 않는다.
+- D-120 candidate 승인은 D-121 구현·offline test·no-start readiness·실행 후보 준비에 이미 소비됐다. 실제 source-reading
+  실행에는 exact D-121 candidate에 대한 두 번째 승인이 필요하다.
+- D-121이 추후 hash-only isolation을 성공하더라도 trusted cutoff anchor, record-projection isolation과 independence는
+  계속 false다. Matcher, calibration, retrieval, runtime memory injection, agent run과 core campaign도 별도 gate다.

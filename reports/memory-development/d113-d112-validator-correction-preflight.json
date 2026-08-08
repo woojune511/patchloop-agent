@@ -1,0 +1,179 @@
+{
+  "schema_version": "d112-validator-gap-audit-d113-v1",
+  "preflight_id": "d113preflight_13b1f266a3f84121bf160dedbc459581a6243247261d991a3bb81aefd6dd2375",
+  "semantic_body_hash": "sha256:13b1f266a3f84121bf160dedbc459581a6243247261d991a3bb81aefd6dd2375",
+  "semantic_body": {
+    "milestone": "D-113",
+    "evidence_kind": "exact-d112-validator-gap-audit",
+    "recorded_at": "2026-08-07T02:22:30Z",
+    "exact_d112_receipt": {
+      "path": "reports/memory-development/d112-retrieval-readiness-probe-receipt.json",
+      "file_bytes": 13835,
+      "file_sha256": "sha256:74fcd761cac65a9cab26529076b7cde60eaa14a1faf40475e680f526e00ba1d1",
+      "receipt_id": "d112probereceipt_ad73368b4b0f47174f53762c917f9f39f17e22ac3bd077d795b0b9e1ac8c9257",
+      "semantic_body_hash": "sha256:ad73368b4b0f47174f53762c917f9f39f17e22ac3bd077d795b0b9e1ac8c9257"
+    },
+    "exact_d112_completion_gate": {
+      "path": "reports/memory-development/d112-retrieval-readiness-completion-gate.json",
+      "file_bytes": 77591,
+      "file_sha256": "sha256:a7e691ae43c60405cbb10cd27caf3055eabaa96bb7fa6f2a02142d97aa903951",
+      "gate_id": "d112_3242bed73c9a322ff1d346eba61cfec2f9eae3b57e4cc7e4d7b0e9a5456367b6",
+      "semantic_body_hash": "sha256:3242bed73c9a322ff1d346eba61cfec2f9eae3b57e4cc7e4d7b0e9a5456367b6"
+    },
+    "executed_d112_implementation_files": [
+      {
+        "path": "patchloop/memory/d112_retrieval_readiness_probe.py",
+        "file_bytes": 54182,
+        "file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b"
+      },
+      {
+        "path": "scripts/run_d112_retrieval_readiness_probe.py",
+        "file_bytes": 2000,
+        "file_sha256": "sha256:308ed1e6499da73edf064a8ecd211c526c4ef4c0fc0123623f1723135b78cd9e"
+      },
+      {
+        "path": "tests/test_d112_retrieval_readiness_probe.py",
+        "file_bytes": 11297,
+        "file_sha256": "sha256:3629de37190cd8337fb3a5c2da07eb6795ca65f8e6599f4ac275fd135e393bb6"
+      }
+    ],
+    "protected_portable_evidence": [
+      {
+        "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+        "file_bytes": 55687,
+        "file_sha256": "sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0"
+      },
+      {
+        "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN",
+        "file_bytes": 72,
+        "file_sha256": "sha256:cdfe40b734135a30f66e34ff24469940063a7231a1fe0783420ee2ff816d9561"
+      },
+      {
+        "path": "reports/memory-development/artifacts/d106/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064.json",
+        "file_bytes": 55644,
+        "file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a"
+      }
+    ],
+    "actual_execution_facts": {
+      "approval_recorded_at": "2026-08-06T16:41:32.316176Z",
+      "execution_claimed_at": "2026-08-06T17:16:20.878831Z",
+      "completion_recorded_at": "2026-08-06T17:18:33.876453Z",
+      "actual_chronology_valid": true,
+      "pre_post_input_fingerprint": "sha256:d54454b2693e231c0ef50c94b20d75d58f00a885dfae98d3b6b190665f9d2e17",
+      "pre_post_input_fingerprints_equal": true,
+      "score_row_count": 9,
+      "all_diagnostic_no_match": true,
+      "runtime_selection_executed": false,
+      "memory_text_returned": false
+    },
+    "validator_gap_findings": [
+      {
+        "gap_id": "skip-current-not-portable",
+        "status": "observed",
+        "affected_function": "validate_d112_completion_gate",
+        "source_file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b",
+        "evidence": {
+          "input_state_call_line": 1193,
+          "verify_current_inputs_branch_line": 1233,
+          "input_state_precedes_flag_branch": true,
+          "input_state_calls_snapshot_evidence": true,
+          "snapshot_requires_local_snapshot_and_exact_dependencies": true
+        },
+        "claim_limit": "verify_current_inputs=false is not a clean-clone portable mode"
+      },
+      {
+        "gap_id": "receipt-validator-not-exact",
+        "status": "observed",
+        "affected_function": "validate_d112_probe_receipt",
+        "source_file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b",
+        "evidence": {
+          "full_receipt_rebuild_call_present": false,
+          "root_exact_key_set_enforced": false,
+          "completion_gate_full_rebuild_call_present": true,
+          "unchecked_receipt_fields": [
+            "milestone",
+            "evidence_kind",
+            "approval_reference_mode",
+            "approver_kind",
+            "approver_label",
+            "claim_semantics.receipt_is_one_use_consumption_marker",
+            "claim_semantics.completion_gate_required_for_success"
+          ],
+          "paired_receipt_and_gate_rehash_not_fail_closed": true
+        },
+        "claim_limit": "the checked-in bytes are exact, but the validator is not a general unknown-field or unchecked-claim tamper proof"
+      },
+      {
+        "gap_id": "timestamp-chronology-not-enforced",
+        "status": "observed",
+        "affected_function": "validate_d112_probe_receipt/validate_d112_completion_gate",
+        "source_file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b",
+        "evidence": {
+          "timestamp_format_checked": true,
+          "approval_before_execution_compare_present": false,
+          "execution_before_completion_compare_present": false,
+          "actual_checked_in_chronology_valid": true
+        },
+        "claim_limit": "the actual timestamps are ordered, but D-112 validation does not enforce order"
+      },
+      {
+        "gap_id": "one-use-repository-local-only",
+        "status": "observed",
+        "affected_function": "_write_new_fsynced/execute_d112_scoring_diagnostic",
+        "source_file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b",
+        "evidence": {
+          "repository_confined_path": true,
+          "exclusive_binary_create": true,
+          "file_fsync": true,
+          "receipt_commit_precedes_loader_call": true,
+          "global_ledger_present": false,
+          "authenticated_signature_present": false,
+          "cross_clone_exclusion_present": false
+        },
+        "claim_limit": "one-use is a repository-local cooperative claim, not a global uniqueness proof"
+      },
+      {
+        "gap_id": "network-zero-not-socket-instrumented",
+        "status": "observed",
+        "affected_function": "_default_model_loader/_embedding_config",
+        "source_file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b",
+        "evidence": {
+          "library_offline_environment_present": true,
+          "local_files_only_present": true,
+          "os_socket_block_verified": false,
+          "socket_instrumentation_present": false,
+          "network_zero_is_source_path_and_self_attested": true
+        },
+        "claim_limit": "the run records offline/local-only configuration, not OS-level socket blocking"
+      }
+    ],
+    "assessment": {
+      "exact_checked_in_d112_bytes_bound": true,
+      "actual_checked_in_chronology_valid": true,
+      "general_receipt_tamper_proof_established": false,
+      "clean_clone_portable_validation_established": false,
+      "global_one_use_established": false,
+      "os_socket_block_established": false,
+      "append_only_validator_correction_candidate_ready": true,
+      "score_policy_decision_ready": false,
+      "retrieval_ready": false,
+      "core_campaign_ready": false
+    },
+    "evidence_boundary": {
+      "d112_validator_invoked": false,
+      "d112_execution_replayed": false,
+      "snapshot_or_model_file_read": false,
+      "embedding_model_load_count": 0,
+      "query_encode_call_count": 0,
+      "retrieval_calls": 0,
+      "runtime_memory_injection_count": 0,
+      "agent_runs": 0,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "network_accessed": false,
+      "private_hidden_reference_or_known_bad_read": false,
+      "d112_or_index_mutations": 0,
+      "added_model_cost_usd": 0
+    }
+  }
+}

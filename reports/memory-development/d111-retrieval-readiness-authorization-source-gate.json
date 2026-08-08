@@ -1,0 +1,70 @@
+{
+  "schema_version": "retrieval-readiness-authorization-source-gate-d111-v1",
+  "gate_id": "d111_348e6dd21ad0816a3c4dc1889f2d7a421c7e41194c48b2fe5c7120513f6b3524",
+  "semantic_body_hash": "sha256:348e6dd21ad0816a3c4dc1889f2d7a421c7e41194c48b2fe5c7120513f6b3524",
+  "semantic_body": {
+    "milestone": "D-111",
+    "evidence_kind": "retrieval-readiness-authorization-source-gate",
+    "recorded_at": "2026-08-07T00:10:00Z",
+    "preflight": {
+      "path": "reports/memory-development/d111-frozen-index-retrieval-readiness-preflight.json",
+      "schema_version": "frozen-index-retrieval-readiness-preflight-d111-v1",
+      "preflight_id": "d111preflight_ee48af2da2ab34bb252f11842fe34c734229ad193776fc97bdd34dc3849003f9",
+      "semantic_body_hash": "sha256:ee48af2da2ab34bb252f11842fe34c734229ad193776fc97bdd34dc3849003f9",
+      "file_bytes": 13085,
+      "file_sha256": "sha256:fed699e068c52e2dd929b654a65369aee3499d6d69c5a38c14dcee808ff57387"
+    },
+    "candidate": {
+      "path": "reports/memory-development/d111-retrieval-readiness-authorization-candidate.json",
+      "schema_version": "retrieval-readiness-authorization-candidate-d111-v1",
+      "candidate_id": "d111retrievalcandidate_bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+      "semantic_body_hash": "sha256:bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+      "file_bytes": 6465,
+      "file_sha256": "sha256:f91aa284cc7a2add2516f44b4397b29e3aee5caa4cf0f83ec7913e6e5d7899d6"
+    },
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d111_retrieval_readiness_authorization.py",
+        "file_bytes": 53482,
+        "file_sha256": "sha256:6bdaf0705fce6782ce2ddbd419f5f6d2c0b2aea30ebf7bde65759e8de8536542"
+      },
+      {
+        "path": "scripts/build_d111_retrieval_readiness_authorization_candidate.py",
+        "file_bytes": 1615,
+        "file_sha256": "sha256:20db64846d23d8bc36a25c44561308e45e1af78a65439e48e1622ba4e0ef02de"
+      },
+      {
+        "path": "tests/test_d111_retrieval_readiness_authorization.py",
+        "file_bytes": 7269,
+        "file_sha256": "sha256:190a421857a6760bebaf041f6bd52c934d9750bca4c8e613fe87e09990bd1438"
+      }
+    ],
+    "qualification": {
+      "exact_d110_portable_freeze_evidence_validated": true,
+      "d106_unfrozen_index_unchanged": true,
+      "three_public_dev_validation_probes_bound": true,
+      "legacy_retrieval_gaps_recorded": true,
+      "selective_score_upper_bound_below_threshold_proved": true,
+      "candidate_only_no_approval_receipt": true,
+      "retrieval_or_embedding_executed": false,
+      "runtime_or_core_boundary_crossed": false
+    },
+    "authority": {
+      "retrieval_readiness_candidate_ready": true,
+      "exact_candidate_user_approval_received": false,
+      "retrieval_probe_authorized": false,
+      "retrieval_probe_executed": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "raw_trace_ready": false,
+      "four_condition_retrieval_ready": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "exact-d111-candidate-id-body-sha-file-sha-user-approval"
+  }
+}

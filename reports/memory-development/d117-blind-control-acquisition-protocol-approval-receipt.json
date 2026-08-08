@@ -1,0 +1,183 @@
+{
+  "schema_version": "grammar-blind-public-control-acquisition-protocol-approval-receipt-d117-v1",
+  "receipt_id": "d117approval_f70a2ff210ae2df203591b9650177161ca71084da256e994539af09a48deeae9",
+  "semantic_body_hash": "sha256:f70a2ff210ae2df203591b9650177161ca71084da256e994539af09a48deeae9",
+  "semantic_body": {
+    "milestone": "D-117",
+    "evidence_kind": "exact-d116-grammar-blind-protocol-candidate-approval-binding",
+    "approval_recorded_at": "2026-08-07T09:27:15.522350Z",
+    "approval_action_id": "sha256:e368dcb794875064f605a341902b4c27be20fcb3ff9b86d65ca5fb66dbf35e55",
+    "approval_reference": {
+      "candidate_id": "d116classsignalcandidate_0b1b700af4ce2274cb9cb032ecf23c741ec9c41b0e86abbc06e96e18f91c74d4",
+      "semantic_body_hash": "sha256:0b1b700af4ce2274cb9cb032ecf23c741ec9c41b0e86abbc06e96e18f91c74d4",
+      "file_sha256": "sha256:8299f3d400bd9412a8b7100305a0eb57f1d5b4ea78a39d8e5edad6cd5a2b15ca"
+    },
+    "approval_reference_mode": "exact-current-user-message-self-attested",
+    "approval_statement_code": "exact-d116-triple-d117-blind-acquisition-protocol-candidate-only-v1",
+    "d116_source_gate": {
+      "path": "reports/memory-development/d116-public-failure-class-signal-source-gate.json",
+      "file_bytes": 19859,
+      "file_sha256": "sha256:f03bc7806d8401b9ac9f3d9e47df7b0ef19b16a04380bed1c9cb1d105e52320d",
+      "schema_version": "public-failure-class-signal-contract-source-gate-d116-v1",
+      "gate_id": "d116_e93b1d39428c3778dd1f55dd0ae1a6c7f4b2091f9b4a92c347f6b7b3c6a66c37",
+      "semantic_body_hash": "sha256:e93b1d39428c3778dd1f55dd0ae1a6c7f4b2091f9b4a92c347f6b7b3c6a66c37"
+    },
+    "d116_candidate": {
+      "path": "reports/memory-development/d116-public-failure-class-signal-calibration-candidate.json",
+      "file_bytes": 8017,
+      "file_sha256": "sha256:8299f3d400bd9412a8b7100305a0eb57f1d5b4ea78a39d8e5edad6cd5a2b15ca",
+      "schema_version": "public-failure-class-signal-calibration-authorization-candidate-d116-v1",
+      "candidate_id": "d116classsignalcandidate_0b1b700af4ce2274cb9cb032ecf23c741ec9c41b0e86abbc06e96e18f91c74d4",
+      "semantic_body_hash": "sha256:0b1b700af4ce2274cb9cb032ecf23c741ec9c41b0e86abbc06e96e18f91c74d4"
+    },
+    "authorized_action_hash": "sha256:e368dcb794875064f605a341902b4c27be20fcb3ff9b86d65ca5fb66dbf35e55",
+    "authorized_scope": {
+      "action_kind": "prepare-grammar-blind-preexisting-public-applicability-control-acquisition-protocol-candidate",
+      "future_milestone": "D-117",
+      "public_development_inputs_only": true,
+      "required_independent_positive_per_group": 1,
+      "controls_must_be_acquired_after_exact_d116_matcher_contract_hash_is_sealed": true,
+      "controls_must_be_blind_to_post_acquisition_grammar_changes": true,
+      "control_selection_may_use_matcher_output": false,
+      "control_label_adjudication_may_use_matcher_output": false,
+      "control_acquisition_blinded_to_matcher_output": true,
+      "source_pool_must_preexist_d116": true,
+      "issue_prose_authoring_or_rewriting_after_d116_allowed": false,
+      "source_pool_cutoff_must_precede": "2026-08-07T06:22:51.021003Z",
+      "pool_bytes_cutoff_and_provenance_hashes_required": true,
+      "exact_pool_membership_manifest_or_exhaustive_inclusion_rule_must_predate_d116": true,
+      "exact_pool_membership_manifest_bytes_and_hash_required": true,
+      "pool_assembler_may_view_matcher_grammar_hash_or_output": false,
+      "pool_assembler_isolation_from_grammar_observers_required": true,
+      "selector_or_adjudicator_may_view_matcher_grammar_or_hash": false,
+      "selector_and_adjudicator_receive_only_d105_applicability_rubric": true,
+      "selector_and_adjudicator_isolation_from_grammar_observers_required": true,
+      "current_process_or_agent_eligible_as_blind_selector": false,
+      "failed_blinding_controls_must_be_marked_post_hoc_and_independent_false": true,
+      "pool_assembler_selector_or_adjudicator_blinding_failure_triggers_fallback": true,
+      "matcher_grammar_mutation_allowed": false,
+      "source_anchor_reuse_as_independent_positive_allowed": false,
+      "moto_d112_hypothesis_as_label_allowed": false,
+      "tox_source_association_as_public_label_allowed": false,
+      "ontology_weakening_allowed": false,
+      "new_private_hidden_reference_patch_or_solution_content_allowed": false,
+      "classifier_implementation_allowed": false,
+      "classifier_execution_allowed": false,
+      "calibration_execution_allowed": false,
+      "conditional_tuple_evaluation_allowed": false,
+      "score_policy_mutation_allowed": false,
+      "retrieval_or_runtime_injection_allowed": false,
+      "agent_provider_evaluator_or_network_allowed": false,
+      "core_or_analysis_campaign_allowed": false
+    },
+    "materialization_scope": {
+      "new_module_script_test_only": true,
+      "new_artifact_paths": [
+        "reports/memory-development/d117-blind-control-acquisition-protocol-approval-receipt.json",
+        "reports/memory-development/d117-blind-control-acquisition-protocol-preflight.json",
+        "reports/memory-development/d117-blind-control-acquisition-protocol-authorization-candidate.json",
+        "reports/memory-development/d117-blind-control-acquisition-protocol-source-gate.json"
+      ],
+      "actual_pool_manifest_issue_bytes_blind_packet_or_label_allowed": false,
+      "actual_pool_or_public_issue_read_allowed": false,
+      "role_assignment_or_isolation_session_execution_allowed": false,
+      "matcher_classifier_or_calibration_implementation_or_execution_allowed": false,
+      "score_index_retrieval_injection_agent_provider_evaluator_or_core_allowed": false,
+      "existing_predecessor_code_artifact_task_or_index_mutation_allowed": false
+    },
+    "protected_pre_state": {
+      "files": [
+        {
+          "path": "reports/memory-development/d116-public-failure-class-signal-approval-receipt.json",
+          "file_bytes": 12014,
+          "file_sha256": "sha256:86c4e279df6c3d4b6ea02719375f76370d76fb795d642f2d10211e878662ba77"
+        },
+        {
+          "path": "reports/memory-development/d116-public-failure-class-signal-preflight.json",
+          "file_bytes": 76157,
+          "file_sha256": "sha256:fc2602a385242204ab9ae274ea6c73a83bd00a00eace88c7f310a57b5d4655f5"
+        },
+        {
+          "path": "reports/memory-development/d116-public-failure-class-signal-calibration-candidate.json",
+          "file_bytes": 8017,
+          "file_sha256": "sha256:8299f3d400bd9412a8b7100305a0eb57f1d5b4ea78a39d8e5edad6cd5a2b15ca"
+        },
+        {
+          "path": "reports/memory-development/d116-public-failure-class-signal-source-gate.json",
+          "file_bytes": 19859,
+          "file_sha256": "sha256:f03bc7806d8401b9ac9f3d9e47df7b0ef19b16a04380bed1c9cb1d105e52320d"
+        },
+        {
+          "path": "patchloop/memory/d116_public_failure_class_signal_contract.py",
+          "file_bytes": 106302,
+          "file_sha256": "sha256:8244e1b5c23ea73e6be4e58ad8c4980251d6bb2be51f92e2c1ca8393172ca530"
+        },
+        {
+          "path": "scripts/build_d116_public_failure_class_signal_candidate.py",
+          "file_bytes": 1883,
+          "file_sha256": "sha256:1f462e51e706da543f99ed3ac0aa79cf07001711b9b13162ff63a7f45e3c33b9"
+        },
+        {
+          "path": "tests/test_d116_public_failure_class_signal_contract.py",
+          "file_bytes": 37436,
+          "file_sha256": "sha256:8afaf76ef5cadebec52e9d35ceb465080351d85667d210ae3069728fa5e8b3d2"
+        },
+        {
+          "path": "reports/memory-development/d105-renderer-embedding-index-authorization-gate.json",
+          "file_bytes": 12368,
+          "file_sha256": "sha256:db6303f3de834b3c36493f2863dcc5be3ca697490d18df15c86a18e7ee7b17eb"
+        },
+        {
+          "path": "reports/memory-development/rendered/d105/memgrp_649483b80292fea26e4009ebdb72df31.txt",
+          "file_bytes": 1191,
+          "file_sha256": "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c"
+        },
+        {
+          "path": "reports/memory-development/rendered/d105/memgrp_b421547d481faabf9be3511217258de5.txt",
+          "file_bytes": 1164,
+          "file_sha256": "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a"
+        },
+        {
+          "path": "reports/memory-development/rendered/d105/memgrp_5a23f463cba43bf3ba395f67cf976047.txt",
+          "file_bytes": 1161,
+          "file_sha256": "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7"
+        }
+      ],
+      "fingerprint": "sha256:255a882ec58789ba9f57b5a90638406cb7a8680218b434c7ff3451d535088ea5"
+    },
+    "implementation_pre_state": {
+      "files": [
+        {
+          "path": "patchloop/memory/d117_blind_control_acquisition_protocol.py",
+          "file_bytes": 77586,
+          "file_sha256": "sha256:56b2b428924e55fb9e6ba708b91552ee52472d4cadb53bfb2ac9bfb3be7f9a79"
+        },
+        {
+          "path": "scripts/build_d117_blind_control_acquisition_protocol_candidate.py",
+          "file_bytes": 4981,
+          "file_sha256": "sha256:70c1a57485e005f8bcc52255aca0aed52d475c78f3d8c60e06163b63addfc857"
+        },
+        {
+          "path": "tests/test_d117_blind_control_acquisition_protocol.py",
+          "file_bytes": 30733,
+          "file_sha256": "sha256:145d8252feac285af727ba9eb60e8e5923e773600d6632910f10715b751170aa"
+        }
+      ],
+      "fingerprint": "sha256:5df65454805434eb8277f64681071413840cb04a7ed1d57c33a3ce37d5dc4a5e"
+    },
+    "claim_semantics": {
+      "receipt_is_protocol_candidate_authorization_binding_not_acquisition_claim": true,
+      "idempotent_exact_materialization_allowed": true,
+      "one_use_pool_acquisition_execution_claim": false,
+      "pool_acquisition_execution_consumed": false,
+      "current_process_or_agent_is_blind_reviewer": false,
+      "global_or_cross_clone_exclusion_proved": false
+    },
+    "self_attested": true,
+    "approver_kind": "user",
+    "approver_label": "repository-maintainer",
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false,
+    "execution_result_present": false
+  }
+}

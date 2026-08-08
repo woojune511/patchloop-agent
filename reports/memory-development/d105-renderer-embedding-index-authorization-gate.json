@@ -1,0 +1,269 @@
+{
+  "schema_version": "memory-render-index-authorization-source-gate-d105-v1",
+  "gate_id": "d105_0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70",
+  "semantic_body_hash": "sha256:0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70",
+  "semantic_body": {
+    "milestone": "D-105",
+    "evidence_kind": "deterministic-memory-render-and-index-build-authorization-source-gate",
+    "recorded_at": "2026-08-06T05:30:00Z",
+    "d104_gate": {
+      "path": "reports/memory-development/d104-three-rule-source-materialization-gate.json",
+      "schema_version": "unindexed-memory-source-materialization-gate-d104-v1",
+      "gate_id": "d104_61e44eb5609c05c97b84602bbaa4eb7bff84dd33af227cef18592aa2b6a32c11",
+      "semantic_body_hash": "sha256:61e44eb5609c05c97b84602bbaa4eb7bff84dd33af227cef18592aa2b6a32c11",
+      "file_bytes": 12705,
+      "file_sha256": "sha256:8eeb26d6f5e0ff22658501afe54bd8cebe35896dc18b60f8f73355ec53190dd0",
+      "source_collection_id": "d104collection_4017131c10c127f47b8ea68ff2d8c3c3265c2f6cb11c1b175dd52c23882bd399",
+      "source_set_hash": "sha256:1168c8c9cfcaa3671f42391436bfff713c90f01baec468e5ef2509ddb95dbad2"
+    },
+    "source_collection_id": "d104collection_4017131c10c127f47b8ea68ff2d8c3c3265c2f6cb11c1b175dd52c23882bd399",
+    "source_set_hash": "sha256:1168c8c9cfcaa3671f42391436bfff713c90f01baec468e5ef2509ddb95dbad2",
+    "entries": [
+      {
+        "order": 1,
+        "path": "reports/memory-development/rendered/d105/memgrp_649483b80292fea26e4009ebdb72df31.txt",
+        "proposed_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+        "source_id": "d104src_770793305341d62f095021fe2c9c354c2524090a921a23778a824181c098fa0a",
+        "source_file_sha256": "sha256:8a139248e3e53e3a563366c6a2f9ad213a6a164831bd3cef2a3e5b6cb37008e8",
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "template_hash": "sha256:844290fa8eab2ff0d2c0541f224c17cb61ced74c27f7861b04ee4bdfae081060",
+        "file_bytes": 1191,
+        "file_sha256": "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c"
+      },
+      {
+        "order": 2,
+        "path": "reports/memory-development/rendered/d105/memgrp_b421547d481faabf9be3511217258de5.txt",
+        "proposed_memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+        "source_id": "d104src_28a04e4a26cd25fc4fe55e3c5baf0aeb8c63fbc964c8a8c77c51b250b10efbda",
+        "source_file_sha256": "sha256:87b1b751634d8c34ef125042e472807828a7820064f25e413a51d0755b5b51da",
+        "semantic_group_id": "request-context-propagation-gap",
+        "template_hash": "sha256:91e444444d313e92b857fdbf871802da9fdc57fc50a71ec0ba5c462626432593",
+        "file_bytes": 1164,
+        "file_sha256": "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a"
+      },
+      {
+        "order": 3,
+        "path": "reports/memory-development/rendered/d105/memgrp_5a23f463cba43bf3ba395f67cf976047.txt",
+        "proposed_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+        "source_id": "d104src_3590f0f35053a37af10b6078e984feee950fe5cb50a88956b19d1451e5118ba8",
+        "source_file_sha256": "sha256:d5b22f7c2ca75a271cf60cd52eb9089f2fd54bec99f5c9a75d09c311e0311505",
+        "semantic_group_id": "exception-origin-state-conflation",
+        "template_hash": "sha256:5a8e661e092e50e72bf8aa6456e9a5996fcd94503dcf4275a0be60579762ce8a",
+        "file_bytes": 1161,
+        "file_sha256": "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7"
+      }
+    ],
+    "render_set_hash": "sha256:7b72fc94642d996fad5a0b199719c56bfecc8a8fc1bbe42b2060aa18e21d2667",
+    "bundle": {
+      "separator": "\n\n---\n\n",
+      "file_bytes": 3528,
+      "file_sha256": "sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf",
+      "includes_all_three_entries": true,
+      "provider_exact_token_count": null
+    },
+    "rendered_memory_count": 3,
+    "render_validation": "pass",
+    "leak_scan": "pass",
+    "render_policy": {
+      "schema_version": "model-facing-memory-render-d105-v1",
+      "encoding": "ascii-subset-of-utf8",
+      "normalization": "NFKC-input-required-no-transform",
+      "newline": "LF",
+      "trailing_newline_required": true,
+      "entry_separator": "\n\n---\n\n",
+      "field_order": [
+        "failure_pattern.failure_class",
+        "failure_pattern.phase",
+        "failure_pattern.description",
+        "preconditions",
+        "diagnostic_evidence",
+        "recommended_actions",
+        "do_not_apply_when",
+        "applicable_languages"
+      ],
+      "excluded_fields": [
+        "proposed_memory_id",
+        "source_run_ids",
+        "source_failure_ids",
+        "evidence_ref_ids",
+        "semantic_group_id",
+        "semantic_group_fingerprint",
+        "decision_hash",
+        "template_hash",
+        "source_id",
+        "semantic_body_hash",
+        "admission_seal",
+        "confidence",
+        "dedup_confidence",
+        "validation_count",
+        "local_paths"
+      ],
+      "whole_entry_only": true,
+      "partial_truncation_allowed": false,
+      "provenance_in_model_text": false
+    },
+    "token_budget_policy": {
+      "max_memory_delta_tokens": 2000,
+      "provider_exact_budget_validated": false,
+      "counter": "responses.input_tokens.count",
+      "same_request_shape_required": true
+    },
+    "token_budget_evidence_boundary": {
+      "schema_version": "provider-memory-delta-budget-d105-v1",
+      "provider_model": "gpt-5.4-mini-2026-03-17",
+      "baseline": "canonical-context-selected-memory-is-json-null",
+      "with_memory": "same-canonical-context-selected-memory-is-exact-whole-entry-bundle",
+      "delta_formula": "with_memory_input_tokens - baseline_input_tokens",
+      "allowed_context_diff_json_pointers": [
+        "/selected_memory"
+      ],
+      "canonical_context_deep_diff_required": true,
+      "baseline_selected_memory_value": null,
+      "with_memory_selected_memory_must_match_render_bundle": true,
+      "request_equal_after_context_slot_normalization": true,
+      "both_context_hashes_required_in_future_receipt": true,
+      "both_request_hashes_required_in_future_receipt": true,
+      "headers_and_separators_included": true,
+      "local_character_divided_by_four_used": false,
+      "local_estimate_authoritative": false,
+      "standalone_memory_count_equivalent_to_full_request_delta": false,
+      "provider_count_receipt_present": false,
+      "provider_call_made_for_d105": false
+    },
+    "embedding_authorization_candidate": {
+      "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+      "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "normalize_embeddings": true,
+      "trust_remote_code": false
+    },
+    "embedding_revision_observation": {
+      "model_api_url": "https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2",
+      "commit_url": "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/commit/1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "observed_at": "2026-08-06T05:15:00Z",
+      "upstream_last_modified": "2026-06-01T06:29:13Z",
+      "revision_kind": "full-40-hex-commit",
+      "license": "apache-2.0",
+      "expected_vector_dimension": 384,
+      "expected_dtype": "float32",
+      "external_observation_not_signature": true,
+      "model_snapshot_downloaded": false,
+      "snapshot_file_hashes_verified": false,
+      "vector_shape_verified": false
+    },
+    "locked_embedding_dependencies": {
+      "install_command": "uv sync --locked --extra memory",
+      "memory_extra": [
+        "sentence-transformers>=3.4,<6"
+      ],
+      "pyproject": {
+        "path": "pyproject.toml",
+        "file_bytes": 1032,
+        "file_sha256": "sha256:2e8395b0d26e0f4e686daa3481c18301e025417666db828da0e0425cfd5b3986"
+      },
+      "lock": {
+        "path": "uv.lock",
+        "file_bytes": 240131,
+        "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+      },
+      "packages": {
+        "huggingface-hub": "1.24.0",
+        "sentence-transformers": "5.6.0",
+        "tokenizers": "0.22.2",
+        "torch": "2.13.0",
+        "transformers": "5.14.1"
+      }
+    },
+    "group_aware_index_build_plan": {
+      "schema_version": "group-aware-index-build-plan-d105-v1",
+      "input_source_schema": "unindexed-memory-entry-source-d104-v1",
+      "source_collection_id": "d104collection_4017131c10c127f47b8ea68ff2d8c3c3265c2f6cb11c1b175dd52c23882bd399",
+      "source_set_hash": "sha256:1168c8c9cfcaa3671f42391436bfff713c90f01baec468e5ef2509ddb95dbad2",
+      "ordered_source_ids": [
+        "d104src_770793305341d62f095021fe2c9c354c2524090a921a23778a824181c098fa0a",
+        "d104src_28a04e4a26cd25fc4fe55e3c5baf0aeb8c63fbc964c8a8c77c51b250b10efbda",
+        "d104src_3590f0f35053a37af10b6078e984feee950fe5cb50a88956b19d1451e5118ba8"
+      ],
+      "ordered_render_hashes": [
+        "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c",
+        "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a",
+        "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7"
+      ],
+      "one_entry_per_admitted_group": true,
+      "held_group_ids": [
+        "interrupt-lifecycle-unresolved",
+        "diagnostic-contract-unresolved"
+      ],
+      "held_groups_allowed": false,
+      "legacy_failure_builder_allowed": false,
+      "deterministic_index_identity_required": true,
+      "source_provenance_preserved_outside_model_text": true,
+      "actual_builder_implemented": false,
+      "locked_model_preflight_completed": false
+    },
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d105_renderer_authorization.py",
+        "file_bytes": 37368,
+        "file_sha256": "sha256:cad11fc8039e562fd0690faa4398150b41cda18993f8049ded5beba01acdfbb3"
+      },
+      {
+        "path": "scripts/build_d105_renderer_authorization_gate.py",
+        "file_bytes": 1521,
+        "file_sha256": "sha256:6de482cbfc62c4190a72a8cb3af6470040e425eb40c92d7a6e3a4453d2f0175a"
+      },
+      {
+        "path": "tests/test_d105_renderer_authorization.py",
+        "file_bytes": 14533,
+        "file_sha256": "sha256:668ed5d0d6971fa3ec711b7b7e8ee8fa866ca4ac8b8f4d205221e75e7a78dad8"
+      }
+    ],
+    "evidence_boundary": {
+      "semantic_authoring_source": "exact-d104-sealed-unindexed-sources-only",
+      "sealed_rule_text_modified": false,
+      "inherited_public_submitted_patch_integrity_revalidated": true,
+      "public_submitted_patch_bodies_read_by_inherited_validator": true,
+      "public_patch_text_copied_into_renders": false,
+      "new_rule_semantics_authored_from_patch_text": false,
+      "raw_trace_bodies_read": false,
+      "private_or_evaluator_bodies_read": false,
+      "provider_request_or_response_bodies_read": false,
+      "embedding_model_imported": false,
+      "embedding_model_downloaded": false,
+      "package_initialization_imported_legacy_retrieval_and_store_modules": true,
+      "legacy_memory_store_or_retrieval_api_called": false,
+      "historical_index_state_inspected": false,
+      "historical_index_state_modified": false
+    },
+    "authority": {
+      "d104_exact_gate_revalidated": true,
+      "d104_source_set_revalidated": true,
+      "admitted_rule_count": 3,
+      "held_group_count": 2,
+      "held_group_rendered_count": 0,
+      "render_policy_frozen": true,
+      "rendered_memory_count": 3,
+      "token_budget_policy_frozen": true,
+      "provider_exact_budget_validated": false,
+      "embedding_revision_candidate_pinned": true,
+      "embedding_snapshot_verified": false,
+      "index_build_authorization_candidate": true,
+      "user_index_build_approval_receipt_present": false,
+      "memory_index_build_authorized": false,
+      "actual_memory_entry_count": 0,
+      "embedding_count": 0,
+      "d105_created_index_count": 0,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "retrieval_ready": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "exact-d105-gate-approval-locked-embedding-snapshot-preflight-and-group-aware-index-builder"
+  }
+}

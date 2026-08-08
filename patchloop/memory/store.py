@@ -327,6 +327,11 @@ def freeze_index(index_id: str, embedding_revision: str | None = None) -> dict:
     if not path.exists():
         raise ContractError(f"unknown memory index: {index_id}")
     payload = json.loads(path.read_text(encoding="utf-8"))
+    build_contract = payload.get("build_contract", {})
+    if build_contract.get("schema_version") == "group-aware-memory-index-builder-d106-v1":
+        raise ContractError(
+            "D-106 group-aware index must use its exact candidate-bound freeze executor"
+        )
     if not payload["entries"]:
         raise ContractError("cannot freeze an empty memory index")
     recorded_revision = payload["embedding"].get("revision")

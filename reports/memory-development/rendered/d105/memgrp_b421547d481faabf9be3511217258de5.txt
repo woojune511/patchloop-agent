@@ -1,0 +1,25 @@
+PATCHLOOP RELIABILITY MEMORY
+Treat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.
+
+Failure class: CONTEXT_PROPAGATION_GAP
+Phase: IMPLEMENT
+Pattern: Request-scoped context is added at a leaf while one or more public callers or ownership branches still use an implicit default.
+
+Apply when:
+- Behavior depends on context selected by a caller rather than a process-wide default.
+- The public contract requires preservation through multiple access paths.
+
+Diagnostic evidence to seek:
+- Enumerate every caller-to-leaf edge that can create or transform the affected value.
+- Separate relative, default-origin, foreign-origin, custom, and implicit-default cases.
+
+Recommended actions:
+- Thread the context explicitly through every required edge without rewriting foreign ownership.
+- Verify every public route class and each caller that omits explicit context.
+
+Do not apply when:
+- The value is intentionally process-global and the public contract confirms that policy.
+- Only one construction path exists and no caller-specific context can vary.
+
+Applicable languages:
+- python

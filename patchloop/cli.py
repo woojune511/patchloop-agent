@@ -225,10 +225,7 @@ def run(
         bool,
         typer.Option(
             "--self-validation",
-            help=(
-                "Opt in to tool v3/context v6 temporary probes and "
-                "structured final review."
-            ),
+            help=("Opt in to tool v3/context v6 temporary probes and structured final review."),
         ),
     ] = False,
 ) -> None:
@@ -354,18 +351,14 @@ def budget_diagnose(
             else runtime_root() / "experiments" / f"{experiment}.json"
         )
         if not source.is_file():
-            raise ContractError(
-                f"experiment result is unavailable: {experiment}"
-            )
+            raise ContractError(f"experiment result is unavailable: {experiment}")
         try:
             return derive_experiment_budget_pressure(
                 source,
                 StateStore(runtime_root() / "state.sqlite3"),
             )
         except (OSError, ValueError) as exc:
-            raise ContractError(
-                f"budget pressure evidence is invalid: {exc}"
-            ) from exc
+            raise ContractError(f"budget pressure evidence is invalid: {exc}") from exc
 
     _guarded(operation)
 
@@ -405,6 +398,163 @@ def memory_validate_review(
     from patchloop.memory.review import validate_review_proposal
 
     _guarded(lambda: validate_review_proposal(proposal_path))
+
+
+@memory_app.command("validate-d099-review")
+def memory_validate_d099_review(
+    proposal_path: Annotated[
+        Path,
+        typer.Argument(exists=True, file_okay=True, dir_okay=False, readable=True),
+    ],
+    require_raw_evidence: Annotated[
+        bool,
+        typer.Option("--require-raw-evidence"),
+    ] = False,
+    runtime: Annotated[
+        Path | None,
+        typer.Option("--runtime-root", file_okay=False, dir_okay=True),
+    ] = None,
+) -> None:
+    """Validate the non-admitting D-099 public review proposal."""
+    from patchloop.memory.d099_review import validate_d099_review_proposal
+
+    _guarded(
+        lambda: validate_d099_review_proposal(
+            proposal_path,
+            root=runtime,
+            require_raw_evidence=require_raw_evidence,
+        )
+    )
+
+
+@memory_app.command("d100-status")
+def memory_d100_status(
+    proposal_path: Annotated[
+        Path,
+        typer.Argument(exists=True, file_okay=True, dir_okay=False, readable=True),
+    ],
+) -> None:
+    """Report D-100 mechanism readiness without recording a human decision."""
+    from patchloop.memory.d100_group_admission import d100_mechanism_status
+
+    _guarded(lambda: d100_mechanism_status(proposal_path))
+
+
+@memory_app.command("validate-d100-source-gate")
+def memory_validate_d100_source_gate(
+    source_gate_path: Annotated[
+        Path,
+        typer.Argument(exists=True, file_okay=True, dir_okay=False, readable=True),
+    ],
+) -> None:
+    """Validate the mechanism-only D-100 portable source gate."""
+    from patchloop.memory.d100_group_admission import validate_d100_source_gate
+
+    _guarded(lambda: validate_d100_source_gate(source_gate_path))
+
+
+@memory_app.command("record-d100-decision")
+def memory_record_d100_decision(
+    proposal_path: Annotated[
+        Path,
+        typer.Argument(exists=True, file_okay=True, dir_okay=False, readable=True),
+    ],
+    journal: Annotated[Path, typer.Option("--journal", file_okay=True, dir_okay=False)],
+    group: Annotated[str, typer.Option("--group")],
+    decision: Annotated[str, typer.Option("--decision")],
+    reviewer_kind: Annotated[str, typer.Option("--reviewer-kind")],
+    reviewer: Annotated[str, typer.Option("--reviewer")],
+    rationale: Annotated[str, typer.Option("--rationale")],
+    action_id: Annotated[str, typer.Option("--action-id")],
+    expected_tail: Annotated[str, typer.Option("--expected-tail")],
+) -> None:
+    """Append one explicit self-attested group decision with tail-CAS protection."""
+    from patchloop.memory.d100_group_admission import record_d100_group_decision
+
+    tail = None if expected_tail == "none" else expected_tail
+    _guarded(
+        lambda: record_d100_group_decision(
+            proposal_path,
+            journal,
+            semantic_group_id=group,
+            decision=decision,
+            reviewer_kind=reviewer_kind,
+            reviewer=reviewer,
+            rationale=rationale,
+            action_id=action_id,
+            expected_tail=tail,
+        )
+    )
+
+
+@memory_app.command("validate-d100-decisions")
+def memory_validate_d100_decisions(
+    proposal_path: Annotated[
+        Path,
+        typer.Argument(exists=True, file_okay=True, dir_okay=False, readable=True),
+    ],
+    journal: Annotated[
+        Path,
+        typer.Option(
+            "--journal",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    expected_head: Annotated[str | None, typer.Option("--expected-head")] = None,
+    expected_record_count: Annotated[
+        int | None,
+        typer.Option("--expected-record-count", min=1),
+    ] = None,
+) -> None:
+    """Validate a D-100 group-decision chain without writing state."""
+    from patchloop.memory.d100_group_admission import validate_d100_decision_journal
+
+    _guarded(
+        lambda: validate_d100_decision_journal(
+            proposal_path,
+            journal,
+            expected_head=expected_head,
+            expected_record_count=expected_record_count,
+        )
+    )
+
+
+@memory_app.command("preview-d100-entries")
+def memory_preview_d100_entries(
+    proposal_path: Annotated[
+        Path,
+        typer.Argument(exists=True, file_okay=True, dir_okay=False, readable=True),
+    ],
+    journal: Annotated[
+        Path,
+        typer.Option(
+            "--journal",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    expected_head: Annotated[str | None, typer.Option("--expected-head")] = None,
+    expected_record_count: Annotated[
+        int | None,
+        typer.Option("--expected-record-count", min=1),
+    ] = None,
+) -> None:
+    """Project complete decisions into non-indexed MemoryEntry templates."""
+    from patchloop.memory.d100_group_admission import project_d100_memory_entry_preview
+
+    _guarded(
+        lambda: project_d100_memory_entry_preview(
+            proposal_path,
+            journal,
+            expected_head=expected_head,
+            expected_record_count=expected_record_count,
+        )
+    )
 
 
 @memory_app.command("freeze")

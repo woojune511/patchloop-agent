@@ -1,0 +1,1457 @@
+{
+  "schema_version": "memory-public-review-proposal-d099-v1",
+  "proposal_id": "d099_63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+  "semantic_body_hash": "sha256:63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+  "semantic_body": {
+    "milestone": "D-099",
+    "evidence_kind": "formal-non-admitting-public-review-dedup",
+    "recorded_at": "2026-08-05T11:01:05Z",
+    "producer": {
+      "kind": "maintainer-assisted",
+      "method": "d099-public-evidence-review-v1",
+      "model_id": null,
+      "response_artifact_hash": null
+    },
+    "source_seal": {
+      "path": "reports/live-pilot/dev-no-memory-condition-neutral-3000k-20260805-r1.json",
+      "bytes": 117209,
+      "sha256": "sha256:ad87fa8c540552da62d964a430c29b032097b5cabbe78f0102c23cf36330b2dc",
+      "schema_version": "condition-neutral-no-memory-baseline-d098-evidence-v1",
+      "report_id": "d098_e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf",
+      "semantic_body_hash": "sha256:e35cab52597c3ec6e884f074f9acf346dec65301e22d11edc2de56db7be9eacf"
+    },
+    "campaign": {
+      "experiment_id": "dev-no-memory-condition-neutral-3000k-20260805-r1",
+      "execution_hash": "sha256:1a5aaccc4f95f71d285e0e0a9c8ccb27f82e235fbff465ef30f095401fde25f4",
+      "suite_hash": "sha256:e32000918e96e6773986e99d5aa9dc29a9a91fc4f0a89f5e63adde69f78267ed",
+      "schedule_hash": "sha256:2ecbf257117481bfa31d62454221af243cc541470a91abeefdcae1f0912a552d",
+      "dataset_manifest_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786"
+    },
+    "evidence_boundary": {
+      "policy": "agent-visible-public-evidence-v2",
+      "allowed_sources": [
+        "public task specification",
+        "agent-visible search and read artifacts",
+        "agent-submitted task-failure patch",
+        "registered visible-check result summary",
+        "diff review and submission lifecycle metadata",
+        "generic official task-failure outcome"
+      ],
+      "prohibited_semantic_sources": [
+        "private task specification",
+        "acceptance assertion name or output",
+        "reference solution patch",
+        "evaluator evidence payload",
+        "provider request or response body",
+        "credential value"
+      ],
+      "opaque_integrity_bindings": [
+        "qualification hash",
+        "source evidence hash",
+        "failure record file hash"
+      ],
+      "generic_outcome_only": true,
+      "private_task_body_interpreted": false,
+      "hidden_test_body_interpreted": false,
+      "reference_patch_body_interpreted": false,
+      "evaluator_payload_body_interpreted": false,
+      "provider_request_or_response_body_interpreted": false
+    },
+    "sources": [
+      {
+        "run_id": "run_575da4ead3334551",
+        "failure_record_id": "fail_0f5c0cd58af05907ba3285e4e7ef069e",
+        "task_id": "pyfakefs-makedirs-parent-traversal",
+        "repetition": 1,
+        "public_spec": {
+          "path": "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+          "bytes": 1852,
+          "sha256": "sha256:5be7e6f6d2ad9722ee90c5a829aa043bf94c70ac317d5ce45254e4f3f9458eb0"
+        },
+        "public_spec_hash": "sha256:4d5de049d133ee29adf726733b7ace99b9d55518cc0433c72d2aa7b1576664d8",
+        "failure_record_sha256": "sha256:711a5cd943af21965e90a6fee8adb33415b4cadfb650f0fbfca77a7355d41e3e",
+        "qualification_hash": "sha256:c6225d67717c40beeeae98f7221c3b1bdbd90fdce699ba87cf5431f9eaced4f9",
+        "qualification_file_sha256": "sha256:7f5676d75ae7f3b277e001165474e257f1980999a4285dda27e26e467a47bacb",
+        "source_evidence_hash": "sha256:acd0ee8e676f589c6f5e7badfb0d4b31173a77a4eea4ccc978fa2825668a7fe0",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_575da4ead3334551.submitted.patch",
+          "bytes": 1580,
+          "sha256": "sha256:d0f9a3b3046b12c991d47f40331931886762e369b7b25004bbff67b491b085ed"
+        },
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "assessment": "The submitted change preserves a final directory outcome but does not demonstrate the complete public traversal matrix across intermediate and leaf components, path types, creation modes, and platform modes.",
+        "causal_confidence": 0.72,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:e88411ed437cc4eab00cb833dd69f53d413141a5e96098f06ed5daa590e5956a",
+            "role": "public_inspection",
+            "sequence": 314,
+            "event_id": "evt_656469a3b2ea49cab23267ab723531b2",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:d716a32aa627efab14569fcc31601ca3978ceff604337eaf2e5ab49e06ef6365",
+            "artifact_hash": "sha256:5028f44a0afb16176201f36eadbdc9d8573fdc5a71b41009b7199d0081de917b",
+            "artifact_bytes": 563,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:2be93502afd53f406b3edcdbf11b432d11a2da71d149e55abc70833559d2d283",
+            "role": "mutation",
+            "sequence": 486,
+            "event_id": "evt_1fee12f5da834f4580a928b320aa8245",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:1026512ea4bd9eb4bcf9c89804aa30c95b372373ae496ea267c0cdabd88e121a",
+            "artifact_hash": "sha256:d0f9a3b3046b12c991d47f40331931886762e369b7b25004bbff67b491b085ed",
+            "artifact_bytes": 1580,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:da1ee21661b05abf240975e701bfbbc753f2c87c173b96884310a04a1af5f5d8",
+            "role": "visible_check",
+            "sequence": 506,
+            "event_id": "evt_e90500dcc7524775ba22badfa1ff3472",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:bc673d4abec0e23209bb499f5094bc39ac404404b554b680d52896cdbbc476ff",
+            "artifact_hash": "sha256:ef426636604ceec736b5c65696b97129058bd5b59cd6f1b5e7e7ae4c3f8a4293",
+            "artifact_bytes": 1588,
+            "check_id": "upstream-fake-os-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:117f2c8f2710ad627c3bddf2f2679f019cc369c02f674c13187130ba04251452",
+            "role": "diff",
+            "sequence": 512,
+            "event_id": "evt_6272b0d57c6045f0aef98426f57e87ae",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:c25daff7e1fa52738d7e8dfb2c954319fb8e0cc58c30b8dc7c9022dcad3788a7",
+            "artifact_hash": "sha256:d2ea18c2be9500e94d8aa3fdf625486bdd389f557c0d83d0c00eab1976052541",
+            "artifact_bytes": 1929,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:000b74e3ad564945d56023b8e559011304468e7666210b6358cf975b7e631eb6",
+            "role": "review",
+            "sequence": 518,
+            "event_id": "evt_f4d93bad3e4d41adbcfa8e66bb3dfaf1",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:b5f1efc7bdd7f7e076bb6ef3a233e42edf56dc7e96e5ef84728a12fbe2272463",
+            "artifact_hash": "sha256:d0f9a3b3046b12c991d47f40331931886762e369b7b25004bbff67b491b085ed",
+            "artifact_bytes": 1580,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:b5662f234446f7c068969e3a841957b10a74a57217537a9bc6b227c8d3124e33",
+            "role": "submission",
+            "sequence": 521,
+            "event_id": "evt_d96c228ce967471c8dbc27a8aec0b713",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:83705cbd895cdff80d1c862baf27727b91911189436b53f2917d91b42dc307f8",
+            "artifact_hash": "sha256:d0f9a3b3046b12c991d47f40331931886762e369b7b25004bbff67b491b085ed",
+            "artifact_bytes": 1580,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:d5edb8714a4fde01514c16eae45052f44eb4ddec423b641580b64a3eaa00ca0e",
+            "role": "generic_outcome",
+            "sequence": 524,
+            "event_id": "evt_5aa8647d4b59468185966b3a86c4b91d",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:9d6cd2715073aceca39fb84b513e48876fa809f395e8a91bab2c1fd5a28285b3",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_74364afdc3d94f9c",
+        "failure_record_id": "fail_6b7b036074a2590d97db1afdfe90a89d",
+        "task_id": "pyfakefs-makedirs-parent-traversal",
+        "repetition": 2,
+        "public_spec": {
+          "path": "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+          "bytes": 1852,
+          "sha256": "sha256:5be7e6f6d2ad9722ee90c5a829aa043bf94c70ac317d5ce45254e4f3f9458eb0"
+        },
+        "public_spec_hash": "sha256:4d5de049d133ee29adf726733b7ace99b9d55518cc0433c72d2aa7b1576664d8",
+        "failure_record_sha256": "sha256:128d2c6ef84e556dbdeb97883a6356ff7987e30575f93f2c40601f51f06b0948",
+        "qualification_hash": "sha256:a3ed13200c5c8fa55e5d57df3b920a9a5e220be58c5ff37c9df3e6aac66350e1",
+        "qualification_file_sha256": "sha256:c4548c5d88b095e2775111fb9bb3942c6d53b53c2f2195b28070882ade5d7b5b",
+        "source_evidence_hash": "sha256:ae481c0cfb38ee331045ffe7c20efc99f68117746233aead083353b18eac6c4e",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_74364afdc3d94f9c.submitted.patch",
+          "bytes": 900,
+          "sha256": "sha256:47a3ab3a7972bb77271333bdb88b2ad4168144fe48203db764541433b0766acc"
+        },
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "assessment": "The submitted change narrows traversal handling but leaves the public string and bytes path variants coupled to platform-specific component handling without complete matrix evidence.",
+        "causal_confidence": 0.76,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:3d3bde4504e4e132457447df5525df595f9603ac37a94fc363713acae92dc522",
+            "role": "public_inspection",
+            "sequence": 7,
+            "event_id": "evt_8d3d767b0ec94bb68f3ad225c8aa1bf1",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:63b05abd75777248b951f0f851f7327249e955fef37b1b8e0940c3b5641870ac",
+            "artifact_hash": "sha256:7c32e3c6d86f1c36bc9773aedd2a1acdf84e4c42555d6015a6de8d72b37e01fc",
+            "artifact_bytes": 488,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:6f21b835281730df4d90b463c73c2b1e72f17e05e6c14e5d10380403900ccd79",
+            "role": "mutation",
+            "sequence": 134,
+            "event_id": "evt_3cc877d79f4f4329bfb5489a00fcb66f",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:6733751cd0a986885ddc6e27005d5c7e2f9165c1fbe41f0434ce7da524189552",
+            "artifact_hash": "sha256:47a3ab3a7972bb77271333bdb88b2ad4168144fe48203db764541433b0766acc",
+            "artifact_bytes": 900,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:77bca24764bfb3c0b99be60ca57d300fdf40c0a2f4e6cf33f6cb38f8abe924aa",
+            "role": "visible_check",
+            "sequence": 151,
+            "event_id": "evt_f767f0d1e5014477a392713e42fcf8fb",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:e1640093de6fbb7a857153f9633bf109bcf0a8baf58dce11c0f7441c6e6f27f4",
+            "artifact_hash": "sha256:4968e231c83b6ea1bf37488fde14d3a296f1820e015e39adc0993a972f320037",
+            "artifact_bytes": 1588,
+            "check_id": "upstream-fake-os-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:daed2d1be00fbd82b2c87f03745dbff77341c8a8f7f278c9188a72370887b60c",
+            "role": "diff",
+            "sequence": 157,
+            "event_id": "evt_8081019708c54de4aac5aca00e35c7da",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:5b0ced3bc1c1a1f7c93f488c039746f4a3abc393827cfcbe3ab8a1f711370023",
+            "artifact_hash": "sha256:3175993a2e430882e645982a0dac47bc4b485c58d323a6a4aa374cb5b557a7d8",
+            "artifact_bytes": 1232,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:5b2b508eb5fce69de298e290465399e37f716293d8c2bcf567a68dc6a970a90a",
+            "role": "review",
+            "sequence": 163,
+            "event_id": "evt_fa5b5dee98b6493bb5a5bbfdb026c90b",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:1b5e2b4da9854d10b61dc5934960001364a2ffc29df91c8250ba333babf58034",
+            "artifact_hash": "sha256:47a3ab3a7972bb77271333bdb88b2ad4168144fe48203db764541433b0766acc",
+            "artifact_bytes": 900,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:fe8947887eec06a498032c02d3204b9544c60f67dad7998e2e24bb6f8b920e9a",
+            "role": "submission",
+            "sequence": 166,
+            "event_id": "evt_5ebb0b6a5b0f47d4b0952c269fe4cd06",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:87321ba00f03363508feb99adf9989a63ee795c5f2d51c9a1420e8cf26d0c0e0",
+            "artifact_hash": "sha256:47a3ab3a7972bb77271333bdb88b2ad4168144fe48203db764541433b0766acc",
+            "artifact_bytes": 900,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:a1323bc9b573cdb1e7d8d4c5833d96f781864e35a15c56234c1daee00f7b4661",
+            "role": "generic_outcome",
+            "sequence": 169,
+            "event_id": "evt_71e1576d89d74bf0b347a545bf5635d9",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:4c1a10225396c5a85f3baa3e4ce77782ba357635d6688110503925d923d61f61",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_5ffc2e1c58784e17",
+        "failure_record_id": "fail_2cf07eaf03315e54908197f76180394b",
+        "task_id": "hf-hub-xet-endpoint-propagation",
+        "repetition": 1,
+        "public_spec": {
+          "path": "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+          "bytes": 1825,
+          "sha256": "sha256:3500452712d3977761f24da95170f073f86ec2a0589b69522321f91f5f473c4f"
+        },
+        "public_spec_hash": "sha256:8f7b0ea5f92ec9d843b8053f0739b42570b7407d76fe6f7a7ea6fd08c481a075",
+        "failure_record_sha256": "sha256:838c048e75241625d9140e4169c9bf1fc487555d55fd9f2c6450035a5d2026dd",
+        "qualification_hash": "sha256:2848e86058015149098f1a87e27000674b3d72c94d738cde85256cc4c7116c1f",
+        "qualification_file_sha256": "sha256:236e0b12098de3277bf20239e6e264af4324cc4707c3c6698dd135a28a4f94fe",
+        "source_evidence_hash": "sha256:751958d0cf90ca0fb8c00ba4beb3e33e238fec6482188bab475ced5e1e52dae5",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_5ffc2e1c58784e17.submitted.patch",
+          "bytes": 3482,
+          "sha256": "sha256:b6361b034aafcdd1c176901dd8a01a90d7a6d81a456eb13ec3ec11f46d8a46fc"
+        },
+        "semantic_group_id": "request-context-propagation-gap",
+        "assessment": "The submitted change adds request endpoint context at one metadata path without public evidence that every caller and every relative, default, foreign-origin, and implicit-endpoint branch preserves that context.",
+        "causal_confidence": 0.86,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:6322c19e2f3d76953e8b240aad23be23f822fdc45ef25cb449109f34d8eadd96",
+            "role": "public_inspection",
+            "sequence": 36,
+            "event_id": "evt_9c99f8d6eedb45b5a3f8a48f4bd729db",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:895539f9bed9f113471253c6198d8f529907b6c12efe749cc0d0599780ddc61e",
+            "artifact_hash": "sha256:b3dfdb1a8b156beba000d46a147852f72d132874f9856ddfb9c4c6d627d6d7fa",
+            "artifact_bytes": 1002,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:f3752e7396c1982e804aab6165e447ec5c2ae891b8aac050fcdc106fe77d7838",
+            "role": "public_inspection",
+            "sequence": 60,
+            "event_id": "evt_33fd6848e4d149d597d3fc4da413ca25",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:8f4d938c4d5cbecb03e3bf1798af1195d72e827eaee53c2a01c2bac55583453a",
+            "artifact_hash": "sha256:388078f5631315549b48f13fea08b0cc36f6dc174e27923bfb01c28ceac617ff",
+            "artifact_bytes": 1281,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:9499217f1dbaa114be0c8bffce70bbf442f29a871b62e8973af7c078024429b7",
+            "role": "mutation",
+            "sequence": 78,
+            "event_id": "evt_52055df9e1544705bde3d1c42ba14038",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:6d8643e2546efdce42c4ef205dfff8ad677981a61fa036e7136544d2ba98aa7f",
+            "artifact_hash": "sha256:b6361b034aafcdd1c176901dd8a01a90d7a6d81a456eb13ec3ec11f46d8a46fc",
+            "artifact_bytes": 3482,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:e00cc3c337e8b6fb1c1538d5ae8be2badd4bee78cb29aa83a5e28e481efe1d4f",
+            "role": "visible_check",
+            "sequence": 93,
+            "event_id": "evt_3b5c66ba5c7a422e9dfd203f30a2fc26",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:3bd5c9967052a1a95efee36223b3c194b85290068ec195a447ae1895c8207af3",
+            "artifact_hash": "sha256:bea6ff3e880d3abb66ca25827d177ae3233efb1a609c63b11ac1fe516b84147f",
+            "artifact_bytes": 2414,
+            "check_id": "upstream-xet-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:02b64adb4ea16b185c717049d7353ab60bb1543bde3488694491069bca344c0f",
+            "role": "diff",
+            "sequence": 99,
+            "event_id": "evt_b5cc3239eb324338b0dad4af672e8ac5",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:47261140321bf89ca5f6b0241d02bceb5a0d21e0a2beb00d15a0220d6e1dcc32",
+            "artifact_hash": "sha256:cb50be5d58e066d3c872c65210f56711f56122959f42526f146e6fe01b62e257",
+            "artifact_bytes": 3945,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:d2b073a113b517277a5ee9dfeab88b3ea5b153518d532df7f338a8b73e11985e",
+            "role": "review",
+            "sequence": 105,
+            "event_id": "evt_26992bd74cfc466e865d1d1dc87defde",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:80f3d32ec960a213509c3acb21cf7407c0738fb7f1d823467b1592a0a0558e3c",
+            "artifact_hash": "sha256:b6361b034aafcdd1c176901dd8a01a90d7a6d81a456eb13ec3ec11f46d8a46fc",
+            "artifact_bytes": 3482,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:c8414725f6c310048e2ef931f0ff8586db0e3f380cda0225d258f76b5d95b356",
+            "role": "submission",
+            "sequence": 108,
+            "event_id": "evt_adb2e09b78c440a59917b20406e14804",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:30eef91f1be0d9ba434dcfd8f3dbdfb66f9dbfc0c3984c5cdceca40e7f6fc686",
+            "artifact_hash": "sha256:b6361b034aafcdd1c176901dd8a01a90d7a6d81a456eb13ec3ec11f46d8a46fc",
+            "artifact_bytes": 3482,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:2dd08cfa73d50737c6a750fc6f32fb3c9c057bde614dc950ee12d60f54b1dd99",
+            "role": "generic_outcome",
+            "sequence": 111,
+            "event_id": "evt_275e4b3436034306b17f35e96518669c",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:e0d34c1afea81acf8b0ca5da72b72a576bb00bfff7135b2193b2a34918aee6be",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_88f96fae3d2442e6",
+        "failure_record_id": "fail_8edc6a7fd4f3506f92a149698e55da6e",
+        "task_id": "hf-hub-xet-endpoint-propagation",
+        "repetition": 2,
+        "public_spec": {
+          "path": "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+          "bytes": 1825,
+          "sha256": "sha256:3500452712d3977761f24da95170f073f86ec2a0589b69522321f91f5f473c4f"
+        },
+        "public_spec_hash": "sha256:8f7b0ea5f92ec9d843b8053f0739b42570b7407d76fe6f7a7ea6fd08c481a075",
+        "failure_record_sha256": "sha256:5ca9796db0e6d4c6caacf623d84f7f3660cbb8eafff1a83b65fedc4d70df15a6",
+        "qualification_hash": "sha256:08e26791a9bff7d0f4a4c2ec141c1a06c7fd5c378f805080dabda98f7fb20416",
+        "qualification_file_sha256": "sha256:ee3433e0851bacb1f681a0b2a335abbb652f5fcb8c93b65bae5f534f1256dcac",
+        "source_evidence_hash": "sha256:6da69c9dfb2b0e0280df1e7824e6186bad1d9d70b09fcd505ba07cb1ab7a3677",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_88f96fae3d2442e6.submitted.patch",
+          "bytes": 2615,
+          "sha256": "sha256:8b349877164f44217e9bf8fac09cdf39c67d5ff41d1a3aa3be91f94e0d336432"
+        },
+        "semantic_group_id": "request-context-propagation-gap",
+        "assessment": "The submitted change propagates endpoint context through more public callers, but the trace does not establish complete call-graph and route-ownership coverage required by the public contract.",
+        "causal_confidence": 0.88,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:7a3c7e0d82b406dabd02baebe174f5c41c4ed3e2267fc8b10c3a4aaa301b2a33",
+            "role": "public_inspection",
+            "sequence": 31,
+            "event_id": "evt_262d206c3c60497598147d47c404aabb",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:772618b6ea3fe59c03afff9d3adb45e0efe63e8086dca607e13f8b8d2598751b",
+            "artifact_hash": "sha256:6047c3dd4150368ce782bdfc8efaf1d93acd006fb0a92ffb025a1caadbb6b995",
+            "artifact_bytes": 1089,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:9e7731417d937ef6386560d200ad84a5aeb07acc17e1ee22d711a34456def2cd",
+            "role": "public_inspection",
+            "sequence": 493,
+            "event_id": "evt_79823a7077844466a30e639892f83904",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:ea262190bb0bc561c82b558d1ede930499f68cb0330f0be708b2598766c76f7b",
+            "artifact_hash": "sha256:a70fcd530e0007c8d043f7865dc752c5cceef9a6f4ad9223f63dcda87ab51ca4",
+            "artifact_bytes": 1136,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:1fbfaff7722d8b07556f1b3b91e69185dec4fc71be60bc684c7459931e80c6f0",
+            "role": "mutation",
+            "sequence": 696,
+            "event_id": "evt_b7f0176e62a846a6975b31eaf0764972",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:32a856af637f332023844ba315fe311b14d1ff09606c86dfb232870bb71ccb28",
+            "artifact_hash": "sha256:8b349877164f44217e9bf8fac09cdf39c67d5ff41d1a3aa3be91f94e0d336432",
+            "artifact_bytes": 2615,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:8fd4908ce5d978ee9cd57ac4b5db48685a71d42483f960a067928302852b7960",
+            "role": "visible_check",
+            "sequence": 701,
+            "event_id": "evt_4c1449f4a49d45cbb5365af6a4e4ac80",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:8997f23c8a0c5ead17255f9e8fe7f8012127379482d560ffa23f1099e35940f8",
+            "artifact_hash": "sha256:f035ae9735ff3c86afa383808b0f3ed7b74b05bf4afa1dfe3d0bea8bfbcfd204",
+            "artifact_bytes": 2414,
+            "check_id": "upstream-xet-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:98d9c8c0a13077b67edf3b0c6ef12e19f7e4df1cbbffe6b855d37b51f70e4d2a",
+            "role": "diff",
+            "sequence": 707,
+            "event_id": "evt_2ec85f13866e454ca125243324ecb6c6",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:b4c6072465dd648e259ea3e87dec12dd277f9386fb6959ae7a296bc846d75585",
+            "artifact_hash": "sha256:ecd5ca63e7b9d888861c05679bb71e29468d5aa93b24a42d1d09961597838dc2",
+            "artifact_bytes": 3087,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:0b2bbb84a0a4cb823aa61962902d4d0823e05865510d82dbda7c69fc33047bc0",
+            "role": "review",
+            "sequence": 713,
+            "event_id": "evt_0b52b93bc9cf46d3b333ead13f0705cb",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:5de7e26bf21833f7e3461efb0f0b9fdd9930def2c02e98f78482ee79310b39c4",
+            "artifact_hash": "sha256:8b349877164f44217e9bf8fac09cdf39c67d5ff41d1a3aa3be91f94e0d336432",
+            "artifact_bytes": 2615,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:846b360ea570eda0efc9bf9a3f3a5f85c221794a7741ff83d3228a59e7bb3c96",
+            "role": "submission",
+            "sequence": 716,
+            "event_id": "evt_70baf77cbffe4ff7bcdb25ed9501bc48",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:eb29cf11c28852b930ff319d5dbed8c47ea5d167591a400c1a500b20203a883f",
+            "artifact_hash": "sha256:8b349877164f44217e9bf8fac09cdf39c67d5ff41d1a3aa3be91f94e0d336432",
+            "artifact_bytes": 2615,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:3ed1b7aaec1dd87661562c929730d11e59f1da37009bb19472d8fec142d8a197",
+            "role": "generic_outcome",
+            "sequence": 719,
+            "event_id": "evt_6af11b18f96f4deb994a4b35acef8cab",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:eb0d4e949baef605a8f87eb2378dde5127e213a7350642cddeeb25c06abaa710",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_3dc602aab8964d77",
+        "failure_record_id": "fail_dac1b9595479551688a9613db9462927",
+        "task_id": "anyio-interrupt-runner-cleanup",
+        "repetition": 2,
+        "public_spec": {
+          "path": "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+          "bytes": 1864,
+          "sha256": "sha256:ea977422306f9ce7203b4fc92aac83a73bc41554813d9ce1d794546767e76ddd"
+        },
+        "public_spec_hash": "sha256:b6d5b8d42a003795ed38256fa9a0e07c94578a6e0996179588a15d42604b86bf",
+        "failure_record_sha256": "sha256:e5f97aeed09f9dfa69189b2fa2dcee12518f309233de2adaec38d9905413ac11",
+        "qualification_hash": "sha256:fdaeef171c661c9293d9cc2ebcf894d22418201a8d9375bb3aec78cd8b85c42e",
+        "qualification_file_sha256": "sha256:b7fad72d27833429963c59535d25d3ccc690f604ffe9f4e14b48d11f4397da11",
+        "source_evidence_hash": "sha256:166daaf570d88ab91ba965f85902a735e05d10df83ab09aeb80776a8bb3d3fb6",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_3dc602aab8964d77.submitted.patch",
+          "bytes": 3788,
+          "sha256": "sha256:37be7c96b1874b76915fd3005459dc9271107e77961863294c417414c50d2636"
+        },
+        "semantic_group_id": "interrupt-lifecycle-unresolved",
+        "assessment": "The submitted change alters cancellation handling and runner ownership, but one observation is insufficient to promote a general lifecycle rule covering propagation, non-resumption, and exactly-once cleanup.",
+        "causal_confidence": 0.58,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:8a8bf485750bdc04aec516889cb787334f29bebf9cf285547333380f998ddc61",
+            "role": "public_inspection",
+            "sequence": 238,
+            "event_id": "evt_c0b1ddc59c1e4b3da6c96cb4712b4462",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:4e7f7df03b99da5221d6a62abe60be727e168903e593e767377c7206f3991347",
+            "artifact_hash": "sha256:d4627d7773aaf52c67b634c100860506bcb606fb1a18efe9c674a1207cdd26d4",
+            "artifact_bytes": 558,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:eb20df1308ee6d001f3f8e3906f2f5589314755f1312f33b6aaef266f9708bf7",
+            "role": "public_inspection",
+            "sequence": 247,
+            "event_id": "evt_da6770eea5c44ac790f702396ccd71aa",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:b612b37a9348f454d51327a52970e2197a07433f8d91f83dabd937aed775bdd7",
+            "artifact_hash": "sha256:b0e32a81146ebc54220754dc1f9539233627072167e949ce57dd4de98d60a22d",
+            "artifact_bytes": 4775,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:53fc5abb45b21471f202ccafc0dae68c7b72039554503569bd3f379ba390d6b7",
+            "role": "mutation",
+            "sequence": 1087,
+            "event_id": "evt_b1f46a519ca54e80922fb0e5c71fed43",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:4b3092ed8eabe291d81503421d3da45e1e166f0063749c58d83ec9106de22e8f",
+            "artifact_hash": "sha256:37be7c96b1874b76915fd3005459dc9271107e77961863294c417414c50d2636",
+            "artifact_bytes": 3788,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:4189d26178ebb6f50b6cf3750132f3d8c9ff6a7f3c674525fd40191bf2ed1baf",
+            "role": "visible_check",
+            "sequence": 1092,
+            "event_id": "evt_cda85549984b41f9b5805fc4c99d50e2",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:21e1df3bfe414b1a11ba757e79fa52a7bdc71ee5b59540e417d05762d029144c",
+            "artifact_hash": "sha256:21565647abd07fedc8ee345e002395703c4932f1e7ec495d8359e1ddc8935219",
+            "artifact_bytes": 379,
+            "check_id": "upstream-pytest-plugin-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:7122705552f5f4dd057d1feb9071bad05818176469732a0d4e87570392545bfe",
+            "role": "diff",
+            "sequence": 1098,
+            "event_id": "evt_631e2c86845244ebbb8420234f6be8de",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:bde83b0b5047ecc52be7d7f0101bc5852ae8a66e1527fecca92651f94b6e44a6",
+            "artifact_hash": "sha256:921c505999b31c3b59f33f9ea57b2a6103b1086f55f1ffa5d79a6357775db822",
+            "artifact_bytes": 4200,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:2da6d3579bff50020f00915da7f31d3af429c3e1499d73e0454cfe7437cd8f38",
+            "role": "review",
+            "sequence": 1104,
+            "event_id": "evt_0530ed53be17439589fff190efe21882",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:3e39403098fd1f52332b581f81fc94c47ad83f0f331c9dd8ba6d0d5d7927fce1",
+            "artifact_hash": "sha256:37be7c96b1874b76915fd3005459dc9271107e77961863294c417414c50d2636",
+            "artifact_bytes": 3788,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:2f416b55ea0459b71b8c080390bd955e46e6b16ee3f901a4cb1efcce12e73da5",
+            "role": "submission",
+            "sequence": 1107,
+            "event_id": "evt_06f73ecc9165434aaf4b9c1beeb6c109",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:b22afd1cd12a009c1a27229ed973f4ef57bb1d7fd27795ea647817dfbdd75a57",
+            "artifact_hash": "sha256:37be7c96b1874b76915fd3005459dc9271107e77961863294c417414c50d2636",
+            "artifact_bytes": 3788,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:7f984b87d1483b749c0406e1af390554f0e0c710253dd72b5874c9b03bccf47e",
+            "role": "generic_outcome",
+            "sequence": 1110,
+            "event_id": "evt_4d23233a450740af907e7897e3359277",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:a30b6e1672d7d72cf694c4b6d126e49726d068bc645691ac43d21037f8df0d22",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_59aac91defac456b",
+        "failure_record_id": "fail_19d13b555e5f5e21b89c0dde9e593ec8",
+        "task_id": "loguru-invalid-format-feedback",
+        "repetition": 1,
+        "public_spec": {
+          "path": "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
+          "bytes": 2392,
+          "sha256": "sha256:efec17dc692c0935553e9e3c67ad5463d977254ea52a536c1dcf4a4c43831f10"
+        },
+        "public_spec_hash": "sha256:4839d8e5e1e57efa2a33a458ab0fe839d5ef4200bbe53b0f56683d8b8b98e7ea",
+        "failure_record_sha256": "sha256:58084373e77d8b032689d78d1a7cffcac45922e2ab923af1d19ba1aea7a9c105",
+        "qualification_hash": "sha256:10809a50bb68367fa7832c8435d2adf967b258d9316646e1581804a6ed8d3ab0",
+        "qualification_file_sha256": "sha256:09dd1b1744bab045ef28e977dd9fd1d6e52d10256f95c473a3a4d6970bb74909",
+        "source_evidence_hash": "sha256:3a982898fa9ff2b127f6cddfafedf5f352f7fca24d71057cc3ee2fa489c473d4",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_59aac91defac456b.submitted.patch",
+          "bytes": 3795,
+          "sha256": "sha256:ec0db776e58ce2bfe0d855b104735809b08367486b9e152fd778e632b74a1570"
+        },
+        "semantic_group_id": "diagnostic-contract-unresolved",
+        "assessment": "The submitted diagnostic path can itself be interpreted as formatting syntax, while the public contract also spans static, dynamic, colored, catch, and patcher-provided record paths; a general rule remains pending.",
+        "causal_confidence": 0.82,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:eb383a2ec9fb5dd594adf1e6d892dafacc2c68cf4e35039ebc2a88c1859d885c",
+            "role": "public_inspection",
+            "sequence": 28,
+            "event_id": "evt_a1658e6cb3974f31a26600b8a1d22827",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:0368eb374a9d4470d9c8b0749b56304970510796e45a51f8b385fa457e38267d",
+            "artifact_hash": "sha256:c3922e07cbb31daf3114c4f4f6bbd74bcbd7e6f8fdc4f39a633dc4530b806f89",
+            "artifact_bytes": 1516,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:49b3d758747322aa980e8eff0b4ea2a06c6b6ddbda7160d529153e7a20f5ff6f",
+            "role": "mutation",
+            "sequence": 52,
+            "event_id": "evt_3bea9f46bda947deaa57b76f17ead47d",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:f90c8a5e281e557628511ef95aa210e8ec7e58368a77729b8d6a6bdf68c2c755",
+            "artifact_hash": "sha256:ec0db776e58ce2bfe0d855b104735809b08367486b9e152fd778e632b74a1570",
+            "artifact_bytes": 3795,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:dd4b038b8ff3e1911a1bbae9a56d4a0ae7aea8e77fbeef1dfcf3ae12d298db6f",
+            "role": "visible_check",
+            "sequence": 67,
+            "event_id": "evt_45ebea522c344fb2ac751b7dea8f5e99",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:bcc1623998a252ebc71ffcfa9d4bea800c0834e94b30d6db3a4396e90b68e7c7",
+            "artifact_hash": "sha256:c678ed6878bd024525ca20e4d13a9ac98fa3222c1be082243747ef88c7114b52",
+            "artifact_bytes": 358,
+            "check_id": "upstream-format-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:d5830a0f76042ec0eee5d27f250e3244b101188247d07706c42a756ddf128851",
+            "role": "visible_check",
+            "sequence": 71,
+            "event_id": "evt_d332c9caaa724850b5c1324c46e885d7",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:5ebb61a0ae4ebeb46c711bc28c134cf54db96e295cb8a4074e7657c03edb5c32",
+            "artifact_hash": "sha256:055220402eb463210892c1317af7051edfa8d23ced27eccf6ce9c61e0030c8a2",
+            "artifact_bytes": 254,
+            "check_id": "basic-format-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:92f6c050a7058a82cd53c754244ff976568836df9594dc5ef061f19fe7858d0b",
+            "role": "visible_check",
+            "sequence": 74,
+            "event_id": "evt_4f8c591cbf084c839f83c997049fd850",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:e4b1528017daeffaa2cdf141093848aff4e41aa6a529911cb1d94cee40434a5e",
+            "artifact_hash": "sha256:f2aa3449cd3ddec1207eb978c577cbe9c1972025b4f77eb4b79d216ce829f832",
+            "artifact_bytes": 255,
+            "check_id": "patcher-field-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:32e8bcd10a62125a12e14c2ce2524d0646dca8b87b8910c003887863fc3893f0",
+            "role": "diff",
+            "sequence": 79,
+            "event_id": "evt_fc44f301ab39484a80fd0b634c21a9b1",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:f2eebee3f71c56a71add60d1e8a7b078fea2e1d729a6f1446259f9ca9581a61e",
+            "artifact_hash": "sha256:f5c95b5e16fa9fc7f0b8d7b173bb43acceb76e36f73fe0b5be294702dc0314b1",
+            "artifact_bytes": 4189,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:cbe7ba59c4d61eac0f1df8c1b3a288df8728d1ceea29749b2af102691f228cbd",
+            "role": "review",
+            "sequence": 85,
+            "event_id": "evt_d97484f6907a406099ffd7a3fc99558c",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:3fd45a206394ca35fa2f7b54e4e4b4ba72b6b6e04c03832d82bf1e640d21d4b0",
+            "artifact_hash": "sha256:ec0db776e58ce2bfe0d855b104735809b08367486b9e152fd778e632b74a1570",
+            "artifact_bytes": 3795,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:aa06cda52628be1a217b090860af403b6bd43b4772bea041fe3966117edd97b8",
+            "role": "submission",
+            "sequence": 88,
+            "event_id": "evt_a262a2bc56b843079349c515445c5ab1",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:3b163fe3ac0cf6b7e4ec32cebdab23eef7ec58f92c32116399ee680666bf31dc",
+            "artifact_hash": "sha256:ec0db776e58ce2bfe0d855b104735809b08367486b9e152fd778e632b74a1570",
+            "artifact_bytes": 3795,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:533fb82d34a7cf1643f69a96beec746430bd9cdc2f62605a43c15cb9dadddff5",
+            "role": "generic_outcome",
+            "sequence": 91,
+            "event_id": "evt_e92a437a2b274ef3be5b662df3154760",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:0a73c62a0165ddbdd69d63e47bb673d000f5977273bc39b41cccebad93392291",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_cc179262fa664600",
+        "failure_record_id": "fail_bcf0bf2e95765d42b925742d955da82e",
+        "task_id": "loguru-invalid-format-feedback",
+        "repetition": 2,
+        "public_spec": {
+          "path": "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
+          "bytes": 2392,
+          "sha256": "sha256:efec17dc692c0935553e9e3c67ad5463d977254ea52a536c1dcf4a4c43831f10"
+        },
+        "public_spec_hash": "sha256:4839d8e5e1e57efa2a33a458ab0fe839d5ef4200bbe53b0f56683d8b8b98e7ea",
+        "failure_record_sha256": "sha256:a3a36537b3467eef519f5327d743dfbd63d702541ee5b5e8cfe0919ef0f003f7",
+        "qualification_hash": "sha256:3244d4ca8614c682b8b4eea7a127720b1d8b91b29965efcfc9166cb1fc308442",
+        "qualification_file_sha256": "sha256:7f53070bcd1076c7e2007c44525915c4e72d4446d808e4d8050a63e0030d693c",
+        "source_evidence_hash": "sha256:2af2b357f4a405b4ba83469a5919fc2c95bcfa5130fbad473227e0f118cc06fe",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_cc179262fa664600.submitted.patch",
+          "bytes": 3622,
+          "sha256": "sha256:e873433015a0d7cecb5ccdffb3483982a5b7cc527983f6c7bc1894297f26d0ff"
+        },
+        "semantic_group_id": "diagnostic-contract-unresolved",
+        "assessment": "The second submitted diagnostic follows the same public formatting boundary and repeats the risk that explanatory placeholder syntax creates a secondary error instead of useful feedback.",
+        "causal_confidence": 0.86,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:d1853919e3a361a60142bc728cf5c20881a604e1e0db12255c5dc0713b1278c5",
+            "role": "public_inspection",
+            "sequence": 17,
+            "event_id": "evt_17a1158abb4e442ca2e5c34f8927b339",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:f408165cc332b5c96b1fe97211e7822b71011bb9becbcdcd3c6e728bd428d494",
+            "artifact_hash": "sha256:ba7fa26ec90fdbacb744491b8f40671ca4ead602735b9b6aaba1c7201a37fd50",
+            "artifact_bytes": 1367,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:64eb71bd45ab71c7df36554294e83192fe2965d310ad128c3825c71be27bdb55",
+            "role": "public_inspection",
+            "sequence": 23,
+            "event_id": "evt_8256975a33ec4f8ea6feda680ffd62b1",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:24949da2be9ed86a5d5e46d4adc67f7f17abb6c610a6ae22edf8b5b404eb804e",
+            "artifact_hash": "sha256:342405581143642c84a049f9f6ced7ed8e102032d0946d659251b734205d232e",
+            "artifact_bytes": 2098,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:98162ab6198df0315f74d9c8682587005802d7aba4b89095d1faeb02e18c8dcf",
+            "role": "mutation",
+            "sequence": 125,
+            "event_id": "evt_b7f183ae1a2a4ad380db1a61f3f9d905",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:e16b4df2667f23c610407a27db270993a6cbcd87f1b52bfa696bc63e7ad64771",
+            "artifact_hash": "sha256:e873433015a0d7cecb5ccdffb3483982a5b7cc527983f6c7bc1894297f26d0ff",
+            "artifact_bytes": 3622,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:9d8f40ba640a40da2be195667925a36ee51c0a6296cc85e3a4fb980c2d7f3417",
+            "role": "visible_check",
+            "sequence": 130,
+            "event_id": "evt_f946188dccc3483cafc0b0f7aaa377dc",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:4a0646a079753ff87eaeeb40bb0374f6148128eded26bc9cb8593982fb204fb6",
+            "artifact_hash": "sha256:a3c4709a5e73b82d2e129696d4eaf63e2198cd6b2072f295419493bea98462ea",
+            "artifact_bytes": 358,
+            "check_id": "upstream-format-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:a1570558c0479694d3de40b01a3c4283e89b949fdfe8f6b5340f0385353bcc84",
+            "role": "visible_check",
+            "sequence": 134,
+            "event_id": "evt_52a50fd6904f48ad9fd129a12b279842",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:52fc1d62f165423159fd9cfed27c63bc6c880f1f3dd3e3a7440f99f832e95d92",
+            "artifact_hash": "sha256:e0e327b0be42a7217254b29be0298b02cdbf9dbb33ebd288d2c56b0716a97659",
+            "artifact_bytes": 254,
+            "check_id": "basic-format-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:2087baf6babf36270e7054ad99c330c6c5377c5a451b4e92072d45c3c4aa9187",
+            "role": "visible_check",
+            "sequence": 137,
+            "event_id": "evt_b85a6645711c4cac90edfadaec8ffce3",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:1f146793f518be6179580f5c7165f24e6e2bbfad4d88c0d063b9dc9dc98a3a4f",
+            "artifact_hash": "sha256:af994f6e1b98246e585bec26dea61254e5e0132f784907dfe2d42bc3b72a60eb",
+            "artifact_bytes": 255,
+            "check_id": "patcher-field-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:582aa36703e0203939d44a3dc149603f85f26b508db90240ae09b1ca219d86c1",
+            "role": "diff",
+            "sequence": 142,
+            "event_id": "evt_3349e9ddc00c4b01ab46b3b0e06e5f06",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:45ba45f2dd19881bfb007873e406535ede4fa5268df6fb07f9876b218efe1b12",
+            "artifact_hash": "sha256:78108c72a0c2c795ec65b0321b2af8f870f6cab53076ed13e3daab0d9cb21b24",
+            "artifact_bytes": 4009,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:55547387b6d02c6f4d2663c4023dfe402a54c94eb70ffb44d7f95d9f1c9113d8",
+            "role": "review",
+            "sequence": 148,
+            "event_id": "evt_b8fca4b9b01a42df91f139f5590946cf",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:6e661ad458fdc453311a4b121ec8085fd01bf5904a8e8d81cd16426191239445",
+            "artifact_hash": "sha256:e873433015a0d7cecb5ccdffb3483982a5b7cc527983f6c7bc1894297f26d0ff",
+            "artifact_bytes": 3622,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:3fde6d9f232c5106de560e48d8b156b0fe7955cea6284c466287fd779a661818",
+            "role": "submission",
+            "sequence": 151,
+            "event_id": "evt_d2f21c191963461da27f892ebe2a4547",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:7ac0b87ecccec8f6ec2aff8b0c34efc5c3ee897b3693f8a5ab7ee4ea65d36bb8",
+            "artifact_hash": "sha256:e873433015a0d7cecb5ccdffb3483982a5b7cc527983f6c7bc1894297f26d0ff",
+            "artifact_bytes": 3622,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:899db6699f1e754883e8185cfbb60c4b7bbf546f1fc585db7a582dfbf9795a11",
+            "role": "generic_outcome",
+            "sequence": 154,
+            "event_id": "evt_34f07bee86a74092ab5262dc47060403",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:f7a6bd81dda085be20ec43b8f9457895de9cd9563be3500255c7d13f7b1f2ca2",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_ac3ae1a7009a4e8b",
+        "failure_record_id": "fail_f90fa668a6945abe98ef6dd5e4761a97",
+        "task_id": "tox-cross-section-empty-substitution",
+        "repetition": 2,
+        "public_spec": {
+          "path": "tasks/dev-train/tox-cross-section-empty-substitution/public.yaml",
+          "bytes": 1903,
+          "sha256": "sha256:cf100f771e799824b2928f28faec4be76f011aa84667b1573b6fa373860b0c82"
+        },
+        "public_spec_hash": "sha256:e371eddfbc9e8c73f7b47def95480496d7f88ddccb0348c00a12a9b78c496521",
+        "failure_record_sha256": "sha256:fe572c2ff40196fd740925f7ff2565577a22b47cdf73691e39689b7d508ebc12",
+        "qualification_hash": "sha256:a87d7158577228836d2492f27b7603d00ed09ec969a60e5c5ac643f8aaab51a2",
+        "qualification_file_sha256": "sha256:dea236119d0590f0554a039a53c17a01fb394881b914a77a3e8db6af0cb97166",
+        "source_evidence_hash": "sha256:146fdaad7722d86caa68d558a30aa284f6c10029303251ba9be6f908f4266171",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_ac3ae1a7009a4e8b.submitted.patch",
+          "bytes": 1021,
+          "sha256": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99"
+        },
+        "semantic_group_id": "exception-origin-state-conflation",
+        "assessment": "The submitted change handles lookup absence and post-lookup transformation inside one exception boundary, conflating a missing source with an existing value that resolves to an empty state.",
+        "causal_confidence": 0.92,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:90277ac5d5e83bbe45385ffeb37a6057c15d2b1fd3df839094710e6d7af0b43d",
+            "role": "public_inspection",
+            "sequence": 171,
+            "event_id": "evt_13ad5e5843c94034a678d46a352f5245",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:1aade91a358debb0a85d8814817893317397f9aca1082b3c3d87925bb9930146",
+            "artifact_hash": "sha256:27842d0a8e0700202ae6b2e50c759b841cba86572daab3d1c8e761884ee891c0",
+            "artifact_bytes": 4790,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:abd60751fdc78deb222f60abdeb76cf858f24065e06e3dcf228e2ff925e8aca0",
+            "role": "public_inspection",
+            "sequence": 174,
+            "event_id": "evt_3a76c1c2f6f94f01b1065aaacc027b4d",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:735cc4556bc9f26120661cb786810ca0b1ad9d53209c7f3fd09771b2e0a0885e",
+            "artifact_hash": "sha256:027c3f02e1cc2b44ec9ebd9755b9cc221c7e93b3d5832a956a3eef83c973fe51",
+            "artifact_bytes": 6083,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:f11990f8b4762844a5777a2c034fb8513dff434d4ce311d7dc562ad6f8b5b201",
+            "role": "mutation",
+            "sequence": 181,
+            "event_id": "evt_a510a5576c71492d8bd95aadf74698bd",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:075f6706d5fb87fd0c5f79c3fdde96e381a3aabfdd38cd28b2b38fd50aeee10e",
+            "artifact_hash": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "artifact_bytes": 1021,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:4922d909fd3ce225d197d2b507782a1302d693c924765e7a874eee3ac90bf68f",
+            "role": "visible_check",
+            "sequence": 188,
+            "event_id": "evt_1a288a2e127c43bc92d4c8c573b7e7d9",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:65b54e3fe505b42a63e6bab995a3d7f4798b75abd6df496b57602e9303a13c65",
+            "artifact_hash": "sha256:233e6a10490a4033d4bd148aa7166a7f45b016f6f992e8c0df3a35849daf8079",
+            "artifact_bytes": 363,
+            "check_id": "upstream-show-config-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:4c2d22864fca7205faaa60d2574dba8cc23651c0ef4dae0e984a5735b6b9f293",
+            "role": "diff",
+            "sequence": 194,
+            "event_id": "evt_585866ee479d44819fc539214be44268",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:6a84457d0fb729402929147dfaf853660cc5be75cdbd4bdfcd99cd52fb061ee6",
+            "artifact_hash": "sha256:b479fbada264fd3a41e50e920f254aba6bbaa29f20699f239510b09b2720b3d1",
+            "artifact_bytes": 1361,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:9b408f21fe54ce0e49775ad20f06bce44faab2d4972535c510c4a4cb4b092ee1",
+            "role": "review",
+            "sequence": 200,
+            "event_id": "evt_503613a56a65404b813bd67cdb534048",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:743dd0351f965abc8a2a5528065685d76908e553f03541d141fb6dc9a0994b94",
+            "artifact_hash": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "artifact_bytes": 1021,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:483b8a54c94e9febcf32a48ef2ea60ac89452a2b6237ea7d03ebedcf4522a29e",
+            "role": "submission",
+            "sequence": 203,
+            "event_id": "evt_da7ad913fca440c29f7e7dba2d826041",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:3380b04fd4f7a4fa97a202763a33bb2969642e54a4eaf97e3ab67db1f9b35c23",
+            "artifact_hash": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "artifact_bytes": 1021,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:aa225f0c1c3aa5d0893164cfc15568b064b4a2c4cf4615fd1b1351ba599219df",
+            "role": "generic_outcome",
+            "sequence": 206,
+            "event_id": "evt_becd1829601c4f11882196d704282787",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:58c414d06943f12934927e9c901ff4310460fcd374334db8f98b7dff5f0c7884",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      },
+      {
+        "run_id": "run_d5c2e22b485a4578",
+        "failure_record_id": "fail_ab3918ee4a3c5f34bc9d04a8f0970c00",
+        "task_id": "tox-cross-section-empty-substitution",
+        "repetition": 1,
+        "public_spec": {
+          "path": "tasks/dev-train/tox-cross-section-empty-substitution/public.yaml",
+          "bytes": 1903,
+          "sha256": "sha256:cf100f771e799824b2928f28faec4be76f011aa84667b1573b6fa373860b0c82"
+        },
+        "public_spec_hash": "sha256:e371eddfbc9e8c73f7b47def95480496d7f88ddccb0348c00a12a9b78c496521",
+        "failure_record_sha256": "sha256:d11ae39444ef99c4d190e6d7d94e0f871a23f314cea930921305e0fdbcddce3f",
+        "qualification_hash": "sha256:a525b04a69c2e4fb2048166f290c09bfdf1ca1b1ff210b6856ab777b1c6960e3",
+        "qualification_file_sha256": "sha256:c2ac675b9f088a303e57208912db3cb0164f67d21151fcd179ff7b4c79fdfff5",
+        "source_evidence_hash": "sha256:50cef2993b57bc74304055d9c19dc3537227cb3ea2315d31c3a7012fb0554ef1",
+        "submitted_patch": {
+          "path": "reports/memory-development/artifacts/d099/run_d5c2e22b485a4578.submitted.patch",
+          "bytes": 1021,
+          "sha256": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99"
+        },
+        "semantic_group_id": "exception-origin-state-conflation",
+        "assessment": "The byte-identical submitted change repeats the same public exception-origin conflation between absent lookup state and an empty transformed value.",
+        "causal_confidence": 0.92,
+        "evidence_refs": [
+          {
+            "evidence_ref_id": "sha256:5506486fc0e67ef21e7de08ec1fb65e4c00195a81d93aad8d1ecdc0505992384",
+            "role": "public_inspection",
+            "sequence": 75,
+            "event_id": "evt_fa64127094b3431b8aa8fae6c122aafa",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:0e223dab2de05075956674576887801df00c5ec9dfe80f98db5ee41d934558bb",
+            "artifact_hash": "sha256:27842d0a8e0700202ae6b2e50c759b841cba86572daab3d1c8e761884ee891c0",
+            "artifact_bytes": 4790,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:8a4558f889d629d455729fae4b78e556e0197c4bcb7a3f6c674be66d927ceee5",
+            "role": "public_inspection",
+            "sequence": 78,
+            "event_id": "evt_f31386e55b0c47889875977e33937e28",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:ac500541131473fd2361efc29d3dcd3fc18b6c21b2f324e5eacd6ad34e89d2c3",
+            "artifact_hash": "sha256:027c3f02e1cc2b44ec9ebd9755b9cc221c7e93b3d5832a956a3eef83c973fe51",
+            "artifact_bytes": 6083,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:b23bd90e820701a264994d46b8822fd21a98f85ed846a9dcd3e7f92be8ad43a6",
+            "role": "public_inspection",
+            "sequence": 81,
+            "event_id": "evt_33ac0aa7a3f04b269a4e44008ac1eae6",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:52a1545390225f5c1d7eb9634f2193a3d5ac86e754e85f145d96ee0fa3949303",
+            "artifact_hash": "sha256:b858d2cb46c3a3f65dcaa527b4914782be6803313d425f56f0bffb13f6230e6d",
+            "artifact_bytes": 10911,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:127fddaa2b889fec52264e1abfee2062983a53f96fafd54cf9173d0fa49c92c3",
+            "role": "mutation",
+            "sequence": 88,
+            "event_id": "evt_1d5f619787d64d1ca80e967c9ed79c86",
+            "event_type": "PatchApplied",
+            "event_hash": "sha256:492df599c40d5947cfaac4c9fe20ce25a6d5e043d08494822abc6aef94259c77",
+            "artifact_hash": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "artifact_bytes": 1021,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:8336ce50de3e7e86b169de79973e7fb758436cc903b01d622e46f883afb4abf4",
+            "role": "visible_check",
+            "sequence": 95,
+            "event_id": "evt_204df3dc7b4341fe9563d76464bf7ec0",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:7958ff92363b913faad2743eeef593bb685cc0ea5e10f326a0446883dfe082f4",
+            "artifact_hash": "sha256:beabd5728adc522302903caa791147333f57755532a6b79a16e9b178d5a44b12",
+            "artifact_bytes": 363,
+            "check_id": "upstream-show-config-regression"
+          },
+          {
+            "evidence_ref_id": "sha256:82d7423fbbd2fb93b89a2c1d023ac22e490464ac329eebf6045de0d84c702210",
+            "role": "diff",
+            "sequence": 101,
+            "event_id": "evt_d6e5e0ae340f422393e2269f046e4c1e",
+            "event_type": "ToolSucceeded",
+            "event_hash": "sha256:a0874417daeb18db3190df5385b0cee6cd7df277d7583d102cb0f7a4c25d0ce8",
+            "artifact_hash": "sha256:b479fbada264fd3a41e50e920f254aba6bbaa29f20699f239510b09b2720b3d1",
+            "artifact_bytes": 1361,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:75e225198f2e8f8804af34e5779d906daa5d93c9aff50581858c499b64bcd3a2",
+            "role": "review",
+            "sequence": 107,
+            "event_id": "evt_195add75eabe49d98924a6926b9d199b",
+            "event_type": "ReviewRecorded",
+            "event_hash": "sha256:c4105565913784f2d3b1da12881650b74d54453750605caa07943f98d8fb5298",
+            "artifact_hash": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "artifact_bytes": 1021,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:fb9bd242fb9645328e6abbe562b6d113c96385e4e2c9ec2a51994a61ec33f11e",
+            "role": "submission",
+            "sequence": 110,
+            "event_id": "evt_046ee56de7af4441bfd12b44b525fbcd",
+            "event_type": "SubmissionAccepted",
+            "event_hash": "sha256:80b037c18616b4c010684fa5615bb3200c9f420957eb5dddefad3c41bc0a048e",
+            "artifact_hash": "sha256:3feba59de1ed3aa4fdc714bc46156d0b3f89ea7e2e614d9935b37a49806bee99",
+            "artifact_bytes": 1021,
+            "check_id": null
+          },
+          {
+            "evidence_ref_id": "sha256:e3a738c25ba4e6ba3e6a8d71eafeb3f87b7ba9e3f2ace97f9ebac127062923c0",
+            "role": "generic_outcome",
+            "sequence": 113,
+            "event_id": "evt_ed04a11e124b48bcb86e0e7dea366996",
+            "event_type": "FailureTagged",
+            "event_hash": "sha256:38f1255978a8c62de205f6ac78f2e8075ecbf73d4a525886f779c77bb8656452",
+            "artifact_hash": null,
+            "artifact_bytes": null,
+            "check_id": null
+          }
+        ]
+      }
+    ],
+    "groups": [
+      {
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "representative_run_id": "run_575da4ead3334551",
+        "relation": "semantic-cluster",
+        "merge_rationale": "Both repetitions address the same public traversal contract and leave different portions of its platform and path-type matrix under-validated.",
+        "dedup_confidence": 0.74,
+        "disposition": "candidate",
+        "proposed_rule": {
+          "failure_class": "PLATFORM_EMULATION_MATRIX_GAP",
+          "phase": "IMPLEMENT",
+          "description": "An emulation fix validates a final outcome without preserving the observable intermediate semantics across the public platform matrix.",
+          "preconditions": [
+            "The task emulates platform behavior with observable intermediate and leaf effects.",
+            "The public contract names more than one path type, platform mode, or error branch."
+          ],
+          "diagnostic_evidence": [
+            "Enumerate intermediate and leaf effects separately before changing normalization.",
+            "Build a public matrix for platform mode, path type, creation mode, existing state, and error state."
+          ],
+          "recommended_actions": [
+            "Implement the smallest change that preserves every matrix cell named by the public contract.",
+            "Run the registered regression and add targeted public reasoning evidence for uncovered cells."
+          ],
+          "do_not_apply_when": [
+            "The public contract has no observable intermediate behavior.",
+            "All named platform and path-type branches intentionally share identical semantics."
+          ],
+          "applicable_languages": [
+            "python"
+          ],
+          "confidence": 0.74,
+          "admission_decision": "not_made"
+        },
+        "members": [
+          {
+            "run_id": "run_575da4ead3334551",
+            "failure_record_id": "fail_0f5c0cd58af05907ba3285e4e7ef069e"
+          },
+          {
+            "run_id": "run_74364afdc3d94f9c",
+            "failure_record_id": "fail_6b7b036074a2590d97db1afdfe90a89d"
+          }
+        ],
+        "evidence_ref_ids": [
+          "sha256:e88411ed437cc4eab00cb833dd69f53d413141a5e96098f06ed5daa590e5956a",
+          "sha256:2be93502afd53f406b3edcdbf11b432d11a2da71d149e55abc70833559d2d283",
+          "sha256:da1ee21661b05abf240975e701bfbbc753f2c87c173b96884310a04a1af5f5d8",
+          "sha256:117f2c8f2710ad627c3bddf2f2679f019cc369c02f674c13187130ba04251452",
+          "sha256:000b74e3ad564945d56023b8e559011304468e7666210b6358cf975b7e631eb6",
+          "sha256:b5662f234446f7c068969e3a841957b10a74a57217537a9bc6b227c8d3124e33",
+          "sha256:d5edb8714a4fde01514c16eae45052f44eb4ddec423b641580b64a3eaa00ca0e",
+          "sha256:3d3bde4504e4e132457447df5525df595f9603ac37a94fc363713acae92dc522",
+          "sha256:6f21b835281730df4d90b463c73c2b1e72f17e05e6c14e5d10380403900ccd79",
+          "sha256:77bca24764bfb3c0b99be60ca57d300fdf40c0a2f4e6cf33f6cb38f8abe924aa",
+          "sha256:daed2d1be00fbd82b2c87f03745dbff77341c8a8f7f278c9188a72370887b60c",
+          "sha256:5b2b508eb5fce69de298e290465399e37f716293d8c2bcf567a68dc6a970a90a",
+          "sha256:fe8947887eec06a498032c02d3204b9544c60f67dad7998e2e24bb6f8b920e9a",
+          "sha256:a1323bc9b573cdb1e7d8d4c5833d96f781864e35a15c56234c1daee00f7b4661"
+        ],
+        "admission_decision": "not_made",
+        "unresolved_reason": null,
+        "next_review_actions": [],
+        "semantic_fingerprint": "sha256:2680ffacfdfe654288f9c9d9bfc399c2b07d2d0b52ee06b2201ebb6e72d2a45f"
+      },
+      {
+        "semantic_group_id": "request-context-propagation-gap",
+        "representative_run_id": "run_5ffc2e1c58784e17",
+        "relation": "semantic-cluster",
+        "merge_rationale": "Both repetitions modify endpoint-aware metadata behavior but do not show complete coverage of every public call-graph edge and route ownership case.",
+        "dedup_confidence": 0.94,
+        "disposition": "candidate",
+        "proposed_rule": {
+          "failure_class": "CONTEXT_PROPAGATION_GAP",
+          "phase": "IMPLEMENT",
+          "description": "Request-scoped context is added at a leaf while one or more public callers or ownership branches still use an implicit default.",
+          "preconditions": [
+            "Behavior depends on context selected by a caller rather than a process-wide default.",
+            "The public contract requires preservation through multiple access paths."
+          ],
+          "diagnostic_evidence": [
+            "Enumerate every caller-to-leaf edge that can create or transform the affected value.",
+            "Separate relative, default-origin, foreign-origin, custom, and implicit-default cases."
+          ],
+          "recommended_actions": [
+            "Thread the context explicitly through every required edge without rewriting foreign ownership.",
+            "Verify every public route class and each caller that omits explicit context."
+          ],
+          "do_not_apply_when": [
+            "The value is intentionally process-global and the public contract confirms that policy.",
+            "Only one construction path exists and no caller-specific context can vary."
+          ],
+          "applicable_languages": [
+            "python"
+          ],
+          "confidence": 0.88,
+          "admission_decision": "not_made"
+        },
+        "members": [
+          {
+            "run_id": "run_5ffc2e1c58784e17",
+            "failure_record_id": "fail_2cf07eaf03315e54908197f76180394b"
+          },
+          {
+            "run_id": "run_88f96fae3d2442e6",
+            "failure_record_id": "fail_8edc6a7fd4f3506f92a149698e55da6e"
+          }
+        ],
+        "evidence_ref_ids": [
+          "sha256:6322c19e2f3d76953e8b240aad23be23f822fdc45ef25cb449109f34d8eadd96",
+          "sha256:f3752e7396c1982e804aab6165e447ec5c2ae891b8aac050fcdc106fe77d7838",
+          "sha256:9499217f1dbaa114be0c8bffce70bbf442f29a871b62e8973af7c078024429b7",
+          "sha256:e00cc3c337e8b6fb1c1538d5ae8be2badd4bee78cb29aa83a5e28e481efe1d4f",
+          "sha256:02b64adb4ea16b185c717049d7353ab60bb1543bde3488694491069bca344c0f",
+          "sha256:d2b073a113b517277a5ee9dfeab88b3ea5b153518d532df7f338a8b73e11985e",
+          "sha256:c8414725f6c310048e2ef931f0ff8586db0e3f380cda0225d258f76b5d95b356",
+          "sha256:2dd08cfa73d50737c6a750fc6f32fb3c9c057bde614dc950ee12d60f54b1dd99",
+          "sha256:7a3c7e0d82b406dabd02baebe174f5c41c4ed3e2267fc8b10c3a4aaa301b2a33",
+          "sha256:9e7731417d937ef6386560d200ad84a5aeb07acc17e1ee22d711a34456def2cd",
+          "sha256:1fbfaff7722d8b07556f1b3b91e69185dec4fc71be60bc684c7459931e80c6f0",
+          "sha256:8fd4908ce5d978ee9cd57ac4b5db48685a71d42483f960a067928302852b7960",
+          "sha256:98d9c8c0a13077b67edf3b0c6ef12e19f7e4df1cbbffe6b855d37b51f70e4d2a",
+          "sha256:0b2bbb84a0a4cb823aa61962902d4d0823e05865510d82dbda7c69fc33047bc0",
+          "sha256:846b360ea570eda0efc9bf9a3f3a5f85c221794a7741ff83d3228a59e7bb3c96",
+          "sha256:3ed1b7aaec1dd87661562c929730d11e59f1da37009bb19472d8fec142d8a197"
+        ],
+        "admission_decision": "not_made",
+        "unresolved_reason": null,
+        "next_review_actions": [],
+        "semantic_fingerprint": "sha256:195b37a651d16037d49d389c3ec30c9cdaa658239cb66e108cb25ed5464d6471"
+      },
+      {
+        "semantic_group_id": "interrupt-lifecycle-unresolved",
+        "representative_run_id": "run_3dc602aab8964d77",
+        "relation": "single",
+        "merge_rationale": "Only one eligible completed submission exists, so no cross-run semantic deduplication evidence is available for a reusable lifecycle rule.",
+        "dedup_confidence": 1.0,
+        "disposition": "hold",
+        "unresolved_reason": "Public code suggests cancellation-consumption and owner-task cleanup risk, but one run does not establish a general rule across resume, propagation, and exactly-once cleanup states.",
+        "next_review_actions": [
+          "Review the public lifecycle as an explicit owner, worker, future, and fixture state machine.",
+          "Seek independent public evidence for interrupt propagation, non-resumption, and cleanup cardinality."
+        ],
+        "members": [
+          {
+            "run_id": "run_3dc602aab8964d77",
+            "failure_record_id": "fail_dac1b9595479551688a9613db9462927"
+          }
+        ],
+        "evidence_ref_ids": [
+          "sha256:8a8bf485750bdc04aec516889cb787334f29bebf9cf285547333380f998ddc61",
+          "sha256:eb20df1308ee6d001f3f8e3906f2f5589314755f1312f33b6aaef266f9708bf7",
+          "sha256:53fc5abb45b21471f202ccafc0dae68c7b72039554503569bd3f379ba390d6b7",
+          "sha256:4189d26178ebb6f50b6cf3750132f3d8c9ff6a7f3c674525fd40191bf2ed1baf",
+          "sha256:7122705552f5f4dd057d1feb9071bad05818176469732a0d4e87570392545bfe",
+          "sha256:2da6d3579bff50020f00915da7f31d3af429c3e1499d73e0454cfe7437cd8f38",
+          "sha256:2f416b55ea0459b71b8c080390bd955e46e6b16ee3f901a4cb1efcce12e73da5",
+          "sha256:7f984b87d1483b749c0406e1af390554f0e0c710253dd72b5874c9b03bccf47e"
+        ],
+        "admission_decision": "not_made",
+        "proposed_rule": null,
+        "semantic_fingerprint": "sha256:bfd05d53347d867efccc0fa091408a2c36dc57695ae5ff99d16b76fefdbb1244"
+      },
+      {
+        "semantic_group_id": "diagnostic-contract-unresolved",
+        "representative_run_id": "run_59aac91defac456b",
+        "relation": "semantic-cluster",
+        "merge_rationale": "Both repetitions introduce a similar secondary diagnostic-formatting risk, but the broader reusable boundary across all public formatter modes remains unresolved.",
+        "dedup_confidence": 0.96,
+        "disposition": "hold",
+        "unresolved_reason": "The repeated patch defect is concrete, while the correct general memory rule for static, dynamic, colored, catch, and custom-record paths still needs review.",
+        "next_review_actions": [
+          "Separate primary formatting failure from construction of the diagnostic message.",
+          "Review every public formatter mode and both catch behaviors before proposing a general rule."
+        ],
+        "members": [
+          {
+            "run_id": "run_59aac91defac456b",
+            "failure_record_id": "fail_19d13b555e5f5e21b89c0dde9e593ec8"
+          },
+          {
+            "run_id": "run_cc179262fa664600",
+            "failure_record_id": "fail_bcf0bf2e95765d42b925742d955da82e"
+          }
+        ],
+        "evidence_ref_ids": [
+          "sha256:eb383a2ec9fb5dd594adf1e6d892dafacc2c68cf4e35039ebc2a88c1859d885c",
+          "sha256:49b3d758747322aa980e8eff0b4ea2a06c6b6ddbda7160d529153e7a20f5ff6f",
+          "sha256:dd4b038b8ff3e1911a1bbae9a56d4a0ae7aea8e77fbeef1dfcf3ae12d298db6f",
+          "sha256:d5830a0f76042ec0eee5d27f250e3244b101188247d07706c42a756ddf128851",
+          "sha256:92f6c050a7058a82cd53c754244ff976568836df9594dc5ef061f19fe7858d0b",
+          "sha256:32e8bcd10a62125a12e14c2ce2524d0646dca8b87b8910c003887863fc3893f0",
+          "sha256:cbe7ba59c4d61eac0f1df8c1b3a288df8728d1ceea29749b2af102691f228cbd",
+          "sha256:aa06cda52628be1a217b090860af403b6bd43b4772bea041fe3966117edd97b8",
+          "sha256:533fb82d34a7cf1643f69a96beec746430bd9cdc2f62605a43c15cb9dadddff5",
+          "sha256:d1853919e3a361a60142bc728cf5c20881a604e1e0db12255c5dc0713b1278c5",
+          "sha256:64eb71bd45ab71c7df36554294e83192fe2965d310ad128c3825c71be27bdb55",
+          "sha256:98162ab6198df0315f74d9c8682587005802d7aba4b89095d1faeb02e18c8dcf",
+          "sha256:9d8f40ba640a40da2be195667925a36ee51c0a6296cc85e3a4fb980c2d7f3417",
+          "sha256:a1570558c0479694d3de40b01a3c4283e89b949fdfe8f6b5340f0385353bcc84",
+          "sha256:2087baf6babf36270e7054ad99c330c6c5377c5a451b4e92072d45c3c4aa9187",
+          "sha256:582aa36703e0203939d44a3dc149603f85f26b508db90240ae09b1ca219d86c1",
+          "sha256:55547387b6d02c6f4d2663c4023dfe402a54c94eb70ffb44d7f95d9f1c9113d8",
+          "sha256:3fde6d9f232c5106de560e48d8b156b0fe7955cea6284c466287fd779a661818",
+          "sha256:899db6699f1e754883e8185cfbb60c4b7bbf546f1fc585db7a582dfbf9795a11"
+        ],
+        "admission_decision": "not_made",
+        "proposed_rule": null,
+        "semantic_fingerprint": "sha256:b8238774a1399211fc7eb8d2452894e901f8b8291969641704a38c969a07fe8c"
+      },
+      {
+        "semantic_group_id": "exception-origin-state-conflation",
+        "representative_run_id": "run_ac3ae1a7009a4e8b",
+        "relation": "exact-duplicate",
+        "merge_rationale": "Both repetitions submitted the same patch bytes and share the same public lookup-versus-transformation exception boundary.",
+        "dedup_confidence": 1.0,
+        "disposition": "candidate",
+        "proposed_rule": {
+          "failure_class": "SEMANTIC_STATE_CONFLATION",
+          "phase": "IMPLEMENT",
+          "description": "One exception boundary treats source lookup failure and later value transformation failure as the same semantic state.",
+          "preconditions": [
+            "The public contract distinguishes a missing source from an existing empty or transformed value.",
+            "Lookup and transformation can raise the same exception type for different reasons."
+          ],
+          "diagnostic_evidence": [
+            "Trace lookup, filtering, substitution, defaulting, and caller fallback as separate stages.",
+            "Exercise missing, existing-empty, matching, defaulted, caller-context, and fallback cases."
+          ],
+          "recommended_actions": [
+            "Narrow exception handling to the operation whose absence semantics it represents.",
+            "Preserve the distinct empty and default states through later transformations."
+          ],
+          "do_not_apply_when": [
+            "The public API intentionally defines lookup and transformation failure as identical.",
+            "The operations cannot produce distinguishable semantic states."
+          ],
+          "applicable_languages": [
+            "python"
+          ],
+          "confidence": 0.92,
+          "admission_decision": "not_made"
+        },
+        "members": [
+          {
+            "run_id": "run_ac3ae1a7009a4e8b",
+            "failure_record_id": "fail_f90fa668a6945abe98ef6dd5e4761a97"
+          },
+          {
+            "run_id": "run_d5c2e22b485a4578",
+            "failure_record_id": "fail_ab3918ee4a3c5f34bc9d04a8f0970c00"
+          }
+        ],
+        "evidence_ref_ids": [
+          "sha256:90277ac5d5e83bbe45385ffeb37a6057c15d2b1fd3df839094710e6d7af0b43d",
+          "sha256:abd60751fdc78deb222f60abdeb76cf858f24065e06e3dcf228e2ff925e8aca0",
+          "sha256:f11990f8b4762844a5777a2c034fb8513dff434d4ce311d7dc562ad6f8b5b201",
+          "sha256:4922d909fd3ce225d197d2b507782a1302d693c924765e7a874eee3ac90bf68f",
+          "sha256:4c2d22864fca7205faaa60d2574dba8cc23651c0ef4dae0e984a5735b6b9f293",
+          "sha256:9b408f21fe54ce0e49775ad20f06bce44faab2d4972535c510c4a4cb4b092ee1",
+          "sha256:483b8a54c94e9febcf32a48ef2ea60ac89452a2b6237ea7d03ebedcf4522a29e",
+          "sha256:aa225f0c1c3aa5d0893164cfc15568b064b4a2c4cf4615fd1b1351ba599219df",
+          "sha256:5506486fc0e67ef21e7de08ec1fb65e4c00195a81d93aad8d1ecdc0505992384",
+          "sha256:8a4558f889d629d455729fae4b78e556e0197c4bcb7a3f6c674be66d927ceee5",
+          "sha256:b23bd90e820701a264994d46b8822fd21a98f85ed846a9dcd3e7f92be8ad43a6",
+          "sha256:127fddaa2b889fec52264e1abfee2062983a53f96fafd54cf9173d0fa49c92c3",
+          "sha256:8336ce50de3e7e86b169de79973e7fb758436cc903b01d622e46f883afb4abf4",
+          "sha256:82d7423fbbd2fb93b89a2c1d023ac22e490464ac329eebf6045de0d84c702210",
+          "sha256:75e225198f2e8f8804af34e5779d906daa5d93c9aff50581858c499b64bcd3a2",
+          "sha256:fb9bd242fb9645328e6abbe562b6d113c96385e4e2c9ec2a51994a61ec33f11e",
+          "sha256:e3a738c25ba4e6ba3e6a8d71eafeb3f87b7ba9e3f2ace97f9ebac127062923c0"
+        ],
+        "admission_decision": "not_made",
+        "unresolved_reason": null,
+        "next_review_actions": [],
+        "semantic_fingerprint": "sha256:e70e64a6af47eac96d9fe70943d6ea869a84757da4475edd5b972fb0654561fb"
+      }
+    ],
+    "population_partition": {
+      "source_row_count": 12,
+      "review_source_count": 9,
+      "semantic_group_count": 5,
+      "candidate_group_count": 3,
+      "candidate_source_count": 6,
+      "hold_group_count": 2,
+      "hold_source_count": 3,
+      "excluded_resolved": [
+        {
+          "run_id": "run_3fe55fd3847d4a4d",
+          "task_id": "pdm-ignore-active-venv-resolution",
+          "repetition": 1,
+          "outcome_kind": "resolved",
+          "reason": "resolved"
+        },
+        {
+          "run_id": "run_92bf10d2a6b14601",
+          "task_id": "pdm-ignore-active-venv-resolution",
+          "repetition": 2,
+          "outcome_kind": "resolved",
+          "reason": "resolved"
+        }
+      ],
+      "excluded_budget": [
+        {
+          "run_id": "run_7ecb4b2489c34982",
+          "task_id": "anyio-interrupt-runner-cleanup",
+          "repetition": 1,
+          "outcome_kind": "agent_failure",
+          "reason": "canonical_pre_provider_budget"
+        }
+      ],
+      "candidate_order_hash": "sha256:c225327d121ec853c64486b0f753d14f817cb1cd6757cd14db0f43e9506d6a1f",
+      "group_partition_hash": "sha256:d02907d24aa25eaa6547fe37af60a362971064f2f8ba8225f1f380f653db781a"
+    },
+    "build_validation": {
+      "source_seal_verified": true,
+      "dataset_manifest_and_public_specs_verified": true,
+      "selected_public_event_refs_verified": 74,
+      "portable_submitted_patches_verified": 9,
+      "proposal_text_leak_scan_passed": true,
+      "submitted_patch_leak_scan_passed": true,
+      "original_runtime_state_unchanged": true,
+      "raw_source_audit_performed": true
+    },
+    "authority": {
+      "proposal_only": true,
+      "human_admission_status": "pending",
+      "group_approval_completed": false,
+      "admitted_memory_rule_count": 0,
+      "d099_review_history_written": false,
+      "memory_admission_unlocked": false,
+      "memory_index_build_authorized": false,
+      "d099_memory_index_built": false,
+      "d099_memory_index_frozen": false,
+      "historical_memory_artifacts_modified": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "automatic_agent_self_review_observed": false,
+      "exact_hidden_failure_cause_established": false,
+      "agent_architecture_defect_established": false,
+      "harness_defect_established": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "Record append-only human decisions at the semantic-group level, then implement a group-aware proposal consumer; do not write per-failure review history or build an index from this proposal."
+  }
+}

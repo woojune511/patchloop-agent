@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.contracts import (
+    AC_FIXED_BUNDLE_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
@@ -34,9 +35,7 @@ _FROZEN_COMPARISON_PURPOSES = frozenset(
     }
 )
 
-_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID = (
-    "babel-strict-grouped-decimal-trailing-zeroes"
-)
+_CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID = "babel-strict-grouped-decimal-trailing-zeroes"
 _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
     ("pyfakefs-makedirs-parent-traversal", 1): 1,
     ("pyfakefs-makedirs-parent-traversal", 2): 2,
@@ -52,6 +51,40 @@ _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
     ("pdm-ignore-active-venv-resolution", 2): 12,
 }
 
+_AC_FIXED_BUNDLE_ROW_ORDER = {
+    ("moto-query-scanned-count", MemoryCondition.NO_MEMORY): 1,
+    ("moto-query-scanned-count", MemoryCondition.STRUCTURED): 2,
+    ("babel-strict-grouped-decimal-trailing-zeroes", MemoryCondition.STRUCTURED): 3,
+    ("babel-strict-grouped-decimal-trailing-zeroes", MemoryCondition.NO_MEMORY): 4,
+}
+
+
+def _ac_fixed_bundle_readiness_profile(
+    manifest: RunManifest,
+    *,
+    limits: Mapping[str, int | None],
+) -> bool:
+    """Select only one exact row of the four-row A/C readiness source."""
+
+    experiment = manifest.experiment
+    return bool(
+        experiment is not None
+        and experiment.experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+        and experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
+        and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+        and experiment.schedule_seed == 20260723
+        and experiment.repetition == 1
+        and experiment.schedule_order
+        == _AC_FIXED_BUNDLE_ROW_ORDER.get((manifest.task_id, manifest.memory.condition))
+        and limits
+        == {
+            "model_calls": None,
+            "tool_calls": None,
+            "total_tokens": 3_000_000,
+            "wall_clock_ms": 3_600_000,
+        }
+    )
+
 
 def _condition_neutral_comparison_pilot_profile(
     manifest: RunManifest,
@@ -63,12 +96,9 @@ def _condition_neutral_comparison_pilot_profile(
     experiment = manifest.experiment
     return bool(
         experiment is not None
-        and experiment.experiment_id
-        == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
-        and experiment.purpose
-        == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-        and manifest.task_id
-        == _CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID
+        and experiment.experiment_id == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+        and experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+        and manifest.task_id == _CONDITION_NEUTRAL_COMPARISON_PILOT_TASK_ID
         and experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
         and experiment.schedule_seed == 20260723
         and experiment.schedule_order == 1
@@ -511,9 +541,7 @@ def calculate_budget_pressure(
         )
         * 1000,
     }
-    call_limits_disabled = bool(
-        limits["model_calls"] is None or limits["tool_calls"] is None
-    )
+    call_limits_disabled = bool(limits["model_calls"] is None or limits["tool_calls"] is None)
     experiment_payload = manifest_payload.get("experiment")
     claims_condition_neutral_pilot_identity = bool(
         isinstance(experiment_payload, Mapping)
@@ -529,12 +557,17 @@ def calculate_budget_pressure(
         isinstance(experiment_payload, Mapping)
         and experiment_payload.get("experiment_id") == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
     )
+    claims_ac_fixed_bundle_identity = bool(
+        isinstance(experiment_payload, Mapping)
+        and experiment_payload.get("experiment_id") in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+    )
     exact_manifest: RunManifest | None = None
     if (
         call_limits_disabled
         or claims_condition_neutral_pilot_identity
         or claims_budget_readiness_probe_identity
         or claims_condition_neutral_v2_identity
+        or claims_ac_fixed_bundle_identity
     ):
         try:
             exact_manifest = RunManifest.model_validate(manifest_payload)
@@ -555,6 +588,11 @@ def calculate_budget_pressure(
                     "the D-097 no-memory identity requires its exact frozen "
                     "row and condition-neutral 3M/3600 runtime tuple"
                 ) from exc
+            if claims_ac_fixed_bundle_identity:
+                raise ValueError(
+                    "the A/C fixed-bundle identity requires its exact four-row "
+                    "3M/3600 runtime tuple"
+                ) from exc
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
                 "completion probe, D-081 generic readiness, or frozen "
@@ -574,6 +612,10 @@ def calculate_budget_pressure(
             limits=limits,
         )
     )
+    ac_fixed_bundle = bool(
+        exact_manifest is not None
+        and _ac_fixed_bundle_readiness_profile(exact_manifest, limits=limits)
+    )
     if claims_condition_neutral_pilot_identity and not condition_neutral_pilot:
         raise ValueError(
             "the D-085 condition-neutral comparison pilot identity requires "
@@ -584,11 +626,14 @@ def calculate_budget_pressure(
             "the D-097 no-memory identity requires its exact frozen row and "
             "condition-neutral 3M/3600 runtime tuple"
         )
+    if claims_ac_fixed_bundle_identity and not ac_fixed_bundle:
+        raise ValueError(
+            "the A/C fixed-bundle identity requires its exact four-row 3M/3600 runtime tuple"
+        )
     if claims_budget_readiness_probe_identity and (
         exact_manifest is None
         or exact_manifest.experiment is None
-        or exact_manifest.experiment.purpose
-        != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+        or exact_manifest.experiment.purpose != ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         or exact_manifest.task_id != "anyio-interrupt-runner-cleanup"
         or limits
         != {
@@ -606,8 +651,7 @@ def calculate_budget_pressure(
         assert exact_manifest is not None
         workflow_completion_probe = bool(
             exact_manifest.experiment is not None
-            and exact_manifest.experiment.purpose.value
-            == "workflow-completion-probe"
+            and exact_manifest.experiment.purpose.value == "workflow-completion-probe"
             and limits["model_calls"] is None
             and limits["tool_calls"] is None
             and (
@@ -620,8 +664,7 @@ def calculate_budget_pressure(
                 or (
                     exact_manifest.experiment.experiment_id
                     == CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
-                    and exact_manifest.task_id
-                    == "anyio-interrupt-runner-cleanup"
+                    and exact_manifest.task_id == "anyio-interrupt-runner-cleanup"
                     and limits["total_tokens"] == 2_000_000
                     and limits["wall_clock_ms"] == 1_800_000
                 )
@@ -629,8 +672,7 @@ def calculate_budget_pressure(
         )
         generic_count_observability = bool(
             exact_manifest.experiment is not None
-            and exact_manifest.experiment.purpose.value
-            == "generic-baseline-readiness"
+            and exact_manifest.experiment.purpose.value == "generic-baseline-readiness"
             and limits["model_calls"] is None
             and limits["tool_calls"] is None
             and (
@@ -658,6 +700,7 @@ def calculate_budget_pressure(
             or frozen_comparison
             or condition_neutral_pilot
             or condition_neutral_v2
+            or ac_fixed_bundle
         ):
             raise ValueError(
                 "disabled model/tool call limits require the exact workflow "
@@ -669,12 +712,9 @@ def calculate_budget_pressure(
         label="model.max_output_tokens",
     )
     if call_limits_disabled and not (
-        model.get("model_id") == "gpt-5.4-mini-2026-03-17"
-        and max_output_tokens == 25_000
+        model.get("model_id") == "gpt-5.4-mini-2026-03-17" and max_output_tokens == 25_000
     ):
-        raise ValueError(
-            "observability diagnostics require the exact model and output allowance"
-        )
+        raise ValueError("observability diagnostics require the exact model and output allowance")
     event_payloads = [_mapping(event, label="event") for event in events]
     for event in event_payloads:
         event_run_id = event.get("run_id")

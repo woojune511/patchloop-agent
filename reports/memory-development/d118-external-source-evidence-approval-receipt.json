@@ -1,0 +1,73 @@
+{
+  "schema_version": "external-source-evidence-approval-receipt-d118-v1",
+  "receipt_id": "d118approval_2a7461b834374e4a34db8c02850501d0ad9e8416e7a4bf7f73613abef08713a2",
+  "semantic_body_hash": "sha256:2a7461b834374e4a34db8c02850501d0ad9e8416e7a4bf7f73613abef08713a2",
+  "semantic_body": {
+    "milestone": "D-118",
+    "evidence_kind": "exact-d117-bound-external-source-evidence-approval",
+    "recorded_at": "2026-08-07T10:17:00Z",
+    "approval_reference": {
+      "candidate_id": "d117blindprotocolcandidate_27622afdd9d46e43cb9e23675a334b5a4e91fc768298374cae61ab440c850dae",
+      "semantic_body_hash": "sha256:27622afdd9d46e43cb9e23675a334b5a4e91fc768298374cae61ab440c850dae",
+      "file_sha256": "sha256:d10bbe5b3b65050868a1202cd1af9f130c89bbe43ceccf9359af145cac96cda7"
+    },
+    "approval_reference_mode": "exact-current-user-message-self-attested",
+    "approval_statement_code": "d118-public-development-metadata-opaque-snapshot-and-hash-preflight-only-v1",
+    "d117_candidate": {
+      "path": "reports/memory-development/d117-blind-control-acquisition-protocol-authorization-candidate.json",
+      "candidate_id": "d117blindprotocolcandidate_27622afdd9d46e43cb9e23675a334b5a4e91fc768298374cae61ab440c850dae",
+      "semantic_body_hash": "sha256:27622afdd9d46e43cb9e23675a334b5a4e91fc768298374cae61ab440c850dae",
+      "file_bytes": 7999,
+      "file_sha256": "sha256:d10bbe5b3b65050868a1202cd1af9f130c89bbe43ceccf9359af145cac96cda7"
+    },
+    "d117_source_gate": {
+      "path": "reports/memory-development/d117-blind-control-acquisition-protocol-source-gate.json",
+      "gate_id": "d117_750cd5a0a8946984aafe75b0939417bf026120cdb3dbc54d09180fd795202589",
+      "semantic_body_hash": "sha256:750cd5a0a8946984aafe75b0939417bf026120cdb3dbc54d09180fd795202589",
+      "file_bytes": 16813,
+      "file_sha256": "sha256:a439fc936b5b594c043b4ea90cd57bb676e79004cf4de8794b83f3af15fb13e3"
+    },
+    "authorized_scope": {
+      "action_kind": "prepare-external-public-development-source-evidence",
+      "milestone": "D-118",
+      "exact_d117_candidate_triple_required": true,
+      "official_public_development_benchmark_metadata_research_allowed": true,
+      "revision_pinned_opaque_snapshot_download_allowed": true,
+      "source_level_manifest_checksum_license_and_version_lookup_allowed": true,
+      "membership_cutoff_and_isolation_hash_preflight_allowed": true,
+      "issue_or_task_record_parsing_or_reading_allowed": false,
+      "issue_labeling_or_blind_review_allowed": false,
+      "pool_selection_acquisition_or_freeze_allowed": false,
+      "matcher_classifier_or_calibration_execution_allowed": false,
+      "score_policy_or_index_mutation_allowed": false,
+      "retrieval_or_runtime_memory_injection_allowed": false,
+      "agent_provider_evaluator_or_core_campaign_allowed": false
+    },
+    "authorized_action_hash": "sha256:87e472c7f0e9994ef0616fd1a0b6659a80b8b8cdf16f0435a7f12a8247500c98",
+    "materialization_scope": {
+      "new_module_script_test_and_four_sanitized_json_artifacts_only": true,
+      "ignored_local_opaque_snapshots_allowed": true,
+      "raw_snapshot_bytes_in_git_reports_or_docs_allowed": false,
+      "record_parser_or_projector_implementation_allowed": false,
+      "record_or_issue_content_read_allowed": false,
+      "execution_authorization_candidate_allowed": false,
+      "exact_d117_bound_input_mutation_allowed": false
+    },
+    "claim_semantics": {
+      "authorization_observed_before_download_actions_self_attested": true,
+      "authenticated_user_message_timestamp_available": false,
+      "download_http_request_count_instrumented": false,
+      "network_execution_journal_present": false,
+      "receipt_is_not_trusted_cutoff_evidence": true,
+      "receipt_is_not_pool_acquisition_or_blindness_claim": true,
+      "d117_later_execution_candidate_action_not_authorized_or_consumed": true,
+      "external_triples_prerequisite_not_satisfied": true,
+      "global_cross_clone_or_arbitrary_writer_exclusion_proved": false
+    },
+    "self_attested": true,
+    "approver_kind": "user",
+    "approver_label": "repository-maintainer",
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false
+  }
+}

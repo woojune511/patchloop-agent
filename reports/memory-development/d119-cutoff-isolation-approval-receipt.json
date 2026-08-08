@@ -1,0 +1,107 @@
+{
+  "schema_version": "cutoff-isolation-approval-receipt-d119-v1",
+  "receipt_id": "d119approval_671af8d6e7cbd44ef0793c1bf1bf53f3f5f8e3fcbfd26e04906cb4abdea50cce",
+  "semantic_body_hash": "sha256:671af8d6e7cbd44ef0793c1bf1bf53f3f5f8e3fcbfd26e04906cb4abdea50cce",
+  "semantic_body": {
+    "milestone": "D-119",
+    "evidence_kind": "self-attested-user-approval-receipt",
+    "recorded_at": "2026-08-07T12:58:57.728538Z",
+    "approval_statement_code": "PROCEED_D119_TRUSTED_ANCHOR_AND_HASH_ONLY_ISOLATION_EVIDENCE",
+    "approval_reference": "current-thread-user-message:proceed",
+    "d118_source_gate": {
+      "role": "source-gate",
+      "path": "reports/memory-development/d118-external-source-evidence-source-gate.json",
+      "id_field": "gate_id",
+      "identifier": "d118_cdd55277ad1dc1215a45aa3588e7862df3535b91b7274681fe0a8488abd3e707",
+      "semantic_body_hash": "sha256:cdd55277ad1dc1215a45aa3588e7862df3535b91b7274681fe0a8488abd3e707",
+      "file_bytes": 17748,
+      "file_sha256": "sha256:0f01a2b315f9c32c34b8c2400af6f22a1c4f2538b2538f8597f2ab0b8d57c343"
+    },
+    "d118_evidence_pack": {
+      "role": "evidence-pack",
+      "path": "reports/memory-development/d118-external-source-evidence-pack.json",
+      "id_field": "evidence_pack_id",
+      "identifier": "d118evidencepack_e40dad5ceac6dcfbb29d47bec3a548c44bdcbeba964e4e7a43818b76e8c62f10",
+      "semantic_body_hash": "sha256:e40dad5ceac6dcfbb29d47bec3a548c44bdcbeba964e4e7a43818b76e8c62f10",
+      "file_bytes": 25451,
+      "file_sha256": "sha256:318d4f58276283e6e6ae6c45c4afe50af5bca6b6937ffa841b8b791a0357c6b1"
+    },
+    "source_pre_state": {
+      "files": [
+        {
+          "source_id": "swe-bench-dev-f5351",
+          "path": ".patchloop/external-evidence/d118/swe-bench-f5351/data/dev-00000-of-00001.parquet",
+          "file_bytes": 1382594,
+          "file_sha256": "sha256:d758d54540aa4140d0274ed0cc93b8288aa6f323c3c603e2557e7666a47fc41b"
+        },
+        {
+          "source_id": "swe-gym-train-26a6",
+          "path": ".patchloop/external-evidence/d118/swe-gym-26a6/data/train-00000-of-00001.parquet",
+          "file_bytes": 43644473,
+          "file_sha256": "sha256:60569cea74bb281f7a5579467436a2bc1932c6e0c5f2f7fa0d084392abd9ad97"
+        }
+      ],
+      "file_count": 2,
+      "total_bytes": 45027067,
+      "fingerprint": "sha256:912c8ad78849f7f674756ab9d4084ed92e3c8a535bc04a6b89a7a14f7170a53f"
+    },
+    "implementation_pre_state": {
+      "files": [
+        {
+          "path": "patchloop/memory/d119_cutoff_isolation_qualification.py",
+          "file_bytes": 79260,
+          "file_sha256": "sha256:8428dc47241ee8698eb8edc075521d4fa2044f9e793325771df2fab0c917312b"
+        },
+        {
+          "path": "scripts/run_d119_cutoff_isolation_qualification.py",
+          "file_bytes": 1906,
+          "file_sha256": "sha256:fff81e5c6d8218f1102c5ff5bd485513db56ce3a2fe205faa219e708c8acc21b"
+        },
+        {
+          "path": "tests/test_d119_cutoff_isolation_qualification.py",
+          "file_bytes": 32427,
+          "file_sha256": "sha256:f2c4f3b50980d4697aca81967d5d19e2021df455dc320d5ddffdd3458d761650"
+        }
+      ],
+      "fingerprint": "sha256:5488da61de90d19058463a042ca2c9b2a883f31e4d1a2612e5cda85780302221"
+    },
+    "authorized_action": {
+      "action": "execute-two-exact-object-hash-only-isolation-sessions",
+      "d118_source_gate": {
+        "role": "source-gate",
+        "path": "reports/memory-development/d118-external-source-evidence-source-gate.json",
+        "id_field": "gate_id",
+        "identifier": "d118_cdd55277ad1dc1215a45aa3588e7862df3535b91b7274681fe0a8488abd3e707",
+        "semantic_body_hash": "sha256:cdd55277ad1dc1215a45aa3588e7862df3535b91b7274681fe0a8488abd3e707",
+        "file_bytes": 17748,
+        "file_sha256": "sha256:0f01a2b315f9c32c34b8c2400af6f22a1c4f2538b2538f8597f2ab0b8d57c343"
+      },
+      "source_fingerprint": "sha256:912c8ad78849f7f674756ab9d4084ed92e3c8a535bc04a6b89a7a14f7170a53f",
+      "profile_hash": "sha256:82511cd9e7e25be999955e260f009204703ef5dcdbc2340897d821c4f52cf6a5",
+      "session_probe_hashes": [
+        "sha256:76dac3eec570730dc9fa9b1ce1cc4344b42971ffc4339b22caf4a569c65bd2bc",
+        "sha256:39e64b76b26d8c53e2e128a1ef5c6e09354ca009d1b45157dc9cd0028a493dc7"
+      ],
+      "docker_cli_file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70"
+    },
+    "authorized_action_hash": "sha256:be673eec0b6cf5cde23db0f19c050d82867a1a4a497a28124f61ca47e24278c2",
+    "isolation_profile_hash": "sha256:82511cd9e7e25be999955e260f009204703ef5dcdbc2340897d821c4f52cf6a5",
+    "session_probe_hashes": [
+      "sha256:76dac3eec570730dc9fa9b1ce1cc4344b42971ffc4339b22caf4a569c65bd2bc",
+      "sha256:39e64b76b26d8c53e2e128a1ef5c6e09354ca009d1b45157dc9cd0028a493dc7"
+    ],
+    "docker_cli_binding": {
+      "file_name": "docker.exe",
+      "file_bytes": 43095472,
+      "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+      "runner_kind": "subprocess-exact-argv-no-shell"
+    },
+    "claim_semantics": {
+      "approval_is_self_attested": true,
+      "repository_local_one_use_only": true,
+      "global_or_cross_clone_exclusion_proved": false,
+      "record_or_pool_access_authorized": false
+    },
+    "execution_result_present": false
+  }
+}

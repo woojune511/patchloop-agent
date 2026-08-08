@@ -4,6 +4,7 @@ import json
 import shutil
 import sqlite3
 from copy import deepcopy
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -70,8 +71,7 @@ MEMORY_TASK = Path("tasks/dev-train/loguru-invalid-format-feedback")
 PILOT_TASK = Path("tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes")
 MOTO_TASK = Path("tasks/dev-validation/moto-query-scanned-count")
 BUDGET_PILOT_TASKS = tuple(
-    Path(path).parent
-    for path in sorted(MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS)
+    Path(path).parent for path in sorted(MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS)
 )
 BUDGET_PILOT_BUDGET = Budget(
     max_model_calls=40,
@@ -92,15 +92,11 @@ PATCH_TEXT = (
 DIFF_HASH = sha256_bytes(PATCH_TEXT.encode("utf-8"))
 PROBE_ID = "python-diagnostic"
 PROBE_IMAGE_DIGEST = "sha256:" + ("b" * 64)
-SELF_VALIDATION_TASK = Path(
-    "fixtures/task-packages/self-validation-csv-quoted-newline"
-)
+SELF_VALIDATION_TASK = Path("fixtures/task-packages/self-validation-csv-quoted-newline")
 
 
 def _qualification_review_contract(package) -> PublicReviewContract:
-    excerpt = normalize_public_issue_text(
-        package.public.issue.description
-    )
+    excerpt = normalize_public_issue_text(package.public.issue.description)
     payload = {
         "schema_version": "public-review-contract-v1",
         "task_id": package.public.task_id,
@@ -144,9 +140,7 @@ def test_expected_token_tail_policy_uses_versioned_corrective_reserve(
         package,
         run_id=f"run_{context_policy_version}",
         sandbox_backend="local",
-    ).model_copy(
-        update={"context_policy_version": context_policy_version}
-    )
+    ).model_copy(update={"context_policy_version": context_policy_version})
 
     policy = qualification_module._v5_expected_tail_policy(
         task=package.public,
@@ -156,17 +150,11 @@ def test_expected_token_tail_policy_uses_versioned_corrective_reserve(
     )
 
     assert policy["nominal_reserve"] == {
-        "tool_calls": (
-            4
-            + 2 * len(package.public.visible_checks)
-            + corrective_tool_calls
-        ),
+        "tool_calls": (4 + 2 * len(package.public.visible_checks) + corrective_tool_calls),
         "model_calls": model_calls,
         "feedback_model_calls": 1,
     }
-    assert policy["token_projection"]["projected_model_turns"] == (
-        projected_model_turns
-    )
+    assert policy["token_projection"]["projected_model_turns"] == (projected_model_turns)
 
 
 def _v8_event(
@@ -200,18 +188,12 @@ def _v8_saturation_case(
         package,
         run_id="run_v8_qualification",
         sandbox_backend="local",
-        saturation_context_validation=(
-            context_policy_version == "phase-evidence-v8"
-        ),
-        review_evidence_validation=(
-            context_policy_version == "phase-evidence-v9"
-        ),
+        saturation_context_validation=(context_policy_version == "phase-evidence-v8"),
+        review_evidence_validation=(context_policy_version == "phase-evidence-v9"),
         public_review_contract=review_contract,
     )
     if tail_blocked:
-        manifest = manifest.model_copy(
-            update={"budget": Budget(max_tool_calls=1)}
-        )
+        manifest = manifest.model_copy(update={"budget": Budget(max_tool_calls=1)})
     prefix = [
         _v8_event(
             sequence,
@@ -226,29 +208,21 @@ def _v8_saturation_case(
         manifest=manifest,
         projection_stage="pre_generation",
     )
-    read_search_policy = (
-        qualification_module._v8_expected_read_search_policy(
-            events=prefix,
-            tail_policy=tail_policy,
-        )
+    read_search_policy = qualification_module._v8_expected_read_search_policy(
+        events=prefix,
+        tail_policy=tail_policy,
     )
     expected_actions = (
-        ["apply_patch", "run_check"]
-        if tail_blocked
-        else ["apply_patch", "run_check", "run_probe"]
+        ["apply_patch", "run_check"] if tail_blocked else ["apply_patch", "run_check", "run_probe"]
     )
     phase_contract = {
         "schema_version": "phase-contract-v3",
         "current_phase": "INTAKE",
         "allowed_next_actions": (
-            expected_actions
-            if allowed_next_actions is None
-            else allowed_next_actions
+            expected_actions if allowed_next_actions is None else allowed_next_actions
         ),
         "completed_checks": [],
-        "pending_checks": [
-            check.id for check in package.public.visible_checks
-        ],
+        "pending_checks": [check.id for check in package.public.visible_checks],
         "mutation_event_sequence": None,
         "mutation_present": False,
         "review_event_sequence": None,
@@ -291,15 +265,9 @@ def _v8_saturation_case(
             "artifact_path": artifact.path,
             "request_body_hash": request_body_hash,
             "context_hash": sha256_text(rendered_context),
-            "investigation_read_search_admitted": (
-                read_search_policy["admitted"]
-            ),
-            "investigation_read_search_reason_codes": (
-                read_search_policy["reason_codes"]
-            ),
-            "investigation_semantic_replay_count": (
-                read_search_policy["semantic_replay_count"]
-            ),
+            "investigation_read_search_admitted": (read_search_policy["admitted"]),
+            "investigation_read_search_reason_codes": (read_search_policy["reason_codes"]),
+            "investigation_semantic_replay_count": (read_search_policy["semantic_replay_count"]),
             "investigation_semantic_replay_threshold": (
                 read_search_policy["semantic_replay_threshold"]
             ),
@@ -553,13 +521,11 @@ def _v9_review_anchor_case(
     rendered_payload = json.loads(built.rendered)
     context_build = json.loads(canonical_json(built.evidence))
     if citable_sequences is not None:
-        rendered_payload["review_evidence"][
-            "citable_event_sequences"
-        ] = citable_sequences
+        rendered_payload["review_evidence"]["citable_event_sequences"] = citable_sequences
     if tamper_target == "pinned_result":
-        rendered_payload["review_evidence"]["pinned_results"][0][
-            "payload"
-        ]["tool_result"]["passed"] = False
+        rendered_payload["review_evidence"]["pinned_results"][0]["payload"]["tool_result"][
+            "passed"
+        ] = False
     elif tamper_target == "recent_duplicate":
         rendered_payload["recent_events"].append(
             rendered_payload["review_evidence"]["pinned_results"][0]
@@ -567,27 +533,17 @@ def _v9_review_anchor_case(
     elif tamper_target == "non_object_context":
         rendered_payload = []
     elif tamper_target == "pinned_tool_result":
-        context_build["review_evidence"]["pinned_tool_results"][0][
-            "artifact_id"
-        ] = "art_forged"
+        context_build["review_evidence"]["pinned_tool_results"][0]["artifact_id"] = "art_forged"
     elif tamper_target == "float_visible_sequence":
-        rendered_payload["review_evidence"][
-            "citable_event_sequences"
-        ] = [2.0, 3.0]
+        rendered_payload["review_evidence"]["citable_event_sequences"] = [2.0, 3.0]
     elif tamper_target == "float_build_sequence":
-        context_build["review_evidence"][
-            "citable_event_sequences"
-        ] = [2.0, 3.0]
+        context_build["review_evidence"]["citable_event_sequences"] = [2.0, 3.0]
     elif tamper_target == "float_pinned_sequence":
-        rendered_payload["review_evidence"]["pinned_results"][0][
-            "sequence"
-        ] = 2.0
+        rendered_payload["review_evidence"]["pinned_results"][0]["sequence"] = 2.0
     elif tamper_target == "float_presented_sequence":
         context_build["tool_results"][0]["event_sequence"] = 2.0
     elif tamper_target == "bool_mutation_sequence":
-        rendered_payload["review_evidence"][
-            "mutation_event_sequence"
-        ] = True
+        rendered_payload["review_evidence"]["mutation_event_sequence"] = True
     context = json.dumps(rendered_payload, ensure_ascii=False)
     request_body = {"context": context}
     request_hash = sha256_text(canonical_json(request_body))
@@ -614,37 +570,25 @@ def _v9_review_anchor_case(
             "artifact_path": artifact.path,
             "request_body_hash": request_hash,
             "context_hash": sha256_text(context),
-            "review_evidence_pinning_active": review_evidence[
-                "pinning_active"
-            ],
-            "review_evidence_worktree_diff_hash": review_evidence[
-                "worktree_diff_hash"
-            ],
-            "review_evidence_mutation_event_sequence": review_evidence[
-                "mutation_event_sequence"
-            ],
+            "review_evidence_pinning_active": review_evidence["pinning_active"],
+            "review_evidence_worktree_diff_hash": review_evidence["worktree_diff_hash"],
+            "review_evidence_mutation_event_sequence": review_evidence["mutation_event_sequence"],
             "review_evidence_passing_check_event_sequences": (
                 review_evidence["passing_check_event_sequences"]
             ),
-            "review_evidence_source_get_diff_sequence": review_evidence[
-                "source_get_diff_sequence"
-            ],
-            "review_evidence_citable_event_sequences": review_evidence[
-                "citable_event_sequences"
-            ],
+            "review_evidence_source_get_diff_sequence": review_evidence["source_get_diff_sequence"],
+            "review_evidence_citable_event_sequences": review_evidence["citable_event_sequences"],
             "review_evidence_incomplete_event_sequences": review_evidence[
                 "incomplete_event_sequences"
             ],
         },
     )
-    valid, details = (
-        qualification_module._v9_review_evidence_context_contract(
-            root=tmp_path,
-            manifest=manifest,
-            package=package,
-            events=[*events, context_event],
-            context_events=[context_event],
-        )
+    valid, details = qualification_module._v9_review_evidence_context_contract(
+        root=tmp_path,
+        manifest=manifest,
+        package=package,
+        events=[*events, context_event],
+        context_events=[context_event],
     )
     return valid, details
 
@@ -728,11 +672,9 @@ def _submission_get_diff_presentation_case(
             "result_artifact": diff_artifact.model_dump(mode="json"),
         },
     )
-    expected_event, expected_tool_result = (
-        qualification_module._v9_recompute_review_anchor(
-            source_event,
-            artifact_store=artifacts,
-        )
+    expected_event, expected_tool_result = qualification_module._v9_recompute_review_anchor(
+        source_event,
+        artifact_store=artifacts,
     )
     review_fields = {
         "schema_version": "review-evidence-v1",
@@ -765,91 +707,57 @@ def _submission_get_diff_presentation_case(
                 "schema_version": "context-build-evidence-v9",
                 "review_evidence": {
                     **deepcopy(review_fields),
-                    "pinned_tool_results": [
-                        deepcopy(expected_tool_result)
-                    ],
+                    "pinned_tool_results": [deepcopy(expected_tool_result)],
                 },
             }
         )
 
     if tamper_target == "pinned_body":
-        rendered_payload["review_evidence"]["pinned_results"][0][
-            "payload"
-        ]["tool_result"]["patch"] += "# forged\n"
+        rendered_payload["review_evidence"]["pinned_results"][0]["payload"]["tool_result"][
+            "patch"
+        ] += "# forged\n"
     elif tamper_target == "wrong_sequence":
-        rendered_payload["review_evidence"][
-            "source_get_diff_sequence"
-        ] = 30
+        rendered_payload["review_evidence"]["source_get_diff_sequence"] = 30
     elif tamper_target == "wrong_artifact_presented":
         context_build["tool_results"][0]["artifact_id"] = "art_forged"
     elif tamper_target == "wrong_artifact_pinned":
-        context_build["review_evidence"]["pinned_tool_results"][0][
-            "artifact_id"
-        ] = "art_forged"
+        context_build["review_evidence"]["pinned_tool_results"][0]["artifact_id"] = "art_forged"
     elif tamper_target == "truncated_presented":
         context_build["tool_results"][0]["truncated"] = True
     elif tamper_target == "truncated_pinned":
-        context_build["review_evidence"]["pinned_tool_results"][0][
-            "truncated"
-        ] = True
+        context_build["review_evidence"]["pinned_tool_results"][0]["truncated"] = True
     elif tamper_target == "recent_duplicate":
-        rendered_payload["recent_events"].append(
-            deepcopy(expected_event)
-        )
+        rendered_payload["recent_events"].append(deepcopy(expected_event))
     elif tamper_target == "missing_pinned":
         rendered_payload["review_evidence"]["pinned_results"] = []
     elif tamper_target == "duplicate_pinned_result":
-        rendered_payload["review_evidence"]["pinned_results"].append(
-            deepcopy(expected_event)
-        )
+        rendered_payload["review_evidence"]["pinned_results"].append(deepcopy(expected_event))
     elif tamper_target == "duplicate_pinned_tool_result":
-        context_build["review_evidence"][
-            "pinned_tool_results"
-        ].append(deepcopy(expected_tool_result))
-    elif tamper_target == "duplicate_presented_tool_result":
-        context_build["tool_results"].append(
+        context_build["review_evidence"]["pinned_tool_results"].append(
             deepcopy(expected_tool_result)
         )
+    elif tamper_target == "duplicate_presented_tool_result":
+        context_build["tool_results"].append(deepcopy(expected_tool_result))
     elif tamper_target == "citable_missing":
-        rendered_payload["review_evidence"][
-            "citable_event_sequences"
-        ] = [2]
+        rendered_payload["review_evidence"]["citable_event_sequences"] = [2]
     elif tamper_target == "incomplete_source":
-        rendered_payload["review_evidence"][
-            "incomplete_event_sequences"
-        ] = [3]
+        rendered_payload["review_evidence"]["incomplete_event_sequences"] = [3]
     elif tamper_target == "visible_source_sequence_float":
-        rendered_payload["review_evidence"][
-            "source_get_diff_sequence"
-        ] = 3.0
+        rendered_payload["review_evidence"]["source_get_diff_sequence"] = 3.0
     elif tamper_target == "build_source_sequence_float":
-        context_build["review_evidence"][
-            "source_get_diff_sequence"
-        ] = 3.0
+        context_build["review_evidence"]["source_get_diff_sequence"] = 3.0
     elif tamper_target == "visible_citable_sequence_float":
-        rendered_payload["review_evidence"][
-            "citable_event_sequences"
-        ] = [2, 3.0]
+        rendered_payload["review_evidence"]["citable_event_sequences"] = [2, 3.0]
     elif tamper_target == "build_citable_sequence_float":
-        context_build["review_evidence"][
-            "citable_event_sequences"
-        ] = [2, 3.0]
+        context_build["review_evidence"]["citable_event_sequences"] = [2, 3.0]
     elif tamper_target == "visible_incomplete_sequence_float":
-        rendered_payload["review_evidence"][
-            "incomplete_event_sequences"
-        ] = [99.0]
+        rendered_payload["review_evidence"]["incomplete_event_sequences"] = [99.0]
     elif tamper_target == "build_incomplete_sequence_bool":
-        context_build["review_evidence"][
-            "incomplete_event_sequences"
-        ] = [False]
+        context_build["review_evidence"]["incomplete_event_sequences"] = [False]
     elif tamper_target == "pinned_result_sequence_float":
-        rendered_payload["review_evidence"]["pinned_results"][0][
-            "sequence"
-        ] = 3.0
+        rendered_payload["review_evidence"]["pinned_results"][0]["sequence"] = 3.0
     elif tamper_target == "pinned_tool_sequence_float":
-        context_build["review_evidence"]["pinned_tool_results"][0][
-            "event_sequence"
-        ] = 3.0
+        context_build["review_evidence"]["pinned_tool_results"][0]["event_sequence"] = 3.0
     elif tamper_target == "presented_sequence_float":
         context_build["tool_results"][0]["event_sequence"] = 3.0
 
@@ -890,9 +798,7 @@ def _submission_get_diff_presentation_case(
         escaped.write_bytes(Path(request_artifact.path).read_bytes())
         context_event.payload["artifact_path"] = str(escaped)
     elif tamper_target == "source_descriptor_hash":
-        source_event.payload["result_artifact"]["content_hash"] = (
-            f"sha256:{'0' * 64}"
-        )
+        source_event.payload["result_artifact"]["content_hash"] = f"sha256:{'0' * 64}"
     elif tamper_target == "source_descriptor_size":
         source_event.payload["result_artifact"]["size_bytes"] += 1
     elif tamper_target == "source_descriptor_path_escape":
@@ -1033,11 +939,7 @@ def test_v9_review_rejection_terminal_contract_resets_on_patch() -> None:
         _v8_event(7, EventType.RUN_COMPLETED),
     ]
 
-    valid, details = (
-        qualification_module._v9_review_rejection_terminal_contract(
-            events
-        )
-    )
+    valid, details = qualification_module._v9_review_rejection_terminal_contract(events)
 
     assert valid is True
     assert details["terminal_rejection_count"] == 0
@@ -1062,18 +964,12 @@ def test_v9_third_review_rejection_must_end_in_run_failure() -> None:
             payload={
                 "error_type": "SubmissionProtocolError",
                 "error_code": "SUBMISSION_PROTOCOL_ERROR",
-                "message": (
-                    "structured review evidence was rejected three times"
-                ),
+                "message": ("structured review evidence was rejected three times"),
             },
         ),
     ]
 
-    valid, details = (
-        qualification_module._v9_review_rejection_terminal_contract(
-            events
-        )
-    )
+    valid, details = qualification_module._v9_review_rejection_terminal_contract(events)
 
     assert valid is True
     assert details["terminal_rejection_sequences"] == [4]
@@ -1111,18 +1007,12 @@ def test_v9_rejects_progress_after_third_review_rejection(
             payload={
                 "error_type": "SubmissionProtocolError",
                 "error_code": "SUBMISSION_PROTOCOL_ERROR",
-                "message": (
-                    "structured review evidence was rejected three times"
-                ),
+                "message": ("structured review evidence was rejected three times"),
             },
         ),
     ]
 
-    valid, details = (
-        qualification_module._v9_review_rejection_terminal_contract(
-            events
-        )
-    )
+    valid, details = qualification_module._v9_review_rejection_terminal_contract(events)
 
     assert valid is False
     assert details["failed_terminal_rejection_sequences"] == [4]
@@ -1151,11 +1041,7 @@ def test_v9_third_review_rejection_rejects_unrelated_run_failure() -> None:
         ),
     ]
 
-    valid, details = (
-        qualification_module._v9_review_rejection_terminal_contract(
-            events
-        )
-    )
+    valid, details = qualification_module._v9_review_rejection_terminal_contract(events)
 
     assert valid is False
     assert details["failed_terminal_rejection_sequences"] == [4]
@@ -1167,9 +1053,7 @@ def _with_probe_profile(package):
             "public": package.public.model_copy(
                 update={
                     "schema_version": "task-public-v2",
-                    "probe_profiles": [
-                        RegisteredProbeProfile(id=PROBE_ID)
-                    ],
+                    "probe_profiles": [RegisteredProbeProfile(id=PROBE_ID)],
                 }
             )
         }
@@ -1197,10 +1081,7 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
                 "experiments/generic-baseline-readiness-v2v5-20260802-r1.yaml",
             )
         )
-    if (
-        purpose
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
-    ):
+    if purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT:
         tasks = sorted(MEMORY_DEVELOPMENT_BUDGET_PILOT_TASKS)
         conditions = ["no_memory"]
         repetitions = 1
@@ -1233,16 +1114,11 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
         }
         diagnostic_profile = (
             "d037-rejected-patch-retry-v4"
-            if manifest.fault.type
-            == "controlled-reject-first-prepared-patch"
-            else diagnostic_profile_by_total_budget.get(
-                manifest.budget.max_total_tokens
-            )
+            if manifest.fault.type == "controlled-reject-first-prepared-patch"
+            else diagnostic_profile_by_total_budget.get(manifest.budget.max_total_tokens)
         )
         if diagnostic_profile is not None:
-            budget = Budget(
-                max_total_tokens=manifest.budget.max_total_tokens
-            )
+            budget = Budget(max_total_tokens=manifest.budget.max_total_tokens)
             max_output_tokens = 25_000
             diagnostic = {
                 "schema_version": "experiment-diagnostic-v1",
@@ -1326,18 +1202,14 @@ def _suite_for_manifest(manifest, *, dataset_hash: str) -> ExperimentSuite:
             "cost_limit_usd": cost_limit,
             "pricing_verified_at": None,
             "pricing_source_url": None,
-            "input_price_per_million_usd": (
-                manifest.model.input_price_per_million_usd
-            ),
+            "input_price_per_million_usd": (manifest.model.input_price_per_million_usd),
             "cached_input_price_per_million_usd": (
                 manifest.model.cached_input_price_per_million_usd
             ),
             "cache_write_input_price_per_million_usd": (
                 manifest.model.cache_write_input_price_per_million_usd
             ),
-            "output_price_per_million_usd": (
-                manifest.model.output_price_per_million_usd
-            ),
+            "output_price_per_million_usd": (manifest.model.output_price_per_million_usd),
             "retrieval_threshold": 0.72,
             "memory_token_budget": manifest.memory.max_context_tokens,
             "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
@@ -1370,17 +1242,11 @@ def _write_execution_plan(
         max_total_tokens=600_000,
         wall_clock_timeout_seconds=1_800,
     )
-    budget_pilot = (
-        suite.purpose
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
-    )
-    generic_baseline_readiness = (
-        suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
-    )
+    budget_pilot = suite.purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+    generic_baseline_readiness = suite.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
     if (
         (
-            suite.purpose
-            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            suite.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
             and suite.budget == completion_budget
         )
         or budget_pilot
@@ -1389,15 +1255,10 @@ def _write_execution_plan(
         tasks = []
         for task_value in suite.tasks:
             task_path = Path(task_value)
-            package = load_task_package(
-                task_path.parent if task_path.is_file() else task_path
-            )
+            package = load_task_package(task_path.parent if task_path.is_file() else task_path)
             dataset_role = (
                 DatasetRole.DEVELOPMENT_VALIDATION
-                if (
-                    generic_baseline_readiness
-                    and package.public.split == "dev-validation"
-                )
+                if (generic_baseline_readiness and package.public.split == "dev-validation")
                 else DatasetRole.MEMORY_DEVELOPMENT
                 if generic_baseline_readiness or budget_pilot
                 else DatasetRole.DEVELOPMENT_VALIDATION
@@ -1427,14 +1288,10 @@ def _write_execution_plan(
             )
         schedule, schedule_hash = _make_schedule(suite, tasks)
         if omit_non_current_task:
-            tasks = [
-                task for task in tasks if task["task_id"] == manifest.task_id
-            ]
+            tasks = [task for task in tasks if task["task_id"] == manifest.task_id]
             schedule, schedule_hash = _make_schedule(suite, tasks)
         elif omit_non_current_schedule:
-            schedule = [
-                row for row in schedule if row["task_id"] == manifest.task_id
-            ]
+            schedule = [row for row in schedule if row["task_id"] == manifest.task_id]
             schedule_hash = sha256_text(canonical_json(schedule))
         manifest_rows = [
             row
@@ -1463,9 +1320,7 @@ def _write_execution_plan(
                 "schedule_row_id": experiment.schedule_row_id,
                 "task_id": manifest.task_id,
                 "dataset_role": (
-                    experiment.dataset_role.value
-                    if experiment.dataset_role is not None
-                    else None
+                    experiment.dataset_role.value if experiment.dataset_role is not None else None
                 ),
                 "condition": manifest.memory.condition.value,
                 "repetition": experiment.repetition,
@@ -1610,24 +1465,14 @@ def _terminal_trace(
     self_validation_probe_timed_out: bool = False,
 ) -> tuple[str, RunResult, str]:
     if (
-        include_self_validation_review
-        or include_self_validation_probe
+        include_self_validation_review or include_self_validation_probe
     ) and not self_validation_contract:
-        raise AssertionError(
-            "self-validation evidence requires the v3/v6 contract"
-        )
-    if (
-        self_validation_probe_timed_out
-        and not include_self_validation_probe
-    ):
-        raise AssertionError(
-            "probe timeout fixture requires probe evidence"
-        )
+        raise AssertionError("self-validation evidence requires the v3/v6 contract")
+    if self_validation_probe_timed_out and not include_self_validation_probe:
+        raise AssertionError("probe timeout fixture requires probe evidence")
     package = load_task_package(task_dir)
     _, dataset_hash, _ = load_dataset_manifest()
-    generic_baseline_readiness = (
-        purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
-    )
+    generic_baseline_readiness = purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
     generic_suite = (
         eval_runner.load_suite(
             {
@@ -1645,17 +1490,13 @@ def _terminal_trace(
         if generic_baseline_readiness
         else None
     )
-    resolved_experiment_id = (
-        experiment_id
-        or (
-            eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
-            if generic_baseline_readiness
-            else (
-                "dev-validation-gpt54mini-token-tail-v5-20260730-r1"
-                if purpose
-                == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-                else "qualification-test"
-            )
+    resolved_experiment_id = experiment_id or (
+        eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
+        if generic_baseline_readiness
+        else (
+            "dev-validation-gpt54mini-token-tail-v5-20260730-r1"
+            if purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            else "qualification-test"
         )
     )
     outcome_label = "agent" if agent_failure else ("resolved" if resolved else "failure")
@@ -1675,11 +1516,7 @@ def _terminal_trace(
                 model_id == "gpt-5.4-mini-2026-03-17"
                 and effective_budget.max_total_tokens == 90_000
             )
-            else (
-                25_000
-                if model_id == "gpt-5.4-mini-2026-03-17"
-                else 4096
-            )
+            else (25_000 if model_id == "gpt-5.4-mini-2026-03-17" else 4096)
         )
     manifest = build_manifest(
         package,
@@ -1692,14 +1529,10 @@ def _terminal_trace(
         max_output_tokens=effective_max_output_tokens,
         transport_max_retries=(0 if generic_baseline_readiness else None),
         input_price_per_million_usd=(
-            generic_suite.input_price_per_million_usd
-            if generic_suite is not None
-            else None
+            generic_suite.input_price_per_million_usd if generic_suite is not None else None
         ),
         cached_input_price_per_million_usd=(
-            generic_suite.cached_input_price_per_million_usd
-            if generic_suite is not None
-            else None
+            generic_suite.cached_input_price_per_million_usd if generic_suite is not None else None
         ),
         cache_write_input_price_per_million_usd=(
             generic_suite.cache_write_input_price_per_million_usd
@@ -1707,9 +1540,7 @@ def _terminal_trace(
             else None
         ),
         output_price_per_million_usd=(
-            generic_suite.output_price_per_million_usd
-            if generic_suite is not None
-            else None
+            generic_suite.output_price_per_million_usd if generic_suite is not None else None
         ),
         agent_image_digest=(
             package.environment.image_digest if package.environment is not None else None
@@ -1717,11 +1548,7 @@ def _terminal_trace(
         evaluator_image_digest=(
             package.environment.image_digest if package.environment is not None else None
         ),
-        probe_image_digest=(
-            PROBE_IMAGE_DIGEST
-            if self_validation_contract
-            else None
-        ),
+        probe_image_digest=(PROBE_IMAGE_DIGEST if self_validation_contract else None),
         experiment_context=(
             ExperimentRunContext(
                 experiment_id=resolved_experiment_id,
@@ -1746,8 +1573,7 @@ def _terminal_trace(
         manifest.tool_schema_version = "v1"
         manifest.context_policy_version = "v1"
     elif (
-        purpose
-        == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
+        purpose == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
         or generic_baseline_readiness
     ):
         manifest.context_policy_version = "phase-evidence-v5"
@@ -1878,11 +1704,7 @@ def _terminal_trace(
                 "schema_version": "model-request-evidence-v1",
                 **(
                     {"provider": "openai"}
-                    if (
-                        runtime_contract
-                        or manifest.context_policy_version
-                        == "phase-evidence-v5"
-                    )
+                    if (runtime_contract or manifest.context_policy_version == "phase-evidence-v5")
                     else {}
                 ),
                 "request_body": request_body,
@@ -1919,60 +1741,31 @@ def _terminal_trace(
                 "context_hash": sha256_text(actual_rendered),
                 "context_characters": evidence["rendered_characters"],
                 "context_bytes": evidence["rendered_bytes"],
-                "eligible_event_count": evidence["events"][
-                    "eligible_count"
-                ],
-                "included_event_count": evidence["events"][
-                    "included_count"
-                ],
-                "omitted_event_count": evidence["events"][
-                    "omitted_count"
-                ],
+                "eligible_event_count": evidence["events"]["eligible_count"],
+                "included_event_count": evidence["events"]["included_count"],
+                "omitted_event_count": evidence["events"]["omitted_count"],
                 "truncated_tool_result_count": sum(
-                    bool(item["truncated"])
-                    for item in evidence["tool_results"]
+                    bool(item["truncated"]) for item in evidence["tool_results"]
                 ),
                 "artifact_role": "model-request-evidence",
                 "provider_state_used": False,
-                "investigation_ledger_hash": ledger[
-                    "content_hash"
-                ],
-                "investigation_source_through_sequence": ledger[
-                    "source_through_sequence"
-                ],
-                "investigation_no_progress_streak": ledger[
-                    "no_progress_streak"
-                ],
-                "investigation_exploration_admitted": ledger[
-                    "exploration_admitted"
-                ],
-                "investigation_tail_block_reasons": ledger[
-                    "tail_block_reasons"
-                ],
-                "investigation_tail_remaining_tokens": ledger[
-                    "tail_remaining_tokens"
-                ],
-                "investigation_tail_observation_count": ledger[
-                    "tail_observation_count"
-                ],
+                "investigation_ledger_hash": ledger["content_hash"],
+                "investigation_source_through_sequence": ledger["source_through_sequence"],
+                "investigation_no_progress_streak": ledger["no_progress_streak"],
+                "investigation_exploration_admitted": ledger["exploration_admitted"],
+                "investigation_tail_block_reasons": ledger["tail_block_reasons"],
+                "investigation_tail_remaining_tokens": ledger["tail_remaining_tokens"],
+                "investigation_tail_observation_count": ledger["tail_observation_count"],
                 "investigation_tail_max_observed_input_tokens": ledger[
                     "tail_max_observed_input_tokens"
                 ],
-                "investigation_tail_max_positive_growth": ledger[
-                    "tail_max_positive_growth"
-                ],
+                "investigation_tail_max_positive_growth": ledger["tail_max_positive_growth"],
                 "investigation_tail_projected_next_input_tokens": ledger[
                     "tail_projected_next_input_tokens"
                 ],
-                "investigation_tail_projected_model_turns": ledger[
-                    "tail_projected_model_turns"
-                ],
-                "investigation_tail_reserved_tokens": ledger[
-                    "tail_reserved_tokens"
-                ],
-                "investigation_tail_max_output_tokens": ledger[
-                    "tail_max_output_tokens"
-                ],
+                "investigation_tail_projected_model_turns": ledger["tail_projected_model_turns"],
+                "investigation_tail_reserved_tokens": ledger["tail_reserved_tokens"],
+                "investigation_tail_max_output_tokens": ledger["tail_max_output_tokens"],
             }
         )
         return payload
@@ -1987,9 +1780,7 @@ def _terminal_trace(
                 {
                     "task_id": manifest.task_id,
                     "artifact_role": "runtime-contract",
-                    "runtime_contract_artifact": (
-                        runtime_contract.model_dump(mode="json")
-                    ),
+                    "runtime_contract_artifact": (runtime_contract.model_dump(mode="json")),
                 }
             )
         state.append_event(
@@ -2177,9 +1968,7 @@ def _terminal_trace(
                 )
             else:
                 rejection_error_code = (
-                    "CONTROLLED_DIAGNOSTIC_REJECTION"
-                    if controlled_rejection
-                    else "CONTRACT_ERROR"
+                    "CONTROLLED_DIAGNOSTIC_REJECTION" if controlled_rejection else "CONTRACT_ERROR"
                 )
                 rejection_error_message = (
                     "diagnostic control rejected the first "
@@ -2196,51 +1985,30 @@ def _terminal_trace(
                             "Review the rehydrated candidate and rejection "
                             "evidence, then retry with a new action_id."
                         ),
-                        "fault_type": (
-                            "controlled-reject-first-prepared-patch"
-                        ),
-                        "trigger": (
-                            "first-preflight-valid-apply-patch"
-                        ),
+                        "fault_type": ("controlled-reject-first-prepared-patch"),
+                        "trigger": ("first-preflight-valid-apply-patch"),
                         "trigger_after": 1,
                         "source_call_sequence": rejected_call.sequence,
-                        "source_prepared_sequence": (
-                            rejected_prepared_event.sequence
-                        ),
-                        "candidate_content_hash": (
-                            submitted_patch.content_hash
-                        ),
+                        "source_prepared_sequence": (rejected_prepared_event.sequence),
+                        "candidate_content_hash": (submitted_patch.content_hash),
                         "input_hash": patch_input_hash,
-                        "prepared_intent_content_hash": (
-                            rejected_intent.content_hash
-                        ),
-                        "baseline_worktree_diff_hash": sha256_text(
-                            ""
-                        ),
+                        "prepared_intent_content_hash": (rejected_intent.content_hash),
+                        "baseline_worktree_diff_hash": sha256_text(""),
                         "expected_worktree_diff_hash": DIFF_HASH,
-                        "observed_worktree_diff_hash": sha256_text(
-                            ""
-                        ),
+                        "observed_worktree_diff_hash": sha256_text(""),
                         "worktree_mutated": False,
                     }
                     if controlled_rejection
                     else {"reason": "invalid public patch"}
                 )
-                if (
-                    controlled_rejection
-                    and controlled_rejection_details_overrides is not None
-                ):
-                    rejection_error_details.update(
-                        controlled_rejection_details_overrides
-                    )
+                if controlled_rejection and controlled_rejection_details_overrides is not None:
+                    rejection_error_details.update(controlled_rejection_details_overrides)
                 if controlled_rejection_interleaved:
                     state.append_event(
                         run_id,
                         EventType.LOOP_DETECTED,
                         actor="tamper-test",
-                        payload={
-                            "reason": "interleaved-before-controlled-failure"
-                        },
+                        payload={"reason": "interleaved-before-controlled-failure"},
                     )
                 rejected_result_payload = {
                     "tool": "apply_patch",
@@ -2458,13 +2226,9 @@ def _terminal_trace(
                 "input_artifact": probe_input.model_dump(mode="json"),
                 "artifact_id": probe_input.artifact_id,
                 "artifact_path": probe_input.path,
-                "source_artifact": probe_source.model_dump(
-                    mode="json"
-                ),
+                "source_artifact": probe_source.model_dump(mode="json"),
                 "source_hash": probe_source.content_hash,
-                "probe_policy_version": (
-                    "ephemeral-python-probe-v2"
-                ),
+                "probe_policy_version": ("ephemeral-python-probe-v2"),
                 "probe_id": PROBE_ID,
             },
         )
@@ -2486,9 +2250,7 @@ def _terminal_trace(
             "source_hash": probe_source.content_hash,
             "execution_policy": execution_policy,
             "command": ["python", "-I", "<ephemeral-probe>"],
-            "exit_code": (
-                None if self_validation_probe_timed_out else 0
-            ),
+            "exit_code": (None if self_validation_probe_timed_out else 0),
             "passed": not self_validation_probe_timed_out,
             "timed_out": self_validation_probe_timed_out,
             "truncated": False,
@@ -2498,9 +2260,7 @@ def _terminal_trace(
             "duration_ms": 1,
             "worktree_diff_hash": DIFF_HASH,
         }
-        probe_result = artifacts.put_json(
-            probe_result_payload
-        )
+        probe_result = artifacts.put_json(probe_result_payload)
         state.append_event(
             run_id,
             EventType.TOOL_SUCCEEDED,
@@ -2515,9 +2275,7 @@ def _terminal_trace(
                 "passed": not self_validation_probe_timed_out,
                 "timed_out": self_validation_probe_timed_out,
                 "truncated": False,
-                "exit_code": (
-                    None if self_validation_probe_timed_out else 0
-                ),
+                "exit_code": (None if self_validation_probe_timed_out else 0),
                 "original_output_bytes": 13,
                 "worktree_diff_hash": DIFF_HASH,
                 "source_hash": probe_source.content_hash,
@@ -2559,12 +2317,10 @@ def _terminal_trace(
     if counter_generation_block_reason is not None:
         if counter_generation_block_reason != "model_call_budget_exhausted":
             raise AssertionError(
-                "the complete synthetic qualification trace only supports "
-                "model-call exhaustion"
+                "the complete synthetic qualification trace only supports model-call exhaustion"
             )
         existing_model_calls = sum(
-            event.type == EventType.MODEL_CALLED
-            for event in state.list_events(run_id)
+            event.type == EventType.MODEL_CALLED for event in state.list_events(run_id)
         )
         filler_model_calls = (
             manifest.budget.max_model_calls - existing_model_calls
@@ -2582,9 +2338,7 @@ def _terminal_trace(
                 ensure_ascii=False,
                 default=str,
             )
-            filler_context, filler_request_hash = request_artifact(
-                filler_rendered_context
-            )
+            filler_context, filler_request_hash = request_artifact(filler_rendered_context)
             state.append_event(
                 run_id,
                 EventType.CONTEXT_BUILT,
@@ -2595,9 +2349,7 @@ def _terminal_trace(
                     filler_rendered_context,
                 ),
             )
-            filler_model = artifacts.put_text(
-                f"public model response: continue {index}"
-            )
+            filler_model = artifacts.put_text(f"public model response: continue {index}")
             state.append_event(
                 run_id,
                 EventType.MODEL_CALLED,
@@ -2642,9 +2394,7 @@ def _terminal_trace(
                     "event_sequence": event.sequence,
                     "tool": "run_check",
                     "worktree_diff_hash": DIFF_HASH,
-                    "artifact_id": event.payload.get(
-                        "artifact_id"
-                    ),
+                    "artifact_id": event.payload.get("artifact_id"),
                     "available": True,
                     "truncated": False,
                 }
@@ -2652,8 +2402,7 @@ def _terminal_trace(
                 if event.type == EventType.TOOL_SUCCEEDED
                 and event.payload.get("tool") == "run_check"
                 and event.payload.get("passed") is True
-                and event.payload.get("worktree_diff_hash")
-                == DIFF_HASH
+                and event.payload.get("worktree_diff_hash") == DIFF_HASH
             )
         review_tool_results.append(
             {
@@ -2669,8 +2418,7 @@ def _terminal_trace(
         review_rendered_context,
         tool_results=review_tool_results,
         runtime_contract=(
-            counter_generation_block_reason is not None
-            or include_self_validation_review
+            counter_generation_block_reason is not None or include_self_validation_review
         ),
     )
     if counter_generation_block_reason is not None:
@@ -2718,14 +2466,8 @@ def _terminal_trace(
         )
     else:
         preceding_events = state.list_events(run_id)
-        model_calls_used = sum(
-            event.type == EventType.MODEL_CALLED
-            for event in preceding_events
-        )
-        tool_calls_used = sum(
-            event.type == EventType.TOOL_CALLED
-            for event in preceding_events
-        )
+        model_calls_used = sum(event.type == EventType.MODEL_CALLED for event in preceding_events)
+        tool_calls_used = sum(event.type == EventType.TOOL_CALLED for event in preceding_events)
         wall_clock_ms = sum(
             int(event.payload.get("duration_ms", 0))
             for event in preceding_events
@@ -2737,8 +2479,7 @@ def _terminal_trace(
             }
         )
         total_tokens_used = sum(
-            int(event.payload.get("input_tokens", 0))
-            + int(event.payload.get("output_tokens", 0))
+            int(event.payload.get("input_tokens", 0)) + int(event.payload.get("output_tokens", 0))
             for event in preceding_events
             if event.type == EventType.MODEL_CALLED
         )
@@ -2749,6 +2490,7 @@ def _terminal_trace(
             "generation_started": False,
             "request_artifact_id": review_context.artifact_id,
             "request_artifact_path": review_context.path,
+            "request_artifact_hash": review_context.content_hash,
             "request_body_hash": review_request_hash,
             "requested_input_tokens": None,
             "remaining_tokens": None,
@@ -2761,9 +2503,7 @@ def _terminal_trace(
             "tool_calls_used": tool_calls_used,
             "max_tool_calls": manifest.budget.max_tool_calls,
             "wall_clock_ms": wall_clock_ms,
-            "wall_clock_timeout_ms": (
-                manifest.budget.wall_clock_timeout_seconds * 1000
-            ),
+            "wall_clock_timeout_ms": (manifest.budget.wall_clock_timeout_seconds * 1000),
             "total_tokens_used": total_tokens_used,
             "max_total_tokens": manifest.budget.max_total_tokens,
         }
@@ -2868,24 +2608,16 @@ def _terminal_trace(
             "mutation_event_sequence": mutation_event.sequence,
             "source_get_diff_sequence": get_diff_event.sequence,
             "requirements": review_arguments["requirements"],
-            "targeted_validation": review_arguments[
-                "targeted_validation"
-            ],
+            "targeted_validation": review_arguments["targeted_validation"],
             "residual_risks": [],
             "deterministic_correctness_claimed": False,
         }
-        task_review_artifact = artifacts.put_json(
-            task_review_document
-        )
-        task_review_content_hash = (
-            task_review_artifact.content_hash
-        )
+        task_review_artifact = artifacts.put_json(task_review_document)
+        task_review_content_hash = task_review_artifact.content_hash
         review_result_payload = {
             "schema_version": "task-review-result-v1",
             "review_schema_version": "task-review-v1",
-            "review_artifact": task_review_artifact.model_dump(
-                mode="json"
-            ),
+            "review_artifact": task_review_artifact.model_dump(mode="json"),
             "review_content_hash": task_review_content_hash,
             "review": task_review_document,
             "request_artifact_id": review_context.artifact_id,
@@ -2898,9 +2630,7 @@ def _terminal_trace(
             "self_attestation": True,
             "deterministic_correctness_claimed": False,
         }
-        review_result_artifact = artifacts.put_json(
-            review_result_payload
-        )
+        review_result_artifact = artifacts.put_json(review_result_payload)
         task_review_event = state.append_event(
             run_id,
             EventType.TOOL_SUCCEEDED,
@@ -2911,13 +2641,9 @@ def _terminal_trace(
                 "status": "succeeded",
                 "artifact_id": review_result_artifact.artifact_id,
                 "artifact_path": review_result_artifact.path,
-                "result_artifact": review_result_artifact.model_dump(
-                    mode="json"
-                ),
+                "result_artifact": review_result_artifact.model_dump(mode="json"),
                 "review_schema_version": "task-review-v1",
-                "review_artifact": task_review_artifact.model_dump(
-                    mode="json"
-                ),
+                "review_artifact": task_review_artifact.model_dump(mode="json"),
                 "review_content_hash": task_review_content_hash,
                 "requirement_count": 1,
                 "targeted_validation_count": 1,
@@ -2944,9 +2670,7 @@ def _terminal_trace(
         ]
         finish_rendered_context = json.dumps(
             {
-                "public_task": package.public.model_dump(
-                    mode="json"
-                ),
+                "public_task": package.public.model_dump(mode="json"),
                 "task_context": context_text,
                 "recent_events": [
                     {
@@ -2981,9 +2705,7 @@ def _terminal_trace(
                 finish_rendered_context,
             ),
         )
-        finish_model = artifacts.put_text(
-            "public model response: finish_task after review"
-        )
+        finish_model = artifacts.put_text("public model response: finish_task after review")
         state.append_event(
             run_id,
             EventType.MODEL_CALLED,
@@ -3000,10 +2722,7 @@ def _terminal_trace(
             {
                 "type": "ModelGenerationBudgetError",
                 "code": "MODEL_GENERATION_BUDGET_EXCEEDED",
-                "message": (
-                    "model generation blocked: "
-                    f"{counter_generation_block_reason}"
-                ),
+                "message": (f"model generation blocked: {counter_generation_block_reason}"),
                 "details": generation_block_payload,
             }
             if generation_block_payload is not None
@@ -3074,26 +2793,15 @@ def _terminal_trace(
             payload={
                 "worktree_diff_hash": DIFF_HASH,
                 "source_get_diff_sequence": get_diff_event.sequence,
-                "request_artifact_id": (
-                    finish_request_context.artifact_id
-                ),
+                "request_artifact_id": (finish_request_context.artifact_id),
                 "complete_tool_result": True,
                 **(
                     {
-                        "source_task_review_sequence": (
-                            task_review_event.sequence
-                        ),
-                        "task_review_artifact": (
-                            task_review_artifact.model_dump(
-                                mode="json"
-                            )
-                        ),
-                        "task_review_content_hash": (
-                            task_review_content_hash
-                        ),
+                        "source_task_review_sequence": (task_review_event.sequence),
+                        "task_review_artifact": (task_review_artifact.model_dump(mode="json")),
+                        "task_review_content_hash": (task_review_content_hash),
                     }
-                    if task_review_event is not None
-                    and task_review_artifact is not None
+                    if task_review_event is not None and task_review_artifact is not None
                     else {}
                 ),
             },
@@ -3148,14 +2856,8 @@ def _terminal_trace(
                 "submitted_patch_artifact": submitted_patch.model_dump(mode="json"),
                 **(
                     {
-                        "task_review_artifact": (
-                            task_review_artifact.model_dump(
-                                mode="json"
-                            )
-                        ),
-                        "task_review_content_hash": (
-                            task_review_content_hash
-                        ),
+                        "task_review_artifact": (task_review_artifact.model_dump(mode="json")),
+                        "task_review_content_hash": (task_review_content_hash),
                     }
                     if task_review_artifact is not None
                     else {}
@@ -3235,10 +2937,7 @@ def _terminal_trace(
                 "error_type": "ModelGenerationBudgetError",
                 "error_code": "MODEL_GENERATION_BUDGET_EXCEEDED",
                 "error_details": generation_block_payload,
-                "message": (
-                    "model generation blocked: "
-                    f"{counter_generation_block_reason}"
-                ),
+                "message": (f"model generation blocked: {counter_generation_block_reason}"),
             }
             if generation_block_payload is not None
             else None
@@ -3279,9 +2978,7 @@ def test_live_memory_development_failure_is_qualified_and_eligible(tmp_path) -> 
     assert lifecycle["details"]["complete_source_in_context"] is True
     assert lifecycle["details"]["ordered_submission_valid"] is True
     assert qualification["qualified"] is True, [
-        check
-        for check in qualification["checks"]
-        if not check["passed"]
+        check for check in qualification["checks"] if not check["passed"]
     ]
     assert qualification["trace_integrity_passed"] is True
     assert qualification["leakage_scan_passed"] is True
@@ -3330,10 +3027,7 @@ def test_v4_source_schema_does_not_rewrite_historical_v3_hash(
         root=tmp_path,
     )
 
-    assert (
-        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V4
-        == "trace-source-evidence-v4"
-    )
+    assert qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V4 == "trace-source-evidence-v4"
     with monkeypatch.context() as schema_patch:
         schema_patch.setattr(
             qualification_module,
@@ -3362,10 +3056,7 @@ def test_v6_source_schema_is_separate_from_historical_v5(
         root=tmp_path,
     )
 
-    assert (
-        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V6
-        == "trace-source-evidence-v6"
-    )
+    assert qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V6 == "trace-source-evidence-v6"
     with monkeypatch.context() as historical_schema_patch:
         historical_schema_patch.setattr(
             qualification_module,
@@ -3400,14 +3091,9 @@ def test_v8_source_schema_does_not_rewrite_v7_or_local_d062_hash(
 ) -> None:
     from patchloop.agent.review import load_public_review_contract
 
-    package = load_task_package(
-        Path("tasks/dev-train/hf-hub-xet-endpoint-propagation")
-    )
+    package = load_task_package(Path("tasks/dev-train/hf-hub-xet-endpoint-propagation"))
     review_contract = load_public_review_contract(
-        Path(
-            "experiments/review-contracts/"
-            "hf-hub-xet-endpoint-propagation.yaml"
-        ),
+        Path("experiments/review-contracts/hf-hub-xet-endpoint-propagation.yaml"),
         task=package.public,
         public_spec_hash=package.public_spec_hash,
     )
@@ -3426,14 +3112,8 @@ def test_v8_source_schema_does_not_rewrite_v7_or_local_d062_hash(
         require_valid_plan=False,
     )
 
-    assert (
-        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V7
-        == "trace-source-evidence-v7"
-    )
-    assert (
-        qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V8
-        == "trace-source-evidence-v8"
-    )
+    assert qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V7 == "trace-source-evidence-v7"
+    assert qualification_module._SOURCE_EVIDENCE_SCHEMA_VERSION_V8 == "trace-source-evidence-v8"
     with monkeypatch.context() as v8_schema_patch:
         v8_schema_patch.setattr(
             qualification_module,
@@ -3464,18 +3144,11 @@ def test_v8_source_schema_does_not_rewrite_v7_or_local_d062_hash(
         )
 
     d062_run_id = "run_0ccfc8fd359a4785"
-    d062_hash = (
-        "sha256:53148b2b42e82ddcb6083b1b317df3c7"
-        "f8598972ed61fac0f69c65c5acff4351"
-    )
+    d062_hash = "sha256:53148b2b42e82ddcb6083b1b317df3c7f8598972ed61fac0f69c65c5acff4351"
     repository_runtime = Path(__file__).resolve().parents[1] / ".patchloop"
-    d062_qualification = (
-        repository_runtime / "qualifications" / f"{d062_run_id}.json"
-    )
+    d062_qualification = repository_runtime / "qualifications" / f"{d062_run_id}.json"
     if d062_qualification.is_file():
-        recorded = json.loads(
-            d062_qualification.read_text(encoding="utf-8")
-        )
+        recorded = json.loads(d062_qualification.read_text(encoding="utf-8"))
         assert recorded["source_evidence_hash"] == d062_hash
         assert (
             calculate_source_evidence_hash(
@@ -3491,9 +3164,7 @@ def test_v6_runtime_contract_binds_prompt_and_tool_schema() -> None:
     from patchloop.agent.model import SYSTEM_PROMPT_V4
     from patchloop.agent.tools import TOOL_SCHEMAS_V3
 
-    package = _with_probe_profile(
-        load_task_package(MEMORY_TASK)
-    )
+    package = _with_probe_profile(load_task_package(MEMORY_TASK))
     manifest = build_manifest(
         package,
         run_id="run_v6_runtime_contract",
@@ -3566,18 +3237,14 @@ def test_v6_self_validation_lifecycle_binds_review_cas_and_request(
     )
     state = StateStore(valid_root / "state.sqlite3")
     manifest = state.get_manifest(run_id)
-    package = _with_probe_profile(
-        load_task_package(MEMORY_TASK)
-    )
+    package = _with_probe_profile(load_task_package(MEMORY_TASK))
 
-    passed, details = (
-        qualification_module._self_validation_lifecycle_evidence(
-            root=valid_root,
-            manifest=manifest,
-            package=package,
-            events=state.list_events(run_id),
-            result=result,
-        )
+    passed, details = qualification_module._self_validation_lifecycle_evidence(
+        root=valid_root,
+        manifest=manifest,
+        package=package,
+        events=state.list_events(run_id),
+        result=result,
     )
 
     assert passed is True, details
@@ -3589,8 +3256,7 @@ def test_v6_self_validation_lifecycle_binds_review_cas_and_request(
     review_event = next(
         event
         for event in state.list_events(run_id)
-        if event.type == EventType.TOOL_SUCCEEDED
-        and event.payload.get("tool") == "review_task"
+        if event.type == EventType.TOOL_SUCCEEDED and event.payload.get("tool") == "review_task"
     )
     source_hash_before_tamper = calculate_source_evidence_hash(
         run_id,
@@ -3600,19 +3266,20 @@ def test_v6_self_validation_lifecycle_binds_review_cas_and_request(
         '{"tampered":true}',
         encoding="utf-8",
     )
-    assert calculate_source_evidence_hash(
-        run_id,
-        root=valid_root,
-    ) != source_hash_before_tamper
-
-    tampered, tampered_details = (
-        qualification_module._self_validation_lifecycle_evidence(
+    assert (
+        calculate_source_evidence_hash(
+            run_id,
             root=valid_root,
-            manifest=manifest,
-            package=package,
-            events=state.list_events(run_id),
-            result=result,
         )
+        != source_hash_before_tamper
+    )
+
+    tampered, tampered_details = qualification_module._self_validation_lifecycle_evidence(
+        root=valid_root,
+        manifest=manifest,
+        package=package,
+        events=state.list_events(run_id),
+        result=result,
     )
     assert tampered is False
     assert tampered_details["failed_call_sequences"]
@@ -3627,16 +3294,12 @@ def test_v6_completed_evaluation_without_semantic_review_fails_closed(
     )
     state = StateStore(tmp_path / "state.sqlite3")
 
-    passed, details = (
-        qualification_module._self_validation_lifecycle_evidence(
-            root=tmp_path,
-            manifest=state.get_manifest(run_id),
-            package=_with_probe_profile(
-                load_task_package(MEMORY_TASK)
-            ),
-            events=state.list_events(run_id),
-            result=result,
-        )
+    passed, details = qualification_module._self_validation_lifecycle_evidence(
+        root=tmp_path,
+        manifest=state.get_manifest(run_id),
+        package=_with_probe_profile(load_task_package(MEMORY_TASK)),
+        events=state.list_events(run_id),
+        result=result,
     )
 
     assert passed is False
@@ -3656,16 +3319,12 @@ def test_v6_timed_out_probe_is_valid_nonpassing_evidence(
     )
     state = StateStore(tmp_path / "state.sqlite3")
 
-    passed, details = (
-        qualification_module._self_validation_lifecycle_evidence(
-            root=tmp_path,
-            manifest=state.get_manifest(run_id),
-            package=_with_probe_profile(
-                load_task_package(MEMORY_TASK)
-            ),
-            events=state.list_events(run_id),
-            result=result,
-        )
+    passed, details = qualification_module._self_validation_lifecycle_evidence(
+        root=tmp_path,
+        manifest=state.get_manifest(run_id),
+        package=_with_probe_profile(load_task_package(MEMORY_TASK)),
+        events=state.list_events(run_id),
+        result=result,
     )
 
     assert passed is True, details
@@ -3963,9 +3622,7 @@ def test_controlled_diagnostic_binds_one_unmutated_rejection_and_retry(
     run_id, _, _ = _terminal_trace(
         tmp_path,
         task_dir=PILOT_TASK,
-        purpose=(
-            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
-        ),
+        purpose=(ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT),
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
         prompt_telemetry=True,
@@ -3999,19 +3656,13 @@ def test_controlled_diagnostic_binds_one_unmutated_rejection_and_retry(
     )
     assert controlled["passed"] is True
     assert controlled["details"]["controlled_rejection_count"] == 1
-    assert (
-        controlled["details"]["verified_controlled_rejection_count"]
-        == 1
-    )
+    assert controlled["details"]["verified_controlled_rejection_count"] == 1
     assert controlled["details"]["controlled_patch_applied_sequences"] == []
     assert retry["passed"] is True
     assert retry["details"]["retry_episode_count"] == 1
     assert retry["details"]["verified_retry_count"] == 1
     assert retry["details"]["controlled_rejection_count"] == 1
-    assert not any(
-        check["check_id"] == "fault_free"
-        for check in qualification["checks"]
-    )
+    assert not any(check["check_id"] == "fault_free" for check in qualification["checks"])
     assert qualification["qualified"] is True
 
 
@@ -4021,9 +3672,7 @@ def test_controlled_diagnostic_rejects_interleaved_failure_declaration(
     run_id, _, _ = _terminal_trace(
         tmp_path,
         task_dir=PILOT_TASK,
-        purpose=(
-            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
-        ),
+        purpose=(ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT),
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
         prompt_telemetry=True,
@@ -4052,9 +3701,7 @@ def test_controlled_diagnostic_rejects_interleaved_failure_declaration(
         if check["check_id"] == "controlled_diagnostic_boundary"
     )
     assert controlled["passed"] is False
-    assert controlled["details"][
-        "verified_controlled_rejection_count"
-    ] == 0
+    assert controlled["details"]["verified_controlled_rejection_count"] == 0
     assert qualification["qualified"] is False
 
 
@@ -4066,9 +3713,7 @@ def test_controlled_diagnostic_fails_closed_on_declared_rejection_corruption(
     run_id, _, _ = _terminal_trace(
         tmp_path,
         task_dir=PILOT_TASK,
-        purpose=(
-            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
-        ),
+        purpose=(ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT),
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
         prompt_telemetry=True,
@@ -4093,8 +3738,7 @@ def test_controlled_diagnostic_fails_closed_on_declared_rejection_corruption(
         event
         for event in state.list_events(run_id)
         if event.type == EventType.TOOL_FAILED
-        and event.payload.get("error_code")
-        == "CONTROLLED_DIAGNOSTIC_REJECTION"
+        and event.payload.get("error_code") == "CONTROLLED_DIAGNOSTIC_REJECTION"
     ]
     assert len(controlled_failures) == 1
     expected_failed_sequences = [controlled_failures[0].sequence]
@@ -4139,9 +3783,7 @@ def test_controlled_diagnostic_rejects_profile_manifest_fault_mismatch(
     run_id, _, _ = _terminal_trace(
         tmp_path,
         task_dir=PILOT_TASK,
-        purpose=(
-            ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT
-        ),
+        purpose=(ExperimentPurpose.DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT),
         role=DatasetRole.DEVELOPMENT_VALIDATION,
         resolved=True,
         prompt_telemetry=True,
@@ -4159,9 +3801,7 @@ def test_controlled_diagnostic_rejects_profile_manifest_fault_mismatch(
             "diagnostic": {
                 "schema_version": "experiment-diagnostic-v1",
                 "profile": "d037-rejected-patch-retry-v3",
-                "required_trace_features": [
-                    "rejected_patch_retry_context"
-                ],
+                "required_trace_features": ["rejected_patch_retry_context"],
             }
         },
     )
@@ -4173,9 +3813,7 @@ def test_controlled_diagnostic_rejects_profile_manifest_fault_mismatch(
     )
 
     plan = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
     assert plan["passed"] is False
     assert qualification["qualified"] is False
@@ -4392,9 +4030,7 @@ def test_structured_v2_neutral_detail_shape_is_byte_stable_when_requalified(
     historical = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
     path = tmp_path / "qualifications" / f"{run_id}.json"
     terminal_check = next(
-        check
-        for check in historical["checks"]
-        if check["check_id"] == "terminal_result_integrity"
+        check for check in historical["checks"] if check["check_id"] == "terminal_result_integrity"
     )
     terminal_check["details"].update(
         {
@@ -4404,11 +4040,7 @@ def test_structured_v2_neutral_detail_shape_is_byte_stable_when_requalified(
     )
     historical["qualification_hash"] = sha256_text(
         canonical_json(
-            {
-                key: value
-                for key, value in historical.items()
-                if key != "qualification_hash"
-            }
+            {key: value for key, value in historical.items() if key != "qualification_hash"}
         )
     )
     path.write_text(
@@ -4440,19 +4072,13 @@ def test_structured_v2_non_neutral_qualification_change_is_rejected(
     tampered = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
     path = tmp_path / "qualifications" / f"{run_id}.json"
     prompt_check = next(
-        check
-        for check in tampered["checks"]
-        if check["check_id"] == "prompt_token_integrity"
+        check for check in tampered["checks"] if check["check_id"] == "prompt_token_integrity"
     )
     prompt_check["passed"] = False
     tampered["qualified"] = False
     tampered["qualification_hash"] = sha256_text(
         canonical_json(
-            {
-                key: value
-                for key, value in tampered.items()
-                if key != "qualification_hash"
-            }
+            {key: value for key, value in tampered.items() if key != "qualification_hash"}
         )
     )
     path.write_text(
@@ -4761,18 +4387,14 @@ def test_gpt54mini_d037_corrective_contract_is_qualified(tmp_path) -> None:
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
 
     model_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "frozen_model_contract"
+        check for check in qualification["checks"] if check["check_id"] == "frozen_model_contract"
     )
     assert model_check["passed"] is True
     assert model_check["details"]["model_id"] == "gpt-5.4-mini-2026-03-17"
     assert model_check["details"]["max_total_tokens"] == 120_000
     assert model_check["details"]["max_output_tokens"] == 25_000
     plan_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
     assert plan_check["passed"] is True
     assert qualification["qualified"] is True
@@ -4794,18 +4416,14 @@ def test_gpt54mini_d037_tail_reserve_contract_is_qualified(tmp_path) -> None:
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
 
     model_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "frozen_model_contract"
+        check for check in qualification["checks"] if check["check_id"] == "frozen_model_contract"
     )
     assert model_check["passed"] is True
     assert model_check["details"]["model_id"] == "gpt-5.4-mini-2026-03-17"
     assert model_check["details"]["max_total_tokens"] == 200_000
     assert model_check["details"]["max_output_tokens"] == 25_000
     plan_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
     assert plan_check["passed"] is True
     assert qualification["qualified"] is True
@@ -4847,9 +4465,7 @@ def test_gpt54mini_d037_corrective_plan_tampering_is_rejected(
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
 
     plan_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
     assert plan_check["passed"] is False
     assert qualification["qualified"] is False
@@ -4871,9 +4487,7 @@ def test_gpt54mini_d037_partial_corrective_contract_is_rejected(tmp_path) -> Non
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
 
     model_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "frozen_model_contract"
+        check for check in qualification["checks"] if check["check_id"] == "frozen_model_contract"
     )
     assert model_check["passed"] is False
     assert qualification["qualified"] is False
@@ -4966,33 +4580,28 @@ def test_high_budget_completion_pilot_model_contract_qualifies(
         resolved=True,
         prompt_telemetry=True,
         budget=completion_budget,
-        experiment_id=(
-            "dev-validation-gpt54mini-completion-v6-20260731-r1"
-        ),
+        experiment_id=("dev-validation-gpt54mini-completion-v6-20260731-r1"),
     )
 
     qualification = qualify_run(run_id, task_dir=task_dir, root=tmp_path)
-    checks = {
-        check["check_id"]: check for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert qualification["qualified"] is True, [
         check for check in qualification["checks"] if not check["passed"]
     ]
     assert checks["frozen_model_contract"]["passed"] is True
-    assert checks["frozen_model_contract"]["details"][
-        "max_total_tokens"
-    ] == 600_000
+    assert checks["frozen_model_contract"]["details"]["max_total_tokens"] == 600_000
     assert qualification["memory_candidate_eligible"] is False
 
 
 def test_d077_generic_baseline_readiness_full_row_qualifies(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    historical_start = datetime(2026, 8, 2, 14, 0, tzinfo=UTC)
+    monkeypatch.setattr("patchloop.state.store.utc_now", lambda: historical_start)
     budget = eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D077_BUDGET
-    experiment_id = (
-        eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
-    )
+    experiment_id = eval_runner.GENERIC_BASELINE_READINESS_D077_EXPERIMENT_ID
     run_id, result, _ = _terminal_trace(
         tmp_path,
         task_dir=PILOT_TASK,
@@ -5011,9 +4620,7 @@ def test_d077_generic_baseline_readiness_full_row_qualifies(
         root=tmp_path,
         persist=False,
     )
-    checks = {
-        check["check_id"]: check for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert result.official is True
     assert qualification["qualified"] is True, [
@@ -5034,11 +4641,18 @@ def test_d077_generic_baseline_readiness_full_row_qualifies(
 
 def test_d081_generic_baseline_readiness_full_row_qualifies_with_null_counts(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    budget = eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
-    experiment_id = (
-        eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
+    historical_suite = eval_runner.load_suite(
+        "experiments/generic-baseline-readiness-v2v5-20260803-r3.yaml"
     )
+    assert historical_suite.pricing_verified_at is not None
+    monkeypatch.setattr(
+        "patchloop.state.store.utc_now",
+        lambda: historical_suite.pricing_verified_at,
+    )
+    budget = eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET
+    experiment_id = eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
     run_id, result, _ = _terminal_trace(
         tmp_path,
         task_dir=PILOT_TASK,
@@ -5057,9 +4671,7 @@ def test_d081_generic_baseline_readiness_full_row_qualifies_with_null_counts(
         root=tmp_path,
         persist=False,
     )
-    checks = {
-        check["check_id"]: check for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert result.official is True
     assert qualification["qualified"] is True, [
@@ -5087,9 +4699,7 @@ def test_d081_generic_readiness_rejects_forged_count_budget_block(
         prompt_telemetry=True,
         budget=eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_D081_BUDGET,
         max_output_tokens=25_000,
-        experiment_id=(
-            eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID
-        ),
+        experiment_id=(eval_runner.GENERIC_BASELINE_READINESS_D081_EXPERIMENT_ID),
         counter_generation_block_reason="model_call_budget_exhausted",
     )
 
@@ -5099,9 +4709,7 @@ def test_d081_generic_readiness_rejects_forged_count_budget_block(
         root=tmp_path,
         persist=False,
     )
-    checks = {
-        check["check_id"]: check for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert checks["disabled_call_guard_contract"]["passed"] is False
     assert qualification["qualified"] is False
@@ -5130,9 +4738,7 @@ def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_request
             prompt_telemetry=True,
             budget=eval_runner.GPT54_MINI_GENERIC_BASELINE_READINESS_BUDGET,
             max_output_tokens=25_000,
-            experiment_id=(
-                eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID
-            ),
+            experiment_id=(eval_runner.GENERIC_BASELINE_READINESS_EXPERIMENT_ID),
         )
         return run_id, result
 
@@ -5144,9 +4750,7 @@ def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_request
         root=valid_root,
         persist=False,
     )
-    checks = {
-        check["check_id"]: check for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert result.official is True
     assert result.evaluation_status == "completed"
@@ -5174,10 +4778,7 @@ def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_request
         root=runtime_root,
         persist=False,
     )
-    runtime_checks = {
-        check["check_id"]: check
-        for check in runtime_tampered["checks"]
-    }
+    runtime_checks = {check["check_id"]: check for check in runtime_tampered["checks"]}
     assert runtime_tampered["qualified"] is False
     assert runtime_checks["generic_runtime_contract"]["passed"] is False
 
@@ -5189,19 +4790,14 @@ def test_generic_baseline_readiness_full_row_qualifies_and_binds_runtime_request
         for event in request_state.list_events(request_run_id)
         if event.type == EventType.MODEL_CALLED
     )
-    Path(request_event.payload["request_artifact_path"]).write_bytes(
-        b'{"tampered":true}'
-    )
+    Path(request_event.payload["request_artifact_path"]).write_bytes(b'{"tampered":true}')
     request_tampered = qualify_run(
         request_run_id,
         task_dir=PILOT_TASK,
         root=request_root,
         persist=False,
     )
-    request_checks = {
-        check["check_id"]: check
-        for check in request_tampered["checks"]
-    }
+    request_checks = {check["check_id"]: check for check in request_tampered["checks"]}
     assert request_tampered["qualified"] is False
     assert request_checks["prompt_token_integrity"]["passed"] is False
 
@@ -5218,9 +4814,7 @@ def test_memory_development_budget_pilot_contract_qualifies(
     run_id, _, _ = _terminal_trace(
         tmp_path,
         task_dir=task_dir,
-        purpose=(
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
-        ),
+        purpose=(ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT),
         role=DatasetRole.MEMORY_DEVELOPMENT,
         resolved=True,
         prompt_telemetry=True,
@@ -5233,22 +4827,16 @@ def test_memory_development_budget_pilot_contract_qualifies(
         task_dir=task_dir,
         root=tmp_path,
     )
-    checks = {
-        check["check_id"]: check for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert qualification["qualified"] is True, [
         check for check in qualification["checks"] if not check["passed"]
     ]
     assert checks["frozen_model_contract"]["passed"] is True
-    assert checks["frozen_model_contract"]["details"][
-        "max_total_tokens"
-    ] == 480_000
+    assert checks["frozen_model_contract"]["details"]["max_total_tokens"] == 480_000
     assert checks["frozen_campaign_provenance"]["passed"] is True
     assert checks["approved_execution_plan"]["passed"] is True
-    assert qualification["purpose"] == (
-        "memory-development-no-memory-budget-pilot"
-    )
+    assert qualification["purpose"] == ("memory-development-no-memory-budget-pilot")
     assert qualification["dataset_role"] == "memory-development"
     assert qualification["tool_schema_version"] == "v2"
     assert qualification["context_policy_version"] == "phase-evidence-v5"
@@ -5272,9 +4860,7 @@ def test_memory_development_budget_pilot_failures_are_not_memory_candidates(
     run_id, _, _ = _terminal_trace(
         tmp_path,
         task_dir=task_dir,
-        purpose=(
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
-        ),
+        purpose=(ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT),
         role=DatasetRole.MEMORY_DEVELOPMENT,
         resolved=False,
         agent_failure=agent_failure,
@@ -5303,9 +4889,7 @@ def test_memory_development_budget_pilot_plan_requires_all_three_tasks(
     run_id, _, _ = _terminal_trace(
         tmp_path,
         task_dir=task_dir,
-        purpose=(
-            ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT
-        ),
+        purpose=(ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT),
         role=DatasetRole.MEMORY_DEVELOPMENT,
         resolved=True,
         prompt_telemetry=True,
@@ -5320,9 +4904,7 @@ def test_memory_development_budget_pilot_plan_requires_all_three_tasks(
         root=tmp_path,
     )
     plan_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
 
     assert plan_check["passed"] is False
@@ -5360,9 +4942,7 @@ def test_high_budget_completion_plan_requires_full_two_task_coverage(
 
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
     plan_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
 
     assert plan_check["passed"] is False
@@ -5382,9 +4962,7 @@ def test_primary_mini_live_pilot_requires_prompt_token_telemetry(tmp_path) -> No
     qualification = qualify_run(run_id, task_dir=PILOT_TASK, root=tmp_path)
 
     prompt_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "prompt_token_integrity"
+        check for check in qualification["checks"] if check["check_id"] == "prompt_token_integrity"
     )
     assert prompt_check["passed"] is False
     assert prompt_check["details"]["required"] is True
@@ -5438,26 +5016,23 @@ def test_v2_model_call_budget_block_can_be_fully_qualified(
         task_dir=MEMORY_TASK,
         root=tmp_path,
     )
-    checks = {
-        check["check_id"]: check
-        for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert qualification["qualified"] is True, [
-        check
-        for check in qualification["checks"]
-        if not check["passed"]
+        check for check in qualification["checks"] if not check["passed"]
     ]
     assert qualification["evaluation_reached"] is False
     assert qualification["outcome_kind"] == "agent_failure"
     assert qualification["failure_record_id"] == failure_id
     assert checks["prompt_token_integrity"]["passed"] is True
-    assert checks["prompt_token_integrity"]["details"][
-        "terminal_generation_block_schema_version"
-    ] == "model-generation-block-v2"
-    assert checks["prompt_token_integrity"]["details"][
-        "terminal_generation_block_reason"
-    ] == "model_call_budget_exhausted"
+    assert (
+        checks["prompt_token_integrity"]["details"]["terminal_generation_block_schema_version"]
+        == "model-generation-block-v2"
+    )
+    assert (
+        checks["prompt_token_integrity"]["details"]["terminal_generation_block_reason"]
+        == "model_call_budget_exhausted"
+    )
     assert checks["terminal_result_integrity"]["passed"] is True
 
 
@@ -5472,21 +5047,18 @@ def test_v2_counter_block_requires_durable_event_durations(
     database = tmp_path / "state.sqlite3"
     with sqlite3.connect(database) as connection:
         rows = connection.execute(
-            "SELECT sequence, event_json FROM events "
-            "WHERE run_id = ? ORDER BY sequence",
+            "SELECT sequence, event_json FROM events WHERE run_id = ? ORDER BY sequence",
             (run_id,),
         ).fetchall()
         sequence, raw_event = next(
             (sequence, raw_event)
             for sequence, raw_event in rows
-            if json.loads(raw_event)["type"]
-            == EventType.MODEL_CALLED.value
+            if json.loads(raw_event)["type"] == EventType.MODEL_CALLED.value
         )
         event = json.loads(raw_event)
         event["payload"].pop("duration_ms")
         connection.execute(
-            "UPDATE events SET event_json = ? "
-            "WHERE run_id = ? AND sequence = ?",
+            "UPDATE events SET event_json = ? WHERE run_id = ? AND sequence = ?",
             (canonical_json(event), run_id, sequence),
         )
 
@@ -5495,10 +5067,7 @@ def test_v2_counter_block_requires_durable_event_durations(
         task_dir=MEMORY_TASK,
         root=tmp_path,
     )
-    checks = {
-        check["check_id"]: check
-        for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert qualification["qualified"] is False
     assert checks["prompt_token_integrity"]["passed"] is False
@@ -5524,9 +5093,7 @@ def test_v2_counter_block_rejects_result_wall_clock_tampering(
             "UPDATE runs SET result_json = ? WHERE run_id = ?",
             (canonical_json(result_payload), run_id),
         )
-    result_path = (
-        tmp_path / "artifacts" / "runs" / run_id / "result.json"
-    )
+    result_path = tmp_path / "artifacts" / "runs" / run_id / "result.json"
     result_path.write_text(
         json.dumps(result_payload, indent=2),
         encoding="utf-8",
@@ -5537,10 +5104,7 @@ def test_v2_counter_block_rejects_result_wall_clock_tampering(
         task_dir=MEMORY_TASK,
         root=tmp_path,
     )
-    checks = {
-        check["check_id"]: check
-        for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert qualification["qualified"] is False
     assert checks["usage_reconciliation"]["passed"] is False
@@ -5567,10 +5131,7 @@ def test_v2_model_call_block_rejects_over_limit_tool_usage(
         task_dir=MEMORY_TASK,
         root=tmp_path,
     )
-    checks = {
-        check["check_id"]: check
-        for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert qualification["qualified"] is False
     assert checks["prompt_token_integrity"]["passed"] is False
@@ -5587,21 +5148,18 @@ def test_v2_counter_block_requires_budget_guard_actor(
     database = tmp_path / "state.sqlite3"
     with sqlite3.connect(database) as connection:
         rows = connection.execute(
-            "SELECT sequence, event_json FROM events "
-            "WHERE run_id = ? ORDER BY sequence",
+            "SELECT sequence, event_json FROM events WHERE run_id = ? ORDER BY sequence",
             (run_id,),
         ).fetchall()
         sequence, raw_event = next(
             (sequence, raw_event)
             for sequence, raw_event in rows
-            if json.loads(raw_event)["type"]
-            == EventType.MODEL_GENERATION_BLOCKED.value
+            if json.loads(raw_event)["type"] == EventType.MODEL_GENERATION_BLOCKED.value
         )
         event = json.loads(raw_event)
         event["actor"] = "tampered-budget-guard"
         connection.execute(
-            "UPDATE events SET event_json = ? "
-            "WHERE run_id = ? AND sequence = ?",
+            "UPDATE events SET event_json = ? WHERE run_id = ? AND sequence = ?",
             (canonical_json(event), run_id, sequence),
         )
 
@@ -5610,10 +5168,7 @@ def test_v2_counter_block_requires_budget_guard_actor(
         task_dir=MEMORY_TASK,
         root=tmp_path,
     )
-    checks = {
-        check["check_id"]: check
-        for check in qualification["checks"]
-    }
+    checks = {check["check_id"]: check for check in qualification["checks"]}
 
     assert qualification["qualified"] is False
     assert checks["prompt_token_integrity"]["passed"] is False
@@ -5834,9 +5389,7 @@ def test_execution_plan_rejects_arbitrary_self_consistent_execution_hash(
     qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
 
     plan_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
     assert plan_check["passed"] is False
     assert qualification["qualified"] is False
@@ -5863,17 +5416,13 @@ def test_execution_plan_hash_inputs_cannot_be_tampered(
     elif tamper_target == "schedule_hash":
         plan["schedule_hash"] = "sha256:" + ("f" * 64)
     else:
-        plan["pilot_qualification"]["qualification_hash"] = (
-            "sha256:" + ("f" * 64)
-        )
+        plan["pilot_qualification"]["qualification_hash"] = "sha256:" + ("f" * 64)
     plan_path.write_text(json.dumps(plan, indent=2), encoding="utf-8")
 
     qualification = qualify_run(run_id, task_dir=MEMORY_TASK, root=tmp_path)
 
     plan_check = next(
-        check
-        for check in qualification["checks"]
-        if check["check_id"] == "approved_execution_plan"
+        check for check in qualification["checks"] if check["check_id"] == "approved_execution_plan"
     )
     assert plan_check["passed"] is False
     assert qualification["qualified"] is False

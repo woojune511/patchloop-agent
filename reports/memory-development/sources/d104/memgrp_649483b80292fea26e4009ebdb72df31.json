@@ -1,0 +1,101 @@
+{
+  "schema_version": "unindexed-memory-entry-source-d104-v1",
+  "source_id": "d104src_770793305341d62f095021fe2c9c354c2524090a921a23778a824181c098fa0a",
+  "semantic_body_hash": "sha256:770793305341d62f095021fe2c9c354c2524090a921a23778a824181c098fa0a",
+  "semantic_body": {
+    "milestone": "D-104",
+    "evidence_kind": "sealed-group-unindexed-memory-source",
+    "materialized_at": "2026-08-06T04:00:00Z",
+    "source_collection_id": "d104collection_4017131c10c127f47b8ea68ff2d8c3c3265c2f6cb11c1b175dd52c23882bd399",
+    "source_projection_policy": "d103-seal-admitted-template-exact-v1",
+    "admission_seal": {
+      "path": "reports/memory-development/d103-maintainer-assisted-admission-seal.json",
+      "schema_version": "memory-group-admission-seal-d101-v1",
+      "seal_id": "d101seal_3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "semantic_body_hash": "sha256:3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "file_bytes": 19357,
+      "file_sha256": "sha256:af1e6ea8811445f26d542f34500d1a7b3919392bef00c98b71f4c26ded236e8e"
+    },
+    "projected_entry": {
+      "template": {
+        "target_schema": "memory-entry-v1",
+        "proposed_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+        "failure_pattern": {
+          "failure_class": "PLATFORM_EMULATION_MATRIX_GAP",
+          "phase": "IMPLEMENT",
+          "description": "An emulation fix validates a final outcome without preserving the observable intermediate semantics across the public platform matrix."
+        },
+        "preconditions": [
+          "The task emulates platform behavior with observable intermediate and leaf effects.",
+          "The public contract names more than one path type, platform mode, or error branch."
+        ],
+        "diagnostic_evidence": [
+          "Enumerate intermediate and leaf effects separately before changing normalization.",
+          "Build a public matrix for platform mode, path type, creation mode, existing state, and error state."
+        ],
+        "recommended_actions": [
+          "Implement the smallest change that preserves every matrix cell named by the public contract.",
+          "Run the registered regression and add targeted public reasoning evidence for uncovered cells."
+        ],
+        "do_not_apply_when": [
+          "The public contract has no observable intermediate behavior.",
+          "All named platform and path-type branches intentionally share identical semantics."
+        ],
+        "applicable_languages": [
+          "python"
+        ],
+        "source_run_ids": [
+          "run_575da4ead3334551",
+          "run_74364afdc3d94f9c"
+        ],
+        "validation_count": 0,
+        "confidence": 0.74
+      },
+      "provenance": {
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "semantic_group_fingerprint": "sha256:2680ffacfdfe654288f9c9d9bfc399c2b07d2d0b52ee06b2201ebb6e72d2a45f",
+        "decision_hash": "sha256:9933f0f079ca2d40ebdbc1e2257e794b36ca05045d186c02785c1c00df92bfa3",
+        "source_failure_ids": [
+          "fail_0f5c0cd58af05907ba3285e4e7ef069e",
+          "fail_6b7b036074a2590d97db1afdfe90a89d"
+        ],
+        "evidence_ref_ids": [
+          "sha256:e88411ed437cc4eab00cb833dd69f53d413141a5e96098f06ed5daa590e5956a",
+          "sha256:2be93502afd53f406b3edcdbf11b432d11a2da71d149e55abc70833559d2d283",
+          "sha256:da1ee21661b05abf240975e701bfbbc753f2c87c173b96884310a04a1af5f5d8",
+          "sha256:117f2c8f2710ad627c3bddf2f2679f019cc369c02f674c13187130ba04251452",
+          "sha256:000b74e3ad564945d56023b8e559011304468e7666210b6358cf975b7e631eb6",
+          "sha256:b5662f234446f7c068969e3a841957b10a74a57217537a9bc6b227c8d3124e33",
+          "sha256:d5edb8714a4fde01514c16eae45052f44eb4ddec423b641580b64a3eaa00ca0e",
+          "sha256:3d3bde4504e4e132457447df5525df595f9603ac37a94fc363713acae92dc522",
+          "sha256:6f21b835281730df4d90b463c73c2b1e72f17e05e6c14e5d10380403900ccd79",
+          "sha256:77bca24764bfb3c0b99be60ca57d300fdf40c0a2f4e6cf33f6cb38f8abe924aa",
+          "sha256:daed2d1be00fbd82b2c87f03745dbff77341c8a8f7f278c9188a72370887b60c",
+          "sha256:5b2b508eb5fce69de298e290465399e37f716293d8c2bcf567a68dc6a970a90a",
+          "sha256:fe8947887eec06a498032c02d3204b9544c60f67dad7998e2e24bb6f8b920e9a",
+          "sha256:a1323bc9b573cdb1e7d8d4c5833d96f781864e35a15c56234c1daee00f7b4661"
+        ],
+        "dedup_confidence": 0.74
+      },
+      "template_hash": "sha256:844290fa8eab2ff0d2c0541f224c17cb61ced74c27f7861b04ee4bdfae081060"
+    },
+    "leak_scan_passed": true,
+    "authority": {
+      "source_record_materialized": true,
+      "unindexed_source_record": true,
+      "source_schema_validated": true,
+      "source_provenance_validated": true,
+      "source_leak_scan_passed": true,
+      "actual_memory_entry_created": false,
+      "index_version_assigned": false,
+      "rendered_memory_created": false,
+      "embedding_created": false,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "retrieval_ready": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false
+    }
+  }
+}

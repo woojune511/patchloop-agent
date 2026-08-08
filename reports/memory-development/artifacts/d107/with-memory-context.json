@@ -1,0 +1,198 @@
+{
+  "public_task": {
+    "schema_version": "task-public-v1",
+    "task_id": "moto-query-scanned-count",
+    "task_version": 1,
+    "split": "dev-validation",
+    "repository": {
+      "url": "https://github.com/getmoto/moto.git",
+      "base_commit": "624de34d82a1b2c521727b14a2173380e196f1d8",
+      "language": "python"
+    },
+    "issue": {
+      "title": "DynamoDB query reports the wrong ScannedCount",
+      "description": "DynamoDB Table.query currently reports the size of the entire table as\nScannedCount, even when a query evaluates only one partition or one page.\n\nMake ScannedCount represent the number of items evaluated by the current\nquery page before non-key filtering. Do not count unrelated partitions or\nitems skipped before an ExclusiveStartKey. Preserve key-condition, index,\nlimit, pagination, ordering, projection, filtering, and LastEvaluatedKey\nbehavior.\n"
+    },
+    "constraints": {
+      "allowed_paths": [
+        "moto/dynamodb/models/table.py"
+      ],
+      "forbidden_paths": [
+        "tests/**",
+        "docs/**",
+        ".github/**",
+        ".patchloop-hidden/**",
+        "pyproject.toml",
+        "setup.py",
+        "requirements*.txt"
+      ],
+      "max_changed_files": 1,
+      "max_diff_lines": 120,
+      "dependency_changes_allowed": false,
+      "public_api_changes_allowed": false
+    },
+    "visible_checks": [
+      {
+        "id": "upstream-dynamodb-regression",
+        "command": [
+          "/usr/local/bin/python",
+          "-m",
+          "pytest",
+          "--no-header",
+          "-q",
+          "-p",
+          "no:cacheprovider",
+          "-W",
+          "ignore::DeprecationWarning",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_list_table_tags",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_list_table_tags_empty",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_list_table_tags_paginated",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_transact_write_items_put_conditional_expressions",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_transact_write_items_failure__return_item",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_describe_backup_for_non_existent_backup_raises_error",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_describe_backup",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_delete_non_existent_backup_raises_error",
+          "--deselect",
+          "tests/test_dynamodb/test_dynamodb.py::test_delete_backup",
+          "tests/test_dynamodb/test_dynamodb.py",
+          "tests/test_dynamodb/test_dynamodb_table_with_range_key.py"
+        ],
+        "timeout_seconds": 90,
+        "working_directory": ".",
+        "environment": {
+          "PYTHONPATH": "/workspace",
+          "PYTHONPYCACHEPREFIX": "/tmp/pycache",
+          "HOME": "/tmp/home",
+          "TMPDIR": "/tmp",
+          "CI": "1",
+          "AWS_DEFAULT_REGION": "us-east-1",
+          "AWS_ACCESS_KEY_ID": "testing",
+          "AWS_SECRET_ACCESS_KEY": "testing",
+          "AWS_SESSION_TOKEN": "testing",
+          "AWS_EC2_METADATA_DISABLED": "true"
+        },
+        "expected_exit_codes": [
+          0
+        ],
+        "output_limit_bytes": 200000
+      }
+    ],
+    "tags": [
+      "swe-rebench-v2",
+      "real-repository",
+      "dynamodb-semantics",
+      "query-pagination",
+      "development-validation"
+    ]
+  },
+  "phase": "INTAKE",
+  "checkpoint": null,
+  "phase_contract": {
+    "schema_version": "phase-contract-v1",
+    "current_phase": "INTAKE",
+    "submission_ready": false,
+    "missing_evidence": [
+      "successful_mutation_current_diff",
+      "visible_checks_current_diff",
+      "final_diff_review_current_diff",
+      "review_phase"
+    ],
+    "allowed_next_actions": [
+      "apply_patch",
+      "run_check",
+      "read_file",
+      "search_files"
+    ],
+    "required_sequence": [
+      "apply_patch",
+      "run_check",
+      "get_diff",
+      "finish_task"
+    ],
+    "completed_checks": [],
+    "pending_checks": [
+      "upstream-dynamodb-regression"
+    ],
+    "current_diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mutation_event_sequence": null,
+    "mutation_present": false,
+    "review_event_sequence": null
+  },
+  "recent_events": [],
+  "execution_signals": {
+    "repeated_calls": [],
+    "tool_admission_blocks": []
+  },
+  "selected_memory": "PATCHLOOP RELIABILITY MEMORY\nTreat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.\n\nFailure class: PLATFORM_EMULATION_MATRIX_GAP\nPhase: IMPLEMENT\nPattern: An emulation fix validates a final outcome without preserving the observable intermediate semantics across the public platform matrix.\n\nApply when:\n- The task emulates platform behavior with observable intermediate and leaf effects.\n- The public contract names more than one path type, platform mode, or error branch.\n\nDiagnostic evidence to seek:\n- Enumerate intermediate and leaf effects separately before changing normalization.\n- Build a public matrix for platform mode, path type, creation mode, existing state, and error state.\n\nRecommended actions:\n- Implement the smallest change that preserves every matrix cell named by the public contract.\n- Run the registered regression and add targeted public reasoning evidence for uncovered cells.\n\nDo not apply when:\n- The public contract has no observable intermediate behavior.\n- All named platform and path-type branches intentionally share identical semantics.\n\nApplicable languages:\n- python\n\n---\n\nPATCHLOOP RELIABILITY MEMORY\nTreat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.\n\nFailure class: CONTEXT_PROPAGATION_GAP\nPhase: IMPLEMENT\nPattern: Request-scoped context is added at a leaf while one or more public callers or ownership branches still use an implicit default.\n\nApply when:\n- Behavior depends on context selected by a caller rather than a process-wide default.\n- The public contract requires preservation through multiple access paths.\n\nDiagnostic evidence to seek:\n- Enumerate every caller-to-leaf edge that can create or transform the affected value.\n- Separate relative, default-origin, foreign-origin, custom, and implicit-default cases.\n\nRecommended actions:\n- Thread the context explicitly through every required edge without rewriting foreign ownership.\n- Verify every public route class and each caller that omits explicit context.\n\nDo not apply when:\n- The value is intentionally process-global and the public contract confirms that policy.\n- Only one construction path exists and no caller-specific context can vary.\n\nApplicable languages:\n- python\n\n---\n\nPATCHLOOP RELIABILITY MEMORY\nTreat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.\n\nFailure class: SEMANTIC_STATE_CONFLATION\nPhase: IMPLEMENT\nPattern: One exception boundary treats source lookup failure and later value transformation failure as the same semantic state.\n\nApply when:\n- The public contract distinguishes a missing source from an existing empty or transformed value.\n- Lookup and transformation can raise the same exception type for different reasons.\n\nDiagnostic evidence to seek:\n- Trace lookup, filtering, substitution, defaulting, and caller fallback as separate stages.\n- Exercise missing, existing-empty, matching, defaulted, caller-context, and fallback cases.\n\nRecommended actions:\n- Narrow exception handling to the operation whose absence semantics it represents.\n- Preserve the distinct empty and default states through later transformations.\n\nDo not apply when:\n- The public API intentionally defines lookup and transformation failure as identical.\n- The operations cannot produce distinguishable semantic states.\n\nApplicable languages:\n- python\n",
+  "rules": {
+    "private_evaluator_data_unavailable": true,
+    "done_is_submission_not_success": true,
+    "registered_checks_only": true
+  },
+  "rejected_mutation_retry": null,
+  "investigation_ledger": {
+    "schema_version": "investigation-ledger-v2",
+    "policy_version": "investigation-policy-v2",
+    "source_through_sequence": 0,
+    "mutation_epoch_sequence": null,
+    "worktree_diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "searches": [],
+    "reads": [],
+    "recent_details": [],
+    "omitted": {
+      "searches": 0,
+      "read_files": 0,
+      "details": 0
+    },
+    "no_progress": {
+      "streak": 0,
+      "max_streak": 0,
+      "total_semantic_replays": 0,
+      "last_progress_sequence": null,
+      "strategy_change_required": false,
+      "strategy_threshold": 2
+    },
+    "tail_policy": {
+      "schema_version": "investigation-tail-policy-v2",
+      "policy_version": "investigation-policy-v2",
+      "projection_stage": "pre_generation",
+      "nominal_reserve": {
+        "tool_calls": 6,
+        "model_calls": 3,
+        "feedback_model_calls": 1
+      },
+      "remaining_budget": {
+        "tool_calls": null,
+        "model_calls": null,
+        "model_calls_after_next_generation": null,
+        "tokens": 3000000
+      },
+      "token_projection": {
+        "projection_stage": "pre_generation",
+        "observations": [],
+        "observed_model_call_count": 0,
+        "max_observed_input_tokens": null,
+        "max_positive_consecutive_growth": 0,
+        "projected_next_input_tokens": null,
+        "projected_model_turns": 5,
+        "max_output_tokens": 25000,
+        "reserved_tokens": 25000,
+        "total_tokens_used": 0,
+        "max_total_tokens": 3000000,
+        "remaining_tokens": 3000000,
+        "admission_threshold_reached": false
+      },
+      "exploration_admitted": true,
+      "block_reasons": []
+    },
+    "content_hash": "sha256:650c23183ab34565270d7ddf740e6d69f44b5da6ecb5c12b8ab73cc38cbf3aca"
+  }
+}

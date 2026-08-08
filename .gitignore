@@ -1,5 +1,11 @@
 .venv/
 .cache/
+.uv-cache/
+
+# Repository-local test and audit scratch directories.
+/tmp*/
+/row-claim-debug-*/
+/rcd-*/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -14,4 +20,3 @@ run-state/
 reports/generated/
 experiments/results/
 .env
-

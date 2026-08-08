@@ -1,0 +1,44 @@
+{
+  "schema_version": "provider-memory-token-count-receipt-d107-v1",
+  "receipt_id": "d107countreceipt_80447f354d982620b1c849a32abcd276c40428721c8948f6aef5671a11176946",
+  "semantic_body_hash": "sha256:80447f354d982620b1c849a32abcd276c40428721c8948f6aef5671a11176946",
+  "semantic_body": {
+    "plan": {
+      "plan_id": "d107plan_7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+      "semantic_body_hash": "sha256:7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+      "file_sha256": "sha256:2a3d817d14d500863d56d5446010866a6feb2361eb684c3575400020bc31a085"
+    },
+    "calls": [
+      {
+        "order": 1,
+        "label": "baseline",
+        "request_file_sha256": "sha256:ae72ce63de3203fe12278bab6dd86c51043d228a74f72f1c3e95699edf853b15",
+        "request_semantic_hash": "sha256:49b71f5903b17d8942810f37b67759affc399cdf35ded4a87d4aa4ceb8469315",
+        "response": {
+          "object": "response.input_tokens",
+          "input_tokens": 2193
+        }
+      },
+      {
+        "order": 2,
+        "label": "with_memory",
+        "request_file_sha256": "sha256:f80033274b3c7c20310f39ab64783e27d2b742ab867ae9fb34bb553ed2fb7247",
+        "request_semantic_hash": "sha256:bbfcf5b5f1c387682511916b514342cd7b8d3bc946834b88abd17ab7f1cba3f7",
+        "response": {
+          "object": "response.input_tokens",
+          "input_tokens": 2895
+        }
+      }
+    ],
+    "baseline_input_tokens": 2193,
+    "with_memory_input_tokens": 2895,
+    "memory_delta_tokens": 702,
+    "provider_input_token_count_calls_made": 2,
+    "provider_generation_calls_made": 0,
+    "sdk_transport_max_retries": 0,
+    "automatic_retry_used": false,
+    "api_key_persisted_in_artifact": false,
+    "provider_exact_budget_validated": true,
+    "index_freeze_authorized": false
+  }
+}

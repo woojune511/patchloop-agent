@@ -1,0 +1,25 @@
+PATCHLOOP RELIABILITY MEMORY
+Treat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.
+
+Failure class: PLATFORM_EMULATION_MATRIX_GAP
+Phase: IMPLEMENT
+Pattern: An emulation fix validates a final outcome without preserving the observable intermediate semantics across the public platform matrix.
+
+Apply when:
+- The task emulates platform behavior with observable intermediate and leaf effects.
+- The public contract names more than one path type, platform mode, or error branch.
+
+Diagnostic evidence to seek:
+- Enumerate intermediate and leaf effects separately before changing normalization.
+- Build a public matrix for platform mode, path type, creation mode, existing state, and error state.
+
+Recommended actions:
+- Implement the smallest change that preserves every matrix cell named by the public contract.
+- Run the registered regression and add targeted public reasoning evidence for uncovered cells.
+
+Do not apply when:
+- The public contract has no observable intermediate behavior.
+- All named platform and path-type branches intentionally share identical semantics.
+
+Applicable languages:
+- python

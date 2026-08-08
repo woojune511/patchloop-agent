@@ -1,0 +1,1345 @@
+{
+  "schema_version": "public-failure-class-signal-contract-preflight-d116-v1",
+  "preflight_id": "d116preflight_e9005e90895ea4554ea04b21b025ff1afc42076d4e08a7adef2b6476cbf06a3f",
+  "semantic_body_hash": "sha256:e9005e90895ea4554ea04b21b025ff1afc42076d4e08a7adef2b6476cbf06a3f",
+  "semantic_body": {
+    "milestone": "D-116",
+    "evidence_kind": "public-applicability-signal-contract-and-prospective-calibration",
+    "recorded_at": "2026-08-07T06:22:52Z",
+    "approval_receipt": {
+      "path": "reports/memory-development/d116-public-failure-class-signal-approval-receipt.json",
+      "file_bytes": 12014,
+      "file_sha256": "sha256:86c4e279df6c3d4b6ea02719375f76370d76fb795d642f2d10211e878662ba77",
+      "schema_version": "public-failure-class-signal-approval-receipt-d116-v1",
+      "receipt_id": "d116approval_016c99bd81a756f640cf10132eda196057cb3a50a59cf593d64e215dc4d47bcb",
+      "semantic_body_hash": "sha256:016c99bd81a756f640cf10132eda196057cb3a50a59cf593d64e215dc4d47bcb"
+    },
+    "d115_source_gate": {
+      "path": "reports/memory-development/d115-score-policy-decision-source-gate.json",
+      "file_bytes": 13730,
+      "file_sha256": "sha256:67f62c23e9f5e14fe9cd1d075b2c6f679764c18644837914b0031348c4a21b72",
+      "schema_version": "score-policy-decision-source-gate-d115-v1",
+      "gate_id": "d115_ab5e8f0e9f57c5fb37f05137da5b6cf8ca6421856ade33616448023d39c4a805",
+      "semantic_body_hash": "sha256:ab5e8f0e9f57c5fb37f05137da5b6cf8ca6421856ade33616448023d39c4a805"
+    },
+    "d115_candidate": {
+      "path": "reports/memory-development/d115-score-policy-decision-candidate.json",
+      "file_bytes": 6839,
+      "file_sha256": "sha256:1fd424eab88c60a9d8480e756642b2c70b03afd03dd777e27bf36a3ea428df7a",
+      "schema_version": "score-policy-decision-candidate-d115-v1",
+      "candidate_id": "d115scoredecisioncandidate_91e3ef5af000fe830483012b5deee4eeb47f5a117fa5904d93d713b03f2308ec",
+      "semantic_body_hash": "sha256:91e3ef5af000fe830483012b5deee4eeb47f5a117fa5904d93d713b03f2308ec"
+    },
+    "input_scope": {
+      "public_yaml_inventory_count": 10,
+      "prospective_calibration_eligible_count": 8,
+      "bootstrap_excluded_count": 2,
+      "allowed_splits": [
+        "dev-train",
+        "dev-validation"
+      ],
+      "classifier_projection_fields": [
+        "issue.title",
+        "issue.description",
+        "repository.language"
+      ],
+      "tags_used_for_classifier_projection": false,
+      "task_id_repository_identity_phase_or_path_used_for_classifier_projection": false,
+      "private_hidden_reference_known_bad_trace_patch_or_evaluator_read": false,
+      "held_out_result_read": false
+    },
+    "public_development_inventory": [
+      {
+        "path": "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 1864,
+        "file_sha256": "sha256:ea977422306f9ce7203b4fc92aac83a73bc41554813d9ce1d794546767e76ddd",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "async pytest tests resume after keyboardinterrupt during fixture teardown",
+            "issue_description": "on the asyncio backend, interrupting an async pytest test that uses an async-generator fixture can leave the test runner alive. when pytest later re-enters the event loop to tear the fixture down, the interrupted test may resume and execute code that should never run. ensure the interrupt still propagates, the interrupted test cannot resume, and async fixture cleanup completes exactly once. preserve normal pytest pass, failure, skip, and expected-failure outcomes, including fixtures whose lifetime spans more than one test.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:63843ccb627adbceeac6d8fefc0469dae384b52f24cc7975a9674c2f0e4240cc"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-train/csv-final-record-flush/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 1096,
+        "file_sha256": "sha256:58ad92151b819e338be09e15b23bd9e23dd50ec7ae402094ff4e0f0d190c4662",
+        "eligibility": "bootstrap-excluded",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "chunked csv parser drops the final unterminated record",
+            "issue_description": "a valid final csv record is lost when the input ends without a trailing newline. records may span input chunks and quoted commas must remain supported. preserve the public parse_chunks(chunks) interface and existing behavior for newline-terminated records.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:9d538b141a7daf684178975304f48171f3d583a41342770b66dc36a3ab7e5ccf"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-train/duration-minute-boundary/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 1065,
+        "file_sha256": "sha256:3d150a9420989ba938fa4ea543d31b485a09a186852dcf5632427246a318c9f8",
+        "eligibility": "bootstrap-excluded",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "elapsed-time formatter rounds incomplete minutes upward",
+            "issue_description": "durations of at least 60 seconds must report only fully completed minutes. values below 60 seconds must remain in seconds, negative durations must remain invalid, and the public format_elapsed(seconds) interface must not change.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:d0fa8a13452b8c7e6d99db943734dbe2839f357ca6c4736a3446a5a96a067124"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 1825,
+        "file_sha256": "sha256:3500452712d3977761f24da95170f073f86ec2a0589b69522321f91f5f473c4f",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "custom hub endpoint is ignored by xet refresh metadata",
+            "issue_description": "a client configured with a custom hub endpoint can request file metadata from that endpoint while receiving xet refresh metadata that still points at the default hugging face host. ensure request-specific endpoint context is preserved through every file metadata access path. rebase refresh routes owned by the default hub origin onto the configured endpoint, while preserving relative routes, routes already owned by another origin, and callers that do not provide an explicit endpoint.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:f019656c679b4258be2665a122e4376fbb945f48c0938a1fea2449c83d0d1138"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 2392,
+        "file_sha256": "sha256:efec17dc692c0935553e9e3c67ad5463d977254ea52a536c1dcf4a4c43831f10",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "invalid logger format keys do not provide actionable feedback",
+            "issue_description": "a static format passed to logger.add() can reference a record key that does not exist. the resulting runtime keyerror is currently difficult to diagnose. improve that feedback so it identifies the missing key, reports the available record keys, and explains how custom values should be supplied and referenced. preserve the existing catch contract: catch=true must report the logging error without propagating it, while catch=false must raise a useful keyerror. existing valid formats, including fields injected by a configured patcher, must continue to work.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:36ee0f7b45170304bc41fc7d704384327cde318b18c26fcdd3a8d0349699cf98"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 1986,
+        "file_sha256": "sha256:3d819ce8136e11d0572954f1afcc1918134aeef2e84d8fa365970c45ff671c24",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "ignoring the active virtualenv disables interpreter resolution",
+            "issue_description": "a project configured to use virtual environments can report that no compatible python exists as soon as pdm_ignore_active_venv is enabled, even when another associated environment is eligible or the normal environment-creation fallback is available. treat the setting as an exclusion of the currently active environment, not as a switch that disables virtualenv resolution. preserve normal active-environment reuse for unset and false-like values. the behavior must work for both virtual_env and conda_prefix without confusing sibling paths with descendants of the active environment.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:7bb70aa644118e5078bfac259ad91be59f16b03a35ae9d9a79657441fe0a6b34"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 1852,
+        "file_sha256": "sha256:5be7e6f6d2ad9722ee90c5a829aa043bf94c70ac317d5ce45254e4f3f9458eb0",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "fake makedirs loses parent-traversal side effects",
+            "issue_description": "the fake implementation of os.makedirs can produce the requested final directory while still behaving differently from the real operating-system implementation when a relative path contains parent-directory components. directories created while walking those components are missing from the resulting fake filesystem. match real os.makedirs traversal semantics for these paths in supported posix and windows filesystem modes. preserve normal behavior for existing destinations, bytes paths, creation modes, invalid parents, and paths without parent-directory components.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:5d2f9d232bf27f5e5c1b54e3495790f2b3318dee3a9583e121666029f317fe76"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-train/tox-cross-section-empty-substitution/public.yaml",
+        "split": "dev-train",
+        "file_bytes": 1903,
+        "file_sha256": "sha256:cf100f771e799824b2928f28faec4be76f011aa84667b1573b6fa373860b0c82",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "cross-section factor substitutions remain unresolved when no condition matches",
+            "issue_description": "an ini configuration can reference a value from another section with `{[section]key}`. when that referenced key contains factor-conditional lines and none of its factors match the requesting environment, tox leaves the literal reference in the resolved configuration instead of treating the existing value as empty. resolve an existing cross-section value that is empty after factor filtering to an empty string. preserve matching factor values, explicit replacement defaults, caller-environment context, and the existing same-section fallback behavior for computed configuration defaults.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:3f872cd0ec5839fea8cd4091812fb798519e1b24ced470c6a9a321aa7e2fc5e5"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+        "split": "dev-validation",
+        "file_bytes": 2023,
+        "file_sha256": "sha256:d65e09fe70bb0449c85e663d0eeb695fe52bc7fb34619debbbe81a0b16ab2aca",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "strict decimal parsing rejects valid grouped values with trailing zeroes",
+            "issue_description": "babel's parse_decimal rejects canonically grouped localized decimals in strict mode when a non-zero fractional value is followed by insignificant trailing zeroes. accept grouped decimals when their localized representation differs from the canonical form only by insignificant zeroes at the end of the fractional part. preserve the parsed decimal's scale. continue to reject malformed grouping and wrong-locale separators, and do not change non-strict parsing, locale handling, numbering-system behavior, or the public parse_decimal api.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:4b577a2f621bd8ff7644862ea2204cc335991045e4f0218836e28b5fb6f13a85"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      },
+      {
+        "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+        "split": "dev-validation",
+        "file_bytes": 2839,
+        "file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7",
+        "eligibility": "prospective-calibration",
+        "classifier_projection": {
+          "projection": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "dynamodb query reports the wrong scannedcount",
+            "issue_description": "dynamodb table.query currently reports the size of the entire table as scannedcount, even when a query evaluates only one partition or one page. make scannedcount represent the number of items evaluated by the current query page before non-key filtering. do not count unrelated partitions or items skipped before an exclusivestartkey. preserve key-condition, index, limit, pagination, ordering, projection, filtering, and lastevaluatedkey behavior.",
+            "language": "python"
+          },
+          "projection_sha256": "sha256:08f37724f2f5cc21a29174ff1f66344e483c92c5ce4d5a114940c3045ceedefa"
+        },
+        "classifier_projection_excludes_task_id_and_path": true,
+        "classifier_execution_result_present": false
+      }
+    ],
+    "taxonomy_contract": {
+      "taxonomy_source": "exact-leak-scanned-d105-model-facing-render",
+      "d105_gate": {
+        "path": "reports/memory-development/d105-renderer-embedding-index-authorization-gate.json",
+        "file_bytes": 12368,
+        "file_sha256": "sha256:db6303f3de834b3c36493f2863dcc5be3ca697490d18df15c86a18e7ee7b17eb",
+        "schema_version": "memory-render-index-authorization-source-gate-d105-v1",
+        "gate_id": "d105_0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70",
+        "semantic_body_hash": "sha256:0f99c7d1cd1c371191073ead8d60636be9ea6040947d9c7f3522aba25bc3df70"
+      },
+      "entry_count": 3,
+      "entries": [
+        {
+          "order": 1,
+          "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+          "semantic_group_id": "platform-emulation-matrix-gap",
+          "failure_class": "PLATFORM_EMULATION_MATRIX_GAP",
+          "model_facing_text": "PATCHLOOP RELIABILITY MEMORY\nTreat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.\n\nFailure class: PLATFORM_EMULATION_MATRIX_GAP\nPhase: IMPLEMENT\nPattern: An emulation fix validates a final outcome without preserving the observable intermediate semantics across the public platform matrix.\n\nApply when:\n- The task emulates platform behavior with observable intermediate and leaf effects.\n- The public contract names more than one path type, platform mode, or error branch.\n\nDiagnostic evidence to seek:\n- Enumerate intermediate and leaf effects separately before changing normalization.\n- Build a public matrix for platform mode, path type, creation mode, existing state, and error state.\n\nRecommended actions:\n- Implement the smallest change that preserves every matrix cell named by the public contract.\n- Run the registered regression and add targeted public reasoning evidence for uncovered cells.\n\nDo not apply when:\n- The public contract has no observable intermediate behavior.\n- All named platform and path-type branches intentionally share identical semantics.\n\nApplicable languages:\n- python\n",
+          "render": {
+            "path": "reports/memory-development/rendered/d105/memgrp_649483b80292fea26e4009ebdb72df31.txt",
+            "file_bytes": 1191,
+            "file_sha256": "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c"
+          }
+        },
+        {
+          "order": 2,
+          "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+          "semantic_group_id": "request-context-propagation-gap",
+          "failure_class": "CONTEXT_PROPAGATION_GAP",
+          "model_facing_text": "PATCHLOOP RELIABILITY MEMORY\nTreat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.\n\nFailure class: CONTEXT_PROPAGATION_GAP\nPhase: IMPLEMENT\nPattern: Request-scoped context is added at a leaf while one or more public callers or ownership branches still use an implicit default.\n\nApply when:\n- Behavior depends on context selected by a caller rather than a process-wide default.\n- The public contract requires preservation through multiple access paths.\n\nDiagnostic evidence to seek:\n- Enumerate every caller-to-leaf edge that can create or transform the affected value.\n- Separate relative, default-origin, foreign-origin, custom, and implicit-default cases.\n\nRecommended actions:\n- Thread the context explicitly through every required edge without rewriting foreign ownership.\n- Verify every public route class and each caller that omits explicit context.\n\nDo not apply when:\n- The value is intentionally process-global and the public contract confirms that policy.\n- Only one construction path exists and no caller-specific context can vary.\n\nApplicable languages:\n- python\n",
+          "render": {
+            "path": "reports/memory-development/rendered/d105/memgrp_b421547d481faabf9be3511217258de5.txt",
+            "file_bytes": 1164,
+            "file_sha256": "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a"
+          }
+        },
+        {
+          "order": 3,
+          "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+          "semantic_group_id": "exception-origin-state-conflation",
+          "failure_class": "SEMANTIC_STATE_CONFLATION",
+          "model_facing_text": "PATCHLOOP RELIABILITY MEMORY\nTreat this as fallible process guidance. Verify it against the current public task and repository evidence; registered checks take precedence.\n\nFailure class: SEMANTIC_STATE_CONFLATION\nPhase: IMPLEMENT\nPattern: One exception boundary treats source lookup failure and later value transformation failure as the same semantic state.\n\nApply when:\n- The public contract distinguishes a missing source from an existing empty or transformed value.\n- Lookup and transformation can raise the same exception type for different reasons.\n\nDiagnostic evidence to seek:\n- Trace lookup, filtering, substitution, defaulting, and caller fallback as separate stages.\n- Exercise missing, existing-empty, matching, defaulted, caller-context, and fallback cases.\n\nRecommended actions:\n- Narrow exception handling to the operation whose absence semantics it represents.\n- Preserve the distinct empty and default states through later transformations.\n\nDo not apply when:\n- The public API intentionally defines lookup and transformation failure as identical.\n- The operations cannot produce distinguishable semantic states.\n\nApplicable languages:\n- python\n",
+          "render": {
+            "path": "reports/memory-development/rendered/d105/memgrp_5a23f463cba43bf3ba395f67cf976047.txt",
+            "file_bytes": 1161,
+            "file_sha256": "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7"
+          }
+        }
+      ],
+      "taxonomy_is_fallible_process_guidance": true,
+      "taxonomy_is_failure_cause_ground_truth": false
+    },
+    "signal_input_contract": {
+      "schema_version": "public-applicability-signal-input-d116-v1",
+      "allowed_fields_in_order": [
+        "issue_title",
+        "issue_description",
+        "language"
+      ],
+      "exact_key_set_required": true,
+      "supported_languages": [
+        "python"
+      ],
+      "canonicalization": {
+        "unicode": "NFKC",
+        "line_endings": "LF-before-whitespace-collapse",
+        "case": "unicode-casefold",
+        "whitespace": "collapse-runs-to-ascii-space-and-trim",
+        "hash": "sha256-of-canonical-json"
+      },
+      "boundary_behavior": {
+        "raw_manifest_valid_string_values_are_canonicalized": true,
+        "classifier_accepts_only_exact_canonical_projection": true,
+        "wrong-type-empty-extra-missing-or-noncanonical-projection": "CONTRACT_ERROR",
+        "valid-canonical-unsupported-language": "ABSTAIN"
+      },
+      "forbidden_classifier_inputs": [
+        "task-id",
+        "directory-or-file-path",
+        "split",
+        "repository-url-or-name",
+        "base-commit",
+        "tags",
+        "visible-check-id-or-command",
+        "allowed-or-forbidden-paths",
+        "d112-hypothesized-group",
+        "source-memory-or-group-association",
+        "phase",
+        "trace-or-patch",
+        "test-or-evaluator-result",
+        "private-hidden-reference-known-bad-or-held-out-result"
+      ],
+      "phase_independent_signal_required": true,
+      "same_public_projection_same_signal_across_phases_required": true
+    },
+    "signal_result_contract": {
+      "schema_version": "public-applicability-signal-result-d116-v1",
+      "signal_semantics": "public-applicability-not-failure-cause-ground-truth",
+      "decision_enum": [
+        "SELECT",
+        "ABSTAIN"
+      ],
+      "selected_group_domain": [
+        "platform-emulation-matrix-gap",
+        "request-context-propagation-gap",
+        "exception-origin-state-conflation",
+        null
+      ],
+      "required_fields": [
+        "schema_version",
+        "contract_version",
+        "canonical_input_sha256",
+        "decision",
+        "selected_group_id",
+        "matched_required_predicates",
+        "missing_required_predicates",
+        "contradiction_predicates",
+        "competing_group_ids",
+        "evidence_spans",
+        "reason_code"
+      ],
+      "evidence_span_coordinate_contract": "field plus zero-based Unicode-code-point half-open start/end over canonical value",
+      "result_collection_contract": {
+        "matched_required_predicates": "unique predicate-id strings for fully satisfied predicates, ordered by group order then required-predicate order",
+        "missing_required_predicates": "unique predicate-id strings for unsatisfied predicates, ordered by group order then required-predicate order",
+        "contradiction_predicates": "unique matched contradiction predicate-id strings in group and declaration order",
+        "competing_group_ids": "all fully supported semantic-group-id strings in taxonomy group order; empty for no full group and one element for SELECT",
+        "evidence_spans": "selected tuples for every matched required predicate plus the selected first match for every contradiction; order by the evidence-span ordering contract",
+        "all_collections_are_json_arrays": true,
+        "duplicate_identifiers_allowed": false,
+        "null_elements_allowed": false
+      },
+      "contract_error_is_not_a_signal_result": true,
+      "select_reason_code": "SELECT_UNIQUE_FULL_GROUP",
+      "abstain_reason_codes_in_precedence_order": [
+        "UNSUPPORTED_LANGUAGE",
+        "CONTRADICTION_PRESENT",
+        "MULTIPLE_FULL_GROUPS",
+        "PARTIAL_PREDICATE_EVIDENCE",
+        "NO_FULL_GROUP"
+      ],
+      "contract_error_reason_codes": [
+        "INVALID_PROJECTION_KEY_SET",
+        "INVALID_PROJECTION_VALUE_TYPE",
+        "EMPTY_PROJECTION_VALUE",
+        "NONCANONICAL_PROJECTION_VALUE",
+        "PROJECTION_HASH_MISMATCH",
+        "INVALID_RESULT_SPAN"
+      ],
+      "select_requires_exactly_one_fully_supported_group": true,
+      "select_establishes_true_relevance": false,
+      "abstain_selected_group_must_be_null": true,
+      "confidence_probability_allowed_before_calibration": false,
+      "numeric_failure_class_component_mapping_authorized": false,
+      "runtime_memory_selection_authorized": false
+    },
+    "deterministic_abstention_contract": {
+      "contract_version": "deterministic-abstention-d116-v1",
+      "abstain_when": [
+        "no-group-satisfies-every-required-predicate",
+        "more-than-one-group-satisfies-every-required-predicate",
+        "any-required-predicate-has-only-partial-evidence",
+        "a-contradiction-predicate-is-present",
+        "language-is-not-supported"
+      ],
+      "invalid_or_noncanonical_input_behavior": "CONTRACT_ERROR-before-matching",
+      "abstain_means_unknown_not_negative_ground_truth": true,
+      "abstain_to_numeric_zero_mapping_authorized": false,
+      "ties_must_abstain": true,
+      "fallback_to-semantic-top_allowed": false
+    },
+    "prospective_predicate_contract": {
+      "contract_version": "frozen-public-matcher-grammar-d116-v1",
+      "formal_matcher_grammar_complete": true,
+      "matcher_evaluator_implementation_present": false,
+      "matcher_evaluator_execution_count": 0,
+      "task_specific_branch_allowed": false,
+      "embedding_or_llm_judgment_allowed": false,
+      "generic_keyword_count_is_sufficient": false,
+      "predicate_evidence_spans_required": true,
+      "matcher_algorithm": {
+        "regex_engine": "python-stdlib-re",
+        "regex_runtime_contract": "CPython-3.12",
+        "regex_flags": [
+          "ASCII"
+        ],
+        "classifier_text_fields_in_order": [
+          "issue_title",
+          "issue_description"
+        ],
+        "token_pattern": "[a-z0-9]+(?:-[a-z0-9]+)*",
+        "sentence_boundary_pattern": "[.!?]+(?:\\s+|$)",
+        "clause_boundary_patterns": [
+          "[,;:]",
+          "\\b(?:but|while|whereas|rather than|instead of)\\b"
+        ],
+        "sentence_and_clause_indices": "sentence_index and clause_index are each zero-based global counters within one canonical field; clause_index does not reset at sentence boundaries",
+        "token_offset_contract": "Tokens are re.finditer(token_pattern, ASCII) results in occurrence order. For a regex match, token_start is the first token index whose end is greater than the match start; token_end is one plus the last token index whose start is less than the match end. Both are zero-based half-open token offsets; reject a match that overlaps no token.",
+        "sentence_segmentation_contract": "Enumerate non-overlapping sentence-boundary matches left to right. A sentence interval starts at the previous boundary end and ends at the current boundary end, so punctuation and following whitespace belong to the preceding sentence. Add the non-empty trailing interval; drop empty intervals. Reject an atom match that crosses a sentence interval boundary.",
+        "clause_segmentation_contract": "Within each sentence, enumerate matches from every clause-boundary pattern, sort by start,end,pattern-index, retain the first and discard later overlapping boundaries. Clause intervals are the non-empty text between boundary spans. A match has clause_index null exactly when match_start < boundary_end and match_end > boundary_start for a retained boundary; half-open adjacency alone is not overlap. A null-clause match is ineligible for a same-clause relation; otherwise assign clause indices globally across the field in sentence order.",
+        "negation_tokens": [
+          "not",
+          "never",
+          "without",
+          "neither"
+        ],
+        "negation_scope": "Discard an atom match when any negation token occurs among the immediately preceding three tokens in the same clause. For clause_index null, use the same sentence instead.",
+        "atomic_match_enumeration": "For each atom, enumerate every re.finditer match and sort by field-index,start,end,alternative-pattern-index.",
+        "all_atoms_relation": "After negation filtering, enumerate the Cartesian product of one match per atom in declared atom order. Retain only tuples whose spans are distinct and non-overlapping, whose field is identical, whose relation_scope is satisfied, and whose max(token_end)-min(token_start) is <= max_token_span. Sort retained tuples by the concatenated per-atom match keys (field-index,start,end,pattern-index) and choose the first valid tuple. Never choose an invalid tuple and stop. same-clause means identical non-null clause index; same-sentence means identical sentence index; same-or-adjacent-sentences means maximum minus minimum sentence index is <= 1.",
+        "minimum_distinct_atoms_same_field": "Enumerate declared-order atom-index subsets of exactly minimum_distinct_atoms, then each subset's Cartesian match products after negation filtering. Retain only one-field tuples with distinct non-overlapping spans. Sort valid candidates by field-index,atom-index-subset,then concatenated per-atom match keys and choose the first. Report only that selected minimum subset.",
+        "cross_predicate_span_reuse": "The same canonical character span may be selected by different predicate IDs; it may not be reused by two atom IDs within one predicate. No global cross-predicate backtracking is performed.",
+        "partial_predicate_evidence": "A required predicate is partial only when it is not satisfied and at least one of its atoms has a non-negated match. If no group is fully supported and at least one predicate is partial, use PARTIAL_PREDICATE_EVIDENCE; otherwise use NO_FULL_GROUP.",
+        "contradiction_match": "For each contradiction in group order, choose its first non-negated match by field-index,start,end,pattern-index; any selected contradiction causes global abstention.",
+        "contradiction_scope": "global-all-groups-before-group-selection",
+        "group_full_support": "every required predicate is satisfied and no group contradiction matches",
+        "decision_precedence": [
+          "contract-error-on-invalid-or-noncanonical-projection",
+          "abstain-on-unsupported-language",
+          "abstain-on-any-matched-group-contradiction",
+          "abstain-on-more-than-one-fully-supported-group",
+          "select-the-only-fully-supported-group",
+          "abstain-on-partial-predicate-evidence",
+          "abstain-on-no-match"
+        ],
+        "unsupported_language_short_circuit": "After exact projection and canonical_input_sha256 validation, an unsupported language returns ABSTAIN/UNSUPPORTED_LANGUAGE without tokenizing or matching text; matched_required_predicates, missing_required_predicates, contradiction_predicates, competing_group_ids, and evidence_spans are all empty arrays and selected_group_id is null.",
+        "pattern_or_match_score_allowed": false,
+        "semantic_fallback_allowed": false
+      },
+      "evidence_span_contract": {
+        "field_enum": [
+          "issue_title",
+          "issue_description"
+        ],
+        "coordinate_system": "zero-based Unicode-code-point half-open offsets over the exact canonical field",
+        "required_span_fields": [
+          "predicate_id",
+          "atom_id",
+          "field",
+          "start",
+          "end",
+          "matched_text",
+          "pattern",
+          "pattern_index",
+          "sentence_index",
+          "clause_index",
+          "token_start",
+          "token_end"
+        ],
+        "field_types": {
+          "predicate_id": "string",
+          "atom_id": "string",
+          "field": "enum-string",
+          "start": "nonnegative-integer",
+          "end": "positive-integer-greater-than-start",
+          "matched_text": "string",
+          "pattern": "exact-declared-regex-string",
+          "pattern_index": "nonnegative-integer-within-declared-pattern-list",
+          "sentence_index": "nonnegative-integer",
+          "clause_index": "nonnegative-integer-or-null",
+          "token_start": "nonnegative-integer",
+          "token_end": "positive-integer-greater-than-token-start"
+        },
+        "matched_text_must_equal_canonical_field_slice": true,
+        "ordering": "field-order,start,end,group-order,predicate-order,atom-order,pattern-index ascending",
+        "duplicate_or_overlapping_selected_spans_within_one_predicate_allowed": false,
+        "same_span_reuse_across_different_predicate_ids_allowed": true,
+        "composite_role_exceptions": []
+      },
+      "groups": [
+        {
+          "semantic_group_id": "platform-emulation-matrix-gap",
+          "required_predicates": [
+            {
+              "predicate_id": "P1-explicit-emulation-reference-parity",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-sentence",
+              "max_token_span": 28,
+              "atoms": [
+                {
+                  "atom_id": "P1-emulation",
+                  "alternatives": [
+                    "\\b(?:fake|emulated|mock(?:ed)?|simulated)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P1-reference",
+                  "alternatives": [
+                    "\\b(?:real|native|reference|operating-system)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P1-parity-or-contrast",
+                  "alternatives": [
+                    "\\b(?:differ(?:s|ed|ent|ently)?|match(?:es|ed)?|parity|equivalent)\\b"
+                  ]
+                }
+              ]
+            },
+            {
+              "predicate_id": "P2-observable-intermediate-effect",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-or-adjacent-sentences",
+              "max_token_span": 45,
+              "atoms": [
+                {
+                  "atom_id": "P2-terminal-outcome",
+                  "alternatives": [
+                    "\\b(?:requested final|final (?:directory|outcome)|resulting)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P2-intermediate-effect",
+                  "alternatives": [
+                    "\\b(?:intermediate|side effects?|walking|traversal|directories created)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P2-distinction",
+                  "alternatives": [
+                    "\\b(?:while|rather than|instead of|before|after|differ(?:s|ed|ent|ently)?)\\b"
+                  ]
+                }
+              ]
+            },
+            {
+              "predicate_id": "P3-multi-dimension-public-matrix",
+              "mode": "minimum-distinct-atoms-same-field",
+              "minimum_distinct_atoms": 2,
+              "atoms": [
+                {
+                  "atom_id": "P3-platform",
+                  "alternatives": [
+                    "\\b(?:posix|windows|platform|operating-system)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P3-path-type",
+                  "alternatives": [
+                    "\\b(?:relative paths?|bytes paths?|parent-directory|path type)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P3-state",
+                  "alternatives": [
+                    "\\b(?:existing destinations?|missing|existing|state)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P3-mode",
+                  "alternatives": [
+                    "\\b(?:filesystem modes?|creation modes?|strict mode)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "P3-error",
+                  "alternatives": [
+                    "\\b(?:invalid parents?|errors?|exceptions?|failure)\\b"
+                  ]
+                }
+              ]
+            }
+          ],
+          "contradiction_predicates": [
+            {
+              "predicate_id": "PX-intentional-identical-semantics",
+              "atom_id": "PX-contradiction",
+              "patterns": [
+                "\\b(?:intentionally|by design) (?:share|have) (?:the )?(?:same|identical) (?:behavior|semantics)\\b"
+              ]
+            }
+          ]
+        },
+        {
+          "semantic_group_id": "request-context-propagation-gap",
+          "required_predicates": [
+            {
+              "predicate_id": "C1-caller-selected-scoped-context",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-clause",
+              "max_token_span": 12,
+              "atoms": [
+                {
+                  "atom_id": "C1-actor",
+                  "alternatives": [
+                    "\\b(?:caller|client|request)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "C1-scope-selection",
+                  "alternatives": [
+                    "\\b(?:configured|custom|request-specific|explicit)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "C1-context-object",
+                  "alternatives": [
+                    "\\b(?:endpoint|context|origin)\\b"
+                  ]
+                }
+              ]
+            },
+            {
+              "predicate_id": "C2-context-ownership-difference",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-sentence",
+              "max_token_span": 45,
+              "atoms": [
+                {
+                  "atom_id": "C2-scoped-value",
+                  "alternatives": [
+                    "\\b(?:configured|custom|request-specific|explicit)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "C2-other-ownership",
+                  "alternatives": [
+                    "\\b(?:default|global|relative|another|foreign)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "C2-owned-object",
+                  "alternatives": [
+                    "\\b(?:endpoint|origin|host|ownership|owned)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "C2-distinction-or-preservation",
+                  "alternatives": [
+                    "\\b(?:rebase|onto|while|rather than|instead|preserv(?:e|es|ed|ing))\\b"
+                  ]
+                }
+              ]
+            },
+            {
+              "predicate_id": "C3-multiple-propagation-paths",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-clause",
+              "max_token_span": 20,
+              "atoms": [
+                {
+                  "atom_id": "C3-multiplicity",
+                  "alternatives": [
+                    "\\b(?:every|all|multiple|more than one|across)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "C3-path",
+                  "alternatives": [
+                    "\\b(?:(?:metadata )?access paths?|caller paths?|construction paths?|ownership paths?)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "C3-propagation",
+                  "alternatives": [
+                    "\\b(?:preserv(?:e|es|ed|ing)|propagat(?:e|es|ed|ing)|through|across)\\b"
+                  ]
+                }
+              ]
+            }
+          ],
+          "contradiction_predicates": [
+            {
+              "predicate_id": "CX-intentionally-global",
+              "atom_id": "CX-global-contradiction",
+              "patterns": [
+                "\\b(?:intentionally|by design) (?:process-wide|global)\\b"
+              ]
+            },
+            {
+              "predicate_id": "CX-one-path-only",
+              "atom_id": "CX-one-path-contradiction",
+              "patterns": [
+                "\\bonly one (?:construction|access|caller|ownership) path exists\\b"
+              ]
+            }
+          ]
+        },
+        {
+          "semantic_group_id": "exception-origin-state-conflation",
+          "required_predicates": [
+            {
+              "predicate_id": "S1-missing-versus-existing-empty-state",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-sentence",
+              "max_token_span": 35,
+              "atoms": [
+                {
+                  "atom_id": "S1-absence",
+                  "alternatives": [
+                    "\\b(?:missing|unresolved|not found|absent|undefined)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "S1-existing",
+                  "alternatives": [
+                    "\\b(?:existing|present|defined)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "S1-empty-or-transformed",
+                  "alternatives": [
+                    "\\b(?:empty|string|transformed|filtered)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "S1-distinction",
+                  "alternatives": [
+                    "\\b(?:vs|versus|rather than|instead of|distinguish(?:es|ed)?|different)\\b"
+                  ]
+                }
+              ]
+            },
+            {
+              "predicate_id": "S2-distinct-processing-stages",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-sentence",
+              "max_token_span": 45,
+              "atoms": [
+                {
+                  "atom_id": "S2-origin-stage",
+                  "alternatives": [
+                    "\\b(?:lookup|reference|referenced|resolve|resolution|source)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "S2-transform-stage",
+                  "alternatives": [
+                    "\\b(?:filter|filtering|substitution|defaulting|transformation|replacement)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "S2-stage-order",
+                  "alternatives": [
+                    "\\b(?:after|before|from|instead of|distinct|separate)\\b"
+                  ]
+                }
+              ]
+            },
+            {
+              "predicate_id": "S3-shared-error-boundary-collapse",
+              "mode": "all-atoms-relation",
+              "relation_scope": "same-sentence",
+              "max_token_span": 35,
+              "atoms": [
+                {
+                  "atom_id": "S3-origin-stage",
+                  "alternatives": [
+                    "\\b(?:lookup|reference|resolution|source)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "S3-transform-stage",
+                  "alternatives": [
+                    "\\b(?:filtering|substitution|defaulting|transformation)\\b"
+                  ]
+                },
+                {
+                  "atom_id": "S3-shared-boundary",
+                  "alternatives": [
+                    "\\b(?:same (?:exception|error)(?: boundary)?|collapse(?:s|d)? (?:at|into) (?:the )?(?:same )?(?:exception|error)(?: boundary)?|reported as (?:the )?same (?:exception|error))\\b"
+                  ]
+                }
+              ]
+            }
+          ],
+          "contradiction_predicates": [
+            {
+              "predicate_id": "SX-intentionally-identical-stage-failure",
+              "atom_id": "SX-contradiction",
+              "patterns": [
+                "\\b(?:lookup|resolution) and (?:filtering|substitution|defaulting|transformation) (?:are|is) intentionally (?:the same|identical)\\b"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "prospective_calibration_plan": {
+      "plan_version": "prospective-public-calibration-plan-d116-v1",
+      "plan_only_no_execution": true,
+      "current_panel_used_during_contract_authoring": true,
+      "current_panel_blind_validation": false,
+      "candidate_expectations_are_ground_truth": false,
+      "public_inventory_count": 10,
+      "eligible_case_count": 8,
+      "bootstrap_excluded_count": 2,
+      "source_anchor_conformance_count": 2,
+      "independent_positive_count": 0,
+      "classifier_inputs": [
+        {
+          "input_ref": "sha256:63843ccb627adbceeac6d8fefc0469dae384b52f24cc7975a9674c2f0e4240cc",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "async pytest tests resume after keyboardinterrupt during fixture teardown",
+            "issue_description": "on the asyncio backend, interrupting an async pytest test that uses an async-generator fixture can leave the test runner alive. when pytest later re-enters the event loop to tear the fixture down, the interrupted test may resume and execute code that should never run. ensure the interrupt still propagates, the interrupted test cannot resume, and async fixture cleanup completes exactly once. preserve normal pytest pass, failure, skip, and expected-failure outcomes, including fixtures whose lifetime spans more than one test.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:63843ccb627adbceeac6d8fefc0469dae384b52f24cc7975a9674c2f0e4240cc"
+        },
+        {
+          "input_ref": "sha256:f019656c679b4258be2665a122e4376fbb945f48c0938a1fea2449c83d0d1138",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "custom hub endpoint is ignored by xet refresh metadata",
+            "issue_description": "a client configured with a custom hub endpoint can request file metadata from that endpoint while receiving xet refresh metadata that still points at the default hugging face host. ensure request-specific endpoint context is preserved through every file metadata access path. rebase refresh routes owned by the default hub origin onto the configured endpoint, while preserving relative routes, routes already owned by another origin, and callers that do not provide an explicit endpoint.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:f019656c679b4258be2665a122e4376fbb945f48c0938a1fea2449c83d0d1138"
+        },
+        {
+          "input_ref": "sha256:36ee0f7b45170304bc41fc7d704384327cde318b18c26fcdd3a8d0349699cf98",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "invalid logger format keys do not provide actionable feedback",
+            "issue_description": "a static format passed to logger.add() can reference a record key that does not exist. the resulting runtime keyerror is currently difficult to diagnose. improve that feedback so it identifies the missing key, reports the available record keys, and explains how custom values should be supplied and referenced. preserve the existing catch contract: catch=true must report the logging error without propagating it, while catch=false must raise a useful keyerror. existing valid formats, including fields injected by a configured patcher, must continue to work.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:36ee0f7b45170304bc41fc7d704384327cde318b18c26fcdd3a8d0349699cf98"
+        },
+        {
+          "input_ref": "sha256:7bb70aa644118e5078bfac259ad91be59f16b03a35ae9d9a79657441fe0a6b34",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "ignoring the active virtualenv disables interpreter resolution",
+            "issue_description": "a project configured to use virtual environments can report that no compatible python exists as soon as pdm_ignore_active_venv is enabled, even when another associated environment is eligible or the normal environment-creation fallback is available. treat the setting as an exclusion of the currently active environment, not as a switch that disables virtualenv resolution. preserve normal active-environment reuse for unset and false-like values. the behavior must work for both virtual_env and conda_prefix without confusing sibling paths with descendants of the active environment.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:7bb70aa644118e5078bfac259ad91be59f16b03a35ae9d9a79657441fe0a6b34"
+        },
+        {
+          "input_ref": "sha256:5d2f9d232bf27f5e5c1b54e3495790f2b3318dee3a9583e121666029f317fe76",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "fake makedirs loses parent-traversal side effects",
+            "issue_description": "the fake implementation of os.makedirs can produce the requested final directory while still behaving differently from the real operating-system implementation when a relative path contains parent-directory components. directories created while walking those components are missing from the resulting fake filesystem. match real os.makedirs traversal semantics for these paths in supported posix and windows filesystem modes. preserve normal behavior for existing destinations, bytes paths, creation modes, invalid parents, and paths without parent-directory components.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:5d2f9d232bf27f5e5c1b54e3495790f2b3318dee3a9583e121666029f317fe76"
+        },
+        {
+          "input_ref": "sha256:3f872cd0ec5839fea8cd4091812fb798519e1b24ced470c6a9a321aa7e2fc5e5",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "cross-section factor substitutions remain unresolved when no condition matches",
+            "issue_description": "an ini configuration can reference a value from another section with `{[section]key}`. when that referenced key contains factor-conditional lines and none of its factors match the requesting environment, tox leaves the literal reference in the resolved configuration instead of treating the existing value as empty. resolve an existing cross-section value that is empty after factor filtering to an empty string. preserve matching factor values, explicit replacement defaults, caller-environment context, and the existing same-section fallback behavior for computed configuration defaults.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:3f872cd0ec5839fea8cd4091812fb798519e1b24ced470c6a9a321aa7e2fc5e5"
+        },
+        {
+          "input_ref": "sha256:4b577a2f621bd8ff7644862ea2204cc335991045e4f0218836e28b5fb6f13a85",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "strict decimal parsing rejects valid grouped values with trailing zeroes",
+            "issue_description": "babel's parse_decimal rejects canonically grouped localized decimals in strict mode when a non-zero fractional value is followed by insignificant trailing zeroes. accept grouped decimals when their localized representation differs from the canonical form only by insignificant zeroes at the end of the fractional part. preserve the parsed decimal's scale. continue to reject malformed grouping and wrong-locale separators, and do not change non-strict parsing, locale handling, numbering-system behavior, or the public parse_decimal api.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:4b577a2f621bd8ff7644862ea2204cc335991045e4f0218836e28b5fb6f13a85"
+        },
+        {
+          "input_ref": "sha256:08f37724f2f5cc21a29174ff1f66344e483c92c5ce4d5a114940c3045ceedefa",
+          "classifier_payload": {
+            "schema_version": "public-applicability-signal-input-d116-v1",
+            "issue_title": "dynamodb query reports the wrong scannedcount",
+            "issue_description": "dynamodb table.query currently reports the size of the entire table as scannedcount, even when a query evaluates only one partition or one page. make scannedcount represent the number of items evaluated by the current query page before non-key filtering. do not count unrelated partitions or items skipped before an exclusivestartkey. preserve key-condition, index, limit, pagination, ordering, projection, filtering, and lastevaluatedkey behavior.",
+            "language": "python"
+          },
+          "classifier_payload_sha256": "sha256:08f37724f2f5cc21a29174ff1f66344e483c92c5ce4d5a114940c3045ceedefa"
+        }
+      ],
+      "review_expectations": [
+        {
+          "input_ref": "sha256:63843ccb627adbceeac6d8fefc0469dae384b52f24cc7975a9674c2f0e4240cc",
+          "source_path_for_review_only": "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+          "case_role": "abstention-control-ambiguous-lifecycle",
+          "candidate_expectation": "ABSTAIN",
+          "candidate_group_id": null,
+          "acceptance_included": true,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        },
+        {
+          "input_ref": "sha256:f019656c679b4258be2665a122e4376fbb945f48c0938a1fea2449c83d0d1138",
+          "source_path_for_review_only": "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+          "case_role": "source-anchor-conformance",
+          "candidate_expectation": "SELECT",
+          "candidate_group_id": "request-context-propagation-gap",
+          "acceptance_included": true,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        },
+        {
+          "input_ref": "sha256:36ee0f7b45170304bc41fc7d704384327cde318b18c26fcdd3a8d0349699cf98",
+          "source_path_for_review_only": "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
+          "case_role": "abstention-control-diagnostic-keyword-overlap",
+          "candidate_expectation": "ABSTAIN",
+          "candidate_group_id": null,
+          "acceptance_included": true,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        },
+        {
+          "input_ref": "sha256:7bb70aa644118e5078bfac259ad91be59f16b03a35ae9d9a79657441fe0a6b34",
+          "source_path_for_review_only": "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml",
+          "case_role": "abstention-control-cross-class-ambiguity",
+          "candidate_expectation": "ABSTAIN",
+          "candidate_group_id": null,
+          "acceptance_included": true,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        },
+        {
+          "input_ref": "sha256:5d2f9d232bf27f5e5c1b54e3495790f2b3318dee3a9583e121666029f317fe76",
+          "source_path_for_review_only": "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+          "case_role": "source-anchor-conformance",
+          "candidate_expectation": "SELECT",
+          "candidate_group_id": "platform-emulation-matrix-gap",
+          "acceptance_included": true,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        },
+        {
+          "input_ref": "sha256:3f872cd0ec5839fea8cd4091812fb798519e1b24ced470c6a9a321aa7e2fc5e5",
+          "source_path_for_review_only": "tasks/dev-train/tox-cross-section-empty-substitution/public.yaml",
+          "case_role": "abstention-control-incomplete-source-overlap",
+          "candidate_expectation": "ABSTAIN",
+          "candidate_group_id": null,
+          "acceptance_included": true,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        },
+        {
+          "input_ref": "sha256:4b577a2f621bd8ff7644862ea2204cc335991045e4f0218836e28b5fb6f13a85",
+          "source_path_for_review_only": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+          "case_role": "public-abstention-control",
+          "candidate_expectation": "ABSTAIN",
+          "candidate_group_id": null,
+          "acceptance_included": true,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        },
+        {
+          "input_ref": "sha256:08f37724f2f5cc21a29174ff1f66344e483c92c5ce4d5a114940c3045ceedefa",
+          "source_path_for_review_only": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+          "case_role": "hypothesis-only-boundary-diagnostic",
+          "candidate_expectation": "ABSTAIN",
+          "candidate_group_id": null,
+          "acceptance_included": false,
+          "independent_positive": false,
+          "expectation_is_ground_truth": false
+        }
+      ],
+      "classifier_executor_receives_review_expectations": false,
+      "classifier_executor_argument": "classifier_inputs[].classifier_payload-only",
+      "bootstrap_exclusions": [
+        {
+          "path": "tasks/dev-train/csv-final-record-flush/public.yaml",
+          "split": "dev-train",
+          "file_bytes": 1096,
+          "file_sha256": "sha256:58ad92151b819e338be09e15b23bd9e23dd50ec7ae402094ff4e0f0d190c4662",
+          "eligibility": "bootstrap-excluded",
+          "classifier_projection": {
+            "projection": {
+              "schema_version": "public-applicability-signal-input-d116-v1",
+              "issue_title": "chunked csv parser drops the final unterminated record",
+              "issue_description": "a valid final csv record is lost when the input ends without a trailing newline. records may span input chunks and quoted commas must remain supported. preserve the public parse_chunks(chunks) interface and existing behavior for newline-terminated records.",
+              "language": "python"
+            },
+            "projection_sha256": "sha256:9d538b141a7daf684178975304f48171f3d583a41342770b66dc36a3ab7e5ccf"
+          },
+          "classifier_projection_excludes_task_id_and_path": true,
+          "classifier_execution_result_present": false
+        },
+        {
+          "path": "tasks/dev-train/duration-minute-boundary/public.yaml",
+          "split": "dev-train",
+          "file_bytes": 1065,
+          "file_sha256": "sha256:3d150a9420989ba938fa4ea543d31b485a09a186852dcf5632427246a318c9f8",
+          "eligibility": "bootstrap-excluded",
+          "classifier_projection": {
+            "projection": {
+              "schema_version": "public-applicability-signal-input-d116-v1",
+              "issue_title": "elapsed-time formatter rounds incomplete minutes upward",
+              "issue_description": "durations of at least 60 seconds must report only fully completed minutes. values below 60 seconds must remain in seconds, negative durations must remain invalid, and the public format_elapsed(seconds) interface must not change.",
+              "language": "python"
+            },
+            "projection_sha256": "sha256:d0fa8a13452b8c7e6d99db943734dbe2839f357ca6c4736a3446a5a96a067124"
+          },
+          "classifier_projection_excludes_task_id_and_path": true,
+          "classifier_execution_result_present": false
+        }
+      ],
+      "source_anchor_overlap_counts_as_independent_evidence": false,
+      "moto_d112_hypothesis_counts_as_label": false,
+      "moto_case_included_in_mechanical_acceptance": false,
+      "minimum_independent_positive_per_group_for_execution_admission": 1,
+      "future_controls_acquired_after_matcher_contract_hash_is_sealed": true,
+      "future_control_selection_may_use_matcher_output": false,
+      "future_control_label_adjudication_may_use_matcher_output": false,
+      "future_control_acquisition_blinded_to_matcher_output": true,
+      "future_control_source_pool_must_preexist_d116": true,
+      "future_control_issue_prose_authoring_or_rewriting_after_d116_allowed": false,
+      "future_control_pool_cutoff_must_precede": "2026-08-07T06:22:51.021003Z",
+      "future_control_pool_bytes_cutoff_and_provenance_must_be_hashed": true,
+      "future_exact_pool_membership_manifest_or_exhaustive_inclusion_rule_must_predate_d116": true,
+      "future_exact_pool_membership_manifest_bytes_and_hash_required": true,
+      "future_pool_assembler_may_view_matcher_grammar_hash_or_output": false,
+      "future_pool_assembler_must_be_isolated_from_grammar_observers": true,
+      "future_selector_and_adjudicator_may_view_matcher_grammar_or_hash": false,
+      "future_selector_and_adjudicator_receive_only_d105_applicability_rubric": true,
+      "future_selector_and_adjudicator_must_be_isolated_from_grammar_observers": true,
+      "current_process_or_agent_is_eligible_as_blind_selector": false,
+      "if_blinding_cannot_be_enforced_mark_controls_post_hoc_and_independent_false": true,
+      "pool_assembler_selector_or_adjudicator_blinding_failure_triggers_fallback": true,
+      "matcher_grammar_change_after_control_acquisition_allowed": false,
+      "grammar_change_requires_new_contract_version_and_invalidates_blind_status": true,
+      "independent_positive_groups_available": [],
+      "groups_missing_independent_positive": [
+        "platform-emulation-matrix-gap",
+        "request-context-propagation-gap",
+        "exception-origin-state-conflation"
+      ],
+      "strict_public_source_anchor_expectations": {
+        "platform-emulation-matrix-gap": "SELECT-on-pyfakefs-source-anchor-only",
+        "request-context-propagation-gap": "SELECT-on-hf-hub-source-anchor-only",
+        "exception-origin-state-conflation": "ABSTAIN-on-tox-because-public-prose-does-not-state-S3-shared-error-boundary"
+      },
+      "synthetic_conformance_plan": {
+        "plan_only_no_execution": true,
+        "required_before_any_independent_control_is_scored": true,
+        "synthetic_cases_count_as_independent_calibration_evidence": false,
+        "cases": [
+          {
+            "case_id": "platform-conformance-positive",
+            "purpose": "emulated versus native behavior, final-versus-traversal effect, and two public branch dimensions",
+            "expected_outcome": "SELECT-platform-emulation-matrix-gap"
+          },
+          {
+            "case_id": "context-conformance-positive",
+            "purpose": "client-selected context contrasted with default ownership and preserved through every access path",
+            "expected_outcome": "SELECT-request-context-propagation-gap"
+          },
+          {
+            "case_id": "semantic-conformance-positive",
+            "purpose": "missing versus existing-empty state across two stages explicitly collapsed at one error boundary",
+            "expected_outcome": "SELECT-exception-origin-state-conflation"
+          },
+          {
+            "case_id": "tox-like-missing-S3",
+            "purpose": "S1 and S2 evidence without any shared error-boundary statement",
+            "expected_outcome": "ABSTAIN-partial-evidence"
+          },
+          {
+            "case_id": "keyword-salad",
+            "purpose": "all common words without the required sentence or clause relations",
+            "expected_outcome": "ABSTAIN-no-full-group"
+          },
+          {
+            "case_id": "negated-emulation-with-contradiction",
+            "purpose": "negated emulation cue plus intentionally identical-semantics cue",
+            "expected_outcome": "ABSTAIN-contradiction-present"
+          },
+          {
+            "case_id": "context-partial",
+            "purpose": "custom endpoint without ownership contrast or multiple paths",
+            "expected_outcome": "ABSTAIN-partial-evidence"
+          },
+          {
+            "case_id": "two-full-group-matches",
+            "purpose": "one canonical projection fully supporting two groups",
+            "expected_outcome": "ABSTAIN-multiple-groups"
+          },
+          {
+            "case_id": "unsupported-language",
+            "purpose": "valid canonical projection with language other than Python",
+            "expected_outcome": "ABSTAIN-unsupported-language"
+          },
+          {
+            "case_id": "malformed-or-extra-projection-field",
+            "purpose": "wrong type, noncanonical value, or unknown projection key",
+            "expected_outcome": "CONTRACT_ERROR"
+          },
+          {
+            "case_id": "forbidden-field-and-phase-invariance",
+            "purpose": "change task identity, tags, paths, split, and external phase without changing the classifier projection",
+            "expected_outcome": "projection-and-signal-byte-identical"
+          },
+          {
+            "case_id": "span-integrity-negative",
+            "purpose": "off-by-one offset or matched_text not equal to canonical field slice",
+            "expected_outcome": "RESULT_VALIDATION_ERROR"
+          }
+        ]
+      },
+      "three_class_calibration_ready": false,
+      "calibration_execution_ready": false,
+      "blocking_reason": "no-blind-independent-public-applicability-positive-for-any-admitted-group",
+      "actual_classifier_execution_count": 0,
+      "actual_calibration_result_count": 0
+    },
+    "conditional_tuple_boundary": {
+      "d115_conditional_tuple": {
+        "policy_id": "counterfactual-class-signal-conditional-tuple",
+        "weights": {
+          "semantic": 0.25,
+          "failure_class": 0.4,
+          "phase": 0.15,
+          "language": 0.1,
+          "validation": 0.1
+        },
+        "threshold": 0.6,
+        "comparator": "greater-than-or-equal",
+        "counterfactual_only": true,
+        "corrected_policy_selected": false,
+        "implementation_ready": false,
+        "counterfactual_signal_assumptions": {
+          "source": "d112-public-non-acceptance-hypothesis",
+          "moto_implement_hypothesized_group_signal": 1.0,
+          "moto_reproduce_signal_copied_from_implement_for_phase_control": true,
+          "babel_all_groups_abstain": true,
+          "runtime_classifier_observed": false,
+          "true_relevance_established": false
+        },
+        "required_signal": "independent-deterministic-public-taxonomy-classifier-with-explicit-abstention",
+        "forbidden_signal_sources": [
+          "d112-hypothesized-group-id",
+          "task-id-to-answer-lookup",
+          "private-task-spec",
+          "hidden-test",
+          "reference-or-known-bad-patch",
+          "held-out-result"
+        ],
+        "diagnostic_only_counterfactual_results": {
+          "moto_implement_hypothesized_score": 0.6530721018133969,
+          "moto_implement_hypothesized_pass": true,
+          "babel_top_score": 0.3156332814131685,
+          "babel_no_match": true,
+          "moto_reproduce_hypothesized_score": 0.503072101813397,
+          "moto_reproduce_no_match": true,
+          "phase_delta": 0.1499999999999999
+        }
+      },
+      "offline_evaluation_permitted_by_d115": true,
+      "evaluated_in_d116": false,
+      "reason_not_evaluated": "no-classifier-execution-authority-and-no-three-class-independent-positive",
+      "counterfactual_only": true,
+      "runtime_classifier_observed": false,
+      "acceptance_evidence": false,
+      "corrected_policy_selected": false
+    },
+    "protected_pre_state": {
+      "files": [
+        {
+          "path": "reports/memory-development/d115-score-policy-decision-preflight.json",
+          "file_bytes": 59725,
+          "file_sha256": "sha256:91908b43eb581b09249f8285e5f1d09389092c5b40c1c794b9ab139667c86bad"
+        },
+        {
+          "path": "reports/memory-development/d115-score-policy-decision-candidate.json",
+          "file_bytes": 6839,
+          "file_sha256": "sha256:1fd424eab88c60a9d8480e756642b2c70b03afd03dd777e27bf36a3ea428df7a"
+        },
+        {
+          "path": "reports/memory-development/d115-score-policy-decision-source-gate.json",
+          "file_bytes": 13730,
+          "file_sha256": "sha256:67f62c23e9f5e14fe9cd1d075b2c6f679764c18644837914b0031348c4a21b72"
+        },
+        {
+          "path": "patchloop/memory/d115_score_policy_decision.py",
+          "file_bytes": 48275,
+          "file_sha256": "sha256:1199605de49c5f9e8ebafa8e7a161e17c5af05e00888fb13ec9fb524f20a5081"
+        },
+        {
+          "path": "scripts/build_d115_score_policy_decision_candidate.py",
+          "file_bytes": 1679,
+          "file_sha256": "sha256:6ccb44b4f77a336addeb075d051ec3131e24be2297cd1854d5febb4a77ab4b21"
+        },
+        {
+          "path": "tests/test_d115_score_policy_decision.py",
+          "file_bytes": 19823,
+          "file_sha256": "sha256:516766e65580bf8e23746c7ed1c9f10d15a46f77f5caacf4f0d5000ce3973efc"
+        },
+        {
+          "path": "reports/memory-development/d105-renderer-embedding-index-authorization-gate.json",
+          "file_bytes": 12368,
+          "file_sha256": "sha256:db6303f3de834b3c36493f2863dcc5be3ca697490d18df15c86a18e7ee7b17eb"
+        },
+        {
+          "path": "reports/memory-development/rendered/d105/memgrp_649483b80292fea26e4009ebdb72df31.txt",
+          "file_bytes": 1191,
+          "file_sha256": "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c"
+        },
+        {
+          "path": "reports/memory-development/rendered/d105/memgrp_b421547d481faabf9be3511217258de5.txt",
+          "file_bytes": 1164,
+          "file_sha256": "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a"
+        },
+        {
+          "path": "reports/memory-development/rendered/d105/memgrp_5a23f463cba43bf3ba395f67cf976047.txt",
+          "file_bytes": 1161,
+          "file_sha256": "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7"
+        },
+        {
+          "path": "tasks/dev-train/anyio-interrupt-runner-cleanup/public.yaml",
+          "file_bytes": 1864,
+          "file_sha256": "sha256:ea977422306f9ce7203b4fc92aac83a73bc41554813d9ce1d794546767e76ddd"
+        },
+        {
+          "path": "tasks/dev-train/csv-final-record-flush/public.yaml",
+          "file_bytes": 1096,
+          "file_sha256": "sha256:58ad92151b819e338be09e15b23bd9e23dd50ec7ae402094ff4e0f0d190c4662"
+        },
+        {
+          "path": "tasks/dev-train/duration-minute-boundary/public.yaml",
+          "file_bytes": 1065,
+          "file_sha256": "sha256:3d150a9420989ba938fa4ea543d31b485a09a186852dcf5632427246a318c9f8"
+        },
+        {
+          "path": "tasks/dev-train/hf-hub-xet-endpoint-propagation/public.yaml",
+          "file_bytes": 1825,
+          "file_sha256": "sha256:3500452712d3977761f24da95170f073f86ec2a0589b69522321f91f5f473c4f"
+        },
+        {
+          "path": "tasks/dev-train/loguru-invalid-format-feedback/public.yaml",
+          "file_bytes": 2392,
+          "file_sha256": "sha256:efec17dc692c0935553e9e3c67ad5463d977254ea52a536c1dcf4a4c43831f10"
+        },
+        {
+          "path": "tasks/dev-train/pdm-ignore-active-venv-resolution/public.yaml",
+          "file_bytes": 1986,
+          "file_sha256": "sha256:3d819ce8136e11d0572954f1afcc1918134aeef2e84d8fa365970c45ff671c24"
+        },
+        {
+          "path": "tasks/dev-train/pyfakefs-makedirs-parent-traversal/public.yaml",
+          "file_bytes": 1852,
+          "file_sha256": "sha256:5be7e6f6d2ad9722ee90c5a829aa043bf94c70ac317d5ce45254e4f3f9458eb0"
+        },
+        {
+          "path": "tasks/dev-train/tox-cross-section-empty-substitution/public.yaml",
+          "file_bytes": 1903,
+          "file_sha256": "sha256:cf100f771e799824b2928f28faec4be76f011aa84667b1573b6fa373860b0c82"
+        },
+        {
+          "path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+          "file_bytes": 2023,
+          "file_sha256": "sha256:d65e09fe70bb0449c85e663d0eeb695fe52bc7fb34619debbbe81a0b16ab2aca"
+        },
+        {
+          "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+          "file_bytes": 2839,
+          "file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7"
+        }
+      ],
+      "fingerprint": "sha256:8de15a5a680b8a501009ca56b69e47be39111018723250a817aeddf66a06626f"
+    },
+    "evidence_boundary": {
+      "contract_and_plan_materialized": true,
+      "classifier_source_code_created": false,
+      "classifier_execution_count": 0,
+      "task_level_signal_result_count": 0,
+      "calibration_result_count": 0,
+      "model_or_embedding_load_count": 0,
+      "retrieval_calls": 0,
+      "runtime_memory_injection_count": 0,
+      "agent_runs": 0,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "network_capable_call_paths_invoked": 0,
+      "network_evidence_kind": "source-path-self-attested",
+      "os_level_socket_block_or_instrumentation_verified": false,
+      "added_model_cost_usd": 0
+    },
+    "authority": {
+      "exact_d115_candidate_user_approval_received": true,
+      "public_failure_class_signal_contract_authorized": true,
+      "public_applicability_signal_contract_prepared": true,
+      "formal_matcher_grammar_complete": true,
+      "matcher_evaluator_implementation_authorized": false,
+      "matcher_evaluator_implemented": false,
+      "matcher_evaluator_execution_count": 0,
+      "prospective_calibration_candidate_ready": false,
+      "calibration_execution_candidate_ready": false,
+      "actual_classifier_implementation_authorized": false,
+      "actual_classifier_implemented": false,
+      "classifier_execution_authorized": false,
+      "classifier_execution_count": 0,
+      "calibration_execution_authorized": false,
+      "calibration_execution_count": 0,
+      "calibration_results_present": false,
+      "three_class_calibrated": false,
+      "independent_generalization_validated": false,
+      "runtime_classifier_observed": false,
+      "true_relevance_established": false,
+      "corrected_policy_selected": false,
+      "score_policy_correction_authorized": false,
+      "score_policy_correction_implemented": false,
+      "score_weights_or_threshold_changed": false,
+      "runtime_failure_class_signal_changed": false,
+      "ranking_policy_changed": false,
+      "memory_entry_index_or_marker_changed": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "agent_runs": 0,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false
+    }
+  }
+}

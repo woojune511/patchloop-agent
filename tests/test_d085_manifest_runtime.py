@@ -25,7 +25,7 @@ from patchloop.errors import RecoveryError
 from patchloop.evals import qualification as trace_qualification
 from patchloop.runtime import build_manifest
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json
+from patchloop.util import canonical_json, sha256_bytes
 
 PILOT_TASK = Path(
     "tasks/dev-validation/"
@@ -226,7 +226,10 @@ def test_d085_paid_boundary_routes_only_exact_pilot_through_plan_matcher(
         "_execution_plan_matches",
         plan_matches,
     )
-    authorization = SimpleNamespace(plan_path=str(plan_path))
+    authorization = SimpleNamespace(
+        plan_path=str(plan_path),
+        plan_hash=sha256_bytes(plan_path.read_bytes()),
+    )
 
     assert AgentRunner._live_plan_matches_manifest(manifest, authorization)
     assert calls == [manifest.run_id]

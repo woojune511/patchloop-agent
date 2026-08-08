@@ -115,6 +115,17 @@ def retrieve_memory(
         )
         return "", decision
     raw = json.loads(selected_path.read_text(encoding="utf-8"))
+    if raw.get("frozen") is not True:
+        raise ContractError("memory retrieval requires a frozen index")
+    build_contract = raw.get("build_contract", {})
+    if (
+        build_contract.get("schema_version")
+        == "group-aware-memory-index-builder-d106-v1"
+        and raw.get("authority", {}).get("retrieval_experiment_authorized") is not True
+    ):
+        raise ContractError(
+            "D-106 group-aware index retrieval requires a later explicit authorization gate"
+        )
     entries = [MemoryEntry.model_validate(item) for item in raw["entries"]]
     if entries and raw.get("embedding", {}).get("implementation") != "sentence-transformers":
         raise ContractError("frozen memory index lacks sentence-transformers vectors")

@@ -1,0 +1,40 @@
+diff --git a/pyfakefs/fake_os.py b/pyfakefs/fake_os.py
+index 26be463..6c389f5 100644
+--- a/pyfakefs/fake_os.py
++++ b/pyfakefs/fake_os.py
+@@ -931,6 +931,35 @@ class FakeOsModule:
+         """
+         if exist_ok is None:
+             exist_ok = False
++
++        # Preserve the side effects of traversing parent-directory components
++        # in relative paths (for example ``foo/../bar`` should leave ``foo``
++        # behind when it is created while walking the path).
++        try:
++            path = make_string_path(name)
++        except TypeError:
++            path = name
++        if isinstance(path, (str, bytes)) and not self.path.isabs(path):
++            curdir = matching_string(path, ".")
++            pardir = matching_string(path, "..")
++            components = []
++            remainder = path
++            while True:
++                head, tail = self.path.split(remainder)
++                if not tail:
++                    break
++                components.append(tail)
++                remainder = head
++            components.reverse()
++            if pardir in components:
++                prefix = None
++                for component in components:
++                    if component == pardir:
++                        break
++                    if component == curdir:
++                        continue
++                    prefix = component if prefix is None else self.path.join(prefix, component)
++                    self.filesystem.makedirs(prefix, mode, True)
+         self.filesystem.makedirs(name, mode, exist_ok)
+ 
+     def _path_with_dir_fd(

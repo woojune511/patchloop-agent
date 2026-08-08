@@ -1,0 +1,140 @@
+{
+  "schema_version": "retrieval-readiness-authorization-candidate-d111-v1",
+  "candidate_id": "d111retrievalcandidate_bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+  "semantic_body_hash": "sha256:bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+  "semantic_body": {
+    "milestone": "D-111",
+    "evidence_kind": "retrieval-readiness-authorization-candidate",
+    "recorded_at": "2026-08-07T00:05:00Z",
+    "preflight": {
+      "path": "reports/memory-development/d111-frozen-index-retrieval-readiness-preflight.json",
+      "schema_version": "frozen-index-retrieval-readiness-preflight-d111-v1",
+      "preflight_id": "d111preflight_ee48af2da2ab34bb252f11842fe34c734229ad193776fc97bdd34dc3849003f9",
+      "semantic_body_hash": "sha256:ee48af2da2ab34bb252f11842fe34c734229ad193776fc97bdd34dc3849003f9",
+      "file_bytes": 13085,
+      "file_sha256": "sha256:fed699e068c52e2dd929b654a65369aee3499d6d69c5a38c14dcee808ff57387"
+    },
+    "candidate_status": "awaiting-exact-user-approval",
+    "proposed_one_use_action": {
+      "schema_version": "exact-group-retrieval-readiness-probe-d111-v1",
+      "execution_kind": "local-read-only-scoring-diagnostic",
+      "maximum_executions": 1,
+      "automatic_retry_allowed": false,
+      "sidecar_authorization_required": true,
+      "frozen_index_mutation_allowed": false,
+      "frozen_marker_mutation_allowed": false,
+      "d106_unfrozen_index_mutation_allowed": false,
+      "legacy_retrieve_memory_call_allowed": false,
+      "runtime_memory_injection_allowed": false,
+      "agent_context_rendering_allowed": false,
+      "agent_run_allowed": false,
+      "provider_call_allowed": false,
+      "evaluator_call_allowed": false,
+      "core_campaign_allowed": false,
+      "analysis_campaign_allowed": false,
+      "network_access_allowed": false,
+      "local_embedding_model_load_count": 1,
+      "local_batch_encode_call_count": 1,
+      "local_batch_query_row_count": 3,
+      "expected_query_vector_shape": [
+        3,
+        384
+      ],
+      "expected_query_vector_dtype": "float32",
+      "finite_normalized_query_vectors_required": true,
+      "device": "cpu",
+      "exact_frozen_index_file_sha256": "sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0",
+      "exact_frozen_marker_file_sha256": "sha256:cdfe40b734135a30f66e34ff24469940063a7231a1fe0783420ee2ff816d9561",
+      "exact_embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "exact_embedding_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "exact_snapshot_manifest_hash": "sha256:e497d8dad53f09ddc8b9fcc9b81e3ff778e002e120ab4254c72993d8611959cb",
+      "query_encoder_requires_local_files_only": true,
+      "structured_text_source": "frozen-index-model_facing_text-exact-bytes",
+      "raw_trace_in_scope": false,
+      "diagnostic_scoring_contract": {
+        "query_text": "public-title-newline-description-newline-space-joined-tags",
+        "semantic_component": "max-zero-normalized-query-vector-dot-frozen-entry-vector",
+        "failure_class_tokenizer_regex": "[a-z0-9_]+",
+        "failure_class_component": "counter-cosine-public-query-vs-entry-failure-class",
+        "phase_component": "float-entry-phase-equals-probe-phase",
+        "language_component": "float-python-in-entry-applicable-languages",
+        "validation_component": "min-one-entry-validation-count-divided-by-three",
+        "score_weights": {
+          "semantic": 0.35,
+          "failure_class": 0.25,
+          "phase": 0.15,
+          "language": 0.15,
+          "validation": 0.1
+        },
+        "selective_threshold": 0.72,
+        "selective_comparator": "greater-than-or-equal",
+        "rank_order": "descending-score-then-ascending-memory-id",
+        "component_and_final_scores_must_be_recorded": true,
+        "scoring_policy_is_diagnostic_not_core_qualification": true
+      },
+      "memory_token_budget": 2000,
+      "probe_ids_in_order": [
+        "moto-implement-positive-hypothesis",
+        "babel-implement-no-match-control",
+        "moto-reproduce-phase-control"
+      ],
+      "future_output_paths": [
+        "patchloop/memory/d112_retrieval_readiness_probe.py",
+        "scripts/run_d112_retrieval_readiness_probe.py",
+        "tests/test_d112_retrieval_readiness_probe.py",
+        "reports/memory-development/d112-retrieval-readiness-probe-receipt.json",
+        "reports/memory-development/d112-retrieval-readiness-completion-gate.json"
+      ],
+      "score_policy_correction_allowed": false,
+      "threshold_change_allowed": false,
+      "memory_entry_change_allowed": false
+    },
+    "diagnostic_acceptance": {
+      "all_three_public_probe_identities_match": true,
+      "local_only_pinned_query_encoder_required": true,
+      "component_scores_and_final_score_recorded": true,
+      "deterministic_tie_order_by_memory_id_required": true,
+      "no_memory_text_returned_or_injected": true,
+      "pre_and_post_input_fingerprints_equal": true,
+      "observed_ranking_or_selection_must_not_be_precommitted": true,
+      "probe_hypotheses_are_not_pass_fail_criteria": true,
+      "selective_degeneracy_must_be_reported_not_hidden": true
+    },
+    "explicitly_excluded": {
+      "synthetic_internal_failure_label_query": true,
+      "private_task": true,
+      "hidden_tests": true,
+      "reference_patch": true,
+      "known_bad_patch": true,
+      "raw_trace": true,
+      "provider_generation": true,
+      "runtime_retrieval_integration": true,
+      "memory_effect_claim": true,
+      "negative_transfer_claim": true
+    },
+    "approval_contract": {
+      "separate_user_message_required": true,
+      "exact_candidate_id_required": true,
+      "exact_semantic_body_hash_required": true,
+      "exact_file_sha256_required": true,
+      "generic_continue_message_is_approval": false,
+      "approval_receipt_created_by_d111": false
+    },
+    "authority": {
+      "retrieval_readiness_candidate_ready": true,
+      "exact_candidate_user_approval_received": false,
+      "retrieval_probe_authorized": false,
+      "retrieval_probe_executed": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "raw_trace_ready": false,
+      "four_condition_retrieval_ready": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    }
+  }
+}

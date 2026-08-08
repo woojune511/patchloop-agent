@@ -1,0 +1,67 @@
+diff --git a/loguru/_handler.py b/loguru/_handler.py
+index d5ef46a..e627fb7 100644
+--- a/loguru/_handler.py
++++ b/loguru/_handler.py
+@@ -107,6 +107,19 @@ class Handler:
+     def __repr__(self):
+         return "(id=%d, level=%d, sink=%s)" % (self._id, self._levelno, self._name)
+ 
++    def _format_message(self, formatter, record):
++        try:
++            return formatter.format_map(record)
++        except KeyError as error:
++            missing_key = error.args[0] if error.args else str(error)
++            available_keys = ", ".join(sorted(record))
++            raise KeyError(
++                "Formatting field not found: {!r}. Available record keys: {}. "
++                "To use custom values, pass them with logger.bind() or logger.patch() "
++                "and reference bound values with {extra[...]} or patcher-added values "
++                "directly with their field name."
++            .format(missing_key, available_keys)) from None
++
+     @contextmanager
+     def _protected_lock(self):
+         """Acquire the lock, but fail fast if its already acquired by the current thread."""
+@@ -158,11 +171,11 @@ class Handler:
+             elif self._is_formatter_dynamic:
+                 if not self._colorize:
+                     precomputed_format = self._memoize_dynamic_format(dynamic_format)
+-                    formatted = precomputed_format.format_map(formatter_record)
++                    formatted = self._format_message(precomputed_format, formatter_record)
+                 elif colored_message is None:
+                     ansi_level = self._levels_ansi_codes[level_id]
+                     _, precomputed_format = self._memoize_dynamic_format(dynamic_format, ansi_level)
+-                    formatted = precomputed_format.format_map(formatter_record)
++                    formatted = self._format_message(precomputed_format, formatter_record)
+                 else:
+                     ansi_level = self._levels_ansi_codes[level_id]
+                     formatter, precomputed_format = self._memoize_dynamic_format(
+@@ -172,16 +185,16 @@ class Handler:
+                         record["message"], ansi_level=ansi_level, colored_message=colored_message
+                     )
+                     formatter_record["message"] = coloring_message
+-                    formatted = precomputed_format.format_map(formatter_record)
++                    formatted = self._format_message(precomputed_format, formatter_record)
+ 
+             else:
+                 if not self._colorize:
+                     precomputed_format = self._decolorized_format
+-                    formatted = precomputed_format.format_map(formatter_record)
++                    formatted = self._format_message(precomputed_format, formatter_record)
+                 elif colored_message is None:
+                     ansi_level = self._levels_ansi_codes[level_id]
+                     precomputed_format = self._precolorized_formats[level_id]
+-                    formatted = precomputed_format.format_map(formatter_record)
++                    formatted = self._format_message(precomputed_format, formatter_record)
+                 else:
+                     ansi_level = self._levels_ansi_codes[level_id]
+                     precomputed_format = self._precolorized_formats[level_id]
+@@ -189,7 +202,7 @@ class Handler:
+                         record["message"], ansi_level=ansi_level, colored_message=colored_message
+                     )
+                     formatter_record["message"] = coloring_message
+-                    formatted = precomputed_format.format_map(formatter_record)
++                    formatted = self._format_message(precomputed_format, formatter_record)
+ 
+             if self._serialize:
+                 formatted = self._serialize_record(formatted, record)

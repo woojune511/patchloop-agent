@@ -38,19 +38,12 @@ class ExperimentPurpose(StrEnum):
     GENERIC_BASELINE_READINESS = "generic-baseline-readiness"
     WORKFLOW_COMPLETION_PROBE = "workflow-completion-probe"
     DEVELOPMENT_VALIDATION_LIVE_PILOT = "development-validation-live-pilot"
-    DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT = (
-        "development-validation-model-candidate-pilot"
-    )
+    DEVELOPMENT_VALIDATION_AC_READINESS = "development-validation-ac-readiness"
+    DEVELOPMENT_VALIDATION_MODEL_CANDIDATE_PILOT = "development-validation-model-candidate-pilot"
     MEMORY_DEVELOPMENT_NO_MEMORY = "memory-development-no-memory"
-    MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT = (
-        "memory-development-no-memory-budget-pilot"
-    )
-    MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT = (
-        "memory-development-no-memory-corrective-pilot"
-    )
-    MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT = (
-        "memory-development-no-memory-saturation-pilot"
-    )
+    MEMORY_DEVELOPMENT_NO_MEMORY_BUDGET_PILOT = "memory-development-no-memory-budget-pilot"
+    MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT = "memory-development-no-memory-corrective-pilot"
+    MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT = "memory-development-no-memory-saturation-pilot"
     MEMORY_DEVELOPMENT_NO_MEMORY_REVIEW_EVIDENCE_PILOT = (
         "memory-development-no-memory-review-evidence-pilot"
     )
@@ -72,10 +65,25 @@ CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID = (
 CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID = (
     "anyio-workflow-completion-budget-only-v2v5-20260804-r1"
 )
-GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID = (
-    "generic-high-headroom-readiness-v2v5-20260804-r1"
-)
+GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID = "generic-high-headroom-readiness-v2v5-20260804-r1"
 CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID = "dev-no-memory-condition-neutral-3000k-20260805-r1"
+AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID = "dev-validation-ac-fixed-bundle-readiness-20260808-r1"
+AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID = (
+    "dev-validation-ac-fixed-bundle-readiness-20260808-r2"
+)
+AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
+    {
+        AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+    }
+)
+AC_FIXED_BUNDLE_POLICY_VERSION = "fixed-d110-bundle-v1"
+AC_FIXED_BUNDLE_D110_INDEX_VERSION = (
+    "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064"
+)
+AC_FIXED_BUNDLE_D110_INDEX_CONTENT_HASH = (
+    "sha256:3a99e6c190672d1676bc4d13604de989899de9ddac85d282cc90c4d56f426c56"
+)
 
 
 class RunOutcomeKind(StrEnum):
@@ -213,10 +221,7 @@ class PublicTask(StrictModel):
 
     @model_validator(mode="after")
     def bind_probe_profiles_to_v2(self) -> PublicTask:
-        if (
-            self.schema_version == "task-public-v1"
-            and "probe_profiles" in self.model_fields_set
-        ):
+        if self.schema_version == "task-public-v1" and "probe_profiles" in self.model_fields_set:
             raise ValueError("probe_profiles requires task-public-v2")
         if self.schema_version == "task-public-v2" and not self.probe_profiles:
             raise ValueError("task-public-v2 requires at least one probe profile")
@@ -273,9 +278,7 @@ class PublicReviewCoverageTarget(StrictModel):
         if value is None:
             return None
         if value != value.strip() or "\n" in value or "\r" in value:
-            raise ValueError(
-                "public review coverage target anchor must be one exact, trimmed line"
-            )
+            raise ValueError("public review coverage target anchor must be one exact, trimmed line")
         return value
 
     @field_validator("check_ids")
@@ -284,27 +287,21 @@ class PublicReviewCoverageTarget(StrictModel):
         if any(re.fullmatch(r"[a-z][a-z0-9_-]+", value) is None for value in values):
             raise ValueError("public review coverage target check IDs are invalid")
         if values != sorted(set(values)):
-            raise ValueError(
-                "public review coverage target check IDs must be unique and sorted"
-            )
+            raise ValueError("public review coverage target check IDs must be unique and sorted")
         return values
 
     @model_validator(mode="after")
     def validate_evidence_shape(self) -> PublicReviewCoverageTarget:
         if self.evidence_kind == "current_diff_inspection":
             if self.path is None or self.anchor is None:
-                raise ValueError(
-                    "current-diff inspection coverage targets require path and anchor"
-                )
+                raise ValueError("current-diff inspection coverage targets require path and anchor")
             if "check_ids" in self.model_fields_set:
                 raise ValueError(
                     "current-diff inspection coverage targets cannot declare check_ids"
                 )
         else:
             if not self.check_ids:
-                raise ValueError(
-                    "passing-validation coverage targets require nonempty check_ids"
-                )
+                raise ValueError("passing-validation coverage targets require nonempty check_ids")
             if "path" in self.model_fields_set or "anchor" in self.model_fields_set:
                 raise ValueError(
                     "passing-validation coverage targets cannot declare path or anchor"
@@ -331,9 +328,7 @@ class PublicReviewContract(StrictModel):
     schema_version: Literal[
         "public-review-contract-v1",
         "public-review-contract-v2",
-    ] = (
-        "public-review-contract-v1"
-    )
+    ] = "public-review-contract-v1"
     task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
     task_version: int = Field(ge=1)
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -345,50 +340,32 @@ class PublicReviewContract(StrictModel):
 
     @model_validator(mode="after")
     def validate_identity_and_hash(self) -> PublicReviewContract:
-        requirement_ids = [
-            requirement.requirement_id
-            for requirement in self.requirements
-        ]
+        requirement_ids = [requirement.requirement_id for requirement in self.requirements]
         if len(requirement_ids) != len(set(requirement_ids)):
             raise ValueError("public review requirement IDs must be unique")
-        source_excerpts = [
-            requirement.source_excerpt
-            for requirement in self.requirements
-        ]
+        source_excerpts = [requirement.source_excerpt for requirement in self.requirements]
         if len(source_excerpts) != len(set(source_excerpts)):
-            raise ValueError(
-                "public review source excerpts must be unique"
-            )
+            raise ValueError("public review source excerpts must be unique")
         coverage_targets = [
-            target
-            for requirement in self.requirements
-            for target in requirement.coverage_targets
+            target for requirement in self.requirements for target in requirement.coverage_targets
         ]
         if self.schema_version == "public-review-contract-v1":
             if any(
                 "coverage_targets" in requirement.model_fields_set
                 for requirement in self.requirements
             ):
-                raise ValueError(
-                    "public-review-contract-v1 cannot declare coverage targets"
-                )
+                raise ValueError("public-review-contract-v1 cannot declare coverage targets")
         else:
             if any(not requirement.coverage_targets for requirement in self.requirements):
                 raise ValueError(
                     "public-review-contract-v2 requires coverage targets for every requirement"
                 )
             if len(coverage_targets) > 20:
-                raise ValueError(
-                    "public-review-contract-v2 supports at most 20 coverage targets"
-                )
-            target_ids = [
-                target.coverage_target_id for target in coverage_targets
-            ]
+                raise ValueError("public-review-contract-v2 supports at most 20 coverage targets")
+            target_ids = [target.coverage_target_id for target in coverage_targets]
             if len(target_ids) != len(set(target_ids)):
                 raise ValueError("public review coverage target IDs must be unique")
-        expected_hash = sha256_json(
-            self.model_dump(mode="json", exclude={"content_hash"})
-        )
+        expected_hash = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
         if self.content_hash != expected_hash:
             raise ValueError("public review contract content hash mismatch")
         return self
@@ -505,18 +482,20 @@ class ExperimentRunContext(StrictModel):
 
     @model_validator(mode="after")
     def bind_campaign_cost_context(self) -> ExperimentRunContext:
-        if self.experiment_id == CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID:
+        if self.experiment_id in {
+            CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
+            AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        }:
             if self.campaign_cost_control_hash is None:
-                raise ValueError("the D-097 campaign requires campaign_cost_control_hash")
+                raise ValueError(
+                    "the exact full-schedule campaign requires campaign_cost_control_hash"
+                )
             return self
         requires_cost_control = (
-            self.experiment_id
-            == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
+            self.experiment_id == CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID
         )
         if requires_cost_control != (self.campaign_cost_control_hash is not None):
-            raise ValueError(
-                "the D-087 campaign alone requires campaign_cost_control_hash"
-            )
+            raise ValueError("the D-087 campaign alone requires campaign_cost_control_hash")
         return self
 
 
@@ -698,11 +677,8 @@ class DatasetTaskEntry(StrictModel):
             raise ValueError("easy tasks are not eligible for the research dataset")
         if self.source.contamination_risk == "unknown":
             raise ValueError("research dataset entries require a contamination-risk audit")
-        if not (
-            self.source.issue_url is not None and self.source.issue_url.strip()
-        ) and not (
-            self.source.pull_request_url is not None
-            and self.source.pull_request_url.strip()
+        if not (self.source.issue_url is not None and self.source.issue_url.strip()) and not (
+            self.source.pull_request_url is not None and self.source.pull_request_url.strip()
         ):
             raise ValueError(
                 "research dataset entries require an upstream issue or pull request URL"
@@ -815,9 +791,7 @@ class StressLane(StrictModel):
         if len(self.scenarios) != len(set(self.scenarios)):
             raise ValueError("stress lane scenarios must be unique")
         if self.selection_rationale and set(self.selection_rationale) != set(self.task_ids):
-            raise ValueError(
-                "stress selection_rationale keys must match the selected task_ids"
-            )
+            raise ValueError("stress selection_rationale keys must match the selected task_ids")
         if any(not rationale.strip() for rationale in self.selection_rationale.values()):
             raise ValueError("stress selection rationale must not be blank")
         if self.schedule is not None:
@@ -913,9 +887,7 @@ class DatasetManifest(StrictModel):
                     "frozen stress lane requires a selection policy and fault schedule"
                 )
             if set(lane.selection_rationale) != set(lane.task_ids):
-                raise ValueError(
-                    "frozen stress lane requires rationale for every selected task"
-                )
+                raise ValueError("frozen stress lane requires rationale for every selected task")
             eligible_sentinels = {
                 entry.task_id
                 for entry in self.tasks
@@ -929,8 +901,7 @@ class DatasetManifest(StrictModel):
             ineligible = sorted(set(lane.task_ids) - eligible_sentinels)
             if ineligible:
                 raise ValueError(
-                    "frozen stress lane requires admitted held-out tasks: "
-                    + ", ".join(ineligible)
+                    "frozen stress lane requires admitted held-out tasks: " + ", ".join(ineligible)
                 )
         return self
 
@@ -990,13 +961,8 @@ class FaultSpec(StrictModel):
 
     @model_validator(mode="after")
     def validate_controlled_rejection_trigger(self) -> FaultSpec:
-        if (
-            self.type == "controlled-reject-first-prepared-patch"
-            and self.trigger_after != 1
-        ):
-            raise ValueError(
-                "controlled rejection requires trigger_after=1"
-            )
+        if self.type == "controlled-reject-first-prepared-patch" and self.trigger_after != 1:
+            raise ValueError("controlled rejection requires trigger_after=1")
         return self
 
 
@@ -1041,24 +1007,19 @@ class RunManifest(StrictModel):
     @model_validator(mode="after")
     def validate_corrective_runtime_contract(self) -> RunManifest:
         corrective_pair_v7 = (
-            self.tool_schema_version == "v4"
-            and self.context_policy_version == "phase-evidence-v7"
+            self.tool_schema_version == "v4" and self.context_policy_version == "phase-evidence-v7"
         )
         saturation_pair_v8 = (
-            self.tool_schema_version == "v4"
-            and self.context_policy_version == "phase-evidence-v8"
+            self.tool_schema_version == "v4" and self.context_policy_version == "phase-evidence-v8"
         )
         review_evidence_pair_v9 = (
-            self.tool_schema_version == "v4"
-            and self.context_policy_version == "phase-evidence-v9"
+            self.tool_schema_version == "v4" and self.context_policy_version == "phase-evidence-v9"
         )
         coverage_review_pair_v10 = (
-            self.tool_schema_version == "v5"
-            and self.context_policy_version == "phase-evidence-v10"
+            self.tool_schema_version == "v5" and self.context_policy_version == "phase-evidence-v10"
         )
         coverage_rejection_pair_v11 = (
-            self.tool_schema_version == "v6"
-            and self.context_policy_version == "phase-evidence-v11"
+            self.tool_schema_version == "v6" and self.context_policy_version == "phase-evidence-v11"
         )
         corrective_pair = (
             corrective_pair_v7
@@ -1079,56 +1040,35 @@ class RunManifest(StrictModel):
             }
             or self.public_review_contract is not None
         )
-        if corrective_declared and (
-            not corrective_pair or self.public_review_contract is None
-        ):
+        if corrective_declared and (not corrective_pair or self.public_review_contract is None):
             raise ValueError(
                 "corrective runtime requires an exact v4/v7-v9, v5/v10, or "
                 "v6/v11 pair, and a public review contract"
             )
-        if (
-            self.public_review_contract is not None
-            and (
-                (
-                    (
-                        coverage_review_pair_v10
-                        or coverage_rejection_pair_v11
-                    )
-                    and self.public_review_contract.schema_version
-                    != "public-review-contract-v2"
-                )
-                or (
-                    not (
-                        coverage_review_pair_v10
-                        or coverage_rejection_pair_v11
-                    )
-                    and self.public_review_contract.schema_version
-                    != "public-review-contract-v1"
-                )
+        if self.public_review_contract is not None and (
+            (
+                (coverage_review_pair_v10 or coverage_rejection_pair_v11)
+                and self.public_review_contract.schema_version != "public-review-contract-v2"
+            )
+            or (
+                not (coverage_review_pair_v10 or coverage_rejection_pair_v11)
+                and self.public_review_contract.schema_version != "public-review-contract-v1"
             )
         ):
-            raise ValueError(
-                "public review contract version conflicts with the runtime pair"
-            )
+            raise ValueError("public review contract version conflicts with the runtime pair")
         if (
             self.experiment is not None
             and self.experiment.purpose
             == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_CORRECTIVE_PILOT
             and not corrective_pair_v7
         ):
-            raise ValueError(
-                "corrective pilot purpose requires the v4/v7 runtime contract"
-            )
+            raise ValueError("corrective pilot purpose requires the v4/v7 runtime contract")
         saturation_live_pilot = bool(
             self.experiment is not None
             and self.experiment.purpose
             == ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY_SATURATION_PILOT
         )
-        if (
-            saturation_pair_v8
-            and self.experiment is not None
-            and not saturation_live_pilot
-        ):
+        if saturation_pair_v8 and self.experiment is not None and not saturation_live_pilot:
             raise ValueError(
                 "phase-evidence-v8 saturation context is offline-only and "
                 "cannot declare an experiment context outside the exact "
@@ -1137,10 +1077,7 @@ class RunManifest(StrictModel):
         if (
             saturation_pair_v8
             and self.model.provider != "mock"
-            and not (
-                saturation_live_pilot
-                and self.model.provider == "openai"
-            )
+            and not (saturation_live_pilot and self.model.provider == "openai")
         ):
             raise ValueError(
                 "phase-evidence-v8 saturation context is offline-only and "
@@ -1148,13 +1085,9 @@ class RunManifest(StrictModel):
                 "pilot purpose"
             )
         if saturation_live_pilot and not saturation_pair_v8:
-            raise ValueError(
-                "saturation pilot purpose requires the v4/v8 runtime contract"
-            )
+            raise ValueError("saturation pilot purpose requires the v4/v8 runtime contract")
         if saturation_live_pilot and self.model.provider != "openai":
-            raise ValueError(
-                "saturation pilot purpose requires the OpenAI provider"
-            )
+            raise ValueError("saturation pilot purpose requires the OpenAI provider")
         review_evidence_live_pilot = bool(
             self.experiment is not None
             and self.experiment.purpose
@@ -1173,23 +1106,16 @@ class RunManifest(StrictModel):
         if (
             review_evidence_pair_v9
             and self.model.provider != "mock"
-            and not (
-                review_evidence_live_pilot
-                and self.model.provider == "openai"
-            )
+            and not (review_evidence_live_pilot and self.model.provider == "openai")
         ):
             raise ValueError(
                 "phase-evidence-v9 review evidence is offline-only and requires "
                 "the mock provider outside the exact review-evidence pilot purpose"
             )
         if review_evidence_live_pilot and not review_evidence_pair_v9:
-            raise ValueError(
-                "review-evidence pilot purpose requires the v4/v9 runtime contract"
-            )
+            raise ValueError("review-evidence pilot purpose requires the v4/v9 runtime contract")
         if review_evidence_live_pilot and self.model.provider != "openai":
-            raise ValueError(
-                "review-evidence pilot purpose requires the OpenAI provider"
-            )
+            raise ValueError("review-evidence pilot purpose requires the OpenAI provider")
         coverage_review_live_pilot = bool(
             self.experiment is not None
             and self.experiment.purpose
@@ -1208,23 +1134,16 @@ class RunManifest(StrictModel):
         if (
             coverage_review_pair_v10
             and self.model.provider != "mock"
-            and not (
-                coverage_review_live_pilot
-                and self.model.provider == "openai"
-            )
+            and not (coverage_review_live_pilot and self.model.provider == "openai")
         ):
             raise ValueError(
                 "phase-evidence-v10 coverage review is offline-only and requires "
                 "the mock provider outside the exact coverage-review pilot purpose"
             )
         if coverage_review_live_pilot and not coverage_review_pair_v10:
-            raise ValueError(
-                "coverage-review pilot purpose requires the v5/v10 runtime contract"
-            )
+            raise ValueError("coverage-review pilot purpose requires the v5/v10 runtime contract")
         if coverage_review_live_pilot and self.model.provider != "openai":
-            raise ValueError(
-                "coverage-review pilot purpose requires the OpenAI provider"
-            )
+            raise ValueError("coverage-review pilot purpose requires the OpenAI provider")
         coverage_rejection_live_pilot = bool(
             self.experiment is not None
             and self.experiment.purpose
@@ -1243,10 +1162,7 @@ class RunManifest(StrictModel):
         if (
             coverage_rejection_pair_v11
             and self.model.provider != "mock"
-            and not (
-                coverage_rejection_live_pilot
-                and self.model.provider == "openai"
-            )
+            and not (coverage_rejection_live_pilot and self.model.provider == "openai")
         ):
             raise ValueError(
                 "phase-evidence-v11 coverage rejection recovery is offline-only "
@@ -1258,18 +1174,14 @@ class RunManifest(StrictModel):
                 "coverage-rejection pilot purpose requires the v6/v11 runtime contract"
             )
         if coverage_rejection_live_pilot and self.model.provider != "openai":
-            raise ValueError(
-                "coverage-rejection pilot purpose requires the OpenAI provider"
-            )
+            raise ValueError("coverage-rejection pilot purpose requires the OpenAI provider")
         generic_baseline_readiness = bool(
             self.experiment is not None
-            and self.experiment.purpose
-            == ExperimentPurpose.GENERIC_BASELINE_READINESS
+            and self.experiment.purpose == ExperimentPurpose.GENERIC_BASELINE_READINESS
         )
         workflow_completion_probe = bool(
             self.experiment is not None
-            and self.experiment.purpose
-            == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
+            and self.experiment.purpose == ExperimentPurpose.WORKFLOW_COMPLETION_PROBE
         )
         condition_neutral_budget_readiness_probe = bool(
             workflow_completion_probe
@@ -1277,8 +1189,7 @@ class RunManifest(StrictModel):
             and self.experiment.experiment_id
             == CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID
             and self.task_id == "anyio-interrupt-runner-cleanup"
-            and self.experiment.dataset_role
-            == DatasetRole.MEMORY_DEVELOPMENT
+            and self.experiment.dataset_role == DatasetRole.MEMORY_DEVELOPMENT
             and self.experiment.schedule_seed == 20260723
             and self.experiment.schedule_order == 1
             and self.experiment.repetition == 1
@@ -1298,14 +1209,10 @@ class RunManifest(StrictModel):
             )
         condition_neutral_comparison_pilot = bool(
             self.experiment is not None
-            and self.experiment.purpose
-            == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
-            and self.experiment.experiment_id
-            == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
-            and self.task_id
-            == "babel-strict-grouped-decimal-trailing-zeroes"
-            and self.experiment.dataset_role
-            == DatasetRole.DEVELOPMENT_VALIDATION
+            and self.experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_LIVE_PILOT
+            and self.experiment.experiment_id == CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID
+            and self.task_id == "babel-strict-grouped-decimal-trailing-zeroes"
+            and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
             and self.experiment.schedule_seed == 20260723
             and self.experiment.schedule_order == 1
             and self.experiment.repetition == 1
@@ -1333,10 +1240,7 @@ class RunManifest(StrictModel):
             and self.public_review_contract is None
         )
         future_comparison_profile = bool(
-            (
-                future_comparison_purpose is not None
-                or condition_neutral_comparison_pilot
-            )
+            (future_comparison_purpose is not None or condition_neutral_comparison_pilot)
             and self.tool_schema_version == "v2"
             and self.context_policy_version == "phase-evidence-v5"
             and self.model.provider == "openai"
@@ -1421,8 +1325,7 @@ class RunManifest(StrictModel):
                 "public review sidecar"
             )
         count_limits_disabled = bool(
-            self.budget.max_model_calls is None
-            or self.budget.max_tool_calls is None
+            self.budget.max_model_calls is None or self.budget.max_tool_calls is None
         )
         generic_count_observability = bool(
             generic_baseline_readiness
@@ -1485,18 +1388,14 @@ class RunManifest(StrictModel):
             },
         }
         generic_observability_profile = (
-            generic_observability_profiles.get(
-                self.experiment.experiment_id
-            )
+            generic_observability_profiles.get(self.experiment.experiment_id)
             if self.experiment is not None
             else None
         )
         generic_high_headroom_row_identity = bool(
             self.experiment is not None
-            and self.experiment.experiment_id
-            == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
-            and self.experiment.dataset_role
-            == DatasetRole.MEMORY_DEVELOPMENT
+            and self.experiment.experiment_id == GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+            and self.experiment.dataset_role == DatasetRole.MEMORY_DEVELOPMENT
             and self.experiment.schedule_seed == 20260723
             and self.experiment.repetition == 1
             and self.experiment.schedule_order
@@ -1507,20 +1406,76 @@ class RunManifest(StrictModel):
             }.get(self.task_id)
             and self.memory.max_context_tokens == 2_000
         )
+        ac_fixed_bundle_readiness = bool(
+            self.experiment is not None
+            and self.experiment.experiment_id in AC_FIXED_BUNDLE_EXPERIMENT_IDS
+            and self.experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
+            and self.experiment.dataset_role == DatasetRole.DEVELOPMENT_VALIDATION
+            and self.experiment.schedule_seed == 20260723
+            and self.experiment.repetition == 1
+            and self.experiment.schedule_order
+            == {
+                ("moto-query-scanned-count", MemoryCondition.NO_MEMORY): 1,
+                ("moto-query-scanned-count", MemoryCondition.STRUCTURED): 2,
+                (
+                    "babel-strict-grouped-decimal-trailing-zeroes",
+                    MemoryCondition.STRUCTURED,
+                ): 3,
+                (
+                    "babel-strict-grouped-decimal-trailing-zeroes",
+                    MemoryCondition.NO_MEMORY,
+                ): 4,
+            }.get((self.task_id, self.memory.condition))
+            and self.memory_policy_version == AC_FIXED_BUNDLE_POLICY_VERSION
+            and self.model.provider == "openai"
+            and self.model.model_id == "gpt-5.4-mini-2026-03-17"
+            and self.model.reasoning_effort == "medium"
+            and self.model.reasoning_mode == "standard"
+            and self.model.service_tier == "default"
+            and self.model.transport_max_retries == 0
+            and self.model.max_output_tokens == 25_000
+            and self.tool_schema_version == "v2"
+            and self.context_policy_version == "phase-evidence-v5"
+            and self.budget.max_model_calls is None
+            and self.budget.max_tool_calls is None
+            and self.budget.max_total_tokens == 3_000_000
+            and self.budget.wall_clock_timeout_seconds == 3_600
+            and self.memory.max_context_tokens == 2_000
+            and (
+                (
+                    self.memory.condition == MemoryCondition.NO_MEMORY
+                    and self.memory.index_version is None
+                    and self.memory.index_hash is None
+                )
+                or (
+                    self.memory.condition == MemoryCondition.STRUCTURED
+                    and self.memory.index_version == AC_FIXED_BUNDLE_D110_INDEX_VERSION
+                    and self.memory.index_hash == AC_FIXED_BUNDLE_D110_INDEX_CONTENT_HASH
+                )
+            )
+            and self.fault.type == "none"
+            and self.public_review_contract is None
+        )
+        if (
+            self.experiment is not None
+            and self.experiment.purpose == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS
+            and not ac_fixed_bundle_readiness
+        ):
+            raise ValueError(
+                "A/C readiness manifest requires the exact four-row fixed-bundle runtime"
+            )
         if generic_count_observability and not (
             generic_observability_profile is not None
             and self.budget.max_model_calls is None
             and self.budget.max_tool_calls is None
-            and self.budget.max_total_tokens
-            == generic_observability_profile["max_total_tokens"]
+            and self.budget.max_total_tokens == generic_observability_profile["max_total_tokens"]
             and self.budget.wall_clock_timeout_seconds
             == generic_observability_profile["wall_clock_timeout_seconds"]
             and self.task_id in generic_observability_profile["task_ids"]
             and self.model.model_id == "gpt-5.4-mini-2026-03-17"
             and self.model.max_output_tokens == 25_000
             and (
-                self.experiment.experiment_id
-                != GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
+                self.experiment.experiment_id != GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID
                 or generic_high_headroom_row_identity
             )
         ):
@@ -1534,6 +1489,7 @@ class RunManifest(StrictModel):
             or generic_count_observability
             or future_comparison_profile
             or prospective_no_memory_v2
+            or ac_fixed_bundle_readiness
         ):
             raise ValueError(
                 "disabled model/tool call limits are reserved for an exact "
@@ -1643,8 +1599,7 @@ class Usage(StrictModel):
         accounted_input = self.cached_input_tokens + self.cache_write_input_tokens
         if accounted_input > self.input_tokens:
             raise ValueError(
-                "cached_input_tokens + cache_write_input_tokens "
-                "must not exceed input_tokens"
+                "cached_input_tokens + cache_write_input_tokens must not exceed input_tokens"
             )
         if self.reasoning_output_tokens > self.output_tokens:
             raise ValueError("reasoning_output_tokens must not exceed output_tokens")
@@ -1799,9 +1754,7 @@ class MemoryReviewGroup(StrictModel):
             raise ValueError("group member_run_ids must be unique")
         if len(self.member_failure_ids) != len(self.member_run_ids):
             raise ValueError("group failure and run member counts must match")
-        expected_relation = (
-            "single" if len(self.member_run_ids) == 1 else "semantic-duplicate"
-        )
+        expected_relation = "single" if len(self.member_run_ids) == 1 else "semantic-duplicate"
         if self.relation != expected_relation:
             raise ValueError("group relation does not match its member count")
         if self.representative_run_id not in self.member_run_ids:
@@ -1827,15 +1780,11 @@ class MemoryReviewProducer(StrictModel):
     def validate_model_provenance(self) -> MemoryReviewProducer:
         model_fields_present = self.model_id is not None and self.response_artifact_hash is not None
         if self.kind == "model-self-review" and not model_fields_present:
-            raise ValueError(
-                "model self-review requires model_id and response_artifact_hash"
-            )
+            raise ValueError("model self-review requires model_id and response_artifact_hash")
         if self.kind == "maintainer-assisted" and (
             self.model_id is not None or self.response_artifact_hash is not None
         ):
-            raise ValueError(
-                "maintainer-assisted review must not claim model response provenance"
-            )
+            raise ValueError("maintainer-assisted review must not claim model response provenance")
         return self
 
 
@@ -1867,6 +1816,489 @@ class MemoryReviewProposal(StrictModel):
         if source_runs & excluded_runs:
             raise ValueError("source and excluded run IDs must be disjoint")
         return self
+
+
+class D099ArtifactDescriptor(StrictModel):
+    path: str
+    bytes: int = Field(ge=0)
+    sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @field_validator("path")
+    @classmethod
+    def validate_path(cls, value: str) -> str:
+        return safe_relative_path(value, field_name="artifact.path")
+
+
+class D099SourceSeal(D099ArtifactDescriptor):
+    schema_version: Literal["condition-neutral-no-memory-baseline-d098-evidence-v1"]
+    report_id: str = Field(pattern=r"^d098_[0-9a-f]{64}$")
+    semantic_body_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
+class D099CampaignBinding(StrictModel):
+    experiment_id: Literal["dev-no-memory-condition-neutral-3000k-20260805-r1"]
+    execution_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    suite_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    schedule_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    dataset_manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
+class D099EvidenceBoundary(StrictModel):
+    policy: Literal["agent-visible-public-evidence-v2"]
+    allowed_sources: list[str] = Field(min_length=1)
+    prohibited_semantic_sources: list[str] = Field(min_length=1)
+    opaque_integrity_bindings: list[str] = Field(min_length=1)
+    generic_outcome_only: Literal[True]
+    private_task_body_interpreted: Literal[False]
+    hidden_test_body_interpreted: Literal[False]
+    reference_patch_body_interpreted: Literal[False]
+    evaluator_payload_body_interpreted: Literal[False]
+    provider_request_or_response_body_interpreted: Literal[False]
+
+    @field_validator(
+        "allowed_sources",
+        "prohibited_semantic_sources",
+        "opaque_integrity_bindings",
+    )
+    @classmethod
+    def validate_source_lists(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)) or any(not item.strip() for item in value):
+            raise ValueError("D-099 evidence lists must contain unique non-blank values")
+        return value
+
+
+class D099EvidenceRef(StrictModel):
+    evidence_ref_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    role: Literal[
+        "public_inspection",
+        "mutation",
+        "visible_check",
+        "diff",
+        "review",
+        "submission",
+        "generic_outcome",
+    ]
+    sequence: int = Field(ge=1)
+    event_id: str = Field(pattern=r"^evt_[0-9a-f]+$")
+    event_type: Literal[
+        "ToolSucceeded",
+        "PatchApplied",
+        "ReviewRecorded",
+        "SubmissionAccepted",
+        "FailureTagged",
+    ]
+    event_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    artifact_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    artifact_bytes: int | None = Field(default=None, ge=0)
+    check_id: str | None = Field(default=None, min_length=1)
+
+    @model_validator(mode="after")
+    def validate_role_shape(self) -> D099EvidenceRef:
+        expected_types = {
+            "public_inspection": "ToolSucceeded",
+            "mutation": "PatchApplied",
+            "visible_check": "ToolSucceeded",
+            "diff": "ToolSucceeded",
+            "review": "ReviewRecorded",
+            "submission": "SubmissionAccepted",
+            "generic_outcome": "FailureTagged",
+        }
+        if self.event_type != expected_types[self.role]:
+            raise ValueError("D-099 evidence role and event type do not match")
+        artifact_present = self.artifact_hash is not None and self.artifact_bytes is not None
+        if (self.role == "generic_outcome") == artifact_present:
+            raise ValueError("only generic outcome evidence may omit an artifact binding")
+        if (self.role == "visible_check") != (self.check_id is not None):
+            raise ValueError("only visible-check evidence may carry check_id")
+        return self
+
+
+class D099ReviewSource(StrictModel):
+    run_id: str = Field(min_length=1)
+    failure_record_id: str = Field(min_length=1)
+    task_id: str = Field(min_length=1)
+    repetition: int = Field(ge=1)
+    public_spec: D099ArtifactDescriptor
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    failure_record_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    qualification_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    qualification_file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    source_evidence_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    submitted_patch: D099ArtifactDescriptor
+    semantic_group_id: str = Field(min_length=1)
+    assessment: str = Field(min_length=1)
+    causal_confidence: float = Field(ge=0, le=1)
+    evidence_refs: list[D099EvidenceRef] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_evidence_refs(self) -> D099ReviewSource:
+        ref_ids = [ref.evidence_ref_id for ref in self.evidence_refs]
+        sequences = [ref.sequence for ref in self.evidence_refs]
+        if len(ref_ids) != len(set(ref_ids)):
+            raise ValueError("D-099 source evidence reference IDs must be unique")
+        if sequences != sorted(set(sequences)):
+            raise ValueError("D-099 source evidence sequences must be sorted and unique")
+        required = {
+            "public_inspection",
+            "mutation",
+            "visible_check",
+            "diff",
+            "review",
+            "submission",
+            "generic_outcome",
+        }
+        if {ref.role for ref in self.evidence_refs} != required:
+            raise ValueError("D-099 source must contain every public evidence role")
+        return self
+
+
+class D099GroupMember(StrictModel):
+    run_id: str = Field(min_length=1)
+    failure_record_id: str = Field(min_length=1)
+
+
+class D099ProposedRule(StrictModel):
+    failure_class: str = Field(min_length=1)
+    phase: Phase
+    description: str = Field(min_length=1)
+    preconditions: list[str] = Field(min_length=1)
+    diagnostic_evidence: list[str] = Field(min_length=1)
+    recommended_actions: list[str] = Field(min_length=1)
+    do_not_apply_when: list[str] = Field(min_length=1)
+    applicable_languages: list[Literal["python"]] = Field(default_factory=lambda: ["python"])
+    confidence: float = Field(ge=0, le=1)
+    admission_decision: Literal["not_made"]
+
+
+class D099SemanticGroup(StrictModel):
+    semantic_group_id: str = Field(min_length=1)
+    representative_run_id: str = Field(min_length=1)
+    members: list[D099GroupMember] = Field(min_length=1)
+    relation: Literal["single", "semantic-cluster", "exact-duplicate"]
+    merge_rationale: str = Field(min_length=1)
+    dedup_confidence: float = Field(ge=0, le=1)
+    disposition: Literal["candidate", "hold"]
+    evidence_ref_ids: list[str] = Field(min_length=1)
+    semantic_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    proposed_rule: D099ProposedRule | None = None
+    unresolved_reason: str | None = Field(default=None, min_length=1)
+    next_review_actions: list[str] = Field(default_factory=list)
+    admission_decision: Literal["not_made"]
+
+    @model_validator(mode="after")
+    def validate_group_shape(self) -> D099SemanticGroup:
+        member_pairs = [(member.run_id, member.failure_record_id) for member in self.members]
+        if len(member_pairs) != len(set(member_pairs)):
+            raise ValueError("D-099 semantic group members must be unique")
+        if self.representative_run_id not in {member.run_id for member in self.members}:
+            raise ValueError("D-099 representative run must be a group member")
+        if len(self.evidence_ref_ids) != len(set(self.evidence_ref_ids)):
+            raise ValueError("D-099 group evidence reference IDs must be unique")
+        if self.disposition == "candidate":
+            if self.proposed_rule is None or self.unresolved_reason is not None:
+                raise ValueError("candidate groups require only a proposed rule")
+            if self.next_review_actions:
+                raise ValueError("candidate groups must not carry hold review actions")
+        elif (
+            self.proposed_rule is not None
+            or self.unresolved_reason is None
+            or not self.next_review_actions
+        ):
+            raise ValueError("hold groups require only an unresolved reason and review actions")
+        expected_relation = "single" if len(self.members) == 1 else self.relation
+        if len(self.members) == 1 and expected_relation != self.relation:
+            raise ValueError("single-member D-099 groups must use relation=single")
+        if len(self.members) > 1 and self.relation == "single":
+            raise ValueError("multi-member D-099 groups cannot use relation=single")
+        return self
+
+
+class D099ExcludedRun(StrictModel):
+    run_id: str = Field(min_length=1)
+    task_id: str = Field(min_length=1)
+    repetition: int = Field(ge=1)
+    outcome_kind: Literal["resolved", "agent_failure"]
+    reason: Literal["resolved", "canonical_pre_provider_budget"]
+
+
+class D099PopulationPartition(StrictModel):
+    source_row_count: Literal[12]
+    review_source_count: Literal[9]
+    semantic_group_count: Literal[5]
+    candidate_group_count: int = Field(ge=0)
+    candidate_source_count: int = Field(ge=0)
+    hold_group_count: int = Field(ge=0)
+    hold_source_count: int = Field(ge=0)
+    excluded_resolved: list[D099ExcludedRun]
+    excluded_budget: list[D099ExcludedRun]
+    candidate_order_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    group_partition_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
+class D099BuildValidation(StrictModel):
+    source_seal_verified: Literal[True]
+    dataset_manifest_and_public_specs_verified: Literal[True]
+    selected_public_event_refs_verified: int = Field(ge=1)
+    portable_submitted_patches_verified: Literal[9]
+    proposal_text_leak_scan_passed: Literal[True]
+    submitted_patch_leak_scan_passed: Literal[True]
+    original_runtime_state_unchanged: Literal[True]
+    raw_source_audit_performed: Literal[True]
+
+
+class D099Authority(StrictModel):
+    proposal_only: Literal[True]
+    human_admission_status: Literal["pending"]
+    group_approval_completed: Literal[False]
+    admitted_memory_rule_count: Literal[0]
+    d099_review_history_written: Literal[False]
+    memory_admission_unlocked: Literal[False]
+    memory_index_build_authorized: Literal[False]
+    d099_memory_index_built: Literal[False]
+    d099_memory_index_frozen: Literal[False]
+    historical_memory_artifacts_modified: Literal[False]
+    core_campaign_unlocked: Literal[False]
+    analysis_ready: Literal[False]
+    automatic_agent_self_review_observed: Literal[False]
+    exact_hidden_failure_cause_established: Literal[False]
+    agent_architecture_defect_established: Literal[False]
+    harness_defect_established: Literal[False]
+    provider_calls_made: Literal[0]
+    evaluator_calls_made: Literal[0]
+    added_model_cost_usd: Literal[0]
+
+
+class D099ReviewBody(StrictModel):
+    milestone: Literal["D-099"]
+    evidence_kind: Literal["formal-non-admitting-public-review-dedup"]
+    recorded_at: str = Field(min_length=1)
+    producer: MemoryReviewProducer
+    source_seal: D099SourceSeal
+    campaign: D099CampaignBinding
+    evidence_boundary: D099EvidenceBoundary
+    sources: list[D099ReviewSource] = Field(min_length=1)
+    groups: list[D099SemanticGroup] = Field(min_length=1)
+    population_partition: D099PopulationPartition
+    build_validation: D099BuildValidation
+    authority: D099Authority
+    next_gate: str = Field(min_length=1)
+
+
+class D099ReviewProposal(StrictModel):
+    schema_version: Literal["memory-public-review-proposal-d099-v1"]
+    proposal_id: str = Field(pattern=r"^d099_[0-9a-f]{64}$")
+    semantic_body_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    semantic_body: D099ReviewBody
+
+
+class D100ProposalBinding(StrictModel):
+    schema_version: Literal["memory-public-review-proposal-d099-v1"]
+    proposal_id: str = Field(pattern=r"^d099_[0-9a-f]{64}$")
+    semantic_body_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    file_bytes: int = Field(ge=1)
+    file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
+class D100GroupDecisionRecord(StrictModel):
+    schema_version: Literal["memory-group-review-decision-d100-v1"]
+    decision_id: str = Field(pattern=r"^d100dec_[0-9a-f]{64}$")
+    sequence: int = Field(ge=1)
+    event_kind: Literal["DecisionRecorded", "DecisionCorrected"]
+    action_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
+    action_input_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    proposal: D100ProposalBinding
+    semantic_group_id: str = Field(min_length=1)
+    semantic_group_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    group_disposition: Literal["candidate", "hold"]
+    decision: Literal["approve", "reject", "continue_hold"]
+    reviewer_kind: Literal["human", "maintainer_assisted", "synthetic"]
+    reviewer: str = Field(min_length=1, max_length=200)
+    rationale: str = Field(min_length=1, max_length=2_000)
+    proposed_rule_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    previous_decision_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    supersedes_decision_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    recorded_at: str = Field(min_length=1)
+    decision_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_decision_shape(self) -> D100GroupDecisionRecord:
+        if self.decision == "approve":
+            if self.group_disposition != "candidate" or self.proposed_rule_hash is None:
+                raise ValueError("only candidate groups with a bound rule may be approved")
+        elif self.proposed_rule_hash is not None:
+            raise ValueError("non-approval decisions must not bind a proposed rule")
+        if self.event_kind == "DecisionRecorded" and self.supersedes_decision_hash is not None:
+            raise ValueError("an initial group decision cannot supersede another decision")
+        if self.event_kind == "DecisionCorrected" and self.supersedes_decision_hash is None:
+            raise ValueError("a corrected group decision must bind the prior decision")
+        return self
+
+
+class D100DecisionJournalDescriptor(StrictModel):
+    schema_version: Literal["memory-group-review-journal-d100-v1"]
+    file_bytes: int = Field(ge=1)
+    file_sha256: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    record_count: int = Field(ge=1)
+    correction_count: int = Field(ge=0)
+    decided_group_count: int = Field(ge=1)
+    head_decision_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
+class D100MemoryEntryTemplate(StrictModel):
+    target_schema: Literal["memory-entry-v1"]
+    proposed_memory_id: str = Field(pattern=r"^memgrp_[0-9a-f]{32}$")
+    failure_pattern: FailurePattern
+    preconditions: list[str] = Field(min_length=1)
+    diagnostic_evidence: list[str] = Field(min_length=1)
+    recommended_actions: list[str] = Field(min_length=1)
+    do_not_apply_when: list[str] = Field(min_length=1)
+    applicable_languages: list[Literal["python"]] = Field(min_length=1)
+    source_run_ids: list[str] = Field(min_length=1)
+    validation_count: Literal[0]
+    confidence: float = Field(ge=0, le=1)
+
+
+class D100PreviewProvenance(StrictModel):
+    semantic_group_id: str = Field(min_length=1)
+    semantic_group_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    decision_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    source_failure_ids: list[str] = Field(min_length=1)
+    evidence_ref_ids: list[str] = Field(min_length=1)
+    dedup_confidence: float = Field(ge=0, le=1)
+
+
+class D100ProjectedEntry(StrictModel):
+    template: D100MemoryEntryTemplate
+    provenance: D100PreviewProvenance
+    template_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
+class D100PreviewAuthority(StrictModel):
+    projection_only: Literal[True]
+    complete_group_decisions_validated: Literal[True]
+    external_head_anchor_validated: bool
+    admission_seal_created: Literal[False]
+    admitted_memory_rule_count: Literal[0]
+    memory_admission_unlocked: Literal[False]
+    memory_index_build_authorized: Literal[False]
+    memory_index_built: Literal[False]
+    memory_index_frozen: Literal[False]
+    core_campaign_unlocked: Literal[False]
+    analysis_ready: Literal[False]
+    provider_calls_made: Literal[0]
+    evaluator_calls_made: Literal[0]
+    added_model_cost_usd: Literal[0]
+
+
+class D100EntryPreviewBody(StrictModel):
+    milestone: Literal["D-100"]
+    evidence_kind: Literal["group-aware-memory-entry-preview"]
+    proposal: D100ProposalBinding
+    journal: D100DecisionJournalDescriptor
+    final_decision_hashes: dict[str, str] = Field(min_length=5, max_length=5)
+    approved_group_ids: list[str]
+    rejected_group_ids: list[str]
+    continued_hold_group_ids: list[str]
+    entries: list[D100ProjectedEntry]
+    leak_scan_passed: Literal[True]
+    authority: D100PreviewAuthority
+
+
+class D100EntryPreview(StrictModel):
+    schema_version: Literal["memory-entry-preview-d100-v1"]
+    preview_id: str = Field(pattern=r"^d100preview_[0-9a-f]{64}$")
+    semantic_body_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    semantic_body: D100EntryPreviewBody
+
+
+class D100SourceGroupBinding(StrictModel):
+    semantic_group_id: str = Field(min_length=1)
+    semantic_group_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    disposition: Literal["candidate", "hold"]
+    proposed_rule_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+
+    @model_validator(mode="after")
+    def validate_rule_binding(self) -> D100SourceGroupBinding:
+        if self.disposition == "candidate" and self.proposed_rule_hash is None:
+            raise ValueError("candidate source groups require an exact proposed rule hash")
+        if self.disposition == "hold" and self.proposed_rule_hash is not None:
+            raise ValueError("hold source groups must not bind a proposed rule")
+        return self
+
+
+class D100SourceMechanism(StrictModel):
+    decision_schema: Literal["memory-group-review-decision-d100-v1"]
+    journal_schema: Literal["memory-group-review-journal-d100-v1"]
+    preview_schema: Literal["memory-entry-preview-d100-v1"]
+    target_entry_schema: Literal["memory-entry-v1"]
+    semantic_group_count: Literal[5]
+    tail_cas_required: Literal[True]
+    action_idempotency_required: Literal[True]
+    correction_binds_effective_group_head: Literal[True]
+    append_flush_and_fsync: Literal[True]
+    canonical_rows_required: Literal[True]
+    snapshot_consistency_required: Literal[True]
+    malformed_or_hash_inconsistent_chain_fails_closed: Literal[True]
+    external_head_anchor_supported: Literal[True]
+    external_head_anchor_required_for_suffix_rewrite_detection: Literal[True]
+    reviewer_provenance_self_attested: Literal[True]
+    one_approved_group_per_template: Literal[True]
+    preview_has_no_index_version_or_embedding: Literal[True]
+    legacy_failure_builder_connected: Literal[False]
+
+
+class D100SourceAuthority(StrictModel):
+    mechanism_source_gate_only: Literal[True]
+    production_human_decision_records: Literal[0]
+    group_review_completed: Literal[False]
+    admission_seal_created: Literal[False]
+    admitted_memory_rule_count: Literal[0]
+    preview_entry_count: Literal[0]
+    memory_admission_unlocked: Literal[False]
+    memory_index_build_authorized: Literal[False]
+    memory_index_built: Literal[False]
+    memory_index_frozen: Literal[False]
+    historical_memory_artifacts_modified: Literal[False]
+    core_campaign_unlocked: Literal[False]
+    analysis_ready: Literal[False]
+    provider_calls_made: Literal[0]
+    evaluator_calls_made: Literal[0]
+    added_model_cost_usd: Literal[0]
+
+
+class D100SourceGateBody(StrictModel):
+    milestone: Literal["D-100"]
+    evidence_kind: Literal["group-review-projector-offline-source-gate"]
+    recorded_at: str = Field(min_length=1)
+    proposal: D100ProposalBinding
+    group_bindings: list[D100SourceGroupBinding] = Field(min_length=5, max_length=5)
+    implementation_files: list[D099ArtifactDescriptor] = Field(min_length=1)
+    commands: list[str] = Field(min_length=4)
+    mechanism: D100SourceMechanism
+    authority: D100SourceAuthority
+    next_gate: Literal["explicit-human-group-decisions-and-portable-admission-seal"]
+
+
+class D100SourceGate(StrictModel):
+    schema_version: Literal["memory-group-review-projector-source-gate-d100-v1"]
+    gate_id: str = Field(pattern=r"^d100_[0-9a-f]{64}$")
+    semantic_body_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    semantic_body: D100SourceGateBody
 
 
 class RetrievalCandidate(StrictModel):

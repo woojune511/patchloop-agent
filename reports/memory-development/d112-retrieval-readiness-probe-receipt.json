@@ -1,0 +1,279 @@
+{
+  "schema_version": "retrieval-readiness-scoring-diagnostic-receipt-d112-v1",
+  "receipt_id": "d112probereceipt_ad73368b4b0f47174f53762c917f9f39f17e22ac3bd077d795b0b9e1ac8c9257",
+  "semantic_body_hash": "sha256:ad73368b4b0f47174f53762c917f9f39f17e22ac3bd077d795b0b9e1ac8c9257",
+  "semantic_body": {
+    "milestone": "D-112",
+    "evidence_kind": "self-attested-approval-and-one-use-scoring-execution-claim",
+    "approval_recorded_at": "2026-08-06T16:41:32.316176Z",
+    "execution_claimed_at": "2026-08-06T17:16:20.878831Z",
+    "approval_action_id": "d112-exact-d111-local-read-only-scoring-diagnostic-1",
+    "approval_reference": "user-message:d111-exact-d112-scoring-diagnostic-approval",
+    "approval_reference_mode": "explicit-separate-message-exact-candidate-triple",
+    "approval_statement_code": "EXPLICITLY_APPROVE_D111_EXACT_D112_LOCAL_SCORING_ONCE",
+    "d111_source_gate": {
+      "path": "reports/memory-development/d111-retrieval-readiness-authorization-source-gate.json",
+      "file_bytes": 3308,
+      "file_sha256": "sha256:d550cb048e417965e482c64682df4a1b91b90067f66b36e370912f5a8d759c16",
+      "gate_id": "d111_348e6dd21ad0816a3c4dc1889f2d7a421c7e41194c48b2fe5c7120513f6b3524",
+      "semantic_body_hash": "sha256:348e6dd21ad0816a3c4dc1889f2d7a421c7e41194c48b2fe5c7120513f6b3524"
+    },
+    "d111_candidate": {
+      "path": "reports/memory-development/d111-retrieval-readiness-authorization-candidate.json",
+      "file_bytes": 6465,
+      "file_sha256": "sha256:f91aa284cc7a2add2516f44b4397b29e3aee5caa4cf0f83ec7913e6e5d7899d6",
+      "candidate_id": "d111retrievalcandidate_bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+      "semantic_body_hash": "sha256:bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+      "action_hash": "sha256:4b94f6ba6d10a2e939e1f3dea9c9ce3d52a4cfafffa0fae68915b2287b1b449b"
+    },
+    "authorized_action_hash": "sha256:4b94f6ba6d10a2e939e1f3dea9c9ce3d52a4cfafffa0fae68915b2287b1b449b",
+    "authorized_scope": {
+      "action_schema_version": "exact-group-retrieval-readiness-probe-d111-v1",
+      "maximum_executions": 1,
+      "automatic_retry_authorized": false,
+      "local_embedding_model_load_count": 1,
+      "local_batch_encode_call_count": 1,
+      "local_batch_query_row_count": 3,
+      "expected_query_vector_shape": [
+        3,
+        384
+      ],
+      "expected_query_vector_dtype": "float32",
+      "device": "cpu",
+      "local_files_only": true,
+      "trust_remote_code": false,
+      "network_access_authorized": false,
+      "legacy_retrieve_memory_authorized": false,
+      "memory_text_return_authorized": false,
+      "runtime_memory_injection_authorized": false,
+      "agent_context_rendering_authorized": false,
+      "agent_run_authorized": false,
+      "provider_calls_authorized": 0,
+      "evaluator_calls_authorized": 0,
+      "score_policy_change_authorized": false,
+      "threshold_change_authorized": false,
+      "memory_entry_change_authorized": false,
+      "retrieval_experiment_authorized": false,
+      "core_campaign_authorized": false,
+      "analysis_campaign_authorized": false
+    },
+    "probe_ids_in_order": [
+      "moto-implement-positive-hypothesis",
+      "babel-implement-no-match-control",
+      "moto-reproduce-phase-control"
+    ],
+    "pre_execution_input": {
+      "schema_version": "retrieval-readiness-scoring-input-state-d112-v1",
+      "fingerprint": "sha256:d54454b2693e231c0ef50c94b20d75d58f00a885dfae98d3b6b190665f9d2e17",
+      "state": {
+        "d111_source_gate": {
+          "path": "reports/memory-development/d111-retrieval-readiness-authorization-source-gate.json",
+          "file_bytes": 3308,
+          "file_sha256": "sha256:d550cb048e417965e482c64682df4a1b91b90067f66b36e370912f5a8d759c16",
+          "gate_id": "d111_348e6dd21ad0816a3c4dc1889f2d7a421c7e41194c48b2fe5c7120513f6b3524",
+          "semantic_body_hash": "sha256:348e6dd21ad0816a3c4dc1889f2d7a421c7e41194c48b2fe5c7120513f6b3524"
+        },
+        "d111_candidate": {
+          "path": "reports/memory-development/d111-retrieval-readiness-authorization-candidate.json",
+          "file_bytes": 6465,
+          "file_sha256": "sha256:f91aa284cc7a2add2516f44b4397b29e3aee5caa4cf0f83ec7913e6e5d7899d6",
+          "candidate_id": "d111retrievalcandidate_bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+          "semantic_body_hash": "sha256:bfde5cfe1c75cd90e8d78a0960b6d5ac7986420016d805e75b9725abdb20fe7a",
+          "action_hash": "sha256:4b94f6ba6d10a2e939e1f3dea9c9ce3d52a4cfafffa0fae68915b2287b1b449b"
+        },
+        "d110_completion_gate": {
+          "path": "reports/memory-development/d110-index-freeze-completion-gate.json",
+          "file_bytes": 7754,
+          "file_sha256": "sha256:79578db09955dab2a22b015ba5210baec28e7d30b9cac818b1f2c6d6eac782cd",
+          "gate_id": "d110_bc1cae7a2ebc5d6531d203ef4d7101762d7366c9e77814c3a4c772d353f0a736",
+          "semantic_body_hash": "sha256:bc1cae7a2ebc5d6531d203ef4d7101762d7366c9e77814c3a4c772d353f0a736"
+        },
+        "portable_frozen_index": {
+          "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+          "file_bytes": 55687,
+          "file_sha256": "sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0"
+        },
+        "portable_frozen_marker": {
+          "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN",
+          "file_bytes": 72,
+          "file_sha256": "sha256:cdfe40b734135a30f66e34ff24469940063a7231a1fe0783420ee2ff816d9561"
+        },
+        "portable_d106_unfrozen_index": {
+          "path": "reports/memory-development/artifacts/d106/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064.json",
+          "file_bytes": 55644,
+          "file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a"
+        },
+        "frozen_model_facing_text": {
+          "entries": [
+            {
+              "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+              "file_bytes": 1191,
+              "file_sha256": "sha256:f1cd44ed10d527ff7f5c44dd0be4e6957810530cd055d3329da0d7962d3cec7c"
+            },
+            {
+              "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+              "file_bytes": 1164,
+              "file_sha256": "sha256:ab0273b575f76efd4ca9facda9540d87f2ea85e69a333cf87e4d7ac781287c2a"
+            },
+            {
+              "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+              "file_bytes": 1161,
+              "file_sha256": "sha256:00ceca8ed912a48f36ab26fb50b1d7eb428fe261a83b2bd84e231f0c6e786bf7"
+            }
+          ],
+          "bundle_bytes": 3528,
+          "bundle_sha256": "sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf",
+          "text_included_in_evidence": false
+        },
+        "public_probes": [
+          {
+            "probe_id": "moto-implement-positive-hypothesis",
+            "task_id": "moto-query-scanned-count",
+            "phase": "IMPLEMENT",
+            "query_bytes": 586,
+            "query_sha256": "sha256:8ad844e48f313b1b86bbc17a14492797e512fec47a5842b834e4302cf7b74f5e",
+            "query_phase_sha256": "sha256:bd143addcb62ae16038b4eb2c8edbec1b15653f6003a999a7e667fc38e95bc17",
+            "public_task_file_bytes": 2839,
+            "public_task_file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7",
+            "hypothesis_kind": "semantic-positive-not-acceptance-criterion",
+            "hypothesized_group_id": "platform-emulation-matrix-gap"
+          },
+          {
+            "probe_id": "babel-implement-no-match-control",
+            "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+            "phase": "IMPLEMENT",
+            "query_bytes": 695,
+            "query_sha256": "sha256:d400778dbaf3d084d52d7b8c82dfc0dfcbe989dbb241b68e26d38abf42f6f48b",
+            "query_phase_sha256": "sha256:133c56d6b2c92d416ddf2f3e36d45bf6b7c062f7d676911c3e6ee3e358b3d7fb",
+            "public_task_file_bytes": 2023,
+            "public_task_file_sha256": "sha256:d65e09fe70bb0449c85e663d0eeb695fe52bc7fb34619debbbe81a0b16ab2aca",
+            "hypothesis_kind": "no-match-negative-transfer-control-not-acceptance-criterion",
+            "hypothesized_group_id": null
+          },
+          {
+            "probe_id": "moto-reproduce-phase-control",
+            "task_id": "moto-query-scanned-count",
+            "phase": "REPRODUCE",
+            "query_bytes": 586,
+            "query_sha256": "sha256:8ad844e48f313b1b86bbc17a14492797e512fec47a5842b834e4302cf7b74f5e",
+            "query_phase_sha256": "sha256:5e8cae5fa2c4dc1949c5a2a33a6483ca39d790c4389cdd7c6470d78f65e4a0e5",
+            "public_task_file_bytes": 2839,
+            "public_task_file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7",
+            "hypothesis_kind": "phase-sensitivity-control-not-acceptance-criterion",
+            "hypothesized_group_id": null
+          }
+        ],
+        "embedding_snapshot": {
+          "model_id": "sentence-transformers/all-MiniLM-L6-v2",
+          "revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+          "snapshot_manifest_hash": "sha256:e497d8dad53f09ddc8b9fcc9b81e3ff778e002e120ab4254c72993d8611959cb",
+          "required_file_count": 10,
+          "files": [
+            {
+              "path": "1_Pooling/config.json",
+              "bytes": 190,
+              "local_sha256": "sha256:4be450dde3b0273bb9787637cfbd28fe04a7ba6ab9d36ac48e92b11e350ffc23",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "config.json",
+              "bytes": 612,
+              "local_sha256": "sha256:953f9c0d463486b10a6871cc2fd59f223b2c70184f49815e7efbcab5d8908b41",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "config_sentence_transformers.json",
+              "bytes": 116,
+              "local_sha256": "sha256:061ca9d39661d6c6d6de5ba27f79a1cd5770ea247f8d46412a68a498dc5ac9f3",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "model.safetensors",
+              "bytes": 90868376,
+              "local_sha256": "sha256:53aa51172d142c89d9012cce15ae4d6cc0ca6895895114379cacb4fab128d9db",
+              "upstream_verification": "lfs-sha256"
+            },
+            {
+              "path": "modules.json",
+              "bytes": 349,
+              "local_sha256": "sha256:84e40c8e006c9b1d6c122e02cba9b02458120b5fb0c87b746c41e0207cf642cf",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "sentence_bert_config.json",
+              "bytes": 53,
+              "local_sha256": "sha256:fc1993fde0a95c24ec6c022539d41cf6e2f7c9721e5415d6fb6897472a9cd4b7",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "special_tokens_map.json",
+              "bytes": 112,
+              "local_sha256": "sha256:303df45a03609e4ead04bc3dc1536d0ab19b5358db685b6f3da123d05ec200e3",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "tokenizer.json",
+              "bytes": 466247,
+              "local_sha256": "sha256:be50c3628f2bf5bb5e3a7f17b1f74611b2561a3a27eeab05e5aa30f411572037",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "tokenizer_config.json",
+              "bytes": 350,
+              "local_sha256": "sha256:acb92769e8195aabd29b7b2137a9e6d6e25c476a4f15aa4355c233426c61576b",
+              "upstream_verification": "git-blob-sha1"
+            },
+            {
+              "path": "vocab.txt",
+              "bytes": 231508,
+              "local_sha256": "sha256:07eced375cec144d27c900241f3e339478dec958f92fddbc551f295c992038a3",
+              "upstream_verification": "git-blob-sha1"
+            }
+          ],
+          "safetensors_only": true
+        },
+        "locked_dependencies": {
+          "huggingface-hub": "1.24.0",
+          "numpy": "2.5.1",
+          "safetensors": "0.8.0",
+          "sentence-transformers": "5.6.0",
+          "tokenizers": "0.22.2",
+          "torch": "2.13.0",
+          "transformers": "5.14.1"
+        },
+        "implementation_files": [
+          {
+            "path": "patchloop/memory/d112_retrieval_readiness_probe.py",
+            "file_bytes": 54182,
+            "file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b"
+          },
+          {
+            "path": "scripts/run_d112_retrieval_readiness_probe.py",
+            "file_bytes": 2000,
+            "file_sha256": "sha256:308ed1e6499da73edf064a8ecd211c526c4ef4c0fc0123623f1723135b78cd9e"
+          },
+          {
+            "path": "tests/test_d112_retrieval_readiness_probe.py",
+            "file_bytes": 11297,
+            "file_sha256": "sha256:3629de37190cd8337fb3a5c2da07eb6795ca65f8e6599f4ac275fd135e393bb6"
+          }
+        ]
+      }
+    },
+    "claim_semantics": {
+      "exclusive_create_and_fsync_required": true,
+      "claim_created_before_model_load": true,
+      "receipt_is_one_use_consumption_marker": true,
+      "failure_or_hard_kill_remains_consumed": true,
+      "automatic_retry_or_rollback_allowed": false,
+      "completion_gate_required_for_success": true,
+      "sidecar_does_not_modify_frozen_authority": true
+    },
+    "self_attested": true,
+    "approver_kind": "human",
+    "approver_label": "chat-maintainer-self-attested",
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false,
+    "execution_result_present": false
+  }
+}

@@ -1,0 +1,520 @@
+{
+  "schema_version": "external-source-evidence-pack-d118-v1",
+  "evidence_pack_id": "d118evidencepack_e40dad5ceac6dcfbb29d47bec3a548c44bdcbeba964e4e7a43818b76e8c62f10",
+  "semantic_body_hash": "sha256:e40dad5ceac6dcfbb29d47bec3a548c44bdcbeba964e4e7a43818b76e8c62f10",
+  "semantic_body": {
+    "milestone": "D-118",
+    "evidence_kind": "sanitized-external-source-evidence-pack-not-a-pool",
+    "recorded_at": "2026-08-07T10:17:02Z",
+    "approval_receipt": {
+      "path": "reports/memory-development/d118-external-source-evidence-approval-receipt.json",
+      "receipt_id": "d118approval_2a7461b834374e4a34db8c02850501d0ad9e8416e7a4bf7f73613abef08713a2",
+      "semantic_body_hash": "sha256:2a7461b834374e4a34db8c02850501d0ad9e8416e7a4bf7f73613abef08713a2",
+      "file_bytes": 4199,
+      "file_sha256": "sha256:0adb87887b42a19aa8d1b9be3ca5268801666bbecb2cf94b4664e3df1dba8344"
+    },
+    "preflight": {
+      "path": "reports/memory-development/d118-external-source-evidence-preflight.json",
+      "preflight_id": "d118preflight_1f11c66f174e5e475ef9d94df7810c568857f02a8164edf30287778276dab4b0",
+      "semantic_body_hash": "sha256:1f11c66f174e5e475ef9d94df7810c568857f02a8164edf30287778276dab4b0",
+      "file_bytes": 17476,
+      "file_sha256": "sha256:4f4bff33cbf55e841f86da0a30fc67885f9302fa2f149dde040a3d85a2c4c0b3"
+    },
+    "research_summary": {
+      "official_source_families_considered": 3,
+      "revision_pinned_snapshots_bound": 2,
+      "preferred_provisional_source_id": "swe-bench-dev-f5351",
+      "preferred_is_not_admitted_or_selected": true,
+      "preference_reason": "official-dev-split-smaller-surface-same-exact-shard-as-observed-source",
+      "terminal_bench_excluded_before_download": true,
+      "actual_pool_or_independent_control_count": 0
+    },
+    "source_candidates": [
+      {
+        "source_id": "swe-bench-dev-f5351",
+        "priority": 1,
+        "benchmark_family": "SWE-bench",
+        "publisher": "princeton-nlp",
+        "official_repository_id": "princeton-nlp/SWE-bench",
+        "development_role": "dev",
+        "exact_revision": "f5351ee8c6663736817027db3ad03fe662cb5bb8",
+        "official_commit_url": "https://huggingface.co/datasets/princeton-nlp/SWE-bench/commit/f5351ee8c6663736817027db3ad03fe662cb5bb8",
+        "downloaded_opaque_objects": [
+          {
+            "source_id": "swe-bench-dev-f5351",
+            "path": ".patchloop/external-evidence/d118/swe-bench-f5351/.gitattributes",
+            "file_bytes": 2307,
+            "file_sha256": "sha256:f4e703ea6e44bbebe53aceed2a89c11e40b88b7ae130c480c89860ab805ffc8f",
+            "media_kind": "source-level-git-metadata"
+          },
+          {
+            "source_id": "swe-bench-dev-f5351",
+            "path": ".patchloop/external-evidence/d118/swe-bench-f5351/README.md",
+            "file_bytes": 3880,
+            "file_sha256": "sha256:807eeb9e3a95b1b06958d7b7d93bc796c9b454fffdfa22f646ccfff2e17af45c",
+            "media_kind": "source-level-dataset-card"
+          },
+          {
+            "source_id": "swe-bench-dev-f5351",
+            "path": ".patchloop/external-evidence/d118/swe-bench-f5351/data/dev-00000-of-00001.parquet",
+            "file_bytes": 1382594,
+            "file_sha256": "sha256:d758d54540aa4140d0274ed0cc93b8288aa6f323c3c603e2557e7666a47fc41b",
+            "media_kind": "opaque-record-container"
+          }
+        ],
+        "object_set_hash": "sha256:ce9505a9c5a12907f60e253d52131e0b371febf07f37418718412fcd5dd03123",
+        "snapshot_hash_and_size_verified": true,
+        "snapshot_body_decoded": false,
+        "archive_extracted": false,
+        "record_fields_read": [],
+        "issue_or_task_record_read_count": 0,
+        "membership_evidence": {
+          "source_id": "swe-bench-dev-f5351",
+          "development_role": "dev",
+          "rule_kind": "grammar-independent-exhaustive-official-split-rule",
+          "rule_text": "all rows in the sole data/dev-* shard at the exact revision",
+          "membership_glob": "data/dev-*",
+          "exact_revision": "f5351ee8c6663736817027db3ad03fe662cb5bb8",
+          "provider_declared_member_count": 225,
+          "verified_member_count": null,
+          "member_id_read_count": 0,
+          "record_content_read_count": 0,
+          "content_or_label_dependent_selection": false,
+          "post_d116_subset_selection_allowed": false,
+          "provider_reports_rule_and_shard_content_bound_in_tree": true,
+          "provider_tree_binding_verified_from_bound_inputs_by_d118": false,
+          "provider_tree_claim_evidence_kind": "source-level-web-research-self-attested",
+          "readme_rule_or_count_parsed_by_d118": false,
+          "rule_trusted_pre_d116_time_bound": false,
+          "rule_hash": "sha256:5d332429af39af0b891402c6c48844cff4e12bc9825358cd8d2ff708fab1f508"
+        },
+        "cutoff_evidence": {
+          "source_id": "swe-bench-dev-f5351",
+          "exact_revision": "f5351ee8c6663736817027db3ad03fe662cb5bb8",
+          "provider_reported_commit_date": "2024-06-27",
+          "provider_reports_gpg_verified_commit": true,
+          "provider_badge_observation_evidence_kind": "source-level-web-research-self-attested-not-portable-proof",
+          "signature_payload_and_key_verified_locally": false,
+          "git_timestamp_accepted_as_trusted_time": false,
+          "current_download_time_accepted_as_preexistence": false,
+          "http_date_or_last_modified_accepted_as_preexistence": false,
+          "independent_timestamp_or_immutable_archive_binds_exact_tree": false,
+          "trusted_anchor_binds_snapshot_and_membership_rule": false,
+          "strictly_before_d116_cutoff_verified": false,
+          "reason_codes": [
+            "TRUSTED_CUTOFF_ANCHOR_MISSING",
+            "SIGNED_GIT_TREE_IS_NOT_AN_INDEPENDENT_TIMESTAMP",
+            "MEMBERSHIP_RULE_NOT_TRUSTED_TIME_BOUND"
+          ]
+        },
+        "provider_declared_member_count": 225,
+        "verified_member_count": null,
+        "provider_reports_gpg_verified_commit": true,
+        "provider_revision_membership_and_badge_claim_evidence_kind": "source-level-web-research-self-attested-not-rebuilt-from-bound-inputs",
+        "provider_tree_or_signature_proof_bound_in_pack": false,
+        "signature_payload_and_key_verified_locally": false,
+        "license_claim_scope": "official dataset/code repository metadata only",
+        "upstream_issue_content_relicensed": false,
+        "lineage_overlap_with_existing_tasks_checked": false,
+        "public_only_sanitized_projection_created": false,
+        "pool_selected_acquired_or_frozen": false,
+        "post_hoc": true,
+        "independent": false,
+        "eligible_for_independent_calibration": false,
+        "disposition": "BLOCKED_INSUFFICIENT_PREEXISTENCE",
+        "reason_codes": [
+          "TRUSTED_CUTOFF_ANCHOR_MISSING",
+          "MEMBERSHIP_RULE_NOT_TRUSTED_TIME_BOUND",
+          "SOURCE_SELECTION_NOT_PRECOMMITTED_BEFORE_D116",
+          "ISOLATION_PROFILE_NOT_EXECUTED",
+          "LINEAGE_OVERLAP_NOT_CHECKED"
+        ]
+      },
+      {
+        "source_id": "swe-gym-train-26a6",
+        "priority": 2,
+        "benchmark_family": "SWE-Gym",
+        "publisher": "SWE-Gym",
+        "official_repository_id": "SWE-Gym/SWE-Gym",
+        "development_role": "train",
+        "exact_revision": "26a6eae79ae9cb6d4307c3cc99c126fbf23cb3f0",
+        "official_commit_url": "https://huggingface.co/datasets/SWE-Gym/SWE-Gym/commit/26a6eae79ae9cb6d4307c3cc99c126fbf23cb3f0",
+        "downloaded_opaque_objects": [
+          {
+            "source_id": "swe-gym-train-26a6",
+            "path": ".patchloop/external-evidence/d118/swe-gym-26a6/.gitattributes",
+            "file_bytes": 2461,
+            "file_sha256": "sha256:e7a120ab07b1bc5b486be249e9fc6c83d59448d0093e1dfebe95d1566d9cafc0",
+            "media_kind": "source-level-git-metadata"
+          },
+          {
+            "source_id": "swe-gym-train-26a6",
+            "path": ".patchloop/external-evidence/d118/swe-gym-26a6/README.md",
+            "file_bytes": 680,
+            "file_sha256": "sha256:e6aadc383f198bb7592af3c077d8dd71d350a86bea76e1218fd1042fe4b99a04",
+            "media_kind": "source-level-dataset-card"
+          },
+          {
+            "source_id": "swe-gym-train-26a6",
+            "path": ".patchloop/external-evidence/d118/swe-gym-26a6/data/train-00000-of-00001.parquet",
+            "file_bytes": 43644473,
+            "file_sha256": "sha256:60569cea74bb281f7a5579467436a2bc1932c6e0c5f2f7fa0d084392abd9ad97",
+            "media_kind": "opaque-record-container"
+          }
+        ],
+        "object_set_hash": "sha256:8ca8be004077ce6c1923b83d8b23a36ad1efe0940fd973ab2595feb16c64f5d0",
+        "snapshot_hash_and_size_verified": true,
+        "snapshot_body_decoded": false,
+        "archive_extracted": false,
+        "record_fields_read": [],
+        "issue_or_task_record_read_count": 0,
+        "membership_evidence": {
+          "source_id": "swe-gym-train-26a6",
+          "development_role": "train",
+          "rule_kind": "grammar-independent-exhaustive-official-split-rule",
+          "rule_text": "all rows in the sole data/train-* shard at the exact revision",
+          "membership_glob": "data/train-*",
+          "exact_revision": "26a6eae79ae9cb6d4307c3cc99c126fbf23cb3f0",
+          "provider_declared_member_count": 2438,
+          "verified_member_count": null,
+          "member_id_read_count": 0,
+          "record_content_read_count": 0,
+          "content_or_label_dependent_selection": false,
+          "post_d116_subset_selection_allowed": false,
+          "provider_reports_rule_and_shard_content_bound_in_tree": true,
+          "provider_tree_binding_verified_from_bound_inputs_by_d118": false,
+          "provider_tree_claim_evidence_kind": "source-level-web-research-self-attested",
+          "readme_rule_or_count_parsed_by_d118": false,
+          "rule_trusted_pre_d116_time_bound": false,
+          "rule_hash": "sha256:8b4863b5381ee546ce24c98b9511bc96bb7ed18bab6a1392ed7307d4185d0b6a"
+        },
+        "cutoff_evidence": {
+          "source_id": "swe-gym-train-26a6",
+          "exact_revision": "26a6eae79ae9cb6d4307c3cc99c126fbf23cb3f0",
+          "provider_reported_commit_date": "2024-12-09",
+          "provider_reports_gpg_verified_commit": true,
+          "provider_badge_observation_evidence_kind": "source-level-web-research-self-attested-not-portable-proof",
+          "signature_payload_and_key_verified_locally": false,
+          "git_timestamp_accepted_as_trusted_time": false,
+          "current_download_time_accepted_as_preexistence": false,
+          "http_date_or_last_modified_accepted_as_preexistence": false,
+          "independent_timestamp_or_immutable_archive_binds_exact_tree": false,
+          "trusted_anchor_binds_snapshot_and_membership_rule": false,
+          "strictly_before_d116_cutoff_verified": false,
+          "reason_codes": [
+            "TRUSTED_CUTOFF_ANCHOR_MISSING",
+            "SIGNED_GIT_TREE_IS_NOT_AN_INDEPENDENT_TIMESTAMP",
+            "MEMBERSHIP_RULE_NOT_TRUSTED_TIME_BOUND"
+          ]
+        },
+        "provider_declared_member_count": 2438,
+        "verified_member_count": null,
+        "provider_reports_gpg_verified_commit": true,
+        "provider_revision_membership_and_badge_claim_evidence_kind": "source-level-web-research-self-attested-not-rebuilt-from-bound-inputs",
+        "provider_tree_or_signature_proof_bound_in_pack": false,
+        "signature_payload_and_key_verified_locally": false,
+        "license_claim_scope": "official dataset repository metadata only",
+        "upstream_issue_content_relicensed": false,
+        "lineage_overlap_with_existing_tasks_checked": false,
+        "public_only_sanitized_projection_created": false,
+        "pool_selected_acquired_or_frozen": false,
+        "post_hoc": true,
+        "independent": false,
+        "eligible_for_independent_calibration": false,
+        "disposition": "BLOCKED_INSUFFICIENT_PREEXISTENCE",
+        "reason_codes": [
+          "TRUSTED_CUTOFF_ANCHOR_MISSING",
+          "MEMBERSHIP_RULE_NOT_TRUSTED_TIME_BOUND",
+          "SOURCE_SELECTION_NOT_PRECOMMITTED_BEFORE_D116",
+          "ISOLATION_PROFILE_NOT_EXECUTED",
+          "LINEAGE_OVERLAP_NOT_CHECKED"
+        ]
+      }
+    ],
+    "rejected_sources": [
+      {
+        "source_id": "terminal-bench-2-1",
+        "benchmark_family": "Terminal-Bench 2.1",
+        "status": "excluded-before-snapshot-download",
+        "reason_codes": [
+          "EVALUATION_ONLY_NO_PUBLIC_DEVELOPMENT_SPLIT",
+          "OFFICIAL_TRAINING_CORPUS_CANARY_CONFLICT",
+          "NO_EXACT_PRE_D116_MEMBERSHIP_EVIDENCE_IDENTIFIED"
+        ],
+        "snapshot_downloaded": false,
+        "task_or_issue_record_read_count": 0
+      }
+    ],
+    "download_observation": {
+      "successful_revision_pinned_download_command_count": 3,
+      "download_command_count_evidence_kind": "current-process-self-attested",
+      "final_bound_snapshot_count": 2,
+      "superseded_swe_bench_e48e_snapshot_count": 1,
+      "final_bound_file_count": 6,
+      "final_bound_file_bytes": 45036395,
+      "exact_transport_http_request_count": null,
+      "transport_http_request_count_instrumented": false,
+      "automatic_transport_retry_count": null,
+      "execution_time_append_only_network_journal_present": false,
+      "historical_no_record_read_claim_evidence_kind": "current-process-source-path-self-attested",
+      "d118_module_record_parser_or_decoder_call_count": 0,
+      "local_download_time_used_as_cutoff_proof": false,
+      "raw_response_or_record_value_logged": false
+    },
+    "aggregate_disposition": {
+      "status": "BLOCKED_INSUFFICIENT_PREEXISTENCE",
+      "snapshot_hashes_verified_during_d118_materialization": true,
+      "exhaustive_development_split_rules_provider_reported_content_bound": true,
+      "provider_tree_or_membership_proof_rebuilt_from_bound_inputs": false,
+      "trusted_cutoff_anchor_verified": false,
+      "technical_isolation_verified": false,
+      "post_hoc": true,
+      "independent": false,
+      "eligible_for_independent_calibration": false,
+      "execution_authorization_candidate_ready": false
+    },
+    "unresolved_prerequisites": [
+      "trusted-pre-d116-anchor-binding-exact-snapshot-and-membership-rule",
+      "externally-precommitted-source-selection-or-explicit-post-hoc-fallback",
+      "immutable-isolation-image-digest",
+      "executed-isolation-negative-probes",
+      "leak-safe-lineage-overlap-check-under-separate-authorization",
+      "separate-exact-d118-evidence-triple-user-review-before-any-next-candidate"
+    ],
+    "protected_pre_state": {
+      "files": [
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-approval-receipt.json",
+          "file_bytes": 10096,
+          "file_sha256": "sha256:40ea64548634353a12b48f8bcabce941df47e16f9b27d892722d55fcda1e5e13"
+        },
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-preflight.json",
+          "file_bytes": 29919,
+          "file_sha256": "sha256:6682f4f2870cdb34e6ee766333c95ac58a406a7d4e4086d6086752650869c305"
+        },
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-authorization-candidate.json",
+          "file_bytes": 7999,
+          "file_sha256": "sha256:d10bbe5b3b65050868a1202cd1af9f130c89bbe43ceccf9359af145cac96cda7"
+        },
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-source-gate.json",
+          "file_bytes": 16813,
+          "file_sha256": "sha256:a439fc936b5b594c043b4ea90cd57bb676e79004cf4de8794b83f3af15fb13e3"
+        },
+        {
+          "path": "patchloop/memory/d117_blind_control_acquisition_protocol.py",
+          "file_bytes": 77586,
+          "file_sha256": "sha256:56b2b428924e55fb9e6ba708b91552ee52472d4cadb53bfb2ac9bfb3be7f9a79"
+        },
+        {
+          "path": "scripts/build_d117_blind_control_acquisition_protocol_candidate.py",
+          "file_bytes": 4981,
+          "file_sha256": "sha256:70c1a57485e005f8bcc52255aca0aed52d475c78f3d8c60e06163b63addfc857"
+        },
+        {
+          "path": "tests/test_d117_blind_control_acquisition_protocol.py",
+          "file_bytes": 30733,
+          "file_sha256": "sha256:145d8252feac285af727ba9eb60e8e5923e773600d6632910f10715b751170aa"
+        }
+      ],
+      "fingerprint": "sha256:ad5c47ae015f3163e09cace0468d44ec38482248cb1609278c49bc0ecaf53ca4"
+    },
+    "protected_post_state": {
+      "files": [
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-approval-receipt.json",
+          "file_bytes": 10096,
+          "file_sha256": "sha256:40ea64548634353a12b48f8bcabce941df47e16f9b27d892722d55fcda1e5e13"
+        },
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-preflight.json",
+          "file_bytes": 29919,
+          "file_sha256": "sha256:6682f4f2870cdb34e6ee766333c95ac58a406a7d4e4086d6086752650869c305"
+        },
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-authorization-candidate.json",
+          "file_bytes": 7999,
+          "file_sha256": "sha256:d10bbe5b3b65050868a1202cd1af9f130c89bbe43ceccf9359af145cac96cda7"
+        },
+        {
+          "path": "reports/memory-development/d117-blind-control-acquisition-protocol-source-gate.json",
+          "file_bytes": 16813,
+          "file_sha256": "sha256:a439fc936b5b594c043b4ea90cd57bb676e79004cf4de8794b83f3af15fb13e3"
+        },
+        {
+          "path": "patchloop/memory/d117_blind_control_acquisition_protocol.py",
+          "file_bytes": 77586,
+          "file_sha256": "sha256:56b2b428924e55fb9e6ba708b91552ee52472d4cadb53bfb2ac9bfb3be7f9a79"
+        },
+        {
+          "path": "scripts/build_d117_blind_control_acquisition_protocol_candidate.py",
+          "file_bytes": 4981,
+          "file_sha256": "sha256:70c1a57485e005f8bcc52255aca0aed52d475c78f3d8c60e06163b63addfc857"
+        },
+        {
+          "path": "tests/test_d117_blind_control_acquisition_protocol.py",
+          "file_bytes": 30733,
+          "file_sha256": "sha256:145d8252feac285af727ba9eb60e8e5923e773600d6632910f10715b751170aa"
+        }
+      ],
+      "fingerprint": "sha256:ad5c47ae015f3163e09cace0468d44ec38482248cb1609278c49bc0ecaf53ca4"
+    },
+    "protected_fingerprints_equal": true,
+    "external_object_pre_state": {
+      "files": [
+        {
+          "source_id": "swe-bench-dev-f5351",
+          "path": ".patchloop/external-evidence/d118/swe-bench-f5351/.gitattributes",
+          "file_bytes": 2307,
+          "file_sha256": "sha256:f4e703ea6e44bbebe53aceed2a89c11e40b88b7ae130c480c89860ab805ffc8f",
+          "media_kind": "source-level-git-metadata"
+        },
+        {
+          "source_id": "swe-bench-dev-f5351",
+          "path": ".patchloop/external-evidence/d118/swe-bench-f5351/README.md",
+          "file_bytes": 3880,
+          "file_sha256": "sha256:807eeb9e3a95b1b06958d7b7d93bc796c9b454fffdfa22f646ccfff2e17af45c",
+          "media_kind": "source-level-dataset-card"
+        },
+        {
+          "source_id": "swe-bench-dev-f5351",
+          "path": ".patchloop/external-evidence/d118/swe-bench-f5351/data/dev-00000-of-00001.parquet",
+          "file_bytes": 1382594,
+          "file_sha256": "sha256:d758d54540aa4140d0274ed0cc93b8288aa6f323c3c603e2557e7666a47fc41b",
+          "media_kind": "opaque-record-container"
+        },
+        {
+          "source_id": "swe-gym-train-26a6",
+          "path": ".patchloop/external-evidence/d118/swe-gym-26a6/.gitattributes",
+          "file_bytes": 2461,
+          "file_sha256": "sha256:e7a120ab07b1bc5b486be249e9fc6c83d59448d0093e1dfebe95d1566d9cafc0",
+          "media_kind": "source-level-git-metadata"
+        },
+        {
+          "source_id": "swe-gym-train-26a6",
+          "path": ".patchloop/external-evidence/d118/swe-gym-26a6/README.md",
+          "file_bytes": 680,
+          "file_sha256": "sha256:e6aadc383f198bb7592af3c077d8dd71d350a86bea76e1218fd1042fe4b99a04",
+          "media_kind": "source-level-dataset-card"
+        },
+        {
+          "source_id": "swe-gym-train-26a6",
+          "path": ".patchloop/external-evidence/d118/swe-gym-26a6/data/train-00000-of-00001.parquet",
+          "file_bytes": 43644473,
+          "file_sha256": "sha256:60569cea74bb281f7a5579467436a2bc1932c6e0c5f2f7fa0d084392abd9ad97",
+          "media_kind": "opaque-record-container"
+        }
+      ],
+      "file_count": 6,
+      "total_bytes": 45036395,
+      "fingerprint": "sha256:201aefb0c8cc4458cccacf46f0818ece4faa4170e9ba59b06d769ec8176dc7dd",
+      "claim_scope": "six-expected-files-only-not-directory-exclusivity"
+    },
+    "external_object_post_state": {
+      "files": [
+        {
+          "source_id": "swe-bench-dev-f5351",
+          "path": ".patchloop/external-evidence/d118/swe-bench-f5351/.gitattributes",
+          "file_bytes": 2307,
+          "file_sha256": "sha256:f4e703ea6e44bbebe53aceed2a89c11e40b88b7ae130c480c89860ab805ffc8f",
+          "media_kind": "source-level-git-metadata"
+        },
+        {
+          "source_id": "swe-bench-dev-f5351",
+          "path": ".patchloop/external-evidence/d118/swe-bench-f5351/README.md",
+          "file_bytes": 3880,
+          "file_sha256": "sha256:807eeb9e3a95b1b06958d7b7d93bc796c9b454fffdfa22f646ccfff2e17af45c",
+          "media_kind": "source-level-dataset-card"
+        },
+        {
+          "source_id": "swe-bench-dev-f5351",
+          "path": ".patchloop/external-evidence/d118/swe-bench-f5351/data/dev-00000-of-00001.parquet",
+          "file_bytes": 1382594,
+          "file_sha256": "sha256:d758d54540aa4140d0274ed0cc93b8288aa6f323c3c603e2557e7666a47fc41b",
+          "media_kind": "opaque-record-container"
+        },
+        {
+          "source_id": "swe-gym-train-26a6",
+          "path": ".patchloop/external-evidence/d118/swe-gym-26a6/.gitattributes",
+          "file_bytes": 2461,
+          "file_sha256": "sha256:e7a120ab07b1bc5b486be249e9fc6c83d59448d0093e1dfebe95d1566d9cafc0",
+          "media_kind": "source-level-git-metadata"
+        },
+        {
+          "source_id": "swe-gym-train-26a6",
+          "path": ".patchloop/external-evidence/d118/swe-gym-26a6/README.md",
+          "file_bytes": 680,
+          "file_sha256": "sha256:e6aadc383f198bb7592af3c077d8dd71d350a86bea76e1218fd1042fe4b99a04",
+          "media_kind": "source-level-dataset-card"
+        },
+        {
+          "source_id": "swe-gym-train-26a6",
+          "path": ".patchloop/external-evidence/d118/swe-gym-26a6/data/train-00000-of-00001.parquet",
+          "file_bytes": 43644473,
+          "file_sha256": "sha256:60569cea74bb281f7a5579467436a2bc1932c6e0c5f2f7fa0d084392abd9ad97",
+          "media_kind": "opaque-record-container"
+        }
+      ],
+      "file_count": 6,
+      "total_bytes": 45036395,
+      "fingerprint": "sha256:201aefb0c8cc4458cccacf46f0818ece4faa4170e9ba59b06d769ec8176dc7dd",
+      "claim_scope": "six-expected-files-only-not-directory-exclusivity"
+    },
+    "external_object_fingerprints_equal": true,
+    "evidence_boundary": {
+      "source_family_metadata_researched_count": 3,
+      "revision_pinned_source_candidate_count": 2,
+      "successful_snapshot_download_command_count": 3,
+      "superseded_snapshot_observation_count": 1,
+      "exact_http_request_count": null,
+      "http_request_count_instrumented": false,
+      "opaque_bound_file_count": 6,
+      "record_container_parse_count": 0,
+      "record_field_issue_label_patch_test_or_oracle_read_count": 0,
+      "pool_member_id_read_count": 0,
+      "pool_selected_acquired_or_frozen_count": 0,
+      "role_or_isolation_session_count": 0,
+      "matcher_classifier_calibration_execution_count": 0,
+      "retrieval_agent_provider_evaluator_call_count": 0,
+      "added_model_cost_usd": 0
+    },
+    "authority": {
+      "exact_d117_candidate_user_approval_received": true,
+      "external_source_evidence_preparation_authorized": true,
+      "official_public_development_metadata_research_authorized": true,
+      "revision_pinned_opaque_snapshot_download_authorized": true,
+      "membership_cutoff_and_isolation_hash_preflight_authorized": true,
+      "source_candidate_identification_authorized": true,
+      "d117_proposed_next_action_authorized": false,
+      "d117_proposed_next_action_consumed": false,
+      "external_triples_prerequisite_satisfied": false,
+      "source_pool_selection_acquisition_or_freeze_authorized": false,
+      "source_pool_selected": false,
+      "source_pool_acquired": false,
+      "source_pool_frozen": false,
+      "issue_or_task_record_read_count": 0,
+      "issue_labeling_or_review_count": 0,
+      "matcher_execution_count": 0,
+      "classifier_execution_count": 0,
+      "calibration_execution_count": 0,
+      "independent_positive_count": 0,
+      "trusted_cutoff_anchor_verified": false,
+      "independent_generalization_validated": false,
+      "true_relevance_established": false,
+      "score_policy_correction_authorized": false,
+      "score_policy_or_ranking_changed": false,
+      "memory_index_changed": false,
+      "retrieval_ready": false,
+      "retrieval_calls": 0,
+      "runtime_memory_injection_count": 0,
+      "agent_runs": 0,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "core_campaign_unlocked": false,
+      "analysis_campaign_unlocked": false,
+      "d118_execution_authorization_candidate_ready": false
+    }
+  }
+}

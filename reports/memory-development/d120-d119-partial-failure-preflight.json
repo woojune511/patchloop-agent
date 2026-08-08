@@ -1,0 +1,427 @@
+{
+  "schema_version": "d119-partial-failure-preflight-d120-v1",
+  "preflight_id": "d120preflight_cc3496328cf64c924c762d47a7f4926d23322991c29064e68ae6d376a8339310",
+  "semantic_body_hash": "sha256:cc3496328cf64c924c762d47a7f4926d23322991c29064e68ae6d376a8339310",
+  "semantic_body": {
+    "milestone": "D-120",
+    "evidence_kind": "append-only-d119-partial-failure-and-cleanup-contract-audit",
+    "recorded_at": "2026-08-07T13:32:20.788129Z",
+    "d119_partial_state": {
+      "status": "PARTIAL_CONSUMED_FAILED",
+      "artifacts_present": [
+        {
+          "role": "approval-receipt",
+          "path": "reports/memory-development/d119-cutoff-isolation-approval-receipt.json",
+          "id_field": "receipt_id",
+          "identifier": "d119approval_671af8d6e7cbd44ef0793c1bf1bf53f3f5f8e3fcbfd26e04906cb4abdea50cce",
+          "semantic_body_hash": "sha256:671af8d6e7cbd44ef0793c1bf1bf53f3f5f8e3fcbfd26e04906cb4abdea50cce",
+          "file_bytes": 5299,
+          "file_sha256": "sha256:625cd6487fffe50b2429e011c67da222ec0da020dbf62d65a911fa83da3f550c"
+        },
+        {
+          "role": "preflight",
+          "path": "reports/memory-development/d119-cutoff-isolation-preflight.json",
+          "id_field": "preflight_id",
+          "identifier": "d119preflight_85dcbc49bec53797904f080d0e6922b521a9f6f232902e122895090e5f886dd1",
+          "semantic_body_hash": "sha256:85dcbc49bec53797904f080d0e6922b521a9f6f232902e122895090e5f886dd1",
+          "file_bytes": 11229,
+          "file_sha256": "sha256:57f59fc29054276947851abdfe3dbf0040fe10cef5624946e66dc84a698fb18a"
+        }
+      ],
+      "journal": {
+        "path": "reports/memory-development/d119-isolation-execution.jsonl",
+        "record_count": 4,
+        "head_hash": "sha256:4bd08521b13431251449d79cb2847a93fc947cf2ce6e6b319e71f728cc74bd46",
+        "file_bytes": 2075,
+        "file_sha256": "sha256:fadda3b86b2ad954a1d233b0dbf11d67b8a9a86f3db6704eab555eec5f2a4950",
+        "events": [
+          "ExecutionClaimed",
+          "ImageIdentityVerified",
+          "IsolationSessionStarted",
+          "ExecutionFailed"
+        ],
+        "execution_claimed_at": "2026-08-07T12:58:57.747384Z",
+        "failed_at": "2026-08-07T12:58:58.565995Z"
+      },
+      "artifacts_absent": [
+        "reports/memory-development/d119-external-anchor-evidence.json",
+        "reports/memory-development/d119-isolation-evidence.json",
+        "reports/memory-development/d119-cutoff-isolation-source-gate.json"
+      ],
+      "d119_implementation": [
+        {
+          "path": "patchloop/memory/d119_cutoff_isolation_qualification.py",
+          "file_bytes": 79260,
+          "file_sha256": "sha256:8428dc47241ee8698eb8edc075521d4fa2044f9e793325771df2fab0c917312b"
+        },
+        {
+          "path": "scripts/run_d119_cutoff_isolation_qualification.py",
+          "file_bytes": 1906,
+          "file_sha256": "sha256:fff81e5c6d8218f1102c5ff5bd485513db56ce3a2fe205faa219e708c8acc21b"
+        },
+        {
+          "path": "tests/test_d119_cutoff_isolation_qualification.py",
+          "file_bytes": 32427,
+          "file_sha256": "sha256:f2c4f3b50980d4697aca81967d5d19e2021df455dc320d5ddffdd3458d761650"
+        }
+      ],
+      "d119_execution_tuple": {
+        "authorized_action_hash": "sha256:be673eec0b6cf5cde23db0f19c050d82867a1a4a497a28124f61ca47e24278c2",
+        "docker_cli_file_bytes": 43095472,
+        "docker_cli_file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+        "immutable_image_id": "sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac",
+        "dockerfile_sha256": "sha256:f310b88e8a2769b83202c3fb7a5cb776142c70a6d45935b648db258d3bc2d944",
+        "probe_runner_sha256": "sha256:ed07d48a2e2129645aa0ae4765d0f248750125eb685bf55767a21db636e15509",
+        "profile_hash": "sha256:82511cd9e7e25be999955e260f009204703ef5dcdbc2340897d821c4f52cf6a5",
+        "source_fingerprint": "sha256:912c8ad78849f7f674756ab9d4084ed92e3c8a535bc04a6b89a7a14f7170a53f",
+        "ordered_sources": [
+          {
+            "source_id": "swe-bench-dev-f5351",
+            "path": ".patchloop/external-evidence/d118/swe-bench-f5351/data/dev-00000-of-00001.parquet",
+            "file_bytes": 1382594,
+            "file_sha256": "sha256:d758d54540aa4140d0274ed0cc93b8288aa6f323c3c603e2557e7666a47fc41b",
+            "probe_source_sha256": "sha256:76dac3eec570730dc9fa9b1ce1cc4344b42971ffc4339b22caf4a569c65bd2bc"
+          },
+          {
+            "source_id": "swe-gym-train-26a6",
+            "path": ".patchloop/external-evidence/d118/swe-gym-26a6/data/train-00000-of-00001.parquet",
+            "file_bytes": 43644473,
+            "file_sha256": "sha256:60569cea74bb281f7a5579467436a2bc1932c6e0c5f2f7fa0d084392abd9ad97",
+            "probe_source_sha256": "sha256:39e64b76b26d8c53e2e128a1ef5c6e09354ca009d1b45157dc9cd0028a493dc7"
+          }
+        ]
+      },
+      "declared_path_contract": {
+        "normalization": "unicode-nfkc-casefold-posix",
+        "alternate_data_streams_forbidden": true,
+        "symlink_junction_or_reparse_traversal_forbidden": true,
+        "casefold_and_normalized_aliases_absent": true,
+        "existing_inode_aliases_absent": true,
+        "sets_pairwise_disjoint": true,
+        "all_d121_paths_absent_before_authorization": true,
+        "path_sets": {
+          "d119_immutable_or_absent": [
+            "reports/memory-development/d119-cutoff-isolation-approval-receipt.json",
+            "reports/memory-development/d119-cutoff-isolation-preflight.json",
+            "reports/memory-development/d119-isolation-execution.jsonl",
+            "reports/memory-development/d119-external-anchor-evidence.json",
+            "reports/memory-development/d119-isolation-evidence.json",
+            "reports/memory-development/d119-cutoff-isolation-source-gate.json",
+            "patchloop/memory/d119_cutoff_isolation_qualification.py",
+            "scripts/run_d119_cutoff_isolation_qualification.py",
+            "tests/test_d119_cutoff_isolation_qualification.py"
+          ],
+          "d120_candidate": [
+            "patchloop/memory/d120_d119_cleanup_correction_authorization.py",
+            "scripts/build_d120_d119_cleanup_correction_authorization.py",
+            "tests/test_d120_d119_cleanup_correction_authorization.py",
+            "reports/memory-development/d120-d119-partial-failure-preflight.json",
+            "reports/memory-development/d120-d119-cleanup-correction-authorization-candidate.json",
+            "reports/memory-development/d120-d119-cleanup-correction-source-gate.json"
+          ],
+          "d121_preparation_new_only": [
+            "patchloop/memory/d121_hash_only_isolation_successor.py",
+            "scripts/run_d121_hash_only_isolation_successor.py",
+            "tests/test_d121_hash_only_isolation_successor.py",
+            "reports/memory-development/d121-isolation-successor-preparation-approval-receipt.json",
+            "reports/memory-development/d121-isolation-successor-readiness-preflight.json",
+            "reports/memory-development/d121-isolation-successor-execution-authorization-candidate.json",
+            "reports/memory-development/d121-isolation-successor-authorization-source-gate.json"
+          ],
+          "d121_prospective_run_outputs_not_authorized": [
+            "reports/memory-development/d121-isolation-successor-execution-approval-receipt.json",
+            "reports/memory-development/d121-isolation-successor-execution.jsonl",
+            "reports/memory-development/d121-isolation-successor-evidence.json",
+            "reports/memory-development/d121-isolation-successor-completion-gate.json"
+          ]
+        },
+        "d121_preparation_mutation_whitelist": [
+          "patchloop/memory/d121_hash_only_isolation_successor.py",
+          "scripts/run_d121_hash_only_isolation_successor.py",
+          "tests/test_d121_hash_only_isolation_successor.py",
+          "reports/memory-development/d121-isolation-successor-preparation-approval-receipt.json",
+          "reports/memory-development/d121-isolation-successor-readiness-preflight.json",
+          "reports/memory-development/d121-isolation-successor-execution-authorization-candidate.json",
+          "reports/memory-development/d121-isolation-successor-authorization-source-gate.json"
+        ],
+        "d121_prospective_run_outputs_authorized": false
+      },
+      "durable_completed_session_count": 0,
+      "sealed_probe_outcome_count": 0,
+      "probe_outcome": "UNSEALED_UNKNOWN",
+      "same_d119_retry_resume_or_repair_allowed": false
+    },
+    "diagnosis": {
+      "failure_class": "HARNESS_CLEANUP_EVIDENCE_VALIDATOR_ERROR",
+      "failure_stage": "cleanup-postcondition-output-representation-mismatch",
+      "proof_grade": "source-consistent-self-attested-diagnosis-not-portable-proof",
+      "d119_journal_evidence": {
+        "failure_event": "ExecutionFailed",
+        "recorded_error_type": "D119QualificationError",
+        "cleanup_detail_recorded": false,
+        "probe_result_recorded": false
+      },
+      "source_derived_finding": {
+        "function": "_execute_session",
+        "d119_module_file_sha256": "sha256:8428dc47241ee8698eb8edc075521d4fa2044f9e793325771df2fab0c917312b",
+        "accepted_inspect_return_code": "nonzero",
+        "incorrect_additional_predicate": "removed_inspect.stdout == b-empty",
+        "cleanup_exception_can_mask_earlier_primary_exception": true
+      },
+      "actual_execution_operator_observation": {
+        "evidence_kind": "self-attested-operator-observation-not-journal-evidence",
+        "exception_message": "removed-container inspect emitted stdout",
+        "raw_command_transcript_available": false,
+        "raw_removed_inspect_stdout_available": false,
+        "portable_replay_proof": false
+      },
+      "current_cli_observation": {
+        "evidence_kind": "current-read-only-self-attested-reproduction",
+        "missing_container_id_kind": "synthetic-64-zero-hex",
+        "inspect_exit_code": 1,
+        "stdout_presentation": "empty-json-array-lf",
+        "stdout_bytes": 3,
+        "stdout_sha256": "sha256:37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "stderr_shape": "error: no such object: <container-id>\\n",
+        "original_d119_journal_contains_this_observation": false
+      },
+      "classification_boundary": {
+        "container_removal_failure_established": false,
+        "docker_isolation_failure_established": false,
+        "source_hash_failure_established": false,
+        "first_probe_success_established": false,
+        "first_probe_outcome": "UNSEALED_UNKNOWN",
+        "hash_only_isolation_profile_verified": false,
+        "second_session_started": false
+      }
+    },
+    "prospective_d121_action": {
+      "action": "implement-test-and-prepare-d121-execution-authorization-candidate",
+      "unchanged_d119_execution_tuple": {
+        "authorized_action_hash": "sha256:be673eec0b6cf5cde23db0f19c050d82867a1a4a497a28124f61ca47e24278c2",
+        "docker_cli_file_bytes": 43095472,
+        "docker_cli_file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+        "immutable_image_id": "sha256:1144b4be9927ac5882401185c326003383630eac9db84102ee3d71c06e261cac",
+        "dockerfile_sha256": "sha256:f310b88e8a2769b83202c3fb7a5cb776142c70a6d45935b648db258d3bc2d944",
+        "probe_runner_sha256": "sha256:ed07d48a2e2129645aa0ae4765d0f248750125eb685bf55767a21db636e15509",
+        "profile_hash": "sha256:82511cd9e7e25be999955e260f009204703ef5dcdbc2340897d821c4f52cf6a5",
+        "source_fingerprint": "sha256:912c8ad78849f7f674756ab9d4084ed92e3c8a535bc04a6b89a7a14f7170a53f",
+        "ordered_sources": [
+          {
+            "source_id": "swe-bench-dev-f5351",
+            "path": ".patchloop/external-evidence/d118/swe-bench-f5351/data/dev-00000-of-00001.parquet",
+            "file_bytes": 1382594,
+            "file_sha256": "sha256:d758d54540aa4140d0274ed0cc93b8288aa6f323c3c603e2557e7666a47fc41b",
+            "probe_source_sha256": "sha256:76dac3eec570730dc9fa9b1ce1cc4344b42971ffc4339b22caf4a569c65bd2bc"
+          },
+          {
+            "source_id": "swe-gym-train-26a6",
+            "path": ".patchloop/external-evidence/d118/swe-gym-26a6/data/train-00000-of-00001.parquet",
+            "file_bytes": 43644473,
+            "file_sha256": "sha256:60569cea74bb281f7a5579467436a2bc1932c6e0c5f2f7fa0d084392abd9ad97",
+            "probe_source_sha256": "sha256:39e64b76b26d8c53e2e128a1ef5c6e09354ca009d1b45157dc9cd0028a493dc7"
+          }
+        ]
+      },
+      "execution_tuple_reverification_required_before_any_later_run": true,
+      "unchanged_probe_image_profile_source_tuple": true,
+      "planned_behavioral_changes": [
+        "fresh-d121-container-label-and-name-namespace",
+        "cleanup-no-row-presentation-normalization",
+        "exact-id-and-label-wide-residual-inventories",
+        "primary-probe-outcome-preserved-before-cleanup-validation",
+        "expanded-cleanup-and-session-journal-events"
+      ],
+      "relationship_to_d119": {
+        "fresh_successor_run_planned": true,
+        "d119_retry": false,
+        "d119_resume": false,
+        "d119_repair": false,
+        "d119_partial_artifacts_and_implementation_immutable": true
+      },
+      "new_paths": [
+        "patchloop/memory/d121_hash_only_isolation_successor.py",
+        "scripts/run_d121_hash_only_isolation_successor.py",
+        "tests/test_d121_hash_only_isolation_successor.py",
+        "reports/memory-development/d121-isolation-successor-preparation-approval-receipt.json",
+        "reports/memory-development/d121-isolation-successor-readiness-preflight.json",
+        "reports/memory-development/d121-isolation-successor-execution-authorization-candidate.json",
+        "reports/memory-development/d121-isolation-successor-authorization-source-gate.json"
+      ],
+      "mutation_whitelist": [
+        "patchloop/memory/d121_hash_only_isolation_successor.py",
+        "scripts/run_d121_hash_only_isolation_successor.py",
+        "tests/test_d121_hash_only_isolation_successor.py",
+        "reports/memory-development/d121-isolation-successor-preparation-approval-receipt.json",
+        "reports/memory-development/d121-isolation-successor-readiness-preflight.json",
+        "reports/memory-development/d121-isolation-successor-execution-authorization-candidate.json",
+        "reports/memory-development/d121-isolation-successor-authorization-source-gate.json"
+      ],
+      "prospective_run_output_paths_not_authorized": [
+        "reports/memory-development/d121-isolation-successor-execution-approval-receipt.json",
+        "reports/memory-development/d121-isolation-successor-execution.jsonl",
+        "reports/memory-development/d121-isolation-successor-evidence.json",
+        "reports/memory-development/d121-isolation-successor-completion-gate.json"
+      ],
+      "container_namespace": {
+        "label": "io.patchloop.managed=d121-isolation-successor",
+        "name_prefix": "patchloop-d121-",
+        "disjoint_from_d119_and_d120": true,
+        "disjointness_validated_by": "d120-declared-path-contract"
+      },
+      "d120_approval_authorizes": {
+        "d121_new_only_implementation": true,
+        "offline_tests": true,
+        "no_start_exact_docker_readiness_preflight": true,
+        "execution_authorization_candidate_preparation": true
+      },
+      "d120_approval_does_not_authorize": {
+        "docker_container_start": true,
+        "opaque_source_read": true,
+        "d121_successor_execution": true
+      },
+      "prospective_execution_contract": {
+        "fresh_run_count": 1,
+        "session_count": 2,
+        "both_exact_d119_sources_rerun": true,
+        "automatic_retry_count": 0,
+        "failure_remains_consumed": true
+      },
+      "cleanup_observation_contract": {
+        "primary_probe_outcome_captured_before_cleanup": true,
+        "cleanup_outcome_captured_without_masking_primary": true,
+        "required_events_in_order": [
+          "ProbeResultValidated",
+          "ContainerRemovalVerified",
+          "IsolationSessionCompleted"
+        ],
+        "exact_id_rm_return_code": 0,
+        "exact_id_rm_argv": [
+          "<exact-pinned-docker-cli>",
+          "rm",
+          "--force",
+          "<exact-container-id>"
+        ],
+        "post_remove_inspect_return_code": "nonzero",
+        "post_remove_inspect_argv": [
+          "<exact-pinned-docker-cli>",
+          "inspect",
+          "<exact-container-id>"
+        ],
+        "accepted_no_row_stdout_exact_bytes": [
+          {
+            "presentation": "empty-bytes",
+            "hex": ""
+          },
+          {
+            "presentation": "empty-json-array",
+            "hex": "5b5d"
+          },
+          {
+            "presentation": "empty-json-array-lf",
+            "hex": "5b5d0a"
+          },
+          {
+            "presentation": "empty-json-array-crlf",
+            "hex": "5b5d0d0a"
+          }
+        ],
+        "arbitrary_stdout_forbidden": true,
+        "exact_id_inventory_argv": [
+          "<exact-pinned-docker-cli>",
+          "ps",
+          "--all",
+          "--quiet",
+          "--no-trunc",
+          "--filter",
+          "id=<exact-container-id>"
+        ],
+        "successor_label_inventory_argv": [
+          "<exact-pinned-docker-cli>",
+          "ps",
+          "--all",
+          "--quiet",
+          "--no-trunc",
+          "--filter",
+          "label=io.patchloop.managed=d121-isolation-successor"
+        ],
+        "observation_order_before_validation": [
+          "remove-by-exact-id",
+          "inspect-by-exact-id",
+          "exact-id-inventory",
+          "successor-label-inventory"
+        ],
+        "exact_id_inventory_must_be_empty": true,
+        "successor_label_inventory_must_be_empty": true,
+        "both_inventories_execute_even_if_presentation_validation_fails": true,
+        "raw_stderr_persisted": false,
+        "bounded_stderr_size_and_sha_persisted": true
+      },
+      "success_boundary": {
+        "hash_only_isolation_profile_verified_may_become_true": true,
+        "trusted_cutoff_anchor_verified_remains_false": true,
+        "record_projection_isolation_verified_remains_false": true,
+        "independence_remains_false": true,
+        "retrieval_agent_and_core_remain_closed": true
+      }
+    },
+    "prospective_d121_action_hash": "sha256:88195baf93289f3d4613a2d33e6bf16b271fb65d6cf6384a2fdbc8fff20512c4",
+    "d120_implementation_state": {
+      "files": [
+        {
+          "path": "patchloop/memory/d120_d119_cleanup_correction_authorization.py",
+          "file_bytes": 44386,
+          "file_sha256": "sha256:d7b15d103c9940818178d17eb9f226417f06012ca0eace5f9fdb106c5c0a7895"
+        },
+        {
+          "path": "scripts/build_d120_d119_cleanup_correction_authorization.py",
+          "file_bytes": 1124,
+          "file_sha256": "sha256:1250211b93b70e568ac96ccf756415d20c7de6e974b79546b6c58d67cf05c907"
+        },
+        {
+          "path": "tests/test_d120_d119_cleanup_correction_authorization.py",
+          "file_bytes": 23763,
+          "file_sha256": "sha256:974e4920146c90a3bf675dfd28792574f07ba50bae655e89222acb0c5a0d5b82"
+        }
+      ],
+      "fingerprint": "sha256:ef1ee4d6bb01bf25ed99d4f7b76d63491983c09a0cab9c48f1b68d63313f362b"
+    },
+    "evidence_boundary": {
+      "d119_files_mutated": false,
+      "opaque_source_files_opened": false,
+      "docker_or_network_invoked_self_attested": false,
+      "materialization_subprocess_or_socket_instrumentation": false,
+      "zero_call_claim_evidence_kind": "source-path-static-audit-and-focused-test-guards",
+      "operator_observation_is_not_d119_journal_evidence": true,
+      "root_cause_portable_proof_claimed": false,
+      "probe_success_claimed": false
+    },
+    "authority": {
+      "partial_failure_sealed": true,
+      "cleanup_failure_diagnosis_recorded": true,
+      "root_cause_source_consistent_and_self_attested": true,
+      "root_cause_portably_proved": false,
+      "cleanup_correction_candidate_ready": true,
+      "exact_candidate_user_approval_received": false,
+      "d119_mutation_authorized": false,
+      "d119_retry_resume_or_repair_authorized": false,
+      "successor_implementation_authorized": false,
+      "successor_execution_authorization_candidate_preparation_authorized": false,
+      "fresh_successor_run_authorized": false,
+      "successor_run_count": 0,
+      "opaque_source_read_count": 0,
+      "record_container_parse_count": 0,
+      "record_field_read_count": 0,
+      "pool_selection_acquisition_or_freeze_authorized": false,
+      "issue_labeling_or_review_authorized": false,
+      "matcher_classifier_or_calibration_authorized": false,
+      "score_policy_or_index_mutation_authorized": false,
+      "retrieval_or_runtime_injection_authorized": false,
+      "agent_provider_evaluator_or_core_authorized": false,
+      "docker_or_network_call_count_during_candidate_build_self_attested": 0,
+      "subprocess_or_socket_instrumented_during_materialization": false,
+      "focused_test_forbidden_boundary_guards_defined": true,
+      "added_model_cost_usd": 0
+    }
+  }
+}

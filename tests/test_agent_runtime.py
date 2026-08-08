@@ -2027,6 +2027,9 @@ def test_live_v3_counter_budget_block_validates_prompt_and_terminal(
     assert payload["schema_version"] == "model-generation-block-v2"
     assert payload["reason_code"] == reason_code
     assert payload["generation_started"] is False
+    assert payload["request_artifact_hash"] == sha256_bytes(
+        Path(payload["request_artifact_path"]).read_bytes()
+    )
     assert payload["requested_input_tokens"] is None
     assert payload["remaining_tokens"] is None
     assert payload["input_token_count_calls"] == 0
@@ -2083,6 +2086,11 @@ def test_live_v3_counter_budget_block_validates_prompt_and_terminal(
             "tool_call_budget_exhausted",
         ),
         ("model_call_budget_exhausted", "unexpected_counter", True),
+        (
+            "model_call_budget_exhausted",
+            "request_artifact_hash",
+            "sha256:" + "0" * 64,
+        ),
         ("tool_call_budget_exhausted", "max_tool_calls", 2),
         ("wall_clock_budget_exhausted", "wall_clock_ms", 0),
     ],
@@ -2157,6 +2165,7 @@ def test_live_v3_retry_request_budget_block_precedes_second_generation(
         "generation_started": False,
         "request_artifact_id": blocked.payload["request_artifact_id"],
         "request_artifact_path": blocked.payload["request_artifact_path"],
+        "request_artifact_hash": blocked.payload["request_artifact_hash"],
         "request_body_hash": blocked.payload["request_body_hash"],
         "requested_input_tokens": 1_000,
         "remaining_tokens": 4_899,
@@ -2434,6 +2443,7 @@ def test_live_v3_generic_request_budget_block_validates_prompt_and_terminal(
         "generation_started": False,
         "request_artifact_id": blocked.payload["request_artifact_id"],
         "request_artifact_path": blocked.payload["request_artifact_path"],
+        "request_artifact_hash": blocked.payload["request_artifact_hash"],
         "request_body_hash": blocked.payload["request_body_hash"],
         "requested_input_tokens": 1_000,
         "remaining_tokens": 4_899,
@@ -2519,6 +2529,12 @@ def test_live_v3_generic_request_budget_block_validates_prompt_and_terminal(
             "prompt_token_integrity",
         ),
         (
+            EventType.MODEL_GENERATION_BLOCKED,
+            "request_artifact_hash",
+            "sha256:" + ("f" * 64),
+            "prompt_token_integrity",
+        ),
+        (
             EventType.RUN_FAILED,
             "error_code",
             "CONTRACT_ERROR",
@@ -2580,6 +2596,12 @@ def test_v3_generic_budget_block_qualification_rejects_tampering(
             "remaining_tokens",
             1,
             "rejected_patch_retry_context",
+        ),
+        (
+            EventType.MODEL_GENERATION_BLOCKED,
+            "request_artifact_hash",
+            "sha256:" + ("f" * 64),
+            "prompt_token_integrity",
         ),
         (
             EventType.RUN_FAILED,

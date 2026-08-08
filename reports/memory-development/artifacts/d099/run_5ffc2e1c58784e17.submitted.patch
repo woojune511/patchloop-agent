@@ -1,0 +1,83 @@
+diff --git a/src/huggingface_hub/file_download.py b/src/huggingface_hub/file_download.py
+index 98748fd..d8beed7 100644
+--- a/src/huggingface_hub/file_download.py
++++ b/src/huggingface_hub/file_download.py
+@@ -1471,7 +1471,7 @@ def get_hf_file_metadata(
+         size=_int_or_none(
+             r.headers.get(constants.HUGGINGFACE_HEADER_X_LINKED_SIZE) or r.headers.get("Content-Length")
+         ),
+-        xet_file_data=parse_xet_file_data_from_response(r),  # type: ignore
++        xet_file_data=parse_xet_file_data_from_response(r, endpoint=endpoint),  # type: ignore
+     )
+ 
+ 
+diff --git a/src/huggingface_hub/utils/_xet.py b/src/huggingface_hub/utils/_xet.py
+index e80b0e8..daf52f6 100644
+--- a/src/huggingface_hub/utils/_xet.py
++++ b/src/huggingface_hub/utils/_xet.py
+@@ -1,5 +1,6 @@
+ from dataclasses import dataclass
+ from enum import Enum
++from urllib.parse import urljoin, urlparse
+ from typing import Dict, Optional
+ 
+ import requests
+@@ -26,7 +27,9 @@ class XetConnectionInfo:
+     endpoint: str
+ 
+ 
+-def parse_xet_file_data_from_response(response: requests.Response) -> Optional[XetFileData]:
++def parse_xet_file_data_from_response(
++    response: requests.Response, endpoint: Optional[str] = None
++) -> Optional[XetFileData]:
+     """
+     Parse XET file metadata from an HTTP response.
+ 
+@@ -34,6 +37,9 @@ def parse_xet_file_data_from_response(response: requests.Response) -> Optional[X
+     of a given response object. If the required metadata is not found, it returns `None`.
+ 
+     Args:
++        endpoint (`str`, *optional*):
++            Hub endpoint used for the request. If provided, refresh routes owned by the default Hub origin
++            are rebased onto this endpoint.
+         response (`requests.Response`):
+             The HTTP response object containing headers dict and links dict to extract the XET metadata from.
+     Returns:
+@@ -50,6 +56,7 @@ def parse_xet_file_data_from_response(response: requests.Response) -> Optional[X
+             refresh_route = response.links[constants.HUGGINGFACE_HEADER_LINK_XET_AUTH_KEY]["url"]
+         else:
+             refresh_route = response.headers[constants.HUGGINGFACE_HEADER_X_XET_REFRESH_ROUTE]
++        refresh_route = _rebase_refresh_route(refresh_route, endpoint)
+     except KeyError:
+         return None
+ 
+@@ -59,6 +66,29 @@ def parse_xet_file_data_from_response(response: requests.Response) -> Optional[X
+     )
+ 
+ 
++def _rebase_refresh_route(refresh_route: str, endpoint: Optional[str]) -> str:
++    if endpoint is None:
++        return refresh_route
++
++    parsed_refresh_route = urlparse(refresh_route)
++    if not parsed_refresh_route.scheme or not parsed_refresh_route.netloc:
++        return refresh_route
++
++    parsed_default_origin = urlparse(constants.HUGGINGFACE_CO_URL_HOME)
++    if (parsed_refresh_route.scheme, parsed_refresh_route.netloc) != (
++        parsed_default_origin.scheme,
++        parsed_default_origin.netloc,
++    ):
++        return refresh_route
++
++    relative_route = parsed_refresh_route.path.lstrip("/")
++    if parsed_refresh_route.query:
++        relative_route += f"?{parsed_refresh_route.query}"
++    if parsed_refresh_route.fragment:
++        relative_route += f"#{parsed_refresh_route.fragment}"
++    return urljoin(endpoint.rstrip("/") + "/", relative_route)
++
++
+ def parse_xet_connection_info_from_headers(headers: Dict[str, str]) -> Optional[XetConnectionInfo]:
+     """
+     Parse XET connection info from the HTTP headers or return None if not found.

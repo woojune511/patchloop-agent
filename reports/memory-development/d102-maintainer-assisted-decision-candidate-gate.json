@@ -1,0 +1,118 @@
+{
+  "schema_version": "maintainer-assisted-decision-candidate-gate-d102-v1",
+  "gate_id": "d102_27e6b50c156e2c590e4225302534c5fedca67596eae2c831d03d3a4810c11732",
+  "semantic_body_hash": "sha256:27e6b50c156e2c590e4225302534c5fedca67596eae2c831d03d3a4810c11732",
+  "semantic_body": {
+    "milestone": "D-102",
+    "evidence_kind": "maintainer-assisted-five-decision-candidate-gate",
+    "recorded_at": "2026-08-06T02:22:00Z",
+    "journal": {
+      "path": "reports/memory-development/d102-maintainer-assisted-group-decisions.jsonl",
+      "file_bytes": 7829,
+      "file_sha256": "sha256:5c46e6b6a49e436794c1b118f96a9d05caa48a4cd4199e9791ec2ec4499327e3",
+      "record_count": 5,
+      "head_decision_hash": "sha256:4192b503768093e2134b7651da4922fcd9d5c2a064e0150a7f523adc952ac469"
+    },
+    "decisions": [
+      {
+        "order": 1,
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "decision": "approve",
+        "action_id": "d102-user-confirmed-recommendation-1",
+        "rationale_sha256": "sha256:2e24aac1e3be67c043411909041fa64e6a3368fa817a5306efa5a133408b9919",
+        "decision_hash": "sha256:9933f0f079ca2d40ebdbc1e2257e794b36ca05045d186c02785c1c00df92bfa3",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation"
+      },
+      {
+        "order": 2,
+        "semantic_group_id": "request-context-propagation-gap",
+        "decision": "approve",
+        "action_id": "d102-user-confirmed-recommendation-2",
+        "rationale_sha256": "sha256:9bcca42d665c6dc60ea131242ecb756a1eb1fa67bca8d7e50d1928693a6abb07",
+        "decision_hash": "sha256:5943da335c469334e9fee94da46d26ffe7cea6a732c19c3dc97e3f4da718127d",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation"
+      },
+      {
+        "order": 3,
+        "semantic_group_id": "interrupt-lifecycle-unresolved",
+        "decision": "continue_hold",
+        "action_id": "d102-user-confirmed-recommendation-3",
+        "rationale_sha256": "sha256:5b53369adbe4ee8812502f74db9a2699ce1294daecf96e908d2b8de7bc32167d",
+        "decision_hash": "sha256:bf5ea8618dc2b1868c89713bc4fdb8730264cc6be9612d5919f42e1f9382ae38",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation"
+      },
+      {
+        "order": 4,
+        "semantic_group_id": "diagnostic-contract-unresolved",
+        "decision": "continue_hold",
+        "action_id": "d102-user-confirmed-recommendation-4",
+        "rationale_sha256": "sha256:4285439f8c0975b96ca8de0c6d556bead9c5158e8b4b5651832bcfc50f7e1008",
+        "decision_hash": "sha256:567bc94630404712732ee7437cfafdc6fba5d77cc70ff7f0c7e00343320800ae",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation"
+      },
+      {
+        "order": 5,
+        "semantic_group_id": "exception-origin-state-conflation",
+        "decision": "approve",
+        "action_id": "d102-user-confirmed-recommendation-5",
+        "rationale_sha256": "sha256:d65c6aa1f9bc45770144042441ed09bdd5dcb3298ed6f925274930f223d87d65",
+        "decision_hash": "sha256:4192b503768093e2134b7651da4922fcd9d5c2a064e0150a7f523adc952ac469",
+        "reviewer_kind": "maintainer_assisted",
+        "reviewer": "maintainer-confirmed-system-recommendation"
+      }
+    ],
+    "candidate": {
+      "path": "reports/memory-development/d102-maintainer-assisted-admission-candidate.json",
+      "candidate_id": "d101candidate_97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d",
+      "semantic_body_hash": "sha256:97c0d2499e2ffab97df6050b84af7c1d455e4af631a3e0fb58d50a084a62ac9d",
+      "file_bytes": 31148,
+      "file_sha256": "sha256:9620e99961010bc4c942728f1948cb50b3f067025b8d5a02ba579dd3a1b4e457"
+    },
+    "approved_group_count": 3,
+    "rejected_group_count": 0,
+    "continued_hold_group_count": 2,
+    "preview_entry_count": 3,
+    "source_files": [
+      {
+        "path": "patchloop/memory/d102_maintainer_assisted_decisions.py",
+        "file_bytes": 15634,
+        "file_sha256": "sha256:061e6f15dad73ee5866cb736529b52480a986c3b269a86578fb08dbb6963ccae"
+      },
+      {
+        "path": "scripts/build_d102_maintainer_assisted_decision_gate.py",
+        "file_bytes": 1575,
+        "file_sha256": "sha256:5cd62521afd69248af317196f50171f13c45c30c6955987d8a0ecb81c5e20cda"
+      },
+      {
+        "path": "tests/test_d102_maintainer_assisted_decisions.py",
+        "file_bytes": 3874,
+        "file_sha256": "sha256:90b051be8a5148935ef60a721693893b0b03a3d1db378febf893b1b9f17a86d9"
+      }
+    ],
+    "authority": {
+      "maintainer_assisted_decision_count": 5,
+      "human_independent_technical_review_claimed": false,
+      "full_five_group_review_finalized": false,
+      "admission_candidate_created": true,
+      "explicit_candidate_approval_pending": true,
+      "approval_receipt_present": false,
+      "admission_seal_created": false,
+      "admitted_memory_rule_count": 0,
+      "memory_admission_unlocked": false,
+      "memory_index_source_authoring_unlocked": false,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "explicit-exact-candidate-approval"
+  }
+}

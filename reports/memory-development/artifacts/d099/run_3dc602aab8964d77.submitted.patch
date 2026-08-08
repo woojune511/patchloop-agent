@@ -1,0 +1,94 @@
+diff --git a/src/anyio/_backends/_asyncio.py b/src/anyio/_backends/_asyncio.py
+index c3c5690..1e65e18 100644
+--- a/src/anyio/_backends/_asyncio.py
++++ b/src/anyio/_backends/_asyncio.py
+@@ -2231,6 +2231,21 @@ class TestRunner(abc.TestRunner):
+                     "Multiple exceptions occurred in asynchronous callbacks", exceptions
+                 )
+ 
++    def _run_until_complete(self, awaitable: Awaitable[T_Retval]) -> T_Retval:
++        task = asyncio.ensure_future(awaitable, loop=self.get_loop())
++        try:
++            return self.get_loop().run_until_complete(task)
++        except KeyboardInterrupt:
++            runner_task = self._runner_task
++            self._runner_task = None
++            task.cancel()
++            if runner_task is not None and not runner_task.done():
++                runner_task.cancel()
++                with suppress(BaseException):
++                    self.get_loop().run_until_complete(runner_task)
++
++            raise
++
+     async def _run_tests_and_fixtures(
+         self,
+         receive_stream: MemoryObjectReceiveStream[
+@@ -2246,8 +2261,7 @@ class TestRunner(abc.TestRunner):
+                 except CancelledError as exc:
+                     if not future.cancelled():
+                         future.cancel(*exc.args)
+-
+-                    raise
++                    continue
+                 except BaseException as exc:
+                     if not future.cancelled():
+                         future.set_exception(exc)
+@@ -2276,7 +2290,13 @@ class TestRunner(abc.TestRunner):
+         coro = func(*args, **kwargs)
+         future: asyncio.Future[T_Retval] = self.get_loop().create_future()
+         self._send_stream.send_nowait((coro, future))
+-        return await future
++        try:
++            return await future
++        except BaseException:
++            runner_task = self._runner_task
++            if runner_task is not None and runner_task.done():
++                self._runner_task = None
++            raise
+ 
+     def run_asyncgen_fixture(
+         self,
+@@ -2284,7 +2304,7 @@ class TestRunner(abc.TestRunner):
+         kwargs: dict[str, Any],
+     ) -> Iterable[T_Retval]:
+         asyncgen = fixture_func(**kwargs)
+-        fixturevalue: T_Retval = self.get_loop().run_until_complete(
++        fixturevalue: T_Retval = self._run_until_complete(
+             self._call_in_runner_task(asyncgen.asend, None)
+         )
+         self._raise_async_exceptions()
+@@ -2292,13 +2312,13 @@ class TestRunner(abc.TestRunner):
+         yield fixturevalue
+ 
+         try:
+-            self.get_loop().run_until_complete(
++            self._run_until_complete(
+                 self._call_in_runner_task(asyncgen.asend, None)
+             )
+         except StopAsyncIteration:
+             self._raise_async_exceptions()
+         else:
+-            self.get_loop().run_until_complete(asyncgen.aclose())
++            self._run_until_complete(asyncgen.aclose())
+             raise RuntimeError("Async generator fixture did not stop")
+ 
+     def run_fixture(
+@@ -2306,7 +2326,7 @@ class TestRunner(abc.TestRunner):
+         fixture_func: Callable[..., Coroutine[Any, Any, T_Retval]],
+         kwargs: dict[str, Any],
+     ) -> T_Retval:
+-        retval = self.get_loop().run_until_complete(
++        retval = self._run_until_complete(
+             self._call_in_runner_task(fixture_func, **kwargs)
+         )
+         self._raise_async_exceptions()
+@@ -2316,7 +2336,7 @@ class TestRunner(abc.TestRunner):
+         self, test_func: Callable[..., Coroutine[Any, Any, Any]], kwargs: dict[str, Any]
+     ) -> None:
+         try:
+-            self.get_loop().run_until_complete(
++            self._run_until_complete(
+                 self._call_in_runner_task(test_func, **kwargs)
+             )
+         except Exception as exc:

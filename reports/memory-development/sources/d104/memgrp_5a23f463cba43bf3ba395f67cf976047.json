@@ -1,0 +1,104 @@
+{
+  "schema_version": "unindexed-memory-entry-source-d104-v1",
+  "source_id": "d104src_3590f0f35053a37af10b6078e984feee950fe5cb50a88956b19d1451e5118ba8",
+  "semantic_body_hash": "sha256:3590f0f35053a37af10b6078e984feee950fe5cb50a88956b19d1451e5118ba8",
+  "semantic_body": {
+    "milestone": "D-104",
+    "evidence_kind": "sealed-group-unindexed-memory-source",
+    "materialized_at": "2026-08-06T04:00:00Z",
+    "source_collection_id": "d104collection_4017131c10c127f47b8ea68ff2d8c3c3265c2f6cb11c1b175dd52c23882bd399",
+    "source_projection_policy": "d103-seal-admitted-template-exact-v1",
+    "admission_seal": {
+      "path": "reports/memory-development/d103-maintainer-assisted-admission-seal.json",
+      "schema_version": "memory-group-admission-seal-d101-v1",
+      "seal_id": "d101seal_3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "semantic_body_hash": "sha256:3dc67e77a0c8c2d9a94f6bea9138d179eb6d6ac1cda0d8b490a1eab3bfbe705e",
+      "file_bytes": 19357,
+      "file_sha256": "sha256:af1e6ea8811445f26d542f34500d1a7b3919392bef00c98b71f4c26ded236e8e"
+    },
+    "projected_entry": {
+      "template": {
+        "target_schema": "memory-entry-v1",
+        "proposed_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+        "failure_pattern": {
+          "failure_class": "SEMANTIC_STATE_CONFLATION",
+          "phase": "IMPLEMENT",
+          "description": "One exception boundary treats source lookup failure and later value transformation failure as the same semantic state."
+        },
+        "preconditions": [
+          "The public contract distinguishes a missing source from an existing empty or transformed value.",
+          "Lookup and transformation can raise the same exception type for different reasons."
+        ],
+        "diagnostic_evidence": [
+          "Trace lookup, filtering, substitution, defaulting, and caller fallback as separate stages.",
+          "Exercise missing, existing-empty, matching, defaulted, caller-context, and fallback cases."
+        ],
+        "recommended_actions": [
+          "Narrow exception handling to the operation whose absence semantics it represents.",
+          "Preserve the distinct empty and default states through later transformations."
+        ],
+        "do_not_apply_when": [
+          "The public API intentionally defines lookup and transformation failure as identical.",
+          "The operations cannot produce distinguishable semantic states."
+        ],
+        "applicable_languages": [
+          "python"
+        ],
+        "source_run_ids": [
+          "run_ac3ae1a7009a4e8b",
+          "run_d5c2e22b485a4578"
+        ],
+        "validation_count": 0,
+        "confidence": 0.92
+      },
+      "provenance": {
+        "semantic_group_id": "exception-origin-state-conflation",
+        "semantic_group_fingerprint": "sha256:e70e64a6af47eac96d9fe70943d6ea869a84757da4475edd5b972fb0654561fb",
+        "decision_hash": "sha256:4192b503768093e2134b7651da4922fcd9d5c2a064e0150a7f523adc952ac469",
+        "source_failure_ids": [
+          "fail_f90fa668a6945abe98ef6dd5e4761a97",
+          "fail_ab3918ee4a3c5f34bc9d04a8f0970c00"
+        ],
+        "evidence_ref_ids": [
+          "sha256:90277ac5d5e83bbe45385ffeb37a6057c15d2b1fd3df839094710e6d7af0b43d",
+          "sha256:abd60751fdc78deb222f60abdeb76cf858f24065e06e3dcf228e2ff925e8aca0",
+          "sha256:f11990f8b4762844a5777a2c034fb8513dff434d4ce311d7dc562ad6f8b5b201",
+          "sha256:4922d909fd3ce225d197d2b507782a1302d693c924765e7a874eee3ac90bf68f",
+          "sha256:4c2d22864fca7205faaa60d2574dba8cc23651c0ef4dae0e984a5735b6b9f293",
+          "sha256:9b408f21fe54ce0e49775ad20f06bce44faab2d4972535c510c4a4cb4b092ee1",
+          "sha256:483b8a54c94e9febcf32a48ef2ea60ac89452a2b6237ea7d03ebedcf4522a29e",
+          "sha256:aa225f0c1c3aa5d0893164cfc15568b064b4a2c4cf4615fd1b1351ba599219df",
+          "sha256:5506486fc0e67ef21e7de08ec1fb65e4c00195a81d93aad8d1ecdc0505992384",
+          "sha256:8a4558f889d629d455729fae4b78e556e0197c4bcb7a3f6c674be66d927ceee5",
+          "sha256:b23bd90e820701a264994d46b8822fd21a98f85ed846a9dcd3e7f92be8ad43a6",
+          "sha256:127fddaa2b889fec52264e1abfee2062983a53f96fafd54cf9173d0fa49c92c3",
+          "sha256:8336ce50de3e7e86b169de79973e7fb758436cc903b01d622e46f883afb4abf4",
+          "sha256:82d7423fbbd2fb93b89a2c1d023ac22e490464ac329eebf6045de0d84c702210",
+          "sha256:75e225198f2e8f8804af34e5779d906daa5d93c9aff50581858c499b64bcd3a2",
+          "sha256:fb9bd242fb9645328e6abbe562b6d113c96385e4e2c9ec2a51994a61ec33f11e",
+          "sha256:e3a738c25ba4e6ba3e6a8d71eafeb3f87b7ba9e3f2ace97f9ebac127062923c0"
+        ],
+        "dedup_confidence": 1.0
+      },
+      "template_hash": "sha256:5a8e661e092e50e72bf8aa6456e9a5996fcd94503dcf4275a0be60579762ce8a"
+    },
+    "leak_scan_passed": true,
+    "authority": {
+      "source_record_materialized": true,
+      "unindexed_source_record": true,
+      "source_schema_validated": true,
+      "source_provenance_validated": true,
+      "source_leak_scan_passed": true,
+      "actual_memory_entry_created": false,
+      "index_version_assigned": false,
+      "rendered_memory_created": false,
+      "embedding_created": false,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "retrieval_ready": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false
+    }
+  }
+}

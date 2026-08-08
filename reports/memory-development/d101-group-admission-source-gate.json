@@ -1,0 +1,82 @@
+{
+  "schema_version": "memory-group-admission-source-gate-d101-v1",
+  "gate_id": "d101_26838ab1e8097e47f53e712ce11d0d8a603cd4dd3dff408792f77f7d164fe4f9",
+  "semantic_body_hash": "sha256:26838ab1e8097e47f53e712ce11d0d8a603cd4dd3dff408792f77f7d164fe4f9",
+  "semantic_body": {
+    "milestone": "D-101",
+    "evidence_kind": "review-packet-and-admission-mechanism-source-gate",
+    "recorded_at": "2026-08-06T01:05:00Z",
+    "proposal": {
+      "schema_version": "memory-public-review-proposal-d099-v1",
+      "proposal_id": "d099_63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+      "semantic_body_hash": "sha256:63c74999242f6217f2a81c9c2dc22d618d2be137948580f93401341c4ea49574",
+      "file_bytes": 77942,
+      "file_sha256": "sha256:24e34b02a66fc132d333bb51614a10786d38bc188b5550432a5f21f435f21493"
+    },
+    "d100_source_gate": {
+      "path": "reports/memory-development/d100-group-review-projector-source-gate.json",
+      "schema_version": "memory-group-review-projector-source-gate-d100-v1",
+      "gate_id": "d100_5ac180b32fef27d5937c1447e39f01bafda65ce6b5a3eef1992a7da45cab9b2b",
+      "semantic_body_hash": "sha256:5ac180b32fef27d5937c1447e39f01bafda65ce6b5a3eef1992a7da45cab9b2b",
+      "file_bytes": 5048,
+      "file_sha256": "sha256:866bad69dad24dd908339330f27a24a388e64b453e6dc403363836292ea24e47"
+    },
+    "review_packet": {
+      "path": "reports/memory-development/d101-five-group-review-packet.json",
+      "schema_version": "memory-group-review-packet-d101-v1",
+      "document_id": "d101packet_bd78712747b1718ed8c9c4f67324bd8f11f564c76c041d3108843b2da0224947",
+      "semantic_body_hash": "sha256:bd78712747b1718ed8c9c4f67324bd8f11f564c76c041d3108843b2da0224947",
+      "file_bytes": 17494,
+      "file_sha256": "sha256:e7d4acf48dbcac1e366964fc2ed8ceb924d9907f2cb2ddeed94a23ef816c93ef"
+    },
+    "review_markdown": {
+      "path": "reports/memory-development/d101-five-group-review-packet.md",
+      "bytes": 12872,
+      "sha256": "sha256:9fc8e51dc867d66672b7c5334402bafdc27759914df88df09d506a5832d479c5"
+    },
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d101_group_admission.py",
+        "bytes": 100073,
+        "sha256": "sha256:87c0be99cf9ca7c97050f3c407f234da03739edab5745fc9014d4c5380c7ab7c"
+      },
+      {
+        "path": "scripts/d101_group_admission.py",
+        "bytes": 9564,
+        "sha256": "sha256:9d68c860fbc697994f1d006bf7af8e19bf8b728752f0019c77241f7dd5dfa6f8"
+      },
+      {
+        "path": "tests/test_d101_group_admission.py",
+        "bytes": 27734,
+        "sha256": "sha256:52ebb2c6b632049284c875e879507c71a6ce458a8aa1403c182d987daa643dd3"
+      }
+    ],
+    "packet_json_markdown_exact_binding": true,
+    "candidate_receipt_seal_flow_implemented": true,
+    "journal_head_count_file_sha_required": true,
+    "synthetic_journal_or_receipt_rejected": true,
+    "reviewer_identity_self_attested_not_authenticated": true,
+    "legacy_memory_builder_connected": false,
+    "authority": {
+      "mechanism_source_gate_only": true,
+      "review_packet_generated": true,
+      "production_human_decision_records": 0,
+      "admission_candidate_created": false,
+      "approval_receipt_present": false,
+      "admission_seal_created": false,
+      "admitted_memory_rule_count": 0,
+      "memory_admission_unlocked": false,
+      "memory_index_source_authoring_unlocked": false,
+      "memory_index_build_authorized": false,
+      "memory_index_built": false,
+      "memory_index_frozen": false,
+      "historical_d099_or_d100_artifacts_modified": false,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "explicit-five-group-decisions-and-exact-candidate-approval"
+  }
+}

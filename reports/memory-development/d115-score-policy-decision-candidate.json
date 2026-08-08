@@ -1,0 +1,158 @@
+{
+  "schema_version": "score-policy-decision-candidate-d115-v1",
+  "candidate_id": "d115scoredecisioncandidate_91e3ef5af000fe830483012b5deee4eeb47f5a117fa5904d93d713b03f2308ec",
+  "semantic_body_hash": "sha256:91e3ef5af000fe830483012b5deee4eeb47f5a117fa5904d93d713b03f2308ec",
+  "semantic_body": {
+    "milestone": "D-115",
+    "evidence_kind": "offline-score-policy-decision-authorization-candidate",
+    "recorded_at": "2026-08-07T04:57:39Z",
+    "preflight": {
+      "path": "reports/memory-development/d115-score-policy-decision-preflight.json",
+      "file_bytes": 59725,
+      "file_sha256": "sha256:91908b43eb581b09249f8285e5f1d09389092c5b40c1c794b9ab139667c86bad",
+      "schema_version": "score-policy-decision-analysis-d115-v1",
+      "preflight_id": "d115preflight_c9af86f3dd2f5e68316cd36290fcadb1ca8b2cfbe5627d6c6a531246183ba12b",
+      "semantic_body_hash": "sha256:c9af86f3dd2f5e68316cd36290fcadb1ca8b2cfbe5627d6c6a531246183ba12b"
+    },
+    "decision_status": "policy-mutation-deferred",
+    "recommended_disposition": "defer-policy-mutation-and-author-public-only-relevance-calibration",
+    "conditional_policy_hypothesis": {
+      "policy_id": "counterfactual-class-signal-conditional-tuple",
+      "weights": {
+        "semantic": 0.25,
+        "failure_class": 0.4,
+        "phase": 0.15,
+        "language": 0.1,
+        "validation": 0.1
+      },
+      "threshold": 0.6,
+      "comparator": "greater-than-or-equal",
+      "counterfactual_only": true,
+      "corrected_policy_selected": false,
+      "implementation_ready": false,
+      "counterfactual_signal_assumptions": {
+        "source": "d112-public-non-acceptance-hypothesis",
+        "moto_implement_hypothesized_group_signal": 1.0,
+        "moto_reproduce_signal_copied_from_implement_for_phase_control": true,
+        "babel_all_groups_abstain": true,
+        "runtime_classifier_observed": false,
+        "true_relevance_established": false
+      },
+      "required_signal": "independent-deterministic-public-taxonomy-classifier-with-explicit-abstention",
+      "forbidden_signal_sources": [
+        "d112-hypothesized-group-id",
+        "task-id-to-answer-lookup",
+        "private-task-spec",
+        "hidden-test",
+        "reference-or-known-bad-patch",
+        "held-out-result"
+      ],
+      "diagnostic_only_counterfactual_results": {
+        "moto_implement_hypothesized_score": 0.6530721018133969,
+        "moto_implement_hypothesized_pass": true,
+        "babel_top_score": 0.3156332814131685,
+        "babel_no_match": true,
+        "moto_reproduce_hypothesized_score": 0.503072101813397,
+        "moto_reproduce_no_match": true,
+        "phase_delta": 0.1499999999999999
+      }
+    },
+    "proposed_next_action": {
+      "schema_version": "public-failure-class-signal-contract-d115-v1",
+      "action_kind": "prepare-public-failure-class-signal-contract-and-calibration-candidate",
+      "future_milestone": "D-116",
+      "public_development_inputs_only": true,
+      "allowed_splits": [
+        "dev-train",
+        "dev-validation"
+      ],
+      "held_out_access_allowed": false,
+      "private_hidden_reference_or_known_bad_access_allowed": false,
+      "hypothesized_group_id_as_classifier_input_allowed": false,
+      "task_id_answer_lookup_allowed": false,
+      "deterministic_abstention_required": true,
+      "ambiguous_signal_must_abstain": true,
+      "additional_public_negative_controls_required": true,
+      "conditional_policy_tuple_may_be_evaluated_offline": true,
+      "conditional_policy_tuple": {
+        "policy_id": "counterfactual-class-signal-conditional-tuple",
+        "weights": {
+          "semantic": 0.25,
+          "failure_class": 0.4,
+          "phase": 0.15,
+          "language": 0.1,
+          "validation": 0.1
+        },
+        "threshold": 0.6,
+        "comparator": "greater-than-or-equal",
+        "counterfactual_only": true,
+        "corrected_policy_selected": false,
+        "implementation_ready": false,
+        "counterfactual_signal_assumptions": {
+          "source": "d112-public-non-acceptance-hypothesis",
+          "moto_implement_hypothesized_group_signal": 1.0,
+          "moto_reproduce_signal_copied_from_implement_for_phase_control": true,
+          "babel_all_groups_abstain": true,
+          "runtime_classifier_observed": false,
+          "true_relevance_established": false
+        },
+        "required_signal": "independent-deterministic-public-taxonomy-classifier-with-explicit-abstention",
+        "forbidden_signal_sources": [
+          "d112-hypothesized-group-id",
+          "task-id-to-answer-lookup",
+          "private-task-spec",
+          "hidden-test",
+          "reference-or-known-bad-patch",
+          "held-out-result"
+        ],
+        "diagnostic_only_counterfactual_results": {
+          "moto_implement_hypothesized_score": 0.6530721018133969,
+          "moto_implement_hypothesized_pass": true,
+          "babel_top_score": 0.3156332814131685,
+          "babel_no_match": true,
+          "moto_reproduce_hypothesized_score": 0.503072101813397,
+          "moto_reproduce_no_match": true,
+          "phase_delta": 0.1499999999999999
+        }
+      },
+      "score_policy_mutation_allowed": false,
+      "runtime_retrieval_allowed": false,
+      "runtime_memory_injection_allowed": false,
+      "agent_run_allowed": false,
+      "provider_or_evaluator_call_allowed": false,
+      "network_access_allowed": false,
+      "core_campaign_allowed": false,
+      "analysis_campaign_allowed": false
+    },
+    "proposed_next_action_hash": "sha256:180c9456da225b95f8ddcf8ab4d05df1732d670b43f901e2220d841bfa5cb466",
+    "approval_contract": {
+      "separate_user_message_required": true,
+      "exact_candidate_id_required": true,
+      "exact_semantic_body_hash_required": true,
+      "exact_file_sha256_required": true,
+      "generic_continue_message_is_approval": false,
+      "approval_would_authorize_score_policy_mutation": false,
+      "approval_would_authorize_retrieval_or_agent_run": false
+    },
+    "authority": {
+      "offline_score_policy_decision_candidate_ready": true,
+      "corrected_policy_selected": false,
+      "additional_public_relevance_evidence_required": true,
+      "exact_candidate_user_approval_received": false,
+      "public_failure_class_signal_contract_authorized": false,
+      "score_policy_correction_authorized": false,
+      "score_policy_correction_implemented": false,
+      "score_weights_or_threshold_changed": false,
+      "failure_class_signal_changed": false,
+      "ranking_policy_changed": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "agent_runs": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false
+    }
+  }
+}

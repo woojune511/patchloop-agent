@@ -1,0 +1,211 @@
+{
+  "schema_version": "validator-correction-approval-receipt-d114-v1",
+  "receipt_id": "d114approval_20d5025c5d72b156e8470812a0062da2d4d639aa2fa9848ef38da96a71112fd7",
+  "semantic_body_hash": "sha256:20d5025c5d72b156e8470812a0062da2d4d639aa2fa9848ef38da96a71112fd7",
+  "semantic_body": {
+    "milestone": "D-114",
+    "evidence_kind": "exact-d113-approval-and-repository-local-one-use-claim",
+    "approval_recorded_at": "2026-08-07T03:04:28.745556Z",
+    "correction_claimed_at": "2026-08-07T03:42:18.669461Z",
+    "approval_action_id": "d114-exact-d113-append-only-validator-correction-1",
+    "approval_reference": "user-message:d113-exact-d114-validator-correction-approval",
+    "approval_reference_mode": "self-attested-exact-user-message",
+    "approval_statement_code": "EXPLICITLY_APPROVE_D113_EXACT_D114_VALIDATOR_CORRECTION_ONCE",
+    "d113_source_gate": {
+      "path": "reports/memory-development/d113-validator-correction-source-gate.json",
+      "file_bytes": 3133,
+      "file_sha256": "sha256:a69677ddfe7875322e4a27d9f7c3b6086e4fa7350ac9f3f68381fe460dc28d54",
+      "schema_version": "validator-correction-authorization-source-gate-d113-v1",
+      "gate_id": "d113_0cbf14cc933ba33374f7a5b5db2800e62d6e6d1456f2b6eb48facfa35ace568c",
+      "semantic_body_hash": "sha256:0cbf14cc933ba33374f7a5b5db2800e62d6e6d1456f2b6eb48facfa35ace568c"
+    },
+    "d113_candidate": {
+      "path": "reports/memory-development/d113-validator-correction-authorization-candidate.json",
+      "file_bytes": 5963,
+      "file_sha256": "sha256:4b576b6b7edbb7ebf9813e8c4ac35fae7af88992dc4dac3a28a181f79aa6e8a9",
+      "schema_version": "validator-correction-authorization-candidate-d113-v1",
+      "candidate_id": "d113validatorcandidate_373257ce1e2c904482a2aeb4649495baf737a11b3c958ef8420b66640a7f3732",
+      "semantic_body_hash": "sha256:373257ce1e2c904482a2aeb4649495baf737a11b3c958ef8420b66640a7f3732"
+    },
+    "authorized_action_hash": "sha256:b086f8066aff043b27a816e1cd77d4ca176a8adc0f75895c362f93efb9641e5d",
+    "authorized_scope": {
+      "schema_version": "append-only-d112-validator-correction-d113-v1",
+      "action_kind": "append-only-d112-validator-correction",
+      "future_milestone": "D-114",
+      "future_paths": [
+        "patchloop/memory/d114_d112_validator_correction.py",
+        "scripts/build_d114_d112_validator_correction.py",
+        "tests/test_d114_d112_validator_correction.py",
+        "reports/memory-development/d114-d112-validator-correction-receipt.json",
+        "reports/memory-development/d114-d112-validator-correction-gate.json"
+      ],
+      "new_files_only": true,
+      "d112_bound_files_may_be_modified": false,
+      "existing_artifact_or_index_mutation_allowlist": [],
+      "d112_execution_replay_allowed": false,
+      "d112_one_use_capability_recreated": false,
+      "correction_evidence_materializations": 1,
+      "read_only_validator_reruns_allowed": true,
+      "automatic_retry_after_partial_materialization_allowed": false,
+      "required_corrections": {
+        "receipt_and_gate_exact_root_key_sets": true,
+        "receipt_and_gate_exact_semantic_body_key_sets": true,
+        "receipt_expected_payload_full_equality": true,
+        "rehashed_unknown_field_rejected": true,
+        "rehashed_unchecked_claim_field_rejected": true,
+        "paired_receipt_gate_rehash_rejected": true,
+        "approval_execution_completion_chronology_enforced": true,
+        "current_input_and_sealed_historical_modes_separated": true,
+        "portable_mode_avoids_local_model_snapshot": true,
+        "portable_mode_avoids_exact_installed_dependency_requirement": true,
+        "portable_score_replay_uses_checked_in_frozen_index_gate_vectors_and_public_specs": true,
+        "repository_local_one_use_claim_named_accurately": true,
+        "network_claim_limited_to_source_path_and_self_attestation": true
+      },
+      "required_tests": {
+        "exact_d112_artifacts_pass": true,
+        "unknown_root_body_and_claim_fields_fail": true,
+        "each_unchecked_receipt_field_flip_fails": true,
+        "approval_after_execution_fails": true,
+        "execution_after_completion_fails": true,
+        "paired_receipt_gate_rehash_fails": true,
+        "portable_mode_forbids_snapshot_and_dependency_rehydration": true,
+        "portable_mode_forbids_model_load_and_encode": true,
+        "retrieval_provider_evaluator_and_agent_calls_remain_zero": true,
+        "d112_and_index_bytes_unchanged": true
+      },
+      "claim_limits": {
+        "human_reviewer_identity_authenticated": false,
+        "cryptographic_signature_verified": false,
+        "global_one_use_proved": false,
+        "cross_clone_exclusion_proved": false,
+        "os_socket_block_proved": false,
+        "clean_clone_portability_already_validated": false,
+        "d112_scores_or_ranking_corrected": false,
+        "memory_effect_established": false,
+        "negative_transfer_established": false
+      },
+      "closed_runtime_boundaries": {
+        "score_weights_or_threshold_change_allowed": false,
+        "ranking_policy_change_allowed": false,
+        "memory_entry_change_allowed": false,
+        "index_or_marker_change_allowed": false,
+        "retrieval_execution_allowed": false,
+        "runtime_memory_injection_allowed": false,
+        "agent_run_allowed": false,
+        "model_load_or_encode_allowed": false,
+        "provider_call_allowed": false,
+        "evaluator_call_allowed": false,
+        "network_access_allowed": false,
+        "core_campaign_allowed": false,
+        "analysis_campaign_allowed": false
+      }
+    },
+    "protected_pre_state": {
+      "files": [
+        {
+          "path": "reports/memory-development/d112-retrieval-readiness-probe-receipt.json",
+          "file_bytes": 13835,
+          "file_sha256": "sha256:74fcd761cac65a9cab26529076b7cde60eaa14a1faf40475e680f526e00ba1d1"
+        },
+        {
+          "path": "reports/memory-development/d112-retrieval-readiness-completion-gate.json",
+          "file_bytes": 77591,
+          "file_sha256": "sha256:a7e691ae43c60405cbb10cd27caf3055eabaa96bb7fa6f2a02142d97aa903951"
+        },
+        {
+          "path": "patchloop/memory/d112_retrieval_readiness_probe.py",
+          "file_bytes": 54182,
+          "file_sha256": "sha256:3df099f518b8c0707a6f6a81921c8735037fb97f1357a45b238148ac67c70d2b"
+        },
+        {
+          "path": "scripts/run_d112_retrieval_readiness_probe.py",
+          "file_bytes": 2000,
+          "file_sha256": "sha256:308ed1e6499da73edf064a8ecd211c526c4ef4c0fc0123623f1723135b78cd9e"
+        },
+        {
+          "path": "tests/test_d112_retrieval_readiness_probe.py",
+          "file_bytes": 11297,
+          "file_sha256": "sha256:3629de37190cd8337fb3a5c2da07eb6795ca65f8e6599f4ac275fd135e393bb6"
+        },
+        {
+          "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+          "file_bytes": 55687,
+          "file_sha256": "sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0"
+        },
+        {
+          "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN",
+          "file_bytes": 72,
+          "file_sha256": "sha256:cdfe40b734135a30f66e34ff24469940063a7231a1fe0783420ee2ff816d9561"
+        },
+        {
+          "path": "reports/memory-development/artifacts/d106/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064.json",
+          "file_bytes": 55644,
+          "file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a"
+        },
+        {
+          "path": "reports/memory-development/d113-d112-validator-correction-preflight.json",
+          "file_bytes": 8270,
+          "file_sha256": "sha256:f2053137c80a9429251651201f61df942d9e448d0ddf2dab0faf2366bcfbf505"
+        },
+        {
+          "path": "reports/memory-development/d113-validator-correction-authorization-candidate.json",
+          "file_bytes": 5963,
+          "file_sha256": "sha256:4b576b6b7edbb7ebf9813e8c4ac35fae7af88992dc4dac3a28a181f79aa6e8a9"
+        },
+        {
+          "path": "reports/memory-development/d113-validator-correction-source-gate.json",
+          "file_bytes": 3133,
+          "file_sha256": "sha256:a69677ddfe7875322e4a27d9f7c3b6086e4fa7350ac9f3f68381fe460dc28d54"
+        },
+        {
+          "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+          "file_bytes": 2839,
+          "file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7"
+        },
+        {
+          "path": "tasks/dev-validation/babel-strict-grouped-decimal-trailing-zeroes/public.yaml",
+          "file_bytes": 2023,
+          "file_sha256": "sha256:d65e09fe70bb0449c85e663d0eeb695fe52bc7fb34619debbbe81a0b16ab2aca"
+        }
+      ],
+      "fingerprint": "sha256:ca89ae500c26d9a25cce802e2e4f9c48133497f322abe30adb8b594cd73dbb74"
+    },
+    "implementation_pre_state": {
+      "files": [
+        {
+          "path": "patchloop/memory/d114_d112_validator_correction.py",
+          "file_bytes": 66766,
+          "file_sha256": "sha256:2529d8e6101495cff2de8b33d10150081cb7f2537f9010a31565ff4cc6603cba"
+        },
+        {
+          "path": "scripts/build_d114_d112_validator_correction.py",
+          "file_bytes": 1854,
+          "file_sha256": "sha256:2d33766becd1ba412c1c1e178f0a8828261067423722e4b440acf9e97d6a53cd"
+        },
+        {
+          "path": "tests/test_d114_d112_validator_correction.py",
+          "file_bytes": 19075,
+          "file_sha256": "sha256:b0d0c589ce54a059e676ea6eebaec18b305d059f03765a4ccb937e361bc67dd8"
+        }
+      ],
+      "fingerprint": "sha256:201e3786d6796593df6f80a7435a4b3d375efc693456f2e92a0dc5e4003355c7"
+    },
+    "claim_semantics": {
+      "exclusive_create_and_fsync_required": true,
+      "repository_local_one_use_consumption_marker": true,
+      "global_one_use_or_cross_clone_exclusion_proved": false,
+      "arbitrary_writer_delete_recreate_exclusion_proved": false,
+      "failure_or_hard_kill_remains_consumed": true,
+      "automatic_retry_or_rollback_allowed": false,
+      "completion_gate_required_for_success": true,
+      "d112_or_frozen_authority_modified": false
+    },
+    "self_attested": true,
+    "approver_kind": "human",
+    "approver_label": "project-owner",
+    "reviewer_identity_authenticated": false,
+    "cryptographic_signature_verified": false,
+    "execution_result_present": false
+  }
+}

@@ -1,0 +1,117 @@
+{
+  "schema_version": "memory-index-freeze-authorization-candidate-d109-v1",
+  "candidate_id": "d109freezecandidate_480d2aa8657fd143397fcfc71f252b8a8e3c0988d3950b5671089cf6dc8b8d46",
+  "semantic_body_hash": "sha256:480d2aa8657fd143397fcfc71f252b8a8e3c0988d3950b5671089cf6dc8b8d46",
+  "semantic_body": {
+    "milestone": "D-109",
+    "candidate_kind": "exact-unfrozen-group-index-freeze-authorization",
+    "recorded_at": "2026-08-06T12:05:00Z",
+    "d108_completion_gate": {
+      "path": "reports/memory-development/d108-provider-token-count-completion-gate.json",
+      "gate_id": "d108_c663c745d43fc31bdee5309825059827899872c13368d7e3709e8730ee0a0f86",
+      "semantic_body_hash": "sha256:c663c745d43fc31bdee5309825059827899872c13368d7e3709e8730ee0a0f86",
+      "file_bytes": 4794,
+      "file_sha256": "sha256:5f57e29caa3a3c940c280a69fbed3abe3d8daba4b4542e039355443df931d7bc",
+      "provider_exact_budget_validated": true,
+      "memory_delta_tokens": 702,
+      "maximum_memory_delta_tokens": 2000
+    },
+    "d107_portable_validation": {
+      "path": "reports/memory-development/d107-portable-index-validation.json",
+      "validation_id": "d107portable_8fb06997dfd9aa7e07c116db8095b5397382356bcd1cfd71ab3ce6c8b4ad1785",
+      "semantic_body_hash": "sha256:8fb06997dfd9aa7e07c116db8095b5397382356bcd1cfd71ab3ce6c8b4ad1785",
+      "file_bytes": 3146,
+      "file_sha256": "sha256:a6e71de1eea4a311d790e14a25dc9e507e1a2107176a7d0967ac074f9e50f259"
+    },
+    "runtime_preflight": {
+      "path": "reports/memory-development/d109-runtime-index-freeze-preflight.json",
+      "schema_version": "runtime-index-freeze-preflight-d109-v1",
+      "preflight_id": "d109preflight_a7519ddeae6000c3e0fc8f368b6316ddf1d405ab77badbc8eeade12bbfbc4b34",
+      "semantic_body_hash": "sha256:a7519ddeae6000c3e0fc8f368b6316ddf1d405ab77badbc8eeade12bbfbc4b34",
+      "file_bytes": 2895,
+      "file_sha256": "sha256:569a4b071c9c36d436eb2972346d618ece3c748bd92fcfa9c06b12c482625999"
+    },
+    "freeze_target": {
+      "index_id": "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064",
+      "runtime_index_path": ".patchloop/memory/indexes/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+      "portable_index_path": "reports/memory-development/artifacts/d106/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064.json",
+      "pre_freeze_file_bytes": 55644,
+      "pre_freeze_file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a",
+      "pre_freeze_content_hash": "sha256:86dbd991fa411bc43a8ec65927630fe8ad3365a1a41d9a6eafdeb036d9aab3fd",
+      "entry_count": 3,
+      "embedding_count": 3,
+      "memory_ids": [
+        "memgrp_649483b80292fea26e4009ebdb72df31",
+        "memgrp_b421547d481faabf9be3511217258de5",
+        "memgrp_5a23f463cba43bf3ba395f67cf976047"
+      ],
+      "semantic_group_ids": [
+        "platform-emulation-matrix-gap",
+        "request-context-propagation-gap",
+        "exception-origin-state-conflation"
+      ],
+      "held_group_ids": [
+        "interrupt-lifecycle-unresolved",
+        "diagnostic-contract-unresolved"
+      ],
+      "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+      "embedding_revision": "1110a243fdf4706b3f48f1d95db1a4f5529b4d41",
+      "vector_set_hash": "sha256:5f4cf40d0512092ed68fdfa05a1d0ad9b0d2ad7a2f3fd6f6ca078adfcac2fc81"
+    },
+    "authorized_action_template": {
+      "schema_version": "exact-group-index-freeze-action-d109-v1",
+      "action": "freeze-exact-group-index-once",
+      "approval_receipt_required": true,
+      "approval_must_repeat_candidate_id_body_sha_and_file_sha": true,
+      "one_use_execution_required": true,
+      "automatic_retry_allowed": false,
+      "allowed_existing_json_mutations": [
+        "/frozen: false -> true",
+        "/frozen_at: absent -> approval-bound execution UTC timestamp",
+        "/authority/index_freeze_authorized: false -> true",
+        "/authority/memory_index_frozen: false -> true",
+        "/content_hash: recompute after the four allowed semantic changes"
+      ],
+      "all_other_existing_json_fields_byte_semantically_unchanged": true,
+      "frozen_at_source": "approval-bound-freeze-execution-start-utc",
+      "post_freeze_content_hash_rule": "sha256(canonical_json(index_without_content_hash))",
+      "marker_path": ".patchloop/memory/indexes/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN",
+      "marker_content_rule": "post_freeze_content_hash + LF",
+      "marker_written_after_index": true,
+      "partial_or_ambiguous_state_must_fail_closed": true,
+      "provider_calls_authorized": 0,
+      "evaluator_calls_authorized": 0,
+      "retrieval_authorized": false,
+      "runtime_memory_injection_authorized": false,
+      "core_campaign_authorized": false,
+      "analysis_authorized": false
+    },
+    "expected_post_freeze_authority": {
+      "index_freeze_authorized": true,
+      "memory_index_frozen": true,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false
+    },
+    "current_authority": {
+      "freeze_authorization_candidate_ready": true,
+      "explicit_user_approval_received": false,
+      "index_freeze_authorized": false,
+      "memory_index_frozen": false,
+      "frozen_marker_present": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "provider_calls_made_by_d109": 0,
+      "evaluator_calls_made_by_d109": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "exact-d109-candidate-id-body-sha-file-sha-user-approval"
+  }
+}

@@ -28,7 +28,7 @@ PatchLoop v1은 다음을 제공해야 한다.
 - hidden acceptance, regression, scope, dependency, API, safety verifier
 - crash 후 재개 가능한 external checkpoint와 idempotent action
 - evidence 기반 failure taxonomy와 structured memory
-- No Memory, Raw Trace, Structured, Selective Structured 조건의 공정한 비교
+- 단계적 memory 비교: 먼저 No Memory 대 fixed Structured readiness, 이후 Raw Trace와 Selective Structured를 포함한 공정한 비교
 - task-level 결과, 비용, trace, verifier evidence를 담은 재현 가능한 report
 - 핵심 trace를 확인할 수 있는 최소 viewer와 마지막 단계의 Issue import/Draft PR 데모
 
@@ -67,7 +67,7 @@ PatchLoop v1은 다음을 제공해야 한다.
 
 | ID | Hypothesis | Primary evidence |
 | --- | --- | --- |
-| H1 | Selective structured failure memory는 no-memory보다 held-out SCRR을 높인다. | Paired held-out comparison |
+| H1 | Structured failure memory가 no-memory보다 held-out SCRR을 높이는지 단계적으로 검증한다. | A/C readiness 뒤 별도 paired held-out comparison |
 | H2 | Raw trace는 token을 더 사용하고 무관한 task에서 negative transfer를 만들 수 있다. | Token overhead, failure flip, reviewed trace |
 | H3 | Persistent checkpoint는 정상 성공률보다 fault recovery에 더 큰 영향을 준다. | Context-reset/worker-restart ablation |
 | H4 | Deterministic verifier는 단순 visible pass보다 scope violation과 regression을 더 잘 차단한다. | Verifier ablation |
@@ -90,7 +90,7 @@ H1·H2가 핵심 실험이다. H3·H4는 독립된 stress/ablation 결과로 보
 
 1. Task metadata와 signal을 추출한다.
 2. 선택한 memory policy를 fixed token budget 안에서 실행한다.
-3. Threshold 미만이면 memory를 제공하지 않는다.
+3. Fixed C는 승인된 exact bundle을 항상 제공하고, threshold/no-match는 향후 selective D에만 적용한다.
 4. 동일한 agent/harness 조건으로 run을 수행한다.
 5. No-memory paired run과 task 단위로 비교한다.
 
@@ -121,7 +121,7 @@ Visible check는 agent feedback이며 단독 성공 조건이 아니다. LLM rev
 
 - 2개 Python repository
 - smoke 3~5 task, development 8~10 task, held-out 12~15 task
-- 조건당 최소 2회 반복
+- 초기 runtime readiness는 task/condition당 1회, confirmatory held-out 비교는 조건당 최소 2회 반복
 - context reset, worker restart, test timeout의 3개 fault
 - CLI와 machine-readable JSON/CSV report
 - UI는 run list, trace timeline, diff, verifier result, condition comparison만 제공
@@ -135,8 +135,8 @@ Task 수보다 audit 품질을 우선한다. 모든 evaluation task에는 base c
 1. Reference patch와 known-bad patch를 evaluator가 구분한다.
 2. Single agent run이 완전한 manifest·trace·artifact를 남긴다.
 3. Worker kill 이후 중복 patch 없이 동일 run을 재개한다.
-4. Frozen held-out set과 memory index에서 4개 memory 조건을 실행한다.
-5. SCRR, 비용, recovery, negative-transfer 관련 task-level 결과와 confidence interval을 생성한다.
+4. Development-validation에서 A/C fixed-bundle delivery를 검증한 뒤, 별도 승인된 frozen held-out 비교를 실행한다.
+5. 충분한 반복을 가진 held-out 단계에서 SCRR, 비용, recovery, negative-transfer 관련 task-level 결과와 confidence interval을 생성한다.
 6. 최소 trace viewer에서 대표 성공·실패 run의 provenance를 확인할 수 있다.
 
 개선이 없거나 음수여도 실험이 재현 가능하고 failure analysis가 정직하면 유효한 결과다.

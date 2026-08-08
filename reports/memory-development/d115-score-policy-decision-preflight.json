@@ -1,0 +1,1544 @@
+{
+  "schema_version": "score-policy-decision-analysis-d115-v1",
+  "preflight_id": "d115preflight_c9af86f3dd2f5e68316cd36290fcadb1ca8b2cfbe5627d6c6a531246183ba12b",
+  "semantic_body_hash": "sha256:c9af86f3dd2f5e68316cd36290fcadb1ca8b2cfbe5627d6c6a531246183ba12b",
+  "semantic_body": {
+    "milestone": "D-115",
+    "evidence_kind": "public-only-offline-score-policy-decision-analysis",
+    "recorded_at": "2026-08-07T04:57:38Z",
+    "d114_receipt": {
+      "path": "reports/memory-development/d114-d112-validator-correction-receipt.json",
+      "file_bytes": 10493,
+      "file_sha256": "sha256:1f494579e70d9e8a7f0d28439578afc3b3aa77c7735ac8bc4e81627cab70793b",
+      "schema_version": "validator-correction-approval-receipt-d114-v1",
+      "receipt_id": "d114approval_20d5025c5d72b156e8470812a0062da2d4d639aa2fa9848ef38da96a71112fd7",
+      "semantic_body_hash": "sha256:20d5025c5d72b156e8470812a0062da2d4d639aa2fa9848ef38da96a71112fd7"
+    },
+    "d114_gate": {
+      "path": "reports/memory-development/d114-d112-validator-correction-gate.json",
+      "file_bytes": 15686,
+      "file_sha256": "sha256:c336004f12f187ab0bfb7946204f877c088703d25e809a8e79e9ec84d374be11",
+      "schema_version": "validator-correction-completion-gate-d114-v1",
+      "gate_id": "d114_8f378245c6965d59cd5e589a67cea203e502553e19fa9391b11a667db09271fb",
+      "semantic_body_hash": "sha256:8f378245c6965d59cd5e589a67cea203e502553e19fa9391b11a667db09271fb"
+    },
+    "d112_gate": {
+      "path": "reports/memory-development/d112-retrieval-readiness-completion-gate.json",
+      "file_bytes": 77591,
+      "file_sha256": "sha256:a7e691ae43c60405cbb10cd27caf3055eabaa96bb7fa6f2a02142d97aa903951",
+      "schema_version": "retrieval-readiness-scoring-diagnostic-completion-gate-d112-v1",
+      "gate_id": "d112_3242bed73c9a322ff1d346eba61cfec2f9eae3b57e4cc7e4d7b0e9a5456367b6",
+      "semantic_body_hash": "sha256:3242bed73c9a322ff1d346eba61cfec2f9eae3b57e4cc7e4d7b0e9a5456367b6"
+    },
+    "input_scope": {
+      "public_probe_ids_in_order": [
+        "moto-implement-positive-hypothesis",
+        "babel-implement-no-match-control",
+        "moto-reproduce-phase-control"
+      ],
+      "score_row_count": 9,
+      "observed_matrix_uses_stored_d112_components_only": true,
+      "public_non_acceptance_hypothesis_used_for_counterfactual": true,
+      "counterfactual_is_runtime_observable": false,
+      "counterfactual_is_acceptance_evidence": false,
+      "d114_sealed_historical_validation_required": true,
+      "current_input_snapshot_rehydrated": false,
+      "private_hidden_reference_or_known_bad_read": false,
+      "raw_trace_or_patch_read": false,
+      "held_out_result_read": false
+    },
+    "current_policy": {
+      "weights": {
+        "semantic": 0.35,
+        "failure_class": 0.25,
+        "phase": 0.15,
+        "language": 0.15,
+        "validation": 0.1
+      },
+      "threshold": 0.72,
+      "comparator": "greater-than-or-equal",
+      "rank_order": "descending-score-then-ascending-memory-id"
+    },
+    "public_score_matrix": [
+      {
+        "probe_id": "moto-implement-positive-hypothesis",
+        "task_id": "moto-query-scanned-count",
+        "phase": "IMPLEMENT",
+        "hypothesis_kind": "semantic-positive-not-acceptance-criterion",
+        "hypothesized_group_id": "platform-emulation-matrix-gap",
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+        "semantic_group_id": "exception-origin-state-conflation",
+        "recorded_rank": 1,
+        "components": {
+          "semantic": 0.1548259181338791,
+          "failure_class": 0.0,
+          "phase": 1.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.3541890713468577
+      },
+      {
+        "probe_id": "moto-implement-positive-hypothesis",
+        "task_id": "moto-query-scanned-count",
+        "phase": "IMPLEMENT",
+        "hypothesis_kind": "semantic-positive-not-acceptance-criterion",
+        "hypothesized_group_id": "platform-emulation-matrix-gap",
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+        "semantic_group_id": "request-context-propagation-gap",
+        "recorded_rank": 2,
+        "components": {
+          "semantic": 0.09790749061218189,
+          "failure_class": 0.0,
+          "phase": 1.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.33426762171426366
+      },
+      {
+        "probe_id": "moto-implement-positive-hypothesis",
+        "task_id": "moto-query-scanned-count",
+        "phase": "IMPLEMENT",
+        "hypothesis_kind": "semantic-positive-not-acceptance-criterion",
+        "hypothesized_group_id": "platform-emulation-matrix-gap",
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "recorded_rank": 3,
+        "components": {
+          "semantic": 0.01228840725358771,
+          "failure_class": 0.0,
+          "phase": 1.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.30430094253875567
+      },
+      {
+        "probe_id": "babel-implement-no-match-control",
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "phase": "IMPLEMENT",
+        "hypothesis_kind": "no-match-negative-transfer-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+        "semantic_group_id": "exception-origin-state-conflation",
+        "recorded_rank": 1,
+        "components": {
+          "semantic": 0.26253312565267384,
+          "failure_class": 0.0,
+          "phase": 1.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.39188659397843584
+      },
+      {
+        "probe_id": "babel-implement-no-match-control",
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "phase": "IMPLEMENT",
+        "hypothesis_kind": "no-match-negative-transfer-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+        "semantic_group_id": "request-context-propagation-gap",
+        "recorded_rank": 2,
+        "components": {
+          "semantic": 0.16226767943273346,
+          "failure_class": 0.0,
+          "phase": 1.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.3567936878014567
+      },
+      {
+        "probe_id": "babel-implement-no-match-control",
+        "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+        "phase": "IMPLEMENT",
+        "hypothesis_kind": "no-match-negative-transfer-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "recorded_rank": 3,
+        "components": {
+          "semantic": 0.14711641238331064,
+          "failure_class": 0.0,
+          "phase": 1.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.3514907443341587
+      },
+      {
+        "probe_id": "moto-reproduce-phase-control",
+        "task_id": "moto-query-scanned-count",
+        "phase": "REPRODUCE",
+        "hypothesis_kind": "phase-sensitivity-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+        "semantic_group_id": "exception-origin-state-conflation",
+        "recorded_rank": 1,
+        "components": {
+          "semantic": 0.1548259181338791,
+          "failure_class": 0.0,
+          "phase": 0.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.20418907134685768
+      },
+      {
+        "probe_id": "moto-reproduce-phase-control",
+        "task_id": "moto-query-scanned-count",
+        "phase": "REPRODUCE",
+        "hypothesis_kind": "phase-sensitivity-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+        "semantic_group_id": "request-context-propagation-gap",
+        "recorded_rank": 2,
+        "components": {
+          "semantic": 0.09790749061218189,
+          "failure_class": 0.0,
+          "phase": 0.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.18426762171426364
+      },
+      {
+        "probe_id": "moto-reproduce-phase-control",
+        "task_id": "moto-query-scanned-count",
+        "phase": "REPRODUCE",
+        "hypothesis_kind": "phase-sensitivity-control-not-acceptance-criterion",
+        "hypothesized_group_id": null,
+        "hypothesis_is_acceptance_criterion": false,
+        "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+        "semantic_group_id": "platform-emulation-matrix-gap",
+        "recorded_rank": 3,
+        "components": {
+          "semantic": 0.01228840725358771,
+          "failure_class": 0.0,
+          "phase": 0.0,
+          "language": 1.0,
+          "validation": 0.0
+        },
+        "recorded_final_score": 0.1543009425387557
+      }
+    ],
+    "structural_findings": {
+      "current_failure_class_component_all_zero": true,
+      "current_validation_component_all_zero": true,
+      "phase_and_language_equal_within_each_probe": true,
+      "current_implement_python_theoretical_max_without_class_or_validation": 0.65,
+      "current_threshold": 0.72,
+      "theoretical_max_below_threshold": true,
+      "moto_hypothesized_group_rank": 3,
+      "moto_hypothesized_group_score": 0.30430094253875567,
+      "moto_observed_top_nonhypothesized_group_score": 0.3541890713468577,
+      "babel_top_score": 0.39188659397843584,
+      "babel_lowest_score": 0.3514907443341587,
+      "threshold_to_select_any_moto_must_be_at_most": 0.3541890713468577,
+      "threshold_to_keep_babel_no_match_must_be_greater_than": 0.39188659397843584,
+      "threshold_only_separation_interval_exists": false,
+      "threshold_to_select_hypothesized_moto_selects_all_babel_entries": true,
+      "nonnegative_current_feature_weights_can_make_hypothesized_group_top": false,
+      "rank_reason": "class-and-validation-zero-phase-and-language-equal-rank-is-semantic-only; zero-semantic-weight-still-does-not-put-hypothesized-memory-first-by-id",
+      "hypothesis_labels_are_runtime_inputs": false,
+      "hypothesis_labels_are_acceptance_ground_truth": false
+    },
+    "policy_diagnostics": [
+      {
+        "policy_id": "current-policy-v1",
+        "weights": {
+          "semantic": 0.35,
+          "failure_class": 0.25,
+          "phase": 0.15,
+          "language": 0.15,
+          "validation": 0.1
+        },
+        "threshold": 0.72,
+        "threshold_comparator": "greater-than-or-equal",
+        "runtime_observable_inputs_only": true,
+        "probe_results": [
+          {
+            "probe_id": "moto-implement-positive-hypothesis",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05418907134685769,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3541890713468577,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03426762171426366,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.33426762171426366,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.004300942538755698,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.30430094253875567,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "babel-implement-no-match-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.26253312565267384,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.09188659397843583,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.39188659397843584,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.16226767943273346,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05679368780145671,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3567936878014567,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.14711641238331064,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05149074433415872,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3514907443341587,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "moto-reproduce-phase-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05418907134685769,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.20418907134685768,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03426762171426366,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.18426762171426364,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.004300942538755698,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.1543009425387557,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          }
+        ],
+        "diagnostic_control_observations": {
+          "moto_hypothesized_group_top": false,
+          "moto_hypothesized_group_passes": false,
+          "moto_any_memory_passes": false,
+          "negative_control_no_match": true,
+          "phase_control_no_match": true
+        },
+        "disposition": "rejected-degenerate-moto-no-match"
+      },
+      {
+        "policy_id": "threshold-only-at-moto-hypothesized-score",
+        "weights": {
+          "semantic": 0.35,
+          "failure_class": 0.25,
+          "phase": 0.15,
+          "language": 0.15,
+          "validation": 0.1
+        },
+        "threshold": 0.30430094253875567,
+        "threshold_comparator": "greater-than-or-equal",
+        "runtime_observable_inputs_only": true,
+        "probe_results": [
+          {
+            "probe_id": "moto-implement-positive-hypothesis",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [
+              "memgrp_5a23f463cba43bf3ba395f67cf976047",
+              "memgrp_b421547d481faabf9be3511217258de5",
+              "memgrp_649483b80292fea26e4009ebdb72df31"
+            ],
+            "no_match": false,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05418907134685769,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3541890713468577,
+                "threshold_pass": true,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03426762171426366,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.33426762171426366,
+                "threshold_pass": true,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.004300942538755698,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.30430094253875567,
+                "threshold_pass": true,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "babel-implement-no-match-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [
+              "memgrp_5a23f463cba43bf3ba395f67cf976047",
+              "memgrp_b421547d481faabf9be3511217258de5",
+              "memgrp_649483b80292fea26e4009ebdb72df31"
+            ],
+            "no_match": false,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.26253312565267384,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.09188659397843583,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.39188659397843584,
+                "threshold_pass": true,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.16226767943273346,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05679368780145671,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3567936878014567,
+                "threshold_pass": true,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.14711641238331064,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05149074433415872,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3514907443341587,
+                "threshold_pass": true,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "moto-reproduce-phase-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05418907134685769,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.20418907134685768,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03426762171426366,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.18426762171426364,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.004300942538755698,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.1543009425387557,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          }
+        ],
+        "diagnostic_control_observations": {
+          "moto_hypothesized_group_top": false,
+          "moto_hypothesized_group_passes": true,
+          "moto_any_memory_passes": true,
+          "negative_control_no_match": false,
+          "phase_control_no_match": true
+        },
+        "disposition": "rejected-nonhypothesized-rank-and-negative-control-selection"
+      },
+      {
+        "policy_id": "active-component-renormalization-v1",
+        "weights": {
+          "semantic": 0.5384615384615384,
+          "failure_class": 0.0,
+          "phase": 0.23076923076923078,
+          "language": 0.23076923076923078,
+          "validation": 0.0
+        },
+        "threshold": 0.72,
+        "threshold_comparator": "greater-than-or-equal",
+        "runtime_observable_inputs_only": true,
+        "probe_results": [
+          {
+            "probe_id": "moto-implement-positive-hypothesis",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.08336780207208874,
+                  "failure_class": 0.0,
+                  "phase": 0.23076923076923078,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.5449062636105503,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05271941802194409,
+                  "failure_class": 0.0,
+                  "phase": 0.23076923076923078,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.5142578795604057,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.006616834675008766,
+                  "failure_class": 0.0,
+                  "phase": 0.23076923076923078,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.46815529621347035,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "babel-implement-no-match-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.26253312565267384,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.14136399073605513,
+                  "failure_class": 0.0,
+                  "phase": 0.23076923076923078,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.6029024522745167,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.16226767943273346,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.0873749043099334,
+                  "failure_class": 0.0,
+                  "phase": 0.23076923076923078,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.548913365848395,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.14711641238331064,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.07921652974485957,
+                  "failure_class": 0.0,
+                  "phase": 0.23076923076923078,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.5407549912833212,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "moto-reproduce-phase-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.08336780207208874,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.31413703284131955,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05271941802194409,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.28348864879117486,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.006616834675008766,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.23076923076923078,
+                  "validation": 0.0
+                },
+                "final_score": 0.23738606544423954,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          }
+        ],
+        "diagnostic_control_observations": {
+          "moto_hypothesized_group_top": false,
+          "moto_hypothesized_group_passes": false,
+          "moto_any_memory_passes": false,
+          "negative_control_no_match": true,
+          "phase_control_no_match": true
+        },
+        "disposition": "rejected-moto-no-match-and-rank-unchanged"
+      },
+      {
+        "policy_id": "counterfactual-class-signal-current-weights",
+        "weights": {
+          "semantic": 0.35,
+          "failure_class": 0.25,
+          "phase": 0.15,
+          "language": 0.15,
+          "validation": 0.1
+        },
+        "threshold": 0.72,
+        "threshold_comparator": "greater-than-or-equal",
+        "runtime_observable_inputs_only": false,
+        "probe_results": [
+          {
+            "probe_id": "moto-implement-positive-hypothesis",
+            "top_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+            "top_group_id": "platform-emulation-matrix-gap",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 1.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.004300942538755698,
+                  "failure_class": 0.25,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.5543009425387557,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05418907134685769,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3541890713468577,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03426762171426366,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.33426762171426366,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "babel-implement-no-match-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.26253312565267384,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.09188659397843583,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.39188659397843584,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.16226767943273346,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05679368780145671,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3567936878014567,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.14711641238331064,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05149074433415872,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.3514907443341587,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "moto-reproduce-phase-control",
+            "top_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+            "top_group_id": "platform-emulation-matrix-gap",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 1.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.004300942538755698,
+                  "failure_class": 0.25,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.4043009425387557,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.05418907134685769,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.20418907134685768,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03426762171426366,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.15,
+                  "validation": 0.0
+                },
+                "final_score": 0.18426762171426364,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          }
+        ],
+        "diagnostic_control_observations": {
+          "moto_hypothesized_group_top": true,
+          "moto_hypothesized_group_passes": false,
+          "moto_any_memory_passes": false,
+          "negative_control_no_match": true,
+          "phase_control_no_match": true
+        },
+        "disposition": "rejected-counterfactual-and-moto-no-match"
+      },
+      {
+        "policy_id": "counterfactual-class-signal-conditional-tuple",
+        "weights": {
+          "semantic": 0.25,
+          "failure_class": 0.4,
+          "phase": 0.15,
+          "language": 0.1,
+          "validation": 0.1
+        },
+        "threshold": 0.6,
+        "threshold_comparator": "greater-than-or-equal",
+        "runtime_observable_inputs_only": false,
+        "probe_results": [
+          {
+            "probe_id": "moto-implement-positive-hypothesis",
+            "top_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+            "top_group_id": "platform-emulation-matrix-gap",
+            "passing_memory_ids": [
+              "memgrp_649483b80292fea26e4009ebdb72df31"
+            ],
+            "no_match": false,
+            "candidates": [
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 1.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.0030721018133969273,
+                  "failure_class": 0.4,
+                  "phase": 0.15,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.6530721018133969,
+                "threshold_pass": true,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03870647953346978,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.2887064795334698,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.024476872653045472,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.2744768726530455,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "babel-implement-no-match-control",
+            "top_memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+            "top_group_id": "exception-origin-state-conflation",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.26253312565267384,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.06563328141316846,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.3156332814131685,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.16226767943273346,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.040566919858183365,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.2905669198581834,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.14711641238331064,
+                  "failure_class": 0.0,
+                  "phase": 1.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03677910309582766,
+                  "failure_class": 0.0,
+                  "phase": 0.15,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.28677910309582766,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          },
+          {
+            "probe_id": "moto-reproduce-phase-control",
+            "top_memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+            "top_group_id": "platform-emulation-matrix-gap",
+            "passing_memory_ids": [],
+            "no_match": true,
+            "candidates": [
+              {
+                "memory_id": "memgrp_649483b80292fea26e4009ebdb72df31",
+                "semantic_group_id": "platform-emulation-matrix-gap",
+                "components": {
+                  "semantic": 0.01228840725358771,
+                  "failure_class": 1.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.0030721018133969273,
+                  "failure_class": 0.4,
+                  "phase": 0.0,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.503072101813397,
+                "threshold_pass": false,
+                "rank": 1
+              },
+              {
+                "memory_id": "memgrp_5a23f463cba43bf3ba395f67cf976047",
+                "semantic_group_id": "exception-origin-state-conflation",
+                "components": {
+                  "semantic": 0.1548259181338791,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.03870647953346978,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.1387064795334698,
+                "threshold_pass": false,
+                "rank": 2
+              },
+              {
+                "memory_id": "memgrp_b421547d481faabf9be3511217258de5",
+                "semantic_group_id": "request-context-propagation-gap",
+                "components": {
+                  "semantic": 0.09790749061218189,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 1.0,
+                  "validation": 0.0
+                },
+                "weighted_components": {
+                  "semantic": 0.024476872653045472,
+                  "failure_class": 0.0,
+                  "phase": 0.0,
+                  "language": 0.1,
+                  "validation": 0.0
+                },
+                "final_score": 0.12447687265304548,
+                "threshold_pass": false,
+                "rank": 3
+              }
+            ]
+          }
+        ],
+        "diagnostic_control_observations": {
+          "moto_hypothesized_group_top": true,
+          "moto_hypothesized_group_passes": true,
+          "moto_any_memory_passes": true,
+          "negative_control_no_match": true,
+          "phase_control_no_match": true
+        },
+        "disposition": "conditional-hypothesis-only-independent-signal-required"
+      }
+    ],
+    "decision": {
+      "recommended_disposition": "defer-policy-mutation-and-author-public-only-relevance-calibration",
+      "corrected_policy_selected": false,
+      "score_policy_implementation_ready": false,
+      "additional_public_relevance_evidence_required": true,
+      "threshold_only_rejected": true,
+      "current_feature_weight_only_rejected": true,
+      "counterfactual_conditional_tuple": {
+        "policy_id": "counterfactual-class-signal-conditional-tuple",
+        "weights": {
+          "semantic": 0.25,
+          "failure_class": 0.4,
+          "phase": 0.15,
+          "language": 0.1,
+          "validation": 0.1
+        },
+        "threshold": 0.6,
+        "comparator": "greater-than-or-equal",
+        "counterfactual_only": true,
+        "corrected_policy_selected": false,
+        "implementation_ready": false,
+        "counterfactual_signal_assumptions": {
+          "source": "d112-public-non-acceptance-hypothesis",
+          "moto_implement_hypothesized_group_signal": 1.0,
+          "moto_reproduce_signal_copied_from_implement_for_phase_control": true,
+          "babel_all_groups_abstain": true,
+          "runtime_classifier_observed": false,
+          "true_relevance_established": false
+        },
+        "required_signal": "independent-deterministic-public-taxonomy-classifier-with-explicit-abstention",
+        "forbidden_signal_sources": [
+          "d112-hypothesized-group-id",
+          "task-id-to-answer-lookup",
+          "private-task-spec",
+          "hidden-test",
+          "reference-or-known-bad-patch",
+          "held-out-result"
+        ],
+        "diagnostic_only_counterfactual_results": {
+          "moto_implement_hypothesized_score": 0.6530721018133969,
+          "moto_implement_hypothesized_pass": true,
+          "babel_top_score": 0.3156332814131685,
+          "babel_no_match": true,
+          "moto_reproduce_hypothesized_score": 0.503072101813397,
+          "moto_reproduce_no_match": true,
+          "phase_delta": 0.1499999999999999
+        }
+      },
+      "next_required_contract": "independent-abstaining-public-failure-class-signal-and-calibration"
+    },
+    "evidence_boundary": {
+      "hypothesis_promoted_to_ground_truth": false,
+      "hypothesis_used_to_construct_labeled_counterfactual": true,
+      "diagnostic_controls_establish_true_relevance": false,
+      "score_policy_or_threshold_changed": false,
+      "failure_class_signal_changed": false,
+      "memory_entry_index_or_marker_changed": false,
+      "model_load_or_encode_count": 0,
+      "retrieval_calls": 0,
+      "runtime_memory_injection_count": 0,
+      "agent_runs": 0,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "network_capable_call_paths_invoked": 0,
+      "network_evidence_kind": "source-path-self-attested",
+      "os_level_socket_block_or_instrumentation_verified": false,
+      "added_model_cost_usd": 0
+    },
+    "authority": {
+      "offline_score_policy_decision_candidate_ready": false,
+      "corrected_policy_selected": false,
+      "exact_candidate_user_approval_received": false,
+      "score_policy_correction_authorized": false,
+      "score_policy_correction_implemented": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false
+    }
+  }
+}

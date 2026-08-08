@@ -1,0 +1,160 @@
+{
+  "schema_version": "memory-index-freeze-completion-gate-d110-v1",
+  "gate_id": "d110_bc1cae7a2ebc5d6531d203ef4d7101762d7366c9e77814c3a4c772d353f0a736",
+  "semantic_body_hash": "sha256:bc1cae7a2ebc5d6531d203ef4d7101762d7366c9e77814c3a4c772d353f0a736",
+  "semantic_body": {
+    "milestone": "D-110",
+    "evidence_kind": "exact-index-freeze-completion-gate",
+    "recorded_at": "2026-08-06T13:54:43.793637Z",
+    "d109_source_gate": {
+      "path": "reports/memory-development/d109-index-freeze-authorization-source-gate.json",
+      "file_bytes": 3485,
+      "file_sha256": "sha256:0953687473bd25f48ad52bdc78c577d6a4daa4947b019fcd65809e7548c4f949",
+      "schema_version": "index-freeze-authorization-source-gate-d109-v1",
+      "gate_id": "d109_e37e716aceb0a322820eada8b83d8a309e06052f6060c986f6025c61b7d999ef",
+      "semantic_body_hash": "sha256:e37e716aceb0a322820eada8b83d8a309e06052f6060c986f6025c61b7d999ef"
+    },
+    "d109_candidate": {
+      "path": "reports/memory-development/d109-index-freeze-authorization-candidate.json",
+      "schema_version": "memory-index-freeze-authorization-candidate-d109-v1",
+      "candidate_id": "d109freezecandidate_480d2aa8657fd143397fcfc71f252b8a8e3c0988d3950b5671089cf6dc8b8d46",
+      "semantic_body_hash": "sha256:480d2aa8657fd143397fcfc71f252b8a8e3c0988d3950b5671089cf6dc8b8d46",
+      "file_bytes": 5910,
+      "file_sha256": "sha256:ae8a8c6e58b058720943bae9088da2cf242168a70f654006557dd84c84d4e580"
+    },
+    "approval_receipt": {
+      "path": "reports/memory-development/d110-exact-index-freeze-approval-receipt.json",
+      "file_bytes": 3495,
+      "file_sha256": "sha256:f409c6296b1f87d8cb151fcc1866d263f3e74aa9341c46ab49ea3b4fef66a97c",
+      "schema_version": "memory-index-freeze-approval-receipt-d110-v1",
+      "receipt_id": "d110approval_cb0ab444a4c453fbf496e509891013163825c8b5c362204c43d37c7452d49e7b",
+      "semantic_body_hash": "sha256:cb0ab444a4c453fbf496e509891013163825c8b5c362204c43d37c7452d49e7b",
+      "self_attested": true,
+      "reviewer_identity_authenticated": false,
+      "cryptographic_signature_verified": false
+    },
+    "execution_journal": {
+      "path": "reports/memory-development/d110-index-freeze-execution.jsonl",
+      "schema_version": "memory-index-freeze-execution-event-d110-v1",
+      "record_count": 8,
+      "head": "sha256:03d8bcbf57230aa9bfd5ce4e81fa2890bb36c2f5f9e4e51c9e64b3a8c09313e1",
+      "file_bytes": 9481,
+      "file_sha256": "sha256:f06cfa9037f09720675d3c0edd7e19516144bd46375aaa86679c5b1f6923b1e2"
+    },
+    "freeze_receipt": {
+      "path": "reports/memory-development/d110-index-freeze-receipt.json",
+      "file_bytes": 5986,
+      "file_sha256": "sha256:a2aeaa0985cb1bf9ced5bdfd43c5bc473a73e5ac93bf7660ca717e3eb9285702",
+      "schema_version": "memory-index-freeze-receipt-d110-v1",
+      "receipt_id": "d110freezereceipt_b8ca4f167c330011118edb33d8ad3f18a47a20e795f28e752d6cc87e84daa839",
+      "semantic_body_hash": "sha256:b8ca4f167c330011118edb33d8ad3f18a47a20e795f28e752d6cc87e84daa839"
+    },
+    "execution_started_at": "2026-08-06T13:54:43.725943Z",
+    "pre_freeze_state": {
+      "index_id": "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064",
+      "runtime_index_path": ".patchloop/memory/indexes/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+      "file_bytes": 55644,
+      "file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a",
+      "content_hash": "sha256:86dbd991fa411bc43a8ec65927630fe8ad3365a1a41d9a6eafdeb036d9aab3fd",
+      "frozen": false,
+      "frozen_at_present": false,
+      "index_freeze_authorized": false,
+      "memory_index_frozen": false
+    },
+    "post_freeze_state": {
+      "index_id": "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064",
+      "runtime_index_path": ".patchloop/memory/indexes/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+      "file_bytes": 55687,
+      "file_sha256": "sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0",
+      "content_hash": "sha256:3a99e6c190672d1676bc4d13604de989899de9ddac85d282cc90c4d56f426c56",
+      "frozen": true,
+      "frozen_at": "2026-08-06T13:54:43.725943Z",
+      "index_freeze_authorized": true,
+      "memory_index_frozen": true,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false
+    },
+    "exact_semantic_mutation_paths": [
+      "/frozen",
+      "/frozen_at",
+      "/authority/index_freeze_authorized",
+      "/authority/memory_index_frozen",
+      "/content_hash"
+    ],
+    "portable_frozen_index": {
+      "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/index.json",
+      "file_bytes": 55687,
+      "file_sha256": "sha256:c0d2ec424e6cc10d64cdebd5ae493e0546fdfa08d09eb5f3269557b46025c6d0"
+    },
+    "portable_frozen_marker": {
+      "path": "reports/memory-development/artifacts/d110/idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064/FROZEN",
+      "file_bytes": 72,
+      "file_sha256": "sha256:cdfe40b734135a30f66e34ff24469940063a7231a1fe0783420ee2ff816d9561"
+    },
+    "implementation_files": [
+      {
+        "path": "patchloop/memory/d110_index_freeze_execution.py",
+        "file_bytes": 67934,
+        "file_sha256": "sha256:932f818cb092bb385f2563255b70f147f2e416fb442dc153dab7e53934ae4884"
+      },
+      {
+        "path": "patchloop/memory/store.py",
+        "file_bytes": 14817,
+        "file_sha256": "sha256:b9ab57f9022b40e47b650f58fd9f3d19dcc527132b98ba0ee4628d3e3c760087"
+      },
+      {
+        "path": "patchloop/memory/retrieval.py",
+        "file_bytes": 6638,
+        "file_sha256": "sha256:da4dde2e20b2ee9c946754726d242a3962ba42d4a945603740b1c9bbae970b72"
+      },
+      {
+        "path": "scripts/run_d110_index_freeze.py",
+        "file_bytes": 1897,
+        "file_sha256": "sha256:412d86f30d0ccb0cb201bb27081dd9dfd5c8dae2d1c02fdbf627d182d3ae795a"
+      },
+      {
+        "path": "tests/test_d110_index_freeze_execution.py",
+        "file_bytes": 16456,
+        "file_sha256": "sha256:aff0982ebabe693c137d5bc13577869e8473d28598e0b381bbf582bed22478be"
+      },
+      {
+        "path": "tests/test_memory.py",
+        "file_bytes": 16323,
+        "file_sha256": "sha256:b1b92e0b7456e07d8a43e792049a6e4d06ec46e07a0155b0a3af2dbad01e3b8b"
+      }
+    ],
+    "qualification": {
+      "exact_candidate_and_approval_bound": true,
+      "one_use_journal_consumed": true,
+      "cooperative_lock_and_repeated_live_pre_byte_check_passed": true,
+      "atomic_compare_and_swap_claimed": false,
+      "post_index_exact_five_pointer_diff_passed": true,
+      "post_content_hash_passed": true,
+      "index_committed_before_marker": true,
+      "runtime_and_portable_frozen_evidence_match": true,
+      "portable_d106_pre_index_unchanged": true,
+      "execution_lock_and_staged_file_absent": true,
+      "partial_or_ambiguous_state": false
+    },
+    "authority": {
+      "exact_candidate_user_approval_received": true,
+      "freeze_execution_authorized": true,
+      "index_freeze_authorized": true,
+      "memory_index_frozen": true,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "memory_effect_established": false,
+      "negative_transfer_established": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    },
+    "next_gate": "separate-retrieval-readiness-authorization-candidate"
+  }
+}

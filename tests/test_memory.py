@@ -309,6 +309,7 @@ def test_selective_memory_has_auditable_no_match(tmp_path) -> None:
         json.dumps(
             {
                 "index_version": "idx_test",
+                "frozen": True,
                 "entries": [],
             }
         ),
@@ -347,6 +348,38 @@ def test_empty_memory_index_cannot_be_frozen(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(memory_store, "index_root", lambda: root)
     with pytest.raises(ContractError, match="empty"):
         memory_store.freeze_index("idx_empty", "abc123")
+
+
+def test_group_aware_d106_index_never_uses_legacy_freeze_path(tmp_path, monkeypatch) -> None:
+    root = tmp_path / "indexes"
+    index_dir = root / "idx_group"
+    index_dir.mkdir(parents=True)
+    (index_dir / "index.json").write_text(
+        json.dumps(
+            {
+                "index_version": "idx_group",
+                "entries": [{"memory_id": "mem_1"}],
+                "embedding": {
+                    "model": memory_store.EMBEDDING_MODEL,
+                    "revision": "abc123",
+                    "implementation": "sentence-transformers",
+                },
+                "build_contract": {
+                    "schema_version": "group-aware-memory-index-builder-d106-v1"
+                },
+                "authority": {
+                    "index_freeze_authorized": True,
+                    "memory_index_frozen": True,
+                },
+                "frozen": True,
+                "content_hash": "sha256:placeholder",
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(memory_store, "index_root", lambda: root)
+    with pytest.raises(ContractError, match="exact candidate-bound freeze executor"):
+        memory_store.freeze_index("idx_group", "abc123")
 
 
 def test_calibration_failure_cannot_be_approved_as_memory_source(tmp_path, monkeypatch) -> None:

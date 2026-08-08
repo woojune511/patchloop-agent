@@ -1,0 +1,229 @@
+{
+  "schema_version": "provider-memory-token-count-plan-d107-v1",
+  "plan_id": "d107plan_7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+  "semantic_body_hash": "sha256:7ace0e204f367fc857bfbc1ddaa1bbdc58dd9ff3c9272f9d9c7e2b7241160ee6",
+  "semantic_body": {
+    "milestone": "D-107",
+    "evidence_kind": "exact-responses-input-token-count-no-call-execution-plan",
+    "recorded_at": "2026-08-06T09:05:00Z",
+    "d106_gate": {
+      "gate_id": "d106_fc2eeb0800e72d4aa0f7331110baf46caaa848879306454a4e0e6476e8fbe9a8",
+      "semantic_body_hash": "sha256:fc2eeb0800e72d4aa0f7331110baf46caaa848879306454a4e0e6476e8fbe9a8",
+      "file_bytes": 8709,
+      "file_sha256": "sha256:3ac34d27b4eab1facbeb86adb1e37de8927fa312f9e2b68a03e8f39c19008ea7"
+    },
+    "portable_index": {
+      "index_id": "idxgrp_563976c4443a725e287225cef1e718daf134fbb96574921cb9e020049ea52064",
+      "file_bytes": 55644,
+      "file_sha256": "sha256:c9b292f67fcb3c4bf524065801681e76c5df22142bbbb8b2db36d3c932df358a",
+      "content_hash": "sha256:86dbd991fa411bc43a8ec65927630fe8ad3365a1a41d9a6eafdeb036d9aab3fd",
+      "memory_ids": [
+        "memgrp_649483b80292fea26e4009ebdb72df31",
+        "memgrp_b421547d481faabf9be3511217258de5",
+        "memgrp_5a23f463cba43bf3ba395f67cf976047"
+      ],
+      "semantic_group_ids": [
+        "platform-emulation-matrix-gap",
+        "request-context-propagation-gap",
+        "exception-origin-state-conflation"
+      ]
+    },
+    "carrier_context": {
+      "selection": "first-admitted-development-validation-task-in-frozen-manifest-order",
+      "task_id": "moto-query-scanned-count",
+      "task_version": 1,
+      "split": "dev-validation",
+      "path": "tasks/dev-validation/moto-query-scanned-count/public.yaml",
+      "file_bytes": 2839,
+      "file_sha256": "sha256:4005b070d9e46c72a68554fbe998e9d81e920321a31e8bf633d3fd32277857f7",
+      "public_spec_hash": "sha256:15b4c9f378d48ae8eadbfad1a375d367fc973c230abf0996c617282ca0df8ea7",
+      "dataset_manifest": {
+        "path": "data/dataset-manifest.yaml",
+        "semantic_hash": "sha256:cf608ca1a35cb270f2e4cadcf0b34912256ef1c9cd3c0757a89692f8a5fdf786"
+      },
+      "events": [],
+      "checkpoint": null,
+      "public_spec_only_read": true,
+      "private_spec_read": false
+    },
+    "memory_bundle": {
+      "entry_count": 3,
+      "file_bytes": 3528,
+      "file_sha256": "sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf",
+      "entry_separator": "\n\n---\n\n",
+      "whole_entry_only": true,
+      "partial_truncation_allowed": false
+    },
+    "runtime_tuple": {
+      "model": "gpt-5.4-mini-2026-03-17",
+      "reasoning_effort": "medium",
+      "reasoning_mode": "standard",
+      "service_tier": "default",
+      "transport_max_retries": 0,
+      "system_prompt_version": "SYSTEM_PROMPT_V3",
+      "system_prompt_sha256": "sha256:441c71fdea2defed14f06b32c3fba7a7aaa19f7a3ca749bc994e72708d8a733b",
+      "tool_schema_version": "v2",
+      "tool_schema_count": 6,
+      "tool_schema_sha256": "sha256:2ee296c2cf515bf2e0937ec1727dc02046a8560581d39b71246c5b91eccf0827",
+      "context_policy_version": "phase-evidence-v5",
+      "max_output_tokens": 25000,
+      "budget": {
+        "max_model_calls": null,
+        "max_tool_calls": null,
+        "max_total_tokens": 3000000,
+        "wall_clock_timeout_seconds": 3600
+      },
+      "openai_sdk_version": "2.47.0",
+      "store": false,
+      "previous_response_id": null,
+      "truncation": "disabled"
+    },
+    "runtime_source_bindings": {
+      "context_builder": {
+        "path": "patchloop/agent/context.py",
+        "file_bytes": 68912,
+        "file_sha256": "sha256:6730fa00a224704220683b24ddaeeb7ff5721a742dd73d1c203a22280f5cb2dd"
+      },
+      "model_adapter": {
+        "path": "patchloop/agent/model.py",
+        "file_bytes": 43525,
+        "file_sha256": "sha256:f288bfcb40e9a10e81ffe0117a9ba6f8bbee267d56681da28c1734332e679e74"
+      },
+      "tool_schemas": {
+        "path": "patchloop/agent/tools.py",
+        "file_bytes": 208603,
+        "file_sha256": "sha256:b137c5f7ac5bbe86a70afec0929bfb6cab9ce9baac7717c1ecd2b43749809590"
+      },
+      "dependency_lock": {
+        "path": "uv.lock",
+        "file_bytes": 240131,
+        "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+      }
+    },
+    "context_pair": {
+      "allowed_deep_diff_json_pointers": [
+        "/selected_memory"
+      ],
+      "observed_deep_diff_json_pointers": [
+        "/selected_memory"
+      ],
+      "baseline_selected_memory": null,
+      "with_memory_matches_exact_bundle": true,
+      "byte_identical_after_slot_normalization": true,
+      "baseline_context_sha256": "sha256:0d0c19853c4a56eac148f56eecb7f10e79833967fc07cafca269d27fe602006d",
+      "with_memory_context_sha256": "sha256:5e63eb27ab52a7a5b60aa7f5948c4903fae7f8c2cc98127c56472f563fcc586e",
+      "baseline_context_characters": 6573,
+      "with_memory_context_characters": 10180,
+      "baseline_artifact": {
+        "path": "reports/memory-development/artifacts/d107/baseline-context.json",
+        "file_bytes": 6573,
+        "file_sha256": "sha256:0d0c19853c4a56eac148f56eecb7f10e79833967fc07cafca269d27fe602006d",
+        "semantic_payload_sha256": "sha256:99f4be891ab9dbc54239cf540ffae291119f8093fe06be9df1c27f22ed8b1f56"
+      },
+      "with_memory_artifact": {
+        "path": "reports/memory-development/artifacts/d107/with-memory-context.json",
+        "file_bytes": 10180,
+        "file_sha256": "sha256:5e63eb27ab52a7a5b60aa7f5948c4903fae7f8c2cc98127c56472f563fcc586e",
+        "semantic_payload_sha256": "sha256:4b4c1033c2979c8751ad97aebaecce5ce654cf9fcbeb9512687d046d4f6bc3df"
+      }
+    },
+    "full_request_pair": {
+      "baseline_artifact": {
+        "path": "reports/memory-development/artifacts/d107/baseline-full-request.json",
+        "file_bytes": 11617,
+        "file_sha256": "sha256:0935949542007f8a4045a823dbfff0fa7ed0a8ebdd792492b5bba956e6db2f86",
+        "semantic_payload_sha256": "sha256:fef94fa1802dedd9ee31a19be40f06110633f47f68fbf0e021dc5c69a7e1bef9"
+      },
+      "with_memory_artifact": {
+        "path": "reports/memory-development/artifacts/d107/with-memory-full-request.json",
+        "file_bytes": 15307,
+        "file_sha256": "sha256:2e23ef23d9a34b17bffddfbffb990f5f0f9b1d1eaa32aedd6502030f6f4dd0bc",
+        "semantic_payload_sha256": "sha256:ea474e99c0f28edf1b25216b882fb253c09d5b70763ee6465897481b9a318f90"
+      },
+      "baseline_semantic_hash": "sha256:fef94fa1802dedd9ee31a19be40f06110633f47f68fbf0e021dc5c69a7e1bef9",
+      "with_memory_semantic_hash": "sha256:ea474e99c0f28edf1b25216b882fb253c09d5b70763ee6465897481b9a318f90",
+      "equal_after_context_slot_normalization": true,
+      "responses_create_calls_planned": 0
+    },
+    "count_request_pair": {
+      "endpoint": "POST /v1/responses/input_tokens",
+      "sdk_method": "client.responses.input_tokens.count",
+      "exact_payload_fields": [
+        "model",
+        "input",
+        "tools",
+        "reasoning",
+        "truncation"
+      ],
+      "baseline_artifact": {
+        "path": "reports/memory-development/artifacts/d107/baseline-count-request.json",
+        "file_bytes": 11540,
+        "file_sha256": "sha256:ae72ce63de3203fe12278bab6dd86c51043d228a74f72f1c3e95699edf853b15",
+        "semantic_payload_sha256": "sha256:49b71f5903b17d8942810f37b67759affc399cdf35ded4a87d4aa4ceb8469315"
+      },
+      "with_memory_artifact": {
+        "path": "reports/memory-development/artifacts/d107/with-memory-count-request.json",
+        "file_bytes": 15230,
+        "file_sha256": "sha256:f80033274b3c7c20310f39ab64783e27d2b742ab867ae9fb34bb553ed2fb7247",
+        "semantic_payload_sha256": "sha256:bbfcf5b5f1c387682511916b514342cd7b8d3bc946834b88abd17ab7f1cba3f7"
+      },
+      "baseline_semantic_hash": "sha256:49b71f5903b17d8942810f37b67759affc399cdf35ded4a87d4aa4ceb8469315",
+      "with_memory_semantic_hash": "sha256:bbfcf5b5f1c387682511916b514342cd7b8d3bc946834b88abd17ab7f1cba3f7",
+      "equal_after_context_slot_normalization": true,
+      "call_order": [
+        "baseline",
+        "with_memory"
+      ]
+    },
+    "official_documentation_observation": {
+      "observed_at": "2026-08-06T08:50:00Z",
+      "guide_url": "https://developers.openai.com/api/docs/guides/token-counting",
+      "api_reference_url": "https://developers.openai.com/api/reference/python/resources/responses/subresources/input_tokens/methods/count",
+      "endpoint": "POST /v1/responses/input_tokens",
+      "response_object": "response.input_tokens",
+      "response_input_tokens_type": "integer",
+      "documentation_signature_or_snapshot_verified": false
+    },
+    "future_execution_contract": {
+      "separate_exact_gate_approval_required": true,
+      "input_token_count_calls": 2,
+      "generation_calls": 0,
+      "sdk_transport_max_retries": 0,
+      "automatic_retry_allowed": false,
+      "first_or_second_call_failure_yields_no_delta": true,
+      "response_fields_retained": [
+        "object",
+        "input_tokens"
+      ],
+      "request_hashes_retained": true,
+      "api_key_read_from_host_only": true,
+      "api_key_persisted_in_artifact": false,
+      "billing_or_free_tier_claim": null
+    },
+    "unobserved_counts": {
+      "baseline_input_tokens": null,
+      "with_memory_input_tokens": null,
+      "memory_delta_tokens": null,
+      "maximum_memory_delta_tokens": 2000,
+      "provider_exact_budget_validated": false,
+      "provider_receipt_present": false
+    },
+    "authority": {
+      "request_pair_prepared": true,
+      "provider_input_token_count_calls_authorized": false,
+      "provider_input_token_count_calls_made": 0,
+      "provider_generation_calls_authorized": false,
+      "provider_generation_calls_made": 0,
+      "provider_exact_budget_validated": false,
+      "index_freeze_authorized": false,
+      "memory_index_frozen": false,
+      "retrieval_ready": false,
+      "retrieval_experiment_authorized": false,
+      "runtime_memory_injection_count": 0,
+      "core_campaign_unlocked": false,
+      "analysis_ready": false,
+      "evaluator_calls_made": 0,
+      "added_model_cost_usd": 0
+    }
+  }
+}
