@@ -39,7 +39,7 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-126 sealed blocked; D-127 source/receipt present, static pending; no candidate
+Status: D-126 sealed blocked; D-127 source/receipt present, static key-blocked; no candidate
 or execution hash.
 
 D-126 sealed source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing,
@@ -47,7 +47,7 @@ D-126 sealed source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh off
 blockers and a pricing-provenance replayability gap remain. The bounded D-127 scope may resolve them and repeat
 the no-call preflight only; the blocked D-126 artifacts are not rewritten.
 
-D-127 source and append-only receipt exist, but static admission is pending;
+D-127 source and append-only receipt exist, but static stopped before external activity because
 `OPENAI_API_KEY` is absent. External scope ends at exact remediation, bounded pricing and read-only preflight;
 daemon launch fails closed while container auto-restart is unverified.
 

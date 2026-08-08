@@ -52,8 +52,8 @@ delivery with retrieval quality.
 
 - Fix official client routing, retain bounded replayable pricing and limit Docker to exact remediation; never
   authorize container create/start/run/exec.
-- Append-only approval receipt exists; static and downstream evidence are pending. Missing API
-  key and unverified auto-restart block admission; D-127 production calls remain zero.
+- Append-only approval receipt exists. Static stopped on the missing key before external activity;
+  unverified auto-restart also blocks admission, and D-127 production calls remain zero.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 

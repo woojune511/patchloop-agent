@@ -66,7 +66,7 @@ estimate and not a percentage of engineering completion.
   readiness, workload execution, noncooperative path-swap resistance or bounded streaming capture.
 - The SDK no-call probe proves local construction only. It found no API key and did not establish explicit
   production `base_url` or `trust_env=False` behavior.
-- D-127 lacks static/downstream observation and API key. Daemon launch stays disabled while
+- D-127 static stopped on the missing key and produced no downstream observation. Daemon launch stays disabled while
   container auto-restart is unverified because it could violate the closed container-start boundary.
 - Archive prose can contain stale future tense. Current authority comes from source/artifacts and
   `docs/current-status.md`.

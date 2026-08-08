@@ -32,8 +32,8 @@ workloads; the locked-SDK construction probe made zero network calls. Five block
 
 Source now fixes the official OpenAI base URL and `trust_env=False`, and implements bounded replayable pricing,
 exact-identity Docker/read-only preflight and attempt-first append-only orchestration. The receipt is append-only,
-but static and downstream artifacts are absent, so D-126 remains latest sealed. Static has
-not run and `OPENAI_API_KEY` is absent; daemon launch fails closed while container auto-restart is unverified.
+but static and downstream artifacts are absent, so D-126 remains latest sealed. Static stopped on missing
+`OPENAI_API_KEY` before external activity; daemon launch fails closed while container auto-restart is unverified.
 D-127 production Docker/network/provider/
 evaluator/agent activity, injection/retrieval, cost, run, hash and candidate are zero or absent.
 Dedicated D-127 tests pass 55/55; the broader node-disjoint selection passed 231 with 6 skipped (not additive).

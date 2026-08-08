@@ -21,7 +21,7 @@ condition-aware qualification, full-schedule cost reservation/settlement source 
 completion-gate source are implemented. D-125 is the historical local/mock finalization source predecessor.
 D-126 remains the latest sealed gate. D-127 successor source implements the production-client correction,
 replayable pricing capture and exact-identity Docker/no-call orchestration. Its append-only approval receipt
-exists; static source admission and downstream evidence remain pending.
+exists; static stopped on the missing API key before external activity, and downstream evidence is absent.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -49,7 +49,7 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-121 remains a deferred historical no-start isolation lane.
 - D-126 has no executed reservation, result, candidate or execution hash. Provider, evaluator, agent,
   retrieval and injection counts and cost are zero; every A/C outcome remains unmeasured.
-- D-127 is pre-external: receipt recorded, static pending, API key absent and production calls zero.
+- D-127 is pre-external: receipt recorded; static stopped on the absent key; production calls remain zero.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -77,7 +77,7 @@ uv run patchloop report --help
 
 CLI availability does not imply readiness. The approved D-127 scope stops at blocker remediation, official
 pricing capture and a repeated no-call preflight. It currently stops before external activity because the
-receipt exists, but static is pending and `OPENAI_API_KEY` is absent. A ready successor still requires
+receipt exists, but static stopped because `OPENAI_API_KEY` is absent. A ready successor still requires
 separate exact-gate approval before hash/candidate preparation and later live approval.
 
 ## Documentation

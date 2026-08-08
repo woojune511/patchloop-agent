@@ -158,5 +158,5 @@ recorded digest/size/ETag. It creates no hash/candidate/live authority or cost.
 
 D-127 requires committed receipt/clean identity, the official URL with `trust_env=False`, bounded
 replayable pricing, exact-image Docker scope and attempt-first append-only phases. Missing API key or unverified
-daemon auto-restart state fails closed. Only its append-only receipt exists; static/downstream artifacts are
-pending, and container work, hash/candidate/live authority remain forbidden.
+daemon auto-restart state fails closed. Static stopped on the missing key; only the receipt exists, while
+container work, hash/candidate/live authority remain forbidden.

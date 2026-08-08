@@ -68,8 +68,8 @@ evidence-commit topology; it does not repeat the public pricing GET or Docker co
 uv run pytest -q tests/test_d127_docker_remediation.py tests/test_d127_pricing_capture.py tests/test_d127_d126_successor_no_call_preflight.py
 ```
 
-This mocked path creates no downstream evidence or external call. After source/receipt commit, `--check-static`
-remains local; it has not run and the API key is absent. Do not use `--run-external-preflight` before admission.
+This mocked path creates no downstream evidence or external call. `--check-static` remained local and stopped
+on the absent API key. Do not use `--run-external-preflight` before admission.
 
 ## Validate current memory contracts
 

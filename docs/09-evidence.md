@@ -11,8 +11,8 @@ which is preserved at `docs/archive/snapshots/d121/09-evidence.full.md`.
   file `sha256:ddea365e3a51c8283bde58bd349222288a45e8ea8bdb3d211ead0bb001df81f4`; 3,914 bytes.
 - Status: `D127_D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_RECORDED`.
 
-The receipt is append-only; no static, attempt, remediation, pricing, preflight or gate artifact
-exists. API key absence and unverified daemon auto-restart block admission. Production calls, cost, run,
+The receipt is append-only. Static stopped on the missing key and created no attempt, remediation, pricing,
+preflight or gate artifact. Unverified daemon auto-restart also blocks admission. Production calls, cost, run,
 hash and candidate are zero or absent; D-126 remains the latest sealed checkpoint.
 
 ## D-126 clean-source/pricing/no-call preflight
