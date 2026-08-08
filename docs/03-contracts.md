@@ -132,27 +132,16 @@ effect claim.
 
 ## 10. Cost and completion gates
 
-D-123 implemented the R2 source contract for a $13.6125 row reserve, $54.45 full-schedule reserve and proposed
-$55.00 hard cap with $0.55 slack. Before the first provider call, the journal must durably record
-`CampaignStarted` and `FullScheduleCostReserved`; each exact row then records `RunStarted`, `RunTerminal` and
-either `RunCostSettled` or an inconclusive `RunCostSettlementUnavailable`. Usage tokens are repriced with
-integer nano-USD and previous durable settlements are reloaded before the next paid call.
+D-123 binds $13.6125 per row, $54.45 full-schedule reserve and proposed $55 cap. Before any provider call the
+journal records campaign/reserve events; each row records start, terminal and settled-or-inconclusive events.
+Usage is repriced in integer nano-USD and prior settlements reload before another paid call.
 
-The completion source requires the exact four schedule rows once each, unique run IDs, qualified terminal
-traces, durable cost settlement, official evaluation and resolved/SCRR/four-verdict consistency. Missing,
-duplicate, retried, replaced, not-started or confounded rows make the panel inconclusive. Retry, replacement,
-resume, incomplete-matrix promotion and cost censoring remain forbidden.
+Completion requires each exact row once, qualified trace, durable settlement, official evaluation and
+resolved/SCRR/verdict consistency. Missing, duplicate, retried, replaced or confounded rows are inconclusive.
 
-D-124 historically corrects final settlement reconciliation. D-125 adds two offline contracts:
-
-- a unique SQLite `(execution_hash, schedule_row_id, run_id)` consumption before paid execution, followed by a
-  durable journal marker; marker failure consumes locally and blocks execution;
-- an fsynced same-directory prepared result, no-replace publication before exactly one `CampaignCompleted`,
-  and idempotent mocked-fault recovery that never reruns a row.
-
-Qualification is repository-local and mocked-process only. It does not verify cross-store/global/cross-clone
-exclusion, noncooperative path swaps, actual process kill, torn-write/power-loss durability or whole-root
-rollback protection. No reservation or result was executed.
+D-124 corrects settlement reconciliation. D-125 adds local SQLite row consumption plus marker and fsynced,
+no-replace result publication with mocked idempotent recovery. It does not prove global/cross-clone,
+noncooperative-swap, actual-kill or power-loss guarantees. No reservation/result executed.
 
 ## 11. Evidence gates
 
@@ -160,8 +149,10 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-125 binds exact sealed-historical D-124 plus the runtime-finalization source. Its status is
-`D125_AC_RUNTIME_FINALIZATION_SOURCE_QUALIFIED_EXECUTION_CANDIDATE_BLOCKED`; no reservation, result,
-candidate or execution hash exists, and all live-call counts and added model cost are zero. The next exact-D-125
-approval may cover only clean source, fresh pricing and no-call environment preflight; hash/candidate creation remains
-separately gated. D-121 remains historical and deferred.
+D-126 consumes only clean-source/pricing/no-call scope, binding commit
+`68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh rates, 12 Docker reads (six daemon/image, zero workload)
+and an SDK construction probe with zero network calls.
+
+D-126 has five environment blockers plus a provenance gap: no raw official bytes independently rebind its
+recorded digest/size/ETag. It creates no hash/candidate/live authority or cost. The next approval is limited to
+closing those issues and repeating the no-call preflight.

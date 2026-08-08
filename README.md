@@ -18,8 +18,9 @@ readiness panel with an exact, checked-in suite:
 `experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml` fixes the four rows, while
 `experiments/ac-structured-pilot-v2.plan.yaml` preserves the design boundary. Fixed-bundle delivery,
 condition-aware qualification, full-schedule cost reservation/settlement source and the complete-matrix
-completion-gate source are implemented. D-125 adds repository-local row-start consumption and mocked
-fault-boundary finalization recovery source. It is BLOCKED, not an execution candidate or live authority.
+completion-gate source are implemented. D-125 is the historical local/mock finalization source predecessor.
+D-126 sealed clean-source, pricing and no-call environment observations, but five blockers keep it BLOCKED
+before execution-hash or candidate creation.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -42,14 +43,13 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
   2/12 were scope-compliant successes. This is development evidence, not a held-out performance claim.
 - D-110 froze the approved three-entry memory index.
 - D-112/D-115 showed that the current selective scorer cannot be repaired by threshold/weight changes alone.
-- D-124 is the historical settlement-reconciliation predecessor. D-125 qualifies repository-local at-most-once
-  row consumption and mocked process-fault finalization recovery only.
-- D-125 passed 23/23 and D-124+D-125 passed 37/37. Row attestation 147 and finalization union 136 overlap and
-  are never added. None is a repository-wide or live result.
+- D-124/D-125 are historical settlement/finalization predecessors; their local/mock limits remain.
+- D-126 binds source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing and
+  a no-call observation. Docker used 12 read-only commands, including 6 daemon reads and zero workloads;
+  the SDK probe made zero network calls.
 - D-121 remains a deferred historical no-start isolation lane.
-- D-125 has no executed reservation, result, candidate or execution hash. Provider, evaluator, agent, Docker
-  and retrieval calls and added model cost are all zero; runtime memory injection and every A/C outcome remain
-  unmeasured.
+- D-126 has no executed reservation, result, candidate or execution hash. Provider, evaluator, agent,
+  retrieval and injection counts and cost are zero; every A/C outcome remains unmeasured.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -57,11 +57,10 @@ Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
 ```powershell
 uv sync --extra dev
-uv run pytest -q tests/test_d125_ac_runtime_finalization_qualification.py
-uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --validate
+uv run pytest -q tests/test_d126_clean_source_pricing_no_call_preflight.py
+uv run python scripts/build_d126_clean_source_pricing_no_call_preflight.py --validate-post-commit
+uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --validate-sealed-historical
 uv run python scripts/build_d124_ac_settlement_reconciliation_correction.py --validate-sealed-historical
-uv run python scripts/build_d123_ac_cost_completion_qualification.py --validate-sealed-historical
-uv run python scripts/build_d122_ac_fixed_bundle_qualification.py --validate-sealed-historical
 uv run pytest -q tests/test_documentation_structure.py
 git diff --check
 ```
@@ -78,9 +77,9 @@ uv run patchloop experiment run --help
 uv run patchloop report --help
 ```
 
-CLI availability does not imply authorization. The next approval may authorize only clean-source sealing,
-fresh pricing and a no-call Docker/SDK/credential/endpoint preflight bound to exact D-125. Execution-hash or
-candidate creation requires another gate, followed by separate candidate-triple/hash/$55-cap approval.
+CLI availability does not imply authorization. The next approval may only resolve all five D-126 blockers,
+close the non-replayable pricing-provenance gap and repeat an exact no-call preflight. A ready successor still
+requires separate exact-gate approval before hash/candidate preparation and later live approval.
 
 ## Documentation
 
@@ -101,4 +100,4 @@ candidate creation requires another gate, followed by separate candidate-triple/
 
 PatchLoop is a constrained, recoverable coding agent with a leakage-aware evaluation and failure-memory
 pipeline whose exact four-run no-memory versus fixed-structured-memory runtime-finalization source path is
-offline-qualified and BLOCKED before candidate creation and live authority.
+offline-qualified, no-call-preflight observed and BLOCKED before candidate creation and live authority.

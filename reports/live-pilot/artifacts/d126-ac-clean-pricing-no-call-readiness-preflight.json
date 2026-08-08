@@ -1,0 +1,498 @@
+{
+  "schema_version": "ac-clean-pricing-no-call-readiness-preflight-d126-v1",
+  "artifact_id": "d126preflight_c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04",
+  "semantic_body_hash": "sha256:c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04",
+  "semantic_body": {
+    "milestone": "D-126",
+    "evidence_kind": "clean-source-official-pricing-and-no-call-environment-observation",
+    "recorded_at": "2026-08-08T17:58:02.935823Z",
+    "status": "D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED",
+    "observer_contract": {
+      "pricing_fetcher_kind": "official-docs-public-https-no-proxy-no-auth-v1",
+      "docker_runner_kind": "subprocess-exact-read-only-argv-minimal-env-no-shell-v1",
+      "sdk_observer_kind": "local-metadata-ast-and-synthetic-client-no-call-v1",
+      "public_api_observer_injection_supported": false
+    },
+    "receipt_binding": {
+      "path": "reports/live-pilot/artifacts/d126-ac-clean-pricing-no-call-preflight-approval-receipt.json",
+      "artifact_id": "d126approval_596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0",
+      "semantic_body_hash": "sha256:596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0",
+      "file_bytes": 2672,
+      "file_sha256": "sha256:9e40c0da866d44af000127a09faab66aebd7afa7a1c981eb5b83a7976e179abe"
+    },
+    "source_commit_observation": {
+      "commit": "68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22",
+      "tree": "3893a0981f462bdb10a96e95bf74d943f9e8e258",
+      "parent": "5bf8c38509ecdc6954ca84aa44fb8b80b1333ab4",
+      "branch": "codex/patchloop-mvp-baseline",
+      "tracked_tree_listing_sha256": "sha256:7a614d2e8b652c010df67c58eb391810e3fa2bafca329ee842d9d42ebc491324",
+      "worktree_clean_before_observation": true,
+      "index_clean_before_observation": true,
+      "scope": "current-main-worktree-commit-tree-only",
+      "ignored_or_external_worktrees_claimed_clean": false
+    },
+    "official_pricing_observation": {
+      "observed_at": "2026-08-08T17:58:01.710150Z",
+      "source_url": "https://developers.openai.com/api/docs/models/gpt-5.4-mini.md",
+      "pricing_index_url": "https://developers.openai.com/api/docs/pricing",
+      "final_url": "https://developers.openai.com/api/docs/models/gpt-5.4-mini.md",
+      "official_host": "developers.openai.com",
+      "http_status": 200,
+      "content_type": "text/markdown; charset=utf-8",
+      "etag": null,
+      "redirect_count": 0,
+      "public_get_request_count": 1,
+      "public_body_bytes": 3735,
+      "public_body_sha256": "sha256:2b4ec047adff27f002a61fbf6323b98033501b68f81862ec0671579461e1f9c5",
+      "source_evidence_lines": [
+        "Default snapshot: `gpt-5.4-mini-2026-03-17`",
+        "| Input | $0.75 | 1M tokens |",
+        "| Cached input | $0.075 | 1M tokens |",
+        "| Output | $4.5 | 1M tokens |",
+        "| Responses | `v1/responses` | Supported |",
+        "| GPT-5.4 mini | $0.75 | $0.075 | $4.5 |"
+      ],
+      "source_evidence_sha256": "sha256:54673cc95e5edd3df56d5c9361a255ce290c29ef95717cd96599d17e44b242e0",
+      "facts": {
+        "model_label": "GPT-5.4 mini",
+        "dated_model_id": "gpt-5.4-mini-2026-03-17",
+        "service_tier": "default-standard",
+        "unit": "usd-per-1m-text-tokens",
+        "input_usd": "0.75",
+        "cached_input_usd": "0.075",
+        "cache_write_input_usd": null,
+        "output_usd": "4.5",
+        "responses_endpoint_supported": true
+      },
+      "facts_sha256": "sha256:9ca771becaaf7b424551c115b00729cc0663b2d936a74731829a245cb8803abe",
+      "planning_math": {
+        "max_total_tokens": 3000000,
+        "max_output_tokens": 25000,
+        "conservative_worst_rate_usd_per_million": "4.5",
+        "per_row_reserve_usd": "13.6125",
+        "scheduled_rows": 4,
+        "full_schedule_reserve_usd": "54.45",
+        "hard_cap_usd": "55.00",
+        "per_row_reserve_nanos": 13612500000,
+        "full_schedule_reserve_nanos": 54450000000,
+        "hard_cap_nanos": 55000000000
+      },
+      "freshness_window_seconds": 259200,
+      "fresh_at_capture": true,
+      "request_auth_or_cookie_sent": false,
+      "proxy_use_disabled_by_fetcher": true,
+      "raw_body_persisted": false
+    },
+    "docker_observation": {
+      "docker_cli_before": {
+        "file_name": "docker.exe",
+        "file_bytes": 43095472,
+        "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+        "linklike": false
+      },
+      "docker_cli_after": {
+        "file_name": "docker.exe",
+        "file_bytes": 43095472,
+        "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+        "linklike": false
+      },
+      "docker_cli_stable": true,
+      "parent_docker_prefixed_environment_value_persisted": false,
+      "child_environment_contract": {
+        "remove_every_case_insensitive_docker_prefixed_variable": true,
+        "minimal_nonsecret_environment_allowlist": [
+          "SYSTEMROOT",
+          "WINDIR",
+          "USERPROFILE",
+          "APPDATA",
+          "LOCALAPPDATA",
+          "TEMP",
+          "TMP"
+        ],
+        "openai_proxy_tls_and_other_parent_environment_inherited": false,
+        "force_daemon_host": "npipe:////./pipe/dockerDesktopLinuxEngine",
+        "shell": false
+      },
+      "snapshots": [
+        {
+          "snapshot": "before",
+          "commands": [
+            {
+              "role": "cli-version",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "--version"
+              ],
+              "return_code": 0,
+              "stdout_bytes": 37,
+              "stdout_sha256": "sha256:0365fd23319fb9e41ca25561c08a83c246a89041e230fd760dd361d46900f289",
+              "stderr_bytes": 0,
+              "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "context-show",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "context",
+                "show"
+              ],
+              "return_code": 0,
+              "stdout_bytes": 14,
+              "stdout_sha256": "sha256:75270b95abcf0516180e80ce1a2b6f98e42b13765c38de5239be80925439ba63",
+              "stderr_bytes": 0,
+              "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "context-endpoint",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "context",
+                "inspect",
+                "desktop-linux",
+                "--format",
+                "{{json .Endpoints.docker.Host}}"
+              ],
+              "return_code": 0,
+              "stdout_bytes": 44,
+              "stdout_sha256": "sha256:0d1284cdbf15f9de9be8524a923374e8dffede3d62a65a022b0c8f58bfaa26b7",
+              "stderr_bytes": 0,
+              "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "daemon-version",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "version",
+                "--format",
+                "{\"ClientVersion\":{{json .Client.Version}},\"ServerVersion\":{{json .Server.Version}},\"ServerOs\":{{json .Server.Os}},\"ServerArch\":{{json .Server.Arch}}}"
+              ],
+              "return_code": 1,
+              "stdout_bytes": 43,
+              "stdout_sha256": "sha256:6f78a5ee56d26196e2cc35d28e6e8e3b612118d65cef20dc707df567d37f3d58",
+              "stderr_bytes": 224,
+              "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "image-moto",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "image",
+                "inspect",
+                "--format",
+                "{{.Id}}",
+                "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+              ],
+              "return_code": 1,
+              "stdout_bytes": 1,
+              "stdout_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+              "stderr_bytes": 224,
+              "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "image-babel",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "image",
+                "inspect",
+                "--format",
+                "{{.Id}}",
+                "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+              ],
+              "return_code": 1,
+              "stdout_bytes": 1,
+              "stdout_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+              "stderr_bytes": 224,
+              "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            }
+          ],
+          "command_count": 6,
+          "config_read_calls": 3,
+          "read_only_daemon_calls": 3,
+          "workload_or_mutating_calls": 0,
+          "forced_daemon_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+          "observed_projection": {
+            "cli_version": {
+              "version": "29.6.2",
+              "build": "dfc4efb"
+            },
+            "context": "desktop-linux",
+            "context_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+            "daemon": null,
+            "image_ids": {
+              "image-moto": null,
+              "image-babel": null
+            }
+          },
+          "checks": {
+            "cli_version_observed": true,
+            "context_is_desktop_linux": true,
+            "context_endpoint_is_local_named_pipe": true,
+            "daemon_projection_available": false,
+            "moto_image_identity_matches": false,
+            "babel_image_identity_matches": false,
+            "every_output_within_bound": true
+          },
+          "passed": false
+        },
+        {
+          "snapshot": "after",
+          "commands": [
+            {
+              "role": "cli-version",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "--version"
+              ],
+              "return_code": 0,
+              "stdout_bytes": 37,
+              "stdout_sha256": "sha256:0365fd23319fb9e41ca25561c08a83c246a89041e230fd760dd361d46900f289",
+              "stderr_bytes": 0,
+              "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "context-show",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "context",
+                "show"
+              ],
+              "return_code": 0,
+              "stdout_bytes": 14,
+              "stdout_sha256": "sha256:75270b95abcf0516180e80ce1a2b6f98e42b13765c38de5239be80925439ba63",
+              "stderr_bytes": 0,
+              "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "context-endpoint",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "context",
+                "inspect",
+                "desktop-linux",
+                "--format",
+                "{{json .Endpoints.docker.Host}}"
+              ],
+              "return_code": 0,
+              "stdout_bytes": 44,
+              "stdout_sha256": "sha256:0d1284cdbf15f9de9be8524a923374e8dffede3d62a65a022b0c8f58bfaa26b7",
+              "stderr_bytes": 0,
+              "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "daemon-version",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "version",
+                "--format",
+                "{\"ClientVersion\":{{json .Client.Version}},\"ServerVersion\":{{json .Server.Version}},\"ServerOs\":{{json .Server.Os}},\"ServerArch\":{{json .Server.Arch}}}"
+              ],
+              "return_code": 1,
+              "stdout_bytes": 43,
+              "stdout_sha256": "sha256:6f78a5ee56d26196e2cc35d28e6e8e3b612118d65cef20dc707df567d37f3d58",
+              "stderr_bytes": 224,
+              "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "image-moto",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "image",
+                "inspect",
+                "--format",
+                "{{.Id}}",
+                "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+              ],
+              "return_code": 1,
+              "stdout_bytes": 1,
+              "stdout_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+              "stderr_bytes": 224,
+              "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            },
+            {
+              "role": "image-babel",
+              "argv_contract": [
+                "<exact-docker-cli>",
+                "image",
+                "inspect",
+                "--format",
+                "{{.Id}}",
+                "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+              ],
+              "return_code": 1,
+              "stdout_bytes": 1,
+              "stdout_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+              "stderr_bytes": 224,
+              "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+              "stdout_within_bound": true,
+              "stderr_within_bound": true,
+              "raw_stdout_persisted": false,
+              "raw_stderr_persisted": false
+            }
+          ],
+          "command_count": 6,
+          "config_read_calls": 3,
+          "read_only_daemon_calls": 3,
+          "workload_or_mutating_calls": 0,
+          "forced_daemon_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+          "observed_projection": {
+            "cli_version": {
+              "version": "29.6.2",
+              "build": "dfc4efb"
+            },
+            "context": "desktop-linux",
+            "context_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+            "daemon": null,
+            "image_ids": {
+              "image-moto": null,
+              "image-babel": null
+            }
+          },
+          "checks": {
+            "cli_version_observed": true,
+            "context_is_desktop_linux": true,
+            "context_endpoint_is_local_named_pipe": true,
+            "daemon_projection_available": false,
+            "moto_image_identity_matches": false,
+            "babel_image_identity_matches": false,
+            "every_output_within_bound": true
+          },
+          "passed": false
+        }
+      ],
+      "normalized_snapshots_stable": true,
+      "total_command_count": 12,
+      "read_only_daemon_call_count": 6,
+      "docker_workload_or_mutating_call_count": 0,
+      "passed": false
+    },
+    "sdk_credential_endpoint_observation": {
+      "python": {
+        "version": "3.12.13",
+        "file_name": "python.exe",
+        "file_bytes": 262144,
+        "file_sha256": "sha256:5912d0884b23c0343983a864c6064242391e2265536f50b88624857e353882c9",
+        "linklike": false
+      },
+      "openai_sdk": {
+        "installed_version": "2.47.0",
+        "locked_version": "2.47.0"
+      },
+      "credential": {
+        "name": "OPENAI_API_KEY",
+        "present": false,
+        "value_hash_length_or_prefix_persisted": false,
+        "identity_continuity_claimed": false
+      },
+      "routing_environment_presence": {
+        "OPENAI_API_KEY": false,
+        "OPENAI_ADMIN_KEY": false,
+        "OPENAI_BASE_URL": false,
+        "OPENAI_API_BASE": false,
+        "OPENAI_CUSTOM_HEADERS": false,
+        "OPENAI_ORG_ID": false,
+        "OPENAI_ORGANIZATION": false,
+        "OPENAI_PROJECT_ID": false,
+        "OPENAI_PROJECT": false,
+        "OPENAI_WEBHOOK_SECRET": false,
+        "HTTP_PROXY": false,
+        "HTTPS_PROXY": false,
+        "ALL_PROXY": false,
+        "NO_PROXY": false,
+        "SSL_CERT_FILE": false,
+        "SSL_CERT_DIR": false,
+        "REQUESTS_CA_BUNDLE": false,
+        "CURL_CA_BUNDLE": false
+      },
+      "routing_environment_values_persisted": false,
+      "official_endpoint": "https://api.openai.com/v1",
+      "network_call_count": 0,
+      "checks": {
+        "python_is_repository_venv": true,
+        "openai_sdk_installed": true,
+        "openai_sdk_matches_lock": true,
+        "api_key_present": false,
+        "alternate_openai_or_proxy_tls_environment_absent": true,
+        "synthetic_explicit_official_endpoint_no_call_probe_passed": true,
+        "production_client_factory_explicit_official_base_url": false,
+        "production_client_factory_trust_env_false": false
+      },
+      "passed": false
+    },
+    "observed_blockers": [
+      "docker-cli-observed-identity-awaits-separate-exact-approval",
+      "docker-local-daemon-and-exact-images-readiness-failed",
+      "openai-api-key-presence-missing",
+      "production-openai-client-official-base-url-not-explicit",
+      "production-openai-client-trust-env-not-disabled"
+    ],
+    "authority": {
+      "approved_work_item_6_observations_completed": true,
+      "environment_ready_for_execution_hash": false,
+      "execution_hash_created": false,
+      "execution_authorization_candidate_created": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "agent_runs_started": 0,
+      "runtime_memory_injection_count": 0,
+      "retrieval_call_count": 0,
+      "docker_workload_or_mutating_call_count": 0,
+      "cost_reserved_or_spent_usd": "0"
+    },
+    "evidence_boundary": {
+      "pricing_public_network_get_count": 1,
+      "docker_calls_are_read_only_cli_context_daemon_and_image_inspection": true,
+      "docker_raw_output_not_persisted_but_size_and_sha256_digest_are_persisted": true,
+      "sdk_probe_is_local_construction_without_endpoint_call": true,
+      "credential_value_hash_length_prefix_or_identity_not_recorded": true,
+      "ignored_scratch_and_external_worktrees_not_attested": true,
+      "noncooperative_docker_executable_or_path_swap_verified": false,
+      "bounded_streaming_http_and_subprocess_output_capture_verified": false,
+      "later_candidate_must_repeat_freshness_and_environment_checks": true,
+      "runtime_or_global_network_instrumentation_claimed": false
+    }
+  }
+}

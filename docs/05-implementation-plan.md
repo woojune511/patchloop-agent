@@ -10,8 +10,8 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Prepare a separately authorized clean/pricing/no-call preflight while keeping execution-hash, candidate and
-every live path closed.
+Resolve the five D-126 blockers under separate approval and repeat the no-call preflight while keeping
+execution-hash, candidate and every live path closed.
 
 ## Completed foundation
 
@@ -20,12 +20,12 @@ every live path closed.
 - `fixed-d110-bundle-v1` binds exact D-105/D-110 inputs, renders A null and C three entries on every request,
   and exposes no retrieval, provenance, vector or raw-trace content.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
-- D-122/D-123/D-124 are historical predecessors; D-125 is the current runtime-finalization source gate.
+- D-122 through D-125 are historical predecessors; D-126 is the current blocked no-call preflight gate.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
 
-Status: implemented in D-123, corrected by D-124 and finalization-qualified offline by D-125; candidate BLOCKED.
+Status: implemented in D-123, corrected/finalization-qualified by historical D-124/D-125; candidate BLOCKED.
 
 - R2 reserves four row-bound worst cases before the first provider call: $13.6125 each, $54.45 total.
 - The source enforces the proposed $55.00 hard cap, $0.55 slack and durable usage-derived settlement.
@@ -40,16 +40,18 @@ attestation 147 and finalization union 136 overlap and are not added. No live ac
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: blocked; no candidate or execution hash exists.
+Status: D-126 observations complete; environment blocked; no candidate or execution hash exists.
 
-An exact-D-125 approval may authorize only clean committed-source sealing, fresh official pricing lookup and
-no-call Docker/SDK/credential/endpoint preflight. It may not create an execution hash or candidate.
+D-126 sealed source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing,
+12 read-only Docker commands with zero workloads and an SDK no-call probe. Five exact Docker/credential/client
+blockers and a pricing-provenance replayability gap remain. A separate approval may resolve them and repeat
+the no-call preflight only; the blocked D-126 artifacts are not rewritten.
 
 ## Work item 7 — execution hash and candidate
 
-Status: unauthorized and separately gated after work item 6.
+Status: unauthorized and separately gated after a ready repeated work-item-6 preflight.
 
-Create neither identity until a later gate explicitly authorizes it.
+Create neither identity until a later approval cites the exact ready gate and explicitly authorizes it.
 
 ## Work item 8 — separately approved execution
 

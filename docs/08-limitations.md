@@ -21,14 +21,10 @@ estimate and not a percentage of engineering completion.
 
 ## Structured memory
 
-- Three entries are admitted and frozen, but no agent run has received them.
-- D-108's +702 token observation covers an exact count pair, not every turn in a live run.
-- `fixed-d110-bundle-v1`, the exact four-row suite and its trace qualifier are verified offline, but there is
-  no live provider/evaluator result.
-- D-124 corrects historical settlement reconciliation; D-125 adds local row consumption and mocked
-  finalization recovery source. No reservation or completion result was executed.
-- Offline tests prove A-null/C-exact 3,528-byte delivery on every mock request; they do not measure actual
-  repeated-turn token overhead or model behavior.
+- Three entries are frozen, but no agent run has received them and no live provider/evaluator result exists.
+- D-108's +702 count covers one exact pair; mock 3,528-byte delivery does not measure live repeated-turn
+  overhead or behavior.
+- D-124/D-125 add historical settlement, local consumption and mocked finalization source only; no result ran.
 - Because all three entries will be bundled, the readiness panel cannot identify which rule helped or harmed.
 
 ## Retrieval and selective memory
@@ -36,32 +32,25 @@ estimate and not a percentage of engineering completion.
 - D-110 freezes storage, not retrieval authority.
 - The existing `structured` retrieval implementation still embeds/ranks queries and uses a legacy rendering
   path; it is not suitable for the fixed-bundle C readiness treatment.
-- D-112 observed all no-match and incorrect top-group behavior on its public probes.
-- D-115 found no threshold-only or nonnegative current-feature weight correction that solves the observed
-  ordering.
+- D-112/D-115 found all no-match/incorrect top-group behavior and no threshold/current-feature weight fix.
 - The public applicability grammar/classifier is contract-only and lacks blind independent calibration.
 
 ## Four-run A/C readiness
 
-- It has one repetition per condition/task and therefore no variance estimate or confidence interval.
-- Moto/Babel are development-validation tasks, not held-out efficacy rows.
-- The panel can validate workflow delivery and report descriptive direction only.
+- One repetition on development-validation Moto/Babel permits descriptive workflow direction only, with no
+  variance estimate or held-out claim.
 - A result cannot establish causal/general memory improvement, production readiness, retrieval quality,
   cross-repository transfer or a negative-transfer rate.
-- D-125 proves repository-local at-most-once row consumption, not cross-store atomicity, global/cross-clone
-  exclusion or whole-root rollback protection.
-- Finalization recovery uses mocked process-fault boundaries. Actual kill, noncooperative path swap and
-  torn-write/power-loss durability remain unverified.
-- Clean commit, fresh pricing, no-call preflight, candidate/hash and paid approval are absent. The proposed
+- D-125 local/mock evidence does not prove cross-store/global exclusion, whole-root rollback, actual-kill,
+  noncooperative-swap or power-loss durability.
+- D-126 sealed a clean tracked source commit, fresh pricing and bounded no-call observations, but five
+  environment blockers remain. Candidate/hash, paid approval and every live result are absent; the proposed
   `$55` hard cap is neither approved nor used.
 
 ## Isolation and external controls
 
-- D-118 lacks a trusted pre-D-116 anchor binding exact snapshot and membership.
-- D-119 ended in a consumed partial failure with probe outcome unknown.
-- D-121 verified no-start Docker configuration realization only; it did not run the hash probe or establish
-  technical/record-projection isolation.
-- D-121 actual successor execution is deferred and unrelated to fixed-bundle C delivery authority.
+- D-118 lacks a trusted pre-D-116 anchor; D-119 ended consumed with unknown probe outcome.
+- D-121 verified no-start configuration only, not hash-probe isolation; its run is deferred and unrelated to C.
 
 ## Evidence and operations
 
@@ -69,8 +58,13 @@ estimate and not a percentage of engineering completion.
   authenticated user identity.
 - Some historical tests assert states that were intentionally superseded by later artifacts; those tests are
   evidence checks, not current product regression checks.
-- The worktree contains a long uncommitted development history. D-125 records exact source bytes, but that
-  state is not equivalent to a clean Git commit or an approved execution hash.
+- D-126's clean-source claim covers commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22` and its tracked tree
+  only; ignored scratch and external worktrees are not attested, and no execution hash is approved.
+- Pricing facts/math were correct and fresh at capture, but raw official bytes were not retained; the validator
+  cannot independently rebind recorded body SHA/bytes/ETag. The 12 Docker reads do not prove daemon/image
+  readiness, workload execution, noncooperative path-swap resistance or bounded streaming capture.
+- The SDK no-call probe proves local construction only. It found no API key and did not establish explicit
+  production `base_url` or `trust_env=False` behavior.
 - Archive prose can contain stale future tense. Current authority comes from source/artifacts and
   `docs/current-status.md`.
 

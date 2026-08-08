@@ -11,20 +11,21 @@ pipeline은 이를 검증하고 개선하기 위한 지원 계층이다.
 
 ## Current state
 
-- 최신 봉인 checkpoint는 D-125 offline runtime-finalization source qualification이다. Gate ID는
-  `d125_ed9c892a598ce4543591bf3b9135a1cbe3752589fdc447b05867d59e07d45539`, semantic body SHA는
-  `sha256:ed9c892a598ce4543591bf3b9135a1cbe3752589fdc447b05867d59e07d45539`, file SHA는
-  `sha256:9bc5f6e618f31312dc5026a807eabf478e47c05893cca72c71328378b593856e`이며 13,820 bytes다.
+- 최신 봉인 checkpoint는 D-126 clean-source/pricing/no-call preflight다. Gate ID는
+  `d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`, semantic body SHA는
+  `sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`, file SHA는
+  `sha256:e08e8f7aad8f425c7069290a98ac04a5c471bc8c948e1a08121c962b5ba18696`이며 3,078 bytes다.
 - Moto와 Babel development-validation task의 A(`no_memory`)와 C(`structured`) exact four-row
   suite, fixed D-110 bundle delivery, condition-aware manifest/trace qualification을 구현했다. 현재
   R2 exact full-schedule cost reservation/settlement와 four-row completion gate source를 구현했다.
-- D-124는 sealed-historical predecessor다. D-125는 repository-local at-most-once row consumption과 mocked
-  process-fault finalization recovery source만 qualified했다. Cross-store/global/cross-clone exclusion,
-  noncooperative path swap, actual kill과 torn-write/power-loss durability는 검증하지 않았다.
-- D-125 status는 `D125_AC_RUNTIME_FINALIZATION_SOURCE_QUALIFIED_EXECUTION_CANDIDATE_BLOCKED`다. Gate는
-  23/23, D-124+D-125는 37/37을 통과했다. Row attestation 147과 finalization union 136은 겹치므로 합산하지
-  않는다. 실제 reservation, result, candidate와 execution hash는 없다.
-- Provider/evaluator/agent/Docker/retrieval call은 모두 0이다. Runtime memory injection, paid execution,
+- D-126은 source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, 72-hour official pricing과
+  read-only Docker/SDK 관찰을 봉인했지만 5개 blocker와 pricing provenance replay 한계 때문에
+  execution-hash readiness는 false다. Raw official response bytes는 보존되지 않았다.
+- Docker 관찰은 12개 command, 6개 read-only daemon call, workload/mutating call 0이다. SDK probe는
+  local no-call이며 network call 0이다. Provider/evaluator/agent/retrieval/injection과 cost도 모두 0이다.
+- D-124와 D-125는 sealed-historical predecessor다. D-125가 qualified한 repository-local consumption과
+  mocked finalization recovery의 cross-store/global, actual-kill, power-loss 한계는 그대로다.
+- 실제 reservation, result, execution hash와 candidate는 없다. Runtime memory injection, paid execution,
   held-out/core campaign은 별도의 exact approval 전까지 금지한다.
 - D-121 no-start successor는 historical/deferred다. D-119를 retry, resume 또는 repair하지 않는다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.

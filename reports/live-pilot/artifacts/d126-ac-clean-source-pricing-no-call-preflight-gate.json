@@ -1,0 +1,59 @@
+{
+  "schema_version": "ac-clean-source-pricing-no-call-preflight-gate-d126-v1",
+  "artifact_id": "d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d",
+  "semantic_body_hash": "sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d",
+  "semantic_body": {
+    "milestone": "D-126",
+    "evidence_kind": "derived-clean-source-pricing-no-call-preflight-gate",
+    "recorded_at": "2026-08-08T17:58:02.971685Z",
+    "status": "D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED",
+    "receipt_binding": {
+      "path": "reports/live-pilot/artifacts/d126-ac-clean-pricing-no-call-preflight-approval-receipt.json",
+      "artifact_id": "d126approval_596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0",
+      "semantic_body_hash": "sha256:596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0",
+      "file_bytes": 2672,
+      "file_sha256": "sha256:9e40c0da866d44af000127a09faab66aebd7afa7a1c981eb5b83a7976e179abe"
+    },
+    "preflight_binding": {
+      "path": "reports/live-pilot/artifacts/d126-ac-clean-pricing-no-call-readiness-preflight.json",
+      "artifact_id": "d126preflight_c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04",
+      "semantic_body_hash": "sha256:c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04",
+      "file_bytes": 20814,
+      "file_sha256": "sha256:0238f5fa1c62f0160d340cc14b9613b20fc805c54ddb059d02e4464625227a1a"
+    },
+    "qualification": {
+      "source_commit_sealed": true,
+      "official_pricing_observed_within_72_hours": true,
+      "no_call_environment_observation_completed": true,
+      "environment_ready_for_execution_hash": false,
+      "observed_blockers": [
+        "docker-cli-observed-identity-awaits-separate-exact-approval",
+        "docker-local-daemon-and-exact-images-readiness-failed",
+        "openai-api-key-presence-missing",
+        "production-openai-client-official-base-url-not-explicit",
+        "production-openai-client-trust-env-not-disabled"
+      ]
+    },
+    "authority": {
+      "d125_next_gate_approval_consumed": true,
+      "approved_work_item_6_complete": true,
+      "execution_hash_authorized_or_created": false,
+      "execution_candidate_authorized_or_created": false,
+      "provider_evaluator_agent_execution_authorized": false,
+      "runtime_memory_or_retrieval_authorized": false,
+      "docker_workload_authorized": false,
+      "cost_reservation_or_spend_authorized": false
+    },
+    "next_gate": {
+      "if_blocked": "resolve-every-observed-blocker-and-repeat-an-exact-separately-authorized-no-call-preflight",
+      "if_ready": "request-separate-exact-d126-gate-approval-before-execution-hash-or-candidate-preparation",
+      "does_not_authorize_execution_hash_candidate_or_live_run": true
+    },
+    "evidence_boundary": {
+      "qualification_grade": "local-clean-source-public-pricing-and-read-only-no-call-observation",
+      "live_result_present": false,
+      "memory_benefit_or_core_readiness_claimed": false,
+      "candidate_must_recheck_environment_and_pricing": true
+    }
+  }
+}

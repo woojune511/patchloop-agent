@@ -58,16 +58,25 @@ uv run python scripts/build_d124_ac_settlement_reconciliation_correction.py --va
 
 This validates exact D-124 bytes without replaying current implementation as historical evidence.
 
-## Validate current D-125 source gate
+## Validate current D-126 blocked preflight
 
 ```powershell
-uv run pytest -q tests/test_d125_ac_runtime_finalization_qualification.py
-uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --validate
+uv run pytest -q tests/test_d126_clean_source_pricing_no_call_preflight.py
+uv run python scripts/build_d126_clean_source_pricing_no_call_preflight.py --validate-post-commit
 ```
 
-D-125 gate tests passed 23/23 and D-124+D-125 passed 37/37. Row attestation 147 distinct tests and
-finalization union 136 distinct tests overlap, so no combined total is claimed. All paths are offline or
-mocked; no actual process kill, Docker, provider, evaluator or paid call occurs.
+The tests use mocked Git/pricing/Docker/SDK observations. `--validate-post-commit` validates the sealed
+evidence-commit topology; it does not repeat the public pricing GET or Docker commands. Do not invoke
+`--run-preflight` to refresh observations without separate exact authority.
+
+## Validate D-125 historical finalization source
+
+```powershell
+uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --validate-sealed-historical
+```
+
+This validates exact D-125 bytes without replaying later source as historical evidence. Its local/mock
+process and durability limits remain.
 
 ## Validate current memory contracts
 
@@ -117,9 +126,9 @@ historical snapshot hashes, the single D-121 prose owner and the closed four-run
 There is no supported live A/C command. Although the exact suite is an `ExperimentSuite` source, a future live
 command must appear only after:
 
-1. separate approval citing the exact D-125 tuple for clean source, fresh pricing and no-call
-   Docker/SDK/credential/endpoint preflight only;
-2. a later separate gate for execution-hash and candidate creation;
+1. separate approval resolving every D-126 blocker, closing pricing-provenance replayability and repeating the
+   no-call preflight only;
+2. after a ready successor, separate exact-gate approval for execution-hash and candidate creation;
 3. separate approval of the exact candidate triple, execution hash and $55 cap.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that

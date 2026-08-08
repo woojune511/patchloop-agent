@@ -40,14 +40,19 @@ delivery with retrieval quality.
 - A live candidate waits for durable full-schedule reservation, a four-row completion gate, clean committed
   source, fresh pricing and a separately authorized no-call environment preflight.
 
-### 2026-08-09 — D-125 qualifies local finalization source only
+### 2026-08-09 — D-125 source and D-126 no-call preflight remain non-executable
 
 - R2 binds an up-front four-row reserve, usage-derived settlement and exact complete-matrix gate.
 - D-124 is preserved as the settlement-reconciliation predecessor.
 - D-125 qualifies repository-local at-most-once row consumption and mocked fault-boundary finalization
   recovery; it does not claim cross-store/global/cross-clone, actual-kill or power-loss guarantees.
-- The next exact-D-125 approval may cover only clean source, fresh pricing and a no-call environment preflight.
-  Execution-hash/candidate creation and later $55 live approval remain separate gates.
+- D-126 consumed that narrow approval and sealed source commit
+  `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, official pricing and no-call observations only.
+- Twelve Docker commands included six read-only daemon/image calls and no workload; the SDK probe made no
+  network call. Five blockers keep environment readiness false; retained pricing evidence cannot independently
+  replay the official body digest/size/ETag because raw response bytes were not preserved.
+- The next approval may only resolve those issues and repeat the no-call preflight. Execution-hash/candidate
+  creation and later $55 live approval remain separate gates.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 
@@ -71,7 +76,8 @@ delivery with retrieval quality.
 | D-122 | Exact A/C suite and trace qualification are sealed offline; no execution candidate or live authority exists. |
 | D-123 | Historical R2 source seal; post-seal audit found stale runtime settlement reconciliation. |
 | D-124 | Historical settlement-reconciliation correction; validate sealed-historical. |
-| D-125 | Local/mock runtime-finalization source qualified; candidate and live authority remain blocked. |
+| D-125 | Historical local/mock runtime-finalization source; candidate and live authority remained blocked. |
+| D-126 | Clean source/pricing/no-call observations sealed; five blockers and all live authority remain closed. |
 
 ## Superseded sequencing
 

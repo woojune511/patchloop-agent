@@ -71,7 +71,8 @@ All four rows must share:
 - exact task package, base commit and official evaluator per task;
 - max output 25,000, total-token ceiling 3,000,000 and wall timeout 3,600 seconds;
 - no model/tool call-count ceiling;
-- identical pricing/accounting and schedule qualification.
+- identical pricing/accounting and schedule qualification; D-126 observed official default-tier list prices
+  of $0.75 input, $0.075 cached input and $4.50 output per 1M text tokens.
 
 The only planned treatment difference is exact selected-memory content.
 
@@ -93,13 +94,14 @@ D-108's observed +702 input-token count is planning evidence for one request sha
 turn. Live evidence records each request's total token usage; exact per-turn memory overhead would require a
 separately authorized counterfactual count call.
 
-The R2 cost/completion source and D-124 reconciliation correction are inherited. D-125 qualifies only
-repository-local row consumption and mocked-fault finalization recovery. No reservation, result, candidate or
-execution hash exists.
+The R2 cost/completion source and D-124/D-125 historical corrections are inherited. D-126 sealed the clean
+source commit, fresh official pricing and bounded no-call observations, but five environment blockers keep
+readiness false. Pricing facts/math were fresh and correct, but raw official bytes were not retained for
+independent provenance replay. No reservation, result, candidate or execution hash exists.
 
 ## 7. Run-completion gate
 
-The D-125-bound completion source makes the four-row matrix analyzable only if every row:
+The D-125-qualified completion source makes the four-row matrix analyzable only if every row:
 
 - reaches a terminal state;
 - is trace-qualified and cost-settled;
