@@ -10,9 +10,9 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-D-135 corrected source qualification is complete. Preserve the consumed D-132 pricing chain and
-non-authoritative D-134 gate. Next request only exact D-135 terminalization: one procedural terminal and
-terminal-only local commit, external zero. Successor, hash/candidate, cost and execution remain separate.
+D-135 terminalization and D-136 fixed-pricing successor source qualification are complete. Preserve the
+consumed D-132 chain, non-authoritative D-134 gate and D-135 incident terminal. Next request only a fresh exact
+D-136 pricing activation. Docker/SDK preflight, hash/candidate, cost and execution remain separate.
 
 ## Completed foundation
 
@@ -24,9 +24,11 @@ terminal-only local commit, external zero. Successor, hash/candidate, cost and e
 - D-122 through D-131 are historical immutable predecessors; D-127 through D-129 are terminal blocked.
 - D-132 activation/pricing are consumed without canonical terminal; D-133 preserves the marker.
 - D-134's ambiguous gate is preserved by `9dc450a747537634e89fe2ade824685f8b5a52d6` but is not authority.
-- Corrected D-135 source `ca50402aa8d3965ea384563262c713c6090d2ecf` and gate
-  `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` qualify a future
-  terminal-only local transition without invoking it.
+- D-135 terminal-only commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786` procedurally closes the
+  consumed incident without producing canonical pricing evidence.
+- D-136 source `96916ac481ac8beced2db0be9022607e0705e018` and gate
+  `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd` qualify the fixed helper
+  and future one-use topology without creating or exercising it.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -44,22 +46,28 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: corrected D-135 source-qualified; fresh exact procedural-terminal approval required.
+Status: D-136 fixed-pricing successor source-qualified; fresh exact activation required.
 
 The D-132 pricing marker consumed its activation/attempt. Application-level send returned once, but HTTP and
 response fields remain unknown/unretained and completed/replayable canonical pricing evidence count is 0.
 D-134's ambiguous gate is
 preservation-only.
 
-D-135 removes that ambiguity and validates append-only/new-only, collision/orphan/idempotence, exact Git
-topology, loaded modules and a future terminal-only commit. Its gate builder created no terminal and made no
-external call. A new approval quoting the exact D-135 gate/evidence may create only the procedural terminal and
-its local commit. Retry/backfill, pricing helper changes, fixed-successor qualification, Docker/SDK/credential,
-provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C remain unauthorized.
+D-135 removes that ambiguity and its terminal-only commit preserves the incident. D-136 adds a new helper,
+leaving the historical D-127 helper unchanged, and replaces response context-manager use with explicit
+`try/finally` close semantics. Mocked tests cover a `Response` without `__enter__`, close-on-success, redirect
+and error paths.
+
+The future activation must first commit one receipt, then one attempt. It writes and fsyncs an action-started
+marker immediately before helper dispatch. Success commits marker plus replayable pricing terminal; a
+post-marker failure preserves only the marker and consumes the activation with no retry. No such D-136 future
+artifact exists yet, and gate construction made no external call. Docker/SDK/credential,
+provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C remain separately gated.
 
 ## Work item 7 — execution hash and candidate
 
-Status: unauthorized and separately gated after a later qualified fixed-pricing successor and ready preflight.
+Status: unauthorized and separately gated after a successful D-136 terminal and later qualified ready
+Docker/SDK preflight successor.
 
 Create neither identity until a later approval cites the exact ready gate and explicitly authorizes it.
 

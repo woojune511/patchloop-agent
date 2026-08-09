@@ -12,9 +12,10 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-The suite, delivery and R2 cost/completion source are offline-qualified. The earlier D-132 activation is now
-consumed at its official-pricing action-started boundary and is not retried. D-135 offline-qualifies only a
-corrected procedural-terminal writer; an exact local-only terminalization approval is still required.
+The suite, delivery and R2 cost/completion source are offline-qualified. The earlier D-132 activation remains
+consumed at its official-pricing action-started boundary and is never retried. D-135 now seals that incident
+with a local procedural terminal. D-136 offline-qualifies a distinct fixed pricing helper and future evidence
+topology; it does not activate or perform pricing capture.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -38,9 +39,13 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
   response fields remain unknown/unretained. Completed/replayable canonical pricing evidence count is 0, its
   artifact is absent and replay bytes are 0.
 - D-134's ambiguous gate is preserved exactly but has no qualification or terminalization authority.
-- Corrected D-135 gate `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6`
-  binds source `ca50402aa8d3965ea384563262c713c6090d2ecf`. Focused tests passed 15/15 and the selected
-  set passed 85/85 with focused included. The procedural terminal is absent; current-turn external actions are 0.
+- D-135 procedural terminal commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786` preserves the consumed
+  incident without inventing canonical response evidence.
+- D-136 gate `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`
+  binds source `96916ac481ac8beced2db0be9022607e0705e018`. The new helper closes every returned
+  `Response` in `try/finally`; focused tests passed 29/29 and the selected relevant set passed 102/102 with
+  focused included. No D-136 receipt, attempt, marker, pricing evidence or terminal exists; external actions
+  are 0.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -48,8 +53,8 @@ Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
 ```powershell
 uv sync --extra dev
-uv run pytest -q tests/test_d135_d134_ambiguous_gate_correction_offline.py
-uv run python scripts/build_d135_d134_ambiguous_gate_correction_offline.py --validate-offline-gate-post-commit
+uv run pytest -q tests/test_d136_d135_fixed_pricing_successor_offline.py
+uv run python scripts/build_d136_d135_fixed_pricing_successor_offline.py --validate-gate-postcommit
 uv run pytest -q tests/test_documentation_structure.py
 git diff --check
 ```
@@ -60,9 +65,10 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 Use `uv run patchloop --help` to discover the CLI.
 
-CLI availability does not imply authority. A new exact D-135 gate/evidence approval may create only one local
-procedural terminal and terminal-only commit. It is not pricing evidence and grants no external, successor,
-hash/candidate, cost or A/C authority.
+CLI availability does not imply authority. A fresh exact D-136 activation must quote the gate tuple, source
+commit/tree and gate+docs evidence-commit tuple. It may use only the qualified
+receipt/attempt/marker/capture sequence; Docker and SDK preflight remain separate, and hash/candidate, cost
+and A/C authority remain closed.
 
 ## Documentation
 

@@ -99,9 +99,13 @@ application-level `client.send` Response return does not establish HTTP completi
 completed/replayable canonical pricing evidence count is 0, its artifact is absent and replay bytes are 0. No
 retry/backfill is allowed.
 
-D-134's preserved ambiguous gate is not authority. Corrected D-135 gate
-`d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` qualifies only a separately
-approved append-only procedural terminal, not pricing evidence, fixed successor, hash, cost or four-row work.
+D-134's preserved ambiguous gate is not authority. D-135 commit
+`98f4560e718145bc7465732c1a3d2f5a4ea8d786` now seals the corrected procedural terminal, which is incident
+preservation rather than canonical pricing evidence. D-136 gate
+`d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd` offline-qualifies only a
+distinct fixed pricing helper and future append-only activation topology. Its `try/finally` response-close
+behavior is mocked local evidence, not an official pricing capture. No D-136 activation/evidence artifact,
+execution hash, cost authority or four-row result exists.
 
 ## 7. Run-completion gate
 

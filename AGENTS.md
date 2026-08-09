@@ -17,11 +17,13 @@
   unknown/unretained이며 completed/replayable canonical pricing evidence count는 0, artifact는 없고 replay bytes는 0이다.
 - D-133 marker와 D-134 ambiguous gate는 append-only로 보존한다. Preservation commit
   `9dc450a747537634e89fe2ade824685f8b5a52d6`은 old gate에 qualification/terminalization authority를 주지 않는다.
-- 현재 corrected D-135 gate는
-  `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6`다. Procedural terminal은
-  없으며 별도 exact local-only terminalization 승인이 필요하다.
-- D-135 준비의 external action은 0이다. Official docs/network/pricing, Docker/SDK/credential,
-  provider/evaluator/agent, retrieval/injection, hash/candidate, cost와 A/C authority는 닫혀 있다.
+- D-135 procedural terminal은 commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786`에 append-only로
+  봉인됐다. 이는 consumed incident를 절차적으로 종결할 뿐 canonical pricing evidence가 아니다.
+- 현재 D-136 gate는 `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`다.
+  새 helper는 `Response` context-manager 의존을 제거하고 `try/finally`에서 명시적으로 닫으며, mocked
+  경로만 검증됐다. Activation receipt, attempt, action-started, pricing evidence와 terminal은 생성되지 않았다.
+- D-136 준비의 external action은 0이다. Fresh exact pricing activation이 별도로 필요하고 Docker/SDK
+  preflight도 별도 gate다. Provider/evaluator/agent, retrieval/injection, hash/candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 

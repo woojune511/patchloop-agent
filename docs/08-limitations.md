@@ -32,7 +32,7 @@ Historical milestone-by-milestone limitations are archived at
   noncooperative-swap or power-loss durability.
 - No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
-## D-132 through D-135 pricing boundary
+## D-132 through D-136 pricing boundary
 
 - D-132's activation and pricing attempt are consumed. Application-level unauthenticated `client.send` returned
   one `Response`; this does not prove how many HTTP requests occurred or that an exchange completed.
@@ -43,13 +43,17 @@ Historical milestone-by-milestone limitations are archived at
 - D-134 source passed its local tests, but the emitted gate carried an ambiguous numeric GET-count claim. The
   exact gate is preserved as historical evidence and is invalid and non-authoritative; its status and next-gate
   text cannot authorize the D-134 terminal.
-- D-135 source commit `ca50402aa8d3965ea384563262c713c6090d2ecf` and gate
-  `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` qualify only a corrected,
-  future local procedural-terminal writer. The D-135 terminal is absent and a fresh exact terminalization
-  approval is required.
-- D-135 focused 15/15 and selected 85/85 are local tests with the focused set included in the selected total.
-  They prove no external readiness. Current-turn official-docs/network, Docker, SDK/credential,
-  provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C activity is zero.
+- D-135 terminal-only commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786` procedurally seals the
+  incident. It does not reconstruct response fields, create canonical pricing evidence or authorize a retry.
+- D-136 source `96916ac481ac8beced2db0be9022607e0705e018` replaces context-manager reliance only in a new helper:
+  every returned `Response` is explicitly closed in `try/finally`. The historical D-127 helper and consumed
+  artifacts remain unchanged.
+- D-136 gate `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`
+  qualifies future receipt/attempt/marker/terminal contracts, but none of those artifacts exists. Its focused
+  29/29 and selected relevant 102/102 are local mocked tests with focused included, not external readiness.
+- Current-turn official-docs/network/pricing, Docker, SDK/credential, provider/evaluator/agent,
+  memory/retrieval, hash/candidate, cost and A/C activity is zero. Pricing activation and Docker/SDK preflight
+  require separate exact approvals.
 
 ## Isolation, identity and operations
 

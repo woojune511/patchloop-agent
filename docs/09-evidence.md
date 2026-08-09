@@ -3,7 +3,39 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-135 ambiguous-gate correction — terminalization approval required
+## D-136 fixed-pricing successor — fresh activation required
+
+- Gate `reports/live-pilot/artifacts/d136-d135-fixed-pricing-successor-offline-source-gate.json`:
+  ID/body `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`;
+  file `sha256:c9e00304383839c656b6a2753fefee459fb14934dec8dfabcf4f39f44a34a53b`,
+  23,767 bytes.
+- Source commit `96916ac481ac8beced2db0be9022607e0705e018`, tree
+  `7e0a07eed6e780265a5d73cab008a0fabe935fe1`, sole parent
+  `98f4560e718145bc7465732c1a3d2f5a4ea8d786`; status
+  `D136_D135_FIXED_PRICING_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED`.
+- The exact gate-add/10-active-doc evidence commit is the direct child of the source; the post-commit validator
+  reports its commit/tree/parent/blob tuple.
+
+The gate binds the D-135 terminal bytes/commit and predecessor-gate topology. The new helper uses explicit
+`try/finally` close semantics without importing the sealed D-127 helper or consumed D-132 runner. Focused tests
+passed 29/29; the selected relevant set passed 102/102 with focused included, so counts are not additive. No
+D-136 activation receipt, attempt, action-started marker, pricing evidence or terminal was created, and external
+actions are 0.
+
+## D-135 consumed-incident procedural terminal — sealed
+
+- Terminal `reports/live-pilot/artifacts/d135-d132-pricing-consumed-incident-procedural-terminal.json`:
+  ID/body `d135pricingincident_7684c346db32bac34404137a0839c852ce00209ded9d0f9aa444a0a73d519f75`;
+  file `sha256:ac0f8a6a8d3282f14d3d6b5ab8176e0fe4f64a8bb509e4cd1380ca6a76b2438a`,
+  22,084 bytes; blob `8efce4a2508cddd32b59d9be92f3eb65517b1552`.
+- Terminal-only commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786`, tree
+  `901c123f425733ee77e5c8db926ffa4f98edd431`, sole parent
+  `e0a26f0134b811fca2cd76d3d8a69ec2a484cabb`.
+
+The terminal preserves consumed/no-retry and unknown/unretained observations. It is not canonical pricing
+evidence and does not infer or backfill an HTTP exchange or response.
+
+## D-135 ambiguous-gate correction — historical source gate
 
 - Gate `reports/live-pilot/artifacts/d135-d134-ambiguous-gate-correction-offline-source-gate.json`:
   ID/body `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6`;
@@ -16,9 +48,9 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
 
 The gate exact-binds the D-132 pricing attempt/marker, D-134 source, preserved ambiguous gate and its
 preservation-only commit. It treats the D-134 recorded status and next-gate text as invalid and
-non-authoritative, omits the ambiguous numeric GET-count claim and qualifies only the distinct future D-135
+non-authoritative, omits the ambiguous numeric GET-count claim and qualified only the now-sealed D-135
 procedural-terminal writer. Focused tests passed 15/15; selected regression passed 85/85 with focused included,
-so counts are not additive. The D-135 terminal is absent and source/gate preparation made zero external calls.
+so counts are not additive. Source/gate preparation made zero external calls.
 
 ## D-134 ambiguous gate — preserved, invalid and non-authoritative
 
@@ -70,8 +102,9 @@ Receipt and intent are local-admission evidence, not reusable external activatio
 
 ## Next evidence boundary
 
-After the D-135 gate+10-doc evidence commit, obtain a fresh exact D-135-qualified local-only terminalization
-approval quoting the gate and evidence-commit tuple. It may create only the D-135 procedural terminal followed
-by its terminal-only commit. That terminal is incident preservation, not canonical pricing evidence. Pricing
-retry/repair, any fixed external successor, provider/evaluator/agent activity, memory/retrieval, hash/candidate,
-cost and A/C require later distinct source qualification and approvals.
+After the D-136 gate+10-doc evidence commit, obtain a fresh exact D-136 activation quoting the gate tuple,
+source commit/tree and evidence-commit tuple. It may create only the qualified
+receipt/attempt/marker/capture sequence. A post-marker failure consumes the activation and permits only
+marker-only preservation, never retry. A success terminal still grants no Docker/SDK preflight,
+provider/evaluator/agent activity, memory/retrieval, hash/candidate, cost or A/C authority; those require later
+distinct source qualification and approvals.
