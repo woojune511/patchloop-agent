@@ -19,8 +19,13 @@
   Receipt는 non-retroactive이며 consumed다. D-129를 retry, resume, repair하지 않는다.
 - Canonical pricing capture, Docker, image pull, SDK, provider/evaluator/agent, retrieval/injection,
   hash/candidate, cost와 A/C 실행은 모두 0이다. Underlying docs HTTP/redirect 수는 unknown이다.
-- 다음 작업은 exact D-129 chain을 봉인하는 D-130 offline successor다. 이후 admission은 receipt와
-  armed intent를 먼저 commit한 뒤 별도 activation을 받는 2-stage 절차여야 한다.
+- D-130 offline successor gate는 exact D-129 chain과 source commit
+  `e6acdc23050e93f5324827a2dac1ed519fe35406`을 봉인했다. 현재 status는
+  `D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`다.
+- 다음 작업은 exact D-130 local-admission approval이다. Stage 1은 receipt-only commit, durable
+  `ARMED_WAITING_EXACT_ACTIVATION` intent-only commit과 activation challenge만 만들 수 있고 external
+  action은 0이어야 한다. Stage 2는 그 tuple들을 인용하는 별도 exact activation이 필요하다.
+- D-130 receipt, intent, activation, external phase, hash/candidate, cost와 A/C authority는 아직 없다.
 - Moto/Babel의 A(`no_memory`)/C(`structured`) exact four-row suite와 D-110 bundle delivery, R2
   cost/completion source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.

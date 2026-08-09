@@ -102,6 +102,11 @@ attempt. Its non-retroactive receipt is consumed by a procedural blocked termina
 Docker, SDK and every runtime/cost call remained zero; transport count for the docs tool is unknown. The four
 rows and all execution, cost and memory authority remain unchanged.
 
+D-130 qualifies only the offline source and two-stage admission contract. Stage 1 may commit a receipt and
+durable `ARMED_WAITING_EXACT_ACTIVATION` intent, then render the exact challenge, but may make no external
+observation. A separate exact stage-2 activation is required before any environment preflight. No D-130
+receipt, intent, activation, hash/candidate, cost or four-row authority exists.
+
 ## 7. Run-completion gate
 
 The D-125-qualified completion source makes the four-row matrix analyzable only if every row:

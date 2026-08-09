@@ -132,6 +132,13 @@ open, but the machine receipt and phase attempt did not. The terminal deliberate
 records underlying HTTP count as unknown, and keeps canonical pricing/Docker/SDK/provider/runtime/cost counts
 zero. Its receipt is consumed and cannot be retried, resumed or repaired.
 
-D-130 must exact-bind this chain offline. Its admission must first commit a new receipt and durable armed intent
-with zero external calls; only a later exact activation may open an external phase. Desktop/daemon start,
-container work, other images, hash/candidate/live/memory/cost authority remain false.
+D-130 now exact-binds that chain and source commit `e6acdc23050e93f5324827a2dac1ed519fe35406`
+in a canonical new-only offline gate. Its status is
+`D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`.
+The gate is not a receipt, intent, activation or candidate and grants no external authority.
+
+The qualified stage-1 contract may only create a new exact receipt, commit it alone, create a durable
+`ARMED_WAITING_EXACT_ACTIVATION` intent, commit it alone and render an activation challenge. Official-docs,
+network, pricing, Docker, SDK and credential observations must stay zero. Stage 2 requires a separate exact
+user activation quoting the gate, receipt, intent and both commit tuples. Desktop/daemon start, container work,
+other images, hash/candidate/live/memory/cost authority remain false.

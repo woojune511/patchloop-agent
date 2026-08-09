@@ -94,6 +94,20 @@ These commands are read-only validation. Do not call `--create-receipt` or `--re
 the exact receipt is consumed. The terminal records one pre-receipt docs tool open, unknown transport count and
 zero canonical pricing/Docker/SDK/runtime action. Focused 12/12 and selected 79/79 are non-additive.
 
+## Validate current D-130 offline successor gate
+
+```powershell
+uv run pytest -q tests/test_d130_d129_sequence_block_successor_offline.py
+uv run python scripts/build_d130_d129_sequence_block_successor_offline.py --validate
+```
+
+This is read-only offline validation of the exact D-129 chain, D-130 source identity and two-stage contract.
+It must report status
+`D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`,
+13/13 focused tests, and zero receipt/intent/activation/external authority. Do not run a stage-1 admission or
+external action from these commands. The selected D-127–D-130/docs bundle passed 92/92; overlapping focused
+nodes are not additive.
+
 ## Validate current memory contracts
 
 ```powershell
@@ -143,9 +157,11 @@ There is no supported live A/C command. Although the exact suite is an `Experime
 command must appear only after:
 
 1. preserve the consumed D-128 and D-129 receipts/terminals without retry;
-2. prepare and commit a D-130 offline successor binding the exact D-129 incident chain;
-3. obtain admission approval for receipt-only plus durable armed-intent-only commits, with external counts zero;
-4. obtain separate exact activation quoting those tuples before daemon/images/pricing/SDK observation;
+2. preserve the materialized D-130 offline gate binding the exact D-129 incident chain;
+3. obtain exact local-admission approval for receipt-only plus durable
+   `ARMED_WAITING_EXACT_ACTIVATION` intent-only commits and challenge rendering, with external counts zero;
+4. obtain separate exact activation quoting the gate, receipt, intent and both commit tuples before
+   daemon/images/pricing/SDK observation;
 5. after a ready successor, obtain separate hash/candidate and exact live approvals.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that

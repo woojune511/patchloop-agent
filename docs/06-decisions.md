@@ -72,7 +72,7 @@ delivery with retrieval quality.
 - Repeating every milestone in every topic document is discontinued.
 
 Earlier retained decisions remain discoverable in the archived ledger and `docs/09-evidence.md`; they do not
-replace the current D-129 sequence terminal or reopen consumed D-128/D-129 receipts.
+replace the current D-130 offline gate or reopen consumed D-128/D-129 receipts.
 
 ## Superseded sequencing
 
@@ -97,3 +97,11 @@ These questions do not authorize implementation beyond `docs/05-implementation-p
   No attempt was backfilled; Docker, canonical pricing, SDK and runtime/cost paths stayed zero.
 - The consumed receipt cannot be retried. D-130 must be offline and use receipt+armed-intent admission before a
   later exact external activation.
+
+### 2026-08-09 — D-130 separates local admission from external activation
+
+- The canonical D-130 gate exact-binds the D-129 E/S/R/T topology and incident without an external call.
+- Stage 1 is local-only: exact receipt-only commit, durable `ARMED_WAITING_EXACT_ACTIVATION` intent-only commit
+  and activation-challenge rendering. Official-docs/network, Docker, SDK and credential observations stay zero.
+- Stage 2 requires a separate exact user activation quoting the gate, receipt, intent and both commit tuples.
+  The source gate itself creates none of them and grants no hash/candidate, cost or A/C authority.

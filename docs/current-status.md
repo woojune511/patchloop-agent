@@ -2,10 +2,23 @@
 
 ## Current checkpoint
 
-D-129 external work is terminally blocked by sequence, not by Docker readiness. The original offline gate is
-historical and unchanged: `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`,
-body `sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`, file
-`sha256:fd57c187d1f260952b581e60f7d0ff98243f3b4ef172c9a6d6669b3e84968512`, 18,678 bytes.
+D-130 is the current offline-source-qualified successor gate:
+
+- ID `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
+  body `sha256:443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
+  file `sha256:6d580dd979dc77659efed07291264c4ea2a16dca02d9070a32928e9fbefff468`,
+  17,416 bytes.
+- Source commit `e6acdc23050e93f5324827a2dac1ed519fe35406`; status
+  `D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`.
+
+It exact-binds the D-129 gate/receipt/terminal and E/S/R/T Git topology. It performed no external lookup and
+qualifies only a two-stage authority contract. No D-130 approval, receipt, armed intent, activation or external
+attempt exists.
+
+## Historical D-129 terminal
+
+D-129 external work is terminally blocked by sequence, not by Docker readiness. Its original offline gate is
+historical and unchanged: `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`.
 
 The approved external phase did not start. One agent-visible open of the public
 `https://developers.openai.com/api/docs/pricing` page occurred after user approval but before the required
@@ -48,7 +61,8 @@ efficacy evidence, and there is still no supported live command.
 ## Closed authority
 
 D-126 is sealed blocked; D-127 and D-128 are historical terminal-blocked predecessors. D-129 preserves a
-procedural incident only. Provider/evaluator/agent execution, Docker/container workload, runtime memory,
+procedural incident only. D-130 is offline source evidence, not approval or activation. Official-docs/network,
+pricing capture, Docker/SDK/credential observation, provider/evaluator/agent execution, runtime memory,
 retrieval, execution hash/candidate, cost and A/C execution remain unauthorized.
 
 The deferred D-121 candidate
@@ -57,8 +71,10 @@ was never authorized and is not a fixed-bundle prerequisite.
 
 ## Next gate
 
-Prepare a separate D-130 offline successor that exact-binds the D-129 gate, receipt, terminal and Git
-topology. Its next admission must be two-stage: first create and commit a new receipt plus durable armed intent
-with every external count zero; only a later exact activation quoting those tuples may authorize an external
-phase. Desktop/daemon start, containers, other images, provider/evaluator/agent, memory, hash/candidate, cost
-and A/C remain closed.
+Request exact D-130 local-admission approval quoting the gate tuple, 17,416 bytes and the local evidence commit
+that tracks this gate.
+Stage 1 may only create and commit a receipt, create and commit a durable
+`ARMED_WAITING_EXACT_ACTIVATION` intent, and render an activation challenge. Official-docs search/open,
+network/pricing, Docker, SDK and credential observation must remain zero. Stage 2 requires a new exact user
+activation quoting the gate, receipt, intent and both commit tuples. Neither stage is currently approved;
+hash/candidate, cost and A/C remain later gates.

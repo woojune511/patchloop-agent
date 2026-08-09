@@ -10,9 +10,11 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Stop at the D-129 procedural sequence-block terminal. Its receipt was created non-retroactively and consumed;
-do not retry or repair it. Prepare D-130 offline, then use a two-stage receipt+armed-intent admission followed
-by separate exact activation. The agent must not start Desktop or the daemon; all later gates remain closed.
+D-130 offline source qualification is complete. Preserve the D-129 procedural terminal and request only the
+exact D-130 local-admission approval. Stage 1 may create receipt-only and durable
+`ARMED_WAITING_EXACT_ACTIVATION` intent-only commits and render the challenge with all external actions zero.
+Stage 2 requires a separate exact activation. The agent must not start Desktop or the daemon; all later gates
+remain closed.
 
 ## Completed foundation
 
@@ -23,6 +25,8 @@ by separate exact activation. The agent must not start Desktop or the daemon; al
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
 - D-122 through D-128 are historical predecessors; D-127/D-128 are terminal blocked.
 - D-129 offline source is historical; its sequence incident source and receipt-only commits are preserved.
+- D-130 source commit `e6acdc23050e93f5324827a2dac1ed519fe35406` and its canonical offline gate
+  exact-bind the D-129 gate, receipt, terminal and Git topology.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -40,15 +44,17 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-129 procedural terminal blocked; D-130 offline successor required.
+Status: D-130 offline-source-qualified; exact local-admission approval required.
 
 D-126 is sealed blocked, D-127 remains unchanged, and D-128's consumed receipt terminally records three
 read-only rc-1 Docker calls with blocker `already-running-docker-desktop-linux-daemon-unavailable`.
 
 D-129 recorded one approved public docs tool open before its machine receipt/attempt sequence. It sealed a
 non-retroactive receipt and procedural blocked terminal; no canonical pricing, Docker, SDK or runtime action
-followed. Next create a D-130 offline gate. Its first approval may create/commit only receipt and armed intent;
-a later exact activation is required before daemon/image observation or canonical pricing capture.
+followed. D-130 gate `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`
+qualifies its exact chain offline. Its first approval may create/commit only the receipt and armed intent and
+render a challenge, with official-docs/network/Docker/SDK/credential actions zero. A later exact activation
+quoting all tuples is required before daemon/image observation or canonical pricing capture.
 
 ## Work item 7 — execution hash and candidate
 

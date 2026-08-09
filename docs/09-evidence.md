@@ -3,6 +3,25 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## D-130 offline successor — local admission approval required
+
+- Gate `reports/live-pilot/artifacts/d130-d129-external-sequence-block-successor-offline-source-gate.json`:
+  ID `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
+  body `sha256:443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
+  file `sha256:6d580dd979dc77659efed07291264c4ea2a16dca02d9070a32928e9fbefff468`,
+  17,416 bytes.
+- Source commit `e6acdc23050e93f5324827a2dac1ed519fe35406`; status
+  `D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`.
+
+The canonical new-only gate exact-binds the D-129 E/S/R/T Git topology and artifact tuples while preserving
+one official-docs web-tool open, unknown underlying HTTP/redirect count, zero canonical capture and no
+retroactive attempt. D-130 itself made no external lookup. Focused tests passed 13/13 and the selected
+D-127–D-130/docs bundle passed 92/92; overlapping selections are not additive.
+
+The gate is not a receipt, armed intent, activation or candidate. Stage 1 may only create and separately commit
+the exact receipt and durable `ARMED_WAITING_EXACT_ACTIVATION` intent, then render a challenge, with every
+external count zero. Stage 2 requires a new exact user activation quoting those tuples.
+
 ## D-129 external sequence — terminal blocked
 
 - Offline gate `reports/live-pilot/artifacts/d129-d128-terminal-successor-offline-source-gate.json`:
@@ -41,6 +60,9 @@ focused and selected counts are not additive where node sets overlap.
 
 ## Next evidence boundary
 
-D-130 must exact-bind the D-129 gate, receipt, terminal and commit topology without external calls. Its first
-admission may create only a receipt-only commit and durable armed-intent-only commit. A separate exact activation
-must quote those tuples before any external observation; live/hash/candidate/cost/A-C authority stays closed.
+Obtain exact D-130 local-admission approval quoting its gate tuple, 17,416 bytes and the local evidence commit
+that tracks this gate. It may create only a receipt-only commit, durable armed-intent-only commit and activation
+challenge. No official-docs/network,
+Docker, SDK or credential observation belongs to stage 1. A separate exact activation must quote the gate,
+receipt, intent and both commits before any external observation; live/hash/candidate/cost/A-C authority stays
+closed.

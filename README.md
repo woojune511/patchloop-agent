@@ -13,8 +13,9 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
 The exact suite and plan live under `experiments/`. Delivery, qualification and R2 cost/completion source are
-offline-qualified. D-129 is now terminal-blocked: a public official-docs tool open occurred after approval but
-before the required machine receipt and durable attempt. The receipt is non-retroactive and consumed.
+offline-qualified. D-129 is terminal-blocked after one approved official-docs tool open preceded its machine
+receipt and durable attempt. D-130 now exact-binds that incident offline and requires local-admission approval;
+it grants no external authority.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -37,8 +38,9 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-128 made three read-only calls, all return code 1; every mutation and later phase remained zero.
 - D-129 made one agent-visible official-docs open before receipt; underlying HTTP count is unknown. Canonical
   pricing capture, Docker, SDK, provider/evaluator/agent and all execution/cost paths stayed zero.
-- The D-129 sequence-block focused tests passed 12/12; the selected regression bundle passed 79/79 and includes
-  those tests only where node selections overlap.
+- D-130 gate `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`
+  qualifies only the offline two-stage admission contract. Focused tests passed 13/13 and the selected
+  D-127–D-130/docs regression bundle passed 92/92; overlapping selections are not additive.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -49,6 +51,8 @@ uv sync --extra dev
 uv run pytest -q tests/test_d129_d128_terminal_successor_offline.py
 uv run pytest -q tests/test_d129_external_sequence_block.py
 uv run python scripts/build_d129_external_sequence_block.py --validate-terminal
+uv run pytest -q tests/test_d130_d129_sequence_block_successor_offline.py
+uv run python scripts/build_d130_d129_sequence_block_successor_offline.py --validate
 uv run pytest -q tests/test_documentation_structure.py
 git diff --check
 ```
@@ -60,8 +64,10 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 Use `uv run patchloop --help` to discover the CLI.
 
 CLI availability does not imply authority. D-129 has a consumed receipt and procedural terminal but no external
-attempt, canonical pricing/preflight, execution hash/candidate, reservation, cost or A/C result. D-130 must be
-offline-only and its later admission must arm receipt+intent before any separate external activation.
+attempt or canonical pricing/preflight. D-130 is offline-source-qualified only: stage 1 may create and commit
+the exact receipt and durable `ARMED_WAITING_EXACT_ACTIVATION` intent, then render a challenge, while all
+external actions stay zero. A separate exact stage-2 activation is required; hash/candidate, cost and A/C remain
+closed.
 
 ## Documentation
 
