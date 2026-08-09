@@ -1,0 +1,114 @@
+{
+  "schema_version": "d136-fixed-pricing-successor-terminal-v1",
+  "artifact_id": "d136pricing_dbaa24227565316ef404fb1fc2967e2eb45600a92d7365b8fbbfd7d264881362",
+  "semantic_body_hash": "sha256:dbaa24227565316ef404fb1fc2967e2eb45600a92d7365b8fbbfd7d264881362",
+  "semantic_body": {
+    "milestone": "D-136",
+    "evidence_kind": "replayable-official-pricing-evidence-terminal",
+    "recorded_at": "2026-08-09T19:09:19.378371Z",
+    "status": "D136_FIXED_PRICING_SUCCESSOR_CAPTURED_TRANSITION_COMMIT_REQUIRED",
+    "action_started_binding": {
+      "path": "reports/live-pilot/artifacts/d136-fixed-pricing-capture-action-started.json",
+      "artifact_id": "d136pricingstarted_6f4847c856150b0d6bef6108d858ff332d3a1b2c95b0c9ea6bec80d024729fc1",
+      "semantic_body_hash": "sha256:6f4847c856150b0d6bef6108d858ff332d3a1b2c95b0c9ea6bec80d024729fc1",
+      "file_sha256": "sha256:4c11a5e087759ecb2a57f5a64271000214469a35f952e8789cc68b297173cd0a",
+      "file_bytes": 2387,
+      "status": "D136_FIXED_PRICING_CAPTURE_ACTION_STARTED_RECORDED_TRANSITION_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-09T19:09:09.470219Z"
+    },
+    "parent_commit_binding": {
+      "commit": "5f419828c358ee9c5f68cdacf38b588705e71e2e",
+      "tree": "879c38f0d1575adbf03867d172c65d5ab20bc5af",
+      "parents": [
+        "1f9c62ac9309d087d1ef32a237b86ea11bf9d51e"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d136-fixed-pricing-capture-attempt-intent.json",
+      "artifact_blob_oid": "f58c7f1d3f125da8bb9d1b88be0a827b291597e2",
+      "artifact_file_sha256": "sha256:d7e883c3efa36274266ebcec5cce7615a58bf0f9d33868752bb92a778b2c12f9",
+      "artifact_file_bytes": 2570,
+      "single_artifact_add_commit": true
+    },
+    "observation": {
+      "schema_version": "patchloop.d136.official-pricing-decoded-entity.v1",
+      "observed_at": "2026-08-09T19:09:13.169556Z",
+      "source_url": "https://developers.openai.com/api/docs/models/gpt-5.4-mini.md",
+      "final_url": "https://developers.openai.com/api/docs/models/gpt-5.4-mini.md",
+      "official_host": "developers.openai.com",
+      "http_status": 200,
+      "content_type": "text/markdown; charset=utf-8",
+      "content_encoding": null,
+      "etag": null,
+      "redirect_count": 0,
+      "public_get_request_count": 1,
+      "max_decoded_entity_bytes": 128000,
+      "decoded_entity_base64": "IyBHUFQtNS40IG1pbmkKCj4gRm9yIHRoZSBjb21wbGV0ZSBkb2N1bWVudGF0aW9uIGluZGV4LCBzZWUgW2xsbXMudHh0XSgvbGxtcy50eHQpLiBNYXJrZG93biB2ZXJzaW9ucyBvZiBkb2N1bWVudGF0aW9uIHBhZ2VzIGFyZSBhdmFpbGFibGUgYnkgYXBwZW5kaW5nIGAubWRgIHRvIHRoZSBwYWdlIFVSTC4KCj4gT3VyIHN0cm9uZ2VzdCBtaW5pIG1vZGVsIHlldCBmb3IgY29kaW5nLCBjb21wdXRlciB1c2UsIGFuZCBzdWJhZ2VudHMKCk1vZGVsIElEOiBgZ3B0LTUuNC1taW5pYAoKR1BULTUuNCBtaW5pIGJyaW5ncyB0aGUgc3RyZW5ndGhzIG9mIEdQVC01LjQgdG8gYSBmYXN0ZXIsIG1vcmUgZWZmaWNpZW50Cm1vZGVsIGRlc2lnbmVkIGZvciBoaWdoLXZvbHVtZSB3b3JrbG9hZHMuIExlYXJuIG1vcmUgaW4gb3VyCltNb2RlbCBndWlkYW5jZV0oL2FwaS9kb2NzL2d1aWRlcy9sYXRlc3QtbW9kZWwpIHBhZ2UuIFJlYXNvbmluZy5lZmZvcnQgc3VwcG9ydHM6IG5vbmUgKGRlZmF1bHQpLCBsb3csIG1lZGl1bSwgaGlnaCBhbmQgeGhpZ2guCgojIyBNb2RlbCBkZXRhaWxzCgotIERlZmF1bHQgc25hcHNob3Q6IGBncHQtNS40LW1pbmktMjAyNi0wMy0xN2AKLSBJbnB1dCBtb2RhbGl0aWVzOiB0ZXh0LCBpbWFnZQotIE91dHB1dCBtb2RhbGl0aWVzOiB0ZXh0Ci0gNDAwLDAwMCBjb250ZXh0IHdpbmRvdwotIE1heGltdW0gaW5wdXQgdG9rZW5zOiAyNzIsMDAwCi0gMTI4LDAwMCBtYXggb3V0cHV0IHRva2VucwotIEF1ZyAzMSwgMjAyNSBrbm93bGVkZ2UgY3V0b2ZmCi0gUmVhc29uaW5nIHRva2VuIHN1cHBvcnQKCiMjIFByaWNpbmcKClByaWNpbmcgaXMgYmFzZWQgb24gdGhlIG51bWJlciBvZiB0b2tlbnMgdXNlZCwgb3Igb3RoZXIgbWV0cmljcyBiYXNlZCBvbiB0aGUgbW9kZWwgdHlwZS4gRm9yIHRvb2wtc3BlY2lmaWMgbW9kZWxzLCBsaWtlIHNlYXJjaCBhbmQgY29tcHV0ZXIgdXNlLCB0aGVyZeKAmXMgYSBmZWUgcGVyIHRvb2wgY2FsbC4gU2VlIGRldGFpbHMgaW4gdGhlIFtwcmljaW5nIHBhZ2VdKC9hcGkvZG9jcy9wcmljaW5nKS4KCiMjIyBUZXh0IHRva2VucwoKfCBNZXRyaWMgfCBQcmljZSB8IFVuaXQgfAp8IC0tLSB8IC0tLTogfCAtLS0gfAp8IElucHV0IHwgJDAuNzUgfCAxTSB0b2tlbnMgfAp8IENhY2hlZCBpbnB1dCB8ICQwLjA3NSB8IDFNIHRva2VucyB8CnwgT3V0cHV0IHwgJDQuNSB8IDFNIHRva2VucyB8CgotIFJlZ2lvbmFsIHByb2Nlc3NpbmcgKGRhdGEgcmVzaWRlbmN5KSBlbmRwb2ludHMgYXJlIGNoYXJnZWQgYSAxMCUgdXBsaWZ0IGZvciBHUFQtNS40IG1pbmkuCgojIyBFbmRwb2ludHMKCnwgRW5kcG9pbnQgfCBSb3V0ZSB8IFN1cHBvcnQgfAp8IC0tLSB8IC0tLSB8IC0tLSB8CnwgQ2hhdCBDb21wbGV0aW9ucyB8IGB2MS9jaGF0L2NvbXBsZXRpb25zYCB8IFN1cHBvcnRlZCB8CnwgUmVzcG9uc2VzIHwgYHYxL3Jlc3BvbnNlc2AgfCBTdXBwb3J0ZWQgfAp8IFJlYWx0aW1lIHwgYHYxL3JlYWx0aW1lYCB8IE5vdCBzdXBwb3J0ZWQgfAp8IFJlYWx0aW1lIHRyYW5zbGF0aW9uIHwgYHYxL3JlYWx0aW1lL3RyYW5zbGF0aW9uc2AgfCBOb3Qgc3VwcG9ydGVkIHwKfCBSZWFsdGltZSB0cmFuc2NyaXB0aW9uIHwgYHYxL3JlYWx0aW1lL3RyYW5zY3JpcHRpb25fc2Vzc2lvbnNgIHwgTm90IHN1cHBvcnRlZCB8CnwgQXNzaXN0YW50cyB8IGB2MS9hc3Npc3RhbnRzYCB8IE5vdCBzdXBwb3J0ZWQgfAp8IEJhdGNoIHwgYHYxL2JhdGNoYCB8IFN1cHBvcnRlZCB8CnwgRmluZS10dW5pbmcgfCBgdjEvZmluZS10dW5pbmdgIHwgTm90IHN1cHBvcnRlZCB8CnwgRW1iZWRkaW5ncyB8IGB2MS9lbWJlZGRpbmdzYCB8IE5vdCBzdXBwb3J0ZWQgfAp8IEltYWdlIGdlbmVyYXRpb24gfCBgdjEvaW1hZ2VzL2dlbmVyYXRpb25zYCB8IE5vdCBzdXBwb3J0ZWQgfAp8IFZpZGVvcyB8IGB2MS92aWRlb3NgIHwgTm90IHN1cHBvcnRlZCB8CnwgSW1hZ2UgZWRpdCB8IGB2MS9pbWFnZXMvZWRpdHNgIHwgTm90IHN1cHBvcnRlZCB8CnwgU3BlZWNoIGdlbmVyYXRpb24gfCBgdjEvYXVkaW8vc3BlZWNoYCB8IE5vdCBzdXBwb3J0ZWQgfAp8IFRyYW5zY3JpcHRpb24gfCBgdjEvYXVkaW8vdHJhbnNjcmlwdGlvbnNgIHwgTm90IHN1cHBvcnRlZCB8CnwgVHJhbnNsYXRpb24gfCBgdjEvYXVkaW8vdHJhbnNsYXRpb25zYCB8IE5vdCBzdXBwb3J0ZWQgfAp8IE1vZGVyYXRpb24gfCBgdjEvbW9kZXJhdGlvbnNgIHwgTm90IHN1cHBvcnRlZCB8CnwgQ29tcGxldGlvbnMgKGxlZ2FjeSkgfCBgdjEvY29tcGxldGlvbnNgIHwgTm90IHN1cHBvcnRlZCB8CgojIyBTdXBwb3J0ZWQgZmVhdHVyZXMKCi0gc3RyZWFtaW5nCi0gc3RydWN0dXJlZF9vdXRwdXRzCi0gZnVuY3Rpb25fY2FsbGluZwotIGZpbGVfc2VhcmNoCi0gZmlsZV91cGxvYWRzCi0gaW1hZ2VfaW5wdXQKLSB3ZWJfc2VhcmNoCi0gcHJvbXB0X2NhY2hpbmcKCiMjIFN1cHBvcnRlZCB0b29scwoKVG9vbHMgc3VwcG9ydGVkIGJ5IHRoaXMgbW9kZWwgd2hlbiB1c2luZyB0aGUgUmVzcG9uc2VzIEFQSS4KCi0gZnVuY3Rpb25fY2FsbGluZwotIHdlYl9zZWFyY2gKLSBmaWxlX3NlYXJjaAotIHRvb2xfc2VhcmNoCi0gaW1hZ2VfZ2VuZXJhdGlvbgotIGNvZGVfaW50ZXJwcmV0ZXIKLSBob3N0ZWRfc2hlbGwKLSBhcHBseV9wYXRjaAotIHNraWxscwotIGNvbXB1dGVyX3VzZQotIG1jcAoKIyMgUXVpY2sgY29tcGFyaXNvbgoKfCBNb2RlbCB8IElucHV0IHwgQ2FjaGVkIGlucHV0IHwgT3V0cHV0IHwKfCAtLS0gfCAtLS06IHwgLS0tOiB8IC0tLTogfAp8IEdQVC01LjQgbWluaSB8ICQwLjc1IHwgJDAuMDc1IHwgJDQuNSB8CnwgR1BULTUuNCB8ICQyLjUgfCAkMC4yNSB8ICQxNSB8CnwgR1BULTUuNCBuYW5vIHwgJDAuMiB8ICQwLjAyIHwgJDEuMjUgfAoKIyMgU25hcHNob3RzCgpTbmFwc2hvdHMgbGV0IHlvdSBsb2NrIGluIGEgc3BlY2lmaWMgdmVyc2lvbiBvZiB0aGUgbW9kZWwgc28gdGhhdCBwZXJmb3JtYW5jZSBhbmQgYmVoYXZpb3IgcmVtYWluIGNvbnNpc3RlbnQuIEJlbG93IGlzIGEgbGlzdCBvZiBhbGwgYXZhaWxhYmxlIHNuYXBzaG90cyBhbmQgYWxpYXNlcyBmb3IgR1BULTUuNCBtaW5pLgoKLSBgZ3B0LTUuNC1taW5pLTIwMjYtMDMtMTdgCgojIyBSYXRlIGxpbWl0cwoKUmF0ZSBsaW1pdHMgZW5zdXJlIGZhaXIgYW5kIHJlbGlhYmxlIGFjY2VzcyB0byB0aGUgQVBJIGJ5IHBsYWNpbmcgc3BlY2lmaWMgY2FwcyBvbiByZXF1ZXN0cywgdG9rZW5zLCBhdWRpbyBkdXJhdGlvbiwgb3Igb3RoZXIgdXNhZ2Ugd2l0aGluIGEgZ2l2ZW4gdGltZSBwZXJpb2QuIFlvdXIgdXNhZ2UgdGllciBkZXRlcm1pbmVzIGhvdyBoaWdoIHRoZXNlIGxpbWl0cyBhcmUgc2V0IGFuZCBhdXRvbWF0aWNhbGx5IGluY3JlYXNlcyBhcyB5b3Ugc2VuZCBtb3JlIHJlcXVlc3RzIGFuZCBzcGVuZCBtb3JlIG9uIHRoZSBBUEkuCgojIyMgZGVmYXVsdAoKfCBUaWVyIHwgUlBNIHwgVFBNIHwgQmF0Y2ggcXVldWUgbGltaXQgfAp8IC0tLSB8IC0tLTogfCAtLS06IHwgLS0tOiB8CnwgVGllciAxIHwgNTAwIHwgNTAwLDAwMCB8IDUsMDAwLDAwMCB8CnwgVGllciAyIHwgNSwwMDAgfCAyLDAwMCwwMDAgfCAyMCwwMDAsMDAwIHwKfCBUaWVyIDMgfCA1LDAwMCB8IDQsMDAwLDAwMCB8IDQwLDAwMCwwMDAgfAp8IFRpZXIgNCB8IDEwLDAwMCB8IDEwLDAwMCwwMDAgfCAxLDAwMCwwMDAsMDAwIHwKfCBUaWVyIDUgfCAzMCwwMDAgfCAxODAsMDAwLDAwMCB8IDE1LDAwMCwwMDAsMDAwIHwK",
+      "decoded_entity_bytes": 3735,
+      "decoded_entity_sha256": "sha256:2b4ec047adff27f002a61fbf6323b98033501b68f81862ec0671579461e1f9c5",
+      "wire_bytes_retained": false,
+      "origin_signature": false,
+      "request_auth_or_cookie_sent": false,
+      "proxy_use_disabled": true,
+      "manual_redirects": true,
+      "required_evidence_lines": [
+        "Default snapshot: `gpt-5.4-mini-2026-03-17`",
+        "| Input | $0.75 | 1M tokens |",
+        "| Cached input | $0.075 | 1M tokens |",
+        "| Output | $4.5 | 1M tokens |",
+        "| Responses | `v1/responses` | Supported |",
+        "| GPT-5.4 mini | $0.75 | $0.075 | $4.5 |"
+      ],
+      "required_evidence_sha256": "sha256:54673cc95e5edd3df56d5c9361a255ce290c29ef95717cd96599d17e44b242e0",
+      "facts": {
+        "model_label": "GPT-5.4 mini",
+        "dated_model_id": "gpt-5.4-mini-2026-03-17",
+        "service_tier": "default-standard",
+        "unit": "usd-per-1m-text-tokens",
+        "input_usd": "0.75",
+        "cached_input_usd": "0.075",
+        "cache_write_input_usd": null,
+        "output_usd": "4.5",
+        "responses_endpoint_supported": true
+      },
+      "facts_sha256": "sha256:9ca771becaaf7b424551c115b00729cc0663b2d936a74731829a245cb8803abe",
+      "planning_math": {
+        "max_total_tokens": 3000000,
+        "max_output_tokens": 25000,
+        "conservative_worst_rate_usd_per_million": "4.5",
+        "per_row_reserve_usd": "13.6125",
+        "scheduled_rows": 4,
+        "full_schedule_reserve_usd": "54.45",
+        "hard_cap_usd": "55.00",
+        "per_row_reserve_nanos": 13612500000,
+        "full_schedule_reserve_nanos": 54450000000,
+        "hard_cap_nanos": 55000000000
+      },
+      "planning_math_sha256": "sha256:7bdd819f8a07aaa53d77c9ff6ba36b6a4d76b3aa933e129fc700cdcc20809ef4"
+    },
+    "activity_accounting": {
+      "pricing_helper_invocation_count": 1,
+      "official_public_get_send_count": 1,
+      "maximum_authorized_public_get_send_count": 4,
+      "docker_cli_call_count": 0,
+      "sdk_credential_dotenv_environment_value_or_endpoint_observation_count": 0,
+      "provider_evaluator_agent_call_count": 0
+    },
+    "evidence_boundary": {
+      "decoded_entity_is_bounded_and_replayable": true,
+      "wire_bytes_retained": false,
+      "origin_signature_present": false,
+      "d132_evidence_was_not_repaired_or_backfilled": true,
+      "d136_evidence_is_a_distinct_successor": true
+    },
+    "authority": {
+      "docker_or_sdk_no_call_preflight_authorized": false,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    },
+    "next_gate": {
+      "status": "D137_NO_CALL_PREFLIGHT_SUCCESSOR_OFFLINE_SOURCE_APPROVAL_REQUIRED",
+      "fresh_separate_approval_required": true,
+      "current_activation_authorizes_next_gate": false
+    }
+  }
+}

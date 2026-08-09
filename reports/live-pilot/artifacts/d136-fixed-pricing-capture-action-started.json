@@ -1,0 +1,48 @@
+{
+  "schema_version": "d136-fixed-pricing-capture-action-started-v1",
+  "artifact_id": "d136pricingstarted_6f4847c856150b0d6bef6108d858ff332d3a1b2c95b0c9ea6bec80d024729fc1",
+  "semantic_body_hash": "sha256:6f4847c856150b0d6bef6108d858ff332d3a1b2c95b0c9ea6bec80d024729fc1",
+  "semantic_body": {
+    "milestone": "D-136",
+    "evidence_kind": "fixed-pricing-capture-action-started",
+    "recorded_at": "2026-08-09T19:09:09.470219Z",
+    "status": "D136_FIXED_PRICING_CAPTURE_ACTION_STARTED_RECORDED_TRANSITION_COMMIT_REQUIRED",
+    "pricing_attempt_binding": {
+      "path": "reports/live-pilot/artifacts/d136-fixed-pricing-capture-attempt-intent.json",
+      "artifact_id": "d136pricingattempt_3b5d5e23666ea56bfb2fbdeeede3bf845a73b3b2dc12668e12c9ed1de2e34b7e",
+      "semantic_body_hash": "sha256:3b5d5e23666ea56bfb2fbdeeede3bf845a73b3b2dc12668e12c9ed1de2e34b7e",
+      "file_sha256": "sha256:d7e883c3efa36274266ebcec5cce7615a58bf0f9d33868752bb92a778b2c12f9",
+      "file_bytes": 2570,
+      "status": "D136_FIXED_PRICING_CAPTURE_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-09T19:05:50.149917Z"
+    },
+    "parent_commit_binding": {
+      "commit": "5f419828c358ee9c5f68cdacf38b588705e71e2e",
+      "tree": "879c38f0d1575adbf03867d172c65d5ab20bc5af",
+      "parents": [
+        "1f9c62ac9309d087d1ef32a237b86ea11bf9d51e"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d136-fixed-pricing-capture-attempt-intent.json",
+      "artifact_blob_oid": "f58c7f1d3f125da8bb9d1b88be0a827b291597e2",
+      "artifact_file_sha256": "sha256:d7e883c3efa36274266ebcec5cce7615a58bf0f9d33868752bb92a778b2c12f9",
+      "artifact_file_bytes": 2570,
+      "single_artifact_add_commit": true
+    },
+    "capture_contract": {
+      "marker_is_durable_before_helper_dispatch": true,
+      "helper_invocation_limit": 1,
+      "transport_retry_count": 0,
+      "post_marker_exception_consumes_attempt": true,
+      "marker_only_preservation_commit_is_pre_authorized": true
+    },
+    "authority": {
+      "pricing_helper_invocation_count_at_marker_write": 0,
+      "official_public_get_send_count_at_marker_write": 0,
+      "pricing_terminal_created_at_marker_write": false,
+      "docker_sdk_credential_provider_or_agent_call_count": 0,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}
