@@ -33,23 +33,11 @@ delivery with retrieval quality.
 - No statistical, causal, held-out, cross-repository, per-rule or negative-transfer-rate claim is allowed.
 - A missing/confounded row makes the entire matrix inconclusive; no row-only replacement.
 
-### 2026-08-08 — D-122 stops before execution authorization
+### Historical execution gates remain closed
 
-- The exact four-row suite and A/C trace qualifier are sealed as offline source evidence.
-- The `$54.45` worst-case reserve and proposed `$55` cap are planning values only.
-- A live candidate waits for durable full-schedule reservation, a four-row completion gate, clean committed
-  source, fresh pricing and a separately authorized no-call environment preflight.
-
-### 2026-08-09 — D-125 source and D-126 no-call preflight remain non-executable
-
-- D-124/D-125 are historical local/mock; D-126 sealed observation only and remained blocked.
-- Hash/candidate creation and later `$55` live approval remain separate gates.
-
-### 2026-08-09 — D-127 through D-129 remain terminal history
-
-- D-127/D-128 consumed terminals record six then three read-only Docker failures; later self-attested daemon
-  readiness does not reopen them. D-129 records only the sequence incident below. None grants current readiness
-  or Desktop/daemon/container/hash/cost/A-C authority.
+D-122 through D-131 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. D-127 through
+D-129 are consumed/terminal and are never retried or repaired. Planning values, source qualification and
+self-attested readiness grant no external, hash/candidate, cost or A/C authority.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 
@@ -59,7 +47,7 @@ delivery with retrieval quality.
 - Repeating every milestone in every topic document is discontinued.
 
 Earlier retained decisions remain discoverable in the archived ledger and `docs/09-evidence.md`; they do not
-replace the current D-131 offline gate or reopen consumed D-128/D-129 receipts.
+replace the current D-132 offline gate or reopen consumed D-128/D-129 receipts.
 
 ## Superseded sequencing
 
@@ -76,27 +64,21 @@ replace the current D-131 offline gate or reopen consumed D-128/D-129 receipts.
 
 These questions do not authorize implementation beyond `docs/05-implementation-plan.md`.
 
-### 2026-08-09 — D-129 external sequence fails closed
+### 2026-08-09 — D-129 through D-131 preserve the predecessor boundary
 
-- One approved public-docs open preceded the machine receipt/attempt; transport count is unknown and no
-  replayable pricing evidence or retroactive attempt exists. The consumed
-  `D129_EXTERNAL_NO_CALL_SEQUENCE_OBSERVED_BLOCKED` receipt/terminal cannot be retried; later paths stayed zero.
+D-129 failed closed because a docs open preceded receipt/attempt; transport count is unknown. D-130 separated
+local admission from external activation. D-131 later materialized exact receipt-only and armed-intent-only
+commits with external actions zero. Earlier unexercised approval/challenge text cannot cross later topology.
 
-### 2026-08-09 — D-130 separates local admission from external activation
+### 2026-08-09 — D-132 qualifies attempt-first external activation source
 
-- D-130 bound the D-129 chain offline. Its later Stage 1 approval could not be exercised without a committed
-  writer, created no receipt/intent and is non-reusable after the D-131 topology change. External activation
-  remains a separate tuple-bound authority.
-
-### 2026-08-09 — D-131 qualifies local-admission implementation without admitting it
-
-- D-131 gate `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`
-  exact-binds the D-130 predecessor/evidence topology and implementation source commit
-  `9cd736c0221bba17375c3b7ddce02e5214fc21fe`.
-- The source qualifies append-only/new-only receipt and intent writers, exact commit topology, loaded-module
-  provenance and challenge rendering. The gate builder invoked none of those future actions.
-- Only a fresh exact D-131-qualified approval may create the receipt-only and durable
-  `ARMED_WAITING_EXACT_ACTIVATION` intent-only commits and render the challenge. Official-docs/network,
-  Docker, SDK and credential observations must remain zero.
-- External work still requires a later exact activation quoting the D-131 gate, receipt, intent and both
-  commits. D-131 grants no hash/candidate, cost or A/C authority.
+- Gate `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7` binds source commit
+  `ccf898d869342a9d5da42a1fef2c00e593fe91b4` as the sole child of the D-130 armed-intent commit.
+- Activation receipt creation must precede external work in a receipt-only commit. Docker, official pricing and
+  no-call SDK/credential preflight each require an attempt-only commit, an immediate action-started marker and a
+  committed terminal transition before the next phase.
+- Started-without-terminal, orphaned attempt and blocked terminal states are consumed and non-retryable.
+  A ready final gate still grants no execution-hash/candidate, cost or A/C authority.
+- The earlier request/challenge explicitly said it was not activation and is non-reusable after this topology
+  change. Only a fresh exact D-132-qualified activation quoting all gate/evidence/receipt/intent commit tuples
+  may begin the sequence.

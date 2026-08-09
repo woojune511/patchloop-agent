@@ -3,26 +3,39 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-131 local-admission implementation — fresh exact approval required
+## D-132 external-activation implementation — fresh exact activation required
 
-- Gate `reports/live-pilot/artifacts/d131-d130-local-admission-successor-offline-source-gate.json`:
-  ID `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
-  body `sha256:849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
-  file `sha256:8dfcd275b3e66113bc92df64e33bcf14f80c101cba2e40246d42b61f22dac048`,
-  14,516 bytes.
-- Source commit `9cd736c0221bba17375c3b7ddce02e5214fc21fe`; status
-  `D131_D130_LOCAL_ADMISSION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`.
+- Gate `reports/live-pilot/artifacts/d132-d130-external-activation-successor-offline-source-gate.json`:
+  ID/body `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7`;
+  file `sha256:059f672967aeed4b9f07db7249e887b92c3ad999ba96c61a8605e3d67f064bd0`,
+  27,244 bytes.
+- Source commit `ccf898d869342a9d5da42a1fef2c00e593fe91b4`; tree
+  `0bab1f4c64f89070de9cedeeadc62b36668c3f72`; sole parent
+  `4a40971b4e155683c49bbd6bcadc7468514ef84c`.
+- Status `D132_D130_EXTERNAL_ACTIVATION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED`.
 
-The new-only gate exact-binds the D-130 gate/evidence predecessor, D-131 source and loaded modules. It qualifies
-append-only/new-only receipt and intent writers, orphan/collision/idempotence rejection, receipt-only and
-intent-only commit topology, and a challenge that quotes the D-131 gate, receipt, intent and both commits.
-Focused tests passed 15/15 and the selected D-127–D-131/docs bundle passed 107/107; overlapping selections are
-not additive.
+The new-only gate binds the exact G/R/I topology, source and loaded modules. It qualifies canonical activation
+receipt creation, three ordered committed-attempt/action-started/terminal transitions, exact Docker no-start
+scope, bounded replayable pricing, SDK/credential-presence no-call preflight and final READY/BLOCKED gates.
+Focused tests passed 15/15; selected regression passed 170/170 with focused included, so counts are not
+additive. The builder invoked no future writer/helper and created no future artifact or external observation.
 
-The gate builder invoked no future writer or challenge and created no receipt or intent. It made no official-
-docs/network, credential, Docker or SDK observation. The prior D-130 Stage 1 approval was received but not
-exercised and is non-reusable after the D-131 topology change. A fresh exact D-131-qualified local-admission
-approval is required; the challenge produced afterward will not itself be activation.
+The gate evidence tuple is the exact commit that adds this gate and modifies the canonical 10 active docs; use
+the post-commit validator to obtain it. The pre-source request/challenge explicitly was not activation, remained
+unexercised and became non-reusable after D-132.
+
+## D-131 local admission — materialized predecessor
+
+- Gate ID `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
+  evidence commit `283b9124af38252f47a06cbb1a484807b5030be2`.
+- Receipt ID `d130approval_03c8c824f0d74122b8233df9810897b898c29b3bf907dd1a5cfd364f5026e010`;
+  file `sha256:01901a4f20a0231856e0326d2bc37283794b9cff998463707bc19b15d22731ba`,
+  11,514 bytes; receipt-only commit `6987246b438fa6e6e711fa3b254aaf75ac4c2a66`.
+- Intent ID `d130intent_4cd20c7a8bbd20751b2f6a7b4a0d13de16d7aa5a41b6bf20648dedb414b6a153`;
+  file `sha256:349d6680850374c1cee10e49f3319ef18bdd3640c48d075e999cbefac72c460c`,
+  13,175 bytes; intent-only commit `4a40971b4e155683c49bbd6bcadc7468514ef84c`.
+
+Receipt and intent are immutable local-admission evidence, not external activation.
 
 ## D-130 offline successor — historical predecessor
 
@@ -31,8 +44,8 @@ approval is required; the challenge produced afterward will not itself be activa
   file `sha256:6d580dd979dc77659efed07291264c4ea2a16dca02d9070a32928e9fbefff468`, 17,416 bytes;
   evidence commit `d6079e55fd1c4745b05c2e345228b1a66d0a3df4`.
 
-It binds the D-129 incident chain with zero D-130 external lookup. Its later Stage 1 approval was not exercised,
-created no receipt/intent and is non-reusable after D-131 changed the topology.
+It binds the D-129 incident chain with zero D-130 external lookup. Its first Stage 1 approval was not exercised
+and is non-reusable after D-131 changed the topology; the later D-131-qualified admission is indexed above.
 
 ## D-129 external sequence — terminal blocked
 
@@ -59,9 +72,8 @@ hash/candidate, cost and A/C all stayed zero. The receipt is consumed; retry/res
 
 ## Next evidence boundary
 
-Obtain fresh exact D-131-qualified D-130 local-admission approval quoting the D-131 gate tuple, 14,516 bytes and
-the local evidence commit that tracks this gate. It may create only a receipt-only commit, durable
-`ARMED_WAITING_EXACT_ACTIVATION` intent-only commit and activation challenge. No official-docs/network,
-Docker, SDK or credential observation belongs to local admission. A separate exact activation must quote the
-D-131 gate, receipt, intent and both commits before any external observation; live/hash/candidate/cost/A-C
-authority stays closed.
+After the D-132 gate+docs evidence commit, obtain fresh exact D-132-qualified activation quoting that gate and
+evidence tuple plus the D-131 gate, D-130 receipt, D-130 intent and both artifact commit tuples. It may first
+create the activation receipt-only commit; each external phase still requires its own committed attempt before
+action. Started-without-terminal, orphan and blocked states are consumed. No current activation, activation
+receipt, phase artifact or external action exists; live/hash/candidate/cost/A-C authority stays closed.

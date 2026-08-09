@@ -94,22 +94,14 @@ D-108's +702 token count covers one request shape, not every live turn. Exact pe
 separately authorized counterfactual count. D-124/D-125 local/mock corrections are inherited; no reservation,
 result, candidate or execution hash exists.
 
-D-126 is sealed blocked and D-127/D-128 are terminal-blocked historical predecessors. D-128 made three
-read-only rc-1 Docker calls, no mutation and no downstream phase; its receipt is consumed.
+D-126 through D-131 are immutable predecessor evidence. Consumed gates stay closed; D-131-qualified local
+admission created only exact receipt and armed-intent commits with external actions zero.
 
-D-129 external readiness did not begin: a public docs tool open preceded the required receipt and durable
-attempt. Its non-retroactive receipt is consumed by a procedural blocked terminal. Canonical pricing capture,
-Docker, SDK and every runtime/cost call remained zero; transport count for the docs tool is unknown. The four
-rows and all execution, cost and memory authority remain unchanged.
-
-D-130 qualified the predecessor chain, but its later Stage 1 approval was received without being exercised and
-is non-reusable after the D-131 topology change. No receipt or intent was created. D-131 qualifies only the
-offline receipt/intent implementation, provenance, topology and challenge-rendering contracts. A fresh exact
-D-131-qualified local-admission approval may commit a receipt and durable
-`ARMED_WAITING_EXACT_ACTIVATION` intent, then render the exact challenge, but may make no external or
-credential observation. A separate exact activation quoting the D-131 gate, receipt, intent and both commits is
-required before any environment preflight. No local admission, receipt, intent, activation, hash/candidate,
-cost or four-row authority exists.
+D-132 qualifies an ordered activation-receipt, committed-attempt, action-started and terminal-transition
+protocol for Docker readiness, replayable pricing and SDK/credential-presence no-call preflight. An uncertain,
+orphaned or blocked phase is consumed; pricing must stay within 72 hours through the final gate, and READY still
+blocks execution-hash creation. Fresh approval must quote all D-132 and G/R/I evidence tuples. Earlier
+challenge text is non-reusable; no activation, external observation, cost or four-row authority exists.
 
 ## 7. Run-completion gate
 

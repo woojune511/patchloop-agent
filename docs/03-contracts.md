@@ -123,32 +123,31 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 is sealed blocked; D-127/D-128 are consumed terminal-blocked predecessors. D-128's attempt-first phase
-made three read-only rc-1 Docker calls, no mutations, and no downstream pricing/preflight/gate. None may be
-reopened; exact historical bindings are indexed in `docs/09-evidence.md`.
+D-126 through D-131 are immutable predecessors indexed in `docs/09-evidence.md`. Consumed/terminal gates are
+never reopened. The exact D-131-qualified local admission produced one receipt-only commit followed by one
+durable armed-intent-only commit. That G/R/I chain grants no external authority; an earlier request/challenge
+explicitly was not activation and cannot cross the D-132 topology change.
 
-D-129 now has a non-retroactive receipt and procedural terminal. User approval preceded one public docs tool
-open, but the machine receipt and phase attempt did not. The terminal deliberately has no attempt artifact,
-records underlying HTTP count as unknown, and keeps canonical pricing/Docker/SDK/provider/runtime/cost counts
-zero. Its receipt is consumed and cannot be retried, resumed or repaired.
+D-132 gate `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7`
+binds that chain, source commit `ccf898d869342a9d5da42a1fef2c00e593fe91b4`, loaded modules and these
+future contracts:
 
-D-130 exact-bound that chain in a canonical new-only offline gate. Its later Stage 1 approval was received but
-not exercised because the required committed writer did not exist; that approval is non-reusable after the
-D-131 topology change. No D-130 receipt or intent was materialized.
+- a canonical activation receipt must be the only change in the direct child of the D-132 evidence commit;
+- Docker image readiness, official pricing capture and read-only no-call preflight execute in that order;
+- each phase has an attempt-only commit before any action, an append-only action-started marker immediately
+  before its helper, and a committed marker+terminal transition before the next attempt;
+- an orphaned attempt, blocked terminal or started-without-terminal state consumes the activation and fails
+  closed; exact canonical replay alone is idempotent;
+- the final gate can report ready only after all three committed transitions and fresh pricing (at most 72 h),
+  and even readiness keeps execution-hash creation blocked.
 
-D-131 gate `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`
-exact-binds the D-130 gate/evidence commit, source commit
-`9cd736c0221bba17375c3b7ddce02e5214fc21fe`, loaded-module provenance and future local-admission
-topology. Its status is
-`D131_D130_LOCAL_ADMISSION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`.
-The append-only/new-only writers fail closed on orphan, collision, linklike, tamper and wrong Git topology;
-idempotence accepts only exact canonical bytes. Receipt creation requires a clean D-131 evidence commit and a
-receipt-only child commit. Intent creation then requires that exact clean receipt-only commit and an
-intent-only child commit. The challenge requires the clean committed intent and quotes the D-131 gate,
-receipt, intent, receipt commit and intent commit. It is not activation.
+The Docker helper cannot start Desktop/daemon or create/start/run/exec containers; only confirmed-missing exact
+Moto/Babel digests may be pulled. The pricing helper is bounded/replayable and the SDK probe is no-call with
+credential presence only and official endpoint binding. The historical D-127/D-128 top-level runners are not
+reused. The D-132 builder invoked none of these future writers/helpers and observed no credential or external
+state.
 
-The gate builder invoked no future writer or challenge and created no receipt or intent. Only a fresh exact
-D-131-qualified approval may admit those local commits and challenge, with official-docs, network, pricing,
-Docker, SDK and credential observations at zero. A separate exact user activation quoting all five tuples is
-required before external work. Desktop/daemon start, container work, other images, hash/candidate/live/memory/
-cost authority remain false.
+The pre-source request/challenge explicitly was not activation and is non-reusable after D-132. Only a fresh
+exact D-132-qualified user approval quoting the D-132 gate/evidence plus the G/R/I and commit tuples may begin
+the receipt/attempt sequence. Desktop/daemon start, container work, other images, provider/evaluator/agent,
+memory/retrieval, hash/candidate, cost and A/C authority remain false.

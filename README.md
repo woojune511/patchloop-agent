@@ -12,9 +12,10 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-The suite, delivery and R2 cost/completion source are offline-qualified. D-129 is terminal sequence-blocked;
-the later D-130 Stage 1 approval was not exercised and is non-reusable. D-131 qualifies local-admission
-implementation source only, not local admission or external work.
+The suite, delivery and R2 cost/completion source are offline-qualified. D-129 is terminal sequence-blocked.
+D-131-qualified local admission later created exact D-130 receipt and durable armed-intent commits, but no
+external action. D-132 now qualifies the external-activation implementation source only; fresh activation is
+still required.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -37,9 +38,13 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-128 made three read-only calls, all return code 1; every mutation and later phase remained zero.
 - D-129 has one pre-receipt docs open with unknown transport count; later external/runtime/cost paths stayed zero.
 - D-131 gate `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`
-  binds source commit `9cd736c0221bba17375c3b7ddce02e5214fc21fe` and qualifies only the offline
-  receipt/intent writer, validator, topology and challenge-rendering contracts. Focused tests passed 15/15 and
-  the selected D-127–D-131/docs regression bundle passed 107/107; overlapping selections are not additive.
+  precedes the exact D-130 receipt/intent chain.
+- D-132 gate `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7`
+  binds source commit `ccf898d869342a9d5da42a1fef2c00e593fe91b4` and qualifies only activation receipt,
+  committed-attempt/action-started/terminal transitions and final-gate validation. Focused tests passed 15/15;
+  the selected regression passed 170/170 with the focused set included, so counts are not additive.
+- The pre-D-132 activation request/challenge was received but explicitly was not activation. It is unexercised
+  and non-reusable; no D-132 activation receipt, phase artifact, final gate or external action exists.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -54,6 +59,8 @@ uv run pytest -q tests/test_d130_d129_sequence_block_successor_offline.py
 uv run python scripts/build_d130_d129_sequence_block_successor_offline.py --validate
 uv run pytest -q tests/test_d131_d130_local_admission_offline.py
 uv run python scripts/build_d131_d130_local_admission_offline.py --validate-gate
+uv run pytest -q tests/test_d132_d130_external_activation_offline.py
+uv run python scripts/build_d132_d130_external_activation_offline.py --validate-offline-gate-post-commit
 uv run pytest -q tests/test_documentation_structure.py
 git diff --check
 ```
@@ -64,11 +71,11 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 Use `uv run patchloop --help` to discover the CLI.
 
-CLI availability does not imply authority. The prior D-130 approval was not exercised and cannot be reused.
-D-131 is source-qualified only: a fresh exact approval may create and commit the exact receipt and
-durable `ARMED_WAITING_EXACT_ACTIVATION` intent, then render a challenge, while every external action stays
-zero. No receipt or intent exists. Exact activation, credential/Docker/SDK observation, hash/candidate, cost
-and A/C remain closed.
+CLI availability does not imply authority. The D-130 local receipt and durable
+`ARMED_WAITING_EXACT_ACTIVATION` intent exist, but do not authorize external work. Only a fresh exact
+D-132-qualified activation quoting the gate/evidence tuple and the D-131 gate, receipt, intent and commit tuples
+may create the activation receipt and begin the attempt-first sequence. Until then credential/Docker/SDK,
+official pricing, hash/candidate, cost and A/C remain closed.
 
 ## Documentation
 

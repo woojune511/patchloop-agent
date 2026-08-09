@@ -2,20 +2,26 @@
 
 ## Current checkpoint
 
-D-131 is the current offline-source-qualified local-admission implementation gate:
+D-132 is the current offline-source-qualified D-130 external-activation implementation gate:
 
-- ID `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
-  body `sha256:849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
-  file `sha256:8dfcd275b3e66113bc92df64e33bcf14f80c101cba2e40246d42b61f22dac048`,
-  14,516 bytes.
-- Source commit `9cd736c0221bba17375c3b7ddce02e5214fc21fe`; status
-  `D131_D130_LOCAL_ADMISSION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`.
+- ID/body `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7`;
+  file `sha256:059f672967aeed4b9f07db7249e887b92c3ad999ba96c61a8605e3d67f064bd0`,
+  27,244 bytes.
+- Source commit `ccf898d869342a9d5da42a1fef2c00e593fe91b4`, tree
+  `0bab1f4c64f89070de9cedeeadc62b36668c3f72`, sole parent
+  `4a40971b4e155683c49bbd6bcadc7468514ef84c`; status
+  `D132_D130_EXTERNAL_ACTIVATION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED`.
 
-It exact-binds the D-130 predecessor gate/evidence topology, loaded implementation modules and future
-append-only receipt/intent topology. The gate builder invoked neither future writer nor challenge renderer and
-performed no external or credential observation. The prior D-130 Stage 1 approval was received but could not
-be exercised because no committed writer existed; it is non-reusable after D-131 changed the topology. No
-fresh D-131-qualified approval, D-130 receipt, armed intent, activation or external attempt exists.
+The predecessor chain is materialized: D-131 gate
+`d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`, D-130 local receipt
+`d130approval_03c8c824f0d74122b8233df9810897b898c29b3bf907dd1a5cfd364f5026e010` at commit
+`6987246b438fa6e6e711fa3b254aaf75ac4c2a66`, and armed intent
+`d130intent_4cd20c7a8bbd20751b2f6a7b4a0d13de16d7aa5a41b6bf20648dedb414b6a153` at commit
+`4a40971b4e155683c49bbd6bcadc7468514ef84c`. Receipt and intent are local admission, not activation.
+
+D-132 binds the activation receipt-only child, ordered Docker/pricing/preflight attempt-first transitions,
+durable action-started markers, terminal commits and final gate. The builder invoked no future writer/helper.
+Focused tests passed 15/15; selected regression passed 170/170 including focused, so counts are not additive.
 
 ## Historical D-129 terminal
 
@@ -30,7 +36,7 @@ resume or repair D-129. Exact tuples remain in `docs/09-evidence.md` and machine
 ## Manual readiness boundary
 
 The user's daemon-unavailable/rc 1 then 29.6.2 linux/amd64/rc 0/no-auto-start observations are self-attested,
-were not independently observed by D-129 through D-131 and are not future-fresh.
+were not independently observed by D-129 through D-132 and are not future-fresh.
 
 ## Current priority: four-run A/C readiness
 
@@ -40,11 +46,12 @@ efficacy evidence, and there is still no supported live command.
 
 ## Closed authority
 
-D-126 is sealed blocked; D-127 and D-128 are historical terminal-blocked predecessors. D-129 preserves a
-procedural incident only. D-130 is a historical offline predecessor whose later approval was not exercised and
-cannot be reused. D-131 is implementation source evidence, not local admission or activation. Official-docs/
-network, pricing capture, Docker/SDK/credential observation, provider/evaluator/agent execution, runtime
-memory, retrieval, execution hash/candidate, cost and A/C execution remain unauthorized and at D-131 count zero.
+D-126 is sealed blocked; D-127/D-128 are terminal-blocked and D-129 preserves a procedural incident only.
+D-130/D-131 are immutable predecessors. The pre-D-132 activation request/challenge was received but explicitly
+said it was not activation; it is unexercised and non-reusable after the D-132 topology change. No D-132
+activation receipt, phase attempt/started/terminal, final gate or external action exists. Official-docs/network,
+pricing, Docker/SDK/credential, provider/evaluator/agent, runtime memory/retrieval, execution hash/candidate,
+cost and A/C remain unauthorized and at D-132 source-preparation count zero.
 
 The deferred D-121 candidate
 `d121executioncandidate_b37bde7b9f49f92118ca277e521cd409b1e51b6f97c1ad8c2e9ff5090a1c38ef`
@@ -52,10 +59,9 @@ was never authorized and is not a fixed-bundle prerequisite.
 
 ## Next gate
 
-Request a fresh exact D-131-qualified D-130 local-admission approval quoting the D-131 gate tuple, 14,516 bytes
-and the local evidence commit that tracks this gate. The previous D-130 approval is not reusable.
-This local-only admission may create and commit a receipt, create and commit a durable
-`ARMED_WAITING_EXACT_ACTIVATION` intent, and render an activation challenge. Official-docs search/open,
-network/pricing, Docker, SDK and credential observation must remain zero. A later exact user activation must
-quote the D-131 gate, receipt, intent and both commit tuples before any external observation. Neither admission
-nor activation is currently approved; hash/candidate, cost and A/C remain later gates.
+After the exact gate-add/10-active-docs evidence commit is complete, request a fresh exact D-132-qualified
+activation quoting its gate/evidence tuple plus the D-131 gate, D-130 receipt, D-130 intent and both commits.
+That approval may first create an activation receipt-only commit. Each later phase must create and commit its
+attempt before an action-started marker and helper call; terminal transitions must be committed before the next
+phase. Started-without-terminal and orphan/blocked phases are consumed and not retried. No activation is
+currently approved; hash/candidate, cost and A/C remain separate later gates.
