@@ -1,0 +1,383 @@
+{
+  "schema_version": "d132-pricing-consumed-incident-procedural-terminal-offline-source-gate-d134-v1",
+  "gate_id": "d134_a6ec18615a853b34de104a4a89d0db1d43bea3cea12c1412033e260c50779889",
+  "semantic_body_hash": "sha256:a6ec18615a853b34de104a4a89d0db1d43bea3cea12c1412033e260c50779889",
+  "semantic_body": {
+    "milestone": "D-134",
+    "evidence_kind": "offline-procedural-terminal-implementation-source-qualification",
+    "recorded_at": "2026-08-09T15:14:39.758056Z",
+    "status": "D134_D132_PRICING_CONSUMED_INCIDENT_PROCEDURAL_TERMINAL_OFFLINE_SOURCE_QUALIFIED_TERMINALIZATION_APPROVAL_REQUIRED",
+    "predecessor_chain": {
+      "pricing_attempt": {
+        "path": "reports/live-pilot/artifacts/d130-official-pricing-capture-attempt-intent.json",
+        "artifact_id": "d132d130officialpricingcaptureattempt_c518711e0a12b75a3ab81bbfd3e53eb3e13059d0f6fe4b3c4c1309e25924245f",
+        "semantic_body_hash": "sha256:c518711e0a12b75a3ab81bbfd3e53eb3e13059d0f6fe4b3c4c1309e25924245f",
+        "file_sha256": "sha256:ba79ad9362bf14f0cdf8952d9297bea8fcd77fe36ab0eeff44e47e9047ec3f55",
+        "file_bytes": 18137,
+        "status": "D132_D130_OFFICIAL_PRICING_CAPTURE_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+        "recorded_at": "2026-08-09T13:43:26.208409Z",
+        "artifact_mutated": false
+      },
+      "pricing_attempt_commit": {
+        "commit": "30412b769b340f98000674f40de9102d1210507a",
+        "tree": "2a865bf4245936ccb2d4366153038875444a536b",
+        "parents": [
+          "72f1aef7ab93b9d1167ef5d3b11947a9d1f32cf0"
+        ],
+        "artifact_path": "reports/live-pilot/artifacts/d130-official-pricing-capture-attempt-intent.json",
+        "artifact_blob_oid": "530ad365efe8a79eaa6f131db1a4541a4f94c20c",
+        "artifact_file_sha256": "sha256:ba79ad9362bf14f0cdf8952d9297bea8fcd77fe36ab0eeff44e47e9047ec3f55",
+        "artifact_file_bytes": 18137,
+        "single_artifact_add_commit": true
+      },
+      "action_started_marker": {
+        "path": "reports/live-pilot/artifacts/d130-official-pricing-capture-action-started.json",
+        "artifact_id": "d132d130officialpricingcapturestarted_50876b05d4daa48d5f80bce7793f28ffb4f7909350661803dfa96f9a2e6dced7",
+        "semantic_body_hash": "sha256:50876b05d4daa48d5f80bce7793f28ffb4f7909350661803dfa96f9a2e6dced7",
+        "file_sha256": "sha256:328c4fb5ae4d6e50308333e360f25fb88bc856bace7ba483f2eb7e2adde13328",
+        "file_bytes": 12815,
+        "status": "D132_D130_OFFICIAL_PRICING_CAPTURE_ACTION_STARTED",
+        "recorded_at": "2026-08-09T13:46:59.550660Z",
+        "artifact_mutated": false
+      },
+      "marker_only_commit": {
+        "commit": "a10033b6abd7155ebaa5c66c13627ad3ea738566",
+        "tree": "33d7aa66d2e7aa23e0b73ca851a02db20ec295e8",
+        "parents": [
+          "30412b769b340f98000674f40de9102d1210507a"
+        ],
+        "artifact_path": "reports/live-pilot/artifacts/d130-official-pricing-capture-action-started.json",
+        "artifact_blob_oid": "4e1af70ae48884a5c3ec492a9afc83313829ee75",
+        "artifact_file_sha256": "sha256:328c4fb5ae4d6e50308333e360f25fb88bc856bace7ba483f2eb7e2adde13328",
+        "artifact_file_bytes": 12815,
+        "single_artifact_add_commit": true
+      },
+      "activation_and_attempt_consumed": true,
+      "retry_resume_repair_or_terminal_backfill_allowed": false
+    },
+    "source_identity": {
+      "commit": "44a461de923357f36cadc94eebd14d264a7366fc",
+      "tree": "32753ce3877cae916e5c9654d4887aa08e138ed7",
+      "parents": [
+        "a10033b6abd7155ebaa5c66c13627ad3ea738566"
+      ],
+      "implementation_paths_added": [
+        "patchloop/evals/d134_d132_pricing_consumed_incident_offline.py",
+        "scripts/build_d134_d132_pricing_consumed_incident_offline.py",
+        "tests/test_d134_d132_pricing_consumed_incident_offline.py"
+      ],
+      "file_bindings": [
+        {
+          "path": "patchloop/evals/d134_d132_pricing_consumed_incident_offline.py",
+          "blob_oid": "7eb71b5b783e67f313b9d5e82e78639898c71678",
+          "file_sha256": "sha256:e816bf454697a34ab69fb815c5d6d99ab3d514fcd91c712c70bc17091e760c0f",
+          "file_bytes": 46231,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "scripts/build_d134_d132_pricing_consumed_incident_offline.py",
+          "blob_oid": "8d8c1d11fdb03174a83aaef02f079caed5e66849",
+          "file_sha256": "sha256:6c98d049b436c8dd0ebe0dc6f7395b1e5b2861dc553ab8468ba74e6be711f006",
+          "file_bytes": 1786,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "tests/test_d134_d132_pricing_consumed_incident_offline.py",
+          "blob_oid": "dfe9bac0b02c99145af58c15354c5deb4f356db8",
+          "file_sha256": "sha256:287174774deb70d28e8bd6f257bf8f04ca15b2af3ead0e65d027a91ebc862b99",
+          "file_bytes": 36970,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/__init__.py",
+          "blob_oid": "b5195b19ab7923b97ce66c2e36d1644de0f478a9",
+          "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58",
+          "file_bytes": 55,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/contracts.py",
+          "blob_oid": "901cefc3b3eb6d9b99ef5a7f2b02df53c24c8e14",
+          "file_sha256": "sha256:19ecc9b2afefdb3ff69e7cfa9d7b464bb51b44db08987af92c84fcd691c749d8",
+          "file_bytes": 97987,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/__init__.py",
+          "blob_oid": "b8b10d34ff8a160692215e170343eac93a6536df",
+          "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c",
+          "file_bytes": 64,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d131_d130_local_admission_offline.py",
+          "blob_oid": "b75f35cad816721038288aeac9c66ba61b130c9d",
+          "file_sha256": "sha256:74f3287b5e282b6586c4fd30f7b50178c411f1902ad51edfbe0ae01ad99fed4c",
+          "file_bytes": 59231,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d130_d129_sequence_block_successor_offline.py",
+          "blob_oid": "1ec54b9bffbdb420150b3a7ba002a08caca1e1c1",
+          "file_sha256": "sha256:f58c85ede0d0448f5b5d2790eb3f1200458b340723fd9ce51730cbf001cb2521",
+          "file_bytes": 35292,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d129_external_sequence_block.py",
+          "blob_oid": "b21b4647a144996b8deed3f489600623d652b998",
+          "file_sha256": "sha256:527ebd5118c00b0ad064887e32f2999e4f08a469885ebe51bada11e838d5374b",
+          "file_bytes": 38356,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a",
+          "file_bytes": 51141,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "file_bytes": 1149,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/runtime.py",
+          "blob_oid": "2165d6513419ebfcd40972b85bc2733337cbfc36",
+          "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4",
+          "file_bytes": 13657,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "file_bytes": 2109,
+          "current_bytes_match_commit": true
+        }
+      ],
+      "loaded_module_bindings": [
+        {
+          "path": "patchloop/evals/d134_d132_pricing_consumed_incident_offline.py",
+          "blob_oid": "7eb71b5b783e67f313b9d5e82e78639898c71678",
+          "file_sha256": "sha256:e816bf454697a34ab69fb815c5d6d99ab3d514fcd91c712c70bc17091e760c0f",
+          "file_bytes": 46231,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d134_d132_pricing_consumed_incident_offline",
+          "loaded_path": "patchloop/evals/d134_d132_pricing_consumed_incident_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/__init__.py",
+          "blob_oid": "b5195b19ab7923b97ce66c2e36d1644de0f478a9",
+          "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58",
+          "file_bytes": 55,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop",
+          "loaded_path": "patchloop/__init__.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/contracts.py",
+          "blob_oid": "901cefc3b3eb6d9b99ef5a7f2b02df53c24c8e14",
+          "file_sha256": "sha256:19ecc9b2afefdb3ff69e7cfa9d7b464bb51b44db08987af92c84fcd691c749d8",
+          "file_bytes": 97987,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.contracts",
+          "loaded_path": "patchloop/contracts.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "file_bytes": 1149,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.errors",
+          "loaded_path": "patchloop/errors.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/__init__.py",
+          "blob_oid": "b8b10d34ff8a160692215e170343eac93a6536df",
+          "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c",
+          "file_bytes": 64,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals",
+          "loaded_path": "patchloop/evals/__init__.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a",
+          "file_bytes": 51141,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d129_d128_terminal_successor_offline",
+          "loaded_path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d129_external_sequence_block.py",
+          "blob_oid": "b21b4647a144996b8deed3f489600623d652b998",
+          "file_sha256": "sha256:527ebd5118c00b0ad064887e32f2999e4f08a469885ebe51bada11e838d5374b",
+          "file_bytes": 38356,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d129_external_sequence_block",
+          "loaded_path": "patchloop/evals/d129_external_sequence_block.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d130_d129_sequence_block_successor_offline.py",
+          "blob_oid": "1ec54b9bffbdb420150b3a7ba002a08caca1e1c1",
+          "file_sha256": "sha256:f58c85ede0d0448f5b5d2790eb3f1200458b340723fd9ce51730cbf001cb2521",
+          "file_bytes": 35292,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d130_d129_sequence_block_successor_offline",
+          "loaded_path": "patchloop/evals/d130_d129_sequence_block_successor_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d131_d130_local_admission_offline.py",
+          "blob_oid": "b75f35cad816721038288aeac9c66ba61b130c9d",
+          "file_sha256": "sha256:74f3287b5e282b6586c4fd30f7b50178c411f1902ad51edfbe0ae01ad99fed4c",
+          "file_bytes": 59231,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d131_d130_local_admission_offline",
+          "loaded_path": "patchloop/evals/d131_d130_local_admission_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/runtime.py",
+          "blob_oid": "2165d6513419ebfcd40972b85bc2733337cbfc36",
+          "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4",
+          "file_bytes": 13657,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.runtime",
+          "loaded_path": "patchloop/runtime.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "file_bytes": 2109,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.util",
+          "loaded_path": "patchloop/util.py",
+          "loaded_path_matches_repository": true
+        }
+      ],
+      "python_routing_env_presence": {
+        "PYTHONHOME": false,
+        "PYTHONPATH": false
+      },
+      "git_cli_observation": {
+        "resolved_path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+        "file_name": "git.exe",
+        "file_bytes": 4422544,
+        "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+        "linklike": false,
+        "version": "git version 2.54.0.windows.1",
+        "actual_git_engine_invoked_directly": true,
+        "repository_local_core_autocrlf": "false",
+        "authenticated_or_vendor_signed_identity_claimed": false,
+        "stable_during_observation": true,
+        "minimal_secret_free_environment": true,
+        "fsmonitor_disabled": true,
+        "shell_used": false
+      },
+      "worktree_and_index_clean_before_gate": true,
+      "git_identity_vendor_authenticated_or_signed": false
+    },
+    "source_preparation_approval": {
+      "exact_user_approval_recorded": true,
+      "approval_is_self_attested": true,
+      "approval_is_authenticated_or_signed": false,
+      "approved_scope": [
+        "bind-exact-pricing-attempt-and-marker-only-commit-topology-and-bytes",
+        "implement-append-only-procedural-terminal-writer-validator-cli-and-focused-mocked-tests",
+        "implement-collision-orphan-idempotence-loaded-module-and-terminal-only-commit-validation",
+        "create-source-test-cli-only-d134-source-commit-as-direct-child-of-marker-only-commit",
+        "create-d134-offline-gate-and-exact-active-docs-evidence-commit",
+        "render-separate-exact-terminalization-approval-template",
+        "create-only-local-git-commits-within-this-scope"
+      ],
+      "explicit_exclusions": [
+        "create-procedural-terminal-in-this-source-preparation-turn",
+        "retry-resume-repair-d132-pricing-or-backfill-canonical-terminal",
+        "modify-pricing-helper-or-qualify-fixed-successor",
+        "official-docs-search-open-network-or-pricing-capture",
+        "docker-sdk-credential-dotenv-or-endpoint-observation",
+        "provider-evaluator-agent-memory-or-retrieval",
+        "execution-hash-candidate-cost-or-four-row-ac",
+        "create-new-activation-receipt-or-external-phase-attempt"
+      ],
+      "procedural_terminal_creation_authorized_now": false
+    },
+    "incident_contract": {
+      "application_level_client_send_returned_response_count": 1,
+      "application_level_request_was_unauthenticated": true,
+      "observation_provenance": "user-approved-current-session-control-flow-observation-not-reconstructed-machine-telemetry",
+      "underlying_http_request_count": "unknown",
+      "canonical_pricing_capture_count": 0,
+      "canonical_pricing_capture_get_count": 0,
+      "canonical_pricing_evidence_artifact_created": false,
+      "canonical_response_status_retention_state": "not-retained",
+      "canonical_response_headers_retention_state": "not-retained",
+      "canonical_response_body_retention_state": "not-retained",
+      "canonical_redirect_accounting_state": "not-retained",
+      "canonical_replay_bytes_retained": 0,
+      "canonical_http_exchange_completed": "unknown",
+      "exact_failure_timestamp_retained": false,
+      "existing_d132_pricing_terminal_absent": true,
+      "existing_d132_preflight_and_final_gate_absent": true,
+      "terminal_is_procedural_not_canonical_pricing_evidence": true
+    },
+    "qualified_procedural_terminal_contract": {
+      "writer_is_future_only": true,
+      "future_exact_approval_required": true,
+      "future_terminal_is_append_only_new_only": true,
+      "future_terminal_only_commit_required": true,
+      "future_terminal_commit_parent_is_gate_evidence_commit": true,
+      "retry_resume_repair_or_backfill_forbidden": true,
+      "fixed_successor_requires_later_offline_gate": true
+    },
+    "offline_qualification": {
+      "focused_mocked_tests_passed": 15,
+      "builder_invoked_terminal_writer": false,
+      "builder_invoked_network_or_external_helper": false,
+      "predecessor_bytes_and_git_topology_replayed": true,
+      "source_and_loaded_modules_bound": true
+    },
+    "evidence_boundary": {
+      "observed_send_return_count_is_not_canonical_pricing_evidence": true,
+      "unknown_response_fields_remain_unknown": true,
+      "no_system_wide_side_effect_denial_claimed": true,
+      "no_secret_credential_or_environment_value_observed": true
+    },
+    "authority": {
+      "offline_gate_created": true,
+      "procedural_terminal_created": false,
+      "canonical_pricing_terminal_created": false,
+      "d134_source_builder_network_call_count": 0,
+      "d134_source_builder_official_docs_search_or_open_count": 0,
+      "d134_source_builder_docker_cli_call_count": 0,
+      "d134_source_builder_sdk_or_credential_observation_count": 0,
+      "d134_source_builder_provider_evaluator_agent_call_count": 0,
+      "d134_source_builder_memory_or_retrieval_count": 0,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    },
+    "next_gate": {
+      "status": "D134_EXACT_PROCEDURAL_TERMINALIZATION_APPROVAL_REQUIRED",
+      "must_quote_gate_tuple_and_evidence_commit": true,
+      "terminal_only_commit_then_d135_fixed_successor": true,
+      "no_external_action_in_terminalization_turn": true
+    }
+  }
+}
