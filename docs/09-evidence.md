@@ -3,24 +3,43 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-136 fixed-pricing successor — fresh activation required
+## D-137 no-call-preflight successor — source-qualified only
 
-- Gate `reports/live-pilot/artifacts/d136-d135-fixed-pricing-successor-offline-source-gate.json`:
-  ID/body `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`;
-  file `sha256:c9e00304383839c656b6a2753fefee459fb14934dec8dfabcf4f39f44a34a53b`,
-  23,767 bytes.
-- Source commit `96916ac481ac8beced2db0be9022607e0705e018`, tree
-  `7e0a07eed6e780265a5d73cab008a0fabe935fe1`, sole parent
-  `98f4560e718145bc7465732c1a3d2f5a4ea8d786`; status
-  `D136_D135_FIXED_PRICING_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED`.
+- Gate `reports/live-pilot/artifacts/d137-d136-success-terminal-no-call-preflight-successor-offline-source-gate.json`:
+  ID/body `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`;
+  file `sha256:12745a2dd8bb35b04a29cdcda0be000083bc8cabceed72057c2c6c8e32e0ae25`,
+  21,423 bytes.
+- Source commit `adcdeadbbb561f82548044d8c9a18d976b584132`, tree
+  `a1f649cd45007d032ae97d76f97b8a0df9180432`, sole parent
+  `2378569536c2367a3186f575a7517e3de7282336`; its diff is exactly four added implementation paths.
 - The exact gate-add/10-active-doc evidence commit is the direct child of the source; the post-commit validator
-  reports its commit/tree/parent/blob tuple.
+  reports its commit/tree/parent/blob tuple without embedding a self-referential hash here.
 
-The gate binds the D-135 terminal bytes/commit and predecessor-gate topology. The new helper uses explicit
-`try/finally` close semantics without importing the sealed D-127 helper or consumed D-132 runner. Focused tests
-passed 29/29; the selected relevant set passed 102/102 with focused included, so counts are not additive. No
-D-136 activation receipt, attempt, action-started marker, pricing evidence or terminal was created, and external
-actions are 0.
+The gate replay-validates the complete D-136 chain and qualifies only separate future Docker and SDK no-call
+phases. Focused mocked tests passed 62/62; the selected current-compatible set passed 112/112 with focused
+included, so counts are not additive. No D-137 receipt, attempt, marker, terminal or preservation artifact
+exists. Preparation observed no real Docker, SDK, credential/environment value, endpoint or network state.
+
+## D-136 fixed-pricing successor — succeeded and consumed
+
+- Gate evidence commit `5fad5756d2b40b5f72c0bbc38680120d780ef899`; activation receipt commit
+  `1f9c62ac9309d087d1ef32a237b86ea11bf9d51e`; pricing attempt commit
+  `5f419828c358ee9c5f68cdacf38b588705e71e2e`.
+- ACTION_STARTED `reports/live-pilot/artifacts/d136-fixed-pricing-capture-action-started.json`:
+  ID/body `d136pricingstarted_6f4847c856150b0d6bef6108d858ff332d3a1b2c95b0c9ea6bec80d024729fc1`;
+  file `sha256:4c11a5e087759ecb2a57f5a64271000214469a35f952e8789cc68b297173cd0a`,
+  2,387 bytes; blob `b6090028bb40a6dce721bb1a2c6126cb094537f4`.
+- Terminal `reports/live-pilot/artifacts/d136-replayable-official-pricing-evidence.json`:
+  ID/body `d136pricing_dbaa24227565316ef404fb1fc2967e2eb45600a92d7365b8fbbfd7d264881362`;
+  file `sha256:7ce984e1b7f11bfe9aaaed8a4db38af22ab1299086c54ca20e090badc2d33bc0`,
+  10,191 bytes; blob `ee61520b3325e7a4e2ab891aeccff1a92862a543`.
+- Exact two-artifact success commit `2378569536c2367a3186f575a7517e3de7282336`, tree
+  `c6253191e0a5d96fd6503ad9f9f4f6df91af13cc`, sole parent
+  `5f419828c358ee9c5f68cdacf38b588705e71e2e`.
+
+The terminal preserves one unauthenticated official public GET, HTTP 200, redirect count 0 and 3,735 decoded
+replay bytes. Provider/evaluator/agent calls and cost reservation/spend are 0. The activation and phase are
+consumed and never reused; the terminal grants no Docker/SDK, hash/candidate, cost or A/C authority.
 
 ## D-135 consumed-incident procedural terminal — sealed
 
@@ -102,9 +121,8 @@ Receipt and intent are local-admission evidence, not reusable external activatio
 
 ## Next evidence boundary
 
-After the D-136 gate+10-doc evidence commit, obtain a fresh exact D-136 activation quoting the gate tuple,
-source commit/tree and evidence-commit tuple. It may create only the qualified
-receipt/attempt/marker/capture sequence. A post-marker failure consumes the activation and permits only
-marker-only preservation, never retry. A success terminal still grants no Docker/SDK preflight,
-provider/evaluator/agent activity, memory/retrieval, hash/candidate, cost or A/C authority; those require later
-distinct source qualification and approvals.
+Obtain a fresh exact D-137 activation quoting the gate tuple, source commit/tree and evidence-commit tuple. It
+may first create only the activation receipt, then the Docker attempt/marker/terminal sequence. Only committed
+Docker READY permits the separate SDK attempt/marker/terminal sequence. A post-marker failure in either phase
+permits only marker preservation, never retry. Even two READY terminals grant no provider/evaluator/agent,
+memory/retrieval, hash/candidate, cost or A/C authority; those require later distinct approvals.

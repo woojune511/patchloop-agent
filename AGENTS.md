@@ -11,19 +11,18 @@
 
 ## Current state
 
-- D-129부터 D-131까지는 immutable historical predecessor다. Consumed gate는 retry/resume/repair하지 않는다.
-- D-132 activation/pricing attempt는 action-started 뒤 terminal 없이 consumed됐다. Application-level
-  unauthenticated `client.send`의 `Response` 반환만 1회 관찰됐다. Underlying HTTP와 response fields는
-  unknown/unretained이며 completed/replayable canonical pricing evidence count는 0, artifact는 없고 replay bytes는 0이다.
-- D-133 marker와 D-134 ambiguous gate는 append-only로 보존한다. Preservation commit
-  `9dc450a747537634e89fe2ade824685f8b5a52d6`은 old gate에 qualification/terminalization authority를 주지 않는다.
-- D-135 procedural terminal은 commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786`에 append-only로
-  봉인됐다. 이는 consumed incident를 절차적으로 종결할 뿐 canonical pricing evidence가 아니다.
-- 현재 D-136 gate는 `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`다.
-  새 helper는 `Response` context-manager 의존을 제거하고 `try/finally`에서 명시적으로 닫으며, mocked
-  경로만 검증됐다. Activation receipt, attempt, action-started, pricing evidence와 terminal은 생성되지 않았다.
-- D-136 준비의 external action은 0이다. Fresh exact pricing activation이 별도로 필요하고 Docker/SDK
-  preflight도 별도 gate다. Provider/evaluator/agent, retrieval/injection, hash/candidate, cost와 A/C authority는 닫혀 있다.
+- D-129부터 D-135까지는 immutable historical predecessor다. Consumed gate나 attempt는
+  retry/resume/repair/backfill하지 않는다.
+- D-136은 gate→receipt→attempt→ACTION_STARTED+pricing terminal 순서로 성공했고 consumed됐다. 공식
+  public GET 1회, HTTP 200, redirect 0, replay 3,735 bytes가 보존됐으며 provider/evaluator/agent와 비용은 0이다.
+- 현재 D-137 gate는 `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`다.
+  Source commit `adcdeadbbb561f82548044d8c9a18d976b584132`은 D-136 success commit의 exact four-path
+  sole child이고, exact gate+10-doc evidence commit은 그 direct child이며 post-commit validator가 결속한다.
+- D-137은 source-qualified only다. Receipt, Docker/SDK attempt, ACTION_STARTED, terminal은 모두 없으며
+  source/gate 준비 중 실제 Docker, SDK, credential/environment value, endpoint 또는 network 관찰은 0이다.
+- Future Docker와 SDK no-call phase는 서로 분리되고 각각 attempt-first, fsynced marker, terminal-or-marker-only
+  consumed/no-retry 계약을 따른다. Fresh exact activation 없이는 어느 phase도 실행하지 않는다.
+- Provider/evaluator/agent, retrieval/injection, execution hash/candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 

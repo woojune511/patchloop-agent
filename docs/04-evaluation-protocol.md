@@ -39,7 +39,7 @@ held-out result.
 | --- | --- | --- |
 | A | `no_memory` | Implemented baseline condition |
 | B | `raw_trace` | Deferred; portable selection/redaction contract incomplete |
-| C | `structured` | Delivery, exact suite and trace qualifier verified offline; live qualification pending |
+| C | `structured` | Delivery, exact suite and trace qualifier verified offline; not live-qualified |
 | D | `selective_structured` | Deferred; applicability calibration and score policy incomplete |
 
 For this readiness panel, C means all three approved generic rules in frozen D-110 `group_provenance`
@@ -94,17 +94,14 @@ D-108's +702 token count covers one request shape, not every live turn. Exact pe
 separately authorized counterfactual count. D-124/D-125 local/mock corrections are inherited; no reservation,
 result, candidate or execution hash exists.
 
-D-132 activation/pricing are consumed after an action-started marker without canonical terminal. The one
-application-level `client.send` Response return does not establish HTTP completion or retained response fields;
-completed/replayable canonical pricing evidence count is 0, its artifact is absent and replay bytes are 0. No
-retry/backfill is allowed.
+D-132 remains a consumed incident with no canonical response evidence and no retry/backfill. D-135's procedural
+terminal preserves that boundary. D-136 later used a new fixed helper and completed one bounded official public
+pricing capture: one GET, HTTP 200, zero redirects and 3,735 replay bytes. Provider/evaluator/agent activity and
+cost were 0. This is pricing evidence only; the D-136 activation is consumed and grants no run authority.
 
-D-134's preserved ambiguous gate is not authority. D-135 commit
-`98f4560e718145bc7465732c1a3d2f5a4ea8d786` now seals the corrected procedural terminal, which is incident
-preservation rather than canonical pricing evidence. D-136 gate
-`d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd` offline-qualifies only a
-distinct fixed pricing helper and future append-only activation topology. Its `try/finally` response-close
-behavior is mocked local evidence, not an official pricing capture. No D-136 activation/evidence artifact,
+D-137 gate `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`
+offline-qualifies separate future Docker and SDK no-call phases. Its local 62/62 focused and 112/112 selected
+current-compatible results are non-additive source-validation evidence, not readiness. No D-137 future artifact,
 execution hash, cost authority or four-row result exists.
 
 ## 7. Run-completion gate

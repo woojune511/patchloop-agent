@@ -2,21 +2,31 @@
 
 ## Current checkpoint
 
-D-136 is the current fixed-pricing successor offline source-qualification gate:
+D-137 is the current D-136-success-terminal no-call-preflight successor offline source gate:
 
-- Gate ID/body `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`;
-  file `sha256:c9e00304383839c656b6a2753fefee459fb14934dec8dfabcf4f39f44a34a53b`,
-  23,767 bytes.
-- Source commit `96916ac481ac8beced2db0be9022607e0705e018`, tree
-  `7e0a07eed6e780265a5d73cab008a0fabe935fe1`, sole parent
-  `98f4560e718145bc7465732c1a3d2f5a4ea8d786`; status
-  `D136_D135_FIXED_PRICING_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED`.
+- Gate ID/body `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`;
+  file `sha256:12745a2dd8bb35b04a29cdcda0be000083bc8cabceed72057c2c6c8e32e0ae25`,
+  21,423 bytes. Its exact gate+10-active-doc evidence commit is the source commit's direct child and is
+  reported by the post-commit validator.
+- Source commit `adcdeadbbb561f82548044d8c9a18d976b584132`, tree
+  `a1f649cd45007d032ae97d76f97b8a0df9180432`, sole parent
+  `2378569536c2367a3186f575a7517e3de7282336`; the commit contains exactly four added implementation paths.
 
-The exact gate+10-active-doc evidence commit is the direct child of that source and is reported by the
-post-commit validator. D-136 exact-binds the D-135 terminal and predecessor-gate topology. Its new helper keeps
-the exact URL, unauthenticated request, redirect, decoded-size and replay boundaries while replacing response
-context-manager use with explicit `try/finally` close semantics. Focused tests passed 29/29; the selected
-relevant set passed 102/102 including focused, so counts are not additive.
+D-137 is source-qualified only. Focused mocked tests passed 62/62; the selected current-compatible set passed
+112/112 with focused included, so counts are not additive. No future D-137 artifact was created, and source/gate
+preparation performed zero real Docker, SDK, credential/environment-value, endpoint or network observations.
+
+## Consumed D-136 pricing success
+
+D-136 completed the exact gate→receipt→attempt→ACTION_STARTED+terminal topology. Gate evidence commit
+`5fad5756d2b40b5f72c0bbc38680120d780ef899`, receipt commit
+`1f9c62ac9309d087d1ef32a237b86ea11bf9d51e`, attempt commit
+`5f419828c358ee9c5f68cdacf38b588705e71e2e` and success commit
+`2378569536c2367a3186f575a7517e3de7282336` are immutable.
+
+The replayable terminal records one unauthenticated official public GET, HTTP 200, zero redirects and 3,735
+decoded/replay bytes. Provider/evaluator/agent calls and cost reservation/spend are 0. The activation and phase
+are consumed; the evidence can be replayed but the action cannot be reused or retried.
 
 ## Consumed D-132 pricing incident
 
@@ -40,8 +50,10 @@ capture or retroactive attempt and is never retried or repaired; exact tuples ar
 ## Manual readiness boundary
 
 D-132 machine evidence recorded Docker 29.6.2 linux/amd64 and both exact images READY from six read-only rc-0
-calls, with zero pulls or mutations. That observation is historical and not future-fresh. The user's
-no-auto-start statement remains self-attested and was not independently verified.
+calls, with zero pulls or mutations. That observation is historical and not future-fresh. D-137 preparation did
+not call Docker or inspect the daemon, images or containers; it also did not import/inspect a live SDK or
+observe credential, environment-value, `.env` or endpoint state. Current readiness can be established only by
+the separately activated future phases.
 
 ## Experiment direction: four-run A/C readiness
 
@@ -51,11 +63,10 @@ efficacy evidence, and there is still no supported live command.
 
 ## Closed authority
 
-D-126 through D-131 are immutable blocked or local predecessors. D-132 activation is consumed at the pricing
-marker boundary, D-134's gate is preservation-only, and the D-135 terminal is incident preservation only.
-D-136 created no activation receipt, attempt, action-started marker, pricing evidence or terminal. Its offline
-preparation made zero official-docs/network/pricing, Docker/SDK/credential, provider/evaluator/agent and
-memory/retrieval calls. Execution hash/candidate, cost and A/C remain unauthorized and absent.
+D-126 through D-135 are immutable predecessors. D-136 succeeded and is consumed; its pricing evidence grants no
+Docker/SDK or downstream execution authority. D-137 has no receipt, Docker/SDK attempt, ACTION_STARTED,
+terminal or preservation artifact. Provider/evaluator/agent, memory/retrieval, execution hash/candidate, cost
+and A/C remain unauthorized and absent.
 
 The deferred D-121 candidate
 `d121executioncandidate_b37bde7b9f49f92118ca277e521cd409b1e51b6f97c1ad8c2e9ff5090a1c38ef`
@@ -63,10 +74,9 @@ was never authorized and is not a fixed-bundle prerequisite.
 
 ## Next gate
 
-After the gate+docs evidence commit, request one fresh exact D-136 pricing activation quoting the gate tuple,
-source commit/tree and evidence-commit tuple. The qualified future sequence requires receipt-only then
-attempt-only commits, an fsynced action-started marker immediately before helper dispatch, and either a
-marker+pricing-terminal success commit or marker-only preservation after failure. Any post-marker failure
-consumes the activation and forbids retry. A successful pricing terminal does not authorize Docker/SDK
-preflight; that requires a later offline successor and separate approval. Hash/candidate, cost and A/C remain
-separate closed gates.
+Request one fresh exact D-137 activation quoting the gate tuple,
+source commit/tree and evidence-commit tuple. The activation first creates a receipt-only commit. Docker then
+uses its own attempt, fsynced ACTION_STARTED and terminal-or-marker-only consumed/no-retry transition. Only a
+committed Docker READY terminal permits a separate SDK attempt with the same one-use pattern. Neither phase may
+mutate Docker or dispatch synthetic/real provider transport. Hash/candidate, cost and A/C remain separate closed
+gates even after both READY terminals.

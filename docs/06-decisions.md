@@ -24,10 +24,10 @@ cross-repository, per-rule or negative-transfer-rate claim.
 
 ### Historical execution gates remain closed
 
-D-122 through D-135 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. D-127 through
-D-129 and the exercised D-132 pricing phase are consumed and never retried or repaired. D-134's preserved gate
-is invalid; D-135's terminal preserves that incident without creating pricing evidence. Planning values,
-source qualification and self-attested observations grant no hash/candidate, cost or A/C authority.
+D-122 through D-136 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. D-127 through
+D-129, the exercised D-132 pricing phase and the successful D-136 pricing phase are consumed and never retried
+or repaired. Planning values, pricing evidence, source qualification and self-attested observations grant no
+hash/candidate, cost or A/C authority.
 
 ### Active docs own current state; archive owns chronology
 
@@ -35,7 +35,7 @@ source qualification and self-attested observations grant no hash/candidate, cos
 - Exact artifacts: `reports/` and the index in `docs/09-evidence.md`.
 - Historical narratives: `docs/archive/` and Git history.
 
-Earlier decisions cannot replace the current D-136 gate or reopen a consumed receipt, attempt or marker.
+Earlier decisions cannot replace the current D-137 gate or reopen a consumed receipt, attempt or marker.
 
 ### 2026-08-09 — D-129 through D-131 preserve the predecessor boundary
 
@@ -43,7 +43,7 @@ D-129 failed closed because a docs open preceded receipt/attempt; transport coun
 local admission from external activation. D-131 materialized receipt-only and armed-intent-only commits with
 external actions zero. Those artifacts are immutable predecessors, not reusable activation authority.
 
-### 2026-08-10 — D-132 is consumed; D-135 seals it and D-136 qualifies a fixed successor
+### 2026-08-10 — D-132 is sealed, D-136 succeeds, and D-137 qualifies no-call preflight source
 
 - D-132's exact activation was exercised through the pricing attempt and action-started marker. The
   application-level unauthenticated `client.send` returned one `Response`, but underlying HTTP request
@@ -56,13 +56,16 @@ external actions zero. Those artifacts are immutable predecessors, not reusable 
 - D-135 source removed the ambiguity, and terminal-only commit
   `98f4560e718145bc7465732c1a3d2f5a4ea8d786` now seals its exact procedural terminal. The terminal is not a
   response reconstruction or canonical pricing evidence and cannot reopen the consumed D-132 action.
-- D-136 source `96916ac481ac8beced2db0be9022607e0705e018` adds a distinct helper that closes every returned
-  `Response` in `try/finally`, including success, redirect and error paths. Historical helpers/artifacts remain
-  immutable. Gate `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`
-  qualifies only this offline source and future append-only one-use topology.
-- A later exact activation must create receipt-only and attempt-only commits before an action-started marker.
-  A post-marker failure consumes the activation and permits only marker preservation, never retry. No D-136
-  future artifact or external action exists. Docker/SDK preflight, hash/candidate, cost and A/C remain separate.
+- D-136 exercised its exact gate, receipt, pricing attempt and marker+terminal path successfully. The terminal
+  retains one official public GET, HTTP 200, no redirects and 3,735 replay bytes. Provider/evaluator/agent calls
+  and cost were 0. The activation is consumed and authorizes no successor action.
+- D-137 source `adcdeadbbb561f82548044d8c9a18d976b584132` is the exact four-add child of the D-136 success
+  commit. Gate `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`
+  qualifies only separate future Docker and SDK no-call phases. No future artifact or external observation was
+  created during preparation.
+- A later exact activation must create and commit the receipt, then run Docker attempt-first/marker-first. Only
+  committed Docker READY permits a separate SDK attempt. Both phases consume their marker identity, never
+  retry after marker, and grant no hash/candidate, cost or A/C authority.
 
 ## Superseded sequencing
 

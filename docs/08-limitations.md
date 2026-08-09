@@ -32,7 +32,7 @@ Historical milestone-by-milestone limitations are archived at
   noncooperative-swap or power-loss durability.
 - No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
-## D-132 through D-136 pricing boundary
+## D-132 through D-137 external boundary
 
 - D-132's activation and pricing attempt are consumed. Application-level unauthenticated `client.send` returned
   one `Response`; this does not prove how many HTTP requests occurred or that an exchange completed.
@@ -45,15 +45,17 @@ Historical milestone-by-milestone limitations are archived at
   text cannot authorize the D-134 terminal.
 - D-135 terminal-only commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786` procedurally seals the
   incident. It does not reconstruct response fields, create canonical pricing evidence or authorize a retry.
-- D-136 source `96916ac481ac8beced2db0be9022607e0705e018` replaces context-manager reliance only in a new helper:
-  every returned `Response` is explicitly closed in `try/finally`. The historical D-127 helper and consumed
-  artifacts remain unchanged.
-- D-136 gate `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd`
-  qualifies future receipt/attempt/marker/terminal contracts, but none of those artifacts exists. Its focused
-  29/29 and selected relevant 102/102 are local mocked tests with focused included, not external readiness.
-- Current-turn official-docs/network/pricing, Docker, SDK/credential, provider/evaluator/agent,
-  memory/retrieval, hash/candidate, cost and A/C activity is zero. Pricing activation and Docker/SDK preflight
-  require separate exact approvals.
+- D-136's new fixed helper completed one bounded official public capture. Its canonical terminal proves one GET,
+  HTTP 200, zero redirects and 3,735 replay bytes, but only for that capture. Provider/evaluator/agent activity
+  and cost were 0, and the consumed activation cannot be reused.
+- D-137 gate `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`
+  qualifies only future Docker and SDK no-call contracts. Its focused 62/62 and selected current-compatible
+  112/112 are non-additive local mocked results, not external readiness.
+- No D-137 future artifact exists. Preparation made zero real Docker, SDK, credential/environment-value, `.env`,
+  endpoint or network observations. Historical Docker readiness is not future-fresh.
+- The future checks remain cooperative repository-local evidence. They do not prove authenticated identity,
+  global/cross-clone exclusion, daemon immutability outside bounded snapshots or long-term environment stability.
+- Provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C authority remain closed.
 
 ## Isolation, identity and operations
 

@@ -123,34 +123,32 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 through D-131 are immutable predecessors; consumed gates never reopen. D-132 committed a pricing attempt
-and reached action-started without canonical terminal, consuming its activation and attempt. No retry, resume,
-repair or backfill is allowed. The incident records one unauthenticated application-level
-`client.send` Response return; HTTP request count/completion are unknown, response fields are unretained,
-completed/replayable canonical pricing evidence count is 0, its artifact is absent and replay bytes are 0.
+D-126 through D-135 are immutable predecessors; consumed gates never reopen. D-132 ended after its marker
+without canonical response evidence, and D-135 later sealed that incident procedurally without reconstruction.
+D-136 used a distinct fixed helper and completed one exact gate→receipt→attempt→ACTION_STARTED+terminal chain.
+Its replayable terminal binds one unauthenticated official public GET, HTTP 200, redirect count 0 and 3,735
+decoded bytes; provider/evaluator/agent calls and cost are 0. The D-136 activation and phase are consumed.
 
-D-133 then committed and preserved the exact marker. D-134's gate is preserved by commit
-`9dc450a747537634e89fe2ade824685f8b5a52d6`, but its ambiguous numeric GET counter makes its qualification and
-terminalization authority invalid. D-135 corrected that boundary and commit
-`98f4560e718145bc7465732c1a3d2f5a4ea8d786` contains only its append-only procedural terminal. That terminal
-preserves the incident and no-retry facts; it is not canonical pricing evidence.
+D-137 source `adcdeadbbb561f82548044d8c9a18d976b584132`, tree
+`a1f649cd45007d032ae97d76f97b8a0df9180432`, is the exact four-add sole child of D-136 success commit
+`2378569536c2367a3186f575a7517e3de7282336`. Gate
+`d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc` binds that complete predecessor
+topology and qualifies only future local writers/validators plus no-call observations. Its exact gate+10-doc
+evidence commit is the source commit's direct child; no future artifact exists.
 
-D-136 gate `d136_aef9768fcc24b48df09034d14aefcd02b1812531fe77bf56ca1601ac4e5e00fd` exact-binds the
-D-135 terminal bytes/commit and predecessor-gate topology. Source
-`96916ac481ac8beced2db0be9022607e0705e018` introduces a distinct helper that preserves the exact official
-URL, unauthenticated request, maximum three redirects, 128,000 decoded-byte bound and replay validation. It
-does not rely on `Response.__enter__`; every returned response is closed in `try/finally` on success, redirect
-and error paths.
+The future D-137 append-only contract requires:
 
-The future append-only activation contract requires:
+- a fresh exact approval quoting the D-137 gate tuple, source commit/tree and gate+active-doc evidence tuple;
+- one activation receipt committed before either phase;
+- a Docker-only attempt, fsynced ACTION_STARTED, then exact READY/BLOCKED terminal or marker-only preservation;
+- Docker observation limited to the approved CLI, already-running linux/amd64 daemon, exact digest-pinned images
+  and zero-existing-container inventory across stable snapshots;
+- no Docker mutation, pull/load or container operation, and no retry after any marker;
+- a committed Docker READY terminal before a separate SDK-only attempt can be created;
+- an SDK fsynced marker followed by a no-call READY/BLOCKED terminal or marker-only preservation;
+- SDK observation limited to repository provenance, routing and credential-presence bits, never values or `.env`,
+  with synthetic and real transport dispatch count 0.
 
-- a fresh exact approval quoting the D-136 gate tuple, source commit/tree and gate+active-doc
-  evidence-commit tuple;
-- one receipt-only commit followed by one attempt-only commit;
-- a new-only, fsynced action-started marker immediately before the first helper dispatch;
-- on success, marker plus replayable pricing terminal as the exact two-artifact transition commit;
-- after any post-marker failure, marker-only preservation as the sole child and no retry;
-- a later offline successor before Docker/SDK preflight.
-
-No D-136 receipt, attempt, marker, pricing evidence or terminal exists. Gate construction invoked no future
-writer or pricing helper; external, runtime, hash/candidate, cost and A/C authority remain false.
+D-137 source/gate preparation made zero real Docker, SDK, credential/environment-value, endpoint or network
+observations. It grants no current readiness, provider/evaluator/agent, memory/retrieval, execution
+hash/candidate, cost or A/C authority.
