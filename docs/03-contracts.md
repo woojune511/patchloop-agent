@@ -130,16 +130,12 @@ and an SDK construction probe with zero network calls.
 D-126 has five environment blockers plus a provenance gap: no raw official bytes independently rebind its
 recorded digest/size/ETag. It creates no hash/candidate/live authority or cost.
 
-D-127 requires committed receipt/clean identity, the official URL with `trust_env=False`, bounded
-replayable pricing, exact-image Docker scope and attempt-first append-only phases. Missing API key or unverified
-daemon auto-restart state fails closed. Static passed with an exact-key ephemeral `.env` loader that did not
-expose the key value. The Docker phase then recorded an attempt and terminal blocked observation after six
-bounded read-only CLI calls; it made no Desktop start, pull/image-store mutation or container/workload call.
-The existing blocked terminal is idempotent and prevents this receipt from advancing into pricing or preflight,
-so changed environment state requires a separately approved successor. Hash/candidate/live authority remains
-forbidden.
+D-127 remains an append-only terminal-blocked predecessor; changed environment state did not reopen it.
 
-D-128 materializes only that successor's offline contract. It does not load `.env`, create a receipt, expose an
-external entrypoint or authorize any call. A future receipt must bind the committed D-128 gate/source, follow
-manual user-start plus no-container-auto-start attestation, and precede each external phase with durable attempt
-intent. The agent is never authorized to start Docker Desktop or the daemon.
+D-128 bound a clean source commit and its receipt-only child, then wrote durable Docker attempt intent before
+the first external action. The exact approved CLI may inspect only the already-running Linux daemon and the two
+exact digest images; pull is allowed only after confirmed absence. The observed daemon-unavailable result made
+three read-only calls and no pull/mutation/container/workload call, then wrote a terminal blocked artifact.
+That terminal consumes the receipt and forbids pricing, SDK preflight and gate descendants. An orphaned attempt
+would likewise require a new exact approval. User self-attestation is recorded but is not authenticated or an
+agent observation. The agent may not start Desktop/daemon; hash/candidate/live/cost authority remains false.

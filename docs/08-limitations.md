@@ -46,10 +46,10 @@ estimate and not a percentage of engineering completion.
 - D-126 sealed a clean tracked source commit, fresh pricing and bounded no-call observations, but five
   environment blockers remain. Candidate/hash, paid approval and every live result are absent; the proposed
   `$55` hard cap is neither approved nor used.
-- D-127 static passed, but its Docker remediation terminally confirmed that safe daemon/image readiness was
-  not established. It did not reach pricing, repeated preflight or gate creation.
-- D-128 is source-only mocked qualification. Its 12/12 focused and inclusive 76/76 selected tests do not prove
-  daemon safety/readiness and create no approval, receipt, external call, execution identity, cost or result.
+- D-127 remains a sealed terminal-blocked predecessor.
+- D-128 recorded an approval receipt and three failed read-only Docker calls, but the Linux daemon endpoint was
+  unavailable. It did not reach image pull, pricing, SDK preflight or gate creation and establishes no
+  environment readiness, execution identity, cost or result.
 
 ## Isolation and external controls
 
@@ -69,16 +69,12 @@ estimate and not a percentage of engineering completion.
   readiness, workload execution, noncooperative path-swap resistance or bounded streaming capture.
 - The SDK no-call probe proves local construction only. It found no API key and did not establish explicit
   production `base_url` or `trust_env=False` behavior.
-- D-127 used an exact-key ephemeral `.env` loader for static admission without exposing the value; this does
-  not make the local credential itself part of evidence. Its six bounded read-only Docker CLI calls did not
-  start Desktop, mutate images or touch containers/workloads. The terminal blocker
-  `preexisting-container-auto-restart-state-unverified` remains because daemon launch could violate the closed
-  container-start boundary.
-- The D-127 blocked terminal is append-only and idempotent for its receipt. Even after a manual safe Desktop
-  start or authority expansion, no retry or later pricing/preflight phase is authorized without a separately
-  approved successor.
-- D-128 still requires a committed evidence identity, user manual Docker start, no-auto-start attestation and
-  exact tuple approval. The agent is explicitly barred from starting Desktop or the daemon.
+- D-127's exact-key loader did not expose the value; its six Docker reads and consumed blocked terminal prove
+  neither readiness nor mutation. D-128 did not reopen it.
+- D-128 records the user's self-attested manual start/no-auto-start statement, not an authenticated or
+  independently observed fact. The daemon endpoint was nevertheless unreachable. Its receipt is consumed;
+  after user verification of reachability, renewed work needs a new exact successor approval. The agent remains
+  explicitly barred from starting Desktop or the daemon.
 - Archive prose can contain stale future tense. Current authority comes from source/artifacts and
   `docs/current-status.md`.
 

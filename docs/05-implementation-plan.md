@@ -10,8 +10,9 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Stop pending user manual Docker Desktop start, no-pre-existing-container-auto-start attestation and exact
-approval citing the committed D-128 tuple. The agent must not start the daemon; all later gates remain closed.
+Stop after the D-128 terminal blocker. The consumed receipt cannot be retried. Wait for the user to verify the
+Docker Desktop Linux daemon endpoint is reachable and provide a new exact successor approval. The agent must
+not start the daemon; all later gates remain closed.
 
 ## Completed foundation
 
@@ -38,24 +39,17 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-126 sealed blocked; D-127 terminal blocked; D-128 offline source qualified, approval required.
+Status: D-126 sealed blocked; D-127 historical terminal blocked; D-128 external terminal blocked.
 
-D-126 sealed source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing,
-12 read-only Docker commands with zero workloads and an SDK no-call probe. Five exact Docker/credential/client
-blockers and a pricing-provenance replayability gap remain. The bounded D-127 scope may resolve them and repeat
-the no-call preflight only; the blocked D-126 artifacts are not rewritten.
+D-126 remains the latest sealed gate and D-127 remains an unchanged blocked predecessor. D-128 used source
+`23038c16467a32c5b862f84e09797a298101f4e4` and receipt-only child
+`4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50`. After durable attempt intent, the exact CLI made three read-only
+calls (`version`, Moto inspect, Babel inspect), all return code 1, and recorded blocker
+`already-running-docker-desktop-linux-daemon-unavailable`.
 
-D-127 static passed with an exact-key ephemeral `.env` loader and no key-value exposure. Its Docker phase made
-six bounded read-only CLI calls, then recorded terminal blocker
-`preexisting-container-auto-restart-state-unverified`; Desktop start, image mutation and container/workload
-counts remained zero. Pricing capture, repeated preflight and gate were not opened. Because the receipt now has
-an idempotent blocked terminal, it cannot be retried after environment changes without a separate successor
-approval.
-
-D-128 materializes the source-only successor contract at commit
-`3b192e177b2da1302a030eb457ca96f7dae86611`. It created no receipt, external attempt/call, pricing/preflight,
-hash/candidate, cost or A/C action. The gate does not embed its evidence commit; the commit containing the
-gate/docs supplies the identity a future exact approval must cite.
+Desktop/daemon start, image pull/mutation, container/workload, pricing GET, SDK attempt, gate, provider/
+evaluator/agent, retrieval/injection, hash/candidate, cost and A/C counts remain zero. No downstream descendant
+was created. The receipt is consumed; work item 6 can continue only through a newly approved successor.
 
 ## Work item 7 — execution hash and candidate
 

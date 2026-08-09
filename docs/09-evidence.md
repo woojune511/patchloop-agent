@@ -3,20 +3,35 @@
 This document links to canonical machine artifacts. It does not duplicate the full historical narrative,
 which is preserved at `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-128 offline terminal-successor source
+## D-128 external successor — terminal blocked
 
-- Gate `reports/live-pilot/artifacts/d128-d127-terminal-successor-offline-source-gate.json`:
-  ID `d128_9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`;
+- Offline predecessor gate ID `d128_9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`;
   body `sha256:9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`;
-  file `sha256:2528aa018908958bdd35b4b6202c75be2b4ca72521d64bfed800284a015a739c`; 12,557 bytes.
-- Status `D128_D127_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`; source commit
-  `3b192e177b2da1302a030eb457ca96f7dae86611`.
+  file `sha256:2528aa018908958bdd35b4b6202c75be2b4ca72521d64bfed800284a015a739c`; 12,557 bytes;
+  evidence commit `aeac01a04447c731ee5eac4c56e599eb74532a60`.
+- Source `23038c16467a32c5b862f84e09797a298101f4e4`; tree
+  `46862cc0d48035e866d8d5086926391b56f90ba2`; sole parent `aeac01a04447c731ee5eac4c56e599eb74532a60`.
+- Receipt commit `4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50`; tree
+  `2d01c39b264cff0abf18ec1a11a05c49b2507895`; sole parent the source commit.
+- Receipt `reports/live-pilot/artifacts/d128-d127-terminal-successor-external-no-call-preflight-approval-receipt.json`:
+  ID `d128approval_11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd`;
+  body `sha256:11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd`;
+  file `sha256:b5cb1e1d65e1a1d3ebf726ba85031ccb66dfb7cf950fab1dde68cbeebaf72050`; 7,713 bytes.
+- Attempt `reports/live-pilot/artifacts/d128-docker-image-readiness-remediation-attempt-intent.json`:
+  ID `d128dockerimagereadinessremediationattempt_25c78d210117696eb1f2f8b7f73069c022b9bb00b332bc83350eb5dab388cc21`;
+  body `sha256:25c78d210117696eb1f2f8b7f73069c022b9bb00b332bc83350eb5dab388cc21`;
+  file `sha256:04c5d2a32bc908d2dfc4b754779ec75a43aee19ff28c68c1bc7843c4d38c71c5`; 5,583 bytes.
+- Terminal `reports/live-pilot/artifacts/d128-exact-docker-image-readiness-remediation-observation.json`:
+  ID `d128dockerremediation_2682a64e07d869c9989f02028d994f7e16a50327f07b0692917475cdac0ad78f`;
+  body `sha256:2682a64e07d869c9989f02028d994f7e16a50327f07b0692917475cdac0ad78f`;
+  file `sha256:77dbd861466e5ce4913a0a7f0c4d1240b83a0a5be5169571c104c0e42a95e939`; 9,270 bytes;
+  status `D128_EXACT_DOCKER_IMAGE_READINESS_REMEDIATION_OBSERVED_BLOCKED`; blocker
+  `already-running-docker-desktop-linux-daemon-unavailable`.
 
-Focused tests passed 12/12; the D-122/D-127/D-128 selected union passed 76/76 and includes those 12. The gate
-created no approval receipt, external attempt, Docker/network/pricing/SDK/provider call, hash/candidate, cost or
-A/C action. The gate does not embed its evidence commit; the commit containing gate/docs supplies that identity.
-After user manual Docker start and no-auto-start attestation, exact approval must cite both; the agent must not
-start Desktop or the daemon.
+The exact CLI made three read-only calls (`version`, Moto inspect, Babel inspect), all return code 1.
+Desktop/daemon start, pull/mutation, container/workload, provider/evaluator/agent, retrieval/injection, pricing
+GET, SDK attempt, hash/candidate, cost and A/C counts are zero. No pricing/preflight/gate descendant exists.
+The receipt is consumed; endpoint reachability must be user-verified before a newly approved successor.
 
 ## D-127 terminal blocked Docker remediation
 
@@ -36,12 +51,9 @@ start Desktop or the daemon.
 - Terminal status: `D127_EXACT_DOCKER_REMEDIATION_OBSERVED_BLOCKED`; source
   `cec335f345a56d544614fe0c9ec3e75cba78bf17`.
 
-Static passed after an exact-key ephemeral loader imported only `OPENAI_API_KEY` from the local `.env`; the
-value was not exposed or recorded. The terminal records six bounded read-only Docker CLI calls and blocker
-`preexisting-container-auto-restart-state-unverified`. Desktop start, pulls/image-store mutation,
-container/workload, pricing GET, preflight, gate, provider/evaluator/agent, memory, hash/candidate and cost are
-zero or absent. The terminal is exact-idempotent for this receipt, so a changed environment requires a
-separately approved successor. D-126 remains the latest sealed checkpoint.
+Static imported only the `OPENAI_API_KEY` name without exposing its value. Six read-only Docker calls then
+recorded blocker `preexisting-container-auto-restart-state-unverified`; every mutation, later phase and live/
+cost action remained zero. Its receipt is consumed. D-126 remains the latest sealed checkpoint.
 
 ## D-126 clean-source/pricing/no-call preflight
 

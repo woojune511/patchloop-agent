@@ -74,15 +74,18 @@ six bounded read-only CLI calls and terminally blocked before Desktop start or m
 `--run-external-preflight`: the existing receipt is terminal/idempotent blocked, and renewed work requires a
 separate exact successor approval.
 
-## Validate D-128 offline source gate
+## Validate D-128 source and terminal-blocked contracts
 
 ```powershell
 uv run pytest -q tests/test_d128_d127_terminal_successor_offline.py
 uv run python scripts/build_d128_d127_terminal_successor_offline.py --validate
+uv run pytest -q tests/test_d128_docker_no_start_remediation.py tests/test_d128_terminal_successor_no_call_preflight.py
 ```
 
-This is local replay only. The recorded focused count is 12/12; the inclusive D-122/D-127/D-128 selected union
-is 76/76, not an additional count. Validation creates no approval, receipt or external action.
+These are local or mocked checks. The production D-128 receipt is consumed by its terminal blocked Docker
+observation after three read-only calls. Do not use `--run-external-preflight`: it cannot reopen that receipt,
+and no pricing/preflight/gate descendant exists. `--validate`/`--validate-post-commit` on the external builder
+requires a completed gate and is not the validator for this blocked branch.
 
 ## Validate current memory contracts
 
@@ -132,9 +135,9 @@ historical snapshot hashes, the single D-121 prose owner and the closed four-run
 There is no supported live A/C command. Although the exact suite is an `ExperimentSuite` source, a future live
 command must appear only after:
 
-1. commit the D-128 gate/docs and preserve D-127 evidence;
-2. user-start Docker Desktop and attest that no pre-existing container auto-started;
-3. obtain exact approval citing the committed D-128 tuple before its bounded successor scope;
+1. preserve the D-128 receipt, attempt and terminal evidence without retry;
+2. have the user verify the Docker Desktop Linux daemon endpoint is actually reachable;
+3. obtain a new exact successor approval before any renewed Docker/pricing/preflight work;
 4. after a ready successor, obtain separate hash/candidate and then exact live approvals.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that

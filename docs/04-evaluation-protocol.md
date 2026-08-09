@@ -99,12 +99,12 @@ source commit, fresh official pricing and bounded no-call observations, but five
 readiness false. Pricing facts/math were fresh and correct, but raw official bytes were not retained for
 independent provenance replay. No reservation, result, candidate or execution hash exists.
 
-D-127 client/pricing/Docker/no-call source and receipt exist. Static passed through an exact-key ephemeral
-`.env` loader without exposing the value. Docker remediation then terminally blocked on unverified
-pre-existing-container auto-restart state after six bounded read-only CLI calls and before Desktop start,
-image mutation, pricing, repeated preflight or gate creation. That terminal is idempotent for the receipt; a
-separately approved successor is required after any environment change. D-128 qualifies that successor's
-source contract offline only; it creates no approval or external/live authority. The four rows do not change.
+D-127 remains a sealed terminal-blocked predecessor. D-128 recorded a distinct source commit, receipt-only
+child and exact approval receipt. Its Docker attempt then made three read-only CLI calls, all return code 1,
+and terminally blocked on `already-running-docker-desktop-linux-daemon-unavailable`. It did not start Desktop
+or the daemon, pull/mutate images, touch containers/workloads, or begin pricing, SDK preflight or gate creation.
+The receipt is consumed; renewed work needs a new exact successor approval after the user verifies endpoint
+reachability. No execution/cost/memory authority changed, and the four rows do not change.
 
 ## 7. Run-completion gate
 

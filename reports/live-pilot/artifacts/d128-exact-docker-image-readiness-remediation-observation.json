@@ -1,0 +1,217 @@
+{
+  "schema_version": "d127-terminal-successor-docker-image-remediation-d128-v1",
+  "artifact_id": "d128dockerremediation_2682a64e07d869c9989f02028d994f7e16a50327f07b0692917475cdac0ad78f",
+  "semantic_body_hash": "sha256:2682a64e07d869c9989f02028d994f7e16a50327f07b0692917475cdac0ad78f",
+  "semantic_body": {
+    "milestone": "D-128",
+    "evidence_kind": "exact-authorized-already-running-docker-image-remediation-observation",
+    "recorded_at": "2026-08-09T05:14:43.990871Z",
+    "status": "D128_EXACT_DOCKER_IMAGE_READINESS_REMEDIATION_OBSERVED_BLOCKED",
+    "receipt_binding": {
+      "path": "reports/live-pilot/artifacts/d128-d127-terminal-successor-external-no-call-preflight-approval-receipt.json",
+      "artifact_id": "d128approval_11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+      "semantic_body_hash": "sha256:11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+      "file_bytes": 7713,
+      "file_sha256": "sha256:b5cb1e1d65e1a1d3ebf726ba85031ccb66dfb7cf950fab1dde68cbeebaf72050"
+    },
+    "attempt_binding": {
+      "path": "reports/live-pilot/artifacts/d128-docker-image-readiness-remediation-attempt-intent.json",
+      "artifact_id": "d128dockerimagereadinessremediationattempt_25c78d210117696eb1f2f8b7f73069c022b9bb00b332bc83350eb5dab388cc21",
+      "semantic_body_hash": "sha256:25c78d210117696eb1f2f8b7f73069c022b9bb00b332bc83350eb5dab388cc21",
+      "file_bytes": 5583,
+      "file_sha256": "sha256:04c5d2a32bc908d2dfc4b754779ec75a43aee19ff28c68c1bc7843c4d38c71c5"
+    },
+    "source_identity": {
+      "commit": "23038c16467a32c5b862f84e09797a298101f4e4",
+      "tree": "46862cc0d48035e866d8d5086926391b56f90ba2",
+      "parents": [
+        "aeac01a04447c731ee5eac4c56e599eb74532a60"
+      ],
+      "branch": "codex/patchloop-mvp-baseline",
+      "source_paths_and_index_clean": true,
+      "git_cli_observation": {
+        "resolved_path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+        "file_name": "git.exe",
+        "file_bytes": 4422544,
+        "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+        "linklike": false,
+        "version": "git version 2.54.0.windows.1",
+        "actual_git_engine_invoked_directly": true,
+        "repository_local_core_autocrlf": "false",
+        "authenticated_or_vendor_signed_identity_claimed": false,
+        "stable_during_observation": true,
+        "minimal_secret_free_environment": true,
+        "fsmonitor_disabled": true
+      }
+    },
+    "receipt_commit_identity": {
+      "commit": "4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50",
+      "tree": "2d01c39b264cff0abf18ec1a11a05c49b2507895",
+      "parents": [
+        "23038c16467a32c5b862f84e09797a298101f4e4"
+      ],
+      "branch": "codex/patchloop-mvp-baseline",
+      "receipt_binding": {
+        "path": "reports/live-pilot/artifacts/d128-d127-terminal-successor-external-no-call-preflight-approval-receipt.json",
+        "artifact_id": "d128approval_11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+        "semantic_body_hash": "sha256:11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+        "file_bytes": 7713,
+        "file_sha256": "sha256:b5cb1e1d65e1a1d3ebf726ba85031ccb66dfb7cf950fab1dde68cbeebaf72050"
+      },
+      "receipt_only_child_of_source": true,
+      "source_module_bytes_unchanged": true
+    },
+    "manual_prerequisite_attestation": {
+      "docker_desktop_linux_daemon_started_manually_by_user": true,
+      "user_confirmed_no_preexisting_container_auto_started": true,
+      "agent_must_not_start_docker_desktop_or_daemon": true,
+      "manual_state_change_does_not_reopen_d127": true,
+      "attestation_is_user_self_attested": true,
+      "attestation_is_authenticated_or_signed": false,
+      "container_auto_start_state_independently_observed_by_agent": false
+    },
+    "observation": {
+      "schema_version": "d128-already-running-docker-remediation-observation-v1",
+      "forced_daemon_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+      "approved_cli_binding_before": {
+        "file_name": "docker.exe",
+        "file_bytes": 43095472,
+        "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+        "linklike": false
+      },
+      "approved_cli_binding_after": {
+        "file_name": "docker.exe",
+        "file_bytes": 43095472,
+        "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+        "linklike": false
+      },
+      "daemon_start_attempted": false,
+      "daemon_start_count": 0,
+      "exact_authorized_images": [
+        "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+        "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+      ],
+      "before": {
+        "daemon": null,
+        "images": {
+          "moto": null,
+          "babel": null
+        },
+        "passed": false
+      },
+      "pull_basis": {
+        "daemon": null,
+        "images": {
+          "moto": null,
+          "babel": null
+        },
+        "passed": false
+      },
+      "after": {
+        "daemon": null,
+        "images": {
+          "moto": null,
+          "babel": null
+        },
+        "passed": false
+      },
+      "after_observation_performed": false,
+      "pulled_images": [],
+      "observed_blockers": [
+        "already-running-docker-desktop-linux-daemon-unavailable"
+      ],
+      "commands": [
+        {
+          "role": "daemon-version",
+          "argv_contract": [
+            "docker.exe",
+            "version",
+            "--format",
+            "{\"ClientVersion\":{{json .Client.Version}},\"ServerVersion\":{{json .Server.Version}},\"ServerOs\":{{json .Server.Os}},\"ServerArch\":{{json .Server.Arch}}}"
+          ],
+          "return_code": 1,
+          "timed_out": false,
+          "stdout_bytes": 43,
+          "stdout_sha256": "sha256:6f78a5ee56d26196e2cc35d28e6e8e3b612118d65cef20dc707df567d37f3d58",
+          "stderr_bytes": 224,
+          "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+          "stdout_within_bound": true,
+          "stderr_within_bound": true,
+          "raw_stdout_persisted": false,
+          "raw_stderr_persisted": false
+        },
+        {
+          "role": "image-moto",
+          "argv_contract": [
+            "docker.exe",
+            "image",
+            "inspect",
+            "--format",
+            "{\"Id\":{{json .Id}},\"RepoDigests\":{{json .RepoDigests}}}",
+            "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+          ],
+          "return_code": 1,
+          "timed_out": false,
+          "stdout_bytes": 1,
+          "stdout_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "stderr_bytes": 224,
+          "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+          "stdout_within_bound": true,
+          "stderr_within_bound": true,
+          "raw_stdout_persisted": false,
+          "raw_stderr_persisted": false
+        },
+        {
+          "role": "image-babel",
+          "argv_contract": [
+            "docker.exe",
+            "image",
+            "inspect",
+            "--format",
+            "{\"Id\":{{json .Id}},\"RepoDigests\":{{json .RepoDigests}}}",
+            "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+          ],
+          "return_code": 1,
+          "timed_out": false,
+          "stdout_bytes": 1,
+          "stdout_sha256": "sha256:01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
+          "stderr_bytes": 224,
+          "stderr_sha256": "sha256:e9133cf10b02b0b91c8b119848513db0ac541e7c3c19681266939e4b9952f7cc",
+          "stdout_within_bound": true,
+          "stderr_within_bound": true,
+          "raw_stdout_persisted": false,
+          "raw_stderr_persisted": false
+        }
+      ],
+      "docker_cli_command_count": 3,
+      "read_only_daemon_or_image_call_count": 3,
+      "image_pull_call_count": 0,
+      "image_store_mutation_count": 0,
+      "container_create_start_run_exec_count": 0,
+      "docker_workload_call_count": 0,
+      "every_output_within_bound": true,
+      "pull_commands_succeeded": true,
+      "passed": false,
+      "raw_stdout_or_stderr_persisted": false
+    },
+    "authority": {
+      "docker_desktop_or_daemon_start_count": 0,
+      "docker_cli_command_count": 3,
+      "read_only_daemon_or_image_call_count": 3,
+      "docker_image_pull_call_count": 0,
+      "docker_image_store_mutation_count": 0,
+      "exact_authorized_images_only": true,
+      "manual_no_auto_start_attestation_recorded": true,
+      "container_auto_start_state_independently_observed": false,
+      "provider_calls_made": 0,
+      "evaluator_calls_made": 0,
+      "agent_runs_started": 0,
+      "runtime_memory_injection_count": 0,
+      "retrieval_call_count": 0,
+      "container_create_start_run_exec_count": 0,
+      "execution_hash_created": false,
+      "execution_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0"
+    }
+  }
+}

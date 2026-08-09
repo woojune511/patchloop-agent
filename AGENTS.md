@@ -23,16 +23,16 @@ pipeline은 이를 검증하고 개선하기 위한 지원 계층이다.
   execution-hash readiness는 false다. Raw official response bytes는 보존되지 않았다.
 - Docker 관찰은 12개 command, 6개 read-only daemon call, workload/mutating call 0이다. SDK probe는
   local no-call이며 network call 0이다. Provider/evaluator/agent/retrieval/injection과 cost도 모두 0이다.
-- D-127 append-only approval receipt 뒤 exact-key ephemeral `.env` loader로 key 값을 노출하지 않고
-  static을 통과했다. Docker remediation은 source `cec335f345a56d544614fe0c9ec3e75cba78bf17`에서
-  6개 bounded read-only CLI call만 기록한 뒤 `preexisting-container-auto-restart-state-unverified`로
-  terminal blocked됐다. Desktop start, image pull/store mutation, container/workload와 이후 pricing/preflight/
-  gate는 모두 0이다.
-- D-128은 source `3b192e177b2da1302a030eb457ca96f7dae86611`의 offline successor gate만
-  materialize했다. Status는 `D128_D127_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`다.
-  Receipt/external attempt와 Docker/network/pricing/SDK/provider/hash/candidate/cost/A-C action은 모두 0이다.
-  Agent는 daemon을 시작하지 않는다. 사용자가 Desktop을 직접 시작하고 container auto-start가 없었다고
-  확인한 뒤, committed D-128 tuple을 인용하는 별도 exact approval이 필요하다.
+- D-127은 six-call read-only Docker remediation 뒤 terminal blocked된 sealed predecessor다.
+- D-128 external source `23038c16467a32c5b862f84e09797a298101f4e4`와 receipt-only child
+  `4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50`를 봉인했다. Exact approval receipt 뒤 Docker phase는
+  3개 read-only CLI call(`version`, Moto/Babel inspect; 모두 rc 1)만 기록하고
+  `already-running-docker-desktop-linux-daemon-unavailable`로 terminal blocked됐다. Status는
+  `D128_EXACT_DOCKER_IMAGE_READINESS_REMEDIATION_OBSERVED_BLOCKED`다.
+- D-128의 Desktop/daemon start, image pull/mutation, container/workload, pricing GET, SDK attempt,
+  provider/evaluator/agent, retrieval/injection, hash/candidate, cost와 A/C action은 모두 0이다. Receipt는
+  소비됐고 pricing/preflight/gate descendant는 없다. Agent는 daemon을 시작하지 않으며, endpoint가 실제
+  reachable하다는 사용자 확인 뒤 새로운 exact successor approval이 필요하다.
 - D-124와 D-125는 sealed-historical predecessor다. D-125가 qualified한 repository-local consumption과
   mocked finalization recovery의 cross-store/global, actual-kill, power-loss 한계는 그대로다.
 - 실제 reservation, result, execution hash와 candidate는 없다. Runtime memory injection, paid execution,

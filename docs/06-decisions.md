@@ -59,11 +59,14 @@ delivery with retrieval quality.
   incidental-start authority does not reopen it; any renewed remediation/pricing/preflight path requires a
   separately approved successor.
 
-### 2026-08-09 — D-128 is offline source, not approval
+### 2026-08-09 — D-128 external successor is terminal blocked
 
-- D-128 qualifies the D-127-terminal successor contract without loading credentials or making external calls.
-- The agent must not start Docker. User manual start plus no-container-auto-start attestation comes first.
-- A new receipt/action needs exact approval citing the committed D-128 tuple; generic proceed is insufficient.
+- D-128 bound distinct source and receipt-only commits plus the user's exact self-attested approval.
+- Its attempt-first Docker phase made three read-only CLI calls, all return code 1, and recorded blocker
+  `already-running-docker-desktop-linux-daemon-unavailable`; no start, pull, mutation or container action ran.
+- Pricing, SDK preflight and gate descendants were not created. The receipt is consumed and cannot be retried.
+- Renewed work requires user verification that the endpoint is reachable and a new exact successor approval.
+  The agent remains forbidden to start Desktop or the daemon.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 
@@ -73,7 +76,7 @@ delivery with retrieval quality.
 - Repeating every milestone in every topic document is discontinued.
 
 Earlier retained decisions remain discoverable in the archived ledger and `docs/09-evidence.md`; they do not
-change D-126 as latest sealed gate or the closed D-128 authority boundary.
+change D-126 as latest sealed gate or reopen the consumed D-128 receipt.
 
 ## Superseded sequencing
 
