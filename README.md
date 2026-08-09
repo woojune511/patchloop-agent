@@ -14,7 +14,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 
 The exact suite and plan live under `experiments/`. Delivery, qualification and R2 cost/completion source are
 offline-qualified. D-126 is the latest sealed gate. D-127 static passed without key exposure, then Docker
-remediation terminally blocked after six read-only CLI calls and before Desktop start, mutation or later phases.
+remediation terminally blocked. D-128 materializes only an offline successor contract; approval and all
+external/live authority remain absent.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -36,6 +37,7 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-126 sealed observations, not readiness; no reservation, result, candidate, hash or A/C outcome exists.
 - D-127 recorded a terminal blocked Docker-remediation observation: six bounded read-only Docker CLI calls,
   no Desktop start, pull/image-store mutation or container/workload, and no pricing/preflight/gate or live call.
+- D-128 qualified offline source only: focused 12/12 and inclusive selected union 76/76; no external action.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -55,12 +57,9 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 Use `uv run patchloop --help` to discover the CLI.
 
-CLI availability does not imply readiness. The approved D-127 scope stops at blocker remediation, official
-pricing capture and a repeated no-call preflight. The current receipt is terminal/idempotent blocked after
-read-only Docker observation, so it cannot be retried after Desktop state changes. A user must first start
-Docker Desktop while safely accounting for existing restart-policy containers, or explicitly expand the
-incidental-start authority; either route then needs a separate successor approval. A later ready successor
-still needs separate exact-gate approval before hash/candidate preparation and live approval.
+CLI availability does not imply authority. The user must manually start Docker Desktop and attest that no
+pre-existing container auto-started; the agent must not start it. Only then may an exact approval cite the
+committed D-128 tuple. Hash/candidate and live execution remain later gates.
 
 ## Documentation
 

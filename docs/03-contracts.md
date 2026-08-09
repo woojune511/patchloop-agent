@@ -138,3 +138,8 @@ bounded read-only CLI calls; it made no Desktop start, pull/image-store mutation
 The existing blocked terminal is idempotent and prevents this receipt from advancing into pricing or preflight,
 so changed environment state requires a separately approved successor. Hash/candidate/live authority remains
 forbidden.
+
+D-128 materializes only that successor's offline contract. It does not load `.env`, create a receipt, expose an
+external entrypoint or authorize any call. A future receipt must bind the committed D-128 gate/source, follow
+manual user-start plus no-container-auto-start attestation, and precede each external phase with durable attempt
+intent. The agent is never authorized to start Docker Desktop or the daemon.

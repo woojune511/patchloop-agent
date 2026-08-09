@@ -59,6 +59,12 @@ delivery with retrieval quality.
   incidental-start authority does not reopen it; any renewed remediation/pricing/preflight path requires a
   separately approved successor.
 
+### 2026-08-09 — D-128 is offline source, not approval
+
+- D-128 qualifies the D-127-terminal successor contract without loading credentials or making external calls.
+- The agent must not start Docker. User manual start plus no-container-auto-start attestation comes first.
+- A new receipt/action needs exact approval citing the committed D-128 tuple; generic proceed is insufficient.
+
 ### 2026-08-08 — active docs own current state; archive owns chronology
 
 - Current checkpoint and next gate: `docs/current-status.md`.
@@ -66,24 +72,8 @@ delivery with retrieval quality.
 - Historical narratives: `docs/archive/`.
 - Repeating every milestone in every topic document is discontinued.
 
-## Retained milestone decisions
-
-| Decision | Effective consequence |
-| --- | --- |
-| D-074 | Generic V2/V5 agent remains the comparison baseline; task-specific V10/V11 changes are not silently promoted. |
-| D-096/D-097 | Comparison runtime uses the dated gpt-5.4-mini, tool v2, phase-evidence-v5 and high-headroom 3M/3600 tuple. |
-| D-098 | No-memory development baseline is sealed; it is not a held-out memory-effect result. |
-| D-103–D-105 | Exactly three reviewed groups and exact model-facing renderings are admitted. |
-| D-108 | The full rendered bundle added 702 input tokens in the exact provider count pair. |
-| D-110 | The three-entry index is frozen, while retrieval/injection authority remains false. |
-| D-112/D-115 | Selective ranking is not ready; threshold/weight-only correction is rejected. |
-| D-121 | No-start Docker readiness is sealed; actual successor execution remains separately gated and deferred. |
-| D-122 | Exact A/C suite and trace qualification are sealed offline; no execution candidate or live authority exists. |
-| D-123 | Historical R2 source seal; post-seal audit found stale runtime settlement reconciliation. |
-| D-124 | Historical settlement-reconciliation correction; validate sealed-historical. |
-| D-125 | Historical local/mock runtime-finalization source; candidate and live authority remained blocked. |
-| D-126 | Clean source/pricing/no-call observations sealed; five blockers and all live authority remain closed. |
-| D-127 | Static passed, but Docker remediation terminally blocked before Desktop start or later phases. |
+Earlier retained decisions remain discoverable in the archived ledger and `docs/09-evidence.md`; they do not
+change D-126 as latest sealed gate or the closed D-128 authority boundary.
 
 ## Superseded sequencing
 

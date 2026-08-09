@@ -28,6 +28,11 @@ pipeline은 이를 검증하고 개선하기 위한 지원 계층이다.
   6개 bounded read-only CLI call만 기록한 뒤 `preexisting-container-auto-restart-state-unverified`로
   terminal blocked됐다. Desktop start, image pull/store mutation, container/workload와 이후 pricing/preflight/
   gate는 모두 0이다.
+- D-128은 source `3b192e177b2da1302a030eb457ca96f7dae86611`의 offline successor gate만
+  materialize했다. Status는 `D128_D127_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`다.
+  Receipt/external attempt와 Docker/network/pricing/SDK/provider/hash/candidate/cost/A-C action은 모두 0이다.
+  Agent는 daemon을 시작하지 않는다. 사용자가 Desktop을 직접 시작하고 container auto-start가 없었다고
+  확인한 뒤, committed D-128 tuple을 인용하는 별도 exact approval이 필요하다.
 - D-124와 D-125는 sealed-historical predecessor다. D-125가 qualified한 repository-local consumption과
   mocked finalization recovery의 cross-store/global, actual-kill, power-loss 한계는 그대로다.
 - 실제 reservation, result, execution hash와 candidate는 없다. Runtime memory injection, paid execution,

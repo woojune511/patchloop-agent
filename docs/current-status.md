@@ -31,6 +31,17 @@ It records six bounded read-only Docker CLI calls; Desktop start, image mutation
 later phase are zero. The exact-idempotent terminal returns the same blocker instead of opening pricing.
 D-126 therefore remains the latest sealed gate.
 
+## D-128 offline successor source — approval required
+
+Gate `d128_9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`, status
+`D128_D127_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`, was materialized against source
+`3b192e177b2da1302a030eb457ca96f7dae86611`; its exact hash/size tuple is in `docs/09-evidence.md`.
+Focused tests passed 12/12 and the inclusive D-122/D-127/D-128 selected union passed 76/76; do not add them.
+
+This is neither an approval receipt nor a sealed ready gate. It made no `.env`, Docker, network, pricing, SDK,
+provider/evaluator/agent, memory, hash/candidate, cost or A/C action. The gate does not embed its evidence
+commit; the commit containing the gate/docs supplies the identity a future approval must cite.
+
 ## Current priority: four-run A/C readiness
 
 The full four-condition campaign is deferred. The immediate question is:
@@ -47,6 +58,7 @@ model, prompt, tools, policy and ceilings otherwise match. This is readiness, no
 - R2 requires full-schedule reserve, durable settlement and one complete qualified/evaluated four-row matrix.
 - D-124/D-125 retain local/mock limits; D-126 observed but did not establish environment readiness.
 - D-127 terminally blocked during Docker remediation; pricing and no-call phases did not run.
+- D-128 qualifies only the offline successor contract; approval and external authority remain false.
 
 Qualification excludes cross-store/global/cross-clone protection, whole-root rollback, noncooperative path
 swap, actual kill and torn-write/power-loss durability. The plan and suite keep all live authority false.
@@ -55,7 +67,7 @@ swap, actual kill and torn-write/power-loss durability. The plan and suite keep 
 
 - Safe Docker daemon/image readiness without any unauthorized incidental container start
 - Replayable official pricing evidence and the repeated no-call preflight
-- A separately approved successor after the current D-127 receipt's terminal blocked observation
+- A D-128 receipt under separate exact approval after manual Docker safety attestation
 - Exact runner execution hash and one-use execution-authorization candidate under a later approval
 - Separate approval repeating the exact candidate triple, execution hash and $55 cap
 - Any live A/C result
@@ -66,8 +78,7 @@ unauthorized for fixed-bundle C.
 ## Closed lanes
 
 Provider/evaluator/agent, runtime memory, score-policy, raw-trace, held-out/core, D-121 successor and classifier
-lanes remain closed. D-127 only added six read-only Docker CLI calls and two artifacts; all mutation, workload,
-pricing/preflight/gate/live-call and cost counts remain zero.
+lanes remain closed. D-128 added only offline source evidence; all external/live and cost counts remain zero.
 
 ## Historical/deferred D-121 lane
 
@@ -76,10 +87,7 @@ remains deferred; its run was never authorized and is not a fixed-bundle prerequ
 
 ## Next gate
 
-The user must first either start Docker Desktop manually while safely accounting for any restart-policy
-containers, or explicitly expand authority to cover incidental pre-existing-container starts. Because this
-D-127 receipt already has an append-only terminal blocked observation, changed Desktop state does not authorize
-retry: a separate exact successor approval is required before any new Docker remediation, pricing capture or
-repeated preflight. Even a later ready gate cannot create an execution hash, candidate or live run. Those need
-a later exact-gate approval, followed by exact candidate-triple/execution-hash/$55-cap approval before live
-execution.
+The user must manually start Docker Desktop and attest that no pre-existing container auto-started; the agent
+must not start Desktop or the daemon. A separate exact approval must cite the D-128 ID, body SHA, file SHA/bytes
+and the commit containing its gate/docs before any receipt or external action. Hash, candidate and live run
+remain later approvals.

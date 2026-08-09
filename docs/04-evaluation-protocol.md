@@ -103,7 +103,8 @@ D-127 client/pricing/Docker/no-call source and receipt exist. Static passed thro
 `.env` loader without exposing the value. Docker remediation then terminally blocked on unverified
 pre-existing-container auto-restart state after six bounded read-only CLI calls and before Desktop start,
 image mutation, pricing, repeated preflight or gate creation. That terminal is idempotent for the receipt; a
-separately approved successor is required after any environment change. The four rows do not change.
+separately approved successor is required after any environment change. D-128 qualifies that successor's
+source contract offline only; it creates no approval or external/live authority. The four rows do not change.
 
 ## 7. Run-completion gate
 

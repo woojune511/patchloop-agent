@@ -74,6 +74,16 @@ six bounded read-only CLI calls and terminally blocked before Desktop start or m
 `--run-external-preflight`: the existing receipt is terminal/idempotent blocked, and renewed work requires a
 separate exact successor approval.
 
+## Validate D-128 offline source gate
+
+```powershell
+uv run pytest -q tests/test_d128_d127_terminal_successor_offline.py
+uv run python scripts/build_d128_d127_terminal_successor_offline.py --validate
+```
+
+This is local replay only. The recorded focused count is 12/12; the inclusive D-122/D-127/D-128 selected union
+is 76/76, not an additional count. Validation creates no approval, receipt or external action.
+
 ## Validate current memory contracts
 
 ```powershell
@@ -122,11 +132,10 @@ historical snapshot hashes, the single D-121 prose owner and the closed four-run
 There is no supported live A/C command. Although the exact suite is an `ExperimentSuite` source, a future live
 command must appear only after:
 
-1. preserve the current D-127 terminal blocked remediation evidence;
-2. manually establish safe Docker Desktop state or explicitly expand incidental-start authority, then obtain
-   a separate exact successor approval and complete its bounded remediation/pricing/no-call scope;
-3. after a ready successor, obtain separate exact-gate approval for execution-hash and candidate creation;
-4. obtain separate approval of the exact candidate triple, execution hash and $55 cap.
+1. commit the D-128 gate/docs and preserve D-127 evidence;
+2. user-start Docker Desktop and attest that no pre-existing container auto-started;
+3. obtain exact approval citing the committed D-128 tuple before its bounded successor scope;
+4. after a ready successor, obtain separate hash/candidate and then exact live approvals.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that
 sequence.

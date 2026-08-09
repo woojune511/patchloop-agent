@@ -3,6 +3,21 @@
 This document links to canonical machine artifacts. It does not duplicate the full historical narrative,
 which is preserved at `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## D-128 offline terminal-successor source
+
+- Gate `reports/live-pilot/artifacts/d128-d127-terminal-successor-offline-source-gate.json`:
+  ID `d128_9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`;
+  body `sha256:9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`;
+  file `sha256:2528aa018908958bdd35b4b6202c75be2b4ca72521d64bfed800284a015a739c`; 12,557 bytes.
+- Status `D128_D127_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`; source commit
+  `3b192e177b2da1302a030eb457ca96f7dae86611`.
+
+Focused tests passed 12/12; the D-122/D-127/D-128 selected union passed 76/76 and includes those 12. The gate
+created no approval receipt, external attempt, Docker/network/pricing/SDK/provider call, hash/candidate, cost or
+A/C action. The gate does not embed its evidence commit; the commit containing gate/docs supplies that identity.
+After user manual Docker start and no-auto-start attestation, exact approval must cite both; the agent must not
+start Desktop or the daemon.
+
 ## D-127 terminal blocked Docker remediation
 
 - Receipt `reports/live-pilot/artifacts/d127-d126-successor-blocker-remediation-no-call-preflight-approval-receipt.json`:
@@ -58,16 +73,8 @@ records the limited successor receipt and blocked remediation without modifying 
 
 ## Historical A/C source predecessors
 
-| Gate | Artifact | Current interpretation |
-| --- | --- | --- |
-| D-125 | `reports/live-pilot/artifacts/d125-ac-runtime-finalization-offline-source-gate.json` | Local row consumption and mocked finalization recovery |
-| D-124 | `reports/live-pilot/artifacts/d124-ac-cost-settlement-reconciliation-correction-source-gate.json` | Settlement reconciliation correction |
-| D-123 | `reports/live-pilot/artifacts/d123-ac-cost-completion-offline-source-gate.json` | R2 cost/completion source superseded by D-124 |
-| D-122 | `reports/live-pilot/artifacts/d122-ac-fixed-bundle-offline-qualification-source-gate.json` | R1 A-null/C-exact delivery source |
-
-All are immutable historical evidence and created no current live authority. D-125 remains repository-local
-and mocked-process only; validate it with
-`scripts/build_d125_ac_runtime_finalization_qualification.py --validate-sealed-historical`.
+D-122 through D-125 gates under `reports/live-pilot/artifacts/` preserve fixed delivery, cost/settlement and
+local/mock finalization source history. They created no live authority; use their sealed-historical validators.
 
 ## Historical/deferred D-121 preparation
 
@@ -81,19 +88,9 @@ official-evaluator rows and 2 resolved task pairs. Its token/cost details are de
 
 ## Structured-memory chain
 
-| Stage | Canonical artifact | Establishes |
-| --- | --- | --- |
-| Admission | `reports/memory-development/d103-maintainer-assisted-admission-seal.json` | Three approved groups |
-| Sources | `reports/memory-development/d104-three-rule-source-materialization-gate.json` | Exact generalized entries |
-| Rendering | `reports/memory-development/d105-renderer-embedding-index-authorization-gate.json` | Exact leak-scanned model-facing text |
-| Index build | `reports/memory-development/d106-locked-group-index-gate.json` | Unfrozen group-aware index |
-| Token count | `reports/memory-development/d108-provider-token-count-completion-gate.json` | 2,193 vs 2,895 input tokens, +702 |
-| Freeze | `reports/memory-development/d110-index-freeze-completion-gate.json` | Exact frozen three-entry index |
-| Diagnostic | `reports/memory-development/d112-retrieval-readiness-completion-gate.json` | 9 local score rows, all no-match |
-| Validator correction | `reports/memory-development/d114-d112-validator-correction-gate.json` | Portable sealed-historical replay |
-| Policy decision | `reports/memory-development/d115-score-policy-decision-source-gate.json` | Threshold/weight-only correction deferred |
-
-None of these artifacts records runtime memory injection or a memory-conditioned agent outcome.
+D-103 through D-115 artifacts under `reports/memory-development/` preserve three-entry admission/render/freeze,
+the +702 exact-pair count and failed selective-scoring diagnostics. None records runtime injection or a
+memory-conditioned outcome.
 
 ## Deferred applicability/isolation chain
 

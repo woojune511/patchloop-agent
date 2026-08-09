@@ -48,6 +48,8 @@ estimate and not a percentage of engineering completion.
   `$55` hard cap is neither approved nor used.
 - D-127 static passed, but its Docker remediation terminally confirmed that safe daemon/image readiness was
   not established. It did not reach pricing, repeated preflight or gate creation.
+- D-128 is source-only mocked qualification. Its 12/12 focused and inclusive 76/76 selected tests do not prove
+  daemon safety/readiness and create no approval, receipt, external call, execution identity, cost or result.
 
 ## Isolation and external controls
 
@@ -75,6 +77,8 @@ estimate and not a percentage of engineering completion.
 - The D-127 blocked terminal is append-only and idempotent for its receipt. Even after a manual safe Desktop
   start or authority expansion, no retry or later pricing/preflight phase is authorized without a separately
   approved successor.
+- D-128 still requires a committed evidence identity, user manual Docker start, no-auto-start attestation and
+  exact tuple approval. The agent is explicitly barred from starting Desktop or the daemon.
 - Archive prose can contain stale future tense. Current authority comes from source/artifacts and
   `docs/current-status.md`.
 

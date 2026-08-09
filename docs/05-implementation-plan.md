@@ -10,10 +10,8 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Preserve the terminal blocked D-127 Docker-remediation evidence. Before any later successor, the user must
-either start Docker Desktop while safely accounting for restart-policy containers or explicitly expand the
-incidental-start authority, then issue a separate exact approval. Keep pricing/preflight, execution-hash,
-candidate and every live agent path closed meanwhile.
+Stop pending user manual Docker Desktop start, no-pre-existing-container-auto-start attestation and exact
+approval citing the committed D-128 tuple. The agent must not start the daemon; all later gates remain closed.
 
 ## Completed foundation
 
@@ -40,8 +38,7 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-126 sealed blocked; D-127 source/receipt and terminal blocked Docker observation present; no pricing,
-preflight, gate, candidate or execution hash.
+Status: D-126 sealed blocked; D-127 terminal blocked; D-128 offline source qualified, approval required.
 
 D-126 sealed source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh official pricing,
 12 read-only Docker commands with zero workloads and an SDK no-call probe. Five exact Docker/credential/client
@@ -54,6 +51,11 @@ six bounded read-only CLI calls, then recorded terminal blocker
 counts remained zero. Pricing capture, repeated preflight and gate were not opened. Because the receipt now has
 an idempotent blocked terminal, it cannot be retried after environment changes without a separate successor
 approval.
+
+D-128 materializes the source-only successor contract at commit
+`3b192e177b2da1302a030eb457ca96f7dae86611`. It created no receipt, external attempt/call, pricing/preflight,
+hash/candidate, cost or A/C action. The gate does not embed its evidence commit; the commit containing the
+gate/docs supplies the identity a future exact approval must cite.
 
 ## Work item 7 — execution hash and candidate
 
