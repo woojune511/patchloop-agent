@@ -7,102 +7,70 @@ Historical milestone-by-milestone limitations are archived at
 
 - The frozen generic comparison agent has a constrained v2 tool surface: no arbitrary shell, new files,
   renames or binary patches.
-- PLAN is not a separately validated plan artifact.
-- Semantic completeness of the final patch remains partly model self-judgment before hidden evaluation.
+- PLAN is not a separately validated plan artifact, and final semantic completeness remains partly model
+  self-judgment before hidden evaluation.
 - Live resume and external billing idempotency are not established for the comparison baseline.
-- AnyIO demonstrated non-convergence even with very large token headroom; no safe general fail-fast policy is
-  validated.
+- AnyIO non-convergence does not establish a safe general fail-fast policy.
 
-## No-memory evidence
+## Existing evidence is not a memory-benefit result
 
-D-098 sealed all 12 scheduled development rows, but only 11 reached the official evaluator and only 2/12
-were scope-compliant successes. This is a fixed development control arm, not a held-out/general performance
-estimate and not a percentage of engineering completion.
-
-## Structured memory
-
-- Three entries are frozen, but no agent run has received them and no live provider/evaluator result exists.
-- D-108's +702 count covers one exact pair; mock 3,528-byte delivery does not measure live repeated-turn
-  overhead or behavior.
-- D-124/D-125 add historical settlement, local consumption and mocked finalization source only; no result ran.
-- Because all three entries will be bundled, the readiness panel cannot identify which rule helped or harmed.
-
-## Retrieval and selective memory
-
-- D-110 freezes storage, not retrieval authority.
-- The existing `structured` retrieval implementation still embeds/ranks queries and uses a legacy rendering
-  path; it is not suitable for the fixed-bundle C readiness treatment.
-- D-112/D-115 found all no-match/incorrect top-group behavior and no threshold/current-feature weight fix.
-- The public applicability grammar/classifier is contract-only and lacks blind independent calibration.
+- D-098 is a fixed development control arm: 12 scheduled rows, 11 official evaluations and 2 scope-compliant
+  successes. It is neither held-out performance nor engineering-completion percentage.
+- Three structured entries are frozen, but no agent run has received them and no live structured-memory result
+  exists. Mock 3,528-byte delivery does not measure repeated live overhead or behavior.
+- D-110 freezes storage, not selective-retrieval authority. Existing embedding/ranking behavior is outside the
+  exact fixed-bundle C treatment and lacks blind independent calibration.
+- D-124/D-125 establish source and mocked local finalization only; no reservation or result ran.
 
 ## Four-run A/C readiness
 
-- One repetition on development-validation Moto/Babel permits descriptive workflow direction only, with no
+- One repetition on development-validation Moto/Babel supports only descriptive workflow direction, without a
   variance estimate or held-out claim.
-- A result cannot establish causal/general memory improvement, production readiness, retrieval quality,
-  cross-repository transfer or a negative-transfer rate.
+- It cannot establish causal/general memory improvement, production readiness, retrieval quality,
+  cross-repository transfer, per-rule effect or negative-transfer rate.
 - D-125 local/mock evidence does not prove cross-store/global exclusion, whole-root rollback, actual-kill,
   noncooperative-swap or power-loss durability.
-- D-126 sealed a clean tracked source commit, fresh pricing and bounded no-call observations, but five
-  environment blockers remain. Candidate/hash, paid approval and every live result are absent; the proposed
-  `$55` hard cap is neither approved nor used.
-- D-127 remains a sealed terminal-blocked predecessor.
-- D-128 recorded an approval receipt and three failed read-only Docker calls, but the Linux daemon endpoint was
-  unavailable. It did not reach image pull, pricing, SDK preflight or gate creation and establishes no
-  environment readiness, execution identity, cost or result.
-- D-129 has a consumed non-retroactive receipt and procedural blocked terminal. It has no canonical pricing,
-  Docker/SDK readiness observation, hash/candidate, cost or result.
-- D-130 is a historical offline predecessor. Its first Stage 1 approval was received but not exercised and is
-  non-reusable after the D-131 topology change.
-- D-131 qualified local-admission source; a later exact approval created a receipt and durable armed intent in
-  separate commits. Those artifacts are not activation and establish no external readiness.
-- D-132 is external-activation implementation-source-qualified only. It created no activation receipt,
-  attempt/started/terminal/final gate or external observation and grants no credential/Docker/SDK,
-  hash/candidate, cost or result authority.
+- No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
-## Isolation and external controls
+## D-132 through D-135 pricing boundary
 
-- D-118 lacks a trusted pre-D-116 anchor; D-119 ended consumed with unknown probe outcome.
-- D-121 verified no-start configuration only, not hash-probe isolation; its run is deferred and unrelated to C.
+- D-132's activation and pricing attempt are consumed. Application-level unauthenticated `client.send` returned
+  one `Response`; this does not prove how many HTTP requests occurred or that an exchange completed.
+- HTTP completion and response status, headers, body and redirects are unknown/unretained. Completed/replayable
+  canonical pricing evidence count is 0, no canonical pricing artifact exists and retained replay bytes are 0.
+  No response or terminal may be reconstructed from the control-flow observation.
+- D-133 preserved only the action-started marker. It did not retry, resume, repair or terminalize pricing.
+- D-134 source passed its local tests, but the emitted gate carried an ambiguous numeric GET-count claim. The
+  exact gate is preserved as historical evidence and is invalid and non-authoritative; its status and next-gate
+  text cannot authorize the D-134 terminal.
+- D-135 source commit `ca50402aa8d3965ea384563262c713c6090d2ecf` and gate
+  `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` qualify only a corrected,
+  future local procedural-terminal writer. The D-135 terminal is absent and a fresh exact terminalization
+  approval is required.
+- D-135 focused 15/15 and selected 85/85 are local tests with the focused set included in the selected total.
+  They prove no external readiness. Current-turn official-docs/network, Docker, SDK/credential,
+  provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C activity is zero.
 
-## Evidence and operations
+## Isolation, identity and operations
 
-- Repository-local one-use gates are cooperative; they do not prove global/cross-clone exclusion or
-  authenticated user identity.
-- Some historical tests assert states that were intentionally superseded by later artifacts; those tests are
-  evidence checks, not current product regression checks.
-- D-126's clean-source claim covers commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22` and its tracked tree
-  only; ignored scratch and external worktrees are not attested, and no execution hash is approved.
-- Pricing facts/math were correct and fresh at capture, but raw official bytes were not retained; the validator
-  cannot independently rebind recorded body SHA/bytes/ETag. The 12 Docker reads do not prove daemon/image
-  readiness, workload execution, noncooperative path-swap resistance or bounded streaming capture.
-- The SDK no-call probe proves local construction only. It found no API key and did not establish explicit
-  production `base_url` or `trust_env=False` behavior.
-- D-127's exact-key loader did not expose the value; its six Docker reads and consumed blocked terminal prove
-  neither readiness nor mutation. D-128 did not reopen it.
-- D-128 records the user's self-attested manual start/no-auto-start statement, not an authenticated or
-  independently observed fact. Its own three Docker calls found the daemon unavailable; its receipt is consumed.
-- D-129 preserves one approved official-docs tool open before receipt/attempt. Underlying transport/content
-  count is unknown and the lookup is not replayable pricing evidence. Canonical pricing, Docker, SDK and all
-  runtime/cost actions stayed zero; the consumed receipt cannot be retried.
-- D-132 focused 15/15 and selected regression 170/170 (focused included, non-additive) are local mocked checks
-  and prove no external readiness. The gate qualifies append-only activation receipt plus attempt-first phase
-  transitions; repository-local Git checks do not prove authenticated user identity or global/cross-clone
-  exclusion.
-- The pre-D-132 request/challenge explicitly was not activation and is non-reusable. No fresh activation,
-  activation receipt or phase artifact exists. The agent remains barred from credential, Docker, SDK and
-  official pricing observation and from starting Desktop or the daemon.
-- Archive prose can contain stale future tense. Current authority comes from source/artifacts and
+- Repository-local one-use gates are cooperative; they do not prove authenticated user identity or
+  global/cross-clone exclusion.
+- D-118 lacks a trusted pre-D-116 anchor; D-119 ended consumed with unknown probe outcome. D-121 verified
+  no-start configuration only, not hash-probe isolation.
+- User-reported Docker readiness/no-auto-start facts are self-attested unless independently captured by the
+  exact approved phase.
+- Some historical tests intentionally assert superseded states. They remain historical evidence checks, not
+  current product regressions.
+- Archive prose may contain stale future tense. Current authority comes from checked-in source/artifacts and
   `docs/current-status.md`.
 
 ## Claims still forbidden
 
-- “Memory improves PatchLoop”
-- “PatchLoop is a finished self-improving agent”
-- “Selective retrieval is ready”
-- “The four-condition experiment is complete”
-- “D-121 proves secure or independent record processing”
-- “A four-run readiness direction generalizes to held-out tasks”
+- “Memory improves PatchLoop.”
+- “PatchLoop is a finished self-improving agent.”
+- “Selective retrieval is ready.”
+- “The four-condition experiment is complete.”
+- “D-121 proves secure or independent record processing.”
+- “A four-run readiness direction generalizes to held-out tasks.”
 
-These claims remain forbidden until the corresponding measured, complete and appropriately scoped evidence
-exists.
+These claims require corresponding measured, complete and appropriately scoped evidence.

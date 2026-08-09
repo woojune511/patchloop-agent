@@ -94,14 +94,14 @@ D-108's +702 token count covers one request shape, not every live turn. Exact pe
 separately authorized counterfactual count. D-124/D-125 local/mock corrections are inherited; no reservation,
 result, candidate or execution hash exists.
 
-D-126 through D-131 are immutable predecessor evidence. Consumed gates stay closed; D-131-qualified local
-admission created only exact receipt and armed-intent commits with external actions zero.
+D-132 activation/pricing are consumed after an action-started marker without canonical terminal. The one
+application-level `client.send` Response return does not establish HTTP completion or retained response fields;
+completed/replayable canonical pricing evidence count is 0, its artifact is absent and replay bytes are 0. No
+retry/backfill is allowed.
 
-D-132 qualifies an ordered activation-receipt, committed-attempt, action-started and terminal-transition
-protocol for Docker readiness, replayable pricing and SDK/credential-presence no-call preflight. An uncertain,
-orphaned or blocked phase is consumed; pricing must stay within 72 hours through the final gate, and READY still
-blocks execution-hash creation. Fresh approval must quote all D-132 and G/R/I evidence tuples. Earlier
-challenge text is non-reusable; no activation, external observation, cost or four-row authority exists.
+D-134's preserved ambiguous gate is not authority. Corrected D-135 gate
+`d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` qualifies only a separately
+approved append-only procedural terminal, not pricing evidence, fixed successor, hash, cost or four-row work.
 
 ## 7. Run-completion gate
 

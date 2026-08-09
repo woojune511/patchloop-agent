@@ -3,77 +3,75 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-132 external-activation implementation — fresh exact activation required
+## D-135 ambiguous-gate correction — terminalization approval required
 
-- Gate `reports/live-pilot/artifacts/d132-d130-external-activation-successor-offline-source-gate.json`:
-  ID/body `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7`;
-  file `sha256:059f672967aeed4b9f07db7249e887b92c3ad999ba96c61a8605e3d67f064bd0`,
-  27,244 bytes.
-- Source commit `ccf898d869342a9d5da42a1fef2c00e593fe91b4`; tree
-  `0bab1f4c64f89070de9cedeeadc62b36668c3f72`; sole parent
-  `4a40971b4e155683c49bbd6bcadc7468514ef84c`.
-- Status `D132_D130_EXTERNAL_ACTIVATION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED`.
+- Gate `reports/live-pilot/artifacts/d135-d134-ambiguous-gate-correction-offline-source-gate.json`:
+  ID/body `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6`;
+  file `sha256:37639f8327d1f29a5ce2321c0f2ba79e3ada7821c1bac1995770faea5237cce0`,
+  22,922 bytes.
+- Source commit `ca50402aa8d3965ea384563262c713c6090d2ecf`; status
+  `D135_D134_AMBIGUOUS_GATE_CORRECTION_OFFLINE_SOURCE_QUALIFIED_TERMINALIZATION_APPROVAL_REQUIRED`.
+- The gate-add/10-active-doc evidence commit is the direct child of the source commit; use the post-commit
+  validator for its exact commit/tree/parent/blob tuple.
 
-The new-only gate binds the exact G/R/I topology, source and loaded modules. It qualifies canonical activation
-receipt creation, three ordered committed-attempt/action-started/terminal transitions, exact Docker no-start
-scope, bounded replayable pricing, SDK/credential-presence no-call preflight and final READY/BLOCKED gates.
-Focused tests passed 15/15; selected regression passed 170/170 with focused included, so counts are not
-additive. The builder invoked no future writer/helper and created no future artifact or external observation.
+The gate exact-binds the D-132 pricing attempt/marker, D-134 source, preserved ambiguous gate and its
+preservation-only commit. It treats the D-134 recorded status and next-gate text as invalid and
+non-authoritative, omits the ambiguous numeric GET-count claim and qualifies only the distinct future D-135
+procedural-terminal writer. Focused tests passed 15/15; selected regression passed 85/85 with focused included,
+so counts are not additive. The D-135 terminal is absent and source/gate preparation made zero external calls.
 
-The gate evidence tuple is the exact commit that adds this gate and modifies the canonical 10 active docs; use
-the post-commit validator to obtain it. The pre-source request/challenge explicitly was not activation, remained
-unexercised and became non-reusable after D-132.
+## D-134 ambiguous gate — preserved, invalid and non-authoritative
 
-## D-131 local admission — materialized predecessor
+- Source commit `44a461de923357f36cadc94eebd14d264a7366fc`.
+- Gate `reports/live-pilot/artifacts/d134-d132-pricing-consumed-incident-procedural-terminal-offline-source-gate.json`:
+  ID/body `d134_a6ec18615a853b34de104a4a89d0db1d43bea3cea12c1412033e260c50779889`;
+  file `sha256:ed32146e25b0fbde90ea3e1bbc7f63badbc1be098f3b031c09321e914a0f9b3c`,
+  18,882 bytes; blob `56fdd6d3336fc402af13bf4d3ac63d47d57805aa`.
+- Preservation-only commit `9dc450a747537634e89fe2ade824685f8b5a52d6` is the sole child of the D-134 source.
+
+The preserved bytes contain an ambiguous numeric GET-count claim. They are historical evidence only and cannot
+authorize a D-134 terminal, pricing retry, response reconstruction or successor activation.
+
+## D-132 pricing attempt and D-133 marker preservation — consumed
+
+- Attempt `reports/live-pilot/artifacts/d130-official-pricing-capture-attempt-intent.json`:
+  ID/body `d132d130officialpricingcaptureattempt_c518711e0a12b75a3ab81bbfd3e53eb3e13059d0f6fe4b3c4c1309e25924245f`;
+  file `sha256:ba79ad9362bf14f0cdf8952d9297bea8fcd77fe36ab0eeff44e47e9047ec3f55`,
+  18,137 bytes; commit `30412b769b340f98000674f40de9102d1210507a`.
+- Marker `reports/live-pilot/artifacts/d130-official-pricing-capture-action-started.json`:
+  ID/body `d132d130officialpricingcapturestarted_50876b05d4daa48d5f80bce7793f28ffb4f7909350661803dfa96f9a2e6dced7`;
+  file `sha256:328c4fb5ae4d6e50308333e360f25fb88bc856bace7ba483f2eb7e2adde13328`,
+  12,815 bytes; marker-only commit `a10033b6abd7155ebaa5c66c13627ad3ea738566`.
+
+Application-level unauthenticated `client.send` returned one `Response`. Underlying HTTP request count/completion and
+response status, headers, body and redirects are unknown/unretained. Completed/replayable canonical pricing
+evidence count is 0, no canonical pricing artifact exists and retained replay bytes are 0. The activation and pricing
+attempt are consumed; retry, resume, repair and terminal backfill are forbidden.
+
+## D-131 local admission — immutable predecessor
 
 - Gate ID `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
   evidence commit `283b9124af38252f47a06cbb1a484807b5030be2`.
 - Receipt ID `d130approval_03c8c824f0d74122b8233df9810897b898c29b3bf907dd1a5cfd364f5026e010`;
-  file `sha256:01901a4f20a0231856e0326d2bc37283794b9cff998463707bc19b15d22731ba`,
-  11,514 bytes; receipt-only commit `6987246b438fa6e6e711fa3b254aaf75ac4c2a66`.
+  receipt-only commit `6987246b438fa6e6e711fa3b254aaf75ac4c2a66`.
 - Intent ID `d130intent_4cd20c7a8bbd20751b2f6a7b4a0d13de16d7aa5a41b6bf20648dedb414b6a153`;
-  file `sha256:349d6680850374c1cee10e49f3319ef18bdd3640c48d075e999cbefac72c460c`,
-  13,175 bytes; intent-only commit `4a40971b4e155683c49bbd6bcadc7468514ef84c`.
+  intent-only commit `4a40971b4e155683c49bbd6bcadc7468514ef84c`.
 
-Receipt and intent are immutable local-admission evidence, not external activation.
+Receipt and intent are local-admission evidence, not reusable external activation.
 
-## D-130 offline successor — historical predecessor
+## Older blocked chain
 
-- Gate `reports/live-pilot/artifacts/d130-d129-external-sequence-block-successor-offline-source-gate.json`:
-  ID `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
-  file `sha256:6d580dd979dc77659efed07291264c4ea2a16dca02d9070a32928e9fbefff468`, 17,416 bytes;
+- D-130 offline gate ID `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
   evidence commit `d6079e55fd1c4745b05c2e345228b1a66d0a3df4`.
-
-It binds the D-129 incident chain with zero D-130 external lookup. Its first Stage 1 approval was not exercised
-and is non-reusable after D-131 changed the topology; the later D-131-qualified admission is indexed above.
-
-## D-129 external sequence — terminal blocked
-
-- Offline gate ID `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
-  evidence commit `70f9955dca8d873f91d622505f7afe7f3cfec59e`.
-- Receipt ID `d129approval_0d505214f607b0f2a2536e1b754750131bc4b6dab2995d24a12554d63090fb42`;
-  receipt-only commit `3fdfaa79a93df1e709eb9c01fdea9c4646cf0ad9`.
-- Terminal ID `d129sequenceblock_b5fc90e29ed2ca7febda54a2e63e4f5a0606703e0e93a997fab719d33797f5c8`;
+- D-129 terminal ID `d129sequenceblock_b5fc90e29ed2ca7febda54a2e63e4f5a0606703e0e93a997fab719d33797f5c8`;
   status `D129_EXTERNAL_NO_CALL_SEQUENCE_OBSERVED_BLOCKED`.
-
-User approval preceded one public official-docs tool open, but receipt/attempt did not. Underlying HTTP and
-returned-content counts are unknown; no canonical replay entity was retained or used as pricing evidence.
-No attempt was backfilled. Docker, image mutation, SDK, canonical pricing, provider/evaluator/agent, memory,
-hash/candidate, cost and A/C all stayed zero. The receipt is consumed; retry/resume/repair remain false.
-
-## Historical blocked chain
-
-- D-128 receipt/attempt/terminal are immutable. Its exact no-start phase made three read-only Docker calls,
-  all rc 1, and stopped on `already-running-docker-desktop-linux-daemon-unavailable` with zero mutation.
-- D-127 made six read-only Docker calls and stopped on
-  `preexisting-container-auto-restart-state-unverified`; its receipt is consumed.
-- D-126 remains `D126_AC_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED`.
-- D-125 and earlier exact tuples remain in their canonical artifacts and Git history. D-121 is deferred.
+- D-127/D-128 remain terminal blocked; D-126 remains observed blocked. D-125 and earlier tuples remain in their
+  canonical artifacts and Git history. D-121 is deferred.
 
 ## Next evidence boundary
 
-After the D-132 gate+docs evidence commit, obtain fresh exact D-132-qualified activation quoting that gate and
-evidence tuple plus the D-131 gate, D-130 receipt, D-130 intent and both artifact commit tuples. It may first
-create the activation receipt-only commit; each external phase still requires its own committed attempt before
-action. Started-without-terminal, orphan and blocked states are consumed. No current activation, activation
-receipt, phase artifact or external action exists; live/hash/candidate/cost/A-C authority stays closed.
+After the D-135 gate+10-doc evidence commit, obtain a fresh exact D-135-qualified local-only terminalization
+approval quoting the gate and evidence-commit tuple. It may create only the D-135 procedural terminal followed
+by its terminal-only commit. That terminal is incident preservation, not canonical pricing evidence. Pricing
+retry/repair, any fixed external successor, provider/evaluator/agent activity, memory/retrieval, hash/candidate,
+cost and A/C require later distinct source qualification and approvals.

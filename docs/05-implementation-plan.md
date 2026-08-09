@@ -10,11 +10,9 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-D-132 external-activation implementation source qualification is complete. Preserve the D-129 terminal and the
-exact D-131 gate/D-130 receipt/armed-intent chain. After the D-132 gate+docs evidence commit, request only a
-fresh exact D-132-qualified activation quoting every required tuple. No external action occurs before the new
-activation receipt-only commit and the first phase attempt-only commit. The agent must not start Desktop or the
-daemon; hash/candidate, cost and execution remain separately gated.
+D-135 corrected source qualification is complete. Preserve the consumed D-132 pricing chain and
+non-authoritative D-134 gate. Next request only exact D-135 terminalization: one procedural terminal and
+terminal-only local commit, external zero. Successor, hash/candidate, cost and execution remain separate.
 
 ## Completed foundation
 
@@ -23,17 +21,12 @@ daemon; hash/candidate, cost and execution remain separately gated.
 - `fixed-d110-bundle-v1` binds exact D-105/D-110 inputs, renders A null and C three entries on every request,
   and exposes no retrieval, provenance, vector or raw-trace content.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
-- D-122 through D-128 are historical predecessors; D-127/D-128 are terminal blocked.
-- D-129 offline source is historical; its sequence incident source and receipt-only commits are preserved.
-- D-130 source/evidence topology remains preserved. Its first Stage 1 approval was unexercised and is not
-  reusable.
-- D-131 source commit `9cd736c0221bba17375c3b7ddce02e5214fc21fe` and its canonical offline gate
-  exact-bind the D-130 predecessor, loaded modules and future append-only local-admission topology.
-- D-131-qualified local admission created exact D-130 receipt-only commit `6987246b438fa6e711fa3b254aaf75ac4c2a66`
-  and armed-intent-only commit `4a40971b4e155683c49bbd6bcadc7468514ef84c`, with external actions zero.
-- D-132 source commit `ccf898d869342a9d5da42a1fef2c00e593fe91b4` and gate
-  `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7` bind the attempt-first
-  external-preflight contract without invoking it.
+- D-122 through D-131 are historical immutable predecessors; D-127 through D-129 are terminal blocked.
+- D-132 activation/pricing are consumed without canonical terminal; D-133 preserves the marker.
+- D-134's ambiguous gate is preserved by `9dc450a747537634e89fe2ade824685f8b5a52d6` but is not authority.
+- Corrected D-135 source `ca50402aa8d3965ea384563262c713c6090d2ecf` and gate
+  `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` qualify a future
+  terminal-only local transition without invoking it.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -51,30 +44,22 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-132 implementation-source-qualified; fresh exact D-132-qualified activation required.
+Status: corrected D-135 source-qualified; fresh exact procedural-terminal approval required.
 
-D-126 is sealed blocked, D-127 remains unchanged, and D-128's consumed receipt terminally records three
-read-only rc-1 Docker calls with blocker `already-running-docker-desktop-linux-daemon-unavailable`.
+The D-132 pricing marker consumed its activation/attempt. Application-level send returned once, but HTTP and
+response fields remain unknown/unretained and completed/replayable canonical pricing evidence count is 0.
+D-134's ambiguous gate is
+preservation-only.
 
-D-129 recorded one approved public docs tool open before its machine receipt/attempt sequence. It sealed a
-non-retroactive receipt and procedural blocked terminal; no canonical pricing, Docker, SDK or runtime action
-followed. D-130 qualified that chain offline. Its first Stage 1 approval was unexercised and became non-reusable
-after D-131.
-
-The D-131-qualified receipt and armed intent now exist in exact single-artifact commits. D-132 qualifies the
-activation receipt writer and ordered Docker/pricing/preflight runner. A fresh exact activation must quote the
-D-132 gate/evidence, D-131 gate, receipt, intent and their commits. It may create the activation receipt-only
-commit, then requires an attempt-only commit before each phase action. Action-started and terminal must be
-published append-only and committed before the next phase; an uncertain or blocked phase is consumed.
-
-The pre-D-132 request/challenge explicitly was not activation and cannot be reused. No D-132 activation
-receipt, attempt/started/terminal/final gate or external observation exists. Desktop/daemon start, container
-operations, other images, provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C remain
-unauthorized.
+D-135 removes that ambiguity and validates append-only/new-only, collision/orphan/idempotence, exact Git
+topology, loaded modules and a future terminal-only commit. Its gate builder created no terminal and made no
+external call. A new approval quoting the exact D-135 gate/evidence may create only the procedural terminal and
+its local commit. Retry/backfill, pricing helper changes, fixed-successor qualification, Docker/SDK/credential,
+provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C remain unauthorized.
 
 ## Work item 7 — execution hash and candidate
 
-Status: unauthorized and separately gated after a ready repeated work-item-6 preflight.
+Status: unauthorized and separately gated after a later qualified fixed-pricing successor and ready preflight.
 
 Create neither identity until a later approval cites the exact ready gate and explicitly authorizes it.
 

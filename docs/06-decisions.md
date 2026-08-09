@@ -8,77 +8,69 @@ work.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
-- First matrix: Moto and Babel development-validation tasks × A/C × one repetition = four rows.
+- First matrix: Moto and Babel development-validation tasks x A/C x one repetition = four rows.
 - Purpose: runtime delivery/readiness, not held-out performance.
 - Full A/B/C/D 96-run campaign is deferred, not deleted.
-- The historical `experiments/core.template.yaml` remains immutable.
+- A missing or confounded row makes the matrix inconclusive; no row-only replacement is allowed.
 
-Reason: C runtime delivery has never executed. A four-row validation panel can expose delivery, leakage,
-qualification and process failures without consuming held-out results or paying for conditions whose inputs
-are not ready.
+One repetition provides no variance estimate and supports no statistical, causal, held-out,
+cross-repository, per-rule or negative-transfer-rate claim.
 
 ### 2026-08-08 — C is an exact fixed bundle
 
-- C receives all three approved D-105 texts in frozen D-110 `group_provenance` order.
-- The exact bundle is delivered on every C model request; A carries the same policy version with null memory.
-- No embedding, similarity, rerank or threshold is used.
-- This is not selective retrieval and does not change D-110 authority.
-
-Reason: D-112/D-115 showed the current scorer is not ready. Mixing it into C would confound structured-memory
-delivery with retrieval quality.
-
-### 2026-08-08 — four rows are diagnostic only
-
-- One repetition provides no variance estimate.
-- No statistical, causal, held-out, cross-repository, per-rule or negative-transfer-rate claim is allowed.
-- A missing/confounded row makes the entire matrix inconclusive; no row-only replacement.
+- C receives all three approved D-105 texts in frozen D-110 `group_provenance` order on every model request.
+- A carries the same policy version with null memory.
+- No embedding, similarity, rerank or threshold is used; this does not grant selective-retrieval authority.
 
 ### Historical execution gates remain closed
 
-D-122 through D-131 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. D-127 through
-D-129 are consumed/terminal and are never retried or repaired. Planning values, source qualification and
-self-attested readiness grant no external, hash/candidate, cost or A/C authority.
+D-122 through D-134 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. D-127 through
+D-129 and the exercised D-132 pricing phase are consumed and never retried or repaired. D-134's preserved gate
+is invalid and non-authoritative for terminalization. Planning values, source qualification and self-attested
+observations grant no hash/candidate, cost or A/C authority.
 
-### 2026-08-08 — active docs own current state; archive owns chronology
+### Active docs own current state; archive owns chronology
 
 - Current checkpoint and next gate: `docs/current-status.md`.
-- Exact artifacts: `reports/` and `docs/09-evidence.md` index.
-- Historical narratives: `docs/archive/`.
-- Repeating every milestone in every topic document is discontinued.
+- Exact artifacts: `reports/` and the index in `docs/09-evidence.md`.
+- Historical narratives: `docs/archive/` and Git history.
 
-Earlier retained decisions remain discoverable in the archived ledger and `docs/09-evidence.md`; they do not
-replace the current D-132 offline gate or reopen consumed D-128/D-129 receipts.
-
-## Superseded sequencing
-
-- “Run the full A/B/C/D matrix immediately” is superseded by the A/C readiness-first sequence.
-- “Continue D-121 isolation work before any C test” is paused. D-121 remains valid evidence but is not a
-  prerequisite for a scorer-free fixed-bundle adapter.
-- No sealed artifact, measured result or prior authority statement is rewritten by this priority change.
-
-## Open questions
-
-1. After readiness passes, should the next A/C held-out design use all 12 tasks with repetitions, or a separately
-   pre-registered exploratory subset?
-2. When, if ever, should B/raw-trace and D/selective return to the critical path?
-
-These questions do not authorize implementation beyond `docs/05-implementation-plan.md`.
+Earlier decisions cannot replace the current D-135 gate or reopen a consumed receipt, attempt or marker.
 
 ### 2026-08-09 — D-129 through D-131 preserve the predecessor boundary
 
 D-129 failed closed because a docs open preceded receipt/attempt; transport count is unknown. D-130 separated
-local admission from external activation. D-131 later materialized exact receipt-only and armed-intent-only
-commits with external actions zero. Earlier unexercised approval/challenge text cannot cross later topology.
+local admission from external activation. D-131 materialized receipt-only and armed-intent-only commits with
+external actions zero. Those artifacts are immutable predecessors, not reusable activation authority.
 
-### 2026-08-09 — D-132 qualifies attempt-first external activation source
+### 2026-08-10 — D-132 pricing is consumed; D-135 is the correction authority
 
-- Gate `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7` binds source commit
-  `ccf898d869342a9d5da42a1fef2c00e593fe91b4` as the sole child of the D-130 armed-intent commit.
-- Activation receipt creation must precede external work in a receipt-only commit. Docker, official pricing and
-  no-call SDK/credential preflight each require an attempt-only commit, an immediate action-started marker and a
-  committed terminal transition before the next phase.
-- Started-without-terminal, orphaned attempt and blocked terminal states are consumed and non-retryable.
-  A ready final gate still grants no execution-hash/candidate, cost or A/C authority.
-- The earlier request/challenge explicitly said it was not activation and is non-reusable after this topology
-  change. Only a fresh exact D-132-qualified activation quoting all gate/evidence/receipt/intent commit tuples
-  may begin the sequence.
+- D-132's exact activation was exercised through the pricing attempt and action-started marker. The
+  application-level unauthenticated `client.send` returned one `Response`, but underlying HTTP request
+  count/completion and response status, headers, body and redirects are unknown/unretained.
+  Completed/replayable canonical pricing evidence count is 0, its artifact is absent, replay bytes are 0,
+  and the activation/attempt is consumed with no retry or backfill.
+- D-133 preserved the marker. D-134 implemented a procedural-terminal path, but its emitted gate contained an
+  ambiguous numeric GET-count claim. That exact gate is preserved append-only and is invalid and
+  non-authoritative; its recorded status and next-gate text grant no terminalization authority.
+- D-135 source commit `ca50402aa8d3965ea384563262c713c6090d2ecf` removes the ambiguity in a distinct
+  gate/future-terminal contract. Gate
+  `d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` requires a fresh exact
+  terminalization approval. The D-135 procedural terminal is absent, and current-turn external actions are zero.
+- A future terminalization may create only the exact D-135 procedural terminal and its terminal-only commit.
+  Pricing repair, fixed-successor qualification, external preflight, hash/candidate, cost and A/C remain
+  separately gated.
+
+## Superseded sequencing
+
+- Running the full A/B/C/D matrix immediately is superseded by A/C readiness first.
+- Continuing D-121 isolation before any C test is paused; D-121 is not a fixed-bundle prerequisite.
+- No sealed artifact, measured result or authority statement is rewritten by this priority change.
+
+## Open questions
+
+1. After readiness passes, should a held-out A/C design use all 12 tasks with repetitions or a separately
+   preregistered exploratory subset?
+2. When, if ever, should B/raw-trace and D/selective return to the critical path?
+
+These questions do not authorize work beyond `docs/05-implementation-plan.md`.

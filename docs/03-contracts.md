@@ -123,31 +123,23 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 through D-131 are immutable predecessors indexed in `docs/09-evidence.md`. Consumed/terminal gates are
-never reopened. The exact D-131-qualified local admission produced one receipt-only commit followed by one
-durable armed-intent-only commit. That G/R/I chain grants no external authority; an earlier request/challenge
-explicitly was not activation and cannot cross the D-132 topology change.
+D-126 through D-131 are immutable predecessors; consumed gates never reopen. D-132 committed a pricing attempt
+and reached action-started without canonical terminal, consuming its activation and attempt. No retry, resume,
+repair or backfill is allowed. The incident records one unauthenticated application-level
+`client.send` Response return; HTTP request count/completion are unknown, response fields are unretained,
+completed/replayable canonical pricing evidence count is 0, its artifact is absent and replay bytes are 0.
 
-D-132 gate `d132_ae224ab320e74bf871b74b0c9df23f88c5de170dfd26e7724aa234f29b2b0ba7`
-binds that chain, source commit `ccf898d869342a9d5da42a1fef2c00e593fe91b4`, loaded modules and these
-future contracts:
+D-133 then committed and preserved the exact marker. D-134's gate is preserved by commit
+`9dc450a747537634e89fe2ade824685f8b5a52d6`, but its ambiguous numeric GET counter makes its qualification and
+terminalization authority invalid. Corrected D-135 gate
+`d135_7e67561d187cfb44440790052a95fc8b95a4006fe886e0f7c3dce9bae437e8c6` binds source
+`ca50402aa8d3965ea384563262c713c6090d2ecf`, predecessor topology and loaded modules. It qualifies only:
 
-- a canonical activation receipt must be the only change in the direct child of the D-132 evidence commit;
-- Docker image readiness, official pricing capture and read-only no-call preflight execute in that order;
-- each phase has an attempt-only commit before any action, an append-only action-started marker immediately
-  before its helper, and a committed marker+terminal transition before the next attempt;
-- an orphaned attempt, blocked terminal or started-without-terminal state consumes the activation and fails
-  closed; exact canonical replay alone is idempotent;
-- the final gate can report ready only after all three committed transitions and fresh pricing (at most 72 h),
-  and even readiness keeps execution-hash creation blocked.
+- a new exact approval must quote the D-135 gate and gate+active-doc evidence-commit tuple;
+- the terminal is append-only/new-only and must be the sole change in the direct child of that evidence commit;
+- it binds only corrected D-135 authority and cannot use the D-134 gate;
+- preservation of consumed/no-retry and unknown/unretained facts, not canonical pricing evidence;
+- a fixed-pricing successor requires a separate later offline source gate.
 
-The Docker helper cannot start Desktop/daemon or create/start/run/exec containers; only confirmed-missing exact
-Moto/Babel digests may be pulled. The pricing helper is bounded/replayable and the SDK probe is no-call with
-credential presence only and official endpoint binding. The historical D-127/D-128 top-level runners are not
-reused. The D-132 builder invoked none of these future writers/helpers and observed no credential or external
-state.
-
-The pre-source request/challenge explicitly was not activation and is non-reusable after D-132. Only a fresh
-exact D-132-qualified user approval quoting the D-132 gate/evidence plus the G/R/I and commit tuples may begin
-the receipt/attempt sequence. Desktop/daemon start, container work, other images, provider/evaluator/agent,
-memory/retrieval, hash/candidate, cost and A/C authority remain false.
+No procedural terminal exists. D-135 invoked no terminal writer or external helper; external, runtime,
+hash/candidate, cost and A/C authority remain false.
