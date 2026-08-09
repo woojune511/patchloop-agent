@@ -132,13 +132,23 @@ open, but the machine receipt and phase attempt did not. The terminal deliberate
 records underlying HTTP count as unknown, and keeps canonical pricing/Docker/SDK/provider/runtime/cost counts
 zero. Its receipt is consumed and cannot be retried, resumed or repaired.
 
-D-130 now exact-binds that chain and source commit `e6acdc23050e93f5324827a2dac1ed519fe35406`
-in a canonical new-only offline gate. Its status is
-`D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`.
-The gate is not a receipt, intent, activation or candidate and grants no external authority.
+D-130 exact-bound that chain in a canonical new-only offline gate. Its later Stage 1 approval was received but
+not exercised because the required committed writer did not exist; that approval is non-reusable after the
+D-131 topology change. No D-130 receipt or intent was materialized.
 
-The qualified stage-1 contract may only create a new exact receipt, commit it alone, create a durable
-`ARMED_WAITING_EXACT_ACTIVATION` intent, commit it alone and render an activation challenge. Official-docs,
-network, pricing, Docker, SDK and credential observations must stay zero. Stage 2 requires a separate exact
-user activation quoting the gate, receipt, intent and both commit tuples. Desktop/daemon start, container work,
-other images, hash/candidate/live/memory/cost authority remain false.
+D-131 gate `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`
+exact-binds the D-130 gate/evidence commit, source commit
+`9cd736c0221bba17375c3b7ddce02e5214fc21fe`, loaded-module provenance and future local-admission
+topology. Its status is
+`D131_D130_LOCAL_ADMISSION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`.
+The append-only/new-only writers fail closed on orphan, collision, linklike, tamper and wrong Git topology;
+idempotence accepts only exact canonical bytes. Receipt creation requires a clean D-131 evidence commit and a
+receipt-only child commit. Intent creation then requires that exact clean receipt-only commit and an
+intent-only child commit. The challenge requires the clean committed intent and quotes the D-131 gate,
+receipt, intent, receipt commit and intent commit. It is not activation.
+
+The gate builder invoked no future writer or challenge and created no receipt or intent. Only a fresh exact
+D-131-qualified approval may admit those local commits and challenge, with official-docs, network, pricing,
+Docker, SDK and credential observations at zero. A separate exact user activation quoting all five tuples is
+required before external work. Desktop/daemon start, container work, other images, hash/candidate/live/memory/
+cost authority remain false.

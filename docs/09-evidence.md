@@ -3,51 +3,50 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-130 offline successor — local admission approval required
+## D-131 local-admission implementation — fresh exact approval required
+
+- Gate `reports/live-pilot/artifacts/d131-d130-local-admission-successor-offline-source-gate.json`:
+  ID `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
+  body `sha256:849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`;
+  file `sha256:8dfcd275b3e66113bc92df64e33bcf14f80c101cba2e40246d42b61f22dac048`,
+  14,516 bytes.
+- Source commit `9cd736c0221bba17375c3b7ddce02e5214fc21fe`; status
+  `D131_D130_LOCAL_ADMISSION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`.
+
+The new-only gate exact-binds the D-130 gate/evidence predecessor, D-131 source and loaded modules. It qualifies
+append-only/new-only receipt and intent writers, orphan/collision/idempotence rejection, receipt-only and
+intent-only commit topology, and a challenge that quotes the D-131 gate, receipt, intent and both commits.
+Focused tests passed 15/15 and the selected D-127–D-131/docs bundle passed 107/107; overlapping selections are
+not additive.
+
+The gate builder invoked no future writer or challenge and created no receipt or intent. It made no official-
+docs/network, credential, Docker or SDK observation. The prior D-130 Stage 1 approval was received but not
+exercised and is non-reusable after the D-131 topology change. A fresh exact D-131-qualified local-admission
+approval is required; the challenge produced afterward will not itself be activation.
+
+## D-130 offline successor — historical predecessor
 
 - Gate `reports/live-pilot/artifacts/d130-d129-external-sequence-block-successor-offline-source-gate.json`:
   ID `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
-  body `sha256:443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`;
-  file `sha256:6d580dd979dc77659efed07291264c4ea2a16dca02d9070a32928e9fbefff468`,
-  17,416 bytes.
-- Source commit `e6acdc23050e93f5324827a2dac1ed519fe35406`; status
-  `D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`.
+  file `sha256:6d580dd979dc77659efed07291264c4ea2a16dca02d9070a32928e9fbefff468`, 17,416 bytes;
+  evidence commit `d6079e55fd1c4745b05c2e345228b1a66d0a3df4`.
 
-The canonical new-only gate exact-binds the D-129 E/S/R/T Git topology and artifact tuples while preserving
-one official-docs web-tool open, unknown underlying HTTP/redirect count, zero canonical capture and no
-retroactive attempt. D-130 itself made no external lookup. Focused tests passed 13/13 and the selected
-D-127–D-130/docs bundle passed 92/92; overlapping selections are not additive.
-
-The gate is not a receipt, armed intent, activation or candidate. Stage 1 may only create and separately commit
-the exact receipt and durable `ARMED_WAITING_EXACT_ACTIVATION` intent, then render a challenge, with every
-external count zero. Stage 2 requires a new exact user activation quoting those tuples.
+It binds the D-129 incident chain with zero D-130 external lookup. Its later Stage 1 approval was not exercised,
+created no receipt/intent and is non-reusable after D-131 changed the topology.
 
 ## D-129 external sequence — terminal blocked
 
-- Offline gate `reports/live-pilot/artifacts/d129-d128-terminal-successor-offline-source-gate.json`:
-  ID `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
-  body `sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
-  file `sha256:fd57c187d1f260952b581e60f7d0ff98243f3b4ef172c9a6d6669b3e84968512`, 18,678 bytes.
-- Incident source commit `d42334312c4752cbe9f4aa039c22b8ed51b8b66b`, sole child of D-129 evidence commit
-  `70f9955dca8d873f91d622505f7afe7f3cfec59e`.
-- Receipt `reports/live-pilot/artifacts/d129-terminal-successor-external-no-call-approval-receipt.json`:
-  ID `d129approval_0d505214f607b0f2a2536e1b754750131bc4b6dab2995d24a12554d63090fb42`;
-  body `sha256:0d505214f607b0f2a2536e1b754750131bc4b6dab2995d24a12554d63090fb42`;
-  file `sha256:820c67d9c5f75cda89aa52f3252295a08ba0ee385e61e6a8ac83cd0637a23885`, 12,014 bytes.
-- Receipt-only commit `3fdfaa79a93df1e709eb9c01fdea9c4646cf0ad9`, sole child of incident source.
-- Terminal `reports/live-pilot/artifacts/d129-external-no-call-sequence-observed-blocked.json`:
-  ID `d129sequenceblock_b5fc90e29ed2ca7febda54a2e63e4f5a0606703e0e93a997fab719d33797f5c8`;
-  body `sha256:b5fc90e29ed2ca7febda54a2e63e4f5a0606703e0e93a997fab719d33797f5c8`;
-  file `sha256:fbb7fac37555ea4d8a2de0d5947fdffe74e3b716b359e2a23834ed6689bd732d`,
-  13,118 bytes; status `D129_EXTERNAL_NO_CALL_SEQUENCE_OBSERVED_BLOCKED`.
+- Offline gate ID `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
+  evidence commit `70f9955dca8d873f91d622505f7afe7f3cfec59e`.
+- Receipt ID `d129approval_0d505214f607b0f2a2536e1b754750131bc4b6dab2995d24a12554d63090fb42`;
+  receipt-only commit `3fdfaa79a93df1e709eb9c01fdea9c4646cf0ad9`.
+- Terminal ID `d129sequenceblock_b5fc90e29ed2ca7febda54a2e63e4f5a0606703e0e93a997fab719d33797f5c8`;
+  status `D129_EXTERNAL_NO_CALL_SEQUENCE_OBSERVED_BLOCKED`.
 
 User approval preceded one public official-docs tool open, but receipt/attempt did not. Underlying HTTP and
 returned-content counts are unknown; no canonical replay entity was retained or used as pricing evidence.
 No attempt was backfilled. Docker, image mutation, SDK, canonical pricing, provider/evaluator/agent, memory,
 hash/candidate, cost and A/C all stayed zero. The receipt is consumed; retry/resume/repair remain false.
-
-Focused sequence tests passed 12/12. The selected D-127/D-128/D-129/docs regression bundle passed 79/79;
-focused and selected counts are not additive where node sets overlap.
 
 ## Historical blocked chain
 
@@ -60,9 +59,9 @@ focused and selected counts are not additive where node sets overlap.
 
 ## Next evidence boundary
 
-Obtain exact D-130 local-admission approval quoting its gate tuple, 17,416 bytes and the local evidence commit
-that tracks this gate. It may create only a receipt-only commit, durable armed-intent-only commit and activation
-challenge. No official-docs/network,
-Docker, SDK or credential observation belongs to stage 1. A separate exact activation must quote the gate,
-receipt, intent and both commits before any external observation; live/hash/candidate/cost/A-C authority stays
-closed.
+Obtain fresh exact D-131-qualified D-130 local-admission approval quoting the D-131 gate tuple, 14,516 bytes and
+the local evidence commit that tracks this gate. It may create only a receipt-only commit, durable
+`ARMED_WAITING_EXACT_ACTIVATION` intent-only commit and activation challenge. No official-docs/network,
+Docker, SDK or credential observation belongs to local admission. A separate exact activation must quote the
+D-131 gate, receipt, intent and both commits before any external observation; live/hash/candidate/cost/A-C
+authority stays closed.

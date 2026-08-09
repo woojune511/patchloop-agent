@@ -52,8 +52,10 @@ estimate and not a percentage of engineering completion.
   environment readiness, execution identity, cost or result.
 - D-129 has a consumed non-retroactive receipt and procedural blocked terminal. It has no canonical pricing,
   Docker/SDK readiness observation, hash/candidate, cost or result.
-- D-130 is offline-source-qualified only. It creates no receipt, durable armed intent, activation or external
-  readiness observation and grants no hash/candidate, cost or result authority.
+- D-130 is a historical offline predecessor. Its later Stage 1 approval was received but not exercised, created
+  no receipt or durable armed intent, and is non-reusable after the D-131 topology change.
+- D-131 is implementation-source-qualified only. It created no approval receipt, armed intent, activation or
+  external readiness observation and grants no credential/Docker/SDK, hash/candidate, cost or result authority.
 
 ## Isolation and external controls
 
@@ -80,9 +82,11 @@ estimate and not a percentage of engineering completion.
 - D-129 preserves one approved official-docs tool open before receipt/attempt. Underlying transport/content
   count is unknown and the lookup is not replayable pricing evidence. Canonical pricing, Docker, SDK and all
   runtime/cost actions stayed zero; the consumed receipt cannot be retried.
-- D-130 focused 13/13 and selected D-127–D-130/docs 92/92 are local checks and prove no external readiness.
-  The D-130 gate only qualifies receipt+`ARMED_WAITING_EXACT_ACTIVATION` admission followed by a separately
-  approved exact activation; neither exists. The agent remains barred from starting Desktop or the daemon.
+- D-131 focused 15/15 and selected D-127–D-131/docs 107/107 are local checks and prove no external readiness.
+  The D-131 gate qualifies only append-only receipt+`ARMED_WAITING_EXACT_ACTIVATION` implementation and a
+  separately approved exact activation sequence. No fresh admission approval, receipt, intent or activation
+  exists. The agent remains barred from credential, Docker and SDK observation and from starting Desktop or
+  the daemon.
 - Archive prose can contain stale future tense. Current authority comes from source/artifacts and
   `docs/current-status.md`.
 

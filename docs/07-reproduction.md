@@ -51,50 +51,19 @@ uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --vali
 These validate exact historical bytes without promoting them to current source evidence. D-124 corrects
 D-123 prospectively; D-125 remains local/mock only.
 
-## Validate historical D-126 blocked preflight
+## Validate historical D-126 through D-129 evidence
 
 ```powershell
-uv run pytest -q tests/test_d126_clean_source_pricing_no_call_preflight.py
 uv run python scripts/build_d126_clean_source_pricing_no_call_preflight.py --validate-post-commit
-```
-
-This validates sealed topology without repeating pricing or Docker. Do not invoke `--run-preflight`.
-
-## Validate D-127 source and blocked-phase contracts
-
-```powershell
-uv run pytest -q tests/test_d127_docker_remediation.py tests/test_d127_pricing_capture.py tests/test_d127_d126_successor_no_call_preflight.py
-```
-
-This mocked path makes no external call. The production receipt is terminal/idempotent blocked after six
-read-only calls. Do not use `--run-external-preflight`.
-
-## Validate D-128 source and terminal-blocked contracts
-
-```powershell
-uv run pytest -q tests/test_d128_d127_terminal_successor_offline.py
 uv run python scripts/build_d128_d127_terminal_successor_offline.py --validate
-uv run pytest -q tests/test_d128_docker_no_start_remediation.py tests/test_d128_terminal_successor_no_call_preflight.py
-```
-
-These are local/mocked checks. D-128's receipt is consumed after three read-only calls; do not invoke its
-external entrypoint or expect a pricing/preflight/gate descendant.
-
-## Validate current D-129 sequence-block terminal
-
-```powershell
-uv run pytest -q tests/test_d129_d128_terminal_successor_offline.py
-uv run pytest -q tests/test_d129_external_sequence_block.py
-uv run python scripts/build_d129_external_sequence_block.py --validate-receipt
-uv run python scripts/build_d129_external_sequence_block.py --validate-terminal
 uv run python scripts/build_d129_external_sequence_block.py --validate-post-commit
 ```
 
-These commands are read-only validation. Do not call `--create-receipt` or `--record-procedural-terminal` again:
-the exact receipt is consumed. The terminal records one pre-receipt docs tool open, unknown transport count and
-zero canonical pricing/Docker/SDK/runtime action. Focused 12/12 and selected 79/79 are non-additive.
+These are read-only sealed-history validators. Never invoke their preflight, external, receipt or terminal
+creation flags: D-127 through D-129 are consumed/terminal, and validation must not repeat Docker or network
+work. Focused historical test commands remain discoverable in Git history and their owning test files.
 
-## Validate current D-130 offline successor gate
+## Validate the D-130 offline predecessor gate
 
 ```powershell
 uv run pytest -q tests/test_d130_d129_sequence_block_successor_offline.py
@@ -104,9 +73,26 @@ uv run python scripts/build_d130_d129_sequence_block_successor_offline.py --vali
 This is read-only offline validation of the exact D-129 chain, D-130 source identity and two-stage contract.
 It must report status
 `D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED`,
-13/13 focused tests, and zero receipt/intent/activation/external authority. Do not run a stage-1 admission or
-external action from these commands. The selected D-127–D-130/docs bundle passed 92/92; overlapping focused
-nodes are not additive.
+13/13 focused tests, and zero receipt/intent/activation/external authority. Its later Stage 1 approval was not
+exercised and is non-reusable after D-131 changed the topology. Do not run a D-130 admission or external action
+from these predecessor commands.
+
+## Validate the current D-131 local-admission implementation gate
+
+```powershell
+uv run pytest -q tests/test_d131_d130_local_admission_offline.py
+uv run python scripts/build_d131_d130_local_admission_offline.py --validate-gate
+```
+
+This read-only offline path verifies the exact D-130 gate/evidence predecessor, D-131 source and loaded-module
+bindings, append-only/new-only writer contracts, orphan/collision/idempotence failures, exact receipt-only and
+intent-only Git topology, and activation challenge tuple rendering. It must report status
+`D131_D130_LOCAL_ADMISSION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`, 15/15 focused tests,
+zero future-writer/challenge invocation during gate creation and no receipt or intent. The selected
+D-127–D-131/docs bundle passed 107/107; overlapping selections are not additive.
+
+Do not call `--create-receipt`, `--create-armed-intent` or any activation/external operation without the next
+fresh exact approval. Validation must not read credentials, Docker or SDK state and must make no external call.
 
 ## Validate current memory contracts
 
@@ -157,12 +143,13 @@ There is no supported live A/C command. Although the exact suite is an `Experime
 command must appear only after:
 
 1. preserve the consumed D-128 and D-129 receipts/terminals without retry;
-2. preserve the materialized D-130 offline gate binding the exact D-129 incident chain;
-3. obtain exact local-admission approval for receipt-only plus durable
+2. preserve the materialized D-130 predecessor and the unexercised, non-reusable D-130 approval;
+3. preserve the D-131 offline gate binding the local-admission implementation source;
+4. obtain fresh exact D-131-qualified local-admission approval for receipt-only plus durable
    `ARMED_WAITING_EXACT_ACTIVATION` intent-only commits and challenge rendering, with external counts zero;
-4. obtain separate exact activation quoting the gate, receipt, intent and both commit tuples before
+5. obtain separate exact activation quoting the D-131 gate, receipt, intent and both commit tuples before
    daemon/images/pricing/SDK observation;
-5. after a ready successor, obtain separate hash/candidate and exact live approvals.
+6. after a ready successor, obtain separate hash/candidate and exact live approvals.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that
 sequence.

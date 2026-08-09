@@ -12,10 +12,9 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-The exact suite and plan live under `experiments/`. Delivery, qualification and R2 cost/completion source are
-offline-qualified. D-129 is terminal-blocked after one approved official-docs tool open preceded its machine
-receipt and durable attempt. D-130 now exact-binds that incident offline and requires local-admission approval;
-it grants no external authority.
+The suite, delivery and R2 cost/completion source are offline-qualified. D-129 is terminal sequence-blocked;
+the later D-130 Stage 1 approval was not exercised and is non-reusable. D-131 qualifies local-admission
+implementation source only, not local admission or external work.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -36,11 +35,11 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-124/D-125 are historical local/mock predecessors; D-121 is deferred.
 - D-126 sealed observations, not readiness; D-127 and D-128 are terminal-blocked historical predecessors.
 - D-128 made three read-only calls, all return code 1; every mutation and later phase remained zero.
-- D-129 made one agent-visible official-docs open before receipt; underlying HTTP count is unknown. Canonical
-  pricing capture, Docker, SDK, provider/evaluator/agent and all execution/cost paths stayed zero.
-- D-130 gate `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`
-  qualifies only the offline two-stage admission contract. Focused tests passed 13/13 and the selected
-  D-127–D-130/docs regression bundle passed 92/92; overlapping selections are not additive.
+- D-129 has one pre-receipt docs open with unknown transport count; later external/runtime/cost paths stayed zero.
+- D-131 gate `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`
+  binds source commit `9cd736c0221bba17375c3b7ddce02e5214fc21fe` and qualifies only the offline
+  receipt/intent writer, validator, topology and challenge-rendering contracts. Focused tests passed 15/15 and
+  the selected D-127–D-131/docs regression bundle passed 107/107; overlapping selections are not additive.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -53,6 +52,8 @@ uv run pytest -q tests/test_d129_external_sequence_block.py
 uv run python scripts/build_d129_external_sequence_block.py --validate-terminal
 uv run pytest -q tests/test_d130_d129_sequence_block_successor_offline.py
 uv run python scripts/build_d130_d129_sequence_block_successor_offline.py --validate
+uv run pytest -q tests/test_d131_d130_local_admission_offline.py
+uv run python scripts/build_d131_d130_local_admission_offline.py --validate-gate
 uv run pytest -q tests/test_documentation_structure.py
 git diff --check
 ```
@@ -63,11 +64,11 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 Use `uv run patchloop --help` to discover the CLI.
 
-CLI availability does not imply authority. D-129 has a consumed receipt and procedural terminal but no external
-attempt or canonical pricing/preflight. D-130 is offline-source-qualified only: stage 1 may create and commit
-the exact receipt and durable `ARMED_WAITING_EXACT_ACTIVATION` intent, then render a challenge, while all
-external actions stay zero. A separate exact stage-2 activation is required; hash/candidate, cost and A/C remain
-closed.
+CLI availability does not imply authority. The prior D-130 approval was not exercised and cannot be reused.
+D-131 is source-qualified only: a fresh exact approval may create and commit the exact receipt and
+durable `ARMED_WAITING_EXACT_ACTIVATION` intent, then render a challenge, while every external action stays
+zero. No receipt or intent exists. Exact activation, credential/Docker/SDK observation, hash/candidate, cost
+and A/C remain closed.
 
 ## Documentation
 

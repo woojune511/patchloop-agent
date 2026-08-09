@@ -10,11 +10,12 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-D-130 offline source qualification is complete. Preserve the D-129 procedural terminal and request only the
-exact D-130 local-admission approval. Stage 1 may create receipt-only and durable
+D-131 local-admission implementation source qualification is complete. Preserve the D-129 procedural terminal
+and the D-130 predecessor, treat the prior unexercised D-130 approval as non-reusable, and request only a fresh
+exact D-131-qualified D-130 local-admission approval. It may create receipt-only and durable
 `ARMED_WAITING_EXACT_ACTIVATION` intent-only commits and render the challenge with all external actions zero.
-Stage 2 requires a separate exact activation. The agent must not start Desktop or the daemon; all later gates
-remain closed.
+A later exact activation must quote those artifacts and commits. The agent must not start Desktop or the
+daemon; all later gates remain closed.
 
 ## Completed foundation
 
@@ -25,8 +26,10 @@ remain closed.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
 - D-122 through D-128 are historical predecessors; D-127/D-128 are terminal blocked.
 - D-129 offline source is historical; its sequence incident source and receipt-only commits are preserved.
-- D-130 source commit `e6acdc23050e93f5324827a2dac1ed519fe35406` and its canonical offline gate
-  exact-bind the D-129 gate, receipt, terminal and Git topology.
+- D-130 source/evidence topology remains preserved. Its later Stage 1 approval was not exercised and is not
+  reusable; no D-130 receipt or intent exists.
+- D-131 source commit `9cd736c0221bba17375c3b7ddce02e5214fc21fe` and its canonical offline gate
+  exact-bind the D-130 predecessor, loaded modules and future append-only local-admission topology.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -44,17 +47,22 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-130 offline-source-qualified; exact local-admission approval required.
+Status: D-131 implementation-source-qualified; fresh exact D-131-qualified local-admission approval required.
 
 D-126 is sealed blocked, D-127 remains unchanged, and D-128's consumed receipt terminally records three
 read-only rc-1 Docker calls with blocker `already-running-docker-desktop-linux-daemon-unavailable`.
 
 D-129 recorded one approved public docs tool open before its machine receipt/attempt sequence. It sealed a
 non-retroactive receipt and procedural blocked terminal; no canonical pricing, Docker, SDK or runtime action
-followed. D-130 gate `d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db`
-qualifies its exact chain offline. Its first approval may create/commit only the receipt and armed intent and
-render a challenge, with official-docs/network/Docker/SDK/credential actions zero. A later exact activation
-quoting all tuples is required before daemon/image observation or canonical pricing capture.
+followed. D-130 qualified that chain offline. Its later Stage 1 approval was received but not exercised and is
+non-reusable after the D-131 topology change.
+
+D-131 gate `d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057`
+qualifies the committed writer/validator/CLI and exact challenge renderer offline without invoking them. No
+receipt or intent exists. A fresh exact approval quoting the D-131 gate tuple, bytes and evidence commit may
+create/commit only the receipt and armed intent and render a challenge, with official-docs/network/Docker/SDK/
+credential actions zero. A later exact activation quoting the gate, artifacts and both commits is required
+before daemon/image observation or canonical pricing capture.
 
 ## Work item 7 — execution hash and candidate
 

@@ -1,0 +1,292 @@
+{
+  "schema_version": "d130-local-admission-implementation-offline-source-gate-d131-v1",
+  "gate_id": "d131_849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057",
+  "semantic_body_hash": "sha256:849502e63d33aa3c8ceea8dc03faf0ff86e8ec51db9321fa13544df15a4af057",
+  "semantic_body": {
+    "milestone": "D-131",
+    "evidence_kind": "d130-local-admission-implementation-offline-source-gate",
+    "recorded_at": "2026-08-09T10:37:33.405818Z",
+    "status": "D131_D130_LOCAL_ADMISSION_IMPLEMENTATION_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED",
+    "predecessor_binding": {
+      "path": "reports/live-pilot/artifacts/d130-d129-external-sequence-block-successor-offline-source-gate.json",
+      "schema_version": "d129-external-sequence-block-successor-offline-source-gate-d130-v1",
+      "gate_id": "d130_443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db",
+      "semantic_body_hash": "sha256:443b0bc935ba6affd4a009dee780ae85ec1ecdc1e3ce62edcd566e12307c74db",
+      "file_sha256": "sha256:6d580dd979dc77659efed07291264c4ea2a16dca02d9070a32928e9fbefff468",
+      "file_bytes": 17416,
+      "status": "D130_D129_EXTERNAL_SEQUENCE_BLOCK_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_ADMISSION_APPROVAL_REQUIRED",
+      "recorded_at": "2026-08-09T08:54:48.400693Z",
+      "evidence_commit": "d6079e55fd1c4745b05c2e345228b1a66d0a3df4",
+      "evidence_tree": "564cc3719b6acaeb709a838d574b8b0f943c4b08",
+      "evidence_parents": [
+        "e6acdc23050e93f5324827a2dac1ed519fe35406"
+      ],
+      "gate_blob_oid": "c20cf331c324d3716f9677e509a5fc0c05791b6b",
+      "artifact_mutated": false
+    },
+    "source_identity": {
+      "commit": "9cd736c0221bba17375c3b7ddce02e5214fc21fe",
+      "tree": "f667a154b9cf41a6c8c3be9a74d4ac0e2c457c54",
+      "parents": [
+        "d6079e55fd1c4745b05c2e345228b1a66d0a3df4"
+      ],
+      "implementation_paths_added": [
+        "patchloop/evals/d131_d130_local_admission_offline.py",
+        "scripts/build_d131_d130_local_admission_offline.py",
+        "tests/test_d131_d130_local_admission_offline.py"
+      ],
+      "file_bindings": [
+        {
+          "path": "patchloop/evals/d131_d130_local_admission_offline.py",
+          "file_bytes": 59231,
+          "file_sha256": "sha256:74f3287b5e282b6586c4fd30f7b50178c411f1902ad51edfbe0ae01ad99fed4c",
+          "blob_oid": "b75f35cad816721038288aeac9c66ba61b130c9d",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "scripts/build_d131_d130_local_admission_offline.py",
+          "file_bytes": 2206,
+          "file_sha256": "sha256:0e9a842dad47cd9c024fdee1eec063616a9873583cb179030dfce85ebc7a4893",
+          "blob_oid": "f8fce67d9ab149a52fc0d2951d47e258653867a1",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "tests/test_d131_d130_local_admission_offline.py",
+          "file_bytes": 40131,
+          "file_sha256": "sha256:44b4a8c55b39f3fde2fd0aa4d4290c534f4a90271a2ec87abf6fe32557b262c8",
+          "blob_oid": "d8fcf3df83c3315731da9d6e312f4b5184852cd2",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d130_d129_sequence_block_successor_offline.py",
+          "file_bytes": 35292,
+          "file_sha256": "sha256:f58c85ede0d0448f5b5d2790eb3f1200458b340723fd9ce51730cbf001cb2521",
+          "blob_oid": "1ec54b9bffbdb420150b3a7ba002a08caca1e1c1",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "file_bytes": 51141,
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "file_bytes": 1149,
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/runtime.py",
+          "file_bytes": 13657,
+          "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4",
+          "blob_oid": "2165d6513419ebfcd40972b85bc2733337cbfc36",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "file_bytes": 2109,
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "current_bytes_match_commit": true
+        }
+      ],
+      "loaded_module_bindings": [
+        {
+          "path": "patchloop/evals/d131_d130_local_admission_offline.py",
+          "file_bytes": 59231,
+          "file_sha256": "sha256:74f3287b5e282b6586c4fd30f7b50178c411f1902ad51edfbe0ae01ad99fed4c",
+          "blob_oid": "b75f35cad816721038288aeac9c66ba61b130c9d",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d131_d130_local_admission_offline",
+          "loaded_path": "patchloop/evals/d131_d130_local_admission_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d130_d129_sequence_block_successor_offline.py",
+          "file_bytes": 35292,
+          "file_sha256": "sha256:f58c85ede0d0448f5b5d2790eb3f1200458b340723fd9ce51730cbf001cb2521",
+          "blob_oid": "1ec54b9bffbdb420150b3a7ba002a08caca1e1c1",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d130_d129_sequence_block_successor_offline",
+          "loaded_path": "patchloop/evals/d130_d129_sequence_block_successor_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "file_bytes": 51141,
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d129_d128_terminal_successor_offline",
+          "loaded_path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "file_bytes": 1149,
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.errors",
+          "loaded_path": "patchloop/errors.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/runtime.py",
+          "file_bytes": 13657,
+          "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4",
+          "blob_oid": "2165d6513419ebfcd40972b85bc2733337cbfc36",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.runtime",
+          "loaded_path": "patchloop/runtime.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "file_bytes": 2109,
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.util",
+          "loaded_path": "patchloop/util.py",
+          "loaded_path_matches_repository": true
+        }
+      ],
+      "python_routing_env_presence": {
+        "PYTHONHOME": false,
+        "PYTHONPATH": false
+      },
+      "git_cli_observation": {
+        "resolved_path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+        "file_name": "git.exe",
+        "file_bytes": 4422544,
+        "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+        "linklike": false,
+        "version": "git version 2.54.0.windows.1",
+        "actual_git_engine_invoked_directly": true,
+        "repository_local_core_autocrlf": "false",
+        "authenticated_or_vendor_signed_identity_claimed": false,
+        "stable_during_observation": true,
+        "minimal_secret_free_environment": true,
+        "fsmonitor_disabled": true,
+        "shell_used": false
+      },
+      "worktree_and_index_clean_before_gate": true,
+      "git_identity_vendor_authenticated_or_signed": false
+    },
+    "qualified_local_admission_contract": {
+      "receipt_path": "reports/live-pilot/artifacts/d130-local-admission-approval-receipt.json",
+      "receipt_schema": "d130-local-admission-approval-receipt-d130-v1",
+      "receipt_status": "D130_LOCAL_ADMISSION_APPROVAL_RECORDED",
+      "receipt_writer_requires_clean_d131_evidence_commit": true,
+      "receipt_commit_must_be_single_artifact_add": true,
+      "intent_path": "reports/live-pilot/artifacts/d130-external-phase-armed-intent.json",
+      "intent_schema": "d130-external-phase-armed-intent-d130-v1",
+      "intent_status": "D130_EXTERNAL_PHASE_ARMED_WAITING_EXACT_ACTIVATION",
+      "intent_writer_requires_clean_receipt_only_commit": true,
+      "intent_commit_must_be_single_artifact_add": true,
+      "writers_are_append_only_idempotent_and_collision_fail_closed": true,
+      "orphan_or_descendant_collision_blocks_without_repair": true,
+      "challenge_requires_clean_committed_intent": true,
+      "challenge_quotes_gate_receipt_intent_and_both_commits": true,
+      "challenge_is_not_activation": true,
+      "external_action_count_during_local_admission": 0
+    },
+    "implementation_integrity": {
+      "implementation_paths": [
+        "patchloop/evals/d131_d130_local_admission_offline.py",
+        "scripts/build_d131_d130_local_admission_offline.py",
+        "tests/test_d131_d130_local_admission_offline.py"
+      ],
+      "dependency_paths": [
+        "patchloop/evals/d130_d129_sequence_block_successor_offline.py",
+        "patchloop/evals/d129_d128_terminal_successor_offline.py",
+        "patchloop/errors.py",
+        "patchloop/runtime.py",
+        "patchloop/util.py"
+      ],
+      "focused_tests_passed": 15,
+      "gate_builder_writer_invocation_count": 0,
+      "gate_builder_challenge_render_count": 0,
+      "gate_builder_reads_dotenv_or_credential_value": false,
+      "gate_builder_reads_parent_environment_values_for_git": false,
+      "gate_builder_uses_fixed_literal_secret_free_git_environment": true
+    },
+    "offline_qualification": {
+      "exact_d130_gate_and_evidence_commit_verified": true,
+      "source_commit_and_loaded_modules_verified": true,
+      "receipt_and_intent_writer_contracts_qualified_offline": true,
+      "receipt_or_intent_materialized": false,
+      "qualification_grade": "offline-source-and-mock-only"
+    },
+    "blocked_prerequisites": [
+      "fresh-exact-d131-local-admission-approval-not-recorded",
+      "d130-receipt-only-commit-not-created",
+      "d130-armed-intent-only-commit-not-created",
+      "separate-exact-external-activation-not-recorded",
+      "docker-pricing-sdk-no-call-readiness-not-observed",
+      "execution-hash-candidate-cost-and-ac-remain-later-gates"
+    ],
+    "evidence_boundary": {
+      "today_d130_approval_was_not_exercised_due_missing_committed_writer": true,
+      "today_d130_approval_must_not_be_reused_after_d131_topology_change": true,
+      "d131_implemented_but_did_not_invoke_future_writers": true,
+      "d131_performed_no_external_or_credential_observation": true,
+      "git_identity_is_observed_not_vendor_authenticated_or_signed": true,
+      "gate_does_not_self_bind_its_future_evidence_commit": true,
+      "d131_source_preparation_approval": {
+        "approval_mode": "current-user-message-self-attested-unsigned",
+        "approval_is_authenticated_or_cryptographically_signed": false,
+        "approved_scope": [
+          "implement-d130-local-admission-receipt-and-armed-intent-offline-writer-validator-cli-and-focused-tests",
+          "implement-append-only-new-only-orphan-collision-idempotence-exact-git-topology-and-loaded-module-provenance-validation",
+          "implement-exact-activation-challenge-renderer",
+          "modify-related-source-tests-docs-and-create-local-git-commits",
+          "create-append-only-d131-offline-source-qualification-gate-and-local-evidence-commit",
+          "render-new-exact-local-admission-approval-template"
+        ],
+        "not_authorized": [
+          "create-d130-or-d131-approval-receipt-or-armed-intent",
+          "create-activation-receipt-or-external-phase-attempt",
+          "official-docs-search-open-network-or-pricing-capture",
+          "docker-sdk-credential-presence-dotenv-or-environment-value-observation",
+          "provider-evaluator-agent-execution",
+          "retrieval-or-memory-injection",
+          "execution-hash-or-candidate-creation",
+          "cost-reservation-or-spending",
+          "four-row-ac-execution"
+        ],
+        "local_admission_authority_recorded": false
+      }
+    },
+    "authority": {
+      "d131_offline_source_gate_materialized": true,
+      "d130_stage1_prior_approval_received_but_not_exercised": true,
+      "d130_stage1_prior_approval_reusable_after_topology_change": false,
+      "d131_local_admission_approval_recorded": false,
+      "d130_receipt_created": false,
+      "d130_armed_intent_created": false,
+      "d130_external_activation_recorded": false,
+      "d130_external_phase_attempt_created": false,
+      "d131_official_docs_or_network_call_count": 0,
+      "d131_docker_sdk_or_credential_observation_count": 0,
+      "d131_provider_evaluator_agent_call_count": 0,
+      "d131_retrieval_or_memory_injection_count": 0,
+      "d131_execution_hash_created": false,
+      "d131_execution_candidate_created": false,
+      "d131_cost_reserved_or_spent_usd": "0",
+      "d131_four_row_ac_execution_authorized": false
+    },
+    "next_gate": {
+      "action": "request-fresh-exact-d131-qualified-d130-local-admission-approval",
+      "must_quote_exact_d131_gate_tuple_bytes_and_evidence_commit": true,
+      "may_create_only_receipt-and-armed-intent-local-commits": true,
+      "must_keep-all-external-actions-zero": true,
+      "requires-separate-exact-activation-after-committed-intent": true,
+      "does_not_authorize-execution-hash-candidate-cost-or-ac": true
+    }
+  }
+}
