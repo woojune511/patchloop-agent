@@ -1,0 +1,51 @@
+{
+  "schema_version": "d136-fixed-pricing-capture-attempt-intent-v1",
+  "artifact_id": "d136pricingattempt_3b5d5e23666ea56bfb2fbdeeede3bf845a73b3b2dc12668e12c9ed1de2e34b7e",
+  "semantic_body_hash": "sha256:3b5d5e23666ea56bfb2fbdeeede3bf845a73b3b2dc12668e12c9ed1de2e34b7e",
+  "semantic_body": {
+    "milestone": "D-136",
+    "evidence_kind": "fixed-pricing-capture-attempt-intent",
+    "recorded_at": "2026-08-09T19:05:50.149917Z",
+    "status": "D136_FIXED_PRICING_CAPTURE_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+    "activation_receipt_binding": {
+      "path": "reports/live-pilot/artifacts/d136-fixed-pricing-successor-activation-receipt.json",
+      "artifact_id": "d136approval_630c0694f307c0434e4bb5692bdf23bd76f45f31d1b6c3558415ca588dd50f66",
+      "semantic_body_hash": "sha256:630c0694f307c0434e4bb5692bdf23bd76f45f31d1b6c3558415ca588dd50f66",
+      "file_sha256": "sha256:c5cc8211678b12740af3c3c4ea3329d820c86a985942517e5fa4d1be247a6bbb",
+      "file_bytes": 17724,
+      "status": "D136_FIXED_PRICING_SUCCESSOR_ACTIVATION_RECEIPT_RECORDED_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-09T19:02:53.806474Z"
+    },
+    "parent_commit_binding": {
+      "commit": "1f9c62ac9309d087d1ef32a237b86ea11bf9d51e",
+      "tree": "6988fda8dfac16e0097937c4b9b4f8dd3019fb0b",
+      "parents": [
+        "5fad5756d2b40b5f72c0bbc38680120d780ef899"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d136-fixed-pricing-successor-activation-receipt.json",
+      "artifact_blob_oid": "be0095604f1eb9dcc364f013082e62bafe9637de",
+      "artifact_file_sha256": "sha256:c5cc8211678b12740af3c3c4ea3329d820c86a985942517e5fa4d1be247a6bbb",
+      "artifact_file_bytes": 17724,
+      "single_artifact_add_commit": true
+    },
+    "capture_contract": {
+      "helper_module_path": "patchloop/evals/d136_fixed_pricing_capture.py",
+      "official_model_page_url": "https://developers.openai.com/api/docs/models/gpt-5.4-mini.md",
+      "maximum_redirects": 3,
+      "maximum_application_level_public_get_send_count": 4,
+      "action_started_must_be_newly_written_and_fsynced_before_helper": true,
+      "post_marker_exception_consumes_attempt": true,
+      "transport_retry_count": 0
+    },
+    "authority": {
+      "action_started_created": false,
+      "pricing_helper_invocation_count": 0,
+      "official_public_get_send_count": 0,
+      "pricing_terminal_created": false,
+      "docker_sdk_credential_provider_or_agent_call_count": 0,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}
