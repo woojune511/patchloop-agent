@@ -1,0 +1,262 @@
+{
+  "schema_version": "terminal-successor-external-sequence-approval-receipt-d129-v1",
+  "artifact_id": "d129approval_0d505214f607b0f2a2536e1b754750131bc4b6dab2995d24a12554d63090fb42",
+  "semantic_body_hash": "sha256:0d505214f607b0f2a2536e1b754750131bc4b6dab2995d24a12554d63090fb42",
+  "semantic_body": {
+    "milestone": "D-129",
+    "evidence_kind": "non-retroactive-terminal-successor-external-no-call-approval-receipt",
+    "recorded_at": "2026-08-09T08:10:18.466324Z",
+    "status": "D129_EXTERNAL_NO_CALL_APPROVAL_RECORDED_AFTER_PRE_RECEIPT_ACTIVITY",
+    "predecessor_binding": {
+      "path": "reports/live-pilot/artifacts/d129-d128-terminal-successor-offline-source-gate.json",
+      "gate_id": "d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c",
+      "semantic_body_hash": "sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c",
+      "file_sha256": "sha256:fd57c187d1f260952b581e60f7d0ff98243f3b4ef172c9a6d6669b3e84968512",
+      "file_bytes": 18678,
+      "status": "D129_D128_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED",
+      "recorded_at": "2026-08-09T07:00:36.222143Z",
+      "evidence_commit": "70f9955dca8d873f91d622505f7afe7f3cfec59e",
+      "evidence_tree": "ad9e348284c1161f258ef7e20ea7cc63cd55399d",
+      "evidence_parent": "1fef6716cddca571777c8b7f9f1dc4501f988d1c",
+      "blob_oid": "5ccf4a0e4ddaf7b4096186bc960035fdb76f337e",
+      "artifact_mutated": false
+    },
+    "source_identity": {
+      "commit": "d42334312c4752cbe9f4aa039c22b8ed51b8b66b",
+      "tree": "4a5f75ba8af5d879af735385fc81b0008267e27e",
+      "parents": [
+        "70f9955dca8d873f91d622505f7afe7f3cfec59e"
+      ],
+      "source_paths_added": [
+        "patchloop/evals/d129_external_sequence_block.py",
+        "scripts/build_d129_external_sequence_block.py",
+        "tests/test_d129_external_sequence_block.py"
+      ],
+      "module_bindings": [
+        {
+          "path": "patchloop/evals/d129_external_sequence_block.py",
+          "file_bytes": 38356,
+          "file_sha256": "sha256:527ebd5118c00b0ad064887e32f2999e4f08a469885ebe51bada11e838d5374b",
+          "blob_oid": "b21b4647a144996b8deed3f489600623d652b998",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "scripts/build_d129_external_sequence_block.py",
+          "file_bytes": 1470,
+          "file_sha256": "sha256:2c26d512f650c2e8b5703f06283820d4c06ad47207fa5cf516f8e958c2fb8443",
+          "blob_oid": "8376693ce92ad2c00deeabd9f180a1b8204f48f1",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "tests/test_d129_external_sequence_block.py",
+          "file_bytes": 27744,
+          "file_sha256": "sha256:b6ad3fe4ea613c64a7d4679fb1cc8558878150b89b3cc672256f6badffabb07c",
+          "blob_oid": "d1daa8d4cb10b228173ca40e07f09fa9f769c99b",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "file_bytes": 51141,
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "file_bytes": 1149,
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/runtime.py",
+          "file_bytes": 13657,
+          "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4",
+          "blob_oid": "2165d6513419ebfcd40972b85bc2733337cbfc36",
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "file_bytes": 2109,
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "current_bytes_match_commit": true
+        }
+      ],
+      "loaded_module_bindings": [
+        {
+          "path": "patchloop/evals/d129_external_sequence_block.py",
+          "file_bytes": 38356,
+          "file_sha256": "sha256:527ebd5118c00b0ad064887e32f2999e4f08a469885ebe51bada11e838d5374b",
+          "blob_oid": "b21b4647a144996b8deed3f489600623d652b998",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d129_external_sequence_block",
+          "loaded_path": "patchloop/evals/d129_external_sequence_block.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "file_bytes": 51141,
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d129_d128_terminal_successor_offline",
+          "loaded_path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "file_bytes": 1149,
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.errors",
+          "loaded_path": "patchloop/errors.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/runtime.py",
+          "file_bytes": 13657,
+          "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4",
+          "blob_oid": "2165d6513419ebfcd40972b85bc2733337cbfc36",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.runtime",
+          "loaded_path": "patchloop/runtime.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "file_bytes": 2109,
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.util",
+          "loaded_path": "patchloop/util.py",
+          "loaded_path_matches_repository": true
+        }
+      ],
+      "python_routing_env_presence": {
+        "PYTHONHOME": false,
+        "PYTHONPATH": false
+      },
+      "worktree_and_index_clean_before_receipt": true,
+      "git_cli_observation": {
+        "resolved_path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+        "file_name": "git.exe",
+        "file_bytes": 4422544,
+        "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+        "linklike": false,
+        "version": "git version 2.54.0.windows.1",
+        "actual_git_engine_invoked_directly": true,
+        "repository_local_core_autocrlf": "false",
+        "authenticated_or_vendor_signed_identity_claimed": false,
+        "stable_during_observation": true,
+        "minimal_secret_free_environment": true,
+        "fsmonitor_disabled": true,
+        "shell_used": false
+      },
+      "git_identity_vendor_authenticated_or_signed": false
+    },
+    "approval_binding": {
+      "approval_mode": "current-user-message-self-attested-unsigned",
+      "approval_is_authenticated_or_cryptographically_signed": false,
+      "approved_scope": [
+        "record-a-new-exact-d129-successor-user-approval-receipt",
+        "use-the-exact-approved-docker-cli-identity",
+        "reobserve-the-already-running-docker-desktop-linux-daemon-read-only",
+        "pull-only-moto-and-babel-exact-digest-images-when-confirmed-absent",
+        "capture-bounded-replayable-openai-official-pricing-evidence",
+        "run-sdk-credential-presence-official-endpoint-no-call-preflight",
+        "create-append-only-d129-attempt-terminal-preflight-and-gate-evidence",
+        "modify-related-source-tests-docs-and-create-local-git-commit"
+      ],
+      "not_authorized": [
+        "agent-start-docker-desktop-or-daemon",
+        "container-create-start-run-or-exec",
+        "pull-or-load-any-image-other-than-the-two-exact-approved-digests",
+        "provider-evaluator-or-agent-execution",
+        "runtime-memory-injection-or-retrieval",
+        "execution-hash-or-execution-candidate-creation",
+        "cost-reservation-or-spend",
+        "four-row-ac-execution"
+      ],
+      "approval_preceded_official_docs_lookup": true,
+      "receipt_preceded_official_docs_lookup": false,
+      "phase_attempt_preceded_official_docs_lookup": false,
+      "receipt_created_before_any_docker_canonical_pricing_capture_or_sdk_probe": true,
+      "receipt_does_not_repair_or_retroactively_authorize_sequence": true
+    },
+    "event_order": [
+      {
+        "ordinal": 1,
+        "event": "exact-user-approval-received"
+      },
+      {
+        "ordinal": 2,
+        "event": "official-docs-tool-open-observed"
+      },
+      {
+        "ordinal": 3,
+        "event": "corrective-source-committed"
+      },
+      {
+        "ordinal": 4,
+        "event": "approval-receipt-recorded"
+      }
+    ],
+    "pre_receipt_activity": {
+      "activity_kind": "public-official-documentation-tool-open",
+      "official_url": "https://developers.openai.com/api/docs/pricing",
+      "agent_visible_web_tool_open_invocation_count": 1,
+      "underlying_http_request_or_redirect_count": "unknown",
+      "agent_supplied_openai_api_key_or_explicit_authentication": false,
+      "agent_supplied_cookie": false,
+      "underlying_tool_cookie_service_auth_or_header_state": "unknown",
+      "provider_response_api_call_count": 0,
+      "canonical_pricing_capture_get_count": 0,
+      "canonical_pricing_evidence_artifact_created": false,
+      "canonical_replayable_entity_retained": false,
+      "canonical_retained_entity_bytes": 0,
+      "canonical_retained_entity_sha256": null,
+      "web_tool_returned_content_bytes": "unknown",
+      "used_as_pricing_evidence": false,
+      "exact_lookup_timestamp_retained": false
+    },
+    "evidence_boundary": {
+      "ordinal_order_used_without_inventing_lookup_timestamp": true,
+      "official_docs_lookup_was_within_user_scope": true,
+      "official_docs_lookup_violated_machine_receipt_and_attempt_order": true,
+      "official_docs_lookup_is_not_canonical_pricing_evidence": true,
+      "receipt_reads_dotenv_or_credential_value": false,
+      "no_external_action_performed_by_receipt_writer": true
+    },
+    "authority": {
+      "d129_receipt_created": true,
+      "d129_external_phase_attempt_created": false,
+      "d129_agent_docker_cli_call_count": 0,
+      "d129_agent_docker_daemon_call_count": 0,
+      "d129_agent_docker_desktop_or_daemon_start_count": 0,
+      "d129_image_pull_or_load_count": 0,
+      "d129_image_store_mutation_count": 0,
+      "d129_container_create_start_run_exec_count": 0,
+      "d129_canonical_pricing_capture_get_count": 0,
+      "d129_sdk_probe_count": 0,
+      "d129_sdk_transport_attempt_count": 0,
+      "d129_credential_presence_observed": false,
+      "d129_provider_call_count": 0,
+      "d129_evaluator_call_count": 0,
+      "d129_agent_run_count": 0,
+      "d129_retrieval_call_count": 0,
+      "d129_runtime_memory_injection_count": 0,
+      "d129_execution_hash_created": false,
+      "d129_execution_candidate_created": false,
+      "d129_cost_reserved_or_spent_usd": "0",
+      "d129_four_row_ac_execution_authorized": false
+    },
+    "next_gate": {
+      "action": "record-d129-external-no-call-sequence-observed-blocked",
+      "no_docker_pricing_sdk_or_other_external_phase_may_follow_this_receipt": true,
+      "does_not_authorize_retry_resume_repair_or_execution": true
+    }
+  }
+}
