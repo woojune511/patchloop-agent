@@ -80,18 +80,19 @@ uv run pytest -q tests/test_d128_docker_no_start_remediation.py tests/test_d128_
 These are local/mocked checks. D-128's receipt is consumed after three read-only calls; do not invoke its
 external entrypoint or expect a pricing/preflight/gate descendant.
 
-## Validate current D-129 offline successor gate
+## Validate current D-129 sequence-block terminal
 
 ```powershell
 uv run pytest -q tests/test_d129_d128_terminal_successor_offline.py
-uv run python scripts/build_d129_d128_terminal_successor_offline.py --validate
-uv run python scripts/build_d129_d128_terminal_successor_offline.py --print-approval-template
+uv run pytest -q tests/test_d129_external_sequence_block.py
+uv run python scripts/build_d129_external_sequence_block.py --validate-receipt
+uv run python scripts/build_d129_external_sequence_block.py --validate-terminal
+uv run python scripts/build_d129_external_sequence_block.py --validate-post-commit
 ```
 
-These local commands validate the 18,678-byte gate, predecessor/source bindings and authority fields; template
-rendering creates no receipt. Focused 12/12 is included in selected 115/115. The manual rc-1 then 29.6.2
-linux/amd64/rc-0 checks are self-attested, not reproduced here. External work needs a new receipt from exact
-D-129 tuple plus evidence-commit approval.
+These commands are read-only validation. Do not call `--create-receipt` or `--record-procedural-terminal` again:
+the exact receipt is consumed. The terminal records one pre-receipt docs tool open, unknown transport count and
+zero canonical pricing/Docker/SDK/runtime action. Focused 12/12 and selected 79/79 are non-additive.
 
 ## Validate current memory contracts
 
@@ -141,11 +142,11 @@ historical snapshot hashes, the single D-121 prose owner and the closed four-run
 There is no supported live A/C command. Although the exact suite is an `ExperimentSuite` source, a future live
 command must appear only after:
 
-1. preserve the D-128 receipt, attempt and terminal evidence without retry;
-2. preserve D-129 as offline/self-attested only and commit its gate plus active docs;
-3. obtain exact approval quoting the D-129 gate ID/body SHA/file SHA/bytes and that evidence commit;
-4. create a new append-only receipt, then reobserve daemon/images before pricing and no-call preflight;
-5. after a ready successor, obtain separate hash/candidate and then exact live approvals.
+1. preserve the consumed D-128 and D-129 receipts/terminals without retry;
+2. prepare and commit a D-130 offline successor binding the exact D-129 incident chain;
+3. obtain admission approval for receipt-only plus durable armed-intent-only commits, with external counts zero;
+4. obtain separate exact activation quoting those tuples before daemon/images/pricing/SDK observation;
+5. after a ready successor, obtain separate hash/candidate and exact live approvals.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that
 sequence.

@@ -10,10 +10,9 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Stop at the materialized D-129 offline successor gate. Its manual-readiness premise is recorded but not
-agent-observed, and its approval receipt does not exist. Wait for an exact approval quoting the D-129 tuple and
-the eventual evidence commit before creating a new receipt or making any external observation. The agent must
-not start Desktop or the daemon; all later gates remain closed.
+Stop at the D-129 procedural sequence-block terminal. Its receipt was created non-retroactively and consumed;
+do not retry or repair it. Prepare D-130 offline, then use a two-stage receipt+armed-intent admission followed
+by separate exact activation. The agent must not start Desktop or the daemon; all later gates remain closed.
 
 ## Completed foundation
 
@@ -23,7 +22,7 @@ not start Desktop or the daemon; all later gates remain closed.
   and exposes no retrieval, provenance, vector or raw-trace content.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
 - D-122 through D-128 are historical predecessors; D-127/D-128 are terminal blocked.
-- D-129 clean source `1fef6716cddca571777c8b7f9f1dc4501f988d1c` and offline gate are qualified.
+- D-129 offline source is historical; its sequence incident source and receipt-only commits are preserved.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -41,20 +40,15 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-129 offline source qualified; exact external no-call approval required.
+Status: D-129 procedural terminal blocked; D-130 offline successor required.
 
 D-126 is sealed blocked, D-127 remains unchanged, and D-128's consumed receipt terminally records three
 read-only rc-1 Docker calls with blocker `already-running-docker-desktop-linux-daemon-unavailable`.
 
-D-129 records two user-reported endpoint checks: unavailable/rc 1, then client/server 29.6.2 on linux/amd64/
-rc 0, with no pre-existing container auto-start reported. The attestation is not authenticated, agent-observed
-or future-fresh. D-129 itself made zero Docker/network/SDK/provider/evaluator/agent/retrieval/injection calls
-and no mutation or cost action; its 12/12 focused tests are included in the 115/115 selected regression union.
-
-Next, and only after exact approval, create a new append-only receipt, durable phase attempt intent, and
-reobserve the already-running daemon/images. A confirmed-missing pull is limited to the exact Moto/Babel digest;
-then capture replayable official pricing and run credential-presence/official-endpoint SDK no-call preflight.
-No receipt, external attempt, pricing, preflight or successor ready gate exists yet.
+D-129 recorded one approved public docs tool open before its machine receipt/attempt sequence. It sealed a
+non-retroactive receipt and procedural blocked terminal; no canonical pricing, Docker, SDK or runtime action
+followed. Next create a D-130 offline gate. Its first approval may create/commit only receipt and armed intent;
+a later exact activation is required before daemon/image observation or canonical pricing capture.
 
 ## Work item 7 — execution hash and candidate
 

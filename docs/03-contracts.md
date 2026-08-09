@@ -127,11 +127,11 @@ D-126 is sealed blocked; D-127/D-128 are consumed terminal-blocked predecessors.
 made three read-only rc-1 Docker calls, no mutations, and no downstream pricing/preflight/gate. None may be
 reopened; exact historical bindings are indexed in `docs/09-evidence.md`.
 
-D-129 is source-only: its canonical gate binds the exact D-128 bytes, clean source
-`1fef6716cddca571777c8b7f9f1dc4501f988d1c`, implementation blobs and local-Git observation. It has no
-receipt writer or external entrypoint. The two user-reported checks (rc 1, then 29.6.2 linux/amd64/rc 0 with
-no auto-start) are self-attested, not agent-observed, and require future receipt-bound reobservation. D-129
-made zero external/runtime calls or cost action. Focused 12/12 is included in selected-union 115/115.
+D-129 now has a non-retroactive receipt and procedural terminal. User approval preceded one public docs tool
+open, but the machine receipt and phase attempt did not. The terminal deliberately has no attempt artifact,
+records underlying HTTP count as unknown, and keeps canonical pricing/Docker/SDK/provider/runtime/cost counts
+zero. Its receipt is consumed and cannot be retried, resumed or repaired.
 
-A future receipt must bind the exact D-129 tuple and eventual evidence commit. Desktop/daemon start,
+D-130 must exact-bind this chain offline. Its admission must first commit a new receipt and durable armed intent
+with zero external calls; only a later exact activation may open an external phase. Desktop/daemon start,
 container work, other images, hash/candidate/live/memory/cost authority remain false.

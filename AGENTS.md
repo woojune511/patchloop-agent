@@ -1,36 +1,28 @@
 # PatchLoop Agent Guide
 
-이 파일은 repository 전체에 적용된다. 과거 milestone의 상세 서술은
-`docs/archive/snapshots/d121/`에 보존되어 있으며 현재 작업의 지침이 아니다.
+이 파일은 repository 전체에 적용된다. 과거 milestone 상세는 `docs/archive/snapshots/d121/`에
+보존되어 있으며 현재 작업의 지침이 아니다.
 
 ## Mission
 
-재현 가능한 평가 기반에서 single coding agent를 실행하고, trace-driven failure memory와
-recovery 정책의 효과를 공정하게 비교한다. Agent가 제품이며 evaluator, recovery, memory
-pipeline은 이를 검증하고 개선하기 위한 지원 계층이다.
+재현 가능한 평가 기반에서 single coding agent를 실행하고 trace-driven failure memory와 recovery
+정책의 효과를 공정하게 비교한다. Agent가 제품이며 evaluator, recovery, memory pipeline은 검증과
+개선을 위한 지원 계층이다.
 
 ## Current state
 
-- 최신 offline successor checkpoint는 D-129 approval-required gate다. Gate ID는
-  `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`, semantic body SHA는
-  `sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`, file SHA는
-  `sha256:fd57c187d1f260952b581e60f7d0ff98243f3b4ef172c9a6d6669b3e84968512`이며 18,678 bytes다.
-  Clean source commit은 `1fef6716cddca571777c8b7f9f1dc4501f988d1c`다.
-- Moto와 Babel development-validation task의 A(`no_memory`)와 C(`structured`) exact four-row
-  suite, fixed D-110 bundle delivery, condition-aware manifest/trace qualification을 구현했다. 현재
-  R2 exact full-schedule cost reservation/settlement와 four-row completion gate source를 구현했다.
-- D-126은 historical blocked이고 D-127/D-128은 terminal-blocked predecessor다. D-128은 read-only Docker
-  CLI call 3개가 모두 rc 1인 뒤 receipt를 소비했으며 retry, resume 또는 repair하지 않는다.
-- D-129는 사용자가 같은 Linux endpoint를 총 두 번 수동 확인했다고 기록한다. 첫 확인은 daemon
-  unavailable/rc 1, 이후 확인은 client/server 29.6.2, linux/amd64, rc 0이며 기존 container auto-start가
-  없었다는 보고다. 이는 self-attested이고 agent가 독립 관찰하지 않았으며 future receipt 뒤 다시
-  관찰해야 한다.
-- D-129 focused 12/12는 selected union 115/115에 포함된다. D-129 Docker/network/SDK/provider/evaluator/
-  agent/retrieval/injection/cost/A-C는 0이고 historical D-128 Docker call은 3개다.
-- D-129 receipt/external/pricing/preflight/hash/candidate/result는 없다. 다음 gate는 exact D-129 tuple과
-  evidence commit을 인용한 별도 승인이 필요하다. Desktop/daemon start와 live/memory/cost는 금지한다.
-- D-124/D-125의 repository-local/mock 한계는 그대로고 실제 reservation/result는 없다.
-- D-121 no-start successor는 historical/deferred다. D-119를 retry, resume 또는 repair하지 않는다.
+- D-129 offline gate는 historical이다. 승인 뒤 공식 문서 tool open 1회가 machine receipt와 durable
+  attempt보다 먼저 발생해 external phase는 `D129_EXTERNAL_NO_CALL_SEQUENCE_OBSERVED_BLOCKED`로
+  terminal 봉인됐다.
+- Receipt ID는 `d129approval_0d505214f607b0f2a2536e1b754750131bc4b6dab2995d24a12554d63090fb42`,
+  terminal ID는 `d129sequenceblock_b5fc90e29ed2ca7febda54a2e63e4f5a0606703e0e93a997fab719d33797f5c8`다.
+  Receipt는 non-retroactive이며 consumed다. D-129를 retry, resume, repair하지 않는다.
+- Canonical pricing capture, Docker, image pull, SDK, provider/evaluator/agent, retrieval/injection,
+  hash/candidate, cost와 A/C 실행은 모두 0이다. Underlying docs HTTP/redirect 수는 unknown이다.
+- 다음 작업은 exact D-129 chain을 봉인하는 D-130 offline successor다. 이후 admission은 receipt와
+  armed intent를 먼저 commit한 뒤 별도 activation을 받는 2-stage 절차여야 한다.
+- Moto/Babel의 A(`no_memory`)/C(`structured`) exact four-row suite와 D-110 bundle delivery, R2
+  cost/completion source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 ## Required reading
@@ -62,23 +54,21 @@ Archive 문서는 historical audit가 필요한 경우에만 읽는다.
 4. **Constrained execution.** Agent에는 등록된 tool/check만 제공하고 unrestricted shell을 주지 않는다.
 5. **Append-only evidence.** 이미 관찰된 run과 gate를 수정하거나 결과를 덮어쓰지 않는다.
 6. **Idempotent recovery.** Action identity와 input hash로 중복 실행을 감지한다.
-7. **Deterministic primary grading.** Hidden acceptance, regression, scope와 safety는 코드 기반
-   evaluator가 판정한다.
-8. **Fair comparison.** Memory 외 model, prompt, tool, task, commit, image, budget, retry와 evaluator를
-   고정한다.
+7. **Deterministic primary grading.** Hidden acceptance, regression, scope와 safety는 코드 evaluator가 판정한다.
+8. **Fair comparison.** Memory 외 model, prompt, tool, task, commit, image, budget, retry와 evaluator를 고정한다.
 9. **No held-out tuning.** Held-out 결과를 본 뒤 task, memory, threshold, prompt 또는 policy를 바꾸지 않는다.
 10. **No solution leakage.** Memory에 정답 코드, hidden assertion 또는 reference patch를 넣지 않는다.
-11. **No invented results.** Plan, implemented path, measured result와 authorized execution을 분리해 쓴다.
-12. **No authority inference.** Checked-in config, test pass, candidate hash 또는 일반적인 “진행해줘”를
-    provider call이나 gated execution 승인으로 해석하지 않는다.
+11. **No invented results.** Plan, implemented path, measured result와 authorized execution을 분리한다.
+12. **No authority inference.** Config, test pass, candidate hash 또는 일반 “진행해줘”를 gated execution
+    승인으로 해석하지 않는다.
 
 ## Implementation workflow
 
 1. `docs/05-implementation-plan.md`의 현재 work item을 선택한다.
 2. 입력, 출력, failure mode, authority boundary와 acceptance test를 먼저 적는다.
-3. Machine-visible schema나 실험 비교가 바뀌면 같은 change에서 계약과 protocol을 갱신한다.
-4. 최소 단위 test부터 관련 regression까지 실행한다.
-5. Private data 노출, task repository 내부 state, held-out tuning과 scope 확장을 점검한다.
+3. Machine-visible schema나 실험 비교가 바뀌면 같은 change에서 contract/protocol을 갱신한다.
+4. 최소 test부터 관련 regression까지 실행한다.
+5. Private data, task-repository state, held-out tuning과 scope 확장을 점검한다.
 6. 실제 실행한 명령과 실행하지 않은 항목을 구분해 handoff한다.
 
 ## Definition of done

@@ -13,9 +13,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
 The exact suite and plan live under `experiments/`. Delivery, qualification and R2 cost/completion source are
-offline-qualified. D-129 is the current offline successor gate and still requires exact approval. It preserves
-D-128 as terminal-blocked history while recording the user's later manual endpoint check as self-attestation,
-not as agent-observed or fresh future readiness.
+offline-qualified. D-129 is now terminal-blocked: a public official-docs tool open occurred after approval but
+before the required machine receipt and durable attempt. The receipt is non-retroactive and consumed.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -36,10 +35,10 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-124/D-125 are historical local/mock predecessors; D-121 is deferred.
 - D-126 sealed observations, not readiness; D-127 and D-128 are terminal-blocked historical predecessors.
 - D-128 made three read-only calls, all return code 1; every mutation and later phase remained zero.
-- D-129 made zero Docker/network/SDK/provider/evaluator/agent calls. It records two user-reported manual checks:
-  first unavailable/rc 1, then client/server 29.6.2 on linux/amd64/rc 0, with no pre-existing container
-  auto-start reported. The agent did not independently observe these facts and a future phase must reobserve.
-- D-129 focused tests passed 12/12; the selected union passed 115/115 and includes the focused tests.
+- D-129 made one agent-visible official-docs open before receipt; underlying HTTP count is unknown. Canonical
+  pricing capture, Docker, SDK, provider/evaluator/agent and all execution/cost paths stayed zero.
+- The D-129 sequence-block focused tests passed 12/12; the selected regression bundle passed 79/79 and includes
+  those tests only where node selections overlap.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -48,7 +47,8 @@ Machine-readable evidence is indexed in `docs/09-evidence.md`.
 ```powershell
 uv sync --extra dev
 uv run pytest -q tests/test_d129_d128_terminal_successor_offline.py
-uv run python scripts/build_d129_d128_terminal_successor_offline.py --validate
+uv run pytest -q tests/test_d129_external_sequence_block.py
+uv run python scripts/build_d129_external_sequence_block.py --validate-terminal
 uv run pytest -q tests/test_documentation_structure.py
 git diff --check
 ```
@@ -59,10 +59,9 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 Use `uv run patchloop --help` to discover the CLI.
 
-CLI availability does not imply authority. D-129 has no approval receipt, external attempt, pricing/preflight,
-execution hash/candidate, reservation, cost or A/C result. A future no-call phase requires approval quoting the
-exact D-129 gate tuple and the local evidence commit that tracks it. The agent still must not start Desktop or
-the daemon; hash/candidate and live execution remain later gates.
+CLI availability does not imply authority. D-129 has a consumed receipt and procedural terminal but no external
+attempt, canonical pricing/preflight, execution hash/candidate, reservation, cost or A/C result. D-130 must be
+offline-only and its later admission must arm receipt+intent before any separate external activation.
 
 ## Documentation
 

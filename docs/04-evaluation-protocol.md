@@ -97,10 +97,10 @@ result, candidate or execution hash exists.
 D-126 is sealed blocked and D-127/D-128 are terminal-blocked historical predecessors. D-128 made three
 read-only rc-1 Docker calls, no mutation and no downstream phase; its receipt is consumed.
 
-D-129 qualifies only offline source/approval boundaries. The two manual checks (unavailable/rc 1, then 29.6.2
-linux/amd64/rc 0 with no auto-start reported) are self-attested and require receipt-bound reobservation. D-129
-made zero external/runtime/cost calls. Focused 12/12 is included in selected 115/115. The four rows and all
-execution, cost and memory authority remain unchanged.
+D-129 external readiness did not begin: a public docs tool open preceded the required receipt and durable
+attempt. Its non-retroactive receipt is consumed by a procedural blocked terminal. Canonical pricing capture,
+Docker, SDK and every runtime/cost call remained zero; transport count for the docs tool is unknown. The four
+rows and all execution, cost and memory authority remain unchanged.
 
 ## 7. Run-completion gate
 

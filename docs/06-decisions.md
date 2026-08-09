@@ -60,10 +60,9 @@ delivery with retrieval quality.
 ### 2026-08-09 — D-129 records manual readiness but grants no external authority
 
 - D-129 binds clean source `1fef6716cddca571777c8b7f9f1dc4501f988d1c` and the D-128 chain offline.
-- The two manual checks (rc 1, then 29.6.2 linux/amd64/rc 0 with no auto-start) are self-attested and must be
-  reobserved after a new receipt. D-129 made zero external/runtime calls; focused 12/12 is within selected 115/115.
-- Renewed work needs exact D-129 tuple plus evidence-commit approval. Desktop/daemon start, container execution,
-  other images, hash/candidate, cost and A/C remain unauthorized.
+- The two manual checks (rc 1, then 29.6.2 linux/amd64/rc 0 with no auto-start) are self-attested. The later
+  external approval led only to the sequence incident described below; no readiness claim followed.
+- Desktop/daemon start, container execution, other images, hash/candidate, cost and A/C remain unauthorized.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 
@@ -73,7 +72,7 @@ delivery with retrieval quality.
 - Repeating every milestone in every topic document is discontinued.
 
 Earlier retained decisions remain discoverable in the archived ledger and `docs/09-evidence.md`; they do not
-replace D-129 as the current offline gate or reopen the consumed D-128 receipt.
+replace the current D-129 sequence terminal or reopen consumed D-128/D-129 receipts.
 
 ## Superseded sequencing
 
@@ -89,3 +88,12 @@ replace D-129 as the current offline gate or reopen the consumed D-128 receipt.
 2. When, if ever, should B/raw-trace and D/selective return to the critical path?
 
 These questions do not authorize implementation beyond `docs/05-implementation-plan.md`.
+
+### 2026-08-09 — D-129 external sequence fails closed
+
+- One approved public docs tool open occurred before the machine receipt and durable attempt. It is not
+  replayable pricing evidence; underlying HTTP/redirect count is unknown.
+- A non-retroactive receipt and `D129_EXTERNAL_NO_CALL_SEQUENCE_OBSERVED_BLOCKED` terminal preserve the event.
+  No attempt was backfilled; Docker, canonical pricing, SDK and runtime/cost paths stayed zero.
+- The consumed receipt cannot be retried. D-130 must be offline and use receipt+armed-intent admission before a
+  later exact external activation.
