@@ -90,21 +90,17 @@ D-122 predecessor evidence and current D-125 offline tests prove:
    selected-memory field and its derived hashes/counts. Later live turns may diverge with agent trajectory.
 7. Input-token counting, truncation-disabled behavior and durable usage evidence remain intact.
 
-D-108's observed +702 input-token count is planning evidence for one request shape, not proof of every live
-turn. Live evidence records each request's total token usage; exact per-turn memory overhead would require a
-separately authorized counterfactual count call.
+D-108's +702 token count covers one request shape, not every live turn. Exact per-turn overhead would need a
+separately authorized counterfactual count. D-124/D-125 local/mock corrections are inherited; no reservation,
+result, candidate or execution hash exists.
 
-The R2 cost/completion source and D-124/D-125 historical corrections are inherited. D-126 sealed the clean
-source commit, fresh official pricing and bounded no-call observations, but five environment blockers keep
-readiness false. Pricing facts/math were fresh and correct, but raw official bytes were not retained for
-independent provenance replay. No reservation, result, candidate or execution hash exists.
+D-126 is sealed blocked and D-127/D-128 are terminal-blocked historical predecessors. D-128 made three
+read-only rc-1 Docker calls, no mutation and no downstream phase; its receipt is consumed.
 
-D-127 remains a sealed terminal-blocked predecessor. D-128 recorded a distinct source commit, receipt-only
-child and exact approval receipt. Its Docker attempt then made three read-only CLI calls, all return code 1,
-and terminally blocked on `already-running-docker-desktop-linux-daemon-unavailable`. It did not start Desktop
-or the daemon, pull/mutate images, touch containers/workloads, or begin pricing, SDK preflight or gate creation.
-The receipt is consumed; renewed work needs a new exact successor approval after the user verifies endpoint
-reachability. No execution/cost/memory authority changed, and the four rows do not change.
+D-129 qualifies only offline source/approval boundaries. The two manual checks (unavailable/rc 1, then 29.6.2
+linux/amd64/rc 0 with no auto-start reported) are self-attested and require receipt-bound reobservation. D-129
+made zero external/runtime/cost calls. Focused 12/12 is included in selected 115/115. The four rows and all
+execution, cost and memory authority remain unchanged.
 
 ## 7. Run-completion gate
 

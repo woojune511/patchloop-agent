@@ -51,16 +51,14 @@ uv run python scripts/build_d125_ac_runtime_finalization_qualification.py --vali
 These validate exact historical bytes without promoting them to current source evidence. D-124 corrects
 D-123 prospectively; D-125 remains local/mock only.
 
-## Validate current D-126 blocked preflight
+## Validate historical D-126 blocked preflight
 
 ```powershell
 uv run pytest -q tests/test_d126_clean_source_pricing_no_call_preflight.py
 uv run python scripts/build_d126_clean_source_pricing_no_call_preflight.py --validate-post-commit
 ```
 
-The tests use mocked Git/pricing/Docker/SDK observations. `--validate-post-commit` validates the sealed
-evidence-commit topology; it does not repeat the public pricing GET or Docker commands. Do not invoke
-`--run-preflight` to refresh observations without separate exact authority.
+This validates sealed topology without repeating pricing or Docker. Do not invoke `--run-preflight`.
 
 ## Validate D-127 source and blocked-phase contracts
 
@@ -68,11 +66,8 @@ evidence-commit topology; it does not repeat the public pricing GET or Docker co
 uv run pytest -q tests/test_d127_docker_remediation.py tests/test_d127_pricing_capture.py tests/test_d127_d126_successor_no_call_preflight.py
 ```
 
-This mocked path creates no downstream evidence or external call. In the recorded production path, an
-exact-key ephemeral `.env` loader passed static without exposing the value, then Docker remediation recorded
-six bounded read-only CLI calls and terminally blocked before Desktop start or mutation. Do not use
-`--run-external-preflight`: the existing receipt is terminal/idempotent blocked, and renewed work requires a
-separate exact successor approval.
+This mocked path makes no external call. The production receipt is terminal/idempotent blocked after six
+read-only calls. Do not use `--run-external-preflight`.
 
 ## Validate D-128 source and terminal-blocked contracts
 
@@ -82,10 +77,21 @@ uv run python scripts/build_d128_d127_terminal_successor_offline.py --validate
 uv run pytest -q tests/test_d128_docker_no_start_remediation.py tests/test_d128_terminal_successor_no_call_preflight.py
 ```
 
-These are local or mocked checks. The production D-128 receipt is consumed by its terminal blocked Docker
-observation after three read-only calls. Do not use `--run-external-preflight`: it cannot reopen that receipt,
-and no pricing/preflight/gate descendant exists. `--validate`/`--validate-post-commit` on the external builder
-requires a completed gate and is not the validator for this blocked branch.
+These are local/mocked checks. D-128's receipt is consumed after three read-only calls; do not invoke its
+external entrypoint or expect a pricing/preflight/gate descendant.
+
+## Validate current D-129 offline successor gate
+
+```powershell
+uv run pytest -q tests/test_d129_d128_terminal_successor_offline.py
+uv run python scripts/build_d129_d128_terminal_successor_offline.py --validate
+uv run python scripts/build_d129_d128_terminal_successor_offline.py --print-approval-template
+```
+
+These local commands validate the 18,678-byte gate, predecessor/source bindings and authority fields; template
+rendering creates no receipt. Focused 12/12 is included in selected 115/115. The manual rc-1 then 29.6.2
+linux/amd64/rc-0 checks are self-attested, not reproduced here. External work needs a new receipt from exact
+D-129 tuple plus evidence-commit approval.
 
 ## Validate current memory contracts
 
@@ -136,9 +142,10 @@ There is no supported live A/C command. Although the exact suite is an `Experime
 command must appear only after:
 
 1. preserve the D-128 receipt, attempt and terminal evidence without retry;
-2. have the user verify the Docker Desktop Linux daemon endpoint is actually reachable;
-3. obtain a new exact successor approval before any renewed Docker/pricing/preflight work;
-4. after a ready successor, obtain separate hash/candidate and then exact live approvals.
+2. preserve D-129 as offline/self-attested only and commit its gate plus active docs;
+3. obtain exact approval quoting the D-129 gate ID/body SHA/file SHA/bytes and that evidence commit;
+4. create a new append-only receipt, then reobserve daemon/images before pricing and no-call preflight;
+5. after a ready successor, obtain separate hash/candidate and then exact live approvals.
 
 Do not repurpose `experiments/core.template.yaml`, the D-121 candidate, or a generic CLI flag to bypass that
 sequence.

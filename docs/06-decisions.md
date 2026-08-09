@@ -42,31 +42,28 @@ delivery with retrieval quality.
 
 ### 2026-08-09 — D-125 source and D-126 no-call preflight remain non-executable
 
-- R2 binds full-schedule reserve/settlement/completion; D-124/D-125 remain historical local/mock predecessors.
-- D-126 sealed clean source, official pricing and bounded no-call observation only. Five blockers and missing
-  raw pricing bytes keep readiness false.
-- D-127 approval is limited to resolving those issues and repeating the no-call preflight. Execution-hash/
-  candidate creation and later $55 live approval remain separate gates.
+- D-124/D-125 are historical local/mock; D-126 sealed observation only and remained blocked.
+- Hash/candidate creation and later `$55` live approval remain separate gates.
 
 ### 2026-08-09 — D-127 remediation is terminal blocked
 
-- Fix official client routing, retain bounded replayable pricing and limit Docker to exact remediation; never
-  authorize container create/start/run/exec.
-- Static passed through an exact-key ephemeral `.env` loader without exposing the value. Six bounded read-only
-  Docker CLI calls then established blocker `preexisting-container-auto-restart-state-unverified`; Desktop
-  start, image mutation, container/workload and every later phase remained zero.
-- The append-only blocked terminal is idempotent for this receipt. Manual safe Desktop start or expanded
-  incidental-start authority does not reopen it; any renewed remediation/pricing/preflight path requires a
-  separately approved successor.
+- Six read-only Docker calls established `preexisting-container-auto-restart-state-unverified`; every mutation
+  and later phase stayed zero. The consumed terminal is idempotent and cannot be reopened.
 
 ### 2026-08-09 — D-128 external successor is terminal blocked
 
-- D-128 bound distinct source and receipt-only commits plus the user's exact self-attested approval.
-- Its attempt-first Docker phase made three read-only CLI calls, all return code 1, and recorded blocker
-  `already-running-docker-desktop-linux-daemon-unavailable`; no start, pull, mutation or container action ran.
-- Pricing, SDK preflight and gate descendants were not created. The receipt is consumed and cannot be retried.
-- Renewed work requires user verification that the endpoint is reachable and a new exact successor approval.
-  The agent remains forbidden to start Desktop or the daemon.
+- D-128's attempt-first phase made three read-only rc-1 calls and recorded
+  `already-running-docker-desktop-linux-daemon-unavailable`; all later phases stayed zero and its receipt is consumed.
+- Later user verification does not reopen D-128. It remains historical and the agent remains forbidden to
+  start Desktop or the daemon.
+
+### 2026-08-09 — D-129 records manual readiness but grants no external authority
+
+- D-129 binds clean source `1fef6716cddca571777c8b7f9f1dc4501f988d1c` and the D-128 chain offline.
+- The two manual checks (rc 1, then 29.6.2 linux/amd64/rc 0 with no auto-start) are self-attested and must be
+  reobserved after a new receipt. D-129 made zero external/runtime calls; focused 12/12 is within selected 115/115.
+- Renewed work needs exact D-129 tuple plus evidence-commit approval. Desktop/daemon start, container execution,
+  other images, hash/candidate, cost and A/C remain unauthorized.
 
 ### 2026-08-08 — active docs own current state; archive owns chronology
 
@@ -76,7 +73,7 @@ delivery with retrieval quality.
 - Repeating every milestone in every topic document is discontinued.
 
 Earlier retained decisions remain discoverable in the archived ledger and `docs/09-evidence.md`; they do not
-change D-126 as latest sealed gate or reopen the consumed D-128 receipt.
+replace D-129 as the current offline gate or reopen the consumed D-128 receipt.
 
 ## Superseded sequencing
 

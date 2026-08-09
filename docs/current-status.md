@@ -2,42 +2,38 @@
 
 ## Evidence checkpoint
 
-The latest sealed checkpoint is D-126 clean-source/pricing/no-call preflight evidence:
+The current offline successor checkpoint is D-129:
 
-- Gate ID `d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`;
-  body `sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`;
-  file `sha256:e08e8f7aad8f425c7069290a98ac04a5c471bc8c948e1a08121c962b5ba18696`; 3,078 bytes.
-- Status: `D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED`.
+- Gate ID `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
+  body `sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
+  file `sha256:fd57c187d1f260952b581e60f7d0ff98243f3b4ef172c9a6d6669b3e84968512`; 18,678 bytes.
+- Source commit `1fef6716cddca571777c8b7f9f1dc4501f988d1c`; status
+  `D129_D128_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`.
 
-D-126 bound source `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh prices, 12 read-only Docker
-commands and a zero-network SDK probe, but retained five environment blockers and no raw pricing bytes.
-Receipt/preflight triples and blocker details are in `docs/09-evidence.md`.
+The source gate binds its clean source commit and exact D-128 predecessor bytes. Focused tests passed 12/12;
+the selected D-122–D-129 regression union passed 115/115. The selected count includes the focused tests, so
+the counts are not additive. The eventual local evidence commit that tracks this artifact and these active
+docs must also be quoted by the next approval; the gate cannot self-bind that descendant commit.
 
-## D-127 predecessor
+## Manual readiness attestation
 
-D-127 remains append-only terminal blocked after six read-only Docker calls. D-128 did not reopen or rewrite it.
+The user reported two manual checks of `npipe:////./pipe/dockerDesktopLinuxEngine`. The first returned daemon
+unavailable/rc 1. The later check reported client/server 29.6.2, server linux/amd64 and rc 0, and the user
+reported that no pre-existing container auto-started. This is self-attested, unauthenticated, not independently
+observed by the agent and not persisted as raw command output. Because readiness is temporally unstable, every
+future external phase must reobserve daemon and exact-image state after a new receipt.
 
-## D-128 external successor — terminal blocked
+## Historical blocked predecessors
 
-Source commit `23038c16467a32c5b862f84e09797a298101f4e4` has tree
-`46862cc0d48035e866d8d5086926391b56f90ba2` and sole parent
-`aeac01a04447c731ee5eac4c56e599eb74532a60`. Receipt-only child
-`4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50` has tree
-`2d01c39b264cff0abf18ec1a11a05c49b2507895` and sole parent the source commit.
+D-126 remains sealed blocked, and D-127 remains terminal blocked after six read-only Docker calls. D-128 used
+an exact one-use receipt, wrote attempt intent, then made three read-only calls (`version`, Moto inspect and
+Babel inspect), all rc 1. It terminally recorded
+`D128_EXACT_DOCKER_IMAGE_READINESS_REMEDIATION_OBSERVED_BLOCKED` with blocker
+`already-running-docker-desktop-linux-daemon-unavailable`. Its receipt is consumed; no pricing, SDK preflight
+or gate descendant exists, and D-129 does not retry, resume, repair or rewrite it.
 
-Receipt `d128approval_11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd`
-bound the user's self-attested manual start/no-auto-start statement. Attempt
-`d128dockerimagereadinessremediationattempt_25c78d210117696eb1f2f8b7f73069c022b9bb00b332bc83350eb5dab388cc21`
-preceded terminal `d128dockerremediation_2682a64e07d869c9989f02028d994f7e16a50327f07b0692917475cdac0ad78f`.
-Exact body/file/byte triples are indexed in `docs/09-evidence.md`.
-
-- Status `D128_EXACT_DOCKER_IMAGE_READINESS_REMEDIATION_OBSERVED_BLOCKED`; blocker
-  `already-running-docker-desktop-linux-daemon-unavailable`.
-
-The exact CLI made three read-only calls (`version`, Moto inspect, Babel inspect), all return code 1. It made
-zero daemon/Desktop starts, pulls, image mutations, container/workload calls or downstream pricing/SDK/gate
-actions. Provider/evaluator/agent, retrieval/injection, hash/candidate, cost and A/C actions also remain zero.
-The receipt is consumed and cannot be retried.
+D-129 itself invoked zero Docker, network, pricing, SDK, provider, evaluator, agent, retrieval or runtime
+memory calls; it performed no image/container mutation. Historical D-128 agent Docker calls remain three.
 
 ## Current priority: four-run A/C readiness
 
@@ -54,17 +50,17 @@ model, prompt, tools, policy and ceilings otherwise match. This is readiness, no
 - D-098 baseline, D-105/D-110 rules/index and fixed A-null/C-3,528-byte delivery are sealed/qualified offline.
 - R2 requires full-schedule reserve, durable settlement and one complete qualified/evaluated four-row matrix.
 - D-124/D-125 retain local/mock limits; D-126 observed but did not establish environment readiness.
-- D-127 remains a sealed terminal-blocked predecessor.
-- D-128 external Docker observation terminally blocked before pricing, SDK preflight or gate creation.
+- D-127 and D-128 remain sealed terminal-blocked predecessors.
+- D-129 qualifies only the offline source, predecessor chain, authority boundary and approval template.
 
 Qualification excludes cross-store/global/cross-clone protection, whole-root rollback, noncooperative path
 swap, actual kill and torn-write/power-loss durability. The plan and suite keep all live authority false.
 
 ## What is not ready
 
-- Reachable Docker Desktop Linux daemon endpoint and exact-image readiness
+- Agent-reobserved Docker Desktop Linux daemon and exact-image readiness after a new receipt
 - Replayable official pricing evidence and the repeated no-call preflight
-- A new exact successor approval; the consumed D-128 receipt cannot be reused
+- A new exact D-129 successor approval and append-only receipt
 - Exact runner execution hash and one-use execution-authorization candidate under a later approval
 - Separate approval repeating the exact candidate triple, execution hash and $55 cap
 - Any live A/C result
@@ -75,8 +71,7 @@ unauthorized for fixed-bundle C.
 ## Closed lanes
 
 Provider/evaluator/agent, runtime memory, score-policy, raw-trace, held-out/core, D-121 successor and classifier
-lanes remain closed. Apart from three failed read-only Docker calls, provider/evaluator/agent, retrieval/
-injection, cost and A/C counts remain zero.
+lanes remain closed. D-129 receipt/external attempt/pricing/preflight/hash/candidate/cost/A-C counts are zero.
 
 ## Historical/deferred D-121 lane
 
@@ -85,6 +80,9 @@ remains deferred; its run was never authorized and is not a fixed-bundle prerequ
 
 ## Next gate
 
-The user must verify that the Docker Desktop Linux daemon endpoint is actually reachable. The agent still must
-not start Desktop or the daemon. Any renewed Docker/pricing/preflight work needs a new exact successor approval;
-the existing D-128 receipt is consumed. Hash, candidate and live run remain later approvals.
+Any renewed Docker/pricing/preflight work needs an exact D-129 terminal-successor external no-call approval
+that quotes the gate ID, body SHA, file SHA, 18,678 bytes and the eventual evidence commit that tracks the gate.
+Only then may a new append-only receipt be created. The future phase must reobserve the already-running daemon,
+may pull only a confirmed-missing Moto/Babel exact digest image, and must remain no-call for provider/evaluator/
+agent. Desktop/daemon start, container create/start/run/exec, other images, memory, hash/candidate, cost and A/C
+remain unauthorized later gates.

@@ -1,0 +1,357 @@
+{
+  "schema_version": "d128-terminal-successor-offline-source-gate-d129-v1",
+  "gate_id": "d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c",
+  "semantic_body_hash": "sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c",
+  "semantic_body": {
+    "milestone": "D-129",
+    "evidence_kind": "offline-d128-terminal-successor-source-qualification",
+    "recorded_at": "2026-08-09T07:00:36.222143Z",
+    "status": "D129_D128_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED",
+    "predecessor_chain": {
+      "d128_source_receipt_evidence_git_topology": {
+        "source": {
+          "commit": "23038c16467a32c5b862f84e09797a298101f4e4",
+          "tree": "46862cc0d48035e866d8d5086926391b56f90ba2",
+          "parents": [
+            "aeac01a04447c731ee5eac4c56e599eb74532a60"
+          ]
+        },
+        "receipt": {
+          "commit": "4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50",
+          "tree": "2d01c39b264cff0abf18ec1a11a05c49b2507895",
+          "parents": [
+            "23038c16467a32c5b862f84e09797a298101f4e4"
+          ]
+        },
+        "evidence": {
+          "commit": "4633f867ebd8b1ad8f6c6cd0dc357250fbe58d81",
+          "tree": "4a94b34cf286db323804ef5ec116cde656eb9e95",
+          "parents": [
+            "4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50"
+          ]
+        }
+      },
+      "offline_source_gate": {
+        "path": "reports/live-pilot/artifacts/d128-d127-terminal-successor-offline-source-gate.json",
+        "schema_version": "d127-terminal-successor-offline-source-gate-d128-v1",
+        "artifact_id": "d128_9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de",
+        "semantic_body_hash": "sha256:9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de",
+        "file_bytes": 12557,
+        "file_sha256": "sha256:2528aa018908958bdd35b4b6202c75be2b4ca72521d64bfed800284a015a739c",
+        "blob_oid_at_d128_evidence_commit": "c871908f61bcdf0e012f193479e8644246e0e0bd",
+        "status": "D128_D127_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED",
+        "recorded_at": "2026-08-09T04:19:08.687268Z",
+        "artifact_mutated": false
+      },
+      "approval_receipt": {
+        "path": "reports/live-pilot/artifacts/d128-d127-terminal-successor-external-no-call-preflight-approval-receipt.json",
+        "schema_version": "d127-terminal-successor-external-no-call-approval-receipt-d128-v1",
+        "artifact_id": "d128approval_11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+        "semantic_body_hash": "sha256:11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+        "file_bytes": 7713,
+        "file_sha256": "sha256:b5cb1e1d65e1a1d3ebf726ba85031ccb66dfb7cf950fab1dde68cbeebaf72050",
+        "blob_oid_at_d128_evidence_commit": "67bd41987d15107d3a2eeda9b34f3ecdadb494b5",
+        "status": "D128_D127_TERMINAL_SUCCESSOR_EXTERNAL_NO_CALL_APPROVAL_RECORDED",
+        "recorded_at": "2026-08-09T05:07:23.980459Z",
+        "artifact_mutated": false
+      },
+      "docker_attempt": {
+        "path": "reports/live-pilot/artifacts/d128-docker-image-readiness-remediation-attempt-intent.json",
+        "schema_version": "d127-terminal-successor-external-phase-attempt-intent-d128-v1",
+        "artifact_id": "d128dockerimagereadinessremediationattempt_25c78d210117696eb1f2f8b7f73069c022b9bb00b332bc83350eb5dab388cc21",
+        "semantic_body_hash": "sha256:25c78d210117696eb1f2f8b7f73069c022b9bb00b332bc83350eb5dab388cc21",
+        "file_bytes": 5583,
+        "file_sha256": "sha256:04c5d2a32bc908d2dfc4b754779ec75a43aee19ff28c68c1bc7843c4d38c71c5",
+        "blob_oid_at_d128_evidence_commit": "12175d420a8b44f63040d09e94f6d91a886b10f2",
+        "status": "D128_DOCKER_IMAGE_READINESS_REMEDIATION_ATTEMPT_INTENT_RECORDED",
+        "recorded_at": "2026-08-09T05:14:38.602304Z",
+        "artifact_mutated": false
+      },
+      "blocked_docker_terminal": {
+        "path": "reports/live-pilot/artifacts/d128-exact-docker-image-readiness-remediation-observation.json",
+        "schema_version": "d127-terminal-successor-docker-image-remediation-d128-v1",
+        "artifact_id": "d128dockerremediation_2682a64e07d869c9989f02028d994f7e16a50327f07b0692917475cdac0ad78f",
+        "semantic_body_hash": "sha256:2682a64e07d869c9989f02028d994f7e16a50327f07b0692917475cdac0ad78f",
+        "file_bytes": 9270,
+        "file_sha256": "sha256:77dbd861466e5ce4913a0a7f0c4d1240b83a0a5be5169571c104c0e42a95e939",
+        "blob_oid_at_d128_evidence_commit": "5868bc24808b5fc205714c2b7d77c8fc8c0c687b",
+        "status": "D128_EXACT_DOCKER_IMAGE_READINESS_REMEDIATION_OBSERVED_BLOCKED",
+        "recorded_at": "2026-08-09T05:14:43.990871Z",
+        "artifact_mutated": false
+      },
+      "terminal_blocker": "already-running-docker-desktop-linux-daemon-unavailable",
+      "receipt_is_consumed": true,
+      "d128_retry_resume_or_repair_opened": false,
+      "d128_pricing_preflight_and_gate_descendants_absent": true,
+      "historical_d128_agent_docker_cli_calls": 3,
+      "historical_d128_agent_image_pull_calls": 0
+    },
+    "manual_readiness_attestation": {
+      "statement_code": "D129_USER_DOCKER_DESKTOP_LINUX_READY_NO_AUTO_START_KO_20260809_V1",
+      "source": "current-user-conversation",
+      "docker_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+      "reported_client_version": "29.6.2",
+      "reported_server_version": "29.6.2",
+      "reported_server_os": "linux",
+      "reported_server_arch": "amd64",
+      "reported_exit_code": 0,
+      "user_reported_no_preexisting_container_auto_started": true,
+      "user_reported_manual_docker_check_attempt_count": 2,
+      "user_reported_successful_readiness_check_count": 1,
+      "user_reported_failed_readiness_check_count": 1,
+      "user_self_attested": true,
+      "authenticated_or_signed": false,
+      "independently_observed_by_agent": false,
+      "raw_user_command_output_persisted": false,
+      "agent_invoked_docker_call_count_for_d129": 0,
+      "d128_terminal_reopened_or_retried": false,
+      "readiness_is_temporally_unstable": true,
+      "future_external_phase_must_reobserve_after_new_receipt": true,
+      "attestation_is_not_external_approval_or_readiness_evidence": true
+    },
+    "source_identity": {
+      "commit": "1fef6716cddca571777c8b7f9f1dc4501f988d1c",
+      "tree": "eda4ca04aa6998d46bd4fba7c96e2a5fa487cea4",
+      "parents": [
+        "4633f867ebd8b1ad8f6c6cd0dc357250fbe58d81"
+      ],
+      "branch": "codex/patchloop-mvp-baseline",
+      "implementation_bindings": [
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "file_bytes": 51141,
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a"
+        },
+        {
+          "path": "scripts/build_d129_d128_terminal_successor_offline.py",
+          "blob_oid": "8ad3ade25a0a49f43b079cbdd77a59c8b1428bd9",
+          "file_bytes": 1700,
+          "file_sha256": "sha256:23588379a56abb9a96f2ba6d3b00d40af03e5f5409a7d99d99c7a1a9c7d23d7e"
+        },
+        {
+          "path": "tests/test_d129_d128_terminal_successor_offline.py",
+          "blob_oid": "b062a09b17af2d3fe1a813a9ddc1da0d940c4dc9",
+          "file_bytes": 26065,
+          "file_sha256": "sha256:38ee94bd8ccfccb48fda124d8ac259cd128577285481009e9ee606321d8032f2"
+        }
+      ],
+      "source_commit_is_clean_exact_child_of_d128_evidence": true,
+      "git_cli_observation": {
+        "resolved_path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+        "file_name": "git.exe",
+        "file_bytes": 4422544,
+        "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+        "linklike": false,
+        "version": "git version 2.54.0.windows.1",
+        "actual_git_engine_invoked_directly": true,
+        "repository_local_core_autocrlf": "false",
+        "authenticated_or_vendor_signed_identity_claimed": false,
+        "stable_during_observation": true,
+        "minimal_secret_free_environment": true,
+        "fsmonitor_disabled": true,
+        "shell_used": false
+      }
+    },
+    "successor_contract": {
+      "contract": {
+        "contract_version": "d128-terminal-successor-no-call-contract-d129-v1",
+        "manual_prerequisite_supplied": true,
+        "external_approval_recorded": false,
+        "new_receipt_requires_future_exact_user_message": true,
+        "offline_gate_is_not_an_approval_receipt": true,
+        "external_entrypoint_present_in_this_module": false,
+        "future_approved_scope": [
+          "record-a-new-exact-d129-successor-user-approval-receipt",
+          "use-the-exact-approved-docker-cli-identity",
+          "reobserve-the-already-running-docker-desktop-linux-daemon-read-only",
+          "pull-only-moto-and-babel-exact-digest-images-when-confirmed-absent",
+          "capture-bounded-replayable-openai-official-pricing-evidence",
+          "run-sdk-credential-presence-official-endpoint-no-call-preflight",
+          "create-append-only-d129-attempt-terminal-preflight-and-gate-evidence",
+          "modify-related-source-tests-docs-and-create-local-git-commit"
+        ],
+        "future_explicitly_not_authorized": [
+          "agent-start-docker-desktop-or-daemon",
+          "container-create-start-run-or-exec",
+          "pull-or-load-any-image-other-than-the-two-exact-approved-digests",
+          "provider-evaluator-or-agent-execution",
+          "runtime-memory-injection-or-retrieval",
+          "execution-hash-or-execution-candidate-creation",
+          "cost-reservation-or-spend",
+          "four-row-ac-execution"
+        ],
+        "future_source_and_receipt_boundary": {
+          "receipt_must_be_new_append_only_and_tracked_at_source_head": true,
+          "receipt_must_bind_exact_clean_commit_tree_parent_and_module_bytes": true,
+          "source_and_receipt_must_be_rechecked_before_each_external_phase": true,
+          "future_evidence_commit_must_add_only_exact_successor_artifacts_and_docs": true
+        },
+        "future_external_failure_boundary": {
+          "attempt_intent_must_be_durable_before_each_first_external_call": true,
+          "attempt_must_bind_receipt_source_modules_and_exact_phase_scope": true,
+          "orphaned_attempt_must_block_retry_without_new_exact_user_approval": true,
+          "existing_terminal_is_idempotent_and_must_not_be_rewritten": true,
+          "terminal_must_record_actual_activity_counts_after_any_external_action": true
+        },
+        "future_receipt_identity_boundary": {
+          "approval_is_self_attested": true,
+          "approval_is_authenticated_or_signed": false,
+          "no_identity_upgrade_claim_is_permitted": true
+        },
+        "future_exact_docker_boundary": {
+          "endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+          "cli_file_bytes": 43095472,
+          "cli_file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+          "version": "29.6.2",
+          "agent_must_not_start_desktop_or_daemon": true,
+          "must_reobserve_linux_amd64_daemon_after_receipt": true
+        },
+        "future_exact_image_refs": [
+          "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+          "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+        ]
+      },
+      "contract_hash": "sha256:4a7d1b0324576ca6df39c08bebe395f52a10143760cb95be399c8c36716d6271"
+    },
+    "approval_template_contract": {
+      "template_version": "d129-terminal-successor-user-approval-template-v1",
+      "required_predecessor_fields": [
+        "D-129 gate ID",
+        "D-129 semantic body SHA",
+        "D-129 file SHA",
+        "D-129 file bytes",
+        "D-129 source/evidence commit"
+      ],
+      "manual_attestation_already_recorded_but_must_be_reobserved": true,
+      "approved_scope": [
+        "record-a-new-exact-d129-successor-user-approval-receipt",
+        "use-the-exact-approved-docker-cli-identity",
+        "reobserve-the-already-running-docker-desktop-linux-daemon-read-only",
+        "pull-only-moto-and-babel-exact-digest-images-when-confirmed-absent",
+        "capture-bounded-replayable-openai-official-pricing-evidence",
+        "run-sdk-credential-presence-official-endpoint-no-call-preflight",
+        "create-append-only-d129-attempt-terminal-preflight-and-gate-evidence",
+        "modify-related-source-tests-docs-and-create-local-git-commit"
+      ],
+      "explicitly_not_authorized": [
+        "agent-start-docker-desktop-or-daemon",
+        "container-create-start-run-or-exec",
+        "pull-or-load-any-image-other-than-the-two-exact-approved-digests",
+        "provider-evaluator-or-agent-execution",
+        "runtime-memory-injection-or-retrieval",
+        "execution-hash-or-execution-candidate-creation",
+        "cost-reservation-or-spend",
+        "four-row-ac-execution"
+      ],
+      "approval_is_self_attested": true,
+      "approval_is_authenticated_or_signed": false,
+      "generic_proceed_message_is_exact_approval": false,
+      "rendering_this_template_records_approval": false,
+      "receipt_must_be_tracked_at_clean_source_head_before_external_action": true
+    },
+    "implementation_integrity": {
+      "source_commit": "1fef6716cddca571777c8b7f9f1dc4501f988d1c",
+      "source_tree": "eda4ca04aa6998d46bd4fba7c96e2a5fa487cea4",
+      "source_parent": "4633f867ebd8b1ad8f6c6cd0dc357250fbe58d81",
+      "implementation_bindings": [
+        {
+          "path": "patchloop/evals/d129_d128_terminal_successor_offline.py",
+          "blob_oid": "5b5e4ef98f67114fa551f406c528411ea0ca7477",
+          "file_bytes": 51141,
+          "file_sha256": "sha256:f741a19d7d44fc90449a7bdce81f75cdd37d6f4bfdc8b83ada901037c43d359a"
+        },
+        {
+          "path": "scripts/build_d129_d128_terminal_successor_offline.py",
+          "blob_oid": "8ad3ade25a0a49f43b079cbdd77a59c8b1428bd9",
+          "file_bytes": 1700,
+          "file_sha256": "sha256:23588379a56abb9a96f2ba6d3b00d40af03e5f5409a7d99d99c7a1a9c7d23d7e"
+        },
+        {
+          "path": "tests/test_d129_d128_terminal_successor_offline.py",
+          "blob_oid": "b062a09b17af2d3fe1a813a9ddc1da0d940c4dc9",
+          "file_bytes": 26065,
+          "file_sha256": "sha256:38ee94bd8ccfccb48fda124d8ac259cd128577285481009e9ee606321d8032f2"
+        }
+      ],
+      "implementation_binding_hash": "sha256:7b93eb24572e62de4c0d25c9a6855fe679df15d3492bfa5c6dfe4daf7f502484"
+    },
+    "offline_qualification": {
+      "exact_d128_chain_and_committed_bytes_validated": true,
+      "d128_artifacts_preserved": true,
+      "d128_terminal_retry_or_resume_opened": false,
+      "manual_readiness_attestation_recorded": true,
+      "manual_readiness_independently_observed_by_agent": false,
+      "source_only_no_external_entrypoint": true,
+      "focused_tests_external_to_builder": true,
+      "focused_tests_are_local_not_remote_ci": true,
+      "focused_tests_passed": 12,
+      "selected_d122_d127_d128_d129_regression_tests_passed": 115,
+      "selected_regression_count_includes_focused_tests": true,
+      "focused_and_selected_counts_are_not_additive": true
+    },
+    "blocked_prerequisites": [
+      "new-exact-d129-successor-user-approval-not-recorded",
+      "manual-readiness-is-self-attested-and-must-be-reobserved-after-that-receipt",
+      "future-receipt-bound-clean-committed-source-identity-not-yet-recorded",
+      "d129-external-attempt-pricing-preflight-and-gate-not-created",
+      "exact-runner-execution-hash-and-candidate-remain-separately-gated"
+    ],
+    "evidence_boundary": {
+      "qualification_grade": "offline-source-local-git-and-zero-external-call-tests",
+      "source_commit_tree_parent_and_module_blobs_bound": true,
+      "git_identity_is_locally_observed_not_vendor_authenticated": true,
+      "manual_readiness_is_user_self_attested": true,
+      "manual_readiness_is_agent_observed": false,
+      "manual_readiness_is_future_freshness_evidence": false,
+      "raw_user_command_output_persisted": false,
+      "dotenv_or_credential_presence_observed": false,
+      "official_pricing_get_made": false,
+      "sdk_or_endpoint_preflight_made": false,
+      "execution_hash_candidate_reservation_or_ac_result_present": false
+    },
+    "authority": {
+      "d129_offline_source_gate_materialized": true,
+      "d129_manual_readiness_attestation_recorded": true,
+      "d129_user_external_approval_recorded": false,
+      "d129_approval_receipt_created": false,
+      "d129_source_commit_bound": true,
+      "d129_evidence_commit_self_bound": false,
+      "d129_offline_agent_invoked_docker_cli_calls": 0,
+      "d129_offline_agent_invoked_docker_daemon_calls": 0,
+      "historical_d128_agent_read_only_docker_calls": 3,
+      "user_reported_manual_docker_check_attempts": 2,
+      "user_reported_successful_manual_docker_readiness_checks": 1,
+      "user_reported_failed_manual_docker_readiness_checks": 1,
+      "docker_desktop_or_daemon_start_authorized": false,
+      "d129_offline_container_create_start_run_exec_count": 0,
+      "d129_offline_image_pull_or_store_mutation_count": 0,
+      "d129_offline_network_calls_made": 0,
+      "d129_offline_pricing_public_get_count": 0,
+      "d129_offline_sdk_probe_count": 0,
+      "d129_offline_credential_presence_observed": false,
+      "d129_offline_provider_calls_made": 0,
+      "d129_offline_evaluator_calls_made": 0,
+      "d129_offline_agent_runs_started": 0,
+      "d129_offline_retrieval_call_count": 0,
+      "d129_offline_runtime_memory_injection_count": 0,
+      "d129_offline_execution_hash_created": false,
+      "d129_offline_execution_candidate_created": false,
+      "d129_offline_cost_reserved_or_spent_usd": "0",
+      "d129_offline_four_row_ac_execution_authorized": false
+    },
+    "next_gate": {
+      "action": "request-exact-d129-terminal-successor-external-no-call-approval",
+      "must_quote_exact_materialized_d129_gate_triple_and_file_bytes": true,
+      "must_quote_exact_d129_source_or_evidence_commit": true,
+      "must_create_a_new_append_only_receipt": true,
+      "receipt_must_bind_clean_commit_tree_parent_and_module_bytes": true,
+      "must_reobserve_daemon_and_images_after_receipt": true,
+      "attempt_intent_must_precede_every_external_phase": true,
+      "orphaned_attempt_requires_another_exact_user_approval": true,
+      "must_not_reuse_delete_or_rewrite_d128_receipt_attempt_or_terminal": true,
+      "does_not_authorize_any_external_action": true,
+      "execution_hash_candidate_cost_and_ac_run_remain_later_gates": true
+    }
+  }
+}

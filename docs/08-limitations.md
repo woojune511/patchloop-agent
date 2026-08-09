@@ -50,6 +50,8 @@ estimate and not a percentage of engineering completion.
 - D-128 recorded an approval receipt and three failed read-only Docker calls, but the Linux daemon endpoint was
   unavailable. It did not reach image pull, pricing, SDK preflight or gate creation and establishes no
   environment readiness, execution identity, cost or result.
+- D-129 records later user-reported manual readiness and qualifies source only. No external receipt, repeated
+  observation, pricing, SDK preflight, hash/candidate, cost or result exists.
 
 ## Isolation and external controls
 
@@ -72,9 +74,13 @@ estimate and not a percentage of engineering completion.
 - D-127's exact-key loader did not expose the value; its six Docker reads and consumed blocked terminal prove
   neither readiness nor mutation. D-128 did not reopen it.
 - D-128 records the user's self-attested manual start/no-auto-start statement, not an authenticated or
-  independently observed fact. The daemon endpoint was nevertheless unreachable. Its receipt is consumed;
-  after user verification of reachability, renewed work needs a new exact successor approval. The agent remains
-  explicitly barred from starting Desktop or the daemon.
+  independently observed fact. Its own three Docker calls found the daemon unavailable; its receipt is consumed.
+- D-129 records two later manual checks: first unavailable/rc 1, then client/server 29.6.2 on linux/amd64/rc 0,
+  with no pre-existing container auto-start reported. Raw output was not persisted, the agent did not observe
+  the success, and readiness may drift before the next phase. D-129 made zero Docker/network/SDK/provider/etc.
+- D-129 focused 12/12 and selected-union 115/115 are local checks; selected includes focused and neither proves
+  external readiness. Renewed work needs exact approval quoting the gate tuple and eventual evidence commit.
+  The agent remains explicitly barred from starting Desktop or the daemon.
 - Archive prose can contain stale future tense. Current authority comes from source/artifacts and
   `docs/current-status.md`.
 

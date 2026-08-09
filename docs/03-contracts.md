@@ -123,19 +123,15 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 consumes only clean-source/pricing/no-call scope, binding commit
-`68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh rates, 12 Docker reads (six daemon/image, zero workload)
-and an SDK construction probe with zero network calls.
+D-126 is sealed blocked; D-127/D-128 are consumed terminal-blocked predecessors. D-128's attempt-first phase
+made three read-only rc-1 Docker calls, no mutations, and no downstream pricing/preflight/gate. None may be
+reopened; exact historical bindings are indexed in `docs/09-evidence.md`.
 
-D-126 has five environment blockers plus a provenance gap: no raw official bytes independently rebind its
-recorded digest/size/ETag. It creates no hash/candidate/live authority or cost.
+D-129 is source-only: its canonical gate binds the exact D-128 bytes, clean source
+`1fef6716cddca571777c8b7f9f1dc4501f988d1c`, implementation blobs and local-Git observation. It has no
+receipt writer or external entrypoint. The two user-reported checks (rc 1, then 29.6.2 linux/amd64/rc 0 with
+no auto-start) are self-attested, not agent-observed, and require future receipt-bound reobservation. D-129
+made zero external/runtime calls or cost action. Focused 12/12 is included in selected-union 115/115.
 
-D-127 remains an append-only terminal-blocked predecessor; changed environment state did not reopen it.
-
-D-128 bound a clean source commit and its receipt-only child, then wrote durable Docker attempt intent before
-the first external action. The exact approved CLI may inspect only the already-running Linux daemon and the two
-exact digest images; pull is allowed only after confirmed absence. The observed daemon-unavailable result made
-three read-only calls and no pull/mutation/container/workload call, then wrote a terminal blocked artifact.
-That terminal consumes the receipt and forbids pricing, SDK preflight and gate descendants. An orphaned attempt
-would likewise require a new exact approval. User self-attestation is recorded but is not authenticated or an
-agent observation. The agent may not start Desktop/daemon; hash/candidate/live/cost authority remains false.
+A future receipt must bind the exact D-129 tuple and eventual evidence commit. Desktop/daemon start,
+container work, other images, hash/candidate/live/memory/cost authority remain false.

@@ -10,9 +10,10 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-Stop after the D-128 terminal blocker. The consumed receipt cannot be retried. Wait for the user to verify the
-Docker Desktop Linux daemon endpoint is reachable and provide a new exact successor approval. The agent must
-not start the daemon; all later gates remain closed.
+Stop at the materialized D-129 offline successor gate. Its manual-readiness premise is recorded but not
+agent-observed, and its approval receipt does not exist. Wait for an exact approval quoting the D-129 tuple and
+the eventual evidence commit before creating a new receipt or making any external observation. The agent must
+not start Desktop or the daemon; all later gates remain closed.
 
 ## Completed foundation
 
@@ -21,7 +22,8 @@ not start the daemon; all later gates remain closed.
 - `fixed-d110-bundle-v1` binds exact D-105/D-110 inputs, renders A null and C three entries on every request,
   and exposes no retrieval, provenance, vector or raw-trace content.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
-- D-122 through D-125 are historical predecessors; D-126 is the latest sealed blocked no-call preflight gate.
+- D-122 through D-128 are historical predecessors; D-127/D-128 are terminal blocked.
+- D-129 clean source `1fef6716cddca571777c8b7f9f1dc4501f988d1c` and offline gate are qualified.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -39,17 +41,20 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-126 sealed blocked; D-127 historical terminal blocked; D-128 external terminal blocked.
+Status: D-129 offline source qualified; exact external no-call approval required.
 
-D-126 remains the latest sealed gate and D-127 remains an unchanged blocked predecessor. D-128 used source
-`23038c16467a32c5b862f84e09797a298101f4e4` and receipt-only child
-`4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50`. After durable attempt intent, the exact CLI made three read-only
-calls (`version`, Moto inspect, Babel inspect), all return code 1, and recorded blocker
-`already-running-docker-desktop-linux-daemon-unavailable`.
+D-126 is sealed blocked, D-127 remains unchanged, and D-128's consumed receipt terminally records three
+read-only rc-1 Docker calls with blocker `already-running-docker-desktop-linux-daemon-unavailable`.
 
-Desktop/daemon start, image pull/mutation, container/workload, pricing GET, SDK attempt, gate, provider/
-evaluator/agent, retrieval/injection, hash/candidate, cost and A/C counts remain zero. No downstream descendant
-was created. The receipt is consumed; work item 6 can continue only through a newly approved successor.
+D-129 records two user-reported endpoint checks: unavailable/rc 1, then client/server 29.6.2 on linux/amd64/
+rc 0, with no pre-existing container auto-start reported. The attestation is not authenticated, agent-observed
+or future-fresh. D-129 itself made zero Docker/network/SDK/provider/evaluator/agent/retrieval/injection calls
+and no mutation or cost action; its 12/12 focused tests are included in the 115/115 selected regression union.
+
+Next, and only after exact approval, create a new append-only receipt, durable phase attempt intent, and
+reobserve the already-running daemon/images. A confirmed-missing pull is limited to the exact Moto/Babel digest;
+then capture replayable official pricing and run credential-presence/official-endpoint SDK no-call preflight.
+No receipt, external attempt, pricing, preflight or successor ready gate exists yet.
 
 ## Work item 7 — execution hash and candidate
 

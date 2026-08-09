@@ -11,32 +11,25 @@ pipeline은 이를 검증하고 개선하기 위한 지원 계층이다.
 
 ## Current state
 
-- 최신 봉인 checkpoint는 D-126 clean-source/pricing/no-call preflight다. Gate ID는
-  `d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`, semantic body SHA는
-  `sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`, file SHA는
-  `sha256:e08e8f7aad8f425c7069290a98ac04a5c471bc8c948e1a08121c962b5ba18696`이며 3,078 bytes다.
+- 최신 offline successor checkpoint는 D-129 approval-required gate다. Gate ID는
+  `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`, semantic body SHA는
+  `sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`, file SHA는
+  `sha256:fd57c187d1f260952b581e60f7d0ff98243f3b4ef172c9a6d6669b3e84968512`이며 18,678 bytes다.
+  Clean source commit은 `1fef6716cddca571777c8b7f9f1dc4501f988d1c`다.
 - Moto와 Babel development-validation task의 A(`no_memory`)와 C(`structured`) exact four-row
   suite, fixed D-110 bundle delivery, condition-aware manifest/trace qualification을 구현했다. 현재
   R2 exact full-schedule cost reservation/settlement와 four-row completion gate source를 구현했다.
-- D-126은 source commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, 72-hour official pricing과
-  read-only Docker/SDK 관찰을 봉인했지만 5개 blocker와 pricing provenance replay 한계 때문에
-  execution-hash readiness는 false다. Raw official response bytes는 보존되지 않았다.
-- Docker 관찰은 12개 command, 6개 read-only daemon call, workload/mutating call 0이다. SDK probe는
-  local no-call이며 network call 0이다. Provider/evaluator/agent/retrieval/injection과 cost도 모두 0이다.
-- D-127은 six-call read-only Docker remediation 뒤 terminal blocked된 sealed predecessor다.
-- D-128 external source `23038c16467a32c5b862f84e09797a298101f4e4`와 receipt-only child
-  `4b2ef5a15e9c721c1c8fa1e73375a3bf061bda50`를 봉인했다. Exact approval receipt 뒤 Docker phase는
-  3개 read-only CLI call(`version`, Moto/Babel inspect; 모두 rc 1)만 기록하고
-  `already-running-docker-desktop-linux-daemon-unavailable`로 terminal blocked됐다. Status는
-  `D128_EXACT_DOCKER_IMAGE_READINESS_REMEDIATION_OBSERVED_BLOCKED`다.
-- D-128의 Desktop/daemon start, image pull/mutation, container/workload, pricing GET, SDK attempt,
-  provider/evaluator/agent, retrieval/injection, hash/candidate, cost와 A/C action은 모두 0이다. Receipt는
-  소비됐고 pricing/preflight/gate descendant는 없다. Agent는 daemon을 시작하지 않으며, endpoint가 실제
-  reachable하다는 사용자 확인 뒤 새로운 exact successor approval이 필요하다.
-- D-124와 D-125는 sealed-historical predecessor다. D-125가 qualified한 repository-local consumption과
-  mocked finalization recovery의 cross-store/global, actual-kill, power-loss 한계는 그대로다.
-- 실제 reservation, result, execution hash와 candidate는 없다. Runtime memory injection, paid execution,
-  held-out/core campaign은 별도의 exact approval 전까지 금지한다.
+- D-126은 historical blocked이고 D-127/D-128은 terminal-blocked predecessor다. D-128은 read-only Docker
+  CLI call 3개가 모두 rc 1인 뒤 receipt를 소비했으며 retry, resume 또는 repair하지 않는다.
+- D-129는 사용자가 같은 Linux endpoint를 총 두 번 수동 확인했다고 기록한다. 첫 확인은 daemon
+  unavailable/rc 1, 이후 확인은 client/server 29.6.2, linux/amd64, rc 0이며 기존 container auto-start가
+  없었다는 보고다. 이는 self-attested이고 agent가 독립 관찰하지 않았으며 future receipt 뒤 다시
+  관찰해야 한다.
+- D-129 focused 12/12는 selected union 115/115에 포함된다. D-129 Docker/network/SDK/provider/evaluator/
+  agent/retrieval/injection/cost/A-C는 0이고 historical D-128 Docker call은 3개다.
+- D-129 receipt/external/pricing/preflight/hash/candidate/result는 없다. 다음 gate는 exact D-129 tuple과
+  evidence commit을 인용한 별도 승인이 필요하다. Desktop/daemon start와 live/memory/cost는 금지한다.
+- D-124/D-125의 repository-local/mock 한계는 그대로고 실제 reservation/result는 없다.
 - D-121 no-start successor는 historical/deferred다. D-119를 retry, resume 또는 repair하지 않는다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 

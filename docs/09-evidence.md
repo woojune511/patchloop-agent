@@ -3,7 +3,31 @@
 This document links to canonical machine artifacts. It does not duplicate the full historical narrative,
 which is preserved at `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## D-128 external successor — terminal blocked
+## D-129 offline successor — approval required
+
+- Gate `reports/live-pilot/artifacts/d129-d128-terminal-successor-offline-source-gate.json`:
+  ID `d129_fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
+  body `sha256:fa5412dd269ba6d4f502220fe1655d6f84b746eff6fa95633691464d6e29243c`;
+  file `sha256:fd57c187d1f260952b581e60f7d0ff98243f3b4ef172c9a6d6669b3e84968512`;
+  18,678 bytes; status `D129_D128_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED`.
+- Clean source commit `1fef6716cddca571777c8b7f9f1dc4501f988d1c`; tree
+  `eda4ca04aa6998d46bd4fba7c96e2a5fa487cea4`; sole parent
+  `4633f867ebd8b1ad8f6c6cd0dc357250fbe58d81`.
+- Focused tests 12/12; selected D-122–D-129 regression union 115/115. Selected includes focused, so these counts
+  are not additive.
+
+The gate records two user-reported checks of `npipe:////./pipe/dockerDesktopLinuxEngine`: first daemon
+unavailable/rc 1, later client/server 29.6.2, linux/amd64/rc 0. The user also reported no pre-existing
+container auto-start. These facts are self-attested, unauthenticated, not independently agent-observed and not
+preserved as raw output; a future receipt-bound phase must reobserve them.
+
+D-129 invoked zero Docker, network, pricing GET, SDK, provider, evaluator, agent, retrieval or runtime-memory
+calls and made no image/container mutation. Historical D-128 agent Docker calls remain three. No D-129 receipt,
+external attempt, pricing/preflight, execution hash/candidate, reservation/cost or A/C run exists. The next
+approval must quote the exact tuple above, 18,678 bytes and the eventual local evidence commit that tracks this
+gate; the offline artifact cannot self-bind that descendant commit.
+
+## D-128 external successor — historical terminal blocked
 
 - Offline predecessor gate ID `d128_9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`;
   body `sha256:9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de`;
@@ -31,57 +55,25 @@ which is preserved at `docs/archive/snapshots/d121/09-evidence.full.md`.
 The exact CLI made three read-only calls (`version`, Moto inspect, Babel inspect), all return code 1.
 Desktop/daemon start, pull/mutation, container/workload, provider/evaluator/agent, retrieval/injection, pricing
 GET, SDK attempt, hash/candidate, cost and A/C counts are zero. No pricing/preflight/gate descendant exists.
-The receipt is consumed; endpoint reachability must be user-verified before a newly approved successor.
+The receipt is consumed. Later D-129 self-attestation does not reopen or rewrite this terminal.
 
 ## D-127 terminal blocked Docker remediation
 
-- Receipt `reports/live-pilot/artifacts/d127-d126-successor-blocker-remediation-no-call-preflight-approval-receipt.json`:
-  ID `d127approval_3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
-  body `sha256:3a7b8bd3bd95564e4f3cddf10c154850bcc939371d69931eb78c87f0810b0d21`;
-  file `sha256:ddea365e3a51c8283bde58bd349222288a45e8ea8bdb3d211ead0bb001df81f4`; 3,914 bytes.
-- Status: `D127_D126_SUCCESSOR_BLOCKER_REMEDIATION_NO_CALL_APPROVAL_RECORDED`.
-- Attempt `reports/live-pilot/artifacts/d127-docker-remediation-attempt-intent.json`:
-  ID `d127dockerremediationattempt_2ebabbf2b9d1ace5c3dc552e8f7c2e2ad8c4f3699c5978e718e973b8112369aa`;
-  body `sha256:2ebabbf2b9d1ace5c3dc552e8f7c2e2ad8c4f3699c5978e718e973b8112369aa`;
-  file `sha256:2a1d5b01f5cf9a18e1e51db473c35e2003b9c875f2f8f7449d25d55df33328c2`; 4,246 bytes.
-- Terminal `reports/live-pilot/artifacts/d127-exact-docker-remediation-observation.json`:
-  ID `d127remediation_139037ff65b70cc08e24a69d2d6fd47fe04b7cc27bec8e97ebe9a7009179857f`;
-  body `sha256:139037ff65b70cc08e24a69d2d6fd47fe04b7cc27bec8e97ebe9a7009179857f`;
-  file `sha256:dc6639db851fb414325473eebf7e9b8ddd9fe15f54a3b0946b0bd82f99a530d3`; 10,139 bytes.
-- Terminal status: `D127_EXACT_DOCKER_REMEDIATION_OBSERVED_BLOCKED`; source
+- Receipt, attempt and terminal artifacts are under `reports/live-pilot/artifacts/` with the `d127-` prefix.
+- Terminal status `D127_EXACT_DOCKER_REMEDIATION_OBSERVED_BLOCKED`; source
   `cec335f345a56d544614fe0c9ec3e75cba78bf17`.
 
-Static imported only the `OPENAI_API_KEY` name without exposing its value. Six read-only Docker calls then
-recorded blocker `preexisting-container-auto-restart-state-unverified`; every mutation, later phase and live/
-cost action remained zero. Its receipt is consumed. D-126 remains the latest sealed checkpoint.
+Static imported only the `OPENAI_API_KEY` name. Six read-only Docker calls recorded blocker
+`preexisting-container-auto-restart-state-unverified`; every mutation/later action stayed zero and the receipt
+is consumed. Exact historical tuples remain in the canonical artifacts and D-129 predecessor binding.
 
 ## D-126 clean-source/pricing/no-call preflight
 
-- Receipt `reports/live-pilot/artifacts/d126-ac-clean-pricing-no-call-preflight-approval-receipt.json`:
-  ID `d126approval_596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0`;
-  body `sha256:596fd109a08fefbfc7e3075fd89879015ef5c78c5caa72353c45bf3ccbec2ae0`;
-  file `sha256:9e40c0da866d44af000127a09faab66aebd7afa7a1c981eb5b83a7976e179abe`; 2,672 bytes.
-- Preflight `reports/live-pilot/artifacts/d126-ac-clean-pricing-no-call-readiness-preflight.json`:
-  ID `d126preflight_c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04`;
-  body `sha256:c1412f3daa396daed456b92ffc84360afcd68780fd281fc99efc0d067b6fed04`;
-  file `sha256:0238f5fa1c62f0160d340cc14b9613b20fc805c54ddb059d02e4464625227a1a`; 20,814 bytes.
-- Gate `reports/live-pilot/artifacts/d126-ac-clean-source-pricing-no-call-preflight-gate.json`:
-  ID `d126_d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`;
-  body `sha256:d2ab27d34a7b56e51ba21d1d6274707b13e8345de6feb3bc9719d047ca834c4d`;
-  file `sha256:e08e8f7aad8f425c7069290a98ac04a5c471bc8c948e1a08121c962b5ba18696`; 3,078 bytes.
-- Status: `D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED`.
-
-D-126 binds commit `68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`, fresh dated-model prices and
-unapproved $13.6125/$54.45/$55 planning math. Raw official bytes were not retained, so provenance is not fully
-replayable. Twelve Docker reads included six daemon/image calls and zero workloads; the locked SDK probe made
-zero network calls. The five blockers are
-`docker-cli-observed-identity-awaits-separate-exact-approval`,
-`docker-local-daemon-and-exact-images-readiness-failed`, `openai-api-key-presence-missing`,
-`production-openai-client-official-base-url-not-explicit` and
-`production-openai-client-trust-env-not-disabled`.
-
-D-126 provider/evaluator/agent/retrieval/injection and cost are zero; hash/candidate flags are false. D-127
-records the limited successor receipt and blocked remediation without modifying these sealed artifacts.
+Receipt, preflight and gate artifacts use the `d126-ac-clean-` prefix under `reports/live-pilot/artifacts/`.
+Gate status is `D126_CLEAN_SOURCE_PRICING_NO_CALL_PREFLIGHT_OBSERVED_BLOCKED`; it binds source
+`68b7c8b0779a33443a4a4e5ae423e3c64e0e1d22`. It recorded fresh pricing, 12 Docker reads and a zero-network
+SDK probe but five blockers and no replayable raw pricing bytes. It created no hash/candidate/live/cost
+authority. Exact historical tuples and blockers remain in the canonical artifacts.
 
 ## Historical A/C source predecessors
 
