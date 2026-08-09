@@ -1,0 +1,157 @@
+{
+  "schema_version": "d127-terminal-successor-external-no-call-approval-receipt-d128-v1",
+  "artifact_id": "d128approval_11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+  "semantic_body_hash": "sha256:11c8d00ba507ead135d82db96de9e0d2ff66600b06801261daad6bf5c25abacd",
+  "semantic_body": {
+    "milestone": "D-128",
+    "evidence_kind": "exact-d127-terminal-successor-external-no-call-user-approval-receipt",
+    "recorded_at": "2026-08-09T05:07:23.980459Z",
+    "status": "D128_D127_TERMINAL_SUCCESSOR_EXTERNAL_NO_CALL_APPROVAL_RECORDED",
+    "predecessor_binding": {
+      "path": "reports/live-pilot/artifacts/d128-d127-terminal-successor-offline-source-gate.json",
+      "schema_version": "d127-terminal-successor-offline-source-gate-d128-v1",
+      "gate_id": "d128_9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de",
+      "semantic_body_hash": "sha256:9edb9d1396b2f572c3b1ade623c7c5f6fb3fdf083d17a71680e7f1041bfba7de",
+      "file_bytes": 12557,
+      "file_sha256": "sha256:2528aa018908958bdd35b4b6202c75be2b4ca72521d64bfed800284a015a739c",
+      "status": "D128_D127_TERMINAL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_APPROVAL_REQUIRED",
+      "recorded_at": "2026-08-09T04:19:08.687268Z",
+      "evidence_commit": {
+        "commit": "aeac01a04447c731ee5eac4c56e599eb74532a60",
+        "tree": "ded3a8dbbf4612549d3712404cd229ca405458cf",
+        "parents": [
+          "3b192e177b2da1302a030eb457ca96f7dae86611"
+        ],
+        "gate_blob_oid": "c871908f61bcdf0e012f193479e8644246e0e0bd",
+        "gate_bytes_match_commit": true
+      },
+      "artifact_mutated": false
+    },
+    "manual_prerequisite_attestation": {
+      "docker_desktop_linux_daemon_started_manually_by_user": true,
+      "user_confirmed_no_preexisting_container_auto_started": true,
+      "agent_must_not_start_docker_desktop_or_daemon": true,
+      "manual_state_change_does_not_reopen_d127": true,
+      "attestation_is_user_self_attested": true,
+      "attestation_is_authenticated_or_signed": false,
+      "container_auto_start_state_independently_observed_by_agent": false
+    },
+    "approval": {
+      "statement_code": "D128_D127_TERMINAL_SUCCESSOR_EXTERNAL_NO_CALL_APPROVAL_KO_20260809_V1",
+      "approved_scope": [
+        "record-a-new-exact-d128-successor-user-approval-receipt",
+        "use-the-exact-approved-docker-cli-identity",
+        "observe-an-already-running-docker-desktop-linux-daemon-read-only",
+        "pull-only-moto-and-babel-exact-digest-images-when-confirmed-absent",
+        "capture-bounded-replayable-openai-official-pricing-evidence",
+        "run-sdk-credential-presence-official-endpoint-no-call-preflight",
+        "create-append-only-d128-attempt-terminal-preflight-and-gate-evidence",
+        "modify-related-source-tests-docs-and-create-local-git-commit"
+      ],
+      "explicitly_not_authorized": [
+        "agent-start-docker-desktop-or-daemon",
+        "container-create-start-run-or-exec",
+        "pull-or-load-any-image-other-than-the-two-exact-approved-digests",
+        "provider-evaluator-or-agent-execution",
+        "runtime-memory-injection-or-retrieval",
+        "execution-hash-or-execution-candidate-creation",
+        "cost-reservation-or-spend",
+        "four-row-ac-execution"
+      ],
+      "approved_docker_cli": {
+        "version": "29.6.2",
+        "file_bytes": 43095472,
+        "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70"
+      },
+      "approved_exact_image_refs": [
+        "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+        "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+      ],
+      "approval_is_self_attested": true,
+      "approval_is_authenticated_or_signed": false
+    },
+    "source_identity": {
+      "commit": "23038c16467a32c5b862f84e09797a298101f4e4",
+      "tree": "46862cc0d48035e866d8d5086926391b56f90ba2",
+      "parents": [
+        "aeac01a04447c731ee5eac4c56e599eb74532a60"
+      ],
+      "branch": "codex/patchloop-mvp-baseline",
+      "source_paths_and_index_clean": true,
+      "git_cli_observation": {
+        "resolved_path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+        "file_name": "git.exe",
+        "file_bytes": 4422544,
+        "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+        "linklike": false,
+        "version": "git version 2.54.0.windows.1",
+        "actual_git_engine_invoked_directly": true,
+        "repository_local_core_autocrlf": "false",
+        "authenticated_or_vendor_signed_identity_claimed": false,
+        "stable_during_observation": true,
+        "minimal_secret_free_environment": true,
+        "fsmonitor_disabled": true
+      }
+    },
+    "loaded_module_bindings": [
+      {
+        "role": "d128-orchestrator",
+        "path": "patchloop/evals/d128_terminal_successor_no_call_preflight.py",
+        "file_bytes": 79183,
+        "file_sha256": "sha256:d4f9ee21fa0f63d66c2f5b22d36e18eaa5f5b31d695635522ec12d2835a587e7",
+        "source_blob_oid": "6df6558d4be8973522e9030572eb039785422b70"
+      },
+      {
+        "role": "d128-docker-no-start-remediation",
+        "path": "patchloop/evals/d128_docker_no_start_remediation.py",
+        "file_bytes": 17385,
+        "file_sha256": "sha256:7d3266bb4fb930a8aeeb78deaf69fcc328acf95a492c21cc918fac66f6d4b708",
+        "source_blob_oid": "a8cab51f734412cba35d481c5107708830c2080b"
+      },
+      {
+        "role": "d127-pricing-capture",
+        "path": "patchloop/evals/d127_pricing_capture.py",
+        "file_bytes": 17383,
+        "file_sha256": "sha256:d68ee250d60b53688a7dccaf3825dd2fda88ded398f499306dffd36f750be7e9",
+        "source_blob_oid": "21638a084b2e21f9866679b3a94c35c9fc4407fb"
+      },
+      {
+        "role": "d127-source-sdk-support",
+        "path": "patchloop/evals/d127_d126_successor_no_call_preflight.py",
+        "file_bytes": 109090,
+        "file_sha256": "sha256:efbfb3223843ec6e5aac8ce2da765b9cde360b6e3208f2c8cfc7f37162951aea",
+        "source_blob_oid": "c96b16fd9ca2a46103d2d41990f7d312dd89175f"
+      },
+      {
+        "role": "d128-offline-predecessor",
+        "path": "patchloop/evals/d128_d127_terminal_successor_offline.py",
+        "file_bytes": 29967,
+        "file_sha256": "sha256:61d34e7966b24d6e7e61044fb6e4e7af10105e5855e5dcf2ad635f8f49419e26",
+        "source_blob_oid": "b22e48fc0a6c366500c69c671ec480f18693b29e"
+      }
+    ],
+    "authority": {
+      "receipt_creation_authorized": true,
+      "already_running_daemon_readiness_authorized": true,
+      "exact_missing_image_pull_authorized": true,
+      "official_pricing_lookup_authorized": true,
+      "sdk_credential_endpoint_no_call_preflight_authorized": true,
+      "local_source_test_doc_commit_authorized": true,
+      "docker_desktop_or_daemon_start_authorized": false,
+      "provider_evaluator_agent_execution_authorized": false,
+      "runtime_memory_injection_or_retrieval_authorized": false,
+      "container_create_start_run_exec_authorized": false,
+      "execution_hash_or_candidate_authorized": false,
+      "cost_reservation_or_spend_authorized": false,
+      "four_row_ac_execution_authorized": false
+    },
+    "evidence_boundary": {
+      "receipt_does_not_prove_environment_readiness": true,
+      "receipt_creation_makes_no_external_call": true,
+      "receipt_must_be_committed_as_the_only_change_before_external_action": true,
+      "source_commit_and_receipt_commit_are_distinct_to_avoid_self_reference": true,
+      "manual_no_auto_start_fact_is_not_independently_observed": true,
+      "receipt_output_is_append_only_new_or_exact_idempotent": true
+    }
+  }
+}
