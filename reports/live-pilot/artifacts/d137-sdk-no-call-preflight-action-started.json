@@ -1,0 +1,51 @@
+{
+  "schema_version": "d137-no-call-preflight-phase-action-started-v1",
+  "artifact_id": "d137sdkstarted_aae9b054b6c8d07454d2996f3104c5ed7ee05ef78d13056306651c1b605dd17b",
+  "semantic_body_hash": "sha256:aae9b054b6c8d07454d2996f3104c5ed7ee05ef78d13056306651c1b605dd17b",
+  "semantic_body": {
+    "milestone": "D-137",
+    "evidence_kind": "sdk-no-call-preflight-action-started",
+    "phase": "sdk",
+    "recorded_at": "2026-08-10T05:28:23.745849Z",
+    "status": "D137_SDK_NO_CALL_PREFLIGHT_ACTION_STARTED_TRANSITION_COMMIT_REQUIRED",
+    "phase_attempt_binding": {
+      "path": "reports/live-pilot/artifacts/d137-sdk-no-call-preflight-attempt-intent.json",
+      "artifact_id": "d137sdkattempt_b991a6c4bddb2e6679fccd5990ec0bfc066d8467f5af1ebecd8e6fb64ab064d1",
+      "semantic_body_hash": "sha256:b991a6c4bddb2e6679fccd5990ec0bfc066d8467f5af1ebecd8e6fb64ab064d1",
+      "file_sha256": "sha256:f327589eac4b01e3f294087df559dc658471320f67facb181dd3c38f10d2485a",
+      "file_bytes": 2635,
+      "status": "D137_SDK_NO_CALL_PREFLIGHT_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-10T05:21:43.138374Z"
+    },
+    "parent_commit_binding": {
+      "commit": "6886edfcee1159530dde2f8569956e6ace657624",
+      "tree": "086b0f3856c77261ebf537067ad958c7e283a9a4",
+      "parents": [
+        "06e57c54b4fe09f3145b8b59e51a0e391108d52a"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d137-sdk-no-call-preflight-attempt-intent.json",
+      "artifact_blob_oid": "1139439db5422fad0b2d8fdd84d9ddc16b1513b6",
+      "artifact_file_sha256": "sha256:f327589eac4b01e3f294087df559dc658471320f67facb181dd3c38f10d2485a",
+      "artifact_file_bytes": 2635,
+      "single_artifact_add_commit": true
+    },
+    "observation_contract": {
+      "marker_is_new_only_durable_and_fsynced_before_first_observation": true,
+      "phase_helper_invocation_limit": 1,
+      "transport_retry_count": 0,
+      "post_marker_exception_consumes_phase": true,
+      "marker_only_preservation_commit_is_pre_authorized": true
+    },
+    "authority": {
+      "phase_helper_invocation_count_at_marker_write": 0,
+      "docker_cli_call_count_at_marker_write": 0,
+      "sdk_import_or_credential_presence_observation_count_at_marker_write": 0,
+      "phase_terminal_created_at_marker_write": false,
+      "environment_value_observation_count": 0,
+      "provider_evaluator_agent_call_count": 0,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}
