@@ -1,0 +1,51 @@
+{
+  "schema_version": "d137-no-call-preflight-phase-action-started-v1",
+  "artifact_id": "d137dockerstarted_5887813935e4b43db24494c11f26e1df0e5c3aaa74cb8b5d6f5b726e2d4c770d",
+  "semantic_body_hash": "sha256:5887813935e4b43db24494c11f26e1df0e5c3aaa74cb8b5d6f5b726e2d4c770d",
+  "semantic_body": {
+    "milestone": "D-137",
+    "evidence_kind": "docker-no-call-preflight-action-started",
+    "phase": "docker",
+    "recorded_at": "2026-08-10T05:17:47.166566Z",
+    "status": "D137_DOCKER_NO_CALL_PREFLIGHT_ACTION_STARTED_TRANSITION_COMMIT_REQUIRED",
+    "phase_attempt_binding": {
+      "path": "reports/live-pilot/artifacts/d137-docker-no-call-preflight-attempt-intent.json",
+      "artifact_id": "d137dockerattempt_5e710b1afdbea2f74555a098642644ddff88507cae43c58692af55cd60a5eca2",
+      "semantic_body_hash": "sha256:5e710b1afdbea2f74555a098642644ddff88507cae43c58692af55cd60a5eca2",
+      "file_sha256": "sha256:772b9f3d01dd85a1ba30fd50f282caff6704bf603a84dddfce1219e769fa10c0",
+      "file_bytes": 2474,
+      "status": "D137_DOCKER_NO_CALL_PREFLIGHT_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-10T05:11:46.024928Z"
+    },
+    "parent_commit_binding": {
+      "commit": "06f32a2874f1a52eccece6129b97b4cb12aee45e",
+      "tree": "73ed804b3d6b4ae3d9a8216c05b0d4ebc9a48823",
+      "parents": [
+        "f18b5d28c1584ad6db02f53ccfd953e8a599c04c"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d137-docker-no-call-preflight-attempt-intent.json",
+      "artifact_blob_oid": "540246fe8ea1a3521cfb98468999e2fe8a40cf7a",
+      "artifact_file_sha256": "sha256:772b9f3d01dd85a1ba30fd50f282caff6704bf603a84dddfce1219e769fa10c0",
+      "artifact_file_bytes": 2474,
+      "single_artifact_add_commit": true
+    },
+    "observation_contract": {
+      "marker_is_new_only_durable_and_fsynced_before_first_observation": true,
+      "phase_helper_invocation_limit": 1,
+      "transport_retry_count": 0,
+      "post_marker_exception_consumes_phase": true,
+      "marker_only_preservation_commit_is_pre_authorized": true
+    },
+    "authority": {
+      "phase_helper_invocation_count_at_marker_write": 0,
+      "docker_cli_call_count_at_marker_write": 0,
+      "sdk_import_or_credential_presence_observation_count_at_marker_write": 0,
+      "phase_terminal_created_at_marker_write": false,
+      "environment_value_observation_count": 0,
+      "provider_evaluator_agent_call_count": 0,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}
