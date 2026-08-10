@@ -1,0 +1,210 @@
+{
+  "schema_version": "d138-sdk-no-call-successor-terminal-v1",
+  "artifact_id": "d138sdk_d6af84f10b258bcf9fa9cdfded60c7aaac715d2b4a1e94d61704cae540f2a59d",
+  "semantic_body_hash": "sha256:d6af84f10b258bcf9fa9cdfded60c7aaac715d2b4a1e94d61704cae540f2a59d",
+  "semantic_body": {
+    "milestone": "D-138",
+    "evidence_kind": "sdk-no-call-successor-terminal",
+    "recorded_at": "2026-08-10T08:35:50.931148Z",
+    "status": "D138_SDK_NO_CALL_SUCCESSOR_BLOCKED_TRANSITION_COMMIT_REQUIRED",
+    "action_started_binding": {
+      "path": "reports/live-pilot/artifacts/d138-sdk-no-call-successor-action-started.json",
+      "artifact_id": "d138sdkstarted_0c536738ccae9dd7de803e0b494c8f316d91a58beff375599ee647bbd270b63d",
+      "semantic_body_hash": "sha256:0c536738ccae9dd7de803e0b494c8f316d91a58beff375599ee647bbd270b63d",
+      "file_sha256": "sha256:27257efd4281b34e717126b8c130e793d247700756a75f7f0c70c62f424548d3",
+      "file_bytes": 5285,
+      "status": "D138_SDK_NO_CALL_SUCCESSOR_ACTION_STARTED_TRANSITION_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-10T08:35:39.714704Z"
+    },
+    "parent_commit_binding": {
+      "commit": "7d41a5c4affd2f4c75c81c9f507d920d9e94df66",
+      "tree": "154d82742f9ba2fdc1d421b2c3a17a038aa5c7e1",
+      "parents": [
+        "d6c3a7f2a51fdbc9214cc45fb624e201b9577145"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d138-sdk-no-call-successor-attempt-intent.json",
+      "artifact_blob_oid": "7003c19f18be8cef5f9da5e7f4100ca6d4c46f38",
+      "artifact_file_sha256": "sha256:8270e6ed99bffed2af1a1969a974701fa514f6e9b4ddd1fa8561e926a559f274",
+      "artifact_file_bytes": 5304,
+      "single_artifact_add_commit": true
+    },
+    "observation": {
+      "activity": {
+        "child_credential_value_forward_count": 0,
+        "child_environment_entry_forward_count": 0,
+        "child_process_kill_count": 0,
+        "child_process_start_count": 0,
+        "child_stderr_bytes": 0,
+        "child_stderr_overflow_count": 0,
+        "child_stdout_bytes": 0,
+        "child_stdout_overflow_count": 0,
+        "child_timeout_count": 0,
+        "dotenv_read_count": 0,
+        "environment_presence_check_count": 3,
+        "environment_value_read_count": 0,
+        "launch_contract_check_count": 1,
+        "parent_file_binding_count": 0,
+        "parent_network_call_count": 0,
+        "parent_sdk_dynamic_import_count": 0,
+        "provider_evaluator_or_agent_call_count": 0
+      },
+      "blockers": [
+        "openai-api-key-presence-bit-is-false",
+        "isolated-sdk-worker-suppressed-by-presence-checks"
+      ],
+      "observation": {
+        "checks": {
+          "openai_api_key_present": false,
+          "pythonhome_absent": true,
+          "pythonpath_absent": true
+        },
+        "environment_presence_bits": {
+          "OPENAI_API_KEY": false,
+          "PYTHONHOME": false,
+          "PYTHONPATH": false
+        },
+        "isolated_child": null,
+        "launch_contract": {
+          "bytecode_writes_disabled": true,
+          "ignore_python_environment": true,
+          "isolated_mode": false,
+          "safe_path_mode": false,
+          "user_site_disabled": true
+        },
+        "python": null,
+        "source_bindings": null,
+        "stage": "presence"
+      },
+      "observer_contract": {
+        "exact_launch_contract": {
+          "bytecode_writes_disabled": true,
+          "ignore_python_environment": true,
+          "isolated_mode": false,
+          "safe_path_mode": false,
+          "user_site_disabled": true
+        },
+        "isolated_child_contract": {
+          "absolute_repository_venv_interpreter": true,
+          "ambient_environment_entry_forward_count": 0,
+          "argv_layout": [
+            "absolute-repository-venv-python",
+            "-E",
+            "-s",
+            "-B",
+            "-c",
+            "fixed-bootstrap",
+            "absolute-repository-root",
+            "absolute-helper-source",
+            "absolute-fixed-temp-root",
+            "fixed-eligibility-token",
+            "expected-helper-sha256",
+            "expected-helper-file-bytes",
+            "expected-model-sha256",
+            "expected-model-file-bytes",
+            "expected-lock-sha256",
+            "expected-lock-file-bytes"
+          ],
+          "audit_hook_coverage_boundary": "bootstrap-after-cpython-and-site-startup",
+          "bootstrap_sha256": "sha256:a370d92f2b9a326c4f7e7cda0fd781b90a8912f8bcfdb5d16d7ba1e1f95c69e3",
+          "bootstrap_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only",
+          "child_environment_entries": [],
+          "child_environment_entry_count": 0,
+          "child_environment_override_count": 1,
+          "child_process_start_limit": 1,
+          "credential_value_forward_count": 0,
+          "cwd_policy": "fresh-nonlink-fixed-root-outside-repository",
+          "eligibility_token_kind": "fixed-boolean-no-value",
+          "fixed_temp_root": "C:\\Users\\geonj\\AppData\\Local\\Temp",
+          "outside_venv_site_packages_entry_forward_count": 0,
+          "pre_bootstrap_startup_network_coverage": "not-observed-not-claimed",
+          "raw_captured_output_persistence_authorized": false,
+          "repository_source_sys_path_entry_forward_count": 0,
+          "required_python_flags": [
+            "-E",
+            "-s",
+            "-B"
+          ],
+          "shell": false,
+          "startup_confidentiality_boundary": "fixed-empty-secret-free-environment",
+          "stderr_contract": "empty",
+          "stderr_limit_bytes": 16384,
+          "stdin": "DEVNULL",
+          "stdout_contract": "one-canonical-json-line",
+          "stdout_limit_bytes": 65536,
+          "timeout_seconds": 20,
+          "validated_parsed_worker_observation_persistence_authorized": true,
+          "worker_action": "_d138_isolated_sdk_worker",
+          "worker_entry_dotenv_open": "audit-deny",
+          "worker_entry_environment_value_access": "deny",
+          "worker_entry_socket_network": "audit-deny",
+          "worker_entry_subprocess": "audit-deny",
+          "worker_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only"
+        },
+        "launcher_source_contract": {
+          "ambient_environment_policy": "inherit-unchanged-required-not-runtime-observed",
+          "environment_override_count": 0,
+          "exact_cli_action": "--run-sdk-preflight",
+          "required_python_flags": [
+            "-E",
+            "-s",
+            "-B"
+          ]
+        },
+        "parent_environment_contract": {
+          "dotenv_read_authorized": false,
+          "environment_override_count": 0,
+          "membership_check_count": 3,
+          "presence_names": [
+            "OPENAI_API_KEY",
+            "PYTHONHOME",
+            "PYTHONPATH"
+          ],
+          "value_access_authorized": false,
+          "value_read_count": 0
+        },
+        "parent_sdk_dynamic_import_count": 0
+      },
+      "passed": false,
+      "phase": "sdk",
+      "schema_version": "d138-d137-sdk-no-call-successor-observation-v2",
+      "status": "D138_SDK_NO_CALL_SUCCESSOR_OBSERVED_BLOCKED"
+    },
+    "activity_accounting": {
+      "child_credential_value_forward_count": 0,
+      "child_environment_entry_forward_count": 0,
+      "child_process_kill_count": 0,
+      "child_process_start_count": 0,
+      "child_stderr_bytes": 0,
+      "child_stderr_overflow_count": 0,
+      "child_stdout_bytes": 0,
+      "child_stdout_overflow_count": 0,
+      "child_timeout_count": 0,
+      "dotenv_read_count": 0,
+      "environment_presence_check_count": 3,
+      "environment_value_read_count": 0,
+      "launch_contract_check_count": 1,
+      "parent_file_binding_count": 0,
+      "parent_network_call_count": 0,
+      "parent_sdk_dynamic_import_count": 0,
+      "provider_evaluator_or_agent_call_count": 0
+    },
+    "evidence_boundary": {
+      "observation_is_replay_validated": true,
+      "observation_expected_committed_source_bindings_cross_validated": true,
+      "ready_or_blocked_is_terminal": true,
+      "post_marker_retry_resume_repair_or_backfill_allowed": false,
+      "credential_or_environment_values_persisted": false,
+      "provider_evaluator_agent_call_count": 0
+    },
+    "authority": {
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    },
+    "next_gate": {
+      "status": "D139_SDK_BLOCKED_OFFLINE_SUCCESSOR_APPROVAL_REQUIRED",
+      "fresh_separate_approval_required": true,
+      "current_activation_authorizes_execution_hash_candidate_cost_or_ac": false
+    }
+  }
+}
