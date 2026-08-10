@@ -24,10 +24,9 @@ cross-repository, per-rule or negative-transfer-rate claim.
 
 ### Historical execution gates remain closed
 
-D-122 through D-136 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. D-127 through
-D-129, the exercised D-132 pricing phase and the successful D-136 pricing phase are consumed and never retried
-or repaired. Planning values, pricing evidence, source qualification and self-attested observations grant no
-hash/candidate, cost or A/C authority.
+D-122 through D-137 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. Consumed
+pricing, Docker and SDK attempts are never retried or repaired. Planning values, observations and source
+qualification grant no hash/candidate, cost or A/C authority.
 
 ### Active docs own current state; archive owns chronology
 
@@ -35,7 +34,7 @@ hash/candidate, cost or A/C authority.
 - Exact artifacts: `reports/` and the index in `docs/09-evidence.md`.
 - Historical narratives: `docs/archive/` and Git history.
 
-Earlier decisions cannot replace the current D-137 gate or reopen a consumed receipt, attempt or marker.
+Earlier decisions cannot replace the current D-138 gate or reopen a consumed receipt, attempt or marker.
 
 ### 2026-08-09 — D-129 through D-131 preserve the predecessor boundary
 
@@ -43,7 +42,7 @@ D-129 failed closed because a docs open preceded receipt/attempt; transport coun
 local admission from external activation. D-131 materialized receipt-only and armed-intent-only commits with
 external actions zero. Those artifacts are immutable predecessors, not reusable activation authority.
 
-### 2026-08-10 — D-132 is sealed, D-136 succeeds, and D-137 qualifies no-call preflight source
+### 2026-08-10 — D-132 is sealed, D-136 succeeds, D-137 is consumed, and D-138 qualifies source
 
 - D-132's exact activation was exercised through the pricing attempt and action-started marker. The
   application-level unauthenticated `client.send` returned one `Response`, but underlying HTTP request
@@ -59,13 +58,16 @@ external actions zero. Those artifacts are immutable predecessors, not reusable 
 - D-136 exercised its exact gate, receipt, pricing attempt and marker+terminal path successfully. The terminal
   retains one official public GET, HTTP 200, no redirects and 3,735 replay bytes. Provider/evaluator/agent calls
   and cost were 0. The activation is consumed and authorizes no successor action.
-- D-137 source `adcdeadbbb561f82548044d8c9a18d976b584132` is the exact four-add child of the D-136 success
-  commit. Gate `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`
-  qualifies only separate future Docker and SDK no-call phases. No future artifact or external observation was
-  created during preparation.
-- A later exact activation must create and commit the receipt, then run Docker attempt-first/marker-first. Only
-  committed Docker READY permits a separate SDK attempt. Both phases consume their marker identity, never
-  retry after marker, and grant no hash/candidate, cost or A/C authority.
+- D-137 exact activation completed a bounded read-only Docker READY transition and then an SDK BLOCKED transition.
+  The blocker was absent `OPENAI_API_KEY` presence; credential/environment values, `.env`, SDK import/probe,
+  transport dispatch and network calls remained 0. Both phases are consumed with no retry.
+- D-138 source `f1f821cd57feb8e1405929ff949e82892e3de6f9` is the exact four-add child of D-137 transition commit
+  `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01`. Gate
+  `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` qualifies only a future one-use
+  SDK successor; preparation created no runtime artifact and observed no environment/SDK/network/Docker state.
+- A later exact activation must commit receipt and attempt before its fsynced marker. The parent may check only
+  approved membership bits; eligible SDK work is confined to the zero-ambient-forwarding child. Terminal or
+  marker-only preservation consumes D-138 and grants no hash/candidate, cost or A/C authority.
 
 ## Superseded sequencing
 

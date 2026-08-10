@@ -32,7 +32,7 @@ Historical milestone-by-milestone limitations are archived at
   noncooperative-swap or power-loss durability.
 - No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
-## D-132 through D-137 external boundary
+## D-132 through D-138 external boundary
 
 - D-132's activation and pricing attempt are consumed. Application-level unauthenticated `client.send` returned
   one `Response`; this does not prove how many HTTP requests occurred or that an exchange completed.
@@ -48,13 +48,19 @@ Historical milestone-by-milestone limitations are archived at
 - D-136's new fixed helper completed one bounded official public capture. Its canonical terminal proves one GET,
   HTTP 200, zero redirects and 3,735 replay bytes, but only for that capture. Provider/evaluator/agent activity
   and cost were 0, and the consumed activation cannot be reused.
-- D-137 gate `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`
-  qualifies only future Docker and SDK no-call contracts. Its focused 62/62 and selected current-compatible
-  112/112 are non-additive local mocked results, not external readiness.
-- No D-137 future artifact exists. Preparation made zero real Docker, SDK, credential/environment-value, `.env`,
-  endpoint or network observations. Historical Docker readiness is not future-fresh.
-- The future checks remain cooperative repository-local evidence. They do not prove authenticated identity,
-  global/cross-clone exclusion, daemon immutability outside bounded snapshots or long-term environment stability.
+- D-137 Docker READY proves only its two bounded read-only snapshots: eight commands, exact daemon/images and zero
+  containers then, with zero mutation. It does not prove long-term daemon or inventory stability.
+- D-137 SDK BLOCKED records `OPENAI_API_KEY` presence false after three membership checks. It read no value or
+  `.env` and did not import/probe the SDK, dispatch transport or call the network. The phase is consumed, so a
+  later key-presence change cannot reopen it.
+- D-138 gate `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` qualifies only new
+  source. Injected-mock 168/168 is local contract evidence, not external readiness; no runtime artifact exists.
+- A future parent may observe only three membership bits in the inherited environment. Eligible SDK work runs
+  in an empty-environment child with no ambient forwarding. Its audit hook starts after CPython/site startup, so
+  pre-bootstrap network absence is not observed or claimed; the fixed empty environment is the confidentiality
+  boundary for that startup.
+- These checks remain cooperative repository-local evidence. They do not prove authenticated identity,
+  global/cross-clone exclusion or long-term environment stability.
 - Provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C authority remain closed.
 
 ## Isolation, identity and operations

@@ -11,17 +11,20 @@
 
 ## Current state
 
-- D-129부터 D-135까지는 immutable historical predecessor다. Consumed gate나 attempt는
+- D-129부터 D-137까지는 immutable historical predecessor다. Consumed gate, attempt 또는 marker를
   retry/resume/repair/backfill하지 않는다.
-- D-136은 gate→receipt→attempt→ACTION_STARTED+pricing terminal 순서로 성공했고 consumed됐다. 공식
-  public GET 1회, HTTP 200, redirect 0, replay 3,735 bytes가 보존됐으며 provider/evaluator/agent와 비용은 0이다.
-- 현재 D-137 gate는 `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`다.
-  Source commit `adcdeadbbb561f82548044d8c9a18d976b584132`은 D-136 success commit의 exact four-path
-  sole child이고, exact gate+10-doc evidence commit은 그 direct child이며 post-commit validator가 결속한다.
-- D-137은 source-qualified only다. Receipt, Docker/SDK attempt, ACTION_STARTED, terminal은 모두 없으며
-  source/gate 준비 중 실제 Docker, SDK, credential/environment value, endpoint 또는 network 관찰은 0이다.
-- Future Docker와 SDK no-call phase는 서로 분리되고 각각 attempt-first, fsynced marker, terminal-or-marker-only
-  consumed/no-retry 계약을 따른다. Fresh exact activation 없이는 어느 phase도 실행하지 않는다.
+- D-136은 공식 public GET 1회, HTTP 200, redirect 0, replay 3,735 bytes를 보존하고 consumed됐다.
+  Provider/evaluator/agent와 비용은 0이다.
+- D-137은 receipt 뒤 Docker attempt→ACTION_STARTED+READY, SDK attempt→ACTION_STARTED+BLOCKED 순서로
+  종료되고 consumed됐다. Docker는 bounded read-only 관찰에서 READY였고, SDK blocker는
+  `OPENAI_API_KEY` presence false였다. Credential/environment value, `.env`, SDK import/probe, transport와
+  network 관찰은 모두 0이었다.
+- 현재 D-138 gate는 `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f`다.
+  Source commit `f1f821cd57feb8e1405929ff949e82892e3de6f9`, tree
+  `b493d9c36a8cdcee646e5773ffe81353bf1d5c8a`는 D-137 terminal commit의 exact four-path sole child다.
+- D-138은 source-qualified only다. Injected-mock focused test는 168/168이며, future artifact와 source-prep
+  environment/SDK/network/Docker 관찰은 0이다. Fresh exact activation 뒤 parent가 inherited environment에서
+  세 membership bit만 확인하고, eligible SDK 검증은 ambient forwarding이 없는 `env={}` child에서 수행한다.
 - Provider/evaluator/agent, retrieval/injection, execution hash/candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.

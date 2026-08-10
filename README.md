@@ -12,9 +12,9 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-The suite, delivery and R2 cost/completion source are offline-qualified. D-136 completed one bounded official
-public pricing capture and is consumed. D-137 now offline-qualifies only the source and future topology for
-separate Docker and SDK no-call preflights; neither phase has been activated.
+The suite, delivery and R2 cost/completion source are offline-qualified. D-136 pricing succeeded and is
+consumed. D-137 then completed bounded Docker READY and SDK missing-key BLOCKED no-call phases; it is consumed.
+D-138 now qualifies only a fresh SDK successor source and future one-use topology.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -33,34 +33,32 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-098 is a development baseline (12 terminal, 11 evaluated, 2 scope-compliant), not held-out evidence.
 - D-110 froze three entries; D-112/D-115 left selective scoring unready.
 - D-121 is deferred; D-124/D-131 are historical and D-129 is terminal blocked.
-- D-132 activation/pricing attempt are consumed at the D-133-preserved action-started marker; no retry or
-  backfill is allowed. Application-level `client.send` returned a `Response` once, while underlying HTTP and
-  response fields remain unknown/unretained. Completed/replayable canonical pricing evidence count is 0, its
-  artifact is absent and replay bytes are 0.
-- D-134's ambiguous gate is preserved exactly but has no qualification or terminalization authority.
-- D-135 procedural terminal commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786` preserves the consumed
-  incident without inventing canonical response evidence.
-- D-136 gate→receipt→attempt→ACTION_STARTED+terminal completed in exact Git order. The terminal preserves one
-  unauthenticated public GET, HTTP 200, zero redirects and 3,735 replay bytes; provider/evaluator/agent calls
-  and cost were 0. The phase is consumed and cannot be reused.
-- D-137 source commit `adcdeadbbb561f82548044d8c9a18d976b584132`, tree
-  `a1f649cd45007d032ae97d76f97b8a0df9180432`, is the exact four-add sole child of the D-136 success commit.
-  Gate `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc` is source-qualified only;
-  its exact gate+10-doc evidence commit is the direct child reported by the post-commit validator. Focused tests
-  passed 62/62 and the selected current-compatible set passed 112/112 with focused included, so counts are not
-  additive.
-- No D-137 receipt, attempt, marker or terminal exists. D-137 preparation observed no real Docker, SDK,
-  credential/environment value, endpoint or network state and grants no current readiness or execution authority.
+- D-132 through D-135 preserve one consumed pricing incident without retry, response reconstruction or canonical
+  pricing evidence. D-136 later preserved one successful public GET and is also consumed.
+- D-137 completed exact receipt, Docker attempt/READY transition, SDK attempt/BLOCKED transition Git order.
+  Docker used eight bounded read-only commands with zero mutation. SDK checked three membership bits, found
+  `OPENAI_API_KEY` absent, and performed zero value reads, `.env` reads, SDK import/probe, dispatch or network call.
+- D-138 source commit `f1f821cd57feb8e1405929ff949e82892e3de6f9`, tree
+  `b493d9c36a8cdcee646e5773ffe81353bf1d5c8a`, is the exact four-add sole child of D-137 transition commit
+  `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01`. Gate
+  `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` is source-qualified only;
+  injected-mock focused tests passed 168/168. No D-138 runtime artifact or environment/SDK/network/Docker
+  observation exists.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
 ## Offline quickstart
 
 ```powershell
-uv sync --extra dev
-uv run pytest -q tests/test_d137_d136_no_call_preflight_successor_offline.py
-uv run python scripts/build_d137_d136_no_call_preflight_successor_offline.py --validate-gate-postcommit
-uv run pytest -q tests/test_documentation_structure.py
+uv sync --offline --frozen --extra dev
+$d138Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d138-' + [guid]::NewGuid())
+& .\.venv\Scripts\python.exe -E -s -B -m pytest -q `
+  -p no:cacheprovider --basetemp $d138Basetemp tests/test_d138_d137_sdk_blocked_successor_offline.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_d138_d137_sdk_blocked_successor_offline.py `
+  --validate-gate-postcommit
+$docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-' + [guid]::NewGuid())
+& .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
+  --basetemp $docsBasetemp tests/test_documentation_structure.py
 git diff --check
 ```
 
@@ -68,12 +66,13 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 ## CLI surface
 
-Use `uv run patchloop --help` to discover the CLI.
+Use `uv run --offline --frozen patchloop --help` to discover the CLI.
 
-CLI availability does not imply authority. A fresh exact D-137 activation must quote the gate tuple, source
-commit/tree and exact gate+docs evidence-commit tuple. Docker must complete through a committed READY
-terminal before a separate SDK attempt can be created. Both phases are one-use and marker-first; hash/candidate,
-cost and A/C authority remain closed.
+CLI availability does not imply authority. A fresh exact D-138 activation must quote gate, source and evidence
+commit tuples. Its parent launch uses repository-venv Python `-E -s -B`, inherits the environment unchanged and,
+after the fsynced marker, observes only approved membership bits. Eligible SDK work runs in a bounded `env={}`
+child with zero ambient credential forwarding and transport dispatch. No outcome grants hash/candidate, cost or
+A/C authority.
 
 ## Documentation
 

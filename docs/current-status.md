@@ -2,19 +2,29 @@
 
 ## Current checkpoint
 
-D-137 is the current D-136-success-terminal no-call-preflight successor offline source gate:
+D-138 is the current D-137 SDK-BLOCKED no-call successor offline source gate:
 
-- Gate ID/body `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`;
-  file `sha256:12745a2dd8bb35b04a29cdcda0be000083bc8cabceed72057c2c6c8e32e0ae25`,
-  21,423 bytes. Its exact gate+10-active-doc evidence commit is the source commit's direct child and is
-  reported by the post-commit validator.
-- Source commit `adcdeadbbb561f82548044d8c9a18d976b584132`, tree
-  `a1f649cd45007d032ae97d76f97b8a0df9180432`, sole parent
-  `2378569536c2367a3186f575a7517e3de7282336`; the commit contains exactly four added implementation paths.
+- Gate ID/body `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f`;
+  file `sha256:ea77b4a9d387ab649f21ed7c3dd35b2095e6143514b20604b1d9c16fffe804fb`,
+  17,533 bytes. Its exact gate+10-active-doc evidence commit is the source commit's direct child and is reported
+  by the post-commit validator.
+- Source commit `f1f821cd57feb8e1405929ff949e82892e3de6f9`, tree
+  `b493d9c36a8cdcee646e5773ffe81353bf1d5c8a`, sole parent
+  `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01`; its diff is exactly four added implementation paths.
 
-D-137 is source-qualified only. Focused mocked tests passed 62/62; the selected current-compatible set passed
-112/112 with focused included, so counts are not additive. No future D-137 artifact was created, and source/gate
-preparation performed zero real Docker, SDK, credential/environment-value, endpoint or network observations.
+D-138 is source-qualified only. Injected-mock focused tests passed 168/168; this count is reported separately
+and is not additive with documentation or static checks. No D-138 receipt, attempt, ACTION_STARTED, terminal or
+preservation artifact exists; preparation observed no environment/credential
+presence or value, SDK, network, endpoint or Docker state.
+
+## Consumed D-137 no-call preflight
+
+D-137 followed gate→receipt→Docker attempt→ACTION_STARTED+READY→SDK attempt→ACTION_STARTED+BLOCKED. The Docker
+transition commit is `06e57c54b4fe09f3145b8b59e51a0e391108d52a`; the final SDK transition commit is
+`8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01`. Docker used eight bounded read-only commands, observed the exact
+daemon/images and zero containers, and performed no mutation. SDK checked three membership bits, found
+`OPENAI_API_KEY` absent, and performed zero value or `.env` reads, SDK import/probe, transport dispatch or network
+call. Both phases are consumed and never retried, resumed, repaired or backfilled.
 
 ## Consumed D-136 pricing success
 
@@ -47,13 +57,11 @@ canonical pricing evidence or reopen D-132.
 D-129 remains terminally sequence-blocked because a docs open preceded its receipt/attempt. It has no canonical
 capture or retroactive attempt and is never retried or repaired; exact tuples are in `docs/09-evidence.md`.
 
-## Manual readiness boundary
+## No-call readiness boundary
 
-D-132 machine evidence recorded Docker 29.6.2 linux/amd64 and both exact images READY from six read-only rc-0
-calls, with zero pulls or mutations. That observation is historical and not future-fresh. D-137 preparation did
-not call Docker or inspect the daemon, images or containers; it also did not import/inspect a live SDK or
-observe credential, environment-value, `.env` or endpoint state. Current readiness can be established only by
-the separately activated future phases.
+D-137 Docker READY is a bounded consumed observation, not a long-term daemon guarantee. D-137 SDK readiness was
+BLOCKED only by the false key-presence bit; its source did not read a credential value. D-138 preparation made
+no membership or SDK observation. Only a separately approved D-138 activation can establish a new SDK terminal.
 
 ## Experiment direction: four-run A/C readiness
 
@@ -63,10 +71,9 @@ efficacy evidence, and there is still no supported live command.
 
 ## Closed authority
 
-D-126 through D-135 are immutable predecessors. D-136 succeeded and is consumed; its pricing evidence grants no
-Docker/SDK or downstream execution authority. D-137 has no receipt, Docker/SDK attempt, ACTION_STARTED,
-terminal or preservation artifact. Provider/evaluator/agent, memory/retrieval, execution hash/candidate, cost
-and A/C remain unauthorized and absent.
+D-126 through D-137 are immutable predecessors. D-136 pricing and both D-137 phases are consumed. D-138 has no
+runtime artifact or current readiness. Provider/evaluator/agent, memory/retrieval, execution hash/candidate,
+cost and A/C remain unauthorized and absent.
 
 The deferred D-121 candidate
 `d121executioncandidate_b37bde7b9f49f92118ca277e521cd409b1e51b6f97c1ad8c2e9ff5090a1c38ef`
@@ -74,9 +81,10 @@ was never authorized and is not a fixed-bundle prerequisite.
 
 ## Next gate
 
-Request one fresh exact D-137 activation quoting the gate tuple,
-source commit/tree and evidence-commit tuple. The activation first creates a receipt-only commit. Docker then
-uses its own attempt, fsynced ACTION_STARTED and terminal-or-marker-only consumed/no-retry transition. Only a
-committed Docker READY terminal permits a separate SDK attempt with the same one-use pattern. Neither phase may
-mutate Docker or dispatch synthetic/real provider transport. Hash/candidate, cost and A/C remain separate closed
-gates even after both READY terminals.
+Request one fresh exact D-138 activation quoting the gate, source and evidence-commit tuples. It may create only
+a receipt commit, then an SDK-attempt commit. The exact inherited-environment repository-venv `-E -s -B` parent
+writes/fsyncs ACTION_STARTED immediately before membership-only checks of `OPENAI_API_KEY`, `PYTHONHOME` and
+`PYTHONPATH`; values are neither read nor persisted. If eligible, SDK provenance and a zero-dispatch synthetic
+probe run only in the bounded `env={}` child with a fixed nonsecret placeholder. Commit READY/BLOCKED terminal, or preserve only
+the marker after failure; never retry. Any terminal requires a later offline successor and grants no downstream
+authority.

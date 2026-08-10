@@ -123,32 +123,32 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 through D-135 are immutable predecessors; consumed gates never reopen. D-132 ended after its marker
-without canonical response evidence, and D-135 later sealed that incident procedurally without reconstruction.
-D-136 used a distinct fixed helper and completed one exact gate→receipt→attempt→ACTION_STARTED+terminal chain.
-Its replayable terminal binds one unauthenticated official public GET, HTTP 200, redirect count 0 and 3,735
-decoded bytes; provider/evaluator/agent calls and cost are 0. The D-136 activation and phase are consumed.
+D-126 through D-137 are immutable predecessors; consumed gates never reopen. D-132 has no canonical response,
+D-135 sealed that incident without reconstruction, and D-136 later completed one successful public pricing GET.
 
-D-137 source `adcdeadbbb561f82548044d8c9a18d976b584132`, tree
-`a1f649cd45007d032ae97d76f97b8a0df9180432`, is the exact four-add sole child of D-136 success commit
-`2378569536c2367a3186f575a7517e3de7282336`. Gate
-`d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc` binds that complete predecessor
-topology and qualifies only future local writers/validators plus no-call observations. Its exact gate+10-doc
-evidence commit is the source commit's direct child; no future artifact exists.
+D-137 completed its append-only chain. Docker transition commit
+`06e57c54b4fe09f3145b8b59e51a0e391108d52a` binds ACTION_STARTED plus READY after eight bounded read-only CLI
+commands, stable exact daemon/image/zero-container snapshots and zero mutation. SDK transition commit
+`8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01` binds ACTION_STARTED plus BLOCKED because the
+`OPENAI_API_KEY` membership bit was false. Three membership checks occurred; credential/environment value and
+`.env` reads, SDK import/probe, synthetic dispatch and network calls were 0. Both markers are consumed.
 
-The future D-137 append-only contract requires:
+D-138 source `f1f821cd57feb8e1405929ff949e82892e3de6f9`, tree
+`b493d9c36a8cdcee646e5773ffe81353bf1d5c8a`, is the exact four-add sole child of that SDK transition. Gate
+`d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` binds the complete D-137 topology
+and qualifies only new local writers, validators and a future one-use SDK observation.
 
-- a fresh exact approval quoting the D-137 gate tuple, source commit/tree and gate+active-doc evidence tuple;
-- one activation receipt committed before either phase;
-- a Docker-only attempt, fsynced ACTION_STARTED, then exact READY/BLOCKED terminal or marker-only preservation;
-- Docker observation limited to the approved CLI, already-running linux/amd64 daemon, exact digest-pinned images
-  and zero-existing-container inventory across stable snapshots;
-- no Docker mutation, pull/load or container operation, and no retry after any marker;
-- a committed Docker READY terminal before a separate SDK-only attempt can be created;
-- an SDK fsynced marker followed by a no-call READY/BLOCKED terminal or marker-only preservation;
-- SDK observation limited to repository provenance, routing and credential-presence bits, never values or `.env`,
-  with synthetic and real transport dispatch count 0.
+The future D-138 contract requires:
 
-D-137 source/gate preparation made zero real Docker, SDK, credential/environment-value, endpoint or network
-observations. It grants no current readiness, provider/evaluator/agent, memory/retrieval, execution
-hash/candidate, cost or A/C authority.
+- fresh exact approval quoting gate, source and exact gate+active-doc evidence tuples;
+- receipt-only and SDK-attempt-only commits before a new-only, fsynced ACTION_STARTED marker;
+- an inherited-environment repository-venv Python launch with exact `-E -s -B` flags and no environment override;
+- after the marker, membership-only checks of `OPENAI_API_KEY`, `PYTHONHOME` and `PYTHONPATH`, never values or `.env`;
+- if eligible, SDK import/provenance and a zero-dispatch synthetic probe only in one bounded `env={}` child;
+- zero ambient environment or credential forwarding, a fixed nonsecret placeholder, `trust_env=false`, retry 0,
+  exact committed helper/model/lock bindings and terminal-or-marker-only no-retry handling;
+- no claim about network before the child's post-CPython/site bootstrap audit hook, while the fixed empty child
+  environment provides the startup confidentiality boundary.
+
+No D-138 runtime artifact exists. Source/gate preparation observed no membership, value, SDK, endpoint, network
+or Docker state and grants no provider/evaluator/agent, memory/retrieval, hash/candidate, cost or A/C authority.

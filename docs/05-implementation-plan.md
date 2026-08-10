@@ -10,9 +10,9 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-D-136 pricing capture completed successfully and is consumed. D-137 no-call-preflight successor source
-qualification is complete. Next request only a fresh exact D-137 activation for its separate Docker then SDK
-phases. Hash/candidate, cost and execution remain separate.
+D-136 pricing and D-137 Docker/SDK no-call phases are consumed. D-137 ended Docker READY then SDK missing-key
+BLOCKED. D-138 successor source qualification is complete; next request only a fresh exact D-138 SDK activation.
+Hash/candidate, cost and execution remain separate.
 
 ## Completed foundation
 
@@ -21,16 +21,15 @@ phases. Hash/candidate, cost and execution remain separate.
 - `fixed-d110-bundle-v1` binds exact D-105/D-110 inputs, renders A null and C three entries on every request,
   and exposes no retrieval, provenance, vector or raw-trace content.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
-- D-122 through D-131 are historical immutable predecessors; D-127 through D-129 are terminal blocked.
-- D-132 activation/pricing are consumed without canonical terminal; D-133 preserves the marker.
-- D-134's ambiguous gate is preserved by `9dc450a747537634e89fe2ade824685f8b5a52d6` but is not authority.
-- D-135 terminal-only commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786` procedurally closes the
-  consumed incident without producing canonical pricing evidence.
+- D-122 through D-135 are immutable predecessors. D-132 is consumed without canonical response evidence and
+  D-135 closes it procedurally without backfill.
 - D-136 completed its exact receipt/attempt/marker/terminal sequence. Its replayable terminal records one public
   GET, HTTP 200, zero redirects and 3,735 bytes with provider/evaluator/agent calls and cost 0.
-- D-137 source `adcdeadbbb561f82548044d8c9a18d976b584132` and gate
-  `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc` qualify separate future
-  Docker and SDK no-call phases without creating or exercising them.
+- D-137 completed Docker READY then SDK missing-key BLOCKED transitions with no Docker mutation, credential value
+  read, SDK import/probe, dispatch or network call; both phases are consumed.
+- D-138 source `f1f821cd57feb8e1405929ff949e82892e3de6f9` and gate
+  `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` qualify only the fresh successor
+  contract. No D-138 runtime artifact or environment/SDK/network/Docker observation exists.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -48,8 +47,7 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-136 pricing succeeded and is consumed; D-137 no-call-preflight source-qualified; fresh exact
-activation required.
+Status: D-136 and D-137 consumed; D-138 SDK successor source-qualified; fresh exact activation required.
 
 The D-132 pricing marker consumed its activation/attempt. Application-level send returned once, but HTTP and
 response fields remain unknown/unretained and completed/replayable canonical pricing evidence count is 0.
@@ -60,15 +58,18 @@ D-135 removes that ambiguity and its terminal-only commit preserves the incident
 bounded official public capture under a new fixed helper. Its success terminal is replayable pricing evidence,
 not Docker/SDK readiness or downstream execution authority.
 
-D-137 first requires a receipt-only commit. Docker has its own attempt, fsynced marker and READY/BLOCKED
-terminal-or-marker-only path with no mutation and no retry. Only committed Docker READY permits a separate SDK
-attempt. SDK has its own marker and terminal-or-marker-only path; it observes repository provenance, routing
-and credential-presence bits only, never values or `.env`, and dispatches no transport. No D-137 future artifact
-exists, and preparation made no Docker/SDK/environment/network observation.
+D-137 used a receipt, separate Docker/SDK attempts and fsynced markers. Docker became READY after bounded
+read-only observations; SDK became BLOCKED when `OPENAI_API_KEY` presence was false. Its value, `.env`, import,
+probe, dispatch and network counts were 0. Neither phase may be retried.
+
+D-138 requires a new receipt-only commit, SDK-attempt-only commit and fsynced marker before three membership-only
+checks. The parent uses inherited-environment repository-venv Python `-E -s -B`; eligible SDK validation runs in
+one bounded empty-environment child with fixed nonsecret placeholder and zero transport dispatch. Commit a
+READY/BLOCKED terminal, or marker only after failure, then stop for a separate offline successor.
 
 ## Work item 7 — execution hash and candidate
 
-Status: unauthorized and separately gated after committed D-137 Docker READY and SDK READY terminals.
+Status: unauthorized. No D-138 terminal exists; even a future D-138 READY terminal grants no such authority.
 
 Create neither identity until a later approval cites the exact ready gate and explicitly authorizes it.
 

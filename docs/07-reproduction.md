@@ -11,57 +11,58 @@ Historical per-milestone commands are archived at
 - Docker Desktop only for a separately approved Docker step
 
 ```powershell
-uv sync --extra dev
+uv sync --offline --frozen --extra dev
 ```
 
 ## Validate the A/C sources and fixed-bundle delivery
 
 ```powershell
-uv run pytest -q tests/test_ac_structured_pilot_plan.py tests/test_ac_fixed_bundle_readiness.py
-uv run pytest -q tests/test_ac_fixed_bundle_cost_completion.py
-uv run pytest -q tests/test_fixed_bundle_delivery.py tests/test_d122_ac_fixed_bundle_qualification.py
-uv run python scripts/build_d122_ac_fixed_bundle_qualification.py --validate-sealed-historical
+uv run --offline --frozen pytest -q tests/test_ac_structured_pilot_plan.py tests/test_ac_fixed_bundle_readiness.py
+uv run --offline --frozen pytest -q tests/test_ac_fixed_bundle_cost_completion.py
+uv run --offline --frozen pytest -q tests/test_fixed_bundle_delivery.py tests/test_d122_ac_fixed_bundle_qualification.py
+uv run --offline --frozen python scripts/build_d122_ac_fixed_bundle_qualification.py --validate-sealed-historical
 ```
 
 These are offline checks for the four-row source, A-null/C-exact bundle contract, trace qualification and
 historical D-122 bytes. They grant no live, retrieval, provider, Docker, hash/candidate or cost authority.
 
-## Validate the current D-137 no-call-preflight successor gate
+## Validate the current D-138 SDK successor gate
 
 ```powershell
-uv run pytest -q tests/test_d137_d136_no_call_preflight_successor_offline.py
-uv run python scripts/build_d137_d136_no_call_preflight_successor_offline.py `
+$d138Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d138-' + [guid]::NewGuid())
+& .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
+  --basetemp $d138Basetemp tests/test_d138_d137_sdk_blocked_successor_offline.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_d138_d137_sdk_blocked_successor_offline.py `
   --validate-gate-postcommit
 ```
 
-The validator rebinds the complete D-136 gate/receipt/attempt/STARTED/terminal topology, exact four-add D-137
+The validator rebinds the complete D-137 gate/receipt/Docker-READY/SDK-BLOCKED topology, exact four-add D-138
 source commit, loaded modules and gate+10-doc evidence commit. It checks append-only/new-only,
-collision/orphan/idempotence, TOCTOU and exact Git topology. Focused mocked tests passed 62/62; the selected
-current-compatible set passed 112/112 with focused included, so counts are not additive.
+collision/orphan/idempotence, TOCTOU and exact Git topology. Injected-mock focused tests passed 168/168.
 
-D-136's replayable terminal records one official public GET, HTTP 200, zero redirects and 3,735 bytes;
-provider/evaluator/agent calls and cost are 0. D-137 validation does not repeat that request. Its mocked Docker
-and SDK helpers use injected dependencies only and make no real Docker, SDK, credential/environment-value,
-endpoint or network observation.
+D-137 Docker became READY with read-only observations; its SDK phase became BLOCKED on the false key-presence
+bit with value/import/probe/dispatch/network counts 0. D-138 validation does not repeat either phase. It performs
+no environment membership/value, SDK, endpoint, network or Docker observation.
 
-Do not call `--create-activation-receipt`, `--create-docker-attempt`, `--run-docker-preflight`,
-`--create-sdk-attempt` or `--run-sdk-preflight` without a fresh exact D-137 activation quoting the gate tuple,
-source commit/tree and evidence-commit tuple. The rendered activation template is not approval. Never invoke a
-historical creation/external mode to repair, resume or retry a consumed phase.
+Do not call `--create-activation-receipt`, `--create-sdk-attempt` or `--run-sdk-preflight` without a fresh exact
+D-138 activation quoting gate, source and evidence-commit tuples. The rendered template is not approval. Never
+invoke a historical creation/external mode to repair, resume or retry a consumed phase.
 
 ## Historical validators
 
-D-123 through D-136 commands remain in their owning scripts, tests and Git history. Use only explicit
+D-123 through D-137 commands remain in their owning scripts, tests and Git history. Use only explicit
 sealed/read-only modes when auditing them. D-132 is a consumed incident; D-134's gate is preserved and invalid;
-D-135 is procedural incident evidence; D-136 pricing succeeded and is consumed.
+D-135 is procedural incident evidence; D-136 pricing and D-137 no-call phases are consumed.
 
 ## Static and documentation checks
 
 ```powershell
-uv run ruff check patchloop tests
-uv run ruff format --check patchloop tests
-uv run python -m compileall -q patchloop tests
-uv run pytest -q tests/test_documentation_structure.py
+& .\.venv\Scripts\ruff.exe check patchloop tests
+& .\.venv\Scripts\ruff.exe format --check patchloop tests
+& .\.venv\Scripts\python.exe -E -s -B -m compileall -q patchloop tests
+$docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-' + [guid]::NewGuid())
+& .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
+  --basetemp $docsBasetemp tests/test_documentation_structure.py
 git diff --check
 ```
 
@@ -73,15 +74,14 @@ evidence.
 
 There is no supported live A/C command. The current sequence is:
 
-1. Preserve the consumed D-132 and D-136 chains and the D-134/D-135 incident evidence without repair.
-2. Validate the exact D-137 gate+10-active-doc evidence commit.
-3. Obtain a fresh exact D-137 activation quoting gate, source and evidence-commit tuples.
-4. Create and commit only the activation receipt, then the Docker attempt.
-5. Write/fsync Docker ACTION_STARTED immediately before read-only observation. Commit READY/BLOCKED terminal,
-   or preserve marker only after failure; never retry.
-6. Only after committed Docker READY, create the separate SDK attempt and use the same marker-first one-use
-   pattern for the no-call SDK observation.
-7. Only after both committed READY terminals may separate hash/candidate, cost and live A/C approvals be considered.
+1. Preserve D-132, D-136 and D-137 consumed chains without repair.
+2. Validate the exact D-138 gate+10-active-doc evidence commit.
+3. Obtain a fresh exact D-138 activation quoting gate, source and evidence-commit tuples.
+4. Commit only the activation receipt, then the SDK attempt.
+5. Launch the inherited-environment repository-venv Python with `-E -s -B`; write/fsync ACTION_STARTED immediately
+   before membership-only checks. Never read values or `.env`.
+6. If eligible, run SDK provenance and zero-dispatch synthetic validation only in the bounded `env={}` child.
+7. Commit READY/BLOCKED terminal, or marker only after failure; never retry. Request a separate offline successor.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or generic CLI flag to bypass this
 sequence.

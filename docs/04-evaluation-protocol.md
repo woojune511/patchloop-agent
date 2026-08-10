@@ -94,15 +94,15 @@ D-108's +702 token count covers one request shape, not every live turn. Exact pe
 separately authorized counterfactual count. D-124/D-125 local/mock corrections are inherited; no reservation,
 result, candidate or execution hash exists.
 
-D-132 remains a consumed incident with no canonical response evidence and no retry/backfill. D-135's procedural
-terminal preserves that boundary. D-136 later used a new fixed helper and completed one bounded official public
-pricing capture: one GET, HTTP 200, zero redirects and 3,735 replay bytes. Provider/evaluator/agent activity and
-cost were 0. This is pricing evidence only; the D-136 activation is consumed and grants no run authority.
+D-132 remains a consumed incident without canonical response evidence; D-135 sealed it without reconstruction.
+D-136 later completed one bounded official public GET, HTTP 200, zero redirects and 3,735 replay bytes. It is
+consumed pricing evidence only and grants no run authority.
 
-D-137 gate `d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc`
-offline-qualifies separate future Docker and SDK no-call phases. Its local 62/62 focused and 112/112 selected
-current-compatible results are non-additive source-validation evidence, not readiness. No D-137 future artifact,
-execution hash, cost authority or four-row result exists.
+D-137 then reached Docker READY and SDK BLOCKED because `OPENAI_API_KEY` presence was false. The SDK phase read
+no environment/credential value or `.env` and performed no import, probe, dispatch or network call; it is consumed.
+D-138 gate `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` qualifies only a fresh
+membership-first, isolated-child SDK successor source. Injected-mock tests passed 168/168; no D-138 runtime
+artifact, execution hash, cost authority or four-row result exists.
 
 ## 7. Run-completion gate
 
