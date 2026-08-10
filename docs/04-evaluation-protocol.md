@@ -97,12 +97,12 @@ result, candidate or execution hash exists.
 D-132 remains consumed without canonical response evidence; D-135 sealed it without reconstruction. D-136
 consumed one official public GET with HTTP 200, zero redirects and 3,735 replay bytes; it grants no run authority.
 
-D-137 reached Docker READY and SDK BLOCKED; D-138 and D-139 independently ended SDK BLOCKED. D-139 final commit
-`ba3af19a5cada8e49c29f514ad56c299639dc452` records `OPENAI_API_KEY` absent after three membership checks.
-Its value/`.env`, child, SDK import/probe, dispatch and network counts were 0; it is consumed. D-140 gate
-`d140_7362f061555800354d23ea673ee4d71ea4aab9d26d7572d9359e4d3f6c1cbad1` qualifies only a fresh
+D-137 reached Docker READY and SDK BLOCKED; D-138 through D-140 independently ended SDK BLOCKED. D-140 final
+commit `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2` records false/false/false for the approved presence bits after
+three membership checks. Its value/`.env`, child, SDK import/probe, transport/network and provider counts were 0;
+it is consumed. D-141 gate `d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab` qualifies only a fresh
 membership-first, isolated-child SDK successor source. Fully injected/mocked tests passed 170/170 separately;
-no D-140 runtime artifact, execution hash, cost authority or four-row result exists. Credential provisioning is
+no D-141 runtime artifact, execution hash, cost authority or four-row result exists. Credential provisioning is
 separate, and eligible work remains confined to a zero-ambient-forwarding `env={}` child after parent membership
 checks; its post-CPython/site audit hook does not support a pre-bootstrap network-absence claim.
 

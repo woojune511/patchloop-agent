@@ -32,27 +32,24 @@ Historical milestone-by-milestone limitations are archived at
   noncooperative-swap or power-loss durability.
 - No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
-## D-132 through D-140 external boundary
+## D-132 through D-141 external boundary
 
-- D-132 preserves only an application-level returned `Response`; HTTP completion and response fields remain
-  unknown, canonical evidence/replay bytes are 0, and D-133 through D-135 preserve and seal it without
-  reconstruction or retry. D-134's ambiguous gate is invalid and non-authoritative.
-- D-136 proves only one consumed public GET with HTTP 200, zero redirects and 3,735 replay bytes; it grants no
-  later readiness or execution authority.
-- D-137 Docker READY covers only eight read-only commands and zero mutation at that time. Its SDK BLOCKED phase
-  found the key absent after three membership checks with value/`.env`/import/probe/dispatch/network counts 0.
-- D-138 and D-139 each exercised a successor once and ended BLOCKED because `OPENAI_API_KEY` presence was false.
-  D-139 final commit `ba3af19a5cada8e49c29f514ad56c299639dc452` records exactly three membership checks;
-  value/`.env`, child, SDK import/probe, transport dispatch and network counts were 0. Both phases are consumed,
-  so later environment change cannot reopen them.
-- D-140 gate `d140_7362f061555800354d23ea673ee4d71ea4aab9d26d7572d9359e4d3f6c1cbad1` qualifies only new
+- D-132 has no canonical response evidence and is sealed without reconstruction; D-136 proves only one consumed
+  public GET. Neither grants later readiness or execution authority.
+- D-137 through D-139 preserve bounded Docker/SDK no-call facts only. They are consumed, cannot be reopened by
+  environment change, and their exact commands, zero-activity limits and tuples remain in `docs/09-evidence.md`.
+- D-140 ended BLOCKED at the presence stage with false/false/false bits after three checks. Value/`.env`, child,
+  SDK import/probe, transport/network and provider counts were 0. Its transition
+  `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2` is consumed and cannot be reopened by environment change.
+- D-141 gate `d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab` qualifies only new
   source. Fully injected/mocked 170/170 is separately reported local contract evidence, not external readiness;
   no runtime artifact or source-preparation external observation/action exists.
-- A future D-140 parent may observe only three membership bits in the inherited environment. Eligible SDK work
+- A future D-141 parent may observe only three membership bits in the inherited environment. Eligible SDK work
   runs in an empty-environment child with no ambient forwarding. Its audit hook starts after CPython/site startup, so
   pre-bootstrap network absence is not observed or claimed; the fixed empty environment is the confidentiality
   boundary for that startup. The child uses only a fixed nonsecret placeholder and must keep dispatch at 0.
-- Credential provisioning is separate from source preparation and activation; neither authorizes it.
+- Credential provisioning is separate from source preparation and activation; neither authorizes it, and no
+  credential value belongs in approval/chat.
 - These checks remain cooperative repository-local evidence. They do not prove authenticated identity,
   global/cross-clone exclusion or long-term environment stability.
 - Provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C authority remain closed.

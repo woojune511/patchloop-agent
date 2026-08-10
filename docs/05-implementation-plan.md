@@ -10,8 +10,8 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-D-136 pricing, D-137 Docker/SDK and D-138/D-139 SDK no-call phases are consumed. D-139 ended missing-key BLOCKED.
-D-140 successor source qualification is complete; next request only a fresh exact D-140 SDK activation.
+D-136 pricing, D-137 Docker/SDK and D-138 through D-140 SDK no-call phases are consumed. D-140 ended missing-key
+BLOCKED. D-141 successor source qualification is complete; next request only a fresh exact D-141 SDK activation.
 Hash/candidate, cost and execution remain separate.
 
 ## Completed foundation
@@ -23,16 +23,13 @@ Hash/candidate, cost and execution remain separate.
 - Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
 - D-122 through D-135 are immutable predecessors. D-132 is consumed without canonical response evidence and
   D-135 closes it procedurally without backfill.
-- D-136 completed its exact receipt/attempt/marker/terminal sequence. Its replayable terminal records one public
-  GET, HTTP 200, zero redirects and 3,735 bytes with provider/evaluator/agent calls and cost 0.
-- D-137 completed Docker READY then SDK missing-key BLOCKED transitions with no Docker mutation, credential value
-  read, SDK import/probe, dispatch or network call; both phases are consumed.
-- D-138 and D-139 each completed receipt, attempt and ACTION_STARTED+BLOCKED. D-139 final commit
-  `ba3af19a5cada8e49c29f514ad56c299639dc452` found the key-presence bit false after three membership checks;
-  value/`.env`, child, SDK import/probe, dispatch and network counts were 0. It is consumed.
-- D-140 source `fbb184ea8be0ea90eb044c03dbab538ed0c1f643` and gate
-  `d140_7362f061555800354d23ea673ee4d71ea4aab9d26d7572d9359e4d3f6c1cbad1` qualify only the fresh successor
-  contract. Fully injected/mocked focused tests passed 170/170 separately; no D-140 runtime artifact or external
+- D-136 preserves one successful public GET; D-137 preserves Docker READY plus SDK BLOCKED. D-138 through D-140
+  each completed receipt, attempt and ACTION_STARTED+BLOCKED. D-140 final commit
+  `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2` recorded false/false/false after three membership checks;
+  value/`.env`, child, SDK import/probe, transport/network and provider counts were 0. It is consumed.
+- D-141 source `0ffe586760659542d7ecf7c94698a2f1e109e6b0` and gate
+  `d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab` qualify only the fresh successor
+  contract. Fully injected/mocked focused tests passed 170/170 separately; no D-141 runtime artifact or external
   observation exists.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
@@ -51,30 +48,28 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-136 through D-139 consumed; D-140 SDK successor source-qualified; fresh exact activation required.
+Status: D-136 through D-140 consumed; D-141 SDK successor source-qualified; fresh exact activation required.
 
 D-132 is consumed without canonical response evidence; D-133–D-135 preserve and seal it without reconstruction.
 D-136 later completed one bounded official public capture. Its replayable pricing terminal is neither Docker/SDK
 readiness nor downstream execution authority.
 
-D-137 used a receipt, separate Docker/SDK attempts and fsynced markers. Docker became READY after bounded
-read-only observations; SDK became BLOCKED when `OPENAI_API_KEY` presence was false. Its value, `.env`, import,
-probe, dispatch and network counts were 0. Neither phase may be retried.
+D-137 used separate Docker/SDK attempts and ended READY/BLOCKED; D-138 through D-140 each used one successor and
+ended BLOCKED. D-140 recorded false/false/false after three membership checks, with zero value/`.env`/child/
+import/probe/transport/network/provider activity. None can be reopened.
 
-D-138 and D-139 each used a successor contract once and ended BLOCKED because `OPENAI_API_KEY` was absent. D-139
-recorded exactly three membership checks and zero value/`.env`/child/import/probe/dispatch/network activity. It
-cannot be reopened.
-
-D-140 requires a new receipt-only commit, SDK-attempt-only commit and fsynced marker before three membership-only
+D-141 requires a new receipt-only commit, SDK-attempt-only commit and fsynced marker before three membership-only
 checks. The parent uses inherited-environment repository-venv Python `-E -s -B`; eligible SDK validation runs in
 one bounded `env={}` child with fixed nonsecret placeholder, no ambient forwarding and zero transport dispatch.
 Its audit hook starts after CPython/site startup, so pre-bootstrap network absence is not claimed. Credential
-provisioning is separate and unauthorized. Commit a READY/BLOCKED terminal, or marker only after failure, then
-stop for a separate offline successor.
+provisioning is separate and unauthorized by both preparation and activation; no credential value belongs in
+approval/chat. Commit a READY/BLOCKED terminal, or marker only after failure, then stop for a D-142 offline
+successor.
 
 ## Work item 7 — execution hash and candidate
 
-Status: unauthorized. No D-140 terminal exists; even a future D-140 READY terminal grants no such authority.
+Status: unauthorized. D-140 is terminal BLOCKED and D-141 has no terminal; even a future D-141 READY terminal
+grants no such authority.
 
 Create neither identity until a later approval cites the exact ready gate and explicitly authorizes it.
 
