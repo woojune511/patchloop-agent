@@ -11,24 +11,25 @@
 
 ## Current state
 
-- D-129부터 D-140까지는 immutable historical predecessor다. Consumed gate, attempt 또는 marker를
+- D-129부터 D-141까지는 immutable historical predecessor다. Consumed gate, attempt 또는 marker를
   retry/resume/repair/backfill하지 않는다.
 - D-136은 공식 public GET 1회(HTTP 200, redirect 0, replay 3,735 bytes)를 보존했고, D-137은 bounded
-  Docker READY 뒤 SDK missing-key BLOCKED로 종료됐다. D-138/D-139도 missing-key BLOCKED다. 모두 consumed며
+  Docker READY 뒤 SDK missing-key BLOCKED로 종료됐다. D-138부터 D-140도 missing-key BLOCKED다. 모두 consumed며
   external mutation/value/`.env`/SDK dispatch는 0이었다. Exact tuple은 `docs/09-evidence.md`가 소유한다.
-- D-140은 gate→receipt→attempt→ACTION_STARTED+BLOCKED transition
-  `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2`로 종료되고 consumed됐다. `OPENAI_API_KEY`, `PYTHONHOME`,
+- D-141은 gate→receipt→attempt→ACTION_STARTED+BLOCKED transition
+  `6405be40eb52d71fc9376065b553a04164543a4b`로 종료되고 consumed됐다. `OPENAI_API_KEY`, `PYTHONHOME`,
   `PYTHONPATH` presence는 false/false/false였고 membership check는 3회였다. Credential/environment value,
   `.env`, child launch, SDK import/probe, transport/network와 provider/evaluator/agent는 모두 0이었다.
-- 현재 D-141 gate는 `d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab`다.
-  Source commit `0ffe586760659542d7ecf7c94698a2f1e109e6b0`, tree
-  `41d14e4d9778e52834e4e6636f1bcd35ce148876`는 D-140 terminal commit의 exact four-path sole child다.
-- D-141은 source-qualified only다. Fully injected/mocked focused test는 170/170이며 다른 검증과 합산하지
+- 현재 D-142 gate는 `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914`다.
+  Source commit `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
+  `7f7e7e25c79899eee6180ae45767492435003096`는 D-141 terminal commit의 exact four-path sole child다.
+- D-142는 source-qualified only다. Fully injected/mocked focused test는 170/170이며 다른 검증과 합산하지
   않는다. Runtime artifact와 source-prep membership/value/`.env`/SDK/child/network/Docker 관찰은 0이다.
-  Fresh exact activation 뒤 `-E -s -B` parent가 inherited environment에서 세 membership bit만 확인하고,
+  Fresh exact D-142 activation 뒤 `-E -s -B` parent가 inherited environment에서 세 membership bit만 확인하고,
   eligible SDK 검증은 ambient forwarding이 없는 `env={}` child에서 fixed nonsecret placeholder와
   zero-dispatch로 수행한다. Credential provisioning은 source preparation과 activation 모두와 분리되며,
-  child audit hook 전 CPython/site startup network 부재는 관찰하거나 주장하지 않는다.
+  child audit hook 전 CPython/site startup network 부재는 관찰하거나 주장하지 않는다. D-142 terminal은
+  별도 D-143 offline successor를 요구하며 downstream authority를 열지 않는다.
 - Provider/evaluator/agent, retrieval/injection, execution hash/candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.

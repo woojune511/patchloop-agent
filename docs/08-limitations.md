@@ -32,19 +32,20 @@ Historical milestone-by-milestone limitations are archived at
   noncooperative-swap or power-loss durability.
 - No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
-## D-132 through D-141 external boundary
+## D-132 through D-142 external boundary
 
 - D-132 has no canonical response evidence and is sealed without reconstruction; D-136 proves only one consumed
   public GET. Neither grants later readiness or execution authority.
-- D-137 through D-139 preserve bounded Docker/SDK no-call facts only. They are consumed, cannot be reopened by
+- D-137 through D-140 preserve bounded Docker/SDK no-call facts only. They are consumed, cannot be reopened by
   environment change, and their exact commands, zero-activity limits and tuples remain in `docs/09-evidence.md`.
-- D-140 ended BLOCKED at the presence stage with false/false/false bits after three checks. Value/`.env`, child,
+- D-141 ended BLOCKED at the presence stage with false/false/false bits after three checks. Value/`.env`, child,
   SDK import/probe, transport/network and provider counts were 0. Its transition
-  `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2` is consumed and cannot be reopened by environment change.
-- D-141 gate `d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab` qualifies only new
+  `6405be40eb52d71fc9376065b553a04164543a4b` is consumed and cannot be reopened by environment change.
+- D-142 source `1370cf43c08cefb550b158a5d4172a60ac172470` and gate
+  `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` qualify only new
   source. Fully injected/mocked 170/170 is separately reported local contract evidence, not external readiness;
   no runtime artifact or source-preparation external observation/action exists.
-- A future D-141 parent may observe only three membership bits in the inherited environment. Eligible SDK work
+- A future D-142 parent may observe only three membership bits in the inherited environment. Eligible SDK work
   runs in an empty-environment child with no ambient forwarding. Its audit hook starts after CPython/site startup, so
   pre-bootstrap network absence is not observed or claimed; the fixed empty environment is the confidentiality
   boundary for that startup. The child uses only a fixed nonsecret placeholder and must keep dispatch at 0.
@@ -52,7 +53,8 @@ Historical milestone-by-milestone limitations are archived at
   credential value belongs in approval/chat.
 - These checks remain cooperative repository-local evidence. They do not prove authenticated identity,
   global/cross-clone exclusion or long-term environment stability.
-- Provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C authority remain closed.
+- Any D-142 terminal requires a separate D-143 offline successor. Provider/evaluator/agent, memory/retrieval,
+  hash/candidate, cost and A/C authority remain closed.
 
 ## Isolation, identity and operations
 

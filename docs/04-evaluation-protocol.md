@@ -97,14 +97,17 @@ result, candidate or execution hash exists.
 D-132 remains consumed without canonical response evidence; D-135 sealed it without reconstruction. D-136
 consumed one official public GET with HTTP 200, zero redirects and 3,735 replay bytes; it grants no run authority.
 
-D-137 reached Docker READY and SDK BLOCKED; D-138 through D-140 independently ended SDK BLOCKED. D-140 final
-commit `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2` records false/false/false for the approved presence bits after
+D-137 reached Docker READY and SDK BLOCKED; D-138 through D-141 independently ended SDK BLOCKED. D-141 final
+commit `6405be40eb52d71fc9376065b553a04164543a4b` records false/false/false for the approved presence bits after
 three membership checks. Its value/`.env`, child, SDK import/probe, transport/network and provider counts were 0;
-it is consumed. D-141 gate `d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab` qualifies only a fresh
-membership-first, isolated-child SDK successor source. Fully injected/mocked tests passed 170/170 separately;
-no D-141 runtime artifact, execution hash, cost authority or four-row result exists. Credential provisioning is
+it is consumed. D-142 source `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
+`7f7e7e25c79899eee6180ae45767492435003096`, and gate
+`d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` qualify only a fresh membership-first,
+isolated-child SDK successor source. Fully injected/mocked tests passed 170/170 separately; no D-142 runtime
+artifact, execution hash, cost authority or four-row result exists. Credential provisioning is
 separate, and eligible work remains confined to a zero-ambient-forwarding `env={}` child after parent membership
-checks; its post-CPython/site audit hook does not support a pre-bootstrap network-absence claim.
+checks; its post-CPython/site audit hook does not support a pre-bootstrap network-absence claim. Any terminal
+requires a separate D-143 offline successor.
 
 ## 7. Run-completion gate
 

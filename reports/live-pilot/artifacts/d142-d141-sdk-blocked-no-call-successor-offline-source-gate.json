@@ -1,0 +1,328 @@
+{
+  "schema_version": "d141-sdk-blocked-no-call-successor-offline-source-gate-d142-v1",
+  "gate_id": "d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914",
+  "semantic_body_hash": "sha256:9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914",
+  "semantic_body": {
+    "milestone": "D-142",
+    "evidence_kind": "d141-sdk-blocked-no-call-successor-offline-source-gate",
+    "recorded_at": "2026-08-10T14:35:38.514760Z",
+    "status": "D142_D141_SDK_BLOCKED_NO_CALL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED",
+    "d141_sdk_blocked_predecessor": {
+      "source_commit": {
+        "commit": "0ffe586760659542d7ecf7c94698a2f1e109e6b0",
+        "tree": "41d14e4d9778e52834e4e6636f1bcd35ce148876",
+        "parents": [
+          "4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2"
+        ]
+      },
+      "artifacts": {
+        "reports/live-pilot/artifacts/d141-d140-sdk-blocked-no-call-successor-offline-source-gate.json": {
+          "path": "reports/live-pilot/artifacts/d141-d140-sdk-blocked-no-call-successor-offline-source-gate.json",
+          "artifact_id": "d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab",
+          "semantic_body_hash": "sha256:51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab",
+          "file_sha256": "sha256:cc8de60111294a79ed5f29b24263d7e7fe303a8f9c0dd5c78858e63bc3caa642",
+          "file_bytes": 16056,
+          "status": "D141_D140_SDK_BLOCKED_NO_CALL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED",
+          "recorded_at": "2026-08-10T12:58:51.602842Z",
+          "blob_oid": "db596c40161e6cdf194e73ecff5f9afe1baa320f",
+          "introduction_commit": "9b9ce197daa34db355274956fd5043ab3a0b3539"
+        },
+        "reports/live-pilot/artifacts/d141-sdk-no-call-successor-activation-receipt.json": {
+          "path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-activation-receipt.json",
+          "artifact_id": "d141approval_e4f5bfc2324eb75194a84f45d42269910bc487101d7cd7b629289e60b7416c71",
+          "semantic_body_hash": "sha256:e4f5bfc2324eb75194a84f45d42269910bc487101d7cd7b629289e60b7416c71",
+          "file_sha256": "sha256:77882d12949840b0768b445ec955e5bafb4da30d2929057c7ece230b7ab65711",
+          "file_bytes": 9720,
+          "status": "D141_SDK_NO_CALL_SUCCESSOR_ACTIVATION_RECEIPT_RECORDED_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T13:30:53.321444Z",
+          "blob_oid": "011fb464bf1a4102ddb2d440cd4506b1fff6267c",
+          "introduction_commit": "10fd04fb3528b4a059618e057ffb1b997cb66603"
+        },
+        "reports/live-pilot/artifacts/d141-sdk-no-call-successor-attempt-intent.json": {
+          "path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-attempt-intent.json",
+          "artifact_id": "d141sdkattempt_5df0f4f15f3e98deebbb77d59ace047102f2da75ef1378875311d1a6be66e588",
+          "semantic_body_hash": "sha256:5df0f4f15f3e98deebbb77d59ace047102f2da75ef1378875311d1a6be66e588",
+          "file_sha256": "sha256:3ba4fad4a3a9d8690c0baeca00b8eaa1e3c8f97af43e99c7df6a310f49a9a32e",
+          "file_bytes": 5698,
+          "status": "D141_SDK_NO_CALL_SUCCESSOR_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T13:34:34.036587Z",
+          "blob_oid": "1abe928d09e9f8c3a4d6a77d087385816c2262fe",
+          "introduction_commit": "d05af7f727517eaf36d37a80dab1a5735762ae75"
+        },
+        "reports/live-pilot/artifacts/d141-sdk-no-call-successor-action-started.json": {
+          "path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-action-started.json",
+          "artifact_id": "d141sdkstarted_549d1631211c3dfeb440989e9377cf6d697125eafd0309d68fe092f66ba61b57",
+          "semantic_body_hash": "sha256:549d1631211c3dfeb440989e9377cf6d697125eafd0309d68fe092f66ba61b57",
+          "file_sha256": "sha256:d41ec6aacb5f31de3df40fe2a405f35e56590ef7aa8971fee923f47663af4116",
+          "file_bytes": 5679,
+          "status": "D141_SDK_NO_CALL_SUCCESSOR_ACTION_STARTED_TRANSITION_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T13:38:35.523814Z",
+          "blob_oid": "c2dce1dc0c37e6af50a6cdf5c822b93a1fc28737",
+          "introduction_commit": "6405be40eb52d71fc9376065b553a04164543a4b"
+        },
+        "reports/live-pilot/artifacts/d141-sdk-no-call-successor-terminal.json": {
+          "path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-terminal.json",
+          "artifact_id": "d141sdk_c96ceb8eb274560b89e3688402a0c3576d6f09536c32d611600ac1386d4613ef",
+          "semantic_body_hash": "sha256:c96ceb8eb274560b89e3688402a0c3576d6f09536c32d611600ac1386d4613ef",
+          "file_sha256": "sha256:38121d8498578cd495ec94a2ca4da47bdebfc87f358540892cff09c297793bcb",
+          "file_bytes": 8962,
+          "status": "D141_SDK_NO_CALL_SUCCESSOR_BLOCKED_TRANSITION_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T13:38:41.413332Z",
+          "blob_oid": "809f513ec9a961bf998b822df08b5fd3e890dcda",
+          "introduction_commit": "6405be40eb52d71fc9376065b553a04164543a4b"
+        }
+      },
+      "final_transition_commit": {
+        "commit": "6405be40eb52d71fc9376065b553a04164543a4b",
+        "tree": "673f9dc639f1a9002d6aae63b99218141ebf7793",
+        "parents": [
+          "d05af7f727517eaf36d37a80dab1a5735762ae75"
+        ]
+      },
+      "consumed": true,
+      "retry_allowed": false,
+      "credential_value_observation_count": 0,
+      "environment_presence_check_count": 3,
+      "dotenv_read_count": 0,
+      "child_process_start_count": 0,
+      "sdk_import_count": 0,
+      "sdk_probe_count": 0,
+      "transport_dispatch_count": 0,
+      "network_call_count": 0
+    },
+    "source_identity": {
+      "commit": "1370cf43c08cefb550b158a5d4172a60ac172470",
+      "tree": "7f7e7e25c79899eee6180ae45767492435003096",
+      "parents": [
+        "6405be40eb52d71fc9376065b553a04164543a4b"
+      ],
+      "exact_four_path_add_commit": true,
+      "source_bindings": [
+        {
+          "path": "patchloop/evals/d142_sdk_no_call_successor.py",
+          "file_bytes": 152672,
+          "file_sha256": "sha256:ca99ac137707733ae5c52e1c7c5e262141e814e2ba798d49fb4c529957dd9b49",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/evals/d142_d141_sdk_blocked_successor_offline.py",
+          "file_bytes": 80148,
+          "file_sha256": "sha256:bb499ea8108f8586c423c6b4d0702fc358fbeffd840b1188acc6969696f73c01",
+          "linklike": false
+        },
+        {
+          "path": "scripts/build_d142_d141_sdk_blocked_successor_offline.py",
+          "file_bytes": 3277,
+          "file_sha256": "sha256:d29330b245be51a7c947d08e413435f2f6da2b663e40b48801d20f0cce6beb90",
+          "linklike": false
+        },
+        {
+          "path": "tests/test_d142_d141_sdk_blocked_successor_offline.py",
+          "file_bytes": 136971,
+          "file_sha256": "sha256:460d44ff752b5c70dd1839330e4cfdb8080e9c24827d68f642c20883db80dbde",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/__init__.py",
+          "file_bytes": 55,
+          "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/evals/__init__.py",
+          "file_bytes": 64,
+          "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/errors.py",
+          "file_bytes": 1149,
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/util.py",
+          "file_bytes": 2109,
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/agent/model.py",
+          "file_bytes": 44052,
+          "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568",
+          "linklike": false
+        },
+        {
+          "path": "pyproject.toml",
+          "file_bytes": 1032,
+          "file_sha256": "sha256:2e8395b0d26e0f4e686daa3481c18301e025417666db828da0e0425cfd5b3986",
+          "linklike": false
+        },
+        {
+          "path": "uv.lock",
+          "file_bytes": 240131,
+          "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c",
+          "linklike": false
+        }
+      ],
+      "loaded_module_provenance_validated": true
+    },
+    "git_cli_observation": {
+      "path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+      "file_bytes": 4422544,
+      "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+      "linklike": false,
+      "version": "git version 2.54.0.windows.1",
+      "repository_local_core_autocrlf": "false",
+      "minimal_secret_free_environment": true,
+      "environment_value_observation_count": 0,
+      "shell_used": false
+    },
+    "exact_launch_contract": {
+      "ignore_python_environment": true,
+      "user_site_disabled": true,
+      "bytecode_writes_disabled": true,
+      "isolated_mode": false,
+      "safe_path_mode": false
+    },
+    "launcher_source_contract": {
+      "required_python_flags": [
+        "-E",
+        "-s",
+        "-B"
+      ],
+      "ambient_environment_policy": "inherit-unchanged-required-not-runtime-observed",
+      "environment_override_count": 0,
+      "exact_cli_action": "--run-sdk-preflight"
+    },
+    "isolated_child_contract": {
+      "worker_action": "_d142_isolated_sdk_worker",
+      "eligibility_token_kind": "fixed-boolean-no-value",
+      "required_python_flags": [
+        "-E",
+        "-s",
+        "-B"
+      ],
+      "absolute_repository_venv_interpreter": true,
+      "shell": false,
+      "stdin": "DEVNULL",
+      "child_process_start_limit": 1,
+      "child_environment_entries": [],
+      "child_environment_override_count": 1,
+      "child_environment_entry_count": 0,
+      "ambient_environment_entry_forward_count": 0,
+      "credential_value_forward_count": 0,
+      "startup_confidentiality_boundary": "fixed-empty-secret-free-environment",
+      "worker_entry_environment_value_access": "deny",
+      "worker_entry_dotenv_open": "audit-deny",
+      "worker_entry_socket_network": "audit-deny",
+      "worker_entry_subprocess": "audit-deny",
+      "bootstrap_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only",
+      "worker_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only",
+      "repository_source_sys_path_entry_forward_count": 0,
+      "outside_venv_site_packages_entry_forward_count": 0,
+      "cwd_policy": "fresh-nonlink-fixed-root-outside-repository",
+      "fixed_temp_root": "C:\\Users\\geonj\\AppData\\Local\\Temp",
+      "timeout_seconds": 20,
+      "stdout_limit_bytes": 65536,
+      "stderr_limit_bytes": 16384,
+      "stdout_contract": "one-canonical-json-line",
+      "stderr_contract": "empty",
+      "raw_captured_output_persistence_authorized": false,
+      "validated_parsed_worker_observation_persistence_authorized": true,
+      "bootstrap_sha256": "sha256:1099b43ccd61787d28fdd5d82b45073a06d0631a8b577fd53f701d5f617fcb7c",
+      "audit_hook_coverage_boundary": "bootstrap-after-cpython-and-site-startup",
+      "pre_bootstrap_startup_network_coverage": "not-observed-not-claimed",
+      "argv_layout": [
+        "absolute-repository-venv-python",
+        "-E",
+        "-s",
+        "-B",
+        "-c",
+        "fixed-bootstrap",
+        "absolute-repository-root",
+        "absolute-helper-source",
+        "absolute-fixed-temp-root",
+        "fixed-eligibility-token",
+        "expected-helper-sha256",
+        "expected-helper-file-bytes",
+        "expected-model-sha256",
+        "expected-model-file-bytes",
+        "expected-lock-sha256",
+        "expected-lock-file-bytes"
+      ]
+    },
+    "credential_provisioning_boundary": {
+      "source_preparation_authorizes_credential_provisioning": false,
+      "future_no_call_activation_authorizes_credential_provisioning": false,
+      "credential_value_in_approval_or_chat_allowed": false,
+      "credential_provisioning_if_any_requires_separate_user_controlled_step": true
+    },
+    "source_preparation_scope": [
+      "exact-bind-and-replay-validate-complete-d141-sdk-blocked-topology",
+      "implement-distinct-d142-sdk-no-call-successor-helper-writer-validator-orchestrator-cli-tests",
+      "run-focused-fully-mocked-tests-only",
+      "never-import-or-invoke-d141-execution-runner",
+      "require-exact-inherited-environment-repository-venv-launch-with-e-s-b-flags",
+      "isolate-future-sdk-import-and-probe-in-empty-environment-bounded-child",
+      "implement-future-receipt-attempt-fsynced-marker-terminal-or-marker-only-one-use-chain",
+      "check-credential-and-routing-membership-bits-only-then-provenance-and-zero-dispatch-probe",
+      "bind-credential-provisioning-as-separate-from-source-preparation-and-future-activation",
+      "enforce-append-only-collision-orphan-idempotence-toctou-loaded-module-and-fixed-git",
+      "create-exact-four-path-source-only-commit-as-d141-sdk-transition-sole-child",
+      "create-gate-plus-exact-ten-active-doc-evidence-commit-as-source-direct-child",
+      "update-active-docs-to-record-d141-consumed-blocked-and-d142-source-qualified-only",
+      "render-fresh-exact-d142-activation-template",
+      "require-any-future-d142-terminal-to-request-separate-d143-offline-successor",
+      "create-only-the-described-local-git-commits"
+    ],
+    "source_preparation_exclusions": [
+      "create-d142-receipt-attempt-action-started-terminal-or-preservation-artifact",
+      "provision-set-clear-export-copy-rotate-or-mutate-any-credential",
+      "read-print-log-hash-measure-prefix-or-persist-credential-or-environment-values",
+      "place-any-credential-value-in-an-approval-message-or-chat",
+      "read-or-load-dotenv",
+      "rerun-reuse-repair-resume-or-backfill-d141",
+      "modify-or-overwrite-d141-source-or-artifacts",
+      "perform-environment-membership-check-during-source-preparation",
+      "import-or-inspect-sdk-runtime-during-source-preparation",
+      "launch-isolated-child-during-source-preparation",
+      "synthetic-or-real-transport-dispatch-official-docs-search-open-network-or-docker-operation",
+      "provider-evaluator-agent-memory-retrieval-injection-execution-hash-candidate-cost-or-four-row-ac"
+    ],
+    "future_activation_scope": [
+      "create-one-exact-d142-activation-receipt-and-sole-artifact-commit",
+      "create-one-exact-d142-sdk-attempt-and-sole-artifact-commit",
+      "use-exact-inherited-environment-repository-venv-python-e-s-b-launch",
+      "record-one-fsynced-d142-action-started-immediately-before-first-membership-observation",
+      "perform-one-membership-only-then-provenance-zero-dispatch-sdk-no-call-observation",
+      "run-sdk-import-and-probe-only-in-bounded-empty-environment-isolated-child",
+      "commit-action-started-plus-ready-or-blocked-terminal",
+      "preserve-action-started-only-after-post-marker-failure-with-no-retry",
+      "request-separate-offline-successor-after-committed-terminal"
+    ],
+    "future_activation_exclusions": [
+      "credential-provision-set-clear-export-value-read-hash-length-prefix-or-persistence",
+      "credential-value-in-approval-message-or-chat",
+      "dotenv-read-load-or-live-endpoint-observation",
+      "d141-retry-reuse-resume-repair-or-backfill",
+      "synthetic-or-real-transport-dispatch-provider-evaluator-agent-or-network-call",
+      "docker-memory-retrieval-injection-hash-candidate-cost-or-four-row-ac"
+    ],
+    "authority": {
+      "external_action_count": 0,
+      "environment_or_credential_presence_observation_count": 0,
+      "environment_or_credential_value_observation_count": 0,
+      "environment_or_credential_mutation_count": 0,
+      "dotenv_read_count": 0,
+      "sdk_import_or_transport_dispatch_count": 0,
+      "isolated_child_launch_count": 0,
+      "network_or_docker_call_count": 0,
+      "future_artifacts_created": false,
+      "fresh_exact_activation_required": true,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}
