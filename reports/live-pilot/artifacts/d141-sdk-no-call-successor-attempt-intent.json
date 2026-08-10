@@ -1,0 +1,130 @@
+{
+  "schema_version": "d141-sdk-no-call-successor-attempt-intent-v1",
+  "artifact_id": "d141sdkattempt_5df0f4f15f3e98deebbb77d59ace047102f2da75ef1378875311d1a6be66e588",
+  "semantic_body_hash": "sha256:5df0f4f15f3e98deebbb77d59ace047102f2da75ef1378875311d1a6be66e588",
+  "semantic_body": {
+    "milestone": "D-141",
+    "evidence_kind": "sdk-no-call-successor-attempt-intent",
+    "recorded_at": "2026-08-10T13:34:34.036587Z",
+    "status": "D141_SDK_NO_CALL_SUCCESSOR_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+    "activation_receipt_binding": {
+      "path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-activation-receipt.json",
+      "artifact_id": "d141approval_e4f5bfc2324eb75194a84f45d42269910bc487101d7cd7b629289e60b7416c71",
+      "semantic_body_hash": "sha256:e4f5bfc2324eb75194a84f45d42269910bc487101d7cd7b629289e60b7416c71",
+      "file_sha256": "sha256:77882d12949840b0768b445ec955e5bafb4da30d2929057c7ece230b7ab65711",
+      "file_bytes": 9720,
+      "status": "D141_SDK_NO_CALL_SUCCESSOR_ACTIVATION_RECEIPT_RECORDED_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-10T13:30:53.321444Z"
+    },
+    "parent_commit_binding": {
+      "commit": "10fd04fb3528b4a059618e057ffb1b997cb66603",
+      "tree": "e0ea66884394e59f103970a6928c3b9b8d8fb360",
+      "parents": [
+        "9b9ce197daa34db355274956fd5043ab3a0b3539"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-activation-receipt.json",
+      "artifact_blob_oid": "011fb464bf1a4102ddb2d440cd4506b1fff6267c",
+      "artifact_file_sha256": "sha256:77882d12949840b0768b445ec955e5bafb4da30d2929057c7ece230b7ab65711",
+      "artifact_file_bytes": 9720,
+      "single_artifact_add_commit": true
+    },
+    "exact_launch_contract": {
+      "ignore_python_environment": true,
+      "user_site_disabled": true,
+      "bytecode_writes_disabled": true,
+      "isolated_mode": false,
+      "safe_path_mode": false
+    },
+    "launcher_source_contract": {
+      "required_python_flags": [
+        "-E",
+        "-s",
+        "-B"
+      ],
+      "ambient_environment_policy": "inherit-unchanged-required-not-runtime-observed",
+      "environment_override_count": 0,
+      "exact_cli_action": "--run-sdk-preflight"
+    },
+    "isolated_child_contract": {
+      "worker_action": "_d141_isolated_sdk_worker",
+      "eligibility_token_kind": "fixed-boolean-no-value",
+      "required_python_flags": [
+        "-E",
+        "-s",
+        "-B"
+      ],
+      "absolute_repository_venv_interpreter": true,
+      "shell": false,
+      "stdin": "DEVNULL",
+      "child_process_start_limit": 1,
+      "child_environment_entries": [],
+      "child_environment_override_count": 1,
+      "child_environment_entry_count": 0,
+      "ambient_environment_entry_forward_count": 0,
+      "credential_value_forward_count": 0,
+      "startup_confidentiality_boundary": "fixed-empty-secret-free-environment",
+      "worker_entry_environment_value_access": "deny",
+      "worker_entry_dotenv_open": "audit-deny",
+      "worker_entry_socket_network": "audit-deny",
+      "worker_entry_subprocess": "audit-deny",
+      "bootstrap_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only",
+      "worker_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only",
+      "repository_source_sys_path_entry_forward_count": 0,
+      "outside_venv_site_packages_entry_forward_count": 0,
+      "cwd_policy": "fresh-nonlink-fixed-root-outside-repository",
+      "fixed_temp_root": "C:\\Users\\geonj\\AppData\\Local\\Temp",
+      "timeout_seconds": 20,
+      "stdout_limit_bytes": 65536,
+      "stderr_limit_bytes": 16384,
+      "stdout_contract": "one-canonical-json-line",
+      "stderr_contract": "empty",
+      "raw_captured_output_persistence_authorized": false,
+      "validated_parsed_worker_observation_persistence_authorized": true,
+      "bootstrap_sha256": "sha256:709810299c557704fae86bbe334a97a8adf4d91e3b83c97074a5aecf7c94d561",
+      "audit_hook_coverage_boundary": "bootstrap-after-cpython-and-site-startup",
+      "pre_bootstrap_startup_network_coverage": "not-observed-not-claimed",
+      "argv_layout": [
+        "absolute-repository-venv-python",
+        "-E",
+        "-s",
+        "-B",
+        "-c",
+        "fixed-bootstrap",
+        "absolute-repository-root",
+        "absolute-helper-source",
+        "absolute-fixed-temp-root",
+        "fixed-eligibility-token",
+        "expected-helper-sha256",
+        "expected-helper-file-bytes",
+        "expected-model-sha256",
+        "expected-model-file-bytes",
+        "expected-lock-sha256",
+        "expected-lock-file-bytes"
+      ]
+    },
+    "credential_provisioning_boundary": {
+      "source_preparation_authorizes_credential_provisioning": false,
+      "future_no_call_activation_authorizes_credential_provisioning": false,
+      "credential_value_in_approval_or_chat_allowed": false,
+      "credential_provisioning_if_any_requires_separate_user_controlled_step": true
+    },
+    "phase_contract": {
+      "attempt_only_commit_required": true,
+      "exact_inherited_environment_launch_required": true,
+      "action_started_new_only_and_fsynced_before_first_membership_observation": true,
+      "helper_invocation_limit": 1,
+      "transport_retry_count": 0,
+      "post_marker_exception_consumes_phase": true,
+      "marker_only_preservation_commit_is_pre_authorized": true
+    },
+    "authority": {
+      "action_started_created": false,
+      "sdk_helper_invocation_count": 0,
+      "environment_presence_observation_count": 0,
+      "environment_value_observation_count": 0,
+      "credential_or_environment_mutation_count": 0,
+      "sdk_import_or_transport_dispatch_count": 0,
+      "network_call_count": 0
+    }
+  }
+}
