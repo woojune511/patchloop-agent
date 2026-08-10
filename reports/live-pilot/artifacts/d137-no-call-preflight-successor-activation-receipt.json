@@ -1,0 +1,266 @@
+{
+  "schema_version": "d137-no-call-preflight-successor-activation-receipt-v1",
+  "artifact_id": "d137approval_77b6b7177b73ac7086b24d8617afa4f5c7e0b9b35f02c6bb89e17e6a6c22fcc8",
+  "semantic_body_hash": "sha256:77b6b7177b73ac7086b24d8617afa4f5c7e0b9b35f02c6bb89e17e6a6c22fcc8",
+  "semantic_body": {
+    "milestone": "D-137",
+    "evidence_kind": "no-call-preflight-successor-activation-receipt",
+    "recorded_at": "2026-08-10T05:09:57.215634Z",
+    "status": "D137_NO_CALL_PREFLIGHT_SUCCESSOR_ACTIVATION_RECEIPT_RECORDED_COMMIT_REQUIRED",
+    "source_gate_binding": {
+      "path": "reports/live-pilot/artifacts/d137-d136-success-terminal-no-call-preflight-successor-offline-source-gate.json",
+      "artifact_id": "d137_7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc",
+      "semantic_body_hash": "sha256:7aee6dbd665e667f5fe8697b47b9046dfcf188b1a8529880215e15a676261acc",
+      "file_sha256": "sha256:12745a2dd8bb35b04a29cdcda0be000083bc8cabceed72057c2c6c8e32e0ae25",
+      "file_bytes": 21423,
+      "status": "D137_D136_SUCCESS_TERMINAL_NO_CALL_PREFLIGHT_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED",
+      "recorded_at": "2026-08-09T20:40:04.586352Z",
+      "evidence_commit_binding": {
+        "commit": "0f69783ea7ab6d55d76071f43b2cd1c32da673f2",
+        "tree": "96dc43865cac18c3b4647ee1ca8c24845eef756a",
+        "parents": [
+          "adcdeadbbb561f82548044d8c9a18d976b584132"
+        ],
+        "artifact_path": "reports/live-pilot/artifacts/d137-d136-success-terminal-no-call-preflight-successor-offline-source-gate.json",
+        "artifact_blob_oid": "e9345e7080bdc081b087427aac3fb2f07b84d377",
+        "artifact_file_sha256": "sha256:12745a2dd8bb35b04a29cdcda0be000083bc8cabceed72057c2c6c8e32e0ae25",
+        "artifact_file_bytes": 21423,
+        "exact_gate_add_and_active_docs_modify_commit": true
+      }
+    },
+    "source_identity": {
+      "commit": "adcdeadbbb561f82548044d8c9a18d976b584132",
+      "tree": "a1f649cd45007d032ae97d76f97b8a0df9180432",
+      "parents": [
+        "2378569536c2367a3186f575a7517e3de7282336"
+      ],
+      "implementation_paths": [
+        "patchloop/evals/d137_no_call_preflight.py",
+        "patchloop/evals/d137_d136_no_call_preflight_successor_offline.py",
+        "scripts/build_d137_d136_no_call_preflight_successor_offline.py",
+        "tests/test_d137_d136_no_call_preflight_successor_offline.py"
+      ],
+      "source_file_bindings": [
+        {
+          "path": "patchloop/evals/d137_no_call_preflight.py",
+          "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+          "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3",
+          "file_bytes": 95362,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/d137_d136_no_call_preflight_successor_offline.py",
+          "blob_oid": "add71221fa04188a697a0bcc38307b5c8e74eae9",
+          "file_sha256": "sha256:cb2cc1221beee206f0c8f1a2d2ec41ba7ff9a82b942b1d66978ac967b966c8f9",
+          "file_bytes": 87350,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "scripts/build_d137_d136_no_call_preflight_successor_offline.py",
+          "blob_oid": "d70db2ce8de133057e67392bd9ebd9a2cf9d4807",
+          "file_sha256": "sha256:6254f6d7ab657ea9f046f2b86a48389dd6728634c0fed3fe8e4632cc6bd97c31",
+          "file_bytes": 4845,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "tests/test_d137_d136_no_call_preflight_successor_offline.py",
+          "blob_oid": "004552288a24301930616810ff180e54bc680418",
+          "file_sha256": "sha256:09f5c5d00d46856e3cab16935f6f382edd893cfd438c2008c9437098cd4670da",
+          "file_bytes": 80025,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/__init__.py",
+          "blob_oid": "b5195b19ab7923b97ce66c2e36d1644de0f478a9",
+          "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58",
+          "file_bytes": 55,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/evals/__init__.py",
+          "blob_oid": "b8b10d34ff8a160692215e170343eac93a6536df",
+          "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c",
+          "file_bytes": 64,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "file_bytes": 1149,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "file_bytes": 2109,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "patchloop/agent/model.py",
+          "blob_oid": "3aef749d3848661323a9b5054b3e0142ccdabd64",
+          "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568",
+          "file_bytes": 44052,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "pyproject.toml",
+          "blob_oid": "05c7531f581c0700e61923790f0886bf73c0ef84",
+          "file_sha256": "sha256:2e8395b0d26e0f4e686daa3481c18301e025417666db828da0e0425cfd5b3986",
+          "file_bytes": 1032,
+          "current_bytes_match_commit": true
+        },
+        {
+          "path": "uv.lock",
+          "blob_oid": "6a706fc06a854ad0ec6e696eec28198666c5c09d",
+          "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c",
+          "file_bytes": 240131,
+          "current_bytes_match_commit": true
+        }
+      ],
+      "loaded_module_bindings": [
+        {
+          "path": "patchloop/evals/d137_d136_no_call_preflight_successor_offline.py",
+          "blob_oid": "add71221fa04188a697a0bcc38307b5c8e74eae9",
+          "file_sha256": "sha256:cb2cc1221beee206f0c8f1a2d2ec41ba7ff9a82b942b1d66978ac967b966c8f9",
+          "file_bytes": 87350,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d137_d136_no_call_preflight_successor_offline",
+          "loaded_path": "patchloop/evals/d137_d136_no_call_preflight_successor_offline.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/d137_no_call_preflight.py",
+          "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+          "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3",
+          "file_bytes": 95362,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals.d137_no_call_preflight",
+          "loaded_path": "patchloop/evals/d137_no_call_preflight.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/__init__.py",
+          "blob_oid": "b5195b19ab7923b97ce66c2e36d1644de0f478a9",
+          "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58",
+          "file_bytes": 55,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop",
+          "loaded_path": "patchloop/__init__.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/evals/__init__.py",
+          "blob_oid": "b8b10d34ff8a160692215e170343eac93a6536df",
+          "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c",
+          "file_bytes": 64,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.evals",
+          "loaded_path": "patchloop/evals/__init__.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/errors.py",
+          "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "file_bytes": 1149,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.errors",
+          "loaded_path": "patchloop/errors.py",
+          "loaded_path_matches_repository": true
+        },
+        {
+          "path": "patchloop/util.py",
+          "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "file_bytes": 2109,
+          "current_bytes_match_commit": true,
+          "module_name": "patchloop.util",
+          "loaded_path": "patchloop/util.py",
+          "loaded_path_matches_repository": true
+        }
+      ],
+      "python_routing_environment_observation_performed": false,
+      "python_routing_environment_observation_count": 0,
+      "git_cli_observation": {
+        "resolved_path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+        "file_name": "git.exe",
+        "file_bytes": 4422544,
+        "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+        "linklike": false,
+        "version": "git version 2.54.0.windows.1",
+        "actual_git_engine_invoked_directly": true,
+        "repository_local_core_autocrlf": "false",
+        "authenticated_or_vendor_signed_identity_claimed": false,
+        "stable_during_observation": true,
+        "minimal_secret_free_environment": true,
+        "environment_value_observation_count": 0,
+        "fsmonitor_disabled": true,
+        "shell_used": false
+      },
+      "exact_source_only_commit": true
+    },
+    "activation_approval": {
+      "exact_user_approval_recorded": true,
+      "approval_is_self_attested": true,
+      "approval_is_authenticated_or_signed": false,
+      "approved_scope": [
+        "create-one-exact-d137-activation-receipt-and-sole-artifact-commit",
+        "create-one-exact-d137-docker-attempt-and-sole-artifact-commit",
+        "record-one-fsynced-d137-docker-action-started-immediately-before-first-observation",
+        "perform-one-bounded-read-only-docker-no-call-preflight",
+        "commit-docker-action-started-plus-ready-or-blocked-terminal",
+        "preserve-docker-action-started-only-after-post-marker-failure-with-no-retry",
+        "after-committed-docker-ready-create-one-sdk-attempt-and-sole-artifact-commit",
+        "record-one-fsynced-sdk-action-started-immediately-before-first-observation",
+        "perform-one-sdk-presence-and-routing-no-call-preflight-with-zero-transport-dispatch",
+        "commit-sdk-action-started-plus-ready-or-blocked-terminal",
+        "preserve-sdk-action-started-only-after-post-marker-failure-with-no-retry",
+        "request-separate-offline-successor-after-committed-sdk-terminal"
+      ],
+      "explicit_exclusions": [
+        "docker-desktop-or-daemon-start-image-pull-load-or-container-create-start-run-exec",
+        "credential-or-environment-value-read-hash-length-prefix-or-persistence",
+        "dotenv-read-load-or-live-endpoint-observation",
+        "provider-evaluator-agent-memory-retrieval-injection-hash-candidate-cost-or-four-row-ac",
+        "retry-resume-repair-or-backfill-any-consumed-attempt"
+      ]
+    },
+    "future_activation_contract": {
+      "ordered_paths": [
+        "reports/live-pilot/artifacts/d137-no-call-preflight-successor-activation-receipt.json",
+        "reports/live-pilot/artifacts/d137-docker-no-call-preflight-attempt-intent.json",
+        "reports/live-pilot/artifacts/d137-docker-no-call-preflight-action-started.json",
+        "reports/live-pilot/artifacts/d137-docker-no-call-preflight-terminal.json",
+        "reports/live-pilot/artifacts/d137-sdk-no-call-preflight-attempt-intent.json",
+        "reports/live-pilot/artifacts/d137-sdk-no-call-preflight-action-started.json",
+        "reports/live-pilot/artifacts/d137-sdk-no-call-preflight-terminal.json"
+      ],
+      "receipt_only_commit_required": true,
+      "docker_attempt_only_commit_required": true,
+      "docker_action_started_fsynced_immediately_before_first_observation": true,
+      "docker_marker_and_ready_or_blocked_terminal_two_artifact_commit_required": true,
+      "docker_marker_only_preservation_after_post_marker_failure": true,
+      "sdk_requires_committed_docker_ready_terminal": true,
+      "sdk_attempt_only_commit_required": true,
+      "sdk_action_started_fsynced_immediately_before_first_observation": true,
+      "sdk_marker_and_ready_or_blocked_terminal_two_artifact_commit_required": true,
+      "sdk_marker_only_preservation_after_post_marker_failure": true,
+      "post_marker_failure_consumes_phase_and_forbids_retry": true,
+      "blocked_terminal_forbids_later_phase_or_execution_progression": true,
+      "ready_or_blocked_sdk_terminal_requires_separate_offline_successor": true,
+      "fresh_exact_activation_must_quote_gate_source_and_evidence_commit": true
+    },
+    "authority": {
+      "docker_or_sdk_helper_invocation_count": 0,
+      "docker_cli_call_count": 0,
+      "sdk_import_or_credential_presence_observation_count": 0,
+      "environment_value_observation_count": 0,
+      "provider_evaluator_agent_call_count": 0,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}
