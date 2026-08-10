@@ -1,0 +1,51 @@
+{
+  "schema_version": "d137-no-call-preflight-phase-attempt-intent-v1",
+  "artifact_id": "d137dockerattempt_5e710b1afdbea2f74555a098642644ddff88507cae43c58692af55cd60a5eca2",
+  "semantic_body_hash": "sha256:5e710b1afdbea2f74555a098642644ddff88507cae43c58692af55cd60a5eca2",
+  "semantic_body": {
+    "milestone": "D-137",
+    "evidence_kind": "docker-no-call-preflight-attempt-intent",
+    "phase": "docker",
+    "recorded_at": "2026-08-10T05:11:46.024928Z",
+    "status": "D137_DOCKER_NO_CALL_PREFLIGHT_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+    "predecessor_artifact_binding": {
+      "path": "reports/live-pilot/artifacts/d137-no-call-preflight-successor-activation-receipt.json",
+      "artifact_id": "d137approval_77b6b7177b73ac7086b24d8617afa4f5c7e0b9b35f02c6bb89e17e6a6c22fcc8",
+      "semantic_body_hash": "sha256:77b6b7177b73ac7086b24d8617afa4f5c7e0b9b35f02c6bb89e17e6a6c22fcc8",
+      "file_sha256": "sha256:f419490db679617e6fdf84e440e57a7d5ae6718b009a1689840a3ba7709fbdf2",
+      "file_bytes": 13425,
+      "status": "D137_NO_CALL_PREFLIGHT_SUCCESSOR_ACTIVATION_RECEIPT_RECORDED_COMMIT_REQUIRED",
+      "recorded_at": "2026-08-10T05:09:57.215634Z"
+    },
+    "parent_commit_binding": {
+      "commit": "f18b5d28c1584ad6db02f53ccfd953e8a599c04c",
+      "tree": "b155f55dcf5cfb96075c1b24f805de76d84f390a",
+      "parents": [
+        "0f69783ea7ab6d55d76071f43b2cd1c32da673f2"
+      ],
+      "artifact_path": "reports/live-pilot/artifacts/d137-no-call-preflight-successor-activation-receipt.json",
+      "artifact_blob_oid": "c1e7a0f2d3567a5897bb8a62672d227d5a53f4f2",
+      "artifact_file_sha256": "sha256:f419490db679617e6fdf84e440e57a7d5ae6718b009a1689840a3ba7709fbdf2",
+      "artifact_file_bytes": 13425,
+      "single_artifact_add_commit": true
+    },
+    "phase_contract": {
+      "attempt_only_commit_required": true,
+      "action_started_new_only_and_fsynced_before_first_observation": true,
+      "helper_invocation_limit": 1,
+      "transport_retry_count": 0,
+      "post_marker_exception_consumes_phase": true,
+      "marker_only_preservation_commit_is_pre_authorized": true
+    },
+    "authority": {
+      "action_started_created": false,
+      "phase_helper_invocation_count": 0,
+      "phase_terminal_created": false,
+      "environment_value_observation_count": 0,
+      "provider_evaluator_agent_call_count": 0,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}
