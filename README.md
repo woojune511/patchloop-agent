@@ -13,9 +13,9 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
 The suite, delivery and R2 cost/completion source are offline-qualified. D-136 pricing succeeded and is
-consumed. D-137 then completed bounded Docker READY and SDK missing-key BLOCKED no-call phases; it is consumed.
-D-138 also ended missing-key BLOCKED and is consumed. D-139 now qualifies only a fresh SDK successor source and
-future one-use topology.
+consumed. D-137 completed bounded Docker READY and SDK missing-key BLOCKED no-call phases; D-138 and D-139 each
+ended missing-key BLOCKED and are consumed. D-140 now qualifies only a fresh SDK successor source and future
+one-use topology.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -36,17 +36,16 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-121 is deferred; D-124/D-131 are historical and D-129 is terminal blocked.
 - D-132 through D-135 preserve one consumed pricing incident without retry, response reconstruction or canonical
   pricing evidence. D-136 later preserved one successful public GET and is also consumed.
-- D-137 completed exact receipt, Docker attempt/READY transition, SDK attempt/BLOCKED transition Git order.
-  Docker used eight bounded read-only commands with zero mutation. SDK checked three membership bits, found
-  `OPENAI_API_KEY` absent, and performed zero value reads, `.env` reads, SDK import/probe, dispatch or network call.
-- D-138 committed receipt, attempt and ACTION_STARTED+BLOCKED in final commit
-  `9f31d330190aa83768077b17c3cde47eb86c639d`. It found `OPENAI_API_KEY` absent in exactly three membership
+- D-137 completed bounded read-only Docker READY then SDK missing-key BLOCKED with zero Docker mutation and zero
+  credential value/`.env`/SDK import/probe/dispatch/network activity; both phases are consumed.
+- D-138 and D-139 each committed receipt, attempt and ACTION_STARTED+BLOCKED. D-139 final commit
+  `ba3af19a5cada8e49c29f514ad56c299639dc452` records `OPENAI_API_KEY` absent after exactly three membership
   checks; value/`.env` reads, child launch, SDK import/probe, dispatch and network were 0. It is consumed.
-- D-139 source commit `f5625be6cf98b5f8824a0d6a5068f1cf03e94d98`, tree
-  `073f821ce8f800a9bbd4cf56c228f00804a8c55a`, is the exact four-add sole child of that D-138 transition. Gate
-  `d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` is source-qualified only;
-  fully injected/mocked focused tests passed 168/168. No D-139 runtime artifact or source-preparation
-  membership/value/SDK/child/network/Docker observation exists.
+- D-140 source commit `fbb184ea8be0ea90eb044c03dbab538ed0c1f643`, tree
+  `45283ebbeb3a7b1b3417ffe1b271020c5f062aba`, is the exact four-add sole child of that D-139 transition. Gate
+  `d140_7362f061555800354d23ea673ee4d71ea4aab9d26d7572d9359e4d3f6c1cbad1` is source-qualified only;
+  fully injected/mocked focused tests passed 170/170 and are non-additive. No D-140 runtime artifact or
+  source-preparation membership/value/`.env`/SDK/child/network/Docker observation exists.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -54,10 +53,10 @@ Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
 ```powershell
 uv sync --offline --frozen --extra dev
-$d139Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d139-' + [guid]::NewGuid())
+$d140Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d140-' + [guid]::NewGuid())
 & .\.venv\Scripts\python.exe -E -s -B -m pytest -q `
-  -p no:cacheprovider --basetemp $d139Basetemp tests/test_d139_d138_sdk_blocked_successor_offline.py
-& .\.venv\Scripts\python.exe -E -s -B scripts/build_d139_d138_sdk_blocked_successor_offline.py `
+  -p no:cacheprovider --basetemp $d140Basetemp tests/test_d140_d139_sdk_blocked_successor_offline.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_d140_d139_sdk_blocked_successor_offline.py `
   --validate-gate-postcommit
 $docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-' + [guid]::NewGuid())
 & .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
@@ -71,11 +70,12 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 Use `uv run --offline --frozen patchloop --help` to discover the CLI.
 
-CLI availability does not imply authority. A fresh exact D-139 activation must quote gate, source and evidence
+CLI availability does not imply authority. A fresh exact D-140 activation must quote gate, source and evidence
 commit tuples. Its parent launch uses repository-venv Python `-E -s -B`, inherits the environment unchanged and,
 after the fsynced marker, observes only approved membership bits. Eligible SDK work runs in a bounded `env={}`
 child with a fixed nonsecret placeholder, zero ambient credential forwarding and zero transport dispatch. The
-child audit hook starts only after CPython/site startup, so pre-bootstrap network absence is not claimed. No
+child audit hook starts only after CPython/site startup, so pre-bootstrap network absence is not claimed.
+Credential provisioning is a separate action and is not authorized by source preparation or activation. No
 outcome grants hash/candidate, cost or A/C authority.
 
 ## Documentation

@@ -123,27 +123,24 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 through D-138 are immutable predecessors; consumed gates never reopen. D-132 has no canonical response,
+D-126 through D-139 are immutable predecessors; consumed gates never reopen. D-132 has no canonical response,
 D-135 sealed that incident without reconstruction, and D-136 later completed one successful public pricing GET.
 
-D-137 completed its append-only chain. Docker transition commit
-`06e57c54b4fe09f3145b8b59e51a0e391108d52a` binds ACTION_STARTED plus READY after eight bounded read-only CLI
-commands, stable exact daemon/image/zero-container snapshots and zero mutation. SDK transition commit
-`8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01` binds ACTION_STARTED plus BLOCKED because the
-`OPENAI_API_KEY` membership bit was false. Three membership checks occurred; credential/environment value and
-`.env` reads, SDK import/probe, synthetic dispatch and network calls were 0. Both markers are consumed.
+D-137 consumed bounded read-only Docker READY and SDK missing-key BLOCKED transitions. Docker mutation and
+credential/environment value, `.env`, SDK import/probe, synthetic dispatch and network counts were 0; its exact
+transition commits remain indexed in `docs/09-evidence.md`.
 
-D-138 then completed its exact gate→receipt→SDK attempt→ACTION_STARTED+BLOCKED chain. Final transition commit
-`9f31d330190aa83768077b17c3cde47eb86c639d` records `OPENAI_API_KEY` presence false after three membership
-checks. Value and `.env` reads, child launch, SDK import/probe, transport dispatch and network call counts are
-all 0. The phase is consumed and never retried, resumed, repaired or backfilled.
+D-138 and D-139 each completed an exact gate→receipt→SDK attempt→ACTION_STARTED+BLOCKED chain. D-139 final
+transition `ba3af19a5cada8e49c29f514ad56c299639dc452` records `OPENAI_API_KEY` presence false after three
+membership checks. Value and `.env` reads, child launch, SDK import/probe, transport dispatch and network call
+counts are all 0. Both phases are consumed and never retried, resumed, repaired or backfilled.
 
-D-139 source `f5625be6cf98b5f8824a0d6a5068f1cf03e94d98`, tree
-`073f821ce8f800a9bbd4cf56c228f00804a8c55a`, is the exact four-add sole child of that D-138 transition. Gate
-`d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` binds the complete D-138 topology
+D-140 source `fbb184ea8be0ea90eb044c03dbab538ed0c1f643`, tree
+`45283ebbeb3a7b1b3417ffe1b271020c5f062aba`, is the exact four-add sole child of that D-139 transition. Gate
+`d140_7362f061555800354d23ea673ee4d71ea4aab9d26d7572d9359e4d3f6c1cbad1` binds the complete D-139 topology
 and qualifies only new local writers, validators and a future one-use SDK observation.
 
-The future D-139 contract requires:
+The future D-140 contract requires:
 
 - fresh exact approval quoting gate, source and exact gate+active-doc evidence tuples;
 - receipt-only and SDK-attempt-only commits before a new-only, fsynced ACTION_STARTED marker;
@@ -155,7 +152,8 @@ The future D-139 contract requires:
 - no claim about network before the child's post-CPython/site bootstrap audit hook, while the fixed empty child
   environment provides the startup confidentiality boundary.
 
-Fully injected/mocked focused tests passed 168/168 and are not additive with other checks. No D-139 runtime
+Fully injected/mocked focused tests passed 170/170 and are not additive with other checks. No D-140 runtime
 artifact exists. Source/gate preparation performed zero membership/value/`.env` observation, credential
-mutation, child launch, SDK inspection, endpoint/network or Docker action and grants no provider/evaluator/agent,
-memory/retrieval, hash/candidate, cost or A/C authority.
+mutation or provisioning, child launch, SDK inspection, endpoint/network or Docker action. Credential
+provisioning remains separate, and the gate grants no provider/evaluator/agent, memory/retrieval, hash/candidate,
+cost or A/C authority.

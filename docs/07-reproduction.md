@@ -26,34 +26,34 @@ uv run --offline --frozen python scripts/build_d122_ac_fixed_bundle_qualificatio
 These are offline checks for the four-row source, A-null/C-exact bundle contract, trace qualification and
 historical D-122 bytes. They grant no live, retrieval, provider, Docker, hash/candidate or cost authority.
 
-## Validate the current D-139 SDK successor gate
+## Validate the current D-140 SDK successor gate
 
 ```powershell
-$d139Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d139-' + [guid]::NewGuid())
+$d140Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d140-' + [guid]::NewGuid())
 & .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
-  --basetemp $d139Basetemp tests/test_d139_d138_sdk_blocked_successor_offline.py
-& .\.venv\Scripts\python.exe -E -s -B scripts/build_d139_d138_sdk_blocked_successor_offline.py `
+  --basetemp $d140Basetemp tests/test_d140_d139_sdk_blocked_successor_offline.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_d140_d139_sdk_blocked_successor_offline.py `
   --validate-gate-postcommit
 ```
 
-The validator rebinds the complete D-138 gate/receipt/attempt/ACTION_STARTED+BLOCKED topology, exact four-add D-139
+The validator rebinds the complete D-139 gate/receipt/attempt/ACTION_STARTED+BLOCKED topology, exact four-add D-140
 source commit, loaded modules and gate+10-doc evidence commit. It checks append-only/new-only,
-collision/orphan/idempotence, TOCTOU and exact Git topology. Fully injected/mocked focused tests passed 168/168.
+collision/orphan/idempotence, TOCTOU and exact Git topology. Fully injected/mocked focused tests passed 170/170.
 This count is separate from documentation and static checks.
 
-D-138 became BLOCKED on the false key-presence bit after three membership checks; value/`.env`, child,
-import/probe/dispatch/network counts were 0. D-139 validation does not repeat it and performs no environment
-membership/value, SDK, child, endpoint, network or Docker observation.
+D-139 became BLOCKED on the false key-presence bit after three membership checks; value/`.env`, child,
+import/probe/dispatch/network counts were 0. D-140 validation does not repeat it and performs no environment
+membership/value, credential provisioning, SDK, child, endpoint, network or Docker observation.
 
 Do not call `--create-activation-receipt`, `--create-sdk-attempt` or `--run-sdk-preflight` without a fresh exact
-D-139 activation quoting gate, source and evidence-commit tuples. The rendered template is not approval. Never
+D-140 activation quoting gate, source and evidence-commit tuples. The rendered template is not approval. Never
 invoke a historical creation/external mode to repair, resume or retry a consumed phase.
 
 ## Historical validators
 
-D-123 through D-138 commands remain in their owning scripts, tests and Git history. Use only explicit
+D-123 through D-139 commands remain in their owning scripts, tests and Git history. Use only explicit
 sealed/read-only modes when auditing them. D-132 is a consumed incident; D-134's gate is preserved and invalid;
-D-135 is procedural incident evidence; D-136 pricing, D-137 no-call phases and D-138 SDK are consumed.
+D-135 is procedural incident evidence; D-136 pricing, D-137 no-call phases and D-138/D-139 SDK are consumed.
 
 ## Static and documentation checks
 
@@ -75,14 +75,15 @@ evidence.
 
 There is no supported live A/C command. The current sequence is:
 
-1. Preserve D-132, D-136, D-137 and D-138 consumed chains without repair.
-2. Validate the exact D-139 gate+10-active-doc evidence commit.
-3. Obtain a fresh exact D-139 activation quoting gate, source and evidence-commit tuples.
+1. Preserve D-132, D-136, D-137, D-138 and D-139 consumed chains without repair.
+2. Validate the exact D-140 gate+10-active-doc evidence commit.
+3. Obtain a fresh exact D-140 activation quoting gate, source and evidence-commit tuples.
 4. Commit only the activation receipt, then the SDK attempt.
 5. Launch the inherited-environment repository-venv Python with `-E -s -B`; write/fsync ACTION_STARTED immediately
    before membership-only checks. Never read values or `.env`.
 6. If eligible, run SDK provenance and zero-dispatch synthetic validation only in the bounded `env={}` child
    with a fixed nonsecret placeholder and no ambient forwarding. Do not claim pre-bootstrap network absence.
+   Credential provisioning is a separate action and is not authorized by this sequence.
 7. Commit READY/BLOCKED terminal, or marker only after failure; never retry. Request a separate offline successor.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or generic CLI flag to bypass this

@@ -94,18 +94,17 @@ D-108's +702 token count covers one request shape, not every live turn. Exact pe
 separately authorized counterfactual count. D-124/D-125 local/mock corrections are inherited; no reservation,
 result, candidate or execution hash exists.
 
-D-132 remains a consumed incident without canonical response evidence; D-135 sealed it without reconstruction.
-D-136 later completed one bounded official public GET, HTTP 200, zero redirects and 3,735 replay bytes. It is
-consumed pricing evidence only and grants no run authority.
+D-132 remains consumed without canonical response evidence; D-135 sealed it without reconstruction. D-136
+consumed one official public GET with HTTP 200, zero redirects and 3,735 replay bytes; it grants no run authority.
 
-D-137 then reached Docker READY and SDK BLOCKED because `OPENAI_API_KEY` presence was false. The SDK phase read
-no environment/credential value or `.env` and performed no import, probe, dispatch or network call; it is consumed.
-D-138 independently checked the same three membership bits, again found `OPENAI_API_KEY` absent and committed a
-BLOCKED terminal at `9f31d330190aa83768077b17c3cde47eb86c639d`. Its value/`.env`, child, SDK import/probe, dispatch and
-network counts were 0; it is consumed. D-139 gate
-`d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` qualifies only a fresh
-membership-first, isolated-child SDK successor source. Fully injected/mocked tests passed 168/168; no D-139
-runtime artifact, execution hash, cost authority or four-row result exists.
+D-137 reached Docker READY and SDK BLOCKED; D-138 and D-139 independently ended SDK BLOCKED. D-139 final commit
+`ba3af19a5cada8e49c29f514ad56c299639dc452` records `OPENAI_API_KEY` absent after three membership checks.
+Its value/`.env`, child, SDK import/probe, dispatch and network counts were 0; it is consumed. D-140 gate
+`d140_7362f061555800354d23ea673ee4d71ea4aab9d26d7572d9359e4d3f6c1cbad1` qualifies only a fresh
+membership-first, isolated-child SDK successor source. Fully injected/mocked tests passed 170/170 separately;
+no D-140 runtime artifact, execution hash, cost authority or four-row result exists. Credential provisioning is
+separate, and eligible work remains confined to a zero-ambient-forwarding `env={}` child after parent membership
+checks; its post-CPython/site audit hook does not support a pre-bootstrap network-absence claim.
 
 ## 7. Run-completion gate
 
