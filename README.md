@@ -14,7 +14,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 
 The suite, delivery and R2 cost/completion source are offline-qualified. D-136 pricing succeeded and is
 consumed. D-137 then completed bounded Docker READY and SDK missing-key BLOCKED no-call phases; it is consumed.
-D-138 now qualifies only a fresh SDK successor source and future one-use topology.
+D-138 also ended missing-key BLOCKED and is consumed. D-139 now qualifies only a fresh SDK successor source and
+future one-use topology.
 
 See `docs/current-status.md` for the current checkpoint and closed authority.
 
@@ -38,12 +39,14 @@ See `docs/current-status.md` for the current checkpoint and closed authority.
 - D-137 completed exact receipt, Docker attempt/READY transition, SDK attempt/BLOCKED transition Git order.
   Docker used eight bounded read-only commands with zero mutation. SDK checked three membership bits, found
   `OPENAI_API_KEY` absent, and performed zero value reads, `.env` reads, SDK import/probe, dispatch or network call.
-- D-138 source commit `f1f821cd57feb8e1405929ff949e82892e3de6f9`, tree
-  `b493d9c36a8cdcee646e5773ffe81353bf1d5c8a`, is the exact four-add sole child of D-137 transition commit
-  `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01`. Gate
-  `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` is source-qualified only;
-  injected-mock focused tests passed 168/168. No D-138 runtime artifact or environment/SDK/network/Docker
-  observation exists.
+- D-138 committed receipt, attempt and ACTION_STARTED+BLOCKED in final commit
+  `9f31d330190aa83768077b17c3cde47eb86c639d`. It found `OPENAI_API_KEY` absent in exactly three membership
+  checks; value/`.env` reads, child launch, SDK import/probe, dispatch and network were 0. It is consumed.
+- D-139 source commit `f5625be6cf98b5f8824a0d6a5068f1cf03e94d98`, tree
+  `073f821ce8f800a9bbd4cf56c228f00804a8c55a`, is the exact four-add sole child of that D-138 transition. Gate
+  `d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` is source-qualified only;
+  fully injected/mocked focused tests passed 168/168. No D-139 runtime artifact or source-preparation
+  membership/value/SDK/child/network/Docker observation exists.
 
 Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
@@ -51,10 +54,10 @@ Machine-readable evidence is indexed in `docs/09-evidence.md`.
 
 ```powershell
 uv sync --offline --frozen --extra dev
-$d138Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d138-' + [guid]::NewGuid())
+$d139Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-d139-' + [guid]::NewGuid())
 & .\.venv\Scripts\python.exe -E -s -B -m pytest -q `
-  -p no:cacheprovider --basetemp $d138Basetemp tests/test_d138_d137_sdk_blocked_successor_offline.py
-& .\.venv\Scripts\python.exe -E -s -B scripts/build_d138_d137_sdk_blocked_successor_offline.py `
+  -p no:cacheprovider --basetemp $d139Basetemp tests/test_d139_d138_sdk_blocked_successor_offline.py
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_d139_d138_sdk_blocked_successor_offline.py `
   --validate-gate-postcommit
 $docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-' + [guid]::NewGuid())
 & .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
@@ -68,11 +71,12 @@ These paths validate sealed local evidence only. There is intentionally no suppo
 
 Use `uv run --offline --frozen patchloop --help` to discover the CLI.
 
-CLI availability does not imply authority. A fresh exact D-138 activation must quote gate, source and evidence
+CLI availability does not imply authority. A fresh exact D-139 activation must quote gate, source and evidence
 commit tuples. Its parent launch uses repository-venv Python `-E -s -B`, inherits the environment unchanged and,
 after the fsynced marker, observes only approved membership bits. Eligible SDK work runs in a bounded `env={}`
-child with zero ambient credential forwarding and transport dispatch. No outcome grants hash/candidate, cost or
-A/C authority.
+child with a fixed nonsecret placeholder, zero ambient credential forwarding and zero transport dispatch. The
+child audit hook starts only after CPython/site startup, so pre-bootstrap network absence is not claimed. No
+outcome grants hash/candidate, cost or A/C authority.
 
 ## Documentation
 

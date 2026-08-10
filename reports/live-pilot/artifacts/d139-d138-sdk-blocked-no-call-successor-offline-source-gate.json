@@ -1,0 +1,317 @@
+{
+  "schema_version": "d138-sdk-blocked-no-call-successor-offline-source-gate-d139-v1",
+  "gate_id": "d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8",
+  "semantic_body_hash": "sha256:09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8",
+  "semantic_body": {
+    "milestone": "D-139",
+    "evidence_kind": "d138-sdk-blocked-no-call-successor-offline-source-gate",
+    "recorded_at": "2026-08-10T10:30:51.257403Z",
+    "status": "D139_D138_SDK_BLOCKED_NO_CALL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED",
+    "d138_sdk_blocked_predecessor": {
+      "source_commit": {
+        "commit": "f1f821cd57feb8e1405929ff949e82892e3de6f9",
+        "tree": "b493d9c36a8cdcee646e5773ffe81353bf1d5c8a",
+        "parents": [
+          "8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01"
+        ]
+      },
+      "artifacts": {
+        "reports/live-pilot/artifacts/d138-d137-sdk-blocked-no-call-successor-offline-source-gate.json": {
+          "path": "reports/live-pilot/artifacts/d138-d137-sdk-blocked-no-call-successor-offline-source-gate.json",
+          "artifact_id": "d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f",
+          "semantic_body_hash": "sha256:fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f",
+          "file_sha256": "sha256:ea77b4a9d387ab649f21ed7c3dd35b2095e6143514b20604b1d9c16fffe804fb",
+          "file_bytes": 17533,
+          "status": "D138_D137_SDK_BLOCKED_NO_CALL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED",
+          "recorded_at": "2026-08-10T07:23:48.080353Z",
+          "blob_oid": "65b6ca1e3968a1539005a5e815c855c937bbf5b8",
+          "introduction_commit": "e430ceed797d0f31d95b501a98ac8070d91cbd71"
+        },
+        "reports/live-pilot/artifacts/d138-sdk-no-call-successor-activation-receipt.json": {
+          "path": "reports/live-pilot/artifacts/d138-sdk-no-call-successor-activation-receipt.json",
+          "artifact_id": "d138approval_94180d3242411147303bd89058732b8ddf65f3640cb9ba328df52d91ece4eae3",
+          "semantic_body_hash": "sha256:94180d3242411147303bd89058732b8ddf65f3640cb9ba328df52d91ece4eae3",
+          "file_sha256": "sha256:e1673424a26f1125b01a428ecaac8b85eeb356bc45da159027f6247f54a79e89",
+          "file_bytes": 9270,
+          "status": "D138_SDK_NO_CALL_SUCCESSOR_ACTIVATION_RECEIPT_RECORDED_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T08:31:14.814604Z",
+          "blob_oid": "4a53be3c8b64450974193f60799b9931c7fc7018",
+          "introduction_commit": "d6c3a7f2a51fdbc9214cc45fb624e201b9577145"
+        },
+        "reports/live-pilot/artifacts/d138-sdk-no-call-successor-attempt-intent.json": {
+          "path": "reports/live-pilot/artifacts/d138-sdk-no-call-successor-attempt-intent.json",
+          "artifact_id": "d138sdkattempt_c597453d860a8a40d8ee3515c75dc4c553d8cd222203a2717e981370bdf4fe82",
+          "semantic_body_hash": "sha256:c597453d860a8a40d8ee3515c75dc4c553d8cd222203a2717e981370bdf4fe82",
+          "file_sha256": "sha256:8270e6ed99bffed2af1a1969a974701fa514f6e9b4ddd1fa8561e926a559f274",
+          "file_bytes": 5304,
+          "status": "D138_SDK_NO_CALL_SUCCESSOR_ATTEMPT_RECORDED_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T08:33:39.782358Z",
+          "blob_oid": "7003c19f18be8cef5f9da5e7f4100ca6d4c46f38",
+          "introduction_commit": "7d41a5c4affd2f4c75c81c9f507d920d9e94df66"
+        },
+        "reports/live-pilot/artifacts/d138-sdk-no-call-successor-action-started.json": {
+          "path": "reports/live-pilot/artifacts/d138-sdk-no-call-successor-action-started.json",
+          "artifact_id": "d138sdkstarted_0c536738ccae9dd7de803e0b494c8f316d91a58beff375599ee647bbd270b63d",
+          "semantic_body_hash": "sha256:0c536738ccae9dd7de803e0b494c8f316d91a58beff375599ee647bbd270b63d",
+          "file_sha256": "sha256:27257efd4281b34e717126b8c130e793d247700756a75f7f0c70c62f424548d3",
+          "file_bytes": 5285,
+          "status": "D138_SDK_NO_CALL_SUCCESSOR_ACTION_STARTED_TRANSITION_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T08:35:39.714704Z",
+          "blob_oid": "d81d5119db5c7ba3ad1c6ee3b5d14e306939539f",
+          "introduction_commit": "9f31d330190aa83768077b17c3cde47eb86c639d"
+        },
+        "reports/live-pilot/artifacts/d138-sdk-no-call-successor-terminal.json": {
+          "path": "reports/live-pilot/artifacts/d138-sdk-no-call-successor-terminal.json",
+          "artifact_id": "d138sdk_d6af84f10b258bcf9fa9cdfded60c7aaac715d2b4a1e94d61704cae540f2a59d",
+          "semantic_body_hash": "sha256:d6af84f10b258bcf9fa9cdfded60c7aaac715d2b4a1e94d61704cae540f2a59d",
+          "file_sha256": "sha256:6dd6ae0bcde0f4179c9382b8b4db1bb57b7f5a4aed14f1ae055f631c572038ad",
+          "file_bytes": 8568,
+          "status": "D138_SDK_NO_CALL_SUCCESSOR_BLOCKED_TRANSITION_COMMIT_REQUIRED",
+          "recorded_at": "2026-08-10T08:35:50.931148Z",
+          "blob_oid": "b345eb206aa2b1193418d9d2cd32682cf3fc128c",
+          "introduction_commit": "9f31d330190aa83768077b17c3cde47eb86c639d"
+        }
+      },
+      "final_transition_commit": {
+        "commit": "9f31d330190aa83768077b17c3cde47eb86c639d",
+        "tree": "9606b1bbd8f88619add3c1949b8d5949e525d4ce",
+        "parents": [
+          "7d41a5c4affd2f4c75c81c9f507d920d9e94df66"
+        ]
+      },
+      "consumed": true,
+      "retry_allowed": false,
+      "credential_value_observation_count": 0,
+      "environment_presence_check_count": 3,
+      "dotenv_read_count": 0,
+      "child_process_start_count": 0,
+      "sdk_import_count": 0,
+      "sdk_probe_count": 0,
+      "transport_dispatch_count": 0,
+      "network_call_count": 0
+    },
+    "source_identity": {
+      "commit": "f5625be6cf98b5f8824a0d6a5068f1cf03e94d98",
+      "tree": "073f821ce8f800a9bbd4cf56c228f00804a8c55a",
+      "parents": [
+        "9f31d330190aa83768077b17c3cde47eb86c639d"
+      ],
+      "exact_four_path_add_commit": true,
+      "source_bindings": [
+        {
+          "path": "patchloop/evals/d139_sdk_no_call_successor.py",
+          "file_bytes": 152672,
+          "file_sha256": "sha256:210305573cd6039eb37017554b3e6444f9947c7f2e89d51aaa87cac28e310e16",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/evals/d139_d138_sdk_blocked_successor_offline.py",
+          "file_bytes": 78504,
+          "file_sha256": "sha256:21eb525940f50ad3cb11d83793a68ceca4ca0f8be4c08892ae1f45968ae3faf6",
+          "linklike": false
+        },
+        {
+          "path": "scripts/build_d139_d138_sdk_blocked_successor_offline.py",
+          "file_bytes": 3277,
+          "file_sha256": "sha256:a4f575133dbb119c6eccacd569e7fc2dd17797ecbbef32eca56628479d6518da",
+          "linklike": false
+        },
+        {
+          "path": "tests/test_d139_d138_sdk_blocked_successor_offline.py",
+          "file_bytes": 124576,
+          "file_sha256": "sha256:0ffec32d35ad8f6de75c564b069753efb5d9863c57d9f9d2ceca1f86973f75c1",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/__init__.py",
+          "file_bytes": 55,
+          "file_sha256": "sha256:c1fd7c888a1b00da2132073daa2cd80663eefb92c830597b2218497669f7fa58",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/evals/__init__.py",
+          "file_bytes": 64,
+          "file_sha256": "sha256:381b7bd6cd2b5ecbcb665ce7037edd1d178c60dcb2e095e2332b5b9de02e734c",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/errors.py",
+          "file_bytes": 1149,
+          "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/util.py",
+          "file_bytes": 2109,
+          "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f",
+          "linklike": false
+        },
+        {
+          "path": "patchloop/agent/model.py",
+          "file_bytes": 44052,
+          "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568",
+          "linklike": false
+        },
+        {
+          "path": "pyproject.toml",
+          "file_bytes": 1032,
+          "file_sha256": "sha256:2e8395b0d26e0f4e686daa3481c18301e025417666db828da0e0425cfd5b3986",
+          "linklike": false
+        },
+        {
+          "path": "uv.lock",
+          "file_bytes": 240131,
+          "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c",
+          "linklike": false
+        }
+      ],
+      "loaded_module_provenance_validated": true
+    },
+    "git_cli_observation": {
+      "path": "C:\\Program Files\\Git\\mingw64\\bin\\git.exe",
+      "file_bytes": 4422544,
+      "file_sha256": "sha256:cab4c4eea1d869cf9f7be73868dc9a90ad2df1b1b673e5f8c8714a576c25ea96",
+      "linklike": false,
+      "version": "git version 2.54.0.windows.1",
+      "repository_local_core_autocrlf": "false",
+      "minimal_secret_free_environment": true,
+      "environment_value_observation_count": 0,
+      "shell_used": false
+    },
+    "exact_launch_contract": {
+      "ignore_python_environment": true,
+      "user_site_disabled": true,
+      "bytecode_writes_disabled": true,
+      "isolated_mode": false,
+      "safe_path_mode": false
+    },
+    "launcher_source_contract": {
+      "required_python_flags": [
+        "-E",
+        "-s",
+        "-B"
+      ],
+      "ambient_environment_policy": "inherit-unchanged-required-not-runtime-observed",
+      "environment_override_count": 0,
+      "exact_cli_action": "--run-sdk-preflight"
+    },
+    "isolated_child_contract": {
+      "worker_action": "_d139_isolated_sdk_worker",
+      "eligibility_token_kind": "fixed-boolean-no-value",
+      "required_python_flags": [
+        "-E",
+        "-s",
+        "-B"
+      ],
+      "absolute_repository_venv_interpreter": true,
+      "shell": false,
+      "stdin": "DEVNULL",
+      "child_process_start_limit": 1,
+      "child_environment_entries": [],
+      "child_environment_override_count": 1,
+      "child_environment_entry_count": 0,
+      "ambient_environment_entry_forward_count": 0,
+      "credential_value_forward_count": 0,
+      "startup_confidentiality_boundary": "fixed-empty-secret-free-environment",
+      "worker_entry_environment_value_access": "deny",
+      "worker_entry_dotenv_open": "audit-deny",
+      "worker_entry_socket_network": "audit-deny",
+      "worker_entry_subprocess": "audit-deny",
+      "bootstrap_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only",
+      "worker_sys_path_policy": "exact-nonlink-base-prefix-before-repository-venv-only",
+      "repository_source_sys_path_entry_forward_count": 0,
+      "outside_venv_site_packages_entry_forward_count": 0,
+      "cwd_policy": "fresh-nonlink-fixed-root-outside-repository",
+      "fixed_temp_root": "C:\\Users\\geonj\\AppData\\Local\\Temp",
+      "timeout_seconds": 20,
+      "stdout_limit_bytes": 65536,
+      "stderr_limit_bytes": 16384,
+      "stdout_contract": "one-canonical-json-line",
+      "stderr_contract": "empty",
+      "raw_captured_output_persistence_authorized": false,
+      "validated_parsed_worker_observation_persistence_authorized": true,
+      "bootstrap_sha256": "sha256:41375bc2230f5b06c4df11782260baad768646fcda89c0d9103b2f0af71fc961",
+      "audit_hook_coverage_boundary": "bootstrap-after-cpython-and-site-startup",
+      "pre_bootstrap_startup_network_coverage": "not-observed-not-claimed",
+      "argv_layout": [
+        "absolute-repository-venv-python",
+        "-E",
+        "-s",
+        "-B",
+        "-c",
+        "fixed-bootstrap",
+        "absolute-repository-root",
+        "absolute-helper-source",
+        "absolute-fixed-temp-root",
+        "fixed-eligibility-token",
+        "expected-helper-sha256",
+        "expected-helper-file-bytes",
+        "expected-model-sha256",
+        "expected-model-file-bytes",
+        "expected-lock-sha256",
+        "expected-lock-file-bytes"
+      ]
+    },
+    "source_preparation_scope": [
+      "exact-bind-and-replay-validate-complete-d138-sdk-blocked-topology",
+      "implement-distinct-d139-sdk-no-call-successor-helper-writer-validator-orchestrator-cli-tests",
+      "run-focused-fully-mocked-tests-only",
+      "never-import-or-invoke-d138-execution-runner",
+      "require-exact-inherited-environment-repository-venv-launch-with-e-s-b-flags",
+      "isolate-future-sdk-import-and-probe-in-empty-environment-bounded-child",
+      "implement-future-receipt-attempt-fsynced-marker-terminal-or-marker-only-one-use-chain",
+      "check-credential-and-routing-membership-bits-only-then-provenance-and-zero-dispatch-probe",
+      "enforce-append-only-collision-orphan-idempotence-toctou-loaded-module-and-fixed-git",
+      "create-exact-four-path-source-only-commit-as-d138-sdk-transition-sole-child",
+      "create-gate-plus-exact-ten-active-doc-evidence-commit-as-source-direct-child",
+      "update-active-docs-to-record-d138-consumed-blocked-and-d139-source-qualified-only",
+      "render-fresh-exact-d139-activation-template",
+      "create-only-described-local-git-commits"
+    ],
+    "source_preparation_exclusions": [
+      "create-d139-receipt-attempt-action-started-terminal-or-preservation-artifact",
+      "provision-set-clear-export-copy-rotate-or-mutate-any-credential",
+      "read-print-log-hash-measure-prefix-or-persist-credential-or-environment-values",
+      "read-or-load-dotenv",
+      "rerun-reuse-repair-resume-or-backfill-d138",
+      "perform-environment-membership-check-during-source-preparation",
+      "import-or-inspect-sdk-runtime-during-source-preparation",
+      "launch-isolated-child-during-source-preparation",
+      "synthetic-or-real-transport-dispatch-official-docs-network-or-docker-operation",
+      "provider-evaluator-agent-memory-retrieval-hash-candidate-cost-or-four-row-ac"
+    ],
+    "future_activation_scope": [
+      "create-one-exact-d139-activation-receipt-and-sole-artifact-commit",
+      "create-one-exact-d139-sdk-attempt-and-sole-artifact-commit",
+      "use-exact-inherited-environment-repository-venv-python-e-s-b-launch",
+      "record-one-fsynced-d139-action-started-immediately-before-first-membership-observation",
+      "perform-one-membership-only-then-provenance-zero-dispatch-sdk-no-call-observation",
+      "run-sdk-import-and-probe-only-in-bounded-empty-environment-isolated-child",
+      "commit-action-started-plus-ready-or-blocked-terminal",
+      "preserve-action-started-only-after-post-marker-failure-with-no-retry",
+      "request-separate-offline-successor-after-committed-terminal"
+    ],
+    "future_activation_exclusions": [
+      "credential-provision-set-clear-export-value-read-hash-length-prefix-or-persistence",
+      "dotenv-read-load-or-live-endpoint-observation",
+      "d138-retry-reuse-resume-repair-or-backfill",
+      "synthetic-or-real-transport-dispatch-provider-evaluator-agent-or-network-call",
+      "docker-memory-retrieval-injection-hash-candidate-cost-or-four-row-ac"
+    ],
+    "authority": {
+      "external_action_count": 0,
+      "environment_or_credential_presence_observation_count": 0,
+      "environment_or_credential_value_observation_count": 0,
+      "environment_or_credential_mutation_count": 0,
+      "dotenv_read_count": 0,
+      "sdk_import_or_transport_dispatch_count": 0,
+      "isolated_child_launch_count": 0,
+      "network_or_docker_call_count": 0,
+      "future_artifacts_created": false,
+      "fresh_exact_activation_required": true,
+      "execution_hash_or_candidate_created": false,
+      "cost_reserved_or_spent_usd": "0",
+      "four_row_ac_executed": false
+    }
+  }
+}

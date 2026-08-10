@@ -10,8 +10,8 @@ provider, evaluator or paid execution. A failed one-use claim is preserved and n
 
 ## Current objective
 
-D-136 pricing and D-137 Docker/SDK no-call phases are consumed. D-137 ended Docker READY then SDK missing-key
-BLOCKED. D-138 successor source qualification is complete; next request only a fresh exact D-138 SDK activation.
+D-136 pricing, D-137 Docker/SDK and D-138 SDK no-call phases are consumed. D-138 ended missing-key BLOCKED.
+D-139 successor source qualification is complete; next request only a fresh exact D-139 SDK activation.
 Hash/candidate, cost and execution remain separate.
 
 ## Completed foundation
@@ -27,9 +27,12 @@ Hash/candidate, cost and execution remain separate.
   GET, HTTP 200, zero redirects and 3,735 bytes with provider/evaluator/agent calls and cost 0.
 - D-137 completed Docker READY then SDK missing-key BLOCKED transitions with no Docker mutation, credential value
   read, SDK import/probe, dispatch or network call; both phases are consumed.
-- D-138 source `f1f821cd57feb8e1405929ff949e82892e3de6f9` and gate
-  `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` qualify only the fresh successor
-  contract. No D-138 runtime artifact or environment/SDK/network/Docker observation exists.
+- D-138 completed receipt, attempt and ACTION_STARTED+BLOCKED at
+  `9f31d330190aa83768077b17c3cde47eb86c639d`. It found the key-presence bit false after three membership
+  checks; value/`.env`, child, SDK import/probe, dispatch and network counts were 0. It is consumed.
+- D-139 source `f5625be6cf98b5f8824a0d6a5068f1cf03e94d98` and gate
+  `d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` qualify only the fresh successor
+  contract. Fully mocked focused tests passed 168/168; no D-139 runtime artifact or external observation exists.
 - The historical four-condition template and selective-retrieval authority remain unchanged and closed.
 
 ## Work item 5 — exact cost reservation and completion gate
@@ -47,7 +50,7 @@ actual-kill or power-loss guarantees. No live action or cost occurred.
 
 ## Work item 6 — clean/pricing/no-call preflight
 
-Status: D-136 and D-137 consumed; D-138 SDK successor source-qualified; fresh exact activation required.
+Status: D-136 through D-138 consumed; D-139 SDK successor source-qualified; fresh exact activation required.
 
 The D-132 pricing marker consumed its activation/attempt. Application-level send returned once, but HTTP and
 response fields remain unknown/unretained and completed/replayable canonical pricing evidence count is 0.
@@ -62,14 +65,19 @@ D-137 used a receipt, separate Docker/SDK attempts and fsynced markers. Docker b
 read-only observations; SDK became BLOCKED when `OPENAI_API_KEY` presence was false. Its value, `.env`, import,
 probe, dispatch and network counts were 0. Neither phase may be retried.
 
-D-138 requires a new receipt-only commit, SDK-attempt-only commit and fsynced marker before three membership-only
+D-138 used that contract once, found `OPENAI_API_KEY` absent and committed a BLOCKED terminal. Exactly three
+membership checks and zero value/`.env`/child/import/probe/dispatch/network activity were recorded. It cannot be
+reopened.
+
+D-139 requires a new receipt-only commit, SDK-attempt-only commit and fsynced marker before three membership-only
 checks. The parent uses inherited-environment repository-venv Python `-E -s -B`; eligible SDK validation runs in
-one bounded empty-environment child with fixed nonsecret placeholder and zero transport dispatch. Commit a
+one bounded `env={}` child with fixed nonsecret placeholder, no ambient forwarding and zero transport dispatch.
+Its audit hook starts after CPython/site startup, so pre-bootstrap network absence is not claimed. Commit a
 READY/BLOCKED terminal, or marker only after failure, then stop for a separate offline successor.
 
 ## Work item 7 — execution hash and candidate
 
-Status: unauthorized. No D-138 terminal exists; even a future D-138 READY terminal grants no such authority.
+Status: unauthorized. No D-139 terminal exists; even a future D-139 READY terminal grants no such authority.
 
 Create neither identity until a later approval cites the exact ready gate and explicitly authorizes it.
 

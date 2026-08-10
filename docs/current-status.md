@@ -2,66 +2,49 @@
 
 ## Current checkpoint
 
-D-138 is the current D-137 SDK-BLOCKED no-call successor offline source gate:
+D-139 is the current D-138 SDK-BLOCKED no-call successor offline source gate:
 
-- Gate ID/body `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f`;
-  file `sha256:ea77b4a9d387ab649f21ed7c3dd35b2095e6143514b20604b1d9c16fffe804fb`,
-  17,533 bytes. Its exact gate+10-active-doc evidence commit is the source commit's direct child and is reported
-  by the post-commit validator.
-- Source commit `f1f821cd57feb8e1405929ff949e82892e3de6f9`, tree
-  `b493d9c36a8cdcee646e5773ffe81353bf1d5c8a`, sole parent
-  `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01`; its diff is exactly four added implementation paths.
+- Gate ID/body `d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8`;
+  file `sha256:a374b0fd1685ea7df0ab4e343dee59cfac6dba0d7a58bf01e3e7b887f1d13584`,
+  15,565 bytes; blob `5a48b3e7447a450929aa52aa58a4e0fcbb352c15`. Its exact gate+10-active-doc
+  evidence commit is the source commit's direct child and is reported by the post-commit validator.
+- Source commit `f5625be6cf98b5f8824a0d6a5068f1cf03e94d98`, tree
+  `073f821ce8f800a9bbd4cf56c228f00804a8c55a`, sole parent
+  `9f31d330190aa83768077b17c3cde47eb86c639d`; its diff is exactly four added implementation paths.
 
-D-138 is source-qualified only. Injected-mock focused tests passed 168/168; this count is reported separately
-and is not additive with documentation or static checks. No D-138 receipt, attempt, ACTION_STARTED, terminal or
-preservation artifact exists; preparation observed no environment/credential
-presence or value, SDK, network, endpoint or Docker state.
+D-139 is source-qualified only. Fully injected/mocked focused tests passed 168/168; this count is reported
+separately and is not additive with documentation or static checks. No D-139 receipt, attempt, ACTION_STARTED,
+terminal or preservation artifact exists. Preparation performed zero membership/value or `.env` observation,
+credential mutation, child launch, SDK import/inspection, transport/network, endpoint or Docker action.
 
-## Consumed D-137 no-call preflight
+## Consumed D-138 SDK successor
 
-D-137 followed gate→receipt→Docker attempt→ACTION_STARTED+READY→SDK attempt→ACTION_STARTED+BLOCKED. The Docker
-transition commit is `06e57c54b4fe09f3145b8b59e51a0e391108d52a`; the final SDK transition commit is
-`8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01`. Docker used eight bounded read-only commands, observed the exact
-daemon/images and zero containers, and performed no mutation. SDK checked three membership bits, found
-`OPENAI_API_KEY` absent, and performed zero value or `.env` reads, SDK import/probe, transport dispatch or network
-call. Both phases are consumed and never retried, resumed, repaired or backfilled.
+D-138 followed gate→receipt→SDK attempt→ACTION_STARTED+BLOCKED. Gate evidence commit
+`e430ceed797d0f31d95b501a98ac8070d91cbd71`, receipt-only commit
+`d6c3a7f2a51fdbc9214cc45fb624e201b9577145`, attempt-only commit
+`7d41a5c4affd2f4c75c81c9f507d920d9e94df66` and final transition commit
+`9f31d330190aa83768077b17c3cde47eb86c639d` are immutable.
 
-## Consumed D-136 pricing success
+The blocker was `OPENAI_API_KEY` presence false after exactly three approved membership checks. Credential and
+environment value reads, `.env` reads, child launches, SDK import/probe, transport dispatch and network calls
+were all 0. D-138 is consumed and cannot be retried, resumed, repaired or backfilled.
 
-D-136 completed the exact gate→receipt→attempt→ACTION_STARTED+terminal topology. Gate evidence commit
-`5fad5756d2b40b5f72c0bbc38680120d780ef899`, receipt commit
-`1f9c62ac9309d087d1ef32a237b86ea11bf9d51e`, attempt commit
-`5f419828c358ee9c5f68cdacf38b588705e71e2e` and success commit
-`2378569536c2367a3186f575a7517e3de7282336` are immutable.
+## Earlier consumed boundaries
 
-The replayable terminal records one unauthenticated official public GET, HTTP 200, zero redirects and 3,735
-decoded/replay bytes. Provider/evaluator/agent calls and cost reservation/spend are 0. The activation and phase
-are consumed; the evidence can be replayed but the action cannot be reused or retried.
-
-## Consumed D-132 pricing incident
-
-D-132 activation and its pricing attempt are consumed and cannot be retried, resumed, repaired or backfilled.
-Application-level unauthenticated `client.send` returned a `Response` once. Underlying HTTP request count and
-completion are unknown; canonical response status, headers, body and redirect accounting are unretained.
-Completed/replayable canonical pricing evidence count is 0, no canonical evidence artifact exists, and replay
-bytes are 0.
-
-D-133 preserved the action-started marker at `a10033b6abd7155ebaa5c66c13627ad3ea738566`.
-D-134's ambiguous gate is preserved by sole-child commit `9dc450a747537634e89fe2ade824685f8b5a52d6`,
-but its qualification status and terminalization authority are invalid. D-135 then sealed the corrected
-procedural terminal as the sole artifact in commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786`; this did not create
-canonical pricing evidence or reopen D-132.
-
-## Historical D-129 terminal
-
-D-129 remains terminally sequence-blocked because a docs open preceded its receipt/attempt. It has no canonical
-capture or retroactive attempt and is never retried or repaired; exact tuples are in `docs/09-evidence.md`.
+- D-137 Docker transition `06e57c54b4fe09f3145b8b59e51a0e391108d52a` is READY after eight read-only
+  commands and zero mutation; SDK transition `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01` is missing-key BLOCKED
+  with value/`.env`/import/probe/dispatch/network counts 0.
+- D-136 success commit `2378569536c2367a3186f575a7517e3de7282336` preserves one official GET, HTTP
+  200, zero redirects and 3,735 replay bytes with provider/evaluator/agent and cost counts 0.
+- D-132 has no canonical response evidence; D-135 commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786`
+  seals it procedurally without reconstruction. D-129 is sequence-blocked. All are consumed; exact tuples are in
+  `docs/09-evidence.md`, machine artifacts and Git history.
 
 ## No-call readiness boundary
 
-D-137 Docker READY is a bounded consumed observation, not a long-term daemon guarantee. D-137 SDK readiness was
-BLOCKED only by the false key-presence bit; its source did not read a credential value. D-138 preparation made
-no membership or SDK observation. Only a separately approved D-138 activation can establish a new SDK terminal.
+D-137 Docker READY is a bounded consumed observation, not a long-term daemon guarantee. D-137 and D-138 SDK
+phases both ended BLOCKED on a false key-presence bit and are consumed. D-139 preparation made no membership or
+SDK observation. Only a separately approved D-139 activation can establish a new SDK terminal.
 
 ## Experiment direction: four-run A/C readiness
 
@@ -71,9 +54,9 @@ efficacy evidence, and there is still no supported live command.
 
 ## Closed authority
 
-D-126 through D-137 are immutable predecessors. D-136 pricing and both D-137 phases are consumed. D-138 has no
-runtime artifact or current readiness. Provider/evaluator/agent, memory/retrieval, execution hash/candidate,
-cost and A/C remain unauthorized and absent.
+D-126 through D-138 are immutable predecessors. D-136 pricing, both D-137 phases and D-138 SDK are consumed.
+D-139 has no runtime artifact or current readiness. Provider/evaluator/agent, memory/retrieval, execution
+hash/candidate, cost and A/C remain unauthorized and absent.
 
 The deferred D-121 candidate
 `d121executioncandidate_b37bde7b9f49f92118ca277e521cd409b1e51b6f97c1ad8c2e9ff5090a1c38ef`
@@ -81,10 +64,11 @@ was never authorized and is not a fixed-bundle prerequisite.
 
 ## Next gate
 
-Request one fresh exact D-138 activation quoting the gate, source and evidence-commit tuples. It may create only
+Request one fresh exact D-139 activation quoting the gate, source and evidence-commit tuples. It may create only
 a receipt commit, then an SDK-attempt commit. The exact inherited-environment repository-venv `-E -s -B` parent
 writes/fsyncs ACTION_STARTED immediately before membership-only checks of `OPENAI_API_KEY`, `PYTHONHOME` and
 `PYTHONPATH`; values are neither read nor persisted. If eligible, SDK provenance and a zero-dispatch synthetic
-probe run only in the bounded `env={}` child with a fixed nonsecret placeholder. Commit READY/BLOCKED terminal, or preserve only
-the marker after failure; never retry. Any terminal requires a later offline successor and grants no downstream
-authority.
+probe run only in the bounded `env={}` child with a fixed nonsecret placeholder and no ambient forwarding.
+The audit hook begins after CPython/site startup, so pre-bootstrap network absence is not observed or claimed.
+Commit READY/BLOCKED terminal, or preserve only the marker after failure; never retry. Any terminal requires a
+later offline successor and grants no downstream authority.

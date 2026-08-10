@@ -123,7 +123,7 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 through D-137 are immutable predecessors; consumed gates never reopen. D-132 has no canonical response,
+D-126 through D-138 are immutable predecessors; consumed gates never reopen. D-132 has no canonical response,
 D-135 sealed that incident without reconstruction, and D-136 later completed one successful public pricing GET.
 
 D-137 completed its append-only chain. Docker transition commit
@@ -133,12 +133,17 @@ commands, stable exact daemon/image/zero-container snapshots and zero mutation. 
 `OPENAI_API_KEY` membership bit was false. Three membership checks occurred; credential/environment value and
 `.env` reads, SDK import/probe, synthetic dispatch and network calls were 0. Both markers are consumed.
 
-D-138 source `f1f821cd57feb8e1405929ff949e82892e3de6f9`, tree
-`b493d9c36a8cdcee646e5773ffe81353bf1d5c8a`, is the exact four-add sole child of that SDK transition. Gate
-`d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` binds the complete D-137 topology
+D-138 then completed its exact gate→receipt→SDK attempt→ACTION_STARTED+BLOCKED chain. Final transition commit
+`9f31d330190aa83768077b17c3cde47eb86c639d` records `OPENAI_API_KEY` presence false after three membership
+checks. Value and `.env` reads, child launch, SDK import/probe, transport dispatch and network call counts are
+all 0. The phase is consumed and never retried, resumed, repaired or backfilled.
+
+D-139 source `f5625be6cf98b5f8824a0d6a5068f1cf03e94d98`, tree
+`073f821ce8f800a9bbd4cf56c228f00804a8c55a`, is the exact four-add sole child of that D-138 transition. Gate
+`d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` binds the complete D-138 topology
 and qualifies only new local writers, validators and a future one-use SDK observation.
 
-The future D-138 contract requires:
+The future D-139 contract requires:
 
 - fresh exact approval quoting gate, source and exact gate+active-doc evidence tuples;
 - receipt-only and SDK-attempt-only commits before a new-only, fsynced ACTION_STARTED marker;
@@ -150,5 +155,7 @@ The future D-138 contract requires:
 - no claim about network before the child's post-CPython/site bootstrap audit hook, while the fixed empty child
   environment provides the startup confidentiality boundary.
 
-No D-138 runtime artifact exists. Source/gate preparation observed no membership, value, SDK, endpoint, network
-or Docker state and grants no provider/evaluator/agent, memory/retrieval, hash/candidate, cost or A/C authority.
+Fully injected/mocked focused tests passed 168/168 and are not additive with other checks. No D-139 runtime
+artifact exists. Source/gate preparation performed zero membership/value/`.env` observation, credential
+mutation, child launch, SDK inspection, endpoint/network or Docker action and grants no provider/evaluator/agent,
+memory/retrieval, hash/candidate, cost or A/C authority.

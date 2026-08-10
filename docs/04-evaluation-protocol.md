@@ -100,9 +100,12 @@ consumed pricing evidence only and grants no run authority.
 
 D-137 then reached Docker READY and SDK BLOCKED because `OPENAI_API_KEY` presence was false. The SDK phase read
 no environment/credential value or `.env` and performed no import, probe, dispatch or network call; it is consumed.
-D-138 gate `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` qualifies only a fresh
-membership-first, isolated-child SDK successor source. Injected-mock tests passed 168/168; no D-138 runtime
-artifact, execution hash, cost authority or four-row result exists.
+D-138 independently checked the same three membership bits, again found `OPENAI_API_KEY` absent and committed a
+BLOCKED terminal at `9f31d330190aa83768077b17c3cde47eb86c639d`. Its value/`.env`, child, SDK import/probe, dispatch and
+network counts were 0; it is consumed. D-139 gate
+`d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` qualifies only a fresh
+membership-first, isolated-child SDK successor source. Fully injected/mocked tests passed 168/168; no D-139
+runtime artifact, execution hash, cost authority or four-row result exists.
 
 ## 7. Run-completion gate
 

@@ -32,33 +32,26 @@ Historical milestone-by-milestone limitations are archived at
   noncooperative-swap or power-loss durability.
 - No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
-## D-132 through D-138 external boundary
+## D-132 through D-139 external boundary
 
-- D-132's activation and pricing attempt are consumed. Application-level unauthenticated `client.send` returned
-  one `Response`; this does not prove how many HTTP requests occurred or that an exchange completed.
-- HTTP completion and response status, headers, body and redirects are unknown/unretained. Completed/replayable
-  canonical pricing evidence count is 0, no canonical pricing artifact exists and retained replay bytes are 0.
-  No response or terminal may be reconstructed from the control-flow observation.
-- D-133 preserved only the action-started marker. It did not retry, resume, repair or terminalize pricing.
-- D-134 source passed its local tests, but the emitted gate carried an ambiguous numeric GET-count claim. The
-  exact gate is preserved as historical evidence and is invalid and non-authoritative; its status and next-gate
-  text cannot authorize the D-134 terminal.
-- D-135 terminal-only commit `98f4560e718145bc7465732c1a3d2f5a4ea8d786` procedurally seals the
-  incident. It does not reconstruct response fields, create canonical pricing evidence or authorize a retry.
-- D-136's new fixed helper completed one bounded official public capture. Its canonical terminal proves one GET,
-  HTTP 200, zero redirects and 3,735 replay bytes, but only for that capture. Provider/evaluator/agent activity
-  and cost were 0, and the consumed activation cannot be reused.
-- D-137 Docker READY proves only its two bounded read-only snapshots: eight commands, exact daemon/images and zero
-  containers then, with zero mutation. It does not prove long-term daemon or inventory stability.
-- D-137 SDK BLOCKED records `OPENAI_API_KEY` presence false after three membership checks. It read no value or
-  `.env` and did not import/probe the SDK, dispatch transport or call the network. The phase is consumed, so a
-  later key-presence change cannot reopen it.
-- D-138 gate `d138_fb8eb1890fc6b9723e9c1e7651eaccc6881a94ab277e94b16a8f6ef2fae41e1f` qualifies only new
-  source. Injected-mock 168/168 is local contract evidence, not external readiness; no runtime artifact exists.
-- A future parent may observe only three membership bits in the inherited environment. Eligible SDK work runs
-  in an empty-environment child with no ambient forwarding. Its audit hook starts after CPython/site startup, so
+- D-132 preserves only an application-level returned `Response`; HTTP completion and response fields remain
+  unknown, canonical evidence/replay bytes are 0, and D-133 through D-135 preserve and seal it without
+  reconstruction or retry. D-134's ambiguous gate is invalid and non-authoritative.
+- D-136 proves only one consumed public GET with HTTP 200, zero redirects and 3,735 replay bytes; it grants no
+  later readiness or execution authority.
+- D-137 Docker READY covers only eight read-only commands and zero mutation at that time. Its SDK BLOCKED phase
+  found the key absent after three membership checks with value/`.env`/import/probe/dispatch/network counts 0.
+- D-138 exercised its successor once and ended BLOCKED at
+  `9f31d330190aa83768077b17c3cde47eb86c639d` because `OPENAI_API_KEY` presence was false. Exactly three
+  membership checks occurred; value/`.env`, child, SDK import/probe, transport dispatch and network counts were
+  0. The phase is consumed, so later environment change cannot reopen it.
+- D-139 gate `d139_09f2e9dfe0ee333a2683c058b772b92f025708c4bcc6b7f1eb89c007ed8df7f8` qualifies only new
+  source. Fully injected/mocked 168/168 is local contract evidence, not external readiness; no runtime artifact
+  or source-preparation external observation/action exists.
+- A future D-139 parent may observe only three membership bits in the inherited environment. Eligible SDK work
+  runs in an empty-environment child with no ambient forwarding. Its audit hook starts after CPython/site startup, so
   pre-bootstrap network absence is not observed or claimed; the fixed empty environment is the confidentiality
-  boundary for that startup.
+  boundary for that startup. The child uses only a fixed nonsecret placeholder and must keep dispatch at 0.
 - These checks remain cooperative repository-local evidence. They do not prove authenticated identity,
   global/cross-clone exclusion or long-term environment stability.
 - Provider/evaluator/agent, memory/retrieval, hash/candidate, cost and A/C authority remain closed.
