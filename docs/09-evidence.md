@@ -86,9 +86,12 @@ Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` preserves success
 `sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and suite
 `sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`.
 
-Its exact four-file child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf`, tree
-`9918bc6eee6fbbe12ac66def5d2162cc07aa38f1`, seals contract content
-`sha256:5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c`. The 6,070-byte qualification file is
-`sha256:adcb55d31786103f8cf34e84902e9243d6bf9c5a5cc2952fc52fb68297f0e01d`, semantic hash
-`sha256:cf00cdc35656fcc3fbf187c3789774e7c8a6c32491d646ebb4d2a600c952d0d5`. External observations/calls and cost are
-zero; no state-change evidence, approval, attempt or terminal exists. D-142/R2 remain unchanged.
+Its v1 child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` remains receipt-bound. Receipt-free v2 source
+`d8652b2648f97788ae65a82e949d2b168e7ff4a9`, tree `373244b7b2a9e44d7e6dfe31deb59aef9030dd97`, seals contract
+`ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd`; qualification semantic hash is
+`sha256:e903639750a961b60f879435a10be5e3f03f1809614e7686a8f8d854d2def309`.
+
+User attestation `ncpattestation_ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c` binds state
+`ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582`. It is unsigned self-attestation,
+not presence proof; `.env` read/stat, value observation, approval, attempt, external call and cost are zero.
+D-142/R2 remain unchanged.

@@ -31,11 +31,12 @@
   authority가 있을 때만 standard runner가 선택하며 durable-prefix/CAS 재검증, append-only receipt,
   completed-result persistence, qualification과 completion adapter까지 local/mock으로 검증됐다. Raw v2
   result는 계속 `official=false`이고 새 A/C 전에 새 source/suite/source-qualification identity가 필요하다.
-- Evaluator-v2 boundary는 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`에 고정됐고, versioned
-  no-call contract source는 direct child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf`로 qualified됐다.
-  Exact tuple은 `docs/09-evidence.md`가 소유하며 evidence/approval/attempt나 live authority가 아니다.
-- Provider/evaluator service/agent, retrieval/injection, Docker/SDK observation, credential provisioning,
-  execution hash/candidate, cost와 A/C authority는 닫혀 있다.
+- Evaluator-v2 boundary는 `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`다. Receipt-required preflight
+  v1은 보존되며, receipt-free v2 source `d8652b2648f97788ae65a82e949d2b168e7ff4a9`는 user attestation을
+  독립 증명으로 승격하지 않는다. `ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582`는
+  `.env`를 읽거나 stat하지 않고 만든 self-attested evidence다. Loader runtime, exact approval와 attempt는 없다.
+- Credential 배치는 user-reported only다. Provider/evaluator/agent, retrieval/injection, Docker/SDK/`.env`
+  observation, execution hash/candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 

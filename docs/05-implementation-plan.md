@@ -41,23 +41,23 @@ and this is not a runtime result.
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: clean source-qualified; live authority remains closed.
+Status: v1 preserved; receipt-free v2 source-qualified with one non-proof state artifact.
 
 Contract v1 accepts only an independently trusted, value-free credential-provisioning receipt and trust anchor.
 Attempt identity additionally binds exact approval and durable-ledger snapshot. Intent reserves evidence;
 ACTION_STARTED precedes observation; READY/BLOCKED/ERROR or post-marker failure is terminal. Reuse, retry, resume,
 overwrite and backfill fail closed. A real source/semantic change requires a new version.
 
-Source commit `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` is the evaluator-v2 boundary's exact four-file
-sole child. Qualification created no evidence, approval, attempt, observation, candidate or cost authority.
+V2 source `d8652b2648f97788ae65a82e949d2b168e7ff4a9` accepts current-user self-attestation without
+claiming authentication, independent verification or presence. Its state artifact read/stat count is zero.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: unauthorized; blocked on real state-change evidence and exact approval.
+Status: no attempt authorized; blocked on an executable exact-key loader successor before exact approval.
 
-The attempt must cite the qualified contract and one relevant state-change evidence artifact with stable
-ID/hash/provenance. The evidence is one-use, the same attempt is never retried or overwritten, and BLOCKED grants
-no successor attempt. Source qualification creates none of this observation authority.
+V2 state is self-attested and binds `loader_runtime_implemented=false`, so approving it would authorize incomplete
+source. Implement/qualify a no-value-return `.env` exact-key isolated-child producer, rebind the attestation under
+that successor, then request approval quoting the exact ID. Evidence remains one-use and terminal means no retry.
 
 ## Work item 5 — execution candidate and cost gate
 

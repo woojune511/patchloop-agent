@@ -12,7 +12,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-`docs/current-status.md` owns R2/D-142, the evaluator-v2 successor, sealed no-call contract and authority.
+`docs/current-status.md` owns R2/D-142, evaluator-v2 and the user-attested no-call boundary.
 
 ## Implemented product path
 
@@ -31,6 +31,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-121 and D-129 through D-141 retain their recorded immutable dispositions. D-142 remains
   source-qualified/unactivated and deferred; the sequencing change creates or rewrites no artifact.
 - Evaluator v1 assigned safety a literal PASS, so its historical results are not independently safety-verified.
+- Receipt-free preflight state is self-attested, not credential-presence proof; no `.env` read or attempt ran.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

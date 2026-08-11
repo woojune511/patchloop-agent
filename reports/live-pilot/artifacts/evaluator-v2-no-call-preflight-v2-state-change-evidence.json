@@ -1,0 +1,23 @@
+{
+  "schema_version": "preflight-state-change-evidence-v2",
+  "evidence_id": "ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582",
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v2",
+  "contract_id": "ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd",
+  "contract_content_hash": "sha256:68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd",
+  "evidence_kind": "credential_location_user_attested_v2",
+  "subject_names_hash": "sha256:ce2e9805ba31d7d9daabd59e20520535681bd87983477a63d18605686f4fa102",
+  "location_surface": "repository-root-dotenv",
+  "user_attestation_id": "ncpattestation_ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c",
+  "user_attestation_content_hash": "sha256:ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c",
+  "predecessor_terminal_file_sha256": "sha256:38121d8498578cd495ec94a2ca4da47bdebfc87f358540892cff09c297793bcb",
+  "identity_assurance": "current-user-self-attested-not-authenticated-or-signed",
+  "external_receipt_present": false,
+  "independent_verification_completed": false,
+  "attestation_proves_credential_presence": false,
+  "exact_preflight_still_required": true,
+  "raw_credential_value_observed": false,
+  "raw_credential_value_persisted": false,
+  "source_or_contract_changed": true,
+  "recorded_at": "2026-08-11T15:06:33.136716Z",
+  "content_hash": "sha256:80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582"
+}

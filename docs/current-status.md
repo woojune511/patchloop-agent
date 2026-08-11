@@ -1,4 +1,4 @@
-# Current status — 2026-08-11
+# Current status — 2026-08-12
 
 ## Current checkpoint
 
@@ -31,9 +31,9 @@ receipt, and permits completed persistence only when that receipt revalidates. Q
 consume the same binding while the raw result remains `official=false`. Local mock/requested-policy tests are not
 a qualified source, Docker-enforcement result or official run.
 
-The **successor A/C offline qualification** is committed at `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`.
-Versioned preflight source `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` is its exact four-file sole child;
-the append-only qualification records zero external observations and no execution authority.
+The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. Receipt-required preflight v1
+is preserved. Receipt-free v2 source `d8652b2648f97788ae65a82e949d2b168e7ff4a9` records user-attested `.env`
+placement without reading/statting it or proving presence; its loader runtime is explicitly unimplemented.
 
 ## Current roadmap
 
@@ -41,11 +41,10 @@ the append-only qualification records zero external observations and no executio
    qualification and completion enforcement are implemented and regression-tested locally.
 2. **Successor A/C qualification.** New source, runtime and successor-suite identities are materialized and
    locally validated; D-142 and R2 remain immutable predecessors.
-3. **Offline preflight contract.** Clean-sealed v1 admits only independently trusted value-free credential
-   provisioning evidence and binds contract/evidence/approval/ledger identities with one-use terminal behavior.
-4. **Separately approved preflight attempt.** Bind `attempt_id` to `contract_version`, a one-use
-   `state_change_evidence_id` and exact `approval_id`. Never reuse that evidence, retry/overwrite the attempt or
-   infer successor authority from BLOCKED.
+3. **Offline preflight contracts.** V1 preserves receipt-required semantics. V2 binds receipt-free self-attestation
+   as non-proof state evidence; no credential value or observation entered the repository.
+4. **Separately approved preflight attempt.** First implement and qualify the exact-key isolated loader successor,
+   then bind its state ID and a later exact approval. Never approve incomplete source or retry a terminal attempt.
 5. **Candidate and cost gate.** After READY, refresh pricing, bind reservation/cap, create the execution hash and
    candidate, then obtain separate exact paid approval. None is implied by preflight.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A exactly once after the source is
@@ -56,7 +55,8 @@ the append-only qualification records zero external observations and no executio
    leakage, redaction and independent public-development calibration contracts are frozen. If they are designed
    after A/C unblinding, use a separate fresh held-out panel.
 
-No official/live v2 result, state-change evidence, approval, attempt or external authority exists.
+No official/live evaluator result, approval, attempt or external observation exists. One self-attested, unconsumed
+state artifact exists; it is not independent credential-presence evidence.
 
 ## Consumed boundaries
 
@@ -67,15 +67,14 @@ authorized and is not a fixed-bundle prerequisite.
 
 ## Closed authority
 
-Provider/evaluator/agent calls, memory/retrieval execution, Docker or SDK observation, credential provisioning,
-execution hash/candidate, cost reservation and A/C execution remain unauthorized and absent. Source qualification,
-tests and this roadmap grant none of them.
+Credential placement is user-reported only. Provider/evaluator/agent calls, memory/retrieval, Docker/SDK/`.env`
+observation, execution hash/candidate, cost reservation and A/C execution remain unauthorized and absent.
 
 ## Next gate
 
-The next gate is a **separately approved preflight attempt**, but none is presently admissible. It first requires
-an independently trusted, one-use credential-provisioning evidence artifact and then an exact approval bound to
-that artifact and contract v1. Provisioning itself remains a separate user-controlled authority; no value enters
-the repository, approval text or chat. READY/BLOCKED/ERROR is terminal and grants no candidate or paid authority.
+The next gate is an **offline exact-key loader/runtime successor**, not approval or observation. V2 state
+`ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582` is self-attested only and binds an
+unimplemented loader. After executable source qualification, a fresh bound state ID must be shown before a later
+exact approval. No credential value enters repository, approval text or chat.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

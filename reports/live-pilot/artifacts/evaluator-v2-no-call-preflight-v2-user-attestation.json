@@ -1,0 +1,19 @@
+{
+  "schema_version": "preflight-user-credential-location-attestation-v2",
+  "attestation_id": "ncpattestation_ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c",
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v2",
+  "contract_id": "ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd",
+  "contract_content_hash": "sha256:68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd",
+  "claim": "openai-api-key-configured-in-repository-root-dotenv",
+  "subject_names_hash": "sha256:ce2e9805ba31d7d9daabd59e20520535681bd87983477a63d18605686f4fa102",
+  "location_surface": "repository-root-dotenv",
+  "identity_assurance": "current-user-self-attested-not-authenticated-or-signed",
+  "external_receipt_present": false,
+  "independent_verification_completed": false,
+  "attestation_proves_credential_presence": false,
+  "dotenv_read_or_stat_performed": false,
+  "raw_credential_value_observed": false,
+  "raw_credential_value_persisted": false,
+  "recorded_at": "2026-08-11T15:06:33.136716Z",
+  "content_hash": "sha256:ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c"
+}
