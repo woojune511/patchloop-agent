@@ -12,7 +12,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-`docs/current-status.md` owns the R2/D-142 checkpoint, offline evaluator-v2 successor and closed authority.
+`docs/current-status.md` owns R2/D-142, the evaluator-v2 successor, sealed no-call contract and authority.
 
 ## Implemented product path
 
@@ -20,7 +20,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Constrained search/read/patch/check/diff/submission tools; no unrestricted agent shell
 - Stateless provider turns plus append-only events, checkpoints, CAS and workspace reconciliation
 - Rejected-patch recovery and token/cost accounting
-- Separate hidden evaluator plus receipt-bound v2 and an offline-qualified successor source/suite identity
+- Separate hidden evaluator, receipt-bound v2, successor identity and sealed no-call contract
 - Audited dataset roles and a frozen, human-reviewed three-entry memory index
 - Exact A-null/C-D110 delivery with replay and condition-aware trace qualification
 

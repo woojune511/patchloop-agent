@@ -2,21 +2,13 @@
 
 ## Current checkpoint
 
-D-142 remains the exact D-141 SDK-BLOCKED no-call successor offline source gate:
+D-142 remains the exact D-141 SDK-BLOCKED no-call successor gate
+`d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914`. Source commit
+`1370cf43c08cefb550b158a5d4172a60ac172470` is D-141's exact four-file sole child; `docs/09-evidence.md`
+owns the file, tree, parent and evidence-commit tuple.
 
-- Gate ID/body `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914`;
-  file `sha256:83fa6e83a3b5827a07e3383f9dea6318b748813742b501a4aaf7b41c726a1e80`,
-  16,298 bytes; blob `a2fcfcf97e8cdc1c7b8357b334211efab4b2dbf2`. Its exact gate+10-active-doc
-  evidence commit is the source commit's direct child and is reported by the post-commit validator.
-- Source commit `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
-  `7f7e7e25c79899eee6180ae45767492435003096`, sole parent
-  `6405be40eb52d71fc9376065b553a04164543a4b`; its diff is exactly four added implementation paths.
-
-Its evidence state is unchanged: **source-qualified only, unactivated**. Fully injected/mocked focused tests
-passed 170/170, reported separately from documentation and static checks. No D-142 receipt, attempt,
-ACTION_STARTED, terminal or preservation artifact exists. Preparation performed zero membership/value or
-`.env` observation, credential mutation/provisioning, child launch, SDK import/inspection, transport/network,
-endpoint or Docker action.
+Its evidence state is unchanged: **source-qualified only, unactivated**. Mocked tests passed 170/170; no receipt,
+attempt, ACTION_STARTED or terminal exists, and preparation made no environment/SDK/Docker/external observation.
 
 Its planning disposition is now **deferred**. This does not consume, invalidate, repair or rewrite D-142; it
 removes activation from the current critical path. A future decision could still cite the exact tuple for the
@@ -39,9 +31,9 @@ receipt, and permits completed persistence only when that receipt revalidates. Q
 consume the same binding while the raw result remains `official=false`. Local mock/requested-policy tests are not
 a qualified source, Docker-enforcement result or official run.
 
-The **successor A/C offline qualification** is materialized in the working tree. It binds distinct
-source/runtime/suite hashes, preserves R2 only as the immutable treatment predecessor and keeps every execution
-authority false. `docs/09-evidence.md` owns the tuple; no clean source seal or run result exists.
+The **successor A/C offline qualification** is committed at `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`.
+Versioned preflight source `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` is its exact four-file sole child;
+the append-only qualification records zero external observations and no execution authority.
 
 ## Current roadmap
 
@@ -49,8 +41,8 @@ authority false. `docs/09-evidence.md` owns the tuple; no clean source seal or r
    qualification and completion enforcement are implemented and regression-tested locally.
 2. **Successor A/C qualification.** New source, runtime and successor-suite identities are materialized and
    locally validated; D-142 and R2 remain immutable predecessors.
-3. **Offline preflight contract.** Qualify a stable versioned source that defines allowed state-change evidence,
-   identity bindings and one-use behavior without observing the environment or launching an external attempt.
+3. **Offline preflight contract.** Clean-sealed v1 admits only independently trusted value-free credential
+   provisioning evidence and binds contract/evidence/approval/ledger identities with one-use terminal behavior.
 4. **Separately approved preflight attempt.** Bind `attempt_id` to `contract_version`, a one-use
    `state_change_evidence_id` and exact `approval_id`. Never reuse that evidence, retry/overwrite the attempt or
    infer successor authority from BLOCKED.
@@ -64,7 +56,7 @@ authority false. `docs/09-evidence.md` owns the tuple; no clean source seal or r
    leakage, redaction and independent public-development calibration contracts are frozen. If they are designed
    after A/C unblinding, use a separate fresh held-out panel.
 
-No clean committed successor seal, official/live v2 result or external authority exists.
+No official/live v2 result, state-change evidence, approval, attempt or external authority exists.
 
 ## Consumed boundaries
 
@@ -81,8 +73,9 @@ tests and this roadmap grant none of them.
 
 ## Next gate
 
-The next gate is the **versioned no-call preflight contract**. It must bind the qualified bytes to a clean commit,
-type allowed external-state evidence and preserve separate attempt approval. It performs no Docker, credential,
-SDK, network, provider, evaluator service or paid agent execution.
+The next gate is a **separately approved preflight attempt**, but none is presently admissible. It first requires
+an independently trusted, one-use credential-provisioning evidence artifact and then an exact approval bound to
+that artifact and contract v1. Provisioning itself remains a separate user-controlled authority; no value enters
+the repository, approval text or chat. READY/BLOCKED/ERROR is terminal and grants no candidate or paid authority.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

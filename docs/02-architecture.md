@@ -81,8 +81,8 @@ conjunction of hidden acceptance, regression, scope and safety.
 Evaluator v1's safety verdict is unconditional. The v2 path binds typed producers to a durable accepted-event
 prefix and verified CAS. A separately supplied authority is required before standard-runner selection; its
 append-only receipt gates completed persistence, qualification and completion while the raw result stays
-unofficial. A working-tree offline successor binds exact source/runtime/suite hashes, but no clean source seal or
-live result exists and v1 evidence remains unchanged.
+unofficial. The committed successor and versioned no-call source bind exact hashes; no state-change evidence,
+attempt, live result or changed v1 evidence exists.
 
 Visible checks and agent self-review are feedback; neither can replace hidden evaluation.
 

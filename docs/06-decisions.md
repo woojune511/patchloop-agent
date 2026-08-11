@@ -21,16 +21,16 @@ work.
   original one-use contract.
 - Evaluator-v2 and the A/C successor require new source, runtime and suite identities. D-142 and the R2 suite
   cannot be relabeled as qualification for those changed bytes.
-- The offline successor has distinct source/runtime/suite hashes; R2 remains its immutable treatment predecessor
-  and the artifact grants no clean-source, external or execution authority.
+- The successor has distinct source/runtime/suite hashes at commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`;
+  R2 remains its immutable treatment predecessor and no runtime result exists.
 - The initial v2 contract is private and task-bound. The manifest contains task/contract/source hashes, counts and
   opaque projections, not direct private requirement/check IDs. Four controls map to runtime trace,
   requested-Docker-policy trace or artifact scan; integrity is a prerequisite. Free-form `prohibited_behaviors`
   is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
-- Offline preflight source qualification and external observation are separate. Each attempt binds
-  `contract_version + state_change_evidence_id + approval_id`; state-change evidence is one-use, the attempt is
-  never retried, and BLOCKED grants no successor. Credential provisioning, candidate creation and paid execution
-  remain separate boundaries.
+- Versioned no-call source `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` is clean-qualified. V1 accepts only
+  independently trusted credential-provisioning evidence; attempt ID binds contract, evidence, approval and
+  ledger snapshot. Evidence is one-use, terminal attempts never retry, and BLOCKED grants no successor.
+  Provisioning, candidate creation and paid execution remain separate boundaries.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

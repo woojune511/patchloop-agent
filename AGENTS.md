@@ -31,8 +31,9 @@
   authority가 있을 때만 standard runner가 선택하며 durable-prefix/CAS 재검증, append-only receipt,
   completed-result persistence, qualification과 completion adapter까지 local/mock으로 검증됐다. Raw v2
   result는 계속 `official=false`이고 새 A/C 전에 새 source/suite/source-qualification identity가 필요하다.
-- Evaluator-v2 A/C successor의 working-tree offline qualification이 materialize됐다. Exact tuple은
-  `docs/09-evidence.md`가 소유하며 clean commit, preflight, candidate나 live authority는 아니다.
+- Evaluator-v2 boundary는 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`에 고정됐고, versioned
+  no-call contract source는 direct child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf`로 qualified됐다.
+  Exact tuple은 `docs/09-evidence.md`가 소유하며 evidence/approval/attempt나 live authority가 아니다.
 - Provider/evaluator service/agent, retrieval/injection, Docker/SDK observation, credential provisioning,
   execution hash/candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.

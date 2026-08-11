@@ -106,8 +106,10 @@ accepted events and verified CAS; exact-marker hits are redacted before persiste
 binds the supplied source/suite qualification authority, event boundaries, accepted patch and evidence inventory.
 Completed persistence and qualification require that receipt; the raw v2 result remains unofficial.
 
-The A/C successor hashes exact source/tests, task/image/marker projections, runtime, R2 treatment and schedule.
-Its factory requires a caller-supplied run-secret marker, reads no credential and opens no execution authority.
+The committed A/C successor hashes source/tests, task/image/marker projections, runtime, treatment and schedule.
+Preflight contract `ac-evaluator-v2-no-call-preflight-v1` accepts only independently trusted, value-free
+credential-provisioning evidence. Attempt identity binds contract, evidence, approval and durable-ledger snapshot;
+reuse, retry, overwrite and terminal append fail closed. Qualification creates none of those inputs or authority.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

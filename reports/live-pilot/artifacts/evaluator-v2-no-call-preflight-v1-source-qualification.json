@@ -1,0 +1,135 @@
+{
+  "schema_version": "versioned-no-call-preflight-source-qualification-v1",
+  "qualification_id": "ac-evaluator-v2-no-call-preflight-source-20260811-r1",
+  "status": "OFFLINE_CONTRACT_SOURCE_QUALIFIED_LIVE_CLOSED",
+  "recorded_at": "2026-08-11T14:36:58.123630Z",
+  "source_commit": {
+    "commit": "4a78745552ef8eab62ddfcdaeb3154de50fe79bf",
+    "tree": "9918bc6eee6fbbe12ac66def5d2162cc07aa38f1",
+    "parents": [
+      "04ee027171d9d4891c4f481d2ccfb277e7a4a9e6"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-no-call-preflight-v1.contract.json",
+      "patchloop/evals/versioned_no_call_preflight.py",
+      "scripts/build_versioned_no_call_preflight_contract.py",
+      "tests/test_versioned_no_call_preflight_contract.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-no-call-preflight-v1.contract.json",
+      "blob_oid": "797681f4562e0a6b2d72a9af995afdb8f5358bdc",
+      "file_bytes": 4630,
+      "file_sha256": "sha256:d9bc1344800dc17f3235ebb330626660089521943712fa601b992b1ca463ad35"
+    },
+    {
+      "path": "patchloop/contracts.py",
+      "blob_oid": "66d902411622f47097ec9d65b785dc068ec0edcd",
+      "file_bytes": 146376,
+      "file_sha256": "sha256:1124f1d0378fa23517a94369399267cb6b65d5745f4b881e837c6046d5cbf69b"
+    },
+    {
+      "path": "patchloop/errors.py",
+      "blob_oid": "053f1925a6fbea0e45414d28f978ea57dfe0d916",
+      "file_bytes": 1149,
+      "file_sha256": "sha256:5c1df0ce42435edad209699957eaa5e8a71f2256ef449b56a21b74efc24e7baa"
+    },
+    {
+      "path": "patchloop/evals/evaluator_v2_source_qualification.py",
+      "blob_oid": "27534d19126a957e143363f0390330cd6ac6481c",
+      "file_bytes": 35596,
+      "file_sha256": "sha256:5d2965273767a92a512d965f3484504e2da6d6106ea2805933e87bc293ac161b"
+    },
+    {
+      "path": "patchloop/evals/versioned_no_call_preflight.py",
+      "blob_oid": "cbbba1891bdb2b5348d20470231ec46180d224d9",
+      "file_bytes": 61945,
+      "file_sha256": "sha256:be6720ae2595b2806dc3fe441201a1dd7aebd9c4f9510e7c3d7b0300cdc05653"
+    },
+    {
+      "path": "patchloop/runtime.py",
+      "blob_oid": "2165d6513419ebfcd40972b85bc2733337cbfc36",
+      "file_bytes": 13657,
+      "file_sha256": "sha256:e7762c637e7cdaf7aed224f5b09fac168fa309ee365b2975242ce40c9edb79e4"
+    },
+    {
+      "path": "patchloop/util.py",
+      "blob_oid": "200ad3ad09960e9f98c695e0d873c20b146f13a2",
+      "file_bytes": 2109,
+      "file_sha256": "sha256:1c50c2e42fe9a310b7b9758d2e1c7bc2f0bdc8441aa864b00a48097a96dc130f"
+    },
+    {
+      "path": "pyproject.toml",
+      "blob_oid": "05c7531f581c0700e61923790f0886bf73c0ef84",
+      "file_bytes": 1032,
+      "file_sha256": "sha256:2e8395b0d26e0f4e686daa3481c18301e025417666db828da0e0425cfd5b3986"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-terminal.json",
+      "blob_oid": "809f513ec9a961bf998b822df08b5fd3e890dcda",
+      "file_bytes": 8962,
+      "file_sha256": "sha256:38121d8498578cd495ec94a2ca4da47bdebfc87f358540892cff09c297793bcb"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/d142-d141-sdk-blocked-no-call-successor-offline-source-gate.json",
+      "blob_oid": "a2fcfcf97e8cdc1c7b8357b334211efab4b2dbf2",
+      "file_bytes": 16298,
+      "file_sha256": "sha256:83fa6e83a3b5827a07e3383f9dea6318b748813742b501a4aaf7b41c726a1e80"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification.json",
+      "blob_oid": "86e391535962a056d83695c11b8e24a2f82e042a",
+      "file_bytes": 12487,
+      "file_sha256": "sha256:0055acd23ec45755e825dbf938032cd118c121890bc975c7d4bba8f8e6277580"
+    },
+    {
+      "path": "uv.lock",
+      "blob_oid": "6a706fc06a854ad0ec6e696eec28198666c5c09d",
+      "file_bytes": 240131,
+      "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+    }
+  ],
+  "validation_files": [
+    {
+      "path": "scripts/build_versioned_no_call_preflight_contract.py",
+      "blob_oid": "49c7fbb961fd02bd6874dacd55f63a99c09e9fea",
+      "file_bytes": 1299,
+      "file_sha256": "sha256:9cddc0b753f03271637b7547de9512dbb6ae54c3fbd827ef9e83110e7b037d4d"
+    },
+    {
+      "path": "tests/test_versioned_no_call_preflight_contract.py",
+      "blob_oid": "e1ad0e99fc0e147b4dd5268952834d2d2a1d9d74",
+      "file_bytes": 21364,
+      "file_sha256": "sha256:bf4413b8353a7378c7675b52c8604d084b71103fc0ea3f64e29a9f111957946c"
+    }
+  ],
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v1",
+  "contract_id": "ncpcontract_5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c",
+  "contract_content_hash": "sha256:5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-no-call-preflight-v1.contract.json",
+    "blob_oid": "797681f4562e0a6b2d72a9af995afdb8f5358bdc",
+    "file_bytes": 4630,
+    "file_sha256": "sha256:d9bc1344800dc17f3235ebb330626660089521943712fa601b992b1ca463ad35"
+  },
+  "evaluator_v2_source_qualification_hash": "sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320",
+  "evaluator_source_hash": "sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943",
+  "successor_suite_hash": "sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f",
+  "runtime_tuple_hash": "sha256:d2195cdce2ab55a23e4dd186d57cb5fb3222ecc40bd190458d2b64c6df438265",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "contract_source_qualified": true,
+    "state_change_evidence_created": false,
+    "approval_created_or_inferred": false,
+    "attempt_or_transition_created": false,
+    "credential_or_environment_observation_count": 0,
+    "credential_value_observation_or_mutation_count": 0,
+    "docker_or_sdk_observation_count": 0,
+    "network_provider_evaluator_agent_call_count": 0,
+    "execution_hash_or_candidate_created": false,
+    "cost_reserved_or_spent_usd": "0"
+  },
+  "next_gate": "separately-approved-no-call-preflight-attempt",
+  "content_hash": "sha256:cf00cdc35656fcc3fbf187c3789774e7c8a6c32491d646ebb4d2a600c952d0d5"
+}

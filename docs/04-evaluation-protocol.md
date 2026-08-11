@@ -103,8 +103,8 @@ Evaluator v1 assigns safety a literal PASS. The v2 path derives typed check/scop
 accepted-event prefix, verified CAS and exact requested-policy descriptors; exact marker hits are redacted before
 persistence. Missing→NOT_RUN, checker error→ERROR, violation→FAIL and complete observations→PASS. Standard-runner
 selection, completed persistence and qualification require a separately supplied authority and exact receipt;
-the raw result remains unofficial. The offline successor source/runtime/suite tuple is now content-qualified,
-but not clean-commit sealed or authorized for execution.
+the raw result remains unofficial. The successor and versioned no-call contract are commit-qualified, but no
+state-change evidence, approval, attempt or execution authority exists.
 
 ## 7. Run-completion gate
 

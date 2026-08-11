@@ -37,6 +37,16 @@ uv run --offline --frozen python scripts/build_evaluator_v2_ac_source_qualificat
 The second command must leave the append-only artifact's mtime unchanged. Both commands are local-only and create
 no Docker/network/credential/provider/evaluator/agent activity, execution hash or candidate.
 
+## Validate the sealed no-call contract
+
+```powershell
+uv run --offline --frozen pytest -q tests/test_versioned_no_call_preflight_contract.py
+uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contract.py --validate
+```
+
+Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
+one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
+
 ## Audit the sealed D-142 source
 
 D-142's post-commit validator is bound to its exact clean historical gate+10-doc evidence checkout. It correctly
@@ -70,8 +80,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate the typed evaluator-v2 receipt and offline successor qualification.
-2. Define and clean-seal the versioned no-call preflight contract without observing external state.
-3. Stop. External preflight attempt, pricing/candidate and paid execution each require later exact authority.
+1. Validate evaluator-v2, successor and sealed no-call source evidence.
+2. Stop. State-change evidence, exact preflight approval, pricing/candidate and paid execution are separate gates.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

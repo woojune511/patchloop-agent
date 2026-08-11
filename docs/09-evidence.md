@@ -81,9 +81,14 @@ provider/evaluator/agent calls were 0. D-141 is consumed and cannot be retried, 
 
 ## Next evidence boundary
 
-The v2 path and offline A/C successor are working-tree evidence only. The artifact is 12,487 bytes, file
-`sha256:0055acd23ec45755e825dbf938032cd118c121890bc975c7d4bba8f8e6277580`, source qualification
+Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` preserves successor source qualification
 `sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320`, evaluator source
-`sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and successor suite
-`sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`; all external call counts and cost are
-zero. Next is a clean-sealed no-call contract, with no change to evaluator-v1, D-142 or R2 artifacts authorized.
+`sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and suite
+`sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`.
+
+Its exact four-file child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf`, tree
+`9918bc6eee6fbbe12ac66def5d2162cc07aa38f1`, seals contract content
+`sha256:5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c`. The 6,070-byte qualification file is
+`sha256:adcb55d31786103f8cf34e84902e9243d6bf9c5a5cc2952fc52fb68297f0e01d`, semantic hash
+`sha256:cf00cdc35656fcc3fbf187c3789774e7c8a6c32491d646ebb4d2a600c952d0d5`. External observations/calls and cost are
+zero; no state-change evidence, approval, attempt or terminal exists. D-142/R2 remain unchanged.

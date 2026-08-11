@@ -37,8 +37,10 @@ Historical milestone-by-milestone limitations are archived at
 - `EvaluationEngine` assigns safety a literal PASS; it does not bind an executed independent safety result.
 - Free-form private `prohibited_behaviors` are audit context, not typed command/network/secret/sandbox evidence.
 - V2 now has authority-gated standard-runner, append-only receipt, completed-persistence and qualification paths.
-  The working-tree successor qualification binds exact local hashes, but is not a clean committed source seal or
-  official/live v2 result; a raw v2 result remains `official=false`.
+  Committed successor/preflight sources bind exact hashes, but no official/live v2 result exists; raw v2 remains
+  `official=false`.
+- Preflight v1 is structural source evidence only. It neither produces/authenticates state-change evidence,
+  approval or ledger state nor observes Docker/SDK; those trusted inputs and runtime producer remain absent.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
