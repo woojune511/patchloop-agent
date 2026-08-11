@@ -1,0 +1,103 @@
+{
+  "schema_version": "versioned-no-call-preflight-contract-v1",
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v1",
+  "contract_id": "ncpcontract_5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c",
+  "evaluator_v2_source_qualification_hash": "sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320",
+  "evaluator_source_hash": "sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943",
+  "successor_suite_hash": "sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f",
+  "runtime_tuple_hash": "sha256:d2195cdce2ab55a23e4dd186d57cb5fb3222ecc40bd190458d2b64c6df438265",
+  "d141_blocked_terminal": {
+    "path": "reports/live-pilot/artifacts/d141-sdk-no-call-successor-terminal.json",
+    "schema_version": "d141-sdk-no-call-successor-terminal-v1",
+    "identity": "d141sdk_c96ceb8eb274560b89e3688402a0c3576d6f09536c32d611600ac1386d4613ef",
+    "semantic_body_hash": "sha256:c96ceb8eb274560b89e3688402a0c3576d6f09536c32d611600ac1386d4613ef",
+    "file_sha256": "sha256:38121d8498578cd495ec94a2ca4da47bdebfc87f358540892cff09c297793bcb",
+    "file_bytes": 8962,
+    "status": "D141_SDK_NO_CALL_SUCCESSOR_BLOCKED_TRANSITION_COMMIT_REQUIRED"
+  },
+  "d142_deferred_gate": {
+    "path": "reports/live-pilot/artifacts/d142-d141-sdk-blocked-no-call-successor-offline-source-gate.json",
+    "schema_version": "d141-sdk-blocked-no-call-successor-offline-source-gate-d142-v1",
+    "identity": "d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914",
+    "semantic_body_hash": "sha256:9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914",
+    "file_sha256": "sha256:83fa6e83a3b5827a07e3383f9dea6318b748813742b501a4aaf7b41c726a1e80",
+    "file_bytes": 16298,
+    "status": "D142_D141_SDK_BLOCKED_NO_CALL_SUCCESSOR_OFFLINE_SOURCE_QUALIFIED_FRESH_ACTIVATION_REQUIRED"
+  },
+  "d142_source_commit": "1370cf43c08cefb550b158a5d4172a60ac172470",
+  "d142_is_audit_only": true,
+  "state_change_rule": {
+    "schema_version": "preflight-state-change-rule-v1",
+    "allowed_kind": "credential_provisioning_completed_v1",
+    "exact_subject_names": [
+      "OPENAI_API_KEY"
+    ],
+    "requires_user_controlled_provisioning_receipt": true,
+    "requires_independent_trust_anchor": true,
+    "raw_credential_value_allowed": false,
+    "unchanged_blocker_is_state_change": false,
+    "source_or_contract_change_requires_version_bump": true
+  },
+  "observation_contract": {
+    "schema_version": "preflight-observation-contract-v1",
+    "phases": [
+      "docker_metadata",
+      "sdk_no_call"
+    ],
+    "docker_metadata_queries": [
+      "engine_version",
+      "qualified_image_identity"
+    ],
+    "sdk_environment_names": [
+      "OPENAI_API_KEY",
+      "PYTHONHOME",
+      "PYTHONPATH"
+    ],
+    "environment_membership_check_limit": 3,
+    "environment_value_read_limit": 0,
+    "dotenv_read_limit": 0,
+    "docker_container_start_limit": 0,
+    "sdk_isolated_child_start_limit": 1,
+    "transport_dispatch_limit": 0,
+    "provider_evaluator_agent_call_limit": 0,
+    "network_call_limit": 0,
+    "credential_mutation_limit": 0,
+    "observation_result_values_allowed": false
+  },
+  "transition_policy": {
+    "schema_version": "preflight-transition-policy-v1",
+    "exact_sequence": [
+      "intent_recorded",
+      "action_started",
+      "ready_or_blocked_or_error_terminal"
+    ],
+    "state_change_evidence_use_limit": 1,
+    "approval_use_limit": 1,
+    "attempt_number": 1,
+    "marker_before_first_observation": true,
+    "terminal_typed_observation_required": true,
+    "intent_creation_reserves_evidence": true,
+    "post_marker_failure_consumes_attempt": true,
+    "terminal_is_append_only": true,
+    "retry_allowed": false,
+    "resume_allowed": false,
+    "overwrite_allowed": false,
+    "repair_or_backfill_allowed": false,
+    "blocked_authorizes_successor": false
+  },
+  "source_authority": {
+    "contract_materialization_authorized": true,
+    "commit_source_qualification_authorized": true,
+    "state_change_evidence_creation_authorized": false,
+    "credential_provisioning_authorized": false,
+    "external_preflight_attempt_authorized": false,
+    "docker_or_sdk_observation_authorized": false,
+    "execution_hash_or_candidate_authorized": false,
+    "pricing_or_cost_reservation_authorized": false,
+    "provider_evaluator_agent_execution_authorized": false,
+    "memory_retrieval_or_injection_authorized": false,
+    "automatic_retry_replacement_or_resume_authorized": false,
+    "memory_benefit_claim_authorized": false
+  },
+  "content_hash": "sha256:5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c"
+}
