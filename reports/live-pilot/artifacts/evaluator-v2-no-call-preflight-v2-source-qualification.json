@@ -1,0 +1,72 @@
+{
+  "schema_version": "user-attested-no-call-preflight-source-qualification-v2",
+  "qualification_id": "ac-evaluator-v2-user-attested-no-call-preflight-source-20260812-r1",
+  "status": "OFFLINE_USER_ATTESTED_CONTRACT_SOURCE_QUALIFIED_LIVE_CLOSED",
+  "recorded_at": "2026-08-11T15:06:05.101799Z",
+  "source_commit": {
+    "commit": "d8652b2648f97788ae65a82e949d2b168e7ff4a9",
+    "tree": "373244b7b2a9e44d7e6dfe31deb59aef9030dd97",
+    "parents": [
+      "e46525d649525502cd808e181ee04ff935f35dce"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-no-call-preflight-v2.contract.json",
+      "patchloop/evals/user_attested_no_call_preflight.py",
+      "scripts/build_user_attested_no_call_preflight_contract.py",
+      "tests/test_user_attested_no_call_preflight_contract.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-no-call-preflight-v2.contract.json",
+      "blob_oid": "3454f38391e9266bde81bc1397b7e8f71d24c376",
+      "file_bytes": 5108,
+      "file_sha256": "sha256:5e4ac4c00f06c0f74e5685e88a323b3770cdfc30da4e1da8f0f579787ca730eb"
+    },
+    {
+      "path": "patchloop/evals/user_attested_no_call_preflight.py",
+      "blob_oid": "c55f89b7e52c7dffe374a8f04e09b305ae4c68c7",
+      "file_bytes": 50274,
+      "file_sha256": "sha256:b05513c149ff5acb2c2e90ad7ffa9a3651f9f0edfb1559ae288e8cc9aa851a2d"
+    },
+    {
+      "path": "scripts/build_user_attested_no_call_preflight_contract.py",
+      "blob_oid": "38bc5b9241d0c0227fc5b8ec6585e2fa026a2ddb",
+      "file_bytes": 3008,
+      "file_sha256": "sha256:c2d035b1adf06f637816b71438535ce1d7c8a48e5a15ca22ab588ac6a13726e4"
+    },
+    {
+      "path": "tests/test_user_attested_no_call_preflight_contract.py",
+      "blob_oid": "b3201826aa68e0be2554093294308d2aa98757dd",
+      "file_bytes": 10137,
+      "file_sha256": "sha256:c59f4efd98b5cbae9c61e11238c5c48ef66a8adf455f6b8f3011f23d217d6dde"
+    }
+  ],
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v2",
+  "contract_id": "ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd",
+  "contract_content_hash": "sha256:68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-no-call-preflight-v2.contract.json",
+    "blob_oid": "3454f38391e9266bde81bc1397b7e8f71d24c376",
+    "file_bytes": 5108,
+    "file_sha256": "sha256:5e4ac4c00f06c0f74e5685e88a323b3770cdfc30da4e1da8f0f579787ca730eb"
+  },
+  "predecessor_contract_id": "ncpcontract_5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c",
+  "predecessor_contract_content_hash": "sha256:5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "contract_source_qualified": true,
+    "user_attestation_created": false,
+    "state_change_evidence_created": false,
+    "approval_created_or_inferred": false,
+    "attempt_or_transition_created": false,
+    "credential_dotenv_or_environment_observation_count": 0,
+    "credential_value_observation_or_mutation_count": 0,
+    "docker_or_sdk_observation_count": 0,
+    "network_provider_evaluator_agent_call_count": 0,
+    "execution_hash_or_candidate_created": false,
+    "cost_reserved_or_spent_usd": "0"
+  },
+  "next_gate": "user-attestation-state-evidence-then-exact-approval",
+  "content_hash": "sha256:e903639750a961b60f879435a10be5e3f03f1809614e7686a8f8d854d2def309"
+}
