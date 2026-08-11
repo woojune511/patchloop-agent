@@ -1,0 +1,137 @@
+{
+  "schema_version": "no-start-executable-preflight-source-qualification-v5",
+  "qualification_id": "ac-evaluator-v2-no-start-executable-preflight-source-20260812-r1",
+  "status": "OFFLINE_NO_START_EXECUTABLE_SOURCE_QUALIFIED_EXACT_APPROVAL_REQUIRED",
+  "recorded_at": "2026-08-11T16:40:21.323168Z",
+  "source_commit": {
+    "commit": "3b80cf26983a1723f1f7b87561003ffc243d64a3",
+    "tree": "d060533981c036119ed7e19367f35056cd0b2ab3",
+    "parents": [
+      "6e068a714d4b516e75c381839e64fc0dcbd27e07"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-no-start-executable-preflight-v5.contract.json",
+      "patchloop/evals/no_start_executable_preflight.py",
+      "scripts/build_no_start_executable_preflight.py",
+      "tests/test_no_start_executable_preflight.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-manual-docker-start-state-v4.contract.json",
+      "blob_oid": "04ea05ccc5217b91731bee37aea31cc7ed0b8461",
+      "file_bytes": 3638,
+      "file_sha256": "sha256:9f116a707c625d931d3b93b255cc05aae92346d278063d037c21584e9315f907"
+    },
+    {
+      "path": "experiments/evaluator-v2-no-start-executable-preflight-v5.contract.json",
+      "blob_oid": "669e819006c37a4b25b81c2ccf82a01364feb482",
+      "file_bytes": 4552,
+      "file_sha256": "sha256:9453e185a31ad7c11a0db026a0e4374185a6209a0b269f779a98c0e52d15685d"
+    },
+    {
+      "path": "patchloop/evals/d137_no_call_preflight.py",
+      "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+      "file_bytes": 95362,
+      "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3"
+    },
+    {
+      "path": "patchloop/evals/executable_no_call_preflight.py",
+      "blob_oid": "468eef2ca4e4ac3966035e2c32c9014cccb858d5",
+      "file_bytes": 69833,
+      "file_sha256": "sha256:f3c6de683600b99870a301ecaf76fcfc0fb58c9f38f305ad07eb0dec0060b919"
+    },
+    {
+      "path": "patchloop/evals/manual_docker_start_state_successor.py",
+      "blob_oid": "0e33e7d93e148f5012218265b89ccb498fecbb4a",
+      "file_bytes": 35792,
+      "file_sha256": "sha256:92c76ae66c77b390916ace2b9e6fb6e14fa8b293a9e2d358d6d05d48958d4a92"
+    },
+    {
+      "path": "patchloop/evals/no_start_executable_preflight.py",
+      "blob_oid": "0da4a7fd120003ceaf7d4218dbc73a9191df1e19",
+      "file_bytes": 57791,
+      "file_sha256": "sha256:86c77bd346beedfd0d18b6e87c487cb52e5368e3ad4af1e6ee18f03cbebe8e01"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-manual-docker-start-state-v4-source-qualification.json",
+      "blob_oid": "722dfdc1dcdc5ebd360dd71c97ca9f5e7024b9f9",
+      "file_bytes": 3226,
+      "file_sha256": "sha256:33c4cbe088ed5d222c94407927cd4a5a23e2a0c3b58968cd64d91feca676238c"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-manual-docker-start-state-v4-state-change-evidence.json",
+      "blob_oid": "d7d8a31675f3ca1b2063f01b706745a1f361a226",
+      "file_bytes": 1782,
+      "file_sha256": "sha256:5e1b7dbbb6091ad9fcd16752dc58926a4ed475a1ecf35e602b5fbaa6e62df427"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-manual-docker-start-state-v4-user-attestation.json",
+      "blob_oid": "d8d11e6782abaee435232b30c295d5e571c95cc2",
+      "file_bytes": 1427,
+      "file_sha256": "sha256:a89ef76bd7b739e46700e1786b0bf24681f409b1d7c38bc77fec2d712ef22df3"
+    },
+    {
+      "path": "scripts/build_no_start_executable_preflight.py",
+      "blob_oid": "1fee33a835d00008c058de65d97537a868c5d6f0",
+      "file_bytes": 3351,
+      "file_sha256": "sha256:b7c8360c308d4adaa06d70640891df18596dc26e82019752bd0d2e41fe599370"
+    },
+    {
+      "path": "scripts/run_dotenv_sdk_no_call_child.py",
+      "blob_oid": "573a3e7d6eb3aa0a35106722f193f83deb2644d5",
+      "file_bytes": 6976,
+      "file_sha256": "sha256:27729c67eca9513bcdd8432bc8e9cb9bfc6399fde3c2f3d36dc512a61b724ad5"
+    },
+    {
+      "path": "tests/test_no_start_executable_preflight.py",
+      "blob_oid": "730b2fa45a24f97e0471afad7f70cbaa31571891",
+      "file_bytes": 13267,
+      "file_sha256": "sha256:dc52f1231e3056f109ed49a5e05fda14166d49bbc9c5ff99ce0d44abb5919bbe"
+    }
+  ],
+  "contract_version": "ac-evaluator-v2-no-start-executable-preflight-v5",
+  "contract_id": "ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84",
+  "contract_content_hash": "sha256:858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-no-start-executable-preflight-v5.contract.json",
+    "blob_oid": "669e819006c37a4b25b81c2ccf82a01364feb482",
+    "file_bytes": 4552,
+    "file_sha256": "sha256:9453e185a31ad7c11a0db026a0e4374185a6209a0b269f779a98c0e52d15685d"
+  },
+  "runtime_file": {
+    "path": "patchloop/evals/no_start_executable_preflight.py",
+    "blob_oid": "0da4a7fd120003ceaf7d4218dbc73a9191df1e19",
+    "file_bytes": 57791,
+    "file_sha256": "sha256:86c77bd346beedfd0d18b6e87c487cb52e5368e3ad4af1e6ee18f03cbebe8e01"
+  },
+  "child_file": {
+    "path": "scripts/run_dotenv_sdk_no_call_child.py",
+    "blob_oid": "573a3e7d6eb3aa0a35106722f193f83deb2644d5",
+    "file_bytes": 6976,
+    "file_sha256": "sha256:27729c67eca9513bcdd8432bc8e9cb9bfc6399fde3c2f3d36dc512a61b724ad5"
+  },
+  "d137_observer_file": {
+    "path": "patchloop/evals/d137_no_call_preflight.py",
+    "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+    "file_bytes": 95362,
+    "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3"
+  },
+  "predecessor_state_file": {
+    "path": "reports/live-pilot/artifacts/evaluator-v2-manual-docker-start-state-v4-state-change-evidence.json",
+    "blob_oid": "d7d8a31675f3ca1b2063f01b706745a1f361a226",
+    "file_bytes": 1782,
+    "file_sha256": "sha256:5e1b7dbbb6091ad9fcd16752dc58926a4ed475a1ecf35e602b5fbaa6e62df427"
+  },
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "approval_created_or_inferred": false,
+    "attempt_or_transition_created": false,
+    "docker_sdk_dotenv_network_or_provider_observation_count": 0,
+    "docker_start_pull_load_image_or_container_mutation_count": 0,
+    "execution_hash_candidate_cost_or_paid_execution_authorized": false
+  },
+  "next_gate": "fresh-exact-approval-reconfirm-manual-start-and-dotenv",
+  "content_hash": "sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7"
+}
