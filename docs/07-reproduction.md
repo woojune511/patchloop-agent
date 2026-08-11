@@ -102,7 +102,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3, structural v4 and qualified v5.
-2. Stop. V5 needs a fresh exact approval that reconfirms current manual start and `.env` placement.
+1. Validate evaluator-v2 and consumed v3-v5 evidence read-only.
+2. Stop. V5 cannot retry; prepare a new offline successor before any new state or approval gate.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

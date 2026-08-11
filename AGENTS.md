@@ -44,10 +44,9 @@
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
-- No-start v5 source `3b80cf26983a1723f1f7b87561003ffc243d64a3` and qualification
-  `sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7` are offline-only. No approval, receipt,
-  attempt, marker, terminal or external observation exists. The next gate is a fresh exact approval that also
-  reconfirms current manual-start state and `.env` placement; start/pull/container/network/cost remain forbidden.
+- No-start v5 one-use attempt is consumed `ERROR(checker_error)`. Docker READY and exact `.env` key membership were
+  observed, but the isolated checker returned no SDK evidence. Accounting is incomplete and retry/resume is false.
+  Preserve v5; next is offline successor design with all external/candidate/cost authority closed.
 
 ## Required reading
 

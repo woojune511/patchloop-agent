@@ -105,10 +105,9 @@ aggregates `ERROR > FAIL > NOT_RUN > PASS`, and validates accepted events, CAS a
 Its receipt binds authority, event boundaries, patch and inventory; persistence/qualification require it and raw
 results remain unofficial.
 
-The A/C successor hashes source/tests, task/image/marker projections, runtime, treatment and schedule. Preflight v1/v2
-preserve receipt/non-proof semantics; v3 is consumed and v4 records self-attested manual start only. V5 binds v4,
-the D-137 read-only observer and isolated reject-dispatch child. Fresh approval must cite contract+qualification+state
-and reconfirm current manual start/`.env`; intent/ACTION_STARTED then precedes one terminal, never a retry.
+The A/C successor hashes source, runtime, treatment and schedule. Preflight v1-v4 remain predecessors. V5 bound v4,
+approval, read-only Docker and the isolated child, then terminated checker-error after ACTION_STARTED. Its incomplete
+accounting is immutable; any future version needs new source/state/approval identities, never a v5 retry.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

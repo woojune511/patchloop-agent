@@ -14,23 +14,23 @@ PASS. Historical results remain immutable and are not independently safety-verif
 binds typed event/CAS evidence and uses an authority receipt to gate runner, persistence, qualification and completion; raw
 results remain `official=false` and local/mock tests are not official evidence.
 
-The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V3 is consumed
-`BLOCKED(docker_not_ready)` and v4 binds only self-attested manual-start state. No-start executable v5 source
-`3b80cf26983a1723f1f7b87561003ffc243d64a3` is qualified, unapproved and unattempted.
+The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V3 is Docker-blocked
+and v4 self-attested. V5 is consumed `ERROR(checker_error)`: Docker was READY after eight stable read-only calls;
+the child found the exact `.env` key declared/nonempty but returned `sdk_checker_error`. Accounting is incomplete.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v4 are sealed; v5 is source-qualified with all source-time live authority false.
-4. **Separately approved preflight attempt.** V5 requires a fresh exact approval that reconfirms current manual-start
-   and `.env` placement; one attempt may read Docker/`.env` and run the reject-dispatch SDK probe, never start/pull.
+3. **Offline preflight contracts.** V1-v5 are sealed; v5 approval and terminal evidence are immutable.
+4. **Separately approved preflight attempt.** V5 is consumed ERROR with retry/resume false and unknown post-marker
+   activity possible. Docker readiness and key membership do not establish SDK or evaluator readiness.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
 8. **Selective/full comparison.** B/D require frozen leakage/redaction/calibration or a fresh held-out panel.
 
-No official/live evaluator result exists. V5 source qualification observed nothing and grants no execution.
+No official/live evaluator result exists. V5 is a consumed preflight error, not readiness evidence.
 
 ## Consumed boundaries
 
@@ -39,16 +39,13 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-Credential placement and manual Docker start are user-reported only. No v5 approval/receipt/attempt/marker/terminal
-exists; Docker, SDK/`.env`, provider/evaluator/agent, memory, candidate, cost and A/C authority remain closed.
+V5 approval, attempt and terminal are consumed. No retry/replacement/resume or new Docker, SDK/`.env`, provider,
+evaluator/agent, memory, candidate, cost or A/C authority exists.
 
 ## Next gate
 
-The next gate is a **fresh exact v5 approval**, separately citing contract
-`ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84`, source qualification
-`sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7` and v4 state
-`ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`, while reconfirming both current
-manual-start state and current `.env` placement. It may authorize one bounded no-start observation only; Docker
-start/pull/load/container operations, network, provider/evaluator/agent, candidate, cost and paid execution stay closed.
+The next gate is an **offline versioned successor design**, not a v5 retry. It must preserve v5 unchanged and make
+the isolated SDK checker failure diagnosable without credential values or transport. Any later observation requires
+new source qualification, relevant state binding and a separate exact approval; none is currently authorized.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

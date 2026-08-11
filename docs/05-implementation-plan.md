@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v4 sealed; v5 source-qualified with exact approval pending.
+Status: v1-v5 sealed; v5 ended `ERROR(checker_error)` and is consumed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -44,20 +44,19 @@ require a new version.
 V3 `ce0628880107db2319816272cfa49adc7ea99667` binds full-file-in-child/boolean-only-return, fixed-placeholder SDK
 reject-dispatch and D-137 read-only Docker. State remains self-attested non-proof; read/stat=0.
 
-V4 binds the manual-start report without proving readiness. V5 `3b80cf26983a1723f1f7b87561003ffc243d64a3`
-implements the no-start one-use path; qualification is offline evidence only and created no approval or observation.
+V4 binds the manual-start report without proving readiness. V5 source, approval, attempt and terminal are immutable;
+its incomplete checker-error accounting cannot be repaired, resumed or promoted to READY.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3 consumed `BLOCKED(docker_not_ready)`; fresh v5 exact approval pending.
+Status: v3 Docker-blocked and v5 checker-error attempts are consumed; no retry authority.
 
-V3 cannot retry. V5 binds qualified source plus v4 state and requires approval to reconfirm current manual start and
-`.env` placement. Only then may one intent/ACTION_STARTED precede eight read-only Docker calls and, if READY, one
-isolated membership/reject-dispatch SDK observation. Start/pull/load/container/network/provider/cost stay forbidden.
+V5 recorded Docker READY and exact key membership, then `sdk_checker_error`. Its incomplete ERROR terminal cannot be
+rerun; next design a new offline successor with sanitized checker diagnostics.
 
 ## Work item 5 — execution candidate and cost gate
 
-Status: unauthorized; blocked on a READY successor preflight and separate exact authority.
+Status: unauthorized; blocked on a new READY successor preflight and separate exact authority.
 
 Refresh official pricing, bind the row reserve and hard cap, then create the execution hash/candidate. A later
 message must separately cite those exact identities and cap to authorize paid execution. Preflight READY creates

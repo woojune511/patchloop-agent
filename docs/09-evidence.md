@@ -103,10 +103,17 @@ binds contract `ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab
 `BLOCKED(docker_not_ready)`: Docker reads 8; start/pull/load/mutation, `.env`/SDK/network/provider/evaluator/agent/cost
 are 0; accounting is complete and retry/resume false.
 
-Manual-start v4 state `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`
-is self-attested non-proof with PatchLoop observation/mutation zero. No-start v5 source/tree
-`3b80cf26983a1723f1f7b87561003ffc243d64a3`/`d060533981c036119ed7e19367f35056cd0b2ab3` binds contract
-`ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84` and qualification
-`sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7`. Source preparation/qualification made
-zero external observation/mutation and grants none; approval, receipt, attempt, marker and terminal are absent.
+V4 state `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef` is self-attested non-proof. V5
+source `3b80cf26983a1723f1f7b87561003ffc243d64a3`, contract `ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84`
+and qualification `sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7` precede approval commit
+`980e94d5a51d92152cf839651a12bbffce191f2c`: receipt `ncpapprovalreceipt_4efe85c7678acc56b53e8b37d2ec36473681fec775ae3f5dc63d85befdea6a11`,
+approval `ncpapproval_3c94656fd82fd51bb2116973bbafef826b7f5431ed9716a1c645bd5c8a7171ad`.
+
+Consumed commit/tree `3374e3452af2a615b5c3eb00e493354baabe9b09`/`c42e7d5b1223be3b21f9932b12aa855c377c24bf` binds attempt
+`ncpattempt_005f1501ed93dc4cde97fa53a1718b6a90bdad18080eb88157bf7c713c5d6f26`, ACTION_STARTED
+`ncpstarted_3ee33fa8017b77c134e908156e3b46da78a16f21149cc7f9c7571e765bcf44f3` and ERROR terminal
+`ncpterminal_a7e12f36e75259ae00fe657ea0a96fde0a9826f58d77ffb1a7f091fff6902089`. Docker was READY after eight stable
+read-only calls; exact images were present and container inventory empty. The isolated child read `.env` once,
+found the exact key declared/nonempty and returned `sdk_checker_error` with no credential value/hash/length or
+network/provider call. Terminal accounting is incomplete, post-marker activity is unknown, and retry/resume is false.
 D-142/R2 and v1-v4 evidence remain unchanged.
