@@ -1,0 +1,110 @@
+{
+  "schema_version": "versioned-no-call-preflight-contract-v2",
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v2",
+  "contract_id": "ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd",
+  "predecessor_contract_version": "ac-evaluator-v2-no-call-preflight-v1",
+  "predecessor_contract_id": "ncpcontract_5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c",
+  "predecessor_contract_content_hash": "sha256:5c4020fed82e521fed27764a7ce98facb67b651b748138a644c08223f21d8c2c",
+  "predecessor_contract_file_sha256": "sha256:d9bc1344800dc17f3235ebb330626660089521943712fa601b992b1ca463ad35",
+  "predecessor_source_qualification_hash": "sha256:cf00cdc35656fcc3fbf187c3789774e7c8a6c32491d646ebb4d2a600c952d0d5",
+  "predecessor_source_qualification_file_sha256": "sha256:adcb55d31786103f8cf34e84902e9243d6bf9c5a5cc2952fc52fb68297f0e01d",
+  "predecessor_terminal_file_sha256": "sha256:38121d8498578cd495ec94a2ca4da47bdebfc87f358540892cff09c297793bcb",
+  "evaluator_v2_source_qualification_hash": "sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320",
+  "evaluator_source_hash": "sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943",
+  "successor_suite_hash": "sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f",
+  "runtime_tuple_hash": "sha256:d2195cdce2ab55a23e4dd186d57cb5fb3222ecc40bd190458d2b64c6df438265",
+  "predecessor_observation_contract_hash": "sha256:9c62f532d907b367e6b6525f6eeb9ad990cc72650a6d786fd5d4ce3e4b956ff3",
+  "predecessor_transition_policy_hash": "sha256:4990d2b9b5b39f0ced12c35bbda13baffe260faf972ba9db800898fe82285fb4",
+  "state_change_rule": {
+    "schema_version": "preflight-state-change-rule-v2",
+    "allowed_kind": "credential_location_user_attested_v2",
+    "exact_subject_names": [
+      "OPENAI_API_KEY"
+    ],
+    "exact_location_surface": "repository-root-dotenv",
+    "identity_assurance": "current-user-self-attested-not-authenticated-or-signed",
+    "external_receipt_required": false,
+    "independent_trust_anchor_required": false,
+    "attestation_proves_credential_presence": false,
+    "exact_preflight_still_required": true,
+    "exact_approval_after_evidence_id_required": true,
+    "raw_credential_value_allowed": false,
+    "unchanged_blocker_is_state_change": false,
+    "source_or_contract_change_requires_version_bump": true
+  },
+  "dotenv_loader_contract": {
+    "schema_version": "dotenv-exact-key-loader-contract-v2",
+    "dotenv_surface": "repository-root-dotenv",
+    "exact_key_names": [
+      "OPENAI_API_KEY"
+    ],
+    "read_may_begin_only_after_action_started": true,
+    "dotenv_file_read_limit": 1,
+    "exact_key_value_load_limit": 1,
+    "isolated_child_forward_limit": 1,
+    "parent_or_agent_value_return_limit": 0,
+    "other_key_forward_limit": 0,
+    "value_log_persist_hash_prefix_or_length_limit": 0,
+    "transport_dispatch_limit": 0,
+    "credential_mutation_limit": 0,
+    "loader_runtime_implemented": false
+  },
+  "observation_contract": {
+    "schema_version": "preflight-observation-contract-v2",
+    "phases": [
+      "docker_metadata",
+      "dotenv_sdk_no_call"
+    ],
+    "docker_metadata_queries": [
+      "engine_version",
+      "qualified_image_identity"
+    ],
+    "parent_environment_membership_names": [
+      "PYTHONHOME",
+      "PYTHONPATH"
+    ],
+    "parent_environment_membership_check_limit": 2,
+    "dotenv_subject_membership_check_limit": 1,
+    "docker_container_start_limit": 0,
+    "sdk_isolated_child_start_limit": 1,
+    "network_call_limit": 0,
+    "provider_evaluator_agent_call_limit": 0,
+    "observation_result_values_allowed": false
+  },
+  "transition_policy": {
+    "schema_version": "preflight-transition-policy-v1",
+    "exact_sequence": [
+      "intent_recorded",
+      "action_started",
+      "ready_or_blocked_or_error_terminal"
+    ],
+    "state_change_evidence_use_limit": 1,
+    "approval_use_limit": 1,
+    "attempt_number": 1,
+    "marker_before_first_observation": true,
+    "terminal_typed_observation_required": true,
+    "intent_creation_reserves_evidence": true,
+    "post_marker_failure_consumes_attempt": true,
+    "terminal_is_append_only": true,
+    "retry_allowed": false,
+    "resume_allowed": false,
+    "overwrite_allowed": false,
+    "repair_or_backfill_allowed": false,
+    "blocked_authorizes_successor": false
+  },
+  "source_authority": {
+    "contract_materialization_authorized": true,
+    "commit_source_qualification_authorized": true,
+    "user_attestation_binding_supported": true,
+    "attestation_is_independent_proof": false,
+    "external_preflight_attempt_authorized": false,
+    "dotenv_docker_or_sdk_observation_authorized": false,
+    "execution_hash_or_candidate_authorized": false,
+    "pricing_or_cost_reservation_authorized": false,
+    "provider_evaluator_agent_execution_authorized": false,
+    "memory_retrieval_or_injection_authorized": false,
+    "automatic_retry_replacement_or_resume_authorized": false,
+    "memory_benefit_claim_authorized": false
+  },
+  "content_hash": "sha256:68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd"
+}
