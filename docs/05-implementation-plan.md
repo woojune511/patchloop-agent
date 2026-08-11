@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1/v2 preserved; executable v3 is qualified and terminal.
+Status: v1/v2 preserved; v3 terminal and structural v4 state are sealed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -44,6 +44,9 @@ require a new version.
 V3 `ce0628880107db2319816272cfa49adc7ea99667` binds full-file-in-child/boolean-only-return, fixed-placeholder SDK
 reject-dispatch and D-137 read-only Docker. State remains self-attested non-proof; read/stat=0.
 
+V4 `5b592e4f4f86a62d90951e49494ed3f8cf2ae315` binds the manual-start report to v3 without reopening it. It has no
+runtime; daemon/image/container readiness and all PatchLoop observations remain false/zero.
+
 ## Work item 4 — separately approved no-call preflight attempt
 
 Status: consumed `BLOCKED(docker_not_ready)`; no retry or resume.
@@ -51,6 +54,7 @@ Status: consumed `BLOCKED(docker_not_ready)`; no retry or resume.
 Exact v3 approval produced one attempt, ACTION_STARTED and terminal. Eight read-only Docker calls observed the daemon
 unready; start/pull/mutation, `.env` read, SDK child and network/provider calls stayed zero. A documented relevant
 Docker state change, new version/state and separate exact approval are prerequisites to any successor attempt.
+The state change is now bound; next implement and qualify a no-start executable successor before requesting approval.
 
 ## Work item 5 — execution candidate and cost gate
 

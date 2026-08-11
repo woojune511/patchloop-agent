@@ -58,6 +58,10 @@ uv run --offline --frozen python scripts/build_executable_no_call_preflight.py -
 uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-state
 uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-exact-approval
 uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-terminal
+uv run --offline --frozen pytest -q tests/test_manual_docker_start_state_successor.py
+uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-source
+uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-state
 ```
 
 These validations do not read/stat `.env` or grant a new attempt.
@@ -95,7 +99,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, successor source and the consumed preflight-v3 chain.
-2. Stop. V3 cannot retry; a Docker state change plus new version/state/approval must precede any successor.
+1. Validate evaluator-v2, consumed v3 and structural manual-start v4.
+2. Stop. V3 cannot retry and v4 cannot execute; qualify a no-start executable successor before approval.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

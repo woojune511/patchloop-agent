@@ -2,77 +2,53 @@
 
 ## Current checkpoint
 
-D-142 remains the exact D-141 SDK-BLOCKED no-call successor gate
-`d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914`. Source commit
-`1370cf43c08cefb550b158a5d4172a60ac172470` is D-141's exact four-file sole child; `docs/09-evidence.md`
-owns the file, tree, parent and evidence-commit tuple.
-
-Its evidence state is unchanged: **source-qualified only, unactivated**. Mocked tests passed 170/170; no receipt,
-attempt, ACTION_STARTED or terminal exists, and preparation made no environment/SDK/Docker/external observation.
-
-Its planning disposition is now **deferred**. This does not consume, invalidate, repair or rewrite D-142; it
-removes activation from the current critical path. A future decision could still cite the exact tuple for the
-original one-use SDK observation, but that observation would not qualify a corrected evaluator or a new A/C
-experiment source.
+D-142 gate `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` and source
+`1370cf43c08cefb550b158a5d4172a60ac172470` remain D-141's exact four-file sole child; `docs/09-evidence.md` owns
+the tuple. Evidence stays **source-qualified only, unactivated** after 170/170 mocked tests, with no runtime artifact
+or observation. Its planning disposition is now **deferred**; it is unchanged/unconsumed and cannot qualify v2 A/C.
 
 ## Evaluator correctness gap
 
-The normative success contract is hidden acceptance AND regression AND scope AND safety. The current
-`EvaluationEngine` instead assigns `safety_state = VerdictState.PASS` without running an independent safety
-check. Therefore evaluator-v1 results do not establish that safety was measured, and a new paid A/C row must
-not be called four-verdict SCRR evidence under that implementation.
+Success requires hidden acceptance AND regression AND scope AND safety, but evaluator-v1 assigns literal safety
+PASS. Historical results remain immutable and are not independently safety-verified. V2's offline successor-only integration path
+binds typed event/CAS evidence and uses an authority receipt to gate runner, persistence, qualification and completion; raw
+results remain `official=false` and local/mock tests are not official evidence.
 
-Historical artifacts, including D-098, remain immutable evaluator-v1 observations and are not regraded. Claims
-using them must state that the safety component was unconditional rather than independently verified.
-
-Evaluator-v2 now has an offline successor-only integration path. With a separately supplied exact authority,
-the standard runner derives typed verdicts from the durable accepted-event prefix and CAS, writes an append-only
-receipt, and permits completed persistence only when that receipt revalidates. Qualification and A/C completion
-consume the same binding while the raw result remains `official=false`. Local mock/requested-policy tests are not
-a qualified source, Docker-enforcement result or official run.
-
-The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. Preflight v1/v2 remain
-predecessors. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` is now consumed
-`BLOCKED(docker_not_ready)` after one exact-approved Docker-only observation.
+The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V3 is consumed
+`BLOCKED(docker_not_ready)`. Structural v4 `5b592e4f4f86a62d90951e49494ed3f8cf2ae315` binds manual-start state
+`ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef` without proving readiness or granting
+runtime/approval authority.
 
 ## Current roadmap
 
-1. **Evaluator correctness v2.** Contract, typed producer, standard-runner selection, receipt-bound persistence,
-   qualification and completion enforcement are implemented and regression-tested locally.
-2. **Successor A/C qualification.** New source, runtime and successor-suite identities are materialized and
-   locally validated; D-142 and R2 remain immutable predecessors.
-3. **Offline preflight contracts.** V1/v2 are preserved; executable v3 source/state/approval are sealed.
+1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
+2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
+3. **Offline preflight contracts.** V1/v2 and consumed v3 are preserved; structural manual-start v4 is sealed.
 4. **Separately approved preflight attempt.** V3 ended Docker-not-ready BLOCKED after eight read-only calls. Daemon
    start/pull/mutation, `.env` read, SDK child and network/provider calls were zero; retry/resume is forbidden.
-5. **Candidate and cost gate.** After READY, refresh pricing, bind reservation/cap, create the execution hash and
-   candidate, then obtain separate exact paid approval. None is implied by preflight.
-6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A exactly once after the source is
-   qualified. An incomplete or confounded panel is preserved as inconclusive, without row replacement.
-7. **Held-out A/C.** If readiness is valid, preregister the frozen 12-task core panel under A/C with at least two
-   repetitions (planning target: 48 rows) before unblinding any held-out result.
-8. **Selective/full comparison.** Return B/raw-trace and D/selective to the critical path only after their
-   leakage, redaction and independent public-development calibration contracts are frozen. If they are designed
-   after A/C unblinding, use a separate fresh held-out panel.
+5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
+6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
+7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
+8. **Selective/full comparison.** B/D require frozen leakage/redaction/calibration or a fresh held-out panel.
 
-No official/live evaluator result exists. The consumed v3 external preflight observed Docker only and provides no
-credential-presence or SDK-readiness evidence.
+No official/live evaluator result exists. V3 observed Docker only; v4 is self-attested and observed nothing.
 
 ## Consumed boundaries
 
-D-129 through D-141 remain immutable consumed predecessors; `docs/09-evidence.md` owns their exact tuples and
-zero-activity limits. The deferred D-121 candidate
-`d121executioncandidate_b37bde7b9f49f92118ca277e521cd409b1e51b6f97c1ad8c2e9ff5090a1c38ef` was never
-authorized and is not a fixed-bundle prerequisite.
+D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
+`d121executioncandidate_b37bde7b9f49f92118ca277e521cd409b1e51b6f97c1ad8c2e9ff5090a1c38ef` was never authorized.
 
 ## Closed authority
 
-Credential placement remains user-reported only. The exact Docker observation is consumed; provider/evaluator/agent,
-memory/retrieval, SDK/`.env`, execution candidate, cost and A/C execution remain unauthorized and absent.
+Credential placement and manual Docker start are user-reported only. V3 observation is consumed; new Docker,
+provider/evaluator/agent, memory/retrieval, SDK/`.env`, candidate, cost and A/C authority remain closed.
 
 ## Next gate
 
-The next gate is a **documented relevant Docker state change**, not retry or candidate creation. V3 is terminal and
-cannot be reused. Starting Docker or mutating its image/container state is not authorized here. After a real external
-change, any attempt needs a newly versioned source/contract, fresh state ID and separate exact approval.
+The next gate is a **qualified no-start executable successor source**, not approval or observation. It must bind v4
+contract `ncpcontract_9a020537dc4a7d011e9bb139d77b71b18c16cb9c7b89ab56dd24813b8fdefeb6`, qualification
+`sha256:f04efac3a7bcd22311bdfd3b1e253fd8e579b37e6510afc2b3dfa049ed439fab` and state
+`ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`. V4 cannot execute or be approved;
+Docker/image/container, SDK/`.env`, network and candidate authority remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

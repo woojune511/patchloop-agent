@@ -29,7 +29,8 @@ work.
   is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
 - V1/v2 stay immutable. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` consumed one exact-approved
   `BLOCKED(docker_not_ready)` attempt: eight read-only Docker calls, zero mutation/`.env`/SDK/network/provider calls.
-  It cannot retry; a successor needs documented Docker state change, new version/state and separate exact approval.
+  It cannot retry. Structural v4 binds the later user-reported manual start without proving readiness or granting
+  execution; a qualified no-start executable successor must precede any new exact approval.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

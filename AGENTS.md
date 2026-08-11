@@ -36,8 +36,11 @@
   `ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`는 exact approval 뒤 1회
   `BLOCKED(docker_not_ready)` terminal로 consumed됐다. Read-only Docker CLI는 8회였고 daemon start/pull/load/
   mutation, `.env` read, SDK child, network/provider/evaluator/agent는 0이었다. Retry/resume하지 않는다.
-- Credential 배치는 user-reported only다. Retrieval/injection, `.env`/SDK observation, execution candidate,
-  cost와 A/C authority는 닫혀 있다.
+- Manual-start v4 source `5b592e4f4f86a62d90951e49494ed3f8cf2ae315`와 state
+  `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`는 사용자 수동 시작 보고만
+  결속한다. Daemon/image/container는 미검증이고 runtime/approval/external observation/mutation은 0이다.
+- Credential 배치는 user-reported only다. Retrieval/injection, `.env`/SDK, Docker successor observation,
+  execution candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 

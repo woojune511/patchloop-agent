@@ -86,23 +86,27 @@ Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` preserves success
 `sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and suite
 `sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`.
 
-Its v1 child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` remains receipt-bound. Receipt-free v2 source
-`d8652b2648f97788ae65a82e949d2b168e7ff4a9`, tree `373244b7b2a9e44d7e6dfe31deb59aef9030dd97`, seals contract
-`ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd`; qualification semantic hash is
-`sha256:e903639750a961b60f879435a10be5e3f03f1809614e7686a8f8d854d2def309`.
-
-User attestation `ncpattestation_ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c` binds structural v2 state
+V1 child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` is receipt-bound. Structural v2 source/tree
+`d8652b2648f97788ae65a82e949d2b168e7ff4a9`/`373244b7b2a9e44d7e6dfe31deb59aef9030dd97` binds contract
+`ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd`, qualification
+`sha256:e903639750a961b60f879435a10be5e3f03f1809614e7686a8f8d854d2def309` and state
 `ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582`.
 
-Executable v3 source `ce0628880107db2319816272cfa49adc7ea99667`, tree
-`fe08f400b9573f11470a021407c9298020a17ca2`, binds contract
-`ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d`; qualification hash is
-`sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079`. Fresh state is
-`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`; approval is
+Executable v3 source/tree `ce0628880107db2319816272cfa49adc7ea99667`/`fe08f400b9573f11470a021407c9298020a17ca2`
+binds contract `ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d`, qualification
+`sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079`, state
+`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317` and approval
 `ncpapproval_37f2d23e133e0ea42a43c08134de51b2a61e2d5de2e4e23a1f9a324e92f6828f`. Attempt
 `ncpattempt_26b65477c3ef1d4ed08adbfa06aba2d0adb9b06889169d09c19cab76396be7d9`, ACTION_STARTED
 `ncpstarted_35873058f1becb38bb50feb7449d6065f2e705f99a00c5dc63a13b03bce489cb` and terminal
 `ncpterminal_1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320` record consumed
-`BLOCKED(docker_not_ready)`: Docker read-only calls 8; start/pull/load/mutation, `.env` read, SDK child,
-network/provider/evaluator/agent and cost 0. Activity accounting is complete; retry/resume is false.
+`BLOCKED(docker_not_ready)`: Docker reads 8; start/pull/load/mutation, `.env`/SDK/network/provider/evaluator/agent/cost
+are 0; accounting is complete and retry/resume false.
+
+Manual-start v4 source/tree `5b592e4f4f86a62d90951e49494ed3f8cf2ae315`/`8ecdfe88999e21da3810cc73e87246c93e27c940`
+binds contract `ncpcontract_9a020537dc4a7d011e9bb139d77b71b18c16cb9c7b89ab56dd24813b8fdefeb6`, qualification
+`sha256:f04efac3a7bcd22311bdfd3b1e253fd8e579b37e6510afc2b3dfa049ed439fab`, attestation
+`ncpattestation_b844402a20a6aa2c554ab095b74f3e903644f7832a4d979b423f8ccb3d543b28` and state
+`ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`. It proves no readiness;
+PatchLoop observation/mutation, approval and execution are zero.
 D-142/R2 remain unchanged.
