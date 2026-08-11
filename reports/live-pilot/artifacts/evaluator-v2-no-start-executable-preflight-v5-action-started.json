@@ -1,0 +1,9 @@
+{
+  "schema_version": "no-start-preflight-action-started-v5",
+  "marker_id": "ncpstarted_3ee33fa8017b77c134e908156e3b46da78a16f21149cc7f9c7571e765bcf44f3",
+  "attempt_id": "ncpattempt_005f1501ed93dc4cde97fa53a1718b6a90bdad18080eb88157bf7c713c5d6f26",
+  "attempt_content_hash": "sha256:005f1501ed93dc4cde97fa53a1718b6a90bdad18080eb88157bf7c713c5d6f26",
+  "sequence": 1,
+  "recorded_at": "2026-08-11T17:00:30.573431Z",
+  "content_hash": "sha256:3ee33fa8017b77c134e908156e3b46da78a16f21149cc7f9c7571e765bcf44f3"
+}

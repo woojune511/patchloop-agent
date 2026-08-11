@@ -1,0 +1,17 @@
+{
+  "schema_version": "no-start-preflight-attempt-intent-v5",
+  "attempt_id": "ncpattempt_005f1501ed93dc4cde97fa53a1718b6a90bdad18080eb88157bf7c713c5d6f26",
+  "contract_id": "ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84",
+  "contract_content_hash": "sha256:858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84",
+  "source_qualification_content_hash": "sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7",
+  "state_change_evidence_id": "ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef",
+  "state_change_evidence_content_hash": "sha256:9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef",
+  "approval_id": "ncpapproval_3c94656fd82fd51bb2116973bbafef826b7f5431ed9716a1c645bd5c8a7171ad",
+  "approval_content_hash": "sha256:3c94656fd82fd51bb2116973bbafef826b7f5431ed9716a1c645bd5c8a7171ad",
+  "ledger_snapshot_hash": "sha256:0193300a53f5c3749d651f62787980658223fc2d52156824c732973218227c9d",
+  "created_at": "2026-08-11T17:00:30.565358Z",
+  "attempt_number": 1,
+  "one_use": true,
+  "retry_or_resume_allowed": false,
+  "content_hash": "sha256:005f1501ed93dc4cde97fa53a1718b6a90bdad18080eb88157bf7c713c5d6f26"
+}
