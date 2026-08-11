@@ -91,7 +91,13 @@ Its v1 child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` remains receipt-bound. R
 `ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd`; qualification semantic hash is
 `sha256:e903639750a961b60f879435a10be5e3f03f1809614e7686a8f8d854d2def309`.
 
-User attestation `ncpattestation_ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c` binds state
-`ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582`. It is unsigned self-attestation,
-not presence proof; `.env` read/stat, value observation, approval, attempt, external call and cost are zero.
+User attestation `ncpattestation_ae8cc41e85992354014ac7cb4b4daef6cb5be052a32d1dee0ef2386273744d1c` binds structural v2 state
+`ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582`.
+
+Executable v3 source `ce0628880107db2319816272cfa49adc7ea99667`, tree
+`fe08f400b9573f11470a021407c9298020a17ca2`, binds contract
+`ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d`; qualification hash is
+`sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079`. Fresh state is
+`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`. Both are unsigned self-attestation,
+not presence proof; `.env` read/stat, approval, attempt, external call and cost remain zero.
 D-142/R2 remain unchanged.

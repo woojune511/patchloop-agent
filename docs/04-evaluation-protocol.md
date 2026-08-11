@@ -99,12 +99,10 @@ D-142 is source-qualified and unactivated, with planning disposition deferred. I
 cannot qualify changed evaluator bytes. Evaluator v2 therefore requires new source, suite and runtime identities;
 the A-null/C-exact-three treatment itself remains unchanged.
 
-Evaluator v1 assigns safety a literal PASS. The v2 path derives typed check/scope/safety evidence from a durable
-accepted-event prefix, verified CAS and exact requested-policy descriptors; exact marker hits are redacted before
-persistence. Missing→NOT_RUN, checker error→ERROR, violation→FAIL and complete observations→PASS. Standard-runner
-selection, completed persistence and qualification require separate authority and an exact receipt; the raw result
-remains unofficial. Receipt-free preflight state is now self-attested but unverified; no loader runtime, approval,
-attempt or execution authority exists.
+Evaluator-v1 safety is literal PASS. V2 derives typed evidence from accepted events, verified CAS and exact requested
+policy; marker hits are redacted. Missing→NOT_RUN, checker error→ERROR, violation→FAIL, complete→PASS. Separate
+authority and receipt gate runner selection, persistence and qualification; raw results remain unofficial.
+Executable preflight source/state is self-attested and qualified, with no approval, attempt or execution authority.
 
 ## 7. Run-completion gate
 

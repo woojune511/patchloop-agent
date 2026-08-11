@@ -27,10 +27,9 @@ work.
   opaque projections, not direct private requirement/check IDs. Four controls map to runtime trace,
   requested-Docker-policy trace or artifact scan; integrity is a prerequisite. Free-form `prohibited_behaviors`
   is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
-- Receipt-required preflight v1 stays immutable. Because no receipt exists, v2 source
-  `d8652b2648f97788ae65a82e949d2b168e7ff4a9` records the user's `.env` placement only as self-attested non-proof
-  state. It made zero `.env`/credential observations. Its loader is unimplemented, so exact approval waits for a
-  qualified executable successor; candidate creation and paid execution remain separate.
+- V1/v2 stay immutable. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` confines `.env` bytes to a child,
+  returns membership only and uses nonsecret placeholder/reject transport. Fresh state is self-attested non-proof
+  with zero observations. Approval binds v3 contract+qualification+state; candidate/paid execution remain separate.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

@@ -47,15 +47,18 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
 one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
 
-Receipt-free v2 validation is also offline:
+Receipt-free predecessors and executable v3 validation are offline:
 
 ```powershell
 uv run --offline --frozen pytest -q tests/test_user_attested_no_call_preflight_contract.py
 uv run --offline --frozen python scripts/build_user_attested_no_call_preflight_contract.py --validate-source
 uv run --offline --frozen python scripts/build_user_attested_no_call_preflight_contract.py --validate-user-attested-state
+uv run --offline --frozen pytest -q tests/test_executable_no_call_preflight.py
+uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-source
+uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-state
 ```
 
-It does not read/stat `.env`; the attestation is not presence proof and the loader remains unimplemented.
+These commands do not read/stat `.env`; state is not presence proof and none grants attempt authority.
 
 ## Audit the sealed D-142 source
 
@@ -91,6 +94,6 @@ evidence.
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
 1. Validate evaluator-v2, successor, preflight sources and self-attested state.
-2. Stop. Exact-key loader source, approval, attempt, pricing/candidate and paid execution are separate gates.
+2. Stop. Exact approval, one no-call attempt, pricing/candidate and paid execution are separate gates.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

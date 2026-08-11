@@ -31,9 +31,9 @@ receipt, and permits completed persistence only when that receipt revalidates. Q
 consume the same binding while the raw result remains `official=false`. Local mock/requested-policy tests are not
 a qualified source, Docker-enforcement result or official run.
 
-The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. Receipt-required preflight v1
-is preserved. Receipt-free v2 source `d8652b2648f97788ae65a82e949d2b168e7ff4a9` records user-attested `.env`
-placement without reading/statting it or proving presence; its loader runtime is explicitly unimplemented.
+The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. Preflight v1/v2 remain
+predecessors. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` confines `.env` bytes to a child, returns
+exact-key membership only and uses fixed-placeholder reject-dispatch SDK validation.
 
 ## Current roadmap
 
@@ -41,10 +41,10 @@ placement without reading/statting it or proving presence; its loader runtime is
    qualification and completion enforcement are implemented and regression-tested locally.
 2. **Successor A/C qualification.** New source, runtime and successor-suite identities are materialized and
    locally validated; D-142 and R2 remain immutable predecessors.
-3. **Offline preflight contracts.** V1 preserves receipt-required semantics. V2 binds receipt-free self-attestation
-   as non-proof state evidence; no credential value or observation entered the repository.
-4. **Separately approved preflight attempt.** First implement and qualify the exact-key isolated loader successor,
-   then bind its state ID and a later exact approval. Never approve incomplete source or retry a terminal attempt.
+3. **Offline preflight contracts.** V1/v2 are preserved; executable v3 source and a fresh self-attested state are
+   qualified without reading `.env` or observing credentials.
+4. **Separately approved preflight attempt.** A later message must cite the exact v3 contract, source qualification
+   and state. Approval authorizes one Docker/isolated-child/SDK no-call attempt; terminal means no retry.
 5. **Candidate and cost gate.** After READY, refresh pricing, bind reservation/cap, create the execution hash and
    candidate, then obtain separate exact paid approval. None is implied by preflight.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A exactly once after the source is
@@ -55,8 +55,8 @@ placement without reading/statting it or proving presence; its loader runtime is
    leakage, redaction and independent public-development calibration contracts are frozen. If they are designed
    after A/C unblinding, use a separate fresh held-out panel.
 
-No official/live evaluator result, approval, attempt or external observation exists. One self-attested, unconsumed
-state artifact exists; it is not independent credential-presence evidence.
+No official/live evaluator result, approval, attempt or external observation exists. V2/v3 self-attested states are
+unconsumed and are not independent presence evidence.
 
 ## Consumed boundaries
 
@@ -72,9 +72,10 @@ observation, execution hash/candidate, cost reservation and A/C execution remain
 
 ## Next gate
 
-The next gate is an **offline exact-key loader/runtime successor**, not approval or observation. V2 state
-`ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582` is self-attested only and binds an
-unimplemented loader. After executable source qualification, a fresh bound state ID must be shown before a later
-exact approval. No credential value enters repository, approval text or chat.
+The next gate is **exact approval**, not observation yet. It must cite contract
+`ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d`, qualification
+`sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079` and state
+`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317` and reconfirm placement. It permits one
+bounded no-call attempt only; no value, network/provider call, candidate or cost authority.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

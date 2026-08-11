@@ -41,23 +41,23 @@ and this is not a runtime result.
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1 preserved; receipt-free v2 source-qualified with one non-proof state artifact.
+Status: v1/v2 preserved; executable v3 source/state qualified without observation.
 
 Contract v1 accepts only an independently trusted, value-free credential-provisioning receipt and trust anchor.
 Attempt identity additionally binds exact approval and durable-ledger snapshot. Intent reserves evidence;
 ACTION_STARTED precedes observation; READY/BLOCKED/ERROR or post-marker failure is terminal. Reuse, retry, resume,
 overwrite and backfill fail closed. A real source/semantic change requires a new version.
 
-V2 source `d8652b2648f97788ae65a82e949d2b168e7ff4a9` accepts current-user self-attestation without
-claiming authentication, independent verification or presence. Its state artifact read/stat count is zero.
+V3 `ce0628880107db2319816272cfa49adc7ea99667` binds full-file-in-child/boolean-only-return, fixed-placeholder SDK
+reject-dispatch and D-137 read-only Docker. State remains self-attested non-proof; read/stat=0.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: no attempt authorized; blocked on an executable exact-key loader successor before exact approval.
+Status: exact approval required; no attempt or observation exists.
 
-V2 state is self-attested and binds `loader_runtime_implemented=false`, so approving it would authorize incomplete
-source. Implement/qualify a no-value-return `.env` exact-key isolated-child producer, rebind the attestation under
-that successor, then request approval quoting the exact ID. Evidence remains one-use and terminal means no retry.
+Approval quotes v3 contract+qualification+
+`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317` and reconfirms placement. It grants one
+bounded no-call attempt; READY/BLOCKED/ERROR means no retry.
 
 ## Work item 5 — execution candidate and cost gate
 

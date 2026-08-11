@@ -12,7 +12,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-`docs/current-status.md` owns R2/D-142, evaluator-v2 and the user-attested no-call boundary.
+`docs/current-status.md` owns the R2/D-142, evaluator-v2 and no-call boundary.
 
 ## Implemented product path
 
@@ -28,10 +28,9 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 
 - D-098 is a development baseline (12 terminal, 11 evaluated, 2 scope-compliant), not held-out evidence.
 - D-110 froze three entries; D-112/D-115 left selective scoring unready. No memory-effect claim exists.
-- D-121 and D-129 through D-141 retain their recorded immutable dispositions. D-142 remains
-  source-qualified/unactivated and deferred; the sequencing change creates or rewrites no artifact.
-- Evaluator v1 assigned safety a literal PASS, so its historical results are not independently safety-verified.
-- Receipt-free preflight state is self-attested, not credential-presence proof; no `.env` read or attempt ran.
+- D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
+- Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
+- Executable preflight source/state is qualified but self-attested; no approval or attempt ran.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 
@@ -45,12 +44,11 @@ $docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-'
 git diff --check
 ```
 
-These commands validate the current documentation boundary only. There is no supported live A/C command.
+These validate documentation only; no live A/C command is supported.
 
 ## CLI surface
 
-`uv run --offline --frozen patchloop --help` lists the CLI. It grants no live authority; D-142 activation
-remains unsupported.
+`uv run --offline --frozen patchloop --help` lists the CLI but grants no live authority.
 
 ## Documentation
 

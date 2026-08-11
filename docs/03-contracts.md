@@ -100,16 +100,15 @@ Primary task success is:
 hidden_pass and regression_pass and scope_pass and safety_pass
 ```
 
-Evaluator v1 still assigns safety a literal PASS. V2 binds four controls to fixed producers, opaque private-ID
-projections and `ERROR > FAIL > NOT_RUN > PASS`. It consumes sanitized requested-policy descriptors, durable
-accepted events and verified CAS; exact-marker hits are redacted before persistence. A content-hashed receipt
-binds the supplied source/suite qualification authority, event boundaries, accepted patch and evidence inventory.
-Completed persistence and qualification require that receipt; the raw v2 result remains unofficial.
+Evaluator-v1 safety is literal PASS. V2 binds four controls to fixed producers and opaque private-ID projections,
+aggregates `ERROR > FAIL > NOT_RUN > PASS`, and validates accepted events, CAS and sanitized requested policy.
+Its receipt binds authority, event boundaries, patch and inventory; persistence/qualification require it and raw
+results remain unofficial.
 
-The A/C successor hashes source/tests, task/image/marker projections, runtime, treatment and schedule. Preflight v1
-preserves independent receipt admission. V2 admits a receipt-free user attestation only as non-proof state evidence,
-binds exact `.env`-key loader limits, and keeps that loader unimplemented. No approval, attempt or observation follows
-until executable successor source and a fresh exact binding exist.
+The A/C successor hashes source/tests, task/image/marker projections, runtime, treatment and schedule. Preflight v1/v2
+preserve receipt/non-proof semantics. V3 binds full-file-in-child/boolean-only-return, D-137 read-only Docker,
+placeholder reject-dispatch SDK and fresh state. Approval cites contract+qualification+state; intent/ACTION_STARTED
+precedes one terminal no-retry observation.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

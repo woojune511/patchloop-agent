@@ -78,11 +78,10 @@ The agent can see only public task files and registered check output. The evalua
 material only after submission and runs in a separate workspace/container. Target primary success is the
 conjunction of hidden acceptance, regression, scope and safety.
 
-Evaluator v1's safety verdict is unconditional. The v2 path binds typed producers to a durable accepted-event
-prefix and verified CAS. A separately supplied authority is required before standard-runner selection; its
-append-only receipt gates completed persistence, qualification and completion while the raw result stays
-unofficial. The committed successor and versioned no-call source bind exact hashes; no state-change evidence,
-attempt, live result or changed v1 evidence exists.
+Evaluator-v1 safety is unconditional. V2 binds typed producers to accepted events/CAS; separate authority and its
+append-only receipt gate runner selection, persistence, qualification and completion. Raw results stay unofficial.
+Successor source and preflight-v3 state are qualified, but no approval, attempt or live result exists; v1 evidence
+is unchanged.
 
 Visible checks and agent self-review are feedback; neither can replace hidden evaluation.
 

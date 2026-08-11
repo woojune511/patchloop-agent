@@ -39,14 +39,13 @@ Historical milestone-by-milestone limitations are archived at
 - V2 now has authority-gated standard-runner, append-only receipt, completed-persistence and qualification paths.
   Committed successor/preflight sources bind exact hashes, but no official/live v2 result exists; raw v2 remains
   `official=false`.
-- Preflight v1 remains receipt-bound. V2 records receipt-free `.env` placement as self-attested, not authenticated,
-  independently verified or presence proof. It did not read/stat `.env`; its exact-key loader runtime, approval,
-  attempt and Docker/SDK observation remain absent.
+- Preflight v1/v2 remain predecessors. V3 source/state is qualified, but state is self-attested non-proof. No `.env`
+  read, approval or attempt occurred. The child reads the full file in memory; only membership returns and no
+  value/hash/prefix/length persists.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
   direct IDs but do not prove confidentiality against dictionary/equality inference.
-- Exact marker scans cover enumerated evidence, not encoded semantics or unreferenced store bytes.
 - Historical evaluator-v1 artifacts, including D-098, are not regraded. They must not be described as independently
   safety-verified, production-secure or valid evidence for the corrected evaluator.
 
