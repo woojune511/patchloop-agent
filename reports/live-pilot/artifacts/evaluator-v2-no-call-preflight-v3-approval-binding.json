@@ -1,0 +1,24 @@
+{
+  "schema_version": "preflight-approval-binding-v3",
+  "approval_id": "ncpapproval_37f2d23e133e0ea42a43c08134de51b2a61e2d5de2e4e23a1f9a324e92f6828f",
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v3",
+  "contract_id": "ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d",
+  "contract_content_hash": "sha256:6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d",
+  "source_qualification_content_hash": "sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079",
+  "state_change_evidence_id": "ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317",
+  "state_change_evidence_content_hash": "sha256:105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317",
+  "user_approval_receipt_id": "ncpapprovalreceipt_405411dc010fb3279adf9b6c51fecef4d4c809c82662fc8b19ae0b12bf1c1ecc",
+  "user_approval_receipt_content_hash": "sha256:405411dc010fb3279adf9b6c51fecef4d4c809c82662fc8b19ae0b12bf1c1ecc",
+  "approved_scopes": [
+    "docker-read-only-two-snapshot-eight-command-observation",
+    "isolated-dotenv-exact-openai-api-key-membership",
+    "isolated-sdk-import-fixed-placeholder-reject-dispatch"
+  ],
+  "identity_assurance": "current-user-self-attested-not-authenticated-or-signed",
+  "attempt_limit": 1,
+  "provider_evaluator_agent_execution_authorized": false,
+  "network_or_transport_authorized": false,
+  "execution_hash_candidate_cost_or_paid_execution_authorized": false,
+  "recorded_at": "2026-08-11T15:48:41.425342Z",
+  "content_hash": "sha256:37f2d23e133e0ea42a43c08134de51b2a61e2d5de2e4e23a1f9a324e92f6828f"
+}
