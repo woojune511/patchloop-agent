@@ -1,0 +1,118 @@
+{
+  "schema_version": "sanitized-sdk-diagnostic-source-qualification-v6",
+  "qualification_id": "ac-evaluator-v2-sanitized-sdk-diagnostic-source-20260812-r1",
+  "status": "OFFLINE_SANITIZED_SDK_DIAGNOSTIC_SOURCE_QUALIFIED_LIVE_CLOSED",
+  "recorded_at": "2026-08-11T18:53:07.637086Z",
+  "source_commit": {
+    "commit": "1d99a7c0acf20ec961240f33f585553fd881dc02",
+    "tree": "274a5c657fdfcb21025e5368073cbd16ed28a0cb",
+    "parents": [
+      "edb79b24221285a2bbaeeb02ca674d692c5edbac"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-sanitized-sdk-diagnostic-v6.contract.json",
+      "patchloop/evals/sanitized_sdk_diagnostic_successor.py",
+      "scripts/build_sanitized_sdk_diagnostic_successor.py",
+      "scripts/run_sanitized_sdk_diagnostic_child.py",
+      "tests/test_sanitized_sdk_diagnostic_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-sanitized-sdk-diagnostic-v6.contract.json",
+      "blob_oid": "fdc8dea61607afac8c95632bcd42e10614d5afb5",
+      "file_bytes": 4306,
+      "file_sha256": "sha256:f45da07b433b6fbac490d41f09528278f4a5cea3807f9c22d70fe9252d6f01c2"
+    },
+    {
+      "path": "patchloop/evals/d137_no_call_preflight.py",
+      "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+      "file_bytes": 95362,
+      "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3"
+    },
+    {
+      "path": "patchloop/evals/no_start_executable_preflight.py",
+      "blob_oid": "0da4a7fd120003ceaf7d4218dbc73a9191df1e19",
+      "file_bytes": 57791,
+      "file_sha256": "sha256:86c77bd346beedfd0d18b6e87c487cb52e5368e3ad4af1e6ee18f03cbebe8e01"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_diagnostic_successor.py",
+      "blob_oid": "72e2976c756d5475c3233c915d265b994f3621ec",
+      "file_bytes": 48106,
+      "file_sha256": "sha256:5e8ce4c2f23be7a63e595e61e916003b444b2c06d1da1f8b6e1866d2673a8f5e"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-no-start-executable-preflight-v5-approval-binding.json",
+      "blob_oid": "798c9dc36bdd420646088379167ec355f04c4362",
+      "file_bytes": 1613,
+      "file_sha256": "sha256:baf207504a4e0d94015ca86f91f5d9ad9c25e82766fbf77d456c62d5e54ce5dd"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-no-start-executable-preflight-v5-terminal.json",
+      "blob_oid": "778a1259914c6fda840650d43005ae9f31257436",
+      "file_bytes": 15912,
+      "file_sha256": "sha256:43f201f3dea70a64232280c81cd959bd97fb7bfc6650e3d7cc055323a97ac090"
+    },
+    {
+      "path": "scripts/build_sanitized_sdk_diagnostic_successor.py",
+      "blob_oid": "ebbe1ce3e1d030179336ed79011f5855f767271c",
+      "file_bytes": 1529,
+      "file_sha256": "sha256:8d4f10ee2b12fa49b054b85d18efa0a300f36ba480297ece5c15ecf5feed7c2b"
+    },
+    {
+      "path": "scripts/run_dotenv_sdk_no_call_child.py",
+      "blob_oid": "573a3e7d6eb3aa0a35106722f193f83deb2644d5",
+      "file_bytes": 6976,
+      "file_sha256": "sha256:27729c67eca9513bcdd8432bc8e9cb9bfc6399fde3c2f3d36dc512a61b724ad5"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_diagnostic_child.py",
+      "blob_oid": "c1312c78164cf847c85b7fcb41569d96425340c1",
+      "file_bytes": 5142,
+      "file_sha256": "sha256:2ad3d536f10f9eaea503db3c61943ee59ff4de37e42a72651d49b396deaedb27"
+    },
+    {
+      "path": "tests/test_sanitized_sdk_diagnostic_successor.py",
+      "blob_oid": "7aff1befdbd67f75b71a59ae24fce8dc620c0496",
+      "file_bytes": 10127,
+      "file_sha256": "sha256:563c21c1cee36e19931168baa9a5db25adc04dfc2888ff2aa1c531a0188cb756"
+    }
+  ],
+  "contract_id": "ncpcontract_3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918",
+  "contract_content_hash": "sha256:3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-sanitized-sdk-diagnostic-v6.contract.json",
+    "blob_oid": "fdc8dea61607afac8c95632bcd42e10614d5afb5",
+    "file_bytes": 4306,
+    "file_sha256": "sha256:f45da07b433b6fbac490d41f09528278f4a5cea3807f9c22d70fe9252d6f01c2"
+  },
+  "runtime_file": {
+    "path": "patchloop/evals/sanitized_sdk_diagnostic_successor.py",
+    "blob_oid": "72e2976c756d5475c3233c915d265b994f3621ec",
+    "file_bytes": 48106,
+    "file_sha256": "sha256:5e8ce4c2f23be7a63e595e61e916003b444b2c06d1da1f8b6e1866d2673a8f5e"
+  },
+  "child_file": {
+    "path": "scripts/run_sanitized_sdk_diagnostic_child.py",
+    "blob_oid": "c1312c78164cf847c85b7fcb41569d96425340c1",
+    "file_bytes": 5142,
+    "file_sha256": "sha256:2ad3d536f10f9eaea503db3c61943ee59ff4de37e42a72651d49b396deaedb27"
+  },
+  "predecessor_terminal_file": {
+    "path": "reports/live-pilot/artifacts/evaluator-v2-no-start-executable-preflight-v5-terminal.json",
+    "blob_oid": "778a1259914c6fda840650d43005ae9f31257436",
+    "file_bytes": 15912,
+    "file_sha256": "sha256:43f201f3dea70a64232280c81cd959bd97fb7bfc6650e3d7cc055323a97ac090"
+  },
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "runtime_integration_or_approval_created": false,
+    "docker_sdk_dotenv_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "candidate_cost_or_paid_execution_authorized": false
+  },
+  "next_gate": "diagnostic-runtime-integration-successor",
+  "content_hash": "sha256:df0d68f6059d267260ec34fcd3d7714c406856ef1b22902412de3e74180e3bb2"
+}
