@@ -1,0 +1,25 @@
+{
+  "schema_version": "no-start-preflight-approval-binding-v5",
+  "approval_id": "ncpapproval_3c94656fd82fd51bb2116973bbafef826b7f5431ed9716a1c645bd5c8a7171ad",
+  "contract_id": "ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84",
+  "contract_content_hash": "sha256:858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84",
+  "source_qualification_content_hash": "sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7",
+  "state_change_evidence_id": "ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef",
+  "state_change_evidence_content_hash": "sha256:9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef",
+  "receipt_id": "ncpapprovalreceipt_4efe85c7678acc56b53e8b37d2ec36473681fec775ae3f5dc63d85befdea6a11",
+  "receipt_content_hash": "sha256:4efe85c7678acc56b53e8b37d2ec36473681fec775ae3f5dc63d85befdea6a11",
+  "approved_scopes": [
+    "already-running-docker-read-only-two-snapshot-eight-command-observation",
+    "isolated-dotenv-exact-openai-api-key-membership",
+    "isolated-sdk-import-fixed-placeholder-reject-dispatch"
+  ],
+  "attempt_limit": 1,
+  "docker_desktop_or_daemon_start_authorized": false,
+  "image_pull_load_or_store_mutation_authorized": false,
+  "container_operation_authorized": false,
+  "network_or_transport_authorized": false,
+  "provider_evaluator_agent_execution_authorized": false,
+  "execution_hash_candidate_cost_or_paid_execution_authorized": false,
+  "recorded_at": "2026-08-11T16:55:54.759966Z",
+  "content_hash": "sha256:3c94656fd82fd51bb2116973bbafef826b7f5431ed9716a1c645bd5c8a7171ad"
+}
