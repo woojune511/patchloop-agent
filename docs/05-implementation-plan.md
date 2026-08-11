@@ -5,98 +5,130 @@
 
 ## Sequencing rule
 
-Finish one evidence boundary before opening the next. Offline implementation does not authorize Docker,
-provider, evaluator or paid execution. A failed one-use claim is preserved and not silently repaired.
+Finish and review one evidence boundary before opening the next. Offline source, tests or qualification do not
+authorize Docker, credentials, network, provider, evaluator service, agent or paid execution. Historical results
+and one-use artifacts remain append-only; a new contract uses a new version and provenance identity.
 
 ## Current objective
 
-D-136 pricing, D-137 Docker/SDK and D-138 through D-141 SDK no-call phases are consumed. D-141 ended missing-key
-BLOCKED. D-142 successor source qualification is complete; next request only a fresh exact D-142 SDK activation.
-Hash/candidate, cost and execution remain separate.
+Close the evaluator correctness gap before any D-142 activation or A/C execution. The current evaluator assigns
+the safety verdict a literal PASS, so the documented four-verdict success conjunction is not fully measured.
+D-142 remains source-qualified and unactivated, but its planning disposition is deferred. This roadmap creates
+no D-142 runtime artifact and no external or paid authority.
 
-## Completed foundation
+## Preserved foundation
 
-- The four-run A/C plan and compact active-document structure are materialized; the D-121 snapshot preserves
-  earlier detail.
-- `fixed-d110-bundle-v1` binds exact D-105/D-110 inputs, renders A null and C three entries on every request,
-  and exposes no retrieval, provenance, vector or raw-trace content.
-- Offline tests cover request/CAS/context replay, tamper, leak, token, fresh-workspace and no-call boundaries.
-- D-122 through D-135 are immutable predecessors. D-132 is consumed without canonical response evidence and
-  D-135 closes it procedurally without backfill.
-- D-136 preserves one successful public GET; D-137 preserves Docker READY plus SDK BLOCKED. D-138 through D-141
-  each completed receipt, attempt and ACTION_STARTED+BLOCKED. D-141 final commit
-  `6405be40eb52d71fc9376065b553a04164543a4b` recorded false/false/false after three membership checks;
-  value/`.env`, child, SDK import/probe, transport/network and provider counts were 0. It is consumed.
-- D-142 source `1370cf43c08cefb550b158a5d4172a60ac172470` and gate
-  `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` qualify only the fresh successor
-  contract. Fully injected/mocked focused tests passed 170/170 separately; no D-142 runtime artifact or external
-  observation exists.
-- The historical four-condition template and selective-retrieval authority remain unchanged and closed.
+- D-098 is the evaluator-v1 development no-memory baseline, not held-out evidence. D-110 froze three entries;
+  D-112/D-115 left selective retrieval unready.
+- `fixed-d110-bundle-v1` renders A null and C the exact frozen bundle; Moto/Babel support is offline only.
+- D-129 through D-141 remain immutable. D-142 is a historical input, not corrected-evaluator qualification.
 
-## Work item 5 — exact cost reservation and completion gate
+## Work item 1 — evaluator correctness v2
 
-Status: implemented in D-123, corrected/finalization-qualified by historical D-124/D-125; candidate BLOCKED.
+Status: implemented and locally verified.
 
-- R2 reserves four row-bound worst cases before the first provider call: $13.6125 each, $54.45 total.
-- The source enforces the proposed $55.00 hard cap, $0.55 slack and durable usage-derived settlement.
-- The completion source requires one terminal, settled, qualified and officially evaluated result for each
-  exact row and validates resolved/SCRR/four-verdict consistency.
-- Missing, duplicate, retried, replaced, unsettled or schedule-mismatched rows remain inconclusive.
+Implemented boundary:
 
-D-125 qualifies repository-local consumption and mocked finalization only, not global/cross-clone,
-actual-kill or power-loss guarantees. No live action or cost occurred.
+- task-bound private contract with direct-ID-free hash projection and opaque registered-check identities;
+- profile-typed evidence plus tool/submission lifecycle, per-check requested-policy and supplied-CAS validation;
+- Docker requested-policy descriptors, redacting typed CAS producers and durable-prefix-bound local aggregation;
+- fail-closed four-verdict/SCRR/outcome consistency and unofficial-only v2 results;
+- authority-gated standard runner, append-only receipt, completed persistence, qualification and A/C completion;
+- golden v1 manifest/result bytes plus representative task and frozen-dataset identities.
 
-## Work item 6 — clean/pricing/no-call preflight
+Not implemented: a clean successor seal, official/live result or Docker-enforcement proof.
 
-Status: D-136 through D-141 consumed; D-142 SDK successor source-qualified; fresh exact activation required.
+Inputs are the four-verdict contract, task/private schemas, isolation rules and reference/known-bad/safety-negative
+fixtures. Outputs are typed four-control observations, fail-closed aggregation and receipt provenance bound to
+events, patch and CAS. Default PASS, prompt-only enforcement, missing evidence, private leakage and historical
+regrading are explicit failure modes; no production-security or sandbox-completeness claim follows.
 
-D-132 is consumed without canonical response evidence; D-133–D-135 preserve and seal it without reconstruction.
-D-136 later completed one bounded official public capture. Its replayable pricing terminal is neither Docker/SDK
-readiness nor downstream execution authority.
+Authority boundary: offline schema, evaluator source, fixtures and tests only. No Docker, credential, network,
+provider, evaluator service, agent or paid call.
 
-D-137 used separate Docker/SDK attempts and ended READY/BLOCKED; D-138 through D-141 each used one successor and
-ended BLOCKED. D-141 recorded false/false/false after three membership checks, with zero value/`.env`/child/
-import/probe/transport/network/provider activity. None can be reopened.
+Acceptance:
 
-D-142 requires a new receipt-only commit, SDK-attempt-only commit and fsynced marker before three membership-only
-checks. The parent uses inherited-environment repository-venv Python `-E -s -B`; eligible SDK validation runs in
-one bounded `env={}` child with fixed nonsecret placeholder, no ambient forwarding and zero transport dispatch.
-Its audit hook starts after CPython/site startup, so pre-bootstrap network absence is not claimed. Credential
-provisioning is separate and unauthorized by both preparation and activation; no credential value belongs in
-approval/chat. Commit a READY/BLOCKED terminal, or marker only after failure, then stop for a D-143 offline
-successor.
+- success, deterministic safety failure, checker error and required-check-not-run cases are tested;
+- reference, known-bad and safety-negative fixtures bind the intended verdicts;
+- SCRR/resolved/task-failure reporting agrees with all four actual verdict states and rejects any mismatch;
+- missing/wrong authority, receipt tamper and unqualified completion fail closed;
+- private inputs remain evaluator-only and historical records remain byte-unchanged.
 
-## Work item 7 — execution hash and candidate
+## Work item 2 — successor A/C offline qualification
 
-Status: unauthorized. D-141 is terminal BLOCKED and D-142 has no terminal; even a future D-142 READY terminal
-grants no such authority.
+Status: materialized and locally validated; no execution authority is open.
 
-Create neither identity until a later approval cites the exact ready gate and explicitly authorizes it.
+The artifact binds exact source/tests, task/image identities, runtime and a successor-suite hash over unchanged
+R2 treatment/schedule: A null, C all three D-105 texts in D-110 order on every request. Source/suite/runtime drift
+fails before runner side effects; the factory requires an explicit run-secret marker. D-142/R2 are not relabeled,
+and this working-tree evidence is neither a clean commit nor a runtime result.
 
-## Work item 8 — separately approved execution
+## Work item 3 — versioned no-call preflight contract
 
-Status: unauthorized.
+Status: next; offline source/contract work only.
 
-Only a later user message citing the exact candidate triple, execution hash and $55 cap may authorize one
-four-row run. Execution stops without replacement if the matrix becomes incomplete. Results are descriptive
-readiness evidence only.
+Define and qualify a stable contract version without observing the environment. It must type the allowed
+state-change evidence, bind `attempt_id` to `contract_version + state_change_evidence_id + approval_id`, forbid
+reuse of state-change evidence and specify append-only terminal behavior. Version again only for a real
+contract/source change, not another observation under unchanged semantics.
 
-## Decision after the four rows
+Keep four authorities distinct: credential provisioning, no-call environment/SDK observation, execution
+hash/candidate creation and paid execution. No credential value enters repository artifacts, approval text or
+chat. D-142 may be audited in its exact historical checkout, but is not this successor preflight.
 
-Choose one of:
+## Work item 4 — separately approved no-call preflight attempt
 
-1. Injection path invalid — correct offline under a new version; do not rerun the same live plan.
-2. Workflow valid but outcomes mixed/negative — preserve result and decide whether structured memory merits
-   a held-out pilot.
-3. Workflow valid and direction encouraging — pre-register a separate held-out A/C design and repetition count.
+Status: unauthorized; blocked on work item 3 and exact authority.
 
-No outcome automatically unlocks B, D or the full four-condition campaign.
+The attempt must cite the qualified contract and one relevant state-change evidence artifact with stable
+ID/hash/provenance. The evidence is one-use, the same attempt is never retried or overwritten, and BLOCKED grants
+no successor attempt. Source qualification creates none of this observation authority.
 
-## Deferred lanes
+## Work item 5 — execution candidate and cost gate
 
-- D-121 fresh hash-only isolation successor execution
-- External blind-control acquisition and public applicability calibration
-- Selective score-policy correction and runtime retrieval
-- Raw-trace source/redaction/truncation
-- Held-out A/C and full A/B/C/D campaigns
-- Viewer/GitHub demo work that does not improve experimental evidence
+Status: unauthorized; blocked on a READY successor preflight and separate exact authority.
+
+Refresh official pricing, bind the row reserve and hard cap, then create the execution hash/candidate. A later
+message must separately cite those exact identities and cap to authorize paid execution. Preflight READY creates
+none of this authority.
+
+## Work item 6 — four-run A/C readiness
+
+Status: unauthorized; blocked on work items 1–5 and exact paid approval.
+
+Run Moto A, Moto C, Babel C and Babel A once. Each row uses a fresh workspace; there is no automatic retry or
+replacement. Every exact row must be terminal, trace-qualified, cost-settled and officially evaluated under
+evaluator v2, with four-verdict/SCRR consistency. Otherwise preserve the panel as inconclusive.
+
+Allowed output is workflow/delivery validity plus descriptive direction and cost for two development-validation
+pairs. It is not a causal, held-out, cross-repository, per-rule or negative-transfer result.
+
+## Work item 7 — preregistered held-out A/C
+
+Status: planned target only; no suite, pricing, candidate or authority exists.
+
+After a valid readiness panel, freeze task identities, repetitions, metrics, exclusions, analysis and stop rules
+before viewing held-out outcomes. The planning target is the existing 12-task core panel × A/C × at least two
+repetitions = at least 48 rows. A separate decision must bind the exact schedule, evaluator version, runtime tuple,
+budget and cost cap. Moto/Babel results must not tune the fixed bundle or held-out policy.
+
+Only this frozen benchmark/model/runtime may support a paired A-versus-C effect statement. It does not establish
+general agent performance, production readiness, selective retrieval or individual-rule efficacy.
+
+## Work item 8 — B/D and the full comparison
+
+Status: deferred.
+
+- B/raw-trace requires portable source selection, redaction, leakage audit and equal-budget truncation.
+- D/selective requires independent public-development applicability labels, frozen score/rerank/threshold policy,
+  abstention behavior and leak/cost audit. The existing three no-match probes are not sufficient calibration.
+- If B/D are designed after held-out A/C is unblinded, evaluate them on a separate fresh held-out panel. Otherwise
+  freeze their contracts before A/C unblinding.
+
+No readiness or held-out A/C outcome automatically unlocks B, D or a full A/B/C/D campaign.
+
+## Deferred non-critical lanes
+
+- D-121 hash-only isolation successor execution
+- viewer/GitHub demo work without new experimental evidence
+- general resume, production-security or self-improvement claims

@@ -32,29 +32,32 @@ Historical milestone-by-milestone limitations are archived at
   noncooperative-swap or power-loss durability.
 - No execution hash/candidate, paid approval, cost reservation or four-row result exists.
 
+## Evaluator-v1 correctness gap
+
+- `EvaluationEngine` assigns safety a literal PASS; it does not bind an executed independent safety result.
+- Free-form private `prohibited_behaviors` are audit context, not typed command/network/secret/sandbox evidence.
+- V2 now has authority-gated standard-runner, append-only receipt, completed-persistence and qualification paths.
+  The working-tree successor qualification binds exact local hashes, but is not a clean committed source seal or
+  official/live v2 result; a raw v2 result remains `official=false`.
+- Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
+  scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
+- Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
+  direct IDs but do not prove confidentiality against dictionary/equality inference.
+- Exact marker scans cover enumerated evidence, not encoded semantics or unreferenced store bytes.
+- Historical evaluator-v1 artifacts, including D-098, are not regraded. They must not be described as independently
+  safety-verified, production-secure or valid evidence for the corrected evaluator.
+
 ## D-132 through D-142 external boundary
 
-- D-132 has no canonical response evidence and is sealed without reconstruction; D-136 proves only one consumed
-  public GET. Neither grants later readiness or execution authority.
-- D-137 through D-140 preserve bounded Docker/SDK no-call facts only. They are consumed, cannot be reopened by
-  environment change, and their exact commands, zero-activity limits and tuples remain in `docs/09-evidence.md`.
-- D-141 ended BLOCKED at the presence stage with false/false/false bits after three checks. Value/`.env`, child,
-  SDK import/probe, transport/network and provider counts were 0. Its transition
-  `6405be40eb52d71fc9376065b553a04164543a4b` is consumed and cannot be reopened by environment change.
-- D-142 source `1370cf43c08cefb550b158a5d4172a60ac172470` and gate
-  `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` qualify only new
-  source. Fully injected/mocked 170/170 is separately reported local contract evidence, not external readiness;
-  no runtime artifact or source-preparation external observation/action exists.
-- A future D-142 parent may observe only three membership bits in the inherited environment. Eligible SDK work
-  runs in an empty-environment child with no ambient forwarding. Its audit hook starts after CPython/site startup, so
-  pre-bootstrap network absence is not observed or claimed; the fixed empty environment is the confidentiality
-  boundary for that startup. The child uses only a fixed nonsecret placeholder and must keep dispatch at 0.
-- Credential provisioning is separate from source preparation and activation; neither authorizes it, and no
-  credential value belongs in approval/chat.
-- These checks remain cooperative repository-local evidence. They do not prove authenticated identity,
-  global/cross-clone exclusion or long-term environment stability.
-- Any D-142 terminal requires a separate D-143 offline successor. Provider/evaluator/agent, memory/retrieval,
-  hash/candidate, cost and A/C authority remain closed.
+- D-132 has no canonical response and D-136 proves only one consumed public GET. D-137 through D-141 preserve
+  bounded consumed Docker/SDK no-call facts. Their exact tuples and zero-activity limits remain in
+  `docs/09-evidence.md`; none reopens after an environment change.
+- D-142 remains source-qualified, unactivated and not consumed. Its 170/170 injected/mocked tests are local
+  contract evidence; preparation made no external observation and created no runtime artifact.
+- D-142 is now deferred. Its original one-use contract remains auditable but cannot qualify evaluator-v2 bytes
+  or a successor A/C source. This planning change creates no receipt, attempt, marker or terminal.
+- Repository-local gates do not prove authenticated identity, global/cross-clone exclusion or long-term
+  environment stability. Credential, external preflight, candidate, cost and A/C authorities remain closed.
 
 ## Isolation, identity and operations
 

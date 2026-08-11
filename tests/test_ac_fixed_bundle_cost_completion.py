@@ -354,9 +354,7 @@ def test_r1_remains_cost_pending_and_r2_binds_exact_full_schedule_control(
 
     assert r2["experiment_id"] == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
     control = r2["campaign_cost_control"]
-    assert control["schema_version"] == (
-        "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"
-    )
+    assert control["schema_version"] == ("ac-fixed-bundle-full-schedule-cost-control-evidence-v1")
     assert control["content_hash"] == sha256_text(canonical_json(control["descriptor"]))
     assert control["descriptor"]["policy"] == eval_runner.AC_FIXED_BUNDLE_COST_POLICY
     assert control["descriptor"]["schedule_row_ids"] == [
@@ -636,9 +634,7 @@ def test_ac_runtime_persists_inconclusive_result_when_durable_settlement_fails(
 
     assert len(started_run_ids) == 1
     assert result["halt_reason"]["type"] == "InfrastructureFailureHalt"
-    assert result["runs"][0]["infrastructure_error"]["type"] == (
-        "CostAccountingUnavailable"
-    )
+    assert result["runs"][0]["infrastructure_error"]["type"] == ("CostAccountingUnavailable")
     assert result["not_started_runs"] == 3
     assert result["campaign_cost_qualification"]["passed"] is False
     assert result["campaign_cost_qualification"]["fully_settled"] is False
@@ -651,16 +647,11 @@ def test_ac_runtime_persists_inconclusive_result_when_durable_settlement_fails(
 
     output = Path(result["path"])
     persisted = json.loads(output.read_text(encoding="utf-8"))
-    assert persisted["campaign_cost_qualification"] == result[
-        "campaign_cost_qualification"
-    ]
+    assert persisted["campaign_cost_qualification"] == result["campaign_cost_qualification"]
     assert persisted["completion_gate"] == result["completion_gate"]
 
     journal_path = Path(result["campaign_journal"]["path"])
-    journal = [
-        json.loads(line)
-        for line in journal_path.read_text(encoding="utf-8").splitlines()
-    ]
+    journal = [json.loads(line) for line in journal_path.read_text(encoding="utf-8").splitlines()]
     assert [event["event_type"] for event in journal] == [
         "CampaignStarted",
         "FullScheduleCostReserved",
@@ -672,19 +663,20 @@ def test_ac_runtime_persists_inconclusive_result_when_durable_settlement_fails(
         "RunNotStarted",
         "CampaignCompleted",
     ]
-    terminal = next(
-        event for event in journal if event["event_type"] == "RunTerminal"
-    )
+    terminal = next(event for event in journal if event["event_type"] == "RunTerminal")
     assert terminal["payload"]["usage_evidence"] is None
     assert terminal["payload"]["usage_reconciliation_passed"] is False
-    assert eval_runner._full_schedule_cost_journal_evidence(
-        journal_path,
-        result["campaign_cost_control"],
-        run_root=tmp_path / "runtime",
-        expected_execution_hash=result["execution_hash"],
-        expected_execution_plan_hash=result["execution_plan"]["artifact_hash"],
-        expected_schedule=r2["schedule"],
-    ) == result["campaign_cost_qualification"]
+    assert (
+        eval_runner._full_schedule_cost_journal_evidence(
+            journal_path,
+            result["campaign_cost_control"],
+            run_root=tmp_path / "runtime",
+            expected_execution_hash=result["execution_hash"],
+            expected_execution_plan_hash=result["execution_plan"]["artifact_hash"],
+            expected_schedule=r2["schedule"],
+        )
+        == result["campaign_cost_qualification"]
+    )
 
 
 def test_displayed_model_cost_is_not_usage_authority() -> None:
@@ -751,12 +743,8 @@ def test_terminal_settlement_reconciliation_uses_final_durable_state(
     values = {
         "usage_reconciliation_passed": mutation != "usage-projection-failed",
         "persisted_result_passed": mutation != "persisted-result-failed",
-        "settled_run_cost_nanos": (
-            None if mutation == "settlement-unavailable" else 907_500
-        ),
-        "durable_usage_evidence": (
-            None if mutation == "durable-evidence-missing" else evidence
-        ),
+        "settled_run_cost_nanos": (None if mutation == "settlement-unavailable" else 907_500),
+        "durable_usage_evidence": (None if mutation == "durable-evidence-missing" else evidence),
         "usage_evidence_hash": (
             None
             if mutation == "durable-hash-missing"
@@ -765,10 +753,7 @@ def test_terminal_settlement_reconciliation_uses_final_durable_state(
             else evidence["content_hash"]
         ),
     }
-    assert (
-        eval_runner._terminal_cost_settlement_reconciliation_passed(**values)
-        is expected
-    )
+    assert eval_runner._terminal_cost_settlement_reconciliation_passed(**values) is expected
 
 
 @pytest.mark.parametrize("tamper", ["unknown-payload", "backward-chronology"])
@@ -796,9 +781,7 @@ def test_ac_journal_rejects_fully_rehashed_payload_or_chronology_tamper(
         newline="",
     )
     expected = (
-        "event payload fields differ"
-        if tamper == "unknown-payload"
-        else "chronology is invalid"
+        "event payload fields differ" if tamper == "unknown-payload" else "chronology is invalid"
     )
     with pytest.raises(ContractError, match=expected):
         eval_runner._full_schedule_cost_journal_evidence(
@@ -808,9 +791,7 @@ def test_ac_journal_rejects_fully_rehashed_payload_or_chronology_tamper(
             expected_execution_hash=r2["execution_hash"],
             expected_execution_plan_hash="sha256:" + "b" * 64,
             expected_schedule=r2["schedule"],
-            durable_usage_resolver=(
-                lambda run_id, _row_id, _root: evidence_by_run[run_id]
-            ),
+            durable_usage_resolver=(lambda run_id, _row_id, _root: evidence_by_run[run_id]),
         )
 
 
@@ -846,9 +827,7 @@ def test_ac_journal_rejects_fully_rehashed_payload_or_chronology_tamper(
             "official_evaluator_runs",
         ),
         (
-            lambda rows: rows[0]["result"].__setitem__(
-                "scope_compliant_success", False
-            ),
+            lambda rows: rows[0]["result"].__setitem__("scope_compliant_success", False),
             "official_evaluator_runs",
         ),
         (
@@ -927,6 +906,61 @@ def test_ac_completion_gate_accepts_four_official_task_failures(
     assert gate["memory_effect_claim_authorized"] is False
 
 
+def test_ac_completion_gate_accepts_qualified_v2_receipts_without_mutating_raw_official(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    tmp_path: Path,
+) -> None:
+    _r1, r2 = ac_preflights
+    _journal, _evidence, cost = _full_schedule_journal(tmp_path, r2)
+    rows = _completion_rows(r2, all_failures=True)
+    for index, row in enumerate(rows, start=1):
+        source_hash = "sha256:" + f"{index + 8:x}" * 64
+        result = row["result"]
+        result.update(
+            {
+                "schema_version": "run-result-v2",
+                "official": False,
+                "evaluator_contract": {"evaluator_source_hash": source_hash},
+                "safety_evidence_bundle_hash": "sha256:" + "a" * 64,
+                "safety_evidence": [{"control": control} for control in range(4)],
+                "verifier_results": [{"check_type": "safety", "state": "pass"} for _ in range(4)],
+            }
+        )
+        row["qualification"].update(
+            {
+                "evaluator_version": "v2",
+                "evaluator_v2_receipt_hash": "sha256:" + "b" * 64,
+                "evaluator_v2_receipt_file_hash": "sha256:" + "c" * 64,
+                "evaluator_v2_source_hash": source_hash,
+                "evaluator_v2_source_qualification_hash": "sha256:" + "d" * 64,
+                "evaluator_v2_runtime_authenticated": True,
+                "evaluator_v2_completion_eligible": True,
+            }
+        )
+
+    gate = eval_runner._ac_fixed_bundle_completion_gate(
+        rows,
+        expected_execution_hash=r2["execution_hash"],
+        expected_schedule=r2["schedule"],
+        expected_campaign_cost_control_hash=r2["campaign_cost_control"]["content_hash"],
+        campaign_cost_qualification=cost,
+    )
+    assert gate["passed"] is True
+    assert gate["official_evaluator_runs"] == 4
+    assert all(row["result"]["official"] is False for row in rows)
+
+    rows[0]["qualification"]["evaluator_v2_completion_eligible"] = False
+    failed = eval_runner._ac_fixed_bundle_completion_gate(
+        rows,
+        expected_execution_hash=r2["execution_hash"],
+        expected_schedule=r2["schedule"],
+        expected_campaign_cost_control_hash=r2["campaign_cost_control"]["content_hash"],
+        campaign_cost_qualification=cost,
+    )
+    assert failed["passed"] is False
+    assert failed["official_evaluator_runs"] == 3
+
+
 def test_campaign_append_rejects_stale_tail_and_preserves_bytes(tmp_path: Path) -> None:
     journal = tmp_path / "campaign.jsonl"
     first = eval_runner._append_campaign_event(
@@ -966,9 +1000,7 @@ def test_r2_terminal_projection_includes_cost_contract_but_r1_does_not() -> None
     payload = {
         "experiment_id": AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
         "memory_condition": "structured",
-        "checks": [
-            {"check_id": check_id, "passed": True, "details": {}} for check_id in check_ids
-        ],
+        "checks": [{"check_id": check_id, "passed": True, "details": {}} for check_id in check_ids],
     }
     r2 = eval_runner._terminal_qualification_summary(payload)
     assert r2["memory_condition"] == "structured"
@@ -1045,9 +1077,7 @@ def _paid_boundary_manifest(
 
     suite = eval_runner.load_suite(R2_SUITE)
     schedule_row = preflight["schedule"][row_index]
-    task_row = next(
-        row for row in preflight["tasks"] if row["task_id"] == schedule_row["task_id"]
-    )
+    task_row = next(row for row in preflight["tasks"] if row["task_id"] == schedule_row["task_id"])
     item = {**task_row, **schedule_row}
     task_path = Path(item["task"])
     package = load_task_package(task_path.parent if task_path.is_file() else task_path)
@@ -1077,9 +1107,7 @@ def _paid_boundary_manifest(
         evaluator_image_digest=item["evaluator_image_digest"],
         input_price_per_million_usd=suite.input_price_per_million_usd,
         cached_input_price_per_million_usd=suite.cached_input_price_per_million_usd,
-        cache_write_input_price_per_million_usd=(
-            suite.cache_write_input_price_per_million_usd
-        ),
+        cache_write_input_price_per_million_usd=(suite.cache_write_input_price_per_million_usd),
         output_price_per_million_usd=suite.output_price_per_million_usd,
         reasoning_effort=suite.reasoning_effort,
         reasoning_mode=suite.reasoning_mode,

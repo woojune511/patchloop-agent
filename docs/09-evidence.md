@@ -21,6 +21,8 @@ receipt, attempt, marker, terminal or preservation artifact exists; preparation 
 or `.env` observation, credential mutation/provisioning, child launch, SDK inspection, endpoint/network or Docker
 action.
 
+Planning disposition is owned by `docs/current-status.md`; it does not alter this evidence state.
+
 ## D-141 SDK no-call successor — BLOCKED and consumed
 
 - Gate `reports/live-pilot/artifacts/d141-d140-sdk-blocked-no-call-successor-offline-source-gate.json`:
@@ -79,10 +81,9 @@ provider/evaluator/agent calls were 0. D-141 is consumed and cannot be retried, 
 
 ## Next evidence boundary
 
-Obtain a fresh exact D-142 activation quoting gate, source and evidence-commit tuples. It may create only a
-receipt commit, then an SDK-attempt commit. The exact parent writes/fsyncs its marker before membership-only
-checks; eligible SDK work runs only in the bounded `env={}` child with fixed placeholder, no ambient forwarding
-and zero dispatch. Pre-bootstrap network absence is not claimed, and credential provisioning is a separate action
-authorized by neither preparation nor activation; no credential value belongs in approval/chat. Commit
-READY/BLOCKED terminal or, after failure, marker only; never retry. Any terminal requires a D-143 offline
-successor and grants no provider/evaluator/agent, memory/retrieval, hash/candidate, cost or A/C authority.
+The v2 path and offline A/C successor are working-tree evidence only. The artifact is 12,487 bytes, file
+`sha256:0055acd23ec45755e825dbf938032cd118c121890bc975c7d4bba8f8e6277580`, source qualification
+`sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320`, evaluator source
+`sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and successor suite
+`sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`; all external call counts and cost are
+zero. Next is a clean-sealed no-call contract, with no change to evaluator-v1, D-142 or R2 artifacts authorized.

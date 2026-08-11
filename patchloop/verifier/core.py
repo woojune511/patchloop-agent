@@ -21,6 +21,7 @@ from patchloop.contracts import (
 from patchloop.errors import ContractError
 from patchloop.repository import WorkspaceManager
 from patchloop.sandbox.runner import Sandbox
+from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes
 from patchloop.verifier.policy import (
@@ -30,6 +31,14 @@ from patchloop.verifier.policy import (
     verify_scope,
     verify_test_tampering,
 )
+from patchloop.verifier.runtime_evidence import (
+    EvaluatorV2RuntimeAuthority,
+    EvaluatorV2StoreBoundProduction,
+    build_submitted_patch_ref,
+    produce_evaluator_v2_result_from_state,
+    produce_registered_check_evidence_v2,
+    produce_scope_policy_evidence_v2,
+)
 
 
 class EvaluationEngine:
@@ -38,10 +47,12 @@ class EvaluationEngine:
         workspace_manager: WorkspaceManager,
         sandbox: Sandbox,
         artifact_store: ArtifactStore,
+        state_store: StateStore | None = None,
     ) -> None:
         self.workspace_manager = workspace_manager
         self.sandbox = sandbox
         self.artifact_store = artifact_store
+        self.state_store = state_store
 
     def _policy_result(self, run_id: str, check_id: str, outcome: PolicyOutcome) -> VerifierResult:
         return VerifierResult(
@@ -87,9 +98,7 @@ class EvaluationEngine:
                         "timed_out": outcome.timed_out,
                         "truncated": outcome.truncated,
                         "artifact_path": artifact.path,
-                        "evidence_artifacts": [
-                            artifact.model_dump(mode="json")
-                        ],
+                        "evidence_artifacts": [artifact.model_dump(mode="json")],
                     },
                 )
             )
@@ -106,6 +115,113 @@ class EvaluationEngine:
             return VerdictState.FAIL
         return VerdictState.PASS
 
+    def evaluate_v2_candidate(
+        self,
+        task_dir: str | Path,
+        patch_path: str | Path,
+        manifest: RunManifest,
+        *,
+        submitted_patch_artifact: Artifact,
+        authority: EvaluatorV2RuntimeAuthority,
+        usage: Usage | None = None,
+    ) -> EvaluatorV2StoreBoundProduction:
+        """Produce one store-bound, unofficial evaluator-v2 candidate.
+
+        This path remains separate from evaluator-v1 and is selected only by
+        the authority-gated standard runner. It performs no Docker or provider
+        activation on its own; the supplied sandbox owns check execution.
+        """
+
+        if self.state_store is None:
+            raise ContractError("evaluator-v2 candidate requires durable run state")
+        if not self.sandbox.official:
+            raise ContractError("evaluator-v2 candidate requires the Docker sandbox")
+        persisted_manifest = self.state_store.get_manifest(manifest.run_id)
+        if persisted_manifest != manifest:
+            raise ContractError("evaluator-v2 candidate manifest differs from durable state")
+        package = load_task_package(task_dir)
+        patch_bytes = Path(patch_path).read_bytes()
+        if (
+            self.artifact_store.read_bytes(submitted_patch_artifact) != patch_bytes
+            or sha256_bytes(patch_bytes) != submitted_patch_artifact.content_hash
+        ):
+            raise ContractError("evaluator-v2 candidate patch is not the accepted CAS object")
+
+        workspace = self.workspace_manager.create(
+            f"eval_v2_{uuid.uuid4().hex}",
+            package.public.repository.url,
+            package.public.repository.base_commit,
+        )
+        started = time.monotonic()
+        patch_hash = self.workspace_manager.apply_patch(workspace, patch_path)
+        hidden_source = Path(package.root) / "hidden"
+        hidden_target = workspace / ".patchloop-hidden"
+        if hidden_source.exists():
+            shutil.copytree(hidden_source, hidden_target)
+        summary = self.workspace_manager.diff_summary(workspace)
+        if not (patch_hash == summary.patch_hash == submitted_patch_artifact.content_hash):
+            raise ContractError("evaluator-v2 candidate workspace differs from accepted patch")
+
+        patch_ref = build_submitted_patch_ref(
+            self.artifact_store,
+            submitted_patch_artifact,
+        )
+        registered = []
+        for check_type, checks in (
+            ("regression", package.public.visible_checks),
+            ("hidden", package.private.hidden_checks),
+        ):
+            for check in checks:
+                outcome = self.sandbox.run_check(workspace, check)
+                registered.append(
+                    produce_registered_check_evidence_v2(
+                        artifact_store=self.artifact_store,
+                        manifest=manifest,
+                        submitted_patch=patch_ref,
+                        check_type=check_type,
+                        check=check,
+                        outcome=outcome,
+                        private_markers=authority.private_markers,
+                    )
+                )
+
+        policy_outcomes = {
+            "scope": verify_scope(summary, package.public.constraints),
+            "dependency": verify_dependencies(summary, package.public.constraints),
+            "test_tampering": verify_test_tampering(summary),
+            "public_api": verify_public_api(
+                summary,
+                package.public.constraints,
+                workspace,
+            ),
+        }
+        policies = [
+            produce_scope_policy_evidence_v2(
+                artifact_store=self.artifact_store,
+                manifest=manifest,
+                submitted_patch=patch_ref,
+                check_id=check_id,
+                outcome=outcome,
+            )
+            for check_id, outcome in policy_outcomes.items()
+        ]
+        final_usage = usage.model_copy(deep=True) if usage is not None else Usage()
+        final_usage.wall_clock_ms += int((time.monotonic() - started) * 1000)
+        return produce_evaluator_v2_result_from_state(
+            state_store=self.state_store,
+            artifact_store=self.artifact_store,
+            run_id=manifest.run_id,
+            package=package,
+            expected_contract=authority.safety_contract,
+            expected_evaluator_source_hash=authority.evaluator_source_hash,
+            expected_tool_schemas=authority.tool_schemas,
+            private_markers=authority.private_markers,
+            submitted_patch=submitted_patch_artifact,
+            registered_checks=registered,
+            scope_policies=policies,
+            usage=final_usage,
+        )
+
     def evaluate(
         self,
         task_dir: str | Path,
@@ -118,12 +234,9 @@ class EvaluationEngine:
         patch_bytes = Path(patch_path).read_bytes()
         if (
             submitted_patch_artifact is not None
-            and sha256_bytes(patch_bytes)
-            != submitted_patch_artifact.content_hash
+            and sha256_bytes(patch_bytes) != submitted_patch_artifact.content_hash
         ):
-            raise ContractError(
-                "evaluator patch input does not match the accepted artifact"
-            )
+            raise ContractError("evaluator patch input does not match the accepted artifact")
         workspace = self.workspace_manager.create(
             f"eval_{uuid.uuid4().hex}",
             package.public.repository.url,
@@ -220,9 +333,7 @@ class EvaluationEngine:
                     "diff_hash": summary.patch_hash,
                     "submitted_patch_artifact_id": patch_artifact.artifact_id,
                     "submitted_patch_content_hash": patch_artifact.content_hash,
-                    "verifier_evidence_schema_version": (
-                        "verifier-evidence-v1"
-                    ),
+                    "verifier_evidence_schema_version": ("verifier-evidence-v1"),
                     "verifier_evidence_artifacts": [
                         raw_artifact
                         for verifier_result in results

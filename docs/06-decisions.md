@@ -6,6 +6,32 @@ work.
 
 ## Effective decisions
 
+### 2026-08-11 — evaluator correctness precedes external readiness and A/C
+
+- The critical path is evaluator correctness v2 → successor A/C offline qualification → versioned no-call
+  contract → separately approved preflight attempt → refreshed pricing/cost and execution candidate → separate
+  paid approval → four-run A/C readiness → preregistered held-out A/C → later B/D comparison.
+- The current evaluator's literal safety PASS does not satisfy the documented four-verdict success contract.
+  No new paid A/C row may be presented as four-verdict SCRR evidence until deterministic safety checks and
+  fail-closed aggregation are versioned, implemented and tested.
+- Historical evaluator-v1 results remain immutable and are not regraded. Claims using them must disclose that
+  safety was unconditional rather than independently measured.
+- D-142 keeps its exact evidence state: source-qualified, unactivated and not consumed. Its planning disposition
+  is deferred. This decision does not create a receipt, attempt, marker or terminal and does not invalidate its
+  original one-use contract.
+- Evaluator-v2 and the A/C successor require new source, runtime and suite identities. D-142 and the R2 suite
+  cannot be relabeled as qualification for those changed bytes.
+- The offline successor has distinct source/runtime/suite hashes; R2 remains its immutable treatment predecessor
+  and the artifact grants no clean-source, external or execution authority.
+- The initial v2 contract is private and task-bound. The manifest contains task/contract/source hashes, counts and
+  opaque projections, not direct private requirement/check IDs. Four controls map to runtime trace,
+  requested-Docker-policy trace or artifact scan; integrity is a prerequisite. Free-form `prohibited_behaviors`
+  is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
+- Offline preflight source qualification and external observation are separate. Each attempt binds
+  `contract_version + state_change_evidence_id + approval_id`; state-change evidence is one-use, the attempt is
+  never retried, and BLOCKED grants no successor. Credential provisioning, candidate creation and paid execution
+  remain separate boundaries.
+
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
 - First matrix: Moto and Babel development-validation tasks x A/C x one repetition = four rows.
@@ -26,7 +52,8 @@ cross-repository, per-rule or negative-transfer-rate claim.
 
 D-122 through D-141 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. Consumed
 pricing, Docker and SDK attempts are never retried or repaired. Planning values, observations and source
-qualification grant no hash/candidate, cost or A/C authority.
+qualification grant no hash/candidate, cost or A/C authority. D-142 is not consumed, but it is outside the
+current critical path and has no activation authority.
 
 ### Active docs own current state; archive owns chronology
 
@@ -34,44 +61,20 @@ qualification grant no hash/candidate, cost or A/C authority.
 - Exact artifacts: `reports/` and the index in `docs/09-evidence.md`.
 - Historical narratives: `docs/archive/` and Git history.
 
-Earlier decisions cannot replace the current D-142 gate or reopen a consumed receipt, attempt or marker.
-
-### 2026-08-09 — D-129 through D-131 preserve the predecessor boundary
-
-D-129 failed closed because a docs open preceded receipt/attempt; transport count is unknown. D-130 separated
-local admission from external activation. D-131 materialized receipt-only and armed-intent-only commits with
-external actions zero. Those artifacts are immutable predecessors, not reusable activation authority.
-
-### 2026-08-10 — D-132 is sealed; D-136 succeeds; D-137–D-141 are consumed; D-142 qualifies source
-
-- D-132 is sealed without response reconstruction; D-136 preserves one successful official public GET; D-137
-  preserves bounded Docker READY plus SDK BLOCKED. All are consumed; exact limits remain in `docs/09-evidence.md`.
-- D-138 through D-141 each exercised a fresh contract exactly once. D-141 receipt and attempt preceded
-  ACTION_STARTED+BLOCKED commit `6405be40eb52d71fc9376065b553a04164543a4b`; the key and routing presence
-  bits were false/false/false after three membership checks. Credential/environment value and `.env` reads,
-  child launch, SDK import/probe, transport/network and provider/evaluator/agent calls were 0. D-141 is consumed.
-- D-142 source `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
-  `7f7e7e25c79899eee6180ae45767492435003096`, is the exact four-add child of D-141 transition commit. Gate
-  `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` qualifies only a future one-use
-  SDK successor; preparation created no runtime artifact and performed no membership/value/`.env`/SDK/child/
-  network/Docker observation or action. Fully injected/mocked focused tests passed 170/170 separately.
-- A later exact D-142 activation must commit receipt and attempt before its fsynced marker. The parent may check only
-  approved membership bits; eligible SDK work is confined to the `env={}` zero-ambient-forwarding child with a
-  fixed placeholder and zero dispatch. Credential provisioning is separate from and unauthorized by preparation
-  and activation; no credential value belongs in approval/chat. The child audit hook begins after CPython/site
-  startup, so pre-bootstrap network absence is not claimed. Terminal or marker-only preservation consumes D-142,
-  requires a separate D-143 offline successor and grants no hash/candidate, cost or A/C authority.
+No sequencing decision can reopen a consumed receipt, attempt or marker or rewrite the exact D-142 gate.
 
 ## Superseded sequencing
 
 - Running the full A/B/C/D matrix immediately is superseded by A/C readiness first.
 - Continuing D-121 isolation before any C test is paused; D-121 is not a fixed-bundle prerequisite.
+- Activating D-142 as the next step is superseded by the evaluator-v2 successor path.
+- Treating the existing R2 source qualification as sufficient for a corrected-evaluator A/C run is superseded;
+  the changed evaluator requires successor source and suite qualification.
 - No sealed artifact, measured result or authority statement is rewritten by this priority change.
 
 ## Open questions
 
-1. After readiness passes, should a held-out A/C design use all 12 tasks with repetitions or a separately
-   preregistered exploratory subset?
-2. When, if ever, should B/raw-trace and D/selective return to the critical path?
+1. Before held-out A/C, what exact 12-task × A/C × repetition schedule, analysis and cost cap should be frozen?
+2. Should B/D be frozen before A/C unblinding, or use a separate fresh held-out panel afterward?
 
 These questions do not authorize work beyond `docs/05-implementation-plan.md`.

@@ -132,7 +132,8 @@ Task 수보다 audit 품질을 우선한다. 모든 evaluation task에는 base c
 
 포트폴리오용 v1은 다음을 증거와 함께 보여야 완료다.
 
-1. Reference patch와 known-bad patch를 evaluator가 구분한다.
+1. Reference, known-bad, safety-negative fixture를 evaluator가 구분하고 required safety evidence 부재를
+   fail-closed로 처리한다.
 2. Single agent run이 완전한 manifest·trace·artifact를 남긴다.
 3. Worker kill 이후 중복 patch 없이 동일 run을 재개한다.
 4. Development-validation에서 A/C fixed-bundle delivery를 검증한 뒤, 별도 승인된 frozen held-out 비교를 실행한다.

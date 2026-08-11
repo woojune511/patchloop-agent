@@ -24,6 +24,29 @@ def _result(run_id: str, success: bool) -> dict:
     }
 
 
+def test_report_requires_qualified_receipt_before_counting_v2_result() -> None:
+    run = {
+        "attempt_status": "terminal",
+        "infrastructure_error": None,
+        "qualification_error": None,
+        "diagnostic_error": None,
+        "diagnostic": None,
+        "result": {**_result("run_v2", True), "schema_version": "run-result-v2"},
+        "qualification": None,
+    }
+    assert report_module._is_research_outcome(run) is False
+
+    run["qualification"] = {
+        "qualified": True,
+        "evaluator_version": "v2",
+        "evaluator_v2_runtime_authenticated": True,
+        "evaluator_v2_completion_eligible": False,
+    }
+    assert report_module._is_research_outcome(run) is False
+    run["qualification"]["evaluator_v2_completion_eligible"] = True
+    assert report_module._is_research_outcome(run) is True
+
+
 def test_report_reaggregates_at_task_level(tmp_path, monkeypatch) -> None:
     root = tmp_path / "runtime"
     experiment_dir = root / "experiments"
@@ -136,9 +159,7 @@ def test_report_separates_infrastructure_and_not_started_rows(
 
     report_module.build_report("separated", tmp_path / "report-separated")
 
-    report = json.loads(
-        (tmp_path / "report-separated" / "report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((tmp_path / "report-separated" / "report.json").read_text(encoding="utf-8"))
     metrics = report["metrics"]["no_memory"]
     assert metrics["runs"] == 1
     assert metrics["scheduled_runs"] == 3
@@ -175,9 +196,7 @@ def test_generic_baseline_readiness_is_row_and_metric_excluded(
         runs.append(
             {
                 "task_id": task_id,
-                "split": "dev-validation"
-                if task_id in {"babel", "moto"}
-                else "dev-train",
+                "split": "dev-validation" if task_id in {"babel", "moto"} else "dev-train",
                 "condition": "no_memory",
                 "repetition": 1,
                 "attempt_status": "terminal",
@@ -214,18 +233,14 @@ def test_generic_baseline_readiness_is_row_and_metric_excluded(
         tmp_path / "report-generic-readiness",
     )
     report = json.loads(
-        (
-            tmp_path / "report-generic-readiness" / "report.json"
-        ).read_text(encoding="utf-8")
+        (tmp_path / "report-generic-readiness" / "report.json").read_text(encoding="utf-8")
     )
-    with (
-        tmp_path / "report-generic-readiness" / "runs.csv"
-    ).open(newline="", encoding="utf-8") as handle:
+    with (tmp_path / "report-generic-readiness" / "runs.csv").open(
+        newline="", encoding="utf-8"
+    ) as handle:
         rows = list(csv.DictReader(handle))
 
-    assert "generic-baseline-readiness" in (
-        report_module._CALIBRATION_ONLY_PURPOSES
-    )
+    assert "generic-baseline-readiness" in (report_module._CALIBRATION_ONLY_PURPOSES)
     assert report["schema_version"] == "analysis-report-v2"
     assert report["analysis_ready"] is False
     assert report["metrics"] == {}
@@ -234,9 +249,9 @@ def test_generic_baseline_readiness_is_row_and_metric_excluded(
     assert all(row["calibration_only"] == "1" for row in rows)
     assert all(row["analysis_included"] == "0" for row in rows)
     assert all(row["exclusion_reason"] == "calibration_only" for row in rows)
-    html_report = (
-        tmp_path / "report-generic-readiness" / "report.html"
-    ).read_text(encoding="utf-8")
+    html_report = (tmp_path / "report-generic-readiness" / "report.html").read_text(
+        encoding="utf-8"
+    )
     assert "Diagnostic calibration metrics" in html_report
 
 
@@ -263,9 +278,7 @@ def test_report_excludes_trace_qualification_failures_from_research_metrics(
                 "qualification": {"qualified": False},
                 "qualification_error": {
                     "type": "TraceQualificationFailed",
-                    "message": (
-                        "terminal trace did not satisfy deterministic qualification"
-                    ),
+                    "message": ("terminal trace did not satisfy deterministic qualification"),
                 },
             }
         ],
@@ -281,9 +294,7 @@ def test_report_excludes_trace_qualification_failures_from_research_metrics(
     monkeypatch.setattr(report_module, "runtime_root", lambda: runtime)
 
     report_module.build_report("report-qualification", tmp_path / "report")
-    report = json.loads(
-        (tmp_path / "report" / "report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((tmp_path / "report" / "report.json").read_text(encoding="utf-8"))
     metrics = report["metrics"]["no_memory"]
 
     assert metrics["runs"] == 0
@@ -338,9 +349,7 @@ def test_report_separates_inconclusive_trace_exercise_from_qualification(
     monkeypatch.setattr(report_module, "runtime_root", lambda: runtime)
 
     report_module.build_report("report-diagnostic", tmp_path / "report")
-    report = json.loads(
-        (tmp_path / "report" / "report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((tmp_path / "report" / "report.json").read_text(encoding="utf-8"))
     metrics = report["metrics"]["no_memory"]
     with (tmp_path / "report" / "runs.csv").open(
         newline="",
@@ -402,9 +411,7 @@ def test_report_marks_only_complete_predeclared_matrix_headline_ready(
     monkeypatch.setattr(report_module, "runtime_root", lambda: root)
 
     report_module.build_report("complete", tmp_path / "report-complete")
-    report = json.loads(
-        (tmp_path / "report-complete" / "report.json").read_text(encoding="utf-8")
-    )
+    report = json.loads((tmp_path / "report-complete" / "report.json").read_text(encoding="utf-8"))
 
     assert report["analysis_ready"] is True
     assert report["analysis_basis"] == "complete-predeclared-matrix"
@@ -468,20 +475,15 @@ def test_report_keeps_complete_budget_pilot_out_of_headline_comparison(
         tmp_path / "report-budget-pilot",
     )
     report = json.loads(
-        (tmp_path / "report-budget-pilot" / "report.json").read_text(
-            encoding="utf-8"
-        )
+        (tmp_path / "report-budget-pilot" / "report.json").read_text(encoding="utf-8")
     )
 
     assert report["metrics"] == {}
     assert report["diagnostic_metrics"]["no_memory"]["runs"] == 3
     assert report["analysis_ready"] is False
-    assert report["analysis_basis"] == (
-        "available-case-diagnostic-not-for-headlines"
-    )
+    assert report["analysis_basis"] == ("available-case-diagnostic-not-for-headlines")
     assert report["analysis_blockers"] == [
-        "experiment purpose is calibration-only and excluded from "
-        "the comparison denominator"
+        "experiment purpose is calibration-only and excluded from the comparison denominator"
     ]
     assert report["headline_metrics"] is None
     assert report["paired_scrr_difference_vs_no_memory"] is None
@@ -542,17 +544,14 @@ def test_report_keeps_saturation_pilot_out_of_headlines(
         tmp_path / "report-saturation-pilot",
     )
     report = json.loads(
-        (tmp_path / "report-saturation-pilot" / "report.json").read_text(
-            encoding="utf-8"
-        )
+        (tmp_path / "report-saturation-pilot" / "report.json").read_text(encoding="utf-8")
     )
 
     assert report["metrics"] == {}
     assert report["diagnostic_metrics"]["no_memory"]["runs"] == 1
     assert report["analysis_ready"] is False
     assert report["analysis_blockers"] == [
-        "experiment purpose is calibration-only and excluded from "
-        "the comparison denominator"
+        "experiment purpose is calibration-only and excluded from the comparison denominator"
     ]
     assert report["headline_metrics"] is None
     assert report["paired_scrr_difference_vs_no_memory"] is None

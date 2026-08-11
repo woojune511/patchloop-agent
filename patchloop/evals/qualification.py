@@ -61,6 +61,10 @@ from patchloop.util import (
     sha256_bytes,
     sha256_text,
 )
+from patchloop.verifier.receipt import (
+    EvaluatorV2QualificationAuthority,
+    validate_persisted_evaluator_v2_evaluation_receipt,
+)
 
 LEGACY_QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v1"
 QUALIFICATION_SCHEMA_VERSION = "trace-qualification-v2"
@@ -1218,8 +1222,7 @@ def _execution_plan_matches(
             and isinstance(expected_runtime_contract, dict)
             and expected_runtime_contract.get("schema_version")
             == "ac-fixed-bundle-readiness-runtime-contract-v1"
-            and expected_runtime_contract.get("experiment_id")
-            == manifest.experiment.experiment_id
+            and expected_runtime_contract.get("experiment_id") == manifest.experiment.experiment_id
             and expected_runtime_contract.get("memory_policy_version")
             == FIXED_BUNDLE_POLICY_VERSION
             and expected_runtime_contract.get("memory_conditions")
@@ -1861,11 +1864,7 @@ def _generic_baseline_runtime_contract_evidence(
                 "suite_hash": manifest.experiment.suite_hash,
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
-                    {
-                        "campaign_cost_control_hash": (
-                            manifest.experiment.campaign_cost_control_hash
-                        )
-                    }
+                    {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
                     if manifest.experiment.experiment_id
                     == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
                     else {}
@@ -2434,6 +2433,9 @@ def _evaluation_receipt_evidence(
     run_id: str,
     manifest: RunManifest,
     result: RunResult | None,
+    package: TaskPackage | None = None,
+    state: StateStore | None = None,
+    evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
 ) -> tuple[bool, dict[str, Any]]:
     """Validate the evaluator-ready marker and every file hash it binds."""
 
@@ -2453,6 +2455,50 @@ def _evaluation_receipt_evidence(
         receipt = json.loads(receipt_bytes)
         if not isinstance(receipt, dict):
             raise ValueError("receipt is not an object")
+        if receipt.get("schema_version") == "evaluator-v2-evaluation-receipt-v1":
+            item.update(
+                {
+                    "schema_version": receipt.get("schema_version"),
+                    "worktree_diff_hash": receipt.get("submitted_patch_content_hash"),
+                    "submitted_patch_artifact_id": receipt.get("submitted_patch_artifact_id"),
+                    "evaluator_duration_ms": receipt.get("evaluator_duration_ms"),
+                    "receipt_semantic_hash": receipt.get("content_hash"),
+                    "runtime_authenticated": receipt.get("runtime_authenticated") is True,
+                    "qualification_eligible": receipt.get("qualification_eligible") is True,
+                    "source_qualification_hash": receipt.get("source_qualification_hash"),
+                    "evaluator_source_hash": receipt.get("evaluator_source_hash"),
+                    "suite_hash": receipt.get("suite_hash"),
+                    "evidence_artifact_count": receipt.get("evidence_artifact_count", 0),
+                    "declared_file_hashes": {
+                        "manifest.json": receipt.get("manifest_file_hash"),
+                        "result.json": receipt.get("result_file_hash"),
+                        "safety-evidence-bundle.json": receipt.get("safety_bundle_file_hash"),
+                        "provenance.json": receipt.get("provenance_file_hash"),
+                    },
+                }
+            )
+            item["actual_file_hashes"] = {
+                name: sha256_bytes((run_dir / name).read_bytes())
+                for name in (
+                    "manifest.json",
+                    "result.json",
+                    "safety-evidence-bundle.json",
+                    "provenance.json",
+                )
+            }
+            if package is None or state is None or evaluator_v2_authority is None or result is None:
+                return False, item
+            validated = validate_persisted_evaluator_v2_evaluation_receipt(
+                state_store=state,
+                artifact_store=ArtifactStore(root / "artifacts"),
+                run_id=run_id,
+                package=package,
+                authority=evaluator_v2_authority,
+                expected_result=result,
+            )
+            if validated.manifest != manifest:
+                raise ValueError("v2 receipt manifest mismatch")
+            return True, item
         file_hashes = receipt.get("file_hashes")
         duration_ms = receipt.get("evaluator_duration_ms")
         item["declared_file_hashes"] = file_hashes
@@ -2508,7 +2554,9 @@ def _evaluation_receipt_evidence(
             raise ValueError("receipt evidence mismatch")
         return True, item
     except (
+        ContractError,
         OSError,
+        RecoveryError,
         TypeError,
         ValueError,
         json.JSONDecodeError,
@@ -7067,8 +7115,7 @@ def _generation_block_common_valid(
                 blocked_event.payload.get("schema_version") is None
                 and "request_artifact_hash" not in blocked_event.payload
             )
-            or blocked_event.payload.get("request_artifact_hash")
-            == request_artifact_hash
+            or blocked_event.payload.get("request_artifact_hash") == request_artifact_hash
         )
         and blocked_event.payload.get("request_body_hash")
         == context_event.payload.get("request_body_hash")
@@ -9926,6 +9973,7 @@ def qualify_run(
     root: str | Path | None = None,
     persist: bool = True,
     state_path: str | Path | None = None,
+    evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
 ) -> dict[str, Any]:
     """Qualify one terminal run and optionally persist its immutable artifact.
 
@@ -10932,8 +10980,7 @@ def qualify_run(
         )
         ac_cost_campaign = bool(
             experiment is not None
-            and experiment.experiment_id
-            == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+            and experiment.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
         )
         expected_control_schema = (
             "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"
@@ -10953,10 +11000,8 @@ def qualify_run(
             bool(
                 execution_plan_ok
                 and isinstance(descriptor, dict)
-                and cost_control.get("schema_version")
-                == expected_control_schema
-                and descriptor.get("schema_version")
-                == expected_policy_schema
+                and cost_control.get("schema_version") == expected_control_schema
+                and descriptor.get("schema_version") == expected_policy_schema
                 and isinstance(control_hash, str)
                 and sha256_text(canonical_json(descriptor)) == control_hash
                 and experiment.campaign_cost_control_hash == control_hash
@@ -11279,16 +11324,23 @@ def qualify_run(
             for verifier_result in result.verifier_results
         )
     )
+    evaluator_v2_receipt_integrity = False
+    evaluator_v2_receipt_evidence: dict[str, Any] = {}
     evaluation_receipt_path = run_root / "artifacts" / "runs" / run_id / "evaluation-receipt.json"
     if verifier_evidence_declared or evaluation_receipt_path.exists():
-        (
-            verifier_artifact_integrity,
-            verifier_artifact_evidence,
-        ) = _verifier_artifact_evidence(
-            root=run_root,
-            result=result,
-            required=True,
-        )
+        result_is_v2 = bool(result is not None and result.schema_version == "run-result-v2")
+        if result_is_v2:
+            verifier_artifact_integrity = True
+            verifier_artifact_evidence = []
+        else:
+            (
+                verifier_artifact_integrity,
+                verifier_artifact_evidence,
+            ) = _verifier_artifact_evidence(
+                root=run_root,
+                result=result,
+                required=True,
+            )
         (
             evaluation_receipt_integrity,
             evaluation_receipt_evidence,
@@ -11297,15 +11349,30 @@ def qualify_run(
             run_id=run_id,
             manifest=manifest,
             result=result,
+            package=package,
+            state=state,
+            evaluator_v2_authority=evaluator_v2_authority,
         )
+        evaluator_v2_receipt_integrity = bool(
+            result_is_v2
+            and evaluation_receipt_integrity
+            and evaluation_receipt_evidence.get("runtime_authenticated") is True
+            and evaluation_receipt_evidence.get("qualification_eligible") is True
+        )
+        evaluator_v2_receipt_evidence = evaluation_receipt_evidence
         add(
             "verifier_evidence_artifacts",
             verifier_artifact_integrity and evaluation_receipt_integrity,
-            evidence_artifact_count=len(verifier_artifact_evidence),
+            evidence_artifact_count=(
+                evaluation_receipt_evidence.get("evidence_artifact_count", 0)
+                if result_is_v2
+                else len(verifier_artifact_evidence)
+            ),
             evaluation_receipt_present=evaluation_receipt_path.is_file(),
             evaluation_receipt_content_hash=(
                 evaluation_receipt_evidence.get("receipt_content_hash")
             ),
+            evaluator_v2_runtime_authenticated=evaluator_v2_receipt_integrity,
         )
     leakage_ok = leak_matches == 0
     add("public_private_boundary", leakage_ok, private_match_count=leak_matches)
@@ -11791,12 +11858,41 @@ def qualify_run(
             for value in result.verdicts.model_dump().values()
         )
     )
+    evaluator_verdicts_recorded = bool(
+        result is not None
+        and all(
+            value
+            in {
+                VerdictState.PASS,
+                VerdictState.FAIL,
+                VerdictState.ERROR,
+                VerdictState.NOT_RUN,
+            }
+            for value in result.verdicts.model_dump().values()
+        )
+    )
+    evaluator_v2_terminal_receipt_bound = bool(
+        evaluator_v2_receipt_integrity
+        and len(terminals) == 1
+        and terminals[0].payload.get("evaluator_v2_receipt_hash")
+        == evaluator_v2_receipt_evidence.get("receipt_semantic_hash")
+        and terminals[0].payload.get("evaluator_v2_source_qualification_hash")
+        == evaluator_v2_receipt_evidence.get("source_qualification_hash")
+    )
+    evaluator_v2_authorized = bool(
+        result is not None
+        and result.schema_version == "run-result-v2"
+        and not result.official
+        and evaluator_v2_terminal_receipt_bound
+    )
     if evaluation_reached:
         evaluation_ok = bool(
             result is not None
-            and result.official
             and terminal_type == EventType.RUN_COMPLETED.value
-            and terminal_verdicts
+            and (
+                (result.official and terminal_verdicts)
+                or (evaluator_v2_authorized and evaluator_verdicts_recorded)
+            )
             and result.verifier_results
             and all(item.run_id == run_id for item in result.verifier_results)
         )
@@ -11848,6 +11944,7 @@ def qualify_run(
         "evaluation_reached": evaluation_reached,
         "official": bool(result is not None and result.official),
         "verdicts_terminal": terminal_verdicts,
+        "evaluator_v2_receipt_authorized": evaluator_v2_authorized,
     }
     if generation_blocked_events:
         terminal_result_details.update(
@@ -12046,11 +12143,18 @@ def qualify_run(
             and dataset_entry.role == DatasetRole.MEMORY_DEVELOPMENT
             and evaluation_reached
             and result is not None
-            and result.official
+            and (result.official or evaluator_v2_authorized)
             and result.evaluation_status == "completed"
             and outcome == RunOutcomeKind.TASK_FAILURE
         )
         or (not condition_neutral_v2 and historical_memory_candidate_eligible)
+    )
+    evaluator_v2_completion_eligible = bool(
+        qualified
+        and trace_integrity
+        and leakage_ok
+        and evaluator_v2_authorized
+        and terminal_verdicts
     )
     source_evidence_hash = calculate_source_evidence_hash(
         run_id,
@@ -12086,6 +12190,26 @@ def qualify_run(
         "source_evidence_hash": source_evidence_hash,
         "checks": checks,
     }
+    if result is not None and result.schema_version == "run-result-v2":
+        payload.update(
+            {
+                "evaluator_version": "v2",
+                "evaluator_v2_receipt_hash": evaluator_v2_receipt_evidence.get(
+                    "receipt_semantic_hash"
+                ),
+                "evaluator_v2_receipt_file_hash": evaluator_v2_receipt_evidence.get(
+                    "receipt_content_hash"
+                ),
+                "evaluator_v2_source_hash": evaluator_v2_receipt_evidence.get(
+                    "evaluator_source_hash"
+                ),
+                "evaluator_v2_source_qualification_hash": (
+                    evaluator_v2_receipt_evidence.get("source_qualification_hash")
+                ),
+                "evaluator_v2_runtime_authenticated": evaluator_v2_authorized,
+                "evaluator_v2_completion_eligible": evaluator_v2_completion_eligible,
+            }
+        )
     if experiment is not None and (
         experiment.purpose
         in {

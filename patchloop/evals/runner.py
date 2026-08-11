@@ -98,6 +98,7 @@ from patchloop.runtime import (
 from patchloop.sandbox import DockerSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, ensure_within, sha256_bytes, sha256_text, utc_now
+from patchloop.verifier.receipt import EvaluatorV2QualificationAuthority
 
 OFFICIAL_PRICING_URL = "https://developers.openai.com/api/docs/pricing"
 PRICING_MAX_AGE = timedelta(hours=72)
@@ -5848,6 +5849,21 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
             "qualification_hash",
         )
     }
+    if payload.get("evaluator_version") == "v2":
+        summary.update(
+            {
+                key: payload.get(key)
+                for key in (
+                    "evaluator_version",
+                    "evaluator_v2_receipt_hash",
+                    "evaluator_v2_receipt_file_hash",
+                    "evaluator_v2_source_hash",
+                    "evaluator_v2_source_qualification_hash",
+                    "evaluator_v2_runtime_authenticated",
+                    "evaluator_v2_completion_eligible",
+                )
+            }
+        )
     raw_checks = payload.get("checks")
     if not isinstance(raw_checks, list):
         raw_checks = []
@@ -6313,7 +6329,12 @@ def _terminal_qualification_summary(payload: dict[str, Any]) -> dict[str, Any]:
     return summary
 
 
-def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
+def _qualify_terminal_run(
+    run_id: str,
+    task: str,
+    *,
+    evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
+) -> dict[str, Any]:
     from patchloop.evals.qualification import (
         load_trace_qualification,
         qualify_run,
@@ -6325,6 +6346,7 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
         run_id,
         task_dir=task_path.parent if task_path.is_file() else task_path,
         root=run_root,
+        evaluator_v2_authority=evaluator_v2_authority,
     )
     if payload.get("experiment_id") in {
         GENERIC_HIGH_HEADROOM_READINESS_EXPERIMENT_ID,
@@ -6337,6 +6359,7 @@ def _qualify_terminal_run(run_id: str, task: str) -> dict[str, Any]:
             task_dir=task_path.parent if task_path.is_file() else task_path,
             root=run_root,
             persist=False,
+            evaluator_v2_authority=evaluator_v2_authority,
         )
         summary = _terminal_qualification_summary(persisted)
         summary["read_only_recomputation"] = {
@@ -6925,6 +6948,38 @@ def _d097_completion_gate(
     }
 
 
+def _qualified_ac_evaluator_result(
+    result: dict[str, Any],
+    qualification: dict[str, Any],
+) -> bool:
+    """Accept historical v1 official results or receipt-qualified v2 results."""
+
+    if result.get("schema_version") in {None, "run-result-v1"}:
+        return result.get("official") is True
+    binding = result.get("evaluator_contract")
+    safety_results = [
+        item
+        for item in result.get("verifier_results", [])
+        if isinstance(item, dict) and item.get("check_type") == "safety"
+    ]
+    return bool(
+        result.get("schema_version") == "run-result-v2"
+        and result.get("official") is False
+        and isinstance(binding, dict)
+        and _is_sha256_identity(binding.get("evaluator_source_hash"))
+        and qualification.get("evaluator_version") == "v2"
+        and qualification.get("evaluator_v2_runtime_authenticated") is True
+        and qualification.get("evaluator_v2_completion_eligible") is True
+        and _is_sha256_identity(qualification.get("evaluator_v2_receipt_hash"))
+        and _is_sha256_identity(qualification.get("evaluator_v2_receipt_file_hash"))
+        and _is_sha256_identity(qualification.get("evaluator_v2_source_qualification_hash"))
+        and qualification.get("evaluator_v2_source_hash") == binding.get("evaluator_source_hash")
+        and _is_sha256_identity(result.get("safety_evidence_bundle_hash"))
+        and len(result.get("safety_evidence", [])) == 4
+        and len(safety_results) == 4
+    )
+
+
 def _ac_fixed_bundle_completion_gate(
     rows: list[dict[str, Any]],
     *,
@@ -7079,7 +7134,7 @@ def _ac_fixed_bundle_completion_gate(
             and exact_readiness(qualification)
             and result.get("agent_submission_status") == "completed"
             and result.get("evaluation_status") == "completed"
-            and result.get("official") is True
+            and _qualified_ac_evaluator_result(result, qualification)
             and outcome in {"resolved", "task_failure"}
             and outcome_conjunction_valid
             and result.get("terminal_error") is None
@@ -8138,17 +8193,9 @@ def _ac_finalization_paths(
         / "journals"
         / f"{AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID}.jsonl"
     )
-    prepared_path = (
-        selected_root
-        / "experiments"
-        / "finalization"
-        / digest
-        / "result.prepared.json"
-    )
+    prepared_path = selected_root / "experiments" / "finalization" / digest / "result.prepared.json"
     output_path = (
-        selected_root
-        / "experiments"
-        / f"{AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID}.json"
+        selected_root / "experiments" / f"{AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID}.json"
     )
     for path, label in (
         (plan_path, "A/C execution plan"),
@@ -8183,8 +8230,7 @@ def _load_ac_finalization_plan(
         isinstance(plan, dict)
         and plan.get("schema_version") == "experiment-execution-plan-v1"
         and plan.get("experiment_id") == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
-        and plan.get("purpose")
-        == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
+        and plan.get("purpose") == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
         and plan.get("execution_hash") == execution_hash
         and plan.get("ready") is True
         and plan.get("blockers") == []
@@ -8285,14 +8331,12 @@ def _validate_ac_finalization_record(
     journal_descriptor = record.get("campaign_journal")
     execution_plan = record.get("execution_plan")
     expected_preflight = {
-        key: plan[key]
-        for key in ("suite_hash", "execution_hash", "schedule_hash", "expected_runs")
+        key: plan[key] for key in ("suite_hash", "execution_hash", "schedule_hash", "expected_runs")
     }
     if not (
         record.get("schema_version") == "experiment-result-v2"
         and record.get("experiment_id") == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
-        and record.get("purpose")
-        == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
+        and record.get("purpose") == ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
         and record.get("suite_hash") == plan.get("suite_hash")
         and record.get("execution_hash") == plan.get("execution_hash")
         and record.get("schedule_hash") == plan.get("schedule_hash")
@@ -8316,8 +8360,7 @@ def _validate_ac_finalization_record(
 
     for row, expected in zip(rows, schedule, strict=True):
         if not all(
-            row.get(field) == expected.get(field)
-            for field in _AC_FINALIZATION_ROW_IDENTITY_FIELDS
+            row.get(field) == expected.get(field) for field in _AC_FINALIZATION_ROW_IDENTITY_FIELDS
         ):
             raise ContractError("prepared A/C result row identity differs from the schedule")
         row_id = row.get("schedule_row_id")
@@ -8443,9 +8486,7 @@ def _write_ac_prepared_result(path: Path, content: bytes) -> None:
                     "prepared A/C result ownership changed during publication"
                 ) from exc
         except OSError as exc:
-            raise ContractError(
-                "prepared A/C result could not be atomically published"
-            ) from exc
+            raise ContractError("prepared A/C result could not be atomically published") from exc
         published = _read_stable_regular_file(path, label="prepared A/C result")
         if published != content:
             raise ContractError("published A/C prepared result differs from exact bytes")

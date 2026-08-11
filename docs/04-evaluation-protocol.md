@@ -16,6 +16,7 @@ Immediate readiness question:
 > process failure when compared contemporaneously with no memory?
 
 The readiness result must not be reported as the answer to the long-term question.
+Readiness execution is paused until evaluator v2 and a successor A/C source are qualified.
 
 ## 2. Dataset roles
 
@@ -39,7 +40,7 @@ held-out result.
 | --- | --- | --- |
 | A | `no_memory` | Implemented baseline condition |
 | B | `raw_trace` | Deferred; portable selection/redaction contract incomplete |
-| C | `structured` | Delivery, exact suite and trace qualifier verified offline; not live-qualified |
+| C | `structured` | R2 delivery/suite qualified offline; evaluator-v2 successor not qualified |
 | D | `selective_structured` | Deferred; applicability calibration and score policy incomplete |
 
 For this readiness panel, C means all three approved generic rules in frozen D-110 `group_provenance`
@@ -48,7 +49,7 @@ embedding retrieval or threshold selection.
 
 ## 4. Four-run readiness matrix
 
-The exact offline plan is `experiments/ac-structured-pilot-v2.plan.yaml`; the exact R2 suite is
+The historical offline plan is `experiments/ac-structured-pilot-v2.plan.yaml`; the exact R2 suite is
 `experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml`.
 
 | Order | Task | Condition |
@@ -90,24 +91,20 @@ D-122 predecessor evidence and current D-125 offline tests prove:
    selected-memory field and its derived hashes/counts. Later live turns may diverge with agent trajectory.
 7. Input-token counting, truncation-disabled behavior and durable usage evidence remain intact.
 
-D-108's +702 token count covers one request shape, not every live turn. Exact per-turn overhead would need a
-separately authorized counterfactual count. D-124/D-125 local/mock corrections are inherited; no reservation,
-result, candidate or execution hash exists.
+D-108's +702 token count covers one request shape, not every live turn. D-124/D-125 prove local/mock completion
+behavior only; no reservation, result, candidate or execution hash exists. Consumed external attempts remain
+canonical in `docs/09-evidence.md`.
 
-D-132 remains consumed without canonical response evidence; D-135 sealed it without reconstruction. D-136
-consumed one official public GET with HTTP 200, zero redirects and 3,735 replay bytes; it grants no run authority.
+D-142 is source-qualified and unactivated, with planning disposition deferred. It has no runtime artifact and
+cannot qualify changed evaluator bytes. Evaluator v2 therefore requires new source, suite and runtime identities;
+the A-null/C-exact-three treatment itself remains unchanged.
 
-D-137 reached Docker READY and SDK BLOCKED; D-138 through D-141 independently ended SDK BLOCKED. D-141 final
-commit `6405be40eb52d71fc9376065b553a04164543a4b` records false/false/false for the approved presence bits after
-three membership checks. Its value/`.env`, child, SDK import/probe, transport/network and provider counts were 0;
-it is consumed. D-142 source `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
-`7f7e7e25c79899eee6180ae45767492435003096`, and gate
-`d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` qualify only a fresh membership-first,
-isolated-child SDK successor source. Fully injected/mocked tests passed 170/170 separately; no D-142 runtime
-artifact, execution hash, cost authority or four-row result exists. Credential provisioning is
-separate, and eligible work remains confined to a zero-ambient-forwarding `env={}` child after parent membership
-checks; its post-CPython/site audit hook does not support a pre-bootstrap network-absence claim. Any terminal
-requires a separate D-143 offline successor.
+Evaluator v1 assigns safety a literal PASS. The v2 path derives typed check/scope/safety evidence from a durable
+accepted-event prefix, verified CAS and exact requested-policy descriptors; exact marker hits are redacted before
+persistence. Missing→NOT_RUN, checker error→ERROR, violation→FAIL and complete observations→PASS. Standard-runner
+selection, completed persistence and qualification require a separately supplied authority and exact receipt;
+the raw result remains unofficial. The offline successor source/runtime/suite tuple is now content-qualified,
+but not clean-commit sealed or authorized for execution.
 
 ## 7. Run-completion gate
 
@@ -116,8 +113,9 @@ The D-125-qualified completion source makes the four-row matrix analyzable only 
 - reaches a terminal state;
 - is trace-qualified and cost-settled;
 - records complete provider response usage with exact token-count reconciliation;
-- reaches the official evaluator and binds hidden/regression/scope/safety verdicts consistently with SCRR and
-  resolved/task-failure outcome;
+- reaches either the historical official v1 evaluator or receipt-qualified v2 path and binds all verdicts
+  consistently with SCRR and resolved/task-failure outcome;
+- binds a specific evaluator-v2 safety result and its evidence rather than accepting a verdict string alone;
 - has no infrastructure, qualification, diagnostic or budget-terminal confound.
 
 If any row fails this gate, preserve all evidence and mark the panel inconclusive. Do not replace or rerun only
@@ -167,6 +165,7 @@ Not allowed:
 
 ## 11. Deferred experiments
 
-After readiness, a separate decision will choose held-out A/C scope and repetitions. The full A/B/C/D design
-remains a later confirmatory experiment; the immutable historical `experiments/core.template.yaml` is not
-modified or authorized by this sequencing decision.
+After valid readiness, the planning target is the frozen 12-task core panel × A/C × at least two repetitions
+(at least 48 rows). Exact schedule, analysis, runtime and cost require preregistration before held-out unblinding.
+The full A/B/C/D design remains later: freeze B/D first or use a separate fresh held-out panel afterward. The
+historical `experiments/core.template.yaml` is not modified or authorized by this decision.

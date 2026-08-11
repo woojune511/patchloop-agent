@@ -80,3 +80,37 @@ def test_current_docs_bind_the_four_run_plan_without_live_authority() -> None:
     assert "expected_runs: 4" in plan
     assert "provider_execution_authorized: false" in plan
     assert "runtime_memory_injection_authorized: false" in plan
+
+
+def test_current_roadmap_defers_d142_and_puts_evaluator_correctness_first() -> None:
+    status = Path("docs/current-status.md").read_text(encoding="utf-8")
+    decisions = Path("docs/06-decisions.md").read_text(encoding="utf-8")
+
+    assert "source-qualified only, unactivated" in status
+    assert "planning disposition is now **deferred**" in status
+    assert "D-142 activation is not the next gate" in status
+    assert "offline successor-only integration path" in status
+    assert "successor A/C offline qualification" in status
+
+    ordered_stages = (
+        "evaluator correctness v2",
+        "successor A/C offline qualification",
+        "versioned no-call",
+        "separately approved preflight attempt",
+        "execution candidate",
+        "four-run A/C readiness",
+        "held-out A/C",
+        "B/D comparison",
+    )
+    positions = [decisions.index(stage) for stage in ordered_stages]
+    assert positions == sorted(positions)
+
+
+def test_documented_evaluator_v1_gap_matches_current_source() -> None:
+    evaluator = Path("patchloop/verifier/core.py").read_text(encoding="utf-8")
+    status = Path("docs/current-status.md").read_text(encoding="utf-8")
+    limitations = Path("docs/08-limitations.md").read_text(encoding="utf-8")
+
+    assert "safety_state = VerdictState.PASS" in evaluator
+    assert "## Evaluator correctness gap" in status
+    assert "## Evaluator-v1 correctness gap" in limitations

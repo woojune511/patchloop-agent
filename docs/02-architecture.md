@@ -42,7 +42,7 @@ audited task + immutable repository snapshot
 | `patchloop.tools` | Search, read, patch, registered checks, diff and submission |
 | `patchloop.state` | Events, checkpoints, CAS and recovery identities |
 | `patchloop.sandbox` | Workspace and process/container boundaries |
-| `patchloop.verifier` | Hidden acceptance, regression, scope, API, dependency and safety checks |
+| `patchloop.verifier` | Hidden/regression/scope checks plus typed v2 evidence, receipt and revalidation |
 | `patchloop.failures` | Evidence-backed failure taxonomy |
 | `patchloop.memory` | Entry schema, rendering, index and memory-delivery helpers |
 | `patchloop.evals` | Suite preflight, immutable schedule, execution and reporting |
@@ -75,8 +75,14 @@ resume remains disabled and external billing idempotency is not proven.
 ## 6. Evaluation boundary
 
 The agent can see only public task files and registered check output. The evaluator receives private task
-material only after submission and runs in a separate workspace/container. Primary success is the conjunction
-of hidden acceptance, regression, scope and safety.
+material only after submission and runs in a separate workspace/container. Target primary success is the
+conjunction of hidden acceptance, regression, scope and safety.
+
+Evaluator v1's safety verdict is unconditional. The v2 path binds typed producers to a durable accepted-event
+prefix and verified CAS. A separately supplied authority is required before standard-runner selection; its
+append-only receipt gates completed persistence, qualification and completion while the raw result stays
+unofficial. A working-tree offline successor binds exact source/runtime/suite hashes, but no clean source seal or
+live result exists and v1 evidence remains unchanged.
 
 Visible checks and agent self-review are feedback; neither can replace hidden evaluation.
 
@@ -87,7 +93,7 @@ Visible checks and agent self-review are feedback; neither can replace hidden ev
 Three generalized memory entries have approved D-105 model-facing text and a D-110 frozen index. The index
 contains source provenance and embeddings, but runtime retrieval authority remains closed.
 
-### Current A/C readiness path
+### Frozen R2 A/C source
 
 `fixed-d110-bundle-v1` implements a narrow fixed-bundle adapter:
 
@@ -98,10 +104,9 @@ contains source provenance and embeddings, but runtime retrieval authority remai
    hashes without exposing source-run provenance, vectors or raw traces.
 5. It emits neither `MemoryRetrieved` nor a new delivery event.
 
-The implementation loads no embedding model, computes no similarity, ranking or threshold and does not call
-the existing selective retrieval path. D-122 also binds the exact four-row suite and condition-aware trace
-qualifier offline. Full-schedule cost reservation, the four-row completion gate, an execution candidate and
-the live run remain absent.
+The implementation loads no embedding model and performs no similarity, ranking or threshold. D-122 binds the
+four-row suite and trace qualifier offline. This R2 source predates evaluator v2; execution is paused and a new
+source/suite/runtime identity is required after evaluator correction. No candidate or live result exists.
 
 ### Deferred paths
 

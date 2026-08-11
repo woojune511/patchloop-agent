@@ -54,6 +54,7 @@ from patchloop.contracts import (
     Budget,
     Checkpoint,
     DatasetRole,
+    EvaluatorV2EvaluationReceipt,
     EventType,
     ExperimentPurpose,
     ExperimentRunContext,
@@ -68,6 +69,7 @@ from patchloop.contracts import (
     ToolResult,
     Usage,
     Verdicts,
+    build_evidence_artifact_ref,
 )
 from patchloop.errors import (
     ContractError,
@@ -107,6 +109,12 @@ from patchloop.util import (
     utc_now,
 )
 from patchloop.verifier import EvaluationEngine
+from patchloop.verifier.receipt import (
+    EvaluatorV2QualificationAuthority,
+    issue_evaluator_v2_evaluation_receipt,
+    validate_evaluator_v2_manifest_authority,
+    validate_persisted_evaluator_v2_evaluation_receipt,
+)
 
 _LIVE_AUTHORIZATION_GUARD = object()
 _CAMPAIGN_COST_RESERVATION_GUARD = object()
@@ -114,9 +122,7 @@ _CAMPAIGN_COST_CONTROL_SCHEMA = "campaign-cost-control-evidence-v1"
 _CAMPAIGN_COST_POLICY_SCHEMA = "campaign-list-price-accrual-cap-v1"
 _CAMPAIGN_JOURNAL_EVENT_SCHEMA = "experiment-journal-event-v1"
 _CAMPAIGN_RESERVATION_CONSUMPTION_SCHEMA = "campaign-cost-reservation-consumption-v1"
-_AC_ROW_START_CONSUMPTION_MARKER_SCHEMA = (
-    "ac-fixed-bundle-row-start-consumption-marker-v1"
-)
+_AC_ROW_START_CONSUMPTION_MARKER_SCHEMA = "ac-fixed-bundle-row-start-consumption-marker-v1"
 _MAX_RECOVERABLE_SUBMISSION_REJECTIONS = 2
 _MAX_RECOVERABLE_REVIEW_REJECTIONS = 2
 _EVALUATION_RECEIPT_SCHEMA = "evaluation-receipt-v1"
@@ -143,9 +149,7 @@ _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA = "campaign-list-price-full-
 _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_CONTROL_SCHEMA = (
     "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"
 )
-_AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_POLICY_SCHEMA = (
-    "ac-fixed-bundle-full-schedule-reserve-v1"
-)
+_AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_POLICY_SCHEMA = "ac-fixed-bundle-full-schedule-reserve-v1"
 _CONDITION_NEUTRAL_NO_MEMORY_ROW_ORDER = {
     ("pyfakefs-makedirs-parent-traversal", 1): 1,
     ("pyfakefs-makedirs-parent-traversal", 2): 2,
@@ -703,6 +707,7 @@ class AgentRunner:
         self_validation: bool = False,
         live_authorization: LiveExecutionAuthorization | None = None,
         campaign_cost_reservation: (CampaignCostReservationAuthorization | None) = None,
+        evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
         _allowed_worker_statuses: set[RunStatus] | None = None,
     ) -> dict[str, Any]:
         task_dir = self._task_dir(task_path)
@@ -736,6 +741,20 @@ class AgentRunner:
                 raise ContractError("task package does not match the immutable run manifest")
         if manifest is not None and manifest.model.provider != selected_provider:
             raise ContractError("model selector does not match the immutable run manifest provider")
+        if manifest is None and evaluator_v2_authority is not None:
+            raise ContractError("evaluator-v2 authority requires a prebuilt v2 manifest")
+        if manifest is not None:
+            if manifest.schema_version == "run-manifest-v2":
+                if evaluator_v2_authority is None:
+                    raise ContractError(
+                        "run-manifest-v2 requires separately qualified evaluator authority"
+                    )
+                evaluator_v2_authority = validate_evaluator_v2_manifest_authority(
+                    manifest,
+                    evaluator_v2_authority,
+                )
+            elif evaluator_v2_authority is not None:
+                raise ContractError("evaluator-v2 authority cannot be attached to a v1 manifest")
         if selected_provider == "openai" and (
             self_validation
             or (
@@ -871,6 +890,7 @@ class AgentRunner:
                     normalized_model,
                     public_review_base_provenance=(public_review_base_provenance),
                     worker_claim=worker_claim,
+                    evaluator_v2_authority=evaluator_v2_authority,
                 )
             except RunOwnershipConflict:
                 raise
@@ -899,6 +919,7 @@ class AgentRunner:
         run_id: str,
         *,
         live_authorization: LiveExecutionAuthorization | None = None,
+        evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
     ) -> dict[str, Any]:
         manifest = self.state.get_manifest(run_id)
         if (
@@ -933,6 +954,7 @@ class AgentRunner:
             memory_condition=manifest.memory.condition,
             manifest=manifest,
             live_authorization=live_authorization,
+            evaluator_v2_authority=evaluator_v2_authority,
             _allowed_worker_statuses={
                 RunStatus.CREATED,
                 RunStatus.SUSPENDED,
@@ -1069,8 +1091,7 @@ class AgentRunner:
         return bool(
             AgentRunner._is_ac_fixed_bundle_readiness_manifest(manifest)
             and manifest.experiment is not None
-            and manifest.experiment.experiment_id
-            == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+            and manifest.experiment.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
             and _valid_sha256_identity(manifest.experiment.campaign_cost_control_hash)
         )
 
@@ -1154,11 +1175,9 @@ class AgentRunner:
         journal_path_raw = plan.get("journal_path")
         if not (
             isinstance(cost_control, dict)
-            and cost_control.get("schema_version")
-            == expected_control_schema
+            and cost_control.get("schema_version") == expected_control_schema
             and isinstance(descriptor, dict)
-            and descriptor.get("schema_version")
-            == expected_policy_schema
+            and descriptor.get("schema_version") == expected_policy_schema
             and descriptor.get("experiment_id") == expected_experiment_id
             and _valid_sha256_identity(control_hash)
             and sha256_text(canonical_json(descriptor)) == control_hash
@@ -1270,8 +1289,7 @@ class AgentRunner:
             and reserved.get("schedule_hash") == descriptor.get("schedule_hash")
             and reserved.get("schedule_row_ids") == schedule_row_ids
             and isinstance(policy, dict)
-            and reserved.get("per_run_reserve_nanos")
-            == policy.get("per_run_reserve_nanos")
+            and reserved.get("per_run_reserve_nanos") == policy.get("per_run_reserve_nanos")
             and reserved.get("full_schedule_reserve_nanos")
             == policy.get("full_schedule_reserve_nanos")
             and reserved.get("hard_cap_nanos") == policy.get("hard_cap_nanos")
@@ -1443,9 +1461,7 @@ class AgentRunner:
         if not self._is_ac_fixed_bundle_cost_completion_manifest(manifest):
             return None
         if live_authorization is None or manifest.experiment is None:
-            raise ContractError(
-                "A/C row-start consumption requires exact live authorization"
-            )
+            raise ContractError("A/C row-start consumption requires exact live authorization")
         binding = self._require_full_schedule_reservation(
             manifest,
             live_authorization,
@@ -1465,8 +1481,7 @@ class AgentRunner:
         if any(
             row["schedule_row_id"] == schedule_row_id
             or row["run_id"] == manifest.run_id
-            or row["row_started_event_hash"]
-            == binding["row_started_event_hash"]
+            or row["row_started_event_hash"] == binding["row_started_event_hash"]
             for row in existing
         ):
             raise ContractError("A/C row start was already consumed")
@@ -1485,9 +1500,7 @@ class AgentRunner:
             schedule_row_id=schedule_row_id,
             run_id=manifest.run_id,
             row_started_event_hash=binding["row_started_event_hash"],
-            journal_prefix_file_sha256=binding[
-                "journal_prefix_file_sha256"
-            ],
+            journal_prefix_file_sha256=binding["journal_prefix_file_sha256"],
             control_hash=control_hash,
         )
         marker_body = {
@@ -1496,9 +1509,7 @@ class AgentRunner:
             "schedule_row_id": schedule_row_id,
             "run_id": manifest.run_id,
             "row_started_event_hash": binding["row_started_event_hash"],
-            "journal_prefix_file_sha256": binding[
-                "journal_prefix_file_sha256"
-            ],
+            "journal_prefix_file_sha256": binding["journal_prefix_file_sha256"],
             "control_hash": control_hash,
             "journal_path": binding["journal_path"],
             "consumed_at": consumption["consumed_at"],
@@ -1549,23 +1560,18 @@ class AgentRunner:
             isinstance(marker, dict)
             and set(marker) == expected_keys
             and isinstance(body, dict)
-            and marker.get("schema_version")
-            == _AC_ROW_START_CONSUMPTION_MARKER_SCHEMA
+            and marker.get("schema_version") == _AC_ROW_START_CONSUMPTION_MARKER_SCHEMA
             and marker.get("execution_hash") == execution_hash
             and marker.get("schedule_row_id") == schedule_row_id
             and isinstance(marker.get("run_id"), str)
             and bool(marker.get("run_id"))
             and _valid_sha256_identity(marker.get("row_started_event_hash"))
-            and _valid_sha256_identity(
-                marker.get("journal_prefix_file_sha256")
-            )
+            and _valid_sha256_identity(marker.get("journal_prefix_file_sha256"))
             and marker.get("control_hash") == control_hash
             and marker.get("journal_path") == journal_path
             and isinstance(marker.get("consumed_at"), str)
             and bool(marker.get("consumed_at"))
-            and _valid_sha256_identity(
-                marker.get("state_consumption_content_hash")
-            )
+            and _valid_sha256_identity(marker.get("state_consumption_content_hash"))
             and _valid_sha256_identity(marker.get("content_hash"))
             and sha256_text(canonical_json(body)) == marker["content_hash"]
         ):
@@ -1838,6 +1844,7 @@ class AgentRunner:
         *,
         public_review_base_provenance: Artifact | None = None,
         worker_claim: dict[str, Any] | None = None,
+        evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
     ) -> dict[str, Any]:
         task_dir = package.root
         system_prompt, tool_schemas = self._runtime_contract(manifest)
@@ -2081,6 +2088,7 @@ class AgentRunner:
                     manifest,
                     sandbox,
                     usage,
+                    evaluator_v2_authority=evaluator_v2_authority,
                 )
             adapter = self._model_adapter(
                 model,
@@ -2753,6 +2761,7 @@ class AgentRunner:
                             manifest,
                             sandbox,
                             usage,
+                            evaluator_v2_authority=evaluator_v2_authority,
                         )
                     should_stop = self._reject_unstructured_submission(
                         manifest.run_id,
@@ -2884,6 +2893,7 @@ class AgentRunner:
                                 manifest,
                                 sandbox,
                                 usage,
+                                evaluator_v2_authority=evaluator_v2_authority,
                             )
                         continue
                     execution_context = (
@@ -3047,6 +3057,8 @@ class AgentRunner:
         manifest: RunManifest,
         sandbox: DockerSandbox | LocalSandbox,
         usage: Usage,
+        *,
+        evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
     ) -> dict[str, Any]:
         usage.model_cost_usd = calculate_model_cost(usage, manifest.model)
         summary = WorkspaceManager.diff_summary(workspace)
@@ -3088,37 +3100,83 @@ class AgentRunner:
             patch_path,
             submitted_patch_bytes,
         )
-        completed_evaluation = self._load_completed_evaluation(
-            manifest,
-            expected_patch_hash=summary.patch_hash,
-            submitted_patch_artifact=submitted_patch_artifact,
-            expected_official=sandbox.official,
-        )
-        if completed_evaluation is None:
-            evaluator = EvaluationEngine(
-                self.workspaces,
-                sandbox,
-                self.artifacts,
-            )
-            evaluator_started = time.monotonic()
-            result = evaluator.evaluate(
-                task_dir,
-                patch_path,
+        evaluator_v2_receipt: EvaluatorV2EvaluationReceipt | None = None
+        if manifest.schema_version == "run-manifest-v2":
+            if evaluator_v2_authority is None or submitted_patch_artifact is None:
+                raise ContractError(
+                    "evaluator-v2 requires qualified authority and an accepted patch"
+                )
+            package = load_task_package(task_dir)
+            if self._evaluation_receipt_path(manifest.run_id).exists():
+                persisted = validate_persisted_evaluator_v2_evaluation_receipt(
+                    state_store=self.state,
+                    artifact_store=self.artifacts,
+                    run_id=manifest.run_id,
+                    package=package,
+                    authority=evaluator_v2_authority,
+                )
+                result = persisted.result
+                evaluator_v2_receipt = persisted.receipt
+                evaluator_duration_ms = persisted.receipt.evaluator_duration_ms
+            else:
+                evaluator = EvaluationEngine(
+                    self.workspaces,
+                    sandbox,
+                    self.artifacts,
+                    self.state,
+                )
+                evaluator_started = time.monotonic()
+                production = evaluator.evaluate_v2_candidate(
+                    task_dir,
+                    patch_path,
+                    manifest,
+                    usage=usage,
+                    submitted_patch_artifact=submitted_patch_artifact,
+                    authority=evaluator_v2_authority.runtime,
+                )
+                evaluator_duration_ms = int((time.monotonic() - evaluator_started) * 1000)
+                persisted = issue_evaluator_v2_evaluation_receipt(
+                    state_store=self.state,
+                    artifact_store=self.artifacts,
+                    package=package,
+                    production=production,
+                    authority=evaluator_v2_authority,
+                    evaluator_duration_ms=evaluator_duration_ms,
+                )
+                result = persisted.result
+                evaluator_v2_receipt = persisted.receipt
+        else:
+            completed_evaluation = self._load_completed_evaluation(
                 manifest,
-                usage=usage,
-                submitted_patch_artifact=submitted_patch_artifact,
-            )
-            evaluator_duration_ms = int((time.monotonic() - evaluator_started) * 1000)
-            self._persist_evaluation_receipt(
-                manifest,
-                result,
-                evaluator_duration_ms=evaluator_duration_ms,
                 expected_patch_hash=summary.patch_hash,
                 submitted_patch_artifact=submitted_patch_artifact,
                 expected_official=sandbox.official,
             )
-        else:
-            result, evaluator_duration_ms = completed_evaluation
+            if completed_evaluation is None:
+                evaluator = EvaluationEngine(
+                    self.workspaces,
+                    sandbox,
+                    self.artifacts,
+                )
+                evaluator_started = time.monotonic()
+                result = evaluator.evaluate(
+                    task_dir,
+                    patch_path,
+                    manifest,
+                    usage=usage,
+                    submitted_patch_artifact=submitted_patch_artifact,
+                )
+                evaluator_duration_ms = int((time.monotonic() - evaluator_started) * 1000)
+                self._persist_evaluation_receipt(
+                    manifest,
+                    result,
+                    evaluator_duration_ms=evaluator_duration_ms,
+                    expected_patch_hash=summary.patch_hash,
+                    submitted_patch_artifact=submitted_patch_artifact,
+                    expected_official=sandbox.official,
+                )
+            else:
+                result, evaluator_duration_ms = completed_evaluation
         classification_error: dict[str, str] | None = None
         try:
             failure = classify_failure(
@@ -3154,6 +3212,7 @@ class AgentRunner:
                 "failure_classification_error": classification_error,
             },
             failure_payload=failure_payload,
+            evaluator_v2_receipt=evaluator_v2_receipt,
         )
         return result.model_dump(mode="json")
 
@@ -3376,17 +3435,66 @@ class AgentRunner:
         error_details = self._safe_error_details(error)
         if error_details:
             terminal_error["details"] = error_details
-        result = RunResult(
-            run_id=manifest.run_id,
-            agent_submission_status=("completed" if submission_accepted else "failed"),
-            evaluation_status="not_run",
-            scope_compliant_success=False,
-            official=False,
-            verdicts=Verdicts(),
-            usage=usage,
-            outcome_kind=outcome_kind,
-            terminal_error=terminal_error,
-        )
+        effective_outcome = outcome_kind
+        if manifest.schema_version == "run-manifest-v2":
+            submitted_patch_ref = None
+            submitted_patch_id = None
+            if submission_accepted:
+                accepted = [
+                    event for event in events if event.type == EventType.SUBMISSION_ACCEPTED
+                ]
+                try:
+                    artifact = Artifact.model_validate(
+                        accepted[0].payload["submitted_patch_artifact"]
+                    )
+                    self.artifacts.read_bytes(artifact)
+                    submitted_patch_ref = build_evidence_artifact_ref(
+                        artifact,
+                        role="submitted_patch",
+                    )
+                    submitted_patch_id = artifact.artifact_id
+                except (IndexError, KeyError, RecoveryError, ValueError) as exc:
+                    raise RecoveryError(
+                        "accepted v2 failure lacks its submitted patch evidence"
+                    ) from exc
+                typed_terminal = {
+                    "code": "EVALUATOR_INFRASTRUCTURE_ERROR",
+                    "phase": "evaluator",
+                }
+                effective_outcome = RunOutcomeKind.INFRASTRUCTURE_ERROR
+            else:
+                typed_terminal = {
+                    "code": "AGENT_SUBMISSION_FAILED",
+                    "phase": "agent",
+                }
+                effective_outcome = RunOutcomeKind.AGENT_FAILURE
+            result = RunResult(
+                schema_version="run-result-v2",
+                run_id=manifest.run_id,
+                agent_submission_status=("completed" if submission_accepted else "failed"),
+                evaluation_status="not_run",
+                scope_compliant_success=False,
+                official=False,
+                verdicts=Verdicts(),
+                usage=usage,
+                submitted_patch_artifact_id=submitted_patch_id,
+                submitted_patch_artifact=submitted_patch_ref,
+                outcome_kind=effective_outcome,
+                terminal_error=typed_terminal,
+                evaluator_contract=manifest.evaluator_contract,
+            )
+        else:
+            result = RunResult(
+                run_id=manifest.run_id,
+                agent_submission_status=("completed" if submission_accepted else "failed"),
+                evaluation_status="not_run",
+                scope_compliant_success=False,
+                official=False,
+                verdicts=Verdicts(),
+                usage=usage,
+                outcome_kind=outcome_kind,
+                terminal_error=terminal_error,
+            )
         failure = classify_failure(
             result,
             load_task_package(task_dir).public.split,
@@ -3417,7 +3525,7 @@ class AgentRunner:
             json.dumps(
                 {
                     "evaluation_reached": False,
-                    "outcome_kind": outcome_kind.value,
+                    "outcome_kind": effective_outcome.value,
                     "error_type": type(error).__name__,
                     "error_code": error_code,
                 },
@@ -3431,7 +3539,7 @@ class AgentRunner:
             event_type=EventType.RUN_FAILED,
             actor="runner",
             payload={
-                "outcome_kind": outcome_kind.value,
+                "outcome_kind": effective_outcome.value,
                 "error_type": type(error).__name__,
                 "error_code": error_code,
                 "error_details": error_details or None,
@@ -3689,11 +3797,7 @@ class AgentRunner:
                 "suite_hash": manifest.experiment.suite_hash,
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
-                    {
-                        "campaign_cost_control_hash": (
-                            manifest.experiment.campaign_cost_control_hash
-                        )
-                    }
+                    {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
                     if manifest.experiment.experiment_id
                     == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
                     else {}

@@ -61,19 +61,27 @@ def _task_means(runs: list[dict], metric: Callable[[dict | None], float]) -> dic
 
 def _is_research_outcome(run: dict) -> bool:
     result = run.get("result")
+    qualification = run.get("qualification")
+    evaluator_v2_qualified = bool(
+        isinstance(result, dict)
+        and result.get("schema_version") == "run-result-v2"
+        and isinstance(qualification, dict)
+        and qualification.get("evaluator_version") == "v2"
+        and qualification.get("evaluator_v2_runtime_authenticated") is True
+        and qualification.get("evaluator_v2_completion_eligible") is True
+    )
     return bool(
         run.get("attempt_status") != "not_started"
         and run.get("infrastructure_error") is None
         and run.get("qualification_error") is None
         and run.get("diagnostic_error") is None
         and (
-            run.get("qualification") is None
-            or run["qualification"].get("qualified") is True
+            evaluator_v2_qualified
+            if isinstance(result, dict) and result.get("schema_version") == "run-result-v2"
+            else qualification is None
+            or (isinstance(qualification, dict) and qualification.get("qualified") is True)
         )
-        and (
-            run.get("diagnostic") is None
-            or run["diagnostic"].get("status") == "passed"
-        )
+        and (run.get("diagnostic") is None or run["diagnostic"].get("status") == "passed")
         and result is not None
         and result.get("outcome_kind") != "infrastructure_error"
     )
@@ -88,8 +96,7 @@ def _exclusion_reason(run: dict) -> str | None:
     ):
         return "infrastructure_error"
     if run.get("qualification_error") is not None or (
-        run.get("qualification") is not None
-        and run["qualification"].get("qualified") is not True
+        run.get("qualification") is not None and run["qualification"].get("qualified") is not True
     ):
         return "trace_qualification_failure"
     diagnostic_error = run.get("diagnostic_error")
@@ -99,12 +106,8 @@ def _exclusion_reason(run: dict) -> str | None:
     ):
         if (
             diagnostic_error is not None
-            and diagnostic_error.get("type")
-            == "TraceExerciseInconclusive"
-        ) or (
-            diagnostic is not None
-            and diagnostic.get("status") == "inconclusive"
-        ):
+            and diagnostic_error.get("type") == "TraceExerciseInconclusive"
+        ) or (diagnostic is not None and diagnostic.get("status") == "inconclusive"):
             return "trace_exercise_inconclusive"
         return "trace_exercise_failure"
     if result is None:
@@ -119,8 +122,7 @@ def _analysis_readiness(raw: dict) -> dict:
     expected_runs = raw.get("expected_runs")
     if raw.get("purpose") in _CALIBRATION_ONLY_PURPOSES:
         reasons.append(
-            "experiment purpose is calibration-only and excluded from "
-            "the comparison denominator"
+            "experiment purpose is calibration-only and excluded from the comparison denominator"
         )
     if not isinstance(expected_runs, int) or len(runs) != expected_runs:
         reasons.append("scheduled row count does not match expected_runs")
@@ -144,9 +146,7 @@ def _analysis_readiness(raw: dict) -> dict:
                 reasons.append("observed task identities do not match the suite task count")
             expected_repetitions = set(range(1, repetitions + 1))
             for condition in conditions:
-                condition_rows = [
-                    run for run in runs if run.get("condition") == condition
-                ]
+                condition_rows = [run for run in runs if run.get("condition") == condition]
                 condition_tasks = {run.get("task_id") for run in condition_rows}
                 if condition_tasks != observed_task_ids:
                     reasons.append(f"condition {condition} has an incomplete task set")
@@ -159,8 +159,7 @@ def _analysis_readiness(raw: dict) -> dict:
                     }
                     if repetitions_seen != expected_repetitions:
                         reasons.append(
-                            f"condition {condition} task {task_id} "
-                            "has incomplete repetitions"
+                            f"condition {condition} task {task_id} has incomplete repetitions"
                         )
     return {
         "analysis_ready": not reasons,
@@ -406,25 +405,17 @@ def build_report(experiment: str, output: str | Path) -> dict:
                     if run.get("qualification") is not None
                     else ""
                 ),
-                "qualification_error": json.dumps(
-                    run.get("qualification_error") or {}
-                ),
+                "qualification_error": json.dumps(run.get("qualification_error") or {}),
                 "diagnostic_status": (
                     run.get("diagnostic", {}).get("status")
                     if run.get("diagnostic") is not None
                     else ""
                 ),
-                "diagnostic_error": json.dumps(
-                    run.get("diagnostic_error") or {}
-                ),
+                "diagnostic_error": json.dumps(run.get("diagnostic_error") or {}),
                 "calibration_only": int(calibration_only),
-                "analysis_included": int(
-                    not calibration_only and _is_research_outcome(run)
-                ),
+                "analysis_included": int(not calibration_only and _is_research_outcome(run)),
                 "exclusion_reason": (
-                    "calibration_only"
-                    if calibration_only
-                    else _exclusion_reason(run) or ""
+                    "calibration_only" if calibration_only else _exclusion_reason(run) or ""
                 ),
             }
         )
@@ -492,24 +483,19 @@ def build_report(experiment: str, output: str | Path) -> dict:
             "runs": len(research_runs),
             "scheduled_runs": len(condition_runs),
             "infrastructure_runs": sum(
-                _exclusion_reason(run) == "infrastructure_error"
-                for run in condition_runs
+                _exclusion_reason(run) == "infrastructure_error" for run in condition_runs
             ),
             "qualification_excluded_runs": sum(
-                _exclusion_reason(run) == "trace_qualification_failure"
-                for run in condition_runs
+                _exclusion_reason(run) == "trace_qualification_failure" for run in condition_runs
             ),
             "diagnostic_inconclusive_runs": sum(
-                _exclusion_reason(run) == "trace_exercise_inconclusive"
-                for run in condition_runs
+                _exclusion_reason(run) == "trace_exercise_inconclusive" for run in condition_runs
             ),
             "diagnostic_failed_runs": sum(
-                _exclusion_reason(run) == "trace_exercise_failure"
-                for run in condition_runs
+                _exclusion_reason(run) == "trace_exercise_failure" for run in condition_runs
             ),
             "not_started_runs": sum(
-                run.get("attempt_status") == "not_started"
-                for run in condition_runs
+                run.get("attempt_status") == "not_started" for run in condition_runs
             ),
             "total_cost_usd": total_cost,
             "cost_per_success_usd": total_cost / successes if successes else None,
@@ -535,9 +521,7 @@ def build_report(experiment: str, output: str | Path) -> dict:
         **readiness,
         "metrics": analysis_metrics,
         "diagnostic_metrics": diagnostic_metrics,
-        "headline_metrics": (
-            analysis_metrics if readiness["analysis_ready"] else None
-        ),
+        "headline_metrics": (analysis_metrics if readiness["analysis_ready"] else None),
         "paired_scrr_difference_vs_no_memory": (
             _paired_differences(task_scrr_by_condition, raw["schedule_seed"])
             if readiness["analysis_ready"]
@@ -572,11 +556,7 @@ def build_report(experiment: str, output: str | Path) -> dict:
             "headline comparison.</strong></p>"
         )
     )
-    table_heading = (
-        "Diagnostic calibration metrics"
-        if calibration_only
-        else "Analysis metrics"
-    )
+    table_heading = "Diagnostic calibration metrics" if calibration_only else "Analysis metrics"
     (output_dir / "report.html").write_text(
         "<!doctype html><meta charset='utf-8'><title>PatchLoop report</title>"
         f"<h1>Experiment {html.escape(experiment)}</h1>"

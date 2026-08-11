@@ -16,7 +16,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import BinaryIO, Protocol
 
-from patchloop.contracts import RegisteredCheck
+from patchloop.contracts import (
+    DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1,
+    RegisteredCheck,
+)
 from patchloop.util import ensure_within, sha256_text
 
 PROBE_IMAGE = "patchloop-sandbox:py312"
@@ -41,9 +44,7 @@ _PROXY_ENVIRONMENT_KEYS = (
 _DOCKER_IMAGE_ID = re.compile(r"sha256:[0-9a-f]{64}")
 _DOCKER_REPO_DIGEST = re.compile(r"[^\x00-\x20\x7f]+@sha256:[0-9a-f]{64}")
 _DOCKER_CONTAINER_ID = re.compile(r"[0-9a-f]{12,64}")
-_DOCKER_IMAGE_INSPECT_FORMAT = (
-    '{"Id":{{json .Id}},"RepoDigests":{{json .RepoDigests}}}'
-)
+_DOCKER_IMAGE_INSPECT_FORMAT = '{"Id":{{json .Id}},"RepoDigests":{{json .RepoDigests}}}'
 _DOCKER_IMAGE_INSPECT_OUTPUT_LIMIT_BYTES = 64 * 1024
 _DOCKER_IMAGE_INSPECT_MAX_REPO_DIGESTS = 128
 _PROBE_RUNTIME_GUARD = """\
@@ -134,11 +135,47 @@ def probe_execution_policy(
             "requested_timeout_seconds": timeout_seconds,
             "container_runner": _PROBE_RUNNER_PATH,
             "container_timeout_exit_code": _PROBE_TIMEOUT_EXIT_CODE,
-            "launcher_timeout_seconds": (
-                timeout_seconds + _PROBE_LAUNCHER_GRACE_SECONDS
-            ),
+            "launcher_timeout_seconds": (timeout_seconds + _PROBE_LAUNCHER_GRACE_SECONDS),
             "output_limit_bytes": output_limit_bytes,
         },
+    }
+
+
+def registered_check_execution_policy(
+    *,
+    image: str,
+    working_directory: str,
+    timeout_seconds: int,
+    output_limit_bytes: int,
+) -> dict[str, object]:
+    """Return the path-free policy requested for one normal Docker check.
+
+    This describes the arguments PatchLoop asks Docker to apply.  It is not a
+    container-inspection result and must not be presented as proof that Docker
+    or the host enforced the request.
+    """
+
+    if not image or image != image.strip() or any(ord(char) < 32 for char in image):
+        raise ValueError("registered-check image reference is invalid")
+    if not working_directory.startswith("/workspace") or ".." in Path(working_directory).parts:
+        raise ValueError("registered-check working directory is invalid")
+    if timeout_seconds < 1 or output_limit_bytes < 1:
+        raise ValueError("registered-check limits must be positive")
+    return {
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "image": image,
+        "working_directory": working_directory,
+        "sandbox_backend": "docker",
+        "requested_network": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["requested_network"],
+        "read_only_root": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["read_only_root"],
+        "read_only_workspace": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["read_only_workspace"],
+        "cpus": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["cpus"],
+        "memory": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["memory"],
+        "pids_limit": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["pids_limit"],
+        "tmpfs": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["tmpfs"],
+        "requested_timeout_seconds": timeout_seconds,
+        "launcher_timeout_seconds": timeout_seconds + 5,
+        "output_limit_bytes": output_limit_bytes,
     }
 
 
@@ -294,9 +331,7 @@ def _run_with_bounded_pipes(
             if not stream.closed:
                 stream.close()
 
-    original_bytes = (
-        stdout_capture.original_bytes + stderr_capture.original_bytes
-    )
+    original_bytes = stdout_capture.original_bytes + stderr_capture.original_bytes
     return (
         exit_code,
         timed_out,
@@ -424,22 +459,12 @@ def _probe_workspace_identity(workspace: Path) -> tuple[Path, str]:
     git_metadata = resolved / ".git"
     try:
         junction_check = getattr(git_metadata, "is_junction", None)
-        is_junction = bool(
-            junction_check is not None and junction_check()
-        )
-        invalid = (
-            git_metadata.is_symlink()
-            or is_junction
-            or not git_metadata.is_dir()
-        )
+        is_junction = bool(junction_check is not None and junction_check())
+        invalid = git_metadata.is_symlink() or is_junction or not git_metadata.is_dir()
     except OSError as exc:
-        raise RuntimeError(
-            "probe workspace Git metadata cannot be inspected"
-        ) from exc
+        raise RuntimeError("probe workspace Git metadata cannot be inspected") from exc
     if invalid:
-        raise RuntimeError(
-            "probe workspace requires a real non-symlink .git directory"
-        )
+        raise RuntimeError("probe workspace requires a real non-symlink .git directory")
     digest = sha256_text(str(resolved)).removeprefix("sha256:")
     return resolved, f"{_PROBE_WORKSPACE_LABEL_KEY}={digest}"
 
@@ -501,33 +526,22 @@ def _reap_stale_probe_containers(
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
-        raise RuntimeError(
-            "stale probe container inspection could not be confirmed"
-        ) from exc
+        raise RuntimeError("stale probe container inspection could not be confirmed") from exc
     if listing.returncode != 0:
-        raise RuntimeError(
-            "stale probe container inspection could not be confirmed"
-        )
+        raise RuntimeError("stale probe container inspection could not be confirmed")
     container_ids = listing.stdout.decode(
         "ascii",
         errors="strict",
     ).split()
-    if any(
-        _DOCKER_CONTAINER_ID.fullmatch(container_id) is None
-        for container_id in container_ids
-    ):
-        raise RuntimeError(
-            "stale probe container inspection returned an invalid identity"
-        )
+    if any(_DOCKER_CONTAINER_ID.fullmatch(container_id) is None for container_id in container_ids):
+        raise RuntimeError("stale probe container inspection returned an invalid identity")
     for container_id in container_ids:
         if not _confirm_probe_container_removed(
             docker,
             container_id,
             filter_kind="id",
         ):
-            raise RuntimeError(
-                "stale probe container cleanup could not be confirmed"
-            )
+            raise RuntimeError("stale probe container cleanup could not be confirmed")
 
 
 class LocalSandbox:
@@ -601,9 +615,7 @@ class LocalSandbox:
             output_limit_bytes,
             image_identity,
         )
-        raise RuntimeError(
-            "agent-authored probes require an isolated Docker sandbox"
-        )
+        raise RuntimeError("agent-authored probes require an isolated Docker sandbox")
 
 
 class DockerSandbox:
@@ -643,22 +655,13 @@ class DockerSandbox:
                     / "resources"
                     / "bin"
                     / "docker.exe",
-                    Path(local_app_data)
-                    / "Docker"
-                    / "resources"
-                    / "bin"
-                    / "docker.exe",
+                    Path(local_app_data) / "Docker" / "resources" / "bin" / "docker.exe",
                 ]
             )
         program_files = os.environ.get("PROGRAMFILES")
         if program_files:
             candidates.append(
-                Path(program_files)
-                / "Docker"
-                / "Docker"
-                / "resources"
-                / "bin"
-                / "docker.exe"
+                Path(program_files) / "Docker" / "Docker" / "resources" / "bin" / "docker.exe"
             )
         for candidate in candidates:
             try:
@@ -713,6 +716,12 @@ class DockerSandbox:
         workdir = "/workspace"
         if check.working_directory != ".":
             workdir = f"/workspace/{check.working_directory}"
+        execution_policy = registered_check_execution_policy(
+            image=self.image,
+            working_directory=workdir,
+            timeout_seconds=check.timeout_seconds,
+            output_limit_bytes=check.output_limit_bytes,
+        )
         command = [
             docker,
             "run",
@@ -771,6 +780,7 @@ class DockerSandbox:
             timed_out=timed_out,
             truncated=truncated,
             original_output_bytes=original,
+            execution_policy=execution_policy,
         )
 
     def run_probe(
@@ -787,27 +797,17 @@ class DockerSandbox:
         docker = self.cli_path()
         if not docker:
             raise RuntimeError("Docker CLI is not available")
-        resolved_workspace, workspace_label = _probe_workspace_identity(
-            workspace
-        )
+        resolved_workspace, workspace_label = _probe_workspace_identity(workspace)
         _reap_stale_probe_containers(docker, workspace_label)
         tag_image_identity = self.probe_image_identity()
         if tag_image_identity is None:
-            raise RuntimeError(
-                "dedicated PatchLoop probe image is unavailable or invalid"
-            )
-        if (
-            image_identity is not None
-            and _DOCKER_IMAGE_ID.fullmatch(image_identity) is None
-        ):
-            raise RuntimeError(
-                "manifest-bound probe image identity is invalid"
-            )
+            raise RuntimeError("dedicated PatchLoop probe image is unavailable or invalid")
+        if image_identity is not None and _DOCKER_IMAGE_ID.fullmatch(image_identity) is None:
+            raise RuntimeError("manifest-bound probe image identity is invalid")
         probe_image_identity = image_identity or tag_image_identity
         if tag_image_identity != probe_image_identity:
             raise RuntimeError(
-                "dedicated probe image tag does not match the "
-                "manifest-bound identity"
+                "dedicated probe image tag does not match the manifest-bound identity"
             )
         bootstrap = (_PROBE_RUNTIME_GUARD + source).encode("utf-8")
         container_name = f"patchloop-probe-{uuid.uuid4().hex}"
@@ -858,11 +858,7 @@ class DockerSandbox:
         create_command.extend(
             [
                 "--mount",
-                (
-                    "type=bind,"
-                    f"source={resolved_workspace},"
-                    "target=/workspace,readonly"
-                ),
+                (f"type=bind,source={resolved_workspace},target=/workspace,readonly"),
                 "--workdir",
                 "/workspace",
                 probe_image_identity,
@@ -894,20 +890,13 @@ class DockerSandbox:
                     check=False,
                 )
             except (OSError, subprocess.TimeoutExpired) as exc:
-                raise RuntimeError(
-                    "probe container creation could not be confirmed"
-                ) from exc
+                raise RuntimeError("probe container creation could not be confirmed") from exc
             container_id = created.stdout.decode(
                 "ascii",
                 errors="strict",
             ).strip()
-            if (
-                created.returncode != 0
-                or _DOCKER_CONTAINER_ID.fullmatch(container_id) is None
-            ):
-                raise RuntimeError(
-                    "probe container creation could not be confirmed"
-                )
+            if created.returncode != 0 or _DOCKER_CONTAINER_ID.fullmatch(container_id) is None:
+                raise RuntimeError("probe container creation could not be confirmed")
             try:
                 inspected = subprocess.run(
                     [
@@ -923,20 +912,14 @@ class DockerSandbox:
                     check=False,
                 )
             except (OSError, subprocess.TimeoutExpired) as exc:
-                raise RuntimeError(
-                    "probe container image identity could not be confirmed"
-                ) from exc
+                raise RuntimeError("probe container image identity could not be confirmed") from exc
             actual_image_identity = inspected.stdout.decode(
                 "ascii",
                 errors="strict",
             ).strip()
-            if (
-                inspected.returncode != 0
-                or actual_image_identity != probe_image_identity
-            ):
+            if inspected.returncode != 0 or actual_image_identity != probe_image_identity:
                 raise RuntimeError(
-                    "probe container image does not match the "
-                    "manifest-bound identity"
+                    "probe container image does not match the manifest-bound identity"
                 )
             (
                 exit_code,
@@ -947,10 +930,7 @@ class DockerSandbox:
             ) = _run_with_bounded_pipes(
                 start_command,
                 input_bytes=bootstrap,
-                timeout_seconds=(
-                    timeout_seconds
-                    + _PROBE_LAUNCHER_GRACE_SECONDS
-                ),
+                timeout_seconds=(timeout_seconds + _PROBE_LAUNCHER_GRACE_SECONDS),
                 output_limit_bytes=output_limit_bytes,
             )
         finally:
@@ -959,13 +939,8 @@ class DockerSandbox:
                 container_name,
                 filter_kind="name",
             ):
-                raise RuntimeError(
-                    "probe container cleanup could not be confirmed"
-                )
-        if (
-            not timed_out
-            and exit_code == _PROBE_TIMEOUT_EXIT_CODE
-        ):
+                raise RuntimeError("probe container cleanup could not be confirmed")
+        if not timed_out and exit_code == _PROBE_TIMEOUT_EXIT_CODE:
             timed_out = True
             exit_code = None
         duration = int((time.monotonic() - started) * 1000)

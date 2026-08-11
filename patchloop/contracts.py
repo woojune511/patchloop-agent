@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime
 from enum import StrEnum
@@ -9,11 +10,17 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from patchloop.util import safe_relative_path, sha256_json
+from patchloop.util import safe_relative_path, sha256_bytes, sha256_json
 
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=False)
+
+
+class FrozenStrictModel(BaseModel):
+    """Immutable base for content-addressed evaluator-v2 values."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
 
 class Phase(StrEnum):
@@ -98,6 +105,69 @@ class VerdictState(StrEnum):
     FAIL = "fail"
     ERROR = "error"
     NOT_RUN = "not_run"
+
+
+class SafetyControlKind(StrEnum):
+    COMMAND = "command"
+    NETWORK = "network"
+    SECRET = "secret"
+    SANDBOX = "sandbox"
+
+
+class SafetyEvidenceProducer(StrEnum):
+    RUNTIME_TRACE = "runtime_trace"
+    SANDBOX_POLICY_TRACE = "sandbox_policy_trace"
+    ARTIFACT_SCAN = "artifact_scan"
+
+
+class SafetyPolicyProfile(StrEnum):
+    REGISTERED_GATEWAY_DISPATCH_V1 = "registered_gateway_dispatch_v1"
+    DOCKER_REGISTERED_CHECK_REQUESTED_NETWORK_NONE_V1 = (
+        "docker_registered_check_requested_network_none_v1"
+    )
+    ENUMERATED_CHAIN_EXACT_MARKER_SCAN_V1 = "enumerated_chain_exact_marker_scan_v1"
+    DOCKER_REGISTERED_CHECK_REQUESTED_CONFINEMENT_V1 = (
+        "docker_registered_check_requested_confinement_v1"
+    )
+
+
+class SafetyEvidenceReason(StrEnum):
+    POLICY_VIOLATION = "policy_violation"
+    CHECKER_ERROR = "checker_error"
+    INTEGRITY_ERROR = "integrity_error"
+    REQUIRED_EVIDENCE_MISSING = "required_evidence_missing"
+    NOT_EXECUTED = "not_executed"
+
+
+DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1 = {
+    "schema_version": "docker-registered-check-request-policy-v1",
+    "requested_network": "none",
+    "read_only_root": True,
+    "read_only_workspace": True,
+    "cpus": "2",
+    "memory": "2g",
+    "pids_limit": 128,
+    "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+}
+
+
+def docker_registered_check_policy_input_hash(
+    profile: SafetyPolicyProfile,
+    check_ids: tuple[str, ...],
+) -> str:
+    """Commit one sandbox-policy requirement to exact registered checks and flags."""
+
+    payload: dict[str, Any] = {
+        "schema_version": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["schema_version"],
+        "registered_check_ids": list(check_ids),
+        "requested_network": DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1["requested_network"],
+    }
+    if profile == SafetyPolicyProfile.DOCKER_REGISTERED_CHECK_REQUESTED_CONFINEMENT_V1:
+        payload.update(DOCKER_REGISTERED_CHECK_REQUEST_POLICY_V1)
+        payload["registered_check_ids"] = list(check_ids)
+    elif profile != SafetyPolicyProfile.DOCKER_REGISTERED_CHECK_REQUESTED_NETWORK_NONE_V1:
+        raise ValueError("unsupported Docker registered-check safety profile")
+    return sha256_json(payload)
 
 
 class RunStatus(StrEnum):
@@ -399,6 +469,192 @@ class AuditSpec(StrictModel):
     prohibited_behaviors: list[str] = Field(default_factory=list)
 
 
+class SafetyRequirement(FrozenStrictModel):
+    """One evaluator-private safety control and its evidence producer."""
+
+    schema_version: Literal["safety-requirement-v2"] = "safety-requirement-v2"
+    requirement_id: str = Field(pattern=r"^[a-z][a-z0-9_-]+$")
+    control: SafetyControlKind
+    evidence_producer: SafetyEvidenceProducer
+    policy_profile: SafetyPolicyProfile
+    policy_input_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    policy_input_count: int = Field(ge=1)
+    required_evidence_roles: tuple[str, ...] = Field(min_length=1)
+    check_ids: tuple[str, ...] = Field(default_factory=tuple)
+    required: Literal[True] = True
+
+    @model_validator(mode="after")
+    def validate_check_binding(self) -> SafetyRequirement:
+        if tuple(sorted(set(self.required_evidence_roles))) != self.required_evidence_roles or any(
+            re.fullmatch(r"[a-z][a-z0-9_]{0,63}", role) is None
+            for role in self.required_evidence_roles
+        ):
+            raise ValueError("required safety evidence roles must be valid, unique, and sorted")
+        if tuple(sorted(set(self.check_ids))) != self.check_ids:
+            raise ValueError("safety requirement check IDs must be unique and sorted")
+        if self.evidence_producer == SafetyEvidenceProducer.SANDBOX_POLICY_TRACE:
+            if not self.check_ids:
+                raise ValueError("sandbox-audit safety evidence requires registered check IDs")
+            if any(
+                re.fullmatch(r"(?:hidden|regression):[a-z][a-z0-9_-]+", check_id) is None
+                for check_id in self.check_ids
+            ):
+                raise ValueError("sandbox-audit check IDs must be role-prefixed registered IDs")
+            if self.policy_input_count != len(self.check_ids):
+                raise ValueError("sandbox-audit policy input count must match registered checks")
+            if self.policy_input_hash != docker_registered_check_policy_input_hash(
+                self.policy_profile,
+                self.check_ids,
+            ):
+                raise ValueError("sandbox-audit policy hash must bind exact requested flags")
+        elif self.check_ids:
+            raise ValueError("registered check IDs are only valid for sandbox-audit evidence")
+        return self
+
+
+def safety_requirement_hash(requirement: SafetyRequirement) -> str:
+    """Return the opaque public identity of one private safety requirement."""
+
+    return sha256_json(requirement.model_dump(mode="json"))
+
+
+_SAFETY_CONTROL_ORDER = (
+    SafetyControlKind.COMMAND,
+    SafetyControlKind.NETWORK,
+    SafetyControlKind.SECRET,
+    SafetyControlKind.SANDBOX,
+)
+_SAFETY_POLICY_BY_CONTROL = {
+    SafetyControlKind.COMMAND: (
+        SafetyEvidenceProducer.RUNTIME_TRACE,
+        SafetyPolicyProfile.REGISTERED_GATEWAY_DISPATCH_V1,
+    ),
+    SafetyControlKind.NETWORK: (
+        SafetyEvidenceProducer.SANDBOX_POLICY_TRACE,
+        SafetyPolicyProfile.DOCKER_REGISTERED_CHECK_REQUESTED_NETWORK_NONE_V1,
+    ),
+    SafetyControlKind.SECRET: (
+        SafetyEvidenceProducer.ARTIFACT_SCAN,
+        SafetyPolicyProfile.ENUMERATED_CHAIN_EXACT_MARKER_SCAN_V1,
+    ),
+    SafetyControlKind.SANDBOX: (
+        SafetyEvidenceProducer.SANDBOX_POLICY_TRACE,
+        SafetyPolicyProfile.DOCKER_REGISTERED_CHECK_REQUESTED_CONFINEMENT_V1,
+    ),
+}
+_SAFETY_EVIDENCE_ROLES_BY_PROFILE = {
+    SafetyPolicyProfile.REGISTERED_GATEWAY_DISPATCH_V1: ("registered_gateway_trace",),
+    SafetyPolicyProfile.DOCKER_REGISTERED_CHECK_REQUESTED_NETWORK_NONE_V1: (
+        "docker_network_policy_trace",
+    ),
+    SafetyPolicyProfile.ENUMERATED_CHAIN_EXACT_MARKER_SCAN_V1: (
+        "run_bound_marker_projection",
+        "scanned_artifact_inventory",
+        "scanned_event_prefix",
+        "scanned_patch",
+    ),
+    SafetyPolicyProfile.DOCKER_REGISTERED_CHECK_REQUESTED_CONFINEMENT_V1: (
+        "docker_confinement_policy_trace",
+    ),
+}
+_SAFETY_AGGREGATION_PRECEDENCE = (
+    VerdictState.ERROR,
+    VerdictState.FAIL,
+    VerdictState.NOT_RUN,
+    VerdictState.PASS,
+)
+_SCOPE_POLICY_CHECK_IDS = ("dependency", "public_api", "scope", "test_tampering")
+
+
+def _check_id_set_hash(check_ids: tuple[str, ...] | list[str]) -> str:
+    return sha256_json(sorted(check_ids))
+
+
+class EvaluatorSafetyContract(FrozenStrictModel):
+    """Private, task-bound safety inputs for evaluator-v2."""
+
+    schema_version: Literal["evaluator-safety-contract-v2"] = "evaluator-safety-contract-v2"
+    contract_id: str = Field(pattern=r"^[a-z][a-z0-9_-]+$")
+    task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    task_version: int = Field(ge=1)
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    requirements: tuple[SafetyRequirement, ...] = Field(min_length=4, max_length=4)
+    aggregation_precedence: tuple[VerdictState, ...] = _SAFETY_AGGREGATION_PRECEDENCE
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_contract(self) -> EvaluatorSafetyContract:
+        requirement_ids = tuple(item.requirement_id for item in self.requirements)
+        if len(requirement_ids) != len(set(requirement_ids)):
+            raise ValueError("safety requirement IDs must be unique")
+        controls = tuple(item.control for item in self.requirements)
+        if controls != _SAFETY_CONTROL_ORDER:
+            raise ValueError(
+                "evaluator-v2 requires one canonically ordered requirement per control"
+            )
+        actual_policy = tuple(
+            (item.evidence_producer, item.policy_profile) for item in self.requirements
+        )
+        expected_policy = tuple(_SAFETY_POLICY_BY_CONTROL[control] for control in controls)
+        if actual_policy != expected_policy:
+            raise ValueError(
+                "evaluator-v2 control, producer, and policy profile mapping is invalid"
+            )
+        if any(
+            item.required_evidence_roles != _SAFETY_EVIDENCE_ROLES_BY_PROFILE[item.policy_profile]
+            for item in self.requirements
+        ):
+            raise ValueError("evaluator-v2 policy profile has an invalid evidence-role inventory")
+        if self.aggregation_precedence != _SAFETY_AGGREGATION_PRECEDENCE:
+            raise ValueError("evaluator-v2 aggregation precedence must be fail-closed")
+        expected_hash = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
+        if self.content_hash != expected_hash:
+            raise ValueError("evaluator safety contract content hash mismatch")
+        return self
+
+
+class EvaluatorContractBinding(FrozenStrictModel):
+    """Agent-visible hashes; private requirement and check IDs stay evaluator-only."""
+
+    schema_version: Literal["evaluator-contract-binding-v2"] = "evaluator-contract-binding-v2"
+    task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    task_version: int = Field(ge=1)
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    contract_id: str = Field(pattern=r"^[a-z][a-z0-9_-]+$")
+    contract_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    evaluator_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    safety_requirement_count: Literal[4]
+    required_safety_requirement_hashes: tuple[str, ...] = Field(min_length=4, max_length=4)
+    requirement_set_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    hidden_check_ids_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    regression_check_ids_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    scope_check_ids_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    registered_check_specs_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @field_validator("required_safety_requirement_hashes")
+    @classmethod
+    def validate_requirement_hashes(cls, values: tuple[str, ...]) -> tuple[str, ...]:
+        if any(re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None for value in values):
+            raise ValueError("required safety requirement hashes must be SHA-256 identities")
+        if len(values) != len(set(values)):
+            raise ValueError("required safety requirement hashes must be unique")
+        return values
+
+    @model_validator(mode="after")
+    def validate_projection_hashes(self) -> EvaluatorContractBinding:
+        if self.safety_requirement_count != len(self.required_safety_requirement_hashes):
+            raise ValueError("safety requirement count disagrees with the hash projection")
+        if self.requirement_set_hash != _check_id_set_hash(
+            list(self.required_safety_requirement_hashes)
+        ):
+            raise ValueError("safety requirement set hash mismatch")
+        if self.scope_check_ids_hash != _check_id_set_hash(list(_SCOPE_POLICY_CHECK_IDS)):
+            raise ValueError("scope policy check-set hash mismatch")
+        return self
+
+
 class PrivateTask(StrictModel):
     schema_version: Literal["task-private-v1", "task-private-v2"] = "task-private-v1"
     task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
@@ -448,7 +704,130 @@ class TaskPackage(StrictModel):
             self.private.task_version,
         ):
             raise ValueError("public/private task identity mismatch")
+        public_spec_hash, private_spec_hash = task_package_spec_hashes(
+            self.public,
+            self.private,
+        )
+        if self.public_spec_hash != public_spec_hash:
+            raise ValueError("task package public spec hash mismatch")
+        if self.private_spec_hash != private_spec_hash:
+            raise ValueError("task package private spec hash mismatch")
         return self
+
+
+def task_package_spec_hashes(
+    public: PublicTask,
+    private: PrivateTask,
+) -> tuple[str, str]:
+    """Compute the frozen public/private task identities used by the loader."""
+
+    private_identity = private.model_dump(mode="json")
+    if private.schema_version == "task-private-v1":
+        # Preserve the frozen v1 identity algorithm after adding the v2-only field.
+        private_identity.pop("hidden_artifacts", None)
+    return (
+        sha256_json(public.model_dump(mode="json")),
+        sha256_json(private_identity),
+    )
+
+
+def _registered_check_projection(
+    package: TaskPackage,
+) -> tuple[list[str], list[str], list[dict[str, Any]]]:
+    hidden_ids = [check.id for check in package.private.hidden_checks]
+    regression_ids = [check.id for check in package.public.visible_checks]
+    if len(hidden_ids) != len(set(hidden_ids)):
+        raise ValueError("private hidden check IDs must be unique for evaluator-v2")
+    if len(regression_ids) != len(set(regression_ids)):
+        raise ValueError("public regression check IDs must be unique for evaluator-v2")
+    specs = [
+        {"role": "hidden", "check": check.model_dump(mode="json")}
+        for check in package.private.hidden_checks
+    ] + [
+        {"role": "regression", "check": check.model_dump(mode="json")}
+        for check in package.public.visible_checks
+    ]
+    specs.sort(key=lambda item: (item["role"], item["check"]["id"]))
+    return sorted(hidden_ids), sorted(regression_ids), specs
+
+
+def registered_check_result_hash(
+    role: Literal["hidden", "regression"], check: RegisteredCheck
+) -> str:
+    """Opaque v2 result identity that commits to a registered check specification."""
+
+    return sha256_json({"role": role, "check": check.model_dump(mode="json")})
+
+
+def build_evaluator_contract_binding(
+    contract: EvaluatorSafetyContract,
+    package: TaskPackage,
+    *,
+    evaluator_source_hash: str,
+) -> EvaluatorContractBinding:
+    """Bind a private evaluator-v2 contract to one exact task package."""
+
+    contract = EvaluatorSafetyContract.model_validate(contract.model_dump(mode="json"))
+    package = TaskPackage.model_validate(package.model_dump(mode="json"))
+    if re.fullmatch(r"sha256:[0-9a-f]{64}", evaluator_source_hash) is None:
+        raise ValueError("evaluator source hash must be a SHA-256 identity")
+    expected_identity = (
+        package.public.task_id,
+        package.public.task_version,
+        package.public_spec_hash,
+        package.private_spec_hash,
+    )
+    contract_identity = (
+        contract.task_id,
+        contract.task_version,
+        contract.public_spec_hash,
+        contract.private_spec_hash,
+    )
+    if contract_identity != expected_identity:
+        raise ValueError("evaluator safety contract belongs to a different task package")
+    hidden_ids, regression_ids, registered_specs = _registered_check_projection(package)
+    registered_ids = tuple(
+        sorted(
+            [f"hidden:{check_id}" for check_id in hidden_ids]
+            + [f"regression:{check_id}" for check_id in regression_ids]
+        )
+    )
+    sandbox_requirements = tuple(
+        requirement
+        for requirement in contract.requirements
+        if requirement.evidence_producer == SafetyEvidenceProducer.SANDBOX_POLICY_TRACE
+    )
+    if not sandbox_requirements or any(
+        requirement.check_ids != registered_ids for requirement in sandbox_requirements
+    ):
+        raise ValueError("sandbox-audit requirements must bind the exact registered check set")
+    requirement_hashes = tuple(safety_requirement_hash(item) for item in contract.requirements)
+    return EvaluatorContractBinding(
+        task_id=contract.task_id,
+        task_version=contract.task_version,
+        public_spec_hash=contract.public_spec_hash,
+        private_spec_hash=contract.private_spec_hash,
+        contract_id=contract.contract_id,
+        contract_hash=contract.content_hash,
+        evaluator_source_hash=evaluator_source_hash,
+        safety_requirement_count=len(requirement_hashes),
+        required_safety_requirement_hashes=requirement_hashes,
+        requirement_set_hash=_check_id_set_hash(list(requirement_hashes)),
+        hidden_check_ids_hash=_check_id_set_hash(
+            [
+                registered_check_result_hash("hidden", check)
+                for check in package.private.hidden_checks
+            ]
+        ),
+        regression_check_ids_hash=_check_id_set_hash(
+            [
+                registered_check_result_hash("regression", check)
+                for check in package.public.visible_checks
+            ]
+        ),
+        scope_check_ids_hash=_check_id_set_hash(list(_SCOPE_POLICY_CHECK_IDS)),
+        registered_check_specs_hash=sha256_json(registered_specs),
+    )
 
 
 class DatasetRole(StrEnum):
@@ -974,13 +1353,17 @@ class MemoryConfig(StrictModel):
 
 
 class RunManifest(StrictModel):
-    schema_version: Literal["run-manifest-v1"] = "run-manifest-v1"
+    schema_version: Literal["run-manifest-v1", "run-manifest-v2"] = "run-manifest-v1"
     run_id: str = Field(pattern=r"^run_[a-zA-Z0-9_-]+$")
     task_id: str
     task_version: int
     base_commit: str
     public_spec_hash: str
     private_spec_hash: str | None = None
+    evaluator_contract: EvaluatorContractBinding | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     harness_git_commit: str = "uncommitted"
     tool_schema_version: str = "v1"
     context_policy_version: str = "v1"
@@ -1003,6 +1386,34 @@ class RunManifest(StrictModel):
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     experiment: ExperimentRunContext | None = None
     created_at: datetime
+
+    @model_validator(mode="after")
+    def validate_evaluator_contract_binding(self) -> RunManifest:
+        if self.schema_version == "run-manifest-v2":
+            if self.evaluator_contract is None:
+                raise ValueError("run-manifest-v2 requires an evaluator contract binding")
+            if self.private_spec_hash is None or any(
+                re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None
+                for value in (self.public_spec_hash, self.private_spec_hash)
+            ):
+                raise ValueError("run-manifest-v2 requires public and private SHA-256 spec hashes")
+            manifest_identity = (
+                self.task_id,
+                self.task_version,
+                self.public_spec_hash,
+                self.private_spec_hash,
+            )
+            binding_identity = (
+                self.evaluator_contract.task_id,
+                self.evaluator_contract.task_version,
+                self.evaluator_contract.public_spec_hash,
+                self.evaluator_contract.private_spec_hash,
+            )
+            if manifest_identity != binding_identity:
+                raise ValueError("run-manifest-v2 evaluator binding belongs to a different task")
+        elif self.evaluator_contract is not None:
+            raise ValueError("evaluator contract binding requires run-manifest-v2")
+        return self
 
     @model_validator(mode="after")
     def validate_corrective_runtime_contract(self) -> RunManifest:
@@ -1561,8 +1972,268 @@ class ToolResult(StrictModel):
     error_message: str | None = None
 
 
+class EvidenceArtifactRef(FrozenStrictModel):
+    """Path-free content identity for evaluator-v2 evidence."""
+
+    schema_version: Literal["evidence-artifact-ref-v2"] = "evidence-artifact-ref-v2"
+    artifact_id: str = Field(pattern=r"^art_[0-9a-f]{32}$")
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    size_bytes: int = Field(ge=0)
+    media_type: Literal[
+        "application/json; charset=utf-8",
+        "text/plain; charset=utf-8",
+        "text/x-diff; charset=utf-8",
+    ]
+    role: str = Field(pattern=r"^[a-z][a-z0-9_]{0,63}$")
+
+    @field_validator("media_type")
+    @classmethod
+    def validate_media_type(cls, value: str) -> str:
+        if value != value.strip() or "\r" in value or "\n" in value or "/" not in value:
+            raise ValueError("evidence media type must be one normalized MIME type")
+        return value
+
+
+def build_evidence_artifact_ref(artifact: Artifact, *, role: str) -> EvidenceArtifactRef:
+    return EvidenceArtifactRef(
+        artifact_id=artifact.artifact_id,
+        content_hash=artifact.content_hash,
+        size_bytes=artifact.size_bytes,
+        media_type=artifact.media_type,
+        role=role,
+    )
+
+
+class SafetyEvidenceRecord(FrozenStrictModel):
+    schema_version: Literal["safety-evidence-record-v2"] = "safety-evidence-record-v2"
+    requirement_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    control: SafetyControlKind
+    evidence_producer: SafetyEvidenceProducer
+    policy_profile: SafetyPolicyProfile
+    state: VerdictState
+    evidence_artifacts: tuple[EvidenceArtifactRef, ...] = Field(default_factory=tuple)
+    reason_code: SafetyEvidenceReason | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+
+    @model_validator(mode="after")
+    def validate_evidence_state(self) -> SafetyEvidenceRecord:
+        if (self.evidence_producer, self.policy_profile) != _SAFETY_POLICY_BY_CONTROL[self.control]:
+            raise ValueError("safety evidence control, producer, and policy profile mismatch")
+        artifact_ids = tuple(item.artifact_id for item in self.evidence_artifacts)
+        if len(artifact_ids) != len(set(artifact_ids)):
+            raise ValueError("safety evidence artifact IDs must be unique")
+        artifact_order = tuple((item.role, item.artifact_id) for item in self.evidence_artifacts)
+        if artifact_order != tuple(sorted(artifact_order)):
+            raise ValueError("safety evidence artifacts must use canonical role and ID order")
+        roles = tuple(item.role for item in self.evidence_artifacts)
+        if len(roles) != len(set(roles)):
+            raise ValueError("safety evidence roles must be unique")
+        if self.state == VerdictState.PASS:
+            if not self.evidence_artifacts or self.reason_code is not None:
+                raise ValueError("PASS safety evidence requires artifacts and no reason code")
+        elif self.state == VerdictState.FAIL:
+            if (
+                not self.evidence_artifacts
+                or self.reason_code != SafetyEvidenceReason.POLICY_VIOLATION
+            ):
+                raise ValueError("FAIL safety evidence requires artifacts and policy_violation")
+        elif self.state == VerdictState.ERROR:
+            if self.evidence_artifacts:
+                raise ValueError("ERROR safety evidence cannot claim completed evidence roles")
+            if self.reason_code not in {
+                SafetyEvidenceReason.CHECKER_ERROR,
+                SafetyEvidenceReason.INTEGRITY_ERROR,
+            }:
+                raise ValueError("ERROR safety evidence requires a checker or integrity reason")
+        else:
+            if self.evidence_artifacts:
+                raise ValueError("NOT_RUN safety evidence cannot claim completed evidence roles")
+            if self.reason_code not in {
+                SafetyEvidenceReason.REQUIRED_EVIDENCE_MISSING,
+                SafetyEvidenceReason.NOT_EXECUTED,
+            }:
+                raise ValueError(
+                    "NOT_RUN safety evidence requires a missing or not-executed reason"
+                )
+        return self
+
+
+class SafetyEvidenceBundle(FrozenStrictModel):
+    """Evaluator-private structural projection; CAS bytes are verified at ingestion."""
+
+    schema_version: Literal["safety-evidence-bundle-v2"] = "safety-evidence-bundle-v2"
+    run_id: str = Field(pattern=r"^run_[a-zA-Z0-9_-]+$")
+    task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
+    task_version: int = Field(ge=1)
+    public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    safety_contract: EvaluatorSafetyContract
+    evaluator_contract: EvaluatorContractBinding
+    through_sequence: int = Field(ge=0)
+    event_prefix_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    records: tuple[SafetyEvidenceRecord, ...] = Field(min_length=1)
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_bundle(self) -> SafetyEvidenceBundle:
+        bundle_identity = (
+            self.task_id,
+            self.task_version,
+            self.public_spec_hash,
+            self.private_spec_hash,
+        )
+        contract_identity = (
+            self.safety_contract.task_id,
+            self.safety_contract.task_version,
+            self.safety_contract.public_spec_hash,
+            self.safety_contract.private_spec_hash,
+        )
+        binding_identity = (
+            self.evaluator_contract.task_id,
+            self.evaluator_contract.task_version,
+            self.evaluator_contract.public_spec_hash,
+            self.evaluator_contract.private_spec_hash,
+        )
+        if bundle_identity != contract_identity or bundle_identity != binding_identity:
+            raise ValueError("safety evidence bundle task identity mismatch")
+        if (
+            self.evaluator_contract.contract_id != self.safety_contract.contract_id
+            or self.evaluator_contract.contract_hash != self.safety_contract.content_hash
+        ):
+            raise ValueError("safety evidence bundle contract binding mismatch")
+        expected_requirement_hashes = tuple(
+            safety_requirement_hash(requirement)
+            for requirement in self.safety_contract.requirements
+        )
+        if (
+            self.evaluator_contract.required_safety_requirement_hashes
+            != expected_requirement_hashes
+        ):
+            raise ValueError("safety evidence bundle requirement projection mismatch")
+        expected_records = tuple(
+            (
+                requirement_hash,
+                requirement.control,
+                requirement.evidence_producer,
+                requirement.policy_profile,
+            )
+            for requirement_hash, requirement in zip(
+                expected_requirement_hashes,
+                self.safety_contract.requirements,
+                strict=True,
+            )
+        )
+        actual_records = tuple(
+            (
+                record.requirement_hash,
+                record.control,
+                record.evidence_producer,
+                record.policy_profile,
+            )
+            for record in self.records
+        )
+        if actual_records != expected_records:
+            raise ValueError("safety evidence records must exactly project the private contract")
+        for record, requirement in zip(
+            self.records, self.safety_contract.requirements, strict=True
+        ):
+            if record.state in {VerdictState.PASS, VerdictState.FAIL}:
+                actual_roles = tuple(item.role for item in record.evidence_artifacts)
+                if actual_roles != requirement.required_evidence_roles:
+                    raise ValueError(
+                        "completed safety evidence must cover the exact required roles"
+                    )
+        artifact_ids = [
+            artifact.artifact_id
+            for record in self.records
+            for artifact in record.evidence_artifacts
+        ]
+        if len(artifact_ids) != len(set(artifact_ids)):
+            raise ValueError("safety evidence artifact IDs cannot be reused across controls")
+        expected_hash = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
+        if self.content_hash != expected_hash:
+            raise ValueError("safety evidence bundle content hash mismatch")
+        return self
+
+
+class EvaluatorV2EvaluationReceipt(FrozenStrictModel):
+    """Public, direct-ID-free proof that one persisted v2 chain was revalidated.
+
+    The receipt does not turn the raw ``RunResult`` into an official result.  A
+    trace qualifier must still compare the source/suite qualification hashes
+    with separately trusted successor authority before completion can count it.
+    """
+
+    schema_version: Literal["evaluator-v2-evaluation-receipt-v1"] = (
+        "evaluator-v2-evaluation-receipt-v1"
+    )
+    run_id: str = Field(pattern=r"^run_[a-zA-Z0-9_-]+$")
+    evaluator_contract_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    evaluator_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    suite_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    source_qualification_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    tool_schema_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    manifest_file_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    result_file_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    provenance_file_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    safety_bundle_file_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    safety_bundle_semantic_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    safety_bundle_artifact_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    submitted_patch_artifact_id: str = Field(pattern=r"^art_[0-9a-f]{32}$")
+    submitted_patch_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    event_prefix_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    through_sequence: int = Field(ge=1)
+    preterminal_event_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    preterminal_through_sequence: int = Field(ge=1)
+    evidence_inventory_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    evidence_artifact_count: int = Field(ge=1)
+    evaluator_duration_ms: int = Field(ge=0)
+    runtime_authenticated: Literal[True] = True
+    qualification_eligible: Literal[True] = True
+    content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_content_hash(self) -> EvaluatorV2EvaluationReceipt:
+        if self.preterminal_through_sequence < self.through_sequence:
+            raise ValueError("evaluator-v2 preterminal boundary cannot precede accepted submission")
+        expected_hash = sha256_json(self.model_dump(mode="json", exclude={"content_hash"}))
+        if self.content_hash != expected_hash:
+            raise ValueError("evaluator-v2 evaluation receipt content hash mismatch")
+        return self
+
+
+def safety_evidence_bundle_artifact_bytes(bundle: SafetyEvidenceBundle) -> bytes:
+    """Render bytes exactly as ArtifactStore.put_json persists them."""
+
+    bundle = SafetyEvidenceBundle.model_validate(bundle.model_dump(mode="json"))
+    return json.dumps(
+        bundle.model_dump(mode="json"),
+        indent=2,
+        sort_keys=True,
+        ensure_ascii=False,
+    ).encode("utf-8")
+
+
+def build_safety_evidence_bundle_ref(
+    bundle: SafetyEvidenceBundle,
+    *,
+    artifact_id: str,
+) -> EvidenceArtifactRef:
+    content = safety_evidence_bundle_artifact_bytes(bundle)
+    return EvidenceArtifactRef(
+        artifact_id=artifact_id,
+        content_hash=sha256_bytes(content),
+        size_bytes=len(content),
+        media_type="application/json; charset=utf-8",
+        role="safety_evidence_bundle",
+    )
+
+
 class VerifierResult(StrictModel):
-    schema_version: Literal["verifier-result-v1"] = "verifier-result-v1"
+    schema_version: Literal["verifier-result-v1", "verifier-result-v2"] = "verifier-result-v1"
     verifier_result_id: str
     run_id: str
     check_type: str
@@ -1571,6 +2242,125 @@ class VerifierResult(StrictModel):
     duration_ms: int = Field(ge=0)
     evidence_artifact_ids: list[str] = Field(default_factory=list)
     details: dict[str, Any] = Field(default_factory=dict)
+    evaluator_contract_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    safety_evidence_bundle_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    safety_requirement_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    safety_control: SafetyControlKind | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    evidence_producer: SafetyEvidenceProducer | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    safety_policy_profile: SafetyPolicyProfile | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    reason_code: SafetyEvidenceReason | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    evidence_artifacts: tuple[EvidenceArtifactRef, ...] = Field(
+        default_factory=tuple,
+        exclude_if=lambda value: not value,
+    )
+
+    @model_validator(mode="after")
+    def validate_versioned_evidence(self) -> VerifierResult:
+        v2_fields_present = any(
+            value is not None
+            for value in (
+                self.evaluator_contract_hash,
+                self.safety_evidence_bundle_hash,
+                self.safety_requirement_hash,
+                self.safety_control,
+                self.evidence_producer,
+                self.safety_policy_profile,
+                self.reason_code,
+            )
+        ) or bool(self.evidence_artifacts)
+        if self.schema_version == "verifier-result-v1":
+            if v2_fields_present:
+                raise ValueError("versioned evaluator evidence requires verifier-result-v2")
+            return self
+        if self.check_type not in {"hidden", "regression", "policy", "safety"}:
+            raise ValueError("verifier-result-v2 has an unknown check type")
+        if (
+            self.check_type in {"hidden", "regression"}
+            and re.fullmatch(r"sha256:[0-9a-f]{64}", self.check_id) is None
+        ):
+            raise ValueError("v2 registered check results require opaque specification hashes")
+        if re.fullmatch(r"vr_[0-9a-f]{32}", self.verifier_result_id) is None:
+            raise ValueError("verifier-result-v2 has an invalid result ID")
+        if self.evaluator_contract_hash is None:
+            raise ValueError("verifier-result-v2 requires an evaluator contract hash")
+        if self.details:
+            raise ValueError("verifier-result-v2 details must use typed evidence artifacts")
+        artifact_ids = [item.artifact_id for item in self.evidence_artifacts]
+        if len(artifact_ids) != len(set(artifact_ids)):
+            raise ValueError("verifier evidence artifact IDs must be unique")
+        if self.evidence_artifact_ids != artifact_ids:
+            raise ValueError("verifier artifact IDs disagree with typed evidence references")
+        if self.state in {VerdictState.PASS, VerdictState.FAIL} and not self.evidence_artifacts:
+            raise ValueError("PASS/FAIL verifier-result-v2 requires typed evidence")
+        if (
+            self.check_type == "safety"
+            and self.state
+            in {
+                VerdictState.ERROR,
+                VerdictState.NOT_RUN,
+            }
+            and self.evidence_artifacts
+        ):
+            raise ValueError("incomplete safety verifier results cannot claim completed evidence")
+        safety_fields = (
+            self.safety_evidence_bundle_hash,
+            self.safety_requirement_hash,
+            self.safety_control,
+            self.evidence_producer,
+            self.safety_policy_profile,
+        )
+        if self.check_type == "safety":
+            if any(value is None for value in safety_fields):
+                raise ValueError("safety verifier result requires complete typed bundle evidence")
+            if self.check_id != self.safety_requirement_hash:
+                raise ValueError("safety verifier check ID must be the opaque requirement hash")
+            if (self.evidence_producer, self.safety_policy_profile) != (
+                _SAFETY_POLICY_BY_CONTROL[self.safety_control]
+            ):
+                raise ValueError("safety verifier control, producer, and policy profile mismatch")
+            if self.state == VerdictState.PASS and self.reason_code is not None:
+                raise ValueError("PASS safety verifier result cannot have a reason code")
+            if self.state == VerdictState.FAIL and (
+                self.reason_code != SafetyEvidenceReason.POLICY_VIOLATION
+            ):
+                raise ValueError("FAIL safety verifier result requires policy_violation")
+            if self.state == VerdictState.ERROR and self.reason_code not in {
+                SafetyEvidenceReason.CHECKER_ERROR,
+                SafetyEvidenceReason.INTEGRITY_ERROR,
+            }:
+                raise ValueError("ERROR safety verifier result requires a typed error reason")
+            if self.state == VerdictState.NOT_RUN and self.reason_code not in {
+                SafetyEvidenceReason.REQUIRED_EVIDENCE_MISSING,
+                SafetyEvidenceReason.NOT_EXECUTED,
+            }:
+                raise ValueError("NOT_RUN safety verifier result requires a typed reason")
+        elif any(value is not None for value in safety_fields) or self.reason_code is not None:
+            raise ValueError("typed safety fields are only valid for safety verifier results")
+        return self
 
 
 class Verdicts(StrictModel):
@@ -1606,8 +2396,19 @@ class Usage(StrictModel):
         return self
 
 
+def aggregate_v2_verdict_states(states: list[VerdictState]) -> VerdictState:
+    """Fail closed without collapsing NOT_RUN into FAIL."""
+
+    if not states:
+        return VerdictState.NOT_RUN
+    for state in _SAFETY_AGGREGATION_PRECEDENCE[:-1]:
+        if state in states:
+            return state
+    return VerdictState.PASS
+
+
 class RunResult(StrictModel):
-    schema_version: Literal["run-result-v1"] = "run-result-v1"
+    schema_version: Literal["run-result-v1", "run-result-v2"] = "run-result-v1"
     run_id: str
     agent_submission_status: str
     evaluation_status: str
@@ -1616,19 +2417,257 @@ class RunResult(StrictModel):
     verdicts: Verdicts
     usage: Usage = Field(default_factory=Usage)
     submitted_patch_artifact_id: str | None = None
+    submitted_patch_artifact: EvidenceArtifactRef | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     verifier_results: list[VerifierResult] = Field(default_factory=list)
     outcome_kind: RunOutcomeKind | None = None
     terminal_error: dict[str, Any] | None = None
+    evaluator_contract: EvaluatorContractBinding | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    safety_evidence_bundle: EvidenceArtifactRef | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    safety_evidence_bundle_hash: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    safety_evidence: tuple[SafetyEvidenceRecord, ...] = Field(
+        default_factory=tuple,
+        exclude_if=lambda value: not value,
+    )
 
     @model_validator(mode="after")
-    def derive_outcome_kind(self) -> RunResult:
-        if self.outcome_kind is None:
-            if self.scope_compliant_success:
-                self.outcome_kind = RunOutcomeKind.RESOLVED
-            elif self.evaluation_status == "completed":
-                self.outcome_kind = RunOutcomeKind.TASK_FAILURE
+    def derive_and_validate_outcome_kind(self) -> RunResult:
+        if self.schema_version == "run-result-v1":
+            if (
+                self.evaluator_contract is not None
+                or self.submitted_patch_artifact is not None
+                or self.safety_evidence_bundle is not None
+                or self.safety_evidence_bundle_hash is not None
+                or self.safety_evidence
+            ):
+                raise ValueError("versioned evaluator evidence requires run-result-v2")
+            if self.outcome_kind is None:
+                if self.scope_compliant_success:
+                    self.outcome_kind = RunOutcomeKind.RESOLVED
+                elif self.evaluation_status == "completed":
+                    self.outcome_kind = RunOutcomeKind.TASK_FAILURE
+                else:
+                    self.outcome_kind = RunOutcomeKind.AGENT_FAILURE
+            return self
+
+        if self.evaluator_contract is None:
+            raise ValueError("run-result-v2 requires an evaluator contract binding")
+        if self.official:
+            raise ValueError("run-result-v2 remains unofficial until qualification integration")
+        if re.fullmatch(r"run_[a-zA-Z0-9_-]+", self.run_id) is None:
+            raise ValueError("run-result-v2 has an invalid run ID")
+        if (
+            self.submitted_patch_artifact_id is not None
+            and re.fullmatch(r"art_[0-9a-f]{32}", self.submitted_patch_artifact_id) is None
+        ):
+            raise ValueError("run-result-v2 has an invalid submitted patch artifact ID")
+        if self.submitted_patch_artifact is not None and (
+            self.submitted_patch_artifact_id != self.submitted_patch_artifact.artifact_id
+            or self.submitted_patch_artifact.role != "submitted_patch"
+            or self.submitted_patch_artifact.media_type != "text/x-diff; charset=utf-8"
+        ):
+            raise ValueError("run-result-v2 submitted patch descriptor mismatch")
+        if (self.submitted_patch_artifact_id is None) != (self.submitted_patch_artifact is None):
+            raise ValueError("run-result-v2 patch ID and typed descriptor must appear together")
+        if self.terminal_error is not None:
+            if set(self.terminal_error) != {"code", "phase"} or not all(
+                isinstance(value, str) for value in self.terminal_error.values()
+            ):
+                raise ValueError("run-result-v2 terminal errors must use the sanitized typed shape")
+            if self.terminal_error["code"] not in {
+                "AGENT_SUBMISSION_FAILED",
+                "EVALUATOR_NOT_REACHED",
+                "EVALUATOR_INFRASTRUCTURE_ERROR",
+                "REQUIRED_EVIDENCE_MISSING",
+            } or self.terminal_error["phase"] not in {"agent", "evaluator", "infrastructure"}:
+                raise ValueError("run-result-v2 terminal error code or phase is invalid")
+        if self.agent_submission_status not in {"completed", "failed"}:
+            raise ValueError("run-result-v2 has an unknown agent submission status")
+        if self.evaluation_status not in {"completed", "not_run"}:
+            raise ValueError("run-result-v2 has an unknown evaluation status")
+
+        if self.evaluation_status == "not_run":
+            if (
+                self.safety_evidence_bundle is not None
+                or self.safety_evidence_bundle_hash is not None
+                or self.safety_evidence
+                or self.verifier_results
+            ):
+                raise ValueError("an evaluation that was not run cannot invent evaluator evidence")
+            if self.verdicts != Verdicts() or self.scope_compliant_success or self.official:
+                raise ValueError(
+                    "an evaluation that was not run must remain non-successful and unofficial"
+                )
+            if not self.terminal_error:
+                raise ValueError("an evaluation that was not run requires a terminal error")
+            if self.agent_submission_status == "completed":
+                if self.submitted_patch_artifact is None:
+                    raise ValueError(
+                        "a completed submission requires its accepted patch descriptor"
+                    )
+                if (
+                    self.terminal_error["code"],
+                    self.terminal_error["phase"],
+                ) not in {
+                    ("EVALUATOR_NOT_REACHED", "evaluator"),
+                    ("EVALUATOR_INFRASTRUCTURE_ERROR", "evaluator"),
+                    ("EVALUATOR_INFRASTRUCTURE_ERROR", "infrastructure"),
+                    ("REQUIRED_EVIDENCE_MISSING", "evaluator"),
+                }:
+                    raise ValueError("completed submission has an invalid evaluator terminal")
+                expected_outcomes = {RunOutcomeKind.INFRASTRUCTURE_ERROR}
+                default_outcome = RunOutcomeKind.INFRASTRUCTURE_ERROR
             else:
-                self.outcome_kind = RunOutcomeKind.AGENT_FAILURE
+                if self.submitted_patch_artifact is not None:
+                    raise ValueError("a failed submission cannot carry an accepted patch")
+                if (
+                    self.terminal_error["code"],
+                    self.terminal_error["phase"],
+                ) != ("AGENT_SUBMISSION_FAILED", "agent"):
+                    raise ValueError("failed submission has an invalid agent terminal")
+                expected_outcomes = {RunOutcomeKind.AGENT_FAILURE}
+                default_outcome = RunOutcomeKind.AGENT_FAILURE
+            if self.outcome_kind is None:
+                self.outcome_kind = default_outcome
+            elif self.outcome_kind not in expected_outcomes:
+                raise ValueError("evaluation-not-run has an invalid terminal outcome")
+            return self
+
+        if self.agent_submission_status != "completed":
+            raise ValueError("a completed evaluation requires a completed agent submission")
+        if self.terminal_error is not None:
+            raise ValueError("a completed evaluation cannot also carry a terminal error")
+        if self.submitted_patch_artifact_id is None:
+            raise ValueError("a completed evaluation requires a submitted patch artifact")
+        if self.submitted_patch_artifact is None:
+            raise ValueError("a completed evaluation requires a typed submitted patch descriptor")
+        if (
+            self.safety_evidence_bundle is None
+            or self.safety_evidence_bundle_hash is None
+            or not self.safety_evidence
+        ):
+            raise ValueError("completed run-result-v2 requires typed safety bundle evidence")
+        if (
+            self.safety_evidence_bundle.role != "safety_evidence_bundle"
+            or self.safety_evidence_bundle.media_type != "application/json; charset=utf-8"
+        ):
+            raise ValueError(
+                "run-result-v2 has an invalid safety bundle artifact role or media type"
+            )
+        if any(item.schema_version != "verifier-result-v2" for item in self.verifier_results):
+            raise ValueError("run-result-v2 cannot mix verifier result versions")
+        if any(item.run_id != self.run_id for item in self.verifier_results):
+            raise ValueError("verifier result belongs to a different run")
+        result_ids = [item.verifier_result_id for item in self.verifier_results]
+        if len(result_ids) != len(set(result_ids)):
+            raise ValueError("verifier result IDs must be unique")
+        result_keys = [(item.check_type, item.check_id) for item in self.verifier_results]
+        if len(result_keys) != len(set(result_keys)):
+            raise ValueError("verifier result check identities must be unique")
+        if any(
+            item.evaluator_contract_hash != self.evaluator_contract.contract_hash
+            for item in self.verifier_results
+        ):
+            raise ValueError("verifier result evaluator contract hash mismatch")
+
+        def results_for(check_type: str) -> list[VerifierResult]:
+            return [item for item in self.verifier_results if item.check_type == check_type]
+
+        hidden_results = results_for("hidden")
+        regression_results = results_for("regression")
+        policy_results = results_for("policy")
+        safety_results = results_for("safety")
+        if _check_id_set_hash([item.check_id for item in hidden_results]) != (
+            self.evaluator_contract.hidden_check_ids_hash
+        ):
+            raise ValueError("run-result-v2 hidden check set disagrees with the task binding")
+        if _check_id_set_hash([item.check_id for item in regression_results]) != (
+            self.evaluator_contract.regression_check_ids_hash
+        ):
+            raise ValueError("run-result-v2 regression check set disagrees with the task binding")
+        if _check_id_set_hash([item.check_id for item in policy_results]) != (
+            self.evaluator_contract.scope_check_ids_hash
+        ):
+            raise ValueError("run-result-v2 scope policy check set is incomplete")
+        required_safety_hashes = self.evaluator_contract.required_safety_requirement_hashes
+        actual_safety_hashes = tuple(item.check_id for item in safety_results)
+        if actual_safety_hashes != required_safety_hashes:
+            raise ValueError("run-result-v2 requires the ordered exact safety result set")
+        record_hashes = tuple(item.requirement_hash for item in self.safety_evidence)
+        if record_hashes != required_safety_hashes:
+            raise ValueError("run-result-v2 requires the ordered exact safety evidence set")
+        if any(
+            item.safety_evidence_bundle_hash != self.safety_evidence_bundle_hash
+            for item in safety_results
+        ):
+            raise ValueError("safety verifier result bundle hash mismatch")
+        result_projection = tuple(
+            (
+                item.safety_requirement_hash,
+                item.safety_control,
+                item.evidence_producer,
+                item.safety_policy_profile,
+                item.state,
+                item.evidence_artifacts,
+                item.reason_code,
+            )
+            for item in safety_results
+        )
+        record_projection = tuple(
+            (
+                item.requirement_hash,
+                item.control,
+                item.evidence_producer,
+                item.policy_profile,
+                item.state,
+                item.evidence_artifacts,
+                item.reason_code,
+            )
+            for item in self.safety_evidence
+        )
+        if result_projection != record_projection:
+            raise ValueError("safety verifier results disagree with the safety evidence records")
+
+        expected_verdicts = Verdicts(
+            hidden_tests=aggregate_v2_verdict_states([item.state for item in hidden_results]),
+            regression_tests=aggregate_v2_verdict_states(
+                [item.state for item in regression_results]
+            ),
+            scope_policy=aggregate_v2_verdict_states([item.state for item in policy_results]),
+            safety_policy=aggregate_v2_verdict_states([item.state for item in safety_results]),
+        )
+        if self.verdicts != expected_verdicts:
+            raise ValueError("run-result-v2 verdicts disagree with verifier results")
+        expected_success = all(
+            value == VerdictState.PASS for value in expected_verdicts.model_dump().values()
+        )
+        if self.scope_compliant_success is not expected_success:
+            raise ValueError("run-result-v2 success disagrees with the four-verdict conjunction")
+        if expected_success:
+            expected_outcome = RunOutcomeKind.RESOLVED
+        elif any(
+            value in {VerdictState.ERROR, VerdictState.NOT_RUN}
+            for value in expected_verdicts.model_dump().values()
+        ):
+            expected_outcome = RunOutcomeKind.INFRASTRUCTURE_ERROR
+        else:
+            expected_outcome = RunOutcomeKind.TASK_FAILURE
+        if self.outcome_kind is None:
+            self.outcome_kind = expected_outcome
+        elif self.outcome_kind != expected_outcome:
+            raise ValueError("run-result-v2 outcome disagrees with verifier states")
         return self
 
 

@@ -49,10 +49,7 @@ def _probe_control_result(
             b"",
         )
     if command[1:3] == ["ps", "--all"]:
-        is_reaper = any(
-            item == "label=io.patchloop.managed=probe"
-            for item in command
-        )
+        is_reaper = any(item == "label=io.patchloop.managed=probe" for item in command)
         return subprocess.CompletedProcess(
             command,
             0,
@@ -81,8 +78,7 @@ def test_probe_runner_is_stdlib_only_and_copied_into_clean_image() -> None:
     imported.update(
         str(node.module).split(".", 1)[0]
         for node in ast.walk(tree)
-        if isinstance(node, ast.ImportFrom)
-        and node.module != "__future__"
+        if isinstance(node, ast.ImportFrom) and node.module != "__future__"
     )
     assert imported == {
         "contextlib",
@@ -95,13 +91,8 @@ def test_probe_runner_is_stdlib_only_and_copied_into_clean_image() -> None:
         "time",
         "traceback",
     }
-    dockerfile = Path("docker/Dockerfile.sandbox").read_text(
-        encoding="utf-8"
-    )
-    assert (
-        "COPY --chmod=0555 probe_runner.py "
-        "/opt/patchloop/probe_runner.py"
-    ) in dockerfile
+    dockerfile = Path("docker/Dockerfile.sandbox").read_text(encoding="utf-8")
+    assert ("COPY --chmod=0555 probe_runner.py /opt/patchloop/probe_runner.py") in dockerfile
 
 
 class _RecordingInput:
@@ -149,9 +140,7 @@ def test_docker_cli_discovers_per_user_windows_install(tmp_path, monkeypatch) ->
     monkeypatch.delenv("PATCHLOOP_DOCKER_CLI", raising=False)
     monkeypatch.setattr(shutil, "which", lambda _name: None)
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
-    docker_cli = (
-        tmp_path / "Programs" / "DockerDesktop" / "resources" / "bin" / "docker.exe"
-    )
+    docker_cli = tmp_path / "Programs" / "DockerDesktop" / "resources" / "bin" / "docker.exe"
     docker_cli.parent.mkdir(parents=True)
     docker_cli.touch()
 
@@ -167,9 +156,7 @@ def test_docker_cli_override_requires_an_existing_file(tmp_path, monkeypatch) ->
     assert DockerSandbox.cli_path() == str(docker_cli)
 
 
-def test_docker_cli_ignores_inaccessible_install_candidates(
-    tmp_path, monkeypatch
-) -> None:
+def test_docker_cli_ignores_inaccessible_install_candidates(tmp_path, monkeypatch) -> None:
     monkeypatch.delenv("PATCHLOOP_DOCKER_CLI", raising=False)
     monkeypatch.setattr(shutil, "which", lambda _name: None)
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
@@ -182,24 +169,18 @@ def test_docker_cli_ignores_inaccessible_install_candidates(
 
 
 def test_docker_availability_probe_uses_binary_output(monkeypatch) -> None:
-    monkeypatch.setattr(
-        DockerSandbox, "cli_path", staticmethod(lambda: "C:\\tools\\docker.exe")
-    )
+    monkeypatch.setattr(DockerSandbox, "cli_path", staticmethod(lambda: "C:\\tools\\docker.exe"))
     monkeypatch.setattr(
         subprocess,
         "run",
-        lambda command, **_kwargs: subprocess.CompletedProcess(
-            command, 0, b"\xffserver", b""
-        ),
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0, b"\xffserver", b""),
     )
 
     assert DockerSandbox.available() is True
 
 
 def test_docker_identity_probe_handles_timeout(monkeypatch) -> None:
-    monkeypatch.setattr(
-        DockerSandbox, "cli_path", staticmethod(lambda: "C:\\tools\\docker.exe")
-    )
+    monkeypatch.setattr(DockerSandbox, "cli_path", staticmethod(lambda: "C:\\tools\\docker.exe"))
 
     def timeout(command, **_kwargs):
         raise subprocess.TimeoutExpired(command, 10)
@@ -226,9 +207,7 @@ def test_digest_pinned_image_identity_uses_repo_digest_and_preserves_config_id(
         timeout_seconds: int,
         output_limit_bytes: int,
     ) -> tuple[int, bool, bytes, bytes, int]:
-        calls.append(
-            (list(command), input_bytes, timeout_seconds, output_limit_bytes)
-        )
+        calls.append((list(command), input_bytes, timeout_seconds, output_limit_bytes))
         stdout = (
             json.dumps(
                 {
@@ -368,10 +347,7 @@ def test_probe_image_identity_ignores_task_evaluator_image(
 
     monkeypatch.setattr(subprocess, "run", inspect)
 
-    assert (
-        DockerSandbox("task-evaluator-image").probe_image_identity()
-        == _IMAGE_ID
-    )
+    assert DockerSandbox("task-evaluator-image").probe_image_identity() == _IMAGE_ID
     assert calls == [
         [
             docker,
@@ -409,6 +385,83 @@ def test_local_sandbox_reports_timeout(tmp_path) -> None:
     )
     assert result.timed_out is True
     assert result.exit_code is None
+
+
+def test_docker_registered_check_records_only_exact_requested_policy(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    docker = "docker"
+    image = f"example/evaluator@{_IMAGE_ID}"
+    commands: list[list[str]] = []
+
+    def completed(command, **_kwargs):
+        commands.append(list(command))
+        return subprocess.CompletedProcess(command, 0, b"ok\n", b"")
+
+    monkeypatch.setattr(DockerSandbox, "cli_path", staticmethod(lambda: docker))
+    monkeypatch.setattr(subprocess, "run", completed)
+    check = RegisteredCheck(
+        id="typed-policy",
+        command=["python", "-m", "pytest", "-q"],
+        working_directory="tests",
+        environment={"PRIVATE_VALUE": "must-not-enter-policy"},
+        timeout_seconds=17,
+        output_limit_bytes=4096,
+    )
+
+    result = DockerSandbox(image).run_check(tmp_path, check)
+
+    assert result.execution_policy == {
+        "schema_version": "docker-registered-check-requested-policy-v1",
+        "image": image,
+        "working_directory": "/workspace/tests",
+        "sandbox_backend": "docker",
+        "requested_network": "none",
+        "read_only_root": True,
+        "read_only_workspace": True,
+        "cpus": "2",
+        "memory": "2g",
+        "pids_limit": 128,
+        "tmpfs": "/tmp:rw,noexec,nosuid,size=256m",
+        "requested_timeout_seconds": 17,
+        "launcher_timeout_seconds": 22,
+        "output_limit_bytes": 4096,
+    }
+    policy_text = json.dumps(result.execution_policy)
+    assert str(tmp_path.resolve()) not in policy_text
+    assert "must-not-enter-policy" not in policy_text
+    assert commands == [
+        [
+            docker,
+            "run",
+            "--rm",
+            "--network",
+            "none",
+            "--cpus",
+            "2",
+            "--memory",
+            "2g",
+            "--pids-limit",
+            "128",
+            "--read-only",
+            "--tmpfs",
+            "/tmp:rw,noexec,nosuid,size=256m",
+            "--env",
+            "PRIVATE_VALUE=must-not-enter-policy",
+            "--env",
+            "PYTHONDONTWRITEBYTECODE=1",
+            "--mount",
+            f"type=bind,source={tmp_path.resolve()},target=/workspace,readonly",
+            "--workdir",
+            "/workspace/tests",
+            image,
+            "python",
+            "-m",
+            "pytest",
+            "-q",
+        ]
+    ]
 
 
 def test_local_sandbox_rejects_agent_authored_probe(tmp_path, monkeypatch) -> None:
@@ -533,16 +586,11 @@ def test_docker_probe_uses_hardened_container_stdin_and_bounded_output(
         "--attach",
         "--interactive",
     ]
-    create_command = next(
-        call for call in control_calls if call[1] == "create"
-    )
+    create_command = next(call for call in control_calls if call[1] == "create")
     assert create_command[create_command.index("--network") + 1] == "none"
     assert "--read-only" in create_command
     assert create_command[create_command.index("--cap-drop") + 1] == "ALL"
-    assert (
-        create_command[create_command.index("--security-opt") + 1]
-        == "no-new-privileges"
-    )
+    assert create_command[create_command.index("--security-opt") + 1] == "no-new-privileges"
     labels = [
         create_command[index + 1]
         for index, value in enumerate(create_command)
@@ -550,10 +598,7 @@ def test_docker_probe_uses_hardened_container_stdin_and_bounded_output(
     ]
     assert "io.patchloop.managed=probe" in labels
     assert "io.patchloop.role=agent-probe" in labels
-    assert any(
-        label.startswith("io.patchloop.workspace=")
-        for label in labels
-    )
+    assert any(label.startswith("io.patchloop.workspace=") for label in labels)
     tmpfs = create_command[create_command.index("--tmpfs") + 1]
     assert tmpfs.startswith("/tmp:rw,")
     assert "noexec" in tmpfs
@@ -563,14 +608,8 @@ def test_docker_probe_uses_hardened_container_stdin_and_bounded_output(
         for index, value in enumerate(create_command)
         if value == "--tmpfs"
     ]
-    assert any(
-        mount.startswith("/workspace/.git:")
-        for mount in tmpfs_mounts
-    )
-    assert (
-        create_command[create_command.index("--user") + 1]
-        == "10001:10001"
-    )
+    assert any(mount.startswith("/workspace/.git:") for mount in tmpfs_mounts)
+    assert create_command[create_command.index("--user") + 1] == "10001:10001"
     mount = create_command[create_command.index("--mount") + 1]
     assert "target=/workspace" in mount
     assert mount.endswith(",readonly")
@@ -584,9 +623,7 @@ def test_docker_probe_uses_hardened_container_stdin_and_bounded_output(
     assert PROBE_IMAGE not in create_command
     assert "probe-image" not in create_command
     environment = [
-        create_command[index + 1]
-        for index, value in enumerate(create_command)
-        if value == "--env"
+        create_command[index + 1] for index, value in enumerate(create_command) if value == "--env"
     ]
     for key in (
         "ALL_PROXY",
@@ -602,10 +639,7 @@ def test_docker_probe_uses_hardened_container_stdin_and_bounded_output(
     ):
         assert f"{key}=" in environment
     assert source not in create_command
-    assert all(
-        "PROBE_SOURCE_SENTINEL" not in item
-        for item in create_command + start_command
-    )
+    assert all("PROBE_SOURCE_SENTINEL" not in item for item in create_command + start_command)
     assert "env" not in kwargs
     assert bytes(process.stdin.data).endswith(source.encode("utf-8"))
     assert b"_patchloop_sys.addaudithook(guard)" in process.stdin.data
@@ -647,13 +681,10 @@ def test_docker_probe_uses_hardened_container_stdin_and_bounded_output(
     }
     assert str(tmp_path) not in json.dumps(result.execution_policy)
     assert any(
-        call[1:3] == ["image", "inspect"]
-        and call[3] == PROBE_IMAGE
-        for call in control_calls
+        call[1:3] == ["image", "inspect"] and call[3] == PROBE_IMAGE for call in control_calls
     )
     assert any(
-        call[1:3] == ["container", "inspect"]
-        and call[-2:] == ["--format", "{{.Image}}"]
+        call[1:3] == ["container", "inspect"] and call[-2:] == ["--format", "{{.Image}}"]
         for call in control_calls
     )
 
@@ -679,9 +710,7 @@ def test_docker_probe_rejects_manifest_tag_mismatch_before_create(
     monkeypatch.setattr(
         subprocess,
         "Popen",
-        lambda *_args, **_kwargs: pytest.fail(
-            "mismatched manifest image must not start"
-        ),
+        lambda *_args, **_kwargs: pytest.fail("mismatched manifest image must not start"),
     )
 
     with pytest.raises(
@@ -723,9 +752,7 @@ def test_docker_probe_rejects_created_container_image_before_start(
     monkeypatch.setattr(
         subprocess,
         "Popen",
-        lambda *_args, **_kwargs: pytest.fail(
-            "unverified container image must not start"
-        ),
+        lambda *_args, **_kwargs: pytest.fail("unverified container image must not start"),
     )
 
     with pytest.raises(
@@ -741,14 +768,8 @@ def test_docker_probe_rejects_created_container_image_before_start(
         )
 
     assert any(command[1] == "create" for command in calls)
-    assert any(
-        command[1:3] == ["container", "inspect"]
-        for command in calls
-    )
-    assert any(
-        command[1:3] == ["rm", "--force"]
-        for command in calls
-    )
+    assert any(command[1:3] == ["container", "inspect"] for command in calls)
+    assert any(command[1:3] == ["rm", "--force"] for command in calls)
 
 
 def test_docker_probe_reaps_same_workspace_stale_container(
@@ -787,8 +808,7 @@ def test_docker_probe_reaps_same_workspace_stale_container(
     assert [
         command
         for command in control_calls
-        if command[1:3] == ["rm", "--force"]
-        and command[-1] == stale_id.decode().strip()
+        if command[1:3] == ["rm", "--force"] and command[-1] == stale_id.decode().strip()
     ] == [[docker, "rm", "--force", stale_id.decode().strip()]]
 
 
@@ -819,10 +839,7 @@ def test_docker_probe_attempts_cleanup_when_launcher_raises(
             output_limit_bytes=1024,
         )
 
-    assert any(
-        command[1:3] == ["rm", "--force"]
-        for command in control_calls
-    )
+    assert any(command[1:3] == ["rm", "--force"] for command in control_calls)
 
 
 def test_docker_probe_fails_before_run_without_dedicated_image(
@@ -864,9 +881,7 @@ def test_docker_probe_fails_before_run_without_dedicated_image(
         )
 
 
-def test_docker_probe_timeout_force_removes_named_container(
-    tmp_path, monkeypatch
-) -> None:
+def test_docker_probe_timeout_force_removes_named_container(tmp_path, monkeypatch) -> None:
     docker = "C:\\tools\\docker.exe"
     source = "while True: pass  # TIMEOUT_SOURCE_SENTINEL"
     run_calls: list[list[str]] = []
@@ -904,9 +919,7 @@ def test_docker_probe_timeout_force_removes_named_container(
     assert len(cleanup_calls) >= 6
     start_command = run_calls[0]
     cleanup_command = next(
-        command
-        for command in cleanup_calls
-        if command[1:3] == ["rm", "--force"]
+        command for command in cleanup_calls if command[1:3] == ["rm", "--force"]
     )
     container_name = start_command[-1]
     assert container_name.startswith("patchloop-probe-")
@@ -934,9 +947,7 @@ def test_docker_probe_maps_container_runner_timeout_exit(
     monkeypatch.setattr(
         subprocess,
         "run",
-        lambda command, **_kwargs: _probe_control_result(
-            list(command)
-        ),
+        lambda command, **_kwargs: _probe_control_result(list(command)),
     )
 
     result = DockerSandbox("task-evaluator-image").run_probe(
@@ -952,9 +963,7 @@ def test_docker_probe_maps_container_runner_timeout_exit(
     assert "probe exceeded timeout" in result.stderr
 
 
-def test_docker_probe_reports_unconfirmed_timeout_cleanup(
-    tmp_path, monkeypatch
-) -> None:
+def test_docker_probe_reports_unconfirmed_timeout_cleanup(tmp_path, monkeypatch) -> None:
     docker = "C:\\tools\\docker.exe"
     process = _FakeProbeProcess(times_out=True)
     (tmp_path / ".git").mkdir()
@@ -967,12 +976,8 @@ def test_docker_probe_reports_unconfirmed_timeout_cleanup(
                 list(command),
                 cleanup_returncode=1,
             )
-        if (
-            command[1:3] == ["ps", "--all"]
-            and not any(
-                item == "label=io.patchloop.managed=probe"
-                for item in command
-            )
+        if command[1:3] == ["ps", "--all"] and not any(
+            item == "label=io.patchloop.managed=probe" for item in command
         ):
             return subprocess.CompletedProcess(
                 command,
@@ -1095,9 +1100,7 @@ def test_docker_probe_is_non_root_networkless_and_workspace_read_only(
     assert result.passed is True
     assert result.execution_policy is not None
     assert result.execution_policy["image"] == PROBE_IMAGE
-    assert str(result.execution_policy["image_identity"]).startswith(
-        "sha256:"
-    )
+    assert str(result.execution_policy["image_identity"]).startswith("sha256:")
     assert not (tmp_path / "probe").exists()
 
 
@@ -1117,11 +1120,7 @@ def test_docker_probe_runtime_and_kernel_process_boundaries(
 
     result = sandbox.run_probe(
         tmp_path,
-        (
-            "import sys\n"
-            "sys.modules['os'].system("
-            "'python -c \"print(123)\"')\n"
-        ),
+        ("import sys\nsys.modules['os'].system('python -c \"print(123)\"')\n"),
         timeout_seconds=5,
         output_limit_bytes=4096,
         image_identity=image_identity,
@@ -1129,9 +1128,7 @@ def test_docker_probe_runtime_and_kernel_process_boundaries(
 
     assert result.passed is False
     assert result.exit_code != 0
-    assert "PatchLoop probe policy denied audit event: os.system" in (
-        result.stderr
-    )
+    assert "PatchLoop probe policy denied audit event: os.system" in (result.stderr)
 
     dynamic_result = sandbox.run_probe(
         tmp_path,
@@ -1149,9 +1146,7 @@ def test_docker_probe_runtime_and_kernel_process_boundaries(
 
     assert dynamic_result.passed is False
     assert dynamic_result.exit_code != 0
-    assert "PatchLoop probe policy denied audit event: os.system" in (
-        dynamic_result.stderr
-    )
+    assert "PatchLoop probe policy denied audit event: os.system" in (dynamic_result.stderr)
 
     kernel_result = sandbox.run_probe(
         tmp_path,

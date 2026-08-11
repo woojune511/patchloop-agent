@@ -100,6 +100,15 @@ Primary task success is:
 hidden_pass and regression_pass and scope_pass and safety_pass
 ```
 
+Evaluator v1 still assigns safety a literal PASS. V2 binds four controls to fixed producers, opaque private-ID
+projections and `ERROR > FAIL > NOT_RUN > PASS`. It consumes sanitized requested-policy descriptors, durable
+accepted events and verified CAS; exact-marker hits are redacted before persistence. A content-hashed receipt
+binds the supplied source/suite qualification authority, event boundaries, accepted patch and evidence inventory.
+Completed persistence and qualification require that receipt; the raw v2 result remains unofficial.
+
+The A/C successor hashes exact source/tests, task/image/marker projections, runtime, R2 treatment and schedule.
+Its factory requires a caller-supplied run-secret marker, reads no credential and opens no execution authority.
+
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory
 effect claim.
@@ -123,39 +132,8 @@ Preparation, execution receipt, journal, completion gate and successor correctio
 An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
 instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
 
-D-126 through D-141 are immutable predecessors; consumed gates never reopen. D-132 has no canonical response,
-D-135 sealed that incident without reconstruction, and D-136 later completed one successful public pricing GET.
-
-D-137 consumed bounded read-only Docker READY and SDK missing-key BLOCKED transitions. Docker mutation and
-credential/environment value, `.env`, SDK import/probe, synthetic dispatch and network counts were 0; its exact
-transition commits remain indexed in `docs/09-evidence.md`.
-
-D-138 through D-141 each completed an exact gate→receipt→SDK attempt→ACTION_STARTED+BLOCKED chain. D-141 final
-transition `6405be40eb52d71fc9376065b553a04164543a4b` records the three approved presence bits as false/false/false
-after three membership checks. Value and `.env` reads, child launch, SDK import/probe, transport/network and
-provider/evaluator/agent calls are all 0. These phases are consumed and never retried, resumed, repaired or
-backfilled.
-
-D-142 source `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
-`7f7e7e25c79899eee6180ae45767492435003096`, is the exact four-add sole child of that D-141 transition. Gate
-`d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` binds the complete D-141 topology
-and qualifies only new local writers, validators and a future one-use SDK observation.
-
-The future D-142 contract requires:
-
-- fresh exact approval quoting gate, source and exact gate+active-doc evidence tuples;
-- receipt-only and SDK-attempt-only commits before a new-only, fsynced ACTION_STARTED marker;
-- an inherited-environment repository-venv Python launch with exact `-E -s -B` flags and no environment override;
-- after the marker, membership-only checks of `OPENAI_API_KEY`, `PYTHONHOME` and `PYTHONPATH`, never values or `.env`;
-- if eligible, SDK import/provenance and a zero-dispatch synthetic probe only in one bounded `env={}` child;
-- zero ambient environment or credential forwarding, a fixed nonsecret placeholder, `trust_env=false`, retry 0,
-  exact committed helper/model/lock bindings and terminal-or-marker-only no-retry handling;
-- no claim about network before the child's post-CPython/site bootstrap audit hook, while the fixed empty child
-  environment provides the startup confidentiality boundary.
-
-Fully injected/mocked focused tests passed 170/170 and are not additive with other checks. No D-142 runtime
-artifact exists. Source/gate preparation performed zero membership/value/`.env` observation, credential
-mutation or provisioning, child launch, SDK inspection, endpoint/network or Docker action. Credential
-provisioning remains separate from both source preparation and activation, no credential value belongs in an
-approval/chat, and the gate grants no provider/evaluator/agent, memory/retrieval, hash/candidate, cost or A/C
-authority. Any D-142 terminal requires a separate D-143 offline successor.
+D-126 through D-141 are immutable predecessors and consumed attempts never reopen. D-142's exact tuples and
+original one-use contract remain canonical in `reports/` and `docs/09-evidence.md`; its evidence state is
+source-qualified and unactivated, while its current planning disposition is deferred. Documentation creates no
+D-142 receipt, attempt, marker or terminal. A future return to that original observation requires a new exact
+decision, and any corrected-evaluator A/C path instead requires new evaluator, source, suite and runtime identities.

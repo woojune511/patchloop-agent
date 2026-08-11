@@ -8,9 +8,15 @@ from typing import Any
 import yaml
 from pydantic import ValidationError
 
-from patchloop.contracts import PrivateTask, PublicTask, TaskEnvironment, TaskPackage
+from patchloop.contracts import (
+    PrivateTask,
+    PublicTask,
+    TaskEnvironment,
+    TaskPackage,
+    task_package_spec_hashes,
+)
 from patchloop.errors import ContractError
-from patchloop.util import ensure_within, sha256_bytes, sha256_json
+from patchloop.util import ensure_within, sha256_bytes
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
@@ -61,16 +67,13 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
     if private.schema_version == "task-private-v2":
         declared_paths = {artifact.path for artifact in private.hidden_artifacts}
         actual_paths = {
-            path.relative_to(root).as_posix()
-            for path in hidden_root.rglob("*")
-            if path.is_file()
+            path.relative_to(root).as_posix() for path in hidden_root.rglob("*") if path.is_file()
         }
         if actual_paths != declared_paths:
             missing = sorted(declared_paths - actual_paths)
             undeclared = sorted(actual_paths - declared_paths)
             raise ContractError(
-                "hidden artifact inventory mismatch: "
-                f"missing={missing}, undeclared={undeclared}"
+                f"hidden artifact inventory mismatch: missing={missing}, undeclared={undeclared}"
             )
         for artifact in private.hidden_artifacts:
             artifact_path = ensure_within(root, artifact.path)
@@ -81,10 +84,7 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
                     f"{artifact.path} expected {artifact.sha256}, got {actual_hash}"
                 )
 
-    private_identity = private.model_dump(mode="json")
-    if private.schema_version == "task-private-v1":
-        # Preserve the frozen v1 identity algorithm after adding the v2-only field.
-        private_identity.pop("hidden_artifacts", None)
+    public_spec_hash, private_spec_hash = task_package_spec_hashes(public, private)
 
     try:
         return TaskPackage(
@@ -92,8 +92,8 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
             private=private,
             environment=environment,
             root=str(root),
-            public_spec_hash=sha256_json(public.model_dump(mode="json")),
-            private_spec_hash=sha256_json(private_identity),
+            public_spec_hash=public_spec_hash,
+            private_spec_hash=private_spec_hash,
         )
     except ValidationError as exc:
         raise ContractError(f"task package identity validation failed: {exc}") from exc

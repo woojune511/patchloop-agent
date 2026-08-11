@@ -11,6 +11,7 @@ from pathlib import Path
 
 from patchloop.contracts import (
     Checkpoint,
+    EvaluatorV2EvaluationReceipt,
     EventType,
     RunEvent,
     RunManifest,
@@ -24,14 +25,10 @@ from patchloop.errors import (
     RecoveryError,
     RunOwnershipConflict,
 )
-from patchloop.util import canonical_json, sha256_text, utc_now
+from patchloop.util import canonical_json, sha256_bytes, sha256_json, sha256_text, utc_now
 
-_D087_RESERVATION_CONSUMPTION_SCHEMA = (
-    "d087-campaign-reservation-consumption-v1"
-)
-_AC_ROW_START_CONSUMPTION_SCHEMA = (
-    "ac-fixed-bundle-row-start-consumption-v1"
-)
+_D087_RESERVATION_CONSUMPTION_SCHEMA = "d087-campaign-reservation-consumption-v1"
+_AC_ROW_START_CONSUMPTION_SCHEMA = "ac-fixed-bundle-row-start-consumption-v1"
 
 
 def _sha256_identity(value: str) -> bool:
@@ -138,15 +135,19 @@ class StateStore:
     ) -> dict[str, str]:
         """Atomically consume one exact D-087 schedule-row reservation."""
 
-        if not all(
-            _sha256_identity(value)
-            for value in (
-                execution_hash,
-                schedule_row_id,
-                reservation_event_hash,
-                control_hash,
+        if (
+            not all(
+                _sha256_identity(value)
+                for value in (
+                    execution_hash,
+                    schedule_row_id,
+                    reservation_event_hash,
+                    control_hash,
+                )
             )
-        ) or not isinstance(run_id, str) or not run_id:
+            or not isinstance(run_id, str)
+            or not run_id
+        ):
             raise ContractError("invalid D-087 reservation consumption identity")
         descriptor = {
             "schema_version": _D087_RESERVATION_CONSUMPTION_SCHEMA,
@@ -181,21 +182,14 @@ class StateStore:
                 )
                 connection.commit()
         except sqlite3.IntegrityError as exc:
-            existing = self.list_d087_reservation_consumptions(
-                execution_hash
-            )
+            existing = self.list_d087_reservation_consumptions(execution_hash)
             if any(
                 item["schedule_row_id"] == schedule_row_id
-                or item["reservation_event_hash"]
-                == reservation_event_hash
+                or item["reservation_event_hash"] == reservation_event_hash
                 for item in existing
             ):
-                raise ContractError(
-                    "D-087 campaign cost reservation was already consumed"
-                ) from exc
-            raise RecoveryError(
-                "D-087 reservation consumption could not be persisted"
-            ) from exc
+                raise ContractError("D-087 campaign cost reservation was already consumed") from exc
+            raise RecoveryError("D-087 reservation consumption could not be persisted") from exc
         return row
 
     def list_d087_reservation_consumptions(
@@ -221,9 +215,7 @@ class StateStore:
                 "execution_hash": stored["execution_hash"],
                 "schedule_row_id": stored["schedule_row_id"],
                 "run_id": stored["run_id"],
-                "reservation_event_hash": stored[
-                    "reservation_event_hash"
-                ],
+                "reservation_event_hash": stored["reservation_event_hash"],
                 "control_hash": stored["control_hash"],
                 "consumed_at": stored["consumed_at"],
             }
@@ -244,9 +236,7 @@ class StateStore:
                 and bool(descriptor["consumed_at"])
                 and sha256_text(canonical_json(descriptor)) == content_hash
             ):
-                raise RecoveryError(
-                    "D-087 reservation consumption state is invalid"
-                )
+                raise RecoveryError("D-087 reservation consumption state is invalid")
             output.append({**descriptor, "content_hash": content_hash})
         return output
 
@@ -319,9 +309,7 @@ class StateStore:
                 for item in existing
             ):
                 raise ContractError("A/C row start was already consumed") from exc
-            raise RecoveryError(
-                "A/C row-start consumption could not be persisted"
-            ) from exc
+            raise RecoveryError("A/C row-start consumption could not be persisted") from exc
         return row
 
     def list_ac_row_start_consumptions(
@@ -348,12 +336,8 @@ class StateStore:
                 "execution_hash": stored["execution_hash"],
                 "schedule_row_id": stored["schedule_row_id"],
                 "run_id": stored["run_id"],
-                "row_started_event_hash": stored[
-                    "row_started_event_hash"
-                ],
-                "journal_prefix_file_sha256": stored[
-                    "journal_prefix_file_sha256"
-                ],
+                "row_started_event_hash": stored["row_started_event_hash"],
+                "journal_prefix_file_sha256": stored["journal_prefix_file_sha256"],
                 "control_hash": stored["control_hash"],
                 "consumed_at": stored["consumed_at"],
             }
@@ -367,10 +351,7 @@ class StateStore:
                 content_hash,
             )
             if not (
-                all(
-                    isinstance(value, str) and _sha256_identity(value)
-                    for value in identities
-                )
+                all(isinstance(value, str) and _sha256_identity(value) for value in identities)
                 and descriptor["execution_hash"] == execution_hash
                 and isinstance(descriptor["run_id"], str)
                 and bool(descriptor["run_id"])
@@ -383,6 +364,7 @@ class StateStore:
         return output
 
     def create_run(self, manifest: RunManifest) -> None:
+        manifest = RunManifest.model_validate(manifest.model_dump(mode="json"))
         with self._connect() as connection:
             connection.execute(
                 "INSERT INTO runs(run_id, manifest_json, status, created_at) VALUES (?, ?, ?, ?)",
@@ -429,9 +411,7 @@ class StateStore:
 
     def set_run_status(self, run_id: str, status: RunStatus, result: dict | None = None) -> None:
         if status in {RunStatus.COMPLETED, RunStatus.FAILED}:
-            raise ValueError(
-                "terminal run state must be persisted with finalize_run"
-            )
+            raise ValueError("terminal run state must be persisted with finalize_run")
         if result is not None:
             raise ValueError("non-terminal run state cannot include a result")
         with self._connect() as connection:
@@ -450,9 +430,15 @@ class StateStore:
         actor: str,
         payload: dict | None = None,
         failure_payload: dict | None = None,
+        evaluator_v2_receipt: EvaluatorV2EvaluationReceipt | None = None,
     ) -> RunEvent:
         """Atomically persist the one terminal event, status, and result."""
 
+        result = RunResult.model_validate(result.model_dump(mode="json"))
+        if evaluator_v2_receipt is not None:
+            evaluator_v2_receipt = EvaluatorV2EvaluationReceipt.model_validate(
+                evaluator_v2_receipt.model_dump(mode="json")
+            )
         expected_event = {
             RunStatus.COMPLETED: EventType.RUN_COMPLETED,
             RunStatus.FAILED: EventType.RUN_FAILED,
@@ -465,23 +451,109 @@ class StateStore:
         with self._lock, self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
-                "SELECT status, result_json FROM runs WHERE run_id = ?",
+                "SELECT manifest_json, status, result_json FROM runs WHERE run_id = ?",
                 (run_id,),
             ).fetchone()
             if row is None:
                 raise RecoveryError(f"unknown run: {run_id}")
+            try:
+                stored_manifest = RunManifest.model_validate_json(row["manifest_json"])
+            except ValueError:
+                raise RecoveryError(f"run has an invalid immutable manifest: {run_id}") from None
+            expected_result_schema = {
+                "run-manifest-v1": "run-result-v1",
+                "run-manifest-v2": "run-result-v2",
+            }[stored_manifest.schema_version]
+            if result.schema_version != expected_result_schema:
+                raise ContractError("terminal result schema does not match the run manifest")
+            if result.evaluator_contract != stored_manifest.evaluator_contract:
+                raise ContractError(
+                    "terminal result evaluator binding does not match the run manifest"
+                )
             event_rows = connection.execute(
                 "SELECT event_json FROM events WHERE run_id = ?",
                 (run_id,),
             ).fetchall()
+            events = [RunEvent.model_validate_json(item["event_json"]) for item in event_rows]
+            if result.schema_version == "run-result-v2":
+                if result.evaluation_status == "completed":
+                    receipt = evaluator_v2_receipt
+                    binding = result.evaluator_contract
+                    bundle_ref = result.safety_evidence_bundle
+                    patch_ref = result.submitted_patch_artifact
+                    experiment = stored_manifest.experiment
+                    safety_events = (
+                        events[: evaluator_v2_receipt.through_sequence]
+                        if evaluator_v2_receipt is not None
+                        else []
+                    )
+                    tail_events = (
+                        events[evaluator_v2_receipt.through_sequence :]
+                        if evaluator_v2_receipt is not None
+                        else []
+                    )
+                    tail_valid = not tail_events or bool(
+                        len(tail_events) == 2
+                        and tail_events[0].type == EventType.PHASE_CHANGED
+                        and tail_events[0].actor == "phase-machine"
+                        and tail_events[0].correlation_id is None
+                        and tail_events[0].payload == {"from": "REVIEW", "to": "DONE"}
+                        and tail_events[1].type == EventType.CHECKPOINT_SAVED
+                        and tail_events[1].actor == "state-store"
+                        and tail_events[1].correlation_id is None
+                        and set(tail_events[1].payload)
+                        == {"checkpoint_id", "through_sequence", "worktree_diff_hash"}
+                        and tail_events[1].payload.get("through_sequence")
+                        == tail_events[0].sequence
+                        and tail_events[1].payload.get("worktree_diff_hash")
+                        == (patch_ref.content_hash if patch_ref is not None else None)
+                    )
+                    if receipt is None:
+                        raise ContractError(
+                            "completed run-result-v2 persistence requires an evaluation receipt"
+                        )
+                    if (
+                        binding is None
+                        or bundle_ref is None
+                        or patch_ref is None
+                        or experiment is None
+                        or receipt.run_id != run_id
+                        or receipt.evaluator_contract_hash != binding.contract_hash
+                        or receipt.evaluator_source_hash != binding.evaluator_source_hash
+                        or receipt.suite_hash != experiment.suite_hash
+                        or receipt.manifest_file_hash
+                        != sha256_bytes(stored_manifest.model_dump_json(indent=2).encode("utf-8"))
+                        or receipt.result_file_hash
+                        != sha256_bytes(result.model_dump_json(indent=2).encode("utf-8"))
+                        or receipt.safety_bundle_semantic_hash != result.safety_evidence_bundle_hash
+                        or receipt.safety_bundle_artifact_hash != bundle_ref.content_hash
+                        or receipt.submitted_patch_artifact_id != patch_ref.artifact_id
+                        or receipt.submitted_patch_content_hash != patch_ref.content_hash
+                        or not events
+                        or receipt.preterminal_through_sequence != events[-1].sequence
+                        or receipt.preterminal_event_hash
+                        != sha256_json([event.model_dump(mode="json") for event in events])
+                        or not safety_events
+                        or safety_events[-1].type != EventType.SUBMISSION_ACCEPTED
+                        or sum(
+                            event.type == EventType.SUBMISSION_ACCEPTED for event in safety_events
+                        )
+                        != 1
+                        or receipt.event_prefix_hash
+                        != sha256_json([event.model_dump(mode="json") for event in safety_events])
+                        or not tail_valid
+                    ):
+                        raise ContractError(
+                            "completed run-result-v2 receipt conflicts with durable run evidence"
+                        )
+                elif evaluator_v2_receipt is not None:
+                    raise ContractError("evaluation-not-run cannot carry an evaluator-v2 receipt")
+            elif evaluator_v2_receipt is not None:
+                raise ContractError("an evaluator-v2 receipt cannot qualify a v1 result")
             terminal_rows = [
                 event
-                for event in (
-                    RunEvent.model_validate_json(item["event_json"])
-                    for item in event_rows
-                )
-                if event.type
-                in {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
+                for event in events
+                if event.type in {EventType.RUN_COMPLETED, EventType.RUN_FAILED}
             ]
             if (
                 row["status"] != RunStatus.RUNNING.value
@@ -502,12 +574,9 @@ class StateStore:
                 ),
             )
             if updated.rowcount != 1:
-                raise RecoveryError(
-                    f"run terminal state changed while finalizing: {run_id}"
-                )
+                raise RecoveryError(f"run terminal state changed while finalizing: {run_id}")
             sequence_row = connection.execute(
-                "SELECT COALESCE(MAX(sequence), 0) AS value "
-                "FROM events WHERE run_id = ?",
+                "SELECT COALESCE(MAX(sequence), 0) AS value FROM events WHERE run_id = ?",
                 (run_id,),
             ).fetchone()
             sequence = int(sequence_row["value"])
@@ -530,12 +599,24 @@ class StateStore:
                         run_id,
                         failure_event.sequence,
                         failure_event.event_id,
-                        canonical_json(
-                            failure_event.model_dump(mode="json")
-                        ),
+                        canonical_json(failure_event.model_dump(mode="json")),
                     ),
                 )
             sequence += 1
+            terminal_payload = dict(payload or {})
+            if evaluator_v2_receipt is not None:
+                expected_receipt_payload = {
+                    "evaluator_v2_receipt_hash": evaluator_v2_receipt.content_hash,
+                    "evaluator_v2_source_qualification_hash": (
+                        evaluator_v2_receipt.source_qualification_hash
+                    ),
+                }
+                if any(
+                    key in terminal_payload and terminal_payload[key] != value
+                    for key, value in expected_receipt_payload.items()
+                ):
+                    raise ContractError("terminal event conflicts with the evaluator-v2 receipt")
+                terminal_payload.update(expected_receipt_payload)
             event = RunEvent(
                 event_id=f"evt_{uuid.uuid4().hex}",
                 run_id=run_id,
@@ -543,11 +624,10 @@ class StateStore:
                 type=event_type,
                 timestamp=utc_now(),
                 actor=actor,
-                payload=payload or {},
+                payload=terminal_payload,
             )
             connection.execute(
-                "INSERT INTO events(run_id, sequence, event_id, event_json) "
-                "VALUES (?, ?, ?, ?)",
+                "INSERT INTO events(run_id, sequence, event_id, event_json) VALUES (?, ?, ?, ?)",
                 (
                     run_id,
                     event.sequence,
@@ -583,21 +663,20 @@ class StateStore:
     ) -> dict:
         if not allowed_statuses:
             raise ValueError("worker claim requires at least one allowed status")
-        if manifest is not None and manifest.run_id != run_id:
-            raise ValueError("worker claim manifest belongs to a different run")
+        if manifest is not None:
+            manifest = RunManifest.model_validate(manifest.model_dump(mode="json"))
+            if manifest.run_id != run_id:
+                raise ValueError("worker claim manifest belongs to a different run")
         with self._lock, self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
             row = connection.execute(
-                "SELECT manifest_json, status, result_json "
-                "FROM runs WHERE run_id = ?",
+                "SELECT manifest_json, status, result_json FROM runs WHERE run_id = ?",
                 (run_id,),
             ).fetchone()
             if row is None:
                 if manifest is None:
                     raise RecoveryError(f"unknown run: {run_id}")
-                manifest_json = canonical_json(
-                    manifest.model_dump(mode="json")
-                )
+                manifest_json = canonical_json(manifest.model_dump(mode="json"))
                 connection.execute(
                     "INSERT INTO runs("
                     "run_id, manifest_json, status, created_at"
@@ -616,17 +695,12 @@ class StateStore:
                 }
             elif manifest is not None:
                 try:
-                    stored_manifest = RunManifest.model_validate_json(
-                        row["manifest_json"]
-                    )
+                    stored_manifest = RunManifest.model_validate_json(row["manifest_json"])
                 except ValueError as exc:
-                    raise RecoveryError(
-                        f"run has an invalid immutable manifest: {run_id}"
-                    ) from exc
+                    raise RecoveryError(f"run has an invalid immutable manifest: {run_id}") from exc
                 if stored_manifest != manifest:
                     raise ContractError(
-                        "supplied run manifest does not match the stored "
-                        "immutable manifest"
+                        "supplied run manifest does not match the stored immutable manifest"
                     )
             try:
                 prior_status = RunStatus(row["status"])
@@ -653,9 +727,7 @@ class StateStore:
                     details={
                         "run_id": run_id,
                         "status": prior_status.value,
-                        "allowed_statuses": sorted(
-                            status.value for status in allowed_statuses
-                        ),
+                        "allowed_statuses": sorted(status.value for status in allowed_statuses),
                     },
                 )
             updated = connection.execute(
@@ -846,9 +918,7 @@ class StateStore:
         if result.action_id != action_id:
             raise ValueError("tool result belongs to a different action")
         expected_outcome = (
-            EventType.TOOL_SUCCEEDED
-            if result.status == "succeeded"
-            else EventType.TOOL_FAILED
+            EventType.TOOL_SUCCEEDED if result.status == "succeeded" else EventType.TOOL_FAILED
         )
         if outcome_type != expected_outcome:
             raise ValueError("tool result status and outcome event do not match")
@@ -858,12 +928,9 @@ class StateStore:
         if patch_payload is not None:
             if outcome_type != EventType.TOOL_SUCCEEDED:
                 raise ValueError("PatchApplied requires a successful tool outcome")
-            if (
-                patch_payload.get("patch_hash")
-                != result.output.get("patch_hash")
-                or patch_payload.get("worktree_diff_hash")
-                != result.output.get("worktree_diff_hash")
-            ):
+            if patch_payload.get("patch_hash") != result.output.get(
+                "patch_hash"
+            ) or patch_payload.get("worktree_diff_hash") != result.output.get("worktree_diff_hash"):
                 raise ValueError("PatchApplied payload conflicts with tool result")
             expected.append((EventType.PATCH_APPLIED, patch_payload))
         result_json = canonical_json(result.model_dump(mode="json"))
@@ -881,22 +948,15 @@ class StateStore:
                     (run_id, action_id, input_hash, result_json),
                 )
             elif existing_result["input_hash"] != input_hash:
-                raise ActionConflict(
-                    f"action {action_id} was reused with different input"
-                )
+                raise ActionConflict(f"action {action_id} was reused with different input")
             elif existing_result["result_json"] != result_json:
-                raise ActionConflict(
-                    f"action {action_id} was completed with a different result"
-                )
+                raise ActionConflict(f"action {action_id} was completed with a different result")
 
             rows = connection.execute(
                 "SELECT event_json FROM events WHERE run_id = ? ORDER BY sequence",
                 (run_id,),
             ).fetchall()
-            parsed_events = [
-                RunEvent.model_validate_json(row["event_json"])
-                for row in rows
-            ]
+            parsed_events = [RunEvent.model_validate_json(row["event_json"]) for row in rows]
             relevant = [
                 event
                 for event in parsed_events
@@ -910,22 +970,17 @@ class StateStore:
             ]
             expected_types = [item[0] for item in expected]
             if [event.type for event in relevant] != expected_types[: len(relevant)]:
-                raise RecoveryError(
-                    f"action {action_id} has an invalid durable outcome prefix"
-                )
+                raise RecoveryError(f"action {action_id} has an invalid durable outcome prefix")
             for event, (_, payload) in zip(
                 relevant,
                 expected[: len(relevant)],
                 strict=True,
             ):
                 if event.payload != payload:
-                    raise RecoveryError(
-                        f"action {action_id} outcome conflicts with its result"
-                    )
+                    raise RecoveryError(f"action {action_id} outcome conflicts with its result")
 
             row = connection.execute(
-                "SELECT COALESCE(MAX(sequence), 0) AS value "
-                "FROM events WHERE run_id = ?",
+                "SELECT COALESCE(MAX(sequence), 0) AS value FROM events WHERE run_id = ?",
                 (run_id,),
             ).fetchone()
             sequence = int(row["value"])
@@ -977,15 +1032,9 @@ class StateStore:
             raise ValueError("invalid nonexecuted action event lifecycle")
         if result.action_id != action_id:
             raise ValueError("tool result belongs to a different action")
-        if (
-            event_types[-1] == EventType.TOOL_REPLAYED
-            and result.status != "succeeded"
-        ):
+        if event_types[-1] == EventType.TOOL_REPLAYED and result.status != "succeeded":
             raise ValueError("semantic replay requires a successful result")
-        if (
-            event_types[-1] == EventType.TOOL_ADMISSION_BLOCKED
-            and result.status != "rejected"
-        ):
+        if event_types[-1] == EventType.TOOL_ADMISSION_BLOCKED and result.status != "rejected":
             raise ValueError("tool admission block requires a rejected result")
 
         result_json = canonical_json(result.model_dump(mode="json"))
@@ -1009,13 +1058,9 @@ class StateStore:
                     (run_id, action_id, input_hash, result_json),
                 )
             elif existing_result["input_hash"] != input_hash:
-                raise ActionConflict(
-                    f"action {action_id} was reused with different input"
-                )
+                raise ActionConflict(f"action {action_id} was reused with different input")
             elif existing_result["result_json"] != result_json:
-                raise ActionConflict(
-                    f"action {action_id} was completed with a different result"
-                )
+                raise ActionConflict(f"action {action_id} was completed with a different result")
 
             rows = connection.execute(
                 "SELECT event_json FROM events WHERE run_id = ? ORDER BY sequence",
@@ -1023,32 +1068,21 @@ class StateStore:
             ).fetchall()
             relevant = [
                 event
-                for event in (
-                    RunEvent.model_validate_json(row["event_json"])
-                    for row in rows
-                )
-                if event.correlation_id == action_id
-                and event.type in relevant_types
+                for event in (RunEvent.model_validate_json(row["event_json"]) for row in rows)
+                if event.correlation_id == action_id and event.type in relevant_types
             ]
-            if [event.type for event in relevant] != list(
-                event_types[: len(relevant)]
-            ):
-                raise RecoveryError(
-                    f"action {action_id} has an invalid nonexecuted event prefix"
-                )
+            if [event.type for event in relevant] != list(event_types[: len(relevant)]):
+                raise RecoveryError(f"action {action_id} has an invalid nonexecuted event prefix")
             for event, (_, actor, payload) in zip(
                 relevant,
                 event_specs[: len(relevant)],
                 strict=True,
             ):
                 if event.actor != actor or event.payload != payload:
-                    raise RecoveryError(
-                        f"action {action_id} nonexecuted evidence conflicts"
-                    )
+                    raise RecoveryError(f"action {action_id} nonexecuted evidence conflicts")
 
             row = connection.execute(
-                "SELECT COALESCE(MAX(sequence), 0) AS value "
-                "FROM events WHERE run_id = ?",
+                "SELECT COALESCE(MAX(sequence), 0) AS value FROM events WHERE run_id = ?",
                 (run_id,),
             ).fetchone()
             sequence = int(row["value"])
