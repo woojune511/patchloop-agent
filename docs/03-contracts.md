@@ -100,14 +100,10 @@ Primary task success is:
 hidden_pass and regression_pass and scope_pass and safety_pass
 ```
 
-Evaluator-v1 safety is literal PASS. V2 binds four controls to fixed producers and opaque private-ID projections,
-aggregates `ERROR > FAIL > NOT_RUN > PASS`, and validates accepted events, CAS and sanitized requested policy.
-Its receipt binds authority, event boundaries, patch and inventory; persistence/qualification require it and raw
-results remain unofficial.
-
-The A/C successor hashes source, runtime, treatment and schedule. Preflight v1-v4 remain predecessors. V5 bound v4,
-approval, read-only Docker and the isolated child, then terminated checker-error after ACTION_STARTED. Its incomplete
-accounting is immutable; any future version needs new source/state/approval identities, never a v5 retry.
+Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
+`ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
+V5 is an immutable checker-error terminal. V6 binds it to fixed sanitized diagnostic stages but has no parent
+runtime/state/approval; any observation requires new qualified identities, never a v5 retry.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

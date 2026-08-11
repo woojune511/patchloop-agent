@@ -39,14 +39,15 @@
 - Manual-start v4 source `5b592e4f4f86a62d90951e49494ed3f8cf2ae315`와 state
   `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`는 사용자 수동 시작 보고만
   결속한다. Daemon/image/container는 미검증이고 runtime/approval/external observation/mutation은 0이다.
-- Credential 배치는 user-reported only다. Retrieval/injection, `.env`/SDK, Docker successor observation,
-  execution candidate, cost와 A/C authority는 닫혀 있다.
+- Retrieval/injection, new `.env`/SDK/Docker observation, execution candidate, cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - No-start v5 one-use attempt is consumed `ERROR(checker_error)`. Docker READY and exact `.env` key membership were
   observed, but the isolated checker returned no SDK evidence. Accounting is incomplete and retry/resume is false.
-  Preserve v5; next is offline successor design with all external/candidate/cost authority closed.
+  Sanitized-diagnostic v6 contract/source `1d99a7c0acf20ec961240f33f585553fd881dc02` is qualified offline only.
+  It binds fixed stages/codes and zero credential/exception material, but has no parent runtime, state, approval or
+  observation. Preserve v5; next is offline parent-integration source with all external/candidate/cost authority closed.
 
 ## Required reading
 

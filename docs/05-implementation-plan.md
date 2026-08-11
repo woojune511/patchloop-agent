@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v5 sealed; v5 ended `ERROR(checker_error)` and is consumed.
+Status: v1-v5 sealed; v6 sanitized-diagnostic source qualified, live closed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -44,15 +44,15 @@ require a new version.
 V3 `ce0628880107db2319816272cfa49adc7ea99667` binds full-file-in-child/boolean-only-return, fixed-placeholder SDK
 reject-dispatch and D-137 read-only Docker. State remains self-attested non-proof; read/stat=0.
 
-V4 binds the manual-start report without proving readiness. V5 source, approval, attempt and terminal are immutable;
-its incomplete checker-error accounting cannot be repaired, resumed or promoted to READY.
+V4 binds the manual-start report without proving readiness. V5 is immutable and cannot be promoted. V6 binds the
+v5 terminal to fixed stages/codes and zero credential/exception material, but has no runtime/state/approval path.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3 Docker-blocked and v5 checker-error attempts are consumed; no retry authority.
+Status: v3/v5 attempts consumed; v6 source-qualified only, no observation authority.
 
-V5 recorded Docker READY and exact key membership, then `sdk_checker_error`. Its incomplete ERROR terminal cannot be
-rerun; next design a new offline successor with sanitized checker diagnostics.
+V5 cannot rerun. Next build and qualify a separate one-use parent integration for v6 without observing Docker,
+`.env` or SDK; only a later relevant state plus exact approval may open one new attempt.
 
 ## Work item 5 — execution candidate and cost gate
 

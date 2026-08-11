@@ -99,11 +99,9 @@ D-142 is source-qualified and unactivated, with planning disposition deferred. I
 cannot qualify changed evaluator bytes. Evaluator v2 therefore requires new source, suite and runtime identities;
 the A-null/C-exact-three treatment itself remains unchanged.
 
-Evaluator-v1 safety is literal PASS. V2 derives typed evidence from accepted events, verified CAS and exact requested
-policy; marker hits are redacted. Missing→NOT_RUN, checker error→ERROR, violation→FAIL, complete→PASS. Separate
-authority and receipt gate runner selection, persistence and qualification; raw results remain unofficial.
-V3 is Docker-blocked and v4 self-attested. Consumed v5 observed Docker READY and exact key membership but ended
-`ERROR(checker_error)` before SDK evidence; incomplete accounting prevents readiness or evaluator claims.
+Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
+persistence/qualification; raw results remain unofficial. V5 is a consumed checker error. V6 only source-qualifies
+sanitized diagnostic stages; it has no runtime/state/approval or readiness claim.
 
 ## 7. Run-completion gate
 

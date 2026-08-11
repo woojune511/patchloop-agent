@@ -65,9 +65,12 @@ uv run --offline --frozen python scripts/build_manual_docker_start_state_success
 uv run --offline --frozen pytest -q tests/test_no_start_executable_preflight.py
 uv run --offline --frozen python scripts/build_no_start_executable_preflight.py --validate-contract
 uv run --offline --frozen python scripts/build_no_start_executable_preflight.py --validate-source
+uv run --offline --frozen pytest -q tests/test_sanitized_sdk_diagnostic_successor.py
+uv run --offline --frozen python scripts/build_sanitized_sdk_diagnostic_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_diagnostic_successor.py --validate-source
 ```
 
-These validations do not read/stat `.env` or grant a new attempt.
+These validations do not read/stat `.env` or grant a new attempt. V6 has no runtime/state/approval mode.
 
 ## Audit the sealed D-142 source
 
@@ -102,7 +105,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2 and consumed v3-v5 evidence read-only.
-2. Stop. V5 cannot retry; prepare a new offline successor before any new state or approval gate.
+1. Validate evaluator-v2, consumed v3-v5 and source-qualified v6 read-only.
+2. Stop. Next qualify an offline v6 parent integration before any new state or approval gate.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

@@ -78,11 +78,9 @@ The agent can see only public task files and registered check output. The evalua
 material only after submission and runs in a separate workspace/container. Target primary success is the
 conjunction of hidden acceptance, regression, scope and safety.
 
-Evaluator-v1 safety is unconditional. V2 binds typed producers to accepted events/CAS; separate authority and its
-append-only receipt gate runner selection, persistence, qualification and completion. Raw results stay unofficial.
-Successor source is qualified. Preflight v3 is Docker-blocked and v4 self-attested. V5's approved one-use path
-reached Docker READY and key membership, then terminal `ERROR(checker_error)` with incomplete accounting. It is
-consumed, not an evaluator result or SDK-readiness evidence; v1 evidence is unchanged.
+Evaluator-v1 safety is unconditional. V2's typed, receipt-gated local path keeps raw results unofficial. V5 is a
+consumed checker error, not SDK-readiness evidence. V6 only source-qualifies sanitized diagnostics; parent runtime,
+state and approval do not exist, and v1 evidence is unchanged.
 
 Visible checks and agent self-review are feedback; neither can replace hidden evaluation.
 
