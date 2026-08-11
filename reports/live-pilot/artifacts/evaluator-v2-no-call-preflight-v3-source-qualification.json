@@ -1,0 +1,135 @@
+{
+  "schema_version": "executable-no-call-preflight-source-qualification-v3",
+  "qualification_id": "ac-evaluator-v2-executable-no-call-preflight-source-20260812-r1",
+  "status": "OFFLINE_EXECUTABLE_PREFLIGHT_SOURCE_QUALIFIED_EXACT_APPROVAL_REQUIRED",
+  "recorded_at": "2026-08-11T15:30:53.410958Z",
+  "source_commit": {
+    "commit": "ce0628880107db2319816272cfa49adc7ea99667",
+    "tree": "fe08f400b9573f11470a021407c9298020a17ca2",
+    "parents": [
+      "00a78b88a5ecee70df88cc288d32fbfc801999d0"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-no-call-preflight-v3.contract.json",
+      "patchloop/evals/executable_no_call_preflight.py",
+      "scripts/build_executable_no_call_preflight.py",
+      "scripts/run_dotenv_sdk_no_call_child.py",
+      "tests/test_executable_no_call_preflight.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-no-call-preflight-v2.contract.json",
+      "blob_oid": "3454f38391e9266bde81bc1397b7e8f71d24c376",
+      "file_bytes": 5108,
+      "file_sha256": "sha256:5e4ac4c00f06c0f74e5685e88a323b3770cdfc30da4e1da8f0f579787ca730eb"
+    },
+    {
+      "path": "experiments/evaluator-v2-no-call-preflight-v3.contract.json",
+      "blob_oid": "8e3a6b856c555bf77dbb5748c110bc81bfa900e2",
+      "file_bytes": 4041,
+      "file_sha256": "sha256:66c98d8565a182f5831c79fa3fa7b7c342a7877a9a9d83aef0e13fed387930ee"
+    },
+    {
+      "path": "patchloop/agent/model.py",
+      "blob_oid": "3aef749d3848661323a9b5054b3e0142ccdabd64",
+      "file_bytes": 44052,
+      "file_sha256": "sha256:b8ac21ab33421ed33942036854ecf7e1badce5d35a6014da27488903352d8568"
+    },
+    {
+      "path": "patchloop/evals/d137_no_call_preflight.py",
+      "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+      "file_bytes": 95362,
+      "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3"
+    },
+    {
+      "path": "patchloop/evals/executable_no_call_preflight.py",
+      "blob_oid": "468eef2ca4e4ac3966035e2c32c9014cccb858d5",
+      "file_bytes": 69833,
+      "file_sha256": "sha256:f3c6de683600b99870a301ecaf76fcfc0fb58c9f38f305ad07eb0dec0060b919"
+    },
+    {
+      "path": "patchloop/evals/user_attested_no_call_preflight.py",
+      "blob_oid": "c55f89b7e52c7dffe374a8f04e09b305ae4c68c7",
+      "file_bytes": 50274,
+      "file_sha256": "sha256:b05513c149ff5acb2c2e90ad7ffa9a3651f9f0edfb1559ae288e8cc9aa851a2d"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-no-call-preflight-v2-source-qualification.json",
+      "blob_oid": "5196784937fa2f27b445903d64dd765a15998ca2",
+      "file_bytes": 3403,
+      "file_sha256": "sha256:e770389bcab5ae3f7abd1b2e5c07f6cda536c21503f787bbb766ba0092bc9206"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-no-call-preflight-v2-state-change-evidence.json",
+      "blob_oid": "37bb7d2c0f3db85079799c61a54bb7a5748e69d0",
+      "file_bytes": 1476,
+      "file_sha256": "sha256:133522ad0d0670264ebc30563cbb58f6b7f80126eec4bb4c5840151f2bb2eba3"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-no-call-preflight-v2-user-attestation.json",
+      "blob_oid": "7a8981f5e8cadd4f26c0894ec2bd93efd41ac3d7",
+      "file_bytes": 1138,
+      "file_sha256": "sha256:00734bbd51f261743d326096f9083620cfc15a303e5f0e8d296a6035715e3fe4"
+    },
+    {
+      "path": "scripts/build_executable_no_call_preflight.py",
+      "blob_oid": "badfa19ff457bc9ed954f8971250fe2b5245b6fd",
+      "file_bytes": 3717,
+      "file_sha256": "sha256:0918fea6d99157148f8bcda9023109485fa9b829400dbabfe27146d20fcbe136"
+    },
+    {
+      "path": "scripts/run_dotenv_sdk_no_call_child.py",
+      "blob_oid": "573a3e7d6eb3aa0a35106722f193f83deb2644d5",
+      "file_bytes": 6976,
+      "file_sha256": "sha256:27729c67eca9513bcdd8432bc8e9cb9bfc6399fde3c2f3d36dc512a61b724ad5"
+    },
+    {
+      "path": "tests/test_executable_no_call_preflight.py",
+      "blob_oid": "b53bce4ccc1edd62a5ff0201d085530ec578b161",
+      "file_bytes": 14895,
+      "file_sha256": "sha256:e6ae8dd60079f01bcaa2eb2cdbce8decd718e0503b0de704e062ef021569d7a9"
+    },
+    {
+      "path": "uv.lock",
+      "blob_oid": "6a706fc06a854ad0ec6e696eec28198666c5c09d",
+      "file_bytes": 240131,
+      "file_sha256": "sha256:7cc04e0ad0fa5e94619612b322ce1e1f9113e5da405f62b8c9bc256ba0952d8c"
+    }
+  ],
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v3",
+  "contract_id": "ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d",
+  "contract_content_hash": "sha256:6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-no-call-preflight-v3.contract.json",
+    "blob_oid": "8e3a6b856c555bf77dbb5748c110bc81bfa900e2",
+    "file_bytes": 4041,
+    "file_sha256": "sha256:66c98d8565a182f5831c79fa3fa7b7c342a7877a9a9d83aef0e13fed387930ee"
+  },
+  "runtime_file": {
+    "path": "patchloop/evals/executable_no_call_preflight.py",
+    "blob_oid": "468eef2ca4e4ac3966035e2c32c9014cccb858d5",
+    "file_bytes": 69833,
+    "file_sha256": "sha256:f3c6de683600b99870a301ecaf76fcfc0fb58c9f38f305ad07eb0dec0060b919"
+  },
+  "child_file": {
+    "path": "scripts/run_dotenv_sdk_no_call_child.py",
+    "blob_oid": "573a3e7d6eb3aa0a35106722f193f83deb2644d5",
+    "file_bytes": 6976,
+    "file_sha256": "sha256:27729c67eca9513bcdd8432bc8e9cb9bfc6399fde3c2f3d36dc512a61b724ad5"
+  },
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "executable_source_qualified": true,
+    "state_change_evidence_created": false,
+    "approval_created_or_inferred": false,
+    "attempt_or_transition_created": false,
+    "credential_dotenv_environment_observation_count": 0,
+    "credential_value_observation_or_mutation_count": 0,
+    "docker_or_sdk_observation_count": 0,
+    "network_provider_evaluator_agent_call_count": 0,
+    "execution_hash_candidate_or_cost_created": false
+  },
+  "next_gate": "fresh-state-binding-then-exact-user-approval",
+  "content_hash": "sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079"
+}
