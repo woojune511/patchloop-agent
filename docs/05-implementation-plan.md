@@ -11,53 +11,46 @@ and one-use artifacts remain append-only; a new contract uses a new version and 
 
 ## Current objective
 
-Use the sealed v2/preflight sources to admit only a separately evidenced and approved no-call attempt. D-142 stays
-deferred; this roadmap creates no external, candidate, cost or paid authority.
+Advance only through sealed evidence gates. D-142 stays deferred; no gate implies candidate, cost or paid authority.
 
 ## Preserved foundation
 
-- D-098 is the evaluator-v1 development no-memory baseline, not held-out evidence. D-110 froze three entries;
-  D-112/D-115 left selective retrieval unready.
-- `fixed-d110-bundle-v1` renders A null and C the exact frozen bundle; Moto/Babel support is offline only.
-- D-129 through D-141 remain immutable. D-142 is a historical input, not corrected-evaluator qualification.
+D-098 is a development baseline; D-110 froze three entries and D-112/D-115 left selection unready.
+`fixed-d110-bundle-v1` keeps A null/C exact-three. D-129-D-141 are immutable and D-142 is not v2 qualification.
 
 ## Work item 1 — evaluator correctness v2
 
 Status: implemented and locally verified.
 
-Implemented: task-bound private projections; typed runtime/requested-policy/CAS evidence; fail-closed
-four-verdict aggregation; authority-gated runner, receipt, persistence, qualification and completion; v1 byte
-goldens. Tests cover success, safety failure, checker/not-run, known-bad fixtures, mismatch/tamper and privacy.
-This is offline evaluator evidence, not an official result, Docker-enforcement or production-security proof.
+Implemented and tested: task-bound projections, typed evidence, fail-closed four-verdict aggregation, authority-gated
+runner/receipt/persistence/qualification/completion and v1 byte goldens. This is offline evidence, not an official,
+Docker-enforcement or production-security result.
 
 ## Work item 2 — successor A/C offline qualification
 
 Status: committed and locally validated; no execution authority is open.
 
-The artifact binds exact source/tests, task/image identities, runtime and a successor-suite hash over unchanged
-R2 treatment/schedule: A null, C all three D-105 texts in D-110 order on every request. Source/suite/runtime drift
-fails before runner side effects; the factory requires an explicit run-secret marker. D-142/R2 are not relabeled,
-and this is not a runtime result.
+The artifact binds source/tests, task/image, runtime and successor-suite hashes over unchanged R2 treatment: A null,
+C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and this is not a runtime result.
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1/v2 preserved; executable v3 source/state qualified without observation.
+Status: v1/v2 preserved; executable v3 is qualified and terminal.
 
-Contract v1 accepts only an independently trusted, value-free credential-provisioning receipt and trust anchor.
-Attempt identity additionally binds exact approval and durable-ledger snapshot. Intent reserves evidence;
-ACTION_STARTED precedes observation; READY/BLOCKED/ERROR or post-marker failure is terminal. Reuse, retry, resume,
-overwrite and backfill fail closed. A real source/semantic change requires a new version.
+V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
+observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
+require a new version.
 
 V3 `ce0628880107db2319816272cfa49adc7ea99667` binds full-file-in-child/boolean-only-return, fixed-placeholder SDK
 reject-dispatch and D-137 read-only Docker. State remains self-attested non-proof; read/stat=0.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: exact approval required; no attempt or observation exists.
+Status: consumed `BLOCKED(docker_not_ready)`; no retry or resume.
 
-Approval quotes v3 contract+qualification+
-`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317` and reconfirms placement. It grants one
-bounded no-call attempt; READY/BLOCKED/ERROR means no retry.
+Exact v3 approval produced one attempt, ACTION_STARTED and terminal. Eight read-only Docker calls observed the daemon
+unready; start/pull/mutation, `.env` read, SDK child and network/provider calls stayed zero. A documented relevant
+Docker state change, new version/state and separate exact approval are prerequisites to any successor attempt.
 
 ## Work item 5 — execution candidate and cost gate
 
@@ -75,8 +68,7 @@ Run Moto A, Moto C, Babel C and Babel A once. Each row uses a fresh workspace; t
 replacement. Every exact row must be terminal, trace-qualified, cost-settled and officially evaluated under
 evaluator v2, with four-verdict/SCRR consistency. Otherwise preserve the panel as inconclusive.
 
-Allowed output is workflow/delivery validity plus descriptive direction and cost for two development-validation
-pairs. It is not a causal, held-out, cross-repository, per-rule or negative-transfer result.
+Output is descriptive workflow/direction/cost only, not a causal, held-out or transfer claim.
 
 ## Work item 7 — preregistered held-out A/C
 

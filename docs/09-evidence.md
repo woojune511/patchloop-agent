@@ -98,6 +98,11 @@ Executable v3 source `ce0628880107db2319816272cfa49adc7ea99667`, tree
 `fe08f400b9573f11470a021407c9298020a17ca2`, binds contract
 `ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d`; qualification hash is
 `sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079`. Fresh state is
-`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`. Both are unsigned self-attestation,
-not presence proof; `.env` read/stat, approval, attempt, external call and cost remain zero.
+`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`; approval is
+`ncpapproval_37f2d23e133e0ea42a43c08134de51b2a61e2d5de2e4e23a1f9a324e92f6828f`. Attempt
+`ncpattempt_26b65477c3ef1d4ed08adbfa06aba2d0adb9b06889169d09c19cab76396be7d9`, ACTION_STARTED
+`ncpstarted_35873058f1becb38bb50feb7449d6065f2e705f99a00c5dc63a13b03bce489cb` and terminal
+`ncpterminal_1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320` record consumed
+`BLOCKED(docker_not_ready)`: Docker read-only calls 8; start/pull/load/mutation, `.env` read, SDK child,
+network/provider/evaluator/agent and cost 0. Activity accounting is complete; retry/resume is false.
 D-142/R2 remain unchanged.

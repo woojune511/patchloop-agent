@@ -33,10 +33,11 @@
   result는 계속 `official=false`이고 새 A/C 전에 새 source/suite/source-qualification identity가 필요하다.
 - Evaluator-v2 boundary는 `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`다. V1/v2는 immutable predecessor다.
   Qualified executable v3 source `ce0628880107db2319816272cfa49adc7ea99667`와 state
-  `ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`가 qualified됐다.
-  State는 self-attested non-proof이며 `.env` read/stat, exact approval와 attempt는 0이다.
-- Credential 배치는 user-reported only다. Provider/evaluator/agent, retrieval/injection, Docker/SDK/`.env`
-  observation, execution hash/candidate, cost와 A/C authority는 닫혀 있다.
+  `ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`는 exact approval 뒤 1회
+  `BLOCKED(docker_not_ready)` terminal로 consumed됐다. Read-only Docker CLI는 8회였고 daemon start/pull/load/
+  mutation, `.env` read, SDK child, network/provider/evaluator/agent는 0이었다. Retry/resume하지 않는다.
+- Credential 배치는 user-reported only다. Retrieval/injection, `.env`/SDK observation, execution candidate,
+  cost와 A/C authority는 닫혀 있다.
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 

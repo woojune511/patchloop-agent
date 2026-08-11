@@ -1,0 +1,19 @@
+{
+  "schema_version": "preflight-attempt-intent-v3",
+  "attempt_id": "ncpattempt_26b65477c3ef1d4ed08adbfa06aba2d0adb9b06889169d09c19cab76396be7d9",
+  "contract_version": "ac-evaluator-v2-no-call-preflight-v3",
+  "contract_id": "ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d",
+  "contract_content_hash": "sha256:6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d",
+  "source_qualification_content_hash": "sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079",
+  "state_change_evidence_id": "ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317",
+  "state_change_evidence_content_hash": "sha256:105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317",
+  "approval_id": "ncpapproval_37f2d23e133e0ea42a43c08134de51b2a61e2d5de2e4e23a1f9a324e92f6828f",
+  "approval_content_hash": "sha256:37f2d23e133e0ea42a43c08134de51b2a61e2d5de2e4e23a1f9a324e92f6828f",
+  "ledger_snapshot_hash": "sha256:23ac3d3c212e0497d44e87c2bd13a4f869e85329302e2b5ca477edd17342c8a6",
+  "created_at": "2026-08-11T15:49:42.951265Z",
+  "attempt_number": 1,
+  "state": "intent_recorded",
+  "one_use": true,
+  "retry_or_resume_allowed": false,
+  "content_hash": "sha256:26b65477c3ef1d4ed08adbfa06aba2d0adb9b06889169d09c19cab76396be7d9"
+}

@@ -102,7 +102,7 @@ the A-null/C-exact-three treatment itself remains unchanged.
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence from accepted events, verified CAS and exact requested
 policy; marker hits are redacted. Missing→NOT_RUN, checker error→ERROR, violation→FAIL, complete→PASS. Separate
 authority and receipt gate runner selection, persistence and qualification; raw results remain unofficial.
-Executable preflight source/state is self-attested and qualified, with no approval, attempt or execution authority.
+Executable preflight-v3 is consumed Docker-not-ready BLOCKED; it produced no `.env`/SDK or evaluator result.
 
 ## 7. Run-completion gate
 

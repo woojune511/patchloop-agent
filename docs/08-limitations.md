@@ -5,19 +5,15 @@ Historical milestone-by-milestone limitations are archived at
 
 ## Agent capability
 
-- The frozen generic comparison agent has a constrained v2 tool surface: no arbitrary shell, new files,
-  renames or binary patches.
-- PLAN is not a separately validated plan artifact, and final semantic completeness remains partly model
-  self-judgment before hidden evaluation.
-- Live resume and external billing idempotency are not established for the comparison baseline.
+- The frozen agent has no arbitrary shell, new files, renames or binary patches. PLAN is not independently validated,
+  and final semantic completeness remains partly model judgment before hidden evaluation.
+- Live resume/external billing idempotency are not established.
 - AnyIO non-convergence does not establish a safe general fail-fast policy.
 
 ## Existing evidence is not a memory-benefit result
 
-- D-098 is a fixed development control arm: 12 scheduled rows, 11 official evaluations and 2 scope-compliant
-  successes. It is neither held-out performance nor engineering-completion percentage.
-- Three structured entries are frozen, but no agent run has received them and no live structured-memory result
-  exists. Mock 3,528-byte delivery does not measure repeated live overhead or behavior.
+- D-098 is a development control: 12 rows, 11 evaluations, 2 scope-compliant successes; it is not held-out evidence.
+- Three entries are frozen, but no agent run received them. Mock 3,528-byte delivery is not live behavior evidence.
 - D-110 freezes storage, not selective-retrieval authority. Existing embedding/ranking behavior is outside the
   exact fixed-bundle C treatment and lacks blind independent calibration.
 - D-124/D-125 establish source and mocked local finalization only; no reservation or result ran.
@@ -36,12 +32,11 @@ Historical milestone-by-milestone limitations are archived at
 
 - `EvaluationEngine` assigns safety a literal PASS; it does not bind an executed independent safety result.
 - Free-form private `prohibited_behaviors` are audit context, not typed command/network/secret/sandbox evidence.
-- V2 now has authority-gated standard-runner, append-only receipt, completed-persistence and qualification paths.
-  Committed successor/preflight sources bind exact hashes, but no official/live v2 result exists; raw v2 remains
+- V2 has authority-gated runner, receipt, persistence and qualification, but no official/live result; raw v2 remains
   `official=false`.
-- Preflight v1/v2 remain predecessors. V3 source/state is qualified, but state is self-attested non-proof. No `.env`
-  read, approval or attempt occurred. The child reads the full file in memory; only membership returns and no
-  value/hash/prefix/length persists.
+- Preflight v1/v2 remain predecessors. V3's self-attested state led to one consumed Docker-not-ready BLOCKED attempt.
+  Eight read-only Docker calls ran; `.env`/SDK/network did not. Therefore credential presence and SDK readiness remain
+  unobserved, and the terminal cannot be retried after a later environment change.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
@@ -51,9 +46,8 @@ Historical milestone-by-milestone limitations are archived at
 
 ## D-132 through D-142 external boundary
 
-- D-132 has no canonical response and D-136 proves only one consumed public GET. D-137 through D-141 preserve
-  bounded consumed Docker/SDK no-call facts. Their exact tuples and zero-activity limits remain in
-  `docs/09-evidence.md`; none reopens after an environment change.
+- D-132 has no canonical response; D-136 proves one public GET; D-137-D-141 preserve consumed Docker/SDK no-call
+  facts. `docs/09-evidence.md` owns exact tuples; environment change reopens none.
 - D-142 remains source-qualified, unactivated and not consumed. Its 170/170 injected/mocked tests are local
   contract evidence; preparation made no external observation and created no runtime artifact.
 - D-142 is now deferred. Its original one-use contract remains auditable but cannot qualify evaluator-v2 bytes

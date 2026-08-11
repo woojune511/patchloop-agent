@@ -27,9 +27,9 @@ work.
   opaque projections, not direct private requirement/check IDs. Four controls map to runtime trace,
   requested-Docker-policy trace or artifact scan; integrity is a prerequisite. Free-form `prohibited_behaviors`
   is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
-- V1/v2 stay immutable. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` confines `.env` bytes to a child,
-  returns membership only and uses nonsecret placeholder/reject transport. Fresh state is self-attested non-proof
-  with zero observations. Approval binds v3 contract+qualification+state; candidate/paid execution remain separate.
+- V1/v2 stay immutable. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` consumed one exact-approved
+  `BLOCKED(docker_not_ready)` attempt: eight read-only Docker calls, zero mutation/`.env`/SDK/network/provider calls.
+  It cannot retry; a successor needs documented Docker state change, new version/state and separate exact approval.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

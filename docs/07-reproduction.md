@@ -56,9 +56,11 @@ uv run --offline --frozen python scripts/build_user_attested_no_call_preflight_c
 uv run --offline --frozen pytest -q tests/test_executable_no_call_preflight.py
 uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-source
 uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-state
+uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-exact-approval
+uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-terminal
 ```
 
-These commands do not read/stat `.env`; state is not presence proof and none grants attempt authority.
+These validations do not read/stat `.env` or grant a new attempt.
 
 ## Audit the sealed D-142 source
 
@@ -93,7 +95,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, successor, preflight sources and self-attested state.
-2. Stop. Exact approval, one no-call attempt, pricing/candidate and paid execution are separate gates.
+1. Validate evaluator-v2, successor source and the consumed preflight-v3 chain.
+2. Stop. V3 cannot retry; a Docker state change plus new version/state/approval must precede any successor.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

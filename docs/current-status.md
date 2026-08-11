@@ -32,8 +32,8 @@ consume the same binding while the raw result remains `official=false`. Local mo
 a qualified source, Docker-enforcement result or official run.
 
 The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. Preflight v1/v2 remain
-predecessors. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` confines `.env` bytes to a child, returns
-exact-key membership only and uses fixed-placeholder reject-dispatch SDK validation.
+predecessors. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` is now consumed
+`BLOCKED(docker_not_ready)` after one exact-approved Docker-only observation.
 
 ## Current roadmap
 
@@ -41,10 +41,9 @@ exact-key membership only and uses fixed-placeholder reject-dispatch SDK validat
    qualification and completion enforcement are implemented and regression-tested locally.
 2. **Successor A/C qualification.** New source, runtime and successor-suite identities are materialized and
    locally validated; D-142 and R2 remain immutable predecessors.
-3. **Offline preflight contracts.** V1/v2 are preserved; executable v3 source and a fresh self-attested state are
-   qualified without reading `.env` or observing credentials.
-4. **Separately approved preflight attempt.** A later message must cite the exact v3 contract, source qualification
-   and state. Approval authorizes one Docker/isolated-child/SDK no-call attempt; terminal means no retry.
+3. **Offline preflight contracts.** V1/v2 are preserved; executable v3 source/state/approval are sealed.
+4. **Separately approved preflight attempt.** V3 ended Docker-not-ready BLOCKED after eight read-only calls. Daemon
+   start/pull/mutation, `.env` read, SDK child and network/provider calls were zero; retry/resume is forbidden.
 5. **Candidate and cost gate.** After READY, refresh pricing, bind reservation/cap, create the execution hash and
    candidate, then obtain separate exact paid approval. None is implied by preflight.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A exactly once after the source is
@@ -55,8 +54,8 @@ exact-key membership only and uses fixed-placeholder reject-dispatch SDK validat
    leakage, redaction and independent public-development calibration contracts are frozen. If they are designed
    after A/C unblinding, use a separate fresh held-out panel.
 
-No official/live evaluator result, approval, attempt or external observation exists. V2/v3 self-attested states are
-unconsumed and are not independent presence evidence.
+No official/live evaluator result exists. The consumed v3 external preflight observed Docker only and provides no
+credential-presence or SDK-readiness evidence.
 
 ## Consumed boundaries
 
@@ -67,15 +66,13 @@ authorized and is not a fixed-bundle prerequisite.
 
 ## Closed authority
 
-Credential placement is user-reported only. Provider/evaluator/agent calls, memory/retrieval, Docker/SDK/`.env`
-observation, execution hash/candidate, cost reservation and A/C execution remain unauthorized and absent.
+Credential placement remains user-reported only. The exact Docker observation is consumed; provider/evaluator/agent,
+memory/retrieval, SDK/`.env`, execution candidate, cost and A/C execution remain unauthorized and absent.
 
 ## Next gate
 
-The next gate is **exact approval**, not observation yet. It must cite contract
-`ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d`, qualification
-`sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079` and state
-`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317` and reconfirm placement. It permits one
-bounded no-call attempt only; no value, network/provider call, candidate or cost authority.
+The next gate is a **documented relevant Docker state change**, not retry or candidate creation. V3 is terminal and
+cannot be reused. Starting Docker or mutating its image/container state is not authorized here. After a real external
+change, any attempt needs a newly versioned source/contract, fresh state ID and separate exact approval.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

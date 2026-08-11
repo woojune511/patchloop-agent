@@ -80,8 +80,8 @@ conjunction of hidden acceptance, regression, scope and safety.
 
 Evaluator-v1 safety is unconditional. V2 binds typed producers to accepted events/CAS; separate authority and its
 append-only receipt gate runner selection, persistence, qualification and completion. Raw results stay unofficial.
-Successor source and preflight-v3 state are qualified, but no approval, attempt or live result exists; v1 evidence
-is unchanged.
+Successor source is qualified. Preflight-v3 is consumed `BLOCKED(docker_not_ready)` after Docker-only observation;
+it is not an evaluator result and v1 evidence is unchanged.
 
 Visible checks and agent self-review are feedback; neither can replace hidden evaluation.
 
