@@ -1,0 +1,68 @@
+{
+  "schema_version": "manual-docker-start-state-source-qualification-v4",
+  "qualification_id": "ac-evaluator-v2-manual-docker-start-state-source-20260812-r1",
+  "status": "OFFLINE_MANUAL_DOCKER_START_STATE_SOURCE_QUALIFIED_LIVE_CLOSED",
+  "recorded_at": "2026-08-11T16:10:38.562567Z",
+  "source_commit": {
+    "commit": "5b592e4f4f86a62d90951e49494ed3f8cf2ae315",
+    "tree": "8ecdfe88999e21da3810cc73e87246c93e27c940",
+    "parents": [
+      "917d6dcc531aa8e6c3db40fd5cf7ca03038c8a50"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-manual-docker-start-state-v4.contract.json",
+      "patchloop/evals/manual_docker_start_state_successor.py",
+      "scripts/build_manual_docker_start_state_successor.py",
+      "tests/test_manual_docker_start_state_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-manual-docker-start-state-v4.contract.json",
+      "blob_oid": "04ea05ccc5217b91731bee37aea31cc7ed0b8461",
+      "file_bytes": 3638,
+      "file_sha256": "sha256:9f116a707c625d931d3b93b255cc05aae92346d278063d037c21584e9315f907"
+    },
+    {
+      "path": "patchloop/evals/manual_docker_start_state_successor.py",
+      "blob_oid": "0e33e7d93e148f5012218265b89ccb498fecbb4a",
+      "file_bytes": 35792,
+      "file_sha256": "sha256:92c76ae66c77b390916ace2b9e6fb6e14fa8b293a9e2d358d6d05d48958d4a92"
+    },
+    {
+      "path": "scripts/build_manual_docker_start_state_successor.py",
+      "blob_oid": "822851bb5aa81520380cc5204052bdedc9892795",
+      "file_bytes": 2045,
+      "file_sha256": "sha256:7c695185bef8a82ceff7c43e465f163b477f8d7179afb550825fc8efe13a9200"
+    },
+    {
+      "path": "tests/test_manual_docker_start_state_successor.py",
+      "blob_oid": "39a8e0ce5479e6c0108b2fae95762f5075ad7d3f",
+      "file_bytes": 8328,
+      "file_sha256": "sha256:7f21c5cac6f1c15fadee37270a8913a771fee2295542f41a44664ba2d2519dd8"
+    }
+  ],
+  "contract_version": "ac-evaluator-v2-manual-docker-start-state-v4",
+  "contract_id": "ncpcontract_9a020537dc4a7d011e9bb139d77b71b18c16cb9c7b89ab56dd24813b8fdefeb6",
+  "contract_content_hash": "sha256:9a020537dc4a7d011e9bb139d77b71b18c16cb9c7b89ab56dd24813b8fdefeb6",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-manual-docker-start-state-v4.contract.json",
+    "blob_oid": "04ea05ccc5217b91731bee37aea31cc7ed0b8461",
+    "file_bytes": 3638,
+    "file_sha256": "sha256:9f116a707c625d931d3b93b255cc05aae92346d278063d037c21584e9315f907"
+  },
+  "predecessor_terminal_id": "ncpterminal_1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320",
+  "predecessor_terminal_content_hash": "sha256:1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "manual_start_attestation_created": false,
+    "state_change_evidence_created": false,
+    "docker_sdk_dotenv_or_network_observation_count": 0,
+    "external_mutation_count": 0,
+    "approval_attempt_or_transition_created": false,
+    "execution_hash_candidate_cost_or_paid_execution_authorized": false
+  },
+  "next_gate": "manual-start-attestation-state-binding",
+  "content_hash": "sha256:f04efac3a7bcd22311bdfd3b1e253fd8e579b37e6510afc2b3dfa049ed439fab"
+}
