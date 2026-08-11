@@ -103,10 +103,10 @@ binds contract `ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab
 `BLOCKED(docker_not_ready)`: Docker reads 8; start/pull/load/mutation, `.env`/SDK/network/provider/evaluator/agent/cost
 are 0; accounting is complete and retry/resume false.
 
-Manual-start v4 source/tree `5b592e4f4f86a62d90951e49494ed3f8cf2ae315`/`8ecdfe88999e21da3810cc73e87246c93e27c940`
-binds contract `ncpcontract_9a020537dc4a7d011e9bb139d77b71b18c16cb9c7b89ab56dd24813b8fdefeb6`, qualification
-`sha256:f04efac3a7bcd22311bdfd3b1e253fd8e579b37e6510afc2b3dfa049ed439fab`, attestation
-`ncpattestation_b844402a20a6aa2c554ab095b74f3e903644f7832a4d979b423f8ccb3d543b28` and state
-`ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`. It proves no readiness;
-PatchLoop observation/mutation, approval and execution are zero.
-D-142/R2 remain unchanged.
+Manual-start v4 state `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`
+is self-attested non-proof with PatchLoop observation/mutation zero. No-start v5 source/tree
+`3b80cf26983a1723f1f7b87561003ffc243d64a3`/`d060533981c036119ed7e19367f35056cd0b2ab3` binds contract
+`ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84` and qualification
+`sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7`. Source preparation/qualification made
+zero external observation/mutation and grants none; approval, receipt, attempt, marker and terminal are absent.
+D-142/R2 and v1-v4 evidence remain unchanged.

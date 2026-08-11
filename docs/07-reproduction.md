@@ -62,6 +62,9 @@ uv run --offline --frozen pytest -q tests/test_manual_docker_start_state_success
 uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-source
 uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-state
+uv run --offline --frozen pytest -q tests/test_no_start_executable_preflight.py
+uv run --offline --frozen python scripts/build_no_start_executable_preflight.py --validate-contract
+uv run --offline --frozen python scripts/build_no_start_executable_preflight.py --validate-source
 ```
 
 These validations do not read/stat `.env` or grant a new attempt.
@@ -99,7 +102,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3 and structural manual-start v4.
-2. Stop. V3 cannot retry and v4 cannot execute; qualify a no-start executable successor before approval.
+1. Validate evaluator-v2, consumed v3, structural v4 and qualified v5.
+2. Stop. V5 needs a fresh exact approval that reconfirms current manual start and `.env` placement.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

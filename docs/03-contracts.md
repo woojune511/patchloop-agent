@@ -106,10 +106,9 @@ Its receipt binds authority, event boundaries, patch and inventory; persistence/
 results remain unofficial.
 
 The A/C successor hashes source/tests, task/image/marker projections, runtime, treatment and schedule. Preflight v1/v2
-preserve receipt/non-proof semantics. V3 binds full-file-in-child/boolean-only-return, D-137 read-only Docker,
-placeholder reject-dispatch SDK and fresh state. Approval cites contract+qualification+state; intent/ACTION_STARTED
-precedes one terminal no-retry observation. Structural v4 binds that consumed terminal to a self-attested manual
-Docker start, proves no readiness, and exposes no executable/approval path.
+preserve receipt/non-proof semantics; v3 is consumed and v4 records self-attested manual start only. V5 binds v4,
+the D-137 read-only observer and isolated reject-dispatch child. Fresh approval must cite contract+qualification+state
+and reconfirm current manual start/`.env`; intent/ACTION_STARTED then precedes one terminal, never a retry.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

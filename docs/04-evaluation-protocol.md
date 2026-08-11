@@ -102,8 +102,8 @@ the A-null/C-exact-three treatment itself remains unchanged.
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence from accepted events, verified CAS and exact requested
 policy; marker hits are redacted. Missing→NOT_RUN, checker error→ERROR, violation→FAIL, complete→PASS. Separate
 authority and receipt gate runner selection, persistence and qualification; raw results remain unofficial.
-Executable v3 is consumed Docker-not-ready BLOCKED. Structural v4 records manual start without observing readiness;
-neither produced `.env`/SDK or evaluator evidence.
+Executable v3 is consumed Docker-blocked; v4 records manual start without proving readiness. V5 is source-qualified,
+unapproved and unattempted, so it produced no Docker/`.env`/SDK or evaluator evidence.
 
 ## 7. Run-completion gate
 
