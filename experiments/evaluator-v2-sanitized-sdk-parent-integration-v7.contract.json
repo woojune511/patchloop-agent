@@ -1,0 +1,107 @@
+{
+  "schema_version": "sanitized-sdk-parent-integration-contract-v7",
+  "contract_version": "ac-evaluator-v2-sanitized-sdk-parent-integration-v7",
+  "contract_id": "ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf",
+  "v6": {
+    "source_commit": "1d99a7c0acf20ec961240f33f585553fd881dc02",
+    "qualification_commit": "f42fcfdee079bca5f050dc33178ef5316e68c955",
+    "contract_id": "ncpcontract_3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918",
+    "contract_content_hash": "sha256:3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918",
+    "source_qualification_hash": "sha256:df0d68f6059d267260ec34fcd3d7714c406856ef1b22902412de3e74180e3bb2",
+    "child_file_sha256": "sha256:2ad3d536f10f9eaea503db3c61943ee59ff4de37e42a72651d49b396deaedb27",
+    "runtime_file_sha256": "sha256:5e8ce4c2f23be7a63e595e61e916003b444b2c06d1da1f8b6e1866d2673a8f5e",
+    "v5_terminal_id": "ncpterminal_a7e12f36e75259ae00fe657ea0a96fde0a9826f58d77ffb1a7f091fff6902089",
+    "v5_retry_or_resume_allowed": false
+  },
+  "runtime_profile": {
+    "schema_version": "sanitized-sdk-parent-runtime-profile-v1",
+    "docker_observer_path": "patchloop/evals/d137_no_call_preflight.py",
+    "docker_observer_file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3",
+    "docker_expected_command_count": 8,
+    "child_path": "scripts/run_sanitized_sdk_diagnostic_child.py",
+    "child_file_sha256": "sha256:2ad3d536f10f9eaea503db3c61943ee59ff4de37e42a72651d49b396deaedb27",
+    "child_flags": [
+      "-I",
+      "-E",
+      "-s",
+      "-B"
+    ],
+    "child_environment": {
+      "PYTHONIOENCODING": "utf-8",
+      "PYTHONUTF8": "1"
+    },
+    "child_timeout_seconds": 60,
+    "child_output_limit": 262144,
+    "parent_environment_names": [
+      "PYTHONHOME",
+      "PYTHONPATH"
+    ],
+    "dotenv_bytes_confined_to_child": true,
+    "credential_value_hash_prefix_or_length_limit": 0,
+    "exception_message_type_repr_or_traceback_limit": 0,
+    "docker_start_pull_load_or_container_operation_limit": 0,
+    "transport_dispatch_limit": 0,
+    "network_call_limit": 0,
+    "provider_evaluator_agent_call_limit": 0,
+    "exact_child_execution_codes": [
+      "parent_presence_error",
+      "parent_python_environment_not_clean",
+      "child_binding_error",
+      "child_launch_error",
+      "child_nonzero_exit",
+      "child_stderr_not_empty",
+      "child_output_limit",
+      "child_output_invalid",
+      "parent_child_observer_error"
+    ],
+    "exact_parent_terminal_reasons": [
+      "docker_not_ready",
+      "parent_python_environment_not_clean",
+      "child_checker_error",
+      "dotenv_not_ready",
+      "sdk_diagnostic_blocked",
+      "sdk_diagnostic_error",
+      "docker_checker_error"
+    ],
+    "parent_observer_integration_implemented": true,
+    "one_use_lifecycle_implemented": true
+  },
+  "transition_policy": {
+    "schema_version": "preflight-transition-policy-v1",
+    "exact_sequence": [
+      "intent_recorded",
+      "action_started",
+      "ready_or_blocked_or_error_terminal"
+    ],
+    "state_change_evidence_use_limit": 1,
+    "approval_use_limit": 1,
+    "attempt_number": 1,
+    "marker_before_first_observation": true,
+    "terminal_typed_observation_required": true,
+    "intent_creation_reserves_evidence": true,
+    "post_marker_failure_consumes_attempt": true,
+    "terminal_is_append_only": true,
+    "retry_allowed": false,
+    "resume_allowed": false,
+    "overwrite_allowed": false,
+    "repair_or_backfill_allowed": false,
+    "blocked_authorizes_successor": false
+  },
+  "fresh_state_required": true,
+  "v5_state_or_approval_reuse_allowed": false,
+  "current_manual_start_and_dotenv_reconfirmation_required": true,
+  "source_authority": {
+    "contract_materialization_authorized": true,
+    "source_qualification_authorized": true,
+    "state_change_evidence_creation_authorized": false,
+    "exact_approval_required": true,
+    "external_preflight_attempt_authorized": false,
+    "docker_sdk_or_dotenv_observation_authorized": false,
+    "network_or_transport_authorized": false,
+    "provider_evaluator_agent_execution_authorized": false,
+    "candidate_cost_or_paid_execution_authorized": false,
+    "automatic_retry_replacement_or_resume_authorized": false
+  },
+  "next_gate": "fresh-v7-state-and-separate-exact-approval",
+  "content_hash": "sha256:5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf"
+}
