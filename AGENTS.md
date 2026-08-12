@@ -46,9 +46,11 @@
 - No-start v5 is consumed `ERROR(checker_error)` and cannot retry. V6 remains its source-qualified diagnostic
   predecessor. Parent-integration v7 source `6f6ba8627238b9d926e8b2bfe8a877d64ff1d755` and contract
   `ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf` are qualified offline only.
-  State `ncpstate_c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970` records only the
-  user's current Docker/`.env` report; it made zero observation and is non-reusable. No approval, attempt or terminal
-  exists. The next gate is separate approval citing the exact contract, qualification and state.
+  V7 exact approval `ncpapproval_02415aa08a4359a2f810d31f40c9a6e9a041af655df4c931cb61ac4a09d292ff`
+  produced consumed `ERROR(sdk_diagnostic_error)` terminal
+  `ncpterminal_a6ad48867773cc2614861cadfbece94c646fa2b7aef453facc7fd37fe4dd537c`. Docker was READY
+  after 8 reads and the exact key was declared/nonempty, but the child returned `diagnostic_runtime_import_error`
+  before SDK diagnosis. Dispatch/network/provider counts were 0; accounting is complete and retry/resume is false.
 
 ## Required reading
 

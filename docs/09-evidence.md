@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V7 sanitized SDK parent integration — source-qualified only
+## V7 sanitized SDK parent integration — ERROR and consumed
 
 - V6 predecessor source `1d99a7c0acf20ec961240f33f585553fd881dc02`, contract
   `ncpcontract_3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918` and qualification
@@ -21,8 +21,17 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
 Materialization and qualification made zero Docker/`.env`/SDK/network observation or mutation. State
 `ncpstate_c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970` has file
 `sha256:14e8563d2146accf73c7f0150a31707ba4f8a53d913113b4eacdba5c415a5a47`, 1,134 bytes and commit
-`3040044b32cf043edc054fb13869a85a4b4b83fd`; it records only a user report, is non-reusable and made zero
-observation/mutation. No approval, attempt, marker or terminal exists; separate exact approval is next.
+`3040044b32cf043edc054fb13869a85a4b4b83fd`; it records only a non-reusable user report. Receipt
+`ncpapprovalreceipt_5af0a296f10895a6f57f3ee394a516fa41110aa155279e2ee0d5ef0278f990c1` and approval
+`ncpapproval_02415aa08a4359a2f810d31f40c9a6e9a041af655df4c931cb61ac4a09d292ff` are commit
+`28f98c49d794377b4afbcf69acd1c39fb22d7c85`.
+
+Attempt `ncpattempt_de2f13e06b77b975c9ef16e0ca75787fcb93a8272de4ee80262f79bf94c83e89`, marker
+`ncpstarted_7a04080397aecad7d1f98e683f0c4c25198545d9347d181b3c9c94f2ba871d39` and terminal
+`ncpterminal_a6ad48867773cc2614861cadfbece94c646fa2b7aef453facc7fd37fe4dd537c` are commit
+`3cde67ba12390af328979d58b52551f1761f7cb3`. Docker was READY after 8 reads; exact key membership was true;
+one child launch ended `diagnostic_runtime_import_error`. Dispatch/network/provider counts were 0, accounting was
+complete, unknown activity false and retry/resume false. No credential value/hash/length or exception text was recorded.
 
 ## D-142 SDK no-call successor — source-qualified only
 
@@ -77,41 +86,17 @@ D-141 is consumed and cannot be retried, resumed, repaired or backfilled. Exact 
 - D-129 remains terminal sequence-blocked; D-121 is deferred. Exact older artifacts and tuples remain in
   `reports/`, the archived ledger and Git history. None may be retried, resumed, repaired or backfilled.
 
-## Next evidence boundary
+## Evaluator and preflight predecessors — compact index
 
-Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` preserves successor source qualification
-`sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320`, evaluator source
-`sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and suite
-`sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`.
+- Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` binds qualification
+  `sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320`, evaluator source
+  `sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and suite
+  `sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`; it has no live result.
+- V3 terminal `ncpterminal_1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320`
+  consumed `BLOCKED(docker_not_ready)` after 8 Docker reads and zero `.env`/SDK/network/provider calls.
+- V4 state `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef` is
+  self-attested non-proof. V5 terminal `ncpterminal_a7e12f36e75259ae00fe657ea0a96fde0a9826f58d77ffb1a7f091fff6902089`
+  consumed ERROR after Docker/key checks returned only `sdk_checker_error` with incomplete accounting.
 
-V1 child `4a78745552ef8eab62ddfcdaeb3154de50fe79bf` is receipt-bound. Structural v2 source/tree
-`d8652b2648f97788ae65a82e949d2b168e7ff4a9`/`373244b7b2a9e44d7e6dfe31deb59aef9030dd97` binds contract
-`ncpcontract_68151531120dd61e5c6363f172a92144c75f7553de4d5fc902e5190b30770fbd`, qualification
-`sha256:e903639750a961b60f879435a10be5e3f03f1809614e7686a8f8d854d2def309` and state
-`ncpstate_80e1ab7955bab8d1b9bf83ae05a0aada373fa69dc11e9770bdde680256355582`.
-
-Executable v3 source/tree `ce0628880107db2319816272cfa49adc7ea99667`/`fe08f400b9573f11470a021407c9298020a17ca2`
-binds contract `ncpcontract_6e7fa7dac02b594d9f16c84b4d3036632a6f6a2214cd7cf8cbab7b559bd55f9d`, qualification
-`sha256:385ac8521f86a4572bb9614af4c5730bb9856e63be3445ddb27521b492bd8079`, state
-`ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317` and approval
-`ncpapproval_37f2d23e133e0ea42a43c08134de51b2a61e2d5de2e4e23a1f9a324e92f6828f`. Attempt
-`ncpattempt_26b65477c3ef1d4ed08adbfa06aba2d0adb9b06889169d09c19cab76396be7d9`, ACTION_STARTED
-`ncpstarted_35873058f1becb38bb50feb7449d6065f2e705f99a00c5dc63a13b03bce489cb` and terminal
-`ncpterminal_1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320` record consumed
-`BLOCKED(docker_not_ready)`: Docker reads 8; start/pull/load/mutation, `.env`/SDK/network/provider/evaluator/agent/cost
-are 0; accounting is complete and retry/resume false.
-
-V4 state `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef` is self-attested non-proof. V5
-source `3b80cf26983a1723f1f7b87561003ffc243d64a3`, contract `ncpcontract_858f2467550660dfbeeed28676d791a6fd72825a767afd631ce2d7f3574d9f84`
-and qualification `sha256:fea077651d24ce9723f21e08758043516d41bba12090f201ffb0dfd5876a09d7` precede approval commit
-`980e94d5a51d92152cf839651a12bbffce191f2c`: receipt `ncpapprovalreceipt_4efe85c7678acc56b53e8b37d2ec36473681fec775ae3f5dc63d85befdea6a11`,
-approval `ncpapproval_3c94656fd82fd51bb2116973bbafef826b7f5431ed9716a1c645bd5c8a7171ad`.
-
-Consumed commit/tree `3374e3452af2a615b5c3eb00e493354baabe9b09`/`c42e7d5b1223be3b21f9932b12aa855c377c24bf` binds attempt
-`ncpattempt_005f1501ed93dc4cde97fa53a1718b6a90bdad18080eb88157bf7c713c5d6f26`, ACTION_STARTED
-`ncpstarted_3ee33fa8017b77c134e908156e3b46da78a16f21149cc7f9c7571e765bcf44f3` and ERROR terminal
-`ncpterminal_a7e12f36e75259ae00fe657ea0a96fde0a9826f58d77ffb1a7f091fff6902089`. Docker was READY after eight stable
-read-only calls; exact images were present and container inventory empty. The isolated child read `.env` once,
-found the exact key declared/nonempty and returned `sdk_checker_error` with no credential value/hash/length or
-network/provider call. Terminal accounting is incomplete, post-marker activity is unknown, and retry/resume is false.
-D-142/R2 and v1-v4 evidence remain unchanged.
+Exact v1-v5 source, contract, receipt, approval and ledger tuples remain canonical in `reports/` and Git history.
+D-142/R2 are unchanged; no predecessor may be retried, resumed, repaired or backfilled.

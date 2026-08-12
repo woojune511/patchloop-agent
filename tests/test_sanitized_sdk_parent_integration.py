@@ -277,25 +277,32 @@ def test_parent_observation_rejects_false_ready_projection() -> None:
         parent.ParentObservation.model_validate(valid)
 
 
-def test_current_checkout_has_v7_state_but_no_approval_or_attempt_artifact() -> None:
-    summary = parent.validate_state_evidence(repository=REPOSITORY)
-    assert summary["status"] == "V7_STATE_RECORDED_APPROVAL_ABSENT"
-    assert summary["external_observations_made"] == 0
-    assert summary["external_mutations_made"] == 0
-    assert summary["approval_or_attempt_created"] is False
+def test_current_checkout_has_consumed_v7_error_terminal() -> None:
+    summary = parent.validate_attempt_chain(repository=REPOSITORY)
+    terminal = parent.TerminalTransition.model_validate_json(
+        (REPOSITORY / parent.TERMINAL_PATH).read_bytes()
+    )
+    observation = terminal.observation
+    assert summary["status"] == "V7_SANITIZED_SDK_PARENT_TERMINAL_VALID"
+    assert summary["outcome"] == "error"
+    assert summary["reason"] == "sdk_diagnostic_error"
+    assert summary["activity_accounting_complete"] is True
+    assert summary["unknown_post_marker_activity_possible"] is False
+    assert summary["retry_or_resume_allowed"] is False
+    assert observation.docker_cli_command_count == 8
+    assert observation.child_launch_attempt_count == 1
+    assert observation.child_execution is not None
+    assert observation.child_execution.child is not None
+    assert observation.child_execution.child.error_code == "diagnostic_runtime_import_error"
+    assert observation.child_execution.child.activity.transport_dispatch_count == 0
+    assert observation.network_call_count == 0
+    assert observation.provider_evaluator_agent_call_count == 0
 
-    for path in (
-        parent.APPROVAL_RECEIPT_PATH,
-        parent.APPROVAL_PATH,
-        parent.ATTEMPT_PATH,
-        parent.ACTION_STARTED_PATH,
-        parent.TERMINAL_PATH,
-    ):
-        assert not (REPOSITORY / path).exists()
 
-
-def test_run_once_fails_before_observer_without_exact_approval() -> None:
+def test_consumed_v7_ledger_suppresses_second_observer() -> None:
     calls = {"observer": 0}
+    paths = (parent.ATTEMPT_PATH, parent.ACTION_STARTED_PATH, parent.TERMINAL_PATH)
+    before = {path: (REPOSITORY / path).read_bytes() for path in paths}
 
     def observer(*_args: Any, **_kwargs: Any) -> parent.ParentObservation:
         calls["observer"] += 1
@@ -304,9 +311,7 @@ def test_run_once_fails_before_observer_without_exact_approval() -> None:
     with pytest.raises((FileNotFoundError, parent.SanitizedSDKParentError)):
         parent.run_once(repository=REPOSITORY, parent_observer=observer)
     assert calls["observer"] == 0
-    assert not (REPOSITORY / parent.ATTEMPT_PATH).exists()
-    assert not (REPOSITORY / parent.ACTION_STARTED_PATH).exists()
-    assert not (REPOSITORY / parent.TERMINAL_PATH).exists()
+    assert before == {path: (REPOSITORY / path).read_bytes() for path in paths}
 
 
 def test_checked_in_source_qualification_when_present() -> None:

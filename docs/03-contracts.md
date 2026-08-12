@@ -102,9 +102,9 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
-V5 is an immutable checker-error terminal. V6 fixes sanitized diagnostic stages. Source-qualified v7 binds v6,
-the D-137 observer, isolated flags/environment and intent→ACTION_STARTED→terminal lifecycle. Its current state is
-user-attested, non-reusable and observation-free; approval and attempt are absent and it is never a v5 retry.
+V5 is an immutable checker-error terminal. V6 fixes sanitized diagnostic stages. V7 bound v6, D-137 and the isolated
+lifecycle, then consumed `ERROR(sdk_diagnostic_error)`: Docker/key checks completed but the child emitted the fixed
+`diagnostic_runtime_import_error` before SDK diagnosis. Its exact approval and ledger cannot be reused.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

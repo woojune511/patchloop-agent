@@ -31,8 +31,8 @@ work.
   `BLOCKED(docker_not_ready)` attempt: eight read-only Docker calls, zero mutation/`.env`/SDK/network/provider calls.
   V4 binds manual start without proving readiness. V5 then consumed one approved attempt: Docker READY and exact key
   membership preceded `ERROR(checker_error)` with incomplete accounting. It cannot retry. V6 fixes sanitized
-  diagnostics; source-qualified v7 binds the parent runtime. Its new state is user-attested non-proof and made zero
-  observation; approval and attempt remain separate closed gates.
+  diagnostics. V7 consumed one exact-approved parent attempt: Docker/key checks completed, then the child returned
+  `diagnostic_runtime_import_error`; dispatch/network/provider were 0 and its ledger cannot reopen.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
