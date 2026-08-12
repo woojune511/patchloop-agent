@@ -1,0 +1,80 @@
+{
+  "schema_version": "dedicated-frame-preflight-successor-contract-v15",
+  "contract_version": "ac-evaluator-v2-dedicated-frame-preflight-successor-v15",
+  "contract_id": "ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01",
+  "predecessor": {
+    "evidence_commit": "e63f418e9b2e3c6810fc3de68a203bcbfeb0a217",
+    "contract_id": "ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e",
+    "source_qualification_hash": "sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816",
+    "terminal_id": "ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f",
+    "terminal_content_hash": "sha256:d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f",
+    "terminal_file_sha256": "sha256:9114e21765913c008fa4345897a4c1a42d7c213283fb31805fed662f887a3930",
+    "outcome": "error",
+    "reason": "child_checker_error",
+    "base_child_code": "child_output_invalid",
+    "frame_code": "framed_output_invalid",
+    "envelope_received": false,
+    "docker_cli_command_count": 8,
+    "child_launch_attempt_count": 1,
+    "child_process_return_count": 1,
+    "network_call_count": 0,
+    "provider_evaluator_agent_call_count": 0,
+    "docker_mutation_count": 0,
+    "credential_value_metadata_count": 0,
+    "raw_child_output_persisted": false,
+    "activity_accounting_complete": false,
+    "unknown_post_marker_activity_possible": true,
+    "retry_or_resume_allowed": false,
+    "causal_detail_available": false
+  },
+  "runtime": {
+    "entrypoint": "patchloop.evals.dedicated_frame_preflight_successor.run_parent_preflight_injected",
+    "child_path": "scripts/run_sanitized_sdk_bootstrap_dedicated_frame_child.py",
+    "child_file_sha256": "sha256:823e85a8e10276d137f2d3bba2c0c8854b18e2213c855bef4ebd95bfce187ead",
+    "v13_runtime_file_sha256": "sha256:bc336c0574522262dd13fc0c16f4f5f5ad02fc58b6498b2ab7f95dab722fb493",
+    "v13_contract_id": "ncpcontract_11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047",
+    "v13_contract_content_hash": "sha256:11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047",
+    "child_flags": [
+      "-I",
+      "-E",
+      "-s",
+      "-B"
+    ],
+    "fixed_child_environment": {
+      "PYTHONIOENCODING": "utf-8",
+      "PYTHONUTF8": "1"
+    },
+    "approved_scopes": [
+      "v9-contract-and-source-validation-before-observation",
+      "docker-read-only-two-snapshot-eight-command-observation",
+      "isolated-dotenv-exact-openai-api-key-membership",
+      "sanitized-sdk-fixed-placeholder-reject-dispatch-with-child-only-systemroot"
+    ],
+    "result_descriptor_duplicated_before_workload": true,
+    "workload_stdout_stderr_redirected_to_null": true,
+    "envelope_written_directly_to_saved_descriptor": true,
+    "fd1_fd2_restore_required_before_envelope": false,
+    "canonical_single_value_free_envelope_required": true,
+    "raw_child_output_persistence_allowed": false,
+    "live_default_observers_exposed": false,
+    "child_launch_limit": 1,
+    "network_call_limit": 0,
+    "provider_evaluator_agent_call_limit": 0,
+    "credential_value_return_hash_prefix_or_length_limit": 0
+  },
+  "authority": {
+    "contract_materialization_authorized": true,
+    "source_qualification_authorized": true,
+    "state_approval_attempt_or_terminal_creation_authorized": false,
+    "environment_docker_dotenv_sdk_or_network_observation_authorized": false,
+    "credential_value_recording_authorized": false,
+    "docker_start_pull_load_image_store_or_container_mutation_authorized": false,
+    "provider_evaluator_agent_execution_authorized": false,
+    "candidate_cost_or_paid_execution_authorized": false
+  },
+  "correction_scope": "child-envelope-result-channel-only",
+  "predecessor_retry_or_repair": false,
+  "execution_currently_authorized": false,
+  "next_gate": "new-versioned-state-and-activation-wrapper-required",
+  "content_hash": "sha256:ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01"
+}
