@@ -1,0 +1,9 @@
+{
+  "schema_version": "manual-docker-restart-framed-action-started-v14",
+  "marker_id": "ncpstarted_8770a0f9ca64a06055fc6b7f004a56139ea420a45fff312fafa37099197965d1",
+  "attempt_id": "ncpattempt_53b489aa63592c668529f3530f2af9c61a435c79ff40bcab5ec0aa1332a2267a",
+  "attempt_content_hash": "sha256:53b489aa63592c668529f3530f2af9c61a435c79ff40bcab5ec0aa1332a2267a",
+  "sequence": 1,
+  "recorded_at": "2026-08-12T15:03:35.388912Z",
+  "content_hash": "sha256:8770a0f9ca64a06055fc6b7f004a56139ea420a45fff312fafa37099197965d1"
+}
