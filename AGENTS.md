@@ -56,6 +56,10 @@
   pass 8/8. Contract `ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01`
   is qualified at `ac32e78` with hash `sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494`.
   It is source-only: observation 0, no state/approval/attempt/terminal, and no executable activation wrapper or authority.
+- V16 source `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`, contract
+  `ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` and qualification
+  `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` add the activation wrapper offline.
+  No state/approval/attempt/terminal or external observation exists; the next boundary is an exact v16 state statement.
 
 ## Required reading
 

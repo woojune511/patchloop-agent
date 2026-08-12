@@ -1,14 +1,10 @@
 # Current reproduction and validation
 
-Historical per-milestone commands are archived at
-`docs/archive/snapshots/d121/07-reproduction.full.md`. Commands below are the supported current paths.
+Historical commands are archived at `docs/archive/snapshots/d121/07-reproduction.full.md`; only paths below are current.
 
 ## Environment
 
-- Windows/PowerShell
-- Python 3.12+
-- `uv` with the repository lockfile
-- Docker Desktop only for a separately approved Docker step
+- Windows/PowerShell, Python 3.12+ and locked `uv`; Docker only under separate exact authority
 
 ```powershell
 uv sync --offline --frozen --extra dev
@@ -23,8 +19,7 @@ uv run --offline --frozen pytest -q tests/test_fixed_bundle_delivery.py tests/te
 uv run --offline --frozen python scripts/build_d122_ac_fixed_bundle_qualification.py --validate-sealed-historical
 ```
 
-These are offline checks for the four-row source, A-null/C-exact bundle contract, trace qualification and
-historical D-122 bytes. They grant no live, retrieval, provider, Docker, hash/candidate or cost authority.
+These offline checks grant no live, retrieval, Docker, provider, candidate or cost authority.
 
 ## Validate the evaluator-v2 successor qualification
 
@@ -34,8 +29,7 @@ uv run --offline --frozen pytest -q tests/test_evaluator_v2_contracts.py `
 uv run --offline --frozen python scripts/build_evaluator_v2_ac_source_qualification.py
 ```
 
-The second command must leave the append-only artifact's mtime unchanged. Both commands are local-only and create
-no Docker/network/credential/provider/evaluator/agent activity, execution hash or candidate.
+The second command leaves artifact mtime unchanged; neither command creates external activity or a candidate.
 
 ## Validate the sealed no-call contract
 
@@ -44,31 +38,27 @@ uv run --offline --frozen pytest -q tests/test_versioned_no_call_preflight_contr
 uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contract.py --validate
 ```
 
-Validation reads committed blobs without changing artifact mtime. Source creation was one-time and grants no live authority.
+Validation reads committed blobs without changing mtime and grants no live authority.
 
-V13/v14 remain consumed. Validate v14 terminal and source-only v15 without external observation:
+V13/v14 remain consumed. Validate v14 terminal and source-only v15/v16 without external observation:
 
 ```powershell
 uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-terminal
 uv run --offline --frozen python scripts/build_dedicated_frame_preflight_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_dedicated_frame_preflight_successor.py --validate-source
+uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-source
 uv run --offline --frozen pytest -q tests/test_dedicated_frame_preflight_successor.py
+uv run --offline --frozen pytest -q tests/test_dedicated_frame_activation_successor.py
 ```
 
-These modes create no artifact and read no `.env`/Docker/SDK. V15 has no live/default-observer mode.
+These modes create no artifact and read no `.env`/Docker/SDK. V15 has no live/default-observer mode; v16 observer
+execution is reachable only after separate exact state, approval and immediate-run lifecycle gates.
 
 ## Audit the sealed D-142 source
 
-D-142's post-commit validator is bound to its exact clean historical gate+10-doc evidence checkout. It correctly
-rejects a later documentation HEAD, so it is not a current quickstart. Audit it only in a separate clean checkout
-of that historical commit; never use a creation/external mode. The recorded 170/170 injected/mocked count remains
-separate local contract evidence and performs no external observation.
-
-## Historical validators
-
-D-123 through D-142 commands remain in their owning scripts, tests and Git history. Use only explicit
-sealed/read-only modes in an exact clean historical checkout. D-132 is a consumed incident; D-136 pricing,
-D-137 no-call phases and D-138 through D-141 SDK are consumed. D-142 is unactivated and deferred.
+D-142 validation is bound to its exact clean historical checkout and rejects current HEAD. Audit only there in
+sealed/read-only mode. Its 170/170 mocked count is local evidence, not external observation.
 
 ## Static and documentation checks
 
@@ -82,13 +72,9 @@ $docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-'
 git diff --check
 ```
 
-Repository-wide suites may retain historical absent-state assertions; do not rewrite sealed evidence to satisfy them.
+Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C or D-142 activation command:
-
-1. Validate evaluator-v2, consumed v13/v14 and source-only v15 read-only.
-2. Stop. No preflight, candidate, cost or paid execution gate is open.
-
-V10-v14 modes are consumed. V15 requires a new state/activation version and later exact authority.
+There is no supported live A/C or D-142 activation command. Validate v13-v16 read-only, then stop: V10-v14 are
+consumed and no preflight/candidate/cost gate is open. An exact v16 state statement alone authorizes no attempt.

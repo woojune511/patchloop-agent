@@ -6,11 +6,11 @@
 ## 1. Design principles
 
 - One coding agent, explicit state machine and constrained tools
-- Hidden evaluator outside the agent workspace
+- Hidden evaluator outside workspace
 - Durable run state outside the task repository
-- Deterministic contracts around model/tool boundaries
-- Append-only evidence and fail-closed recovery
-- Memory as one controlled input, never as an implicit agent mutation
+- Deterministic model/tool contracts
+- Append-only evidence; fail-closed recovery
+- Memory as a controlled input, never implicit mutation
 
 ## 2. System flow
 
@@ -32,7 +32,7 @@ audited task + immutable repository snapshot
        immutable result, usage and evidence
 ```
 
-`DONE` means the agent submitted a candidate patch. Only the evaluator determines task success.
+`DONE` means patch submission; only the evaluator determines success.
 
 ## 3. Components
 
@@ -53,15 +53,8 @@ The generic comparison agent is frozen to SYSTEM_PROMPT_V3, tool schema v2 and p
 Each provider turn is rebuilt from durable public state; `previous_response_id` is not used. The tool surface
 does not expose arbitrary shell or unrestricted filesystem mutation.
 
-The state machine enforces:
-
-- a public issue intake before implementation;
-- evidence-producing reproduction and verification;
-- current-diff visible checks before submission;
-- a model-visible final diff;
-- explicit terminal errors for budget, protocol and infrastructure failures.
-
-PLAN is a phase, not a separately approved planning agent or hidden plan artifact.
+The state machine requires public intake, evidence-producing reproduce/verify, current-diff checks, a model-visible
+final diff and explicit budget/protocol/infrastructure terminals. PLAN is a phase, not a separate agent.
 
 ## 5. Persistent state and recovery
 
@@ -88,23 +81,17 @@ Visible checks and agent self-review are feedback; neither can replace hidden ev
 
 ### Frozen assets
 
-Three generalized memory entries have approved D-105 model-facing text and a D-110 frozen index. The index
-contains source provenance and embeddings, but runtime retrieval authority remains closed.
+Three generalized entries have approved D-105 text and a D-110 frozen index; retrieval authority remains closed.
 
 ### Frozen R2 A/C source
 
 `fixed-d110-bundle-v1` implements a narrow fixed-bundle adapter:
 
-1. It verifies the exact D-105 gate/render files and D-110 index, marker and completion gate.
-2. It assembles only the three approved texts in frozen D-110 `group_provenance` order.
-3. A renders `selected_memory=null`; C renders the exact 3,528-byte bundle on every model request.
-4. The existing model-request artifact and `ContextBuilt` event bind delivery and normalized no-memory request
-   hashes without exposing source-run provenance, vectors or raw traces.
-5. It emits neither `MemoryRetrieved` nor a new delivery event.
+It verifies D-105/D-110 assets, assembles only the three texts in frozen order, renders A as null and C as the exact
+3,528-byte bundle, and binds delivery through existing request/context evidence without retrieval events.
 
-The implementation loads no embedding model and performs no similarity, ranking or threshold. D-122 binds the
-four-row suite and trace qualifier offline. This R2 source predates evaluator v2; execution is paused and a new
-source/suite/runtime identity is required after evaluator correction. No candidate or live result exists.
+It loads no embedding model or scorer. D-122 binds the four-row suite offline, but R2 predates evaluator v2 and no
+candidate or live result exists.
 
 ### Deferred paths
 
@@ -115,8 +102,7 @@ source/suite/runtime identity is required after evaluator correction. No candida
 
 ## 8. Trust and authority boundaries
 
-- Config files and tests never authorize paid calls.
-- A frozen index does not authorize retrieval or injection.
+- Config, tests and a frozen index authorize neither paid calls nor retrieval/injection.
 - A candidate ID does not technically authenticate a user; repository gates are cooperative and append-only.
 - No active path may read private/hidden/reference data to construct memory or select a task.
 - Failure at a one-use evidence claim remains consumed; it is not silently retried or repaired.

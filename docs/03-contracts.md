@@ -112,6 +112,8 @@ checks, but the returned child output contained no framed envelope; the terminal
 `ERROR(child_checker_error/framed_output_invalid)`. Its whole-terminal accounting is incomplete, unknown activity is
 true and retry/resume is false. V15 binds that terminal without claiming a cause and writes the envelope to a result
 descriptor duplicated before fd 1/2 suppression. Its injected-only entrypoint has no activation lifecycle or authority.
+V16 binds the exact v15 commit/tree/qualification and adds distinct exact state, future-approval and immediate-run
+statements. Its source qualification creates none of those lifecycle artifacts and grants no observation authority.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

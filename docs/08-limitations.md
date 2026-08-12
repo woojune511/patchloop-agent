@@ -46,7 +46,8 @@ Historical milestone-by-milestone limitations are archived at
   and launched one child, but received no framed envelope. Raw child output was not persisted; whole-terminal accounting
   is incomplete and unknown post-marker activity is true. Thus v14 proves neither SDK readiness, confidentiality nor a
   narrower cause, and it cannot retry. V15's dedicated descriptor survives synthetic noise/fd closure in an actual
-  Windows subprocess, but the SDK/`.env` workload was not rerun and no activation wrapper or runtime result exists.
+  Windows subprocess, but the SDK/`.env` workload was not rerun. V16 adds only an offline activation wrapper; no
+  state, approval, attempt, observation or runtime result exists.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

@@ -27,18 +27,24 @@ qualified at `ac32e78` as `sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa
 offline tests, including an actual Windows subprocess. It made no external observation and has no state, approval,
 attempt, terminal, live default observer or execution authority.
 
+V16 activation source commit/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/
+`b99883f5771e2bea8f4635c16a308cfcbc61dfc4` binds that exact v15 qualification. Contract
+`ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` is source-qualified at
+`761bd37` as `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` after 7/7 focused tests.
+It implements distinct state/approval/run entrypoints, but no state, approval, attempt, terminal or observation exists.
+
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v14 are immutable; v15 is source-qualified only.
-4. **Separately approved preflight attempt.** No activation wrapper, state, approval or attempt exists for v15.
+3. **Offline preflight contracts.** V1-v14 are immutable; v15/v16 are source-qualified only.
+4. **Separately approved preflight attempt.** V16 has no state, approval or attempt.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
 8. **Selective/full comparison.** B/D require frozen leakage/redaction/calibration or a fresh held-out panel.
 
-No official/live evaluator result exists. V7, v12 and v14 are consumed ERROR; v15 is not readiness evidence.
+No official/live evaluator result exists. V7, v12 and v14 are consumed ERROR; v15/v16 are not readiness evidence.
 
 ## Consumed boundaries
 
@@ -47,12 +53,13 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12/v13/v14 are consumed. V15 qualification opens no Docker/`.env`/SDK, cost or A/C execution.
+V5/v7/v12/v13/v14 are consumed. V15/v16 qualification opens no Docker/`.env`/SDK, cost or A/C execution.
 
 ## Next gate
 
-No execution gate is open. The next implementation boundary is a new versioned state/activation wrapper around v15;
-only its later exact state and approval could open one attempt. Current artifacts grant none. Docker provisioning,
+No execution gate is open. The next boundary is an exact v16 state statement; it records a self-attested non-proof
+only. A later separate exact approval and still-later exact immediate-run statement would be required for one attempt.
+Current artifacts grant none. Docker provisioning,
 candidate, cost and paid execution remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

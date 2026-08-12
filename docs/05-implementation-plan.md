@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v14 are immutable predecessors; v15 source is qualified offline.
+Status: v1-v14 are immutable predecessors; v15 and its v16 activation wrapper are qualified offline.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,14 +47,15 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14 consumed; v15 is source-qualified but activation-closed.
+Status: v3/v5/v7/v12/v13/v14 consumed; v15/v16 are source-qualified but activation-closed.
 
 V13 stopped before `.env`/SDK. V14 reached Docker READY with eight read-only calls, launched one child, and ended
 `ERROR(child_checker_error/framed_output_invalid)` because no framed envelope arrived. Network/provider/evaluator/agent,
 Docker mutation and credential-value metadata counts are 0, but whole-terminal accounting is incomplete and unknown
 activity is true. The one-use chain is sealed; do not retry, resume, replace or infer successor authority.
 V15 duplicates a result descriptor before workload suppression and passes 8/8 offline tests, including an actual
-Windows subprocess with noisy/closed fd 1/2. A new version must add state/activation binding before any attempt.
+Windows subprocess with noisy/closed fd 1/2. V16 binds that exact source and implements separate state, approval and
+immediate-run entrypoints. It has no state or execution artifact; an exact state statement is next.
 
 ## Work item 5 — execution candidate and cost gate
 

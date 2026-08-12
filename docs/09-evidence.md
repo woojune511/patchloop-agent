@@ -3,6 +3,16 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V16 dedicated-frame activation — source-qualified only
+
+Source/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/`b99883f5771e2bea8f4635c16a308cfcbc61dfc4`
+is the exact four-addition child of `9c6ec8a`; contract
+`ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` binds the exact v15 source
+qualification. Sole-artifact commit `761bd37` records
+`sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091`; file
+`sha256:337ab14568d43a3c8027cdad8418236ba6581abcf19477565aa750225fa9abaa`, 3,835 bytes. State, approval,
+attempt, terminal, external observation, mutation and execution authority are absent.
+
 ## V15 dedicated-frame successor — source-qualified only
 
 Source/tree `e962291bfea66980a66c7592e87ce5277b43b30a`/`082840944a46b2fc8d3b9f2df8afcc5d04b759ee`
@@ -11,7 +21,7 @@ is the exact five-addition child of `51bb6a6`; contract
 its unknown cause. Sole-artifact qualification commit `ac32e78` records
 `sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494`; file
 `sha256:0112807f9a8bbe4831e7c9103859909c8266247ec0aaf551c2960978421b9708`, 4,755 bytes. External observation,
-mutation and execution authority are 0; state/approval/attempt/terminal and activation wrapper are absent.
+mutation and execution authority are 0; state/approval/attempt/terminal are absent. V16 is its separate wrapper.
 
 ## V14 manual-restart successor — consumed ERROR
 

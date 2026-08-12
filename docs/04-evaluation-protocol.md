@@ -106,8 +106,9 @@ passed, but child stdout failed typed parsing, so terminal `ERROR(child_output_i
 V13's one attempt ended `BLOCKED(docker_not_ready)` before `.env`/SDK observation. V14 then consumed one approved
 attempt: Docker passed eight read-only checks and one child returned, but no framed envelope was received. Its
 `ERROR(child_checker_error/framed_output_invalid)` terminal has incomplete whole-terminal accounting and unknown
-post-marker activity. V15 corrects only the result channel in offline source/tests; it has no state, activation wrapper
-or runtime authority. Neither terminal nor v15 establishes readiness.
+post-marker activity. V15 corrects only the result channel in offline source/tests. V16 adds an offline activation
+lifecycle wrapper, but has no state, approval, attempt or runtime authority. Neither terminal nor either source
+qualification establishes readiness.
 
 ## 7. Run-completion gate
 

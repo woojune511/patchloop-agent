@@ -21,19 +21,17 @@ work.
   original one-use contract.
 - Evaluator-v2 and the A/C successor require new source, runtime and suite identities. D-142 and the R2 suite
   cannot be relabeled as qualification for those changed bytes.
-- The successor has distinct source/runtime/suite hashes at commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`;
-  R2 remains its immutable treatment predecessor and no runtime result exists.
-- The initial v2 contract is private and task-bound. The manifest contains task/contract/source hashes, counts and
-  opaque projections, not direct private requirement/check IDs. Four controls map to runtime trace,
-  requested-Docker-policy trace or artifact scan; integrity is a prerequisite. Free-form `prohibited_behaviors`
-  is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
+- Successor source/runtime/suite hashes are distinct at `04ee027`; R2 remains the immutable treatment predecessor.
+- V2 is task-bound and keeps direct private IDs out of the manifest. Four typed controls require integrity-checked
+  runtime, requested-Docker-policy or artifact evidence; free-form audit prose is not a safety rule.
 - V1-v12 are immutable predecessors; consumed attempts cannot retry. Exact activity is indexed in
   `docs/09-evidence.md`. V12 ended `child_output_invalid` after Docker passed.
 - V13 consumed `BLOCKED(docker_not_ready)` before `.env`/SDK. V14 bound that terminal and then consumed one separately
   approved attempt. Docker reached READY after eight read-only calls; one child returned without a framed envelope,
   producing `ERROR(child_checker_error/framed_output_invalid)`. Whole-terminal accounting is incomplete, unknown
   activity is true and retry/resume is closed. V15 binds the unknown cause and corrects only the result channel with a
-  pre-work duplicate descriptor. Its source qualification grants no state, activation wrapper or execution authority.
+  pre-work duplicate descriptor. V16 binds that source and adds the lifecycle wrapper offline. Neither qualification
+  grants state, attempt or execution authority.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
@@ -58,13 +56,8 @@ pricing, Docker and SDK attempts are never retried or repaired. Planning values,
 qualification grant no hash/candidate, cost or A/C authority. D-142 is not consumed, but it is outside the
 current critical path and has no activation authority.
 
-### Active docs own current state; archive owns chronology
-
-- Current checkpoint and next gate: `docs/current-status.md`.
-- Exact artifacts: `reports/` and the index in `docs/09-evidence.md`.
-- Historical narratives: `docs/archive/` and Git history.
-
-No sequencing decision can reopen a consumed receipt, attempt or marker or rewrite the exact D-142 gate.
+`docs/current-status.md` owns the checkpoint/gate, `reports/` owns artifacts and the archive owns chronology. No
+sequencing decision reopens consumed evidence or rewrites D-142.
 
 ## Superseded sequencing
 
@@ -73,7 +66,6 @@ No sequencing decision can reopen a consumed receipt, attempt or marker or rewri
 - Activating D-142 as the next step is superseded by the evaluator-v2 successor path.
 - Treating the existing R2 source qualification as sufficient for a corrected-evaluator A/C run is superseded;
   the changed evaluator requires successor source and suite qualification.
-- No sealed artifact, measured result or authority statement is rewritten by this priority change.
 
 ## Open questions
 
