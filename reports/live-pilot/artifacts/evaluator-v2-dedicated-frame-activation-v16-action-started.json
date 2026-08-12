@@ -1,0 +1,9 @@
+{
+  "schema_version": "dedicated-frame-activation-action-started-v16",
+  "marker_id": "ncpstarted_026c47c310c4d9f08dab3b430975a2d3f3a0b3404251725694671959e077d2e9",
+  "attempt_id": "ncpattempt_6ac263d18d68bbe764ac7b630bb5672f5e612add486d67af7f6a4b629328ada5",
+  "attempt_content_hash": "sha256:6ac263d18d68bbe764ac7b630bb5672f5e612add486d67af7f6a4b629328ada5",
+  "sequence": 1,
+  "recorded_at": "2026-08-12T16:26:43.927461Z",
+  "content_hash": "sha256:026c47c310c4d9f08dab3b430975a2d3f3a0b3404251725694671959e077d2e9"
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version": "dedicated-frame-activation-attempt-v16",
+  "attempt_id": "ncpattempt_6ac263d18d68bbe764ac7b630bb5672f5e612add486d67af7f6a4b629328ada5",
+  "run_authorization_id": "ncprunauthorization_bd060ddbcbff9e3a0ef480cca6237b0f47da92d820b8afb8931022f769b2b7ee",
+  "run_authorization_content_hash": "sha256:bd060ddbcbff9e3a0ef480cca6237b0f47da92d820b8afb8931022f769b2b7ee",
+  "ledger_snapshot_hash": "sha256:60d95f6799737eb7b3c1661ac0da028ba55e1eacc09384e427bbe30d6dac261b",
+  "attempt_number": 1,
+  "retry_or_resume_allowed": false,
+  "created_at": "2026-08-12T16:26:43.918460Z",
+  "content_hash": "sha256:6ac263d18d68bbe764ac7b630bb5672f5e612add486d67af7f6a4b629328ada5"
+}
