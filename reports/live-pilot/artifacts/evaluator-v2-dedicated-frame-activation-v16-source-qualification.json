@@ -1,0 +1,82 @@
+{
+  "schema_version": "dedicated-frame-activation-source-qualification-v16",
+  "qualification_id": "ac-evaluator-v2-dedicated-frame-activation-source-20260813-r1",
+  "status": "OFFLINE_V16_ACTIVATION_SOURCE_QUALIFIED_STATE_STATEMENT_REQUIRED",
+  "recorded_at": "2026-08-12T15:59:47.010031Z",
+  "source_commit": {
+    "commit": "910573fb7f4ee4ca3779f81c0d7d21eb2f976c63",
+    "tree": "b99883f5771e2bea8f4635c16a308cfcbc61dfc4",
+    "parents": [
+      "9c6ec8ac7a5a44533f1a1e42c41059b27cfca2b3"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-dedicated-frame-activation-successor-v16.contract.json",
+      "patchloop/evals/dedicated_frame_activation_successor.py",
+      "scripts/build_dedicated_frame_activation_successor.py",
+      "tests/test_dedicated_frame_activation_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-dedicated-frame-activation-successor-v16.contract.json",
+      "blob_oid": "f44a4b22ade87b318910d6a251942d2db9497e9b",
+      "file_bytes": 4007,
+      "file_sha256": "sha256:65fff6d60a58d4a0a27af411d590864c568228a5a101ea126011e57f1bc1cb36"
+    },
+    {
+      "path": "experiments/evaluator-v2-dedicated-frame-preflight-successor-v15.contract.json",
+      "blob_oid": "95cd8d372745cb83f515d36c0f010f7fb90659f7",
+      "file_bytes": 3970,
+      "file_sha256": "sha256:9624376e0ea81a3b4b3c8700ad09b60a94590beb448ff3d8995198491c40eeb0"
+    },
+    {
+      "path": "patchloop/evals/dedicated_frame_activation_successor.py",
+      "blob_oid": "60ed876a252605169b24249d4a45b2f812013f5a",
+      "file_bytes": 52269,
+      "file_sha256": "sha256:d1f49322f0bd458bf0e3a9ff6b2c2831850a8eeff84e0bf3114e9439d2c39c96"
+    },
+    {
+      "path": "patchloop/evals/dedicated_frame_preflight_successor.py",
+      "blob_oid": "78d00ee57f75fbdb05de60912ba1fc1816004965",
+      "file_bytes": 30320,
+      "file_sha256": "sha256:b652088ffd7f6e4a28c95bd5547626206ffafe097c125820c984977f000e5fad"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dedicated-frame-preflight-v15-source-qualification.json",
+      "blob_oid": "a674268ad0c4cff9f0c41ab3b43cb8c3e5d83ca3",
+      "file_bytes": 4755,
+      "file_sha256": "sha256:0112807f9a8bbe4831e7c9103859909c8266247ec0aaf551c2960978421b9708"
+    },
+    {
+      "path": "scripts/build_dedicated_frame_activation_successor.py",
+      "blob_oid": "6bd62093e62409fbf376038cb3d9102a1e7c58ff",
+      "file_bytes": 4218,
+      "file_sha256": "sha256:098497df569f110091d3c3ce21a510468b79c4284224fe433aab30850c9920c2"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_dedicated_frame_child.py",
+      "blob_oid": "54bc51bf07c85bbb54224c6e4513bd3319b8ee6e",
+      "file_bytes": 6658,
+      "file_sha256": "sha256:823e85a8e10276d137f2d3bba2c0c8854b18e2213c855bef4ebd95bfce187ead"
+    },
+    {
+      "path": "tests/test_dedicated_frame_activation_successor.py",
+      "blob_oid": "4346d634c624d2e8f408f1b48d966f70781e934b",
+      "file_bytes": 8342,
+      "file_sha256": "sha256:a74e98ce0977eb79e61f975b22b577c16490bb276601998396144a3de19f9dd2"
+    }
+  ],
+  "contract_id": "ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c",
+  "contract_content_hash": "sha256:e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c",
+  "predecessor_source_qualification_hash": "sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "state_approval_attempt_or_terminal_created": false,
+    "environment_docker_dotenv_sdk_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "execution_authorized": false
+  },
+  "next_gate": "fresh-exact-v16-state-statement",
+  "content_hash": "sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091"
+}
