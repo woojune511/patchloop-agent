@@ -1,0 +1,73 @@
+{
+  "schema_version": "sanitized-sdk-bootstrap-framed-successor-contract-v13",
+  "contract_version": "ac-evaluator-v2-sanitized-sdk-bootstrap-framed-successor-v13",
+  "contract_id": "ncpcontract_11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047",
+  "predecessor": {
+    "evidence_commit": "770b661e52646e0e309162121f14ff92f7f2568d",
+    "contract_id": "ncpcontract_4dba86e844bf0c500f61b2714f00714e9c1fe105e4938ff63db3b00f276706b3",
+    "source_qualification_hash": "sha256:e96858f63e4e45e74ec9219e8653dbe276ebcd37384bcfa8762535ee771a6c41",
+    "terminal_id": "ncpterminal_9a4fc25df858faad01f4ec7872ca7d4cb31a4515f719fbabb2a20fc4cc55b13b",
+    "terminal_content_hash": "sha256:9a4fc25df858faad01f4ec7872ca7d4cb31a4515f719fbabb2a20fc4cc55b13b",
+    "outcome": "error",
+    "reason": "child_checker_error",
+    "child_code": "child_output_invalid",
+    "activity_accounting_complete": true,
+    "unknown_post_marker_activity_possible": false,
+    "retry_or_resume_allowed": false
+  },
+  "runtime": {
+    "entrypoint": "patchloop.evals.sanitized_sdk_bootstrap_framed_successor.run_parent_preflight",
+    "v9_source_commit": "8678ce9e4fbae426971a90a2f47ad28b5a431885",
+    "v9_contract_id": "ncpcontract_c9f40f2fb6e944edddf8232923135bde1acbd8def51b101f432490671a904c11",
+    "v9_source_qualification_hash": "sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687",
+    "framed_child_path": "scripts/run_sanitized_sdk_bootstrap_framed_child.py",
+    "framed_child_file_sha256": "sha256:dce8b1a770847779e4b8516b78686b0600a8f27598ddf5a616d859e181a2471f",
+    "diagnostic_child_file_sha256": "sha256:2ad3d536f10f9eaea503db3c61943ee59ff4de37e42a72651d49b396deaedb27",
+    "child_flags": [
+      "-I",
+      "-E",
+      "-s",
+      "-B"
+    ],
+    "fixed_child_environment": {
+      "PYTHONIOENCODING": "utf-8",
+      "PYTHONUTF8": "1"
+    },
+    "passthrough_environment_names": [
+      "SYSTEMROOT"
+    ],
+    "docker_expected_command_count": 8,
+    "diagnostic_child_limit": 1,
+    "stdout_stderr_descriptor_isolation_required": true,
+    "canonical_single_envelope_required": true,
+    "raw_child_output_persistence_allowed": false,
+    "credential_value_return_hash_prefix_or_length_limit": 0,
+    "network_call_limit": 0,
+    "provider_evaluator_agent_call_limit": 0
+  },
+  "lifecycle": {
+    "fresh_source_bound_state_required": true,
+    "separate_exact_approval_required": true,
+    "exact_immediate_run_statement_required": true,
+    "authorization_attempt_action_before_observation": true,
+    "one_terminal_required": true,
+    "attempt_limit": 1,
+    "state_or_approval_reusable": false,
+    "retry_replacement_or_resume_allowed": false,
+    "consumed_v12_reuse_allowed": false
+  },
+  "authority": {
+    "contract_materialization_authorized": true,
+    "source_qualification_authorized": true,
+    "state_approval_attempt_or_terminal_during_qualification_authorized": false,
+    "environment_docker_dotenv_sdk_or_network_observation_authorized": false,
+    "credential_value_recording_authorized": false,
+    "docker_start_pull_load_image_store_or_container_mutation_authorized": false,
+    "provider_evaluator_agent_execution_authorized": false,
+    "candidate_cost_or_paid_execution_authorized": false
+  },
+  "state_approval_and_attempt_entrypoints_implemented": true,
+  "execution_currently_authorized": false,
+  "next_gate": "fresh-exact-v13-state-statement",
+  "content_hash": "sha256:11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047"
+}
