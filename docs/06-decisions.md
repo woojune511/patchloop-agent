@@ -30,8 +30,8 @@ work.
   approved attempt. Docker reached READY after eight read-only calls; one child returned without a framed envelope,
   producing `ERROR(child_checker_error/framed_output_invalid)`. Whole-terminal accounting is incomplete, unknown
   activity is true and retry/resume is closed. V15 binds the unknown cause and corrects only the result channel with a
-  pre-work duplicate descriptor. V16 binds that source and adds the lifecycle wrapper offline. Neither qualification
-  grants state, attempt or execution authority.
+  pre-work duplicate descriptor. V16 binds that source and adds the lifecycle wrapper offline. Its later exact state is
+  self-attested non-proof only; no approval, attempt or execution authority exists.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

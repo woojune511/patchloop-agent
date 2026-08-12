@@ -59,7 +59,8 @@
 - V16 source `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`, contract
   `ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` and qualification
   `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` add the activation wrapper offline.
-  No state/approval/attempt/terminal or external observation exists; the next boundary is an exact v16 state statement.
+  State `ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029` is a nonreusable,
+  self-attested non-proof with observation 0 and no execution authority. Approval/attempt/terminal remain absent.
 
 ## Required reading
 

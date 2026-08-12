@@ -10,8 +10,10 @@ is the exact four-addition child of `9c6ec8a`; contract
 `ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` binds the exact v15 source
 qualification. Sole-artifact commit `761bd37` records
 `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091`; file
-`sha256:337ab14568d43a3c8027cdad8418236ba6581abcf19477565aa750225fa9abaa`, 3,835 bytes. State, approval,
-attempt, terminal, external observation, mutation and execution authority are absent.
+`sha256:337ab14568d43a3c8027cdad8418236ba6581abcf19477565aa750225fa9abaa`, 3,835 bytes. State-only commit `0469c8f`
+records `ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029`; file
+`sha256:c9df6b5b0fae84ef01690ac2b3746ee8a2106fa58af81f3e95204d38f2f300fb`, 918 bytes. It is self-attested
+non-proof with observation 0/execution false; approval, attempt and terminal are absent.
 
 ## V15 dedicated-frame successor — source-qualified only
 

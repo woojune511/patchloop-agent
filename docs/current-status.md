@@ -31,14 +31,16 @@ V16 activation source commit/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/
 `b99883f5771e2bea8f4635c16a308cfcbc61dfc4` binds that exact v15 qualification. Contract
 `ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` is source-qualified at
 `761bd37` as `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` after 7/7 focused tests.
-It implements distinct state/approval/run entrypoints, but no state, approval, attempt, terminal or observation exists.
+Exact statement binding at `0469c8f` created nonreusable state
+`ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029`: self-attested non-proof,
+observation 0 and execution false. Approval, attempt and terminal are absent.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
 3. **Offline preflight contracts.** V1-v14 are immutable; v15/v16 are source-qualified only.
-4. **Separately approved preflight attempt.** V16 has no state, approval or attempt.
+4. **Separately approved preflight attempt.** V16 has state only; approval and attempt are absent.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -57,9 +59,8 @@ V5/v7/v12/v13/v14 are consumed. V15/v16 qualification opens no Docker/`.env`/SDK
 
 ## Next gate
 
-No execution gate is open. The next boundary is an exact v16 state statement; it records a self-attested non-proof
-only. A later separate exact approval and still-later exact immediate-run statement would be required for one attempt.
-Current artifacts grant none. Docker provisioning,
+No execution gate is open. The next boundary is a separate exact v16 future-attempt approval; it starts no attempt.
+A still-later exact immediate-run statement would be required for one attempt. Current artifacts grant none. Docker provisioning,
 candidate, cost and paid execution remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.
