@@ -104,7 +104,7 @@ persistence/qualification; raw results remain unofficial. V12/V14/V16/V18 consum
 V13 stopped Docker-not-ready; none can retry or establish readiness. V18's supervisor returned no envelope after
 Docker READY, leaving incomplete/unknown accounting. V19 changes only the outer result transport. V20 wraps its
 exact qualification with separate state/approval/run gates; source qualification grants no state, external
-observation or execution authority.
+observation or execution authority. The later self-attested state also grants none; approval and attempt are absent.
 
 ## 7. Run-completion gate
 

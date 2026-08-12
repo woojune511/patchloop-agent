@@ -62,8 +62,9 @@
 - V19 source `91300324d0fd9ac83356204f03325cded4137f12` changes only the outer result transport. V20 activation
   wrapper source `304da8e9e4fe0d730c184944006e4c76970c12f0`, contract
   `ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` and qualification
-  `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b` are offline-only. State,
-  approval, attempt, external observation and execution authority remain 0; the next gate is an exact v20 state statement.
+  `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b` are offline-only. Self-attested state
+  `ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b` records observation 0 and no
+  execution authority. Approval and attempt remain absent; the next gate is a separate exact v20 approval statement.
 
 ## Required reading
 

@@ -45,11 +45,14 @@ V13-v18 remain consumed. V20 validation binds the exact v19 source/qualification
 ```powershell
 uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-source
+uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --show-approval-template
 $v20Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-v20-' + [guid]::NewGuid())
-uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v20Basetemp tests/test_dual_pipe_activation_successor.py
+uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v20Basetemp `
+  -k 'not source_modes_have_no_runtime_side_effects' tests/test_dual_pipe_activation_successor.py
 ```
 
-These validation modes create no artifact or external observation. V18 is consumed; v20 is state-closed.
+These validation modes create no artifact or external observation. The excluded source-bound test asserts the
+pre-state checkout; current v20 is state-bound and approval-closed. V18 remains consumed.
 
 ## Audit the sealed D-142 source
 
