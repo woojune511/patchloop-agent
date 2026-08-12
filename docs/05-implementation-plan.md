@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v18 are immutable; v20 is source-qualified with state and approval bound.
+Status: v1-v20 are immutable; v20 is a consumed ERROR.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,12 +47,11 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14/v16/v18 consumed; v20 has approval but no attempt.
+Status: v3/v5/v7/v12/v13/v14/v16/v18/v20 consumed; no attempt is open.
 
-V18 passed Docker's 8 reads, then consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting.
-V19 changes only the parent/supervisor result transport. V20 binds that exact source and implements separate
-state/approval/immediate-run gates. Its non-proof state is bound, but separate exact approval and later immediate-run
-authority are required before any observation. Approval is now bound; exact immediate-run authority remains absent.
+V20 passed Docker's 8 reads and its outer pipe returned nonempty at code 0, but the supervisor envelope remained
+invalid. It consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting and no retry. Another
+attempt requires a new offline successor, qualification, state and approval.
 
 ## Work item 5 — execution candidate and cost gate
 

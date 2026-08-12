@@ -32,8 +32,8 @@ work.
   activity is true and retry/resume is closed. V16 later consumes the same framed-output class after Docker READY.
   V17 binds that exact terminal and moves the diagnostic to one null-stdio worker behind a stdlib supervisor and
   anonymous result pipe. V18 later passed Docker but consumed a no-envelope supervisor ERROR with incomplete/unknown
-  accounting. Its state, approval and attempt cannot be reused. V19 corrects only the outer transport. V20 binds
-  that qualified source behind separate gates; state and approval grant no execution until an exact run statement.
+  accounting. V20 later corrected the outer transport, but consumed the same supervisor-envelope class after Docker
+  READY. Its state, approval and attempt cannot be reused; any correction requires a new versioned successor.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

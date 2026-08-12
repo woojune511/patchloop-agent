@@ -45,14 +45,14 @@ V13-v18 remain consumed. V20 validation binds the exact v19 source/qualification
 ```powershell
 uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-source
-uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --show-run-template
+uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-terminal
 $v20Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-v20-' + [guid]::NewGuid())
 uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v20Basetemp `
   -k 'not source_modes_have_no_runtime_side_effects' tests/test_dual_pipe_activation_successor.py
 ```
 
-These validation modes create no artifact or external observation. The excluded source-bound test asserts the
-pre-state checkout. Current v20 is approval-bound and attempt-closed; showing the run template starts nothing.
+These validation modes create no artifact or external observation. The excluded test asserts the pre-state checkout.
+V20 is consumed; terminal validation starts nothing and grants no retry.
 
 ## Audit the sealed D-142 source
 
@@ -75,5 +75,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142, v18 retry or v20 activation command. Validate read-only, then stop: no
+There is no supported live A/C, D-142, v18/v20 retry or activation command. Validate read-only, then stop: no
 attempt, candidate or cost gate is open.

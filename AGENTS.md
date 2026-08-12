@@ -47,25 +47,13 @@
   `ERROR(child_checker_error/child_output_invalid)` after Docker passed. Both had forbidden activity 0 and cannot
   retry. V8-v11 are immutable offline/source/state/approval predecessors and cannot be reused; exact tuples are in
   `docs/09-evidence.md`.
-- Framed v13 is consumed `BLOCKED(docker_not_ready)` at `d9fb103b7be464f3ff1aaf73ef31097eb9815239`;
-  eight Docker reads ran and `.env`/SDK/network/mutation stayed 0. Retry/resume is false.
-- Manual-restart v14 consumed `ERROR(child_checker_error/framed_output_invalid)` at `e63f418`: Docker passed eight
-  reads and one child returned without an envelope. Recorded forbidden counts are 0, but accounting is incomplete,
-  unknown activity is true and retry/resume is false.
-- V15 is the source predecessor. V16 consumed one exact-approved attempt at `30c254d`: Docker passed 8 reads, one
-  child returned no envelope, and terminal `ERROR(child_checker_error/framed_output_invalid)` has incomplete
-  accounting, unknown activity true and retry/resume false.
-- V18 `e4c76af` preserves v17's supervisor/worker pipe. Exact state/approval led to one consumed attempt at
-  `490f1ed`: Docker passed 8 reads, one supervisor child returned no envelope, and terminal is
-  `ERROR(child_checker_error/supervised_output_invalid)`. Forbidden counts are 0, accounting incomplete/unknown and
-  retry false; exact IDs remain in `docs/09-evidence.md`.
-- V19 source `91300324d0fd9ac83356204f03325cded4137f12` changes only the outer result transport. V20 activation
-  wrapper source `304da8e9e4fe0d730c184944006e4c76970c12f0`, contract
+- V13/V14/V16/V18 are consumed Docker/preflight failures with no retry; `docs/09-evidence.md` owns their exact tuples.
+- V20 source `304da8e9e4fe0d730c184944006e4c76970c12f0`, contract
   `ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` and qualification
-  `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b` are offline-only. Self-attested state
-  `ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b` records observation 0 and no
-  execution authority. Approval `ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f`
-  is bound with no attempt; the next gate is a separate exact immediate-run statement.
+  `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b` led through exact state/approval to
+  consumed lifecycle `5cc6b96`. Docker passed 8 reads and the outer pipe returned a nonempty result at code 0, but
+  the supervisor envelope was invalid. Terminal is `ERROR(child_checker_error/supervised_output_invalid)` with
+  incomplete/unknown accounting and no retry; raw output is absent and no narrower cause is established.
 
 ## Required reading
 

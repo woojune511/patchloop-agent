@@ -103,8 +103,8 @@ Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed 
 persistence/qualification; raw results remain unofficial. V12/V14/V16/V18 consumed checker-error lifecycles and
 V13 stopped Docker-not-ready; none can retry or establish readiness. V18's supervisor returned no envelope after
 Docker READY, leaving incomplete/unknown accounting. V19 changes only the outer result transport. V20 wraps its
-exact qualification with separate state/approval/run gates. Source qualification, self-attested state and later
-approval grant no observation or execution; a separate exact immediate-run statement is still required.
+exact qualification with separate state/approval/run gates. V20 consumed one ERROR after Docker READY; the invalid
+supervisor envelope leaves accounting incomplete/unknown, grants no readiness and cannot retry.
 
 ## 7. Run-completion gate
 

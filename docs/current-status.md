@@ -14,37 +14,27 @@ PASS. Historical results remain immutable and are not independently safety-verif
 binds typed event/CAS evidence and uses an authority receipt to gate runner, persistence, qualification and completion; raw
 results remain `official=false` and local/mock tests are not official evidence.
 
-The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V13 stopped before
-`.env`/SDK; V14/V16 each consumed a framing ERROR after Docker READY. V16 records 8 Docker reads, one returned child,
-forbidden counts 0, incomplete accounting, unknown activity and no retry; `docs/09-evidence.md` owns its exact ID.
-
-V18 contract `ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` and qualification
-`sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d` preserve v17's supervisor/worker pipe.
-Exact state/approval led to lifecycle `490f1ed`: Docker passed 8 stable reads, then one supervisor child returned no
-envelope. Terminal `ncpterminal_775512b68eac1b8f418c22a4ab30a450bf5ba8150f155f8bcbe4e5938acca516` is
-`ERROR(child_checker_error/supervised_output_invalid)` with forbidden counts 0, incomplete/unknown accounting and no retry.
-
-V19 changes only parent/supervisor result transport. V20 source/tree
+The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V13/V14/V16/V18 are
+immutable consumed predecessors; `docs/09-evidence.md` owns their exact tuples. V20 source/tree
 `304da8e9e4fe0d730c184944006e4c76970c12f0`/`0f43651ed75142c48b29b42664dbf90b22a37291` wraps its exact
-source qualification with separate state, approval and immediate-run gates. Contract
-`ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` has qualification
-`sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b`. Self-attested state
-`ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b` records observation 0 and no
-execution authority. Approval `ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f`
-is bound with `attempt_started=false`; no run authorization, attempt or observation exists.
+v19 source. Exact state/approval led to lifecycle `5cc6b96`: Docker passed 8 stable reads and the outer pipe returned
+a nonempty result at code 0, but the supervisor envelope was invalid. Terminal
+`ncpterminal_d528eb39f0e367fe8b38b81ae3a3ddbd627d9c9cefe6a84e8874523b7e488897` is
+`ERROR(child_checker_error/supervised_output_invalid)` with incomplete/unknown accounting and no retry. Raw output
+is absent, so no narrower cause is established.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v18 are immutable; v20 has exact state and approval.
-4. **Separately approved preflight attempt.** Exact immediate-run authority is required; no attempt is open.
+3. **Offline preflight contracts.** V1-v20 are immutable; v20 is consumed ERROR.
+4. **Separately approved preflight attempt.** Blocked on a new versioned successor; no attempt is open.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
 8. **Selective/full comparison.** B/D require frozen leakage/redaction/calibration or a fresh held-out panel.
 
-No official/live evaluator result exists. V7/v12/v14/v16/v18 are consumed ERROR; v20 is not readiness evidence.
+No official/live evaluator result exists. V7/v12/v14/v16/v18/v20 are consumed ERROR and not readiness evidence.
 
 ## Consumed boundaries
 
@@ -53,11 +43,11 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12/v13/v14/v16/v18 are consumed and cannot retry. Cost and A/C execution remain closed.
+V5/v7/v12/v13/v14/v16/v18/v20 are consumed and cannot retry. Cost and A/C execution remain closed.
 
 ## Next gate
 
-No attempt is open. V16/V18 cannot retry or resume. V20 state/approval are nonreusable; the next boundary is the
-separate exact v20 immediate-run statement. Candidate and cost remain closed.
+No attempt is open. V20 cannot retry or resume. Any correction requires a new offline successor, qualification,
+state and approval before another attempt. Candidate and cost remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

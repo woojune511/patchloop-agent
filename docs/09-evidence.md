@@ -3,19 +3,19 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V20 dual-pipe activation — source-qualified only
+## V20 dual-pipe activation — consumed ERROR
 
 Source/tree `304da8e9e4fe0d730c184944006e4c76970c12f0`/`0f43651ed75142c48b29b42664dbf90b22a37291`
 is the exact four-addition child of `05e2b19`. Contract
-`ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` wraps exact v19 qualification
-`sha256:1dc8eb6e484e56eb7bdbf8545fe5d40825a92ef864f46b94a5cf00bbdcf20c14`. Sole qualification commit
-`23e8a04` records `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b`; file
-`sha256:980ab39f6e8a661426005c659c3a18cfc8bfe62ad3fd279981c1f52a32ce9c55`, 3,757 bytes. Commit `99db597`
-records self-attested state `ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b`; file
-`sha256:a709c5bd5313410c10f99e1f7517f1dd6c219022529cad79c55b45235535bf1d`, 912 bytes. Commit `19e2aff`
-records approval `ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f`; file
-`sha256:c6921eb6b34910199eae3d1242308f315ebccea8f7dd1b51bd2ae2079ea77939`, 1,567 bytes. Observation/mutation are
-0; attempt/terminal are absent and the next gate is exact v20 immediate-run authority.
+`ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` has qualification
+`sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b`. State
+`ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b` and approval
+`ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f` led to lifecycle `5cc6b96`.
+Attempt `ncpattempt_ceb920acc4c49d71dfaf196f890f2d7ddb37b48b2c3cbad2d43892ecb2e2ab6a` ended at terminal
+`ncpterminal_d528eb39f0e367fe8b38b81ae3a3ddbd627d9c9cefe6a84e8874523b7e488897`; terminal file
+`sha256:6ddeabb4fb8f6632887382c9a5f9f1bf4f16dd721873d75af439b4b2e2c2c60b`, 22,558 bytes. Docker passed 8 reads;
+the outer pipe returned nonempty at code 0 but the supervisor envelope was invalid. Recorded forbidden counts are 0,
+raw output is absent, accounting is incomplete/unknown, outcome is `ERROR(child_checker_error)` and retry is false.
 
 ## V18 supervised-frame activation — consumed ERROR
 
