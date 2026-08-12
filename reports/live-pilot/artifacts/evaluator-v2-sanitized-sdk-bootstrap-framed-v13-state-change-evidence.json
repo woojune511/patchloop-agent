@@ -1,0 +1,15 @@
+{
+  "schema_version": "sanitized-sdk-bootstrap-framed-state-v13",
+  "state_id": "ncpstate_92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446",
+  "contract_id": "ncpcontract_11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047",
+  "source_qualification_hash": "sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298",
+  "statement_sha256": "sha256:055df3295c4a0c5ef8a192623cc04e75016fffe11ae04d87a366d350f9e270af",
+  "docker_running_reported": true,
+  "dotenv_only_openai_api_key_reported": true,
+  "self_attested_nonproof": true,
+  "external_observation_count": 0,
+  "execution_authorized": false,
+  "reusable": false,
+  "recorded_at": "2026-08-12T12:53:11.508242Z",
+  "content_hash": "sha256:92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446"
+}
