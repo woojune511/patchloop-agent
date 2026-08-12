@@ -11,9 +11,13 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
 - Qualification `sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816`, file
   `sha256:b3aa811ebbf2f92767a67815646e45bfbcc158cf06f65abfdb61bc113f8d0abd`, 5,711 bytes is the sole addition at
   `0bc0fbe3a2447b102738d239c421585d44182165`. Tests pass 7/7.
+- State `ncpstate_cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555`, content hash
+  `sha256:cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555`, file
+  `sha256:4541cfdd304d65e5047663ec3f73f59a1a68ca59f397fe4bc86f7e42621bd119`, 908 bytes is the sole addition at
+  `d4467c0`.
 
-Observation/mutation and state/approval/attempt are 0. The manual-start report is self-attested non-proof; the next
-gate is the exact v14 state statement and grants no execution.
+State observation/mutation is 0, `.env` unreported and reusable false. Approval/attempt are absent; the next gate is
+the exact v14 approval statement and grants no execution.
 
 ## V13 framed successor — consumed BLOCKED
 

@@ -51,10 +51,11 @@ V13 remains consumed. Validate the current v14 source without external observati
 ```powershell
 uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-source
-uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --show-state-template
+uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --show-approval-template
 ```
 
-These modes create no artifact and read no `.env`/Docker/SDK. V14 tests pass 7/7. Do not invoke predecessor modes.
+These modes create no artifact and read no `.env`/Docker/SDK. Pre-state tests passed 7/7; the state-absence assertion is
+now historical. Do not invoke predecessor modes.
 
 ## Audit the sealed D-142 source
 
@@ -87,7 +88,7 @@ Repository-wide suites may retain historical absent-state assertions; do not rew
 
 There is no supported live A/C or D-142 activation command:
 
-1. Validate evaluator-v2, consumed v13 and v14 source read-only.
-2. Stop. Only the exact v14 state statement may create non-proof state; it performs no observation.
+1. Validate evaluator-v2, consumed v13 and v14 source/state read-only.
+2. Stop. Only the exact v14 approval statement may create a binding; it starts no attempt.
 
-V10-v13 creation/execution modes are consumed. V14 state, approval and run require separate exact statements.
+V10-v13 modes and v14 state creation are consumed. V14 approval/run require separate exact statements.

@@ -27,14 +27,15 @@ and SDK child were not reached. Mutation/network/provider/evaluator/agent/value 
 V14 source `d42acfc4d62350e692725f33d1be4b0a53f47b93` delegates unchanged v13 runtime under new lifecycle identity.
 Contract `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` and qualification
 `sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816` passed 7/7 offline tests.
-The manual-start report is not proof; state/approval/attempt and external observation are absent.
+State `ncpstate_cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555` at `d4467c0` records only the
+manual-start report. It is non-proof, `.env` unreported, observation 0 and nonreusable; approval/attempt are absent.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v13 are predecessors; v14 source is qualified.
-4. **Separately approved preflight attempt.** V14 awaits exact state, then distinct approval/run authority.
+3. **Offline preflight contracts.** V1-v13 are predecessors; v14 source/state are bound.
+4. **Separately approved preflight attempt.** V14 awaits exact approval, then distinct run authority.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -49,12 +50,12 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12/v13 are consumed. V14 qualification opens no Docker/`.env`/SDK, cost or A/C execution authority.
+V5/v7/v12/v13 are consumed. V14 state opens no Docker/`.env`/SDK, cost or A/C execution authority.
 
 ## Next gate
 
-The next gate is one **exact v14 state-binding statement** from `--show-state-template`. It records self-attested,
-nonreusable state only and performs no observation. Later exact approval and run statements remain separate; v13 retry,
-Docker provisioning, candidate, cost and paid execution stay closed.
+The next gate is one **exact v14 approval-binding statement** from `--show-approval-template`. It must reconfirm current
+Docker-running and `.env`-only-`OPENAI_API_KEY` reports, creates one nonreusable approval only and starts no attempt.
+The later exact run statement, Docker provisioning, candidate, cost and paid execution remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

@@ -46,7 +46,7 @@ Historical milestone-by-milestone limitations are archived at
   typed parsing. Raw stdout was not retained, so no key/SDK readiness or narrower cause is proved. V12 cannot retry,
   is not evaluator-v12 and proves no confidentiality. V13's stream suppression and envelope are mock/source evidence;
   its attempt stopped Docker-not-ready before `.env`/SDK. V14 only source-qualifies a new wrapper and manual-report
-  binding path; it proves no Docker, image, `.env` or SDK readiness.
+  binding path; its state is self-attested with `.env` unreported and proves no Docker, image, `.env` or SDK readiness.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

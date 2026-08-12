@@ -108,7 +108,8 @@ result or narrower cause. V13 suppresses workload streams and returns one typed,
 created no runtime artifact; a later exact statement created one nonreusable self-attested state with observation 0.
 A second statement approved one attempt, now consumed `BLOCKED(docker_not_ready)`. Its authorization→attempt→
 ACTION_STARTED→terminal chain is complete and nonreusable. V14 binds that terminal and delegates unchanged v13 runtime
-under a new source/lifecycle identity. Qualification creates no state or authority; exact state→approval→run remains.
+under a new source/lifecycle identity. Its exact state records only a Docker-running report with `.env` unreported and
+observation 0. Approval/run remain separate and absent.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory
