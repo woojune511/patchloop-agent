@@ -33,7 +33,7 @@ work.
   V17 binds that exact terminal and moves the diagnostic to one null-stdio worker behind a stdlib supervisor and
   anonymous result pipe. V18 later passed Docker but consumed a no-envelope supervisor ERROR with incomplete/unknown
   accounting. Its state, approval and attempt cannot be reused. V19 corrects only the outer transport. V20 binds
-  that qualified source behind separate gates; its self-attested state grants no execution and approval is absent.
+  that qualified source behind separate gates; state and approval grant no execution until an exact run statement.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

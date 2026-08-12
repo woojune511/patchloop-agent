@@ -64,7 +64,8 @@
   `ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` and qualification
   `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b` are offline-only. Self-attested state
   `ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b` records observation 0 and no
-  execution authority. Approval and attempt remain absent; the next gate is a separate exact v20 approval statement.
+  execution authority. Approval `ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f`
+  is bound with no attempt; the next gate is a separate exact immediate-run statement.
 
 ## Required reading
 

@@ -12,8 +12,10 @@ is the exact four-addition child of `05e2b19`. Contract
 `23e8a04` records `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b`; file
 `sha256:980ab39f6e8a661426005c659c3a18cfc8bfe62ad3fd279981c1f52a32ce9c55`, 3,757 bytes. Commit `99db597`
 records self-attested state `ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b`; file
-`sha256:a709c5bd5313410c10f99e1f7517f1dd6c219022529cad79c55b45235535bf1d`, 912 bytes. Observation/mutation and
-execution authority are 0; approval/attempt/terminal are absent and the next gate is exact v20 approval.
+`sha256:a709c5bd5313410c10f99e1f7517f1dd6c219022529cad79c55b45235535bf1d`, 912 bytes. Commit `19e2aff`
+records approval `ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f`; file
+`sha256:c6921eb6b34910199eae3d1242308f315ebccea8f7dd1b51bd2ae2079ea77939`, 1,567 bytes. Observation/mutation are
+0; attempt/terminal are absent and the next gate is exact v20 immediate-run authority.
 
 ## V18 supervised-frame activation — consumed ERROR
 

@@ -40,7 +40,7 @@ Historical milestone-by-milestone limitations are archived at
   lifecycle can retry or establish SDK readiness or a narrower cause. V18's supervisor returned no envelope, so its
   accounting remains incomplete/unknown. V19 changes only the outer result channel. V20 binds that qualified source
   behind separate state/approval/run gates. Synthetic subprocess tests do not prove worker/SDK behavior; v20's
-  self-attested state is non-proof and grants no approval, attempt or observation.
+  self-attested state and approval are non-proof and grant no attempt or observation.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

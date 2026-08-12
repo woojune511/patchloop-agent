@@ -105,7 +105,8 @@ Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 V5/V7/V12/V13/V14/V16/V18 are immutable consumed terminals. V17 isolates one null-stdio diagnostic worker behind
 a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after Docker READY. V19 changes only the
 outer result transport. V20 binds its exact source qualification and separates state, approval and immediate-run
-authority. Its self-attested state records no observation or execution authority; approval and attempt are absent.
+authority. Its self-attested state and approval record no observation or execution; only a separate exact immediate-run
+statement can start the ledger.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

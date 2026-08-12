@@ -30,14 +30,15 @@ source qualification with separate state, approval and immediate-run gates. Cont
 `ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` has qualification
 `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b`. Self-attested state
 `ncpstate_7931e548e99c34ba36b334bab032d7359701929cbb6866d8b713bc2c94b9d17b` records observation 0 and no
-execution authority; approval and attempt remain absent.
+execution authority. Approval `ncpapproval_4dc5670957a304fcbf4178479059a61217a528d008a5f4d70603269e11c0c49f`
+is bound with `attempt_started=false`; no run authorization, attempt or observation exists.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v18 are immutable; v20 is source-qualified/state-bound.
-4. **Separately approved preflight attempt.** Exact v20 approval and later run authority are required; no attempt is open.
+3. **Offline preflight contracts.** V1-v18 are immutable; v20 has exact state and approval.
+4. **Separately approved preflight attempt.** Exact immediate-run authority is required; no attempt is open.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -56,7 +57,7 @@ V5/v7/v12/v13/v14/v16/v18 are consumed and cannot retry. Cost and A/C execution 
 
 ## Next gate
 
-No attempt is open. V16/V18 cannot retry or resume. V20 state is nonreusable and grants no execution; the next
-boundary is a separate exact v20 approval statement. Candidate and cost remain closed.
+No attempt is open. V16/V18 cannot retry or resume. V20 state/approval are nonreusable; the next boundary is the
+separate exact v20 immediate-run statement. Candidate and cost remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.
