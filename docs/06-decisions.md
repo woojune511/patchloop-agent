@@ -29,11 +29,10 @@ work.
   is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
 - V1-v12 are immutable predecessors; consumed attempts cannot retry. Exact activity is indexed in
   `docs/09-evidence.md`. V12 ended `child_output_invalid` after Docker passed.
-- V13 discards workload streams and uses one typed envelope. Qualification granted no execution; a later exact
-  state/approval chain authorized one attempt. It consumed `BLOCKED(docker_not_ready)` after eight read-only Docker
-  calls and before `.env`/SDK. Retry is closed. V14 binds that terminal and delegates unchanged v13 semantics under a
-  new identity. Its later exact state is self-attested non-proof with `.env` unreported and observation 0; approval/run
-  are separate, and approval now binds one future attempt without starting it.
+- V13 consumed `BLOCKED(docker_not_ready)` before `.env`/SDK. V14 bound that terminal and then consumed one separately
+  approved attempt. Docker reached READY after eight read-only calls; one child returned without a framed envelope,
+  producing `ERROR(child_checker_error/framed_output_invalid)`. Whole-terminal accounting is incomplete, unknown
+  activity is true and retry/resume is closed. A future preflight requires a new qualified version and authority.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

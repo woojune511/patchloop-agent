@@ -103,10 +103,10 @@ Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed 
 persistence/qualification; raw results remain unofficial. V5/v7 are consumed. V10 state is self-attested non-proof;
 v11 binds it to exact v9 runtime and one approval pair. V12 consumed one exact-approved lifecycle: its Docker gate
 passed, but child stdout failed typed parsing, so terminal `ERROR(child_output_invalid)` establishes no readiness.
-V13's framed boundary is source-qualified/mock-only. Its recorded self-attested state has observation 0 and no
-runtime proof. Its one attempt ended `BLOCKED(docker_not_ready)` before `.env`/SDK observation. The consumed terminal
-establishes no readiness. V14 source qualification and manual-start report also change no A/C treatment.
-Its state is self-attested non-proof; approval is bound but attempt remains absent.
+V13's one attempt ended `BLOCKED(docker_not_ready)` before `.env`/SDK observation. V14 then consumed one approved
+attempt: Docker passed eight read-only checks and one child returned, but no framed envelope was received. Its
+`ERROR(child_checker_error/framed_output_invalid)` terminal has incomplete whole-terminal accounting and unknown
+post-marker activity. Neither terminal establishes readiness; retry is closed and no successor authority exists.
 
 ## 7. Run-completion gate
 

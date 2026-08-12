@@ -106,10 +106,11 @@ V5/V7/V12 are immutable error terminals; their approval and ledgers cannot be re
 `SYSTEMROOT` boundary, but v12 ended `child_output_invalid` after Docker passed and retained no raw stdout, key/SDK
 result or narrower cause. V13 suppresses workload streams and returns one typed, value-free envelope. Qualification
 created no runtime artifact; a later exact statement created one nonreusable self-attested state with observation 0.
-A second statement approved one attempt, now consumed `BLOCKED(docker_not_ready)`. Its authorization→attempt→
-ACTION_STARTED→terminal chain is complete and nonreusable. V14 binds that terminal and delegates unchanged v13 runtime
-under a new source/lifecycle identity. Its exact state records only a Docker-running report with `.env` unreported and
-observation 0. A second exact statement records one nonreusable future-attempt approval; run remains absent.
+A second statement approved one attempt, now consumed `BLOCKED(docker_not_ready)`. Its append-only chain is complete
+and nonreusable. V14 bound that terminal and consumed one separately approved attempt. Docker passed eight read-only
+checks, but the returned child output contained no framed envelope; the terminal is
+`ERROR(child_checker_error/framed_output_invalid)`. Its whole-terminal accounting is incomplete, unknown activity is
+true and retry/resume is false. No predecessor receipt, state, approval or attempt can authorize a successor.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

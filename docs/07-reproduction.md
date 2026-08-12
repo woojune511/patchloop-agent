@@ -46,16 +46,15 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 
 Validation reads committed blobs without changing artifact mtime. Source creation was one-time and grants no live authority.
 
-V13 remains consumed. Validate the current v14 source without external observation:
+V13 and v14 remain consumed. Validate the sealed v14 chain without external observation:
 
 ```powershell
 uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-source
-uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --show-run-template
+uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-terminal
 ```
 
-These modes create no artifact and read no `.env`/Docker/SDK. Pre-state tests passed 7/7; the state-absence assertion is
-now historical. Do not invoke predecessor modes.
+These modes create no artifact and read no `.env`/Docker/SDK. Do not invoke run, state, approval or predecessor modes.
 
 ## Audit the sealed D-142 source
 
@@ -88,7 +87,7 @@ Repository-wide suites may retain historical absent-state assertions; do not rew
 
 There is no supported live A/C or D-142 activation command:
 
-1. Validate evaluator-v2, consumed v13 and v14 source/state/approval read-only.
-2. Stop. Only the exact v14 immediate-run statement may start the attempt.
+1. Validate evaluator-v2 and the consumed v13/v14 chains read-only.
+2. Stop. No preflight, candidate, cost or paid execution gate is open.
 
-V10-v13 modes and v14 state/approval creation are consumed. V14 run requires its distinct exact statement.
+V10-v14 modes and artifacts are consumed. A corrected successor requires a new version, qualification and exact authority.

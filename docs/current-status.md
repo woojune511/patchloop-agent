@@ -24,26 +24,27 @@ Its state/approval produced one attempt, sealed at `d9fb103b7be464f3ff1aaf73ef31
 `BLOCKED(docker_not_ready)`. Eight read-only Docker commands ran; daemon/image/container readiness failed, so `.env`
 and SDK child were not reached. Mutation/network/provider/evaluator/agent/value recording were 0; retry is closed.
 
-V14 source `d42acfc4d62350e692725f33d1be4b0a53f47b93` delegates unchanged v13 runtime under new lifecycle identity.
-Contract `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` and qualification
-`sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816` passed 7/7 offline tests.
-State `ncpstate_cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555` at `d4467c0` records only the
-manual-start report. It is non-proof with observation 0. Approval
-`ncpapproval_370ba1d7f36ba7ce82805f8919747800f9be22ebf93f4ea670c2c85beffd0924` at `540a882` reconfirms the
-Docker/`.env` reports and binds one future attempt, but no attempt or observation exists.
+V14 source `d42acfc4d62350e692725f33d1be4b0a53f47b93`, contract
+`ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e`, qualification
+`sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816`, state and approval led to one
+attempt committed at `e63f418`. Docker reached READY after eight read-only commands; one child launch returned but no
+framed envelope was received. Terminal `ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f`
+is `ERROR(child_checker_error/framed_output_invalid)`. Network/provider/evaluator/agent, Docker mutation and credential
+value metadata counts are 0 and raw child output was not persisted. Whole-terminal accounting is incomplete,
+unknown post-marker activity is true, and retry/resume is closed.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v13 are predecessors; v14 source/state/approval are bound.
-4. **Separately approved preflight attempt.** V14 awaits its distinct exact immediate-run statement.
+3. **Offline preflight contracts.** V1-v14 are immutable predecessors.
+4. **Separately approved preflight attempt.** V14 consumed its sole attempt; no successor is qualified or authorized.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
 8. **Selective/full comparison.** B/D require frozen leakage/redaction/calibration or a fresh held-out panel.
 
-No official/live evaluator result exists. V7 and v12 are consumed ERROR, not readiness evidence.
+No official/live evaluator result exists. V7, v12 and v14 are consumed ERROR, not readiness evidence.
 
 ## Consumed boundaries
 
@@ -52,12 +53,12 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12/v13 are consumed. V14 approval alone opens no Docker/`.env`/SDK, cost or A/C execution.
+V5/v7/v12/v13/v14 are consumed. Their artifacts open no Docker/`.env`/SDK, cost or A/C execution.
 
 ## Next gate
 
-The next gate is one **exact v14 immediate-run statement** from `--show-run-template`. Only it may consume approval and
-start the append-only attempt lifecycle. Generic continuation, Docker provisioning, candidate, cost and paid execution
-remain closed.
+No execution gate is open. A future preflight requires a corrected, versioned and newly qualified successor plus new
+state and exact approval; current artifacts grant none. Docker provisioning, candidate, cost and paid execution remain
+closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

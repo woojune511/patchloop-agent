@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v13 preserved; v14 source/qualification/state are immutable inputs.
+Status: v1-v14 are immutable predecessors.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,12 +47,12 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13 consumed; v14 state/approval bound, attempt absent.
+Status: v3/v5/v7/v12/v13/v14 consumed; no successor is qualified or authorized.
 
-V13 suppresses workload stdout/stderr and validates one canonical envelope; 12/12 mock tests include output noise,
-schema failure, Docker-first suppression and append-only terminal ordering. Its live Docker-first gate stopped before
-`.env`/SDK. V14 delegates those semantics and binds the manual-start report only after an exact post-qualification state
-statement. Approval is bound; next obtain the distinct exact immediate-run statement.
+V13 stopped before `.env`/SDK. V14 reached Docker READY with eight read-only calls, launched one child, and ended
+`ERROR(child_checker_error/framed_output_invalid)` because no framed envelope arrived. Network/provider/evaluator/agent,
+Docker mutation and credential-value metadata counts are 0, but whole-terminal accounting is incomplete and unknown
+activity is true. The one-use chain is sealed; do not retry, resume, replace or infer successor authority.
 
 ## Work item 5 — execution candidate and cost gate
 

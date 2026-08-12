@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V14 manual-restart successor — source-qualified only
+## V14 manual-restart successor — consumed ERROR
 
 - Source/tree `d42acfc4d62350e692725f33d1be4b0a53f47b93`/`658bfae5bad5652a7f34e74ddc759ff16664badf`
   is the exact four-addition child of `dffb5298918a55cf863635b63cae4a3dc794d42a`; contract
@@ -19,8 +19,15 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
   `sha256:487ae7e9bbf81478ac8297971cdde9dd117c285cb9a9934e2b6b12045632c0b0`, 1,401 bytes is the sole addition at
   `540a882`.
 
-State/approval observation is 0 and both are nonreusable. Attempt is absent; the next gate is the exact v14 immediate-run
-statement and grants no cost or A/C authority.
+The exact four-artifact lifecycle is committed at `e63f418`: authorization
+`ncprunauthorization_3503359b4c95ca913793efdb93e5ea74d9b35708eeab261deef6f25464daed1f`, attempt
+`ncpattempt_53b489aa63592c668529f3530f2af9c61a435c79ff40bcab5ec0aa1332a2267a`, ACTION_STARTED
+`ncpstarted_8770a0f9ca64a06055fc6b7f004a56139ea420a45fff312fafa37099197965d1`, and terminal
+`ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f`. Docker passed eight read-only
+commands with zero mutation. One child launch returned, but no framed envelope was received; outcome is
+`ERROR(child_checker_error/framed_output_invalid)`. Network/provider/evaluator/agent and credential-value metadata
+counts are 0; raw child output was not persisted. Whole-terminal accounting is incomplete, unknown post-marker activity
+is true and retry/resume is false. No cost or A/C authority exists.
 
 ## V13 framed successor — consumed BLOCKED
 

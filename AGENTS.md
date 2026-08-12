@@ -49,12 +49,12 @@
   `docs/09-evidence.md`.
 - Framed v13 is consumed `BLOCKED(docker_not_ready)` at `d9fb103b7be464f3ff1aaf73ef31097eb9815239`;
   eight Docker reads ran and `.env`/SDK/network/mutation stayed 0. Retry/resume is false.
-- Manual-restart v14 source `d42acfc4d62350e692725f33d1be4b0a53f47b93`, contract
-  `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` and qualification
-  `sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816` are offline-only. Tests pass 7/7;
-  state `ncpstate_cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555` is non-proof with observation 0
-  and `.env` unreported. Approval `ncpapproval_370ba1d7f36ba7ce82805f8919747800f9be22ebf93f4ea670c2c85beffd0924`
-  is recorded but attempt is absent; the next gate is one distinct exact immediate-run statement.
+- Manual-restart v14 consumed its one approved attempt at `e63f418`. Docker reached READY after eight read-only
+  commands, then the single child returned without a framed envelope. Terminal
+  `ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f` is
+  `ERROR(child_checker_error/framed_output_invalid)`: network/provider/evaluator/agent, Docker mutation and credential
+  value metadata counts are 0, but whole-terminal accounting is incomplete and unknown post-marker activity is true.
+  Raw child output was not persisted. Retry/resume is false; only a newly qualified successor could proceed.
 
 ## Required reading
 

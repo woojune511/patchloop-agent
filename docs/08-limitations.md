@@ -41,12 +41,11 @@ Historical milestone-by-milestone limitations are archived at
   sanitized error; incomplete accounting means neither exact SDK cause nor readiness is established. It cannot retry.
 - V7 consumed one import-error attempt; its fixed code proves neither SDK readiness nor the hidden exception. V8
   reproduces missing `SYSTEMROOT`/10106, but its staged imports are local source evidence only.
-- V9 composes the corrected child and Docker gate with injected observers. V10 only source-qualifies an exact
-  self-attested state binder; V11 binds one approval pair. V12 consumed it: Docker passed, but child stdout failed
-  typed parsing. Raw stdout was not retained, so no key/SDK readiness or narrower cause is proved. V12 cannot retry,
-  is not evaluator-v12 and proves no confidentiality. V13's stream suppression and envelope are mock/source evidence;
-  its attempt stopped Docker-not-ready before `.env`/SDK. V14 only source-qualifies a new wrapper and manual-report
-  binding path; state/approval are self-attested and prove no Docker, image, `.env` or SDK readiness.
+- V9 composes the corrected child and Docker gate with injected observers. V12 consumed one attempt after Docker passed,
+  but child stdout failed typed parsing. V13 then stopped Docker-not-ready before `.env`/SDK. V14 reached Docker READY
+  and launched one child, but received no framed envelope. Raw child output was not persisted; whole-terminal accounting
+  is incomplete and unknown post-marker activity is true. Thus v14 proves neither SDK readiness, confidentiality nor a
+  narrower cause, and it cannot retry.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
