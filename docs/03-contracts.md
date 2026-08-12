@@ -110,7 +110,8 @@ A second statement approved one attempt, now consumed `BLOCKED(docker_not_ready)
 and nonreusable. V14 bound that terminal and consumed one separately approved attempt. Docker passed eight read-only
 checks, but the returned child output contained no framed envelope; the terminal is
 `ERROR(child_checker_error/framed_output_invalid)`. Its whole-terminal accounting is incomplete, unknown activity is
-true and retry/resume is false. No predecessor receipt, state, approval or attempt can authorize a successor.
+true and retry/resume is false. V15 binds that terminal without claiming a cause and writes the envelope to a result
+descriptor duplicated before fd 1/2 suppression. Its injected-only entrypoint has no activation lifecycle or authority.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

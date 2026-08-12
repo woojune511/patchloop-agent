@@ -49,12 +49,13 @@
   `docs/09-evidence.md`.
 - Framed v13 is consumed `BLOCKED(docker_not_ready)` at `d9fb103b7be464f3ff1aaf73ef31097eb9815239`;
   eight Docker reads ran and `.env`/SDK/network/mutation stayed 0. Retry/resume is false.
-- Manual-restart v14 consumed its one approved attempt at `e63f418`. Docker reached READY after eight read-only
-  commands, then the single child returned without a framed envelope. Terminal
-  `ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f` is
-  `ERROR(child_checker_error/framed_output_invalid)`: network/provider/evaluator/agent, Docker mutation and credential
-  value metadata counts are 0, but whole-terminal accounting is incomplete and unknown post-marker activity is true.
-  Raw child output was not persisted. Retry/resume is false; only a newly qualified successor could proceed.
+- Manual-restart v14 consumed `ERROR(child_checker_error/framed_output_invalid)` at `e63f418`: Docker passed eight
+  reads and one child returned without an envelope. Recorded forbidden counts are 0, but accounting is incomplete,
+  unknown activity is true and retry/resume is false.
+- Source-only v15 `e962291` uses a pre-work duplicated result descriptor; injected and actual Windows subprocess tests
+  pass 8/8. Contract `ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01`
+  is qualified at `ac32e78` with hash `sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494`.
+  It is source-only: observation 0, no state/approval/attempt/terminal, and no executable activation wrapper or authority.
 
 ## Required reading
 

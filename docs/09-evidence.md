@@ -3,31 +3,24 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V15 dedicated-frame successor — source-qualified only
+
+Source/tree `e962291bfea66980a66c7592e87ce5277b43b30a`/`082840944a46b2fc8d3b9f2df8afcc5d04b759ee`
+is the exact five-addition child of `51bb6a6`; contract
+`ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01` binds v14 without claiming
+its unknown cause. Sole-artifact qualification commit `ac32e78` records
+`sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494`; file
+`sha256:0112807f9a8bbe4831e7c9103859909c8266247ec0aaf551c2960978421b9708`, 4,755 bytes. External observation,
+mutation and execution authority are 0; state/approval/attempt/terminal and activation wrapper are absent.
+
 ## V14 manual-restart successor — consumed ERROR
 
-- Source/tree `d42acfc4d62350e692725f33d1be4b0a53f47b93`/`658bfae5bad5652a7f34e74ddc759ff16664badf`
-  is the exact four-addition child of `dffb5298918a55cf863635b63cae4a3dc794d42a`; contract
-  `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` binds v13 terminal.
-- Qualification `sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816`, file
-  `sha256:b3aa811ebbf2f92767a67815646e45bfbcc158cf06f65abfdb61bc113f8d0abd`, 5,711 bytes is the sole addition at
-  `0bc0fbe3a2447b102738d239c421585d44182165`. Tests pass 7/7.
-- State `ncpstate_cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555`, content hash
-  `sha256:cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555`, file
-  `sha256:4541cfdd304d65e5047663ec3f73f59a1a68ca59f397fe4bc86f7e42621bd119`, 908 bytes is the sole addition at
-  `d4467c0`.
-- Approval `ncpapproval_370ba1d7f36ba7ce82805f8919747800f9be22ebf93f4ea670c2c85beffd0924`, file
-  `sha256:487ae7e9bbf81478ac8297971cdde9dd117c285cb9a9934e2b6b12045632c0b0`, 1,401 bytes is the sole addition at
-  `540a882`.
-
-The exact four-artifact lifecycle is committed at `e63f418`: authorization
-`ncprunauthorization_3503359b4c95ca913793efdb93e5ea74d9b35708eeab261deef6f25464daed1f`, attempt
-`ncpattempt_53b489aa63592c668529f3530f2af9c61a435c79ff40bcab5ec0aa1332a2267a`, ACTION_STARTED
-`ncpstarted_8770a0f9ca64a06055fc6b7f004a56139ea420a45fff312fafa37099197965d1`, and terminal
-`ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f`. Docker passed eight read-only
-commands with zero mutation. One child launch returned, but no framed envelope was received; outcome is
-`ERROR(child_checker_error/framed_output_invalid)`. Network/provider/evaluator/agent and credential-value metadata
-counts are 0; raw child output was not persisted. Whole-terminal accounting is incomplete, unknown post-marker activity
-is true and retry/resume is false. No cost or A/C authority exists.
+Source/qualification/state/approval led to exact lifecycle commit `e63f418`: attempt
+`ncpattempt_53b489aa63592c668529f3530f2af9c61a435c79ff40bcab5ec0aa1332a2267a` and terminal
+`ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f`. Docker passed eight reads and
+one child returned without an envelope. The result is `ERROR(child_checker_error/framed_output_invalid)` with recorded
+forbidden counts 0, incomplete accounting, unknown activity true and retry false. Exact intermediate tuples remain in
+`reports/`; no cost or A/C authority exists.
 
 ## V13 framed successor — consumed BLOCKED
 

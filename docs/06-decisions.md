@@ -32,7 +32,8 @@ work.
 - V13 consumed `BLOCKED(docker_not_ready)` before `.env`/SDK. V14 bound that terminal and then consumed one separately
   approved attempt. Docker reached READY after eight read-only calls; one child returned without a framed envelope,
   producing `ERROR(child_checker_error/framed_output_invalid)`. Whole-terminal accounting is incomplete, unknown
-  activity is true and retry/resume is closed. A future preflight requires a new qualified version and authority.
+  activity is true and retry/resume is closed. V15 binds the unknown cause and corrects only the result channel with a
+  pre-work duplicate descriptor. Its source qualification grants no state, activation wrapper or execution authority.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
