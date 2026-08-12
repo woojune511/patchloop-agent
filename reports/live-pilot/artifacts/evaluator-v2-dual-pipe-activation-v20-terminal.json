@@ -1,0 +1,475 @@
+{
+  "schema_version": "dual-pipe-activation-terminal-v20",
+  "terminal_id": "ncpterminal_d528eb39f0e367fe8b38b81ae3a3ddbd627d9c9cefe6a84e8874523b7e488897",
+  "attempt_id": "ncpattempt_ceb920acc4c49d71dfaf196f890f2d7ddb37b48b2c3cbad2d43892ecb2e2ab6a",
+  "action_started_id": "ncpstarted_b90b90a2c37342e20597f659087e3873adf44b17a27a6e2bf3e88bf5bf4a70e9",
+  "previous_content_hash": "sha256:b90b90a2c37342e20597f659087e3873adf44b17a27a6e2bf3e88bf5bf4a70e9",
+  "sequence": 2,
+  "outcome": "error",
+  "reason": "child_checker_error",
+  "observation": {
+    "schema_version": "sanitized-sdk-bootstrap-dual-pipe-parent-observation-v19",
+    "base": {
+      "schema_version": "sanitized-sdk-bootstrap-supervised-parent-observation-v17",
+      "base": {
+        "schema_version": "sanitized-sdk-bootstrap-parent-observation-v1",
+        "state": "error",
+        "reason": "child_checker_error",
+        "docker_observation": {
+          "schema_version": "d137-d136-docker-no-call-preflight-observation-v1",
+          "phase": "docker",
+          "status": "D137_DOCKER_NO_CALL_PREFLIGHT_READY_SDK_PHASE_BLOCKED",
+          "observer_contract": {
+            "docker_cli_path": "C:\\Users\\geonj\\AppData\\Local\\Programs\\DockerDesktop\\resources\\bin\\docker.exe",
+            "docker_cli_version": "29.6.2",
+            "docker_cli_build": "dfc4efb",
+            "docker_cli_file_bytes": 43095472,
+            "docker_cli_file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+            "forced_daemon_endpoint": "npipe:////./pipe/dockerDesktopLinuxEngine",
+            "exact_images": [
+              "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+              "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+            ],
+            "snapshot_labels": [
+              "before",
+              "after"
+            ],
+            "command_roles_per_snapshot": [
+              "daemon-version",
+              "image-moto",
+              "image-babel",
+              "container-inventory"
+            ],
+            "max_output_bytes_per_stream": 65536,
+            "timeout_seconds_per_command": 30,
+            "child_environment_names": [
+              "DOCKER_CONFIG",
+              "DOCKER_HOST"
+            ]
+          },
+          "observation": {
+            "docker_cli_bindings": [
+              {
+                "file_name": "docker.exe",
+                "file_bytes": 43095472,
+                "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+                "linklike": false
+              },
+              {
+                "file_name": "docker.exe",
+                "file_bytes": 43095472,
+                "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+                "linklike": false
+              },
+              {
+                "file_name": "docker.exe",
+                "file_bytes": 43095472,
+                "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+                "linklike": false
+              },
+              {
+                "file_name": "docker.exe",
+                "file_bytes": 43095472,
+                "file_sha256": "sha256:8985cd8ac002c3240b5aa48fe401fcb55dca5d849b537e3c835564e8e8c49a70",
+                "linklike": false
+              }
+            ],
+            "snapshots": [
+              {
+                "label": "before",
+                "daemon": {
+                  "ClientVersion": "29.6.2",
+                  "ServerVersion": "29.6.2",
+                  "ServerOs": "linux",
+                  "ServerArch": "amd64"
+                },
+                "images": {
+                  "moto": {
+                    "requested_repo_digest": "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+                    "requested_digest": "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+                    "config_id": "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+                    "repo_digests": [
+                      "swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+                    ],
+                    "matched_repo_digest": "swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+                  },
+                  "babel": {
+                    "requested_repo_digest": "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+                    "requested_digest": "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+                    "config_id": "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+                    "repo_digests": [
+                      "swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+                    ],
+                    "matched_repo_digest": "swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+                  }
+                },
+                "container_inventory": {
+                  "observation_valid": true,
+                  "zero_existing_containers": true,
+                  "container_ids_raw_or_hashed_persisted": false
+                },
+                "commands": [
+                  {
+                    "role": "daemon-version",
+                    "argv_contract": [
+                      "docker.exe",
+                      "version",
+                      "--format",
+                      "{\"ClientVersion\":{{json .Client.Version}},\"ServerVersion\":{{json .Server.Version}},\"ServerOs\":{{json .Server.Os}},\"ServerArch\":{{json .Server.Arch}}}"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": 92,
+                    "stdout_sha256": "sha256:b77598521d2ac1cd61734aef55a3147a45f8178efe44f2b27abe59dda55b4b73",
+                    "stderr_bytes": 0,
+                    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "stdout_zero": false,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  },
+                  {
+                    "role": "image-moto",
+                    "argv_contract": [
+                      "docker.exe",
+                      "image",
+                      "inspect",
+                      "--format",
+                      "{\"Id\":{{json .Id}},\"RepoDigests\":{{json .RepoDigests}}}",
+                      "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": 197,
+                    "stdout_sha256": "sha256:f00be50291ad3366b690e4f23e49a8a78894f5739a2b9eff29049569f623c397",
+                    "stderr_bytes": 0,
+                    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "stdout_zero": false,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  },
+                  {
+                    "role": "image-babel",
+                    "argv_contract": [
+                      "docker.exe",
+                      "image",
+                      "inspect",
+                      "--format",
+                      "{\"Id\":{{json .Id}},\"RepoDigests\":{{json .RepoDigests}}}",
+                      "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": 203,
+                    "stdout_sha256": "sha256:ca833d376862a596d970ba6fee6c195498e2b4156013ab94a214b116c5907fca",
+                    "stderr_bytes": 0,
+                    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "stdout_zero": false,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  },
+                  {
+                    "role": "container-inventory",
+                    "argv_contract": [
+                      "docker.exe",
+                      "container",
+                      "ls",
+                      "--all",
+                      "--no-trunc",
+                      "--format",
+                      "{{.ID}}"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": null,
+                    "stdout_sha256": null,
+                    "stderr_bytes": null,
+                    "stderr_sha256": null,
+                    "stdout_zero": true,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  }
+                ],
+                "passed": true
+              },
+              {
+                "label": "after",
+                "daemon": {
+                  "ClientVersion": "29.6.2",
+                  "ServerVersion": "29.6.2",
+                  "ServerOs": "linux",
+                  "ServerArch": "amd64"
+                },
+                "images": {
+                  "moto": {
+                    "requested_repo_digest": "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+                    "requested_digest": "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+                    "config_id": "sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee",
+                    "repo_digests": [
+                      "swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+                    ],
+                    "matched_repo_digest": "swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+                  },
+                  "babel": {
+                    "requested_repo_digest": "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+                    "requested_digest": "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+                    "config_id": "sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a",
+                    "repo_digests": [
+                      "swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+                    ],
+                    "matched_repo_digest": "swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+                  }
+                },
+                "container_inventory": {
+                  "observation_valid": true,
+                  "zero_existing_containers": true,
+                  "container_ids_raw_or_hashed_persisted": false
+                },
+                "commands": [
+                  {
+                    "role": "daemon-version",
+                    "argv_contract": [
+                      "docker.exe",
+                      "version",
+                      "--format",
+                      "{\"ClientVersion\":{{json .Client.Version}},\"ServerVersion\":{{json .Server.Version}},\"ServerOs\":{{json .Server.Os}},\"ServerArch\":{{json .Server.Arch}}}"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": 92,
+                    "stdout_sha256": "sha256:b77598521d2ac1cd61734aef55a3147a45f8178efe44f2b27abe59dda55b4b73",
+                    "stderr_bytes": 0,
+                    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "stdout_zero": false,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  },
+                  {
+                    "role": "image-moto",
+                    "argv_contract": [
+                      "docker.exe",
+                      "image",
+                      "inspect",
+                      "--format",
+                      "{\"Id\":{{json .Id}},\"RepoDigests\":{{json .RepoDigests}}}",
+                      "docker.io/swerebenchv2/getmoto-moto@sha256:dfdf957ab30b8829e8b6bbfd693b00fab88b7979d3c856362fd5d66c489a1fee"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": 197,
+                    "stdout_sha256": "sha256:f00be50291ad3366b690e4f23e49a8a78894f5739a2b9eff29049569f623c397",
+                    "stderr_bytes": 0,
+                    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "stdout_zero": false,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  },
+                  {
+                    "role": "image-babel",
+                    "argv_contract": [
+                      "docker.exe",
+                      "image",
+                      "inspect",
+                      "--format",
+                      "{\"Id\":{{json .Id}},\"RepoDigests\":{{json .RepoDigests}}}",
+                      "docker.io/swerebenchv2/python-babel-babel@sha256:864e84fc4bdf09252f7fda4f85665cc05155a7b1d75847d61c67325abce7ef5a"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": 203,
+                    "stdout_sha256": "sha256:ca833d376862a596d970ba6fee6c195498e2b4156013ab94a214b116c5907fca",
+                    "stderr_bytes": 0,
+                    "stderr_sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "stdout_zero": false,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  },
+                  {
+                    "role": "container-inventory",
+                    "argv_contract": [
+                      "docker.exe",
+                      "container",
+                      "ls",
+                      "--all",
+                      "--no-trunc",
+                      "--format",
+                      "{{.ID}}"
+                    ],
+                    "return_code": 0,
+                    "timed_out": false,
+                    "stdout_bytes": null,
+                    "stdout_sha256": null,
+                    "stderr_bytes": null,
+                    "stderr_sha256": null,
+                    "stdout_zero": true,
+                    "stderr_zero": true,
+                    "output_within_bound": true,
+                    "raw_stdout_or_stderr_persisted": false
+                  }
+                ],
+                "passed": true
+              }
+            ],
+            "normalized_snapshots_stable": true
+          },
+          "blockers": [],
+          "activity": {
+            "docker_cli_file_binding_count": 4,
+            "docker_cli_command_count": 8,
+            "read_only_daemon_version_call_count": 2,
+            "read_only_exact_image_inspect_call_count": 4,
+            "read_only_container_inventory_call_count": 2,
+            "docker_desktop_or_daemon_start_count": 0,
+            "docker_image_pull_or_load_count": 0,
+            "docker_image_store_mutation_count": 0,
+            "container_create_start_run_exec_count": 0,
+            "docker_workload_or_mutating_call_count": 0,
+            "container_ids_raw_or_hashed_persisted": false,
+            "raw_stdout_or_stderr_persisted": false
+          },
+          "passed": true
+        },
+        "child_execution": {
+          "schema_version": "sanitized-sdk-bootstrap-parent-child-execution-v1",
+          "contract_binding_valid": true,
+          "parent_pythonhome_absent": true,
+          "parent_pythonpath_absent": true,
+          "systemroot_present": true,
+          "systemroot_nonempty": true,
+          "child": null,
+          "code": "child_output_invalid",
+          "activity": {
+            "parent_environment_membership_check_count": 2,
+            "parent_environment_membership_check_completed_count": 2,
+            "systemroot_membership_check_count": 1,
+            "systemroot_nonempty_check_count": 1,
+            "systemroot_value_passed_to_child_count": 1,
+            "systemroot_value_return_count": 0,
+            "exception_message_type_repr_or_traceback_return_count": 0,
+            "child_launch_attempt_count": 1,
+            "child_process_return_count": 1
+          },
+          "activity_accounting_complete": true,
+          "unknown_post_launch_activity_possible": false,
+          "passed": false
+        },
+        "docker_cli_command_count": 8,
+        "child_launch_attempt_count": 1,
+        "network_call_count": 0,
+        "provider_evaluator_agent_call_count": 0,
+        "activity_accounting_complete": true,
+        "unknown_post_marker_activity_possible": false,
+        "passed": false
+      },
+      "supervised_child_execution": {
+        "schema_version": "sanitized-sdk-bootstrap-supervised-child-execution-v17",
+        "base": {
+          "schema_version": "sanitized-sdk-bootstrap-parent-child-execution-v1",
+          "contract_binding_valid": true,
+          "parent_pythonhome_absent": true,
+          "parent_pythonpath_absent": true,
+          "systemroot_present": true,
+          "systemroot_nonempty": true,
+          "child": null,
+          "code": "child_output_invalid",
+          "activity": {
+            "parent_environment_membership_check_count": 2,
+            "parent_environment_membership_check_completed_count": 2,
+            "systemroot_membership_check_count": 1,
+            "systemroot_nonempty_check_count": 1,
+            "systemroot_value_passed_to_child_count": 1,
+            "systemroot_value_return_count": 0,
+            "exception_message_type_repr_or_traceback_return_count": 0,
+            "child_launch_attempt_count": 1,
+            "child_process_return_count": 1
+          },
+          "activity_accounting_complete": true,
+          "unknown_post_launch_activity_possible": false,
+          "passed": false
+        },
+        "supervisor_code": "supervised_output_invalid",
+        "envelope_received": false,
+        "worker_launch_attempt_count": null,
+        "worker_process_return_count": null,
+        "worker_result_message_count": null,
+        "raw_supervisor_or_worker_output_persisted": false,
+        "activity_accounting_complete": false,
+        "unknown_workload_activity_possible": true
+      },
+      "activity_accounting_complete": false,
+      "unknown_post_marker_activity_possible": true,
+      "passed": false
+    },
+    "dual_pipe_child_execution": {
+      "schema_version": "sanitized-sdk-bootstrap-dual-pipe-child-execution-v19",
+      "base": {
+        "schema_version": "sanitized-sdk-bootstrap-supervised-child-execution-v17",
+        "base": {
+          "schema_version": "sanitized-sdk-bootstrap-parent-child-execution-v1",
+          "contract_binding_valid": true,
+          "parent_pythonhome_absent": true,
+          "parent_pythonpath_absent": true,
+          "systemroot_present": true,
+          "systemroot_nonempty": true,
+          "child": null,
+          "code": "child_output_invalid",
+          "activity": {
+            "parent_environment_membership_check_count": 2,
+            "parent_environment_membership_check_completed_count": 2,
+            "systemroot_membership_check_count": 1,
+            "systemroot_nonempty_check_count": 1,
+            "systemroot_value_passed_to_child_count": 1,
+            "systemroot_value_return_count": 0,
+            "exception_message_type_repr_or_traceback_return_count": 0,
+            "child_launch_attempt_count": 1,
+            "child_process_return_count": 1
+          },
+          "activity_accounting_complete": true,
+          "unknown_post_launch_activity_possible": false,
+          "passed": false
+        },
+        "supervisor_code": "supervised_output_invalid",
+        "envelope_received": false,
+        "worker_launch_attempt_count": null,
+        "worker_process_return_count": null,
+        "worker_result_message_count": null,
+        "raw_supervisor_or_worker_output_persisted": false,
+        "activity_accounting_complete": false,
+        "unknown_workload_activity_possible": true
+      },
+      "parent_supervisor_transport": {
+        "schema_version": "parent-supervisor-dual-pipe-transport-v19",
+        "launch_attempt_count": 1,
+        "process_return_count": 1,
+        "result_message_nonempty_count": 1,
+        "result_within_limit": true,
+        "returncode": 0,
+        "stdout_null_from_process_start_count": 1,
+        "stderr_null_from_process_start_count": 1,
+        "raw_process_output_persisted": false,
+        "activity_accounting_complete": true,
+        "unknown_process_activity_possible": false
+      },
+      "activity_accounting_complete": false,
+      "unknown_workload_activity_possible": true
+    },
+    "activity_accounting_complete": false,
+    "unknown_post_marker_activity_possible": true,
+    "passed": false
+  },
+  "activity_accounting_complete": false,
+  "unknown_post_marker_activity_possible": true,
+  "retry_or_resume_allowed": false,
+  "network_call_count": 0,
+  "provider_evaluator_agent_call_count": 0,
+  "docker_start_pull_load_image_store_or_container_mutation_count": 0,
+  "credential_value_return_hash_prefix_or_length_count": 0,
+  "recorded_at": "2026-08-12T19:36:36.305319Z",
+  "content_hash": "sha256:d528eb39f0e367fe8b38b81ae3a3ddbd627d9c9cefe6a84e8874523b7e488897"
+}

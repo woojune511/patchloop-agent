@@ -1,0 +1,11 @@
+{
+  "schema_version": "dual-pipe-activation-attempt-v20",
+  "attempt_id": "ncpattempt_ceb920acc4c49d71dfaf196f890f2d7ddb37b48b2c3cbad2d43892ecb2e2ab6a",
+  "run_authorization_id": "ncprunauthorization_413608e82bd54307670e1a6d0da58faf42f572746cdc0ccfb0a85dce1c34a55b",
+  "run_authorization_content_hash": "sha256:413608e82bd54307670e1a6d0da58faf42f572746cdc0ccfb0a85dce1c34a55b",
+  "ledger_snapshot_hash": "sha256:8132201e5f9b025988574fc88154ad0c7fe9efe514dd1850c90d1de074b28366",
+  "attempt_number": 1,
+  "retry_or_resume_allowed": false,
+  "created_at": "2026-08-12T19:34:44.045836Z",
+  "content_hash": "sha256:ceb920acc4c49d71dfaf196f890f2d7ddb37b48b2c3cbad2d43892ecb2e2ab6a"
+}
