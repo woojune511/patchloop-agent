@@ -2,6 +2,13 @@
 
 ## Current checkpoint
 
+V21 is source-qualified/activation-closed: source/tree `05cb2ab717805a5e777a4e7b87f7784d44dfac84`/
+`d05216a65fc6e627e1fbee41560a52fb6e8c023d`, contract
+`ncpcontract_d1ec7610e2e29d3a614958a46ac36b190d97fe369cf6b533cfe39afd228ccc8a`, qualification
+`sha256:5510796c3ba9e26a36fac67dff46d21fd3bc4d0f646169c0b4862551542132c4` at `aef271e8`. Its fixed public
+fixture validated two framed local hops only. No live observation or lifecycle exists; protocol-zero declarations do
+not prove process-wide absence, SDK readiness or an effect result.
+
 D-142 gate `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` and source
 `1370cf43c08cefb550b158a5d4172a60ac172470` remain D-141's exact four-file sole child; `docs/09-evidence.md` owns
 the tuple. Evidence stays **source-qualified only, unactivated** after 170/170 mocked tests, with no runtime artifact
@@ -27,14 +34,15 @@ is absent, so no narrower cause is established.
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v20 are immutable; v20 is consumed ERROR.
-4. **Separately approved preflight attempt.** Blocked on a new versioned successor; no attempt is open.
+3. **Offline preflight contracts.** V1-v20 are immutable; v20 is consumed ERROR. V21 is source-qualified only.
+4. **Separately approved preflight attempt.** Blocked on a versioned V21 activation path; no attempt is open.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
 8. **Selective/full comparison.** B/D require frozen leakage/redaction/calibration or a fresh held-out panel.
 
 No official/live evaluator result exists. V7/v12/v14/v16/v18/v20 are consumed ERROR and not readiness evidence.
+V21's fixed-public-fixture result is offline transport evidence only.
 
 ## Consumed boundaries
 
@@ -43,11 +51,12 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12/v13/v14/v16/v18/v20 are consumed and cannot retry. Cost and A/C execution remain closed.
+V5/v7/v12/v13/v14/v16/v18/v20 are consumed and cannot retry. V21 activation, cost and A/C execution remain closed.
 
 ## Next gate
 
-No attempt is open. V20 cannot retry or resume. Any correction requires a new offline successor, qualification,
-state and approval before another attempt. Candidate and cost remain closed.
+No attempt is open. V20 cannot retry or resume, and its narrower cause remains unknown. Any future attempt requires
+a separately versioned activation wrapper, fresh state bound to the exact V21 reports and exact approval. Candidate
+and cost remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

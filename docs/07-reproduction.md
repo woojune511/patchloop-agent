@@ -54,6 +54,16 @@ uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v20Basetemp 
 These validation modes create no artifact or external observation. The excluded test asserts the pre-state checkout.
 V20 is consumed; terminal validation starts nothing and grants no retry.
 
+V21 validation rechecks committed source and recorded fixture evidence without replaying the process chain:
+
+```powershell
+uv run --offline --frozen python scripts/build_envelope_diagnostic_preflight_successor.py --validate-source
+```
+
+Qualification used two fixed-fixture local hops; both frames passed. This proves neither process-wide absence nor
+readiness and grants no live/lifecycle/cost/A/C authority. Do not use fixture-run mode for routine validation. A new
+activation wrapper, fresh state and exact approval are required.
+
 ## Audit the sealed D-142 source
 
 D-142 validation is bound to its exact clean historical checkout and rejects current HEAD. Audit only there in
@@ -75,5 +85,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142, v18/v20 retry or activation command. Validate read-only, then stop: no
+There is no supported live A/C, D-142, v18/v20 retry or v21 activation command. Validate read-only, then stop: no
 attempt, candidate or cost gate is open.
