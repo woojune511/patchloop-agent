@@ -3,36 +3,27 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V14 manual-restart successor — source-qualified only
+
+- Source/tree `d42acfc4d62350e692725f33d1be4b0a53f47b93`/`658bfae5bad5652a7f34e74ddc759ff16664badf`
+  is the exact four-addition child of `dffb5298918a55cf863635b63cae4a3dc794d42a`; contract
+  `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` binds v13 terminal.
+- Qualification `sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816`, file
+  `sha256:b3aa811ebbf2f92767a67815646e45bfbcc158cf06f65abfdb61bc113f8d0abd`, 5,711 bytes is the sole addition at
+  `0bc0fbe3a2447b102738d239c421585d44182165`. Tests pass 7/7.
+
+Observation/mutation and state/approval/attempt are 0. The manual-start report is self-attested non-proof; the next
+gate is the exact v14 state statement and grants no execution.
+
 ## V13 framed successor — consumed BLOCKED
 
-- Source/tree `5bcffb29248d6de60eef34f6893c23f17ea70d3c`/`f75a01141b8cd0e7a6f7bf28c706e0104943eff2`
-  is the exact five-addition child of `ff4e00d124a0954903d06f8436c11af2c6bc57b1`; contract
-  `ncpcontract_11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047` binds v12 terminal.
-- Qualification `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298`, file
-  `sha256:3d4f59bb8c69c6ba298c39492e01466a3e840f968d78d7c5cb2f6bf45cb12873`, 5,373 bytes is the sole addition at
-  `02c15ea5f3871626fc4b5ae2023330294950908c`. Mock tests passed 12/12.
-- State `ncpstate_92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446`, content hash
-  `sha256:92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446`, file
-  `sha256:a842b8fbd7ecc580b7ba31baac5f069addce3fe631dcb7e3e16316970cf6165c`, 804 bytes is the sole addition at
-  `2f3eecf12b87463e155f46857ba93c010bf00a6a`.
-- Approval `ncpapproval_896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c`, content hash
-  `sha256:896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c`, file
-  `sha256:0aebd748dc9983da54dabebb22cb9d22aac16e7171bec74a98588ad5bd57bfd6`, 1,317 bytes is the sole addition at
-  `cc2a7bddec0ee1bb142f32c71dbc17740df66fb6`.
-- Lifecycle commit `d9fb103b7be464f3ff1aaf73ef31097eb9815239` adds authorization
-  `ncprunauthorization_884013b3e5225af82d92f1ad55c9ffeb6767ac96164d61e2df7f15ba2d05f84c`, attempt
-  `ncpattempt_ecaa6b98c8a205719f1fcfa6208c51f304944aefb80241ed664abc063c33c9e2`, marker
-  `ncpstarted_ac0d13614ed8e088755a4cc6eeaccdd4a27c1fce72a0b91c8b454d88296f64c6` and terminal
-  `ncpterminal_bf8a4b5e32ae56db30084c5d68d8ff77566a96538540c18520a929b3fd9170fe`.
-- Authorization/attempt/marker/terminal files are 993/689/524/13,840 bytes with SHA-256
-  `d781a5233284d1d2d390c2c2812a082908b6b984fdfdb3c6b7f3d0f0ec3c7c1a`,
-  `8b63b8ab11cb2b56a4bf5726e27d4e7b6fe54890b1d34661b2a21263c6f7a5c8`,
-  `12c895f08f926e25b7e98f1383d93ab583f36f08263830561e3616cb43b518fb` and
-  `451045a14adad713c36a1c816b1abb105d1604ca05657425cf8451a251fc4981` respectively.
-
-Terminal is `BLOCKED(docker_not_ready)`: eight read-only Docker calls; mutation, `.env`, SDK child, network,
-provider/evaluator/agent and credential-value recording 0. Accounting is complete, unknown activity false and retry
-closed. V13 establishes no readiness; a future attempt requires a new versioned successor and fresh exact authority.
+Source `5bcffb29248d6de60eef34f6893c23f17ea70d3c`, contract
+`ncpcontract_11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047` and qualification
+`sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298` led through state/approval to lifecycle commit
+`d9fb103b7be464f3ff1aaf73ef31097eb9815239` and terminal
+`ncpterminal_bf8a4b5e32ae56db30084c5d68d8ff77566a96538540c18520a929b3fd9170fe`.
+It is `BLOCKED(docker_not_ready)`: eight Docker reads and zero mutation/`.env`/SDK/network/provider activity;
+accounting complete, unknown activity false and retry closed. Exact intermediate IDs/hashes remain in `reports/`.
 
 ## V12 preflight lifecycle — consumed ERROR
 
@@ -71,12 +62,9 @@ dispatch/network/provider were 0, accounting complete and retry/resume false. Ex
 - D-137 Docker transition `06e57c54b4fe09f3145b8b59e51a0e391108d52a` is READY after eight read-only
   commands and zero mutation. SDK transition `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01` is BLOCKED after three
   membership checks found the key absent; value/`.env`/import/probe/dispatch/network counts were 0.
-- D-138 SDK transition `9f31d330190aa83768077b17c3cde47eb86c639d` is BLOCKED after three membership
-  checks found the key absent; value/`.env`/child/import/probe/dispatch/network counts were 0.
-- D-139 SDK transition `ba3af19a5cada8e49c29f514ad56c299639dc452` is BLOCKED after three membership
-  checks found the key absent; value/`.env`/child/import/probe/dispatch/network counts were 0.
-- D-140 SDK transition `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2` is BLOCKED after false/false/false
-  presence bits and three checks; value/`.env`/child/import/probe/dispatch/network/provider counts were 0.
+- D-138/D-139/D-140 transitions `9f31d330190aa83768077b17c3cde47eb86c639d`,
+  `ba3af19a5cada8e49c29f514ad56c299639dc452` and `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2`
+  are missing-key BLOCKED with three checks and zero value/`.env`/child/SDK/network activity.
 - D-136 success commit `2378569536c2367a3186f575a7517e3de7282336` preserves one official public GET,
   HTTP 200, zero redirects and 3,735 replay bytes with provider/evaluator/agent and cost counts 0.
 - D-132 has no canonical response evidence. D-133 marker commit

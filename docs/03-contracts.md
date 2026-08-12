@@ -107,7 +107,8 @@ V5/V7/V12 are immutable error terminals; their approval and ledgers cannot be re
 result or narrower cause. V13 suppresses workload streams and returns one typed, value-free envelope. Qualification
 created no runtime artifact; a later exact statement created one nonreusable self-attested state with observation 0.
 A second statement approved one attempt, now consumed `BLOCKED(docker_not_ready)`. Its authorization→attempt→
-ACTION_STARTED→terminal chain is complete and nonreusable; a future attempt requires a new versioned successor.
+ACTION_STARTED→terminal chain is complete and nonreusable. V14 binds that terminal and delegates unchanged v13 runtime
+under a new source/lifecycle identity. Qualification creates no state or authority; exact state→approval→run remains.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

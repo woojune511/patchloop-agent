@@ -31,7 +31,8 @@ work.
   `docs/09-evidence.md`. V12 ended `child_output_invalid` after Docker passed.
 - V13 discards workload streams and uses one typed envelope. Qualification granted no execution; a later exact
   state/approval chain authorized one attempt. It consumed `BLOCKED(docker_not_ready)` after eight read-only Docker
-  calls and before `.env`/SDK. Retry is closed; a future attempt requires a new versioned successor.
+  calls and before `.env`/SDK. Retry is closed. V14 binds that terminal and delegates unchanged v13 semantics under a
+  new source/lifecycle identity; its qualification grants no state or execution authority.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

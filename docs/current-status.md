@@ -22,15 +22,19 @@ V13 source `5bcffb29248d6de60eef34f6893c23f17ea70d3c` uses suppressed streams an
 `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298` and pre-state mock 12/12 are offline.
 Its state/approval produced one attempt, sealed at `d9fb103b7be464f3ff1aaf73ef31097eb9815239` as
 `BLOCKED(docker_not_ready)`. Eight read-only Docker commands ran; daemon/image/container readiness failed, so `.env`
-and SDK child were not reached. Mutation/network/provider/evaluator/agent/value recording were 0, accounting is complete,
-unknown activity false and retry/resume closed.
+and SDK child were not reached. Mutation/network/provider/evaluator/agent/value recording were 0; retry is closed.
+
+V14 source `d42acfc4d62350e692725f33d1be4b0a53f47b93` delegates unchanged v13 runtime under new lifecycle identity.
+Contract `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` and qualification
+`sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816` passed 7/7 offline tests.
+The manual-start report is not proof; state/approval/attempt and external observation are absent.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v13 are immutable predecessors.
-4. **Separately approved preflight attempt.** V13 is consumed; any successor needs new versioned authority.
+3. **Offline preflight contracts.** V1-v13 are predecessors; v14 source is qualified.
+4. **Separately approved preflight attempt.** V14 awaits exact state, then distinct approval/run authority.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -45,12 +49,12 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12/v13 are consumed. No Docker provisioning, successor, cost or A/C execution authority is open.
+V5/v7/v12/v13 are consumed. V14 qualification opens no Docker/`.env`/SDK, cost or A/C execution authority.
 
 ## Next gate
 
-There is no active execution gate. A future no-call attempt requires documented relevant external-state change, a new
-versioned successor/source qualification, nonreusable state and separate exact approval/run authority. V13 retry,
-Docker provisioning, candidate, cost and paid execution remain closed.
+The next gate is one **exact v14 state-binding statement** from `--show-state-template`. It records self-attested,
+nonreusable state only and performs no observation. Later exact approval and run statements remain separate; v13 retry,
+Docker provisioning, candidate, cost and paid execution stay closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

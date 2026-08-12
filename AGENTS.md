@@ -47,11 +47,12 @@
   `ERROR(child_checker_error/child_output_invalid)` after Docker passed. Both had forbidden activity 0 and cannot
   retry. V8-v11 are immutable offline/source/state/approval predecessors and cannot be reused; exact tuples are in
   `docs/09-evidence.md`.
-- Framed successor v13 source `5bcffb29248d6de60eef34f6893c23f17ea70d3c` and qualification
-  `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298` are offline-only.
-  Its exact-approved attempt is consumed `BLOCKED(docker_not_ready)` at `d9fb103b7be464f3ff1aaf73ef31097eb9815239`.
-  Docker CLI read-only count was 8; `.env`/SDK child/network/provider/evaluator/agent and mutations were 0. Accounting
-  is complete and retry/resume is false. A future attempt requires a new versioned successor and fresh exact authority.
+- Framed v13 is consumed `BLOCKED(docker_not_ready)` at `d9fb103b7be464f3ff1aaf73ef31097eb9815239`;
+  eight Docker reads ran and `.env`/SDK/network/mutation stayed 0. Retry/resume is false.
+- Manual-restart v14 source `d42acfc4d62350e692725f33d1be4b0a53f47b93`, contract
+  `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` and qualification
+  `sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816` are offline-only. Tests pass 7/7;
+  state/approval/attempt and observation are absent. The next gate is one exact v14 state statement.
 
 ## Required reading
 

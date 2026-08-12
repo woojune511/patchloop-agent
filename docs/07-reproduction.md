@@ -46,16 +46,15 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 
 Validation reads committed blobs without changing artifact mtime. Source creation was one-time and grants no live authority.
 
-V12 remains consumed. Validate the current framed v13 source without external observation:
+V13 remains consumed. Validate the current v14 source without external observation:
 
 ```powershell
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-source
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-terminal
+uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-source
+uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --show-state-template
 ```
 
-These modes create no artifact and read no `.env`/Docker/SDK. The sealed pre-state suite passed 12/12; its absence
-assertion is now historical. Do not invoke predecessor creation/execution commands from Git history.
+These modes create no artifact and read no `.env`/Docker/SDK. V14 tests pass 7/7. Do not invoke predecessor modes.
 
 ## Audit the sealed D-142 source
 
@@ -88,8 +87,7 @@ Repository-wide suites may retain historical absent-state assertions; do not rew
 
 There is no supported live A/C or D-142 activation command:
 
-1. Validate evaluator-v2 and the consumed v13 terminal read-only.
-2. Stop. No v13 creation or execution mode may be invoked again.
+1. Validate evaluator-v2, consumed v13 and v14 source read-only.
+2. Stop. Only the exact v14 state statement may create non-proof state; it performs no observation.
 
-V10 `--record-state` and v11 `--record-approval` are consumed one-use creation modes. Use validation modes only;
-v12 and v13 creation/execution modes are consumed. Any future attempt requires a new versioned successor.
+V10-v13 creation/execution modes are consumed. V14 state, approval and run require separate exact statements.

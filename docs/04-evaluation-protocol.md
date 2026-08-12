@@ -105,7 +105,7 @@ v11 binds it to exact v9 runtime and one approval pair. V12 consumed one exact-a
 passed, but child stdout failed typed parsing, so terminal `ERROR(child_output_invalid)` establishes no readiness.
 V13's framed boundary is source-qualified/mock-only. Its recorded self-attested state has observation 0 and no
 runtime proof. Its one attempt ended `BLOCKED(docker_not_ready)` before `.env`/SDK observation. The consumed terminal
-establishes no readiness and changes no A/C treatment.
+establishes no readiness. V14 source qualification and manual-start report also change no A/C treatment.
 
 ## 7. Run-completion gate
 
