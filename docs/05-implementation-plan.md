@@ -49,10 +49,10 @@ stages/codes; v7 binds its isolated child, the D-137 observer and one-use lifecy
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5 attempts consumed; v7 source-qualified only, no state or observation authority.
+Status: v3/v5 attempts consumed; v7 state recorded, exact approval absent.
 
-V5 cannot rerun. Next record fresh v7 user-attested state only after explicit reconfirmation, then require a separate
-approval citing the exact contract, source qualification and state before one Docker/child observation attempt.
+V5 cannot rerun. V7 state records the fresh user report without observation and is non-reusable. Next require a
+separate approval citing the exact contract, source qualification and state before one Docker/child observation attempt.
 
 ## Work item 5 — execution candidate and cost gate
 

@@ -277,9 +277,14 @@ def test_parent_observation_rejects_false_ready_projection() -> None:
         parent.ParentObservation.model_validate(valid)
 
 
-def test_current_checkout_has_no_v7_state_approval_or_attempt_artifact() -> None:
+def test_current_checkout_has_v7_state_but_no_approval_or_attempt_artifact() -> None:
+    summary = parent.validate_state_evidence(repository=REPOSITORY)
+    assert summary["status"] == "V7_STATE_RECORDED_APPROVAL_ABSENT"
+    assert summary["external_observations_made"] == 0
+    assert summary["external_mutations_made"] == 0
+    assert summary["approval_or_attempt_created"] is False
+
     for path in (
-        parent.STATE_PATH,
         parent.APPROVAL_RECEIPT_PATH,
         parent.APPROVAL_PATH,
         parent.ATTEMPT_PATH,
@@ -289,7 +294,7 @@ def test_current_checkout_has_no_v7_state_approval_or_attempt_artifact() -> None
         assert not (REPOSITORY / path).exists()
 
 
-def test_run_once_fails_before_observer_without_state_and_approval() -> None:
+def test_run_once_fails_before_observer_without_exact_approval() -> None:
     calls = {"observer": 0}
 
     def observer(*_args: Any, **_kwargs: Any) -> parent.ParentObservation:

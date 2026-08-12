@@ -46,8 +46,9 @@
 - No-start v5 is consumed `ERROR(checker_error)` and cannot retry. V6 remains its source-qualified diagnostic
   predecessor. Parent-integration v7 source `6f6ba8627238b9d926e8b2bfe8a877d64ff1d755` and contract
   `ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf` are qualified offline only.
-  V7 made zero Docker/`.env`/SDK observation and has no state, approval, attempt or terminal. Its next gate is a fresh
-  v7 state plus separate approval citing the exact contract, qualification and state; general continuation is not it.
+  State `ncpstate_c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970` records only the
+  user's current Docker/`.env` report; it made zero observation and is non-reusable. No approval, attempt or terminal
+  exists. The next gate is separate approval citing the exact contract, qualification and state.
 
 ## Required reading
 

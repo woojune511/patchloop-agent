@@ -18,8 +18,11 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
   `sha256:16419a67050098b590682cda657e22c6378bbeeb55148e802f1e5a0a820e49e2`, 5,124 bytes and commit
   `50a3149028b6531b0ef837af90057077d18a2c4a`.
 
-Materialization and qualification made zero Docker/`.env`/SDK/network observation or mutation. No v7 state,
-approval, attempt, marker or terminal exists; the next gate is fresh state plus a separate exact approval.
+Materialization and qualification made zero Docker/`.env`/SDK/network observation or mutation. State
+`ncpstate_c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970` has file
+`sha256:14e8563d2146accf73c7f0150a31707ba4f8a53d913113b4eacdba5c415a5a47`, 1,134 bytes and commit
+`3040044b32cf043edc054fb13869a85a4b4b83fd`; it records only a user report, is non-reusable and made zero
+observation/mutation. No approval, attempt, marker or terminal exists; separate exact approval is next.
 
 ## D-142 SDK no-call successor — source-qualified only
 

@@ -31,7 +31,8 @@ work.
   `BLOCKED(docker_not_ready)` attempt: eight read-only Docker calls, zero mutation/`.env`/SDK/network/provider calls.
   V4 binds manual start without proving readiness. V5 then consumed one approved attempt: Docker READY and exact key
   membership preceded `ERROR(checker_error)` with incomplete accounting. It cannot retry. V6 fixes sanitized
-  diagnostics; source-qualified v7 binds the parent runtime and lifecycle while state, approval and observation stay closed.
+  diagnostics; source-qualified v7 binds the parent runtime. Its new state is user-attested non-proof and made zero
+  observation; approval and attempt remain separate closed gates.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

@@ -53,10 +53,11 @@ The current validator recursively binds the sealed v5 terminal and v6 qualificat
 uv run --offline --frozen pytest -q tests/test_sanitized_sdk_parent_integration.py
 uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-source
+uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-state
 ```
 
 These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
-own scripts and Git history; do not use their creation modes. V7 has no state, approval, attempt or terminal artifact.
+own scripts and Git history; do not use their creation modes. V7 state is self-attested; approval/attempt are absent.
 
 ## Audit the sealed D-142 source
 
@@ -91,7 +92,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3-v5 and source-qualified v6/v7 read-only.
-2. Stop. Fresh v7 state needs a new user reconfirmation; a later exact approval must cite its three identities.
+1. Validate evaluator-v2, consumed v3-v5 and source-qualified v6/v7 plus the v7 state read-only.
+2. Stop. A later exact approval must cite the v7 contract, qualification and state identities.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

@@ -39,8 +39,8 @@ Historical milestone-by-milestone limitations are archived at
   unobserved, and the terminal cannot be retried after a later environment change.
 - V4 is self-attested non-proof. Consumed v5 reached Docker/key checks but its isolated SDK checker returned only a
   sanitized error; incomplete accounting means neither exact SDK cause nor readiness is established. It cannot retry.
-- V6 source-qualifies fixed diagnostics; v7 source-qualifies their isolated parent and one-use lifecycle. Neither
-  source qualification read `.env`, ran Docker/SDK, created state/approval/attempt, diagnosed v5 or proved readiness.
+- V6 source-qualifies fixed diagnostics; v7 source-qualifies their parent/lifecycle. Its later state is only a
+  user report: no `.env`/Docker/SDK observation, approval or attempt occurred, so it does not prove readiness.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
