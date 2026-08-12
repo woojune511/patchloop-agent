@@ -1,0 +1,123 @@
+{
+  "schema_version": "sanitized-sdk-bootstrap-parent-source-qualification-v9",
+  "qualification_id": "ac-evaluator-v2-sanitized-sdk-bootstrap-parent-source-20260812-r1",
+  "status": "OFFLINE_SANITIZED_SDK_BOOTSTRAP_PARENT_SOURCE_QUALIFIED_LIVE_CLOSED",
+  "recorded_at": "2026-08-12T04:06:18.834860Z",
+  "source_commit": {
+    "commit": "8678ce9e4fbae426971a90a2f47ad28b5a431885",
+    "tree": "fc0556deaae838c7c0d22524dd269731e236a9d5",
+    "parents": [
+      "7d116ac964634952e82875393d0df1302e8478b3"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-sanitized-sdk-bootstrap-parent-successor-v9.contract.json",
+      "patchloop/evals/sanitized_sdk_bootstrap_parent_successor.py",
+      "scripts/build_sanitized_sdk_bootstrap_parent_successor.py",
+      "tests/test_sanitized_sdk_bootstrap_parent_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-sanitized-sdk-bootstrap-parent-successor-v9.contract.json",
+      "blob_oid": "2f1a943b11c8ea249bac53016469129292785d38",
+      "file_bytes": 4516,
+      "file_sha256": "sha256:2b07ad7ca721761616c4ade04a0ae883b101765f741f058c008a9555b79c58fd"
+    },
+    {
+      "path": "experiments/evaluator-v2-sanitized-sdk-import-bootstrap-v8.contract.json",
+      "blob_oid": "c32a428a58ea2c30175fa11c604af72e373cd492",
+      "file_bytes": 5129,
+      "file_sha256": "sha256:f647fe044f9e53ef6cc8ebec251bf69cb32abdb438b0fab96f498c1ab14546f9"
+    },
+    {
+      "path": "patchloop/evals/d137_no_call_preflight.py",
+      "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+      "file_bytes": 95362,
+      "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_bootstrap_parent_successor.py",
+      "blob_oid": "603949cd039e13e3b57badfd358787699b72fdb5",
+      "file_bytes": 52195,
+      "file_sha256": "sha256:af5ae9d50d45a01f16b0e22b841fc06aad08c66394a748ad12e49fbfd2b0c885"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_diagnostic_successor.py",
+      "blob_oid": "72e2976c756d5475c3233c915d265b994f3621ec",
+      "file_bytes": 48106,
+      "file_sha256": "sha256:5e8ce4c2f23be7a63e595e61e916003b444b2c06d1da1f8b6e1866d2673a8f5e"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_import_bootstrap_successor.py",
+      "blob_oid": "2d9732f4813634d2d2e09ab9bc0c84731183e8ea",
+      "file_bytes": 31447,
+      "file_sha256": "sha256:48a99c8831927e211a1f3acab8602d0d0b0d6cde6214e73918d2579294853701"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_parent_integration.py",
+      "blob_oid": "97643446c87920603308d8c399dec0e6233a4716",
+      "file_bytes": 68134,
+      "file_sha256": "sha256:cb177a42b8c698411d52440f64cf93dcdd2e68ca027869373b0066924f3ff368"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-import-bootstrap-v8-source-qualification.json",
+      "blob_oid": "75fd7d4a00c84459fbeb22c4f6a0ed3bbd2fb9e3",
+      "file_bytes": 6094,
+      "file_sha256": "sha256:afc233c32cc87c5ec3f30afeb48f0071ba8be38f3412ee471b28746ce46fd33f"
+    },
+    {
+      "path": "scripts/build_sanitized_sdk_bootstrap_parent_successor.py",
+      "blob_oid": "84f9165ed31b171dc55556526e1d276158346d91",
+      "file_bytes": 1549,
+      "file_sha256": "sha256:6e648fa3e523d5676fdf5b63ea0ef2c5a4259781c9249f5e43f313605e8ef8dd"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_diagnostic_child.py",
+      "blob_oid": "c1312c78164cf847c85b7fcb41569d96425340c1",
+      "file_bytes": 5142,
+      "file_sha256": "sha256:2ad3d536f10f9eaea503db3c61943ee59ff4de37e42a72651d49b396deaedb27"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_import_bootstrap_child.py",
+      "blob_oid": "a5f79722bd708a8eac6eca06f5c2f8d892200f57",
+      "file_bytes": 7790,
+      "file_sha256": "sha256:3e2f0734d40c7ea23f13742c19feb9f358e92e9a4668fa96e047a4f055e74127"
+    },
+    {
+      "path": "tests/test_sanitized_sdk_bootstrap_parent_successor.py",
+      "blob_oid": "0b8d6ec211b799c936f732a6b7fdada6f0f81fa0",
+      "file_bytes": 17151,
+      "file_sha256": "sha256:ec71303eef691e7b9dbbb89fb0ff636453ce35af281c44646051eed4e151bd66"
+    }
+  ],
+  "contract_id": "ncpcontract_c9f40f2fb6e944edddf8232923135bde1acbd8def51b101f432490671a904c11",
+  "contract_content_hash": "sha256:c9f40f2fb6e944edddf8232923135bde1acbd8def51b101f432490671a904c11",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-sanitized-sdk-bootstrap-parent-successor-v9.contract.json",
+    "blob_oid": "2f1a943b11c8ea249bac53016469129292785d38",
+    "file_bytes": 4516,
+    "file_sha256": "sha256:2b07ad7ca721761616c4ade04a0ae883b101765f741f058c008a9555b79c58fd"
+  },
+  "runtime_file": {
+    "path": "patchloop/evals/sanitized_sdk_bootstrap_parent_successor.py",
+    "blob_oid": "603949cd039e13e3b57badfd358787699b72fdb5",
+    "file_bytes": 52195,
+    "file_sha256": "sha256:af5ae9d50d45a01f16b0e22b841fc06aad08c66394a748ad12e49fbfd2b0c885"
+  },
+  "predecessor_qualification_file": {
+    "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-import-bootstrap-v8-source-qualification.json",
+    "blob_oid": "75fd7d4a00c84459fbeb22c4f6a0ed3bbd2fb9e3",
+    "file_bytes": 6094,
+    "file_sha256": "sha256:afc233c32cc87c5ec3f30afeb48f0071ba8be38f3412ee471b28746ce46fd33f"
+  },
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "state_approval_attempt_or_terminal_created": false,
+    "environment_docker_sdk_dotenv_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "candidate_cost_or_paid_execution_authorized": false
+  },
+  "next_gate": "fresh-v9-state-and-separate-exact-approval",
+  "content_hash": "sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687"
+}
