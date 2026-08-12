@@ -27,16 +27,13 @@ work.
   opaque projections, not direct private requirement/check IDs. Four controls map to runtime trace,
   requested-Docker-policy trace or artifact scan; integrity is a prerequisite. Free-form `prohibited_behaviors`
   is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
-- V1/v2 stay immutable. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` consumed one exact-approved
-  `BLOCKED(docker_not_ready)` attempt: eight read-only Docker calls, zero mutation/`.env`/SDK/network/provider calls.
-  V4 binds manual start without proving readiness. V5 then consumed one approved attempt: Docker READY and exact key
-  membership preceded `ERROR(checker_error)` with incomplete accounting. It cannot retry. V6 fixes sanitized
-  diagnostics. V7 consumed one exact-approved parent attempt: Docker/key checks completed, then the child returned
-  `diagnostic_runtime_import_error`; dispatch/network/provider were 0 and its ledger cannot reopen.
-- V8 offline reproduction maps that failure to omitted `SYSTEMROOT` and Windows error 10106. The correction permits
-  only non-recorded `SYSTEMROOT` pass-through and staged fixed codes; its source qualification grants no execution.
-- V9 applies the pass-through only to the original sanitized child, retains Docker gating and validates contract/source
-  before observation. Source qualification creates no state or attempt; v7 artifacts remain consumed.
+- V1/v2 are immutable; exact-approved v3/v5/v7 attempts are consumed and cannot retry. Their outcomes were
+  Docker-not-ready, checker error and diagnostic-runtime import error respectively; exact activity is indexed in
+  `docs/09-evidence.md`. V8 maps v7 to omitted `SYSTEMROOT`/Windows 10106 without granting execution.
+- V9 applies child-only pass-through and retains Docker gating. V10 exact source
+  `3190923f97883e7df4bb53b9b8231c3598239fb1` binds v9 to a fixed post-qualification user statement. Its source
+  qualification creates no attestation/state/approval/attempt or observation; generic continuation and v7 artifacts
+  cannot satisfy the next gate.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

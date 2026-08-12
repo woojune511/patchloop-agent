@@ -43,23 +43,18 @@
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
-- No-start v5 is consumed `ERROR(checker_error)` and cannot retry. V6 remains its source-qualified diagnostic
-  predecessor. Parent-integration v7 source `6f6ba8627238b9d926e8b2bfe8a877d64ff1d755` and contract
-  `ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf` are qualified offline only.
-  V7 exact approval `ncpapproval_02415aa08a4359a2f810d31f40c9a6e9a041af655df4c931cb61ac4a09d292ff`
-  produced consumed `ERROR(sdk_diagnostic_error)` terminal
-  `ncpterminal_a6ad48867773cc2614861cadfbece94c646fa2b7aef453facc7fd37fe4dd537c`. Docker was READY
-  after 8 reads and the exact key was declared/nonempty, but the child returned `diagnostic_runtime_import_error`
-  before SDK diagnosis. Dispatch/network/provider counts were 0; accounting is complete and retry/resume is false.
+- V5 and v7 are consumed failures and cannot retry. V7 reached Docker READY and exact-key membership, then stopped
+  at fixed `diagnostic_runtime_import_error`; dispatch/network/provider were 0 and accounting was complete.
 - Import-bootstrap v8 source `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`, contract
   `ncpcontract_bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b` and qualification
   `sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025` are offline-only.
   Exact-env tests localize v7 to missing `SYSTEMROOT`/Windows error 10106.
-- Corrected-parent v9 source `8678ce9e4fbae426971a90a2f47ad28b5a431885`, contract
-  `ncpcontract_c9f40f2fb6e944edddf8232923135bde1acbd8def51b101f432490671a904c11` and qualification
-  `sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687` are source-only. V9 validates its
-  contract before observation, retains the 8-command Docker gate and passes `SYSTEMROOT` only to the original
-  sanitized child. No state/approval/attempt exists; next build a fresh state-binding successor without reusing v7.
+- Corrected-parent v9 source `8678ce9e4fbae426971a90a2f47ad28b5a431885` remains source-only. State-binding
+  v10 source `3190923f97883e7df4bb53b9b8231c3598239fb1`, contract
+  `ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539` and qualification
+  `sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e` are qualified offline. V10 accepts
+  only its fixed post-qualification statement citing both exact identities. No attestation/state/approval/attempt
+  or external observation exists; prior statements and generic continuation grant no authority.
 
 ## Required reading
 

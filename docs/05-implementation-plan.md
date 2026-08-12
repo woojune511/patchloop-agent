@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v8 sealed; v9 corrected-parent source qualified, runtime closed.
+Status: v1-v9 preserved; v10 state-binding source qualified, attestation/state absent.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -46,15 +46,16 @@ reject-dispatch and D-137 read-only Docker. State remains self-attested non-proo
 
 V4 binds the manual-start report without proving readiness. V5 is immutable. V6 fixes value-free diagnostic
 stages/codes; v7 ran its parent once and stopped at the child's fixed diagnostic-runtime import boundary.
-V8 localizes missing `SYSTEMROOT`/Windows 10106. V9 applies that correction child-only, preserves the Docker gate and
-fails contract/source drift before observation; injected tests are not a runtime result.
+V8 localizes missing `SYSTEMROOT`/Windows 10106. V9 applies the correction child-only. V10 binds exact v9
+source/qualification and a fixed future user statement without observation; source tests are not a runtime result.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7 attempts consumed; no retry authority.
+Status: v3/v5/v7 attempts consumed; v10 awaits one fresh exact attestation, with no retry authority.
 
-V7 recorded Docker READY, exact-key membership and a consumed import error. V9 has no state/approval entrypoint.
-Next build a fresh state-binding successor; a later exact approval may authorize one attempt only.
+V7 recorded Docker READY, exact-key membership and a consumed import error. V10 has no state/approval artifact.
+Next bind only its fixed post-qualification statement into a nonreusable state. Then build a fresh approval
+successor; only a later separate exact approval may authorize one attempt.
 
 ## Work item 5 — execution candidate and cost gate
 

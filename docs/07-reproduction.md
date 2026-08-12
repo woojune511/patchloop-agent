@@ -47,7 +47,7 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
 one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
 
-The current validators recursively bind the sealed v5-v8 predecessor chain:
+The current validators recursively bind the sealed predecessor chain through source-qualified v10:
 
 ```powershell
 uv run --offline --frozen pytest -q tests/test_sanitized_sdk_import_bootstrap_successor.py
@@ -56,6 +56,9 @@ uv run --offline --frozen python scripts/build_sanitized_sdk_import_bootstrap_su
 uv run --offline --frozen pytest -q tests/test_sanitized_sdk_bootstrap_parent_successor.py
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_parent_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_parent_successor.py --validate-source
+uv run --offline --frozen pytest -q tests/test_sanitized_sdk_bootstrap_state_binding_successor.py
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-source
 ```
 
 These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
@@ -94,7 +97,8 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3/v5/v7 and source-qualified v8/v9 read-only.
-2. Stop. Next create only a fresh offline v9 state-binding successor; do not observe current state.
+1. Validate evaluator-v2, consumed v3/v5/v7 and source-qualified v8/v9/v10 read-only.
+2. Stop. Wait for the exact v10 post-qualification statement before creating its attestation/state pair.
 
-Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.
+`--record-state` is not a current quickstart and generic continuation is insufficient. Do not repurpose a historical
+receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

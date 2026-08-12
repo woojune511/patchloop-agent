@@ -105,9 +105,10 @@ Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 V5 is an immutable checker-error terminal. V6 fixes sanitized diagnostic stages. V7 bound v6, D-137 and the isolated
 lifecycle, then consumed `ERROR(sdk_diagnostic_error)`: Docker/key checks completed but the child emitted the fixed
 `diagnostic_runtime_import_error` before SDK diagnosis. Its exact approval and ledger cannot be reused.
-V8 binds that terminal to missing-`SYSTEMROOT`/10106 reproduction, seven fixed import stages, value/exception limits
-0 and SDK-package count at most 1. V9 binds v8, contract-first validation, the existing Docker observer and child-only
-`SYSTEMROOT` for the original sanitized diagnostic child. Its source has no state, approval, attempt or execution entrypoint.
+V8 binds missing-`SYSTEMROOT`/10106 reproduction. V9 binds contract-first validation, the Docker observer and
+child-only `SYSTEMROOT`. V10 binds exact v9 source/qualification and accepts only a fixed post-qualification user
+statement citing exact v10 identities. Its derived state is self-attested, nonreusable and grants no approval,
+observation or execution; no attestation/state artifact currently exists.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

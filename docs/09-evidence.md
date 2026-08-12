@@ -3,20 +3,19 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V9 corrected parent — source-qualified only
+## V10 state binder — source-qualified only
 
-- Source/tree `8678ce9e4fbae426971a90a2f47ad28b5a431885`/`fc0556deaae838c7c0d22524dd269731e236a9d5`
-  is the exact four-addition child of `7d116ac964634952e82875393d0df1302e8478b3`.
-- Contract `ncpcontract_c9f40f2fb6e944edddf8232923135bde1acbd8def51b101f432490671a904c11` binds
-  v8, contract-first validation, the 8-command Docker gate and child-only `SYSTEMROOT` pass-through to the original
-  sanitized diagnostic child. Focused validation passed 20/20 with injected observers.
-- Qualification body `sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687`, file
-  `sha256:8df598e5ac759db1e660654bb7a7d86cc630d9592ce670f0082d859d62008e67`, 5,751 bytes is commit
-  `b89f59ef46187ca08b02d047d63ad992c8cb3056`.
+- Source/tree `3190923f97883e7df4bb53b9b8231c3598239fb1`/`d7f0723630b1e9a699775974aa222fdec4d88df5`
+  is the exact four-addition child of `0c0f8065d99996b632c8a2f7e288d473fe7644c5`.
+- Contract `ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539` binds
+  exact v9 source/qualification and requires a fixed post-qualification statement citing v10 identities.
+- Qualification body `sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e`, file
+  `sha256:269be5085e26b07d551768dc51c9be75c364d29427f601ac928f2c297ed55a25`, 5,381 bytes is commit
+  `12e0927afdb651a07cc8e25abc0362d373ac48d0`.
 
-Source preparation observed no environment, Docker, `.env`, SDK or network and created no state, approval or attempt.
-V8 source/qualification remain `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`/
-`sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025`.
+Qualification created no attestation/state/approval/attempt and observed no environment, Docker, `.env`, SDK or
+network. V9 source/qualification remain `8678ce9e4fbae426971a90a2f47ad28b5a431885`/
+`sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687`.
 
 ## V7 consumed error — compact index
 

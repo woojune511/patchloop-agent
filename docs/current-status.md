@@ -18,16 +18,17 @@ The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277
 `ERROR(checker_error)`. V7 then consumed one exact-approved attempt: Docker READY after 8 reads, exact key
 declared/nonempty, one child launch, then `ERROR(sdk_diagnostic_error)` with child code
 `diagnostic_runtime_import_error`. Accounting is complete, unknown activity is false and retry/resume is closed.
-V8 is source-qualified only: exact-env tests localize the failure to missing `SYSTEMROOT` and Windows error 10106;
-it stages fixed import codes and returns no system value/exception. V9 source-qualifies the corrected parent: contract
-validation precedes observation, the existing Docker gate is retained, and `SYSTEMROOT` is child-only. No v9 state,
-approval, attempt or external observation exists.
+V8 localizes the import failure to missing `SYSTEMROOT`/Windows 10106. V9 source-qualifies the corrected parent.
+V10 source `3190923f97883e7df4bb53b9b8231c3598239fb1` binds that runtime to contract
+`ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539` and qualification
+`sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e`. It has no user attestation, state,
+approval, attempt, external observation or mutation.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v8 are sealed; v9 corrected parent source is qualified, runtime closed.
+3. **Offline preflight contracts.** V1-v9 are predecessors; v10 state-binding source is qualified, state absent.
 4. **Separately approved preflight attempt.** V3/v5/v7 are consumed and cannot retry.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
@@ -43,13 +44,15 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7 approvals, attempts and terminals are consumed. No new Docker, SDK/`.env`, provider, evaluator/agent,
-memory, candidate, cost or A/C authority exists.
+V5/v7 approvals, attempts and terminals are consumed. V10 source qualification grants no Docker, SDK/`.env`,
+provider, evaluator/agent, memory, candidate, cost or A/C authority.
 
 ## Next gate
 
-The next gate is a **fresh v9 state-binding successor**, not execution. It must bind a new current-state report to
-the exact v9 contract/qualification without observation or reuse. A separate later message must cite those exact
-identities to authorize one no-call attempt; no earlier v7 state or approval can be reused.
+The next gate is a **fresh exact v10 user attestation and state materialization**, not observation or execution.
+Only the fixed post-qualification statement from `--show-attestation-template`, citing the exact v10 contract and
+qualification above, may create one append-only `ncpattestation_*`/`ncpstate_*` pair. Prior statements and generic
+continuation are insufficient. That state remains self-attested non-proof; a new approval successor and a separate
+exact user approval are required before one attempt. No v7 artifact is reusable.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.
