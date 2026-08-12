@@ -107,8 +107,8 @@ V13's one attempt ended `BLOCKED(docker_not_ready)` before `.env`/SDK observatio
 attempt: Docker passed eight read-only checks and one child returned, but no framed envelope was received. Its
 `ERROR(child_checker_error/framed_output_invalid)` terminal has incomplete whole-terminal accounting and unknown
 post-marker activity. V15 corrects only the result channel in offline source/tests. V16 adds an offline activation
-lifecycle wrapper, self-attested state and future-attempt approval, but has no attempt or runtime evidence. Neither terminal nor source
-qualification establishes readiness.
+lifecycle wrapper, then consumes one `ERROR(framed_output_invalid)` attempt after Docker READY. Incomplete accounting
+and unknown activity make it non-readiness evidence; it cannot retry.
 
 ## 7. Run-completion gate
 

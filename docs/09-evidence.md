@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V16 dedicated-frame activation — state/approval bound, no attempt
+## V16 dedicated-frame activation — consumed ERROR
 
 Source/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/`b99883f5771e2bea8f4635c16a308cfcbc61dfc4`
 is the exact four-addition child of `9c6ec8a`; contract
@@ -16,7 +16,12 @@ records `ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e80
 non-proof with observation 0/execution false. Approval-only commit `415d9e1` records
 `ncpapproval_22f6a5e7fa855af2ec104f1cb0daebbaa85fe8c5f4c86c0e50e48e85384221c1`; file
 `sha256:30629d9cec38f124d2b96582ef5b6680bcd5955f8e77afc7d34e611e01f51337`, 1,385 bytes. It starts no attempt;
-authorization, attempt, ACTION_STARTED and terminal are absent.
+exact lifecycle commit `30c254d03e886e998b47e32d08488f724df3109f` records attempt
+`ncpattempt_6ac263d18d68bbe764ac7b630bb5672f5e612add486d67af7f6a4b629328ada5` and terminal
+`ncpterminal_db06f32f6223cdd227eb36b503b34ad6fc0eda817e563b21db9b896f8737c907`; terminal file
+`sha256:84b6c0d32a67d9d136b6fce98393e46a17f2321a28dc5b8562d6550b09f24ab5`, 19,089 bytes. Docker passed 8 reads,
+then one child returned no envelope: `ERROR(child_checker_error/framed_output_invalid)`. Forbidden counts are 0;
+accounting incomplete, unknown activity true, retry false.
 
 ## V15 dedicated-frame successor — source-qualified only
 

@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v14 are immutable predecessors; v15 and its v16 activation wrapper are qualified offline.
+Status: v1-v14/v16 are immutable; v15 remains the source predecessor.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,14 +47,14 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14 consumed; v16 has state/approval but no attempt.
+Status: v3/v5/v7/v12/v13/v14/v16 consumed; no attempt is open.
 
 V13 stopped before `.env`/SDK. V14 reached Docker READY then ended `ERROR(framed_output_invalid)` with incomplete
 accounting and unknown activity; its one-use chain is sealed. Do not retry or infer successor authority.
 V15 duplicates a result descriptor before workload suppression and passes 8/8 offline tests, including an actual
 Windows subprocess with noisy/closed fd 1/2. V16 binds that exact source and implements separate state, approval and
-immediate-run entrypoints. Its state records observation 0/execution false; exact nonreusable approval starts no
-attempt. An exact immediate-run statement is next.
+immediate-run entrypoints, but its one attempt again returned no envelope after Docker READY. Terminal
+`ERROR(framed_output_invalid)` has incomplete accounting/unknown activity; do not retry. A new version is required.
 
 ## Work item 5 — execution candidate and cost gate
 

@@ -48,12 +48,11 @@ uv run --offline --frozen python scripts/build_dedicated_frame_preflight_success
 uv run --offline --frozen python scripts/build_dedicated_frame_preflight_successor.py --validate-source
 uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-source
+uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-terminal
 uv run --offline --frozen pytest -q tests/test_dedicated_frame_preflight_successor.py
-uv run --offline --frozen pytest -q tests/test_dedicated_frame_activation_successor.py
 ```
 
-These modes create no artifact and read no `.env`/Docker/SDK. V15 has no live/default-observer mode; v16 observer
-execution is reachable only after separate exact state, approval and immediate-run lifecycle gates.
+These read-only modes create no artifact or external observation. V15 has no live/default observer; v16 is consumed.
 
 ## Audit the sealed D-142 source
 
@@ -77,4 +76,4 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 ## Live execution
 
 There is no supported live A/C or D-142 activation command. Validate v13-v16 read-only, then stop: V10-v14 are
-consumed and no candidate/cost gate is open. V16 state/approval started no attempt; exact immediate-run authority is next.
+consumed and no candidate/cost gate is open. V16 is also consumed ERROR and cannot retry.

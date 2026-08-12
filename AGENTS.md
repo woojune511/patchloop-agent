@@ -61,7 +61,9 @@
   `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` add the activation wrapper offline.
   State `ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029` is a nonreusable,
   self-attested non-proof. Approval `ncpapproval_22f6a5e7fa855af2ec104f1cb0daebbaa85fe8c5f4c86c0e50e48e85384221c1`
-  allows one future attempt but starts none; observation/execution/attempt/terminal remain absent.
+  led to one consumed attempt at `30c254d`: Docker passed 8 reads, but one child returned no envelope and terminal
+  `ERROR(child_checker_error/framed_output_invalid)`. Forbidden counts are 0; accounting is incomplete, unknown
+  activity true and retry/resume false.
 
 ## Required reading
 

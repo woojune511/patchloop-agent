@@ -1,4 +1,4 @@
-# Current status — 2026-08-12
+# Current status — 2026-08-13
 
 ## Current checkpoint
 
@@ -29,23 +29,22 @@ V16 activation source commit/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/
 `b99883f5771e2bea8f4635c16a308cfcbc61dfc4` binds that exact v15 qualification. Contract
 `ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` is source-qualified at
 `761bd37` as `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` after 7/7 focused tests.
-Exact statement binding at `0469c8f` created nonreusable state
-`ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029`: self-attested non-proof,
-observation 0 and execution false. Exact binding at `415d9e1` recorded nonreusable future-attempt approval
-`ncpapproval_22f6a5e7fa855af2ec104f1cb0daebbaa85fe8c5f4c86c0e50e48e85384221c1`; no attempt or terminal exists.
+State/approval led to one exact attempt at `30c254d`. Docker passed 8 read-only calls; one child launched/returned
+without an envelope, ending `ERROR(child_checker_error/framed_output_invalid)`. Recorded network/provider/Docker
+mutation/credential-value counts are 0, but accounting is incomplete, unknown activity true and retry false.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v14 are immutable; v15 is source-qualified and v16 is state/approval-bound.
-4. **Separately approved preflight attempt.** V16 has state/approval; no attempt exists.
+3. **Offline preflight contracts.** V1-v14/v16 are immutable; v15 is a source predecessor.
+4. **Separately approved preflight attempt.** V16 consumed ERROR; a new version is required.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
 8. **Selective/full comparison.** B/D require frozen leakage/redaction/calibration or a fresh held-out panel.
 
-No official/live evaluator result exists. V7, v12 and v14 are consumed ERROR; v15/v16 are not readiness evidence.
+No official/live evaluator result exists. V7, v12, v14 and v16 are consumed ERROR; none is readiness evidence.
 
 ## Consumed boundaries
 
@@ -54,12 +53,11 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12/v13/v14 are consumed. V16 state/approval starts no Docker/`.env`/SDK, cost or A/C execution.
+V5/v7/v12/v13/v14/v16 are consumed and cannot retry. Cost and A/C execution remain closed.
 
 ## Next gate
 
-No attempt is open. The next boundary is an exact v16 immediate-run statement, required to append authorization,
-attempt and ACTION_STARTED before observation. Current artifacts start none. Docker provisioning,
-candidate, cost and paid execution remain closed.
+No attempt is open. V16 cannot retry/resume; the next implementation boundary is a new versioned successor that
+binds its exact terminal. Candidate, cost and paid execution remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.
