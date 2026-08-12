@@ -1,0 +1,19 @@
+{
+  "schema_version": "sanitized-sdk-parent-state-evidence-v7",
+  "evidence_id": "ncpstate_c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970",
+  "contract_id": "ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf",
+  "contract_content_hash": "sha256:5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf",
+  "source_qualification_hash": "sha256:defaa75877c4d842ae41d3d2845f1f6a82df874a5ca6953c91b4b660cf86ca2c",
+  "v5_terminal_id": "ncpterminal_a7e12f36e75259ae00fe657ea0a96fde0a9826f58d77ffb1a7f091fff6902089",
+  "v6_source_qualification_hash": "sha256:df0d68f6059d267260ec34fcd3d7714c406856ef1b22902412de3e74180e3bb2",
+  "change_kind": "fresh-v7-parent-after-consumed-v5",
+  "current_manual_docker_start_reported": true,
+  "current_dotenv_placement_reported": true,
+  "state_is_user_attested_not_observed": true,
+  "credential_value_recorded": false,
+  "external_observation_count": 0,
+  "external_mutation_count": 0,
+  "reusable": false,
+  "recorded_at": "2026-08-12T01:13:49.592943Z",
+  "content_hash": "sha256:c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970"
+}
