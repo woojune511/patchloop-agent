@@ -33,7 +33,7 @@ work.
   state/approval chain authorized one attempt. It consumed `BLOCKED(docker_not_ready)` after eight read-only Docker
   calls and before `.env`/SDK. Retry is closed. V14 binds that terminal and delegates unchanged v13 semantics under a
   new identity. Its later exact state is self-attested non-proof with `.env` unreported and observation 0; approval/run
-  remain unopened.
+  are separate, and approval now binds one future attempt without starting it.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

@@ -15,9 +15,12 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
   `sha256:cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555`, file
   `sha256:4541cfdd304d65e5047663ec3f73f59a1a68ca59f397fe4bc86f7e42621bd119`, 908 bytes is the sole addition at
   `d4467c0`.
+- Approval `ncpapproval_370ba1d7f36ba7ce82805f8919747800f9be22ebf93f4ea670c2c85beffd0924`, file
+  `sha256:487ae7e9bbf81478ac8297971cdde9dd117c285cb9a9934e2b6b12045632c0b0`, 1,401 bytes is the sole addition at
+  `540a882`.
 
-State observation/mutation is 0, `.env` unreported and reusable false. Approval/attempt are absent; the next gate is
-the exact v14 approval statement and grants no execution.
+State/approval observation is 0 and both are nonreusable. Attempt is absent; the next gate is the exact v14 immediate-run
+statement and grants no cost or A/C authority.
 
 ## V13 framed successor — consumed BLOCKED
 
@@ -63,32 +66,18 @@ dispatch/network/provider were 0, accounting complete and retry/resume false. Ex
 
 ## Earlier consumed evidence — compact index
 
-- D-137 Docker transition `06e57c54b4fe09f3145b8b59e51a0e391108d52a` is READY after eight read-only
-  commands and zero mutation. SDK transition `8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01` is BLOCKED after three
-  membership checks found the key absent; value/`.env`/import/probe/dispatch/network counts were 0.
-- D-138/D-139/D-140 transitions `9f31d330190aa83768077b17c3cde47eb86c639d`,
-  `ba3af19a5cada8e49c29f514ad56c299639dc452` and `4b8eaf4d815f2ad5e2205bace0e8d9a97ad043f2`
-  are missing-key BLOCKED with three checks and zero value/`.env`/child/SDK/network activity.
-- D-136 success commit `2378569536c2367a3186f575a7517e3de7282336` preserves one official public GET,
-  HTTP 200, zero redirects and 3,735 replay bytes with provider/evaluator/agent and cost counts 0.
-- D-132 has no canonical response evidence. D-133 marker commit
-  `a10033b6abd7155ebaa5c66c13627ad3ea738566`, invalid D-134 gate commit
-  `9dc450a747537634e89fe2ade824685f8b5a52d6` and D-135 procedural terminal commit
-  `98f4560e718145bc7465732c1a3d2f5a4ea8d786` preserve that consumed incident without reconstruction.
-- D-129 remains terminal sequence-blocked; D-121 is deferred. Exact older artifacts and tuples remain in
-  `reports/`, the archived ledger and Git history. None may be retried, resumed, repaired or backfilled.
+- D-136 success `2378569536c2367a3186f575a7517e3de7282336` preserves one HTTP-200 GET; D-137 transitions
+  `06e57c54b4fe09f3145b8b59e51a0e391108d52a`/`8aa0ebf09b51b5ca6fc6cee90a7136cfb95a8a01` preserve Docker READY then
+  missing-key BLOCKED. D-138-D-141 remain consumed zero-value/no-network successors indexed in `reports/`.
+- D-132 has no canonical response. D-133-D-135 commits preserve the incident without reconstruction; D-129 is
+  sequence-blocked and D-121 deferred. Exact tuples remain in `reports/`/Git and cannot retry or backfill.
 
 ## Evaluator and preflight predecessors — compact index
 
-- Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` binds qualification
-  `sha256:18e7278f7e98988536de9b866fcb3e281c76a23404d252be1186ce9df97e7320`, evaluator source
-  `sha256:a272b43ced99550dbb79b9c478d3f7161cb260b0451709b7ab141ba8d6f64943` and suite
-  `sha256:bafa8212ce34efb36f2b96bb0508d99917544317a9671d93ad2b06a796672e6f`; it has no live result.
-- V3 terminal `ncpterminal_1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320`
-  consumed `BLOCKED(docker_not_ready)` after 8 Docker reads and zero `.env`/SDK/network/provider calls.
-- V4 state `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef` is
-  self-attested non-proof. V5 terminal `ncpterminal_a7e12f36e75259ae00fe657ea0a96fde0a9826f58d77ffb1a7f091fff6902089`
-  consumed ERROR after Docker/key checks returned only `sdk_checker_error` with incomplete accounting.
+- Evaluator-v2 commit `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6` is qualified locally with no live result.
+- V3 terminal `ncpterminal_1735b16d4317df06fece7506221da4ff1cd1c4e57a8fee6818b56907643e6320` is Docker-not-ready;
+  V4 state is non-proof and V5 terminal `ncpterminal_a7e12f36e75259ae00fe657ea0a96fde0a9826f58d77ffb1a7f091fff6902089`
+  is consumed checker error. Exact source/qualification tuples remain in `reports/`.
 
 Exact v1-v5 source, contract, receipt, approval and ledger tuples remain canonical in `reports/` and Git history.
 D-142/R2 are unchanged; no predecessor may be retried, resumed, repaired or backfilled.

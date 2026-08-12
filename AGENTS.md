@@ -53,7 +53,8 @@
   `ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e` and qualification
   `sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816` are offline-only. Tests pass 7/7;
   state `ncpstate_cda6ab57afae766cc7b2e26ce9b5ef40e984dd652177457b94da2550a22b2555` is non-proof with observation 0
-  and `.env` unreported. Approval/attempt are absent; the next gate is one exact v14 approval statement.
+  and `.env` unreported. Approval `ncpapproval_370ba1d7f36ba7ce82805f8919747800f9be22ebf93f4ea670c2c85beffd0924`
+  is recorded but attempt is absent; the next gate is one distinct exact immediate-run statement.
 
 ## Required reading
 

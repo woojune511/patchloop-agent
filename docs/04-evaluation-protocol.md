@@ -106,7 +106,7 @@ passed, but child stdout failed typed parsing, so terminal `ERROR(child_output_i
 V13's framed boundary is source-qualified/mock-only. Its recorded self-attested state has observation 0 and no
 runtime proof. Its one attempt ended `BLOCKED(docker_not_ready)` before `.env`/SDK observation. The consumed terminal
 establishes no readiness. V14 source qualification and manual-start report also change no A/C treatment.
-Its state is self-attested non-proof; approval/attempt remain absent.
+Its state is self-attested non-proof; approval is bound but attempt remains absent.
 
 ## 7. Run-completion gate
 
