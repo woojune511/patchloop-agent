@@ -1,0 +1,33 @@
+{
+  "schema_version": "user-exact-approval-receipt-v11",
+  "receipt_id": "ncpapprovalreceipt_df293fb560a3ae46a26fdca4691be4361946eaf5f1e01cbe2625f1f094dc80fd",
+  "contract_version": "ac-evaluator-v2-sanitized-sdk-bootstrap-approval-v11",
+  "contract_id": "ncpcontract_56b40355ec3805cb987bde6d3f45d7135160336b477186a7e7519bdb55f5285f",
+  "contract_content_hash": "sha256:56b40355ec3805cb987bde6d3f45d7135160336b477186a7e7519bdb55f5285f",
+  "source_qualification_content_hash": "sha256:61258adc944956893bde753065e5ec33cd15ee222235b484aba4938e0facadbe",
+  "state_change_evidence_id": "ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5",
+  "state_change_evidence_content_hash": "sha256:cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5",
+  "statement_sha256": "sha256:a3358db32df2a9887adbf2cca29ec600298d7b89fd5b4c64e574b57c5dde7eb8",
+  "approved_runtime": "patchloop.evals.sanitized_sdk_bootstrap_parent_successor.run_parent_preflight",
+  "approved_scopes": [
+    "v9-contract-and-source-validation-before-observation",
+    "docker-read-only-two-snapshot-eight-command-observation",
+    "isolated-dotenv-exact-openai-api-key-membership",
+    "sanitized-sdk-fixed-placeholder-reject-dispatch-with-child-only-systemroot"
+  ],
+  "identity_assurance": "current-user-self-attested-not-authenticated-or-signed",
+  "current_state_report_reconfirmed": true,
+  "attempt_limit": 1,
+  "approval_reusable": false,
+  "state_reusable": false,
+  "approval_binding_only": true,
+  "attempt_started": false,
+  "attempt_lifecycle_successor_required": true,
+  "credential_value_in_approval": false,
+  "network_or_transport_authorized": false,
+  "provider_evaluator_agent_execution_authorized": false,
+  "candidate_cost_or_paid_execution_authorized": false,
+  "retry_replacement_or_resume_authorized": false,
+  "recorded_at": "2026-08-12T09:16:22.388735Z",
+  "content_hash": "sha256:df293fb560a3ae46a26fdca4691be4361946eaf5f1e01cbe2625f1f094dc80fd"
+}
