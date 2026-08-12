@@ -1,0 +1,130 @@
+{
+  "schema_version": "sanitized-sdk-import-bootstrap-source-qualification-v8",
+  "qualification_id": "ac-evaluator-v2-sanitized-sdk-import-bootstrap-source-20260812-r1",
+  "status": "OFFLINE_SANITIZED_SDK_IMPORT_BOOTSTRAP_SOURCE_QUALIFIED_LIVE_CLOSED",
+  "recorded_at": "2026-08-12T02:13:33.053162Z",
+  "source_commit": {
+    "commit": "701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e",
+    "tree": "06a3df1764ed88dc5939ee6c976a25605f66c0cf",
+    "parents": [
+      "9ec874ce81b76c4c1e885c350ab3089ee8782e80"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-sanitized-sdk-import-bootstrap-v8.contract.json",
+      "patchloop/evals/sanitized_sdk_import_bootstrap_successor.py",
+      "scripts/build_sanitized_sdk_import_bootstrap_successor.py",
+      "scripts/run_sanitized_sdk_import_bootstrap_child.py",
+      "tests/test_sanitized_sdk_import_bootstrap_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-sanitized-sdk-import-bootstrap-v8.contract.json",
+      "blob_oid": "c32a428a58ea2c30175fa11c604af72e373cd492",
+      "file_bytes": 5129,
+      "file_sha256": "sha256:f647fe044f9e53ef6cc8ebec251bf69cb32abdb438b0fab96f498c1ab14546f9"
+    },
+    {
+      "path": "experiments/evaluator-v2-sanitized-sdk-parent-integration-v7.contract.json",
+      "blob_oid": "2ec0f8efb2470d76309e35416f74cda2ad39618b",
+      "file_bytes": 4424,
+      "file_sha256": "sha256:ed7cf246062ce40b76cfa0fa57a06608ef0db7fcaaebab7b86c2e54ca56eb951"
+    },
+    {
+      "path": "patchloop/evals/d137_no_call_preflight.py",
+      "blob_oid": "54bc0d8acbb5f9108c6a70b01c114b68acb7fffa",
+      "file_bytes": 95362,
+      "file_sha256": "sha256:61b1d40ed5a4e686e3eba18bf38c5ce6779c3e53de073d3b235e9a1b044314b3"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_diagnostic_successor.py",
+      "blob_oid": "72e2976c756d5475c3233c915d265b994f3621ec",
+      "file_bytes": 48106,
+      "file_sha256": "sha256:5e8ce4c2f23be7a63e595e61e916003b444b2c06d1da1f8b6e1866d2673a8f5e"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_import_bootstrap_successor.py",
+      "blob_oid": "2d9732f4813634d2d2e09ab9bc0c84731183e8ea",
+      "file_bytes": 31447,
+      "file_sha256": "sha256:48a99c8831927e211a1f3acab8602d0d0b0d6cde6214e73918d2579294853701"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_parent_integration.py",
+      "blob_oid": "97643446c87920603308d8c399dec0e6233a4716",
+      "file_bytes": 68134,
+      "file_sha256": "sha256:cb177a42b8c698411d52440f64cf93dcdd2e68ca027869373b0066924f3ff368"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-parent-integration-v7-source-qualification.json",
+      "blob_oid": "c9e35892aec4e22f3b0219eb12a8512786a80c82",
+      "file_bytes": 5124,
+      "file_sha256": "sha256:16419a67050098b590682cda657e22c6378bbeeb55148e802f1e5a0a820e49e2"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-parent-integration-v7-terminal.json",
+      "blob_oid": "57910346dd0de023d45377704bdacd657df51497",
+      "file_bytes": 17204,
+      "file_sha256": "sha256:cd11c014ac9c543b49a2c65d6f6b4dfd3b20b89c535086ac8890c0588d2084af"
+    },
+    {
+      "path": "scripts/build_sanitized_sdk_import_bootstrap_successor.py",
+      "blob_oid": "c25602eaad753bf894dcc2d9698c32d8c3ef624d",
+      "file_bytes": 1541,
+      "file_sha256": "sha256:e227c7589be4e07197e551aa4b282ea78de29b8a904555869b4428ab5f542cde"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_diagnostic_child.py",
+      "blob_oid": "c1312c78164cf847c85b7fcb41569d96425340c1",
+      "file_bytes": 5142,
+      "file_sha256": "sha256:2ad3d536f10f9eaea503db3c61943ee59ff4de37e42a72651d49b396deaedb27"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_import_bootstrap_child.py",
+      "blob_oid": "a5f79722bd708a8eac6eca06f5c2f8d892200f57",
+      "file_bytes": 7790,
+      "file_sha256": "sha256:3e2f0734d40c7ea23f13742c19feb9f358e92e9a4668fa96e047a4f055e74127"
+    },
+    {
+      "path": "tests/test_sanitized_sdk_import_bootstrap_successor.py",
+      "blob_oid": "c01d275109e1db494409fdd7ac079bf9c5ad4fd9",
+      "file_bytes": 9046,
+      "file_sha256": "sha256:32b1547faa08734033e4915093058ddceaa19641edf6d017f12a871ffb4e1ee1"
+    }
+  ],
+  "contract_id": "ncpcontract_bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b",
+  "contract_content_hash": "sha256:bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b",
+  "contract_file": {
+    "path": "experiments/evaluator-v2-sanitized-sdk-import-bootstrap-v8.contract.json",
+    "blob_oid": "c32a428a58ea2c30175fa11c604af72e373cd492",
+    "file_bytes": 5129,
+    "file_sha256": "sha256:f647fe044f9e53ef6cc8ebec251bf69cb32abdb438b0fab96f498c1ab14546f9"
+  },
+  "runtime_file": {
+    "path": "patchloop/evals/sanitized_sdk_import_bootstrap_successor.py",
+    "blob_oid": "2d9732f4813634d2d2e09ab9bc0c84731183e8ea",
+    "file_bytes": 31447,
+    "file_sha256": "sha256:48a99c8831927e211a1f3acab8602d0d0b0d6cde6214e73918d2579294853701"
+  },
+  "child_file": {
+    "path": "scripts/run_sanitized_sdk_import_bootstrap_child.py",
+    "blob_oid": "a5f79722bd708a8eac6eca06f5c2f8d892200f57",
+    "file_bytes": 7790,
+    "file_sha256": "sha256:3e2f0734d40c7ea23f13742c19feb9f358e92e9a4668fa96e047a4f055e74127"
+  },
+  "predecessor_terminal_file": {
+    "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-parent-integration-v7-terminal.json",
+    "blob_oid": "57910346dd0de023d45377704bdacd657df51497",
+    "file_bytes": 17204,
+    "file_sha256": "sha256:cd11c014ac9c543b49a2c65d6f6b4dfd3b20b89c535086ac8890c0588d2084af"
+  },
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "runtime_state_approval_attempt_or_terminal_created": false,
+    "docker_sdk_client_probe_dotenv_environment_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "candidate_cost_or_paid_execution_authorized": false
+  },
+  "next_gate": "import-bootstrap-parent-integration-successor",
+  "content_hash": "sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025"
+}
