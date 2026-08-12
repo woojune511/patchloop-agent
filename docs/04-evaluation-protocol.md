@@ -100,15 +100,11 @@ cannot qualify changed evaluator bytes. Evaluator v2 therefore requires new sour
 the A-null/C-exact-three treatment itself remains unchanged.
 
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
-persistence/qualification; raw results remain unofficial. V5/v7 are consumed. V10 state is self-attested non-proof;
-v11 binds it to exact v9 runtime and one approval pair. V12 consumed one exact-approved lifecycle: its Docker gate
-passed, but child stdout failed typed parsing, so terminal `ERROR(child_output_invalid)` establishes no readiness.
-V13's one attempt ended `BLOCKED(docker_not_ready)` before `.env`/SDK observation. V14 then consumed one approved
-attempt: Docker passed eight read-only checks and one child returned, but no framed envelope was received. Its
-`ERROR(child_checker_error/framed_output_invalid)` terminal has incomplete whole-terminal accounting and unknown
-post-marker activity. V15 corrects only the result channel in offline source/tests. V16 adds an offline activation
-lifecycle wrapper, then consumes one `ERROR(framed_output_invalid)` attempt after Docker READY. Incomplete accounting
-and unknown activity make it non-readiness evidence; it cannot retry.
+persistence/qualification; raw results remain unofficial. V12/V14/V16/V18 consumed checker-error lifecycles and
+V13 stopped Docker-not-ready; none can retry or establish readiness. V18's supervisor returned no envelope after
+Docker READY, leaving incomplete/unknown accounting. V19 binds that exact terminal and changes only the outer result
+transport to null stdio plus a bounded anonymous pipe. Its synthetic transport tests and source qualification grant
+no activation, external observation or execution authority.
 
 ## 7. Run-completion gate
 

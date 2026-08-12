@@ -40,25 +40,16 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 
 Validation reads committed blobs without changing mtime and grants no live authority.
 
-V13-v16 remain consumed. Validate v16 terminal and source-only v17/v18 without external observation:
+V13-v18 remain consumed. V19 validation binds the committed v18 terminal without external observation:
 
 ```powershell
-uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-terminal
-uv run --offline --frozen python scripts/build_dedicated_frame_preflight_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_dedicated_frame_preflight_successor.py --validate-source
-uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-source
-uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-terminal
-uv run --offline --frozen python scripts/build_supervised_frame_preflight_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_supervised_frame_preflight_successor.py --validate-source
-uv run --offline --frozen pytest -q tests/test_supervised_frame_preflight_successor.py
-uv run --offline --frozen python scripts/build_supervised_frame_activation_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_supervised_frame_activation_successor.py --validate-source
-uv run --offline --frozen pytest -q tests/test_supervised_frame_activation_successor.py
-uv run --offline --frozen python scripts/build_supervised_frame_activation_successor.py --validate-terminal
+uv run --offline --frozen python scripts/build_dual_pipe_preflight_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_dual_pipe_preflight_successor.py --validate-source
+$v19Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-v19-' + [guid]::NewGuid())
+uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v19Basetemp tests/test_dual_pipe_preflight_successor.py
 ```
 
-These validation modes create no artifact or external observation. V18 is consumed.
+These validation modes create no artifact or external observation. V18 is consumed; v19 is activation-closed.
 
 ## Audit the sealed D-142 source
 
@@ -81,5 +72,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142 or v18 retry command. Validate read-only, then stop: v16/v18 are consumed
-and no candidate or cost gate is open.
+There is no supported live A/C, D-142, v18 retry or v19 activation command. Validate read-only, then stop: no
+attempt, candidate or cost gate is open.

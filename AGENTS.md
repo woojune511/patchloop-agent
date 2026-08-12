@@ -59,6 +59,11 @@
   `490f1ed`: Docker passed 8 reads, one supervisor child returned no envelope, and terminal is
   `ERROR(child_checker_error/supervised_output_invalid)`. Forbidden counts are 0, accounting incomplete/unknown and
   retry false; exact IDs remain in `docs/09-evidence.md`.
+- V19 source `91300324d0fd9ac83356204f03325cded4137f12` binds that exact terminal and changes only the outer
+  parent/supervisor result transport to null stdio plus a bounded anonymous pipe. Contract
+  `ncpcontract_85b051f1bc7a3d03fba136e3f85f50bd0fd3eca9f989e5252bddfeb99ced5fcf` is source-qualified at
+  `sha256:1dc8eb6e484e56eb7bdbf8545fe5d40825a92ef864f46b94a5cf00bbdcf20c14`; activation, state, approval,
+  attempt, external observation and execution authority remain 0.
 
 ## Required reading
 

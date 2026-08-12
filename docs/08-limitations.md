@@ -36,16 +36,11 @@ Historical milestone-by-milestone limitations are archived at
   `official=false`.
 - V3/v5/v7/v12/v13/v14 attempts are consumed and prove neither current readiness nor hidden failure cause; exact
   observations and accounting limits remain in `docs/09-evidence.md`. Environment changes reopen none.
-- V9 composes the corrected child and Docker gate with injected observers. V12 consumed one attempt after Docker passed,
-  but child stdout failed typed parsing. V13 then stopped Docker-not-ready before `.env`/SDK. V14 reached Docker READY
-  and launched one child, but received no framed envelope. Raw child output was not persisted; whole-terminal accounting
-  is incomplete and unknown post-marker activity is true. Thus v14 proves neither SDK readiness, confidentiality nor a
-  narrower cause, and it cannot retry. V15's dedicated descriptor survives synthetic noise/fd closure in an actual
-  Windows subprocess, but v16's actual child again returned no envelope after Docker READY. Its terminal accounting
-  is incomplete/unknown, so it proves neither SDK readiness nor a narrower cause and cannot retry. V17 isolates the
-  workload behind a stdlib supervisor/anonymous pipe and passes synthetic close/hard-exit tests only. V18 wraps that
-  source but its live supervisor returned no envelope after Docker READY. Incomplete/unknown accounting proves neither
-  worker execution nor SDK readiness; v18 cannot retry.
+- V12/V14/V16/V18 consumed checker-error attempts after Docker passed; V13 stopped Docker-not-ready. No failed
+  lifecycle can retry or establish SDK readiness or a narrower cause. V18's supervisor returned no envelope, so its
+  accounting remains incomplete/unknown. V19 binds that exact terminal without causal inference and changes only the
+  outer parent/supervisor result channel to null stdio plus a bounded anonymous pipe. Synthetic subprocess tests do
+  not prove worker/SDK behavior; v19 is source-qualified only and has no activation, state, approval or attempt.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

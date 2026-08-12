@@ -3,6 +3,16 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V19 dual-pipe successor — source-qualified only
+
+Source/tree `91300324d0fd9ac83356204f03325cded4137f12`/`a31a395a29bf749631c877bf17bb85a5f817c79a`
+is the exact five-addition child of `e52deab4`. Contract
+`ncpcontract_85b051f1bc7a3d03fba136e3f85f50bd0fd3eca9f989e5252bddfeb99ced5fcf` binds the v18 terminal and
+changes only parent/supervisor result transport to null stdio plus a bounded anonymous pipe. Sole qualification
+commit `e54b399` records `sha256:1dc8eb6e484e56eb7bdbf8545fe5d40825a92ef864f46b94a5cf00bbdcf20c14`;
+file `sha256:859219f58b3cf14c213fb6101b102166de1bebcb278a25155c4467ecbfa34af9`, 5,342 bytes. External observation,
+mutation, state/approval/attempt/terminal and execution authority are 0.
+
 ## V18 supervised-frame activation — consumed ERROR
 
 Source/tree `e4c76af0e101b1f9bc62ab2fde5ebc1c975f6f42`/`4efccdd2ccd06e10d78a7b90d037cb69dc5e5f27`
@@ -18,23 +28,13 @@ read-only calls; mutation/network/provider/credential metadata are 0. One superv
 
 ## V16 dedicated-frame activation — consumed ERROR
 
-Source/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/`b99883f5771e2bea8f4635c16a308cfcbc61dfc4`
-is the exact four-addition child of `9c6ec8a`; contract
-`ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` binds the exact v15 source
-qualification. Sole-artifact commit `761bd37` records
-`sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091`; file
-`sha256:337ab14568d43a3c8027cdad8418236ba6581abcf19477565aa750225fa9abaa`, 3,835 bytes. State-only commit `0469c8f`
-records `ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029`; file
-`sha256:c9df6b5b0fae84ef01690ac2b3746ee8a2106fa58af81f3e95204d38f2f300fb`, 918 bytes. It is self-attested
-non-proof with observation 0/execution false. Approval-only commit `415d9e1` records
-`ncpapproval_22f6a5e7fa855af2ec104f1cb0daebbaa85fe8c5f4c86c0e50e48e85384221c1`; file
-`sha256:30629d9cec38f124d2b96582ef5b6680bcd5955f8e77afc7d34e611e01f51337`, 1,385 bytes. It starts no attempt;
-exact lifecycle commit `30c254d03e886e998b47e32d08488f724df3109f` records attempt
-`ncpattempt_6ac263d18d68bbe764ac7b630bb5672f5e612add486d67af7f6a4b629328ada5` and terminal
-`ncpterminal_db06f32f6223cdd227eb36b503b34ad6fc0eda817e563b21db9b896f8737c907`; terminal file
-`sha256:84b6c0d32a67d9d136b6fce98393e46a17f2321a28dc5b8562d6550b09f24ab5`, 19,089 bytes. Docker passed 8 reads,
-then one child returned no envelope: `ERROR(child_checker_error/framed_output_invalid)`. Forbidden counts are 0;
-accounting incomplete, unknown activity true, retry false.
+Contract `ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` and qualification
+`sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` led through nonreusable state/approval to
+lifecycle `30c254d`. Attempt `ncpattempt_6ac263d18d68bbe764ac7b630bb5672f5e612add486d67af7f6a4b629328ada5`
+ended at terminal `ncpterminal_db06f32f6223cdd227eb36b503b34ad6fc0eda817e563b21db9b896f8737c907`;
+file `sha256:84b6c0d32a67d9d136b6fce98393e46a17f2321a28dc5b8562d6550b09f24ab5`, 19,089 bytes. Docker passed 8 reads,
+then one child returned no envelope: `ERROR(child_checker_error/framed_output_invalid)`, forbidden counts 0,
+accounting incomplete/unknown and retry false. Exact intermediate tuples remain in `reports/`.
 
 ## V15 dedicated-frame successor — source-qualified only
 
