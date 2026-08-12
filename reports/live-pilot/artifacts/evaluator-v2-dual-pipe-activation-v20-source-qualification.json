@@ -1,0 +1,82 @@
+{
+  "schema_version": "dual-pipe-activation-source-qualification-v20",
+  "qualification_id": "ac-evaluator-v2-dual-pipe-activation-source-20260813-r1",
+  "status": "OFFLINE_V20_ACTIVATION_SOURCE_QUALIFIED_STATE_STATEMENT_REQUIRED",
+  "recorded_at": "2026-08-12T19:16:55.621508Z",
+  "source_commit": {
+    "commit": "304da8e9e4fe0d730c184944006e4c76970c12f0",
+    "tree": "0f43651ed75142c48b29b42664dbf90b22a37291",
+    "parents": [
+      "05e2b19a7e3770984af7c807500cf9e196d9bb27"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-dual-pipe-activation-successor-v20.contract.json",
+      "patchloop/evals/dual_pipe_activation_successor.py",
+      "scripts/build_dual_pipe_activation_successor.py",
+      "tests/test_dual_pipe_activation_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-dual-pipe-activation-successor-v20.contract.json",
+      "blob_oid": "997c918ac5be39650dc812b1c0e647b955ed19f0",
+      "file_bytes": 4237,
+      "file_sha256": "sha256:365faf9b149c71c31a4da84fa751165685324fbaa64349fddf64d025103782f3"
+    },
+    {
+      "path": "experiments/evaluator-v2-dual-pipe-preflight-successor-v19.contract.json",
+      "blob_oid": "1ecee2c65e448623f881ad5c76321af10c3d1c0a",
+      "file_bytes": 4597,
+      "file_sha256": "sha256:b7431f1467f70873ac829bf8dae012d656570dd0211bb9896ae698fb5f3666f5"
+    },
+    {
+      "path": "patchloop/evals/dual_pipe_activation_successor.py",
+      "blob_oid": "625f9600cb14a5e6a791089683ad6935f9be7045",
+      "file_bytes": 53504,
+      "file_sha256": "sha256:fcf699285fd2d7763be88a4b2a18c1b30c7aa25adf5a7cffa67013e306f8fc50"
+    },
+    {
+      "path": "patchloop/evals/dual_pipe_preflight_successor.py",
+      "blob_oid": "d4026b33b9f31d5822e8d2655ff75c0518cde20b",
+      "file_bytes": 38954,
+      "file_sha256": "sha256:8d75aa41195ebc8269226f1525159ce1b3c11f046eb6ac04b781717ff627faf8"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-preflight-v19-source-qualification.json",
+      "blob_oid": "8e4f506d78b67704529f4b02f093907d6758047f",
+      "file_bytes": 5342,
+      "file_sha256": "sha256:859219f58b3cf14c213fb6101b102166de1bebcb278a25155c4467ecbfa34af9"
+    },
+    {
+      "path": "scripts/build_dual_pipe_activation_successor.py",
+      "blob_oid": "7d957036aab8e90f98f0547ac94d6b2d2ac58eda",
+      "file_bytes": 4206,
+      "file_sha256": "sha256:265a9774dcc3d62b8e311f8dccdb7b94a62ef7a7d1933e8ec06b42112e0b85a9"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_dual_pipe_supervisor.py",
+      "blob_oid": "471be3b917a5c390eb4f67e561f92518152b48c3",
+      "file_bytes": 4602,
+      "file_sha256": "sha256:fdd149332fb15827291c478c8f851669e59447198ad01d22cd29ba580135d374"
+    },
+    {
+      "path": "tests/test_dual_pipe_activation_successor.py",
+      "blob_oid": "d7f0687ca2adec41cca8f44af0af6b5dfbd7b955",
+      "file_bytes": 10159,
+      "file_sha256": "sha256:52e8ec681abd56b556d57f17eb92abab3beee9507fd88f87da33502e5b1c9d84"
+    }
+  ],
+  "contract_id": "ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102",
+  "contract_content_hash": "sha256:2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102",
+  "predecessor_source_qualification_hash": "sha256:1dc8eb6e484e56eb7bdbf8545fe5d40825a92ef864f46b94a5cf00bbdcf20c14",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "state_approval_attempt_or_terminal_created": false,
+    "environment_docker_dotenv_sdk_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "execution_authorized": false
+  },
+  "next_gate": "fresh-exact-v20-state-statement",
+  "content_hash": "sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b"
+}
