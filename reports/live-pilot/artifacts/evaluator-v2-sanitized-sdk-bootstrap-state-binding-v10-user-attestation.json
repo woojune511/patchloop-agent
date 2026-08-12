@@ -1,0 +1,26 @@
+{
+  "schema_version": "current-state-user-attestation-v10",
+  "attestation_id": "ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3",
+  "contract_version": "ac-evaluator-v2-sanitized-sdk-bootstrap-state-binding-v10",
+  "contract_id": "ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539",
+  "contract_content_hash": "sha256:5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539",
+  "source_qualification_content_hash": "sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e",
+  "statement_sha256": "sha256:8664fa6563a727d9cba4c24040353bfbff17103927de21d5e39f86cc24cb1813",
+  "claim": "docker-running-and-dotenv-only-openai-api-key-user-attested-v10",
+  "actor": "user",
+  "identity_assurance": "current-user-self-attested-not-authenticated-or-signed",
+  "docker_desktop_running_reported": true,
+  "dotenv_exact_key_names_reported": [
+    "OPENAI_API_KEY"
+  ],
+  "exact_contract_id_cited": true,
+  "exact_source_qualification_hash_cited": true,
+  "state_binding_only": true,
+  "execution_authority_granted": false,
+  "independent_verification_completed": false,
+  "credential_value_observed_or_persisted": false,
+  "patchloop_external_observation_count": 0,
+  "patchloop_external_mutation_count": 0,
+  "recorded_at": "2026-08-12T07:14:56.108065Z",
+  "content_hash": "sha256:0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3"
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "current-state-change-evidence-v10",
+  "evidence_id": "ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5",
+  "contract_version": "ac-evaluator-v2-sanitized-sdk-bootstrap-state-binding-v10",
+  "contract_id": "ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539",
+  "contract_content_hash": "sha256:5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539",
+  "source_qualification_content_hash": "sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e",
+  "v9_source_commit": "8678ce9e4fbae426971a90a2f47ad28b5a431885",
+  "v9_source_qualification_hash": "sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687",
+  "user_attestation_id": "ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3",
+  "user_attestation_content_hash": "sha256:0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3",
+  "evidence_kind": "current-state-user-attested-v10",
+  "identity_assurance": "current-user-self-attested-not-authenticated-or-signed",
+  "docker_desktop_running_reported": true,
+  "dotenv_exact_key_names_reported": [
+    "OPENAI_API_KEY"
+  ],
+  "independent_verification_completed": false,
+  "docker_daemon_ready_verified": false,
+  "dotenv_file_or_membership_verified": false,
+  "systemroot_presence_or_value_attested": false,
+  "credential_value_observed_or_persisted": false,
+  "v9_runtime_source_qualified": true,
+  "runtime_execution_authorized": false,
+  "separate_exact_approval_required": true,
+  "state_change_evidence_reusable": false,
+  "approval_attempt_or_terminal_created": false,
+  "patchloop_external_observation_count": 0,
+  "patchloop_external_mutation_count": 0,
+  "next_gate": "fresh-exact-v10-approval-successor",
+  "recorded_at": "2026-08-12T07:14:56.108065Z",
+  "content_hash": "sha256:cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5"
+}
