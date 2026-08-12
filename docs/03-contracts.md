@@ -108,8 +108,8 @@ lifecycle, then consumed `ERROR(sdk_diagnostic_error)`: Docker/key checks comple
 V8 binds missing-`SYSTEMROOT`/10106 reproduction. V9 binds contract-first validation, the Docker observer and
 child-only `SYSTEMROOT`. V10 binds exact v9 source/qualification and accepts only a fixed post-qualification user
 statement citing exact v10 identities. Its self-attested state is nonreusable. V11 binds that exact ID/hash and v9
-runtime/scopes; only its post-qualification fixed statement can create a nonreusable approval pair. The pair starts
-no attempt and requires a qualified lifecycle successor.
+runtime/scopes. Its fixed statement created one nonreusable approval pair with `attempt_started=false`; the pair grants
+no execution and requires a qualified lifecycle successor.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

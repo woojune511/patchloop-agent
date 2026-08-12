@@ -56,10 +56,9 @@
   binding created attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3`
   and nonreusable state `ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
   `5ab4226bfc5017563b673375f9057fde39b1c38c`; it is self-attested non-proof with observation/mutation 0.
-- Approval v11 source `e1524fbdcffcfc2da04aefdf940cf79d32c71d9d`, contract
-  `ncpcontract_56b40355ec3805cb987bde6d3f45d7135160336b477186a7e7519bdb55f5285f` and qualification
-  `sha256:61258adc944956893bde753065e5ec33cd15ee222235b484aba4938e0facadbe` bind that state and exact v9 runtime.
-  No approval/attempt exists. Only its fixed exact statement may create one nonreusable approval pair; no attempt starts.
+- Approval v11 binds that state and exact v9 runtime; `docs/09-evidence.md` owns its exact source/contract/qualification
+  and approval tuple. The nonreusable pair at `11058e5d0e0d6bedeb5687869f1ca8eed7c7583d` starts no attempt and grants
+  no execution; the next gate is a qualified v11 attempt-lifecycle successor.
 
 ## Required reading
 

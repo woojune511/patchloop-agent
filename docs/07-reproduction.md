@@ -61,6 +61,7 @@ uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_bin
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-state
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-source
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-approval
 ```
 
 These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
@@ -100,7 +101,7 @@ evidence.
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
 1. Validate evaluator-v2, consumed v3/v5/v7 and sealed v8-v11 chain read-only.
-2. Stop. Wait for the exact v11 post-qualification approval statement; do not start an attempt.
+2. Stop. The next gate is a qualified v11 attempt-lifecycle successor, not an attempt.
 
-V10 `--record-state` is consumed. V11 `--record-approval` is not a quickstart and generic continuation is insufficient.
-Use validation modes for current evidence; do not repurpose historical artifacts.
+V10 `--record-state` and v11 `--record-approval` are consumed one-use creation modes. Use validation modes only;
+generic continuation cannot authorize a successor or execution.
