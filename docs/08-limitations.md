@@ -42,6 +42,8 @@ Historical milestone-by-milestone limitations are archived at
 - V7 observed Docker READY and exact-key membership, then the isolated child returned
   `diagnostic_runtime_import_error` before SDK diagnosis. This fixed code does not reveal the underlying exception or
   prove SDK readiness; the attempt is consumed and cannot be retried.
+- V8 reproduces missing `SYSTEMROOT` as Windows 10106 and source-qualifies staged imports. This is local source
+  evidence, not a child run; project imports may load the SDK package once, but no client/probe result exists.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

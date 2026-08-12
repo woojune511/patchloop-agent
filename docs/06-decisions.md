@@ -33,6 +33,8 @@ work.
   membership preceded `ERROR(checker_error)` with incomplete accounting. It cannot retry. V6 fixes sanitized
   diagnostics. V7 consumed one exact-approved parent attempt: Docker/key checks completed, then the child returned
   `diagnostic_runtime_import_error`; dispatch/network/provider were 0 and its ledger cannot reopen.
+- V8 offline reproduction maps that failure to omitted `SYSTEMROOT` and Windows error 10106. The correction permits
+  only non-recorded `SYSTEMROOT` pass-through and staged fixed codes; its source qualification grants no execution.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

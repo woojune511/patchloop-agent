@@ -18,12 +18,14 @@ The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277
 `ERROR(checker_error)`. V7 then consumed one exact-approved attempt: Docker READY after 8 reads, exact key
 declared/nonempty, one child launch, then `ERROR(sdk_diagnostic_error)` with child code
 `diagnostic_runtime_import_error`. Accounting is complete, unknown activity is false and retry/resume is closed.
+V8 is source-qualified only: exact-env tests localize the failure to missing `SYSTEMROOT` and Windows error 10106;
+it stages fixed import codes, returns no system value/exception, and has no parent runtime, state or approval.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v7 are sealed; v7 diagnosed only its parent import boundary.
+3. **Offline preflight contracts.** V1-v7 are sealed; v8 import-bootstrap source is qualified, runtime closed.
 4. **Separately approved preflight attempt.** V3/v5/v7 are consumed and cannot retry.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
@@ -44,8 +46,8 @@ memory, candidate, cost or A/C authority exists.
 
 ## Next gate
 
-The next gate is an **offline versioned import-diagnostic successor**, not a v7 retry. It must explain or correct the
-isolated child's `diagnostic_runtime_import_error` using injected tests and source qualification only. Any later
-observation needs a new contract/source, fresh state and separate exact approval; v7 artifacts are never reused.
+The next gate is an **offline v8 parent-integration successor**, not v7/v8 execution. It must bind a value-free
+`SYSTEMROOT` pass-through, the staged child and one-use lifecycle without reading environment values or running the
+child. Only after source qualification may fresh state and separate exact approval be considered.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

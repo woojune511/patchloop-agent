@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v7 sealed; v7 terminal is consumed ERROR.
+Status: v1-v7 sealed; v8 import-bootstrap source qualified, runtime closed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -46,13 +46,14 @@ reject-dispatch and D-137 read-only Docker. State remains self-attested non-proo
 
 V4 binds the manual-start report without proving readiness. V5 is immutable. V6 fixes value-free diagnostic
 stages/codes; v7 ran its parent once and stopped at the child's fixed diagnostic-runtime import boundary.
+V8 localizes this to missing `SYSTEMROOT`/Windows 10106 and binds a value-free staged correction.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
 Status: v3/v5/v7 attempts consumed; no retry authority.
 
-V7 recorded Docker READY, exact-key membership and `diagnostic_runtime_import_error` with complete accounting and
-zero dispatch/network/provider calls. Next build an offline versioned correction; only a later successor can open state.
+V7 recorded Docker READY, exact-key membership and the import error with complete accounting and zero dispatch/network.
+Next build/source-qualify a separate v8 parent integration; only its later successor may open state and approval.
 
 ## Work item 5 — execution candidate and cost gate
 

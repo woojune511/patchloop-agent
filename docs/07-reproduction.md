@@ -56,6 +56,9 @@ uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.
 uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-state
 uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-exact-approval
 uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-terminal
+uv run --offline --frozen pytest -q tests/test_sanitized_sdk_import_bootstrap_successor.py
+uv run --offline --frozen python scripts/build_sanitized_sdk_import_bootstrap_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_import_bootstrap_successor.py --validate-source
 ```
 
 These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
@@ -94,7 +97,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2 and consumed v3/v5/v7 read-only.
-2. Stop. Next create only an offline versioned successor for the v7 import error.
+1. Validate evaluator-v2, consumed v3/v5/v7 and source-qualified v8 read-only.
+2. Stop. Next create only an offline v8 parent-integration successor.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

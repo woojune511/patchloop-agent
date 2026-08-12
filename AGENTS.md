@@ -51,6 +51,12 @@
   `ncpterminal_a6ad48867773cc2614861cadfbece94c646fa2b7aef453facc7fd37fe4dd537c`. Docker was READY
   after 8 reads and the exact key was declared/nonempty, but the child returned `diagnostic_runtime_import_error`
   before SDK diagnosis. Dispatch/network/provider counts were 0; accounting is complete and retry/resume is false.
+- Import-bootstrap v8 source `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`, contract
+  `ncpcontract_bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b` and qualification
+  `sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025` are offline-only.
+  Exact-env tests localize v7 to missing `SYSTEMROOT`/Windows error 10106. V8 returns fixed staged codes and no
+  value/exception; project imports may load the SDK package once but client/probe/dispatch/network remain 0. No parent
+  integration, state or approval exists; next build a separate parent successor without reusing v7.
 
 ## Required reading
 

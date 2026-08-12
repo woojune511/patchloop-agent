@@ -3,6 +3,19 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V8 import-bootstrap correction — source-qualified only
+
+- Source commit/tree `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`/
+  `06a3df1764ed88dc5939ee6c976a25605f66c0cf` directly follows v7 preservation and adds exactly five paths.
+- Contract `ncpcontract_bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b` binds
+  v7 terminal, missing `SYSTEMROOT`/10106 reproduction, fixed staged codes and zero value/exception return.
+- Qualification body `sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025`, file
+  `sha256:afc233c32cc87c5ec3f30afeb48f0071ba8be38f3412ee471b28746ce46fd33f`, 6,094 bytes is commit
+  `bdfed282d21b08f0ebe4002d77679be549c96a4d`. Focused validation passed 16/16.
+
+No v8 parent, state, approval, attempt or external observation exists. A future project import may load the SDK
+package once; client/probe/dispatch/network remain forbidden until a separately qualified parent and exact approval.
+
 ## V7 sanitized SDK parent integration — ERROR and consumed
 
 - V6 predecessor source `1d99a7c0acf20ec961240f33f585553fd881dc02`, contract
@@ -35,36 +48,17 @@ complete, unknown activity false and retry/resume false. No credential value/has
 
 ## D-142 SDK no-call successor — source-qualified only
 
-- Gate `reports/live-pilot/artifacts/d142-d141-sdk-blocked-no-call-successor-offline-source-gate.json`:
-  ID/body `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914`;
-  file `sha256:83fa6e83a3b5827a07e3383f9dea6318b748813742b501a4aaf7b41c726a1e80`,
-  16,298 bytes; blob `a2fcfcf97e8cdc1c7b8357b334211efab4b2dbf2`.
-- Source commit `1370cf43c08cefb550b158a5d4172a60ac172470`, tree
-  `7f7e7e25c79899eee6180ae45767492435003096`, sole parent
-  `6405be40eb52d71fc9376065b553a04164543a4b`; its diff is exactly four added implementation paths.
-- The gate-add/10-active-doc evidence commit is the source's direct child; the post-commit validator reports its
-  exact tuple without embedding a self-referential commit hash here.
-
-The gate replay-validates the complete D-141 chain and qualifies only the future one-use SDK successor contract.
-Fully injected/mocked focused tests passed 170/170 and are reported separately from other checks. No D-142
-receipt, attempt, marker, terminal or preservation artifact exists; preparation performed zero membership/value
-or `.env` observation, credential mutation/provisioning, child launch, SDK inspection, endpoint/network or Docker
-action.
-
-Planning disposition is owned by `docs/current-status.md`; it does not alter this evidence state.
+- Gate `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` binds source/tree
+  `1370cf43c08cefb550b158a5d4172a60ac172470`/`7f7e7e25c79899eee6180ae45767492435003096`, the exact
+  four-path child of D-141 terminal commit `6405be40eb52d71fc9376065b553a04164543a4b`.
+- Injected/mocked tests passed 170/170. Receipt/attempt/marker/terminal and external observation are absent.
+  Planning is deferred; exact file/blob tuples remain in the gate artifact and Git history.
 
 ## D-141 SDK no-call successor — BLOCKED and consumed
 
-- Gate/source/evidence commits are `d141_51e825a474cc957f6fa20dea9ec5332c9b0defd7569dfe6f063f57f195636aab`,
-  `0ffe586760659542d7ecf7c94698a2f1e109e6b0` and `9b9ce197daa34db355274956fd5043ab3a0b3539`.
-- Receipt/attempt/ACTION_STARTED/terminal IDs are `d141approval_e4f5bfc2324eb75194a84f45d42269910bc487101d7cd7b629289e60b7416c71`,
-  `d141sdkattempt_5df0f4f15f3e98deebbb77d59ace047102f2da75ef1378875311d1a6be66e588`,
-  `d141sdkstarted_549d1631211c3dfeb440989e9377cf6d697125eafd0309d68fe092f66ba61b57` and
-  `d141sdk_c96ceb8eb274560b89e3688402a0c3576d6f09536c32d611600ac1386d4613ef`.
-- Terminal commit `6405be40eb52d71fc9376065b553a04164543a4b` recorded false/false/false after three
-  presence checks. Credential/environment value, `.env`, child, SDK, network and provider/evaluator/agent counts were 0.
-
-D-141 is consumed and cannot be retried, resumed, repaired or backfilled. Exact file tuples remain in `reports/`.
+- Terminal `d141sdk_c96ceb8eb274560b89e3688402a0c3576d6f09536c32d611600ac1386d4613ef` at commit
+  `6405be40eb52d71fc9376065b553a04164543a4b` recorded false/false/false after three checks; value, `.env`,
+  child, SDK, network and provider counts were 0. It is consumed; exact chain tuples remain in `reports/`.
 
 ## Earlier consumed evidence — compact index
 
