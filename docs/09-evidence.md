@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V12 preflight lifecycle — source-qualified only
+## V12 preflight lifecycle — consumed ERROR
 
 - Source/tree `0518f294ea73890aa0387a57121167c5a01f7947`/`53ade760c499755b3b683a0e5c6b375e729e10bb`
   is the exact four-addition child of `74541b2db480857df4e90b4a6732cda605a08950`.
@@ -13,9 +13,18 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
   `sha256:377b90f0050bbb6e8df20e89acd4579f7fc4e6d43f70bfbf0ef1aa0129831f58`, 5,246 bytes is the sole addition at
   `049f8bd9704087da68acf67c75f5dc79a8cf5e49`.
 
-Qualification created no authorization, attempt, marker, terminal, observation or mutation; execution is false. The
-next gate is `fresh-exact-v12-run-statement`. This is a preflight lifecycle version, not an evaluator version. The v11
-receipt/approval pair remains canonical at `11058e5d0e0d6bedeb5687869f1ca8eed7c7583d` and is nonreusable.
+One exact-approved execution is sealed as the exact four-addition commit
+`770b661e52646e0e309162121f14ff92f7f2568d`. Authorization
+`ncprunauthorization_d155a44fb6b1e1951eb22ef7cd461d93ee7b205c586435a7a4951ff680f19a34`, attempt
+`ncpattempt_b619ed00db478d4873321d9b72b7e91bfb7e13b53f0203b52f751f7b97bbb434`, marker
+`ncpstarted_037edbdc6279fcb28c64d8c210043cc75fc23a42904064339e78a8fb2f11736f` and terminal
+`ncpterminal_9a4fc25df858faad01f4ec7872ca7d4cb31a4515f719fbabb2a20fc4cc55b13b` are consumed.
+
+The terminal is `ERROR(child_checker_error/child_output_invalid)`: Docker passed 8 read-only commands and the parent
+environment guards passed, but returned child stdout failed typed JSON parsing. Accounting is complete; unknown
+activity is false; Docker start/image mutation/container/network/provider/evaluator/agent/credential-value recording
+counts are 0. Retry/resume is false. No key-membership or SDK readiness result exists. V12 is a preflight lifecycle
+version, not an evaluator version; the next boundary is a new offline corrected successor.
 
 ## V7 consumed error — compact index
 

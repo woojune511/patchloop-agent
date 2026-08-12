@@ -42,9 +42,9 @@ Historical milestone-by-milestone limitations are archived at
 - V7 consumed one import-error attempt; its fixed code proves neither SDK readiness nor the hidden exception. V8
   reproduces missing `SYSTEMROOT`/10106, but its staged imports are local source evidence only.
 - V9 composes the corrected child and Docker gate with injected observers. V10 only source-qualifies an exact
-  self-attested state binder. Its state proves neither daemon/key readiness nor identity. V11 binds one approval pair
-  and v12 source-qualifies its lifecycle, but no attempt, observation or runtime result exists. V12 is not evaluator-v12;
-  child-only pass-through proves no confidentiality.
+  self-attested state binder; V11 binds one approval pair. V12 consumed it: Docker passed, but child stdout failed
+  typed parsing. Raw stdout was not retained, so no key/SDK readiness or narrower cause is proved. V12 cannot retry,
+  is not evaluator-v12 and proves no confidentiality.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

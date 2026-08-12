@@ -33,9 +33,9 @@ work.
 - V9 applies child-only pass-through and retains Docker gating. V10 exact source
   `3190923f97883e7df4bb53b9b8231c3598239fb1` binds v9 to a fixed post-qualification user statement. Its source
   qualification created no observation. The later exact statement produced one nonreusable self-attested state.
-- V11 binds that exact state and v9 runtime/scopes. Its fixed statement created one nonreusable approval pair but no
-  attempt, observation or mutation. V12 binds the pair into a one-shot lifecycle; qualification is offline and only a
-  fresh exact run statement may start it.
+- V11 created one nonreusable approval pair. V12 consumed it as
+  `ERROR(child_checker_error/child_output_invalid)`: Docker passed, child stdout failed typed parsing and retry closed.
+  Correction requires a new offline versioned successor.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

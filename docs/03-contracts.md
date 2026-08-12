@@ -110,7 +110,9 @@ child-only `SYSTEMROOT`. V10 binds exact v9 source/qualification and accepts onl
 statement citing exact v10 identities. Its self-attested state is nonreusable. V11 binds that exact ID/hash and v9
 runtime/scopes. Its fixed statement created one nonreusable approval pair with `attempt_started=false`; the pair grants
 no execution. V12 binds that pair and implements authorization→attempt→ACTION_STARTED→one v9 observation→terminal.
-Its source qualification creates none of those runtime artifacts; an exact post-qualification run statement is required.
+Its exact-approved execution consumed `ERROR(child_checker_error/child_output_invalid)`: Docker passed, but child
+stdout failed typed parsing. Raw stdout was not retained, so no narrower cause, key/SDK result or retry exists. A new
+contract/source/qualification/approval chain is required.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

@@ -56,9 +56,9 @@
   binding created attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3`
   and nonreusable state `ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
   `5ab4226bfc5017563b673375f9057fde39b1c38c`; it is self-attested non-proof with observation/mutation 0.
-- Preflight lifecycle v12 source `0518f294ea73890aa0387a57121167c5a01f7947` binds the v11 approval and v9
-  runtime. Qualification `sha256:e96858f63e4e45e74ec9219e8653dbe276ebcd37384bcfa8762535ee771a6c41`
-  creates no attempt or authority; the next gate is one fresh exact v12 run statement. V12 is not an evaluator version.
+- Preflight lifecycle v12 consumed one exact-approved `ERROR(child_checker_error/child_output_invalid)` attempt.
+  Docker passed 8 reads, but child stdout failed typed parsing; accounting is complete, forbidden activity is 0 and
+  retry is closed. `docs/09-evidence.md` owns the tuple. A corrected successor is required; v12 is not evaluator-v12.
 
 ## Required reading
 

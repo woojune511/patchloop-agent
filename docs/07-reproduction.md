@@ -52,9 +52,11 @@ The current v12 validators recursively bind v11 approval, v10 state and the seal
 ```powershell
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-source
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-terminal
 ```
 
-These do not read/stat `.env` or grant an attempt. Predecessor commands remain in Git history; use validation only.
+These validation modes do not grant an attempt. The terminal validator audits the committed consumed chain; predecessor
+creation/execution commands remain in Git history and must not be invoked.
 
 ## Audit the sealed D-142 source
 
@@ -89,8 +91,8 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3/v5/v7 and sealed v8-v12 chain read-only.
-2. Stop. Obtain the exact v12 statement from `--show-run-template`; generic continuation starts nothing.
+1. Validate evaluator-v2 and consumed v3/v5/v7/v12 chains read-only.
+2. Stop. V12 ended `ERROR(child_output_invalid)` and has no retry/replacement/resume authority.
 
 V10 `--record-state` and v11 `--record-approval` are consumed one-use creation modes. Use validation modes only;
-v12 `--run-exact-attempt` requires its fresh exact statement and still grants no paid execution.
+v12 `--run-exact-attempt` is also consumed. The next work is an offline corrected successor, not live execution.
