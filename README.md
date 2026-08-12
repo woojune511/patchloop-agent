@@ -30,7 +30,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-110 froze three entries; D-112/D-115 left selective scoring unready. No memory-effect claim exists.
 - D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
-- V3/v5/v7 are consumed; v10 binds a self-attested state, while approval/attempt/execution stay closed.
+- V3/v5/v7 are consumed; v11 source binds v10 state, while approval/attempt/execution stay closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

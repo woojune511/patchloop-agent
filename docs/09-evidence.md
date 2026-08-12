@@ -3,22 +3,18 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V10 state binder — source-qualified only
+## V11 approval successor — source-qualified only
 
-- Source/tree `3190923f97883e7df4bb53b9b8231c3598239fb1`/`d7f0723630b1e9a699775974aa222fdec4d88df5`
-  is the exact four-addition child of `0c0f8065d99996b632c8a2f7e288d473fe7644c5`.
-- Contract `ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539` binds
-  exact v9 source/qualification and requires a fixed post-qualification statement citing v10 identities.
-- Qualification body `sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e`, file
-  `sha256:269be5085e26b07d551768dc51c9be75c364d29427f601ac928f2c297ed55a25`, 5,381 bytes is commit
-  `12e0927afdb651a07cc8e25abc0362d373ac48d0`.
+- Source/tree `e1524fbdcffcfc2da04aefdf940cf79d32c71d9d`/`b074a6ae4e27eb9286781db46e6935e6adb1a85c`
+  is the exact four-addition child of `f05c23e5e1d158bc4cce47840655ead34228f28a`.
+- Contract `ncpcontract_56b40355ec3805cb987bde6d3f45d7135160336b477186a7e7519bdb55f5285f` binds
+  v10 state `ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` and v9 runtime/scopes.
+- Qualification body `sha256:61258adc944956893bde753065e5ec33cd15ee222235b484aba4938e0facadbe`, file
+  `sha256:a5c2e4323c87ca9bada83d883e70f24f2505bbec758a6d40fca74fac714bf44f`, 6,357 bytes is commit
+  `ccd5126aae1c413e474adc12783cbc4c6d1b58ee`.
 
-Qualification observed no environment, Docker, `.env`, SDK or network. Exact statement binding later created
-attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3` and state
-`ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
-`5ab4226bfc5017563b673375f9057fde39b1c38c`. File hashes are `sha256:2e95c2c73d7594259a4150325ea6e6ac963b1c1c5d7e4b972f972451c1d323fc` and
-`sha256:adca442a20b7dbafa834b54888568c1e9ddfbe16f9c783458ad2917caa60b4e2`.
-The state is self-attested non-proof, nonreusable, observation/mutation 0 and execution false; no approval/attempt exists.
+Preparation created no approval/attempt and observed no environment, Docker, `.env`, SDK or network. V10 state is
+self-attested non-proof, nonreusable and execution false; its exact files remain at `5ab4226bfc5017563b673375f9057fde39b1c38c`.
 
 ## V7 consumed error — compact index
 

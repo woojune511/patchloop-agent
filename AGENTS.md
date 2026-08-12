@@ -55,8 +55,11 @@
   `sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e` are qualified offline. Exact statement
   binding created attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3`
   and nonreusable state `ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
-  `5ab4226bfc5017563b673375f9057fde39b1c38c`. They are self-attested non-proof with observation/mutation 0 and
-  execution false. No approval/attempt exists; next build/source-qualify a fresh approval successor.
+  `5ab4226bfc5017563b673375f9057fde39b1c38c`; it is self-attested non-proof with observation/mutation 0.
+- Approval v11 source `e1524fbdcffcfc2da04aefdf940cf79d32c71d9d`, contract
+  `ncpcontract_56b40355ec3805cb987bde6d3f45d7135160336b477186a7e7519bdb55f5285f` and qualification
+  `sha256:61258adc944956893bde753065e5ec33cd15ee222235b484aba4938e0facadbe` bind that state and exact v9 runtime.
+  No approval/attempt exists. Only its fixed exact statement may create one nonreusable approval pair; no attempt starts.
 
 ## Required reading
 

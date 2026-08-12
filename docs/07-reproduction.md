@@ -59,6 +59,8 @@ uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_parent_su
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-source
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-state
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-source
 ```
 
 These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
@@ -97,8 +99,8 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3/v5/v7 and sealed v8/v9/v10 state chain read-only.
-2. Stop. Next build/source-qualify only a fresh approval successor bound to the exact v10 state.
+1. Validate evaluator-v2, consumed v3/v5/v7 and sealed v8-v11 chain read-only.
+2. Stop. Wait for the exact v11 post-qualification approval statement; do not start an attempt.
 
-V10 `--record-state` is consumed and must not be invoked again. Its source-era full test intentionally retains the
-pre-state absence assertion; use `--validate-state` for the current chain. Do not repurpose historical artifacts.
+V10 `--record-state` is consumed. V11 `--record-approval` is not a quickstart and generic continuation is insufficient.
+Use validation modes for current evidence; do not repurpose historical artifacts.

@@ -32,8 +32,9 @@ work.
   `docs/09-evidence.md`. V8 maps v7 to omitted `SYSTEMROOT`/Windows 10106 without granting execution.
 - V9 applies child-only pass-through and retains Docker gating. V10 exact source
   `3190923f97883e7df4bb53b9b8231c3598239fb1` binds v9 to a fixed post-qualification user statement. Its source
-  qualification created no observation. The exact later statement produced one append-only, self-attested state with
-  execution false. It is nonreusable; the next gate is a new approval successor, not approval or an attempt.
+  qualification created no observation. The later exact statement produced one nonreusable self-attested state.
+- V11 binds that exact state and v9 runtime/scopes. Source qualification creates no approval/attempt; only its fixed
+  post-qualification statement may create one approval pair, which still requires a lifecycle successor.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
