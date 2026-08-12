@@ -23,16 +23,17 @@ V17 remains the immutable supervisor/worker source predecessor. V18 source/tree
 four-addition activation child. Contract
 `ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` is source-qualified at
 `50a4b28` as `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d`.
-V18 preserves the supervisor/worker pipe and adds separate lifecycle entrypoints. State-only commit `749e359` records
-nonreusable `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`: self-attested non-proof,
-observation 0, execution false. Approval/attempt/terminal and Docker/`.env`/SDK observation are absent.
+V18 preserves the supervisor/worker pipe. State `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`
+is non-proof. Approval-only commit `99d2099` records nonreusable
+`ncpapproval_8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094`; observation 0, attempt false.
+Run authorization/attempt/terminal and Docker/`.env`/SDK observation are absent.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v17 are immutable; v18 is source-qualified and state-bound only.
-4. **Separately approved preflight attempt.** Bind fresh exact v18 approval, then separate run authority; none exists.
+3. **Offline preflight contracts.** V1-v17 are immutable; v18 is source/state/approval-bound only.
+4. **Separately approved preflight attempt.** Exact immediate-run authority remains absent; no attempt is open.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -51,7 +52,7 @@ V5/v7/v12/v13/v14/v16 are consumed and cannot retry. Cost and A/C execution rema
 
 ## Next gate
 
-No attempt is open. V16 cannot retry/resume; v17/v18 grant no execution authority. The next boundary is the exact
-v18 approval statement; it records approval only and starts no attempt. Candidate and cost remain closed.
+No attempt is open. V16 cannot retry/resume. V18 approval is nonreusable and starts nothing; the next boundary is
+the exact immediate-run statement, which starts one attempt. Candidate and cost remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

@@ -31,8 +31,7 @@ work.
   producing `ERROR(child_checker_error/framed_output_invalid)`. Whole-terminal accounting is incomplete, unknown
   activity is true and retry/resume is closed. V16 later consumes the same framed-output class after Docker READY.
   V17 binds that exact terminal and moves the diagnostic to one null-stdio worker behind a stdlib supervisor and
-  anonymous result pipe. V18 is its source-qualified activation wrapper; exact non-proof state now exists, while
-  approval and run authority remain separate and absent.
+  anonymous result pipe. V18 has source qualification plus nonreusable state/approval; run authority remains absent.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

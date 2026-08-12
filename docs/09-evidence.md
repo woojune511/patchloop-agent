@@ -14,8 +14,10 @@ one-worker topology and adds separate lifecycle entrypoints. Sole-artifact commi
 `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d`; file
 `sha256:1d06731569666457eef7edac71f0afc21bbd8f25b1fa96a9ab16e5152695fa0b`, 3,850 bytes. State-only commit
 `749e359` records `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`; file
-`sha256:30dbe38a6b2d7fa69a0d45ed026c39d70b7bc4cc69150d6c2c8212a935e00ba1`, 919 bytes. It is nonreusable
-self-attestation with observation 0/execution false; approval/attempt/terminal are absent and exact approval is next.
+`sha256:30dbe38a6b2d7fa69a0d45ed026c39d70b7bc4cc69150d6c2c8212a935e00ba1`, 919 bytes. Approval-only commit `99d2099`
+records `ncpapproval_8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094`; file
+`sha256:8777484694239a97e25d066b8fc6177679e7d20f53ca7079f383b845d47a8a9b`, 1,526 bytes. Both are nonreusable,
+observation 0; attempt/terminal are absent and exact immediate-run authority is next.
 
 ## V16 dedicated-frame activation — consumed ERROR
 
