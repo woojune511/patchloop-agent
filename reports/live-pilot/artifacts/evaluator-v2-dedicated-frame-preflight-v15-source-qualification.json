@@ -1,0 +1,101 @@
+{
+  "schema_version": "dedicated-frame-preflight-source-qualification-v15",
+  "qualification_id": "ac-evaluator-v2-dedicated-frame-preflight-source-20260813-r1",
+  "status": "OFFLINE_V15_DEDICATED_FRAME_SOURCE_QUALIFIED_ACTIVATION_CLOSED",
+  "recorded_at": "2026-08-12T15:35:31.949103Z",
+  "source_commit": {
+    "commit": "e962291bfea66980a66c7592e87ce5277b43b30a",
+    "tree": "082840944a46b2fc8d3b9f2df8afcc5d04b759ee",
+    "parents": [
+      "51bb6a6e84faa4266eb64147271febee0b9a38ff"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-dedicated-frame-preflight-successor-v15.contract.json",
+      "patchloop/evals/dedicated_frame_preflight_successor.py",
+      "scripts/build_dedicated_frame_preflight_successor.py",
+      "scripts/run_sanitized_sdk_bootstrap_dedicated_frame_child.py",
+      "tests/test_dedicated_frame_preflight_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-dedicated-frame-preflight-successor-v15.contract.json",
+      "blob_oid": "95cd8d372745cb83f515d36c0f010f7fb90659f7",
+      "file_bytes": 3970,
+      "file_sha256": "sha256:9624376e0ea81a3b4b3c8700ad09b60a94590beb448ff3d8995198491c40eeb0"
+    },
+    {
+      "path": "experiments/evaluator-v2-manual-docker-restart-framed-successor-v14.contract.json",
+      "blob_oid": "51a7fa46fb6eb3d459e171f05dfa4e3ca1467bc2",
+      "file_bytes": 4113,
+      "file_sha256": "sha256:447c6a98b39dc7760faced6e29f723a90cc4c8bb360a046a6d9a4ce0dcfa6621"
+    },
+    {
+      "path": "patchloop/evals/dedicated_frame_preflight_successor.py",
+      "blob_oid": "78d00ee57f75fbdb05de60912ba1fc1816004965",
+      "file_bytes": 30320,
+      "file_sha256": "sha256:b652088ffd7f6e4a28c95bd5547626206ffafe097c125820c984977f000e5fad"
+    },
+    {
+      "path": "patchloop/evals/manual_docker_restart_framed_successor.py",
+      "blob_oid": "8babafab6d6cb3e0812088cefeba4050dd1bc50b",
+      "file_bytes": 51630,
+      "file_sha256": "sha256:5776bbd582eb2a17698273ed1335a5c3e7f3733d052f9a47eba5a75bdba0f99d"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_bootstrap_framed_successor.py",
+      "blob_oid": "2c55862402d7b6aa399f05d4a14d98d8d1d15b18",
+      "file_bytes": 68193,
+      "file_sha256": "sha256:bc336c0574522262dd13fc0c16f4f5f5ad02fc58b6498b2ab7f95dab722fb493"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-manual-docker-restart-framed-v14-source-qualification.json",
+      "blob_oid": "965811007425d436cb24de656e3fda0050b96c19",
+      "file_bytes": 5711,
+      "file_sha256": "sha256:b3aa811ebbf2f92767a67815646e45bfbcc158cf06f65abfdb61bc113f8d0abd"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-manual-docker-restart-framed-v14-terminal.json",
+      "blob_oid": "0aa4b8db5c09498dc9610d0be2b69d03d6a3389c",
+      "file_bytes": 19091,
+      "file_sha256": "sha256:9114e21765913c008fa4345897a4c1a42d7c213283fb31805fed662f887a3930"
+    },
+    {
+      "path": "scripts/build_dedicated_frame_preflight_successor.py",
+      "blob_oid": "7004ab2468ee58e77462a85df5f2056d363d5c77",
+      "file_bytes": 1646,
+      "file_sha256": "sha256:9fc3240b33b533bf47c215e9ad6e9b84d8c1e62f418bf9ba082a93fc77de59e8"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_dedicated_frame_child.py",
+      "blob_oid": "54bc51bf07c85bbb54224c6e4513bd3319b8ee6e",
+      "file_bytes": 6658,
+      "file_sha256": "sha256:823e85a8e10276d137f2d3bba2c0c8854b18e2213c855bef4ebd95bfce187ead"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_framed_child.py",
+      "blob_oid": "d31e1d10f211b4bc53d750ef80887d1c90c92c54",
+      "file_bytes": 6262,
+      "file_sha256": "sha256:dce8b1a770847779e4b8516b78686b0600a8f27598ddf5a616d859e181a2471f"
+    },
+    {
+      "path": "tests/test_dedicated_frame_preflight_successor.py",
+      "blob_oid": "181c7f2d2a740fb053d03296df031ffca3f43493",
+      "file_bytes": 9967,
+      "file_sha256": "sha256:f4d8d0c2eefa24a0ab9c384914d1655531d7cb2e7daade4caeb76b4fb327346c"
+    }
+  ],
+  "contract_id": "ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01",
+  "contract_content_hash": "sha256:ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01",
+  "predecessor_terminal_id": "ncpterminal_d390b170b452fa9497f22bd46832330e3a9b4097b645c3a9094d8d424e801e5f",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "state_approval_attempt_or_terminal_created": false,
+    "environment_docker_dotenv_sdk_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "execution_authorized": false
+  },
+  "next_gate": "new-versioned-state-and-activation-wrapper-required",
+  "content_hash": "sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494"
+}
