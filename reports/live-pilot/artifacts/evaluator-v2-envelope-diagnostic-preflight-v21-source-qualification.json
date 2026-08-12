@@ -1,0 +1,171 @@
+{
+  "schema_version": "envelope-diagnostic-source-qualification-v21",
+  "qualification_id": "ac-evaluator-v2-envelope-diagnostic-source-20260813-r1",
+  "status": "OFFLINE_V21_ENVELOPE_DIAGNOSTIC_SOURCE_QUALIFIED_ACTIVATION_CLOSED",
+  "recorded_at": "2026-08-12T20:23:50.151366Z",
+  "source_commit": {
+    "commit": "05cb2ab717805a5e777a4e7b87f7784d44dfac84",
+    "tree": "d05216a65fc6e627e1fbee41560a52fb6e8c023d",
+    "parents": [
+      "ac804d2db098c734d91bc88d285c936953763ad4"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-envelope-diagnostic-preflight-successor-v21.contract.json",
+      "patchloop/evals/envelope_diagnostic_preflight_successor.py",
+      "scripts/build_envelope_diagnostic_preflight_successor.py",
+      "scripts/run_sanitized_sdk_bootstrap_envelope_diagnostic_v21.py",
+      "tests/test_envelope_diagnostic_preflight_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-dual-pipe-activation-successor-v20.contract.json",
+      "blob_oid": "997c918ac5be39650dc812b1c0e647b955ed19f0",
+      "file_bytes": 4237,
+      "file_sha256": "sha256:365faf9b149c71c31a4da84fa751165685324fbaa64349fddf64d025103782f3"
+    },
+    {
+      "path": "experiments/evaluator-v2-dual-pipe-preflight-successor-v19.contract.json",
+      "blob_oid": "1ecee2c65e448623f881ad5c76321af10c3d1c0a",
+      "file_bytes": 4597,
+      "file_sha256": "sha256:b7431f1467f70873ac829bf8dae012d656570dd0211bb9896ae698fb5f3666f5"
+    },
+    {
+      "path": "experiments/evaluator-v2-envelope-diagnostic-preflight-successor-v21.contract.json",
+      "blob_oid": "7b949e8a6768ea51b5e4336045efb98c15b60004",
+      "file_bytes": 4878,
+      "file_sha256": "sha256:cf8eed678d2f9d63f1c936509ac2bb0086293335334410171c74891794876b83"
+    },
+    {
+      "path": "patchloop/evals/dual_pipe_activation_successor.py",
+      "blob_oid": "625f9600cb14a5e6a791089683ad6935f9be7045",
+      "file_bytes": 53504,
+      "file_sha256": "sha256:fcf699285fd2d7763be88a4b2a18c1b30c7aa25adf5a7cffa67013e306f8fc50"
+    },
+    {
+      "path": "patchloop/evals/dual_pipe_preflight_successor.py",
+      "blob_oid": "d4026b33b9f31d5822e8d2655ff75c0518cde20b",
+      "file_bytes": 38954,
+      "file_sha256": "sha256:8d75aa41195ebc8269226f1525159ce1b3c11f046eb6ac04b781717ff627faf8"
+    },
+    {
+      "path": "patchloop/evals/envelope_diagnostic_preflight_successor.py",
+      "blob_oid": "5ea98c1b0d4eb8ada8fd2a5676a6160cda39e96e",
+      "file_bytes": 35722,
+      "file_sha256": "sha256:00f8e9b7acd14b029752ea971486213817df743325ede6513ea0d0d050ce0002"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-activation-v20-action-started.json",
+      "blob_oid": "76795d4a23f9e54ce02827a11143a114872e2369",
+      "file_bytes": 514,
+      "file_sha256": "sha256:9e955782b9db0fa13611b04d44255515ba6c5e98b166806feb641257b8fb7611"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-activation-v20-approval-binding.json",
+      "blob_oid": "eb8b18e63d3095837079ade60573d8d701771a4b",
+      "file_bytes": 1567,
+      "file_sha256": "sha256:c6921eb6b34910199eae3d1242308f315ebccea8f7dd1b51bd2ae2079ea77939"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-activation-v20-attempt-intent.json",
+      "blob_oid": "d8ec3ef1eafa2ea4a09986700fcf1e79929b1126",
+      "file_bytes": 679,
+      "file_sha256": "sha256:12636952170574ac125470b947ae70f61349a457beca2b42ec55b46b0c22e058"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-activation-v20-run-authorization.json",
+      "blob_oid": "600fb0c66ae686c3d8caee124d680ffccf65b6d9",
+      "file_bytes": 983,
+      "file_sha256": "sha256:fa63daf71ba96426633fb2ecdf631deabfe9e01b03b29e12ab356ef5255a3d8c"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-activation-v20-source-qualification.json",
+      "blob_oid": "fdcc5b89ecd83f87362289d3b6108c90577ef371",
+      "file_bytes": 3757,
+      "file_sha256": "sha256:980ab39f6e8a661426005c659c3a18cfc8bfe62ad3fd279981c1f52a32ce9c55"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-activation-v20-state-change-evidence.json",
+      "blob_oid": "eea53ddb0b3268610ae537a732c371444d0f75db",
+      "file_bytes": 912,
+      "file_sha256": "sha256:a709c5bd5313410c10f99e1f7517f1dd6c219022529cad79c55b45235535bf1d"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-activation-v20-terminal.json",
+      "blob_oid": "ebeedd43cc4fcfe73152daf058ff3f6682cac0c3",
+      "file_bytes": 22558,
+      "file_sha256": "sha256:6ddeabb4fb8f6632887382c9a5f9f1bf4f16dd721873d75af439b4b2e2c2c60b"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-dual-pipe-preflight-v19-source-qualification.json",
+      "blob_oid": "8e4f506d78b67704529f4b02f093907d6758047f",
+      "file_bytes": 5342,
+      "file_sha256": "sha256:859219f58b3cf14c213fb6101b102166de1bebcb278a25155c4467ecbfa34af9"
+    },
+    {
+      "path": "scripts/build_envelope_diagnostic_preflight_successor.py",
+      "blob_oid": "ca6eb9a12f99a63837a919c4ae0135b38887b11c",
+      "file_bytes": 1871,
+      "file_sha256": "sha256:9f850737d8aee4d60c54472c2403dc62abd6a773899f858f0b2f1fa38ce7d719"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_dual_pipe_supervisor.py",
+      "blob_oid": "471be3b917a5c390eb4f67e561f92518152b48c3",
+      "file_bytes": 4602,
+      "file_sha256": "sha256:fdd149332fb15827291c478c8f851669e59447198ad01d22cd29ba580135d374"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_envelope_diagnostic_v21.py",
+      "blob_oid": "9b8bcc7fbef7799ed3b40c41290e4743e5a3a57f",
+      "file_bytes": 24595,
+      "file_sha256": "sha256:fb1b4e4f256b14b913801559a9cdbd2546edae9efad777c92647f14627d49d41"
+    },
+    {
+      "path": "tests/test_envelope_diagnostic_preflight_successor.py",
+      "blob_oid": "98219e50b8b7cc355a6cb46ad786e6d0b4f2a2cb",
+      "file_bytes": 11778,
+      "file_sha256": "sha256:317f02c66e12a666cc892a308a8856968fcc876884bd739c7a6bde2dd9438371"
+    }
+  ],
+  "contract_id": "ncpcontract_d1ec7610e2e29d3a614958a46ac36b190d97fe369cf6b533cfe39afd228ccc8a",
+  "contract_content_hash": "sha256:d1ec7610e2e29d3a614958a46ac36b190d97fe369cf6b533cfe39afd228ccc8a",
+  "predecessor_terminal_id": "ncpterminal_d528eb39f0e367fe8b38b81ae3a3ddbd627d9c9cefe6a84e8874523b7e488897",
+  "fixture_chain": {
+    "schema_version": "envelope-diagnostic-fixed-fixture-evidence-v21",
+    "fixture_id": "v21-public-fixed-placeholder-no-dispatch",
+    "parent_supervisor_launch_attempt_count": 1,
+    "parent_supervisor_process_return_count": 1,
+    "parent_supervisor_result_message_count": 1,
+    "parent_supervisor_returncode": 0,
+    "parent_supervisor_frame_stage": "valid",
+    "supervisor_worker_launch_attempt_count": 1,
+    "supervisor_worker_process_return_count": 1,
+    "supervisor_worker_result_message_count": 1,
+    "supervisor_worker_returncode": 0,
+    "supervisor_worker_frame_stage": "valid",
+    "complete_framed_message_received_on_both_hops": true,
+    "dotenv_read_count": 0,
+    "sdk_import_count": 0,
+    "transport_dispatch_count": 0,
+    "network_call_count": 0,
+    "provider_evaluator_agent_call_count": 0,
+    "credential_value_or_metadata_count": 0,
+    "invalid_raw_payload_metadata_persisted": false,
+    "fixture_protocol_accounting_complete": true,
+    "process_external_activity_absence_proven": false,
+    "passed": true
+  },
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "offline_fixed_fixture_process_launch_count": 2,
+    "state_approval_attempt_or_terminal_created": false,
+    "docker_dotenv_sdk_network_or_provider_observation_count": 0,
+    "credential_value_or_metadata_observation_count": 0,
+    "external_mutation_count": 0,
+    "execution_authorized": false,
+    "candidate_cost_or_paid_execution_authorized": false
+  },
+  "next_gate": "new-versioned-state-and-activation-wrapper-required",
+  "content_hash": "sha256:5510796c3ba9e26a36fac67dff46d21fd3bc4d0f646169c0b4862551542132c4"
+}
