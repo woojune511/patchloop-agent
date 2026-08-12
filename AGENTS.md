@@ -43,11 +43,11 @@
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
-- No-start v5 one-use attempt is consumed `ERROR(checker_error)`. Docker READY and exact `.env` key membership were
-  observed, but the isolated checker returned no SDK evidence. Accounting is incomplete and retry/resume is false.
-  Sanitized-diagnostic v6 contract/source `1d99a7c0acf20ec961240f33f585553fd881dc02` is qualified offline only.
-  It binds fixed stages/codes and zero credential/exception material, but has no parent runtime, state, approval or
-  observation. Preserve v5; next is offline parent-integration source with all external/candidate/cost authority closed.
+- No-start v5 is consumed `ERROR(checker_error)` and cannot retry. V6 remains its source-qualified diagnostic
+  predecessor. Parent-integration v7 source `6f6ba8627238b9d926e8b2bfe8a877d64ff1d755` and contract
+  `ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf` are qualified offline only.
+  V7 made zero Docker/`.env`/SDK observation and has no state, approval, attempt or terminal. Its next gate is a fresh
+  v7 state plus separate approval citing the exact contract, qualification and state; general continuation is not it.
 
 ## Required reading
 

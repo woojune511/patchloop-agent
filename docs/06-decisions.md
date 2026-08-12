@@ -30,8 +30,8 @@ work.
 - V1/v2 stay immutable. Executable v3 `ce0628880107db2319816272cfa49adc7ea99667` consumed one exact-approved
   `BLOCKED(docker_not_ready)` attempt: eight read-only Docker calls, zero mutation/`.env`/SDK/network/provider calls.
   V4 binds manual start without proving readiness. V5 then consumed one approved attempt: Docker READY and exact key
-  membership preceded `ERROR(checker_error)` with incomplete accounting. It cannot retry. V6 source-qualifies only
-  fixed-stage sanitized diagnostics; runtime integration, state, approval and observation remain separate closed gates.
+  membership preceded `ERROR(checker_error)` with incomplete accounting. It cannot retry. V6 fixes sanitized
+  diagnostics; source-qualified v7 binds the parent runtime and lifecycle while state, approval and observation stay closed.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

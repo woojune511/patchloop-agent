@@ -47,30 +47,16 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
 one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
 
-Receipt-free predecessors and executable v3 validation are offline:
+The current validator recursively binds the sealed v5 terminal and v6 qualification:
 
 ```powershell
-uv run --offline --frozen pytest -q tests/test_user_attested_no_call_preflight_contract.py
-uv run --offline --frozen python scripts/build_user_attested_no_call_preflight_contract.py --validate-source
-uv run --offline --frozen python scripts/build_user_attested_no_call_preflight_contract.py --validate-user-attested-state
-uv run --offline --frozen pytest -q tests/test_executable_no_call_preflight.py
-uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-source
-uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-state
-uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-exact-approval
-uv run --offline --frozen python scripts/build_executable_no_call_preflight.py --validate-terminal
-uv run --offline --frozen pytest -q tests/test_manual_docker_start_state_successor.py
-uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-source
-uv run --offline --frozen python scripts/build_manual_docker_start_state_successor.py --validate-state
-uv run --offline --frozen pytest -q tests/test_no_start_executable_preflight.py
-uv run --offline --frozen python scripts/build_no_start_executable_preflight.py --validate-contract
-uv run --offline --frozen python scripts/build_no_start_executable_preflight.py --validate-source
-uv run --offline --frozen pytest -q tests/test_sanitized_sdk_diagnostic_successor.py
-uv run --offline --frozen python scripts/build_sanitized_sdk_diagnostic_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_diagnostic_successor.py --validate-source
+uv run --offline --frozen pytest -q tests/test_sanitized_sdk_parent_integration.py
+uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-source
 ```
 
-These validations do not read/stat `.env` or grant a new attempt. V6 has no runtime/state/approval mode.
+These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
+own scripts and Git history; do not use their creation modes. V7 has no state, approval, attempt or terminal artifact.
 
 ## Audit the sealed D-142 source
 
@@ -105,7 +91,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3-v5 and source-qualified v6 read-only.
-2. Stop. Next qualify an offline v6 parent integration before any new state or approval gate.
+1. Validate evaluator-v2, consumed v3-v5 and source-qualified v6/v7 read-only.
+2. Stop. Fresh v7 state needs a new user reconfirmation; a later exact approval must cite its three identities.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

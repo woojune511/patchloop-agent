@@ -102,8 +102,9 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
-V5 is an immutable checker-error terminal. V6 binds it to fixed sanitized diagnostic stages but has no parent
-runtime/state/approval; any observation requires new qualified identities, never a v5 retry.
+V5 is an immutable checker-error terminal. V6 fixes sanitized diagnostic stages. Source-qualified v7 binds v6,
+the D-137 observer, isolated flags/environment and intent→ACTION_STARTED→terminal lifecycle, but has no state,
+approval or observation; any attempt needs fresh exact identities and is never a v5 retry.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

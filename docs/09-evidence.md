@@ -3,20 +3,23 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V6 sanitized SDK diagnostics — source-qualified only
+## V7 sanitized SDK parent integration — source-qualified only
 
-- Source commit/tree `1d99a7c0acf20ec961240f33f585553fd881dc02`/
-  `274a5c657fdfcb21025e5368073cbd16ed28a0cb` directly follows v5 preservation commit
-  `edb79b24221285a2bbaeeb02ca674d692c5edbac` and adds exactly five source/contract/test paths.
-- Contract `ncpcontract_3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918` binds
-  fixed diagnostic stages/codes, credential/exception-material limits 0 and all live authorities false.
-- Qualification `reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-diagnostic-v6-source-qualification.json`
-  has body `sha256:df0d68f6059d267260ec34fcd3d7714c406856ef1b22902412de3e74180e3bb2`, file
-  `sha256:ac0a8239d0678630b618da875944274b54253f24aa823b929c348a7af89e9edc`, 5,380 bytes and commit
-  `f42fcfdee079bca5f050dc33178ef5316e68c955`.
+- V6 predecessor source `1d99a7c0acf20ec961240f33f585553fd881dc02`, contract
+  `ncpcontract_3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918` and qualification
+  `sha256:df0d68f6059d267260ec34fcd3d7714c406856ef1b22902412de3e74180e3bb2` remain unchanged.
+- V7 source commit/tree `6f6ba8627238b9d926e8b2bfe8a877d64ff1d755`/
+  `990bef7e12c1d485a33fd79b1ca8d9b6960426e8` directly follows `f48db03a12b3274c047a01e2cc626395812f1f53`
+  and adds exactly four contract/runtime/builder/test paths.
+- Contract `ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf` binds v6,
+  the D-137 observer, isolated `-I -E -s -B` child, fixed environment and one-use lifecycle; all source live authority is false.
+- Qualification artifact `evaluator-v2-sanitized-sdk-parent-integration-v7-source-qualification.json` has body
+  `sha256:defaa75877c4d842ae41d3d2845f1f6a82df874a5ca6953c91b4b660cf86ca2c`, file
+  `sha256:16419a67050098b590682cda657e22c6378bbeeb55148e802f1e5a0a820e49e2`, 5,124 bytes and commit
+  `50a3149028b6531b0ef837af90057077d18a2c4a`.
 
-This is offline source evidence only: Docker/`.env`/SDK/network observations and mutations were 0. No parent runtime
-integration, state, approval, attempt or terminal exists, and v5 remains consumed rather than diagnosed or retried.
+Materialization and qualification made zero Docker/`.env`/SDK/network observation or mutation. No v7 state,
+approval, attempt, marker or terminal exists; the next gate is fresh state plus a separate exact approval.
 
 ## D-142 SDK no-call successor — source-qualified only
 

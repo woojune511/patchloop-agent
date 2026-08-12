@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v5 sealed; v6 sanitized-diagnostic source qualified, live closed.
+Status: v1-v5 sealed; v6 diagnostic and v7 parent sources qualified, live closed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -44,15 +44,15 @@ require a new version.
 V3 `ce0628880107db2319816272cfa49adc7ea99667` binds full-file-in-child/boolean-only-return, fixed-placeholder SDK
 reject-dispatch and D-137 read-only Docker. State remains self-attested non-proof; read/stat=0.
 
-V4 binds the manual-start report without proving readiness. V5 is immutable and cannot be promoted. V6 binds the
-v5 terminal to fixed stages/codes and zero credential/exception material, but has no runtime/state/approval path.
+V4 binds the manual-start report without proving readiness. V5 is immutable. V6 fixes value-free diagnostic
+stages/codes; v7 binds its isolated child, the D-137 observer and one-use lifecycle without running them.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5 attempts consumed; v6 source-qualified only, no observation authority.
+Status: v3/v5 attempts consumed; v7 source-qualified only, no state or observation authority.
 
-V5 cannot rerun. Next build and qualify a separate one-use parent integration for v6 without observing Docker,
-`.env` or SDK; only a later relevant state plus exact approval may open one new attempt.
+V5 cannot rerun. Next record fresh v7 user-attested state only after explicit reconfirmation, then require a separate
+approval citing the exact contract, source qualification and state before one Docker/child observation attempt.
 
 ## Work item 5 — execution candidate and cost gate
 
