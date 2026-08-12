@@ -43,7 +43,8 @@ Historical milestone-by-milestone limitations are archived at
   reproduces missing `SYSTEMROOT`/10106, but its staged imports are local source evidence only.
 - V9 composes the corrected child and Docker gate with injected observers. V10 only source-qualifies an exact
   self-attested state binder. Its state proves neither daemon/key readiness nor identity. V11 binds one approval pair
-  but no attempt, observation or runtime result; child-only pass-through proves no confidentiality.
+  and v12 source-qualifies its lifecycle, but no attempt, observation or runtime result exists. V12 is not evaluator-v12;
+  child-only pass-through proves no confidentiality.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

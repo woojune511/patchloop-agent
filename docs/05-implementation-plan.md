@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v10 preserved; v11 source qualified and exact approval pair bound.
+Status: v1-v11 preserved; v12 lifecycle source qualified, attempt absent.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -52,10 +52,10 @@ ID/hash and v9 scopes without an attempt entrypoint.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7 consumed; v11 approval bound, attempt absent and retry authority closed.
+Status: v3/v5/v7 consumed; v12 awaits one fresh exact run statement.
 
-V10 state is self-attested non-proof. The v11 pair starts no attempt and observed/mutated nothing. Next implement and
-source-qualify its exact lifecycle successor; execution still requires separate authority.
+V12 writes authorization, attempt and ACTION_STARTED before one v9 observation, then one terminal; partial state is
+consumed and retry is closed. Qualification ran none of it. Next obtain only its fixed statement and run once.
 
 ## Work item 5 — execution candidate and cost gate
 

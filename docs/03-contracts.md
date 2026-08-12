@@ -109,7 +109,8 @@ V8 binds missing-`SYSTEMROOT`/10106 reproduction. V9 binds contract-first valida
 child-only `SYSTEMROOT`. V10 binds exact v9 source/qualification and accepts only a fixed post-qualification user
 statement citing exact v10 identities. Its self-attested state is nonreusable. V11 binds that exact ID/hash and v9
 runtime/scopes. Its fixed statement created one nonreusable approval pair with `attempt_started=false`; the pair grants
-no execution and requires a qualified lifecycle successor.
+no execution. V12 binds that pair and implements authorization→attempt→ACTION_STARTED→one v9 observation→terminal.
+Its source qualification creates none of those runtime artifacts; an exact post-qualification run statement is required.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

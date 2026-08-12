@@ -19,17 +19,17 @@ The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277
 declared/nonempty, one child launch, then `ERROR(sdk_diagnostic_error)` with child code
 `diagnostic_runtime_import_error`. Accounting is complete, unknown activity is false and retry/resume is closed.
 V8 localizes the import failure to missing `SYSTEMROOT`/Windows 10106. V9 source-qualifies the corrected parent.
-V10 binds v9 runtime and one exact statement; its state at `5ab4226bfc5017563b673375f9057fde39b1c38c` is
-self-attested non-proof, with unverified Docker/key readiness and external activity 0. V11 binds that state/runtime.
-Its exact source/contract/qualification and approval IDs are in `docs/09-evidence.md`; the nonreusable pair at
-`11058e5d0e0d6bedeb5687869f1ca8eed7c7583d` starts no attempt and external activity remains 0.
+V10 state remains self-attested non-proof. V11 binds it and one nonreusable approval. Preflight lifecycle v12 source
+`0518f294ea73890aa0387a57121167c5a01f7947` now binds that approval and v9 runtime; qualification
+`sha256:e96858f63e4e45e74ec9219e8653dbe276ebcd37384bcfa8762535ee771a6c41` is offline only. No run authorization,
+attempt, marker, terminal or external activity exists. This v12 is not an evaluator version.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v10 are predecessors; v11 source and exact approval are bound.
-4. **Separately approved preflight attempt.** V3/v5/v7 are consumed; v11 needs a qualified lifecycle successor.
+3. **Offline preflight contracts.** V1-v11 are predecessors; v12 lifecycle source is qualified.
+4. **Separately approved preflight attempt.** V3/v5/v7 are consumed; v12 awaits one exact run statement.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -44,12 +44,12 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7 are consumed. V11 approval starts no attempt and grants no Docker, SDK/`.env`, provider/evaluator/agent, cost or A/C authority.
+V5/v7 are consumed. V12 qualification grants no Docker, SDK/`.env`, provider/evaluator/agent, cost or A/C authority.
 
 ## Next gate
 
-The next gate is a **qualified v11 attempt-lifecycle successor**, not execution. The approval pair is append-only,
-nonreusable and already bound; `attempt_started=false` and no entrypoint exists. A successor must bind it before any
-future separately authorized attempt. Generic continuation, retry/replacement/resume and prior approvals are insufficient.
+The next gate is one **fresh exact v12 run statement** from `--show-run-template`. It authorizes only the immediate
+one-shot no-call preflight lifecycle; generic continuation, retry/replacement/resume, provider/agent/evaluator and paid
+execution remain insufficient or forbidden.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

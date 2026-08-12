@@ -101,7 +101,8 @@ the A-null/C-exact-three treatment itself remains unchanged.
 
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
 persistence/qualification; raw results remain unofficial. V5/v7 are consumed. V10 state is self-attested non-proof;
-v11 binds it to exact v9 runtime and one approval pair, but creates no attempt, observation or readiness claim.
+v11 binds it to exact v9 runtime and one approval pair; v12 source-qualifies the lifecycle but creates no attempt,
+observation or readiness claim.
 
 ## 7. Run-completion gate
 

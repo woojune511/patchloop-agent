@@ -47,25 +47,14 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
 one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
 
-The current validators recursively bind the sealed predecessor chain through source-qualified v10:
+The current v12 validators recursively bind v11 approval, v10 state and the sealed v9 runtime:
 
 ```powershell
-uv run --offline --frozen pytest -q tests/test_sanitized_sdk_import_bootstrap_successor.py
-uv run --offline --frozen python scripts/build_sanitized_sdk_import_bootstrap_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_import_bootstrap_successor.py --validate-source
-uv run --offline --frozen pytest -q tests/test_sanitized_sdk_bootstrap_parent_successor.py
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_parent_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_parent_successor.py --validate-source
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-source
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_state_binding_successor.py --validate-state
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-source
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_approval_successor.py --validate-approval
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-source
 ```
 
-These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
-own scripts and Git history; do not use creation/run modes. V7 is consumed and validation is read-only.
+These do not read/stat `.env` or grant an attempt. Predecessor commands remain in Git history; use validation only.
 
 ## Audit the sealed D-142 source
 
@@ -100,8 +89,8 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3/v5/v7 and sealed v8-v11 chain read-only.
-2. Stop. The next gate is a qualified v11 attempt-lifecycle successor, not an attempt.
+1. Validate evaluator-v2, consumed v3/v5/v7 and sealed v8-v12 chain read-only.
+2. Stop. Obtain the exact v12 statement from `--show-run-template`; generic continuation starts nothing.
 
 V10 `--record-state` and v11 `--record-approval` are consumed one-use creation modes. Use validation modes only;
-generic continuation cannot authorize a successor or execution.
+v12 `--run-exact-attempt` requires its fresh exact statement and still grants no paid execution.

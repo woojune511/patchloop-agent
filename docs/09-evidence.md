@@ -3,22 +3,19 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V11 approval bound — attempt absent
+## V12 preflight lifecycle — source-qualified only
 
-- Source/tree `e1524fbdcffcfc2da04aefdf940cf79d32c71d9d`/`b074a6ae4e27eb9286781db46e6935e6adb1a85c`
-  adds four files. Contract `ncpcontract_56b40355ec3805cb987bde6d3f45d7135160336b477186a7e7519bdb55f5285f`
-  binds state `ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` and v9 scopes.
-- Qualification `sha256:61258adc944956893bde753065e5ec33cd15ee222235b484aba4938e0facadbe` is at
-  `ccd5126aae1c413e474adc12783cbc4c6d1b58ee`.
-- Evidence commit `11058e5d0e0d6bedeb5687869f1ca8eed7c7583d` solely adds receipt
-  `ncpapprovalreceipt_df293fb560a3ae46a26fdca4691be4361946eaf5f1e01cbe2625f1f094dc80fd`
-  (file `sha256:885d847a1bdb9a204ca8b5060d169526bc183231c64f5cc0dce69a4f94e341ab`) and approval
-  `ncpapproval_b5fcc5e41246799c7124da67f9af0507a77af034bfd6a195307e79a7d3a609c2`
-  (file `sha256:226384c57d25d2058749d84bf9700b633199d412f1b3c425d3e95340425c3c37`).
+- Source/tree `0518f294ea73890aa0387a57121167c5a01f7947`/`53ade760c499755b3b683a0e5c6b375e729e10bb`
+  is the exact four-addition child of `74541b2db480857df4e90b4a6732cda605a08950`.
+- Contract `ncpcontract_4dba86e844bf0c500f61b2714f00714e9c1fe105e4938ff63db3b00f276706b3` binds
+  v11 approval `ncpapproval_b5fcc5e41246799c7124da67f9af0507a77af034bfd6a195307e79a7d3a609c2` and v9 runtime.
+- Qualification `sha256:e96858f63e4e45e74ec9219e8653dbe276ebcd37384bcfa8762535ee771a6c41`, file
+  `sha256:377b90f0050bbb6e8df20e89acd4579f7fc4e6d43f70bfbf0ef1aa0129831f58`, 5,246 bytes is the sole addition at
+  `049f8bd9704087da68acf67c75f5dc79a8cf5e49`.
 
-Validation returned `V11_EXACT_APPROVAL_BOUND_ATTEMPT_LIFECYCLE_SUCCESSOR_REQUIRED`: limit 1, nonreusable state/pair,
-`attempt_started=false`, no entrypoint and external observation/mutation 0. The reported Docker/key state remains
-self-attested non-proof; next gate is `qualified-v11-attempt-lifecycle-successor`, not execution.
+Qualification created no authorization, attempt, marker, terminal, observation or mutation; execution is false. The
+next gate is `fresh-exact-v12-run-statement`. This is a preflight lifecycle version, not an evaluator version. The v11
+receipt/approval pair remains canonical at `11058e5d0e0d6bedeb5687869f1ca8eed7c7583d` and is nonreusable.
 
 ## V7 consumed error — compact index
 
