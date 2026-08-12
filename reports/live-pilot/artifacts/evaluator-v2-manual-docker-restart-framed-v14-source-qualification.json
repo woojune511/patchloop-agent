@@ -1,0 +1,118 @@
+{
+  "schema_version": "manual-docker-restart-framed-source-qualification-v14",
+  "qualification_id": "ac-evaluator-v2-manual-docker-restart-framed-source-20260812-r1",
+  "status": "OFFLINE_V14_FRAMED_SOURCE_QUALIFIED_STATE_STATEMENT_REQUIRED",
+  "recorded_at": "2026-08-12T14:27:02.495474Z",
+  "source_commit": {
+    "commit": "d42acfc4d62350e692725f33d1be4b0a53f47b93",
+    "tree": "658bfae5bad5652a7f34e74ddc759ff16664badf",
+    "parents": [
+      "dffb5298918a55cf863635b63cae4a3dc794d42a"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-manual-docker-restart-framed-successor-v14.contract.json",
+      "patchloop/evals/manual_docker_restart_framed_successor.py",
+      "scripts/build_manual_docker_restart_framed_successor.py",
+      "tests/test_manual_docker_restart_framed_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-manual-docker-restart-framed-successor-v14.contract.json",
+      "blob_oid": "51a7fa46fb6eb3d459e171f05dfa4e3ca1467bc2",
+      "file_bytes": 4113,
+      "file_sha256": "sha256:447c6a98b39dc7760faced6e29f723a90cc4c8bb360a046a6d9a4ce0dcfa6621"
+    },
+    {
+      "path": "experiments/evaluator-v2-sanitized-sdk-bootstrap-framed-successor-v13.contract.json",
+      "blob_oid": "359dbef57118323da3d37d0f515286af67f2a106",
+      "file_bytes": 3492,
+      "file_sha256": "sha256:1c6e03f64fb8cd0b7243c683cce02ec5fc34e45c825a3be9513ac69539950ade"
+    },
+    {
+      "path": "patchloop/evals/manual_docker_restart_framed_successor.py",
+      "blob_oid": "8babafab6d6cb3e0812088cefeba4050dd1bc50b",
+      "file_bytes": 51630,
+      "file_sha256": "sha256:5776bbd582eb2a17698273ed1335a5c3e7f3733d052f9a47eba5a75bdba0f99d"
+    },
+    {
+      "path": "patchloop/evals/sanitized_sdk_bootstrap_framed_successor.py",
+      "blob_oid": "2c55862402d7b6aa399f05d4a14d98d8d1d15b18",
+      "file_bytes": 68193,
+      "file_sha256": "sha256:bc336c0574522262dd13fc0c16f4f5f5ad02fc58b6498b2ab7f95dab722fb493"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-bootstrap-framed-v13-action-started.json",
+      "blob_oid": "f6c12bf213048a45487cc3618e7e3b8d772644fa",
+      "file_bytes": 524,
+      "file_sha256": "sha256:12c895f08f926e25b7e98f1383d93ab583f36f08263830561e3616cb43b518fb"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-bootstrap-framed-v13-approval-binding.json",
+      "blob_oid": "1bcd4621371db3926e6a768770d38b317054bc0a",
+      "file_bytes": 1317,
+      "file_sha256": "sha256:0aebd748dc9983da54dabebb22cb9d22aac16e7171bec74a98588ad5bd57bfd6"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-bootstrap-framed-v13-attempt-intent.json",
+      "blob_oid": "efc72d7bf3a30cb8f580c91c6e81b31cef179758",
+      "file_bytes": 689,
+      "file_sha256": "sha256:8b63b8ab11cb2b56a4bf5726e27d4e7b6fe54890b1d34661b2a21263c6f7a5c8"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-bootstrap-framed-v13-run-authorization.json",
+      "blob_oid": "9b3b3666e002f2723f1b5e7ba25ae5967abc7caa",
+      "file_bytes": 993,
+      "file_sha256": "sha256:d781a5233284d1d2d390c2c2812a082908b6b984fdfdb3c6b7f3d0f0ec3c7c1a"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-bootstrap-framed-v13-source-qualification.json",
+      "blob_oid": "8ddbd1913e6f9a52a6b94eb7b3bc09ffd6dbfa9b",
+      "file_bytes": 5373,
+      "file_sha256": "sha256:3d4f59bb8c69c6ba298c39492e01466a3e840f968d78d7c5cb2f6bf45cb12873"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-bootstrap-framed-v13-state-change-evidence.json",
+      "blob_oid": "bf1e01e657ff77e243c10986763bad9c9804c8bf",
+      "file_bytes": 804,
+      "file_sha256": "sha256:a842b8fbd7ecc580b7ba31baac5f069addce3fe631dcb7e3e16316970cf6165c"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-sanitized-sdk-bootstrap-framed-v13-terminal.json",
+      "blob_oid": "55096d486431c941c28df1fb5d9eb8a306e353c6",
+      "file_bytes": 13840,
+      "file_sha256": "sha256:451045a14adad713c36a1c816b1abb105d1604ca05657425cf8451a251fc4981"
+    },
+    {
+      "path": "scripts/build_manual_docker_restart_framed_successor.py",
+      "blob_oid": "5f37503474061d2abf20ac2c2dfea5a4d0d40974",
+      "file_bytes": 4164,
+      "file_sha256": "sha256:7646c2a672a28f1848f68a238263982f95d5d3a7e5f0a0beb5c74405261e0ef3"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_framed_child.py",
+      "blob_oid": "d31e1d10f211b4bc53d750ef80887d1c90c92c54",
+      "file_bytes": 6262,
+      "file_sha256": "sha256:dce8b1a770847779e4b8516b78686b0600a8f27598ddf5a616d859e181a2471f"
+    },
+    {
+      "path": "tests/test_manual_docker_restart_framed_successor.py",
+      "blob_oid": "3e56ec35eb88780730db40910805914da5eb36f4",
+      "file_bytes": 7383,
+      "file_sha256": "sha256:4dae04be9a91fda9272c79384a6cc58f9290d419e4b0208f8295c22869de6f02"
+    }
+  ],
+  "contract_id": "ncpcontract_e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e",
+  "contract_content_hash": "sha256:e7e0330cd94e691bdfe033476dd32a17711117092a620600e7ab47bbf1c8d74e",
+  "predecessor_terminal_id": "ncpterminal_bf8a4b5e32ae56db30084c5d68d8ff77566a96538540c18520a929b3fd9170fe",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "state_approval_attempt_or_terminal_created": false,
+    "environment_docker_dotenv_sdk_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "execution_authorized": false
+  },
+  "next_gate": "fresh-exact-v14-state-statement",
+  "content_hash": "sha256:66b1f0cf406c5344b76a22cd883d48841cadbb4a058b3c7f78db8f4779b4f816"
+}
