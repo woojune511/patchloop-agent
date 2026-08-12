@@ -1,0 +1,16 @@
+{
+  "schema_version": "supervised-frame-activation-state-v18",
+  "state_id": "ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26",
+  "contract_id": "ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c",
+  "source_qualification_hash": "sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d",
+  "predecessor_source_qualification_hash": "sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883",
+  "statement_sha256": "sha256:08c3908904354e45802951eff04b212780f599eed3eda35deb506d629d1148e8",
+  "docker_running_reported": true,
+  "dotenv_only_openai_api_key_reported": true,
+  "self_attested_nonproof": true,
+  "external_observation_count": 0,
+  "execution_authorized": false,
+  "reusable": false,
+  "recorded_at": "2026-08-12T17:58:28.079883Z",
+  "content_hash": "sha256:dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26"
+}
