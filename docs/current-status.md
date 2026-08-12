@@ -18,19 +18,20 @@ The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277
 `.env`/SDK; V14/V16 each consumed a framing ERROR after Docker READY. V16 records 8 Docker reads, one returned child,
 forbidden counts 0, incomplete accounting, unknown activity and no retry; `docs/09-evidence.md` owns its exact ID.
 
-V17 source/tree `01590c1dd9899574f2059ed4a94fbb9a1ac341d3`/`7db1ea68115a7458640e7f3669103897f67a7694`
-is the exact five-addition child of the v16 status commit. Contract
-`ncpcontract_0344d5a846e88299373fd65a9c380b25dd3d069805790bc0c81891ef4159e76c` is source-qualified at
-`1579d9a` as `sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`.
-A stdlib supervisor owns parent stdout; one null-stdio worker uses an anonymous result pipe. Synthetic stdio-close and
-hard-exit paths are fail-closed. No Docker/`.env`/SDK observation or state/approval/attempt/terminal was created.
+V17 remains the immutable supervisor/worker source predecessor. V18 source/tree
+`e4c76af0e101b1f9bc62ab2fde5ebc1c975f6f42`/`4efccdd2ccd06e10d78a7b90d037cb69dc5e5f27` is its exact
+four-addition activation child. Contract
+`ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` is source-qualified at
+`50a4b28` as `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d`.
+It adds separate state/approval/immediate-run entrypoints while preserving one supervisor, one null-stdio worker and
+the anonymous result pipe. No Docker/`.env`/SDK observation or state/approval/attempt/terminal was created.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v16 are immutable; v17 is source-qualified only.
-4. **Separately approved preflight attempt.** Build a new activation wrapper over exact v17; no attempt is open.
+3. **Offline preflight contracts.** V1-v17 are immutable; v18 is source-qualified only.
+4. **Separately approved preflight attempt.** Bind fresh exact v18 state, then approval and run authority; none exists.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -49,7 +50,7 @@ V5/v7/v12/v13/v14/v16 are consumed and cannot retry. Cost and A/C execution rema
 
 ## Next gate
 
-No attempt is open. V16 cannot retry/resume; v17 grants no execution authority. The next boundary is a new activation
-wrapper binding exact v17 source qualification. Candidate, cost and paid execution remain closed.
+No attempt is open. V16 cannot retry/resume; v17/v18 grant no execution authority. The next boundary is the exact
+v18 state statement; it creates self-attested state only, not approval or execution. Candidate and cost remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

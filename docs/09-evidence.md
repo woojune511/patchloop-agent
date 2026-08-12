@@ -3,15 +3,17 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V17 supervised-frame successor — source-qualified only
+## V18 supervised-frame activation — source-qualified only
 
-Source/tree `01590c1dd9899574f2059ed4a94fbb9a1ac341d3`/`7db1ea68115a7458640e7f3669103897f67a7694`
-is the exact five-addition child of `3c661b2`; contract
-`ncpcontract_0344d5a846e88299373fd65a9c380b25dd3d069805790bc0c81891ef4159e76c` binds the exact v16 terminal.
-Sole-artifact commit `1579d9a611f4f4c532f5a32918c08b21bed97099` records qualification
-`sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`; file
-`sha256:60e4630cb54ca7e697bfab250928f675b01d96cfac1ebc9db6f93d4b2420e855`, 5,637 bytes. External observation,
-mutation, state/approval/attempt/terminal and execution authority are 0; a new activation wrapper is required.
+V17 source qualification `sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`
+remains immutable. V18 source/tree `e4c76af0e101b1f9bc62ab2fde5ebc1c975f6f42`/
+`4efccdd2ccd06e10d78a7b90d037cb69dc5e5f27` is its exact four-addition child; contract
+`ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` preserves the one-supervisor/
+one-worker topology and adds separate lifecycle entrypoints. Sole-artifact commit
+`50a4b28e45d20adfe2e42da6ced8b4fc2da3551d` records qualification
+`sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d`; file
+`sha256:1d06731569666457eef7edac71f0afc21bbd8f25b1fa96a9ab16e5152695fa0b`, 3,850 bytes. External observation,
+mutation, state/approval/attempt/terminal and execution authority are 0; exact fresh state is the next gate.
 
 ## V16 dedicated-frame activation — consumed ERROR
 

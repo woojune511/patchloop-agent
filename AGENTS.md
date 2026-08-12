@@ -55,10 +55,11 @@
 - V15 is the source predecessor. V16 consumed one exact-approved attempt at `30c254d`: Docker passed 8 reads, one
   child returned no envelope, and terminal `ERROR(child_checker_error/framed_output_invalid)` has incomplete
   accounting, unknown activity true and retry/resume false.
-- Source-only v17 `01590c1`, contract `ncpcontract_0344d5a846e88299373fd65a9c380b25dd3d069805790bc0c81891ef4159e76c`
-  and qualification `sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`
-  separate a stdlib supervisor from one null-stdio diagnostic worker and use an anonymous result pipe. Observation,
-  state/approval/attempt/terminal and execution authority are 0; a new activation wrapper is required.
+- V17 is the immutable supervisor/worker source predecessor. Source-qualified v18 `e4c76af`, contract
+  `ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` and qualification
+  `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d` add separate lifecycle entrypoints
+  without changing the one-supervisor/one-null-stdio-worker pipe. Observation, state/approval/attempt/terminal and
+  execution authority are 0; exact fresh v18 state is required next.
 
 ## Required reading
 
