@@ -42,7 +42,9 @@ Historical milestone-by-milestone limitations are archived at
   is incomplete and unknown post-marker activity is true. Thus v14 proves neither SDK readiness, confidentiality nor a
   narrower cause, and it cannot retry. V15's dedicated descriptor survives synthetic noise/fd closure in an actual
   Windows subprocess, but v16's actual child again returned no envelope after Docker READY. Its terminal accounting
-  is incomplete/unknown, so it proves neither SDK readiness nor a narrower cause and cannot retry.
+  is incomplete/unknown, so it proves neither SDK readiness nor a narrower cause and cannot retry. V17 isolates the
+  workload behind a stdlib supervisor/anonymous pipe and passes synthetic close/hard-exit tests only; it has no live
+  activation, observation or SDK-readiness evidence.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

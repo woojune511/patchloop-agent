@@ -14,31 +14,23 @@ PASS. Historical results remain immutable and are not independently safety-verif
 binds typed event/CAS evidence and uses an authority receipt to gate runner, persistence, qualification and completion; raw
 results remain `official=false` and local/mock tests are not official evidence.
 
-The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V5/V7/V12 are immutable
-ERROR terminals. V13 consumed `BLOCKED(docker_not_ready)` before `.env`/SDK. V14 at `e63f418` passed eight Docker
-reads and returned one child without a framed envelope, then consumed
-`ERROR(child_checker_error/framed_output_invalid)`. Its recorded forbidden counts are 0, but whole-terminal accounting
-is incomplete, unknown post-marker activity is true and retry/resume is closed.
+The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V13 stopped before
+`.env`/SDK; V14/V16 each consumed a framing ERROR after Docker READY. V16 records 8 Docker reads, one returned child,
+forbidden counts 0, incomplete accounting, unknown activity and no retry; `docs/09-evidence.md` owns its exact ID.
 
-V15 source/tree `e962291bfea66980a66c7592e87ce5277b43b30a`/`082840944a46b2fc8d3b9f2df8afcc5d04b759ee`
-uses a pre-work result descriptor. Contract `ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01`
-is qualified at `ac32e78` as `sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494`
-after 8/8 offline tests; it made no observation or runtime artifact.
-
-V16 activation source commit/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/
-`b99883f5771e2bea8f4635c16a308cfcbc61dfc4` binds that exact v15 qualification. Contract
-`ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` is source-qualified at
-`761bd37` as `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` after 7/7 focused tests.
-State/approval led to one exact attempt at `30c254d`. Docker passed 8 read-only calls; one child launched/returned
-without an envelope, ending `ERROR(child_checker_error/framed_output_invalid)`. Recorded network/provider/Docker
-mutation/credential-value counts are 0, but accounting is incomplete, unknown activity true and retry false.
+V17 source/tree `01590c1dd9899574f2059ed4a94fbb9a1ac341d3`/`7db1ea68115a7458640e7f3669103897f67a7694`
+is the exact five-addition child of the v16 status commit. Contract
+`ncpcontract_0344d5a846e88299373fd65a9c380b25dd3d069805790bc0c81891ef4159e76c` is source-qualified at
+`1579d9a` as `sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`.
+A stdlib supervisor owns parent stdout; one null-stdio worker uses an anonymous result pipe. Synthetic stdio-close and
+hard-exit paths are fail-closed. No Docker/`.env`/SDK observation or state/approval/attempt/terminal was created.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v14/v16 are immutable; v15 is a source predecessor.
-4. **Separately approved preflight attempt.** V16 consumed ERROR; a new version is required.
+3. **Offline preflight contracts.** V1-v16 are immutable; v17 is source-qualified only.
+4. **Separately approved preflight attempt.** Build a new activation wrapper over exact v17; no attempt is open.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -57,7 +49,7 @@ V5/v7/v12/v13/v14/v16 are consumed and cannot retry. Cost and A/C execution rema
 
 ## Next gate
 
-No attempt is open. V16 cannot retry/resume; the next implementation boundary is a new versioned successor that
-binds its exact terminal. Candidate, cost and paid execution remain closed.
+No attempt is open. V16 cannot retry/resume; v17 grants no execution authority. The next boundary is a new activation
+wrapper binding exact v17 source qualification. Candidate, cost and paid execution remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

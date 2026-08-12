@@ -52,18 +52,13 @@
 - Manual-restart v14 consumed `ERROR(child_checker_error/framed_output_invalid)` at `e63f418`: Docker passed eight
   reads and one child returned without an envelope. Recorded forbidden counts are 0, but accounting is incomplete,
   unknown activity is true and retry/resume is false.
-- Source-only v15 `e962291` uses a pre-work duplicated result descriptor; injected and actual Windows subprocess tests
-  pass 8/8. Contract `ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01`
-  is qualified at `ac32e78` with hash `sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494`.
-  It is source-only: observation 0, no state/approval/attempt/terminal, and no executable activation wrapper or authority.
-- V16 source `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`, contract
-  `ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c` and qualification
-  `sha256:f2b3e1483bf67d00ea2b568986971454b7efeef1e0088f51fc1329077bffa091` add the activation wrapper offline.
-  State `ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029` is a nonreusable,
-  self-attested non-proof. Approval `ncpapproval_22f6a5e7fa855af2ec104f1cb0daebbaa85fe8c5f4c86c0e50e48e85384221c1`
-  led to one consumed attempt at `30c254d`: Docker passed 8 reads, but one child returned no envelope and terminal
-  `ERROR(child_checker_error/framed_output_invalid)`. Forbidden counts are 0; accounting is incomplete, unknown
-  activity true and retry/resume false.
+- V15 is the source predecessor. V16 consumed one exact-approved attempt at `30c254d`: Docker passed 8 reads, one
+  child returned no envelope, and terminal `ERROR(child_checker_error/framed_output_invalid)` has incomplete
+  accounting, unknown activity true and retry/resume false.
+- Source-only v17 `01590c1`, contract `ncpcontract_0344d5a846e88299373fd65a9c380b25dd3d069805790bc0c81891ef4159e76c`
+  and qualification `sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`
+  separate a stdlib supervisor from one null-stdio diagnostic worker and use an anonymous result pipe. Observation,
+  state/approval/attempt/terminal and execution authority are 0; a new activation wrapper is required.
 
 ## Required reading
 

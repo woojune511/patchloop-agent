@@ -3,6 +3,16 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V17 supervised-frame successor — source-qualified only
+
+Source/tree `01590c1dd9899574f2059ed4a94fbb9a1ac341d3`/`7db1ea68115a7458640e7f3669103897f67a7694`
+is the exact five-addition child of `3c661b2`; contract
+`ncpcontract_0344d5a846e88299373fd65a9c380b25dd3d069805790bc0c81891ef4159e76c` binds the exact v16 terminal.
+Sole-artifact commit `1579d9a611f4f4c532f5a32918c08b21bed97099` records qualification
+`sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`; file
+`sha256:60e4630cb54ca7e697bfab250928f675b01d96cfac1ebc9db6f93d4b2420e855`, 5,637 bytes. External observation,
+mutation, state/approval/attempt/terminal and execution authority are 0; a new activation wrapper is required.
+
 ## V16 dedicated-frame activation — consumed ERROR
 
 Source/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/`b99883f5771e2bea8f4635c16a308cfcbc61dfc4`

@@ -102,18 +102,12 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
-V5/V7/V12 are immutable error terminals; their approval and ledgers cannot be reused. V8/V9 correct v7's missing
-`SYSTEMROOT` boundary, but v12 ended `child_output_invalid` after Docker passed and retained no raw stdout, key/SDK
-result or narrower cause. V13 suppresses workload streams and returns one typed, value-free envelope. Qualification
-created no runtime artifact; a later exact statement created one nonreusable self-attested state with observation 0.
-A second statement approved one attempt, now consumed `BLOCKED(docker_not_ready)`. Its append-only chain is complete
-and nonreusable. V14 bound that terminal and consumed one separately approved attempt. Docker passed eight read-only
-checks, but the returned child output contained no framed envelope; the terminal is
-`ERROR(child_checker_error/framed_output_invalid)`. Its whole-terminal accounting is incomplete, unknown activity is
-true and retry/resume is false. V15 binds that terminal without claiming a cause and writes the envelope to a result
-descriptor duplicated before fd 1/2 suppression. Its injected-only entrypoint has no activation lifecycle or authority.
-V16 binds the exact v15 commit/tree/qualification and adds distinct exact state, future-approval and immediate-run
-statements. Its source qualification creates none of those lifecycle artifacts and grants no observation authority.
+V5/V7/V12/V14/V16 are immutable error terminals; their approvals and ledgers cannot be reused. V13 consumed
+Docker-not-ready. V16 later passed eight Docker reads but returned no framed envelope; accounting is incomplete,
+unknown activity true and retry false. V17 binds that exact terminal without claiming a cause. Its stdlib supervisor
+alone owns parent stdout; one diagnostic worker starts with null stdio and returns a typed message through an anonymous
+pipe. Only injected/offline paths exist: source qualification creates no state, approval, attempt, terminal, external
+observation or execution authority.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

@@ -40,7 +40,7 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 
 Validation reads committed blobs without changing mtime and grants no live authority.
 
-V13/v14 remain consumed. Validate v14 terminal and source-only v15/v16 without external observation:
+V13-v16 remain consumed. Validate v16 terminal and source-only v17 without external observation:
 
 ```powershell
 uv run --offline --frozen python scripts/build_manual_docker_restart_framed_successor.py --validate-terminal
@@ -49,10 +49,12 @@ uv run --offline --frozen python scripts/build_dedicated_frame_preflight_success
 uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-source
 uv run --offline --frozen python scripts/build_dedicated_frame_activation_successor.py --validate-terminal
-uv run --offline --frozen pytest -q tests/test_dedicated_frame_preflight_successor.py
+uv run --offline --frozen python scripts/build_supervised_frame_preflight_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_supervised_frame_preflight_successor.py --validate-source
+uv run --offline --frozen pytest -q tests/test_supervised_frame_preflight_successor.py
 ```
 
-These read-only modes create no artifact or external observation. V15 has no live/default observer; v16 is consumed.
+These read-only modes create no artifact or external observation. V17 exposes no live/default observer.
 
 ## Audit the sealed D-142 source
 
@@ -75,5 +77,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C or D-142 activation command. Validate v13-v16 read-only, then stop: V10-v14 are
-consumed and no candidate/cost gate is open. V16 is also consumed ERROR and cannot retry.
+There is no supported live A/C, D-142 or v17 activation command. Validate read-only, then stop: v16 is consumed,
+v17 is source-qualified only and no candidate/cost gate is open.

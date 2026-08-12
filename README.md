@@ -30,8 +30,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-110 froze three entries; D-112/D-115 left selective scoring unready. No memory-effect claim exists.
 - D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
-- V3-v14 attempts are immutable; v16 also consumed one `ERROR(framed_output_invalid)` attempt after Docker READY.
-  It is not readiness evidence and cannot retry.
+- V3-v14/v16 attempts are immutable. V17 is source-qualified supervisor/worker framing only, with no observation,
+  activation or readiness evidence.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 
