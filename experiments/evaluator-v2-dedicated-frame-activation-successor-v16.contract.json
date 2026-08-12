@@ -1,0 +1,70 @@
+{
+  "schema_version": "dedicated-frame-activation-successor-contract-v16",
+  "contract_version": "ac-evaluator-v2-dedicated-frame-activation-successor-v16",
+  "contract_id": "ncpcontract_e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c",
+  "predecessor": {
+    "source_commit": "e962291bfea66980a66c7592e87ce5277b43b30a",
+    "source_tree": "082840944a46b2fc8d3b9f2df8afcc5d04b759ee",
+    "qualification_commit": "ac32e7848246aa18e04920f2c354abda8707b41e",
+    "contract_id": "ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01",
+    "contract_content_hash": "sha256:ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01",
+    "source_qualification_hash": "sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494",
+    "qualification_file_sha256": "sha256:0112807f9a8bbe4831e7c9103859909c8266247ec0aaf551c2960978421b9708",
+    "qualification_status": "OFFLINE_V15_DEDICATED_FRAME_SOURCE_QUALIFIED_ACTIVATION_CLOSED",
+    "state_approval_attempt_or_terminal_count": 0,
+    "external_observation_count": 0,
+    "execution_authorized": false
+  },
+  "runtime": {
+    "entrypoint": "patchloop.evals.dedicated_frame_activation_successor.run_once",
+    "observer_entrypoint": "patchloop.evals.dedicated_frame_activation_successor._run_parent_preflight",
+    "delegate_entrypoint": "patchloop.evals.dedicated_frame_preflight_successor.run_parent_preflight_injected",
+    "v15_source_commit": "e962291bfea66980a66c7592e87ce5277b43b30a",
+    "v15_contract_id": "ncpcontract_ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01",
+    "v15_contract_content_hash": "sha256:ac6959d19db4d7a11ce199a32bde188fbfd515c7bdfcee9241d10ac164800f01",
+    "v15_source_qualification_hash": "sha256:0cdf9e0bb8ea981e7360bd7acd456c3b8aebfc6cf719aa2527e828ab7dc2f494",
+    "v15_runtime_file_sha256": "sha256:b652088ffd7f6e4a28c95bd5547626206ffafe097c125820c984977f000e5fad",
+    "v15_child_file_sha256": "sha256:823e85a8e10276d137f2d3bba2c0c8854b18e2213c855bef4ebd95bfce187ead",
+    "approved_scopes": [
+      "v9-contract-and-source-validation-before-observation",
+      "docker-read-only-two-snapshot-eight-command-observation",
+      "isolated-dotenv-exact-openai-api-key-membership",
+      "sanitized-sdk-fixed-placeholder-reject-dispatch-with-child-only-systemroot"
+    ],
+    "delegate_semantics_unchanged": true,
+    "default_observers_reachable_only_after_action_started": true,
+    "direct_observer_cli_exposed": false,
+    "docker_expected_command_count": 8,
+    "framed_child_limit": 1,
+    "raw_child_output_persistence_allowed": false,
+    "credential_value_return_hash_prefix_or_length_limit": 0,
+    "network_call_limit": 0,
+    "provider_evaluator_agent_call_limit": 0
+  },
+  "lifecycle": {
+    "predecessor_source_qualification_required": true,
+    "fresh_source_bound_state_required": true,
+    "separate_exact_approval_required": true,
+    "exact_immediate_run_statement_required": true,
+    "authorization_attempt_action_before_observation": true,
+    "one_terminal_required": true,
+    "attempt_limit": 1,
+    "state_or_approval_reusable": false,
+    "retry_replacement_or_resume_allowed": false,
+    "v15_source_or_qualification_mutation_allowed": false
+  },
+  "authority": {
+    "contract_materialization_authorized": true,
+    "source_qualification_authorized": true,
+    "state_approval_attempt_or_terminal_during_qualification_authorized": false,
+    "environment_docker_dotenv_sdk_or_network_observation_authorized": false,
+    "credential_value_recording_authorized": false,
+    "docker_start_pull_load_image_store_or_container_mutation_authorized": false,
+    "provider_evaluator_agent_execution_authorized": false,
+    "candidate_cost_or_paid_execution_authorized": false
+  },
+  "state_approval_and_attempt_entrypoints_implemented": true,
+  "execution_currently_authorized": false,
+  "next_gate": "fresh-exact-v16-state-statement",
+  "content_hash": "sha256:e5ab4405de4e30a97c3524d157fbf74ad5757f61809c161bee07ede2dfc7564c"
+}
