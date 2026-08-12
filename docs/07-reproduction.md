@@ -47,18 +47,15 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
 one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
 
-The current validator recursively binds the sealed v5 terminal and v6 qualification:
+The current validators recursively bind the sealed v5-v8 predecessor chain:
 
 ```powershell
-uv run --offline --frozen pytest -q tests/test_sanitized_sdk_parent_integration.py
-uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-source
-uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-state
-uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-exact-approval
-uv run --offline --frozen python scripts/build_sanitized_sdk_parent_integration.py --validate-terminal
 uv run --offline --frozen pytest -q tests/test_sanitized_sdk_import_bootstrap_successor.py
 uv run --offline --frozen python scripts/build_sanitized_sdk_import_bootstrap_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_import_bootstrap_successor.py --validate-source
+uv run --offline --frozen pytest -q tests/test_sanitized_sdk_bootstrap_parent_successor.py
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_parent_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_parent_successor.py --validate-source
 ```
 
 These validations do not read/stat `.env` or grant an attempt. Historical v1-v6 read-only commands remain in their
@@ -97,7 +94,7 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2, consumed v3/v5/v7 and source-qualified v8 read-only.
-2. Stop. Next create only an offline v8 parent-integration successor.
+1. Validate evaluator-v2, consumed v3/v5/v7 and source-qualified v8/v9 read-only.
+2. Stop. Next create only a fresh offline v9 state-binding successor; do not observe current state.
 
 Do not repurpose a historical receipt, attempt, marker, gate, template or CLI flag to bypass this sequence.

@@ -54,9 +54,12 @@
 - Import-bootstrap v8 source `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`, contract
   `ncpcontract_bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b` and qualification
   `sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025` are offline-only.
-  Exact-env tests localize v7 to missing `SYSTEMROOT`/Windows error 10106. V8 returns fixed staged codes and no
-  value/exception; project imports may load the SDK package once but client/probe/dispatch/network remain 0. No parent
-  integration, state or approval exists; next build a separate parent successor without reusing v7.
+  Exact-env tests localize v7 to missing `SYSTEMROOT`/Windows error 10106.
+- Corrected-parent v9 source `8678ce9e4fbae426971a90a2f47ad28b5a431885`, contract
+  `ncpcontract_c9f40f2fb6e944edddf8232923135bde1acbd8def51b101f432490671a904c11` and qualification
+  `sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687` are source-only. V9 validates its
+  contract before observation, retains the 8-command Docker gate and passes `SYSTEMROOT` only to the original
+  sanitized child. No state/approval/attempt exists; next build a fresh state-binding successor without reusing v7.
 
 ## Required reading
 

@@ -35,6 +35,8 @@ work.
   `diagnostic_runtime_import_error`; dispatch/network/provider were 0 and its ledger cannot reopen.
 - V8 offline reproduction maps that failure to omitted `SYSTEMROOT` and Windows error 10106. The correction permits
   only non-recorded `SYSTEMROOT` pass-through and staged fixed codes; its source qualification grants no execution.
+- V9 applies the pass-through only to the original sanitized child, retains Docker gating and validates contract/source
+  before observation. Source qualification creates no state or attempt; v7 artifacts remain consumed.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

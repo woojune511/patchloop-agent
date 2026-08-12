@@ -3,48 +3,29 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V8 import-bootstrap correction — source-qualified only
+## V9 corrected parent — source-qualified only
 
-- Source commit/tree `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`/
-  `06a3df1764ed88dc5939ee6c976a25605f66c0cf` directly follows v7 preservation and adds exactly five paths.
-- Contract `ncpcontract_bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b` binds
-  v7 terminal, missing `SYSTEMROOT`/10106 reproduction, fixed staged codes and zero value/exception return.
-- Qualification body `sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025`, file
-  `sha256:afc233c32cc87c5ec3f30afeb48f0071ba8be38f3412ee471b28746ce46fd33f`, 6,094 bytes is commit
-  `bdfed282d21b08f0ebe4002d77679be549c96a4d`. Focused validation passed 16/16.
+- Source/tree `8678ce9e4fbae426971a90a2f47ad28b5a431885`/`fc0556deaae838c7c0d22524dd269731e236a9d5`
+  is the exact four-addition child of `7d116ac964634952e82875393d0df1302e8478b3`.
+- Contract `ncpcontract_c9f40f2fb6e944edddf8232923135bde1acbd8def51b101f432490671a904c11` binds
+  v8, contract-first validation, the 8-command Docker gate and child-only `SYSTEMROOT` pass-through to the original
+  sanitized diagnostic child. Focused validation passed 20/20 with injected observers.
+- Qualification body `sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687`, file
+  `sha256:8df598e5ac759db1e660654bb7a7d86cc630d9592ce670f0082d859d62008e67`, 5,751 bytes is commit
+  `b89f59ef46187ca08b02d047d63ad992c8cb3056`.
 
-No v8 parent, state, approval, attempt or external observation exists. A future project import may load the SDK
-package once; client/probe/dispatch/network remain forbidden until a separately qualified parent and exact approval.
+Source preparation observed no environment, Docker, `.env`, SDK or network and created no state, approval or attempt.
+V8 source/qualification remain `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`/
+`sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025`.
 
-## V7 sanitized SDK parent integration — ERROR and consumed
+## V7 consumed error — compact index
 
-- V6 predecessor source `1d99a7c0acf20ec961240f33f585553fd881dc02`, contract
-  `ncpcontract_3c050730b5c573d395b9d8559d29532153ffa82ceacc51e91434de9fb4351918` and qualification
-  `sha256:df0d68f6059d267260ec34fcd3d7714c406856ef1b22902412de3e74180e3bb2` remain unchanged.
-- V7 source commit/tree `6f6ba8627238b9d926e8b2bfe8a877d64ff1d755`/
-  `990bef7e12c1d485a33fd79b1ca8d9b6960426e8` directly follows `f48db03a12b3274c047a01e2cc626395812f1f53`
-  and adds exactly four contract/runtime/builder/test paths.
-- Contract `ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf` binds v6,
-  the D-137 observer, isolated `-I -E -s -B` child, fixed environment and one-use lifecycle; all source live authority is false.
-- Qualification artifact `evaluator-v2-sanitized-sdk-parent-integration-v7-source-qualification.json` has body
-  `sha256:defaa75877c4d842ae41d3d2845f1f6a82df874a5ca6953c91b4b660cf86ca2c`, file
-  `sha256:16419a67050098b590682cda657e22c6378bbeeb55148e802f1e5a0a820e49e2`, 5,124 bytes and commit
-  `50a3149028b6531b0ef837af90057077d18a2c4a`.
-
-Materialization and qualification made zero Docker/`.env`/SDK/network observation or mutation. State
-`ncpstate_c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970` has file
-`sha256:14e8563d2146accf73c7f0150a31707ba4f8a53d913113b4eacdba5c415a5a47`, 1,134 bytes and commit
-`3040044b32cf043edc054fb13869a85a4b4b83fd`; it records only a non-reusable user report. Receipt
-`ncpapprovalreceipt_5af0a296f10895a6f57f3ee394a516fa41110aa155279e2ee0d5ef0278f990c1` and approval
-`ncpapproval_02415aa08a4359a2f810d31f40c9a6e9a041af655df4c931cb61ac4a09d292ff` are commit
-`28f98c49d794377b4afbcf69acd1c39fb22d7c85`.
-
-Attempt `ncpattempt_de2f13e06b77b975c9ef16e0ca75787fcb93a8272de4ee80262f79bf94c83e89`, marker
-`ncpstarted_7a04080397aecad7d1f98e683f0c4c25198545d9347d181b3c9c94f2ba871d39` and terminal
-`ncpterminal_a6ad48867773cc2614861cadfbece94c646fa2b7aef453facc7fd37fe4dd537c` are commit
-`3cde67ba12390af328979d58b52551f1761f7cb3`. Docker was READY after 8 reads; exact key membership was true;
-one child launch ended `diagnostic_runtime_import_error`. Dispatch/network/provider counts were 0, accounting was
-complete, unknown activity false and retry/resume false. No credential value/hash/length or exception text was recorded.
+Source/contract/qualification are `6f6ba8627238b9d926e8b2bfe8a877d64ff1d755`,
+`ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf` and
+`sha256:defaa75877c4d842ae41d3d2845f1f6a82df874a5ca6953c91b4b660cf86ca2c`. Terminal
+`ncpterminal_a6ad48867773cc2614861cadfbece94c646fa2b7aef453facc7fd37fe4dd537c` at
+`3cde67ba12390af328979d58b52551f1761f7cb3` records Docker READY, exact-key membership and one child import error;
+dispatch/network/provider were 0, accounting complete and retry/resume false. Exact chain tuples remain in `reports/`.
 
 ## D-142 SDK no-call successor — source-qualified only
 

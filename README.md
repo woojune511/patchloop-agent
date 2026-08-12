@@ -30,7 +30,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-110 froze three entries; D-112/D-115 left selective scoring unready. No memory-effect claim exists.
 - D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
-- V3/v5/v7 are consumed; v8 source-qualifies the missing-`SYSTEMROOT` import correction, with runtime closed.
+- V3/v5/v7 are consumed; v9 source-qualifies the corrected parent and keeps state/execution closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

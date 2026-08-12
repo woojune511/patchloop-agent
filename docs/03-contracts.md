@@ -106,7 +106,8 @@ V5 is an immutable checker-error terminal. V6 fixes sanitized diagnostic stages.
 lifecycle, then consumed `ERROR(sdk_diagnostic_error)`: Docker/key checks completed but the child emitted the fixed
 `diagnostic_runtime_import_error` before SDK diagnosis. Its exact approval and ledger cannot be reused.
 V8 binds that terminal to missing-`SYSTEMROOT`/10106 reproduction, seven fixed import stages, value/exception limits
-0 and SDK-package count at most 1 with client/probe/dispatch/network 0. It has no parent, state or approval entrypoint.
+0 and SDK-package count at most 1. V9 binds v8, contract-first validation, the existing Docker observer and child-only
+`SYSTEMROOT` for the original sanitized diagnostic child. Its source has no state, approval, attempt or execution entrypoint.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory
