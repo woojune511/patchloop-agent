@@ -1,0 +1,22 @@
+{
+  "schema_version": "sanitized-sdk-bootstrap-framed-approval-v13",
+  "approval_id": "ncpapproval_896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c",
+  "contract_id": "ncpcontract_11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047",
+  "source_qualification_hash": "sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298",
+  "state_id": "ncpstate_92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446",
+  "state_content_hash": "sha256:92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446",
+  "statement_sha256": "sha256:9ad61f49f87023f93278446fe58e975a667dbf7fa37ae84e1c03c862812d6b65",
+  "approved_runtime": "patchloop.evals.sanitized_sdk_bootstrap_framed_successor.run_parent_preflight",
+  "approved_scopes": [
+    "v9-contract-and-source-validation-before-observation",
+    "docker-read-only-two-snapshot-eight-command-observation",
+    "isolated-dotenv-exact-openai-api-key-membership",
+    "sanitized-sdk-fixed-placeholder-reject-dispatch-with-child-only-systemroot"
+  ],
+  "future_attempt_limit": 1,
+  "attempt_started": false,
+  "reusable": false,
+  "retry_replacement_or_resume_authorized": false,
+  "recorded_at": "2026-08-12T13:11:23.914098Z",
+  "content_hash": "sha256:896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c"
+}
