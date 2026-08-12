@@ -1,0 +1,82 @@
+{
+  "schema_version": "supervised-frame-activation-source-qualification-v18",
+  "qualification_id": "ac-evaluator-v2-supervised-frame-activation-source-20260813-r1",
+  "status": "OFFLINE_V18_ACTIVATION_SOURCE_QUALIFIED_STATE_STATEMENT_REQUIRED",
+  "recorded_at": "2026-08-12T17:43:57.249806Z",
+  "source_commit": {
+    "commit": "e4c76af0e101b1f9bc62ab2fde5ebc1c975f6f42",
+    "tree": "4efccdd2ccd06e10d78a7b90d037cb69dc5e5f27",
+    "parents": [
+      "23de9a346aa66bb517c63021a36f815254cc0beb"
+    ],
+    "added_paths": [
+      "experiments/evaluator-v2-supervised-frame-activation-successor-v18.contract.json",
+      "patchloop/evals/supervised_frame_activation_successor.py",
+      "scripts/build_supervised_frame_activation_successor.py",
+      "tests/test_supervised_frame_activation_successor.py"
+    ]
+  },
+  "source_files": [
+    {
+      "path": "experiments/evaluator-v2-supervised-frame-activation-successor-v18.contract.json",
+      "blob_oid": "cad9b6b3d560407de057edb9e4de4f05823b3891",
+      "file_bytes": 4217,
+      "file_sha256": "sha256:37aa85d127d6e8fe0188257602252a8d14a8254ddc0ef96e28ce85bbd6643bc6"
+    },
+    {
+      "path": "experiments/evaluator-v2-supervised-frame-preflight-successor-v17.contract.json",
+      "blob_oid": "25b992e902eb06a935a7ae8c7e997e41e899387c",
+      "file_bytes": 4512,
+      "file_sha256": "sha256:126fccf738394ac4a3fd8836c18e30d49e12db908f1aff0e8a3985bfaeab2ee3"
+    },
+    {
+      "path": "patchloop/evals/supervised_frame_activation_successor.py",
+      "blob_oid": "e01750e0b513c04adc5c5250b4f22dd9b11d69f9",
+      "file_bytes": 53859,
+      "file_sha256": "sha256:dbf393dcf845d18d0eff2d17e51c737f523b7c97284547b66803867944343370"
+    },
+    {
+      "path": "patchloop/evals/supervised_frame_preflight_successor.py",
+      "blob_oid": "8787a7a205014dffce8091476dfb0e84953cbe0d",
+      "file_bytes": 43204,
+      "file_sha256": "sha256:b7aded9370d94946fe63da4f44e90fc2dec70afc3a426e5395dd5de26295ce24"
+    },
+    {
+      "path": "reports/live-pilot/artifacts/evaluator-v2-supervised-frame-preflight-v17-source-qualification.json",
+      "blob_oid": "afdf3e79c55181b338f26dc95cacb8b16a946899",
+      "file_bytes": 5637,
+      "file_sha256": "sha256:60e4630cb54ca7e697bfab250928f675b01d96cfac1ebc9db6f93d4b2420e855"
+    },
+    {
+      "path": "scripts/build_supervised_frame_activation_successor.py",
+      "blob_oid": "928f27da49104873294a0bcbc575d17a3198f9b6",
+      "file_bytes": 4220,
+      "file_sha256": "sha256:a08f68a77933a69c54732f8ec79547c8b642eff27920a4e8efe5a7cd440625e4"
+    },
+    {
+      "path": "scripts/run_sanitized_sdk_bootstrap_supervised_frame_child.py",
+      "blob_oid": "53bfe02cd85c7f78555b76d3c0dce7243a0ef475",
+      "file_bytes": 18485,
+      "file_sha256": "sha256:d81ae82d529fb6fd2a7c8d87b52afcdc6fbfdb2201dde1837a4b945fe3770a46"
+    },
+    {
+      "path": "tests/test_supervised_frame_activation_successor.py",
+      "blob_oid": "06ad27e63f99a8c9175420222fe2842f854f5cc9",
+      "file_bytes": 8925,
+      "file_sha256": "sha256:c473f157c4b4df53c62fe96b40e7391054d6d7f07f4bb3be11dd8d509f5a7abf"
+    }
+  ],
+  "contract_id": "ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c",
+  "contract_content_hash": "sha256:3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c",
+  "predecessor_source_qualification_hash": "sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883",
+  "authority": {
+    "repository_commit_read_authorized": true,
+    "source_qualified": true,
+    "state_approval_attempt_or_terminal_created": false,
+    "environment_docker_dotenv_sdk_network_or_provider_observation_count": 0,
+    "external_mutation_count": 0,
+    "execution_authorized": false
+  },
+  "next_gate": "fresh-exact-v18-state-statement",
+  "content_hash": "sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d"
+}
