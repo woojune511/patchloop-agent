@@ -1,0 +1,9 @@
+{
+  "schema_version": "sanitized-sdk-parent-action-started-v7",
+  "marker_id": "ncpstarted_7a04080397aecad7d1f98e683f0c4c25198545d9347d181b3c9c94f2ba871d39",
+  "attempt_id": "ncpattempt_de2f13e06b77b975c9ef16e0ca75787fcb93a8272de4ee80262f79bf94c83e89",
+  "attempt_content_hash": "sha256:de2f13e06b77b975c9ef16e0ca75787fcb93a8272de4ee80262f79bf94c83e89",
+  "sequence": 1,
+  "recorded_at": "2026-08-12T01:18:59.334605Z",
+  "content_hash": "sha256:7a04080397aecad7d1f98e683f0c4c25198545d9347d181b3c9c94f2ba871d39"
+}

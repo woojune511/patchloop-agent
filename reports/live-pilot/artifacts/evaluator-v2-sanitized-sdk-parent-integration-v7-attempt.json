@@ -1,0 +1,14 @@
+{
+  "schema_version": "sanitized-sdk-parent-attempt-v7",
+  "attempt_id": "ncpattempt_de2f13e06b77b975c9ef16e0ca75787fcb93a8272de4ee80262f79bf94c83e89",
+  "contract_id": "ncpcontract_5a078023a4730abb42e5f01cd9e525ffafbcdab690cccdabcddb61e4b7c29cbf",
+  "source_qualification_hash": "sha256:defaa75877c4d842ae41d3d2845f1f6a82df874a5ca6953c91b4b660cf86ca2c",
+  "state_evidence_id": "ncpstate_c664d973bcf4a5964bcd035c4d4f581c0ac7bc31c79ebb9d46850e6c2f429970",
+  "approval_id": "ncpapproval_02415aa08a4359a2f810d31f40c9a6e9a041af655df4c931cb61ac4a09d292ff",
+  "ledger_snapshot_hash": "sha256:de90bfab17ec988778e04b03dfd72a9db0449aad9493c0595a9769fc4a133314",
+  "attempt_number": 1,
+  "one_use": true,
+  "retry_or_resume_allowed": false,
+  "created_at": "2026-08-12T01:18:59.326603Z",
+  "content_hash": "sha256:de2f13e06b77b975c9ef16e0ca75787fcb93a8272de4ee80262f79bf94c83e89"
+}
