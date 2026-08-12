@@ -58,8 +58,8 @@
 - V17 is the immutable supervisor/worker source predecessor. Source-qualified v18 `e4c76af`, contract
   `ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` and qualification
   `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d` add separate lifecycle entrypoints
-  without changing the one-supervisor/one-null-stdio-worker pipe. Observation, state/approval/attempt/terminal and
-  execution authority are 0; exact fresh v18 state is required next.
+  without changing the supervisor/worker pipe. State `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`
+  is non-proof with observation 0/execution false. Approval/attempt/terminal are absent; exact v18 approval is next.
 
 ## Required reading
 

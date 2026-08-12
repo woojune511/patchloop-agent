@@ -12,8 +12,10 @@ remains immutable. V18 source/tree `e4c76af0e101b1f9bc62ab2fde5ebc1c975f6f42`/
 one-worker topology and adds separate lifecycle entrypoints. Sole-artifact commit
 `50a4b28e45d20adfe2e42da6ced8b4fc2da3551d` records qualification
 `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d`; file
-`sha256:1d06731569666457eef7edac71f0afc21bbd8f25b1fa96a9ab16e5152695fa0b`, 3,850 bytes. External observation,
-mutation, state/approval/attempt/terminal and execution authority are 0; exact fresh state is the next gate.
+`sha256:1d06731569666457eef7edac71f0afc21bbd8f25b1fa96a9ab16e5152695fa0b`, 3,850 bytes. State-only commit
+`749e359` records `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`; file
+`sha256:30dbe38a6b2d7fa69a0d45ed026c39d70b7bc4cc69150d6c2c8212a935e00ba1`, 919 bytes. It is nonreusable
+self-attestation with observation 0/execution false; approval/attempt/terminal are absent and exact approval is next.
 
 ## V16 dedicated-frame activation — consumed ERROR
 

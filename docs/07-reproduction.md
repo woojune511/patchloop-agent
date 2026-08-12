@@ -55,9 +55,10 @@ uv run --offline --frozen pytest -q tests/test_supervised_frame_preflight_succes
 uv run --offline --frozen python scripts/build_supervised_frame_activation_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_supervised_frame_activation_successor.py --validate-source
 uv run --offline --frozen pytest -q tests/test_supervised_frame_activation_successor.py
+uv run --offline --frozen python scripts/build_supervised_frame_activation_successor.py --show-approval-template
 ```
 
-These read-only modes create no artifact or external observation. V17 exposes no live/default observer; v18 has no state.
+These read-only modes create no artifact or external observation. V18 has state only.
 
 ## Audit the sealed D-142 source
 
@@ -81,4 +82,4 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 ## Live execution
 
 There is no supported live A/C, D-142 or v18 attempt command. Validate read-only, then stop: v16 is consumed,
-v18 is source-qualified only and no state, candidate or cost gate is open.
+v18 has no approval/attempt and no candidate or cost gate is open.

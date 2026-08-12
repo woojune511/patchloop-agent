@@ -106,8 +106,8 @@ V5/V7/V12/V14/V16 are immutable error terminals; their approvals and ledgers can
 Docker-not-ready. V16 later passed eight Docker reads but returned no framed envelope; accounting is incomplete,
 unknown activity true and retry false. V17 binds that exact terminal without claiming a cause. Its stdlib supervisor
 alone owns parent stdout; one diagnostic worker starts with null stdio and returns a typed message through an anonymous
-pipe. Only injected/offline paths exist: source qualification creates no state, approval, attempt, terminal, external
-observation or execution authority.
+pipe. V18 adds separate activation entrypoints; current self-attested state has observation 0 and grants no approval,
+attempt or execution authority.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory
