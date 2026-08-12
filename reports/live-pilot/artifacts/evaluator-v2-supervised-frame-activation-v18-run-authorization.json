@@ -1,0 +1,14 @@
+{
+  "schema_version": "supervised-frame-activation-run-authorization-v18",
+  "authorization_id": "ncprunauthorization_7ed4df9dbb06a9908a00273051dc3160a9824cf2cccc4d1c57b7eb974cb96f2a",
+  "contract_id": "ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c",
+  "source_qualification_hash": "sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d",
+  "state_id": "ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26",
+  "approval_id": "ncpapproval_8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094",
+  "approval_content_hash": "sha256:8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094",
+  "statement_sha256": "sha256:9f42375e7b20a7cea0ac11803feda37fc7dfea11051fb4e775dfac05231e5b05",
+  "attempt_limit": 1,
+  "retry_replacement_or_resume_authorized": false,
+  "recorded_at": "2026-08-12T18:10:54.025951Z",
+  "content_hash": "sha256:7ed4df9dbb06a9908a00273051dc3160a9824cf2cccc4d1c57b7eb974cb96f2a"
+}

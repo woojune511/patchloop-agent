@@ -1,0 +1,9 @@
+{
+  "schema_version": "supervised-frame-activation-action-started-v18",
+  "marker_id": "ncpstarted_367fafbb9c010a174fdc9d8ecb2dc346fd85af47c984035233d666393a464eba",
+  "attempt_id": "ncpattempt_9ee90622a86be952b924ec77c591b9b6f569d5383738ef6ed118810022a79a7b",
+  "attempt_content_hash": "sha256:9ee90622a86be952b924ec77c591b9b6f569d5383738ef6ed118810022a79a7b",
+  "sequence": 1,
+  "recorded_at": "2026-08-12T18:10:54.041388Z",
+  "content_hash": "sha256:367fafbb9c010a174fdc9d8ecb2dc346fd85af47c984035233d666393a464eba"
+}
