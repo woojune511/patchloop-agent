@@ -30,7 +30,8 @@ work.
 - V1-v12 are immutable predecessors; consumed attempts cannot retry. Exact activity is indexed in
   `docs/09-evidence.md`. V12 ended `child_output_invalid` after Docker passed.
 - V13 discards workload streams and uses one typed envelope. Qualification granted no execution; a later exact
-  statement recorded non-proof state with observation 0. Approval and immediate run remain distinct, unopened gates.
+  statement recorded non-proof state with observation 0 and a second bound one future-attempt approval. Immediate run
+  remains a distinct, unopened gate.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

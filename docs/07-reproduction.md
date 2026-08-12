@@ -51,7 +51,7 @@ V12 remains consumed. Validate the current framed v13 source without external ob
 ```powershell
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-source
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --show-approval-template
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --show-run-template
 ```
 
 These modes create no artifact and read no `.env`/Docker/SDK. The sealed pre-state suite passed 12/12; its absence
@@ -88,8 +88,8 @@ Repository-wide suites may retain historical absent-state assertions; do not rew
 
 There is no supported live A/C or D-142 activation command:
 
-1. Validate evaluator-v2, consumed predecessors, framed v13 and its committed state read-only.
-2. Stop. Only the exact v13 approval statement may create a binding; it starts no attempt.
+1. Validate evaluator-v2, consumed predecessors and committed v13 state/approval read-only.
+2. Stop. Only the exact v13 immediate-run statement may start the attempt.
 
 V10 `--record-state` and v11 `--record-approval` are consumed one-use creation modes. Use validation modes only;
-v12 `--run-exact-attempt` and v13 `--record-state` are consumed. V13 approval and run require distinct exact statements.
+v12 `--run-exact-attempt` and v13 state/approval creation are consumed. V13 run requires its distinct exact statement.

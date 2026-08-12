@@ -51,7 +51,8 @@
   `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298` are offline-only.
   It isolates stdout/stderr and accepts one canonical typed envelope. Exact state
   `ncpstate_92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446` is self-attested non-proof with
-  observation 0 and no execution authority. Approval/attempt are absent; the next gate is one exact approval binding.
+  observation 0. Approval `ncpapproval_896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c`
+  is recorded but no attempt exists; the next gate is one distinct exact immediate-run statement.
 
 ## Required reading
 

@@ -106,7 +106,8 @@ V5/V7/V12 are immutable error terminals; their approval and ledgers cannot be re
 `SYSTEMROOT` boundary, but v12 ended `child_output_invalid` after Docker passed and retained no raw stdout, key/SDK
 result or narrower cause. V13 suppresses workload streams and returns one typed, value-free envelope. Qualification
 created no runtime artifact; a later exact statement created one nonreusable self-attested state with observation 0.
-Approval/run remain absent and the state authorizes no observation.
+A second exact statement created one nonreusable future-attempt approval. No run artifact exists; execution still
+requires the distinct exact immediate-run statement.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

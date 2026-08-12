@@ -47,11 +47,11 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12 consumed; v13 source-qualified with non-proof state recorded; approval/attempt absent.
+Status: v3/v5/v7/v12 consumed; v13 source/state/approval bound; attempt absent.
 
 V13 suppresses workload stdout/stderr and validates one canonical envelope; 12/12 mock tests include output noise,
-schema failure, Docker-first suppression and append-only terminal ordering. Next obtain separate exact approval, then
-distinct run authority. Neither grants cost or paid authority.
+schema failure, Docker-first suppression and append-only terminal ordering. Next obtain the distinct exact immediate-run
+statement. The approval grants no cost or paid authority.
 
 ## Work item 5 — execution candidate and cost gate
 

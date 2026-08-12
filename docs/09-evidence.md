@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V13 framed successor — state bound, execution closed
+## V13 framed successor — approval bound, attempt closed
 
 - Source/tree `5bcffb29248d6de60eef34f6893c23f17ea70d3c`/`f75a01141b8cd0e7a6f7bf28c706e0104943eff2`
   is the exact five-addition child of `ff4e00d124a0954903d06f8436c11af2c6bc57b1`; contract
@@ -15,9 +15,13 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
   `sha256:92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446`, file
   `sha256:a842b8fbd7ecc580b7ba31baac5f069addce3fe631dcb7e3e16316970cf6165c`, 804 bytes is the sole addition at
   `2f3eecf12b87463e155f46857ba93c010bf00a6a`.
+- Approval `ncpapproval_896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c`, content hash
+  `sha256:896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c`, file
+  `sha256:0aebd748dc9983da54dabebb22cb9d22aac16e7171bec74a98588ad5bd57bfd6`, 1,317 bytes is the sole addition at
+  `cc2a7bddec0ee1bb142f32c71dbc17740df66fb6`.
 
-The state is self-attested non-proof: observation 0, execution authority false and reusable false. Approval, attempt and
-terminal remain absent. The next gate is its exact approval-binding statement; this is not runtime readiness.
+State remains self-attested non-proof. Approval binds one future attempt but starts none; authorization, attempt,
+ACTION_STARTED and terminal are absent. The next gate is its distinct exact immediate-run statement.
 
 ## V12 preflight lifecycle — consumed ERROR
 
