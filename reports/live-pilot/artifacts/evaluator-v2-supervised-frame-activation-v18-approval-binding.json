@@ -1,0 +1,27 @@
+{
+  "schema_version": "supervised-frame-activation-approval-v18",
+  "approval_id": "ncpapproval_8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094",
+  "contract_id": "ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c",
+  "source_qualification_hash": "sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d",
+  "state_id": "ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26",
+  "state_content_hash": "sha256:dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26",
+  "statement_sha256": "sha256:08303b05a3423bf524fb29159ecfe03f5cfda04b549e22e6413fce538306ef60",
+  "docker_running_reconfirmed": true,
+  "dotenv_only_openai_api_key_reconfirmed": true,
+  "approved_runtime": "patchloop.evals.supervised_frame_activation_successor.run_once",
+  "approved_scopes": [
+    "v9-contract-and-source-validation-before-observation",
+    "docker-read-only-two-snapshot-eight-command-observation",
+    "isolated-dotenv-exact-openai-api-key-membership",
+    "sanitized-sdk-fixed-placeholder-reject-dispatch-with-child-only-systemroot",
+    "supervisor-worker-anonymous-pipe-result-framing"
+  ],
+  "parent_to_supervisor_launch_limit": 1,
+  "supervisor_to_worker_launch_limit": 1,
+  "future_attempt_limit": 1,
+  "attempt_started": false,
+  "reusable": false,
+  "retry_replacement_or_resume_authorized": false,
+  "recorded_at": "2026-08-12T18:05:15.707012Z",
+  "content_hash": "sha256:8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094"
+}
