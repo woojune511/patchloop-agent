@@ -43,22 +43,14 @@
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
-- V5 and v7 are consumed failures and cannot retry. V7 reached Docker READY and exact-key membership, then stopped
-  at fixed `diagnostic_runtime_import_error`; dispatch/network/provider were 0 and accounting was complete.
-- Import-bootstrap v8 source `701c988f5ef2074f0cadaa06e04e88c3e3ea6f9e`, contract
-  `ncpcontract_bff6d0e1dc8601e3cc4aaac98fc9370b72425151d982c6892d189a292accc47b` and qualification
-  `sha256:d39f23a7e4a124659d3a4ef790a57950e3d4d7903bb753a9fcc16d1a0a4d9025` are offline-only.
-  Exact-env tests localize v7 to missing `SYSTEMROOT`/Windows error 10106.
-- Corrected-parent v9 source `8678ce9e4fbae426971a90a2f47ad28b5a431885` remains source-only. State-binding
-  v10 source `3190923f97883e7df4bb53b9b8231c3598239fb1`, contract
-  `ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539` and qualification
-  `sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e` are qualified offline. Exact statement
-  binding created attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3`
-  and nonreusable state `ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
-  `5ab4226bfc5017563b673375f9057fde39b1c38c`; it is self-attested non-proof with observation/mutation 0.
-- Preflight lifecycle v12 consumed one exact-approved `ERROR(child_checker_error/child_output_invalid)` attempt.
-  Docker passed 8 reads, but child stdout failed typed parsing; accounting is complete, forbidden activity is 0 and
-  retry is closed. `docs/09-evidence.md` owns the tuple. A corrected successor is required; v12 is not evaluator-v12.
+- V5/v7/v12 are immutable consumed failures. V7 stopped at fixed `diagnostic_runtime_import_error`; v12 ended
+  `ERROR(child_checker_error/child_output_invalid)` after Docker passed. Both had forbidden activity 0 and cannot
+  retry. V8-v11 are immutable offline/source/state/approval predecessors and cannot be reused; exact tuples are in
+  `docs/09-evidence.md`.
+- Framed successor v13 source `5bcffb29248d6de60eef34f6893c23f17ea70d3c` and qualification
+  `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298` are offline-only.
+  It isolates stdout/stderr and accepts one canonical typed envelope. Mock tests pass 12/12, but state, approval,
+  attempt, observation and authority are absent; the next gate is one exact state-binding statement.
 
 ## Required reading
 

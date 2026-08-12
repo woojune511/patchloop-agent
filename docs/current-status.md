@@ -23,14 +23,17 @@ V10 remains self-attested non-proof; V11 binds one nonreusable approval. V12 con
 `770b661e52646e0e309162121f14ff92f7f2568d`: Docker passed 8 reads and parent environment guards, but child stdout
 failed typed JSON parsing. Terminal `ERROR(child_checker_error/child_output_invalid)` has complete accounting,
 unknown activity false and mutation/network/provider/evaluator/agent/credential-value recording 0. It establishes no
-key/SDK readiness, cannot retry and is not an evaluator version.
+key/SDK readiness, cannot retry and is not an evaluator version. V13 source
+`5bcffb29248d6de60eef34f6893c23f17ea70d3c` replaces that blind boundary with suppressed stdout/stderr and one
+canonical typed envelope. Qualification `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298`
+and 12/12 mock tests are offline only; state, approval, attempt and observation are absent.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v11 are predecessors; v12 is immutable and consumed.
-4. **Separately approved preflight attempt.** V3/v5/v7/v12 are consumed; correct the typed child-output contract offline.
+3. **Offline preflight contracts.** V1-v12 are predecessors; framed v13 source is qualified.
+4. **Separately approved preflight attempt.** V13 awaits exact state binding, then distinct approval and run authority.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -45,12 +48,12 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12 are consumed. No retry, Docker/SDK/`.env`, provider/evaluator/agent, cost or A/C authority is open.
+V5/v7/v12 are consumed. V13 qualification opens no Docker/SDK/`.env`, provider/evaluator/agent, cost or A/C authority.
 
 ## Next gate
 
-The next gate is a **new offline versioned successor** for the typed child-output boundary. It grants no observation;
-any future attempt needs distinct qualification, state/approval bindings and fresh exact authority. V12 retry,
-candidate, cost and paid execution remain closed.
+The next gate is one **exact v13 state-binding statement** from `--show-state-template`. It creates self-attested,
+nonreusable state only and no observation. A later distinct approval and still-later exact run statement are required;
+generic continuation, v12 retry, candidate, cost and paid execution remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

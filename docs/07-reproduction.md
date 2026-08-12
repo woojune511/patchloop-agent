@@ -47,16 +47,16 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
 one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
 
-The current v12 validators recursively bind v11 approval, v10 state and the sealed v9 runtime:
+V12 remains consumed. Validate the current framed v13 source without external observation:
 
 ```powershell
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-source
-uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_attempt_successor.py --validate-terminal
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-source
+uv run --offline --frozen pytest -q tests/test_sanitized_sdk_bootstrap_framed_successor.py
 ```
 
-These validation modes do not grant an attempt. The terminal validator audits the committed consumed chain; predecessor
-creation/execution commands remain in Git history and must not be invoked.
+These modes create no state or attempt and do not read `.env`/Docker/SDK. Predecessor creation/execution commands remain
+in Git history and must not be invoked.
 
 ## Audit the sealed D-142 source
 
@@ -91,8 +91,8 @@ evidence.
 
 There is no supported live A/C or D-142 activation command. The current sequence is offline only:
 
-1. Validate evaluator-v2 and consumed v3/v5/v7/v12 chains read-only.
-2. Stop. V12 ended `ERROR(child_output_invalid)` and has no retry/replacement/resume authority.
+1. Validate evaluator-v2, consumed predecessors and framed v13 read-only.
+2. Stop. Only an exact v13 state statement may create self-attested state; it authorizes no observation.
 
 V10 `--record-state` and v11 `--record-approval` are consumed one-use creation modes. Use validation modes only;
-v12 `--run-exact-attempt` is also consumed. The next work is an offline corrected successor, not live execution.
+v12 `--run-exact-attempt` is consumed. V13 approval and run require later distinct exact statements.

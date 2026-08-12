@@ -35,7 +35,8 @@ work.
   qualification created no observation. The later exact statement produced one nonreusable self-attested state.
 - V11 created one nonreusable approval pair. V12 consumed it as
   `ERROR(child_checker_error/child_output_invalid)`: Docker passed, child stdout failed typed parsing and retry closed.
-  Correction requires a new offline versioned successor.
+  V13 corrects the protocol with discarded workload streams and a canonical typed envelope. Its offline qualification
+  grants no execution; state, approval and immediate run remain three distinct gates.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

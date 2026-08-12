@@ -105,14 +105,11 @@ Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 V5 is an immutable checker-error terminal. V6 fixes sanitized diagnostic stages. V7 bound v6, D-137 and the isolated
 lifecycle, then consumed `ERROR(sdk_diagnostic_error)`: Docker/key checks completed but the child emitted the fixed
 `diagnostic_runtime_import_error` before SDK diagnosis. Its exact approval and ledger cannot be reused.
-V8 binds missing-`SYSTEMROOT`/10106 reproduction. V9 binds contract-first validation, the Docker observer and
-child-only `SYSTEMROOT`. V10 binds exact v9 source/qualification and accepts only a fixed post-qualification user
-statement citing exact v10 identities. Its self-attested state is nonreusable. V11 binds that exact ID/hash and v9
-runtime/scopes. Its fixed statement created one nonreusable approval pair with `attempt_started=false`; the pair grants
-no execution. V12 binds that pair and implements authorization→attempt→ACTION_STARTED→one v9 observation→terminal.
-Its exact-approved execution consumed `ERROR(child_checker_error/child_output_invalid)`: Docker passed, but child
-stdout failed typed parsing. Raw stdout was not retained, so no narrower cause, key/SDK result or retry exists. A new
-contract/source/qualification/approval chain is required.
+V8 localizes missing `SYSTEMROOT`; v9 composes child-only pass-through with Docker-first observation. V10/V11 bind
+nonreusable state/approval. V12 consumed them as `ERROR(child_checker_error/child_output_invalid)` after Docker passed;
+raw stdout was not retained, so no narrower cause or key/SDK result exists. V13 binds that terminal, suppresses workload
+stdout/stderr and returns one typed, value-free canonical envelope. Its exact state→approval→run chain is implemented
+but qualification creates none of those artifacts and authorizes no observation.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

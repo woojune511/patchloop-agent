@@ -44,7 +44,8 @@ Historical milestone-by-milestone limitations are archived at
 - V9 composes the corrected child and Docker gate with injected observers. V10 only source-qualifies an exact
   self-attested state binder; V11 binds one approval pair. V12 consumed it: Docker passed, but child stdout failed
   typed parsing. Raw stdout was not retained, so no key/SDK readiness or narrower cause is proved. V12 cannot retry,
-  is not evaluator-v12 and proves no confidentiality.
+  is not evaluator-v12 and proves no confidentiality. V13's stream suppression and envelope are mock/source evidence;
+  they neither reconstruct v12 output nor prove live key/SDK/Docker readiness.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

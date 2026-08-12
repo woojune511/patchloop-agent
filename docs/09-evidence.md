@@ -3,28 +3,27 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
+## V13 framed successor — source-qualified only
+
+- Source/tree `5bcffb29248d6de60eef34f6893c23f17ea70d3c`/`f75a01141b8cd0e7a6f7bf28c706e0104943eff2`
+  is the exact five-addition child of `ff4e00d124a0954903d06f8436c11af2c6bc57b1`; contract
+  `ncpcontract_11d85bf3b90518afa163c265433eb1a2ed2c1ce2a12a51c3db828a2ea097c047` binds v12 terminal.
+- Qualification `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298`, file
+  `sha256:3d4f59bb8c69c6ba298c39492e01466a3e840f968d78d7c5cb2f6bf45cb12873`, 5,373 bytes is the sole addition at
+  `02c15ea5f3871626fc4b5ae2023330294950908c`. Mock tests passed 12/12.
+
+Qualification performed observation/mutation 0 and created no state, approval, attempt or terminal. V13 discards
+workload stdout/stderr and validates one canonical envelope; this is not runtime readiness. The next gate is its exact
+state statement, which remains self-attested non-proof and grants no execution.
+
 ## V12 preflight lifecycle — consumed ERROR
 
-- Source/tree `0518f294ea73890aa0387a57121167c5a01f7947`/`53ade760c499755b3b683a0e5c6b375e729e10bb`
-  is the exact four-addition child of `74541b2db480857df4e90b4a6732cda605a08950`.
-- Contract `ncpcontract_4dba86e844bf0c500f61b2714f00714e9c1fe105e4938ff63db3b00f276706b3` binds
-  v11 approval `ncpapproval_b5fcc5e41246799c7124da67f9af0507a77af034bfd6a195307e79a7d3a609c2` and v9 runtime.
-- Qualification `sha256:e96858f63e4e45e74ec9219e8653dbe276ebcd37384bcfa8762535ee771a6c41`, file
-  `sha256:377b90f0050bbb6e8df20e89acd4579f7fc4e6d43f70bfbf0ef1aa0129831f58`, 5,246 bytes is the sole addition at
-  `049f8bd9704087da68acf67c75f5dc79a8cf5e49`.
-
-One exact-approved execution is sealed as the exact four-addition commit
-`770b661e52646e0e309162121f14ff92f7f2568d`. Authorization
-`ncprunauthorization_d155a44fb6b1e1951eb22ef7cd461d93ee7b205c586435a7a4951ff680f19a34`, attempt
-`ncpattempt_b619ed00db478d4873321d9b72b7e91bfb7e13b53f0203b52f751f7b97bbb434`, marker
-`ncpstarted_037edbdc6279fcb28c64d8c210043cc75fc23a42904064339e78a8fb2f11736f` and terminal
-`ncpterminal_9a4fc25df858faad01f4ec7872ca7d4cb31a4515f719fbabb2a20fc4cc55b13b` are consumed.
-
-The terminal is `ERROR(child_checker_error/child_output_invalid)`: Docker passed 8 read-only commands and the parent
-environment guards passed, but returned child stdout failed typed JSON parsing. Accounting is complete; unknown
-activity is false; Docker start/image mutation/container/network/provider/evaluator/agent/credential-value recording
-counts are 0. Retry/resume is false. No key-membership or SDK readiness result exists. V12 is a preflight lifecycle
-version, not an evaluator version; the next boundary is a new offline corrected successor.
+Source/qualification are `0518f294ea73890aa0387a57121167c5a01f7947` and
+`sha256:e96858f63e4e45e74ec9219e8653dbe276ebcd37384bcfa8762535ee771a6c41`. Exact four-artifact commit
+`770b661e52646e0e309162121f14ff92f7f2568d` terminates as
+`ncpterminal_9a4fc25df858faad01f4ec7872ca7d4cb31a4515f719fbabb2a20fc4cc55b13b` /
+`ERROR(child_checker_error/child_output_invalid)`: Docker passed 8 reads, but no typed child result exists. Accounting
+is complete; forbidden activity is 0 and retry is false. Exact ledger IDs remain in `reports/`.
 
 ## V7 consumed error — compact index
 
