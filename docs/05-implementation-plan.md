@@ -35,28 +35,23 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v12 preserved; framed v13 source/qualification are immutable and offline-only.
+Status: v1-v12 preserved; framed v13 source/qualification and self-attested state are immutable inputs.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
 require a new version.
 
-V3 `ce0628880107db2319816272cfa49adc7ea99667` binds full-file-in-child/boolean-only-return, fixed-placeholder SDK
-reject-dispatch and D-137 read-only Docker. State remains self-attested non-proof; read/stat=0.
-
-V4 binds the manual-start report without proving readiness. V5 is immutable. V6 fixes value-free diagnostic
-stages/codes; v7 ran its parent once and stopped at the child's fixed diagnostic-runtime import boundary.
-V8 localizes missing `SYSTEMROOT`/Windows 10106. V9 applies the correction child-only. V10 binds exact v9
-source/qualification and one exact statement; the resulting state is not runtime evidence. V11 binds its exact
-ID/hash and v9 scopes without an attempt entrypoint.
+V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V8/V9 correct missing
+`SYSTEMROOT`/Windows 10106. V10/V11's non-proof state/approval were consumed by v12. Exact tuples live in
+`docs/09-evidence.md`; none is readiness evidence.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12 consumed; v13 source-qualified, state/approval/attempt absent.
+Status: v3/v5/v7/v12 consumed; v13 source-qualified with non-proof state recorded; approval/attempt absent.
 
 V13 suppresses workload stdout/stderr and validates one canonical envelope; 12/12 mock tests include output noise,
-schema failure, Docker-first suppression and append-only terminal ordering. Next bind only its exact self-attested state,
-then obtain separate approval and run authority. None grants cost or paid authority.
+schema failure, Docker-first suppression and append-only terminal ordering. Next obtain separate exact approval, then
+distinct run authority. Neither grants cost or paid authority.
 
 ## Work item 5 — execution candidate and cost gate
 

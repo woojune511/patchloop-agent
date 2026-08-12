@@ -14,26 +14,21 @@ PASS. Historical results remain immutable and are not independently safety-verif
 binds typed event/CAS evidence and uses an authority receipt to gate runner, persistence, qualification and completion; raw
 results remain `official=false` and local/mock tests are not official evidence.
 
-The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V5 consumed
-`ERROR(checker_error)`. V7 then consumed one exact-approved attempt: Docker READY after 8 reads, exact key
-declared/nonempty, one child launch, then `ERROR(sdk_diagnostic_error)` with child code
-`diagnostic_runtime_import_error`. Accounting is complete, unknown activity is false and retry/resume is closed.
-V8 localizes the import failure to missing `SYSTEMROOT`/Windows 10106. V9 source-qualifies the corrected parent.
-V10 remains self-attested non-proof; V11 binds one nonreusable approval. V12 consumed it at
-`770b661e52646e0e309162121f14ff92f7f2568d`: Docker passed 8 reads and parent environment guards, but child stdout
-failed typed JSON parsing. Terminal `ERROR(child_checker_error/child_output_invalid)` has complete accounting,
-unknown activity false and mutation/network/provider/evaluator/agent/credential-value recording 0. It establishes no
-key/SDK readiness, cannot retry and is not an evaluator version. V13 source
-`5bcffb29248d6de60eef34f6893c23f17ea70d3c` replaces that blind boundary with suppressed stdout/stderr and one
-canonical typed envelope. Qualification `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298`
-and 12/12 mock tests are offline only; state, approval, attempt and observation are absent.
+The **successor A/C offline qualification** is `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`. V5/V7/V12 are immutable
+ERROR terminals. V12 at `770b661e52646e0e309162121f14ff92f7f2568d` passed eight Docker reads but ended
+`child_output_invalid`; accounting is complete, prohibited activity is 0, and it proves no readiness or retry right.
+
+V13 source `5bcffb29248d6de60eef34f6893c23f17ea70d3c` uses suppressed streams and one typed envelope. Qualification
+`sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298` and pre-state mock 12/12 are offline.
+State `ncpstate_92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446` at `2f3eecf` is self-attested
+non-proof with observation 0 and no execution authority; approval/attempt are absent.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v12 are predecessors; framed v13 source is qualified.
-4. **Separately approved preflight attempt.** V13 awaits exact state binding, then distinct approval and run authority.
+3. **Offline preflight contracts.** V1-v12 are predecessors; framed v13 source and non-proof state are bound.
+4. **Separately approved preflight attempt.** V13 awaits exact approval binding, then distinct run authority.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -48,12 +43,12 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7/v12 are consumed. V13 qualification opens no Docker/SDK/`.env`, provider/evaluator/agent, cost or A/C authority.
+V5/v7/v12 are consumed. V13 qualification/state opens no Docker/SDK/`.env`, provider/evaluator/agent, cost or A/C authority.
 
 ## Next gate
 
-The next gate is one **exact v13 state-binding statement** from `--show-state-template`. It creates self-attested,
-nonreusable state only and no observation. A later distinct approval and still-later exact run statement are required;
-generic continuation, v12 retry, candidate, cost and paid execution remain closed.
+The next gate is one **exact v13 approval-binding statement** from `--show-approval-template`. It creates one
+nonreusable approval artifact only and starts no attempt. A later distinct exact run statement is required; generic
+continuation, v12 retry, candidate, cost and paid execution remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

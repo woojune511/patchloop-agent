@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V13 framed successor — source-qualified only
+## V13 framed successor — state bound, execution closed
 
 - Source/tree `5bcffb29248d6de60eef34f6893c23f17ea70d3c`/`f75a01141b8cd0e7a6f7bf28c706e0104943eff2`
   is the exact five-addition child of `ff4e00d124a0954903d06f8436c11af2c6bc57b1`; contract
@@ -11,10 +11,13 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
 - Qualification `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298`, file
   `sha256:3d4f59bb8c69c6ba298c39492e01466a3e840f968d78d7c5cb2f6bf45cb12873`, 5,373 bytes is the sole addition at
   `02c15ea5f3871626fc4b5ae2023330294950908c`. Mock tests passed 12/12.
+- State `ncpstate_92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446`, content hash
+  `sha256:92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446`, file
+  `sha256:a842b8fbd7ecc580b7ba31baac5f069addce3fe631dcb7e3e16316970cf6165c`, 804 bytes is the sole addition at
+  `2f3eecf12b87463e155f46857ba93c010bf00a6a`.
 
-Qualification performed observation/mutation 0 and created no state, approval, attempt or terminal. V13 discards
-workload stdout/stderr and validates one canonical envelope; this is not runtime readiness. The next gate is its exact
-state statement, which remains self-attested non-proof and grants no execution.
+The state is self-attested non-proof: observation 0, execution authority false and reusable false. Approval, attempt and
+terminal remain absent. The next gate is its exact approval-binding statement; this is not runtime readiness.
 
 ## V12 preflight lifecycle — consumed ERROR
 

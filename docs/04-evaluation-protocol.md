@@ -103,8 +103,8 @@ Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed 
 persistence/qualification; raw results remain unofficial. V5/v7 are consumed. V10 state is self-attested non-proof;
 v11 binds it to exact v9 runtime and one approval pair. V12 consumed one exact-approved lifecycle: its Docker gate
 passed, but child stdout failed typed parsing, so terminal `ERROR(child_output_invalid)` establishes no readiness.
-V13's framed boundary is source-qualified/mock-only; without state, approval, attempt and terminal it also establishes
-no readiness and changes no A/C treatment.
+V13's framed boundary is source-qualified/mock-only. Its recorded self-attested state has observation 0 and no
+execution authority; without approval, attempt and terminal it establishes no readiness and changes no A/C treatment.
 
 ## 7. Run-completion gate
 

@@ -102,14 +102,11 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
-V5 is an immutable checker-error terminal. V6 fixes sanitized diagnostic stages. V7 bound v6, D-137 and the isolated
-lifecycle, then consumed `ERROR(sdk_diagnostic_error)`: Docker/key checks completed but the child emitted the fixed
-`diagnostic_runtime_import_error` before SDK diagnosis. Its exact approval and ledger cannot be reused.
-V8 localizes missing `SYSTEMROOT`; v9 composes child-only pass-through with Docker-first observation. V10/V11 bind
-nonreusable state/approval. V12 consumed them as `ERROR(child_checker_error/child_output_invalid)` after Docker passed;
-raw stdout was not retained, so no narrower cause or key/SDK result exists. V13 binds that terminal, suppresses workload
-stdout/stderr and returns one typed, value-free canonical envelope. Its exact state→approval→run chain is implemented
-but qualification creates none of those artifacts and authorizes no observation.
+V5/V7/V12 are immutable error terminals; their approval and ledgers cannot be reused. V8/V9 correct v7's missing
+`SYSTEMROOT` boundary, but v12 ended `child_output_invalid` after Docker passed and retained no raw stdout, key/SDK
+result or narrower cause. V13 suppresses workload streams and returns one typed, value-free envelope. Qualification
+created no runtime artifact; a later exact statement created one nonreusable self-attested state with observation 0.
+Approval/run remain absent and the state authorizes no observation.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

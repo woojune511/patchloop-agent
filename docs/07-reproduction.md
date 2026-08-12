@@ -44,19 +44,18 @@ uv run --offline --frozen pytest -q tests/test_versioned_no_call_preflight_contr
 uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contract.py --validate
 ```
 
-Validation reads committed Git blobs and must not change artifact mtime. Materialization/qualification were
-one-time source steps; the CLI has no attempt or observation mode and grants no provisioning or live authority.
+Validation reads committed blobs without changing artifact mtime. Source creation was one-time and grants no live authority.
 
 V12 remains consumed. Validate the current framed v13 source without external observation:
 
 ```powershell
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-contract
 uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --validate-source
-uv run --offline --frozen pytest -q tests/test_sanitized_sdk_bootstrap_framed_successor.py
+uv run --offline --frozen python scripts/build_sanitized_sdk_bootstrap_framed_successor.py --show-approval-template
 ```
 
-These modes create no state or attempt and do not read `.env`/Docker/SDK. Predecessor creation/execution commands remain
-in Git history and must not be invoked.
+These modes create no artifact and read no `.env`/Docker/SDK. The sealed pre-state suite passed 12/12; its absence
+assertion is now historical. Do not invoke predecessor creation/execution commands from Git history.
 
 ## Audit the sealed D-142 source
 
@@ -83,16 +82,14 @@ $docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-'
 git diff --check
 ```
 
-Large repository-wide suites may include historical tests that intentionally assert a superseded absent state.
-Prefer the current focused bundles and explain any historical-state mismatch instead of rewriting sealed
-evidence.
+Repository-wide suites may retain historical absent-state assertions; do not rewrite sealed evidence to satisfy them.
 
 ## Live execution
 
-There is no supported live A/C or D-142 activation command. The current sequence is offline only:
+There is no supported live A/C or D-142 activation command:
 
-1. Validate evaluator-v2, consumed predecessors and framed v13 read-only.
-2. Stop. Only an exact v13 state statement may create self-attested state; it authorizes no observation.
+1. Validate evaluator-v2, consumed predecessors, framed v13 and its committed state read-only.
+2. Stop. Only the exact v13 approval statement may create a binding; it starts no attempt.
 
 V10 `--record-state` and v11 `--record-approval` are consumed one-use creation modes. Use validation modes only;
-v12 `--run-exact-attempt` is consumed. V13 approval and run require later distinct exact statements.
+v12 `--run-exact-attempt` and v13 `--record-state` are consumed. V13 approval and run require distinct exact statements.

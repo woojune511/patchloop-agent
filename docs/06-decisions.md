@@ -27,16 +27,10 @@ work.
   opaque projections, not direct private requirement/check IDs. Four controls map to runtime trace,
   requested-Docker-policy trace or artifact scan; integrity is a prerequisite. Free-form `prohibited_behaviors`
   is not promoted to a machine safety rule, and existing task YAML remains unchanged in this slice.
-- V1/v2 are immutable; exact-approved v3/v5/v7 attempts are consumed and cannot retry. Their outcomes were
-  Docker-not-ready, checker error and diagnostic-runtime import error respectively; exact activity is indexed in
-  `docs/09-evidence.md`. V8 maps v7 to omitted `SYSTEMROOT`/Windows 10106 without granting execution.
-- V9 applies child-only pass-through and retains Docker gating. V10 exact source
-  `3190923f97883e7df4bb53b9b8231c3598239fb1` binds v9 to a fixed post-qualification user statement. Its source
-  qualification created no observation. The later exact statement produced one nonreusable self-attested state.
-- V11 created one nonreusable approval pair. V12 consumed it as
-  `ERROR(child_checker_error/child_output_invalid)`: Docker passed, child stdout failed typed parsing and retry closed.
-  V13 corrects the protocol with discarded workload streams and a canonical typed envelope. Its offline qualification
-  grants no execution; state, approval and immediate run remain three distinct gates.
+- V1-v12 are immutable predecessors; consumed attempts cannot retry. Exact activity is indexed in
+  `docs/09-evidence.md`. V12 ended `child_output_invalid` after Docker passed.
+- V13 discards workload streams and uses one typed envelope. Qualification granted no execution; a later exact
+  statement recorded non-proof state with observation 0. Approval and immediate run remain distinct, unopened gates.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
