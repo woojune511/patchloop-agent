@@ -1,0 +1,11 @@
+{
+  "schema_version": "sanitized-sdk-bootstrap-framed-attempt-v13",
+  "attempt_id": "ncpattempt_ecaa6b98c8a205719f1fcfa6208c51f304944aefb80241ed664abc063c33c9e2",
+  "run_authorization_id": "ncprunauthorization_884013b3e5225af82d92f1ad55c9ffeb6767ac96164d61e2df7f15ba2d05f84c",
+  "run_authorization_content_hash": "sha256:884013b3e5225af82d92f1ad55c9ffeb6767ac96164d61e2df7f15ba2d05f84c",
+  "ledger_snapshot_hash": "sha256:ae7eac818601fa2b7cd1a79587da9308e678db8cf38f94ac3c5ac5ee894b6786",
+  "attempt_number": 1,
+  "retry_or_resume_allowed": false,
+  "created_at": "2026-08-12T13:14:47.319100Z",
+  "content_hash": "sha256:ecaa6b98c8a205719f1fcfa6208c51f304944aefb80241ed664abc063c33c9e2"
+}

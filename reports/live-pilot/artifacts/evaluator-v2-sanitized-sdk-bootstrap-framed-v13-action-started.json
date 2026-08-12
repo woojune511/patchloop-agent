@@ -1,0 +1,9 @@
+{
+  "schema_version": "sanitized-sdk-bootstrap-framed-action-started-v13",
+  "marker_id": "ncpstarted_ac0d13614ed8e088755a4cc6eeaccdd4a27c1fce72a0b91c8b454d88296f64c6",
+  "attempt_id": "ncpattempt_ecaa6b98c8a205719f1fcfa6208c51f304944aefb80241ed664abc063c33c9e2",
+  "attempt_content_hash": "sha256:ecaa6b98c8a205719f1fcfa6208c51f304944aefb80241ed664abc063c33c9e2",
+  "sequence": 1,
+  "recorded_at": "2026-08-12T13:14:47.329117Z",
+  "content_hash": "sha256:ac0d13614ed8e088755a4cc6eeaccdd4a27c1fce72a0b91c8b454d88296f64c6"
+}
