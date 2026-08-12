@@ -52,9 +52,11 @@
 - Corrected-parent v9 source `8678ce9e4fbae426971a90a2f47ad28b5a431885` remains source-only. State-binding
   v10 source `3190923f97883e7df4bb53b9b8231c3598239fb1`, contract
   `ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539` and qualification
-  `sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e` are qualified offline. V10 accepts
-  only its fixed post-qualification statement citing both exact identities. No attestation/state/approval/attempt
-  or external observation exists; prior statements and generic continuation grant no authority.
+  `sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e` are qualified offline. Exact statement
+  binding created attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3`
+  and nonreusable state `ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
+  `5ab4226bfc5017563b673375f9057fde39b1c38c`. They are self-attested non-proof with observation/mutation 0 and
+  execution false. No approval/attempt exists; next build/source-qualify a fresh approval successor.
 
 ## Required reading
 

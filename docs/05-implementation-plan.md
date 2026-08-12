@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v9 preserved; v10 state-binding source qualified, attestation/state absent.
+Status: v1-v9 preserved; v10 source and one self-attested nonreusable state sealed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,15 +47,15 @@ reject-dispatch and D-137 read-only Docker. State remains self-attested non-proo
 V4 binds the manual-start report without proving readiness. V5 is immutable. V6 fixes value-free diagnostic
 stages/codes; v7 ran its parent once and stopped at the child's fixed diagnostic-runtime import boundary.
 V8 localizes missing `SYSTEMROOT`/Windows 10106. V9 applies the correction child-only. V10 binds exact v9
-source/qualification and a fixed future user statement without observation; source tests are not a runtime result.
+source/qualification and one exact user statement without observation; the resulting state is not runtime evidence.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7 attempts consumed; v10 awaits one fresh exact attestation, with no retry authority.
+Status: v3/v5/v7 attempts consumed; v10 state bound, approval successor absent, with no retry authority.
 
-V7 recorded Docker READY, exact-key membership and a consumed import error. V10 has no state/approval artifact.
-Next bind only its fixed post-qualification statement into a nonreusable state. Then build a fresh approval
-successor; only a later separate exact approval may authorize one attempt.
+V7 recorded Docker READY, exact-key membership and a consumed import error. V10 state is self-attested non-proof
+with observation/mutation 0. Next build and source-qualify a fresh approval successor bound to its exact ID/hash;
+only a later separate exact approval may authorize one attempt.
 
 ## Work item 5 — execution candidate and cost gate
 

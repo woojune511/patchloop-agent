@@ -21,14 +21,17 @@ declared/nonempty, one child launch, then `ERROR(sdk_diagnostic_error)` with chi
 V8 localizes the import failure to missing `SYSTEMROOT`/Windows 10106. V9 source-qualifies the corrected parent.
 V10 source `3190923f97883e7df4bb53b9b8231c3598239fb1` binds that runtime to contract
 `ncpcontract_5365b5b57ad61a691232efb73c930656338e5137ba10fa80d4788c6b2c782539` and qualification
-`sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e`. It has no user attestation, state,
-approval, attempt, external observation or mutation.
+`sha256:e9e8d7425b300ad109ba38ceeda08e8e897cf596c03d381771351792eb761a6e`. Exact user statement binding created
+attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3` and state
+`ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
+`5ab4226bfc5017563b673375f9057fde39b1c38c`. They are self-attested non-proof: Docker/key readiness is unverified,
+external observation/mutation is 0 and execution authority is false.
 
 ## Current roadmap
 
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
-3. **Offline preflight contracts.** V1-v9 are predecessors; v10 state-binding source is qualified, state absent.
+3. **Offline preflight contracts.** V1-v9 are predecessors; v10 source and one nonreusable state are sealed.
 4. **Separately approved preflight attempt.** V3/v5/v7 are consumed and cannot retry.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
@@ -44,15 +47,14 @@ D-129-D-141 are immutable consumed predecessors. Deferred D-121 candidate
 
 ## Closed authority
 
-V5/v7 approvals, attempts and terminals are consumed. V10 source qualification grants no Docker, SDK/`.env`,
-provider, evaluator/agent, memory, candidate, cost or A/C authority.
+V5/v7 approvals, attempts and terminals are consumed. V10 state grants no Docker, SDK/`.env`, provider,
+evaluator/agent, memory, candidate, cost or A/C authority.
 
 ## Next gate
 
-The next gate is a **fresh exact v10 user attestation and state materialization**, not observation or execution.
-Only the fixed post-qualification statement from `--show-attestation-template`, citing the exact v10 contract and
-qualification above, may create one append-only `ncpattestation_*`/`ncpstate_*` pair. Prior statements and generic
-continuation are insufficient. That state remains self-attested non-proof; a new approval successor and a separate
-exact user approval are required before one attempt. No v7 artifact is reusable.
+The next gate is a **fresh exact v10 approval successor**, not approval or execution. Its new offline source must bind
+the exact v10 contract, qualification and state above, expose no observation/attempt path during qualification and
+forbid state reuse. Only after that source is qualified may a separate message cite its exact identities to create
+one approval for one no-call attempt. Generic continuation and every v7 artifact are insufficient.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.

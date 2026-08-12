@@ -100,8 +100,8 @@ cannot qualify changed evaluator bytes. Evaluator v2 therefore requires new sour
 the A-null/C-exact-three treatment itself remains unchanged.
 
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
-persistence/qualification; raw results remain unofficial. V5/v7 are consumed failures. V10 only source-qualifies
-an exact, post-qualification state binder over v9; no state, observation, approval, attempt or readiness claim exists.
+persistence/qualification; raw results remain unofficial. V5/v7 are consumed failures. V10 binds one self-attested,
+unverified current-state report over v9; observation, approval, attempt and readiness claims remain absent.
 
 ## 7. Run-completion gate
 

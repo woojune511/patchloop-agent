@@ -13,9 +13,12 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
   `sha256:269be5085e26b07d551768dc51c9be75c364d29427f601ac928f2c297ed55a25`, 5,381 bytes is commit
   `12e0927afdb651a07cc8e25abc0362d373ac48d0`.
 
-Qualification created no attestation/state/approval/attempt and observed no environment, Docker, `.env`, SDK or
-network. V9 source/qualification remain `8678ce9e4fbae426971a90a2f47ad28b5a431885`/
-`sha256:0eecd10e4628ea6bc83fe67e45a91ef96f1582f50095b495bbad0caa12d54687`.
+Qualification observed no environment, Docker, `.env`, SDK or network. Exact statement binding later created
+attestation `ncpattestation_0467a7aa45ba81596227189aca97ecdd5997a0f3719fed9c3bbcdf781fa526e3` and state
+`ncpstate_cf5f91ae06c6c49dc988ec217a535301b5162208ed227186cb76b15be572abe5` at
+`5ab4226bfc5017563b673375f9057fde39b1c38c`. File hashes are `sha256:2e95c2c73d7594259a4150325ea6e6ac963b1c1c5d7e4b972f972451c1d323fc` and
+`sha256:adca442a20b7dbafa834b54888568c1e9ddfbe16f9c783458ad2917caa60b4e2`.
+The state is self-attested non-proof, nonreusable, observation/mutation 0 and execution false; no approval/attempt exists.
 
 ## V7 consumed error — compact index
 
