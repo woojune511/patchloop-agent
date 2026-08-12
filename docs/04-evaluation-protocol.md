@@ -102,9 +102,9 @@ the A-null/C-exact-three treatment itself remains unchanged.
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
 persistence/qualification; raw results remain unofficial. V12/V14/V16/V18 consumed checker-error lifecycles and
 V13 stopped Docker-not-ready; none can retry or establish readiness. V18's supervisor returned no envelope after
-Docker READY, leaving incomplete/unknown accounting. V19 binds that exact terminal and changes only the outer result
-transport to null stdio plus a bounded anonymous pipe. Its synthetic transport tests and source qualification grant
-no activation, external observation or execution authority.
+Docker READY, leaving incomplete/unknown accounting. V19 changes only the outer result transport. V20 wraps its
+exact qualification with separate state/approval/run gates; source qualification grants no state, external
+observation or execution authority.
 
 ## 7. Run-completion gate
 

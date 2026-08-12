@@ -30,8 +30,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-110 froze three entries; D-112/D-115 left selective scoring unready. No memory-effect claim exists.
 - D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
-- V3-v18 predecessor artifacts are immutable. V18 consumed a no-envelope supervisor ERROR; V19 corrects only the outer result
-  transport and is source-qualified/activation-closed, not readiness or execution evidence.
+- V3-v18 are immutable. V19 corrects only the outer result transport; its v20 activation wrapper is
+  source-qualified/state-closed, not readiness or execution evidence.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

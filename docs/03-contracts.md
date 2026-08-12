@@ -103,9 +103,9 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
 V5/V7/V12/V13/V14/V16/V18 are immutable consumed terminals. V17 isolates one null-stdio diagnostic worker behind
-a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after Docker READY. V19 binds that exact
-terminal without claiming a cause and replaces only parent/supervisor stdout framing with null stdio plus a bounded
-anonymous result pipe. It is source-qualified only, with no activation or execution authority.
+a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after Docker READY. V19 changes only the
+outer result transport. V20 binds its exact source qualification and separates state, approval and immediate-run
+authority; it is source-qualified only, with no state, attempt or execution authority.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

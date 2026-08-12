@@ -38,9 +38,9 @@ Historical milestone-by-milestone limitations are archived at
   observations and accounting limits remain in `docs/09-evidence.md`. Environment changes reopen none.
 - V12/V14/V16/V18 consumed checker-error attempts after Docker passed; V13 stopped Docker-not-ready. No failed
   lifecycle can retry or establish SDK readiness or a narrower cause. V18's supervisor returned no envelope, so its
-  accounting remains incomplete/unknown. V19 binds that exact terminal without causal inference and changes only the
-  outer parent/supervisor result channel to null stdio plus a bounded anonymous pipe. Synthetic subprocess tests do
-  not prove worker/SDK behavior; v19 is source-qualified only and has no activation, state, approval or attempt.
+  accounting remains incomplete/unknown. V19 changes only the outer result channel. V20 binds that qualified source
+  behind separate state/approval/run gates. Synthetic subprocess tests do not prove worker/SDK behavior; v20 is
+  source-qualified only and has no state, approval, attempt or observation.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

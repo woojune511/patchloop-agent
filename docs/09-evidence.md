@@ -3,15 +3,15 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V19 dual-pipe successor — source-qualified only
+## V20 dual-pipe activation — source-qualified only
 
-Source/tree `91300324d0fd9ac83356204f03325cded4137f12`/`a31a395a29bf749631c877bf17bb85a5f817c79a`
-is the exact five-addition child of `e52deab4`. Contract
-`ncpcontract_85b051f1bc7a3d03fba136e3f85f50bd0fd3eca9f989e5252bddfeb99ced5fcf` binds the v18 terminal and
-changes only parent/supervisor result transport to null stdio plus a bounded anonymous pipe. Sole qualification
-commit `e54b399` records `sha256:1dc8eb6e484e56eb7bdbf8545fe5d40825a92ef864f46b94a5cf00bbdcf20c14`;
-file `sha256:859219f58b3cf14c213fb6101b102166de1bebcb278a25155c4467ecbfa34af9`, 5,342 bytes. External observation,
-mutation, state/approval/attempt/terminal and execution authority are 0.
+Source/tree `304da8e9e4fe0d730c184944006e4c76970c12f0`/`0f43651ed75142c48b29b42664dbf90b22a37291`
+is the exact four-addition child of `05e2b19`. Contract
+`ncpcontract_2c5d22d26c1ae017e8b78d0e99fe99d33b5916b8282a1c186f25fbd818f68102` wraps exact v19 qualification
+`sha256:1dc8eb6e484e56eb7bdbf8545fe5d40825a92ef864f46b94a5cf00bbdcf20c14`. Sole qualification commit
+`23e8a04` records `sha256:6e6a58dcaa1f034ad6146e955bdcd9a289b4031ec261ed22d71fc5264f8fe90b`; file
+`sha256:980ab39f6e8a661426005c659c3a18cfc8bfe62ad3fd279981c1f52a32ce9c55`, 3,757 bytes. State, approval,
+attempt, terminal, external observation/mutation and execution authority are 0; next gate is exact v20 state.
 
 ## V18 supervised-frame activation — consumed ERROR
 

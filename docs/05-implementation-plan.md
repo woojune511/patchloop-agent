@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v18 are immutable; v19 is source-qualified/activation-closed.
+Status: v1-v18 are immutable; v20 is source-qualified/state-closed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,12 +47,12 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14/v16/v18 consumed; v19 has no activation or attempt.
+Status: v3/v5/v7/v12/v13/v14/v16/v18 consumed; v20 has no state, approval or attempt.
 
 V18 passed Docker's 8 reads, then consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting.
-V19 binds that exact terminal and changes only the parent/supervisor result transport to null stdio plus a bounded
-anonymous pipe. Synthetic transport/failure tests pass and source is qualified, but a new activation wrapper, state
-and exact approval are required before any observation.
+V19 changes only the parent/supervisor result transport. V20 binds that exact source and implements separate
+state/approval/immediate-run gates. Its source is qualified, but exact state and later approval are required before
+any observation.
 
 ## Work item 5 — execution candidate and cost gate
 

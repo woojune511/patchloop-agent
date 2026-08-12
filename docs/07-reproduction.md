@@ -40,16 +40,16 @@ uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contr
 
 Validation reads committed blobs without changing mtime and grants no live authority.
 
-V13-v18 remain consumed. V19 validation binds the committed v18 terminal without external observation:
+V13-v18 remain consumed. V20 validation binds the exact v19 source/qualification without external observation:
 
 ```powershell
-uv run --offline --frozen python scripts/build_dual_pipe_preflight_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_dual_pipe_preflight_successor.py --validate-source
-$v19Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-v19-' + [guid]::NewGuid())
-uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v19Basetemp tests/test_dual_pipe_preflight_successor.py
+uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-contract
+uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-source
+$v20Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-v20-' + [guid]::NewGuid())
+uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v20Basetemp tests/test_dual_pipe_activation_successor.py
 ```
 
-These validation modes create no artifact or external observation. V18 is consumed; v19 is activation-closed.
+These validation modes create no artifact or external observation. V18 is consumed; v20 is state-closed.
 
 ## Audit the sealed D-142 source
 
@@ -72,5 +72,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142, v18 retry or v19 activation command. Validate read-only, then stop: no
+There is no supported live A/C, D-142, v18 retry or v20 activation command. Validate read-only, then stop: no
 attempt, candidate or cost gate is open.
