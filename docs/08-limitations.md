@@ -34,20 +34,15 @@ Historical milestone-by-milestone limitations are archived at
 - Free-form private `prohibited_behaviors` are audit context, not typed command/network/secret/sandbox evidence.
 - V2 has authority-gated runner, receipt, persistence and qualification, but no official/live result; raw v2 remains
   `official=false`.
-- Preflight v1/v2 remain predecessors. V3's self-attested state led to one consumed Docker-not-ready BLOCKED attempt.
-  Eight read-only Docker calls ran; `.env`/SDK/network did not. Therefore credential presence and SDK readiness remain
-  unobserved, and the terminal cannot be retried after a later environment change.
-- V4 is self-attested non-proof. Consumed v5 reached Docker/key checks but its isolated SDK checker returned only a
-  sanitized error; incomplete accounting means neither exact SDK cause nor readiness is established. It cannot retry.
-- V7 consumed one import-error attempt; its fixed code proves neither SDK readiness nor the hidden exception. V8
-  reproduces missing `SYSTEMROOT`/10106, but its staged imports are local source evidence only.
+- V3/v5/v7/v12/v13/v14 attempts are consumed and prove neither current readiness nor hidden failure cause; exact
+  observations and accounting limits remain in `docs/09-evidence.md`. Environment changes reopen none.
 - V9 composes the corrected child and Docker gate with injected observers. V12 consumed one attempt after Docker passed,
   but child stdout failed typed parsing. V13 then stopped Docker-not-ready before `.env`/SDK. V14 reached Docker READY
   and launched one child, but received no framed envelope. Raw child output was not persisted; whole-terminal accounting
   is incomplete and unknown post-marker activity is true. Thus v14 proves neither SDK readiness, confidentiality nor a
   narrower cause, and it cannot retry. V15's dedicated descriptor survives synthetic noise/fd closure in an actual
   Windows subprocess, but the SDK/`.env` workload was not rerun. V16 adds only an offline activation wrapper; no
-  approval, attempt, observation or runtime result exists. Its state is self-attested non-proof only.
+  attempt, observation or runtime result exists. Its state is non-proof and future approval starts nothing.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

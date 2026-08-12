@@ -31,7 +31,7 @@ work.
   producing `ERROR(child_checker_error/framed_output_invalid)`. Whole-terminal accounting is incomplete, unknown
   activity is true and retry/resume is closed. V15 binds the unknown cause and corrects only the result channel with a
   pre-work duplicate descriptor. V16 binds that source and adds the lifecycle wrapper offline. Its later exact state is
-  self-attested non-proof only; no approval, attempt or execution authority exists.
+  self-attested non-proof; its exact future approval starts no attempt. No execution has occurred.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

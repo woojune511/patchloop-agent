@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V16 dedicated-frame activation — source-qualified only
+## V16 dedicated-frame activation — state/approval bound, no attempt
 
 Source/tree `910573fb7f4ee4ca3779f81c0d7d21eb2f976c63`/`b99883f5771e2bea8f4635c16a308cfcbc61dfc4`
 is the exact four-addition child of `9c6ec8a`; contract
@@ -13,7 +13,10 @@ qualification. Sole-artifact commit `761bd37` records
 `sha256:337ab14568d43a3c8027cdad8418236ba6581abcf19477565aa750225fa9abaa`, 3,835 bytes. State-only commit `0469c8f`
 records `ncpstate_b0a9e3e98b3ae5c4a64e29adf4024d9b97bbbfd0b9074eedb786376cc15e8029`; file
 `sha256:c9df6b5b0fae84ef01690ac2b3746ee8a2106fa58af81f3e95204d38f2f300fb`, 918 bytes. It is self-attested
-non-proof with observation 0/execution false; approval, attempt and terminal are absent.
+non-proof with observation 0/execution false. Approval-only commit `415d9e1` records
+`ncpapproval_22f6a5e7fa855af2ec104f1cb0daebbaa85fe8c5f4c86c0e50e48e85384221c1`; file
+`sha256:30629d9cec38f124d2b96582ef5b6680bcd5955f8e77afc7d34e611e01f51337`, 1,385 bytes. It starts no attempt;
+authorization, attempt, ACTION_STARTED and terminal are absent.
 
 ## V15 dedicated-frame successor — source-qualified only
 

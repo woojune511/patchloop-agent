@@ -47,15 +47,14 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14 consumed; v16 has state only and remains activation-closed.
+Status: v3/v5/v7/v12/v13/v14 consumed; v16 has state/approval but no attempt.
 
-V13 stopped before `.env`/SDK. V14 reached Docker READY with eight read-only calls, launched one child, and ended
-`ERROR(child_checker_error/framed_output_invalid)` because no framed envelope arrived. Network/provider/evaluator/agent,
-Docker mutation and credential-value metadata counts are 0, but whole-terminal accounting is incomplete and unknown
-activity is true. The one-use chain is sealed; do not retry, resume, replace or infer successor authority.
+V13 stopped before `.env`/SDK. V14 reached Docker READY then ended `ERROR(framed_output_invalid)` with incomplete
+accounting and unknown activity; its one-use chain is sealed. Do not retry or infer successor authority.
 V15 duplicates a result descriptor before workload suppression and passes 8/8 offline tests, including an actual
 Windows subprocess with noisy/closed fd 1/2. V16 binds that exact source and implements separate state, approval and
-immediate-run entrypoints. Its exact self-attested state records observation 0/execution false; approval is next.
+immediate-run entrypoints. Its state records observation 0/execution false; exact nonreusable approval starts no
+attempt. An exact immediate-run statement is next.
 
 ## Work item 5 — execution candidate and cost gate
 

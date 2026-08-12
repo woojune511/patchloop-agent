@@ -77,4 +77,4 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 ## Live execution
 
 There is no supported live A/C or D-142 activation command. Validate v13-v16 read-only, then stop: V10-v14 are
-consumed and no preflight/candidate/cost gate is open. V16 state alone authorizes no attempt; exact approval is next.
+consumed and no candidate/cost gate is open. V16 state/approval started no attempt; exact immediate-run authority is next.
