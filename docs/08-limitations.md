@@ -44,7 +44,8 @@ Historical milestone-by-milestone limitations are archived at
   Windows subprocess, but v16's actual child again returned no envelope after Docker READY. Its terminal accounting
   is incomplete/unknown, so it proves neither SDK readiness nor a narrower cause and cannot retry. V17 isolates the
   workload behind a stdlib supervisor/anonymous pipe and passes synthetic close/hard-exit tests only. V18 wraps that
-  exact source with state/approval binding, but no live observation, attempt or SDK-readiness evidence.
+  source but its live supervisor returned no envelope after Docker READY. Incomplete/unknown accounting proves neither
+  worker execution nor SDK readiness; v18 cannot retry.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit

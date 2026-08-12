@@ -3,21 +3,18 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V18 supervised-frame activation — source-qualified only
+## V18 supervised-frame activation — consumed ERROR
 
-V17 source qualification `sha256:7f319c87e0e683756287ef41ca70dd18e2ad8413a6251a61f54f1d6410f3a883`
-remains immutable. V18 source/tree `e4c76af0e101b1f9bc62ab2fde5ebc1c975f6f42`/
-`4efccdd2ccd06e10d78a7b90d037cb69dc5e5f27` is its exact four-addition child; contract
-`ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` preserves the one-supervisor/
-one-worker topology and adds separate lifecycle entrypoints. Sole-artifact commit
-`50a4b28e45d20adfe2e42da6ced8b4fc2da3551d` records qualification
-`sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d`; file
-`sha256:1d06731569666457eef7edac71f0afc21bbd8f25b1fa96a9ab16e5152695fa0b`, 3,850 bytes. State-only commit
-`749e359` records `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`; file
-`sha256:30dbe38a6b2d7fa69a0d45ed026c39d70b7bc4cc69150d6c2c8212a935e00ba1`, 919 bytes. Approval-only commit `99d2099`
-records `ncpapproval_8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094`; file
-`sha256:8777484694239a97e25d066b8fc6177679e7d20f53ca7079f383b845d47a8a9b`, 1,526 bytes. Both are nonreusable,
-observation 0; attempt/terminal are absent and exact immediate-run authority is next.
+Source/tree `e4c76af0e101b1f9bc62ab2fde5ebc1c975f6f42`/`4efccdd2ccd06e10d78a7b90d037cb69dc5e5f27`
+is the exact v17 activation child. Contract `ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c`
+has qualification `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d` at `50a4b28`.
+State `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`/`749e359` and approval
+`ncpapproval_8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094`/`99d2099` are nonreusable.
+Lifecycle `490f1ed` records attempt `ncpattempt_9ee90622a86be952b924ec77c591b9b6f569d5383738ef6ed118810022a79a7b` and terminal
+`ncpterminal_775512b68eac1b8f418c22a4ab30a450bf5ba8150f155f8bcbe4e5938acca516`; terminal file
+`sha256:45f7d14859fd5cafde9ec551c5a8cb16a2b798f726ceffcab304c8321281e83f`, 19,255 bytes. Docker passed 8 stable
+read-only calls; mutation/network/provider/credential metadata are 0. One supervisor child returned no envelope:
+`ERROR(child_checker_error/supervised_output_invalid)`, incomplete/unknown accounting, raw output absent, retry false.
 
 ## V16 dedicated-frame activation — consumed ERROR
 

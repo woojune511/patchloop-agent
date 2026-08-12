@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v17 are immutable; v18 is source/state/approval-bound only.
+Status: v1-v18 are immutable; v18 is consumed ERROR.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,12 +47,12 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14/v16 consumed; v18 approval exists but no attempt is open.
+Status: v3/v5/v7/v12/v13/v14/v16/v18 consumed; no attempt is open.
 
 V16 passed Docker then consumed `ERROR(framed_output_invalid)` with incomplete/unknown accounting. V17 binds it and
 separates a stdlib supervisor from one null-stdio diagnostic worker over an anonymous result pipe; Windows close/hard-
-exit tests fail closed. V18 binds exact v17 source; state and approval have observation 0 and start no attempt.
-Next require the exact immediate-run statement; generic text grants none.
+exit tests fail closed. V18 passed Docker's 8 reads, then its supervisor child returned no envelope and consumed
+`ERROR(supervised_output_invalid)` with incomplete/unknown accounting. Retry is closed; a new successor is required.
 
 ## Work item 5 — execution candidate and cost gate
 

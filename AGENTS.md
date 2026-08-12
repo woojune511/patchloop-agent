@@ -55,12 +55,10 @@
 - V15 is the source predecessor. V16 consumed one exact-approved attempt at `30c254d`: Docker passed 8 reads, one
   child returned no envelope, and terminal `ERROR(child_checker_error/framed_output_invalid)` has incomplete
   accounting, unknown activity true and retry/resume false.
-- V17 is the immutable supervisor/worker source predecessor. Source-qualified v18 `e4c76af`, contract
-  `ncpcontract_3f641a1b99490ee2db17339d7613a1debf79575e45cccecbc2f2128de1d45a5c` and qualification
-  `sha256:6f4825ef41eea63b6cc437ec2d3f06862b21d4a665c81880e82ee42bcf6b345d` add separate lifecycle entrypoints
-  without changing the supervisor/worker pipe. State `ncpstate_dc0ca2031ee6bc274542bd6042f6e6b130e1ae476231c5e4bde1a361b5b26b26`
-  and approval `ncpapproval_8da57cdd99194cdc5d4af4e7c91ef1d31d4f12ea9d9d438ca05587755e57f094` are nonreusable with
-  observation 0. No attempt/terminal exists; exact immediate-run authority is next.
+- V18 `e4c76af` preserves v17's supervisor/worker pipe. Exact state/approval led to one consumed attempt at
+  `490f1ed`: Docker passed 8 reads, one supervisor child returned no envelope, and terminal is
+  `ERROR(child_checker_error/supervised_output_invalid)`. Forbidden counts are 0, accounting incomplete/unknown and
+  retry false; exact IDs remain in `docs/09-evidence.md`.
 
 ## Required reading
 
