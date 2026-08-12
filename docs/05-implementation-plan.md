@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v12 preserved; framed v13 source/qualification and self-attested state are immutable inputs.
+Status: v1-v13 preserved as immutable predecessors.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -47,11 +47,11 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12 consumed; v13 source/state/approval bound; attempt absent.
+Status: v3/v5/v7/v12/v13 consumed; v13 ended `BLOCKED(docker_not_ready)`.
 
 V13 suppresses workload stdout/stderr and validates one canonical envelope; 12/12 mock tests include output noise,
-schema failure, Docker-first suppression and append-only terminal ordering. Next obtain the distinct exact immediate-run
-statement. The approval grants no cost or paid authority.
+schema failure, Docker-first suppression and append-only terminal ordering. Its live Docker-first gate stopped before
+`.env`/SDK. Do not retry; any future attempt needs relevant external-state change and a new versioned authority chain.
 
 ## Work item 5 — execution candidate and cost gate
 

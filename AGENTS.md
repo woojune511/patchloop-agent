@@ -49,10 +49,9 @@
   `docs/09-evidence.md`.
 - Framed successor v13 source `5bcffb29248d6de60eef34f6893c23f17ea70d3c` and qualification
   `sha256:b536ebfab36cd17cf37d8dcb6b5ccd61fc46d048fc06aa573cd85035739b6298` are offline-only.
-  It isolates stdout/stderr and accepts one canonical typed envelope. Exact state
-  `ncpstate_92c515579089ec24f7fee94c5e1dbb2f1a5bf28b9387f311ce5451c1effdc446` is self-attested non-proof with
-  observation 0. Approval `ncpapproval_896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c`
-  is recorded but no attempt exists; the next gate is one distinct exact immediate-run statement.
+  Its exact-approved attempt is consumed `BLOCKED(docker_not_ready)` at `d9fb103b7be464f3ff1aaf73ef31097eb9815239`.
+  Docker CLI read-only count was 8; `.env`/SDK child/network/provider/evaluator/agent and mutations were 0. Accounting
+  is complete and retry/resume is false. A future attempt requires a new versioned successor and fresh exact authority.
 
 ## Required reading
 

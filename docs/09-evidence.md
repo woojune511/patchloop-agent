@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V13 framed successor — approval bound, attempt closed
+## V13 framed successor — consumed BLOCKED
 
 - Source/tree `5bcffb29248d6de60eef34f6893c23f17ea70d3c`/`f75a01141b8cd0e7a6f7bf28c706e0104943eff2`
   is the exact five-addition child of `ff4e00d124a0954903d06f8436c11af2c6bc57b1`; contract
@@ -19,9 +19,20 @@ Canonical machine artifacts under `reports/` are authoritative. Historical narra
   `sha256:896c56023af4c86057fe79624e11cdf8e8af486ac2c8df831259868c77247e5c`, file
   `sha256:0aebd748dc9983da54dabebb22cb9d22aac16e7171bec74a98588ad5bd57bfd6`, 1,317 bytes is the sole addition at
   `cc2a7bddec0ee1bb142f32c71dbc17740df66fb6`.
+- Lifecycle commit `d9fb103b7be464f3ff1aaf73ef31097eb9815239` adds authorization
+  `ncprunauthorization_884013b3e5225af82d92f1ad55c9ffeb6767ac96164d61e2df7f15ba2d05f84c`, attempt
+  `ncpattempt_ecaa6b98c8a205719f1fcfa6208c51f304944aefb80241ed664abc063c33c9e2`, marker
+  `ncpstarted_ac0d13614ed8e088755a4cc6eeaccdd4a27c1fce72a0b91c8b454d88296f64c6` and terminal
+  `ncpterminal_bf8a4b5e32ae56db30084c5d68d8ff77566a96538540c18520a929b3fd9170fe`.
+- Authorization/attempt/marker/terminal files are 993/689/524/13,840 bytes with SHA-256
+  `d781a5233284d1d2d390c2c2812a082908b6b984fdfdb3c6b7f3d0f0ec3c7c1a`,
+  `8b63b8ab11cb2b56a4bf5726e27d4e7b6fe54890b1d34661b2a21263c6f7a5c8`,
+  `12c895f08f926e25b7e98f1383d93ab583f36f08263830561e3616cb43b518fb` and
+  `451045a14adad713c36a1c816b1abb105d1604ca05657425cf8451a251fc4981` respectively.
 
-State remains self-attested non-proof. Approval binds one future attempt but starts none; authorization, attempt,
-ACTION_STARTED and terminal are absent. The next gate is its distinct exact immediate-run statement.
+Terminal is `BLOCKED(docker_not_ready)`: eight read-only Docker calls; mutation, `.env`, SDK child, network,
+provider/evaluator/agent and credential-value recording 0. Accounting is complete, unknown activity false and retry
+closed. V13 establishes no readiness; a future attempt requires a new versioned successor and fresh exact authority.
 
 ## V12 preflight lifecycle — consumed ERROR
 

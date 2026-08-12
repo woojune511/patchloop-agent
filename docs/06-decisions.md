@@ -30,8 +30,8 @@ work.
 - V1-v12 are immutable predecessors; consumed attempts cannot retry. Exact activity is indexed in
   `docs/09-evidence.md`. V12 ended `child_output_invalid` after Docker passed.
 - V13 discards workload streams and uses one typed envelope. Qualification granted no execution; a later exact
-  statement recorded non-proof state with observation 0 and a second bound one future-attempt approval. Immediate run
-  remains a distinct, unopened gate.
+  state/approval chain authorized one attempt. It consumed `BLOCKED(docker_not_ready)` after eight read-only Docker
+  calls and before `.env`/SDK. Retry is closed; a future attempt requires a new versioned successor.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 
