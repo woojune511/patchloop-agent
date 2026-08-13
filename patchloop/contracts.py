@@ -89,12 +89,16 @@ AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID = (
 AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID = (
     "dev-validation-ac-fixed-bundle-readiness-20260814-r7"
 )
+AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID = (
+    "dev-validation-ac-fixed-bundle-readiness-20260814-r8"
+)
 AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS = frozenset(
     {
         AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
     }
 )
 AC_FIXED_BUNDLE_LEGACY_COST_EXPERIMENT_IDS = frozenset(
@@ -896,6 +900,13 @@ class ExperimentRunContext(StrictModel):
     schedule_row_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     repetition: int = Field(ge=1)
 
+    @field_validator("schedule_seed", "schedule_order", "repetition", mode="before")
+    @classmethod
+    def require_exact_schedule_integers(cls, value: Any) -> int:
+        if type(value) is not int:
+            raise ValueError("experiment schedule fields must be JSON integers")
+        return value
+
     @model_validator(mode="after")
     def bind_campaign_cost_context(self) -> ExperimentRunContext:
         if self.experiment_id in {
@@ -1342,6 +1353,21 @@ class Budget(StrictModel):
         exclude_if=lambda value: value is None,
     )
 
+    @field_validator(
+        "max_model_calls",
+        "max_tool_calls",
+        "max_total_tokens",
+        "wall_clock_timeout_seconds",
+        "max_cumulative_input_tokens",
+        "max_cumulative_output_tokens",
+        mode="before",
+    )
+    @classmethod
+    def validate_integer_budget_fields(cls, value: Any) -> Any:
+        if value is not None and type(value) is not int:
+            raise ValueError("budget limits must be JSON integers")
+        return value
+
     @model_validator(mode="after")
     def validate_token_budget_schema(self) -> Budget:
         split_values = (
@@ -1392,6 +1418,27 @@ class ModelConfig(StrictModel):
             raise ValueError("transport_max_retries must be the JSON integer 0")
         return value
 
+    @field_validator("max_output_tokens", mode="before")
+    @classmethod
+    def validate_max_output_tokens_type(cls, value: Any) -> Any:
+        if type(value) is not int:
+            raise ValueError("max_output_tokens must be a JSON integer")
+        return value
+
+    @field_validator(
+        "temperature",
+        "input_price_per_million_usd",
+        "cached_input_price_per_million_usd",
+        "cache_write_input_price_per_million_usd",
+        "output_price_per_million_usd",
+        mode="before",
+    )
+    @classmethod
+    def validate_float_model_fields(cls, value: Any) -> Any:
+        if value is not None and type(value) is not float:
+            raise ValueError("model temperature and prices must be JSON numbers with decimals")
+        return value
+
     @model_validator(mode="after")
     def validate_replay_identity(self) -> ModelConfig:
         if self.provider == "replay":
@@ -1412,6 +1459,13 @@ class FaultSpec(StrictModel):
     ] = "none"
     trigger_after: int | None = None
 
+    @field_validator("trigger_after", mode="before")
+    @classmethod
+    def require_exact_trigger_integer(cls, value: Any) -> Any:
+        if value is not None and type(value) is not int:
+            raise ValueError("fault trigger_after must be a JSON integer")
+        return value
+
     @model_validator(mode="after")
     def validate_controlled_rejection_trigger(self) -> FaultSpec:
         if self.type == "controlled-reject-first-prepared-patch" and self.trigger_after != 1:
@@ -1424,6 +1478,13 @@ class MemoryConfig(StrictModel):
     index_version: str | None = None
     index_hash: str | None = None
     max_context_tokens: int = 2000
+
+    @field_validator("max_context_tokens", mode="before")
+    @classmethod
+    def require_exact_context_integer(cls, value: Any) -> int:
+        if type(value) is not int:
+            raise ValueError("memory max_context_tokens must be a JSON integer")
+        return value
 
 
 class RunManifest(StrictModel):
@@ -1460,6 +1521,20 @@ class RunManifest(StrictModel):
     memory: MemoryConfig = Field(default_factory=MemoryConfig)
     experiment: ExperimentRunContext | None = None
     created_at: datetime
+
+    @field_validator("task_version", mode="before")
+    @classmethod
+    def require_exact_task_version(cls, value: Any) -> int:
+        if type(value) is not int:
+            raise ValueError("manifest task_version must be a JSON integer")
+        return value
+
+    @field_validator("created_at", mode="before")
+    @classmethod
+    def reject_numeric_manifest_timestamp(cls, value: Any) -> Any:
+        if not isinstance(value, (str, datetime)) or isinstance(value, bool):
+            raise ValueError("manifest created_at must be an RFC3339 string or datetime")
+        return value
 
     @model_validator(mode="after")
     def validate_evaluator_contract_binding(self) -> RunManifest:
@@ -2472,6 +2547,24 @@ class Usage(StrictModel):
     input_token_count_calls: int = Field(default=0, ge=0)
     tool_calls: int = Field(default=0, ge=0)
     wall_clock_ms: int = Field(default=0, ge=0)
+
+    @field_validator(
+        "input_tokens",
+        "cached_input_tokens",
+        "cache_write_input_tokens",
+        "output_tokens",
+        "reasoning_output_tokens",
+        "model_calls",
+        "input_token_count_calls",
+        "tool_calls",
+        "wall_clock_ms",
+        mode="before",
+    )
+    @classmethod
+    def require_exact_integer_counters(cls, value: Any) -> int:
+        if type(value) is not int:
+            raise ValueError("usage counters must be JSON integers")
+        return value
 
     @model_validator(mode="after")
     def validate_input_token_breakdown(self) -> Usage:

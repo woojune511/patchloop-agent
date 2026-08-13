@@ -1029,6 +1029,7 @@ def _execution_plan_matches(
         or not isinstance(schedule, list)
         or not isinstance(schedule_hash, str)
         or schedule_hash != sha256_text(canonical_json(schedule))
+        or type(plan.get("expected_runs")) is not int
         or plan.get("expected_runs") != len(schedule)
         or not isinstance(tasks, list)
     ):
@@ -1166,6 +1167,7 @@ def _execution_plan_matches(
             completion_plan_matches = bool(
                 canonical_json(schedule) == canonical_json(expected_schedule)
                 and schedule_hash == expected_schedule_hash
+                and type(plan.get("expected_runs")) is int
                 and plan.get("expected_runs") == len(expected_schedule)
             )
         expected_execution_hash = _execution_hash(
@@ -1291,8 +1293,7 @@ def _execution_plan_matches(
             and expected_runtime_contract.get("budget")
             == (
                 _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
-                if manifest.experiment.experiment_id
-                in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
             ).model_dump(mode="json")
             and expected_runtime_contract.get("tool_schema_version") == "v2"
@@ -1303,8 +1304,7 @@ def _execution_plan_matches(
             and expected_runtime_contract.get("call_guard_policy")
             == (
                 _AC_FIXED_BUNDLE_SPLIT_CALL_GUARD_POLICY
-                if manifest.experiment.experiment_id
-                in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else _WORKFLOW_COMPLETION_CALL_GUARD_POLICY
             )
         )
@@ -1929,8 +1929,7 @@ def _generic_baseline_runtime_contract_evidence(
         )
 
         split_budget_campaign = (
-            manifest.experiment.experiment_id
-            in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+            manifest.experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         )
         expected.update(
             {
@@ -1940,8 +1939,7 @@ def _generic_baseline_runtime_contract_evidence(
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
                     {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
-                    if manifest.experiment.experiment_id
-                    in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
+                    if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS
                     else {}
                 ),
                 "schedule_seed": manifest.experiment.schedule_seed,
@@ -7394,10 +7392,8 @@ def _cumulative_split_generation_block_payload_valid(
     }
     if (
         payload.get("schema_version") != _CUMULATIVE_SPLIT_GENERATION_BLOCK_SCHEMA
-        or payload.get("token_budget_schema_version")
-        != _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA
-        or budget.token_budget_schema_version
-        != _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA
+        or payload.get("token_budget_schema_version") != _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA
+        or budget.token_budget_schema_version != _CUMULATIVE_SPLIT_TOKEN_BUDGET_SCHEMA
         or input_limit is None
         or output_limit is None
         or blocked_event.actor != "budget-guard"
@@ -7431,8 +7427,7 @@ def _cumulative_split_generation_block_payload_valid(
             ("output_tokens", output_used + requested_output > output_limit),
             (
                 "total_tokens",
-                total_used + requested_input + requested_output
-                > budget.max_total_tokens,
+                total_used + requested_input + requested_output > budget.max_total_tokens,
             ),
         )
         if exceeded
@@ -7452,8 +7447,7 @@ def _cumulative_split_generation_block_payload_valid(
         and payload.get("max_total_tokens") == budget.max_total_tokens
         and payload.get("remaining_input_tokens") == input_limit - input_used
         and payload.get("remaining_output_tokens") == output_limit - output_used
-        and payload.get("remaining_total_tokens")
-        == budget.max_total_tokens - total_used
+        and payload.get("remaining_total_tokens") == budget.max_total_tokens - total_used
         and payload.get("exceeded_dimensions") == exceeded_dimensions
         and payload.get("binding_dimension") == exceeded_dimensions[0]
     )
@@ -9992,6 +9986,82 @@ def _self_validation_lifecycle_evidence(
     }
 
 
+def _tool_admission_call_budget_binding_valid(
+    payload: dict[str, Any],
+    *,
+    budget: Budget,
+    bounded: bool,
+) -> bool:
+    """Validate the producer's call-counter projection on an admission block."""
+
+    error_details = payload.get("error_details")
+    tail_policy = error_details.get("tail_policy") if isinstance(error_details, dict) else None
+    remaining_budget = (
+        tail_policy.get("remaining_budget") if isinstance(tail_policy, dict) else None
+    )
+    if payload.get("policy_version") == "turn-mutation-barrier-v1":
+        error_details = payload.get("error_details")
+        return bool(
+            payload.get("schema_version") == "tool-admission-blocked-v3"
+            and payload.get("reason_codes") == ["prior_apply_patch_same_turn"]
+            and isinstance(error_details, dict)
+            and error_details.get("schema_version") == "tool-admission-blocked-v3"
+            and error_details.get("policy_version") == "turn-mutation-barrier-v1"
+            and error_details.get("reason_codes") == ["prior_apply_patch_same_turn"]
+            and type(payload.get("source_call_index")) is int
+            and type(payload.get("blocked_call_index")) is int
+            and payload.get("blocked_call_index") > payload.get("source_call_index")
+        )
+    if bounded:
+        model_used = payload.get("model_calls_used")
+        tool_used = payload.get("tool_calls_used")
+        return bool(
+            isinstance(error_details, dict)
+            and payload.get("schema_version") == "tool-admission-blocked-v2"
+            and payload.get("policy_version") == "investigation-policy-v2"
+            and error_details.get("schema_version") == "tool-admission-blocked-v2"
+            and error_details.get("policy_version") == "investigation-policy-v2"
+            and budget.max_model_calls is not None
+            and budget.max_tool_calls is not None
+            and payload.get("max_model_calls") == budget.max_model_calls
+            and payload.get("max_tool_calls") == budget.max_tool_calls
+            and type(model_used) is int
+            and type(tool_used) is int
+            and 0 <= model_used <= budget.max_model_calls
+            and 0 <= tool_used <= budget.max_tool_calls
+            and isinstance(remaining_budget, dict)
+            and tail_policy.get("schema_version") == "investigation-tail-policy-v2"
+            and tail_policy.get("policy_version") == "investigation-policy-v2"
+            and tail_policy.get("projection_stage") == "post_generation"
+            and tail_policy.get("block_reasons") == payload.get("reason_codes")
+            and error_details.get("reason_codes") == payload.get("reason_codes")
+            and type(remaining_budget.get("model_calls")) is int
+            and type(remaining_budget.get("model_calls_after_next_generation")) is int
+            and type(remaining_budget.get("tool_calls")) is int
+            and error_details.get("remaining_model_calls") == remaining_budget.get("model_calls")
+            and error_details.get("remaining_tool_calls") == remaining_budget.get("tool_calls")
+            and error_details.get("remaining_model_calls") == budget.max_model_calls - model_used
+            and error_details.get("remaining_tool_calls") == budget.max_tool_calls - tool_used
+            and remaining_budget.get("model_calls_after_next_generation")
+            == remaining_budget.get("model_calls")
+        )
+    return bool(
+        payload.get("max_model_calls") is None
+        and payload.get("max_tool_calls") is None
+        and isinstance(error_details, dict)
+        and error_details.get("remaining_model_calls") is None
+        and error_details.get("remaining_tool_calls") is None
+        and (
+            not isinstance(remaining_budget, dict)
+            or (
+                remaining_budget.get("model_calls") is None
+                and remaining_budget.get("model_calls_after_next_generation") is None
+                and remaining_budget.get("tool_calls") is None
+            )
+        )
+    )
+
+
 def _private_leak_tokens(
     package: TaskPackage,
     *,
@@ -10390,37 +10460,20 @@ def qualify_run(
                 )
             )
         ]
-        admission_tail_failures = []
-        for event in events:
-            if event.type != EventType.TOOL_ADMISSION_BLOCKED:
-                continue
-            error_details = event.payload.get("error_details")
-            tail_policy = (
-                error_details.get("tail_policy") if isinstance(error_details, dict) else None
-            )
-            remaining_budget = (
-                tail_policy.get("remaining_budget") if isinstance(tail_policy, dict) else None
-            )
-            if (
-                event.payload.get("max_model_calls") is not None
-                or event.payload.get("max_tool_calls") is not None
-                or not isinstance(error_details, dict)
-                or error_details.get("remaining_model_calls") is not None
-                or error_details.get("remaining_tool_calls") is not None
-                or (
-                    isinstance(remaining_budget, dict)
-                    and (
-                        remaining_budget.get("model_calls") is not None
-                        or remaining_budget.get("model_calls_after_next_generation") is not None
-                        or remaining_budget.get("tool_calls") is not None
-                    )
-                )
-            ):
-                admission_tail_failures.append(event.sequence)
         split_budget_call_guard = bool(
             ac_fixed_bundle
             and experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         )
+        admission_tail_failures = []
+        for event in events:
+            if event.type != EventType.TOOL_ADMISSION_BLOCKED:
+                continue
+            if not _tool_admission_call_budget_binding_valid(
+                event.payload,
+                budget=manifest.budget,
+                bounded=split_budget_call_guard,
+            ):
+                admission_tail_failures.append(event.sequence)
         expected_observability_budget = (
             _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
             if split_budget_call_guard
@@ -10445,10 +10498,7 @@ def qualify_run(
             exact_observability_profile
             and manifest.budget == expected_observability_budget
             and (
-                (
-                    manifest.budget.max_model_calls == 180
-                    and manifest.budget.max_tool_calls == 300
-                )
+                (manifest.budget.max_model_calls == 180 and manifest.budget.max_tool_calls == 300)
                 if split_budget_call_guard
                 else (
                     manifest.budget.max_model_calls is None
@@ -11264,8 +11314,7 @@ def qualify_run(
         )
         split_budget_campaign = bool(
             experiment is not None
-            and experiment.experiment_id
-            in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+            and experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         )
         expected_control_schema = (
             "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"
@@ -11280,11 +11329,7 @@ def qualify_run(
             else _CONDITION_NEUTRAL_FULL_SCHEDULE_COST_POLICY_SCHEMA
         )
         expected_count = 4 if ac_cost_campaign else 12
-        expected_per_run_reserve = (
-            3_825_000_000
-            if split_budget_campaign
-            else 13_612_500_000
-        )
+        expected_per_run_reserve = 3_825_000_000 if split_budget_campaign else 13_612_500_000
         expected_full_reserve = (
             15_300_000_000
             if split_budget_campaign

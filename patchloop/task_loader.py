@@ -16,14 +16,19 @@ from patchloop.contracts import (
     task_package_spec_hashes,
 )
 from patchloop.errors import ContractError
-from patchloop.util import ensure_within, sha256_bytes
+from patchloop.util import (
+    ensure_within,
+    load_unique_yaml,
+    require_yaml_scalar_type_identity,
+    sha256_bytes,
+)
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
     if not path.is_file():
         raise ContractError(f"missing task file: {path}")
     try:
-        value = yaml.safe_load(path.read_text(encoding="utf-8"))
+        value = load_unique_yaml(path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
         raise ContractError(f"invalid YAML in {path.name}: {exc}") from exc
     if not isinstance(value, dict):
@@ -38,12 +43,26 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
         private_data = _load_yaml(root / "private.yaml")
         public = PublicTask.model_validate(public_data)
         private = PrivateTask.model_validate(private_data)
-        environment_path = root / "environment.yaml"
-        environment = (
-            TaskEnvironment.model_validate(_load_yaml(environment_path))
-            if environment_path.is_file()
-            else None
+        require_yaml_scalar_type_identity(
+            public_data,
+            public.model_dump(mode="python"),
+            source="public.yaml",
         )
+        require_yaml_scalar_type_identity(
+            private_data,
+            private.model_dump(mode="python"),
+            source="private.yaml",
+        )
+        environment_path = root / "environment.yaml"
+        environment = None
+        if environment_path.is_file():
+            environment_data = _load_yaml(environment_path)
+            environment = TaskEnvironment.model_validate(environment_data)
+            require_yaml_scalar_type_identity(
+                environment_data,
+                environment.model_dump(mode="python"),
+                source="environment.yaml",
+            )
     except ValidationError as exc:
         raise ContractError(f"task contract validation failed: {exc}") from exc
 
@@ -101,6 +120,13 @@ def load_task_package(task_dir: str | Path) -> TaskPackage:
 
 def load_public_task(path: str | Path) -> PublicTask:
     try:
-        return PublicTask.model_validate(_load_yaml(Path(path)))
+        raw = _load_yaml(Path(path))
+        public = PublicTask.model_validate(raw)
+        require_yaml_scalar_type_identity(
+            raw,
+            public.model_dump(mode="python"),
+            source=Path(path).name,
+        )
+        return public
     except ValidationError as exc:
         raise ContractError(f"public task validation failed: {exc}") from exc

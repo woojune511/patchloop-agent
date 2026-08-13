@@ -27,8 +27,9 @@ code/artifacts.
 
 ## Documentation rules
 
-- Exact IDs and hashes live in `reports/`; active prose links to them instead of copying them everywhere.
-- Current checkpoint and next authority appear only in `current-status.md`.
+- `reports/` canonically owns exact IDs and hashes; repeated active prose must match that evidence.
+- `docs/current-status.md` canonically owns the current checkpoint and next authority; other active docs may
+  summarize them without creating independent authority.
 - Milestone narratives do not accumulate in active topic documents.
 - A superseded detail remains discoverable through the archive and Git history.
 - New active documents should normally stay below 300 lines.

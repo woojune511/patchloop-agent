@@ -29,8 +29,8 @@
   만들지 않는다.
 - 현재 evaluator-v1 runtime은 safety verdict를 literal PASS로 둔다. Evaluator-v2는 separately supplied
   authority가 있을 때만 standard runner가 선택하며 durable-prefix/CAS 재검증, append-only receipt,
-  completed-result persistence, qualification과 completion adapter까지 local/mock으로 검증됐다. Raw v2
-  result는 계속 `official=false`이고 새 A/C 전에 새 source/suite/source-qualification identity가 필요하다.
+  completed-result persistence, qualification과 completion adapter까지 구현됐다. Raw v2 result는 계속
+  `official=false`; R3 Moto A의 live receipt-qualified completion은 한 행의 실제 v2 evidence다.
 - Evaluator-v2 boundary는 `04ee027171d9d4891c4f481d2ccfb277e7a4a9e6`다. V1/v2는 immutable predecessor다.
   Qualified executable v3 source `ce0628880107db2319816272cfa49adc7ea99667`와 state
   `ncpstate_105d0becd0a33fe453e6be83044b239263eb855c165da6f275d9e4591e54f317`는 exact approval 뒤 1회
@@ -39,8 +39,26 @@
 - Manual-start v4 source `5b592e4f4f86a62d90951e49494ed3f8cf2ae315`와 state
   `ncpstate_9f8c92448974e89bd7c244feff4df63c94a4a82e6f6e526c262f3cb43b9effef`는 사용자 수동 시작 보고만
   결속한다. Daemon/image/container는 미검증이고 runtime/approval/external observation/mutation은 0이다.
-- Retrieval/injection, new `.env`/SDK/Docker observation, execution candidate, cost와 A/C authority는 닫혀 있다.
-- Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
+- Selective retrieval과 held-out/B/D authority는 닫혀 있다. Fixed C injection은 R3 Moto C에서 live로
+  실행됐지만 제출 전 exact-request token-budget guard로 evaluator에 도달하지 않았다.
+- R4 candidate `sha256:be4ea2e4e17a1354895c9122cd33180837cf29aa3922df4caeaafb46a08d7124`
+  received exact approval once and sealed `inconclusive` before provider dispatch at `$0`. Paid-plan revalidation
+  compared its split budget with the legacy aggregate-only budget; Moto A terminated with `ContractError` and the
+  other three rows were not started. R4 and its R6 qualification are immutable and cannot retry or transfer approval.
+- R5 candidate `sha256:b8d156c6deeb3749b7a42f327fcfc7f5467a498b1ec0afaae4b19797b62a1627`
+  received exact approval once. Moto A/no-memory resolved and passed evaluator v2, but terminal qualification still
+  required the legacy null-call/aggregate-only profile; the other three rows did not start. R5 sealed `inconclusive`
+  at `$0.19303425`, is consumed, and cannot retry or transfer approval.
+- R6 candidate `sha256:c800f36bb133f5e0731e86a2b19870d40b26f54976780a001319c2a7b08e5d61`
+  received exact approval once. Moto A/no-memory resolved and passed evaluator v2, but runtime evidence recorded the
+  legacy call-guard policy and terminal qualification rejected it; the other three rows did not start. R6 sealed
+  `inconclusive` at `$0.169596`, is consumed, and cannot retry or transfer approval.
+- R7/R9 and candidate `sha256:8b962b80...bf6c` are superseded unexecuted after offline contract audits. R10
+  qualifies contract-hardened R8 only; R8 has no no-call candidate, approval or run. The next authority edge is a
+  committed, clean R8 bounded no-call preflight, followed by a fresh exact-candidate approval.
+- Exact R10/R9/R6/R5/R4/R3 evidence tuples are owned by `docs/09-evidence.md`. R3 is `inconclusive`: Moto A is
+  receipt-qualified, Moto C is a pre-evaluator `agent_failure`, and Babel C/A are not started. There is no
+  memory-benefit evidence.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
 - V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before
@@ -50,6 +68,9 @@
   is required only for schema, evaluator, security-boundary or treatment changes—not for another attempt.
 - Local no-call preflight may make at most three pre-provider attempts without state/approval/exact-prose ceremony.
   Paid/provider execution still requires one approval binding the exact four-row hash and hard cost cap.
+- R3 through R6 executions are sealed and cannot resume or overwrite; all approvals are consumed. A future paid
+  run requires a new R8 candidate and separate four-row `$15.30` reserve/`$18` cap approval. No provider execution
+  is currently authorized.
 
 ## Required reading
 

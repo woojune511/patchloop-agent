@@ -71,9 +71,9 @@ The agent can see only public task files and registered check output. The evalua
 material only after submission and runs in a separate workspace/container. Target primary success is the
 conjunction of hidden acceptance, regression, scope and safety.
 
-Evaluator-v1 safety is unconditional. V2's typed, receipt-gated local path keeps raw results unofficial. V5 is a
-consumed checker error, not SDK-readiness evidence. V6 only source-qualifies sanitized diagnostics; parent runtime,
-state and approval do not exist, and v1 evidence is unchanged.
+Evaluator-v1 safety is unconditional. V2 keeps raw results unofficial but promotes authenticated evidence through
+durable-prefix/CAS validation, receipt and qualification. R3 Moto A exercised that path live and passed all four
+verdicts; R3 Moto C failed before submission, so its evaluator remained `NOT_RUN`.
 
 Visible checks and agent self-review are feedback; neither can replace hidden evaluation.
 
@@ -83,15 +83,18 @@ Visible checks and agent self-review are feedback; neither can replace hidden ev
 
 Three generalized entries have approved D-105 text and a D-110 frozen index; retrieval authority remains closed.
 
-### Frozen R2 A/C source
+### Fixed-bundle A/C source
 
 `fixed-d110-bundle-v1` implements a narrow fixed-bundle adapter:
 
 It verifies D-105/D-110 assets, assembles only the three texts in frozen order, renders A as null and C as the exact
 3,528-byte bundle, and binds delivery through existing request/context evidence without retrieval events.
 
-It loads no embedding model or scorer. D-122 binds the four-row suite offline, but R2 predates evaluator v2 and no
-candidate or live result exists.
+It loads no embedding model or scorer. R8 binds the current contract-hardened four-row evaluator-v2 source. R3 exercised A
+and C on Moto, but C could not fund the exact next request within the 3M ceiling before submission. R5 later resolved
+and evaluated Moto A, but post-evaluator qualification failed and halted the other rows. R6 repeated that resolved
+Moto A path and exposed a runtime-evidence policy mismatch. These sealed partial panels
+are runtime evidence, not analyzable memory comparisons.
 
 ### Deferred paths
 

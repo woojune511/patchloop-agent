@@ -20,7 +20,13 @@ from patchloop.contracts import (
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root
 from patchloop.task_loader import load_task_package
-from patchloop.util import ensure_within, sha256_bytes, sha256_json
+from patchloop.util import (
+    ensure_within,
+    load_unique_yaml,
+    require_yaml_scalar_type_identity,
+    sha256_bytes,
+    sha256_json,
+)
 
 DEFAULT_MANIFEST = Path("data/dataset-manifest.yaml")
 
@@ -40,7 +46,7 @@ def load_dataset_manifest(
     if not manifest_path.is_file():
         raise ContractError(f"missing dataset manifest: {manifest_path}")
     try:
-        raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+        raw = load_unique_yaml(manifest_path.read_text(encoding="utf-8"))
     except yaml.YAMLError as exc:
         raise ContractError(f"invalid dataset manifest YAML: {exc}") from exc
     if not isinstance(raw, dict):
@@ -49,6 +55,11 @@ def load_dataset_manifest(
         manifest = DatasetManifest.model_validate(raw)
     except ValidationError as exc:
         raise ContractError(f"dataset manifest validation failed: {exc}") from exc
+    require_yaml_scalar_type_identity(
+        raw,
+        manifest.model_dump(mode="python"),
+        source=manifest_path.name,
+    )
     manifest_hash = sha256_json(manifest.model_dump(mode="json"))
     return manifest, manifest_hash, manifest_path
 
@@ -137,8 +148,7 @@ def _same_repo_pairing_violations(
         )
     if unexpected:
         violations.append(
-            "same-repo lane has repositories outside development: "
-            + ", ".join(unexpected)
+            "same-repo lane has repositories outside development: " + ", ".join(unexpected)
         )
     if duplicated_development:
         violations.append(
@@ -147,8 +157,7 @@ def _same_repo_pairing_violations(
         )
     if duplicated_same_repo:
         violations.append(
-            "same-repo lane is not one task per repository: "
-            + ", ".join(duplicated_same_repo)
+            "same-repo lane is not one task per repository: " + ", ".join(duplicated_same_repo)
         )
     return violations
 
@@ -189,9 +198,7 @@ def select_stress_sentinels(
     )
     remaining.pop(narrow_mutation.task_id)
 
-    missing_checks = sorted(
-        task.task_id for task in remaining.values() if not task.visible_checks
-    )
+    missing_checks = sorted(task.task_id for task in remaining.values() if not task.visible_checks)
     if missing_checks:
         raise ContractError(
             "stress timeout selection requires registered visible checks: "
@@ -298,19 +305,14 @@ def audit_dataset(
                 source_repository = _repository_for(entry)
                 if source_repository is None:
                     raise ContractError("research source repository is missing")
-                package_repository = _github_repository_from_url(
-                    package.public.repository.url
-                )
+                package_repository = _github_repository_from_url(package.public.repository.url)
                 if package_repository != source_repository:
                     raise ContractError(
                         "source repository mismatch: "
                         f"{entry.source.upstream_repository} != "
                         f"{package.public.repository.url}"
                     )
-                if (
-                    entry.source.upstream_base_commit
-                    != package.public.repository.base_commit
-                ):
+                if entry.source.upstream_base_commit != package.public.repository.base_commit:
                     raise ContractError(
                         "source base commit mismatch: "
                         f"{entry.source.upstream_base_commit} != "
@@ -393,10 +395,7 @@ def audit_dataset(
         and research_counts.get(DatasetRole.CORE_SAME_REPO, 0)
         == manifest.targets[DatasetRole.CORE_SAME_REPO]
     )
-    if (
-        manifest.policy.same_repo_requires_one_to_one_development_coverage
-        and pairing_lane_filled
-    ):
+    if manifest.policy.same_repo_requires_one_to_one_development_coverage and pairing_lane_filled:
         errors.extend(
             {
                 "path": str(resolved_manifest),
@@ -451,8 +450,7 @@ def audit_dataset(
         non_heldout = sorted(set(lane.task_ids) - heldout_task_ids - set(unknown))
         if non_heldout:
             stress_errors.append(
-                f"{lane.lane_id} references non-held-out research tasks: "
-                + ", ".join(non_heldout)
+                f"{lane.lane_id} references non-held-out research tasks: " + ", ".join(non_heldout)
             )
     errors.extend({"path": str(resolved_manifest), "error": error} for error in stress_errors)
 
@@ -495,9 +493,7 @@ def audit_dataset(
         lane = manifest.stress_lanes[0]
         selected_ids = list(expected_stress_selection.values())
         if lane.sentinel_count != 3 or len(lane.task_ids) != 3:
-            freeze_blockers.append(
-                f"{lane.lane_id} has {len(lane.task_ids)}/3 selected sentinels"
-            )
+            freeze_blockers.append(f"{lane.lane_id} has {len(lane.task_ids)}/3 selected sentinels")
         if lane.task_ids != selected_ids:
             freeze_blockers.append(
                 f"{lane.lane_id} does not match public-contract-structure-v1 selection"
@@ -607,8 +603,7 @@ def require_frozen_dataset(
         ]
         suffix = "; ".join(dict.fromkeys(details))
         raise ContractError(
-            "core experiment requires a complete frozen dataset"
-            + (f": {suffix}" if suffix else "")
+            "core experiment requires a complete frozen dataset" + (f": {suffix}" if suffix else "")
         )
     if audit.get("manifest_hash") != manifest_hash:
         raise ContractError("dataset manifest changed during frozen-dataset audit")

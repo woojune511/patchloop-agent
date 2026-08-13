@@ -12,23 +12,26 @@ import pytest
 from patchloop import runtime as runtime_module
 from patchloop.agent.runner import LiveExecutionAuthorization, _load_live_execution_plan
 from patchloop.contracts import (
+    AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
-    AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
     DatasetRole,
     ExperimentRunContext,
+    RunResult,
     Usage,
+    VerdictState,
 )
 from patchloop.errors import ContractError
 from patchloop.evals import runner as eval_runner
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
+from tests.test_evaluator_v2_contracts import _v2_chain
 
 R1_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r1.yaml")
 R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 R3_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml")
-R7_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r7.yaml")
+R8_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml")
 SOURCE_COMMIT = "a" * 40
 R2_BASE_SUITE_HASH = eval_runner._suite_hash(eval_runner.load_suite(R2_SUITE))
 EVALUATOR_V2_SOURCE_QUALIFICATION = {
@@ -334,6 +337,8 @@ def _completion_rows(
             "failure_record_id": None,
             "qualification_hash": qualification_hash,
             "source_evidence_hash": "sha256:" + f"{index + 4:x}" * 64,
+            "usage_reconciliation": _projection("usage_reconciliation"),
+            "persisted_result": _projection("persisted_result"),
             "readiness_checks": copy.deepcopy(checks),
             "model_or_tool_call_budget_blocks": {
                 "schema_version": "call-budget-block-projection-v1",
@@ -341,6 +346,8 @@ def _completion_rows(
                 "source_check_passed": True,
                 "event_sequences": [],
             },
+            "gate_checks": {call_guard_check_id: _projection(call_guard_check_id)},
+            "trace_features": {},
             "read_only_recomputation": {
                 "schema_version": "qualification-read-only-recomputation-v1",
                 "matched": True,
@@ -363,13 +370,28 @@ def _completion_rows(
                     "verdicts": verdicts,
                     "terminal_error": None,
                 },
+                "usage": None,
                 "qualification": qualification,
                 "infrastructure_error": None,
                 "qualification_error": None,
+                "diagnostic": None,
                 "diagnostic_error": None,
+                "not_started_reason": None,
             }
         )
     return rows
+
+
+def _typed_v2_result(run_id: str, task_id: str, *, failed: bool) -> dict[str, Any]:
+    chain = _v2_chain(
+        VerdictState.FAIL if failed else VerdictState.PASS,
+        task_path=f"tasks/dev-validation/{task_id}",
+    )
+    payload = chain.result.model_dump(mode="json")
+    payload["run_id"] = run_id
+    for verifier_result in payload["verifier_results"]:
+        verifier_result["run_id"] = run_id
+    return RunResult.model_validate(payload).model_dump(mode="json")
 
 
 def test_r1_remains_cost_pending_and_r2_binds_exact_full_schedule_control(
@@ -503,39 +525,39 @@ def test_r3_paid_plan_uses_a_fresh_identity_and_matches_qualified_manifest(
     )
 
 
-def test_r7_split_budget_paid_plan_round_trips_through_qualification_revalidation(
+def test_r8_split_budget_paid_plan_round_trips_through_qualification_revalidation(
     ac_preflights: tuple[dict[str, Any], dict[str, Any]],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from patchloop.evals import qualification as qualification_module
 
     _r1, _r2 = ac_preflights
-    r7_binding = {
+    r8_binding = {
         **EVALUATOR_V2_SOURCE_QUALIFICATION,
         "successor_suite_hash": "sha256:" + "e" * 64,
-        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R7_SUITE)),
+        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R8_SUITE)),
     }
     monkeypatch.setattr(
         eval_runner,
         "_validated_ac_evaluator_v2_source_qualification",
         lambda suite: (
-            dict(r7_binding)
-            if suite.experiment_id == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
+            dict(r8_binding)
+            if suite.experiment_id == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
             else None
         ),
     )
-    candidate = eval_runner.preflight_suite(R7_SUITE)
+    candidate = eval_runner.preflight_suite(R8_SUITE)
     approved = eval_runner.preflight_suite(
-        R7_SUITE,
+        R8_SUITE,
         approve_live_cost=True,
         approved_execution_hash=candidate["execution_hash"],
     )
     plan = {**approved, "schema_version": "experiment-execution-plan-v1"}
-    v1_manifest = _paid_boundary_manifest(approved, row_index=0, suite_path=R7_SUITE)
+    v1_manifest = _paid_boundary_manifest(approved, row_index=0, suite_path=R8_SUITE)
     manifest = _bind_paid_boundary_manifest_v2(v1_manifest, approved)
 
     assert approved["ready"] is True
-    assert approved["experiment_id"] == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
+    assert approved["experiment_id"] == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
     assert approved["runtime_contract"]["budget"] == (
         eval_runner.GPT54_MINI_AC_SPLIT_TOKEN_BUDGET.model_dump(mode="json")
     )
@@ -1025,6 +1047,43 @@ def test_ac_usage_evidence_rejects_fully_rehashed_unknown_descriptor() -> None:
 
 
 @pytest.mark.parametrize(
+    ("path", "replacement"),
+    [
+        (("usage", "input_tokens"), False),
+        (("usage", "cached_input_tokens"), 0.0),
+        (("price_nanos_per_token", "cached_input"), 75.0),
+        (("token_derived_cost_nanos",), 907_500.0),
+    ],
+)
+def test_ac_usage_evidence_rejects_rehashed_scalar_type_drift(
+    path: tuple[str, ...],
+    replacement: object,
+) -> None:
+    evidence = eval_runner._full_schedule_usage_evidence(
+        _usage(),
+        experiment_id=AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        run_id="run_ac_typed_usage",
+        schedule_row_id="sha256:" + "1" * 64,
+        qualification_hash="sha256:" + "2" * 64,
+        source_evidence_hash="sha256:" + "3" * 64,
+        persisted_result_hash="sha256:" + "4" * 64,
+    )
+    selected = evidence["descriptor"]
+    for part in path[:-1]:
+        selected = selected[part]
+    selected[path[-1]] = replacement
+    evidence["content_hash"] = sha256_text(canonical_json(evidence["descriptor"]))
+
+    with pytest.raises(ContractError):
+        eval_runner._validate_full_schedule_usage_evidence(
+            evidence,
+            experiment_id=AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+            run_id="run_ac_typed_usage",
+            schedule_row_id="sha256:" + "1" * 64,
+        )
+
+
+@pytest.mark.parametrize(
     ("mutation", "expected"),
     [
         ("exact", True),
@@ -1093,6 +1152,52 @@ def test_ac_journal_rejects_fully_rehashed_payload_or_chronology_tamper(
         "event payload fields differ" if tamper == "unknown-payload" else "chronology is invalid"
     )
     with pytest.raises(ContractError, match=expected):
+        eval_runner._full_schedule_cost_journal_evidence(
+            journal,
+            r2["campaign_cost_control"],
+            run_root=tmp_path,
+            expected_execution_hash=r2["execution_hash"],
+            expected_execution_plan_hash="sha256:" + "b" * 64,
+            expected_schedule=r2["schedule"],
+            durable_usage_resolver=(lambda run_id, _row_id, _root: evidence_by_run[run_id]),
+        )
+
+
+@pytest.mark.parametrize(
+    ("event_index", "field", "replacement"),
+    [
+        (1, "row_reserve_count", 4.0),
+        (2, "order", True),
+        (3, "model_cost_usd", 0.0009075 + 0.000000001),
+        (3, "qualification_hash", "sha256:" + "f" * 64),
+        (4, "actual_run_cost_nanos", 907_500.0),
+        (4, "remaining_reserved_rows_after", False),
+    ],
+)
+def test_ac_journal_rejects_rehashed_scalar_types_and_terminal_cross_binding(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    tmp_path: Path,
+    event_index: int,
+    field: str,
+    replacement: object,
+) -> None:
+    _r1, r2 = ac_preflights
+    journal, evidence_by_run, _qualification = _full_schedule_journal(tmp_path, r2)
+    events = [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
+    events[event_index]["payload"][field] = replacement
+    previous: str | None = None
+    for event in events:
+        event["previous_event_hash"] = previous
+        body = {key: value for key, value in event.items() if key != "event_hash"}
+        event["event_hash"] = sha256_text(canonical_json(body))
+        previous = event["event_hash"]
+    journal.write_text(
+        "".join(f"{canonical_json(event)}\n" for event in events),
+        encoding="utf-8",
+        newline="",
+    )
+
+    with pytest.raises(ContractError):
         eval_runner._full_schedule_cost_journal_evidence(
             journal,
             r2["campaign_cost_control"],
@@ -1215,26 +1320,52 @@ def test_ac_completion_gate_accepts_four_official_task_failures(
     assert gate["memory_effect_claim_authorized"] is False
 
 
-def test_ac_completion_gate_accepts_qualified_v2_receipts_without_mutating_raw_official(
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda rows, cost: rows[0]["qualification"]["model_or_tool_call_budget_blocks"].__setitem__(
+            "source_check_count", True
+        ),
+        lambda rows, cost: rows[0].__setitem__("order", True),
+        lambda rows, cost: rows[0]["result"].__setitem__("official", 0),
+        lambda rows, cost: rows[0].__setitem__("usage", "not-usage"),
+        lambda rows, cost: rows[0].__setitem__("unexpected", False),
+        lambda rows, cost: cost.__setitem__("settled_runs", 4.0),
+        lambda rows, cost: cost.__setitem__("full_schedule_reserve_nanos", 54_450_000_000.0),
+    ],
+)
+def test_ac_completion_gate_rejects_scalar_type_and_envelope_drift(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    tmp_path: Path,
+    mutation,
+) -> None:
+    _r1, r2 = ac_preflights
+    _journal, _evidence, cost = _full_schedule_journal(tmp_path, r2)
+    rows = _completion_rows(r2, all_failures=True)
+    mutation(rows, cost)
+
+    gate = eval_runner._ac_fixed_bundle_completion_gate(
+        rows,
+        expected_execution_hash=r2["execution_hash"],
+        expected_schedule=r2["schedule"],
+        expected_campaign_cost_control_hash=r2["campaign_cost_control"]["content_hash"],
+        campaign_cost_qualification=cost,
+    )
+    assert gate["passed"] is False
+
+
+def test_ac_completion_gate_rejects_untyped_v2_receipt_projection(
     ac_preflights: tuple[dict[str, Any], dict[str, Any]],
     tmp_path: Path,
 ) -> None:
     _r1, r2 = ac_preflights
     _journal, _evidence, cost = _full_schedule_journal(tmp_path, r2)
     rows = _completion_rows(r2, all_failures=True)
-    for index, row in enumerate(rows, start=1):
-        source_hash = "sha256:" + f"{index + 8:x}" * 64
-        result = row["result"]
-        result.update(
-            {
-                "schema_version": "run-result-v2",
-                "official": False,
-                "evaluator_contract": {"evaluator_source_hash": source_hash},
-                "safety_evidence_bundle_hash": "sha256:" + "a" * 64,
-                "safety_evidence": [{"control": control} for control in range(4)],
-                "verifier_results": [{"check_type": "safety", "state": "pass"} for _ in range(4)],
-            }
-        )
+    for row in rows:
+        result = _typed_v2_result(row["run_id"], row["task_id"], failed=True)
+        row["result"] = result
+        row["usage"] = result["usage"]
+        source_hash = result["evaluator_contract"]["evaluator_source_hash"]
         row["qualification"].update(
             {
                 "evaluator_version": "v2",
@@ -1258,9 +1389,12 @@ def test_ac_completion_gate_accepts_qualified_v2_receipts_without_mutating_raw_o
     assert gate["official_evaluator_runs"] == 4
     assert all(row["result"]["official"] is False for row in rows)
 
-    rows[0]["qualification"]["evaluator_v2_completion_eligible"] = False
+    malformed = copy.deepcopy(rows)
+    malformed[0]["result"]["evaluator_contract"] = {
+        "evaluator_source_hash": malformed[0]["qualification"]["evaluator_v2_source_hash"]
+    }
     failed = eval_runner._ac_fixed_bundle_completion_gate(
-        rows,
+        malformed,
         expected_execution_hash=r2["execution_hash"],
         expected_schedule=r2["schedule"],
         expected_campaign_cost_control_hash=r2["campaign_cost_control"]["content_hash"],
@@ -1270,29 +1404,29 @@ def test_ac_completion_gate_accepts_qualified_v2_receipts_without_mutating_raw_o
     assert failed["official_evaluator_runs"] == 3
 
 
-def test_r7_completion_gate_accepts_bounded_call_guard_v2_matrix(
+def test_r8_completion_gate_accepts_bounded_call_guard_matrix(
     ac_preflights: tuple[dict[str, Any], dict[str, Any]],
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _r1, _r2 = ac_preflights
-    r7_binding = {
+    r8_binding = {
         **EVALUATOR_V2_SOURCE_QUALIFICATION,
         "successor_suite_hash": "sha256:" + "e" * 64,
-        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R7_SUITE)),
+        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R8_SUITE)),
     }
     monkeypatch.setattr(
         eval_runner,
         "_validated_ac_evaluator_v2_source_qualification",
         lambda suite: (
-            dict(r7_binding)
-            if suite.experiment_id == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
+            dict(r8_binding)
+            if suite.experiment_id == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
             else None
         ),
     )
-    candidate = eval_runner.preflight_suite(R7_SUITE)
+    candidate = eval_runner.preflight_suite(R8_SUITE)
     approved = eval_runner.preflight_suite(
-        R7_SUITE,
+        R8_SUITE,
         approve_live_cost=True,
         approved_execution_hash=candidate["execution_hash"],
     )
@@ -1300,20 +1434,13 @@ def test_r7_completion_gate_accepts_bounded_call_guard_v2_matrix(
     rows = _completion_rows(
         approved,
         all_failures=True,
-        experiment_id=AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
+        experiment_id=AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
     )
-    for index, row in enumerate(rows, start=1):
-        source_hash = "sha256:" + f"{index + 8:x}" * 64
-        row["result"].update(
-            {
-                "schema_version": "run-result-v2",
-                "official": False,
-                "evaluator_contract": {"evaluator_source_hash": source_hash},
-                "safety_evidence_bundle_hash": "sha256:" + "a" * 64,
-                "safety_evidence": [{"control": control} for control in range(4)],
-                "verifier_results": [{"check_type": "safety", "state": "pass"} for _ in range(4)],
-            }
-        )
+    for row in rows:
+        result = _typed_v2_result(row["run_id"], row["task_id"], failed=True)
+        row["result"] = result
+        row["usage"] = result["usage"]
+        source_hash = result["evaluator_contract"]["evaluator_source_hash"]
         row["qualification"].update(
             {
                 "evaluator_version": "v2",
@@ -1325,10 +1452,9 @@ def test_r7_completion_gate_accepts_bounded_call_guard_v2_matrix(
                 "evaluator_v2_completion_eligible": True,
             }
         )
-
     gate = eval_runner._ac_fixed_bundle_completion_gate(
         rows,
-        expected_experiment_id=AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
+        expected_experiment_id=AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
         expected_execution_hash=approved["execution_hash"],
         expected_schedule=approved["schedule"],
         expected_campaign_cost_control_hash=approved["campaign_cost_control"]["content_hash"],
@@ -1338,6 +1464,34 @@ def test_r7_completion_gate_accepts_bounded_call_guard_v2_matrix(
     assert gate["passed"] is True
     assert gate["analysis_ready"] is True
     assert gate["official_evaluator_runs"] == 4
+
+    downgraded = copy.deepcopy(rows)
+    for row in downgraded:
+        row["result"] = {
+            "run_id": row["run_id"],
+            "agent_submission_status": "completed",
+            "evaluation_status": "completed",
+            "official": True,
+            "outcome_kind": "task_failure",
+            "scope_compliant_success": False,
+            "verdicts": {
+                "hidden_tests": "fail",
+                "regression_tests": "pass",
+                "scope_policy": "pass",
+                "safety_policy": "pass",
+            },
+            "terminal_error": None,
+        }
+    rejected = eval_runner._ac_fixed_bundle_completion_gate(
+        downgraded,
+        expected_experiment_id=AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
+        expected_execution_hash=approved["execution_hash"],
+        expected_schedule=approved["schedule"],
+        expected_campaign_cost_control_hash=approved["campaign_cost_control"]["content_hash"],
+        campaign_cost_qualification=cost,
+    )
+    assert rejected["passed"] is False
+    assert rejected["official_evaluator_runs"] == 0
 
 
 def test_campaign_append_rejects_stale_tail_and_preserves_bytes(tmp_path: Path) -> None:
@@ -1391,7 +1545,7 @@ def test_r2_terminal_projection_includes_cost_contract_but_r1_does_not() -> None
     assert "campaign_full_schedule_cost_contract" not in r1["readiness_checks"]
 
 
-def test_r7_terminal_projection_uses_bounded_call_guard_contract() -> None:
+def test_r8_terminal_projection_uses_bounded_call_guard_contract() -> None:
     check_ids = {
         "submission_lifecycle",
         "prompt_token_integrity",
@@ -1405,7 +1559,7 @@ def test_r7_terminal_projection_uses_bounded_call_guard_contract() -> None:
         "campaign_full_schedule_cost_contract",
     }
     payload = {
-        "experiment_id": AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
+        "experiment_id": AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
         "memory_condition": "no_memory",
         "checks": [{"check_id": check_id, "passed": True, "details": {}} for check_id in check_ids],
     }
@@ -1753,6 +1907,8 @@ def test_paid_boundary_accepts_exact_row_one_reservation(
     [
         {"per_run_reserve_nanos": 13_612_499_999},
         {"row_reserve_count": 3},
+        {"per_run_reserve_nanos": 13_612_500_000.0},
+        {"row_reserve_count": True},
     ],
 )
 def test_paid_boundary_rejects_wrong_per_run_reserve_or_row_count(

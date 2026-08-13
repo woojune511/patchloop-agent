@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from types import SimpleNamespace
+from typing import Any
 
 import pytest
 
+from patchloop.agent.investigation import tail_policy
 from patchloop.contracts import Budget, EventType, RunEvent
 from patchloop.evals.policy_replay import (
     PolicyReplayError,
@@ -12,7 +15,9 @@ from patchloop.evals.policy_replay import (
 )
 from patchloop.evals.qualification import (
     _cumulative_split_generation_block_payload_valid,
+    _tool_admission_call_budget_binding_valid,
 )
+from patchloop.task_loader import load_task_package
 
 _START = datetime(2026, 8, 14, tzinfo=UTC)
 
@@ -75,6 +80,122 @@ def _blocked_payload() -> dict[str, object]:
         "remaining_output_tokens": 30,
         "remaining_total_tokens": 50,
     }
+
+
+def _admission_payload() -> dict[str, object]:
+    task = load_task_package(Path("tasks/dev-validation/moto-query-scanned-count")).public
+    events = [
+        *[
+            _event(
+                index,
+                EventType.MODEL_CALLED,
+                {
+                    "requested_input_tokens": 1,
+                    "input_tokens": 1,
+                    "output_tokens": 1,
+                },
+            )
+            for index in range(1, 8)
+        ],
+        *[_event(index, EventType.TOOL_CALLED, {}) for index in range(8, 19)],
+    ]
+    calculated_tail_policy = tail_policy(
+        task,
+        None,
+        context_policy_version="phase-evidence-v6",
+        events=events,
+        budget=_budget(),
+        max_output_tokens=15,
+        projection_stage="post_generation",
+    )
+    reason_codes = calculated_tail_policy["block_reasons"]
+    return {
+        "schema_version": "tool-admission-blocked-v2",
+        "policy_version": "investigation-policy-v2",
+        "reason_codes": reason_codes,
+        "model_calls_used": 7,
+        "max_model_calls": 180,
+        "tool_calls_used": 11,
+        "max_tool_calls": 300,
+        "error_details": {
+            "schema_version": "tool-admission-blocked-v2",
+            "policy_version": "investigation-policy-v2",
+            "reason_codes": reason_codes,
+            "remaining_model_calls": 173,
+            "remaining_tool_calls": 289,
+            "tail_policy": calculated_tail_policy,
+        },
+    }
+
+
+def test_bounded_tool_admission_projection_accepts_exact_producer_counters() -> None:
+    assert _tool_admission_call_budget_binding_valid(
+        _admission_payload(),
+        budget=_budget(),
+        bounded=True,
+    )
+
+
+def test_bounded_tool_admission_accepts_exact_same_turn_barrier_shape() -> None:
+    payload = {
+        "schema_version": "tool-admission-blocked-v3",
+        "policy_version": "turn-mutation-barrier-v1",
+        "reason_codes": ["prior_apply_patch_same_turn"],
+        "source_call_index": 1,
+        "blocked_call_index": 2,
+        "error_details": {
+            "schema_version": "tool-admission-blocked-v3",
+            "policy_version": "turn-mutation-barrier-v1",
+            "reason_codes": ["prior_apply_patch_same_turn"],
+        },
+    }
+
+    assert _tool_admission_call_budget_binding_valid(
+        payload,
+        budget=_budget(),
+        bounded=True,
+    )
+    payload["blocked_call_index"] = 1
+    assert not _tool_admission_call_budget_binding_valid(
+        payload,
+        budget=_budget(),
+        bounded=True,
+    )
+
+
+@pytest.mark.parametrize(
+    ("path", "value"),
+    [
+        (("max_model_calls",), None),
+        (("error_details", "remaining_model_calls"), 172),
+        (("error_details", "tail_policy", "remaining_budget", "tool_calls"), 288),
+        (("error_details", "tail_policy", "projection_stage"), "pre_generation"),
+        (
+            (
+                "error_details",
+                "tail_policy",
+                "remaining_budget",
+                "model_calls_after_next_generation",
+            ),
+            172,
+        ),
+    ],
+)
+def test_bounded_tool_admission_projection_rejects_legacy_or_mismatched_counters(
+    path: tuple[str, ...],
+    value: object,
+) -> None:
+    payload = _admission_payload()
+    selected: Any = payload
+    for part in path[:-1]:
+        selected = selected[part]
+    selected[path[-1]] = value
+
+    assert not _tool_admission_call_budget_binding_valid(
+        payload,
+        budget=_budget(),
+        bounded=True,
+    )
 
 
 def _events(payload: dict[str, object]) -> tuple[list[RunEvent], RunEvent]:

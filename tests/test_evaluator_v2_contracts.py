@@ -233,6 +233,7 @@ def _manifest(
 def _v2_chain(
     safety_state: VerdictState = VerdictState.PASS,
     *,
+    task_path: str = "tasks/smoke/csv-quoted-newline",
     sandbox_backend: str = "docker",
     evaluator_source_hash: str = SHA_C,
     event_prefix_hash: str | None = None,
@@ -248,7 +249,7 @@ def _v2_chain(
     generic_command_observation: bool = False,
     raw_marker_in_event: bool = False,
 ) -> V2Chain:
-    package = load_task_package("tasks/smoke/csv-quoted-newline")
+    package = load_task_package(task_path)
     contract = _safety_contract(package)
     binding = build_evaluator_contract_binding(
         contract,

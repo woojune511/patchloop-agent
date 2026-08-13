@@ -10,13 +10,14 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 from pydantic import ValidationError
 
 from patchloop import runtime as runtime_module
 from patchloop.agent import model as agent_model
 from patchloop.agent import runner as agent_runner
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     Budget,
     DatasetRole,
@@ -106,36 +107,82 @@ def _build(output: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
     return summary, payload, raw
 
 
-def test_r9_source_surfaces_do_not_replace_r8_artifact() -> None:
-    r8 = REPOSITORY / (
+def test_r10_source_surfaces_do_not_replace_r9_artifact() -> None:
+    r9 = REPOSITORY / (
         "reports/live-pilot/artifacts/"
-        "evaluator-v2-ac-successor-offline-source-qualification-r8.json"
+        "evaluator-v2-ac-successor-offline-source-qualification-r9.json"
     )
 
-    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v9"
-    assert source_q.QUALIFICATION_ID.endswith("-r9")
-    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v10.plan.yaml"
-    assert source_q.OUTPUT_PATH.name.endswith("qualification-r9.json")
-    assert r8.is_file()
-    assert len(r8.read_bytes()) == 16_151
-    assert sha256_bytes(r8.read_bytes()) == (
-        "sha256:5e8026c3b114b09cf88b9c34b36ab831d85ce5dbe25d7c47059bb54186d682ec"
+    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v10"
+    assert source_q.QUALIFICATION_ID.endswith("-r10")
+    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v11.plan.yaml"
+    assert source_q.OUTPUT_PATH.name.endswith("qualification-r10.json")
+    assert r9.is_file()
+    assert len(r9.read_bytes()) == 16_152
+    assert sha256_bytes(r9.read_bytes()) == (
+        "sha256:6d59aaaeba99743fe760a9a4690d56976698f482172fd21285955437faafeb22"
     )
-    assert r8 != REPOSITORY / source_q.OUTPUT_PATH
+    assert r9 != REPOSITORY / source_q.OUTPUT_PATH
 
 
-def test_r7_suite_changes_only_the_runtime_evidence_corrected_identity() -> None:
+def test_r8_suite_changes_only_the_contract_hardened_identity() -> None:
     successor = eval_runner.load_suite(source_q.BASE_SUITE_PATH).model_dump(mode="json")
     predecessor = eval_runner.load_suite(source_q.FAST_PREDECESSOR_SUITE_PATH).model_dump(
         mode="json"
     )
 
-    assert successor["experiment_id"] == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
-    assert predecessor["experiment_id"] == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+    assert successor["experiment_id"] == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
+    assert predecessor["experiment_id"] == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
     for field in ("experiment_id",):
         successor.pop(field)
         predecessor.pop(field)
     assert successor == predecessor
+
+
+@pytest.mark.parametrize(
+    ("field_path", "wrong_value"),
+    [
+        (("runtime", "max_model_calls"), 180.0),
+        (("runtime", "max_model_calls"), "180"),
+        (("authority", "provider_or_evaluator_execution_authorized"), 0),
+        (("next_gate", "requires_separate_paid_execution_approval"), 1),
+    ],
+)
+def test_plan_rejects_equal_but_wrong_typed_scalars(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    field_path: tuple[str, str],
+    wrong_value: object,
+) -> None:
+    plan = yaml.safe_load((REPOSITORY / source_q.PLAN_PATH).read_text(encoding="utf-8"))
+    plan[field_path[0]][field_path[1]] = wrong_value
+    selected = tmp_path / "wrong-typed-plan.yaml"
+    selected.write_text(yaml.safe_dump(plan, sort_keys=False), encoding="utf-8")
+    relative = selected.relative_to(tmp_path)
+    monkeypatch.setattr(source_q, "PLAN_PATH", relative)
+
+    with pytest.raises(
+        source_q.EvaluatorV2SourceQualificationError,
+        match="successor (runtime tuple|authority|next gate) differs",
+    ):
+        source_q._load_plan(tmp_path)
+
+
+def test_plan_loader_rejects_duplicate_mapping_keys(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    duplicate = (REPOSITORY / source_q.PLAN_PATH).read_text(encoding="utf-8")
+    duplicate += "\nstatus: offline-evaluator-v2-source-qualification\n"
+    selected = tmp_path / "duplicate-key-plan.yaml"
+    selected.write_text(duplicate, encoding="utf-8")
+    monkeypatch.setattr(source_q, "PLAN_PATH", selected.relative_to(tmp_path))
+
+    with pytest.raises(
+        source_q.EvaluatorV2SourceQualificationError,
+        match="successor plan is unreadable",
+    ):
+        source_q._load_plan(tmp_path)
 
 
 def test_build_validate_and_replay_are_append_only_and_offline(
@@ -199,7 +246,7 @@ def test_successor_suite_is_new_and_preserves_exact_ac_treatment(
     assert payload["base_suite"]["path"] == source_q.BASE_SUITE_PATH.as_posix()
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).experiment_id
-        == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
+        == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
     )
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).pricing_verified_at.isoformat()
@@ -235,6 +282,63 @@ def test_source_and_validation_inventories_are_exact_current_bytes(
             content = (REPOSITORY / item["path"]).read_bytes()
             assert item["file_bytes"] == len(content)
             assert item["file_sha256"] == sha256_bytes(content)
+
+
+def test_paid_path_import_closure_is_fully_source_bound() -> None:
+    closure = source_q._paid_path_import_closure(REPOSITORY)
+    source_paths = set(source_q.SOURCE_PATHS)
+
+    assert set(closure).issubset(source_paths)
+    assert set(closure) >= {
+        Path("patchloop/__init__.py"),
+        Path("patchloop/agent/__init__.py"),
+        Path("patchloop/agent/model.py"),
+        Path("patchloop/dataset.py"),
+        Path("patchloop/evals/failures.py"),
+        Path("patchloop/sandbox/__init__.py"),
+        Path("patchloop/state/__init__.py"),
+        Path("patchloop/verifier/__init__.py"),
+        Path("patchloop/verifier/policy.py"),
+    }
+
+
+def test_paid_path_import_closure_is_transitive_and_excludes_external_modules(
+    tmp_path: Path,
+) -> None:
+    files = {
+        "patchloop/__init__.py": "",
+        "patchloop/evals/__init__.py": "",
+        "patchloop/evals/runner.py": "import os\nfrom patchloop.agent import runner\n",
+        "patchloop/agent/__init__.py": "",
+        "patchloop/agent/runner.py": "from patchloop.verifier import policy\n",
+        "patchloop/verifier/__init__.py": "",
+        "patchloop/verifier/policy.py": "import pydantic\n",
+    }
+    for relative, content in files.items():
+        selected = tmp_path / relative
+        selected.parent.mkdir(parents=True, exist_ok=True)
+        selected.write_text(content, encoding="utf-8")
+
+    closure = source_q._paid_path_import_closure(tmp_path)
+
+    assert [item.as_posix() for item in closure] == sorted(files)
+
+
+def test_source_qualification_fails_when_paid_path_import_is_unbound(
+    isolated_output: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        source_q,
+        "SOURCE_PATHS",
+        tuple(path for path in source_q.SOURCE_PATHS if path != Path("patchloop/agent/model.py")),
+    )
+
+    with pytest.raises(
+        source_q.EvaluatorV2SourceQualificationError,
+        match="omits paid-path imports: patchloop/agent/model.py",
+    ):
+        _build(isolated_output)
 
 
 def test_private_ids_and_reference_hashes_do_not_persist(
@@ -291,7 +395,7 @@ def test_ac_runner_binds_qualified_v2_manifest(
     monkeypatch.setattr(runtime_module, "git_commit", lambda: "a" * 40)
     monkeypatch.setattr(runtime_module, "version", lambda _package: "offline-test-sdk")
     context = ExperimentRunContext(
-        experiment_id=AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
+        experiment_id=AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
         suite_hash=summary["successor_suite_hash"],
         execution_hash="sha256:" + "1" * 64,

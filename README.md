@@ -10,9 +10,16 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - A: no cross-run memory
 - C: the exact three-entry structured bundle
 - Moto and Babel, one A/C pair each
-- identical model, prompt, tools, context policy and 3M/3600 resource ceiling
+- identical model, prompt, tools, context policy and the R8 split-budget runtime tuple
 
-`docs/current-status.md` owns the evaluator-v2, reusable-preflight and A/C boundary.
+R3 attempted the four-row readiness panel once and sealed it `inconclusive`: Moto A resolved through receipt-qualified
+evaluator v2, Moto C could not fund the exact next request within the 3M ceiling before submission, and both Babel
+rows were not started.
+R3 through R6 are sealed `inconclusive`. R4 stopped before provider dispatch at `$0`; R5 and R6 each resolved Moto A
+through evaluator v2 but failed distinct post-evaluator qualification contracts, so their remaining rows did not
+start. R7/R9 was superseded unexecuted after offline contract audits found type and evidence-binding gaps. R10 now
+qualifies the contract-hardened R8 source offline; R8 has no preflight candidate, approval or run.
+`docs/current-status.md` owns the exact tuple and next gate.
 
 ## Implemented product path
 
@@ -32,8 +39,13 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
 - V3-v23 attempts are immutable historical evidence; V23 ended before evaluator execution at
   `diagnostic_result_invalid`. V24/V25 are source corrections, not readiness evidence.
-- The active path reuses unchanged preflight source with append-only attempt IDs. Paid A/C remains blocked until a
-  clean execution hash and one campaign-level cost approval exist.
+- R3 preserves one receipt-qualified live v2 success; R5 and R6 add resolved/evaluated but trace-unqualified rows. None
+  yields an analyzable A/C pair or memory-effect claim.
+- R10/R8 applies equal A/C limits of 3M input, 350k output, 3.35M aggregate, 25k per response, 180/300 model/tool calls
+  and 3,600 seconds. Its price-aware reserve is `$3.825`/row, `$15.30`/panel and `$18` hard cap.
+- Those thresholds come from one observed R3 development row: they are neither held-out-safe nor a completion claim.
+  The old R7 candidate `sha256:8b962b80...bf6c` is superseded and cannot authorize R8. R8 needs a clean-commit
+  no-call preflight and a newly bound approval; R3-R6 are never resumed. Held-out A/C and B/D remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 
@@ -51,8 +63,8 @@ These validate documentation only and make no external or paid call.
 
 ## CLI surface
 
-`uv run --offline --frozen patchloop --help` lists the CLI. The supported fast preflight is no-call; provider
-execution still requires its exact execution hash and explicit campaign cost approval.
+`uv run --offline --frozen patchloop --help` lists the CLI. The supported fast preflight is no-call. Any future
+provider campaign requires a fresh exact execution hash and explicit cost approval.
 
 ## Documentation
 

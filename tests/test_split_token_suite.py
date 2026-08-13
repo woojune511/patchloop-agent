@@ -8,6 +8,7 @@ from patchloop.evals.runner import (  # noqa: PLC2701
     AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY,
     GPT54_MINI_AC_SPLIT_TOKEN_BUDGET,
     HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS,
+    SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS,
     _campaign_cost_control,
     _is_ac_fixed_bundle_readiness_profile,
     _pricing_contract,
@@ -22,6 +23,7 @@ R4_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20
 R5_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r5.yaml"
 R6_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r6.yaml"
 R7_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r7.yaml"
+R8_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml"
 
 
 def test_legacy_budget_serialization_and_r3_hash_are_unchanged() -> None:
@@ -115,19 +117,33 @@ def test_r6_preserves_r5_semantics_and_both_are_consumed() -> None:
     assert _suite_hash(r6) != _suite_hash(r5)
 
 
-def test_r7_preserves_r6_semantics_but_r6_is_consumed() -> None:
+def test_r7_preserves_r6_semantics_but_is_now_superseded() -> None:
     r6 = load_suite(R6_SUITE)
     r7 = load_suite(R7_SUITE)
     r6_payload = r6.model_dump(mode="json")
     r7_payload = r7.model_dump(mode="json")
 
     assert r6.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
-    assert r7.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r7.experiment_id in SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS
     assert r6.experiment_id != r7.experiment_id
     r6_payload.pop("experiment_id")
     r7_payload.pop("experiment_id")
     assert r7_payload == r6_payload
     assert _suite_hash(r7) != _suite_hash(r6)
+
+
+def test_r8_preserves_unexecuted_r7_semantics_with_new_identity() -> None:
+    r7 = load_suite(R7_SUITE)
+    r8 = load_suite(R8_SUITE)
+    r7_payload = r7.model_dump(mode="json")
+    r8_payload = r8.model_dump(mode="json")
+
+    assert r7.experiment_id in SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS
+    assert r8.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    r7_payload.pop("experiment_id")
+    r8_payload.pop("experiment_id")
+    assert r8_payload == r7_payload
+    assert _suite_hash(r8) != _suite_hash(r7)
 
 
 def test_r4_price_aware_reserve_matches_split_ceilings() -> None:

@@ -15,8 +15,8 @@ Immediate readiness question:
 > Can an exact fixed structured bundle be delivered through the full workflow without leakage, ambiguity or
 > process failure when compared contemporaneously with no memory?
 
-The readiness result must not be reported as the answer to the long-term question.
-Readiness execution is paused until evaluator v2 and a successor A/C source are qualified.
+The readiness result is not the long-term answer. R3 through R6 are immutable inconclusive attempts; R10 qualifies
+contract-hardened R8 offline, not as a result. R7/R9 is superseded unexecuted.
 
 ## 2. Dataset roles
 
@@ -40,7 +40,7 @@ held-out result.
 | --- | --- | --- |
 | A | `no_memory` | Implemented baseline condition |
 | B | `raw_trace` | Deferred; portable selection/redaction contract incomplete |
-| C | `structured` | Exact-three delivery and evaluator-v2 successor qualified offline; no live result |
+| C | `structured` | Exact-three delivered live on Moto, but that row failed before agent submission and evaluation |
 | D | `selective_structured` | Deferred; applicability calibration and score policy incomplete |
 
 For this readiness panel, C means all three approved generic rules in frozen D-110 `group_provenance`
@@ -49,8 +49,8 @@ embedding retrieval or threshold selection.
 
 ## 4. Four-run readiness matrix
 
-The historical offline plan is `experiments/ac-structured-pilot-v2.plan.yaml`; the exact R2 suite is
-`experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml`.
+The offline-qualified v11 plan binds unexecuted R8; v10/R9/R7, v9/R8/R6, v8/R7/R5, v7/R6-qualification/R4 and
+v6/R5-qualification/R3 remain immutable predecessors.
 
 | Order | Task | Condition |
 | ---: | --- | --- |
@@ -59,9 +59,8 @@ The historical offline plan is `experiments/ac-structured-pilot-v2.plan.yaml`; t
 | 3 | Babel #1042 | C `structured` |
 | 4 | Babel #1042 | A `no_memory` |
 
-Each row uses a fresh workspace and no state from another row. There is one outcome-bearing repetition. Local
-preflight may retry transient readiness failures before the campaign starts. Campaign rows are single-attempt;
-any infrastructure or outcome-bearing failure makes the panel inconclusive. Condition order is counterbalanced.
+Rows use fresh workspaces and one repetition. Preflight may retry transient pre-provider failure; campaign rows do
+not retry or replace, and any confound makes the counterbalanced panel inconclusive.
 
 ## 5. Controlled variables
 
@@ -71,12 +70,17 @@ All four rows must share:
 - transport retry 0 and `store=false`;
 - SYSTEM_PROMPT_V3, tool schema v2 and phase-evidence-v5;
 - exact task package, base commit and official evaluator per task;
-- max output 25,000, total-token ceiling 3,000,000 and wall timeout 3,600 seconds;
-- no model/tool call-count ceiling;
+- cumulative input/output/aggregate ceilings of 3,000,000/350,000/3,350,000 tokens, with reasoning counted as
+  output;
+- max output 25,000 per response, max 180 model calls, max 300 tool calls and wall timeout 3,600 seconds;
 - identical pricing/accounting and schedule qualification; D-126 observed official default-tier list prices
   of $0.75 input, $0.075 cached input and $4.50 output per 1M text tokens.
 
 The only planned treatment difference is exact selected-memory content.
+
+R8 reserves full-price input/output at `$3.825` per row and `$15.30` per panel, with `$18` cap and `$2.70` slack; it
+assumes no cache discount. The equal A/C thresholds are informed by one R3 development row, not held-out-safe,
+invoice/completion predictions or proof extra capacity resolves C.
 
 ## 6. Memory delivery qualification
 
@@ -92,20 +96,14 @@ D-122 predecessor evidence and current D-125 offline tests prove:
    selected-memory field and its derived hashes/counts. Later live turns may diverge with agent trajectory.
 7. Input-token counting, truncation-disabled behavior and durable usage evidence remain intact.
 
-D-108's +702 token count covers one request shape, not every live turn. D-124/D-125 prove local/mock completion
-behavior only; no reservation, result, candidate or execution hash exists. Consumed external attempts remain
-canonical in `docs/09-evidence.md`.
+D-108's +702 tokens cover one request shape. R3 live C delivery consumed 2,963,919 tokens before submission and says
+nothing about task effect. `docs/09-evidence.md` owns exact observations.
 
-D-142 remains source-qualified/unactivated and cannot qualify changed evaluator bytes. The evaluator-v2 successor
-already binds new source, suite and runtime identities while preserving A-null/C-exact-three treatment.
+R10 binds R8 source/plan/suite/split-budget/bounded-call and strict machine-contract identities while preserving A-null/C-exact-three. The qualification itself
+creates no preflight, approval or runtime artifact; D-142 cannot qualify these bytes.
 
-Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
-persistence/qualification; raw results remain unofficial. Historical V1-V25 attempt artifacts keep their exact
-observations and limits in `docs/09-evidence.md` but no longer define the active retry policy.
-
-The active path uses one reusable, bounded no-call preflight. Completed attempts are append-only; unchanged source
-and configuration may be attempted again without a new contract version or state/approval prose. A clean result emits
-the candidate hash. Provider execution still requires one separate campaign approval for that exact hash and cap.
+R8 has no no-call candidate. The R7 candidate `sha256:8b962b80...bf6c` is superseded and cannot transfer. A future
+R8 candidate still requires a separate exact-hash approval binding `$15.30` reserve and `$18` cap. Raw v2 remains unofficial.
 
 ## 7. Run-completion gate
 
@@ -119,9 +117,13 @@ The D-125-qualified completion source makes the four-row matrix analyzable only 
 - binds a specific evaluator-v2 safety result and its evidence rather than accepting a verdict string alone;
 - has no infrastructure, qualification, diagnostic or budget-terminal confound.
 
-If any row fails this gate, preserve all evidence and mark the panel inconclusive. Do not replace or rerun only that
-row; a later retry must be a disclosed fresh full panel. Cross-store/global/cross-clone protection, actual kill and
-power-loss durability remain unverified.
+R3 failed this gate at Moto C and left Babel unstarted. R4 sealed before provider dispatch at `$0` because its
+paid-plan capability revalidation selected the legacy budget. R5 Moto A then resolved through evaluator v2, but a
+legacy null-call/aggregate-only terminal qualification rejected it and halted the other three rows. No row may be
+replaced. R6 Moto A then resolved and passed evaluator v2, but its runtime evidence recorded the legacy call-guard
+policy and qualification halted the other rows. R8 is the fresh offline-qualified panel with no candidate, approval
+or run. Global/cross-clone
+and kill/power-loss durability remain unverified.
 
 ## 8. Metrics
 

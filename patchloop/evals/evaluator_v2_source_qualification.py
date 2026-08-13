@@ -1,18 +1,20 @@
-"""Offline qualification for the runtime-evidence-corrected evaluator-v2 successor.
+"""Offline qualification for the contract-hardened evaluator-v2 successor.
 
-The artifact produced here binds exact local source, the sealed R6 terminal,
-the unchanged split-budget treatment, the two development-validation task
-packages, and a new successor-suite identity. It never starts an agent,
-evaluator, provider, Docker process, or credential observation and grants none
-of those authorities.
+The artifact produced here binds exact local source and its paid-path import
+closure, the unexecuted R7 predecessor, the unchanged split-budget treatment,
+the two development-validation task packages, and a new successor-suite
+identity. It never starts an agent, evaluator, provider, Docker process, or
+credential observation and grants none of those authorities.
 """
 
 from __future__ import annotations
 
+import ast
 import os
 import stat
 from collections.abc import Sequence
 from datetime import UTC, datetime
+from importlib.util import resolve_name
 from pathlib import Path
 from typing import Any, Literal
 
@@ -39,7 +41,13 @@ from patchloop.memory.fixed_bundle import (
 )
 from patchloop.runtime import repository_root
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json, safe_relative_path, sha256_bytes, sha256_json
+from patchloop.util import (
+    canonical_json,
+    load_unique_yaml,
+    safe_relative_path,
+    sha256_bytes,
+    sha256_json,
+)
 from patchloop.verifier.evidence import evaluator_v2_marker_set_hash
 from patchloop.verifier.runtime_evidence import (
     EvaluatorV2RuntimeAuthority,
@@ -47,17 +55,17 @@ from patchloop.verifier.runtime_evidence import (
     evaluator_v2_runtime_tuple_hash,
 )
 
-SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v9"
-QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260814-r9"
+SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v10"
+QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260814-r10"
 STATUS = "OFFLINE_SOURCE_QUALIFIED_LIVE_CLOSED"
 
-PLAN_PATH = Path("experiments/ac-structured-pilot-v10.plan.yaml")
-BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r7.yaml")
+PLAN_PATH = Path("experiments/ac-structured-pilot-v11.plan.yaml")
+BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml")
 FAST_PREDECESSOR_SUITE_PATH = Path(
-    "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r6.yaml"
+    "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r7.yaml"
 )
 OUTPUT_PATH = Path(
-    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r9.json"
+    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r10.json"
 )
 
 TASK_PATHS = (
@@ -74,17 +82,25 @@ SOURCE_PATHS = tuple(
             FAST_PREDECESSOR_SUITE_PATH,
             Path(
                 "reports/live-pilot/artifacts/"
-                "evaluator-v2-ac-successor-offline-source-qualification-r8.json"
+                "evaluator-v2-ac-successor-offline-source-qualification-r9.json"
             ),
             Path(
                 "reports/live-pilot/"
                 "dev-validation-ac-fixed-bundle-readiness-20260814-r6-evidence.json"
             ),
             Path("patchloop/artifacts.py"),
+            Path("patchloop/__init__.py"),
+            Path("patchloop/agent/__init__.py"),
+            Path("patchloop/agent/coverage_rejection.py"),
+            Path("patchloop/agent/model.py"),
+            Path("patchloop/agent/phases.py"),
+            Path("patchloop/agent/review.py"),
             Path("patchloop/cli.py"),
             Path("patchloop/contracts.py"),
+            Path("patchloop/dataset.py"),
             Path("patchloop/environment.py"),
             Path("patchloop/errors.py"),
+            Path("patchloop/evals/__init__.py"),
             Path("patchloop/runtime.py"),
             Path("patchloop/task_loader.py"),
             Path("patchloop/util.py"),
@@ -94,24 +110,37 @@ SOURCE_PATHS = tuple(
             Path("patchloop/agent/investigation.py"),
             Path("patchloop/agent/tools.py"),
             Path("patchloop/evals/budget.py"),
+            Path("patchloop/evals/coverage_rejection.py"),
             Path("patchloop/evals/evaluator_v2_source_qualification.py"),
+            Path("patchloop/evals/failures.py"),
             Path("patchloop/evals/policy_replay.py"),
             Path("patchloop/evals/qualification.py"),
             Path("patchloop/evals/report.py"),
             Path("patchloop/evals/runner.py"),
             Path("patchloop/memory/__init__.py"),
             Path("patchloop/memory/fixed_bundle.py"),
+            Path("patchloop/memory/retrieval.py"),
+            Path("patchloop/memory/store.py"),
+            Path("patchloop/sandbox/__init__.py"),
             Path("patchloop/sandbox/runner.py"),
+            Path("patchloop/state/__init__.py"),
             Path("patchloop/state/ownership.py"),
             Path("patchloop/state/store.py"),
+            Path("patchloop/verifier/__init__.py"),
             Path("patchloop/verifier/core.py"),
             Path("patchloop/verifier/evidence.py"),
+            Path("patchloop/verifier/policy.py"),
             Path("patchloop/verifier/receipt.py"),
             Path("patchloop/verifier/runtime_evidence.py"),
         ),
         key=lambda item: item.as_posix(),
     )
 )
+
+# `patchloop.exe evaluate` delegates into this semantic campaign entrypoint.
+# `patchloop/cli.py` and the environment adapter remain explicitly source-bound;
+# command-unrelated function-local CLI imports are intentionally not closure roots.
+PAID_PATH_IMPORT_ENTRYPOINTS = (Path("patchloop/evals/runner.py"),)
 
 VALIDATION_PATHS = tuple(
     sorted(
@@ -128,6 +157,7 @@ VALIDATION_PATHS = tuple(
             Path("tests/test_fast_preflight.py"),
             Path("tests/test_report.py"),
             Path("tests/test_r6_runtime_evidence_index.py"),
+            Path("tests/test_r7_offline_contract_chain.py"),
             Path("tests/test_sandbox.py"),
             Path("tests/test_split_token_qualification.py"),
             Path("tests/test_split_token_suite.py"),
@@ -318,6 +348,9 @@ class EvaluatorV2ACSourceQualification(FrozenStrictModel):
     base_suite_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     evaluator_source_files: tuple[QualificationFileBinding, ...] = Field(min_length=1)
     evaluator_source_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    paid_path_import_entrypoints: tuple[str, ...] = Field(min_length=1)
+    paid_path_import_closure: tuple[str, ...] = Field(min_length=1)
+    paid_path_import_closure_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     validation_files: tuple[QualificationFileBinding, ...] = Field(min_length=1)
     validation_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     task_bindings: tuple[QualifiedTaskBinding, ...] = Field(min_length=2, max_length=2)
@@ -346,6 +379,17 @@ class EvaluatorV2ACSourceQualification(FrozenStrictModel):
             set(validation_paths)
         ):
             raise ValueError("qualification validation inventory is not canonical")
+        expected_entrypoints = tuple(item.as_posix() for item in PAID_PATH_IMPORT_ENTRYPOINTS)
+        if self.paid_path_import_entrypoints != expected_entrypoints:
+            raise ValueError("paid-path import entrypoints differ")
+        if self.paid_path_import_closure != tuple(sorted(self.paid_path_import_closure)) or len(
+            self.paid_path_import_closure
+        ) != len(set(self.paid_path_import_closure)):
+            raise ValueError("paid-path import closure is not canonical")
+        if not set(self.paid_path_import_closure).issubset(source_paths):
+            raise ValueError("paid-path import closure is outside the source inventory")
+        if self.paid_path_import_closure_hash != sha256_json(list(self.paid_path_import_closure)):
+            raise ValueError("paid-path import closure fingerprint mismatch")
         if task_ids != (
             "babel-strict-grouped-decimal-trailing-zeroes",
             "moto-query-scanned-count",
@@ -418,6 +462,115 @@ def _logical_path(root: Path, relative: Path, *, must_exist: bool) -> Path:
     if must_exist:
         _require(resolved.is_file(), f"qualification source is not a file: {relative}")
     return resolved
+
+
+def _module_name(relative: Path) -> str:
+    parts = list(relative.with_suffix("").parts)
+    if parts and parts[-1] == "__init__":
+        parts.pop()
+    return ".".join(parts)
+
+
+def _internal_module_path(
+    root: Path,
+    module_name: str,
+    *,
+    required: bool,
+) -> Path | None:
+    if module_name != "patchloop" and not module_name.startswith("patchloop."):
+        return None
+    stem = Path(*module_name.split("."))
+    candidates = (stem.with_suffix(".py"), stem / "__init__.py")
+    existing = [item for item in candidates if (root / item).is_file()]
+    if len(existing) > 1:
+        raise EvaluatorV2SourceQualificationError(
+            f"ambiguous internal import module: {module_name}"
+        )
+    if not existing:
+        if required:
+            raise EvaluatorV2SourceQualificationError(
+                f"unresolved internal import module: {module_name}"
+            )
+        return None
+    return existing[0]
+
+
+def _paid_path_import_closure(
+    root: Path,
+    *,
+    entrypoints: Sequence[Path] = PAID_PATH_IMPORT_ENTRYPOINTS,
+) -> tuple[Path, ...]:
+    """Resolve the Python import closure of the paid campaign entrypoint."""
+
+    queued: list[Path] = []
+    closure: set[Path] = set()
+
+    def add(relative: Path) -> None:
+        relative = Path(safe_relative_path(relative.as_posix()))
+        _logical_path(root, relative, must_exist=True)
+        if relative.suffix != ".py" or not relative.parts or relative.parts[0] != "patchloop":
+            raise EvaluatorV2SourceQualificationError(
+                f"paid-path import is not a patchloop Python module: {relative.as_posix()}"
+            )
+        candidates = [relative]
+        parent = relative.parent
+        while parent.parts and parent.parts[0] == "patchloop":
+            initializer = parent / "__init__.py"
+            if (root / initializer).is_file():
+                candidates.append(initializer)
+            parent = parent.parent
+        for candidate in candidates:
+            if candidate not in closure:
+                closure.add(candidate)
+                queued.append(candidate)
+
+    for entrypoint in entrypoints:
+        add(entrypoint)
+    while queued:
+        relative = queued.pop()
+        selected = _logical_path(root, relative, must_exist=True)
+        try:
+            tree = ast.parse(selected.read_text(encoding="utf-8"), filename=relative.as_posix())
+        except (OSError, UnicodeDecodeError, SyntaxError) as exc:
+            raise EvaluatorV2SourceQualificationError(
+                f"paid-path import source cannot be parsed: {relative.as_posix()}"
+            ) from exc
+        current_module = _module_name(relative)
+        current_package = (
+            current_module if relative.name == "__init__.py" else current_module.rpartition(".")[0]
+        )
+        for node in ast.walk(tree):
+            imported_modules: list[tuple[str, bool]] = []
+            if isinstance(node, ast.Import):
+                imported_modules.extend((alias.name, True) for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:
+                    try:
+                        base = resolve_name(
+                            f"{'.' * node.level}{node.module or ''}",
+                            current_package,
+                        )
+                    except (ImportError, ValueError) as exc:
+                        raise EvaluatorV2SourceQualificationError(
+                            f"invalid relative import in {relative.as_posix()}"
+                        ) from exc
+                else:
+                    base = node.module or ""
+                imported_modules.append((base, True))
+                imported_modules.extend(
+                    (f"{base}.{alias.name}", False) for alias in node.names if alias.name != "*"
+                )
+            for module_name, required in imported_modules:
+                if module_name != "patchloop" and not module_name.startswith("patchloop."):
+                    continue
+                imported_path = _internal_module_path(
+                    root,
+                    module_name,
+                    required=required,
+                )
+                if imported_path is not None:
+                    add(imported_path)
+    return tuple(sorted(closure, key=lambda item: item.as_posix()))
 
 
 def _file_binding(root: Path, relative: Path) -> QualificationFileBinding:
@@ -524,10 +677,27 @@ def _task_binding(
     )
 
 
+def _exact_typed_equal(actual: Any, expected: Any) -> bool:
+    """Compare machine contracts without Python bool/int/float equivalence."""
+
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(expected, dict):
+        return set(actual) == set(expected) and all(
+            _exact_typed_equal(actual[key], expected[key]) for key in expected
+        )
+    if isinstance(expected, (list, tuple)):
+        return len(actual) == len(expected) and all(
+            _exact_typed_equal(actual_item, expected_item)
+            for actual_item, expected_item in zip(actual, expected, strict=True)
+        )
+    return bool(actual == expected)
+
+
 def _load_plan(root: Path) -> dict[str, Any]:
     selected = _logical_path(root, PLAN_PATH, must_exist=True)
     try:
-        value = yaml.safe_load(selected.read_text(encoding="utf-8"))
+        value = load_unique_yaml(selected.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
         raise EvaluatorV2SourceQualificationError(
             "evaluator-v2 successor plan is unreadable"
@@ -547,11 +717,11 @@ def _load_plan(root: Path) -> dict[str, Any]:
     }
     _require(set(value) == expected_keys, "evaluator-v2 successor plan fields differ")
     _require(
-        value["schema_version"] == "ac-structured-pilot-plan-v10"
+        value["schema_version"] == "ac-structured-pilot-plan-v11"
         and value["plan_id"]
-        == "ac-structured-dev-validation-evaluator-v2-runtime-evidence-correction-20260814-v9"
+        == "ac-structured-dev-validation-evaluator-v2-contract-hardening-20260814-v10"
         and value["status"] == "offline-evaluator-v2-source-qualification"
-        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v9.plan.yaml"
+        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v10.plan.yaml"
         and value["base_suite"] == BASE_SUITE_PATH.as_posix(),
         "evaluator-v2 successor plan identity differs",
     )
@@ -567,30 +737,43 @@ def _load_plan(root: Path) -> dict[str, Any]:
         for order, task_id, condition, repetition in _EXPECTED_SCHEDULE
     ]
     _require(
-        successor
-        == {
-            "suite_id": QUALIFICATION_ID,
-            "purpose": "development-validation-ac-readiness",
-            "conditions": ["no_memory", "structured"],
-            "repetitions": 1,
-            "expected_runs": 4,
-            "schedule": expected_schedule,
-            "replacement_or_retry_allowed": False,
-        },
+        _exact_typed_equal(
+            successor,
+            {
+                "suite_id": QUALIFICATION_ID,
+                "purpose": "development-validation-ac-readiness",
+                "conditions": ["no_memory", "structured"],
+                "repetitions": 1,
+                "expected_runs": 4,
+                "schedule": expected_schedule,
+                "replacement_or_retry_allowed": False,
+            },
+        ),
         "successor suite plan differs",
     )
-    _require(value["runtime"] == _EXPECTED_RUNTIME, "successor runtime tuple differs")
-    _require(value["treatment"] == _EXPECTED_TREATMENT, "successor treatment differs")
-    _require(value["authority"] == _EXPECTED_AUTHORITY, "successor authority differs")
     _require(
-        value["next_gate"]
-        == {
-            "action": "run-bounded-no-call-readiness",
-            "maximum_attempts": 3,
-            "per_attempt_versioned_successor_required": False,
-            "requires_separate_paid_execution_approval": True,
-            "does_not_authorize_execution": True,
-        },
+        _exact_typed_equal(value["runtime"], _EXPECTED_RUNTIME),
+        "successor runtime tuple differs",
+    )
+    _require(
+        _exact_typed_equal(value["treatment"], _EXPECTED_TREATMENT),
+        "successor treatment differs",
+    )
+    _require(
+        _exact_typed_equal(value["authority"], _EXPECTED_AUTHORITY),
+        "successor authority differs",
+    )
+    _require(
+        _exact_typed_equal(
+            value["next_gate"],
+            {
+                "action": "run-bounded-no-call-readiness",
+                "maximum_attempts": 3,
+                "per_attempt_versioned_successor_required": False,
+                "requires_separate_paid_execution_approval": True,
+                "does_not_authorize_execution": True,
+            },
+        ),
         "successor next gate differs",
     )
     return value
@@ -598,7 +781,7 @@ def _load_plan(root: Path) -> dict[str, Any]:
 
 def _load_base_suite(root: Path) -> tuple[Any, str]:
     from patchloop.contracts import (
-        AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     )
     from patchloop.evals.runner import (
@@ -621,8 +804,8 @@ def _load_base_suite(root: Path) -> tuple[Any, str]:
         suite_payload.pop(field, None)
         predecessor_payload.pop(field, None)
     _require(
-        suite.experiment_id == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
-        and predecessor.experiment_id == AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID
+        suite.experiment_id == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
+        and predecessor.experiment_id == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
         and suite_payload == predecessor_payload
         and suite.budget == GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
         and suite.campaign_cost_policy is not None
@@ -634,7 +817,7 @@ def _load_base_suite(root: Path) -> tuple[Any, str]:
         and suite.live_cost_approved is False
         and suite.approved_execution_hash is None
         and suite.pricing_verified_at == datetime(2026, 8, 13, 12, 5, 26, tzinfo=UTC),
-        "base A/C suite is not the exact runtime-evidence-corrected successor source",
+        "base A/C suite is not the exact contract-hardened successor source",
     )
     return suite, _suite_hash(suite)
 
@@ -709,6 +892,16 @@ def _build_candidate(
         and no_memory.evidence.selected_memory_present is False,
         "fixed A/C treatment identity differs",
     )
+    paid_path_import_closure = _paid_path_import_closure(root)
+    missing_import_sources = sorted(
+        set(paid_path_import_closure) - set(SOURCE_PATHS),
+        key=lambda item: item.as_posix(),
+    )
+    _require(
+        not missing_import_sources,
+        "evaluator source inventory omits paid-path imports: "
+        + ", ".join(item.as_posix() for item in missing_import_sources),
+    )
     source_files = _bindings(root, SOURCE_PATHS)
     validation_files = _bindings(root, VALIDATION_PATHS)
     evaluator_source_hash = sha256_json([item.model_dump(mode="json") for item in source_files])
@@ -737,6 +930,11 @@ def _build_candidate(
         "base_suite_hash": base_suite_hash,
         "evaluator_source_files": [item.model_dump(mode="json") for item in source_files],
         "evaluator_source_hash": evaluator_source_hash,
+        "paid_path_import_entrypoints": [item.as_posix() for item in PAID_PATH_IMPORT_ENTRYPOINTS],
+        "paid_path_import_closure": [item.as_posix() for item in paid_path_import_closure],
+        "paid_path_import_closure_hash": sha256_json(
+            [item.as_posix() for item in paid_path_import_closure]
+        ),
         "validation_files": [item.model_dump(mode="json") for item in validation_files],
         "validation_hash": sha256_json([item.model_dump(mode="json") for item in validation_files]),
         "task_bindings": [item.model_dump(mode="json") for item in task_bindings],
@@ -924,7 +1122,7 @@ def validate_evaluator_v2_ac_paid_authority(
 ):
     """Bind a paid v2 manifest and authority to the exact qualified artifact."""
 
-    from patchloop.contracts import AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
+    from patchloop.contracts import AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
     from patchloop.verifier.receipt import (
         EvaluatorV2QualificationAuthority,
         validate_evaluator_v2_manifest_authority,
@@ -975,7 +1173,7 @@ def validate_evaluator_v2_ac_paid_authority(
     )
     _require(
         manifest.schema_version == "run-manifest-v2"
-        and experiment.experiment_id == AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID
+        and experiment.experiment_id == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID
         and experiment.suite_hash == payload.successor_suite.content_hash
         and checked.suite_hash == payload.successor_suite.content_hash
         and checked.source_qualification_hash == payload.content_hash

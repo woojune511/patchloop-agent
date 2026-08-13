@@ -50,10 +50,13 @@ from patchloop.contracts import (
     AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
+    AC_FIXED_BUNDLE_LEGACY_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_QUALIFICATION_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
@@ -104,7 +107,15 @@ from patchloop.runtime import (
 )
 from patchloop.sandbox import DockerSandbox
 from patchloop.task_loader import load_task_package
-from patchloop.util import canonical_json, ensure_within, sha256_bytes, sha256_text, utc_now
+from patchloop.util import (
+    canonical_json,
+    ensure_within,
+    load_unique_yaml,
+    require_yaml_scalar_type_identity,
+    sha256_bytes,
+    sha256_text,
+    utc_now,
+)
 from patchloop.verifier.receipt import (
     EvaluatorV2QualificationAuthority,
     validate_evaluator_v2_manifest_authority,
@@ -177,6 +188,7 @@ SUPERSEDED_UNEXECUTED_LIVE_EXPERIMENT_IDS = frozenset(
     {
         "dev-validation-gpt54mini-token-tail-v5-20260730-r1",
         "dev-no-memory-v5-20260730-r1",
+        AC_FIXED_BUNDLE_RUNTIME_EVIDENCE_CORRECTED_EXPERIMENT_ID,
     }
 )
 CONSUMED_COMPLETION_PANEL_EXPERIMENT_IDS = frozenset(
@@ -1465,6 +1477,23 @@ def _nanos_to_usd(value: int) -> float:
     return float(Decimal(value) / Decimal(USD_NANOS))
 
 
+def _exact_typed_equal(actual: Any, expected: Any) -> bool:
+    """Compare JSON-shaped contract values without bool/int/float coercion."""
+
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(expected, dict):
+        return set(actual) == set(expected) and all(
+            _exact_typed_equal(actual[key], value) for key, value in expected.items()
+        )
+    if isinstance(expected, list):
+        return len(actual) == len(expected) and all(
+            _exact_typed_equal(actual_item, expected_item)
+            for actual_item, expected_item in zip(actual, expected, strict=True)
+        )
+    return actual == expected
+
+
 def _d087_usage_payload(usage: Usage) -> dict[str, Any]:
     payload = usage.model_dump(mode="json")
     payload.pop("model_cost_usd", None)
@@ -1610,6 +1639,9 @@ def _validate_full_schedule_usage_evidence(
         and descriptor.get("model_id") == GPT54_MINI_PILOT_MODEL_ID
         and descriptor.get("pricing_schema") == pricing_schema
         and descriptor.get("price_nanos_per_token") == D097_PRICE_NANOS_PER_TOKEN
+        and all(
+            type(value) is int for value in descriptor.get("price_nanos_per_token", {}).values()
+        )
         and _is_sha256_identity(content_hash)
         and sha256_text(canonical_json(descriptor)) == content_hash
         and _is_sha256_identity(descriptor.get("qualification_hash"))
@@ -1627,7 +1659,10 @@ def _validate_full_schedule_usage_evidence(
     if _d097_usage_payload(usage) != usage_payload:
         raise ContractError("non-canonical full-schedule durable usage counters")
     recomputed_cost_nanos = _d097_fixed_cost_nanos(usage)
-    if descriptor.get("token_derived_cost_nanos") != recomputed_cost_nanos:
+    if (
+        type(descriptor.get("token_derived_cost_nanos")) is not int
+        or descriptor.get("token_derived_cost_nanos") != recomputed_cost_nanos
+    ):
         raise ContractError("full-schedule durable usage cost does not match fixed pricing")
     return recomputed_cost_nanos
 
@@ -1732,6 +1767,9 @@ def _validate_d087_usage_evidence(
         and descriptor.get("model_id") == GPT54_MINI_PILOT_MODEL_ID
         and descriptor.get("pricing_schema") == D087_FIXED_PRICING_SCHEMA
         and descriptor.get("price_nanos_per_token") == D087_PRICE_NANOS_PER_TOKEN
+        and all(
+            type(value) is int for value in descriptor.get("price_nanos_per_token", {}).values()
+        )
         and _is_sha256_identity(content_hash)
         and sha256_text(canonical_json(descriptor)) == content_hash
         and _is_sha256_identity(descriptor.get("qualification_hash"))
@@ -1749,7 +1787,10 @@ def _validate_d087_usage_evidence(
     if _d087_usage_payload(usage) != usage_payload:
         raise ContractError("non-canonical D-087 durable usage counters")
     recomputed_cost_nanos = _d087_fixed_cost_nanos(usage)
-    if descriptor.get("token_derived_cost_nanos") != recomputed_cost_nanos:
+    if (
+        type(descriptor.get("token_derived_cost_nanos")) is not int
+        or descriptor.get("token_derived_cost_nanos") != recomputed_cost_nanos
+    ):
         raise ContractError("D-087 durable usage cost does not match fixed pricing")
     return recomputed_cost_nanos
 
@@ -2382,6 +2423,52 @@ class ACFixedBundleSplitTokenCostPolicy(BaseModel):
     completion_guaranteed: Literal[False]
     invoice_or_free_tier_claimed: Literal[False]
 
+    @field_validator(
+        "scheduled_run_count",
+        "max_cumulative_input_tokens",
+        "max_cumulative_output_tokens",
+        "aggregate_token_ceiling",
+        "per_run_reserve_nanos",
+        "full_schedule_reserve_nanos",
+        "hard_cap_nanos",
+        "row_reserve_count",
+        mode="before",
+    )
+    @classmethod
+    def validate_integer_policy_fields(cls, value: Any) -> Any:
+        if type(value) is not int:
+            raise ValueError("split-token policy counters must be JSON integers")
+        return value
+
+    @field_validator(
+        "cost_censoring_allowed",
+        "not_started_due_to_cost_allowed",
+        "automatic_retry_or_replacement_allowed",
+        "completion_guaranteed",
+        "invoice_or_free_tier_claimed",
+        mode="before",
+    )
+    @classmethod
+    def validate_boolean_policy_fields(cls, value: Any) -> Any:
+        if type(value) is not bool:
+            raise ValueError("split-token policy flags must be JSON booleans")
+        return value
+
+    @field_validator(
+        "input_reserve_rate_per_million_usd",
+        "output_reserve_rate_per_million_usd",
+        "per_run_reserve_usd",
+        "full_schedule_reserve_usd",
+        "hard_cap_usd",
+        "hard_cap_slack_usd",
+        mode="before",
+    )
+    @classmethod
+    def validate_float_policy_fields(cls, value: Any) -> Any:
+        if type(value) is not float:
+            raise ValueError("split-token policy rates and USD amounts must be JSON numbers")
+        return value
+
 
 class ExperimentScheduleRow(BaseModel):
     """One author-ordered row for a narrowly pre-registered suite."""
@@ -2392,6 +2479,13 @@ class ExperimentScheduleRow(BaseModel):
     task: str
     condition: MemoryCondition
     repetition: int = Field(ge=1, le=20)
+
+    @field_validator("order", "repetition", mode="before")
+    @classmethod
+    def validate_integer_schedule_fields(cls, value: Any) -> Any:
+        if type(value) is not int:
+            raise ValueError("schedule order and repetition must be JSON integers")
+        return value
 
 
 class ExperimentSuite(BaseModel):
@@ -2473,6 +2567,61 @@ class ExperimentSuite(BaseModel):
     def validate_transport_max_retries_type(cls, value: Any) -> Any:
         if value is not None and type(value) is not int:
             raise ValueError("transport_max_retries must be the JSON integer 0")
+        return value
+
+    @field_validator(
+        "repetitions",
+        "max_output_tokens",
+        "seed",
+        "memory_token_budget",
+        mode="before",
+    )
+    @classmethod
+    def validate_integer_suite_fields(cls, value: Any) -> Any:
+        if type(value) is not int:
+            raise ValueError("experiment counters and token limits must be JSON integers")
+        return value
+
+    @field_validator("core", "live_cost_approved", mode="before")
+    @classmethod
+    def validate_boolean_suite_fields(cls, value: Any) -> Any:
+        if value is not None and type(value) is not bool:
+            raise ValueError("experiment flags must be JSON booleans")
+        return value
+
+    @field_validator(
+        "estimated_cost_usd",
+        "cost_limit_usd",
+        "input_price_per_million_usd",
+        "cached_input_price_per_million_usd",
+        "cache_write_input_price_per_million_usd",
+        "output_price_per_million_usd",
+        "retrieval_threshold",
+        mode="before",
+    )
+    @classmethod
+    def validate_numeric_suite_fields(cls, value: Any) -> Any:
+        if value is not None and type(value) not in {int, float}:
+            raise ValueError("experiment prices and thresholds must be JSON numbers")
+        return value
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_split_successor_raw_numeric_types(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        if value.get("experiment_id") not in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS:
+            return value
+        for field in (
+            "estimated_cost_usd",
+            "cost_limit_usd",
+            "input_price_per_million_usd",
+            "cached_input_price_per_million_usd",
+            "output_price_per_million_usd",
+            "retrieval_threshold",
+        ):
+            if type(value.get(field)) is not float:
+                raise ValueError(f"split-token A/C {field} must be a JSON floating number")
         return value
 
     @model_validator(mode="before")
@@ -3126,11 +3275,21 @@ class ExperimentSuite(BaseModel):
 
 
 def load_suite(path: str | Path) -> ExperimentSuite:
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     try:
-        return ExperimentSuite.model_validate(raw)
-    except ValidationError as exc:
+        raw = load_unique_yaml(Path(path).read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise ContractError(f"experiment YAML validation failed: {exc}") from exc
+    try:
+        suite = ExperimentSuite.model_validate(raw)
+        if suite.experiment_id == AC_FIXED_BUNDLE_CONTRACT_HARDENED_EXPERIMENT_ID:
+            require_yaml_scalar_type_identity(
+                raw,
+                suite.model_dump(mode="python"),
+                source=Path(path).name,
+            )
+    except (ValidationError, ContractError) as exc:
         raise ContractError(f"experiment contract validation failed: {exc}") from exc
+    return suite
 
 
 def _validate_memory_index(index_payload: dict, suite: ExperimentSuite) -> None:
@@ -3685,7 +3844,7 @@ def _full_schedule_cost_journal_evidence(
         "repetition",
     )
     if not (
-        policy == expected_policy
+        _exact_typed_equal(policy, expected_policy)
         and _is_sha256_identity(expected_execution_hash)
         and _is_sha256_identity(expected_execution_plan_hash)
         and _is_sha256_identity(schedule_hash)
@@ -3698,6 +3857,7 @@ def _full_schedule_cost_journal_evidence(
         and all(isinstance(row, dict) for row in expected_schedule)
         and [row.get("schedule_row_id") for row in expected_schedule] == schedule_row_ids
         and sha256_text(canonical_json(expected_schedule)) == schedule_hash
+        and type(descriptor.get("schedule_size")) is int
         and descriptor.get("schedule_size") == expected_count
         and descriptor.get("full_schedule_reservation_required") is True
         and descriptor.get("row_bound_reservations") is True
@@ -3744,7 +3904,10 @@ def _full_schedule_cost_journal_evidence(
         payload: dict[str, Any],
         expected: dict[str, Any],
     ) -> bool:
-        return all(payload.get(field) == expected.get(field) for field in row_identity_fields)
+        return all(
+            _exact_typed_equal(payload.get(field), expected.get(field))
+            for field in row_identity_fields
+        )
 
     for sequence, event in enumerate(events, start=1):
         if not isinstance(event, dict):
@@ -3819,6 +3982,15 @@ def _full_schedule_cost_journal_evidence(
                 and payload.get("campaign_cost_control_hash") == control_hash
                 and payload.get("schedule_hash") == schedule_hash
                 and payload.get("schedule_row_ids") == schedule_row_ids
+                and all(
+                    type(payload.get(field)) is int
+                    for field in (
+                        "per_run_reserve_nanos",
+                        "full_schedule_reserve_nanos",
+                        "hard_cap_nanos",
+                        "row_reserve_count",
+                    )
+                )
                 and payload.get("per_run_reserve_nanos") == policy["per_run_reserve_nanos"]
                 and payload.get("full_schedule_reserve_nanos")
                 == policy["full_schedule_reserve_nanos"]
@@ -3841,6 +4013,14 @@ def _full_schedule_cost_journal_evidence(
                 and payload.get("execution_plan_hash") == expected_execution_plan_hash
                 and payload.get("campaign_cost_control_hash") == control_hash
                 and _is_sha256_identity(payload.get("result_hash"))
+                and all(
+                    type(payload.get(field)) is int
+                    for field in (
+                        "completed_runs",
+                        "infrastructure_errors",
+                        "not_started_runs",
+                    )
+                )
                 and payload.get("completed_runs") == completed_rows
                 and payload.get("infrastructure_errors") == infrastructure_error_rows
                 and payload.get("not_started_runs") == len(not_started_rows)
@@ -3877,6 +4057,19 @@ def _full_schedule_cost_journal_evidence(
         if event_type == "RunTerminal":
             evidence = payload.get("usage_evidence")
             expected_row = expected_schedule[next_row_index]
+            optional_string_fields_valid = all(
+                payload.get(field) is None
+                or (isinstance(payload.get(field), str) and bool(payload.get(field)))
+                for field in (
+                    "outcome_kind",
+                    "infrastructure_error_type",
+                    "qualification_error_type",
+                    "diagnostic_error_type",
+                )
+            )
+            diagnostic_status_valid = payload.get("diagnostic_status") is None or payload.get(
+                "diagnostic_status"
+            ) in {"passed", "inconclusive", "failed"}
             base_terminal_valid = bool(
                 active_row_id is not None
                 and not active_terminal_seen
@@ -3886,6 +4079,8 @@ def _full_schedule_cost_journal_evidence(
                 and payload.get("execution_hash") == expected_execution_hash
                 and payload.get("execution_plan_hash") == expected_execution_plan_hash
                 and payload.get("campaign_cost_control_hash") == control_hash
+                and optional_string_fields_valid
+                and diagnostic_status_valid
             )
             settled_terminal = bool(
                 base_terminal_valid
@@ -3902,8 +4097,42 @@ def _full_schedule_cost_journal_evidence(
                 and isinstance(payload.get("infrastructure_error_type"), str)
                 and bool(payload.get("infrastructure_error_type"))
             )
+            terminal_cost_binding_valid = True
+            if experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
+                if settled_terminal:
+                    try:
+                        terminal_cost_nanos = _validate_full_schedule_usage_evidence(
+                            evidence,
+                            experiment_id=experiment_id,
+                            run_id=active_run_id or "",
+                            schedule_row_id=active_row_id or "",
+                        )
+                    except ContractError:
+                        terminal_cost_binding_valid = False
+                    else:
+                        terminal_cost_binding_valid = bool(
+                            _exact_typed_equal(
+                                payload.get("model_cost_usd"),
+                                _nanos_to_usd(terminal_cost_nanos),
+                            )
+                            and payload.get("qualification_hash")
+                            == evidence["descriptor"]["qualification_hash"]
+                        )
+                elif unavailable_terminal:
+                    displayed_cost = payload.get("model_cost_usd")
+                    terminal_cost_binding_valid = bool(
+                        type(displayed_cost) is float
+                        and Decimal(str(displayed_cost)).is_finite()
+                        and displayed_cost >= 0.0
+                        and (
+                            payload.get("qualification_hash") is None
+                            or _is_sha256_identity(payload.get("qualification_hash"))
+                        )
+                    )
             if not (settled_terminal or unavailable_terminal):
                 raise ContractError("invalid D-097 terminal usage evidence")
+            if not terminal_cost_binding_valid:
+                raise ContractError("invalid A/C terminal cost or qualification binding")
             active_evidence = evidence if settled_terminal else None
             active_terminal_seen = True
             terminal_rows += 1
@@ -3939,8 +4168,11 @@ def _full_schedule_cost_journal_evidence(
                 and payload.get("campaign_cost_control_hash") == control_hash
                 and payload.get("usage_evidence_hash") == expected.get("content_hash")
                 and payload.get("usage_reconciliation_passed") is True
-                and run_cost_nanos == independently_recomputed
                 and type(run_cost_nanos) is int
+                and type(payload.get("accrued_cost_nanos_before")) is int
+                and type(payload.get("accrued_cost_nanos_after")) is int
+                and type(payload.get("remaining_reserved_rows_after")) is int
+                and run_cost_nanos == independently_recomputed
                 and 0 <= run_cost_nanos <= policy["per_run_reserve_nanos"]
                 and payload.get("accrued_cost_nanos_before") == accrued_nanos
                 and payload.get("accrued_cost_nanos_after") == accrued_nanos + run_cost_nanos
@@ -3972,6 +4204,7 @@ def _full_schedule_cost_journal_evidence(
                 and payload.get("campaign_cost_control_hash") == control_hash
                 and isinstance(payload.get("reason_type"), str)
                 and bool(payload.get("reason_type"))
+                and type(payload.get("accrued_cost_nanos")) is int
                 and payload.get("accrued_cost_nanos") == accrued_nanos
                 and payload.get("usage_evidence_hash") is None
                 and payload.get("full_schedule_reserve_remains_held") is True
@@ -5060,6 +5293,10 @@ def preflight_suite(
 ) -> dict[str, Any]:
     """Inspect an experiment without constructing an agent or making API calls."""
 
+    if type(approve_live_cost) is not bool:
+        raise ContractError("approve_live_cost must be a boolean")
+    if credential_present is not None and type(credential_present) is not bool:
+        raise ContractError("credential_present must be a boolean or null")
     suite = load_suite(path)
     preflight_checked_at = utc_now()
     base_suite_hash = _suite_hash(suite)
@@ -7032,13 +7269,20 @@ def _d097_completion_gate(
                 exact_projection(checks.get(check_id), check_id)
                 for check_id in expected_readiness_checks
             )
-            and call_blocks
+            and isinstance(call_blocks, dict)
+            and set(call_blocks)
             == {
-                "schema_version": "call-budget-block-projection-v1",
-                "source_check_count": 1,
-                "source_check_passed": True,
-                "event_sequences": [],
+                "schema_version",
+                "source_check_count",
+                "source_check_passed",
+                "event_sequences",
             }
+            and call_blocks.get("schema_version") == "call-budget-block-projection-v1"
+            and type(call_blocks.get("source_check_count")) is int
+            and call_blocks.get("source_check_count") == 1
+            and call_blocks.get("source_check_passed") is True
+            and isinstance(call_blocks.get("event_sequences"), list)
+            and call_blocks.get("event_sequences") == []
             and isinstance(recomputation, dict)
             and set(recomputation)
             == {
@@ -7080,7 +7324,7 @@ def _d097_completion_gate(
             and qualification.get("leakage_scan_passed") is True
             and valid_sha256(qualification.get("source_evidence_hash"))
             and all(
-                row.get(field) == expected.get(field)
+                _exact_typed_equal(row.get(field), expected.get(field))
                 for field in (
                     "order",
                     "schedule_row_id",
@@ -7276,24 +7520,84 @@ def _d097_completion_gate(
     }
 
 
+def _exact_ac_qualification_envelope(qualification: dict[str, Any]) -> bool:
+    expected_keys = {
+        "schema_version",
+        "run_id",
+        "qualified",
+        "trace_integrity_passed",
+        "leakage_scan_passed",
+        "evaluation_reached",
+        "outcome_kind",
+        "purpose",
+        "experiment_id",
+        "dataset_role",
+        "task_id",
+        "execution_hash",
+        "schedule_row_id",
+        "memory_candidate_eligible",
+        "failure_record_id",
+        "qualification_hash",
+        "memory_condition",
+        "source_evidence_hash",
+        "usage_reconciliation",
+        "persisted_result",
+        "readiness_checks",
+        "model_or_tool_call_budget_blocks",
+        "gate_checks",
+        "trace_features",
+        "read_only_recomputation",
+    }
+    if qualification.get("evaluator_version") == "v2":
+        expected_keys.update(
+            {
+                "evaluator_version",
+                "evaluator_v2_receipt_hash",
+                "evaluator_v2_receipt_file_hash",
+                "evaluator_v2_source_hash",
+                "evaluator_v2_source_qualification_hash",
+                "evaluator_v2_runtime_authenticated",
+                "evaluator_v2_completion_eligible",
+            }
+        )
+    return bool(
+        set(qualification) == expected_keys
+        and qualification.get("schema_version") == "trace-qualification-v1"
+    )
+
+
 def _qualified_ac_evaluator_result(
     result: dict[str, Any],
     qualification: dict[str, Any],
+    *,
+    expected_experiment_id: str,
 ) -> bool:
     """Accept historical v1 official results or receipt-qualified v2 results."""
 
     if result.get("schema_version") in {None, "run-result-v1"}:
-        return result.get("official") is True
-    binding = result.get("evaluator_contract")
+        return bool(
+            expected_experiment_id in AC_FIXED_BUNDLE_LEGACY_COST_EXPERIMENT_IDS
+            and result.get("official") is True
+        )
+    try:
+        parsed = RunResult.model_validate(result)
+    except ValidationError:
+        return False
+    if parsed.schema_version != "run-result-v2":
+        return False
+    typed_result = parsed.model_dump(mode="json")
+    if not _exact_typed_equal(result, typed_result):
+        return False
+    binding = typed_result.get("evaluator_contract")
     safety_results = [
         item
-        for item in result.get("verifier_results", [])
+        for item in typed_result.get("verifier_results", [])
         if isinstance(item, dict) and item.get("check_type") == "safety"
     ]
     return bool(
-        result.get("schema_version") == "run-result-v2"
-        and result.get("official") is False
+        typed_result.get("official") is False
         and isinstance(binding, dict)
+        and binding.get("task_id") == qualification.get("task_id")
         and _is_sha256_identity(binding.get("evaluator_source_hash"))
         and qualification.get("evaluator_version") == "v2"
         and qualification.get("evaluator_v2_runtime_authenticated") is True
@@ -7302,8 +7606,8 @@ def _qualified_ac_evaluator_result(
         and _is_sha256_identity(qualification.get("evaluator_v2_receipt_file_hash"))
         and _is_sha256_identity(qualification.get("evaluator_v2_source_qualification_hash"))
         and qualification.get("evaluator_v2_source_hash") == binding.get("evaluator_source_hash")
-        and _is_sha256_identity(result.get("safety_evidence_bundle_hash"))
-        and len(result.get("safety_evidence", [])) == 4
+        and _is_sha256_identity(typed_result.get("safety_evidence_bundle_hash"))
+        and len(typed_result.get("safety_evidence", [])) == 4
         and len(safety_results) == 4
     )
 
@@ -7388,13 +7692,20 @@ def _ac_fixed_bundle_completion_gate(
                 exact_projection(checks.get(check_id), check_id)
                 for check_id in expected_readiness_checks
             )
-            and call_blocks
+            and isinstance(call_blocks, dict)
+            and set(call_blocks)
             == {
-                "schema_version": "call-budget-block-projection-v1",
-                "source_check_count": 1,
-                "source_check_passed": True,
-                "event_sequences": [],
+                "schema_version",
+                "source_check_count",
+                "source_check_passed",
+                "event_sequences",
             }
+            and call_blocks.get("schema_version") == "call-budget-block-projection-v1"
+            and type(call_blocks.get("source_check_count")) is int
+            and call_blocks.get("source_check_count") == 1
+            and call_blocks.get("source_check_passed") is True
+            and isinstance(call_blocks.get("event_sequences"), list)
+            and call_blocks.get("event_sequences") == []
             and isinstance(recomputation, dict)
             and set(recomputation)
             == {
@@ -7412,6 +7723,25 @@ def _ac_fixed_bundle_completion_gate(
 
     official_rows: list[str] = []
     unclassified_rows: list[str] = []
+    required_row_fields = {
+        "order",
+        "schedule_row_id",
+        "task_id",
+        "split",
+        "dataset_role",
+        "condition",
+        "repetition",
+        "attempt_status",
+        "run_id",
+        "usage",
+        "result",
+        "infrastructure_error",
+        "qualification",
+        "qualification_error",
+        "diagnostic",
+        "diagnostic_error",
+        "not_started_reason",
+    }
     for index, row in enumerate(rows):
         run_id = row.get("run_id")
         identity = run_id if isinstance(run_id, str) else f"row:{index + 1}"
@@ -7440,14 +7770,20 @@ def _ac_fixed_bundle_completion_gate(
             and type(scope_compliant_success) is bool
             and (outcome == "resolved") == scope_compliant_success == all_verdicts_pass
         )
+        row_fields_valid = set(row) == required_row_fields or set(row) == required_row_fields | {
+            "budget_pressure"
+        }
         official = bool(
-            row.get("attempt_status") == "terminal"
+            row_fields_valid
+            and row.get("attempt_status") == "terminal"
             and row.get("infrastructure_error") is None
             and row.get("qualification_error") is None
             and row.get("diagnostic_error") is None
             and isinstance(result, dict)
             and isinstance(qualification, dict)
             and isinstance(expected, dict)
+            and _exact_typed_equal(row.get("usage"), result.get("usage"))
+            and _exact_ac_qualification_envelope(qualification)
             and result.get("run_id") == run_id
             and qualification.get("run_id") == run_id
             and qualification.get("task_id") == expected.get("task_id")
@@ -7466,7 +7802,7 @@ def _ac_fixed_bundle_completion_gate(
             and qualification.get("memory_candidate_eligible") is False
             and valid_sha256(qualification.get("source_evidence_hash"))
             and all(
-                row.get(field) == expected.get(field)
+                _exact_typed_equal(row.get(field), expected.get(field))
                 for field in (
                     "order",
                     "schedule_row_id",
@@ -7480,7 +7816,11 @@ def _ac_fixed_bundle_completion_gate(
             and exact_readiness(qualification)
             and result.get("agent_submission_status") == "completed"
             and result.get("evaluation_status") == "completed"
-            and _qualified_ac_evaluator_result(result, qualification)
+            and _qualified_ac_evaluator_result(
+                result,
+                qualification,
+                expected_experiment_id=expected_experiment_id,
+            )
             and outcome in {"resolved", "task_failure"}
             and outcome_conjunction_valid
             and result.get("terminal_error") is None
@@ -7498,10 +7838,14 @@ def _ac_fixed_bundle_completion_gate(
         and [row.get("schedule_row_id") for row in rows]
         == [row.get("schedule_row_id") for row in expected_rows]
         and [(row.get("task_id"), row.get("condition")) for row in expected_rows] == expected_order
-        and [row.get("order") for row in expected_rows] == [1, 2, 3, 4]
+        and all(
+            type(row.get("order")) is int and row.get("order") == index
+            for index, row in enumerate(expected_rows, start=1)
+        )
         and all(
             row.get("split") == "dev-validation"
             and row.get("dataset_role") == DatasetRole.DEVELOPMENT_VALIDATION.value
+            and type(row.get("repetition")) is int
             and row.get("repetition") == 1
             for row in expected_rows
         )
@@ -7527,16 +7871,29 @@ def _ac_fixed_bundle_completion_gate(
         and cost.get("passed") is True
         and cost.get("fully_settled") is True
         and cost.get("full_schedule_reserved") is True
+        and all(
+            type(cost.get(field)) is int
+            for field in (
+                "reserved_runs",
+                "settled_runs",
+                "not_started_runs",
+                "unsettled_runs",
+                "cost_censoring_events",
+                "accrued_cost_nanos",
+                "full_schedule_reserve_nanos",
+                "hard_cap_nanos",
+            )
+        )
         and cost.get("reserved_runs") == expected_runs
         and cost.get("settled_runs") == expected_runs
         and cost.get("not_started_runs") == 0
+        and cost.get("unsettled_runs") == 0
         and cost.get("cost_censoring_events") == 0
         and cost.get("schedule_hash") == expected_schedule_hash
         and valid_sha256(expected_campaign_cost_control_hash)
         and cost.get("campaign_cost_control_hash") == expected_campaign_cost_control_hash
         and cost.get("full_schedule_reserve_nanos") == expected_full_schedule_reserve_nanos
         and cost.get("hard_cap_nanos") == expected_hard_cap_nanos
-        and type(cost.get("accrued_cost_nanos")) is int
         and 0 <= cost.get("accrued_cost_nanos", -1) <= expected_full_schedule_reserve_nanos
         and cost.get("live_resume_supported") is False
     )
@@ -8449,6 +8806,21 @@ _AC_FINALIZATION_ROW_IDENTITY_FIELDS = (
     "condition",
     "repetition",
 )
+_AC_FINALIZATION_ROW_FIELDS = frozenset(
+    {
+        *_AC_FINALIZATION_ROW_IDENTITY_FIELDS,
+        "attempt_status",
+        "run_id",
+        "usage",
+        "result",
+        "infrastructure_error",
+        "qualification",
+        "qualification_error",
+        "diagnostic",
+        "diagnostic_error",
+        "not_started_reason",
+    }
+)
 
 
 def _fsync_directory_best_effort(path: Path) -> bool:
@@ -8603,6 +8975,7 @@ def _load_ac_finalization_plan(
         and _is_full_schedule_cost_cap_suite(suite)
         and isinstance(schedule, list)
         and len(schedule) == 4
+        and type(plan.get("expected_runs")) is int
         and plan.get("expected_runs") == 4
         and sha256_text(canonical_json(schedule)) == plan.get("schedule_hash")
         and isinstance(cost_control, dict)
@@ -8696,6 +9069,7 @@ def _validate_ac_finalization_record(
     expected_preflight = {
         key: plan[key] for key in ("suite_hash", "execution_hash", "schedule_hash", "expected_runs")
     }
+    expected_actual_cost_usd = _nanos_to_usd(cost_qualification["accrued_cost_nanos"])
     if not (
         record.get("schema_version") == "experiment-result-v2"
         and record.get("experiment_id") == plan.get("experiment_id")
@@ -8703,27 +9077,40 @@ def _validate_ac_finalization_record(
         and record.get("suite_hash") == plan.get("suite_hash")
         and record.get("execution_hash") == plan.get("execution_hash")
         and record.get("schedule_hash") == plan.get("schedule_hash")
+        and type(record.get("schedule_seed")) is int
         and record.get("schedule_seed") == suite.seed
+        and type(record.get("expected_runs")) is int
         and record.get("expected_runs") == 4
-        and record.get("dataset") == plan.get("dataset")
-        and record.get("suite") == plan.get("suite")
-        and record.get("preflight") == expected_preflight
-        and record.get("campaign_cost_control") == cost_control
-        and record.get("campaign_cost_qualification") == cost_qualification
-        and execution_plan == {"path": str(plan_path), "artifact_hash": plan_hash}
-        and journal_descriptor
-        == {
-            "path": str(journal_path),
-            "last_event_hash_before_completion": prior_hash,
-        }
+        and _exact_typed_equal(record.get("dataset"), plan.get("dataset"))
+        and _exact_typed_equal(record.get("suite"), plan.get("suite"))
+        and _exact_typed_equal(record.get("preflight"), expected_preflight)
+        and _exact_typed_equal(record.get("campaign_cost_control"), cost_control)
+        and _exact_typed_equal(record.get("campaign_cost_qualification"), cost_qualification)
+        and _exact_typed_equal(
+            execution_plan,
+            {"path": str(plan_path), "artifact_hash": plan_hash},
+        )
+        and _exact_typed_equal(
+            journal_descriptor,
+            {
+                "path": str(journal_path),
+                "last_event_hash_before_completion": prior_hash,
+            },
+        )
         and isinstance(rows, list)
         and len(rows) == 4
     ):
         raise ContractError("prepared A/C result identity or source binding differs")
 
     for row, expected in zip(rows, schedule, strict=True):
+        if not isinstance(row, dict) or set(row) not in {
+            _AC_FINALIZATION_ROW_FIELDS,
+            _AC_FINALIZATION_ROW_FIELDS | {"budget_pressure"},
+        }:
+            raise ContractError("prepared A/C result row fields differ from the frozen contract")
         if not all(
-            row.get(field) == expected.get(field) for field in _AC_FINALIZATION_ROW_IDENTITY_FIELDS
+            _exact_typed_equal(row.get(field), expected.get(field))
+            for field in _AC_FINALIZATION_ROW_IDENTITY_FIELDS
         ):
             raise ContractError("prepared A/C result row identity differs from the schedule")
         row_id = row.get("schedule_row_id")
@@ -8741,8 +9128,48 @@ def _validate_ac_finalization_record(
                 == ((row.get("result") or {}).get("outcome_kind"))
                 and terminal[0].get("infrastructure_error_type")
                 == ((row.get("infrastructure_error") or {}).get("type"))
+                and terminal[0].get("qualification_hash")
+                == ((row.get("qualification") or {}).get("qualification_hash"))
+                and terminal[0].get("qualification_error_type")
+                == ((row.get("qualification_error") or {}).get("type"))
+                and terminal[0].get("diagnostic_status")
+                == ((row.get("diagnostic") or {}).get("status"))
+                and terminal[0].get("diagnostic_error_type")
+                == ((row.get("diagnostic_error") or {}).get("type"))
             ):
                 raise ContractError("prepared A/C terminal row differs from the journal")
+            usage_evidence = terminal[0].get("usage_evidence")
+            if isinstance(usage_evidence, dict):
+                descriptor = usage_evidence.get("descriptor")
+                result_path = (
+                    journal_path.parents[2]
+                    / "artifacts"
+                    / "runs"
+                    / str(row.get("run_id"))
+                    / "result.json"
+                )
+                try:
+                    persisted_result_bytes = _read_stable_regular_file(
+                        result_path,
+                        label="A/C durable row result",
+                    )
+                    persisted_result = RunResult.model_validate_json(
+                        persisted_result_bytes
+                    ).model_dump(mode="json")
+                except (ContractError, ValidationError, ValueError) as exc:
+                    raise ContractError("prepared A/C durable row result is unavailable") from exc
+                if not (
+                    isinstance(descriptor, dict)
+                    and descriptor.get("persisted_result_hash")
+                    == sha256_bytes(persisted_result_bytes)
+                    and _exact_typed_equal(row.get("result"), persisted_result)
+                    and _exact_typed_equal(row.get("usage"), persisted_result.get("usage"))
+                    and descriptor.get("qualification_hash")
+                    == (row.get("qualification") or {}).get("qualification_hash")
+                    and descriptor.get("source_evidence_hash")
+                    == (row.get("qualification") or {}).get("source_evidence_hash")
+                ):
+                    raise ContractError("prepared A/C durable row result binding differs")
         elif row.get("attempt_status") == "not_started":
             not_started = [
                 event.get("payload")
@@ -8776,15 +9203,24 @@ def _validate_ac_finalization_record(
     diagnostic_errors = sum(row.get("diagnostic_error") is not None for row in rows)
     not_started_runs = sum(row.get("attempt_status") == "not_started" for row in rows)
     if not (
-        record.get("completion_gate") == expected_completion_gate
+        _exact_typed_equal(record.get("completion_gate"), expected_completion_gate)
+        and all(
+            type(record.get(field)) is int
+            for field in (
+                "completed_runs",
+                "infrastructure_errors",
+                "qualification_errors",
+                "diagnostic_errors",
+                "not_started_runs",
+            )
+        )
         and record.get("completed_runs") == completed_runs
         and record.get("infrastructure_errors") == infrastructure_errors
         and record.get("qualification_errors") == qualification_errors
         and record.get("diagnostic_errors") == diagnostic_errors
         and record.get("not_started_runs") == not_started_runs
         and record.get("diagnostic_gate") is None
-        and record.get("actual_model_cost_usd")
-        == _nanos_to_usd(cost_qualification["accrued_cost_nanos"])
+        and _exact_typed_equal(record.get("actual_model_cost_usd"), expected_actual_cost_usd)
     ):
         raise ContractError("prepared A/C result aggregates or completion gate differ")
 
@@ -9613,11 +10049,17 @@ def evaluate_suite(
         diagnostic_error = _diagnostic_error(diagnostic)
         if result is not None and qualification_required:
             try:
-                qualification = _qualify_terminal_run(
-                    manifest.run_id,
-                    task,
-                    evaluator_v2_authority=evaluator_v2_authority,
-                )
+                if evaluator_v2_authority is None:
+                    qualification = _qualify_terminal_run(
+                        manifest.run_id,
+                        task,
+                    )
+                else:
+                    qualification = _qualify_terminal_run(
+                        manifest.run_id,
+                        task,
+                        evaluator_v2_authority=evaluator_v2_authority,
+                    )
                 diagnostic = _diagnostic_result(suite, qualification)
                 diagnostic_error = _diagnostic_error(diagnostic)
                 if qualification.get("qualified") is not True:

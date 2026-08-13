@@ -19,50 +19,49 @@ none is relabeled as evaluator-v2 live evidence.
 Status: implemented and locally verified.
 
 Task-bound projections, typed safety evidence, fail-closed four-verdict aggregation, authority-gated runner,
-receipt, persistence, qualification and completion adapters are tested with v1 byte goldens. This is not yet a
-live evaluator result or a production-security claim.
+receipt, persistence, qualification and completion adapters are tested with v1 byte goldens. R3 Moto A exercised the
+live receipt-qualified path; this remains one development row, not a production-security claim.
 
 ## Work item 2 — successor A/C qualification
 
-Status: committed and locally validated.
-
-The successor binds evaluator-v2 source/tests, Moto/Babel tasks and images, runtime tuple, exact four-row schedule
-and unchanged treatment: A null, C exact-three. Drift fails before provider execution.
+Status: R3-R6 and their R5-R8 qualifications are immutable; R10 offline-qualifies R8 source/tests, tasks/images, v11
+plan, four rows and unchanged A-null/C-exact-three treatment. R7/R9 is superseded unexecuted.
 
 ## Work item 3 — reusable fast preflight
 
-Status: implementation and local regression validation in progress.
+Status: implemented; the old R7 candidate is superseded. R8 requires a new bounded no-call preflight after a clean
+commit and has no candidate yet.
 
-Replace the V-per-attempt lifecycle with one supported command that:
-
-- validates the qualified evaluator-v2 and A/C source identities;
-- loads only `OPENAI_API_KEY` from an explicitly selected repository `.env` without rendering its value;
-- performs bounded Docker/SDK no-call readiness checks;
-- emits a sanitized in-memory attempt summary and retries only transient pre-provider failures, at most three times;
-- emits one candidate execution hash when all non-cost gates pass.
-
-Completed attempt summaries remain immutable. The command never performs a provider, evaluator or agent call.
-Schema/semantics changes require a new version; ordinary attempts do not.
+The supported command validates source identities, loads only secret presence, performs bounded Docker/SDK no-call
+checks, retries transient pre-provider failures at most three times and emits a candidate only if all gates pass.
+Attempt summaries remain immutable; the command makes no provider/evaluator/agent call.
 
 ## Work item 4 — one campaign approval
 
-Status: blocked on a READY fast preflight.
+Status: completed for R3 through R6; all four exact approvals are consumed.
 
-Refresh official pricing and bind the four-row reserve, `$55` hard cap, source commit, evaluator-v2 qualification,
-schedule and execution hash. Ask once for paid execution of that exact campaign. The approval expires when any bound
-field changes and does not authorize held-out, B/D or unrelated execution.
+R3 bound `$54.45` reserve/`$55` cap. R4 bound `$15.30` reserve/`$18` cap and sealed provider-before-dispatch at
+`$0`; R5 and R6 used the same reserve/cap and sealed after one evaluated row failed qualification at `$0.19303425`
+and `$0.169596`, respectively. Their approvals cannot transfer. A separate approval must bind a future R8 exact
+candidate hash, R10, `$15.30` reserve and `$18` cap.
 
 ## Work item 5 — four-run A/C readiness
 
-Status: blocked on work items 3-4.
+Status: attempted as sealed R3 through R6; all complete-matrix gates failed and dispositions are `inconclusive`.
 
-Run Moto A, Moto C, Babel C and Babel A once in fresh workspaces. Each row must be terminal, trace-qualified,
-cost-settled and receipt-qualified under evaluator v2 with consistent hidden/regression/scope/safety verdicts.
+R3 Moto A resolved; Moto C hit 3M before submission and its secondary binding mismatch halted Babel. R4 then failed
+capability revalidation before provider dispatch at `$0`. R5 Moto A resolved and passed evaluator v2, but legacy
+terminal-qualification assumptions rejected the row and halted the rest. R6 Moto A also resolved, but runtime evidence
+serialized the legacy call-guard policy and failed terminal qualification. Rows never retry or replace; another attempt
+is a disclosed full panel. Output remains descriptive, not causal or held-out.
 
-Campaign rows are single-attempt. Any infrastructure or outcome-bearing row failure makes the panel inconclusive.
-If another readiness panel is needed, start a new four-row panel with the same frozen treatment and disclose both.
+## Work item 5a — contract-hardening successor and fresh panel
 
-Output is descriptive workflow/direction/cost evidence, not a causal, held-out or transfer claim.
+Status: R10/R8 offline implementation and source qualification; no R8 candidate, approval or run.
+
+R8 preserves the runtime-evidence fix and hardens types/evidence bindings while keeping equal A/C limits: 3M input, 350k output, 3.35M aggregate,
+25k/response, 180 model, 300 tool and 3,600 seconds; reserve is `$3.825`/row, `$15.30`/panel, `$18` cap. This
+R3-informed diagnostic is not held-out-safe or a benefit claim. Next: clean no-call candidate, then fresh exact-hash/`$18` approval.
 
 ## Work item 6 — preregistered held-out A/C
 

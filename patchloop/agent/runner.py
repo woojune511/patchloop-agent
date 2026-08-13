@@ -185,6 +185,24 @@ _COUNTER_GENERATION_BLOCK_REASONS = frozenset(
 )
 
 
+def _exact_typed_equal(actual: object, expected: object) -> bool:
+    """Compare persisted machine values without Python's bool/int coercion."""
+
+    if type(actual) is not type(expected):
+        return False
+    if isinstance(actual, dict):
+        if not isinstance(expected, dict) or set(actual) != set(expected):
+            return False
+        return all(_exact_typed_equal(actual[key], expected[key]) for key in actual)
+    if isinstance(actual, list):
+        if not isinstance(expected, list) or len(actual) != len(expected):
+            return False
+        return all(
+            _exact_typed_equal(left, right) for left, right in zip(actual, expected, strict=True)
+        )
+    return actual == expected
+
+
 @dataclass(frozen=True)
 class LiveExecutionAuthorization:
     """Ephemeral capability issued only after an approved live preflight."""
@@ -1346,10 +1364,17 @@ class AgentRunner:
             and reserved.get("schedule_hash") == descriptor.get("schedule_hash")
             and reserved.get("schedule_row_ids") == schedule_row_ids
             and isinstance(policy, dict)
+            and type(policy.get("per_run_reserve_nanos")) is int
+            and type(policy.get("full_schedule_reserve_nanos")) is int
+            and type(policy.get("hard_cap_nanos")) is int
+            and type(reserved.get("per_run_reserve_nanos")) is int
             and reserved.get("per_run_reserve_nanos") == policy.get("per_run_reserve_nanos")
+            and type(reserved.get("full_schedule_reserve_nanos")) is int
             and reserved.get("full_schedule_reserve_nanos")
             == policy.get("full_schedule_reserve_nanos")
+            and type(reserved.get("hard_cap_nanos")) is int
             and reserved.get("hard_cap_nanos") == policy.get("hard_cap_nanos")
+            and type(reserved.get("row_reserve_count")) is int
             and reserved.get("row_reserve_count") == expected_count
             and reserved.get("cost_censoring_allowed") is False
         ):
@@ -1436,7 +1461,7 @@ class AgentRunner:
                 )
                 and all(
                     all(
-                        payload.get(field) == expected_prior.get(field)
+                        _exact_typed_equal(payload.get(field), expected_prior.get(field))
                         for field in row_identity_fields
                     )
                     for payload in (started_payload, terminal_payload, settled_payload)
@@ -1457,9 +1482,12 @@ class AgentRunner:
                 and type(run_cost_nanos) is int
                 and run_cost_nanos == durable_run_cost_nanos
                 and 0 <= run_cost_nanos <= policy.get("per_run_reserve_nanos", -1)
+                and type(settled_payload.get("accrued_cost_nanos_before")) is int
                 and settled_payload.get("accrued_cost_nanos_before") == accrued_nanos
+                and type(settled_payload.get("accrued_cost_nanos_after")) is int
                 and settled_payload.get("accrued_cost_nanos_after")
                 == accrued_nanos + run_cost_nanos
+                and type(settled_payload.get("remaining_reserved_rows_after")) is int
                 and settled_payload.get("remaining_reserved_rows_after")
                 == expected_count - index - 1
             ):
@@ -1478,7 +1506,7 @@ class AgentRunner:
             and isinstance(current_payload, dict)
             and not prior_starts
             and expected_order == manifest.experiment.schedule_order
-            and current_payload.get("order") == expected_order
+            and _exact_typed_equal(current_payload.get("order"), expected_order)
             and current_payload.get("schedule_row_id") == manifest.experiment.schedule_row_id
             and current_payload.get("task_id") == manifest.task_id
             and current_payload.get("dataset_role") == expected_dataset_role
@@ -1486,7 +1514,7 @@ class AgentRunner:
             and current_payload.get("repetition") == manifest.experiment.repetition
             and current_payload.get("run_id") == manifest.run_id
             and all(
-                current_payload.get(field) == expected_row.get(field)
+                _exact_typed_equal(current_payload.get(field), expected_row.get(field))
                 for field in (
                     "order",
                     "schedule_row_id",

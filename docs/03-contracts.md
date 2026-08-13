@@ -24,11 +24,14 @@ Held-out task content may not be used to tune prompt, memory, score policy or se
 `ExperimentSuite` binds purpose, ordered rows, runtime tuple, budget, pricing, dataset and execution hash.
 Current A/C sources are:
 
-- `ac-structured-pilot-v2.plan.yaml`: non-executable R2 design;
-- `dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml`: exact Moto A/C, Babel C/A suite using
-  `fixed-d110-bundle-v1`, with null execution hash and live-cost authority false.
+- `ac-structured-pilot-v11.plan.yaml`: R10-qualified contract-hardened split-budget design;
+- `dev-validation-ac-fixed-bundle-readiness-20260814-r8.yaml`: offline-qualified Moto/Babel A/C successor with
+  no no-call candidate, paid approval or run; R7/R9 and its old candidate are superseded unexecuted;
+- R6/R8 and R5/R7: immutable post-evaluator qualification failures; R4/R6-qualification: immutable
+  provider-before-dispatch `$0` terminal;
+  R3/R5-source-qualification: immutable partial live predecessor.
 
-The D-122 R1 plan/suite remain sealed predecessor bytes and are validated only in sealed-historical mode.
+R1/R2 plans, suites and runtime seals remain immutable predecessors.
 
 An accepted plan/suite grants no provider, evaluator, Docker, runtime-memory or cost authority.
 
@@ -41,6 +44,10 @@ A and C manifests differ only in the memory condition and evidence derived from 
 must bind the D-110 index and `fixed-d110-bundle-v1`. The manifest/preflight matcher rejects a legacy
 `latest_frozen_index` serialization, suite tamper, wrong profile, source drift or schedule drift. Both
 conditions retain the identical runtime tuple and resource ceilings.
+
+R8's `cumulative-split-v1` limits are 3M input, 350k output, 3.35M aggregate, 25k per response, 180 model calls, 300
+tool calls and 3,600 seconds; reasoning counts as output and each dimension fails closed. R3 retains its historical
+3M aggregate/25k response/3,600-second tuple and null call caps.
 
 ## 5. Event and checkpoint contracts
 
@@ -80,10 +87,8 @@ The D-110 frozen index is an immutable storage artifact, not runtime authority. 
 `fixed-d110-bundle-v1` provides strict delivery/request evidence:
 
 - A binds no index and renders `selected_memory=null` with zero entries and zero bundle bytes;
-- C binds the D-105 gate/render set and D-110 index/marker/gate, then renders the exact ordered 3,528-byte
-  bundle on every request;
-- model-request/CAS/`ContextBuilt` evidence binds and replays delivery, request and normalized A identity;
-- no new or `MemoryRetrieved` event is emitted;
+- C binds D-105/D-110 inputs and renders the exact ordered 3,528-byte bundle on every request;
+- model-request/CAS/`ContextBuilt` evidence binds delivery and normalized A identity; no retrieval event is emitted;
 - missing, linked, replaced or hash-mismatched bound inputs fail closed;
 - construction performs no retrieval/ranking/model/provider/evaluator activity.
 
@@ -102,30 +107,30 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
-V5-V23 terminals remain immutable historical observations. V23 reached Docker and both typed frames before
-`ERROR(child_checker_error/diagnostic_result_invalid)`. V24 validates the legacy mapping before sorting and emits a
-typed value-free summary; V25 binds that projection to a one-use lifecycle wrapper but never started an attempt.
+V5-V25 retain their exact historical observations in `docs/09-evidence.md`.
 
 The active fast-track contract records each attempt under a new identity while allowing unchanged preflight source
 and configuration to be reused. It permits at most three no-call attempts, never records credential values and emits
 no provider/evaluator/agent call. A new version is required only when machine-visible semantics change.
 
-Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
-Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory
-effect claim.
+R3 retains one receipt-qualified Moto A success, Moto C pre-evaluator budget/binding failure and two not-started
+Babel rows. Incomplete matrices are diagnostic only.
 
 ## 10. Cost and completion gates
 
-D-123 binds $13.6125 per row, $54.45 full-schedule reserve and proposed $55 cap. Before any provider call the
-journal records campaign/reserve events; each row records start, terminal and settled-or-inconclusive events.
-Usage is repriced in integer nano-USD and prior settlements reload before another paid call.
+R3 keeps D-123's $13.6125/row, $54.45/panel and $55 cap. R8 reserves 3M input at $0.75/M plus 350k output at $4.50/M:
+`$3.825`/row, `$15.30`/panel, `$18` cap and `$2.70` slack. It assumes no cache discount and guarantees no invoice or
+completion outcome.
+
+Before any provider call the journal records campaign/reserve events; each row records start, terminal and
+settled-or-inconclusive events. Usage is repriced in integer nano-USD and prior settlements reload before another
+paid call.
 
 Completion requires each exact row once, qualified trace, durable settlement, official evaluation and
 resolved/SCRR/verdict consistency. Missing, duplicate, retried, replaced or confounded rows are inconclusive.
 
-D-124 corrects settlement reconciliation. D-125 adds local SQLite row consumption plus marker and fsynced,
-no-replace result publication with mocked idempotent recovery. It does not prove global/cross-clone,
-noncooperative-swap, actual-kill or power-loss guarantees. No reservation/result executed.
+D-124/D-125 cover settlement and local idempotent publication. R3 exercised two settlements and sealed publication,
+not global/cross-clone, actual-kill or power-loss guarantees.
 
 ## 11. Evidence gates
 
@@ -133,8 +138,10 @@ Preparation, execution receipt, journal and completion gate remain distinct evid
 reusable source/configuration and new attempt IDs. One paid campaign approval binds the exact execution hash, schedule,
 runtime and cap rather than requiring per-row prose. Historical schemas remain under `reports/`.
 
-D-126 through D-141 attempt artifacts never reopen. Their source/config one-use policy is historical. D-142's exact
-tuples remain canonical in `reports/` and `docs/09-evidence.md`; its evidence state is source-qualified and
-unactivated, while its current planning disposition is deferred. Documentation creates no
-D-142 receipt, attempt, marker or terminal. A future return to that original observation requires a new exact
-decision, and any corrected-evaluator A/C path instead requires new evaluator, source, suite and runtime identities.
+R3/R4 indices are `reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260813-r3-evidence.json` and
+`reports/live-pilot/dev-validation-ac-fixed-bundle-readiness-20260814-r4-evidence.json`; neither identity nor approval
+can be reused. R10 qualifies R8 offline. Its R3-informed diagnostic limits are not held-out-safe or a memory-effect
+result; no R8 candidate exists, and any future candidate requires a fresh exact-hash/`$18` approval.
+
+D-126-D-141 never reopen. D-142 remains source-qualified, unactivated and deferred; documentation creates no receipt,
+attempt, marker or terminal. Exact tuples remain in `docs/09-evidence.md`.
