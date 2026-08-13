@@ -103,11 +103,10 @@ Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed 
 persistence/qualification; raw results remain unofficial. V12-V20 are consumed, cannot retry and establish no
 readiness; exact observations and limits remain in `docs/09-evidence.md`.
 
-V22 remains a strict projection-only predecessor. V23 consumed one exact-approved attempt: Docker and both typed
-frames passed, while strict child validation returned `diagnostic_result_invalid`. Its
-`ERROR(child_checker_error)` terminal has incomplete/unknown accounting and no retry, proves no readiness and
-requires a new version. V24 qualifies an order-stable, value-free summary projection only. Its fixture reproduction
-does not identify the exact discarded v23 input, and activation still requires a v25 wrapper plus fresh gates.
+V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` and cannot retry. V24 qualifies the order-stable,
+value-free summary correction; its fixture does not identify the exact discarded v23 input. V25 qualifies the
+lifecycle wrapper and typed two-hop summary channel only. It has no state, attempt or observation; fresh exact
+state/approval/run gates remain mandatory and none proves readiness.
 
 ## 7. Run-completion gate
 

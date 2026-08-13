@@ -3,20 +3,26 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V24 order-stable typed diagnostic -- source-qualified only
+## V25 order-stable activation -- source-qualified, state required
 
-Source/tree `870558afecc3c1ebbefd04b9acc78e138fc5d632`/`6a2fc91416b17f24ae9bf794dc9b75968b5bd380`
-is the exact five-addition child of `8b7d92ab72a1815dfdd0a0804f8247106a1f5131`. Contract
-`ncpcontract_f6fe2bdf24727ab0ba7b32bc86f4678bd253bd4e4652b8eb83acce7660952ed1` has file
-`sha256:0f3822a34ed29857e77c246d1150f54ea44113770541cf64f7b938d0f8fad0ca` (4,624 bytes).
-Sole-artifact qualification commit `545d14d653d952464fb25287a53bb59b624785b0` records content/file
-`sha256:79423fd51f0b951e8b4c7565396d6f4e49447604fb33acee894a9c0644a5bcb6`/
-`sha256:20e0eb9f12003bc8c8f62e615386d224919d267fbf18b61a7d0b17741715c3f5` (17,599 bytes).
+Source/tree `ea383759c57f60e5b33e6f5a2f65e1bb07d65532`/`5453a178c3e9a6ff3325c2d18431acbd661af0a4`
+is the exact five-addition child of `88f21e545298d1af0061bb2a125078fba975c8ad`. Contract
+`ncpcontract_c87b73d0a559f1585c4c40a495d1d5718ac89cd72aae935320023b7f4bbbca1f` has file
+`sha256:f95481387d7e3f355faaa8d7036005de9823bdb7f6a6f35dba7e513eba260fd3` (4,731 bytes).
+Sole-artifact qualification commit `dcd29dcea1f2e15dbe1f3806980b585868acdc87` records content/file
+`sha256:d24b7a9849e0c632c05ef09ad9e9f7886bdf121a8b168d55e7040e8c2c732ff8`/
+`sha256:ae45aa92945eb0e46d66a1debbcc6bedcdc2fcb223dc52b8644c1eb75a75b0b3` (19,403 bytes).
 
-The checked-in fixture reproduces v22's canonical-sort rejection for a valid SDK-observation child; v24 validates
-before sorting and frames a value-free summary. It does not reveal the discarded v23 input or prove exact causality.
-Qualification launched no diagnostic/mock/live process, made no external observation and created no lifecycle.
-Activation requires a new v25 wrapper.
+V25 binds v24's direct pre-canonical validation and value-free summary to fresh lifecycle schemas and two typed
+frames. Qualification launched no diagnostic/mock/live process, made no external observation and created no state,
+approval, attempt or terminal. The next gate is a fresh exact v25 state statement, which is non-proof and non-executable.
+
+## V24 projection -- immutable predecessor
+
+Source/contract/qualification are `870558afecc3c1ebbefd04b9acc78e138fc5d632`,
+`ncpcontract_f6fe2bdf24727ab0ba7b32bc86f4678bd253bd4e4652b8eb83acce7660952ed1` and
+`sha256:79423fd51f0b951e8b4c7565396d6f4e49447604fb33acee894a9c0644a5bcb6`. Its fixture reproduces v22 order loss,
+not the exact discarded v23 input; it created no runtime evidence.
 
 ## V23 typed diagnostic activation -- consumed ERROR
 

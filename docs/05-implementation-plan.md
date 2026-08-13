@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v23 are immutable; v24 correction source is qualified and activation-closed.
+Status: v1-v24 are immutable; v25 lifecycle source is qualified and state-required.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -45,17 +45,16 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 `SYSTEMROOT`/Windows 10106. V10/V11's non-proof state/approval were consumed by v12. Exact tuples live in
 `docs/09-evidence.md`; none is readiness evidence.
 
-V24 corrects the reproducible mapping-order defect by validating before canonical sorting and emitting a value-free
-summary. It has no live or lifecycle entrypoint; implement/qualify a v25 activation wrapper before new state/approval.
+V24 corrects mapping order with a value-free summary. V25 binds it to fresh state/approval/run schemas and a two-hop
+channel. Qualification created no lifecycle/runtime evidence; only an exact self-attested v25 state may come next.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
 Status: v3/v5/v7/v12/v13/v14/v16/v18/v20/v23 consumed; none can retry.
 
-V23 passed Docker's 8 reads and both typed frames at return code 0, then rejected the worker's
-`diagnostic_result_invalid`. Its `ERROR(child_checker_error)` terminal preserves incomplete/unknown accounting and
-closes retry. V24 source qualification is not an attempt. V25 wrapper, fresh gates and a new exact approval are still
-required; no readiness, memory, cost or A/C authority exists.
+V23 preserves a consumed incomplete/unknown `diagnostic_result_invalid` terminal. V24/V25 source qualifications are
+not attempts. No state exists; after exact state binding, a separate exact approval and immediate run statement are
+still required. No readiness, memory, cost or A/C authority exists.
 
 ## Work item 5 — execution candidate and cost gate
 

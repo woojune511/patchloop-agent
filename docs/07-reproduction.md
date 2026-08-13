@@ -71,13 +71,14 @@ Local Git provenance subprocesses may run. These qualifications prove neither pr
 Terminal validation is read-only. V23 is consumed `ERROR(child_checker_error/diagnostic_result_invalid)` and cannot
 retry; validation grants no successor authority.
 
-V24 validation reads committed source and predecessor evidence; it launches no diagnostic/mock/live workload:
+V25 validation rechecks committed v24 evidence and the lifecycle/two-hop source without creating state or a workload:
 
 ```powershell
-& .\.venv\Scripts\python.exe -E -s -B scripts/build_order_stable_typed_diagnostic_successor.py --validate-source
+& .\.venv\Scripts\python.exe -E -s -B scripts/build_order_stable_typed_diagnostic_activation_successor.py --validate-source
 ```
 
-The fixture proves an order-loss defect and corrected summary roundtrip, not the exact v23 input or live readiness.
+It may launch local Git provenance subprocesses; external observation and workload-process counts are 0. Fixture
+coverage proves corrected summary transport, not the exact v23 input or live readiness.
 
 ## Audit the sealed D-142 source
 
@@ -100,5 +101,5 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 
 ## Live execution
 
-There is no supported live A/C, D-142 or v18/v20/v23 retry. Validate read-only, then stop: v24 has no activation
-entrypoint; a v25 wrapper and fresh gates are required. Execution, candidate and cost remain unauthorized.
+There is no supported live A/C, D-142 or consumed-attempt retry. Validate read-only, then stop: v25 has no state or
+approval. Its exact state statement is the next gate; execution, candidate and cost remain unauthorized.

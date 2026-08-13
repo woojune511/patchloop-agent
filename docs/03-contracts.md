@@ -107,11 +107,10 @@ a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after 
 outer result transport. V20's exact state/approval started one append-only ledger, then consumed
 `ERROR(supervised_output_invalid)` with incomplete/unknown accounting. It cannot retry; a correction needs a new version.
 
-V22 is the projection-only predecessor. V23 bound its live roles to one append-only attempt. Docker and both typed
-frames passed, but strict child validation returned `diagnostic_result_invalid`; the terminal is
-`ERROR(child_checker_error)` with incomplete/unknown accounting. It cannot retry, and correction requires a new
-version. V24 is that source-qualified, activation-closed correction: it validates the legacy mapping before sorting
-and frames only a typed summary. It creates no result or authority; a v25 lifecycle wrapper is required.
+V23 consumed one append-only `ERROR(child_checker_error/diagnostic_result_invalid)` attempt and cannot retry. V24
+validates the legacy mapping before sorting and emits only a typed value-free summary. V25 binds that projection to
+fresh state/approval/run schemas and a two-hop channel, but its source qualification created no lifecycle artifact or
+execution authority. The next gate is an exact self-attested state statement, not an observation.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

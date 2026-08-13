@@ -31,10 +31,9 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
 - V3-v20 are immutable consumed predecessors; v20 ended `ERROR(supervised_output_invalid)`.
-- V23 consumed one exact-approved attempt. Docker and both typed frames passed, but strict child validation returned
-  `diagnostic_result_invalid`; the terminal is `ERROR(child_checker_error)` with incomplete/unknown accounting and
-  no retry. V24 is a source-qualified, activation-closed order-stable projection; it is not readiness evidence and
-  successor execution, candidate, cost and paid authority remain closed.
+- V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` with incomplete/unknown accounting and no retry.
+  V24 corrects projection order; V25 source-qualifies its lifecycle wrapper but has no state, approval or attempt.
+  Neither is readiness evidence, and execution, candidate, cost and paid authority remain closed.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

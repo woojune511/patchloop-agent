@@ -52,10 +52,11 @@
   accounting and no retry; `docs/09-evidence.md` owns its exact tuple.
 - V22 is projection-only. V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` after Docker and both
   frames passed; accounting is incomplete/unknown and retry is closed. `docs/09-evidence.md` owns exact tuples.
-- V24 contract `ncpcontract_f6fe2bdf24727ab0ba7b32bc86f4678bd253bd4e4652b8eb83acce7660952ed1` and qualification
-  `sha256:79423fd51f0b951e8b4c7565396d6f4e49447604fb33acee894a9c0644a5bcb6` are source-qualified only. It validates
-  before sorting and emits a value-free summary, but has no live/lifecycle entrypoint. The fixture is not exact
-  v23-cause proof; a v25 activation wrapper is next.
+- V24 is the immutable projection-only correction. V25 source `ea383759c57f60e5b33e6f5a2f65e1bb07d65532`, contract
+  `ncpcontract_c87b73d0a559f1585c4c40a495d1d5718ac89cd72aae935320023b7f4bbbca1f` and qualification
+  `sha256:d24b7a9849e0c632c05ef09ad9e9f7886bdf121a8b168d55e7040e8c2c732ff8` are source-qualified/state-required.
+  Qualification launched no diagnostic/mock/live process and created no lifecycle artifact. The next gate is an
+  exact v25 state statement; it grants no execution authority.
 
 ## Required reading
 
