@@ -12,6 +12,7 @@ import pytest
 from patchloop import runtime as runtime_module
 from patchloop.agent.runner import LiveExecutionAuthorization, _load_live_execution_plan
 from patchloop.contracts import (
+    AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
     DatasetRole,
@@ -24,12 +25,14 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
 R1_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r1.yaml")
 R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
+R3_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml")
 SOURCE_COMMIT = "a" * 40
+R2_BASE_SUITE_HASH = eval_runner._suite_hash(eval_runner.load_suite(R2_SUITE))
 EVALUATOR_V2_SOURCE_QUALIFICATION = {
     "source_qualification_hash": "sha256:" + "a" * 64,
     "evaluator_source_hash": "sha256:" + "b" * 64,
     "successor_suite_hash": "sha256:" + "c" * 64,
-    "base_suite_hash": "sha256:" + "d" * 64,
+    "base_suite_hash": R2_BASE_SUITE_HASH,
     "base_suite_matches": True,
 }
 
@@ -408,6 +411,170 @@ def test_r2_execution_hash_binds_evaluator_v2_qualification(
     assert observed["evaluator_v2_qualification"] == changed
     assert observed["suite_hash"] == changed["successor_suite_hash"]
     assert observed["execution_hash"] != original["execution_hash"]
+
+
+def test_r2_paid_plan_matches_qualified_successor_manifest(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+) -> None:
+    from patchloop.evals import qualification as qualification_module
+
+    _r1, candidate = ac_preflights
+    approved = eval_runner.preflight_suite(
+        R2_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=candidate["execution_hash"],
+    )
+    plan = {**approved, "schema_version": "experiment-execution-plan-v1"}
+    v1_manifest = _paid_boundary_manifest(approved, row_index=0)
+    manifest = _bind_paid_boundary_manifest_v2(v1_manifest, approved)
+
+    assert approved["ready"] is True
+    assert not qualification_module._execution_plan_matches(
+        plan=plan,
+        manifest=v1_manifest,
+    )
+    assert qualification_module._execution_plan_matches(
+        plan=plan,
+        manifest=manifest,
+    )
+
+    tampered_payload = manifest.model_dump(mode="json")
+    tampered_payload["evaluator_contract"]["evaluator_source_hash"] = "sha256:" + "0" * 64
+    assert not qualification_module._execution_plan_matches(
+        plan=plan,
+        manifest=type(manifest).model_validate(tampered_payload),
+    )
+
+
+def test_r3_paid_plan_uses_a_fresh_identity_and_matches_qualified_manifest(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from patchloop.evals import qualification as qualification_module
+
+    _r1, r2 = ac_preflights
+    r3_binding = {
+        **EVALUATOR_V2_SOURCE_QUALIFICATION,
+        "successor_suite_hash": "sha256:" + "d" * 64,
+        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R3_SUITE)),
+    }
+    monkeypatch.setattr(
+        eval_runner,
+        "_validated_ac_evaluator_v2_source_qualification",
+        lambda suite: (
+            dict(r3_binding)
+            if suite.experiment_id == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+            else None
+        ),
+    )
+    candidate = eval_runner.preflight_suite(R3_SUITE)
+    approved = eval_runner.preflight_suite(
+        R3_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=candidate["execution_hash"],
+    )
+    v1_manifest = _paid_boundary_manifest(approved, row_index=0, suite_path=R3_SUITE)
+    manifest = _bind_paid_boundary_manifest_v2(v1_manifest, approved)
+
+    assert approved["ready"] is True
+    assert approved["experiment_id"] == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    assert approved["execution_hash"] != r2["execution_hash"]
+    assert approved["campaign_cost_control"]["descriptor"]["experiment_id"] == (
+        AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    )
+    assert not qualification_module._execution_plan_matches(
+        plan={**approved, "schema_version": "experiment-execution-plan-v1"},
+        manifest=v1_manifest,
+    )
+    assert qualification_module._execution_plan_matches(
+        plan={**approved, "schema_version": "experiment-execution-plan-v1"},
+        manifest=manifest,
+    )
+
+
+def test_paid_boundary_revalidates_the_source_qualified_v2_authority(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from patchloop.agent.runner import AgentRunner, issue_live_execution_authorization
+    from patchloop.evals import evaluator_v2_source_qualification as source_q
+
+    _r1, candidate = ac_preflights
+    approved = eval_runner.preflight_suite(
+        R2_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=candidate["execution_hash"],
+    )
+    manifest = _bind_paid_boundary_manifest_v2(
+        _paid_boundary_manifest(approved, row_index=0),
+        approved,
+    )
+    plan_binding = eval_runner._persist_preflight_plan(approved)
+    authorization = issue_live_execution_authorization(
+        approved["execution_hash"],
+        root=eval_runner.runtime_root(),
+    )
+    authority = object()
+    observed: list[tuple[Any, Any, Any]] = []
+
+    monkeypatch.setattr(
+        source_q,
+        "validate_evaluator_v2_ac_paid_authority",
+        lambda checked_manifest, checked_authority, qualification: observed.append(
+            (checked_manifest, checked_authority, qualification)
+        ),
+    )
+    monkeypatch.setattr(
+        AgentRunner,
+        "_require_full_schedule_reservation",
+        staticmethod(lambda *_args, **_kwargs: {}),
+    )
+
+    AgentRunner._require_live_authorization(
+        manifest,
+        authorization,
+        evaluator_v2_authority=authority,
+    )
+
+    assert authorization.plan_path == plan_binding["path"]
+    assert observed == [(manifest, authority, approved["evaluator_v2_qualification"])]
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("source_qualification_hash", "sha256:" + "0" * 64),
+        ("evaluator_source_hash", "sha256:" + "0" * 64),
+        ("successor_suite_hash", "sha256:" + "0" * 64),
+        ("base_suite_hash", "sha256:" + "0" * 64),
+        ("base_suite_matches", False),
+        ("unexpected", "sha256:" + "0" * 64),
+    ],
+)
+def test_r2_paid_plan_rejects_tampered_successor_binding(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    field: str,
+    value: Any,
+) -> None:
+    from patchloop.evals import qualification as qualification_module
+
+    _r1, candidate = ac_preflights
+    approved = eval_runner.preflight_suite(
+        R2_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=candidate["execution_hash"],
+    )
+    manifest = _bind_paid_boundary_manifest_v2(
+        _paid_boundary_manifest(approved, row_index=0),
+        approved,
+    )
+    tampered = copy.deepcopy({**approved, "schema_version": "experiment-execution-plan-v1"})
+    tampered["evaluator_v2_qualification"][field] = value
+
+    assert not qualification_module._execution_plan_matches(
+        plan=tampered,
+        manifest=manifest,
+    )
 
 
 def test_r2_context_requires_the_exact_cost_control_hash(
@@ -1150,12 +1317,13 @@ def _paid_boundary_manifest(
     preflight: dict[str, Any],
     *,
     row_index: int,
+    suite_path: Path = R2_SUITE,
 ):
     from patchloop.contracts import MemoryCondition
     from patchloop.runtime import build_manifest
     from patchloop.task_loader import load_task_package
 
-    suite = eval_runner.load_suite(R2_SUITE)
+    suite = eval_runner.load_suite(suite_path)
     schedule_row = preflight["schedule"][row_index]
     task_row = next(row for row in preflight["tasks"] if row["task_id"] == schedule_row["task_id"])
     item = {**task_row, **schedule_row}
@@ -1197,6 +1365,38 @@ def _paid_boundary_manifest(
         experiment_context=experiment,
     )
     return manifest
+
+
+def _bind_paid_boundary_manifest_v2(manifest, preflight: dict[str, Any]):
+    from patchloop.agent.tools import TOOL_SCHEMAS_V2
+    from patchloop.task_loader import load_task_package
+    from patchloop.verifier.receipt import EvaluatorV2QualificationAuthority
+    from patchloop.verifier.runtime_evidence import (
+        EvaluatorV2RuntimeAuthority,
+        build_evaluator_safety_contract_v2,
+        evaluator_v2_manifest_runtime_tuple_hash,
+    )
+
+    package = load_task_package(Path("tasks/dev-validation") / manifest.task_id)
+    markers = (b"offline-v2-paid-boundary-marker",)
+    qualification = preflight["evaluator_v2_qualification"]
+    contract = build_evaluator_safety_contract_v2(
+        package=package,
+        tool_schemas=TOOL_SCHEMAS_V2,
+        private_markers=markers,
+    )
+    authority = EvaluatorV2QualificationAuthority(
+        runtime=EvaluatorV2RuntimeAuthority(
+            safety_contract=contract,
+            evaluator_source_hash=qualification["evaluator_source_hash"],
+            tool_schemas=tuple(TOOL_SCHEMAS_V2),
+            private_markers=markers,
+        ),
+        suite_hash=qualification["successor_suite_hash"],
+        source_qualification_hash=qualification["source_qualification_hash"],
+        runtime_tuple_hash=evaluator_v2_manifest_runtime_tuple_hash(manifest),
+    )
+    return eval_runner._bind_evaluator_v2_manifest(manifest, package, authority)
 
 
 def _paid_boundary_case(

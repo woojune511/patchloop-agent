@@ -17,6 +17,7 @@ from patchloop.agent.runner import (
     _ac_row_start_consumption_path,
     issue_live_execution_authorization,
 )
+from patchloop.agent.tools import TOOL_SCHEMAS_V2
 from patchloop.contracts import (
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
@@ -30,6 +31,12 @@ from patchloop.runtime import build_manifest
 from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
+from patchloop.verifier.receipt import EvaluatorV2QualificationAuthority
+from patchloop.verifier.runtime_evidence import (
+    EvaluatorV2RuntimeAuthority,
+    build_evaluator_safety_contract_v2,
+    evaluator_v2_manifest_runtime_tuple_hash,
+)
 
 R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 SOURCE_COMMIT = "a" * 40
@@ -145,12 +152,14 @@ def ac_case(
         root=root,
     )
     manifest, item = _manifest_for(plan, run_id="run_ac_row_claim_1")
+    manifest, evaluator_v2_authority = _bind_manifest_v2(manifest, item, plan)
     row_started_event_hash = _write_current_row_journal(plan, manifest)
     return {
         "root": root,
         "plan": plan,
         "authorization": authorization,
         "manifest": manifest,
+        "evaluator_v2_authority": evaluator_v2_authority,
         "item": item,
         "journal": Path(plan["journal_path"]),
         "row_started_event_hash": row_started_event_hash,
@@ -264,6 +273,34 @@ def _write_current_row_journal(
     )
 
 
+def _bind_manifest_v2(
+    manifest: Any,
+    item: dict[str, Any],
+    plan: dict[str, Any],
+) -> tuple[Any, EvaluatorV2QualificationAuthority]:
+    task_path = Path(item["task"])
+    package = load_task_package(task_path.parent if task_path.is_file() else task_path)
+    markers = (b"offline-row-start-v2-marker",)
+    qualification = plan["evaluator_v2_qualification"]
+    contract = build_evaluator_safety_contract_v2(
+        package=package,
+        tool_schemas=TOOL_SCHEMAS_V2,
+        private_markers=markers,
+    )
+    authority = EvaluatorV2QualificationAuthority(
+        runtime=EvaluatorV2RuntimeAuthority(
+            safety_contract=contract,
+            evaluator_source_hash=qualification["evaluator_source_hash"],
+            tool_schemas=tuple(TOOL_SCHEMAS_V2),
+            private_markers=markers,
+        ),
+        suite_hash=qualification["successor_suite_hash"],
+        source_qualification_hash=qualification["source_qualification_hash"],
+        runtime_tuple_hash=evaluator_v2_manifest_runtime_tuple_hash(manifest),
+    )
+    return eval_runner._bind_evaluator_v2_manifest(manifest, package, authority), authority
+
+
 def _claim_values(case: dict[str, Any]) -> dict[str, str]:
     manifest = case["manifest"]
     assert manifest.experiment is not None
@@ -302,6 +339,13 @@ def _configure_offline_runner(
         AgentRunner,
         "_live_plan_matches_manifest",
         staticmethod(lambda *_args, **_kwargs: True),
+    )
+    from patchloop.evals import evaluator_v2_source_qualification as source_q
+
+    monkeypatch.setattr(
+        source_q,
+        "validate_evaluator_v2_ac_paid_authority",
+        lambda *_args, **_kwargs: None,
     )
     monkeypatch.setattr(
         agent_runner.OpenAIResponsesAdapter,
@@ -434,6 +478,7 @@ def test_ac_paid_boundary_consumes_claim_before_execute_without_calls(
         model="openai",
         manifest=manifest,
         live_authorization=ac_case["authorization"],
+        evaluator_v2_authority=ac_case["evaluator_v2_authority"],
     )
 
     assert result == {"run_id": manifest.run_id}
@@ -467,6 +512,7 @@ def test_ac_marker_write_failure_keeps_db_claim_and_blocks_execute(
             model="openai",
             manifest=manifest,
             live_authorization=ac_case["authorization"],
+            evaluator_v2_authority=ac_case["evaluator_v2_authority"],
         )
 
     values = _claim_values(ac_case)
@@ -499,6 +545,7 @@ def test_ac_consumed_row_rejects_journal_reset_and_replacement_run(
         model="openai",
         manifest=first_manifest,
         live_authorization=ac_case["authorization"],
+        evaluator_v2_authority=ac_case["evaluator_v2_authority"],
     )
     marker_path = _ac_row_start_consumption_path(
         journal_path=ac_case["journal"],
@@ -511,6 +558,11 @@ def test_ac_consumed_row_rejects_journal_reset_and_replacement_run(
     replacement, item = _manifest_for(
         ac_case["plan"],
         run_id="run_ac_row_claim_replacement",
+    )
+    replacement, replacement_authority = _bind_manifest_v2(
+        replacement,
+        item,
+        ac_case["plan"],
     )
     _write_current_row_journal(ac_case["plan"], replacement)
     second = AgentRunner(ac_case["root"])
@@ -529,6 +581,7 @@ def test_ac_consumed_row_rejects_journal_reset_and_replacement_run(
             model="openai",
             manifest=replacement,
             live_authorization=ac_case["authorization"],
+            evaluator_v2_authority=replacement_authority,
         )
 
     assert first_calls == [first_manifest.run_id]
@@ -574,6 +627,7 @@ def test_ac_journal_change_after_initial_validation_stops_before_claim(
             model="openai",
             manifest=manifest,
             live_authorization=ac_case["authorization"],
+            evaluator_v2_authority=ac_case["evaluator_v2_authority"],
         )
 
     assert runner.state.list_ac_row_start_consumptions(manifest.experiment.execution_hash) == []

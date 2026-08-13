@@ -10,7 +10,7 @@ from typing import Any
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
@@ -983,6 +983,8 @@ def _execution_plan_matches(
     pricing = plan.get("pricing")
     runtime_contract = plan.get("runtime_contract")
     schedule_hash = plan.get("schedule_hash")
+    evaluator_v2_qualification_present = "evaluator_v2_qualification" in plan
+    evaluator_v2_qualification = plan.get("evaluator_v2_qualification")
     if (
         plan.get("schema_version") != "experiment-execution-plan-v1"
         or plan.get("ready") is not True
@@ -1034,6 +1036,40 @@ def _execution_plan_matches(
 
         parsed_suite = ExperimentSuite.model_validate(suite)
         normalized_suite = _suite_payload(parsed_suite)
+        base_suite_hash = _suite_hash(parsed_suite)
+        expected_suite_hash = base_suite_hash
+        if evaluator_v2_qualification_present:
+            expected_qualification_keys = {
+                "source_qualification_hash",
+                "evaluator_source_hash",
+                "successor_suite_hash",
+                "base_suite_hash",
+                "base_suite_matches",
+            }
+            evaluator_contract = manifest.evaluator_contract
+            if not (
+                isinstance(evaluator_v2_qualification, dict)
+                and set(evaluator_v2_qualification) == expected_qualification_keys
+                and manifest.schema_version == "run-manifest-v2"
+                and evaluator_contract is not None
+                and evaluator_contract.evaluator_source_hash
+                == evaluator_v2_qualification.get("evaluator_source_hash")
+                and parsed_suite.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
+                and _is_ac_fixed_bundle_readiness_profile(parsed_suite)
+                and evaluator_v2_qualification.get("base_suite_matches") is True
+                and evaluator_v2_qualification.get("base_suite_hash") == base_suite_hash
+                and all(
+                    isinstance(evaluator_v2_qualification.get(key), str)
+                    and re.fullmatch(
+                        r"sha256:[0-9a-f]{64}",
+                        evaluator_v2_qualification[key],
+                    )
+                    is not None
+                    for key in expected_qualification_keys - {"base_suite_matches"}
+                )
+            ):
+                return False
+            expected_suite_hash = evaluator_v2_qualification["successor_suite_hash"]
         campaign_cost_control_matches = _campaign_cost_control_matches(
             parsed_suite,
             campaign_cost_control,
@@ -1134,6 +1170,9 @@ def _execution_plan_matches(
             ),
             campaign_cost_control=(
                 campaign_cost_control if isinstance(campaign_cost_control, dict) else None
+            ),
+            evaluator_v2_qualification=(
+                evaluator_v2_qualification if isinstance(evaluator_v2_qualification, dict) else None
             ),
         )
     except (ContractError, ImportError, KeyError, TypeError, ValueError):
@@ -1426,7 +1465,7 @@ def _execution_plan_matches(
     )
     suite_contract_matches = bool(
         canonical_json(suite) == canonical_json(normalized_suite)
-        and _suite_hash(parsed_suite) == experiment.suite_hash
+        and expected_suite_hash == experiment.suite_hash
         and expected_execution_hash == experiment.execution_hash
         and parsed_suite.model == manifest.model.provider
         and parsed_suite.model_id == manifest.model.model_id
@@ -1865,8 +1904,7 @@ def _generic_baseline_runtime_contract_evidence(
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
                     {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
-                    if manifest.experiment.experiment_id
-                    == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+                    if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
                     else {}
                 ),
                 "schedule_seed": manifest.experiment.schedule_seed,
@@ -10965,7 +11003,7 @@ def qualify_run(
         and experiment.experiment_id
         in {
             CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
-            AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+            *AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
         }
     )
     if full_schedule_cost_campaign:
@@ -10980,7 +11018,7 @@ def qualify_run(
         )
         ac_cost_campaign = bool(
             experiment is not None
-            and experiment.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+            and experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
         )
         expected_control_schema = (
             "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"

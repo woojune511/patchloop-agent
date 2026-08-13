@@ -12,6 +12,10 @@ from typing import Any
 import pytest
 
 from patchloop import runtime as runtime_module
+from patchloop.contracts import (
+    AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+)
 from patchloop.errors import ContractError
 from patchloop.evals import runner as eval_runner
 from patchloop.util import sha256_bytes
@@ -204,6 +208,46 @@ def _paths(context: dict[str, Any]) -> tuple[Path, Path, Path, Path]:
     )
 
 
+def test_corrected_campaign_finalization_paths_preserve_r2_namespace(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path / "runtime"
+    execution_hash = "sha256:" + "a" * 64
+    r2_paths = eval_runner._ac_finalization_paths(
+        execution_hash,
+        root=root,
+        experiment_id=AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+    )
+    r3_paths = eval_runner._ac_finalization_paths(
+        execution_hash,
+        root=root,
+        experiment_id=AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+    )
+
+    assert r3_paths[0] == r2_paths[0]
+    assert r3_paths[2] == r2_paths[2]
+    assert r3_paths[1] != r2_paths[1]
+    assert r3_paths[3] != r2_paths[3]
+    assert r3_paths[1].name == f"{AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID}.jsonl"
+    assert r3_paths[3].name == f"{AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID}.json"
+
+    r2_journal = b'{"r2":"immutable-journal"}\n'
+    r2_result = b'{"r2":"immutable-result"}\n'
+    r2_paths[1].parent.mkdir(parents=True, exist_ok=True)
+    r2_paths[3].parent.mkdir(parents=True, exist_ok=True)
+    r2_paths[1].write_bytes(r2_journal)
+    r2_paths[3].write_bytes(r2_result)
+
+    eval_runner._ac_finalization_paths(
+        execution_hash,
+        root=root,
+        experiment_id=AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+    )
+
+    assert r2_paths[1].read_bytes() == r2_journal
+    assert r2_paths[3].read_bytes() == r2_result
+
+
 def _journal_events(journal: Path) -> list[dict[str, Any]]:
     return [json.loads(line) for line in journal.read_text(encoding="utf-8").splitlines()]
 
@@ -238,6 +282,43 @@ def _forbid_recovery_calls(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(eval_runner, "_docker_image_state", _forbidden("Docker"))
     monkeypatch.setattr(eval_runner, "_openai_sdk_state", _forbidden("SDK"))
     monkeypatch.setattr(subprocess, "run", _forbidden("subprocess"))
+
+
+@pytest.mark.parametrize("mismatch", ["top-level", "suite", "cost-control"])
+def test_ac_recovery_rejects_cross_campaign_identity_without_mutating_r2_evidence(
+    ac_runtime: dict[str, Any],
+    monkeypatch: pytest.MonkeyPatch,
+    mismatch: str,
+) -> None:
+    with pytest.raises(InjectedFinalizationCrash):
+        ac_runtime["execute"](_crash_at("after_prepared_result_fsync"))
+
+    plan_path, journal, prepared, output = _paths(ac_runtime)
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    if mismatch == "top-level":
+        plan["experiment_id"] = AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    elif mismatch == "suite":
+        plan["suite"]["experiment_id"] = AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    else:
+        plan["campaign_cost_control"]["descriptor"]["experiment_id"] = (
+            AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+        )
+    plan_path.write_bytes(json.dumps(plan, indent=2, ensure_ascii=False).encode("utf-8"))
+
+    r2_journal = journal.read_bytes()
+    r2_prepared = prepared.read_bytes()
+    assert not output.exists()
+    _forbid_recovery_calls(monkeypatch)
+
+    with pytest.raises(ContractError, match="does not authorize exact A/C finalization"):
+        eval_runner.recover_ac_campaign_finalization(
+            ac_runtime["execution_hash"],
+            root=ac_runtime["root"],
+        )
+
+    assert journal.read_bytes() == r2_journal
+    assert prepared.read_bytes() == r2_prepared
+    assert not output.exists()
 
 
 @pytest.mark.parametrize(

@@ -16,7 +16,7 @@ from patchloop import runtime as runtime_module
 from patchloop.agent import model as agent_model
 from patchloop.agent import runner as agent_runner
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
     Budget,
     DatasetRole,
     ExperimentPurpose,
@@ -105,6 +105,31 @@ def _build(output: Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
     return summary, payload, raw
 
 
+def test_r5_source_surfaces_do_not_replace_r4_artifact() -> None:
+    r4 = REPOSITORY / (
+        "reports/live-pilot/artifacts/"
+        "evaluator-v2-ac-successor-offline-source-qualification-r4.json"
+    )
+
+    assert source_q.SCHEMA_VERSION == "evaluator-v2-ac-source-qualification-v5"
+    assert source_q.QUALIFICATION_ID.endswith("-r5")
+    assert source_q.PLAN_PATH.as_posix() == "experiments/ac-structured-pilot-v6.plan.yaml"
+    assert source_q.OUTPUT_PATH.name.endswith("qualification-r5.json")
+    assert r4.is_file()
+    assert r4 != REPOSITORY / source_q.OUTPUT_PATH
+
+
+def test_r3_suite_changes_only_fast_predecessor_experiment_identity() -> None:
+    successor = eval_runner.load_suite(source_q.BASE_SUITE_PATH).model_dump(mode="json")
+    predecessor = eval_runner.load_suite(source_q.FAST_PREDECESSOR_SUITE_PATH).model_dump(
+        mode="json"
+    )
+
+    assert successor["experiment_id"] == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    successor["experiment_id"] = predecessor["experiment_id"]
+    assert successor == predecessor
+
+
 def test_build_validate_and_replay_are_append_only_and_offline(
     isolated_output: Path,
 ) -> None:
@@ -164,6 +189,10 @@ def test_successor_suite_is_new_and_preserves_exact_ac_treatment(
     assert successor["treatment_hash"] == sha256_json(source_q._EXPECTED_TREATMENT)
     assert payload["fixed_bundle_sha256"] == source_q.FIXED_BUNDLE_SHA256
     assert payload["base_suite"]["path"] == source_q.BASE_SUITE_PATH.as_posix()
+    assert (
+        eval_runner.load_suite(source_q.BASE_SUITE_PATH).experiment_id
+        == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+    )
     assert (
         eval_runner.load_suite(source_q.BASE_SUITE_PATH).pricing_verified_at.isoformat()
         == "2026-08-13T12:05:26+00:00"
@@ -254,7 +283,7 @@ def test_ac_runner_binds_qualified_v2_manifest(
     monkeypatch.setattr(runtime_module, "git_commit", lambda: "a" * 40)
     monkeypatch.setattr(runtime_module, "version", lambda _package: "offline-test-sdk")
     context = ExperimentRunContext(
-        experiment_id=AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        experiment_id=AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
         purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
         suite_hash=summary["successor_suite_hash"],
         execution_hash="sha256:" + "1" * 64,
@@ -290,11 +319,79 @@ def test_ac_runner_binds_qualified_v2_manifest(
     )
 
     bound = eval_runner._bind_evaluator_v2_manifest(manifest, package, authority)
+    qualification = {
+        key: summary[key]
+        for key in (
+            "source_qualification_hash",
+            "evaluator_source_hash",
+            "successor_suite_hash",
+            "base_suite_hash",
+        )
+    } | {"base_suite_matches": True}
 
     assert bound.schema_version == "run-manifest-v2"
     assert bound.evaluator_contract is not None
     assert bound.evaluator_contract.evaluator_source_hash == summary["evaluator_source_hash"]
     assert bound.evaluator_contract.contract_hash == authority.runtime.safety_contract.content_hash
+    assert (
+        source_q.validate_evaluator_v2_ac_paid_authority(
+            bound,
+            authority,
+            qualification,
+            repository=REPOSITORY,
+        )
+        == authority
+    )
+
+    with pytest.raises(
+        source_q.EvaluatorV2SourceQualificationError,
+        match="differs from the source artifact",
+    ):
+        source_q.validate_evaluator_v2_ac_paid_authority(
+            bound,
+            authority,
+            {**qualification, "source_qualification_hash": "sha256:" + "0" * 64},
+            repository=REPOSITORY,
+        )
+
+    from patchloop.agent.tools import TOOL_SCHEMAS_V2
+    from patchloop.verifier.receipt import EvaluatorV2QualificationAuthority
+    from patchloop.verifier.runtime_evidence import (
+        EvaluatorV2RuntimeAuthority,
+        build_evaluator_safety_contract_v2,
+    )
+
+    forged_contract = build_evaluator_safety_contract_v2(
+        package=package,
+        tool_schemas=TOOL_SCHEMAS_V2,
+        private_markers=authority.runtime.private_markers,
+    )
+    forged_authority = EvaluatorV2QualificationAuthority(
+        runtime=EvaluatorV2RuntimeAuthority(
+            safety_contract=forged_contract,
+            evaluator_source_hash=summary["evaluator_source_hash"],
+            tool_schemas=tuple(TOOL_SCHEMAS_V2),
+            private_markers=authority.runtime.private_markers,
+        ),
+        suite_hash=summary["successor_suite_hash"],
+        source_qualification_hash=summary["source_qualification_hash"],
+        runtime_tuple_hash=authority.runtime_tuple_hash,
+    )
+    forged_bound = eval_runner._bind_evaluator_v2_manifest(
+        manifest,
+        package,
+        forged_authority,
+    )
+    with pytest.raises(
+        source_q.EvaluatorV2SourceQualificationError,
+        match="differs from the qualified source or task",
+    ):
+        source_q.validate_evaluator_v2_ac_paid_authority(
+            forged_bound,
+            forged_authority,
+            qualification,
+            repository=REPOSITORY,
+        )
 
 
 def test_ac_runner_loads_task_authorities_without_persisting_runtime_marker(

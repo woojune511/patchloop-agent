@@ -44,7 +44,7 @@ from patchloop.agent.tools import (
 )
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
-    AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
@@ -773,6 +773,7 @@ class AgentRunner:
                 manifest,
                 live_authorization,
                 runner_root=self.root,
+                evaluator_v2_authority=evaluator_v2_authority,
             )
             self._require_campaign_cost_reservation(
                 manifest,
@@ -929,7 +930,7 @@ class AgentRunner:
             in {
                 CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
                 CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
-                AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+                *AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
             }
         ):
             if (
@@ -1091,7 +1092,7 @@ class AgentRunner:
         return bool(
             AgentRunner._is_ac_fixed_bundle_readiness_manifest(manifest)
             and manifest.experiment is not None
-            and manifest.experiment.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+            and manifest.experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
             and _valid_sha256_identity(manifest.experiment.campaign_cost_control_hash)
         )
 
@@ -1101,6 +1102,7 @@ class AgentRunner:
         authorization: LiveExecutionAuthorization | None,
         *,
         runner_root: Path | None = None,
+        evaluator_v2_authority: EvaluatorV2QualificationAuthority | None = None,
     ) -> None:
         try:
             plan = _load_live_execution_plan(authorization) if authorization is not None else None
@@ -1121,6 +1123,24 @@ class AgentRunner:
             raise ContractError(
                 "live model execution requires an approved experiment execution capability"
             )
+        assert isinstance(plan, dict)
+        if "evaluator_v2_qualification" in plan:
+            try:
+                from patchloop.evals.evaluator_v2_source_qualification import (
+                    validate_evaluator_v2_ac_paid_authority,
+                )
+
+                if evaluator_v2_authority is None:
+                    raise ContractError("paid evaluator-v2 authority is missing")
+                validate_evaluator_v2_ac_paid_authority(
+                    manifest,
+                    evaluator_v2_authority,
+                    plan["evaluator_v2_qualification"],
+                )
+            except (ContractError, ImportError, TypeError, ValueError) as exc:
+                raise ContractError(
+                    "live model execution requires the exact qualified evaluator-v2 authority"
+                ) from exc
         if AgentRunner._is_condition_neutral_runtime_v2_manifest(
             manifest
         ) or AgentRunner._is_ac_fixed_bundle_cost_completion_manifest(manifest):
@@ -1144,9 +1164,14 @@ class AgentRunner:
         assert manifest.experiment is not None
         ac_cost_profile = AgentRunner._is_ac_fixed_bundle_cost_completion_manifest(manifest)
         expected_experiment_id = (
-            AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+            manifest.experiment.experiment_id
             if ac_cost_profile
             else CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID
+        )
+        expected_purpose = (
+            ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
+            if ac_cost_profile
+            else ExperimentPurpose.MEMORY_DEVELOPMENT_NO_MEMORY.value
         )
         expected_control_schema = (
             _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_CONTROL_SCHEMA
@@ -1276,6 +1301,8 @@ class AgentRunner:
         if not (
             events[0].get("event_type") == "CampaignStarted"
             and isinstance(started, dict)
+            and started.get("experiment_id") == expected_experiment_id
+            and started.get("purpose") == expected_purpose
             and started.get("execution_hash") == authorization.execution_hash
             and started.get("execution_plan_hash") == expected_plan_content_hash
             and started.get("schedule_hash") == descriptor.get("schedule_hash")
@@ -3798,8 +3825,7 @@ class AgentRunner:
                 "execution_hash": manifest.experiment.execution_hash,
                 **(
                     {"campaign_cost_control_hash": (manifest.experiment.campaign_cost_control_hash)}
-                    if manifest.experiment.experiment_id
-                    == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+                    if manifest.experiment.experiment_id in AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS
                     else {}
                 ),
                 "schedule_seed": manifest.experiment.schedule_seed,

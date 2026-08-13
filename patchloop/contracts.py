@@ -78,10 +78,18 @@ AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID = "dev-validation-ac-fixed-bundle-readin
 AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID = (
     "dev-validation-ac-fixed-bundle-readiness-20260808-r2"
 )
+AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID = "dev-validation-ac-fixed-bundle-readiness-20260813-r3"
 AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
     {
         AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+    }
+)
+AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS = frozenset(
+    {
+        AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
     }
 )
 AC_FIXED_BUNDLE_POLICY_VERSION = "fixed-d110-bundle-v1"
@@ -863,7 +871,7 @@ class ExperimentRunContext(StrictModel):
     def bind_campaign_cost_context(self) -> ExperimentRunContext:
         if self.experiment_id in {
             CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
-            AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+            *AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
         }:
             if self.campaign_cost_control_hash is None:
                 raise ValueError(
