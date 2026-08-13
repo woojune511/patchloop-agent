@@ -107,10 +107,10 @@ a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after 
 outer result transport. V20's exact state/approval started one append-only ledger, then consumed
 `ERROR(supervised_output_invalid)` with incomplete/unknown accounting. It cannot retry; a correction needs a new version.
 
-V21 is a source-only two-hop complete-write, length/digest-frame and typed-decode contract, not a v20 retry or cause
-proof. Its fixed fixture passed both semantic frames; invalid raw metadata is discarded, and protocol accounting does
-not prove process-wide absence. It grants no live observation, lifecycle, readiness, cost or A/C authority. A new
-activation wrapper, fresh state and exact approval are required.
+V22 binds V21 framing to a strict projection-only typed-child contract. It rejects coercion, preserves inner unknown
+accounting and exposes no live callback or lifecycle. Qualification revalidates source/Git provenance without a
+diagnostic/mock workload; local fixed-mock tests are not readiness. V23 activation, fresh state and exact approval
+are required.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory

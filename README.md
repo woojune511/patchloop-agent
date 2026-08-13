@@ -32,8 +32,8 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
 - V3-v18 are immutable. V19 corrects only the outer result transport; its v20 activation wrapper is
   consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting, not readiness evidence.
-- V21 is an offline source-qualified two-hop framing diagnostic. Its fixed public fixture is not an SDK/readiness
-  result and grants no state, activation, retry, Docker/network, provider or paid-execution authority.
+- V22 is a source-qualified, projection-only typed channel over V21 framing. It has no live callback or lifecycle;
+  its fixed mock is not SDK/readiness evidence and grants no Docker/network, provider or paid authority.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 

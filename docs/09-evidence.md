@@ -3,19 +3,19 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V21 envelope-diagnostic successor -- source-qualified only
+## V22 typed diagnostic channel -- source-qualified only
 
-Source/tree `05cb2ab717805a5e777a4e7b87f7784d44dfac84`/`d05216a65fc6e627e1fbee41560a52fb6e8c023d`
-is the exact five-addition child of `ac804d2db098c734d91bc88d285c936953763ad4`. Contract
-`ncpcontract_d1ec7610e2e29d3a614958a46ac36b190d97fe369cf6b533cfe39afd228ccc8a` is file
-`sha256:cf8eed678d2f9d63f1c936509ac2bb0086293335334410171c74891794876b83` (4,878 bytes). Sole-artifact
-qualification commit `aef271e8ad222167ffd11656d0018d18c1964b57` records content/file
-`sha256:5510796c3ba9e26a36fac67dff46d21fd3bc4d0f646169c0b4862551542132c4`/
-`sha256:3e7b9b504eaa551994865ff0c6b3a0dd472206f97cffcc711ac1be7111befb9f` (8,075 bytes).
+Source/tree `454627d0eaa38b30e3795e3b9f1fb29546ca115d`/`65fbfcf2e92e6766b20d5aca38fb4c14d6c1fa3f`
+is the exact five-addition child of `e763a2ed4fbb14659fcba88eb2c7411ab25eec0c`. Contract
+`ncpcontract_721423c64d9cf0d5f1d4c0e25c7d5e3a25daa1b2b8081e221bc8e73b82367ccd` is file
+`sha256:7909868309b4073574a13b94ffc9694bd111a1758090e4d0f26e2f9a64e794d4` (6,672 bytes). Sole-artifact
+qualification commit `f8857597a5858ff78faedee190b3e33b449fe2db` records content/file
+`sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42`/
+`sha256:271197e7f0ef42544a4c6de6db0d47607b6a8b8a8b3c83268ad909bd6ebca8ef` (12,513 bytes).
 
-Two fixed-fixture local hops passed framing. This is offline transport evidence only: protocol-zero declarations do
-not prove process-wide absence, SDK readiness, V20's cause or an effect. No state/approval/attempt/terminal or live
-authority exists; a new activation wrapper, fresh state and exact approval are required. D-142 is not that gate.
+V22 rejects callback execution and type coercion, preserving inner incomplete/unknown accounting. Qualification
+launched no diagnostic/mock workload; local Git provenance subprocesses and fixed-mock tests are not readiness.
+No lifecycle/live authority exists; V23 activation, fresh state and exact approval are required. D-142 is not that gate.
 
 ## V20 dual-pipe activation — consumed ERROR
 

@@ -34,9 +34,9 @@ work.
   anonymous result pipe. V18 later passed Docker but consumed a no-envelope supervisor ERROR with incomplete/unknown
   accounting. V20 later corrected the outer transport, but consumed the same supervisor-envelope class after Docker
   READY. Its state, approval and attempt cannot be reused; any correction requires a new versioned successor.
-- V21 is a source-only two-hop framing diagnostic, not a v20 retry or cause proof. Its fixture passed semantic
-  framing, while protocol counters do not prove process-wide absence. It creates no live/lifecycle/readiness/cost/A/C
-  authority; the next gate is a new activation wrapper, fresh state and exact approval.
+- V22 is a source-qualified projection-only typed channel over V21 framing, not a v20 retry or readiness result.
+  It exposes no live callback/lifecycle and its qualification runs no diagnostic/mock workload. The next gate is a
+  versioned V23 activation wrapper, then fresh state and exact approval.
 
 ### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
 

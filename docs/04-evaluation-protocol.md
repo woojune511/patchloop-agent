@@ -106,10 +106,9 @@ Docker READY, leaving incomplete/unknown accounting. V19 changes only the outer 
 exact qualification with separate state/approval/run gates. V20 consumed one ERROR after Docker READY; the invalid
 supervisor envelope leaves accounting incomplete/unknown, grants no readiness and cannot retry.
 
-V21 binds v20 without claiming its cause. A fixed public fixture passed complete-write, length/digest framing and
-typed decoding over two local hops. Protocol accounting is complete but process-wide absence is unproven. This
-source qualification creates no live observation, lifecycle, readiness, memory, cost or A/C authority; a new
-activation wrapper, fresh state and exact approval must precede an attempt.
+V22 binds V21 framing to strict projection of already-observed typed child data. It has no live callback or lifecycle;
+qualification runs no diagnostic/mock workload, and the local fixed mock proves neither process-wide absence nor
+readiness. A versioned V23 activation wrapper, fresh state and exact approval must precede an attempt.
 
 ## 7. Run-completion gate
 

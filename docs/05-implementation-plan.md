@@ -35,7 +35,7 @@ C exact-three. Drift fails before side effects; D-142/R2 are not relabeled and t
 
 ## Work item 3 — versioned no-call preflight contract
 
-Status: v1-v20 are immutable; v20 is a consumed ERROR and v21 is source-qualified offline only.
+Status: v1-v20 are immutable; v20 is consumed ERROR and v22 is source-qualified/activation-closed.
 
 V1 requires a trusted value-free receipt. Attempts bind approval and ledger snapshot; intent/ACTION_STARTED precede
 observation and READY/BLOCKED/ERROR is terminal. Reuse/retry/resume/overwrite/backfill fail closed; changed semantics
@@ -45,16 +45,16 @@ V3 binds fixed-placeholder rejection and read-only Docker; v5/v7 are consumed. V
 `SYSTEMROOT`/Windows 10106. V10/V11's non-proof state/approval were consumed by v12. Exact tuples live in
 `docs/09-evidence.md`; none is readiness evidence.
 
-V21 is not a v20 retry or cause proof. Its fixed fixture passed two-hop complete-write/framing/typed decoding;
-protocol accounting does not prove process-wide absence.
+V22 strictly projects typed child data over V21 framing without a live callback. Qualification ran no diagnostic/mock
+workload; the local fixed mock is transport evidence only.
 
 ## Work item 4 — separately approved no-call preflight attempt
 
-Status: v3/v5/v7/v12/v13/v14/v16/v18/v20 consumed; v21 has no attempt and no attempt is open.
+Status: v3/v5/v7/v12/v13/v14/v16/v18/v20 consumed; v22 has no attempt and no attempt is open.
 
 V20 passed Docker's 8 reads and its outer pipe returned nonempty at code 0, but the supervisor envelope remained
 invalid. It consumed `ERROR(supervised_output_invalid)` with incomplete/unknown accounting and no retry. Another
-attempt requires a new activation wrapper, fresh state and exact approval. V21 authorizes no live observation,
+attempt requires a versioned V23 activation wrapper, fresh state and exact approval. V22 authorizes no live observation,
 lifecycle, readiness, memory result, cost or A/C execution.
 
 ## Work item 5 — execution candidate and cost gate
