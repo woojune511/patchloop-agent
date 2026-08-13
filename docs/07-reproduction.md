@@ -67,7 +67,7 @@ V23 validation binds the lifecycle wrapper to exact V22 source evidence without 
 ```
 
 Local Git provenance subprocesses may run. These qualifications prove neither process-wide absence nor readiness.
-V23 still requires fresh exact state, separate approval and an immediate-run statement.
+V23 state is self-attested non-proof; separate approval and an immediate-run statement remain required.
 
 ## Audit the sealed D-142 source
 
@@ -91,4 +91,4 @@ Historical absent-state assertions never justify rewriting sealed evidence.
 ## Live execution
 
 There is no supported live A/C, D-142, v18/v20 retry or currently authorized V23 attempt. Validate read-only, then
-stop: no state, approval, attempt, candidate or cost gate is open.
+stop: state grants no execution, and approval, attempt, candidate and cost remain absent.

@@ -57,9 +57,9 @@
 - V22 remains the immutable projection-only predecessor. V23 source/tree
   `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`, contract
   `ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a` and qualification
-  `sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26` are source-qualified/state-required.
-  Qualification launched no diagnostic/mock/live process and created no lifecycle evidence. No state, approval or
-  attempt exists; fresh exact state is the next gate.
+  `sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26` are source-qualified. Self-attested state
+  `ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d` records the reported Docker/`.env`
+  facts with observation 0 and no execution authority. Approval, attempt and terminal are absent; exact approval is next.
 
 ## Required reading
 

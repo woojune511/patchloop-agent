@@ -3,7 +3,7 @@
 Canonical machine artifacts under `reports/` are authoritative. Historical narrative is archived at
 `docs/archive/snapshots/d121/09-evidence.full.md`.
 
-## V23 typed diagnostic activation -- source-qualified, state absent
+## V23 typed diagnostic activation -- source-qualified, approval absent
 
 Source/tree `733ddc3cc74928f1011c58455fad6b151bfd25ad`/`8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`
 is the exact five-addition child of `77eb86bf7049a468ade4176cd2eafb15b0f2c6e0`. Contract
@@ -13,9 +13,11 @@ qualification commit `f1c469d60280b67b40a852863ddf36d94f0d6b8e` records content/
 `sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26`/
 `sha256:32a8c74166daf84d20cda8317d434481135a93056e063800bb553efd2f7ae2f4` (14,099 bytes).
 
-V23 binds V22 typed projection to append-only lifecycle gates and two inherited result pipes. Qualification launched
-no diagnostic/mock/live process and made no external observation. State, approval, attempt, `ACTION_STARTED` and
-terminal are absent; fresh exact state is next and is not execution authority.
+Qualification launched no diagnostic/mock/live process. State commit `93cc1c260de6f854b0d45cd556eb3ff324103a61` adds only
+`ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d`; content/file
+`sha256:c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d`/
+`sha256:1c03262f461e8f56e7dbf91bed49e3a7b5387c1082ff032734b2bfe18ae0a9ad` (919 bytes). It is self-attested
+non-proof with observation 0 and no execution authority. Approval, attempt, `ACTION_STARTED` and terminal are absent.
 
 ## V22 typed diagnostic channel -- immutable predecessor
 

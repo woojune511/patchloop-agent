@@ -2,12 +2,12 @@
 
 ## Current checkpoint
 
-V23 is source-qualified/state-required: source/tree `733ddc3cc74928f1011c58455fad6b151bfd25ad`/
+V23 is source-qualified/approval-required: source/tree `733ddc3cc74928f1011c58455fad6b151bfd25ad`/
 `8b2de30d46c2ac6eda7a45d6d9c6351624a60f75`, contract
 `ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a`, qualification
-`sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26` at `f1c469d6`. It lifecycle-gates the
-strict V22 typed channel behind durable authorization/attempt/`ACTION_STARTED`. Qualification launched no
-diagnostic/mock/live process and created no state, approval, attempt or observation.
+`sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26` at `f1c469d6`. It lifecycle-gates V22's
+typed channel. State `ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d` at `93cc1c26`
+is self-attested non-proof with observation 0 and no execution authority; approval/attempt/terminal are absent.
 
 D-142 gate `d142_9515aeb4c7289fa26987ec605917c395e54b27d076cd226c266acd2a3cb82914` and source
 `1370cf43c08cefb550b158a5d4172a60ac172470` remain D-141's exact four-file sole child; `docs/09-evidence.md` owns
@@ -35,7 +35,7 @@ is absent, so no narrower cause is established.
 1. **Evaluator correctness v2.** Typed evidence, fail-closed aggregation and receipt-gated integration are local.
 2. **Successor A/C qualification.** New source/runtime/suite identities are local; D-142/R2 remain predecessors.
 3. **Offline preflight contracts.** V1-v20 are immutable; v20 is consumed ERROR. V22 is predecessor; V23 is qualified.
-4. **Separately approved preflight attempt.** Blocked on fresh exact V23 state, then exact approval; no attempt is open.
+4. **Separately approved preflight attempt.** Blocked on exact V23 approval; no attempt is open.
 5. **Candidate and cost gate.** After READY, bind pricing/reserve/cap/hash/candidate, then obtain paid approval.
 6. **Readiness panel.** The four-run A/C readiness runs Moto A/C and Babel C/A once; confounding is inconclusive.
 7. **Held-out A/C.** After valid readiness, preregister 12 tasks × A/C × at least two repetitions (48+ rows).
@@ -56,8 +56,7 @@ V5/v7/v12/v13/v14/v16/v18/v20 are consumed and cannot retry. V23 execution, cost
 ## Next gate
 
 No attempt is open. V20 cannot retry or resume, and its narrower cause remains unknown. The exact next action is a
-fresh state statement bound to the V23 contract/qualification; that state is self-attested non-proof and grants no
-execution. Separate exact approval and a later exact immediate-run statement are still required. Candidate and cost
-remain closed.
+separate approval bound to the V23 contract/qualification/state. It creates no attempt or observation; a later exact
+immediate-run statement is still required. Candidate and cost remain closed.
 
 D-142 activation is not the next gate. Do not create its receipt, attempt, marker or terminal from this roadmap.
