@@ -1,0 +1,25 @@
+{
+  "schema_version": "typed-diagnostic-activation-approval-v25",
+  "approval_id": "ncpapproval_eb438ff9b25f404a88e93d3e6462a4d7c70331b94d3c9e617ec802d98f896919",
+  "contract_id": "ncpcontract_c87b73d0a559f1585c4c40a495d1d5718ac89cd72aae935320023b7f4bbbca1f",
+  "source_qualification_hash": "sha256:d24b7a9849e0c632c05ef09ad9e9f7886bdf121a8b168d55e7040e8c2c732ff8",
+  "state_id": "ncpstate_ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2",
+  "state_content_hash": "sha256:ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2",
+  "statement_sha256": "sha256:5561747e7b2567b14998be9023ef225b6500dc75f1a4a5c10c863da2a28fd238",
+  "approved_runtime": "patchloop.evals.order_stable_typed_diagnostic_activation_successor.run_once",
+  "approved_scopes": [
+    "v21-exact-source-and-recorded-qualification-validation-before-observation",
+    "already-running-docker-read-only-two-snapshot-eight-command-observation",
+    "isolated-dotenv-exact-openai-api-key-membership",
+    "isolated-sanitized-sdk-fixed-placeholder-reject-dispatch-diagnostic",
+    "parent-supervisor-and-supervisor-worker-v21-framed-result-channel"
+  ],
+  "parent_to_supervisor_launch_limit": 1,
+  "supervisor_to_worker_launch_limit": 1,
+  "future_attempt_limit": 1,
+  "attempt_started": false,
+  "reusable": false,
+  "retry_replacement_or_resume_authorized": false,
+  "recorded_at": "2026-08-13T11:34:23.677204Z",
+  "content_hash": "sha256:eb438ff9b25f404a88e93d3e6462a4d7c70331b94d3c9e617ec802d98f896919"
+}
