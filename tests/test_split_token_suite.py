@@ -7,6 +7,7 @@ from patchloop.contracts import Budget
 from patchloop.evals.runner import (  # noqa: PLC2701
     AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY,
     GPT54_MINI_AC_SPLIT_TOKEN_BUDGET,
+    HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS,
     _campaign_cost_control,
     _is_ac_fixed_bundle_readiness_profile,
     _pricing_contract,
@@ -18,6 +19,7 @@ from patchloop.verifier.runtime_evidence import evaluator_v2_runtime_tuple_hash
 REPOSITORY = Path(__file__).resolve().parents[1]
 R3_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml"
 R4_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r4.yaml"
+R5_SUITE = REPOSITORY / "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r5.yaml"
 
 
 def test_legacy_budget_serialization_and_r3_hash_are_unchanged() -> None:
@@ -91,6 +93,21 @@ def test_r4_uses_one_exact_split_budget_for_all_ac_rows() -> None:
     assert len(suite.schedule or []) == 4
     assert _is_ac_fixed_bundle_readiness_profile(suite)
     assert _suite_hash(suite) != _suite_hash(load_suite(R3_SUITE))
+
+
+def test_r5_preserves_r4_semantics_but_r4_is_consumed() -> None:
+    r4 = load_suite(R4_SUITE)
+    r5 = load_suite(R5_SUITE)
+    r4_payload = r4.model_dump(mode="json")
+    r5_payload = r5.model_dump(mode="json")
+
+    assert r4.experiment_id in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r5.experiment_id not in HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS
+    assert r4.experiment_id != r5.experiment_id
+    r4_payload.pop("experiment_id")
+    r5_payload.pop("experiment_id")
+    assert r5_payload == r4_payload
+    assert _suite_hash(r5) != _suite_hash(r4)
 
 
 def test_r4_price_aware_reserve_matches_split_ceilings() -> None:

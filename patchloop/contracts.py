@@ -82,6 +82,15 @@ AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID = "dev-validation-ac-fixed-bundle-readin
 AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID = (
     "dev-validation-ac-fixed-bundle-readiness-20260814-r4"
 )
+AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID = (
+    "dev-validation-ac-fixed-bundle-readiness-20260814-r5"
+)
+AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS = frozenset(
+    {
+        AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
+    }
+)
 AC_FIXED_BUNDLE_LEGACY_COST_EXPERIMENT_IDS = frozenset(
     {
         AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
@@ -101,10 +110,10 @@ AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS = frozenset(
     }
 )
 AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS = frozenset(
-    {*AC_FIXED_BUNDLE_EXPERIMENT_IDS, AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID}
+    {*AC_FIXED_BUNDLE_EXPERIMENT_IDS, *AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS}
 )
 AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS = frozenset(
-    {*AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS, AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID}
+    {*AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS, *AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS}
 )
 AC_FIXED_BUNDLE_POLICY_VERSION = "fixed-d110-bundle-v1"
 AC_FIXED_BUNDLE_D110_INDEX_VERSION = (
@@ -1911,7 +1920,7 @@ class RunManifest(StrictModel):
             and (
                 (
                     self.experiment.experiment_id
-                    != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    not in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     and self.budget.max_model_calls is None
                     and self.budget.max_tool_calls is None
                     and self.budget.max_total_tokens == 3_000_000
@@ -1919,7 +1928,7 @@ class RunManifest(StrictModel):
                 )
                 or (
                     self.experiment.experiment_id
-                    == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     and self.budget.max_model_calls == 180
                     and self.budget.max_tool_calls == 300
                     and self.budget.max_total_tokens == 3_350_000

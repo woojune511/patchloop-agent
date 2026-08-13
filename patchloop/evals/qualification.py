@@ -12,7 +12,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
-    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
@@ -521,7 +521,7 @@ def _ac_fixed_bundle_readiness_manifest_matches(manifest: RunManifest) -> bool:
     expected_budget = (
         _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
         if experiment is not None
-        and experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        and experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
     )
     return bool(
@@ -1288,7 +1288,12 @@ def _execution_plan_matches(
                 MemoryCondition.STRUCTURED.value,
             ]
             and expected_runtime_contract.get("budget")
-            == _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json")
+            == (
+                _GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
+                if manifest.experiment.experiment_id
+                in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
+                else _GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
+            ).model_dump(mode="json")
             and expected_runtime_contract.get("tool_schema_version") == "v2"
             and expected_runtime_contract.get("context_policy_version") == "phase-evidence-v5"
             and expected_runtime_contract.get("system_prompt_hash") == sha256_text(SYSTEM_PROMPT_V3)
@@ -1917,7 +1922,7 @@ def _generic_baseline_runtime_contract_evidence(
 
         split_budget_campaign = (
             manifest.experiment.experiment_id
-            == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+            in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         )
         expected.update(
             {
@@ -11219,7 +11224,7 @@ def qualify_run(
         split_budget_campaign = bool(
             experiment is not None
             and experiment.experiment_id
-            == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+            in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         )
         expected_control_schema = (
             "ac-fixed-bundle-full-schedule-cost-control-evidence-v1"

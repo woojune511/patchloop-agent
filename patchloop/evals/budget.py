@@ -10,7 +10,7 @@ from typing import Any
 
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
-    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
@@ -79,7 +79,7 @@ def _ac_fixed_bundle_readiness_profile(
         == _AC_FIXED_BUNDLE_ROW_ORDER.get((manifest.task_id, manifest.memory.condition))
         and (
             (
-                experiment.experiment_id != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                experiment.experiment_id not in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 and limits
                 == {
                     "model_calls": None,
@@ -89,7 +89,7 @@ def _ac_fixed_bundle_readiness_profile(
                 }
             )
             or (
-                experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 and limits
                 == {
                     "model_calls": 180,

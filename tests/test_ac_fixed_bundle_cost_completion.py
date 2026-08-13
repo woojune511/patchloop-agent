@@ -12,6 +12,7 @@ import pytest
 from patchloop import runtime as runtime_module
 from patchloop.agent.runner import LiveExecutionAuthorization, _load_live_execution_plan
 from patchloop.contracts import (
+    AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
@@ -26,6 +27,7 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_text
 R1_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r1.yaml")
 R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 R3_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml")
+R5_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r5.yaml")
 SOURCE_COMMIT = "a" * 40
 R2_BASE_SUITE_HASH = eval_runner._suite_hash(eval_runner.load_suite(R2_SUITE))
 EVALUATOR_V2_SOURCE_QUALIFICATION = {
@@ -488,6 +490,54 @@ def test_r3_paid_plan_uses_a_fresh_identity_and_matches_qualified_manifest(
     )
     assert qualification_module._execution_plan_matches(
         plan={**approved, "schema_version": "experiment-execution-plan-v1"},
+        manifest=manifest,
+    )
+
+
+def test_r5_split_budget_paid_plan_round_trips_through_capability_revalidation(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from patchloop.evals import qualification as qualification_module
+
+    _r1, _r2 = ac_preflights
+    r5_binding = {
+        **EVALUATOR_V2_SOURCE_QUALIFICATION,
+        "successor_suite_hash": "sha256:" + "e" * 64,
+        "base_suite_hash": eval_runner._suite_hash(eval_runner.load_suite(R5_SUITE)),
+    }
+    monkeypatch.setattr(
+        eval_runner,
+        "_validated_ac_evaluator_v2_source_qualification",
+        lambda suite: (
+            dict(r5_binding)
+            if suite.experiment_id == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
+            else None
+        ),
+    )
+    candidate = eval_runner.preflight_suite(R5_SUITE)
+    approved = eval_runner.preflight_suite(
+        R5_SUITE,
+        approve_live_cost=True,
+        approved_execution_hash=candidate["execution_hash"],
+    )
+    plan = {**approved, "schema_version": "experiment-execution-plan-v1"}
+    v1_manifest = _paid_boundary_manifest(approved, row_index=0, suite_path=R5_SUITE)
+    manifest = _bind_paid_boundary_manifest_v2(v1_manifest, approved)
+
+    assert approved["ready"] is True
+    assert approved["experiment_id"] == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
+    assert approved["runtime_contract"]["budget"] == (
+        eval_runner.GPT54_MINI_AC_SPLIT_TOKEN_BUDGET.model_dump(mode="json")
+    )
+    assert qualification_module._execution_plan_matches(plan=plan, manifest=manifest)
+
+    legacy_budget_plan = copy.deepcopy(plan)
+    legacy_budget_plan["runtime_contract"]["budget"] = (
+        eval_runner.GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET.model_dump(mode="json")
+    )
+    assert not qualification_module._execution_plan_matches(
+        plan=legacy_budget_plan,
         manifest=manifest,
     )
 

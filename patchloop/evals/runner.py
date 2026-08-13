@@ -53,6 +53,7 @@ from patchloop.contracts import (
     AC_FIXED_BUNDLE_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_READINESS_EXPERIMENT_ID,
     AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_BUDGET_READINESS_PROBE_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
@@ -216,6 +217,9 @@ CONSUMED_CONDITION_NEUTRAL_ACCRUED_CAP_EXPERIMENT_IDS = frozenset(
 CONSUMED_CONDITION_NEUTRAL_BASELINE_EXPERIMENT_IDS = frozenset(
     {CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID}
 )
+CONSUMED_AC_FIXED_BUNDLE_EXPERIMENT_IDS = frozenset(
+    {AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID}
+)
 HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
     | HISTORICAL_MINI_CAMPAIGN_EXPERIMENT_IDS
@@ -233,6 +237,7 @@ HISTORICAL_IMMUTABLE_LIVE_EXPERIMENT_IDS = (
     | CONSUMED_CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_IDS
     | CONSUMED_CONDITION_NEUTRAL_ACCRUED_CAP_EXPERIMENT_IDS
     | CONSUMED_CONDITION_NEUTRAL_BASELINE_EXPERIMENT_IDS
+    | CONSUMED_AC_FIXED_BUNDLE_EXPERIMENT_IDS
 )
 SINGLE_TASK_LIVE_EXPERIMENT_IDS = (
     HISTORICAL_TERRA_PILOT_EXPERIMENT_IDS
@@ -877,7 +882,7 @@ def _is_ac_fixed_bundle_readiness_profile(
         )
     )
     split_budget_profile = bool(
-        experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         and getattr(suite, "budget", None) == GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
         and cost_policy_payload == AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
         and getattr(suite, "estimated_cost_usd", None) == 15.3
@@ -903,7 +908,7 @@ def _is_ac_fixed_bundle_readiness_profile(
         and getattr(suite, "service_tier", None) == "default"
         and (
             (
-                experiment_id != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                experiment_id not in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 and getattr(suite, "budget", None) == GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
             )
             or split_budget_profile
@@ -940,7 +945,7 @@ def _has_hash_bound_runtime(suite: Any) -> bool:
             and suite.campaign_cost_policy.model_dump(mode="json")
             == (
                 AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
-                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                if suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else AC_FIXED_BUNDLE_COST_POLICY
             )
         )
@@ -1250,7 +1255,7 @@ def _experiment_runtime_contract(
             "fixed_bundle": _ac_fixed_bundle_descriptor(),
             "full_schedule_cost_policy": (
                 AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
-                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                if suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else AC_FIXED_BUNDLE_COST_POLICY
             ),
             "tool_schema_version": "v2",
@@ -1393,7 +1398,7 @@ def _is_full_schedule_cost_cap_suite(suite: ExperimentSuite) -> bool:
             and suite.campaign_cost_policy.model_dump(mode="json")
             == (
                 AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
-                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                if suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else AC_FIXED_BUNDLE_COST_POLICY
             )
         )
@@ -1419,7 +1424,7 @@ def _full_schedule_cost_policy(suite: ExperimentSuite) -> dict[str, Any] | None:
     ):
         return AC_FIXED_BUNDLE_COST_POLICY
     if (
-        suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         and _is_ac_fixed_bundle_readiness_profile(suite)
         and suite.campaign_cost_policy is not None
         and suite.campaign_cost_policy.model_dump(mode="json")
@@ -1972,7 +1977,7 @@ def _campaign_cost_control(
             "row_cost_censoring_allowed": False,
             **(
                 {"full_schedule_reserve_usd": pricing["budget_upper_bound_usd"]}
-                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                if suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else {"full_schedule_worst_rate_reserve_usd": pricing["budget_upper_bound_usd"]}
             ),
             "full_schedule_reserve_nanos": policy["full_schedule_reserve_nanos"],
@@ -2599,7 +2604,7 @@ class ExperimentSuite(BaseModel):
         elif self.experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
             expected_ac_cost_policy = (
                 AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
-                if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                if self.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else AC_FIXED_BUNDLE_COST_POLICY
             )
             if (
@@ -2791,18 +2796,18 @@ class ExperimentSuite(BaseModel):
             self._require_live_defaults(
                 cost_limit=(
                     18.0
-                    if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    if self.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     else 55.0
                 ),
                 budget=(
                     GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
-                    if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    if self.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     else GPT54_MINI_CONDITION_NEUTRAL_V2_BUDGET
                 ),
             )
             expected_ac_cost = (
                 15.3
-                if self.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                if self.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else 54.45
             )
             if self.estimated_cost_usd != expected_ac_cost:
@@ -3639,7 +3644,7 @@ def _full_schedule_cost_journal_evidence(
     elif experiment_id in AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS:
         expected_policy = (
             AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
-            if experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+            if experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
             else AC_FIXED_BUNDLE_COST_POLICY
         )
         expected_purpose = ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS.value
@@ -5794,7 +5799,7 @@ def _assert_manifest_matches_preflight(
             "fixed_bundle": _ac_fixed_bundle_descriptor(),
             "full_schedule_cost_policy": (
                 AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
-                if suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                if suite.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else AC_FIXED_BUNDLE_COST_POLICY
             ),
             "tool_schema_version": manifest.tool_schema_version,
@@ -7306,12 +7311,12 @@ def _ac_fixed_bundle_completion_gate(
     expected_runs = 4
     expected_full_schedule_reserve_nanos = (
         15_300_000_000
-        if expected_experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        if expected_experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         else 54_450_000_000
     )
     expected_hard_cap_nanos = (
         18_000_000_000
-        if expected_experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        if expected_experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
         else 55_000_000_000
     )
     expected_rows = expected_schedule if isinstance(expected_schedule, list) else []

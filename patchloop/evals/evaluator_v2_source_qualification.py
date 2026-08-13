@@ -1,9 +1,10 @@
-"""Offline qualification for the evaluator-v2 A/C successor.
+"""Offline qualification for the capability-corrected evaluator-v2 A/C successor.
 
-The artifact produced here binds exact local source, the frozen R3 treatment,
-the two development-validation task packages, and a new successor-suite
-identity.  It never starts an agent, evaluator, provider, Docker process, or
-credential observation and grants none of those authorities.
+The artifact produced here binds exact local source, the sealed R4 terminal,
+the unchanged split-budget treatment, the two development-validation task
+packages, and a new successor-suite identity. It never starts an agent,
+evaluator, provider, Docker process, or credential observation and grants none
+of those authorities.
 """
 
 from __future__ import annotations
@@ -46,17 +47,17 @@ from patchloop.verifier.runtime_evidence import (
     evaluator_v2_runtime_tuple_hash,
 )
 
-SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v6"
-QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260814-r6"
+SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v7"
+QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260814-r7"
 STATUS = "OFFLINE_SOURCE_QUALIFIED_LIVE_CLOSED"
 
-PLAN_PATH = Path("experiments/ac-structured-pilot-v7.plan.yaml")
-BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r4.yaml")
+PLAN_PATH = Path("experiments/ac-structured-pilot-v8.plan.yaml")
+BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r5.yaml")
 FAST_PREDECESSOR_SUITE_PATH = Path(
-    "experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.yaml"
+    "experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r4.yaml"
 )
 OUTPUT_PATH = Path(
-    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r6.json"
+    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r7.json"
 )
 
 TASK_PATHS = (
@@ -71,6 +72,14 @@ SOURCE_PATHS = tuple(
             Path("uv.lock"),
             BASE_SUITE_PATH,
             FAST_PREDECESSOR_SUITE_PATH,
+            Path(
+                "reports/live-pilot/artifacts/"
+                "evaluator-v2-ac-successor-offline-source-qualification-r6.json"
+            ),
+            Path(
+                "reports/live-pilot/"
+                "dev-validation-ac-fixed-bundle-readiness-20260814-r4-evidence.json"
+            ),
             Path("patchloop/artifacts.py"),
             Path("patchloop/cli.py"),
             Path("patchloop/contracts.py"),
@@ -118,6 +127,7 @@ VALIDATION_PATHS = tuple(
             Path("tests/test_evaluator_v2_source_qualification.py"),
             Path("tests/test_fast_preflight.py"),
             Path("tests/test_report.py"),
+            Path("tests/test_r4_runtime_evidence_index.py"),
             Path("tests/test_sandbox.py"),
             Path("tests/test_split_token_qualification.py"),
             Path("tests/test_split_token_suite.py"),
@@ -536,11 +546,11 @@ def _load_plan(root: Path) -> dict[str, Any]:
     }
     _require(set(value) == expected_keys, "evaluator-v2 successor plan fields differ")
     _require(
-        value["schema_version"] == "ac-structured-pilot-plan-v7"
+        value["schema_version"] == "ac-structured-pilot-plan-v8"
         and value["plan_id"]
-        == "ac-structured-dev-validation-evaluator-v2-split-budget-20260814-v6"
+        == "ac-structured-dev-validation-evaluator-v2-capability-correction-20260814-v7"
         and value["status"] == "offline-evaluator-v2-source-qualification"
-        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v6.plan.yaml"
+        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v7.plan.yaml"
         and value["base_suite"] == BASE_SUITE_PATH.as_posix(),
         "evaluator-v2 successor plan identity differs",
     )
@@ -587,7 +597,7 @@ def _load_plan(root: Path) -> dict[str, Any]:
 
 def _load_base_suite(root: Path) -> tuple[Any, str]:
     from patchloop.contracts import (
-        AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID,
+        AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID,
         AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
     )
     from patchloop.evals.runner import (
@@ -606,18 +616,12 @@ def _load_base_suite(root: Path) -> tuple[Any, str]:
         raise EvaluatorV2SourceQualificationError("predecessor A/C suite is unavailable") from exc
     suite_payload = suite.model_dump(mode="json")
     predecessor_payload = predecessor.model_dump(mode="json")
-    for field in (
-        "experiment_id",
-        "budget",
-        "campaign_cost_policy",
-        "estimated_cost_usd",
-        "cost_limit_usd",
-    ):
+    for field in ("experiment_id",):
         suite_payload.pop(field, None)
         predecessor_payload.pop(field, None)
     _require(
-        suite.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
-        and predecessor.experiment_id == AC_FIXED_BUNDLE_CORRECTED_EXPERIMENT_ID
+        suite.experiment_id == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
+        and predecessor.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
         and suite_payload == predecessor_payload
         and suite.budget == GPT54_MINI_AC_SPLIT_TOKEN_BUDGET
         and suite.campaign_cost_policy is not None
@@ -629,7 +633,7 @@ def _load_base_suite(root: Path) -> tuple[Any, str]:
         and suite.live_cost_approved is False
         and suite.approved_execution_hash is None
         and suite.pricing_verified_at == datetime(2026, 8, 13, 12, 5, 26, tzinfo=UTC),
-        "base A/C suite is not the exact split-token successor source",
+        "base A/C suite is not the exact capability-corrected successor source",
     )
     return suite, _suite_hash(suite)
 
@@ -919,7 +923,7 @@ def validate_evaluator_v2_ac_paid_authority(
 ):
     """Bind a paid v2 manifest and authority to the exact qualified artifact."""
 
-    from patchloop.contracts import AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+    from patchloop.contracts import AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
     from patchloop.verifier.receipt import (
         EvaluatorV2QualificationAuthority,
         validate_evaluator_v2_manifest_authority,
@@ -970,7 +974,7 @@ def validate_evaluator_v2_ac_paid_authority(
     )
     _require(
         manifest.schema_version == "run-manifest-v2"
-        and experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+        and experiment.experiment_id == AC_FIXED_BUNDLE_CAPABILITY_CORRECTED_EXPERIMENT_ID
         and experiment.suite_hash == payload.successor_suite.content_hash
         and checked.suite_hash == payload.successor_suite.content_hash
         and checked.source_qualification_hash == payload.content_hash

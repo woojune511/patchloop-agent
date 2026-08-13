@@ -1,0 +1,130 @@
+{
+  "schema_version": "ac-fixed-bundle-runtime-evidence-index-v1",
+  "recorded_at": "2026-08-13T17:09:29.5366688Z",
+  "experiment_id": "dev-validation-ac-fixed-bundle-readiness-20260814-r4",
+  "evidence_scope": "checked-in index of a sealed external provider-before-dispatch terminal",
+  "execution_source_commit": "33f789edc539f4e117693b422ceb2bc3d2a30474",
+  "source_qualification": {
+    "path": "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r6.json",
+    "qualification_hash": "sha256:8005cc1a578849b2ccd35a5bedcffd87e2b39d4434da0667d207d4d4cbbb2c22",
+    "file_sha256": "sha256:99d16f89ca7510df2e33d3b6a9911e3ecaf4b0963a5d1d5f89e37eab0bea5c0a",
+    "file_bytes": 15479,
+    "evaluator_source_hash": "sha256:f005dbd9a857b3ebbacff1173510a795fcbcf0c664a3dcfe1ce33914247bf948",
+    "successor_suite_hash": "sha256:c1c9e24066754b4f7c73c441a24797e7230cb7e21a7d762346f96c4a388e7f98"
+  },
+  "campaign": {
+    "execution_hash": "sha256:be4ea2e4e17a1354895c9122cd33180837cf29aa3922df4caeaafb46a08d7124",
+    "schedule_hash": "sha256:c232f6ddd649d0c6a743ff877e61e4089ce075918a45ea45e3d866565a4b0e1a",
+    "cost_control_hash": "sha256:8a784b6458d28d10fda97d75f55311269acce3093b6a0acd508b1ac8d57a1a88",
+    "full_schedule_reserve_nanos": 15300000000,
+    "hard_cap_nanos": 18000000000,
+    "accrued_cost_nanos": 0,
+    "state": "SEALED",
+    "disposition": "inconclusive",
+    "expected_runs": 4,
+    "terminal_runs": 1,
+    "qualified_runs": 0,
+    "receipt_qualified_evaluator_v2_runs": 0,
+    "cost_settled_runs": 0,
+    "not_started_runs": 3,
+    "infrastructure_errors": 1,
+    "analysis_ready": false,
+    "retry_or_replacement_performed": false
+  },
+  "failure_attribution": {
+    "phase": "provider-before-dispatch",
+    "row": 1,
+    "run_id": "run_0e8ff15172bd45a7",
+    "task_id": "moto-query-scanned-count",
+    "condition": "no_memory",
+    "error_type": "ContractError",
+    "error_message": "live model execution requires an approved experiment execution capability",
+    "direct_cause": "paid execution-plan revalidation compared the split-budget runtime contract to the legacy aggregate-only budget",
+    "provider_dispatch_reached": false,
+    "model_calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "model_cost_nanos": 0,
+    "automatic_retry_or_resume_allowed": false
+  },
+  "external_artifacts": {
+    "execution_plan": {
+      "path": ".patchloop/experiments/plans/be4ea2e4e17a1354895c9122cd33180837cf29aa3922df4caeaafb46a08d7124.json",
+      "execution_plan_hash": "sha256:aeb6f5d288010f9b56462691b489fe42bc122eba3b5558d1c2d24ffc3a78127f",
+      "file_sha256": "sha256:761724d482975c83af6513164387d4828256d41ffc020c0fe9525fed258a9ab2",
+      "file_bytes": 21172
+    },
+    "journal": {
+      "path": ".patchloop/experiments/journals/dev-validation-ac-fixed-bundle-readiness-20260814-r4.jsonl",
+      "file_sha256": "sha256:69b680946e70fc2c0643de796726c95b5a447320e565b5d6cccabfb51688779e",
+      "file_bytes": 9368,
+      "event_count": 9,
+      "campaign_completed_event_hash": "sha256:ad112345e8b4f43d5106c1b51ab1c223117b60889a70a82ff692e3d9b4dbb55f"
+    },
+    "prepared_result": {
+      "path": ".patchloop/experiments/finalization/be4ea2e4e17a1354895c9122cd33180837cf29aa3922df4caeaafb46a08d7124/result.prepared.json",
+      "file_sha256": "sha256:e33232fe2441324e310cf1db444f9c311c336d65f8138026bd1b45c3c9aec092",
+      "file_bytes": 14763
+    },
+    "final_result": {
+      "path": ".patchloop/experiments/dev-validation-ac-fixed-bundle-readiness-20260814-r4.json",
+      "file_sha256": "sha256:e33232fe2441324e310cf1db444f9c311c336d65f8138026bd1b45c3c9aec092",
+      "file_bytes": 14763,
+      "same_file_as_prepared_result": true
+    }
+  },
+  "journal_event_counts": {
+    "CampaignStarted": 1,
+    "FullScheduleCostReserved": 1,
+    "RunStarted": 1,
+    "RunTerminal": 1,
+    "RunCostSettlementUnavailable": 1,
+    "RunNotStarted": 3,
+    "CampaignCompleted": 1
+  },
+  "rows": [
+    {
+      "order": 1,
+      "task_id": "moto-query-scanned-count",
+      "condition": "no_memory",
+      "attempt_status": "terminal",
+      "run_id": "run_0e8ff15172bd45a7",
+      "terminal_type": "infrastructure_error",
+      "error_type": "ContractError",
+      "model_calls": 0,
+      "cost_nanos": 0
+    },
+    {
+      "order": 2,
+      "task_id": "moto-query-scanned-count",
+      "condition": "structured",
+      "attempt_status": "not_started",
+      "reason_type": "InfrastructureFailureHalt",
+      "cost_nanos": 0
+    },
+    {
+      "order": 3,
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "structured",
+      "attempt_status": "not_started",
+      "reason_type": "InfrastructureFailureHalt",
+      "cost_nanos": 0
+    },
+    {
+      "order": 4,
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "no_memory",
+      "attempt_status": "not_started",
+      "reason_type": "InfrastructureFailureHalt",
+      "cost_nanos": 0
+    }
+  ],
+  "claim_authority": {
+    "memory_effect": false,
+    "retrieval_quality": false,
+    "heldout_generalization": false,
+    "campaign_completion": false,
+    "cost_settlement": false
+  },
+  "content_hash": "sha256:301ba1c8e61b204666ef5351a6d05c7e1faad987a0c2c88cd54294923f90b869"
+}

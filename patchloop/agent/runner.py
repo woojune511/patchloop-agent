@@ -46,7 +46,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import (
     AC_FIXED_BUNDLE_ALL_COST_EXPERIMENT_IDS,
     AC_FIXED_BUNDLE_ALL_EXPERIMENT_IDS,
-    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID,
+    AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS,
     CONDITION_NEUTRAL_COMPARISON_ACCRUED_CAP_EXPERIMENT_ID,
     CONDITION_NEUTRAL_COMPARISON_PILOT_EXPERIMENT_ID,
     CONDITION_NEUTRAL_NO_MEMORY_V2_EXPERIMENT_ID,
@@ -1088,14 +1088,14 @@ class AgentRunner:
             and manifest.model.max_output_tokens == 25_000
             and (
                 (
-                    experiment.experiment_id != AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    experiment.experiment_id not in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     and manifest.budget.max_model_calls is None
                     and manifest.budget.max_tool_calls is None
                     and manifest.budget.max_total_tokens == 3_000_000
                     and manifest.budget.token_budget_schema_version is None
                 )
                 or (
-                    experiment.experiment_id == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    experiment.experiment_id in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     and manifest.budget.max_model_calls == 180
                     and manifest.budget.max_tool_calls == 300
                     and manifest.budget.max_total_tokens == 3_350_000
@@ -1209,7 +1209,7 @@ class AgentRunner:
             (
                 _AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY_SCHEMA
                 if manifest.experiment.experiment_id
-                == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                 else _AC_FIXED_BUNDLE_FULL_SCHEDULE_COST_POLICY_SCHEMA
             )
             if ac_cost_profile
@@ -3900,7 +3900,7 @@ class AgentRunner:
                 "full_schedule_cost_policy": (
                     AC_FIXED_BUNDLE_SPLIT_TOKEN_COST_POLICY
                     if manifest.experiment.experiment_id
-                    == AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_ID
+                    in AC_FIXED_BUNDLE_SPLIT_BUDGET_EXPERIMENT_IDS
                     else AC_FIXED_BUNDLE_COST_POLICY
                 ),
                 "system_prompt": system_prompt,
