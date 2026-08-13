@@ -1,0 +1,86 @@
+{
+  "schema_version": "typed-diagnostic-activation-successor-contract-v23",
+  "contract_version": "ac-evaluator-v2-typed-diagnostic-activation-successor-v23",
+  "contract_id": "ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a",
+  "predecessor": {
+    "source_commit": "454627d0eaa38b30e3795e3b9f1fb29546ca115d",
+    "source_tree": "65fbfcf2e92e6766b20d5aca38fb4c14d6c1fa3f",
+    "qualification_commit": "f8857597a5858ff78faedee190b3e33b449fe2db",
+    "contract_id": "ncpcontract_721423c64d9cf0d5f1d4c0e25c7d5e3a25daa1b2b8081e221bc8e73b82367ccd",
+    "contract_content_hash": "sha256:721423c64d9cf0d5f1d4c0e25c7d5e3a25daa1b2b8081e221bc8e73b82367ccd",
+    "source_qualification_hash": "sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42",
+    "qualification_status": "OFFLINE_V22_TYPED_DIAGNOSTIC_CHANNEL_SOURCE_QUALIFIED_ACTIVATION_CLOSED",
+    "state_approval_attempt_or_terminal_count": 0,
+    "live_observation_count": 0,
+    "execution_authorized": false
+  },
+  "runtime": {
+    "lifecycle_entrypoint": "patchloop.evals.typed_diagnostic_activation_successor.run_once",
+    "internal_observer_entrypoint": "patchloop.evals.typed_diagnostic_activation_successor._run_parent_preflight",
+    "live_channel_path": "scripts/run_sanitized_sdk_bootstrap_envelope_diagnostic_v23.py",
+    "live_channel_file_sha256": "sha256:ebb9b2b923c0a89994266fe3ebc30adefa13046a762946d36c1f9c25eb926eee",
+    "v22_runtime_file_sha256": "sha256:9593c83902bdf94c862b394317591c205fe2a8741bf6335a33bcf672975d1e8c",
+    "v22_channel_file_sha256": "sha256:56ee2903337269ad2d36f98eb126f4264088d06e701dc7d54cb38290c465ee08",
+    "v22_contract_id": "ncpcontract_721423c64d9cf0d5f1d4c0e25c7d5e3a25daa1b2b8081e221bc8e73b82367ccd",
+    "v22_source_qualification_hash": "sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42",
+    "approved_scopes": [
+      "v21-exact-source-and-recorded-qualification-validation-before-observation",
+      "already-running-docker-read-only-two-snapshot-eight-command-observation",
+      "isolated-dotenv-exact-openai-api-key-membership",
+      "isolated-sanitized-sdk-fixed-placeholder-reject-dispatch-diagnostic",
+      "parent-supervisor-and-supervisor-worker-v21-framed-result-channel"
+    ],
+    "docker_expected_command_count": 8,
+    "parent_to_supervisor_launch_limit": 1,
+    "supervisor_to_worker_launch_limit": 1,
+    "child_flags": [
+      "-I",
+      "-E",
+      "-s",
+      "-B"
+    ],
+    "fixed_process_environment": {
+      "PYTHONIOENCODING": "utf-8",
+      "PYTHONUTF8": "1",
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONHASHSEED": "0",
+      "SYSTEMROOT": "C:\\Windows"
+    },
+    "typed_v22_projection_required": true,
+    "complete_write_and_length_digest_frame_required": true,
+    "default_observer_reachable_only_after_action_started": true,
+    "standalone_observation_cli_exposed": false,
+    "internal_inherited_result_roles_exposed": true,
+    "raw_invalid_payload_metadata_persisted": false,
+    "credential_value_hash_prefix_or_length_limit": 0,
+    "network_call_limit": 0,
+    "provider_evaluator_agent_call_limit": 0
+  },
+  "lifecycle": {
+    "predecessor_source_qualification_required": true,
+    "fresh_source_bound_state_required": true,
+    "separate_exact_approval_required": true,
+    "exact_immediate_run_statement_required": true,
+    "authorization_attempt_action_before_observation_required": true,
+    "one_terminal_required_after_action": true,
+    "attempt_limit": 1,
+    "state_or_approval_reusable": false,
+    "retry_replacement_or_resume_allowed": false,
+    "v22_source_or_qualification_mutation_allowed": false
+  },
+  "authority": {
+    "contract_materialization_authorized": true,
+    "source_qualification_authorized": true,
+    "state_approval_attempt_action_or_terminal_during_qualification_authorized": false,
+    "live_process_or_docker_dotenv_sdk_observation_during_qualification_authorized": false,
+    "credential_value_or_metadata_recording_authorized": false,
+    "docker_start_pull_load_image_store_or_container_mutation_authorized": false,
+    "network_transport_or_provider_execution_authorized": false,
+    "evaluator_agent_candidate_cost_or_paid_execution_authorized": false
+  },
+  "state_approval_and_attempt_entrypoints_implemented": true,
+  "source_qualification_created_runtime_evidence": false,
+  "execution_currently_authorized": false,
+  "next_gate": "fresh-exact-v23-state-statement",
+  "content_hash": "sha256:dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a"
+}
