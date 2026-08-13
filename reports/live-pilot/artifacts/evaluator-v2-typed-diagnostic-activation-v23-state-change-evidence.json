@@ -1,0 +1,16 @@
+{
+  "schema_version": "typed-diagnostic-activation-state-v23",
+  "state_id": "ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d",
+  "contract_id": "ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a",
+  "source_qualification_hash": "sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26",
+  "predecessor_source_qualification_hash": "sha256:497e2f72e3850cb6f60b59af768bafe6342b266ab82f7ea15c6576a22b483d42",
+  "statement_sha256": "sha256:e7c8d2dea4490d72c5041306111de7abaf7c3ea30f4966c29ff1a1652703627c",
+  "docker_running_reported": true,
+  "dotenv_only_openai_api_key_reported": true,
+  "self_attested_nonproof": true,
+  "external_observation_count": 0,
+  "execution_authorized": false,
+  "reusable": false,
+  "recorded_at": "2026-08-13T09:06:37.425256Z",
+  "content_hash": "sha256:c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d"
+}
