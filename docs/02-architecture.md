@@ -105,6 +105,7 @@ candidate or live result exists.
 - Config, tests and a frozen index authorize neither paid calls nor retrieval/injection.
 - A candidate ID does not technically authenticate a user; repository gates are cooperative and append-only.
 - No active path may read private/hidden/reference data to construct memory or select a task.
-- Failure at a one-use evidence claim remains consumed; it is not silently retried or repaired.
+- Completed attempt evidence is immutable. Unchanged source/configuration may run again with a new attempt ID;
+  only an experiment-defining semantic change requires a new version.
 
 Current authority is summarized only in `docs/current-status.md`.

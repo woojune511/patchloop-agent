@@ -23,8 +23,15 @@ from patchloop.evals import runner as eval_runner
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
 R1_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r1.yaml")
-R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml")
+R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 SOURCE_COMMIT = "a" * 40
+EVALUATOR_V2_SOURCE_QUALIFICATION = {
+    "source_qualification_hash": "sha256:" + "a" * 64,
+    "evaluator_source_hash": "sha256:" + "b" * 64,
+    "successor_suite_hash": "sha256:" + "c" * 64,
+    "base_suite_hash": "sha256:" + "d" * 64,
+    "base_suite_matches": True,
+}
 
 
 def _forbidden(label: str):
@@ -46,7 +53,7 @@ def ac_preflights(
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
-        lambda: datetime(2026, 8, 8, 0, tzinfo=UTC),
+        lambda: datetime(2026, 8, 13, 12, 5, 27, tzinfo=UTC),
     )
     monkeypatch.setattr(
         eval_runner,
@@ -71,6 +78,15 @@ def ac_preflights(
     )
     monkeypatch.setattr(runtime_module, "git_commit", lambda: SOURCE_COMMIT)
     monkeypatch.setattr(runtime_module, "version", lambda _package: "offline-test-sdk")
+    monkeypatch.setattr(
+        eval_runner,
+        "_validated_ac_evaluator_v2_source_qualification",
+        lambda suite: (
+            dict(EVALUATOR_V2_SOURCE_QUALIFICATION)
+            if suite.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+            else None
+        ),
+    )
     monkeypatch.setattr(socket, "socket", _forbidden("network socket"))
     monkeypatch.setattr(socket, "create_connection", _forbidden("network connection"))
 
@@ -362,10 +378,36 @@ def test_r1_remains_cost_pending_and_r2_binds_exact_full_schedule_control(
     ]
     assert control["descriptor"]["full_schedule_reserve_nanos"] == 54_450_000_000
     assert control["descriptor"]["hard_cap_nanos"] == 55_000_000_000
+    assert r2["evaluator_v2_qualification"] == EVALUATOR_V2_SOURCE_QUALIFICATION
+    assert r2["suite_hash"] == EVALUATOR_V2_SOURCE_QUALIFICATION["successor_suite_hash"]
     blocker_codes = {blocker["code"] for blocker in r2["blockers"]}
     assert "AC_FULL_SCHEDULE_COST_CONTROL_PENDING" not in blocker_codes
-    assert "AC_EXECUTION_AUTHORIZATION_CANDIDATE_PENDING" in blocker_codes
+    assert "AC_EXECUTION_AUTHORIZATION_CANDIDATE_PENDING" not in blocker_codes
+    assert blocker_codes == {"LIVE_COST_NOT_APPROVED", "APPROVAL_HASH_MISMATCH"}
+    assert r2["execution_candidate_ready"] is True
     assert r2["ready"] is False
+
+
+def test_r2_execution_hash_binds_evaluator_v2_qualification(
+    ac_preflights: tuple[dict[str, Any], dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    _r1, original = ac_preflights
+    changed = {
+        **EVALUATOR_V2_SOURCE_QUALIFICATION,
+        "source_qualification_hash": "sha256:" + "d" * 64,
+    }
+    monkeypatch.setattr(
+        eval_runner,
+        "_validated_ac_evaluator_v2_source_qualification",
+        lambda _suite: changed,
+    )
+
+    observed = eval_runner.preflight_suite(R2_SUITE)
+
+    assert observed["evaluator_v2_qualification"] == changed
+    assert observed["suite_hash"] == changed["successor_suite_hash"]
+    assert observed["execution_hash"] != original["execution_hash"]
 
 
 def test_r2_context_requires_the_exact_cost_control_hash(
@@ -562,10 +604,21 @@ def test_ac_runtime_persists_inconclusive_result_when_durable_settlement_fails(
 ) -> None:
     _r1, r2 = ac_preflights
     started_run_ids: list[str] = []
+    runner_authorities: list[object] = []
+    qualifier_authorities: list[object] = []
+    evaluator_v2_authority = object()
 
     class FakeRunner:
-        def start(self, _task: str, *, manifest, **_kwargs: Any) -> dict[str, Any]:
+        def start(
+            self,
+            _task: str,
+            *,
+            manifest,
+            evaluator_v2_authority,
+            **_kwargs: Any,
+        ) -> dict[str, Any]:
             started_run_ids.append(manifest.run_id)
+            runner_authorities.append(evaluator_v2_authority)
             return {
                 "run_id": manifest.run_id,
                 "agent_submission_status": "completed",
@@ -586,8 +639,28 @@ def test_ac_runtime_persists_inconclusive_result_when_durable_settlement_fails(
     monkeypatch.setattr(eval_runner, "AgentRunner", FakeRunner)
     monkeypatch.setattr(
         eval_runner,
-        "_qualify_terminal_run",
-        lambda run_id, _task: {
+        "_load_ac_evaluator_v2_runtime_authorities",
+        lambda _suite, _qualification: {
+            "moto-query-scanned-count": evaluator_v2_authority,
+            "babel-strict-grouped-decimal-trailing-zeroes": evaluator_v2_authority,
+        },
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "_bind_evaluator_v2_manifest",
+        lambda manifest, _package, authority: (
+            manifest if authority is evaluator_v2_authority else None
+        ),
+    )
+
+    def qualified_terminal(
+        run_id: str,
+        _task: str,
+        *,
+        evaluator_v2_authority,
+    ) -> dict[str, Any]:
+        qualifier_authorities.append(evaluator_v2_authority)
+        return {
             "schema_version": "trace-qualification-v1",
             "run_id": run_id,
             "qualified": True,
@@ -599,7 +672,12 @@ def test_ac_runtime_persists_inconclusive_result_when_durable_settlement_fails(
             "source_evidence_hash": "sha256:" + "2" * 64,
             "usage_reconciliation": _projection("usage_reconciliation"),
             "persisted_result": _projection("persisted_result"),
-        },
+        }
+
+    monkeypatch.setattr(
+        eval_runner,
+        "_qualify_terminal_run",
+        qualified_terminal,
     )
 
     def unavailable_durable_usage(*_args: Any, **_kwargs: Any) -> dict[str, Any]:
@@ -633,6 +711,8 @@ def test_ac_runtime_persists_inconclusive_result_when_durable_settlement_fails(
     )
 
     assert len(started_run_ids) == 1
+    assert runner_authorities == [evaluator_v2_authority]
+    assert qualifier_authorities == [evaluator_v2_authority]
     assert result["halt_reason"]["type"] == "InfrastructureFailureHalt"
     assert result["runs"][0]["infrastructure_error"]["type"] == ("CostAccountingUnavailable")
     assert result["not_started_runs"] == 3

@@ -43,19 +43,13 @@
 - Moto/Babel A/C source는 구현됐지만 live result나 memory benefit 근거는 없다.
 - 현재 상태의 단일 prose authority는 `docs/current-status.md`다.
 
-- V5/v7/v12 are immutable consumed failures. V7 stopped at fixed `diagnostic_runtime_import_error`; v12 ended
-  `ERROR(child_checker_error/child_output_invalid)` after Docker passed. Both had forbidden activity 0 and cannot
-  retry. V8-v11 are immutable offline/source/state/approval predecessors and cannot be reused; exact tuples are in
-  `docs/09-evidence.md`.
-- V13/V14/V16/V18 are consumed Docker/preflight failures with no retry; `docs/09-evidence.md` owns their exact tuples.
-- V20 is a consumed `ERROR(child_checker_error/supervised_output_invalid)` predecessor with incomplete/unknown
-  accounting and no retry; `docs/09-evidence.md` owns its exact tuple.
-- V22 is projection-only. V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` after Docker and both
-  frames passed; accounting is incomplete/unknown and retry is closed. `docs/09-evidence.md` owns exact tuples.
-- V24 is projection-only. V25 contract `ncpcontract_c87b73d0a559f1585c4c40a495d1d5718ac89cd72aae935320023b7f4bbbca1f`
-  is source-qualified; state `ncpstate_ac6bba89eaa69ecfda433cc0775bff2308e0e95eea1ac3baa2bc47368531dae2`
-  and approval `ncpapproval_eb438ff9b25f404a88e93d3e6462a4d7c70331b94d3c9e617ec802d98f896919` are bound.
-  No attempt is open; the next gate is the exact immediate-run statement.
+- V1-V25 artifacts are immutable historical evidence. V23 reached Docker and both frames before
+  `ERROR(child_checker_error/diagnostic_result_invalid)`; V24/V25 are source correction/wrapper evidence, not live
+  readiness. Exact tuples remain in `docs/09-evidence.md`.
+- The active fast track preserves completed attempt records but reuses unchanged source/configuration. A new version
+  is required only for schema, evaluator, security-boundary or treatment changes—not for another attempt.
+- Local no-call preflight may make at most three pre-provider attempts without state/approval/exact-prose ceremony.
+  Paid/provider execution still requires one approval binding the exact four-row hash and hard cost cap.
 
 ## Required reading
 
@@ -84,7 +78,8 @@ Archive 문서는 historical audit가 필요한 경우에만 읽는다.
 3. **External run state.** Event, checkpoint, evaluator data와 generated state를 task repository 안에
    기록하지 않는다.
 4. **Constrained execution.** Agent에는 등록된 tool/check만 제공하고 unrestricted shell을 주지 않는다.
-5. **Append-only evidence.** 이미 관찰된 run과 gate를 수정하거나 결과를 덮어쓰지 않는다.
+5. **Append-only evidence.** 이미 관찰된 attempt를 수정하거나 결과를 덮어쓰지 않는다. 동일 source/config의
+   새 attempt는 새 ID로 허용한다.
 6. **Idempotent recovery.** Action identity와 input hash로 중복 실행을 감지한다.
 7. **Deterministic primary grading.** 새 success는 hidden acceptance, regression, scope와 safety 각각의 실제
    code-evaluator evidence가 있을 때만 인정한다. 현재 v1 literal safety PASS는 새 A/C를 막는 gap이다.
@@ -92,8 +87,8 @@ Archive 문서는 historical audit가 필요한 경우에만 읽는다.
 9. **No held-out tuning.** Held-out 결과를 본 뒤 task, memory, threshold, prompt 또는 policy를 바꾸지 않는다.
 10. **No solution leakage.** Memory에 정답 코드, hidden assertion 또는 reference patch를 넣지 않는다.
 11. **No invented results.** Plan, implemented path, measured result와 authorized execution을 분리한다.
-12. **No authority inference.** Config, test pass, candidate hash 또는 일반 “진행해줘”를 gated execution
-    승인으로 해석하지 않는다.
+12. **Bounded authority.** Repository policy authorizes only the documented no-call preflight. Provider/paid
+    execution requires one explicit campaign approval binding the exact execution hash and cap.
 
 ## Implementation workflow
 

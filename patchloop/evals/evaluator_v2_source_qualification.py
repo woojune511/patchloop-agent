@@ -45,14 +45,14 @@ from patchloop.verifier.runtime_evidence import (
     evaluator_v2_runtime_tuple_hash,
 )
 
-SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v1"
-QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260811-r1"
+SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v3"
+QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260813-r3"
 STATUS = "OFFLINE_SOURCE_QUALIFIED_LIVE_CLOSED"
 
-PLAN_PATH = Path("experiments/ac-structured-pilot-v3.plan.yaml")
-BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml")
+PLAN_PATH = Path("experiments/ac-structured-pilot-v4.plan.yaml")
+BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 OUTPUT_PATH = Path(
-    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification.json"
+    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r3.json"
 )
 
 TASK_PATHS = (
@@ -65,8 +65,11 @@ SOURCE_PATHS = tuple(
         (
             Path("pyproject.toml"),
             Path("uv.lock"),
+            BASE_SUITE_PATH,
             Path("patchloop/artifacts.py"),
+            Path("patchloop/cli.py"),
             Path("patchloop/contracts.py"),
+            Path("patchloop/environment.py"),
             Path("patchloop/errors.py"),
             Path("patchloop/runtime.py"),
             Path("patchloop/task_loader.py"),
@@ -100,6 +103,7 @@ VALIDATION_PATHS = tuple(
             Path("tests/test_documentation_structure.py"),
             Path("tests/test_evaluator_v2_contracts.py"),
             Path("tests/test_evaluator_v2_source_qualification.py"),
+            Path("tests/test_fast_preflight.py"),
             Path("tests/test_report.py"),
             Path("tests/test_sandbox.py"),
         ),
@@ -289,9 +293,7 @@ class EvaluatorV2ACSourceQualification(FrozenStrictModel):
     d110_index_version: Literal[D110_INDEX_VERSION] = D110_INDEX_VERSION
     d110_index_content_hash: Literal[D110_INDEX_CONTENT_HASH] = D110_INDEX_CONTENT_HASH
     authority: QualificationAuthorityBoundary
-    next_gate: Literal["versioned-no-call-preflight-contract"] = (
-        "versioned-no-call-preflight-contract"
-    )
+    next_gate: Literal["bounded-no-call-readiness"] = "bounded-no-call-readiness"
     content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
     @model_validator(mode="after")
@@ -508,10 +510,10 @@ def _load_plan(root: Path) -> dict[str, Any]:
     }
     _require(set(value) == expected_keys, "evaluator-v2 successor plan fields differ")
     _require(
-        value["schema_version"] == "ac-structured-pilot-plan-v3"
-        and value["plan_id"] == "ac-structured-dev-validation-evaluator-v2-successor-20260811-v1"
+        value["schema_version"] == "ac-structured-pilot-plan-v4"
+        and value["plan_id"] == "ac-structured-dev-validation-evaluator-v2-successor-20260813-v3"
         and value["status"] == "offline-evaluator-v2-source-qualification"
-        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v2.plan.yaml"
+        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v3.plan.yaml"
         and value["base_suite"] == BASE_SUITE_PATH.as_posix(),
         "evaluator-v2 successor plan identity differs",
     )
@@ -545,10 +547,10 @@ def _load_plan(root: Path) -> dict[str, Any]:
     _require(
         value["next_gate"]
         == {
-            "action": "define-versioned-no-call-preflight-contract",
-            "requires_clean_committed_source_identity": True,
-            "requires_documented_external_state_change": True,
-            "requires_separate_exact_attempt_approval": True,
+            "action": "run-bounded-no-call-readiness",
+            "maximum_attempts": 3,
+            "per_attempt_versioned_successor_required": False,
+            "requires_separate_paid_execution_approval": True,
             "does_not_authorize_execution": True,
         },
         "successor next gate differs",
@@ -574,8 +576,9 @@ def _load_base_suite(root: Path) -> tuple[Any, str]:
         and _is_ac_fixed_bundle_readiness_profile(suite)
         and suite.live_cost_approved is False
         and suite.approved_execution_hash is None
-        and suite.pricing_verified_at is None,
-        "predecessor A/C suite is not the exact closed R2 source",
+        and suite.pricing_verified_at
+        == datetime(2026, 8, 13, 12, 5, 26, tzinfo=UTC),
+        "base A/C suite is not the exact fresh-pricing fast source",
     )
     return suite, _suite_hash(suite)
 
@@ -688,7 +691,7 @@ def _build_candidate(
         "d110_index_version": D110_INDEX_VERSION,
         "d110_index_content_hash": D110_INDEX_CONTENT_HASH,
         "authority": QualificationAuthorityBoundary().model_dump(mode="json"),
-        "next_gate": "versioned-no-call-preflight-contract",
+        "next_gate": "bounded-no-call-readiness",
     }
     json_body = {
         **body,
@@ -731,6 +734,7 @@ def _summary(
         "source_qualification_hash": payload.content_hash,
         "evaluator_source_hash": payload.evaluator_source_hash,
         "successor_suite_hash": payload.successor_suite.content_hash,
+        "base_suite_hash": payload.base_suite_hash,
         "file_bytes": len(raw),
         "file_sha256": sha256_bytes(raw),
         "execution_authorized": False,

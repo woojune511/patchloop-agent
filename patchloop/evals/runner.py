@@ -66,6 +66,7 @@ from patchloop.contracts import (
     RunResult,
     TaskPackage,
     Usage,
+    build_evaluator_contract_binding,
 )
 from patchloop.dataset import require_dataset_role, require_frozen_dataset
 from patchloop.errors import ContractError, RecoveryError
@@ -98,7 +99,10 @@ from patchloop.runtime import (
 from patchloop.sandbox import DockerSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, ensure_within, sha256_bytes, sha256_text, utc_now
-from patchloop.verifier.receipt import EvaluatorV2QualificationAuthority
+from patchloop.verifier.receipt import (
+    EvaluatorV2QualificationAuthority,
+    validate_evaluator_v2_manifest_authority,
+)
 
 OFFICIAL_PRICING_URL = "https://developers.openai.com/api/docs/pricing"
 PRICING_MAX_AGE = timedelta(hours=72)
@@ -3890,6 +3894,33 @@ def _safe_error_message(error: Exception) -> str:
     return message[:2_000]
 
 
+def _parse_git_porcelain_paths(output: str) -> list[str]:
+    """Parse NUL-delimited porcelain v1, retaining both sides of renames."""
+
+    records = output.split("\0")
+    paths: list[str] = []
+    index = 0
+    while index < len(records):
+        record = records[index]
+        index += 1
+        if not record:
+            continue
+        if len(record) < 4 or record[2] != " ":
+            raise ContractError("Git status returned an invalid porcelain record")
+        status = record[:2]
+        paths.append(record[3:].replace("\\", "/"))
+        if any(code in {"R", "C"} for code in status):
+            if index >= len(records) or not records[index]:
+                raise ContractError("Git status returned an incomplete rename record")
+            paths.append(records[index].replace("\\", "/"))
+            index += 1
+    return sorted(set(paths))
+
+
+def _is_nonexecution_document_path(path: str) -> bool:
+    return path in {"AGENTS.md", "README.md"} or path.startswith("docs/")
+
+
 def _git_state() -> dict[str, Any]:
     commit_result = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -3899,18 +3930,43 @@ def _git_state() -> dict[str, Any]:
         check=False,
     )
     status_result = subprocess.run(
-        ["git", "status", "--porcelain"],
+        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
         cwd=repository_root(),
         capture_output=True,
         text=True,
         check=False,
     )
+    available = commit_result.returncode == 0 and status_result.returncode == 0
+    dirty_paths = (
+        _parse_git_porcelain_paths(status_result.stdout) if status_result.returncode == 0 else []
+    )
+    ignored_documentation_paths = [
+        path for path in dirty_paths if _is_nonexecution_document_path(path)
+    ]
+    execution_dirty_paths = [
+        path for path in dirty_paths if not _is_nonexecution_document_path(path)
+    ]
     return {
-        "available": commit_result.returncode == 0 and status_result.returncode == 0,
+        "available": available,
         "commit": (
             commit_result.stdout.strip() if commit_result.returncode == 0 else "uncommitted"
         ),
-        "clean": status_result.returncode == 0 and not status_result.stdout.strip(),
+        "clean": available and not dirty_paths,
+        "execution_clean": available and not execution_dirty_paths,
+        "dirty_paths": dirty_paths,
+        "ignored_documentation_paths": ignored_documentation_paths,
+        "execution_dirty_paths": execution_dirty_paths,
+    }
+
+
+def _git_execution_projection(value: dict[str, Any]) -> dict[str, Any]:
+    """Select only Git state that can change execution semantics."""
+
+    return {
+        "available": value.get("available"),
+        "commit": value.get("commit"),
+        "execution_clean": value.get("execution_clean", value.get("clean")),
+        "execution_dirty_paths": value.get("execution_dirty_paths", []),
     }
 
 
@@ -4632,6 +4688,7 @@ def _execution_hash(
     pilot_admission: dict[str, Any] | None = None,
     baseline_admission: dict[str, Any] | None = None,
     campaign_cost_control: dict[str, Any] | None = None,
+    evaluator_v2_qualification: dict[str, Any] | None = None,
 ) -> str:
     payload = _suite_payload(suite)
     payload.pop("live_cost_approved", None)
@@ -4667,6 +4724,8 @@ def _execution_hash(
         if not isinstance(content_hash, str):
             raise ContractError("campaign cost control has no canonical hash")
         execution_payload["campaign_cost_control_hash"] = content_hash
+    if evaluator_v2_qualification is not None:
+        execution_payload["evaluator_v2_qualification"] = evaluator_v2_qualification
     return sha256_text(canonical_json(execution_payload))
 
 
@@ -4766,18 +4825,70 @@ def _expected_role_and_split(
     return set(), None
 
 
+def _validated_ac_evaluator_v2_source_qualification(
+    suite: ExperimentSuite,
+) -> dict[str, Any] | None:
+    """Load the hash-only evaluator-v2 gate for the executable A/C suite."""
+
+    if not (
+        suite.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+        and _is_ac_fixed_bundle_readiness_profile(suite)
+    ):
+        return None
+    from patchloop.evals.evaluator_v2_source_qualification import (
+        validate_evaluator_v2_ac_source_qualification,
+    )
+
+    summary = validate_evaluator_v2_ac_source_qualification()
+    selected = {
+        key: summary.get(key)
+        for key in (
+            "source_qualification_hash",
+            "evaluator_source_hash",
+            "successor_suite_hash",
+            "base_suite_hash",
+        )
+    }
+    if not all(_is_sha256_identity(value) for value in selected.values()):
+        raise ContractError("evaluator-v2 A/C source qualification is incomplete")
+    return {
+        **{key: str(value) for key, value in selected.items()},
+        "base_suite_matches": hmac.compare_digest(
+            _suite_hash(suite),
+            str(selected["base_suite_hash"]),
+        ),
+    }
+
+
 def preflight_suite(
     path: str | Path,
     *,
     approve_live_cost: bool = False,
     approved_execution_hash: str | None = None,
+    credential_present: bool | None = None,
 ) -> dict[str, Any]:
     """Inspect an experiment without constructing an agent or making API calls."""
 
     suite = load_suite(path)
     preflight_checked_at = utc_now()
-    suite_hash = _suite_hash(suite)
+    base_suite_hash = _suite_hash(suite)
+    evaluator_v2_qualification = _validated_ac_evaluator_v2_source_qualification(suite)
+    suite_hash = (
+        evaluator_v2_qualification["successor_suite_hash"]
+        if evaluator_v2_qualification is not None
+        and evaluator_v2_qualification.get("base_suite_matches") is True
+        else base_suite_hash
+    )
     blockers: list[dict[str, str]] = []
+    if (
+        evaluator_v2_qualification is not None
+        and evaluator_v2_qualification.get("base_suite_matches") is not True
+    ):
+        _block(
+            blockers,
+            "EVALUATOR_V2_SUITE_SOURCE_MISMATCH",
+            "A/C execution requires the fresh-pricing suite bound by evaluator-v2 qualification",
+        )
     dataset_identity: dict[str, Any] | None = None
     dataset_manifest_path: Path | None = None
     task_rows: list[dict[str, Any]] = []
@@ -5038,7 +5149,11 @@ def preflight_suite(
     )
     credential = {
         "name": "OPENAI_API_KEY",
-        "present": bool(os.environ.get("OPENAI_API_KEY")),
+        "present": (
+            bool(os.environ.get("OPENAI_API_KEY"))
+            if credential_present is None
+            else credential_present
+        ),
         "custom_base_url_present": bool(
             os.environ.get("OPENAI_BASE_URL") or os.environ.get("OPENAI_API_BASE")
         ),
@@ -5114,6 +5229,7 @@ def preflight_suite(
         ),
         baseline_admission=baseline_admission,
         campaign_cost_control=campaign_cost_control,
+        evaluator_v2_qualification=evaluator_v2_qualification,
     )
     theoretical_cost_upper_bound = pricing["budget_upper_bound_usd"]
 
@@ -5153,8 +5269,12 @@ def preflight_suite(
             )
         if not git_state["available"] or git_state["commit"] == "uncommitted":
             _block(blockers, "GIT_COMMIT_UNAVAILABLE", "Git commit identity is unavailable")
-        elif not git_state["clean"]:
-            _block(blockers, "GIT_WORKTREE_DIRTY", "live campaign requires a clean worktree")
+        elif not git_state.get("execution_clean", git_state["clean"]):
+            _block(
+                blockers,
+                "GIT_EXECUTION_SOURCE_DIRTY",
+                "live campaign requires clean executable, suite, task, and evaluator sources",
+            )
         if not docker_state["available"]:
             _block(blockers, "DOCKER_UNAVAILABLE", "Docker server is unavailable")
         for image in docker_state["images"]:
@@ -5316,18 +5436,14 @@ def preflight_suite(
                 "the historical R1 source remains execution-blocked because it "
                 "does not embed the exact full-schedule cost policy",
             )
-        elif suite.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID:
-            if not isinstance(campaign_cost_control, dict):
-                _block(
-                    blockers,
-                    "AC_FULL_SCHEDULE_COST_CONTROL_INVALID",
-                    "the R2 source did not derive its exact full-schedule cost control",
-                )
+        elif (
+            suite.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+            and not isinstance(campaign_cost_control, dict)
+        ):
             _block(
                 blockers,
-                "AC_EXECUTION_AUTHORIZATION_CANDIDATE_PENDING",
-                "D-123 qualifies source contracts only; a separately sealed clean "
-                "no-call preflight and execution candidate are still required",
+                "AC_FULL_SCHEDULE_COST_CONTROL_INVALID",
+                "the R2 source did not derive its exact full-schedule cost control",
             )
     elif any(condition != MemoryCondition.NO_MEMORY for condition in suite.conditions):
         frozen_index = latest_frozen_index()
@@ -5360,6 +5476,13 @@ def preflight_suite(
             "instead of starting the schedule again",
         )
 
+    execution_authority_blockers = {
+        "LIVE_COST_NOT_APPROVED",
+        "APPROVAL_HASH_MISMATCH",
+    }
+    execution_candidate_ready = all(
+        blocker["code"] in execution_authority_blockers for blocker in blockers
+    )
     output_payload = {
         "schema_version": "experiment-preflight-v1",
         "experiment_id": suite.experiment_id,
@@ -5389,12 +5512,15 @@ def preflight_suite(
         "pilot_qualification": pilot_qualification,
         "journal_path": str(journal),
         "blockers": blockers,
+        "execution_candidate_ready": execution_candidate_ready,
         "ready": not blockers,
     }
     if runtime_contract is not None:
         output_payload["runtime_contract"] = runtime_contract
     if campaign_cost_control is not None:
         output_payload["campaign_cost_control"] = campaign_cost_control
+    if evaluator_v2_qualification is not None:
+        output_payload["evaluator_v2_qualification"] = evaluator_v2_qualification
     if baseline_admission is not None:
         output_payload["baseline_admission"] = baseline_admission
     if pilot_admission is not None and pilot_admission.get("admitted") is True:
@@ -8055,7 +8181,8 @@ def _assert_live_environment_unchanged(preflight: dict[str, Any]) -> None:
         ),
     }
     if (
-        current_git != expected["git"]
+        _git_execution_projection(current_git)
+        != _git_execution_projection(expected["git"])
         or current_sdk != expected["openai_sdk"]
         or current_docker != expected["docker"]
         or current_credential != expected["credential"]
@@ -8722,6 +8849,79 @@ def recover_ac_campaign_finalization(
     )
 
 
+def _load_ac_evaluator_v2_runtime_authorities(
+    suite: ExperimentSuite,
+    qualification: dict[str, Any] | None,
+) -> dict[str, EvaluatorV2QualificationAuthority]:
+    """Construct task-private v2 authority before any campaign artifact is written."""
+
+    if qualification is None:
+        return {}
+    if qualification.get("base_suite_matches") is not True:
+        raise ContractError("evaluator-v2 qualification does not bind this suite source")
+    if not (
+        suite.experiment_id == AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID
+        and _is_ac_fixed_bundle_readiness_profile(suite)
+    ):
+        raise ContractError("evaluator-v2 qualification is attached to another suite")
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not isinstance(api_key, str) or not api_key:
+        raise ContractError("evaluator-v2 A/C authority requires OPENAI_API_KEY")
+    try:
+        marker = api_key.encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise ContractError("OPENAI_API_KEY is not valid UTF-8") from exc
+    from patchloop.evals.evaluator_v2_source_qualification import (
+        load_evaluator_v2_ac_qualification_authority,
+    )
+
+    authorities: dict[str, EvaluatorV2QualificationAuthority] = {}
+    for task in suite.tasks:
+        task_path = Path(task)
+        task_dir = task_path.parent if task_path.is_file() else task_path
+        package = load_task_package(task_dir)
+        authority = load_evaluator_v2_ac_qualification_authority(
+            task_dir,
+            runtime_secret_markers=(marker,),
+        )
+        if (
+            authority.suite_hash != qualification.get("successor_suite_hash")
+            or authority.source_qualification_hash
+            != qualification.get("source_qualification_hash")
+            or authority.runtime.evaluator_source_hash
+            != qualification.get("evaluator_source_hash")
+        ):
+            raise ContractError("evaluator-v2 runtime authority differs from preflight")
+        authorities[package.public.task_id] = authority
+    if len(authorities) != len(suite.tasks):
+        raise ContractError("evaluator-v2 runtime authority task set is incomplete")
+    return authorities
+
+
+def _bind_evaluator_v2_manifest(
+    manifest: RunManifest,
+    package: TaskPackage,
+    authority: EvaluatorV2QualificationAuthority,
+) -> RunManifest:
+    """Upgrade one preflight-matched manifest to its receipt-qualified v2 form."""
+
+    binding = build_evaluator_contract_binding(
+        authority.runtime.safety_contract,
+        package,
+        evaluator_source_hash=authority.runtime.evaluator_source_hash,
+    )
+    payload = manifest.model_dump(mode="json")
+    payload.update(
+        {
+            "schema_version": "run-manifest-v2",
+            "evaluator_contract": binding.model_dump(mode="json"),
+        }
+    )
+    bound = RunManifest.model_validate(payload)
+    validate_evaluator_v2_manifest_authority(bound, authority)
+    return bound
+
+
 def evaluate_suite(
     path: str | Path,
     *,
@@ -8748,7 +8948,19 @@ def evaluate_suite(
 
     suite = ExperimentSuite.model_validate(preflight["suite"])
     if not hmac.compare_digest(_suite_hash(suite), preflight["suite_hash"]):
-        raise ContractError("approved preflight suite hash mismatch")
+        evaluator_v2_qualification = preflight.get("evaluator_v2_qualification")
+        if not (
+            isinstance(evaluator_v2_qualification, dict)
+            and evaluator_v2_qualification.get("successor_suite_hash")
+            == preflight["suite_hash"]
+        ):
+            raise ContractError("approved preflight suite hash mismatch")
+    else:
+        evaluator_v2_qualification = preflight.get("evaluator_v2_qualification")
+    evaluator_v2_authorities = _load_ac_evaluator_v2_runtime_authorities(
+        suite,
+        evaluator_v2_qualification,
+    )
     campaign_cost_control = preflight.get("campaign_cost_control")
     accrued_cap_enabled = _is_accrued_spend_cap_suite(suite)
     full_schedule_cost_enabled = _is_full_schedule_cost_cap_suite(suite)
@@ -9039,6 +9251,15 @@ def evaluate_suite(
                 else None
             ),
         )
+        evaluator_v2_authority = evaluator_v2_authorities.get(package.public.task_id)
+        if evaluator_v2_authorities and evaluator_v2_authority is None:
+            raise ContractError("evaluator-v2 authority is missing for the scheduled task")
+        if evaluator_v2_authority is not None:
+            manifest = _bind_evaluator_v2_manifest(
+                manifest,
+                package,
+                evaluator_v2_authority,
+            )
         _assert_manifest_matches_preflight(
             manifest,
             suite=suite,
@@ -9105,6 +9326,7 @@ def evaluate_suite(
                 manifest=manifest,
                 live_authorization=live_authorization,
                 campaign_cost_reservation=campaign_cost_reservation,
+                evaluator_v2_authority=evaluator_v2_authority,
             )
             infrastructure_error = None
         except Exception as exc:
@@ -9157,7 +9379,11 @@ def evaluate_suite(
         diagnostic_error = _diagnostic_error(diagnostic)
         if result is not None and qualification_required:
             try:
-                qualification = _qualify_terminal_run(manifest.run_id, task)
+                qualification = _qualify_terminal_run(
+                    manifest.run_id,
+                    task,
+                    evaluator_v2_authority=evaluator_v2_authority,
+                )
                 diagnostic = _diagnostic_result(suite, qualification)
                 diagnostic_error = _diagnostic_error(diagnostic)
                 if qualification.get("qualified") is not True:

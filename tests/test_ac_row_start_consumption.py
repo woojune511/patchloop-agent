@@ -31,7 +31,7 @@ from patchloop.state import StateStore
 from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_text
 
-R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml")
+R2_SUITE = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 SOURCE_COMMIT = "a" * 40
 
 
@@ -70,7 +70,7 @@ def ac_case(
     monkeypatch.setattr(
         eval_runner,
         "utc_now",
-        lambda: datetime(2026, 8, 9, 0, tzinfo=UTC),
+        lambda: datetime(2026, 8, 13, 12, 5, 27, tzinfo=UTC),
     )
     monkeypatch.setattr(
         eval_runner,
@@ -102,6 +102,17 @@ def ac_case(
         runtime_module,
         "version",
         lambda _package: "offline-test-sdk",
+    )
+    monkeypatch.setattr(
+        eval_runner,
+        "_validated_ac_evaluator_v2_source_qualification",
+        lambda _suite: {
+            "source_qualification_hash": "sha256:" + "1" * 64,
+            "evaluator_source_hash": "sha256:" + "2" * 64,
+            "successor_suite_hash": "sha256:" + "3" * 64,
+            "base_suite_hash": "sha256:" + "4" * 64,
+            "base_suite_matches": True,
+        },
     )
     monkeypatch.setattr(socket, "socket", _forbidden("network socket"))
     monkeypatch.setattr(

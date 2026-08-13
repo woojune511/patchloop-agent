@@ -1,105 +1,65 @@
-# Current reproduction and validation
+# Current reproduction and execution path
 
-Historical commands are archived at `docs/archive/snapshots/d121/07-reproduction.full.md`; only paths below are current.
+Historical D/V commands are preserved in Git and `docs/archive/`; they are not the current runbook.
 
-## Environment
-
-- Windows/PowerShell, Python 3.12+ and locked `uv`; Docker only under separate exact authority
+## Install and validate offline
 
 ```powershell
 uv sync --offline --frozen --extra dev
+& .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
+  tests/test_fast_preflight.py `
+  tests/test_evaluator_v2_source_qualification.py `
+  tests/test_evaluator_v2_contracts.py `
+  tests/test_ac_fixed_bundle_cost_completion.py `
+  tests/test_documentation_structure.py
+& .\.venv\Scripts\python.exe -E -s -B `
+  scripts/build_evaluator_v2_ac_source_qualification.py
 ```
 
-## Validate the A/C sources and fixed-bundle delivery
+These commands validate source, contracts and synthetic evidence only. They make no Docker, SDK transport,
+provider, evaluator or agent call and grant no paid authority.
+
+## Build the execution candidate
+
+The repository-root `.env` must contain exactly one assignment, `OPENAI_API_KEY`. The command temporarily injects
+that value and never prints it. It performs local Git/SDK checks and read-only Docker/image inspection; it makes no
+container, network, provider, evaluator or agent call.
 
 ```powershell
-uv run --offline --frozen pytest -q tests/test_ac_structured_pilot_plan.py tests/test_ac_fixed_bundle_readiness.py
-uv run --offline --frozen pytest -q tests/test_ac_fixed_bundle_cost_completion.py
-uv run --offline --frozen pytest -q tests/test_fixed_bundle_delivery.py tests/test_d122_ac_fixed_bundle_qualification.py
-uv run --offline --frozen python scripts/build_d122_ac_fixed_bundle_qualification.py --validate-sealed-historical
+& .\.venv\Scripts\patchloop.exe preflight `
+  --suite experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml `
+  --env-file .env `
+  --max-attempts 3
 ```
 
-These offline checks grant no live, retrieval, Docker, provider, candidate or cost authority.
+Only transient Docker/process readiness failures retry, within this command. Schema, source, credential, pricing and
+policy failures stop immediately. Success means `execution_candidate_ready=true`; `ready` remains false until paid
+approval and the exact execution hash are supplied.
 
-## Validate the evaluator-v2 successor qualification
+## Run the four-row A/C campaign
+
+After reviewing the candidate, one explicit approval must bind its exact `execution_hash` and the suite's `$55.00`
+hard cap. Only then run:
 
 ```powershell
-uv run --offline --frozen pytest -q tests/test_evaluator_v2_contracts.py `
-  tests/test_evaluator_v2_source_qualification.py
-uv run --offline --frozen python scripts/build_evaluator_v2_ac_source_qualification.py
+& .\.venv\Scripts\patchloop.exe evaluate `
+  --suite experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml `
+  --env-file .env `
+  --approve-live-cost `
+  --approved-execution-hash sha256:<exact-candidate-hash>
 ```
 
-The second command leaves artifact mtime unchanged; neither command creates external activity or a candidate.
+This is the provider/agent/evaluator boundary. SDK transport retry and outcome-bearing row replacement remain zero.
+The four rows must all be terminal, trace-qualified, cost-settled and evaluator-v2 receipt-qualified; otherwise the
+panel is inconclusive. This approval does not authorize held-out A/C or B/D.
 
-## Validate the sealed no-call contract
-
-```powershell
-uv run --offline --frozen pytest -q tests/test_versioned_no_call_preflight_contract.py
-uv run --offline --frozen python scripts/build_versioned_no_call_preflight_contract.py --validate
-```
-
-Validation reads committed blobs without changing mtime and grants no live authority.
-
-V13-v18 remain consumed. V20 validation binds the exact v19 source/qualification without external observation:
-
-```powershell
-uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-contract
-uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-source
-uv run --offline --frozen python scripts/build_dual_pipe_activation_successor.py --validate-terminal
-$v20Basetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-v20-' + [guid]::NewGuid())
-uv run --offline --frozen pytest -q -p no:cacheprovider --basetemp $v20Basetemp `
-  -k 'not source_modes_have_no_runtime_side_effects' tests/test_dual_pipe_activation_successor.py
-```
-
-These validation modes create no artifact or external observation. The excluded test asserts the pre-state checkout.
-V20 is consumed; terminal validation starts nothing and grants no retry.
-
-V22 validation rechecks committed source and recorded V21 evidence without a diagnostic/mock workload:
-
-```powershell
-uv run --offline --frozen python scripts/build_envelope_diagnostic_activation_successor.py --validate-source
-```
-
-V23 validation binds the lifecycle wrapper to exact V22 source evidence without a diagnostic/mock/live workload:
-
-```powershell
-& .\.venv\Scripts\python.exe -E -s -B scripts/build_typed_diagnostic_activation_successor.py --validate-source
-& .\.venv\Scripts\python.exe -E -s -B scripts/build_typed_diagnostic_activation_successor.py --validate-terminal
-```
-
-Local Git provenance subprocesses may run. These qualifications prove neither process-wide absence nor readiness.
-Terminal validation is read-only. V23 is consumed `ERROR(child_checker_error/diagnostic_result_invalid)` and cannot
-retry; validation grants no successor authority.
-
-V25 validation rechecks committed v24 evidence and the lifecycle/two-hop source without creating state or a workload:
-
-```powershell
-& .\.venv\Scripts\python.exe -E -s -B scripts/build_order_stable_typed_diagnostic_activation_successor.py --validate-source
-```
-
-It may launch local Git provenance subprocesses; external observation and workload-process counts are 0. Fixture
-coverage proves corrected summary transport, not the exact v23 input or live readiness.
-
-## Audit the sealed D-142 source
-
-D-142 validation is bound to its exact clean historical checkout and rejects current HEAD. Audit only there in
-sealed/read-only mode. Its 170/170 mocked count is local evidence, not external observation.
-
-## Static and documentation checks
+## Static checks
 
 ```powershell
 & .\.venv\Scripts\ruff.exe check patchloop tests
 & .\.venv\Scripts\ruff.exe format --check patchloop tests
 & .\.venv\Scripts\python.exe -E -s -B -m compileall -q patchloop tests
-$docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-' + [guid]::NewGuid())
-& .\.venv\Scripts\python.exe -E -s -B -m pytest -q -p no:cacheprovider `
-  --basetemp $docsBasetemp tests/test_documentation_structure.py
 git diff --check
 ```
 
-Historical absent-state assertions never justify rewriting sealed evidence.
-
-## Live execution
-
-There is no supported live A/C, D-142 or consumed-attempt retry. V25 has state/approval but no attempt; its exact
-immediate run statement is the next gate. Execution, candidate and cost remain unauthorized.
+Historical attempts stay immutable. Their old one-use configuration policy does not govern this reusable preflight.

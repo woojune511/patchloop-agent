@@ -1,76 +1,63 @@
 # Effective decisions and open questions
 
 The full decision ledger through D-121 is archived at
-`docs/archive/snapshots/d121/06-decisions.full.md`. This file lists only decisions that currently constrain
-work.
+`docs/archive/snapshots/d121/06-decisions.full.md`. This file lists only decisions that constrain current work.
 
 ## Effective decisions
 
-### 2026-08-11 — evaluator correctness precedes external readiness and A/C
+Current order: evaluator correctness v2 -> successor A/C offline qualification -> supported local preflight ->
+execution candidate -> one campaign approval -> four-run A/C readiness -> held-out A/C -> B/D.
 
-- The critical path is evaluator correctness v2 → successor A/C offline qualification → versioned no-call
-  contract → separately approved preflight attempt → refreshed pricing/cost and execution candidate → separate
-  paid approval → four-run A/C readiness → preregistered held-out A/C → later B/D comparison.
-- The current evaluator's literal safety PASS does not satisfy the documented four-verdict success contract.
-  No new paid A/C row may be presented as four-verdict SCRR evidence until deterministic safety checks and
-  fail-closed aggregation are versioned, implemented and tested.
-- Historical evaluator-v1 results remain immutable and are not regraded. Claims using them must disclose that
-  safety was unconditional rather than independently measured.
-- D-142 keeps its exact evidence state: source-qualified, unactivated and not consumed. Its planning disposition
-  is deferred. This decision does not create a receipt, attempt, marker or terminal and does not invalidate its
-  original one-use contract.
-- Evaluator-v2 and the A/C successor require new source, runtime and suite identities. D-142 and the R2 suite
-  cannot be relabeled as qualification for those changed bytes.
-- Successor source/runtime/suite hashes are distinct at `04ee027`; R2 remains the immutable treatment predecessor.
-- V2 is task-bound and keeps direct private IDs out of the manifest. Four typed controls require integrity-checked
-  runtime, requested-Docker-policy or artifact evidence; free-form audit prose is not a safety rule.
-- V1-v12 are immutable predecessors; consumed attempts cannot retry. Exact activity is indexed in
-  `docs/09-evidence.md`. V12 ended `child_output_invalid` after Docker passed.
-- V13 consumed `BLOCKED(docker_not_ready)` before `.env`/SDK. V14 bound that terminal and then consumed one separately
-  approved attempt. Docker reached READY after eight read-only calls; one child returned without a framed envelope,
-  producing `ERROR(child_checker_error/framed_output_invalid)`. Whole-terminal accounting is incomplete, unknown
-  activity is true and retry/resume is closed. V16 later consumes the same framed-output class after Docker READY.
-  V17 binds that exact terminal and moves the diagnostic to one null-stdio worker behind a stdlib supervisor and
-  anonymous result pipe. V18 later passed Docker but consumed a no-envelope supervisor ERROR with incomplete/unknown
-  accounting. V20 later corrected the outer transport, but consumed the same supervisor-envelope class after Docker
-  READY. Its state, approval and attempt cannot be reused; any correction requires a new versioned successor.
-- V23 consumed `diagnostic_result_invalid` with incomplete/unknown accounting and cannot retry. V24's order-stable,
-  value-free projection is not exact v23-cause proof. V25 qualifies the lifecycle/two-hop wrapper and now binds one
-  self-attested state and nonreusable future-attempt approval. Separate exact immediate run text is still required.
+### 2026-08-13 — fast-track attempts, not one-use configurations
 
-### 2026-08-08 — start with A/C readiness, not the full four-condition campaign
+- Append-only applies to observed attempt records. An attempt is never edited or erased, but unchanged source,
+  configuration and campaign definitions remain reusable.
+- A new contract version is required only when schema, evaluator semantics, security boundary, treatment or another
+  experiment-defining input changes. A transient failure or ordinary rerun gets a new `attempt_id`, not a new V-number.
+- Read-only Docker readiness, exact-key-only `.env` loading and fixed-placeholder/no-dispatch SDK diagnostics use one
+  supported local preflight with at most three pre-provider attempts. They need no state artifact, exact approval
+  paragraph or per-attempt chat gate.
+- Provider execution remains separately gated. One campaign approval binds the exact execution hash, evaluator-v2 source,
+  four-row schedule, model/runtime tuple, full-schedule reserve and hard cap. It covers the campaign rather than each
+  row separately and grants no held-out or B/D authority.
+- Campaign rows are single-attempt. Any infrastructure or outcome-bearing row failure ends the panel as inconclusive;
+  retry requires a disclosed fresh full panel.
+- Historical D/V artifacts and their `retry=false` fields remain exact evidence. This policy supersedes their
+  one-use configuration as the active execution design without rewriting them.
 
-- First matrix: Moto and Babel development-validation tasks x A/C x one repetition = four rows.
-- Purpose: runtime delivery/readiness, not held-out performance.
-- Full A/B/C/D 96-run campaign is deferred, not deleted.
-- A missing or confounded row makes the matrix inconclusive; no row-only replacement is allowed.
+### 2026-08-11 — evaluator correctness precedes paid A/C
 
-One repetition provides no variance estimate and supports no statistical, causal, held-out,
-cross-repository, per-rule or negative-transfer-rate claim.
+- Evaluator-v1's literal safety PASS does not satisfy four-verdict success. Historical v1 results remain immutable
+  and are not presented as independently safety-verified.
+- Evaluator-v2 and the successor A/C source use new source, runtime and suite identities. Their typed safety evidence,
+  fail-closed aggregation, receipt, persistence, qualification and completion path are locally verified.
+- Raw v2 results remain `official=false`; the receipt-qualified completion adapter is the authority used by A/C.
+- D-142 remains source-qualified, unactivated and deferred. It is not relabeled as v2 qualification.
+- Historical V1-V25 attempts remain in `docs/09-evidence.md`. V23 ended before evaluator execution with
+  `diagnostic_result_invalid`; V24/V25 are correction/wrapper source evidence, not live readiness results.
 
-### 2026-08-08 — C is an exact fixed bundle
+### 2026-08-08 — start with A/C readiness
 
-- C receives all three approved D-105 texts in frozen D-110 `group_provenance` order on every model request.
-- A carries the same policy version with null memory.
-- No embedding, similarity, rerank or threshold is used; this does not grant selective-retrieval authority.
+- First matrix: Moto and Babel development-validation tasks × A/C × one repetition = four rows.
+- A uses null memory. C receives the exact three D-105 texts in frozen D-110 `group_provenance` order on every model
+  request. No embedding, similarity, rerank or threshold participates.
+- The panel diagnoses workflow delivery/readiness, not held-out performance. One repetition provides no variance
+  estimate and supports no causal, general, cross-repository, per-rule or negative-transfer claim.
+- Full A/B/C/D is deferred. B/D require independent redaction/calibration and, if designed after A/C unblinding, a
+  separate fresh held-out panel.
 
-### Historical execution gates remain closed
+## Historical execution boundaries
 
-D-122 through D-141 are immutable predecessors indexed in `docs/09-evidence.md` and Git history. Consumed
-pricing, Docker and SDK attempts are never retried or repaired. Planning values, observations and source
-qualification grant no hash/candidate, cost or A/C authority. D-142 is not consumed, but it is outside the
-current critical path and has no activation authority.
-
-`docs/current-status.md` owns the checkpoint/gate, `reports/` owns artifacts and the archive owns chronology. No
-sequencing decision reopens consumed evidence or rewrites D-142.
+D-122 through D-141 and V1-V25 attempt artifacts remain immutable. They are not repaired, overwritten or deleted.
+Their old one-use gates do not prohibit new fast-track attempts with unchanged source; neither do they authorize paid
+execution. `docs/current-status.md` owns the current path, `reports/` owns exact artifacts and Git/archive own history.
 
 ## Superseded sequencing
 
-- Running the full A/B/C/D matrix immediately is superseded by A/C readiness first.
-- Continuing D-121 isolation before any C test is paused; D-121 is not a fixed-bundle prerequisite.
-- Activating D-142 as the next step is superseded by the evaluator-v2 successor path.
-- Treating the existing R2 source qualification as sufficient for a corrected-evaluator A/C run is superseded;
-  the changed evaluator requires successor source and suite qualification.
+- A new V-number, state artifact, approval artifact and exact immediate-run paragraph for every local preflight.
+- Treating a failed attempt as consumption of otherwise unchanged source/configuration.
+- Activating D-142 or continuing D-121 isolation before fixed-bundle A/C readiness.
+- Running the full A/B/C/D matrix before the small A/C readiness panel.
 
 ## Open questions
 

@@ -34,16 +34,15 @@ Historical milestone-by-milestone limitations are archived at
 - Free-form private `prohibited_behaviors` are audit context, not typed command/network/secret/sandbox evidence.
 - V2 has authority-gated runner, receipt, persistence and qualification, but no official/live result; raw v2 remains
   `official=false`.
-- V3/v5/v7/v12/v13/v14 attempts are consumed and prove neither current readiness nor hidden failure cause; exact
-  observations and accounting limits remain in `docs/09-evidence.md`. Environment changes reopen none.
-- V12-V20 are consumed failures and cannot retry or establish SDK readiness. Several retain incomplete/unknown
-  accounting; `docs/09-evidence.md` owns their exact observations and limits.
+- V3-v20 attempt records are immutable and prove neither current readiness nor a hidden failure cause. Several retain
+  incomplete/unknown accounting; `docs/09-evidence.md` owns their exact observations and limits. Their one-use
+  configuration policy is historical and does not constrain new fast-track attempts.
 - V22 strictly projects typed child data over V21 framing. V23's one attempt proved Docker reads and typed transport,
   not a valid SDK diagnostic: strict validation returned `diagnostic_result_invalid`. Accounting is incomplete/unknown;
-  network/provider counts are unknown, and the consumed terminal grants no retry, memory, cost or A/C authority.
+  network/provider counts are unknown, and the terminal grants no memory, cost or A/C evidence.
 - V24's representative fixture reproduces mapping-order rejection, not the exact discarded v23 input. V25 binds its
   value-free summary to lifecycle schemas and a typed channel, but qualification ran no workload and proves neither
-  live process success nor SDK/Docker readiness. State/approval exist, but no attempt, observation or result does.
+  live process success nor SDK/Docker readiness. Its unused one-use attempt gate is superseded by the fast track.
 - Docker profiles prove only exact requested registered-check flags, not enforcement or host-wide absence. Marker
   scans cover the enumerated supplied chain, not unreferenced store bytes or encoded/semantic noninterference.
 - Bundles remain evaluator-only and forbidden from agent/memory/retrieval paths. Opaque hash commitments omit
@@ -59,13 +58,13 @@ Historical milestone-by-milestone limitations are archived at
   contract evidence; preparation made no external observation and created no runtime artifact.
 - D-142 is now deferred. Its original one-use contract remains auditable but cannot qualify evaluator-v2 bytes
   or a successor A/C source. This planning change creates no receipt, attempt, marker or terminal.
-- Repository-local gates do not prove authenticated identity, global/cross-clone exclusion or long-term
-  environment stability. Credential, external preflight, candidate, cost and A/C authorities remain closed.
+- Repository-local gates do not prove authenticated identity, global/cross-clone exclusion or long-term environment
+  stability. The reusable preflight still has no provider/evaluator/agent or paid authority.
 
 ## Isolation, identity and operations
 
-- Repository-local one-use gates are cooperative; they do not prove authenticated user identity or
-  global/cross-clone exclusion.
+- Repository-local attempt logs are cooperative; they do not prove authenticated user identity or global/cross-clone
+  exclusion. Append-only records prevent silent rewriting, not repeated execution of unchanged configuration.
 - D-118 lacks a trusted pre-D-116 anchor; D-119 ended consumed with unknown probe outcome. D-121 verified
   no-start configuration only, not hash-probe isolation.
 - User-reported Docker readiness/no-auto-start facts are self-attested unless independently captured by the

@@ -8,7 +8,7 @@ D-001–D-121 prose is preserved at `docs/archive/snapshots/d121/03-contracts.fu
 - JSON/YAML input uses strict schemas and rejects unknown fields where the owning model is strict.
 - IDs derive from canonical content; mutable observations also carry file SHA-256 and byte size.
 - UTC timestamps and nondecreasing chronology are required where ordering is material.
-- Evidence writers use new-only/append-only semantics; partial states fail closed.
+- Evidence writers use new-only/append-only attempt records; a new attempt may reuse unchanged source/configuration.
 - Public and private task material use separate files and loaders.
 - Runtime authority must be explicit; preparation and validation are not execution.
 
@@ -102,15 +102,13 @@ hidden_pass and regression_pass and scope_pass and safety_pass
 
 Evaluator-v1 safety is literal PASS. V2 binds four typed controls, aggregates
 `ERROR > FAIL > NOT_RUN > PASS`, and receipt-gates persistence/qualification; raw results remain unofficial.
-V5/V7/V12/V13/V14/V16/V18 are immutable consumed terminals. V17 isolates one null-stdio diagnostic worker behind
-a stdlib supervisor; V18 nevertheless consumed a no-envelope outer result after Docker READY. V19 changes only the
-outer result transport. V20's exact state/approval started one append-only ledger, then consumed
-`ERROR(supervised_output_invalid)` with incomplete/unknown accounting. It cannot retry; a correction needs a new version.
+V5-V23 terminals remain immutable historical observations. V23 reached Docker and both typed frames before
+`ERROR(child_checker_error/diagnostic_result_invalid)`. V24 validates the legacy mapping before sorting and emits a
+typed value-free summary; V25 binds that projection to a one-use lifecycle wrapper but never started an attempt.
 
-V23 consumed one append-only `ERROR(child_checker_error/diagnostic_result_invalid)` attempt and cannot retry. V24
-validates the legacy mapping before sorting and emits only a typed value-free summary. V25 binds that projection to
-fresh state/approval/run schemas and a two-hop channel. State and nonreusable future-attempt approval are bound, but
-`attempt_started=false`; the exact immediate-run statement is the next gate.
+The active fast-track contract records each attempt under a new identity while allowing unchanged preflight source
+and configuration to be reused. It permits at most three no-call attempts, never records credential values and emits
+no provider/evaluator/agent call. A new version is required only when machine-visible semantics change.
 
 Experiment reports retain every scheduled row, including agent/infrastructure failures and not-started rows.
 Incomplete matrices are diagnostic only. A four-row readiness result cannot be promoted to a core memory
@@ -131,12 +129,12 @@ noncooperative-swap, actual-kill or power-loss guarantees. No reservation/result
 
 ## 11. Evidence gates
 
-Preparation, execution receipt, journal, completion gate and successor correction are distinct artifacts.
-An exact approval applies only to the action named by the approved candidate. Historical exact schemas and
-instance bindings remain available in the archived contract ledger and machine artifacts under `reports/`.
+Preparation, execution receipt, journal and completion gate remain distinct evidence. Local no-call preflight uses a
+reusable source/configuration and new attempt IDs. One paid campaign approval binds the exact execution hash, schedule,
+runtime and cap rather than requiring per-row prose. Historical schemas remain under `reports/`.
 
-D-126 through D-141 are immutable predecessors and consumed attempts never reopen. D-142's exact tuples and
-original one-use contract remain canonical in `reports/` and `docs/09-evidence.md`; its evidence state is
-source-qualified and unactivated, while its current planning disposition is deferred. Documentation creates no
+D-126 through D-141 attempt artifacts never reopen. Their source/config one-use policy is historical. D-142's exact
+tuples remain canonical in `reports/` and `docs/09-evidence.md`; its evidence state is source-qualified and
+unactivated, while its current planning disposition is deferred. Documentation creates no
 D-142 receipt, attempt, marker or terminal. A future return to that original observation requires a new exact
 decision, and any corrected-evaluator A/C path instead requires new evaluator, source, suite and runtime identities.

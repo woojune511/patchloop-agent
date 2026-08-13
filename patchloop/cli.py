@@ -45,6 +45,96 @@ def _guarded(operation: Callable[[], object]) -> None:
     _emit(value)
 
 
+def _with_exact_env_file(
+    env_file: Path | None,
+    operation: Callable[[], object],
+) -> object:
+    if env_file is None:
+        return operation()
+    from patchloop.environment import exact_openai_api_key_environment
+
+    with exact_openai_api_key_environment(env_file):
+        return operation()
+
+
+def _exact_env_file_credential_present(env_file: Path | None) -> bool | None:
+    """Validate a credential file for preflight without exporting its value."""
+
+    if env_file is None:
+        return None
+    from patchloop.environment import exact_openai_api_key_present
+
+    return exact_openai_api_key_present(env_file)
+
+
+_TRANSIENT_PREFLIGHT_BLOCKERS = {
+    "DOCKER_UNAVAILABLE",
+    "DOCKER_IMAGE_UNAVAILABLE",
+    "DOCKER_NOT_READY",
+    "PROCESS_LAUNCH_ERROR",
+    "PROCESS_TIMEOUT",
+}
+
+
+def _bounded_preflight(
+    operation: Callable[[], dict[str, object]],
+    *,
+    max_attempts: int,
+) -> dict[str, object]:
+    """Retry only transient local readiness failures and stop at a candidate."""
+
+    attempts: list[dict[str, object]] = []
+    result: dict[str, object] = {}
+    for attempt_number in range(1, max_attempts + 1):
+        try:
+            result = operation()
+        except subprocess.TimeoutExpired:
+            result = {
+                "execution_candidate_ready": False,
+                "ready": False,
+                "blockers": [
+                    {"code": "PROCESS_TIMEOUT", "message": "local preflight process timed out"}
+                ],
+            }
+        except FileNotFoundError:
+            result = {
+                "execution_candidate_ready": False,
+                "ready": False,
+                "blockers": [
+                    {
+                        "code": "PROCESS_LAUNCH_ERROR",
+                        "message": "local preflight process could not be launched",
+                    }
+                ],
+            }
+        raw_blockers = result.get("blockers")
+        blockers = raw_blockers if isinstance(raw_blockers, list) else []
+        blocker_codes = sorted(
+            str(blocker.get("code"))
+            for blocker in blockers
+            if isinstance(blocker, dict) and isinstance(blocker.get("code"), str)
+        )
+        candidate_ready = result.get("execution_candidate_ready") is True
+        transient_only = bool(blocker_codes) and all(
+            code in _TRANSIENT_PREFLIGHT_BLOCKERS for code in blocker_codes
+        )
+        attempts.append(
+            {
+                "attempt": attempt_number,
+                "execution_candidate_ready": candidate_ready,
+                "blocker_codes": blocker_codes,
+                "transient_only": transient_only,
+            }
+        )
+        if candidate_ready or not transient_only:
+            break
+    return {
+        **result,
+        "preflight_attempts": attempts,
+        "preflight_attempt_count": len(attempts),
+    }
+
+
 def _decode_probe_output(output: bytes) -> str:
     """Decode Windows CLI output without relying on the active code page."""
     if not output:
@@ -291,6 +381,18 @@ def evaluate(
             help="Exact execution hash printed by a clean preflight.",
         ),
     ] = None,
+    env_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--env-file",
+            exists=True,
+            dir_okay=False,
+            help=(
+                "Temporarily load a file containing only OPENAI_API_KEY; "
+                "the value is never emitted."
+            ),
+        ),
+    ] = None,
 ) -> None:
     """Execute a seeded experiment suite after all freeze gates pass."""
     from patchloop.evals.runner import evaluate_suite, preflight_suite
@@ -301,6 +403,7 @@ def evaluate(
                 suite,
                 approve_live_cost=approve_live_cost,
                 approved_execution_hash=approved_execution_hash,
+                credential_present=_exact_env_file_credential_present(env_file),
             )
         except PatchLoopError as exc:
             _emit({"ok": False, "error": exc.code, "message": str(exc), "details": exc.details})
@@ -310,12 +413,61 @@ def evaluate(
             raise typer.Exit(code=2)
         return
     _guarded(
-        lambda: evaluate_suite(
-            suite,
-            approve_live_cost=approve_live_cost,
-            approved_execution_hash=approved_execution_hash,
+        lambda: _with_exact_env_file(
+            env_file,
+            lambda: evaluate_suite(
+                suite,
+                approve_live_cost=approve_live_cost,
+                approved_execution_hash=approved_execution_hash,
+            ),
         )
     )
+
+
+@app.command("preflight")
+def preflight_command(
+    suite: Annotated[Path, typer.Option("--suite", exists=True, dir_okay=False)],
+    env_file: Annotated[
+        Path,
+        typer.Option(
+            "--env-file",
+            exists=True,
+            dir_okay=False,
+            help=(
+                "Credential file containing only OPENAI_API_KEY. "
+                "Its value is never emitted."
+            ),
+        ),
+    ] = Path(".env"),
+    max_attempts: Annotated[
+        int,
+        typer.Option(
+            "--max-attempts",
+            min=1,
+            max=3,
+            help="Retry transient local readiness failures up to three times.",
+        ),
+    ] = 1,
+) -> None:
+    """Build a reusable execution candidate without provider or agent calls."""
+
+    from patchloop.evals.runner import preflight_suite
+
+    try:
+        credential_present = _exact_env_file_credential_present(env_file)
+        result = _bounded_preflight(
+            lambda: preflight_suite(
+                suite,
+                credential_present=credential_present,
+            ),
+            max_attempts=max_attempts,
+        )
+    except PatchLoopError as exc:
+        _emit({"ok": False, "error": exc.code, "message": str(exc), "details": exc.details})
+        raise typer.Exit(code=1) from exc
+    _emit(result)
+    if not result["execution_candidate_ready"]:
+        raise typer.Exit(code=2)
 
 
 @app.command()

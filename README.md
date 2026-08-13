@@ -12,7 +12,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Moto and Babel, one A/C pair each
 - identical model, prompt, tools, context policy and 3M/3600 resource ceiling
 
-`docs/current-status.md` owns the R2/D-142, evaluator-v2 and no-call boundary.
+`docs/current-status.md` owns the evaluator-v2, reusable-preflight and A/C boundary.
 
 ## Implemented product path
 
@@ -20,7 +20,7 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - Constrained search/read/patch/check/diff/submission tools; no unrestricted agent shell
 - Stateless provider turns plus append-only events, checkpoints, CAS and workspace reconciliation
 - Rejected-patch recovery and token/cost accounting
-- Separate hidden evaluator, receipt-bound v2, successor identity and sealed no-call contract
+- Separate hidden evaluator, receipt-bound v2, successor identity and reusable no-call preflight
 - Audited dataset roles and a frozen, human-reviewed three-entry memory index
 - Exact A-null/C-D110 delivery with replay and condition-aware trace qualification
 
@@ -30,10 +30,10 @@ The 96-run A/B/C/D campaign is deferred. The checked-in readiness panel is:
 - D-110 froze three entries; D-112/D-115 left selective scoring unready. No memory-effect claim exists.
 - D-121/D-129-D-141 remain immutable; D-142 stays source-qualified/unactivated and deferred.
 - Evaluator-v1 safety was literal PASS, so historical results are not independently safety-verified.
-- V3-v20 are immutable consumed predecessors; v20 ended `ERROR(supervised_output_invalid)`.
-- V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` with incomplete/unknown accounting and no retry.
-  V24 corrects projection order; V25 qualifies its wrapper and binds state/approval, but no attempt has started.
-  Neither is readiness evidence, and execution, candidate, cost and paid authority remain closed.
+- V3-v23 attempts are immutable historical evidence; V23 ended before evaluator execution at
+  `diagnostic_result_invalid`. V24/V25 are source corrections, not readiness evidence.
+- The active path reuses unchanged preflight source with append-only attempt IDs. Paid A/C remains blocked until a
+  clean execution hash and one campaign-level cost approval exist.
 
 Exact tuples, zero-activity limits and machine-readable evidence are indexed in `docs/09-evidence.md`.
 
@@ -47,11 +47,12 @@ $docsBasetemp = Join-Path 'C:\Users\geonj\AppData\Local\Temp' ('patchloop-docs-'
 git diff --check
 ```
 
-These validate documentation only; no live A/C command is supported.
+These validate documentation only and make no external or paid call.
 
 ## CLI surface
 
-`uv run --offline --frozen patchloop --help` lists the CLI but grants no live authority.
+`uv run --offline --frozen patchloop --help` lists the CLI. The supported fast preflight is no-call; provider
+execution still requires its exact execution hash and explicit campaign cost approval.
 
 ## Documentation
 

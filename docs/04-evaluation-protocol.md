@@ -40,7 +40,7 @@ held-out result.
 | --- | --- | --- |
 | A | `no_memory` | Implemented baseline condition |
 | B | `raw_trace` | Deferred; portable selection/redaction contract incomplete |
-| C | `structured` | R2 delivery/suite qualified offline; evaluator-v2 successor not qualified |
+| C | `structured` | Exact-three delivery and evaluator-v2 successor qualified offline; no live result |
 | D | `selective_structured` | Deferred; applicability calibration and score policy incomplete |
 
 For this readiness panel, C means all three approved generic rules in frozen D-110 `group_provenance`
@@ -59,8 +59,9 @@ The historical offline plan is `experiments/ac-structured-pilot-v2.plan.yaml`; t
 | 3 | Babel #1042 | C `structured` |
 | 4 | Babel #1042 | A `no_memory` |
 
-Each row uses a fresh workspace and no state from another row. There is one repetition, no automatic
-replacement and no retry. Condition order is counterbalanced across the two tasks.
+Each row uses a fresh workspace and no state from another row. There is one outcome-bearing repetition. Local
+preflight may retry transient readiness failures before the campaign starts. Campaign rows are single-attempt;
+any infrastructure or outcome-bearing failure makes the panel inconclusive. Condition order is counterbalanced.
 
 ## 5. Controlled variables
 
@@ -95,18 +96,16 @@ D-108's +702 token count covers one request shape, not every live turn. D-124/D-
 behavior only; no reservation, result, candidate or execution hash exists. Consumed external attempts remain
 canonical in `docs/09-evidence.md`.
 
-D-142 is source-qualified and unactivated, with planning disposition deferred. It has no runtime artifact and
-cannot qualify changed evaluator bytes. Evaluator v2 therefore requires new source, suite and runtime identities;
-the A-null/C-exact-three treatment itself remains unchanged.
+D-142 remains source-qualified/unactivated and cannot qualify changed evaluator bytes. The evaluator-v2 successor
+already binds new source, suite and runtime identities while preserving A-null/C-exact-three treatment.
 
 Evaluator-v1 safety is literal PASS. V2 derives typed evidence with fail-closed aggregation and receipt-gated
-persistence/qualification; raw results remain unofficial. V12-V20 are consumed, cannot retry and establish no
-readiness; exact observations and limits remain in `docs/09-evidence.md`.
+persistence/qualification; raw results remain unofficial. Historical V1-V25 attempt artifacts keep their exact
+observations and limits in `docs/09-evidence.md` but no longer define the active retry policy.
 
-V23 consumed `ERROR(child_checker_error/diagnostic_result_invalid)` and cannot retry. V24 qualifies the order-stable,
-value-free summary correction; its fixture does not identify the exact discarded v23 input. V25 qualifies the
-lifecycle wrapper and typed two-hop summary channel only. State and future-attempt approval grant no observation by
-themselves; the separate exact immediate-run gate remains mandatory and none proves readiness.
+The active path uses one reusable, bounded no-call preflight. Completed attempts are append-only; unchanged source
+and configuration may be attempted again without a new contract version or state/approval prose. A clean result emits
+the candidate hash. Provider execution still requires one separate campaign approval for that exact hash and cap.
 
 ## 7. Run-completion gate
 
@@ -120,9 +119,9 @@ The D-125-qualified completion source makes the four-row matrix analyzable only 
 - binds a specific evaluator-v2 safety result and its evidence rather than accepting a verdict string alone;
 - has no infrastructure, qualification, diagnostic or budget-terminal confound.
 
-If any row fails this gate, preserve all evidence and mark the panel inconclusive. Do not replace or rerun only
-the failed row. D-125's local consumption is fail-closed/no-resume; mocked finalization recovery never reruns a
-row. Cross-store/global/cross-clone protection, actual kill and power-loss durability remain unverified.
+If any row fails this gate, preserve all evidence and mark the panel inconclusive. Do not replace or rerun only that
+row; a later retry must be a disclosed fresh full panel. Cross-store/global/cross-clone protection, actual kill and
+power-loss durability remain unverified.
 
 ## 8. Metrics
 

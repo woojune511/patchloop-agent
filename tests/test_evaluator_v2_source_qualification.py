@@ -12,8 +12,17 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
+from patchloop import runtime as runtime_module
 from patchloop.agent import model as agent_model
 from patchloop.agent import runner as agent_runner
+from patchloop.contracts import (
+    AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+    Budget,
+    DatasetRole,
+    ExperimentPurpose,
+    ExperimentRunContext,
+    MemoryCondition,
+)
 from patchloop.evals import evaluator_v2_source_qualification as source_q
 from patchloop.evals import runner as eval_runner
 from patchloop.memory import retrieval
@@ -113,6 +122,7 @@ def test_build_validate_and_replay_are_append_only_and_offline(
         "source_qualification_hash": payload["content_hash"],
         "evaluator_source_hash": payload["evaluator_source_hash"],
         "successor_suite_hash": payload["successor_suite"]["content_hash"],
+        "base_suite_hash": payload["base_suite_hash"],
         "file_bytes": len(raw),
         "file_sha256": sha256_bytes(raw),
         "execution_authorized": False,
@@ -153,6 +163,25 @@ def test_successor_suite_is_new_and_preserves_exact_ac_treatment(
     assert successor["runtime_tuple_hash"] == source_q._qualified_runtime_tuple_hash()
     assert successor["treatment_hash"] == sha256_json(source_q._EXPECTED_TREATMENT)
     assert payload["fixed_bundle_sha256"] == source_q.FIXED_BUNDLE_SHA256
+    assert payload["base_suite"]["path"] == source_q.BASE_SUITE_PATH.as_posix()
+    assert (
+        eval_runner.load_suite(source_q.BASE_SUITE_PATH).pricing_verified_at.isoformat()
+        == "2026-08-13T12:05:26+00:00"
+    )
+
+
+def test_legacy_null_pricing_r2_is_not_the_qualified_executable_suite(
+    isolated_output: Path,
+) -> None:
+    _build(isolated_output)
+    legacy = eval_runner.load_suite(
+        "experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.yaml"
+    )
+
+    observed = eval_runner._validated_ac_evaluator_v2_source_qualification(legacy)
+
+    assert observed is not None
+    assert observed["base_suite_matches"] is False
 
 
 def test_source_and_validation_inventories_are_exact_current_bytes(
@@ -208,6 +237,98 @@ def test_authority_factory_requires_exact_task_and_run_secret_boundary(
     assert live_shape.runtime.safety_contract.task_id == "moto-query-scanned-count"
     assert secret in live_shape.runtime.private_markers
     assert secret not in isolated_output.read_bytes()
+
+
+def test_ac_runner_binds_qualified_v2_manifest(
+    isolated_output: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    summary, _payload, _raw = _build(isolated_output)
+    task = REPOSITORY / source_q.TASK_PATHS[0]
+    package = load_task_package(task)
+    authority = source_q.load_evaluator_v2_ac_qualification_authority(
+        task,
+        runtime_secret_markers=(b"test-run-marker-not-a-provider-key",),
+        repository=REPOSITORY,
+    )
+    monkeypatch.setattr(runtime_module, "git_commit", lambda: "a" * 40)
+    monkeypatch.setattr(runtime_module, "version", lambda _package: "offline-test-sdk")
+    context = ExperimentRunContext(
+        experiment_id=AC_FIXED_BUNDLE_COST_COMPLETION_EXPERIMENT_ID,
+        purpose=ExperimentPurpose.DEVELOPMENT_VALIDATION_AC_READINESS,
+        suite_hash=summary["successor_suite_hash"],
+        execution_hash="sha256:" + "1" * 64,
+        campaign_cost_control_hash="sha256:" + "2" * 64,
+        dataset_manifest_hash="sha256:" + "3" * 64,
+        dataset_role=DatasetRole.DEVELOPMENT_VALIDATION,
+        schedule_seed=20260723,
+        schedule_order=1,
+        schedule_row_id="sha256:" + "4" * 64,
+        repetition=1,
+    )
+    manifest = runtime_module.build_manifest(
+        package,
+        provider="openai",
+        model_id="gpt-5.4-mini-2026-03-17",
+        memory_condition=MemoryCondition.NO_MEMORY,
+        memory_policy_version="fixed-d110-bundle-v1",
+        sandbox_backend="docker",
+        budget=Budget(
+            max_model_calls=None,
+            max_tool_calls=None,
+            max_total_tokens=3_000_000,
+            wall_clock_timeout_seconds=3_600,
+        ),
+        agent_image_digest=package.environment.image_digest,
+        evaluator_image_digest=package.environment.image_digest,
+        reasoning_effort="medium",
+        reasoning_mode="standard",
+        service_tier="default",
+        transport_max_retries=0,
+        max_output_tokens=25_000,
+        experiment_context=context,
+    )
+
+    bound = eval_runner._bind_evaluator_v2_manifest(manifest, package, authority)
+
+    assert bound.schema_version == "run-manifest-v2"
+    assert bound.evaluator_contract is not None
+    assert bound.evaluator_contract.evaluator_source_hash == summary["evaluator_source_hash"]
+    assert bound.evaluator_contract.contract_hash == authority.runtime.safety_contract.content_hash
+
+
+def test_ac_runner_loads_task_authorities_without_persisting_runtime_marker(
+    isolated_output: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    summary, _payload, _raw = _build(isolated_output)
+    runtime_marker = "test-runtime-marker-not-a-provider-key"
+    monkeypatch.setenv("OPENAI_API_KEY", runtime_marker)
+    suite = eval_runner.load_suite(source_q.BASE_SUITE_PATH)
+
+    authorities = eval_runner._load_ac_evaluator_v2_runtime_authorities(
+        suite,
+        {
+            key: summary[key]
+            for key in (
+                "source_qualification_hash",
+                "evaluator_source_hash",
+                "successor_suite_hash",
+                "base_suite_hash",
+            )
+        }
+        | {"base_suite_matches": True},
+    )
+
+    assert set(authorities) == {
+        "moto-query-scanned-count",
+        "babel-strict-grouped-decimal-trailing-zeroes",
+    }
+    assert all(
+        runtime_marker.encode("utf-8") in authority.runtime.private_markers
+        for authority in authorities.values()
+    )
+    assert runtime_marker.encode("utf-8") not in isolated_output.read_bytes()
 
 
 def test_authority_factory_rejects_unqualified_task_and_bad_markers(

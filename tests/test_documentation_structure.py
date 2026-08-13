@@ -55,9 +55,9 @@ def test_active_documentation_is_small_and_current_focused() -> None:
     assert active_bytes * 10 < snapshot_bytes
 
 
-def test_current_candidate_identity_has_one_active_prose_owner() -> None:
+def test_historical_d121_candidate_is_not_current_authority() -> None:
     owners = [path for path in ACTIVE_DOCS if D121_CANDIDATE_ID in path.read_text(encoding="utf-8")]
-    assert owners == [Path("docs/current-status.md")]
+    assert owners == []
 
 
 def test_agent_required_reading_does_not_require_archive() -> None:
@@ -82,25 +82,27 @@ def test_current_docs_bind_the_four_run_plan_without_live_authority() -> None:
     assert "runtime_memory_injection_authorized: false" in plan
 
 
-def test_current_roadmap_defers_d142_and_puts_evaluator_correctness_first() -> None:
+def test_current_roadmap_defers_d142_and_uses_the_fast_track() -> None:
     status = Path("docs/current-status.md").read_text(encoding="utf-8")
     decisions = Path("docs/06-decisions.md").read_text(encoding="utf-8")
 
     assert "source-qualified only, unactivated" in status
     assert "planning disposition is now **deferred**" in status
-    assert "D-142 activation is not the next gate" in status
+    assert "D-142 and the V25 one-use" in status
     assert "offline successor-only integration path" in status
     assert "successor A/C offline qualification" in status
+    assert "Reusable no-call preflight" in status
+    assert "per-attempt approval prose" in status
 
     ordered_stages = (
         "evaluator correctness v2",
         "successor A/C offline qualification",
-        "versioned no-call",
-        "separately approved preflight attempt",
+        "supported local preflight",
         "execution candidate",
+        "one campaign approval",
         "four-run A/C readiness",
         "held-out A/C",
-        "B/D comparison",
+        "B/D",
     )
     positions = [decisions.index(stage) for stage in ordered_stages]
     assert positions == sorted(positions)
