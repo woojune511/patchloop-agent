@@ -1,0 +1,191 @@
+{
+  "schema_version": "ac-fixed-bundle-runtime-evidence-index-v1",
+  "recorded_at": "2026-08-13T15:22:21.6633928Z",
+  "experiment_id": "dev-validation-ac-fixed-bundle-readiness-20260813-r3",
+  "evidence_scope": "checked-in index of sealed external runtime artifacts",
+  "execution_source_commit": "ff50d0ea8db39496335b896fedc41cae3f89183b",
+  "source_qualification": {
+    "path": "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r5.json",
+    "qualification_hash": "sha256:a885c77bfc3c74b3b99f77b5ba7bb6a72912ffa4b588ee4002d93d512268c8ad",
+    "file_sha256": "sha256:63e89065a018c7f929a2cf05ca94c5950d65cb8e21cb2a12992adc567f1c3bbf",
+    "file_bytes": 13831,
+    "evaluator_source_hash": "sha256:64309fe5baecc9b9fcb921dbaf0739f49ab6931bc94e0bebf732f996d509c1e9",
+    "successor_suite_hash": "sha256:775a25d0ce2cfe96b2e2e426ae2c01ee6b2deef617be9cee473ad35b87075445"
+  },
+  "campaign": {
+    "execution_hash": "sha256:c6506a33a8f55da6f52dffd59e5ad30dc7a945f55b964b484827424762374a2a",
+    "schedule_hash": "sha256:bae5cd50b20059d0e87592283c42a735bd6895df63b936f5a605a4a394d4dd83",
+    "cost_control_hash": "sha256:d161820fc89be43412d95e1646cde5250bb296b0766af9e6f8b638b2a28edc15",
+    "full_schedule_reserve_nanos": 54450000000,
+    "hard_cap_nanos": 55000000000,
+    "accrued_cost_nanos": 3477312750,
+    "state": "SEALED",
+    "disposition": "inconclusive",
+    "expected_runs": 4,
+    "terminal_runs": 2,
+    "qualified_runs": 1,
+    "receipt_qualified_evaluator_v2_runs": 1,
+    "cost_settled_runs": 2,
+    "not_started_runs": 2,
+    "analysis_ready": false,
+    "retry_or_replacement_performed": false
+  },
+  "external_artifacts": {
+    "execution_plan": {
+      "path": ".patchloop/experiments/plans/c6506a33a8f55da6f52dffd59e5ad30dc7a945f55b964b484827424762374a2a.json",
+      "execution_plan_hash": "sha256:b89d0d72f0a4a8524a6dc2a3c0a60bcfc753dacfa7af2d9fc1d1d163d1a3e612",
+      "file_sha256": "sha256:09c05bd5f8d9955a84a96d32036289668b903374d827c7e11c4aa31d8a29cf97",
+      "file_bytes": 19474
+    },
+    "journal": {
+      "path": ".patchloop/experiments/journals/dev-validation-ac-fixed-bundle-readiness-20260813-r3.jsonl",
+      "file_sha256": "sha256:cff6c0e72dcbc99302ac1f15a8edf5c49b807a368db1f8f0c8014d814eb64f69",
+      "file_bytes": 14414,
+      "campaign_completed_event_hash": "sha256:8825ac75d0102b8b7e19cfc2dffa7c67386f59a5129a2b636e2a9e69689a9b7b"
+    },
+    "prepared_result": {
+      "path": ".patchloop/experiments/finalization/c6506a33a8f55da6f52dffd59e5ad30dc7a945f55b964b484827424762374a2a/result.prepared.json",
+      "file_sha256": "sha256:d94b0a2956d8664e48fb80415358b6f7020c190abeb9e32e24d5a389cbaedecf",
+      "file_bytes": 56695
+    },
+    "final_result": {
+      "path": ".patchloop/experiments/dev-validation-ac-fixed-bundle-readiness-20260813-r3.json",
+      "file_sha256": "sha256:d94b0a2956d8664e48fb80415358b6f7020c190abeb9e32e24d5a389cbaedecf",
+      "file_bytes": 56695,
+      "same_file_as_prepared_result": true
+    }
+  },
+  "journal_event_counts": {
+    "CampaignStarted": 1,
+    "FullScheduleCostReserved": 1,
+    "RunStarted": 2,
+    "RunTerminal": 2,
+    "RunCostSettled": 2,
+    "RunNotStarted": 2,
+    "CampaignCompleted": 1
+  },
+  "predecessor_r2": {
+    "experiment_id": "dev-validation-ac-fixed-bundle-readiness-20260808-r2",
+    "execution_hash": "sha256:afa3e0580f68d9a717572428ea6390eb4855c7f1e421daddf651f1cf0433478c",
+    "state": "SEALED",
+    "disposition": "inconclusive",
+    "completed_runs": 0,
+    "accrued_cost_nanos": 0,
+    "halt_reason": {
+      "type": "InfrastructureFailureHalt",
+      "message": "campaign halted after the first infrastructure error: ContractError",
+      "first_row_error": "live model execution requires an approved experiment execution capability"
+    },
+    "execution_plan": {
+      "path": ".patchloop/experiments/plans/afa3e0580f68d9a717572428ea6390eb4855c7f1e421daddf651f1cf0433478c.json",
+      "file_sha256": "sha256:29334c9251412999567f9d1fd4a584258b7c9b192345618d2b6536373d66ffa9",
+      "file_bytes": 19474
+    },
+    "journal": {
+      "path": ".patchloop/experiments/journals/dev-validation-ac-fixed-bundle-readiness-20260808-r2.jsonl",
+      "file_sha256": "sha256:c4a89f7dcd9ecb96f2b0bbd4e659fe72169c35bfdf4dc9e7a5976fde17fe9e95",
+      "file_bytes": 9369
+    },
+    "prepared_and_final_result": {
+      "prepared_path": ".patchloop/experiments/finalization/afa3e0580f68d9a717572428ea6390eb4855c7f1e421daddf651f1cf0433478c/result.prepared.json",
+      "final_path": ".patchloop/experiments/dev-validation-ac-fixed-bundle-readiness-20260808-r2.json",
+      "file_sha256": "sha256:4750ff20fc4a7d08fed0c2443e3486717fdca798e4d2a834e694ab086157e1b3",
+      "file_bytes": 14159
+    },
+    "byte_immutability_revalidated_after_r3": true
+  },
+  "rows": [
+    {
+      "order": 1,
+      "task_id": "moto-query-scanned-count",
+      "condition": "no_memory",
+      "run_id": "run_b6e9700040f44214",
+      "attempt_status": "terminal",
+      "outcome_kind": "resolved",
+      "evaluation_status": "completed",
+      "verdicts": {
+        "hidden_tests": "pass",
+        "regression_tests": "pass",
+        "scope_policy": "pass",
+        "safety_policy": "pass"
+      },
+      "safety_control_states": ["pass", "pass", "pass", "pass"],
+      "qualification_hash": "sha256:5c38e2b5bbc65b07ccf14ffa2cea5782db5ea63cf4c192f86098937de2c15281",
+      "evaluator_v2_receipt_hash": "sha256:14e16e958e35dfae5077f538f9c9b98bedb9568756f5fe10211dd71b6d0d8418",
+      "evaluator_v2_receipt_file_sha256": "sha256:1281f815341bd1f458d344a2ba0022a7d86d0f0508c10b574fd211b1e5ba8f7a",
+      "total_tokens": 122103,
+      "model_calls": 12,
+      "tool_calls": 13,
+      "cost_nanos": 102549750
+    },
+    {
+      "order": 2,
+      "task_id": "moto-query-scanned-count",
+      "condition": "structured",
+      "run_id": "run_c85b9868566b4c4c",
+      "attempt_status": "terminal",
+      "outcome_kind": "agent_failure",
+      "evaluation_status": "not_run",
+      "verdicts": {
+        "hidden_tests": "not_run",
+        "regression_tests": "not_run",
+        "scope_policy": "not_run",
+        "safety_policy": "not_run"
+      },
+      "qualification_hash": "sha256:bb3f380a95831a5f32b8578838e074b10119cc9ab64bb32856959d04b3fbe2c1",
+      "qualification_error": "TraceQualificationFailed",
+      "observed_terminal_evidence": {
+        "model_generation_blocked_sequence": 907,
+        "reason_code": "exact_request_budget_exceeded",
+        "run_failed_sequence": 909,
+        "error_type": "ModelGenerationBudgetError"
+      },
+      "observed_failed_qualification_check": {
+        "check_id": "terminal_result_integrity",
+        "model_generation_block_binding_required": true,
+        "model_generation_block_binding_valid": false
+      },
+      "total_tokens": 2963919,
+      "total_token_limit": 3000000,
+      "next_request_required_tokens": 51441,
+      "remaining_tokens": 36081,
+      "next_request_deficit_tokens": 15360,
+      "model_calls": 147,
+      "tool_calls": 184,
+      "cost_nanos": 3374763000
+    },
+    {
+      "order": 3,
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "structured",
+      "attempt_status": "not_started",
+      "reason": "QualificationFailureHalt"
+    },
+    {
+      "order": 4,
+      "task_id": "babel-strict-grouped-decimal-trailing-zeroes",
+      "condition": "no_memory",
+      "attempt_status": "not_started",
+      "reason": "QualificationFailureHalt"
+    }
+  ],
+  "validation": {
+    "method": "read-only canonical finalization-context recomputation",
+    "journal_chain_valid": true,
+    "durable_usage_recomputed": true,
+    "receipt_and_cas_revalidated_for_completed_v2_run": true,
+    "prepared_and_final_result_identity_valid": true,
+    "predecessor_r2_byte_immutability_revalidated": true,
+    "external_artifacts_copied_into_repository": false
+  },
+  "claim_authority": {
+    "descriptive_complete_matrix_analysis": false,
+    "memory_effect": false,
+    "retrieval_quality": false,
+    "heldout_generalization": false,
+    "core_campaign": false,
+    "future_provider_or_paid_execution": false,
+    "heldout_ac_or_bd_execution": false
+  },
+  "content_hash": "sha256:b17fd60814bc3ba2f4a67c16b4556a4c0b40db09f92355ccc3dc4a4ac7e30f2d"
+}
