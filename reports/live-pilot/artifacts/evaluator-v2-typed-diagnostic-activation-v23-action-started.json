@@ -1,0 +1,9 @@
+{
+  "schema_version": "typed-diagnostic-activation-action-started-v23",
+  "marker_id": "ncpstarted_cba147a0d487c20cc61ef81aff6d586741c417ea18c9338f3a6cd6539081051d",
+  "attempt_id": "ncpattempt_c9ee0c8c0fe8f282e164e505f64d8f8d99561035173965ea9c9768d04ba31765",
+  "attempt_content_hash": "sha256:c9ee0c8c0fe8f282e164e505f64d8f8d99561035173965ea9c9768d04ba31765",
+  "sequence": 1,
+  "recorded_at": "2026-08-13T09:32:48.430785Z",
+  "content_hash": "sha256:cba147a0d487c20cc61ef81aff6d586741c417ea18c9338f3a6cd6539081051d"
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "typed-diagnostic-activation-run-authorization-v23",
+  "authorization_id": "ncprunauthorization_b73eebd60137a7e5e25332f50aee08d7cd02df8b5db9044fbb022b0aa42c9ca3",
+  "contract_id": "ncpcontract_dfdfed2c3e5fabd39f3518cfe9aeae648ad38f182acc2efd2c478bbb449ada0a",
+  "source_qualification_hash": "sha256:f196bac8434dc78d061273ca87bd301237604face9bc93edcf1635afb1678f26",
+  "state_id": "ncpstate_c1fae9c0980bf18f55da673fa2416b48150976561a194097b98f39af1c71ee9d",
+  "approval_id": "ncpapproval_40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637",
+  "approval_content_hash": "sha256:40be479a1d430f6353e872597109a581f806c136f48dac2d7982576fa4544637",
+  "statement_sha256": "sha256:5ffe27b6905492b9ab9b9f17d4e37ff70142d07b106f714a2acf117a1043ab0a",
+  "attempt_limit": 1,
+  "retry_replacement_or_resume_authorized": false,
+  "recorded_at": "2026-08-13T09:32:48.413497Z",
+  "content_hash": "sha256:b73eebd60137a7e5e25332f50aee08d7cd02df8b5db9044fbb022b0aa42c9ca3"
+}
