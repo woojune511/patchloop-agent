@@ -237,7 +237,11 @@ def test_preflight_command_retries_only_transient_failures_and_stops_at_candidat
             {
                 "execution_candidate_ready": False,
                 "ready": False,
-                "blockers": [{"code": "DOCKER_UNAVAILABLE", "message": "not ready"}],
+                "blockers": [
+                    {"code": "DOCKER_UNAVAILABLE", "message": "not ready"},
+                    {"code": "LIVE_COST_NOT_APPROVED", "message": "approval required"},
+                    {"code": "APPROVAL_HASH_MISMATCH", "message": "hash required"},
+                ],
             },
             {
                 "execution_candidate_ready": True,
@@ -284,7 +288,11 @@ def test_preflight_command_retries_only_transient_failures_and_stops_at_candidat
     assert payload["preflight_attempts"][0] == {
         "attempt": 1,
         "execution_candidate_ready": False,
-        "blocker_codes": ["DOCKER_UNAVAILABLE"],
+        "blocker_codes": [
+            "APPROVAL_HASH_MISMATCH",
+            "DOCKER_UNAVAILABLE",
+            "LIVE_COST_NOT_APPROVED",
+        ],
         "transient_only": True,
     }
     assert payload["preflight_attempts"][1]["execution_candidate_ready"] is True

@@ -45,14 +45,14 @@ from patchloop.verifier.runtime_evidence import (
     evaluator_v2_runtime_tuple_hash,
 )
 
-SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v3"
-QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260813-r3"
+SCHEMA_VERSION = "evaluator-v2-ac-source-qualification-v4"
+QUALIFICATION_ID = "dev-validation-ac-fixed-bundle-evaluator-v2-20260813-r4"
 STATUS = "OFFLINE_SOURCE_QUALIFIED_LIVE_CLOSED"
 
-PLAN_PATH = Path("experiments/ac-structured-pilot-v4.plan.yaml")
+PLAN_PATH = Path("experiments/ac-structured-pilot-v5.plan.yaml")
 BASE_SUITE_PATH = Path("experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml")
 OUTPUT_PATH = Path(
-    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r3.json"
+    "reports/live-pilot/artifacts/evaluator-v2-ac-successor-offline-source-qualification-r4.json"
 )
 
 TASK_PATHS = (
@@ -510,10 +510,10 @@ def _load_plan(root: Path) -> dict[str, Any]:
     }
     _require(set(value) == expected_keys, "evaluator-v2 successor plan fields differ")
     _require(
-        value["schema_version"] == "ac-structured-pilot-plan-v4"
-        and value["plan_id"] == "ac-structured-dev-validation-evaluator-v2-successor-20260813-v3"
+        value["schema_version"] == "ac-structured-pilot-plan-v5"
+        and value["plan_id"] == "ac-structured-dev-validation-evaluator-v2-successor-20260813-v4"
         and value["status"] == "offline-evaluator-v2-source-qualification"
-        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v3.plan.yaml"
+        and value["predecessor_plan"] == "experiments/ac-structured-pilot-v4.plan.yaml"
         and value["base_suite"] == BASE_SUITE_PATH.as_posix(),
         "evaluator-v2 successor plan identity differs",
     )

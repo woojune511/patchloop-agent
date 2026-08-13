@@ -75,6 +75,11 @@ _TRANSIENT_PREFLIGHT_BLOCKERS = {
     "PROCESS_TIMEOUT",
 }
 
+_PREFLIGHT_AUTHORITY_BLOCKERS = {
+    "LIVE_COST_NOT_APPROVED",
+    "APPROVAL_HASH_MISMATCH",
+}
+
 
 def _bounded_preflight(
     operation: Callable[[], dict[str, object]],
@@ -114,9 +119,12 @@ def _bounded_preflight(
             for blocker in blockers
             if isinstance(blocker, dict) and isinstance(blocker.get("code"), str)
         )
+        operational_blocker_codes = [
+            code for code in blocker_codes if code not in _PREFLIGHT_AUTHORITY_BLOCKERS
+        ]
         candidate_ready = result.get("execution_candidate_ready") is True
-        transient_only = bool(blocker_codes) and all(
-            code in _TRANSIENT_PREFLIGHT_BLOCKERS for code in blocker_codes
+        transient_only = bool(operational_blocker_codes) and all(
+            code in _TRANSIENT_PREFLIGHT_BLOCKERS for code in operational_blocker_codes
         )
         attempts.append(
             {

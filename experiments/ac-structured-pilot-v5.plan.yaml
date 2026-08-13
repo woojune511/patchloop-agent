@@ -1,0 +1,69 @@
+# Retry-classification correction successor. This source is offline-only and
+# carries no Docker, provider, agent, cost, or execution authority.
+schema_version: ac-structured-pilot-plan-v5
+plan_id: ac-structured-dev-validation-evaluator-v2-successor-20260813-v4
+status: offline-evaluator-v2-source-qualification
+predecessor_plan: experiments/ac-structured-pilot-v4.plan.yaml
+base_suite: experiments/dev-validation-ac-fixed-bundle-readiness-20260813-fast-r1.yaml
+
+successor_suite:
+  suite_id: dev-validation-ac-fixed-bundle-evaluator-v2-20260813-r4
+  purpose: development-validation-ac-readiness
+  conditions: [no_memory, structured]
+  repetitions: 1
+  expected_runs: 4
+  schedule:
+    - {order: 1, task_id: moto-query-scanned-count, condition: no_memory, repetition: 1}
+    - {order: 2, task_id: moto-query-scanned-count, condition: structured, repetition: 1}
+    - {order: 3, task_id: babel-strict-grouped-decimal-trailing-zeroes, condition: structured, repetition: 1}
+    - {order: 4, task_id: babel-strict-grouped-decimal-trailing-zeroes, condition: no_memory, repetition: 1}
+  replacement_or_retry_allowed: false
+
+runtime:
+  evaluator_version: v2
+  safety_contract_schema: evaluator-safety-contract-v2
+  receipt_schema: evaluator-v2-evaluation-receipt-v1
+  raw_result_official: false
+  model: openai
+  model_id: gpt-5.4-mini-2026-03-17
+  reasoning_effort: medium
+  reasoning_mode: standard
+  service_tier: default
+  transport_max_retries: 0
+  max_output_tokens: 25000
+  max_total_tokens: 3000000
+  wall_clock_timeout_seconds: 3600
+  tool_schema_version: v2
+  context_policy_version: phase-evidence-v5
+  memory_policy_version: fixed-d110-bundle-v1
+  sandbox_backend: docker
+  marker_profile: task-private-plus-run-secret-exact-v1
+
+treatment:
+  no_memory_selected_memory: null
+  structured_delivery: exact-d110-three-entry-bundle-every-request
+  fixed_bundle_bytes: 3528
+  fixed_bundle_sha256: sha256:572667d431aa75e4fe74bfc030a99f64245b77d9afa1c88e5d531129f708accf
+  query_embedding_or_similarity_used: false
+  threshold_or_reranking_used: false
+
+authority:
+  offline_source_qualification_authorized: true
+  source_gate_materialization_authorized: true
+  docker_or_sdk_observation_authorized: false
+  credential_observation_or_provisioning_authorized: false
+  provider_or_evaluator_execution_authorized: false
+  agent_execution_authorized: false
+  runtime_memory_injection_authorized: false
+  exact_execution_hash_authorized: false
+  execution_candidate_authorized: false
+  cost_reservation_or_spend_authorized: false
+  automatic_retry_replacement_or_resume_authorized: false
+  memory_benefit_claim_authorized: false
+
+next_gate:
+  action: run-bounded-no-call-readiness
+  maximum_attempts: 3
+  per_attempt_versioned_successor_required: false
+  requires_separate_paid_execution_approval: true
+  does_not_authorize_execution: true
